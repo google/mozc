@@ -71,7 +71,7 @@
         '<(proto_out_dir)/<(relative_dir)/dataset.pb.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_dataset_proto#host',
       ],
       'export_dependent_settings': [

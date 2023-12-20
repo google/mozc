@@ -55,7 +55,7 @@
         '<(proto_out_dir)/<(relative_dir)/candidates.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_candidates_proto#host',
       ],
       'export_dependent_settings': [
@@ -85,7 +85,7 @@
         '<(proto_out_dir)/<(relative_dir)/commands.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'candidates_proto',
         'config_proto',
         'engine_builder_proto',
@@ -115,7 +115,7 @@
         '<(proto_out_dir)/<(relative_dir)/config.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_config_proto#host',
       ],
       'export_dependent_settings': [
@@ -143,7 +143,7 @@
         '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'commands_proto',
         'config_proto',
         'genproto_renderer_proto#host'
@@ -175,7 +175,7 @@
         '<(proto_out_dir)/<(relative_dir)/state.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'candidates_proto',
         'commands_proto',
         'genproto_state_proto#host',
@@ -203,7 +203,7 @@
         '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_user_dictionary_storage_proto#host',
       ],
       'export_dependent_settings': [
@@ -230,7 +230,7 @@
         '<(proto_out_dir)/<(relative_dir)/segmenter_data.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_segmenter_data_proto#host',
       ],
       'export_dependent_settings': [
@@ -257,7 +257,7 @@
         '<(proto_out_dir)/<(relative_dir)/engine_builder.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_engine_builder_proto#host',
       ],
       'export_dependent_settings': [

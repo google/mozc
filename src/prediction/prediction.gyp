@@ -88,7 +88,7 @@
         '<(proto_out_dir)/<(relative_dir)/user_history_predictor.pb.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_prediction#host',
       ],
       'export_dependent_settings': [

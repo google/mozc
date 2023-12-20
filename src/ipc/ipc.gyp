@@ -69,7 +69,7 @@
         '<(proto_out_dir)/<(relative_dir)/ipc.pb.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_ipc#host',
       ],
       'export_dependent_settings': [
@@ -95,7 +95,7 @@
         '<(proto_out_dir)/<(relative_dir)/window_info.pb.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_window_info#host',
       ],
       'export_dependent_settings': [

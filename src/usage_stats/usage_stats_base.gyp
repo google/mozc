@@ -85,7 +85,7 @@
         '<(proto_out_dir)/<(relative_dir)/usage_stats.pb.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_usage_stats#host',
       ],
       'export_dependent_settings': [

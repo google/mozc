@@ -101,7 +101,7 @@
             '<(mozc_oss_src_dir)/client/client.gyp:client',
             '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
             '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
-            '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+            '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
             '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
             '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
             '<(mozc_oss_src_dir)/renderer/renderer.gyp:win32_renderer_client',

@@ -142,7 +142,7 @@
             '<(proto_out_dir)/<(relative_dir)/win32_service_state.pb.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+            '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
             'genproto_server',
           ],
           'export_dependent_settings': [

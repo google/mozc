@@ -201,7 +201,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base_core',
-        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'testing',
       ],
     },
