@@ -36,14 +36,14 @@
 #include "base/clock_mock.h"
 #include "base/logging.h"
 #include "protocol/commands.pb.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats.pb.h"
-#include "usage_stats/usage_stats_testing_util.h"
 #include "absl/time/time.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats.pb.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace session {

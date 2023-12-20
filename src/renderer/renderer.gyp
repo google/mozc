@@ -257,7 +257,7 @@
             '<(mozc_src_dir)/base/win32/base_win32.gyp:win_font_test_helper',
             '<(mozc_oss_src_dir)/data/test/renderer/win32/test_data.gyp:install_test_data',
             '<(mozc_oss_src_dir)/data/test/renderer/win32/test_data.gyp:test_spec_proto',
-            '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+            '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
             '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
             '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
             'win32_renderer_core',

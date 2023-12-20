@@ -35,8 +35,8 @@
 #include <string>
 #include <vector>
 
-#include "usage_stats/usage_stats.pb.h"
 #include "absl/strings/string_view.h"
+#include "usage_stats/usage_stats.pb.h"
 
 namespace mozc {
 namespace usage_stats {

@@ -42,7 +42,6 @@
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "usage_stats/usage_stats.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/composer.h"
@@ -54,6 +53,7 @@
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "transliteration/transliteration.h"
+#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace {

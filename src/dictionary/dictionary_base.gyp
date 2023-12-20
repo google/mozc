@@ -184,7 +184,7 @@
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:user_dictionary_storage_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
-        '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
+        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'gen_pos_map#host',
         'pos_matcher',
         'suppression_dictionary',

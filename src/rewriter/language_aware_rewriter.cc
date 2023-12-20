@@ -38,13 +38,13 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "usage_stats/usage_stats.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
+#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 

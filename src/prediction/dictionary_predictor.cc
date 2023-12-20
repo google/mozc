@@ -43,7 +43,7 @@
 #include "base/strings/japanese.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "usage_stats/usage_stats.h"
+#include "absl/algorithm/container.h"
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
@@ -68,6 +68,7 @@
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 #include "transliteration/transliteration.h"
+#include "usage_stats/usage_stats.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
@@ -114,8 +115,18 @@ bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
 
+bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
+  return request.config().use_typing_correction();
+}
+
 bool ShouldFilterNoisyNumberCandidate(const Request &request) {
   return request.decoder_experiment_params().filter_noisy_number_candidate();
+}
+
+bool IsTypingCorrectionMixerV2Enabled(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .enable_typing_correction_mixer_v2();
 }
 
 KeyValueView GetCandidateKeyAndValue(const Result &result
@@ -318,45 +329,120 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
+  // When v2 mixer is disabled, typing corrected results are
+  // aggregated inside the `AggregateResults` method.
+  std::vector<Result> results =
+      aggregator_->AggregateResults(request, *segments);
+  RewriteResultsForPrediction(request, *segments, &results);
+
+  // When v2 mixer is enabled, we have to explicitly
+  // populate the typing corrected results.
+  // This design allows to implement any mixing and filtering logic
+  // inside `MaybePopualteTypingCorrectedResults`.
+  TypingCorrectionMixingParams typing_correction_mixing_params;
+  if (IsTypingCorrectionEnabled(request) &&
+      IsTypingCorrectionMixerV2Enabled(request)) {
+    typing_correction_mixing_params =
+        MaybePopualteTypingCorrectedResults(request, *segments, &results);
+  }
+
+  return AddPredictionToCandidates(request, segments,
+                                   typing_correction_mixing_params,
+                                   absl::MakeSpan(results));
+}
+
+void DictionaryPredictor::RewriteResultsForPrediction(
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<Result> *results) const {
+  if (results->empty()) {
+    return;
+  }
+
   // Mixed conversion is the feature that mixes prediction and
   // conversion, meaning that results may include the candidates whose
   // key is exactly the same as the composition.  This mode is used in mobile.
   const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
-  std::vector<Result> results =
-      aggregator_->AggregateResults(request, *segments);
-  if (results.empty()) {
-    return false;
-  }
 
   if (is_mixed_conversion) {
-    SetPredictionCostForMixedConversion(request, *segments, &results);
-    if (!IsEnableNewSpatialScoring(request)) {
-      ApplyPenaltyForKeyExpansion(*segments, &results);
-    }
-    MaybeRescoreResults(request, *segments, absl::MakeSpan(results));
-
-    // Currently, we don't have spelling correction feature when in
-    // the mixed conversion mode, so RemoveMissSpelledCandidates() is
-    // not called.
-    return AddPredictionToCandidates(request, segments,
-                                     absl::MakeSpan(results));
+    SetPredictionCostForMixedConversion(request, segments, results);
+  } else {
+    SetPredictionCost(request.request_type(), segments, results);
   }
 
-  // Normal prediction.
-  SetPredictionCost(request.request_type(), *segments, &results);
-  if (!IsEnableNewSpatialScoring(request)) {
-    ApplyPenaltyForKeyExpansion(*segments, &results);
-  }
-  MaybeRescoreResults(request, *segments, absl::MakeSpan(results));
+  ApplyPenaltyForKeyExpansion(request, segments, results);
+  MaybeRescoreResults(request, segments, absl::MakeSpan(*results));
 
-  const std::string &input_key = segments->conversion_segment(0).key();
-  const size_t input_key_len = Util::CharsLen(input_key);
-  RemoveMissSpelledCandidates(input_key_len, &results);
-  return AddPredictionToCandidates(request, segments, absl::MakeSpan(results));
+  if (!is_mixed_conversion) {
+    const size_t input_key_len =
+        Util::CharsLen(segments.conversion_segment(0).key());
+    RemoveMissSpelledCandidates(input_key_len, results);
+  }
+}
+
+DictionaryPredictor::TypingCorrectionMixingParams
+DictionaryPredictor::MaybePopualteTypingCorrectedResults(
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<Result> *results) const {
+  DictionaryPredictor::TypingCorrectionMixingParams
+      typing_correction_mixing_params;
+
+  if (results->empty()) {
+    return typing_correction_mixing_params;
+  }
+
+  const std::string &key = segments.conversion_segment(0).key();
+  const size_t key_len = Util::CharsLen(key);
+  constexpr int kMinTypingCorrectionKeyLen = 3;
+  if (key_len < kMinTypingCorrectionKeyLen) {
+    return typing_correction_mixing_params;
+  }
+
+  std::vector<Result> typing_corrected_results =
+      aggregator_->AggregateTypingCorrectedResults(request, segments);
+  RewriteResultsForPrediction(request, segments, &typing_corrected_results);
+
+  if (typing_corrected_results.empty()) {
+    return typing_correction_mixing_params;
+  }
+
+  // Sets literal on top when the corrections do not have sufficient
+  // confidence.
+  auto find_best_result = [](absl::Span<const Result> v) -> const Result & {
+    return *absl::c_max_element(v, [](const auto &lhs, const auto &rhs) {
+      return ResultCostLess()(rhs, lhs);
+    });
+  };
+
+  const Result &base_best_result = find_best_result(*results);
+  const Result &tc_best_result = find_best_result(typing_corrected_results);
+  const auto &params = request.request().decoder_experiment_params();
+
+  // When the best candidate is SPELLING_CORRECTION (not a typing correction),
+  // do not run literal-on-top.
+  typing_correction_mixing_params.literal_on_top =
+      (!(base_best_result.candidate_attributes &
+         Segment::Candidate::SPELLING_CORRECTION)) &&
+      ((tc_best_result.typing_correction_score <=
+        params.typing_correction_literal_on_top_correction_score_max_diff()) ||
+       ((base_best_result.cost - tc_best_result.cost) <=
+        params.typing_correction_literal_on_top_conversion_cost_max_diff()));
+
+  // Literal-at-least-second parameter is now defined as flag.
+  typing_correction_mixing_params.literal_at_least_second =
+      request.request()
+          .decoder_experiment_params()
+          .typing_correction_literal_at_least_second();
+
+  for (auto &result : typing_corrected_results) {
+    results->emplace_back(std::move(result));
+  }
+
+  return typing_correction_mixing_params;
 }
 
 bool DictionaryPredictor::AddPredictionToCandidates(
     const ConversionRequest &request, Segments *segments,
+    const TypingCorrectionMixingParams &typing_correction_mixing_params,
     absl::Span<Result> results) const {
   DCHECK(segments);
 
@@ -416,7 +502,6 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   for (size_t i = 0; i < result_ptrs.size(); ++i) {
     std::pop_heap(result_ptrs.begin(), result_ptrs.end() - i, min_heap_cmp);
     const Result &result = *result_ptrs[result_ptrs.size() - i - 1];
-
     if (added >= max_candidates_size || result.cost >= kInfinity) {
       break;
     }
@@ -434,7 +519,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     ++added;
   }
 
-  MaybeSuppressAggressiveTypingCorrection(request, segments);
+  MaybeSuppressAggressiveTypingCorrection(
+      request, typing_correction_mixing_params, segments);
 
   MaybeApplyHomonymCorrection(request, segments);
 
@@ -448,32 +534,55 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 // static
 void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
-    const ConversionRequest &request, Segments *segments) {
-  const int max_diff = request.request()
-                           .decoder_experiment_params()
-                           .typing_correction_conversion_cost_max_diff();
-  if (max_diff == 0 || segments->conversion_segments_size() == 0) {
+    const ConversionRequest &request,
+    const TypingCorrectionMixingParams &typing_correction_mixing_params,
+    Segments *segments) {
+  if (segments->conversion_segments_size() == 0 ||
+      segments->conversion_segment(0).candidates_size() <= 1) {
     return;
   }
 
-  // Do nothing when the top candidate is already literal.
   Segment *segment = segments->mutable_conversion_segment(0);
-  if (segment->candidates_size() <= 1 ||
-      !(segment->candidate(0).attributes &
+
+  // Top is already literal.
+  if (!(segment->candidate(0).attributes &
         Segment::Candidate::TYPING_CORRECTION)) {
     return;
   }
 
-  const auto &top = segment->candidate(0);
+  // `typing_correction_conversion_cost_max_diff` is only
+  // used in v1 mixier.
+  // TODO(taku): remove `max_diff` once v2 migration is finished.
+  const int max_diff = IsTypingCorrectionMixerV2Enabled(request)
+                           ? 0
+                           : request.request()
+                                 .decoder_experiment_params()
+                                 .typing_correction_conversion_cost_max_diff();
 
+  const bool force_literal_on_top =
+      typing_correction_mixing_params.literal_on_top;
+  const bool literal_at_least_second =
+      typing_correction_mixing_params.literal_at_least_second;
+
+  if (!force_literal_on_top && max_diff == 0 && !literal_at_least_second) {
+    return;
+  }
+
+  const auto &top = segment->candidate(0);
   const int max_size = std::min<int>(10, segment->candidates_size());
   for (int i = 1; i < max_size; ++i) {
     const auto &c = segment->candidate(i);
     // Finds the first non-typing-corrected candidate.
     if (!(c.attributes & Segment::Candidate::TYPING_CORRECTION)) {
-      // Replace the literal with top when the cost is close enough.
-      if (c.cost - top.cost < max_diff) {
+      // Replace the literal with top when the cost is close enough or
+      // force_literal_on_top is true.
+      if (force_literal_on_top ||
+          (!force_literal_on_top && c.cost - top.cost < max_diff)) {
         segment->move_candidate(i, 0);
+      } else if (literal_at_least_second && i >= 2) {
+        // Moves the literal to the second position even when
+        // literal-on-top condition doesn't match.
+        segment->move_candidate(i, 1);
       }
       break;
     }
@@ -753,7 +862,6 @@ void DictionaryPredictor::FillCandidate(
   if (result.types & PredictionType::TYPING_CORRECTION) {
     candidate->attributes |= Segment::Candidate::TYPING_CORRECTION;
   }
-
   SetDescription(result.types, candidate);
   if (IsDebug(request)) {
     auto it = merged_types.find(result.value);
@@ -1078,8 +1186,10 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
 
 // static
 void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
-    const Segments &segments, std::vector<Result> *results) {
-  if (segments.conversion_segments_size() == 0) {
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<Result> *results) {
+  if (IsEnableNewSpatialScoring(request) ||
+      segments.conversion_segments_size() == 0) {
     return;
   }
   const std::string &conversion_key = segments.conversion_segment(0).key();

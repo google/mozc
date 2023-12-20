@@ -572,7 +572,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 46
+// Next ID: 50
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -618,7 +618,27 @@ message DecoderExperimentParams {
   optional int32 typing_correction_max_rank = 18 [default = 10];
   optional float typing_correction_identity_score_max_diff = 21 [default = 0.0];
   optional float typing_correction_top_score_max_diff = 22 [default = 1.0];
+
+  // TODO(taku): deprecate it once v2 mixer is enabled.
   optional int32 typing_correction_conversion_cost_max_diff = 38 [default = 0];
+
+  // Parameters for new typing correction mixing logic.
+  // `typing_correction_literal_on_top_*` are available only when
+  // enable_typing_correction_mixer_v2 is true.
+  optional bool enable_typing_correction_mixer_v2 = 46 [default = false];
+  // Trigger literal on top if
+  // correction_score <=
+  //          typing_correction_literal_on_top_correction_score_max_diff
+  //  OR
+  // conversion_cost_diff <=
+  //          typing_correction_literal_on_top_spatial_score_max_diff
+  optional float typing_correction_literal_on_top_correction_score_max_diff = 47
+      [default = 0.5];
+  optional int32 typing_correction_literal_on_top_conversion_cost_max_diff = 48
+      [default = 2000];
+  // Literal candidate is placed at least second position.
+  optional bool typing_correction_literal_at_least_second = 49
+      [default = false];
 
   // Parameters for completion
   // The diff against the identity score.

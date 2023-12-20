@@ -64,7 +64,7 @@
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
         '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
-        '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
+        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'prediction_base.gyp:suggestion_filter',
         'prediction_protocol',
       ],
@@ -88,7 +88,7 @@
         '<(proto_out_dir)/<(relative_dir)/user_history_predictor.pb.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_prediction#host',
       ],
       'export_dependent_settings': [

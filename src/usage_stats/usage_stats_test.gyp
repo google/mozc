@@ -40,7 +40,7 @@
         'usage_stats_testing_util.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:base_core',
+        '<(mozc_src_dir)/base/base.gyp:base_core',
         '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:testing',
         'usage_stats_base.gyp:usage_stats',
@@ -69,7 +69,7 @@
         'usage_stats_uploader_test.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:version',
+        '<(mozc_src_dir)/base/base.gyp:version',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'usage_stats_base.gyp:usage_stats_uploader',

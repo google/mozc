@@ -51,6 +51,13 @@ class PredictionAggregatorInterface {
   virtual std::vector<Result> AggregateResults(
       const ConversionRequest &request, const Segments &segments) const = 0;
 
+  // Returns the typing corrected result entries for the `request` and
+  // `segments`.
+  virtual std::vector<Result> AggregateTypingCorrectedResults(
+      const ConversionRequest &request, const Segments &segments) const {
+    return {};
+  }
+
  protected:
   PredictionAggregatorInterface() = default;
 };

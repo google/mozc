@@ -90,9 +90,9 @@
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
+        '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
-        '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
+        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
       ],
     },
   ],

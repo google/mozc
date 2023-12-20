@@ -40,8 +40,6 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
 #include "config/config_handler.h"
@@ -52,6 +50,8 @@
 #include "rewriter/variants_rewriter.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace {

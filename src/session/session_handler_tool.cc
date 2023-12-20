@@ -47,7 +47,6 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "usage_stats/usage_stats.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -68,6 +67,7 @@
 #include "session/session_handler_interface.h"
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
+#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace session {
