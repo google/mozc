@@ -50,7 +50,7 @@
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
-        '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
+        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'converter_base.gyp:immutable_converter',
         'converter_base.gyp:immutable_converter_interface',
         'converter_base.gyp:segmenter',

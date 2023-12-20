@@ -56,7 +56,6 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "usage_stats/usage_stats.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
 #include "absl/strings/ascii.h"
@@ -75,6 +74,7 @@
 #include "rewriter/variants_rewriter.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
+#include "usage_stats/usage_stats.h"
 
 namespace mozc::prediction {
 namespace {

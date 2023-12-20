@@ -41,7 +41,6 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "protocol/config.pb.h"
-#include "usage_stats/usage_stats.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -49,6 +48,7 @@
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "storage/lru_storage.h"
+#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace {

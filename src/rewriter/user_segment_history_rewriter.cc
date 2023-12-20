@@ -46,7 +46,6 @@
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "protocol/config.pb.h"
-#include "usage_stats/usage_stats.h"
 #include "absl/container/btree_set.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -60,6 +59,7 @@
 #include "rewriter/variants_rewriter.h"
 #include "storage/lru_storage.h"
 #include "transliteration/transliteration.h"
+#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace {

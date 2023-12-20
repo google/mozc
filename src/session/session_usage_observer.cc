@@ -42,13 +42,13 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats.pb.h"
 #include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "config/stats_config_util.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats.pb.h"
 
 // TODO(tomokinat): Refactor this file to use abseil types for time/duration.
 

@@ -43,8 +43,6 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 #include "absl/memory/memory.h"
 #include "absl/random/random.h"
 #include "absl/strings/match.h"
@@ -75,6 +73,8 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc::prediction {
 

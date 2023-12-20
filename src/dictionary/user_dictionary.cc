@@ -49,7 +49,6 @@
 #include "base/thread.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "usage_stats/usage_stats.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
@@ -68,6 +67,7 @@
 #include "dictionary/user_pos.h"
 #include "dictionary/user_pos_interface.h"
 #include "request/conversion_request.h"
+#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace dictionary {

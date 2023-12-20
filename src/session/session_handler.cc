@@ -48,7 +48,6 @@
 #include "protocol/config.pb.h"
 #include "protocol/engine_builder.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "usage_stats/usage_stats.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
@@ -65,6 +64,7 @@
 #include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"
+#include "usage_stats/usage_stats.h"
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "base/process.h"

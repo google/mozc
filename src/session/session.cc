@@ -44,7 +44,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
-#include "usage_stats/usage_stats.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
@@ -62,6 +61,7 @@
 #include "session/session_converter_interface.h"
 #include "session/session_usage_stats_util.h"
 #include "transliteration/transliteration.h"
+#include "usage_stats/usage_stats.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE

@@ -46,8 +46,6 @@
 #include "base/singleton.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
@@ -66,6 +64,8 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace dictionary {

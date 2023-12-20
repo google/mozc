@@ -47,8 +47,8 @@
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 // For T13n normalize
-#include "usage_stats/usage_stats.h"
 #include "transliteration/transliteration.h"
+#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace {

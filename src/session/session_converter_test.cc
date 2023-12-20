@@ -48,8 +48,6 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -66,6 +64,8 @@
 #include "testing/mozctest.h"
 #include "testing/testing_util.h"
 #include "transliteration/transliteration.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace session {
