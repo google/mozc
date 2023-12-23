@@ -34,6 +34,9 @@
 #include <string>
 #include <vector>
 
+#include "absl/base/optimization.h"
+#include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/hash.h"
@@ -41,9 +44,6 @@
 #include "base/logging.h"
 #include "base/multifile.h"
 #include "base/util.h"
-#include "absl/base/optimization.h"
-#include "absl/flags/flag.h"
-#include "absl/strings/string_view.h"
 #include "storage/existence_filter.h"
 
 ABSL_FLAG(std::string, input, "", "per-line suggestion filter list");

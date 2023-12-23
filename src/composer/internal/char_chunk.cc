@@ -35,13 +35,13 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/strings/unicode.h"
-#include "base/util.h"
 #include "absl/container/btree_set.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/strings/unicode.h"
+#include "base/util.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/special_key.h"
 #include "composer/internal/transliterators.h"

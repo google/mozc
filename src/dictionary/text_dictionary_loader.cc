@@ -42,16 +42,16 @@
 #include <utility>
 #include <vector>
 
-#include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/multifile.h"
-#include "base/util.h"
 #include "absl/base/attributes.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/multifile.h"
+#include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 

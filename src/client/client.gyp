@@ -41,8 +41,8 @@
         'server_launcher.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:version',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:version',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',

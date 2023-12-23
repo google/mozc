@@ -47,8 +47,8 @@
         'segments_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:number_util',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:number_util',
         '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
@@ -85,7 +85,7 @@
       ],
       'dependencies': [
         'converter.gyp:converter',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',

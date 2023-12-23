@@ -54,7 +54,7 @@
         'base/window_title_modifier.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_dictionary',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:window_info_protocol',
@@ -146,7 +146,7 @@
         'about_dialog/about_dialog_libmain.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'gen_about_dialog_files',
         'qrc_about_dialog',
       ],
@@ -216,7 +216,7 @@
         'administration_dialog/administration_dialog_libmain.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
         'gen_administration_dialog_files',
         'qrc_administration_dialog',
@@ -305,9 +305,9 @@
         'config_dialog/roman_table_editor.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:config_file_stream',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:config_file_stream',
         '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_oss_src_dir)/composer/composer.gyp:key_parser',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
@@ -393,8 +393,8 @@
         'dictionary_tool/zero_width_splitter.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/data_manager/data_manager.gyp:pos_list_provider',
@@ -466,8 +466,8 @@
         'word_register_dialog/word_register_dialog_libmain.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_oss_src_dir)/data_manager/data_manager.gyp:pos_list_provider',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
@@ -534,7 +534,7 @@
         'error_message_dialog/error_message_dialog_libmain.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'gen_error_message_dialog_files',
         'qrc_error_message_dialog',
       ],
@@ -597,7 +597,7 @@
         'post_install_dialog/post_install_dialog_libmain.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
@@ -636,7 +636,7 @@
         'tool/prelauncher_libmain.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
@@ -648,7 +648,7 @@
         'tool/mozc_tool_libmain.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:crash_report_handler',
+        '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
         '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
         'about_dialog_lib',
         'administration_dialog_lib',
@@ -678,7 +678,7 @@
           'dependencies': [
             'gen_mozc_tool_lib_info_plist',
             'prelauncher_lib',
-            '<(mozc_src_dir)/base/base.gyp:breakpad',
+            '<(mozc_oss_src_dir)/base/base.gyp:breakpad',
           ],
           'link_settings': {
             'libraries': [
@@ -734,7 +734,7 @@
             '<(gen_out_dir)/tool/mozc_tool_autogen.rc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_oss_src_dir)/win32/base/win32_base.gyp:ime_base',
             'gen_mozc_tool_header',
           ],
@@ -754,8 +754,8 @@
         'base/encoding_util.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
       ],
     },
     {
@@ -765,7 +765,7 @@
         'base/encoding_util_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'encoding_util',
       ],

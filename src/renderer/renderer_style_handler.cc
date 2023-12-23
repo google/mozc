@@ -38,8 +38,8 @@
 #endif  // _WIN32
 // clang-format on
 
-#include "base/singleton.h"
 #include "protocol/renderer_style.pb.h"
+#include "base/singleton.h"
 
 namespace mozc {
 namespace renderer {

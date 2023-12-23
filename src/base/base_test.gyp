@@ -387,7 +387,7 @@
             '<(gen_header_path)',
           ],
           'action': [
-            '<(python)', '../build_tools/embed_file.py',
+            '<(python)', '<(mozc_src_dir)/build_tools/embed_file.py',
             '--input', '<(input)',
             '--name', 'kEmbeddedFileTestData',
             '--output', '<(gen_header_path)',

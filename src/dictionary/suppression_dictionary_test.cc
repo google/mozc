@@ -32,10 +32,10 @@
 #include <string>
 #include <vector>
 
-#include "base/thread.h"
 #include "absl/strings/str_cat.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/thread.h"
 #include "testing/gunit.h"
 
 #ifdef __APPLE__

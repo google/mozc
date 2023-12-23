@@ -32,9 +32,9 @@
 #include <fstream>
 #include <utility>
 
+#include "absl/synchronization/mutex.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "absl/synchronization/mutex.h"
 
 namespace {
 constexpr char kBuildPropPath[] = "/system/build.prop";

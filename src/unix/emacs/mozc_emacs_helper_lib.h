@@ -34,10 +34,10 @@
 #include <string>
 #include <vector>
 
-#include "base/protobuf/message.h"
-#include "base/protobuf/protobuf.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
+#include "base/protobuf/message.h"
+#include "base/protobuf/protobuf.h"
 
 namespace mozc {
 namespace emacs {

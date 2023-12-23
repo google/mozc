@@ -33,9 +33,9 @@
 #include <memory>
 #include <numeric>
 
+#include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "absl/time/time.h"
 #include "testing/gunit.h"
 
 namespace mozc {

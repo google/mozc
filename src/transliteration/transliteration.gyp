@@ -36,7 +36,7 @@
         'transliteration.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
   ],

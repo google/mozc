@@ -34,9 +34,9 @@
 #include <iterator>
 #include <string>
 
+#include "absl/strings/match.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "absl/strings/match.h"
 
 namespace mozc {
 namespace {

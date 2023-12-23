@@ -40,10 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/clock.h"
-#include "base/logging.h"
-#include "base/protobuf/message.h"
-#include "base/stopwatch.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/engine_builder.pb.h"
@@ -51,6 +47,10 @@
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
+#include "base/clock.h"
+#include "base/logging.h"
+#include "base/protobuf/message.h"
+#include "base/stopwatch.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"

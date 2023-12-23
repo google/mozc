@@ -102,16 +102,16 @@
 #include <utility>
 #include <vector>
 
-#include "base/container/serialized_string_array.h"
-#include "base/file_stream.h"
-#include "base/init_mozc.h"
-#include "base/logging.h"
 #include "absl/base/config.h"
 #include "absl/container/btree_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/container/serialized_string_array.h"
+#include "base/file_stream.h"
+#include "base/init_mozc.h"
+#include "base/logging.h"
 
 ABSL_FLAG(std::string, usage_data_file, "", "usage data file");
 ABSL_FLAG(std::string, cforms_file, "", "cforms file");

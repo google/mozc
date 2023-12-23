@@ -39,6 +39,8 @@
 #include <cstdlib>
 #include <string>
 
+#include "absl/status/status.h"
+#include "absl/synchronization/mutex.h"
 #include "base/const.h"
 #include "base/encryptor.h"
 #include "base/file_util.h"
@@ -47,8 +49,6 @@
 #include "base/random.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
 
 #ifdef _WIN32
 #include "base/win32/wide_char.h"

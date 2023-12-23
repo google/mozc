@@ -39,11 +39,11 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "base/container/freelist.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
-#include "absl/strings/string_view.h"
 #include "converter/lattice.h"
 
 #ifndef NDEBUG

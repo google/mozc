@@ -38,9 +38,9 @@
 #include <string>
 #include <utility>
 
+#include "protocol/renderer_command.pb.h"
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "protocol/renderer_command.pb.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/named_event.h"

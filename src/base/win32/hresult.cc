@@ -34,11 +34,11 @@
 
 #include <string>
 
-#include "base/win32/wide_char.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "base/win32/wide_char.h"
 
 namespace mozc::win32 {
 namespace {

@@ -33,9 +33,9 @@
 #include <utility>
 #include <vector>
 
-#include "base/strings/unicode.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/unicode.h"
 
 namespace mozc::japanese::internal {
 namespace {

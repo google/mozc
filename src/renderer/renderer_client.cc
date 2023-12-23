@@ -36,17 +36,17 @@
 #include <optional>
 #include <string>
 
+#include "protocol/renderer_command.pb.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/synchronization/mutex.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/version.h"
-#include "protocol/renderer_command.pb.h"
-#include "absl/base/thread_annotations.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 

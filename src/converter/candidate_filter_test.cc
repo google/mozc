@@ -35,11 +35,11 @@
 #include <string>
 #include <vector>
 
-#include "base/container/freelist.h"
-#include "base/logging.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "base/container/freelist.h"
+#include "base/logging.h"
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"

@@ -35,15 +35,15 @@
 #include <utility>
 #include <vector>
 
-#include "base/container/serialized_string_array.h"
-#include "base/file_stream.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/random/random.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/container/serialized_string_array.h"
+#include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "converter/connector.h"
 #include "converter/node.h"
 #include "converter/segmenter.h"

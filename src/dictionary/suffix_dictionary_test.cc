@@ -33,9 +33,9 @@
 #include <memory>
 #include <string>
 
-#include "base/util.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "base/util.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_test_util.h"

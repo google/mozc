@@ -36,9 +36,6 @@
 #include <string>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/strings/assign.h"
-#include "base/strings/unicode.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -46,6 +43,9 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/strings/assign.h"
+#include "base/strings/unicode.h"
 #include "composer/composer.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"

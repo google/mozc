@@ -38,12 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/file_stream.h"
-#include "base/init_mozc.h"
-#include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/protobuf/message.h"
-#include "base/util.h"
 #include "evaluation/scorer.h"
 #include "protocol/commands.pb.h"
 #include "absl/container/flat_hash_map.h"
@@ -52,6 +46,12 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/file_stream.h"
+#include "base/init_mozc.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/protobuf/message.h"
+#include "base/util.h"
 #include "client/client.h"
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");

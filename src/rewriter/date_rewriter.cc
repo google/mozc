@@ -47,11 +47,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/clock.h"
-#include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/number_util.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/match.h"
@@ -62,6 +57,11 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/civil_time.h"
 #include "absl/time/time.h"
+#include "base/clock.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/number_util.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"

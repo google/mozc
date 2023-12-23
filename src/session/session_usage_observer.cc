@@ -37,8 +37,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/clock.h"
-#include "base/logging.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
@@ -46,6 +44,8 @@
 #include "absl/base/const_init.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
+#include "base/clock.h"
+#include "base/logging.h"
 #include "config/stats_config_util.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"

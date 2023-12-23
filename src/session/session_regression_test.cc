@@ -35,12 +35,12 @@
 #include <string>
 #include <utility>
 
-#include "base/logging.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "base/logging.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
 #include "config/config_handler.h"

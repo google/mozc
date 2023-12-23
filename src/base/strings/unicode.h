@@ -38,10 +38,10 @@
 #include <type_traits>
 #include <utility>
 
-#include "base/strings/internal/utf8_internal.h"
 #include "absl/base/attributes.h"
 #include "absl/base/optimization.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/internal/utf8_internal.h"
 
 namespace mozc {
 namespace strings {

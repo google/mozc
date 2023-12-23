@@ -37,8 +37,8 @@
 #include <utility>
 #include <vector>
 
-#include "base/win32/hresult.h"
 #include "absl/strings/string_view.h"
+#include "base/win32/hresult.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 

@@ -129,7 +129,7 @@
           ],
           'action': [
             '<(python)', '<(mozc_src_dir)/build_tools/embed_pathname.py',
-            '--path_to_be_embedded', '<(mozc_data_dir)',
+            '--path_to_be_embedded', '<(mozc_oss_data_dir)',
             '--constant_name', 'kMozcDataDir',
             '--output', '<(gen_header_path)',
           ],
@@ -143,7 +143,7 @@
         'googletest.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'gen_mozc_data_dir_header#host',
         'testing',
       ],
@@ -155,7 +155,7 @@
         'gtest_main.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'gen_mozc_data_dir_header#host',
         'googletest_lib',
         'testing',
@@ -200,7 +200,7 @@
         'testing_util.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
         '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
         'testing',
       ],
@@ -212,9 +212,9 @@
         'mozctest.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
         'googletest_lib',
       ],
     },

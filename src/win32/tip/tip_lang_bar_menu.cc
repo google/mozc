@@ -47,10 +47,10 @@
 #include <string>
 #include <utility>
 
-#include "base/win32/com.h"
-#include "base/win32/com_implements.h"
 #include "absl/base/casts.h"
 #include "absl/base/macros.h"
+#include "base/win32/com.h"
+#include "base/win32/com_implements.h"
 #include "win32/base/text_icon.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/tip/tip_dll_module.h"

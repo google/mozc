@@ -32,10 +32,10 @@
 #include <cstdint>
 #include <string>
 
-#include "base/japanese_util.h"
-#include "base/logging.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
 #include "composer/key_event_util.h"
 #include "config/config_handler.h"
 

@@ -34,10 +34,10 @@
 #include <memory>
 #include <string>
 
-#include "base/thread.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
+#include "base/thread.h"
 
 #ifdef __APPLE__
 #include <mach/mach.h>  // for mach_port_t

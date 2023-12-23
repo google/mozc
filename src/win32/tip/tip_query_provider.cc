@@ -36,9 +36,9 @@
 #include <utility>
 #include <vector>
 
-#include "base/win32/wide_char.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
+#include "base/win32/wide_char.h"
 #include "client/client.h"
 #include "client/client_interface.h"
 

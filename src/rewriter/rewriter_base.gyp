@@ -90,7 +90,7 @@
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage#host',
-        '<(mozc_src_dir)/base/base.gyp:codegen_bytearray_stream#host',
+        '<(mozc_oss_src_dir)/base/base.gyp:codegen_bytearray_stream#host',
       ],
     },
     {
@@ -101,7 +101,7 @@
         'gen_collocation_data_main.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         'gen_existence_data',
       ],
     },
@@ -125,9 +125,9 @@
         'gen_symbol_rewriter_dictionary_main.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:japanese_util',
-        '<(mozc_src_dir)/base/base.gyp:serialized_string_array',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:japanese_util',
+        '<(mozc_oss_src_dir)/base/base.gyp:serialized_string_array',
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
@@ -142,8 +142,8 @@
         'gen_usage_rewriter_dictionary_main.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:serialized_string_array',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:serialized_string_array',
       ],
     },
     {
@@ -154,8 +154,8 @@
         'gen_emoticon_rewriter_data.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
@@ -167,7 +167,7 @@
         'gen_single_kanji_noun_prefix_data.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },

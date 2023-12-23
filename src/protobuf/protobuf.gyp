@@ -102,10 +102,10 @@
         {  # else
           'sources': ['<@(protobuf_sources)'],
           'dependencies': [
-              '<(mozc_src_dir)/base/absl.gyp:absl_log',
-              '<(mozc_src_dir)/base/absl.gyp:absl_status',
-              '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-              '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
+              '<(mozc_oss_src_dir)/base/absl.gyp:absl_log',
+              '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+              '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+              '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
           ],
           'include_dirs': [
             '<(protobuf_root)/src',
@@ -158,10 +158,10 @@
         ['use_libprotobuf==0', {
           'sources': ['<@(protoc_sources)'],
           'dependencies': [
-              '<(mozc_src_dir)/base/absl.gyp:absl_log',
-              '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-              '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
-              '<(mozc_src_dir)/base/absl.gyp:absl_types',
+              '<(mozc_oss_src_dir)/base/absl.gyp:absl_log',
+              '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+              '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
+              '<(mozc_oss_src_dir)/base/absl.gyp:absl_types',
           ],
           'include_dirs': [
             '<(protobuf_root)/src',

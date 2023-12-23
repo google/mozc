@@ -42,8 +42,8 @@
 #include <type_traits>
 #include <utility>
 
-#include "base/win32/hresultor.h"
 #include "absl/meta/type_traits.h"
+#include "base/win32/hresultor.h"
 
 namespace mozc::win32 {
 

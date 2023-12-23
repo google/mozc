@@ -40,11 +40,6 @@
 #include <system_error>
 #include <utility>
 
-#include "base/file_stream.h"
-#include "base/logging.h"
-#include "base/mmap.h"
-#include "base/port.h"
-#include "base/singleton.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -52,6 +47,11 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/mmap.h"
+#include "base/port.h"
+#include "base/singleton.h"
 
 #ifdef _WIN32
 // clang-format off

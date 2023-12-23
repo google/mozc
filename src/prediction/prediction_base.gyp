@@ -40,7 +40,7 @@
         'suggestion_filter.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
       ],
     },
@@ -52,9 +52,9 @@
         'gen_suggestion_filter_main.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:codegen_bytearray_stream',
-        '<(mozc_src_dir)/base/base.gyp:multifile',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:codegen_bytearray_stream',
+        '<(mozc_oss_src_dir)/base/base.gyp:multifile',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
       ],
     },

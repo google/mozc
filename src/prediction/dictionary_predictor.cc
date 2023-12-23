@@ -38,10 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/strings/assign.h"
-#include "base/strings/japanese.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/algorithm/container.h"
 #include "absl/base/attributes.h"
@@ -51,6 +47,10 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/logging.h"
+#include "base/strings/assign.h"
+#include "base/strings/japanese.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"

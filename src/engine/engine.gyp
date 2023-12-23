@@ -42,8 +42,8 @@
       ],
       'dependencies': [
         'engine',
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_src_dir)/protocol/protocol.gyp:engine_builder_proto',
@@ -58,9 +58,9 @@
         'engine.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/converter/converter.gyp:converter',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:connector',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:segmenter',
@@ -88,7 +88,7 @@
       'target_name': 'oss_engine_factory',
       'type': 'none',
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/data_manager/oss/oss_data_manager.gyp:oss_data_manager',
         '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction',
         'engine',

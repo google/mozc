@@ -33,12 +33,12 @@
 #include <string>
 #include <vector>
 
-#include "base/protobuf/message.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "base/protobuf/message.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"

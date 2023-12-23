@@ -36,12 +36,12 @@
 #include <memory>
 #include <string>
 
+#include "absl/base/attributes.h"
+#include "absl/flags/flag.h"
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/win32/wide_char.h"
-#include "absl/base/attributes.h"
-#include "absl/flags/flag.h"
 
 ABSL_FLAG(std::string, src, "", "path to the input PNG file");
 ABSL_FLAG(std::string, dest, "", "path to the output BMP file");

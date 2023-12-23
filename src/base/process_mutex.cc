@@ -31,16 +31,16 @@
 
 #include <string>
 
-#include "base/file_util.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "base/singleton.h"
-#include "base/system_util.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "base/file_util.h"
+#include "base/logging.h"
+#include "base/port.h"
+#include "base/singleton.h"
+#include "base/system_util.h"
 
 #ifdef _WIN32
 #include <wil/resource.h>
@@ -54,8 +54,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "base/strings/zstring_view.h"
 #include "absl/container/flat_hash_map.h"
+#include "base/strings/zstring_view.h"
 #endif  // !_WIN32
 
 namespace mozc {

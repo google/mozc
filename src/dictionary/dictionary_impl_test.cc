@@ -35,10 +35,10 @@
 #include <string>
 #include <utility>
 
-#include "base/system_util.h"
-#include "base/util.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
+#include "base/system_util.h"
+#include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"

@@ -33,10 +33,10 @@
 #include <string>
 #include <utility>
 
-#include "base/init_mozc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
+#include "base/init_mozc.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "transliteration/transliteration.h"

@@ -42,6 +42,10 @@
 #include <string>
 #include <utility>
 
+#include "protocol/commands.pb.h"
+#include "absl/base/casts.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/functional/any_invocable.h"
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -53,10 +57,6 @@
 #include "base/win32/hresult.h"
 #include "base/win32/hresultor.h"
 #include "base/win32/win_util.h"
-#include "protocol/commands.pb.h"
-#include "absl/base/casts.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/functional/any_invocable.h"
 #include "win32/base/win32_window_util.h"
 #include "win32/tip/tip_display_attributes.h"
 #include "win32/tip/tip_dll_module.h"

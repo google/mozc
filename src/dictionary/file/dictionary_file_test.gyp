@@ -36,7 +36,7 @@
         'codec_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'dictionary_file.gyp:codec',
@@ -53,7 +53,7 @@
         'dictionary_file_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'dictionary_file.gyp:codec_factory',

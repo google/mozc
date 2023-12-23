@@ -32,9 +32,9 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "base/port.h"
 #include "unix/ibus/ibus_header.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace ibus {

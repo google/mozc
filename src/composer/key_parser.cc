@@ -35,8 +35,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
@@ -44,6 +42,8 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/logging.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace {

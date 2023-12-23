@@ -33,12 +33,12 @@
 #include <string>
 #include <vector>
 
-#include "base/init_mozc.h"
-#include "base/logging.h"
-#include "base/thread.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "base/init_mozc.h"
+#include "base/logging.h"
+#include "base/thread.h"
 #include "ipc/ipc.h"
 
 ABSL_FLAG(std::string, server_address, "ipc_test", "");

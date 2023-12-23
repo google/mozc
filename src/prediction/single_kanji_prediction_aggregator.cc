@@ -34,11 +34,11 @@
 #include <string>
 #include <vector>
 
-#include "base/strings/assign.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/strings/assign.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"

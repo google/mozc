@@ -31,10 +31,10 @@
 
 #include <string>
 
-#include "base/file/temp_dir.h"
-#include "base/logging.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
+#include "base/file/temp_dir.h"
+#include "base/logging.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

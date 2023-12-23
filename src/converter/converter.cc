@@ -37,13 +37,13 @@
 #include <utility>
 #include <vector>
 
+#include "protocol/commands.pb.h"
+#include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "protocol/commands.pb.h"
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 #include "composer/composer.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"

@@ -38,9 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/text_normalizer.h"
-#include "base/util.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -48,6 +45,9 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/text_normalizer.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"

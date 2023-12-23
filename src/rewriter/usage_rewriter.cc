@@ -35,12 +35,12 @@
 #include <string>
 #include <utility>
 
-#include "base/container/serialized_string_array.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "base/container/serialized_string_array.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"

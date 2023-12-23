@@ -39,6 +39,11 @@
 #include <string>
 #include <utility>
 
+#include "absl/container/flat_hash_map.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "base/const.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
@@ -49,11 +54,6 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
 

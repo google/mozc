@@ -37,9 +37,9 @@
 #include <utility>
 #include <vector>
 
-#include "base/file/temp_dir.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
+#include "base/file/temp_dir.h"
 #include "storage/storage_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

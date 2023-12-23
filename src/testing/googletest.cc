@@ -32,9 +32,9 @@
 
 #include <string>
 
+#include "absl/flags/flag.h"
 #include "base/environ.h"
 #include "base/file/temp_dir.h"
-#include "absl/flags/flag.h"
 
 ABSL_FLAG(std::string, test_srcdir, "",
           "A directory that contains the input data files for a test.");

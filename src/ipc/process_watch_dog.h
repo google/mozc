@@ -32,10 +32,10 @@
 
 #include <cstdint>
 
-#include "base/thread.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/synchronization/mutex.h"
+#include "base/thread.h"
 
 #ifdef _WIN32
 #include <wil/resource.h>

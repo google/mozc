@@ -37,8 +37,8 @@
 #include <utility>
 #include <vector>
 
-#include "base/util.h"
 #include "absl/strings/string_view.h"
+#include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"

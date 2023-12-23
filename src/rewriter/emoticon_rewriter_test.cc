@@ -33,11 +33,11 @@
 #include <memory>
 #include <string>
 
-#include "base/logging.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"

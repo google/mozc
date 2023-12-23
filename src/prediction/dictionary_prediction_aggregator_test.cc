@@ -40,9 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/container/serialized_string_array.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
@@ -51,6 +48,9 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "base/container/serialized_string_array.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"

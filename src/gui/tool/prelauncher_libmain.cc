@@ -36,8 +36,8 @@
 #include "renderer/renderer_client.h"
 
 #ifdef __APPLE__
-#include "base/mac/mac_util.h"
 #include "absl/flags/flag.h"
+#include "base/mac/mac_util.h"
 #endif  // __APPLE__
 
 #ifdef __APPLE__

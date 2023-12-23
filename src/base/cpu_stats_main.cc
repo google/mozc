@@ -32,14 +32,14 @@
 #include <ostream>
 #include <vector>
 
-#include "base/cpu_stats.h"
-#include "base/init_mozc.h"
-#include "base/thread.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/cpu_stats.h"
+#include "base/init_mozc.h"
+#include "base/thread.h"
 
 ABSL_FLAG(int32_t, iterations, 1000, "number of iterations");
 ABSL_FLAG(absl::Duration, polling_interval, absl::Seconds(1),

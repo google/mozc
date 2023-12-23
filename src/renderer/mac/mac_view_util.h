@@ -34,8 +34,8 @@
 
 #include <string>
 
-#include "base/coordinates.h"
 #include "protocol/renderer_style.pb.h"
+#include "base/coordinates.h"
 
 namespace mozc {
 namespace renderer {

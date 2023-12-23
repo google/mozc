@@ -33,9 +33,9 @@
 #include <cstddef>
 #include <optional>
 
-#include "base/strings/zstring_view.h"
 #include "absl/status/statusor.h"
 #include "absl/types/span.h"
+#include "base/strings/zstring_view.h"
 
 namespace mozc {
 

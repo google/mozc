@@ -29,9 +29,9 @@
 
 #include <iostream>  // NOLINT
 
+#include "absl/flags/flag.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "absl/flags/flag.h"
 #include "client/client.h"
 
 ABSL_FLAG(bool, shutdown, false, "shutdown server if mozc_server is running");

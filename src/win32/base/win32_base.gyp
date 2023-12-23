@@ -55,7 +55,7 @@
             'input_dll.def',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
           ],
           'msvs_settings': {
             'VCLinkerTool': {
@@ -73,7 +73,7 @@
             'msctf_dll.def',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
           ],
           'msvs_settings': {
             'VCLinkerTool': {
@@ -90,7 +90,7 @@
             'msctf_dll_test.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
             'msctf_dll_import_lib',
           ],
@@ -109,7 +109,7 @@
             'tsf_registrar.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             'input_dll_import_lib',
             'msctf_dll_import_lib',
           ],
@@ -123,7 +123,7 @@
             'keyboard_layout_id_test.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
             '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
             'imframework_util',
@@ -147,8 +147,8 @@
             'win32_window_util.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
             '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
             '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
@@ -168,7 +168,7 @@
             'surrogate_pair_observer_test.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base_test.gyp:clock_mock',
+            '<(mozc_oss_src_dir)/base/base_test.gyp:clock_mock',
             '<(mozc_oss_src_dir)/client/client.gyp:client',
             '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
             '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
@@ -183,7 +183,7 @@
             'uninstall_helper.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             'imframework_util',
             'msctf_dll_import_lib',
           ],
@@ -196,7 +196,7 @@
             'uninstall_helper_test.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
             '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
             'ime_base',
@@ -212,8 +212,8 @@
             'text_icon.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
           ],
         },
         {
@@ -223,7 +223,7 @@
             'text_icon_test.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/win32/base_win32.gyp:win_font_test_helper',
+            '<(mozc_oss_src_dir)/base/win32/base_win32.gyp:win_font_test_helper',
             '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
             'text_icon',
           ],

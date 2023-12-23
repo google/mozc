@@ -32,10 +32,10 @@
 #include <string>
 #include <utility>
 
-#include "base/logging.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "base/logging.h"
 
 namespace mozc {
 namespace dictionary {

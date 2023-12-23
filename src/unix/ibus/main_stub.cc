@@ -30,9 +30,9 @@
 #include <iostream>
 #include <ostream>
 
+#include "absl/flags/flag.h"
 #include "base/init_mozc.h"
 #include "unix/ibus/ibus_config.h"
-#include "absl/flags/flag.h"
 
 ABSL_FLAG(bool, xml, false, "Output xml data for the engine.");
 

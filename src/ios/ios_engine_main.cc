@@ -33,11 +33,11 @@
 #include <ostream>
 #include <string>
 
+#include "protocol/candidates.pb.h"
+#include "absl/flags/flag.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "protocol/candidates.pb.h"
-#include "absl/flags/flag.h"
 #include "ios/ios_engine.h"
 
 // mozc/data_manager/testing:mozc_dataset_for_testing is one of datafile.

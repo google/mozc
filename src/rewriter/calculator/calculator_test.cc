@@ -33,9 +33,9 @@
 #include <ostream>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "absl/strings/string_view.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

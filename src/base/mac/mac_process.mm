@@ -33,12 +33,12 @@
 
 #include <string>
 
+#include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/mac/mac_util.h"
 #include "base/util.h"
-#include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {

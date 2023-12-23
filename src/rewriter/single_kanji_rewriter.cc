@@ -34,11 +34,11 @@
 #include <string>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/strings/assign.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/strings/assign.h"
 #include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
 #include "dictionary/pos_matcher.h"

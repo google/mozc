@@ -41,7 +41,7 @@
         'usage_stats.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
         'gen_usage_stats_list#host',
@@ -110,7 +110,7 @@
         'usage_stats_uploader.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
         'gen_usage_stats_list#host',
       ],

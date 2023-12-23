@@ -41,6 +41,9 @@
 #include <string>
 #include <utility>
 
+#include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "base/const.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
@@ -50,9 +53,6 @@
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
-#include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
-#include "absl/time/time.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 

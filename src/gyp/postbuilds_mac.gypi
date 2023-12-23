@@ -39,7 +39,7 @@
       '<(mac_breakpad_framework)',
     ],
   },
-  'dependencies': ['<(mozc_src_dir)/base/base.gyp:breakpad'],
+  'dependencies': ['<(mozc_oss_src_dir)/base/base.gyp:breakpad'],
   'copies': [
     {
       'files': [

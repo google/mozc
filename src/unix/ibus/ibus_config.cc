@@ -33,17 +33,17 @@
 #include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_replace.h"
+#include "absl/strings/string_view.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/protobuf/text_format.h"
 #include "base/system_util.h"
 #include "unix/ibus/ibus_config.pb.h"
 #include "unix/ibus/main.h"
-#include "absl/status/status.h"
-#include "absl/strings/ascii.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_replace.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 

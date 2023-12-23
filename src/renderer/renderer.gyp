@@ -47,7 +47,7 @@
         'table_layout.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
     {
@@ -57,7 +57,7 @@
         'window_util.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
     {
@@ -67,9 +67,9 @@
         'renderer_client.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:version',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:version',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
@@ -83,9 +83,9 @@
         'renderer_server.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/absl.gyp:absl_time',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_time',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
@@ -100,8 +100,8 @@
         'init_mozc_renderer.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:crash_report_handler',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
         '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
       ],
     },
@@ -112,8 +112,8 @@
         'renderer_client_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:version',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:version',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'renderer_client',
       ],
@@ -128,8 +128,8 @@
         'renderer_server_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/absl.gyp:absl_time',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_time',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc_test_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
@@ -240,7 +240,7 @@
             'win32/win32_renderer_util.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
             '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
             '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
@@ -254,7 +254,7 @@
             'win32/win32_renderer_util_test.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/win32/base_win32.gyp:win_font_test_helper',
+            '<(mozc_oss_src_dir)/base/win32/base_win32.gyp:win_font_test_helper',
             '<(mozc_oss_src_dir)/data/test/renderer/win32/test_data.gyp:install_test_data',
             '<(mozc_oss_src_dir)/data/test/renderer/win32/test_data.gyp:test_spec_proto',
             '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
@@ -280,7 +280,7 @@
             'win32/text_renderer.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
             'renderer_style_handler',
           ],
@@ -302,7 +302,7 @@
             'win32/gen_pbgra32_bitmap.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base_core',
+            '<(mozc_oss_src_dir)/base/base.gyp:base_core',
           ],
           'msvs_settings': {
             'VCLinkerTool': {
@@ -327,10 +327,10 @@
             '<(gen_out_dir)/mozc_renderer_autogen.rc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-            '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
-            '<(mozc_src_dir)/base/base.gyp:base',
-            '<(mozc_src_dir)/base/base.gyp:crash_report_handler',
+            '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+            '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
             '<(mozc_oss_src_dir)/client/client.gyp:client',
             '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
             '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
@@ -360,8 +360,8 @@
             'win32/win32_renderer_client.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
             'renderer_client',
           ],
@@ -392,11 +392,11 @@
             '<(mozc_oss_src_dir)/data/images/mac/product_icon.icns',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/absl.gyp:absl_base',
-            '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-            '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
-            '<(mozc_src_dir)/base/base.gyp:base',
-            '<(mozc_src_dir)/base/base.gyp:crash_report_handler',
+            '<(mozc_oss_src_dir)/base/absl.gyp:absl_base',
+            '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+            '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
             '<(mozc_oss_src_dir)/client/client.gyp:client',
             '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
             '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',

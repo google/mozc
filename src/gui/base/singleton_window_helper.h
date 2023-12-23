@@ -46,8 +46,8 @@
 
 #include <memory>
 
-#include "base/process_mutex.h"
 #include "absl/strings/string_view.h"
+#include "base/process_mutex.h"
 
 namespace mozc {
 namespace gui {

@@ -38,14 +38,14 @@
 #include <string>
 #include <utility>
 
+#include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
+#include "absl/types/span.h"
 #include "base/clock.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/thread.h"
-#include "absl/synchronization/notification.h"
-#include "absl/time/time.h"
-#include "absl/types/span.h"
 #include "client/client.h"
 #include "client/client_interface.h"
 

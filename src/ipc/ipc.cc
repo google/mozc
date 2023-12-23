@@ -33,10 +33,10 @@
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/thread.h"
-#include "absl/strings/string_view.h"
 #include "ipc/ipc_path_manager.h"
 
 #ifdef _WIN32

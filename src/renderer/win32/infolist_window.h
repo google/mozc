@@ -44,10 +44,10 @@
 #include <memory>
 #include <string>
 
-#include "base/const.h"
-#include "base/coordinates.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"
+#include "base/const.h"
+#include "base/coordinates.h"
 #include "client/client_interface.h"
 #include "renderer/win32/text_renderer.h"
 

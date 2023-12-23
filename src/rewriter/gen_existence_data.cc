@@ -36,11 +36,11 @@
 #include <ostream>
 #include <string>
 
+#include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 #include "storage/existence_filter.h"
 
 namespace mozc {

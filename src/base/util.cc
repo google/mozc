@@ -42,8 +42,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/strings/unicode.h"
 #include "absl/algorithm/container.h"
 #include "absl/numeric/bits.h"
 #include "absl/strings/ascii.h"
@@ -51,6 +49,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
+#include "base/logging.h"
+#include "base/strings/unicode.h"
 
 #ifdef _WIN32
 #include "base/win32/wide_char.h"

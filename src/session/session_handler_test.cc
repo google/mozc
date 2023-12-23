@@ -39,9 +39,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/clock.h"
-#include "base/clock_mock.h"
-#include "base/thread.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
@@ -51,6 +48,9 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/clock.h"
+#include "base/clock_mock.h"
+#include "base/thread.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "engine/engine.h"

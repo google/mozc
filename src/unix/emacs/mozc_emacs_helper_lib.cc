@@ -36,9 +36,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/protobuf/descriptor.h"
-#include "base/util.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "absl/base/optimization.h"
@@ -48,6 +45,9 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/protobuf/descriptor.h"
+#include "base/util.h"
 #include "composer/key_parser.h"
 
 namespace mozc {

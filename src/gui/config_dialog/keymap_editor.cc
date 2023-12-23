@@ -43,10 +43,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/config_file_stream.h"
-#include "base/logging.h"
-#include "base/singleton.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/container/flat_hash_set.h"
@@ -54,6 +50,10 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/config_file_stream.h"
+#include "base/logging.h"
+#include "base/singleton.h"
+#include "base/util.h"
 #include "composer/key_parser.h"
 #include "gui/base/table_util.h"
 #include "gui/base/util.h"

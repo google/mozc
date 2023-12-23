@@ -36,9 +36,9 @@
 #include <string>
 #include <vector>
 
-#include "base/mmap.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
+#include "base/mmap.h"
 
 namespace mozc {
 namespace storage {

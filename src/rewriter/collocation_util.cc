@@ -31,9 +31,9 @@
 
 #include <string>
 
-#include "base/util.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
+#include "base/util.h"
 
 namespace mozc {
 void CollocationUtil::GetNormalizedScript(const absl::string_view str,

@@ -36,20 +36,20 @@
 #include <string>
 #include <utility>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "base/environ.h"
 #include "base/file/recursive.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 
 #ifdef _WIN32
 #include <windows.h>
 
-#include "base/win32/wide_char.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/win32/wide_char.h"
 #else  // _WIN32
 #include <unistd.h>
 #endif  // _WIN32

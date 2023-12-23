@@ -43,6 +43,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/process.h"
 #include "base/strings/zstring_view.h"
@@ -53,8 +55,6 @@
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "client/client.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"

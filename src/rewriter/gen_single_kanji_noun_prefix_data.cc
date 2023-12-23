@@ -33,8 +33,8 @@
 #include <string>
 #include <utility>
 
-#include "base/init_mozc.h"
 #include "absl/flags/flag.h"
+#include "base/init_mozc.h"
 #include "data_manager/serialized_dictionary.h"
 
 ABSL_FLAG(std::string, output_token_array, "",

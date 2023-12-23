@@ -30,8 +30,8 @@
 #ifndef MOZC_TESTING_TESTING_UTIL_H_
 #define MOZC_TESTING_TESTING_UTIL_H_
 
-#include "base/protobuf/message.h"
 #include "absl/strings/string_view.h"
+#include "base/protobuf/message.h"
 #include "testing/gunit.h"
 
 namespace mozc {

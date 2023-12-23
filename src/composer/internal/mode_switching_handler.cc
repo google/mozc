@@ -34,10 +34,10 @@
 
 #include <string>
 
-#include "base/singleton.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
+#include "base/singleton.h"
 
 namespace mozc {
 namespace composer {

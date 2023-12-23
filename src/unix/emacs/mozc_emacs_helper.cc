@@ -34,14 +34,14 @@
 #include <string>
 #include <vector>
 
-#include "base/init_mozc.h"
-#include "base/logging.h"
-#include "base/version.h"
 #include "protocol/commands.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "base/init_mozc.h"
+#include "base/logging.h"
+#include "base/version.h"
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "unix/emacs/client_pool.h"

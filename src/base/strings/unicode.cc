@@ -32,8 +32,8 @@
 #include <string>
 #include <string_view>
 
-#include "base/strings/internal/utf8_internal.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/internal/utf8_internal.h"
 
 namespace mozc {
 namespace strings {

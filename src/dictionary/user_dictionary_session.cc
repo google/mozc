@@ -39,13 +39,13 @@
 #include <utility>
 #include <vector>
 
+#include "protocol/user_dictionary_storage.pb.h"
+#include "absl/container/fixed_array.h"
+#include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/strings/assign.h"
-#include "protocol/user_dictionary_storage.pb.h"
-#include "absl/container/fixed_array.h"
-#include "absl/strings/string_view.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"

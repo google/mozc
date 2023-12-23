@@ -32,10 +32,10 @@
 
 #include <cstdint>
 
-#include "base/logging.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "dictionary/dictionary_interface.h"

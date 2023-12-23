@@ -73,8 +73,8 @@
             '<(gen_out_dir)/custom_action_autogen.rc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
-            '<(mozc_src_dir)/base/base.gyp:url',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:url',
             '<(mozc_oss_src_dir)/client/client.gyp:client',
             '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
             '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',

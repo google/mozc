@@ -38,13 +38,6 @@
 #include <sstream>
 #include <string>
 
-#include "base/clock.h"
-#include "base/const.h"
-#include "base/file_util.h"
-#include "base/logging.h"
-#include "base/singleton.h"
-#include "base/system_util.h"
-#include "base/util.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -52,6 +45,13 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "base/clock.h"
+#include "base/const.h"
+#include "base/file_util.h"
+#include "base/logging.h"
+#include "base/singleton.h"
+#include "base/system_util.h"
+#include "base/util.h"
 #include "client/client.h"
 #include "renderer/renderer_client.h"
 #include "unix/ibus/candidate_window_handler.h"

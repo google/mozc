@@ -37,10 +37,10 @@
 #include <string_view>
 #include <type_traits>
 
-#include "base/logging.h"
-#include "base/strings/pfchar.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/strings/pfchar.h"
 
 namespace mozc {
 

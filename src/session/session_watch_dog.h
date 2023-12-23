@@ -34,11 +34,11 @@
 
 #include <memory>
 
-#include "base/cpu_stats.h"
-#include "base/thread.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
+#include "base/cpu_stats.h"
+#include "base/thread.h"
 #include "client/client_interface.h"
 
 namespace mozc {

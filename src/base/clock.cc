@@ -29,9 +29,9 @@
 
 #include "base/clock.h"
 
-#include "base/singleton.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/singleton.h"
 
 #if defined(OS_CHROMEOS) || defined(_WIN32)
 #include <time.h>

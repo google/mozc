@@ -38,12 +38,12 @@
 #include <type_traits>
 #include <utility>
 
-#include "base/logging.h"
-#include "base/win32/hresult.h"
-#include "base/win32/hresultor_internal.h"
 #include "absl/base/attributes.h"
 #include "absl/base/optimization.h"
 #include "absl/meta/type_traits.h"
+#include "base/logging.h"
+#include "base/win32/hresult.h"
+#include "base/win32/hresultor_internal.h"
 
 namespace mozc::win32 {
 

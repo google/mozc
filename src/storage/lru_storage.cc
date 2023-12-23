@@ -42,6 +42,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
+#include "absl/container/flat_hash_set.h"
+#include "absl/time/time.h"
 #include "base/bits.h"
 #include "base/clock.h"
 #include "base/file_stream.h"
@@ -49,9 +52,6 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "absl/algorithm/container.h"
-#include "absl/container/flat_hash_set.h"
-#include "absl/time/time.h"
 
 namespace mozc {
 namespace storage {

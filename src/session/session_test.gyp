@@ -40,7 +40,7 @@
         'session_handler_test_util.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
@@ -61,7 +61,7 @@
         'session_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine',
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
@@ -100,7 +100,7 @@
         'session_handler_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base_test.gyp:clock_mock',
+        '<(mozc_oss_src_dir)/base/base_test.gyp:clock_mock',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
@@ -138,8 +138,8 @@
         'session_usage_stats_util_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base_test.gyp:clock_mock',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base_test.gyp:clock_mock',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
@@ -164,8 +164,8 @@
         'session_watch_dog_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_time',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_time',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'session.gyp:session_watch_dog',
       ],
@@ -180,7 +180,7 @@
         'key_info_util_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
@@ -201,7 +201,7 @@
         'internal/key_event_transformer_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
@@ -270,7 +270,7 @@
         'request_test_util_test.cc'
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'session_base.gyp:request_test_util',
       ],
@@ -285,10 +285,10 @@
         'session_handler_scenario_test.cc'
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:number_util',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:number_util',
         '<(mozc_oss_src_dir)/data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '<(mozc_oss_src_dir)/data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',

@@ -36,7 +36,7 @@
         'louds_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'louds.gyp:louds',
       ],

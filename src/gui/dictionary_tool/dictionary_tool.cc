@@ -48,13 +48,13 @@
 #include <utility>
 #include <vector>
 
-#include "base/file_stream.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "client/client.h"
 #include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_importer.h"

@@ -37,14 +37,14 @@
 #include <utility>
 #include <vector>
 
-#include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/strings/assign.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/strings/assign.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_util.h"

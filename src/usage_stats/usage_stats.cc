@@ -35,9 +35,9 @@
 #include <map>
 #include <string>
 
-#include "base/logging.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.pb.h"
 #include "usage_stats/usage_stats_uploader.h"

@@ -46,17 +46,17 @@
         'win32_ipc.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
-        '<(mozc_src_dir)/base/absl.gyp:absl_time',
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:version',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_time',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:version',
         'ipc_protocol',
       ],
       'conditions': [
         ['target_platform=="Windows"', {
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:obfuscator_support',
+            '<(mozc_oss_src_dir)/base/base.gyp:obfuscator_support',
           ],
         }],
       ],
@@ -120,7 +120,7 @@
         'ipc_test_util.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'ipc',
       ],
     },
@@ -134,10 +134,10 @@
         'process_watch_dog_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_time',
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base_core',
-        '<(mozc_src_dir)/base/base.gyp:version',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_time',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/base.gyp:version',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'ipc',

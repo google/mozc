@@ -31,8 +31,8 @@
 
 #include <windows.h>
 
-#include "base/crash_report_handler.h"
 #include "absl/base/call_once.h"
+#include "base/crash_report_handler.h"
 
 namespace mozc::win32::tsf {
 namespace {

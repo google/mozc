@@ -29,9 +29,9 @@
 
 #include <string>
 
-#include "base/init_mozc.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "base/init_mozc.h"
 #include "converter/gen_segmenter_bitarray.h"
 
 namespace {

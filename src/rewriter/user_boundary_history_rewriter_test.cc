@@ -31,11 +31,11 @@
 
 #include <string>
 
-#include "base/file_util.h"
-#include "base/system_util.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/file_util.h"
+#include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"

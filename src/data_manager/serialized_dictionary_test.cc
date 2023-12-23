@@ -35,8 +35,8 @@
 #include <string>
 #include <utility>
 
-#include "base/container/serialized_string_array.h"
 #include "absl/strings/string_view.h"
+#include "base/container/serialized_string_array.h"
 #include "testing/gunit.h"
 
 namespace mozc {

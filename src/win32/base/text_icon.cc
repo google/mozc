@@ -42,9 +42,9 @@
 #include <cstdint>
 #include <memory>
 
+#include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace win32 {

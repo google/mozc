@@ -35,9 +35,9 @@
 #include <memory>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace session {

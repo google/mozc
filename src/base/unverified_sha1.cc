@@ -35,9 +35,9 @@
 #include <limits>
 #include <string>
 
+#include "absl/numeric/bits.h"
 #include "base/bits.h"
 #include "base/logging.h"
-#include "absl/numeric/bits.h"
 
 namespace mozc {
 namespace internal {
