@@ -691,7 +691,7 @@
                 {
                   'postbuild_name': 'Change the reference to frameworks.',
                   'action': [
-                    '<(python)', '<(mozc_src_dir)/build_tools/change_reference_mac.py',
+                    '<(python)', '<(mozc_oss_src_dir)/build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
                     '--qtver', '<(qt_ver)',
                     '--target',
@@ -813,7 +813,7 @@
                 '<(gen_out_dir)/mozc_tool_info',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/mozc_tool_info',
                 '--input', '<(mozc_oss_src_dir)/data/mac/mozc_tool_info',
                 '--version_file', '<(mozc_src_dir)/mozc_version.txt',
@@ -829,7 +829,7 @@
                 '<(gen_out_dir)/hidden_mozc_tool_info',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/hidden_mozc_tool_info',
                 '--input', '<(mozc_oss_src_dir)/data/mac/hidden_mozc_tool_info',
                 '--version_file', '<(mozc_src_dir)/mozc_version.txt',
@@ -851,7 +851,7 @@
                 '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist_strings.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
                 '--input',
@@ -868,7 +868,7 @@
                 '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist_strings.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
                 '--input',
@@ -891,7 +891,7 @@
                 '<(gen_out_dir)/mozc_tool_lib_info',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/mozc_tool_lib_info',
                 '--input', '<(mozc_oss_src_dir)/data/mac/mozc_tool_lib_info',
                 '--version_file', '<(mozc_src_dir)/mozc_version.txt',
@@ -956,7 +956,7 @@
                 {
                   'postbuild_name': 'Change the reference to frameworks',
                   'action': [
-                    '<(python)', '<(mozc_src_dir)/build_tools/change_reference_mac.py',
+                    '<(python)', '<(mozc_oss_src_dir)/build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
                     '--qtver', '<(qt_ver)',
                     '--target',
@@ -966,7 +966,7 @@
                 {
                   'postbuild_name': 'Copy Qt frameworks to the frameworks directory.',
                   'action': [
-                    '<(python)', '<(mozc_src_dir)/build_tools/copy_qt_frameworks_mac.py',
+                    '<(python)', '<(mozc_oss_src_dir)/build_tools/copy_qt_frameworks_mac.py',
                     '--qtdir', '<(qt_dir)',
                     '--qtver', '<(qt_ver)',
                     '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',

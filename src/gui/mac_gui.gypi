@@ -45,7 +45,7 @@
         {
           'postbuild_name': 'Change the reference to frameworks',
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/change_reference_mac.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/change_reference_mac.py',
             '--qtdir', '<(qt_dir)',
             '--qtver', '<(qt_ver)',
             '--target',

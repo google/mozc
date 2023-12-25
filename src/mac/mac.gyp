@@ -113,7 +113,7 @@
             '<(output_file)',
           ],
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/redirect.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/redirect.py',
             '<(output_file)',
             'generate_mapping.py',
             '--mapname=KanaMap',
@@ -134,7 +134,7 @@
             '<(output_file)',
           ],
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/redirect.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/redirect.py',
             '<(output_file)',
             'generate_mapping.py',
             '--mapname=SpecialKeyMap',
@@ -155,7 +155,7 @@
             '<(output_file)',
           ],
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/redirect.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/redirect.py',
             '<(output_file)',
             'generate_mapping.py',
             '--mapname=SpecialCharMap',
@@ -355,7 +355,7 @@
                 '<(gen_out_dir)/Info.plist',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Info.plist',
                 '--input', 'Info.plist',
                 '--version_file', '<(mozc_src_dir)/mozc_version.txt',
@@ -371,7 +371,7 @@
                 '<(gen_out_dir)/ActivatePane/English.lproj/Localizable.strings',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist_strings.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ActivatePane/English.lproj/Localizable.strings',
                 '--input',
@@ -388,7 +388,7 @@
                 '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist_strings.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
                 '--input',
@@ -405,7 +405,7 @@
                 '<(gen_out_dir)/English.lproj/InfoPlist.strings',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist_strings.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist_strings.py',
                 '--output', '<(gen_out_dir)/English.lproj/InfoPlist.strings',
                 '--input', 'English.lproj/InfoPlist.strings',
                 '--branding', '<(branding)',
@@ -420,7 +420,7 @@
                 '<(gen_out_dir)/Japanese.lproj/InfoPlist.strings',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist_strings.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist_strings.py',
                 '--output', '<(gen_out_dir)/Japanese.lproj/InfoPlist.strings',
                 '--input', 'Japanese.lproj/InfoPlist.strings',
                 '--branding', '<(branding)',
@@ -437,7 +437,7 @@
               'inputs': [ 'installer/preflight_template.sh', ],
               'outputs': [ '<(gen_out_dir)/preflight.sh' ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_macinstaller_script.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_macinstaller_script.py',
                 '--output', '<(gen_out_dir)/preflight.sh',
                 '--input', 'installer/preflight_template.sh',
                 '--version_file', '<(mozc_src_dir)/mozc_version.txt',
@@ -449,7 +449,7 @@
               'inputs': [ 'installer/postflight_template.sh', ],
               'outputs': [ '<(gen_out_dir)/postflight.sh' ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_macinstaller_script.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_macinstaller_script.py',
                 '--output', '<(gen_out_dir)/postflight.sh',
                 '--input', 'installer/postflight_template.sh',
                 '--version_file', '<(mozc_src_dir)/mozc_version.txt',
@@ -461,7 +461,7 @@
               'inputs': [ 'installer/<(branding)_template.pkgproj', ],
               'outputs': [ '<(gen_out_dir)/<(branding).pkgproj' ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_pkgproj.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_pkgproj.py',
                 '--output', '<(gen_out_dir)/<(branding).pkgproj',
                 '--input', 'installer/<(branding)_template.pkgproj',
                 '--version_file', '<(mozc_src_dir)/mozc_version.txt',
@@ -492,7 +492,7 @@
                 '<(PRODUCT_DIR)/<(branding).pkg',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/build_and_sign_pkg_mac.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/build_and_sign_pkg_mac.py',
                 '--pkgproj', '<(gen_out_dir)/<(branding).pkgproj',
                 '--product_dir', '<(PRODUCT_DIR)',
               ],

@@ -331,14 +331,14 @@
           'action_name': 'gen_version_def',
           'inputs': [
             '<(mozc_src_dir)/mozc_version.txt',
-            '<(mozc_src_dir)/build_tools/replace_version.py',
+            '<(mozc_oss_src_dir)/build_tools/replace_version.py',
             'version_def_template.h',
           ],
           'outputs': [
             '<(gen_out_dir)/version_def.h',
           ],
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/replace_version.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/replace_version.py',
             '--version_file', '<(mozc_src_dir)/mozc_version.txt',
             '--input', 'version_def_template.h',
             '--output', '<(gen_out_dir)/version_def.h',
@@ -523,7 +523,7 @@
               '<(mac_breakpad_dir)/symupload',
             ],
             'action': [
-              '<(python)', '<(mozc_src_dir)/build_tools/build_breakpad.py',
+              '<(python)', '<(mozc_oss_src_dir)/build_tools/build_breakpad.py',
               '--bpdir', '<(bpdir)',
               '--outdir', '<(mac_breakpad_dir)',
               '--sdk', 'macosx<(mac_sdk)',

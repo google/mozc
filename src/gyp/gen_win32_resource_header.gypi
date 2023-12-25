@@ -34,12 +34,11 @@
       'action_name': 'gen_<(gen_resource_proj_name)_resource_header',
       'variables': {
         'base_path': '<(DEPTH)/',
-        'oss_base_path': '<(DEPTH)/',
-        'version_file_path': '<(base_path)/mozc_version.txt',
+        'version_file_path': '<(DEPTH)/mozc_version.txt',
         'script_path': '<(base_path)/build_tools/gen_win32_resource_header.py',
       },
       'inputs': [
-        '<(oss_base_path)/<(gen_main_resource_path)',
+        '<(base_path)/<(gen_main_resource_path)',
         '<(base_path)/build_tools/mozc_win32_resource_template.rc',
         '<(script_path)',
         '<(version_file_path)',
@@ -50,7 +49,7 @@
       'action': [
         '<(python)', '<(script_path)',
         '--version_file', '<(version_file_path)',
-        '--main', '<(oss_base_path)/<(gen_main_resource_path)',
+        '--main', '<(base_path)/<(gen_main_resource_path)',
         '--template', '<(base_path)/build_tools/mozc_win32_resource_template.rc',
         '--output', '<(gen_output_resource_path)',
       ],

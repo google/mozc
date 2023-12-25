@@ -69,7 +69,7 @@
             '<(gen_out_dir)/usage_stats_list.inc',
           ],
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/redirect.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/redirect.py',
             '<(gen_out_dir)/usage_stats_list.inc',
             'gen_stats_list.py',
             '<@(input_files)',

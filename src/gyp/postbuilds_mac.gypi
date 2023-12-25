@@ -53,7 +53,7 @@
     {
       'postbuild_name': 'dump symbols',
       'action': [
-        '<(python)', '<(mozc_src_dir)/build_tools/redirect.py',
+        '<(python)', '<(mozc_oss_src_dir)/build_tools/redirect.py',
         '${BUILT_PRODUCTS_DIR}/<(product_name)_x86_64.breakpad',
         '<(mac_breakpad_tools_dir)/dump_syms',
         '-a', 'x86_64',

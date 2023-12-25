@@ -90,7 +90,7 @@
             '<(gen_out_dir)/<(out_mozc_data_header)',
           ],
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/embed_file.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/embed_file.py',
             '--input=<(gen_out_dir)/<(out_mozc_data)',
             '--name=<(mozc_data_varname)',
             '--output=<(gen_out_dir)/<(out_mozc_data_header)',
@@ -422,7 +422,7 @@
             '<(gen_out_dir)/segmenter_inl.inc',
           ],
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/redirect.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/redirect.py',
             '<(gen_out_dir)/segmenter_inl.inc',
             '<(mozc_oss_src_dir)/converter/gen_segmenter_code.py',
             '<@(input_files)',

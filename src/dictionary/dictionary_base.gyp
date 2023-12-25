@@ -57,7 +57,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'sources': [
-        '<(mozc_src_dir)/build_tools/code_generator_util.py',
+        '<(mozc_oss_src_dir)/build_tools/code_generator_util.py',
         'pos_util.py',
       ],
     },
@@ -120,7 +120,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'sources': [
-        '<(mozc_src_dir)/build_tools/code_generator_util.py',
+        '<(mozc_oss_src_dir)/build_tools/code_generator_util.py',
         'gen_pos_map.py',
       ],
 

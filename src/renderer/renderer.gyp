@@ -441,7 +441,7 @@
                 '<(gen_out_dir)/Info.plist',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Info.plist',
                 '--input', 'mac/Info.plist',
                 '--version_file', '<(mozc_src_dir)/mozc_version.txt',
