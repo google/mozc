@@ -34,30 +34,34 @@
 #include "base/singleton.h"
 
 #if defined(OS_CHROMEOS) || defined(_WIN32)
-#include <time.h>
+#include <ctime>
 #endif  // defined(OS_CHROMEOS) || defined(_WIN32)
 
 namespace mozc {
 namespace {
 
+absl::TimeZone GetLocalTimeZone() {
+#if defined(OS_CHROMEOS) || defined(_WIN32)
+  // Do not use absl::LocalTimeZone() here because
+  // - on Chrome OS, it returns UTC: b/196271425
+  // - on Windows, it crashes: https://github.com/google/mozc/issues/856
+  const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
+  const std::tm *offset = std::localtime(&epoch);
+  if (offset == nullptr) {
+    return absl::FixedTimeZone(9 * 60 * 60);  // JST as fallback
+  }
+  return absl::FixedTimeZone(
+      (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
+      + offset->tm_hour * 60 * 60           // hour offset from 00 am.
+      + offset->tm_min * 60);               // minute offset.
+#else   // !defined(OS_CHROMEOS) && !defined(_WIN32)
+  return absl::LocalTimeZone();
+#endif  // defined(OS_CHROMEOS) || defined(_WIN32)
+}
+
 class ClockImpl : public ClockInterface {
  public:
-  ClockImpl() : timezone_(absl::LocalTimeZone()) {
-#if defined(OS_CHROMEOS) || defined(_WIN32)
-    // Because absl::LocalTimeZone() always returns UTC timezone on Chrome OS
-    // and Windows, a work-around for Chrome OS and Windows is required.
-    int offset_sec = 9 * 60 * 60;      // JST as fallback
-    const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
-    const std::tm *offset = std::localtime(&epoch);
-    if (offset) {
-      offset_sec =
-          (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
-          + offset->tm_hour * 60 * 60           // hour offset from 00 am.
-          + offset->tm_min * 60;                // minute offset.
-    }
-    timezone_ = absl::FixedTimeZone(offset_sec);
-#endif  // defined(OS_CHROMEOS) || defined(_WIN32)
-  }
+  ClockImpl() = default;
   ~ClockImpl() override = default;
 
   absl::Time GetAbslTime() override { return absl::Now(); }
@@ -65,7 +69,7 @@ class ClockImpl : public ClockInterface {
   absl::TimeZone GetTimeZone() override { return timezone_; }
 
  private:
-  absl::TimeZone timezone_;
+  const absl::TimeZone timezone_ = GetLocalTimeZone();
 };
 }  // namespace
 
