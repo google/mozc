@@ -30,13 +30,13 @@
 # Visibility:  please choose a more appropriate default for the package,
 # and update any rules that should be different.
 
+load("//bazel:stubs.bzl", "lexan")
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
     "mozc_cc_binary",
     "mozc_cc_library",
 )
-load("//bazel:stubs.bzl", "lexan")
 
 package(default_visibility = ["//:__subpackages__"])
 

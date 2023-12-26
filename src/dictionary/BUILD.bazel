@@ -30,6 +30,7 @@
 # Description:
 #   The implementation of dictionaries used in Mozc.
 
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
@@ -39,7 +40,6 @@ load(
     "mozc_py_library",
     "mozc_select",
 )
-load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
 package(default_visibility = ["//:__subpackages__"])
 

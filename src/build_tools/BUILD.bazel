@@ -30,12 +30,12 @@
 # Description:
 #   Contains tools which are required to build mozc.
 
+load("@rules_python//python:defs.bzl", "py_test")
 load(
     "//:build_defs.bzl",
     "mozc_py_binary",
     "mozc_py_library",
 )
-load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel:stubs.bzl", "bzl_library")
 
 package(default_visibility = ["//:__subpackages__"])
