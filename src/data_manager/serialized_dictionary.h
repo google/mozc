@@ -124,9 +124,14 @@ class SerializedDictionary {
 
   static constexpr size_t kTokenByteLength = 24;
 
-  class iterator : public std::iterator<std::random_access_iterator_tag,
-                                        absl::string_view> {
+  class iterator {
    public:
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = absl::string_view;
+    using difference_type = std::ptrdiff_t;
+    using pointer = absl::string_view *;
+    using reference = absl::string_view &;
+
     iterator() : token_ptr_(nullptr), string_array_(nullptr) {}
     iterator(const char *token_ptr, const SerializedStringArray *string_array)
         : token_ptr_(token_ptr), string_array_(string_array) {}

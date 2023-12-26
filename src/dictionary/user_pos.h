@@ -84,9 +84,14 @@ class UserPos : public UserPosInterface {
  public:
   static constexpr size_t kTokenByteLength = 8;
 
-  class iterator
-      : public std::iterator<std::random_access_iterator_tag, uint16_t> {
+  class iterator {
    public:
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = uint16_t;
+    using difference_type = std::ptrdiff_t;
+    using pointer = uint16_t *;
+    using reference = uint16_t &;
+
     iterator() = default;
     explicit iterator(const char *ptr) : ptr_(ptr) {}
     iterator(const iterator &x) = default;

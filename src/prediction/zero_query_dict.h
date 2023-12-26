@@ -31,6 +31,7 @@
 #define MOZC_PREDICTION_ZERO_QUERY_DICT_H_
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <utility>
@@ -79,9 +80,14 @@ class ZeroQueryDict {
  public:
   static constexpr size_t kTokenByteSize = 16;
 
-  class iterator
-      : public std::iterator<std::random_access_iterator_tag, uint32_t> {
+  class iterator {
    public:
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = uint32_t;
+    using difference_type = std::ptrdiff_t;
+    using pointer = uint32_t *;
+    using reference = uint32_t &;
+
     iterator(const char *ptr, const SerializedStringArray *array)
         : ptr_(ptr), string_array_(array) {}
     iterator(const iterator &x) = default;
