@@ -173,6 +173,12 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
+    name = "vlog",
+    hdrs = ["vlog.h"],
+    deps = [":logging"],
+)
+
+mozc_cc_library(
     name = "codegen_bytearray_stream",
     srcs = ["codegen_bytearray_stream.cc"],
     hdrs = ["codegen_bytearray_stream.h"],
