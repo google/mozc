@@ -43,13 +43,6 @@
 #include <string>
 #include <vector>
 
-#include "base/file_stream.h"
-#include "base/init_mozc.h"
-#include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/singleton.h"
-#include "base/stopwatch.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/algorithm/container.h"
@@ -58,6 +51,13 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
+#include "base/file_stream.h"
+#include "base/init_mozc.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/singleton.h"
+#include "base/stopwatch.h"
+#include "base/util.h"
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "session/random_keyevents_generator.h"

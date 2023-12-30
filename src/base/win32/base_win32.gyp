@@ -66,14 +66,14 @@
           ],
           'dependencies': [
             '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
-            '../base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
           ],
           'copies': [
             {
               'files': [
                 '<(mozc_oss_src_dir)/data/test/renderer/win32/mozc_test_font.ttf',
               ],
-              'destination': '<(mozc_data_dir)/data/test/renderer/win32',
+              'destination': '<(mozc_oss_data_dir)/data/test/renderer/win32',
             },
           ],
         },
@@ -85,8 +85,8 @@
             'hresultor_test.cc',
           ],
           'dependencies': [
-            '../absl.gyp:absl_strings',
-            '../base.gyp:base',
+            '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
           ],
           'variables': {
@@ -102,7 +102,7 @@
           ],
           'dependencies': [
             ':com_implements',
-            '../base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
             '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
           ],
           'variables': {

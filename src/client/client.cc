@@ -39,6 +39,12 @@
 #include <string>
 #include <vector>
 
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "absl/base/attributes.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "base/const.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
@@ -47,12 +53,6 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
-#include "absl/base/attributes.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
-#include "absl/time/time.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"

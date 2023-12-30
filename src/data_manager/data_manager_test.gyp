@@ -40,8 +40,8 @@
         'data_manager_test_base.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_random',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_random',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:connector',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:segmenter',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
@@ -58,7 +58,7 @@
         'dataset_writer_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_oss_src_dir)/testing/testing.gyp:testing',
@@ -74,9 +74,9 @@
         'dataset_reader_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_random',
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_random',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:testing',
         'data_manager_base.gyp:dataset_proto',
@@ -89,7 +89,7 @@
       'type': 'executable',
       'sources': ['serialized_dictionary_test.cc'],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:serialized_string_array',
+        '<(mozc_oss_src_dir)/base/base.gyp:serialized_string_array',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'data_manager_base.gyp:serialized_dictionary',
       ],

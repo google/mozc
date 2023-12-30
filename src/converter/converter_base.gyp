@@ -45,7 +45,7 @@
         'segmenter.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
     {
@@ -55,8 +55,8 @@
         'connector.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/storage/louds/louds.gyp:simple_succinct_bit_vector_index',
       ],
     },
@@ -68,7 +68,7 @@
         'node_allocator.h',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
     {
@@ -81,8 +81,8 @@
         'segments.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_oss_src_dir)/prediction/prediction_base.gyp:suggestion_filter',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
@@ -110,8 +110,8 @@
         'key_corrector.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:japanese_util',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:japanese_util',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
@@ -133,7 +133,7 @@
         'gen_segmenter_bitarray.cc',
       ],
       'dependencies' : [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/protocol/protocol.gyp:segmenter_data_proto',
       ]
     },
@@ -144,9 +144,9 @@
         'pos_id_printer.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:number_util',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:number_util',
       ],
     },
   ],

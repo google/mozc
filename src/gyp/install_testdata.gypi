@@ -30,7 +30,7 @@
 {
   'copies': [
     {
-      'destination': '<(mozc_data_dir)/<(test_data_subdir)',
+      'destination': '<(mozc_oss_data_dir)/<(test_data_subdir)',
       'files': [ '<@(test_data)' ],
     },
   ],

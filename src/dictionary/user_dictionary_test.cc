@@ -39,17 +39,17 @@
 #include <utility>
 #include <vector>
 
-#include "base/file/temp_dir.h"
-#include "base/file_util.h"
-#include "base/logging.h"
-#include "base/random.h"
-#include "base/singleton.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/file/temp_dir.h"
+#include "base/file_util.h"
+#include "base/logging.h"
+#include "base/random.h"
+#include "base/singleton.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"

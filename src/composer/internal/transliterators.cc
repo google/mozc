@@ -31,12 +31,12 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "absl/strings/string_view.h"
 #include "composer/internal/transliterator_interface.h"
 #include "config/character_form_manager.h"
 

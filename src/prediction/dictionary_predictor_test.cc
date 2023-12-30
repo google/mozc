@@ -38,9 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/strings/assign.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/memory/memory.h"
@@ -49,6 +46,9 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/logging.h"
+#include "base/strings/assign.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
@@ -145,25 +145,22 @@ class DictionaryPredictorTestPeer {
 
   bool AddPredictionToCandidates(
       const ConversionRequest &request, Segments *segments,
-      const DictionaryPredictor::TypingCorrectionMixingParams
-          &typing_correction_mixing_params,
+      const TypingCorrectionMixingParams &typing_correction_mixing_params,
       absl::Span<Result> results) const {
     return predictor_.AddPredictionToCandidates(
         request, segments, typing_correction_mixing_params, results);
   }
 
-  DictionaryPredictor::TypingCorrectionMixingParams
-  MaybePopualteTypingCorrectedResults(const ConversionRequest &request,
-                                      const Segments &segments,
-                                      std::vector<Result> *results) const {
+  TypingCorrectionMixingParams MaybePopualteTypingCorrectedResults(
+      const ConversionRequest &request, const Segments &segments,
+      std::vector<Result> *results) const {
     return predictor_.MaybePopualteTypingCorrectedResults(request, segments,
                                                           results);
   }
 
   static void MaybeSuppressAggressiveTypingCorrection(
       const ConversionRequest &request,
-      const DictionaryPredictor::TypingCorrectionMixingParams
-          &typing_correction_mixing_params,
+      const TypingCorrectionMixingParams &typing_correction_mixing_params,
       Segments *segments) {
     DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
         request, typing_correction_mixing_params, segments);
@@ -428,8 +425,7 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<ConversionRequest> convreq_for_prediction_;
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
-  DictionaryPredictor::TypingCorrectionMixingParams
-      typing_correction_mixing_params_;
+  TypingCorrectionMixingParams typing_correction_mixing_params_;
 
  private:
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
@@ -1953,7 +1949,7 @@ TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrectionTest) {
 
   reset_segments();
 
-  DictionaryPredictor::TypingCorrectionMixingParams params;
+  TypingCorrectionMixingParams params;
 
   DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
       *convreq_for_suggestion_, params, &segments);

@@ -29,8 +29,8 @@
 
 #include "win32/base/indicator_visibility_tracker.h"
 
-#include "base/stopwatch.h"
 #include "absl/time/time.h"
+#include "base/stopwatch.h"
 
 namespace mozc {
 namespace win32 {

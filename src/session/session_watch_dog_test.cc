@@ -35,13 +35,13 @@
 #include <utility>
 #include <vector>
 
-#include "base/cpu_stats.h"
-#include "base/logging.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/cpu_stats.h"
+#include "base/logging.h"
 #include "client/client_mock.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"

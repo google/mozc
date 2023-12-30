@@ -34,17 +34,17 @@
 #include <memory>
 #include <string>
 
+#include "protocol/config.pb.h"
+#include "absl/random/random.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/system_util.h"
-#include "protocol/config.pb.h"
-#include "absl/random/random.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
-#include "absl/time/time.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"

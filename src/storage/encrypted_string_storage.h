@@ -32,8 +32,8 @@
 
 #include <string>
 
-#include "base/random.h"
 #include "absl/strings/string_view.h"
+#include "base/random.h"
 
 namespace mozc {
 namespace storage {

@@ -57,11 +57,11 @@
 #include "config/config_handler.h"
 #endif  // __ANDROID__
 
+#include "absl/strings/str_cat.h"
+#include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "absl/strings/str_cat.h"
-#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace config {

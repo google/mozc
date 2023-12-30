@@ -33,12 +33,12 @@
 #include <string>
 #include <vector>
 
-#include "base/util.h"
 #include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/gunit.h"
 

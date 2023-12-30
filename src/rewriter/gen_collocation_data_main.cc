@@ -43,10 +43,10 @@
 #include <string>
 #include <vector>
 
+#include "absl/flags/flag.h"
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "absl/flags/flag.h"
 #include "rewriter/gen_existence_data.h"
 
 ABSL_FLAG(std::string, collocation_data, "", "collocation data text");

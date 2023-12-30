@@ -42,11 +42,11 @@
 #include <algorithm>
 #include <vector>
 
+#include "protocol/commands.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "protocol/commands.pb.h"
-#include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_image_util.h"
 #include "renderer/win32/win32_renderer_util.h"
 

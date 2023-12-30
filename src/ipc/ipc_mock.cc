@@ -35,8 +35,8 @@
 #include <memory>
 #include <string>
 
-#include "base/version.h"
 #include "absl/time/time.h"
+#include "base/version.h"
 #include "ipc/ipc.h"
 
 namespace mozc {

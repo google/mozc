@@ -33,8 +33,8 @@
 #include <cstdint>
 #include <string>
 
-#include "base/util.h"
 #include "absl/strings/string_view.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace {

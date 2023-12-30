@@ -39,11 +39,11 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/strings/unicode.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 

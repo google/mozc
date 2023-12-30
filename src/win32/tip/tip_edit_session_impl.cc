@@ -40,12 +40,12 @@
 #include <utility>
 #include <vector>
 
+#include "protocol/commands.pb.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "base/win32/com.h"
 #include "base/win32/hresultor.h"
 #include "base/win32/wide_char.h"
-#include "protocol/commands.pb.h"
 #include "client/client_interface.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/input_state.h"

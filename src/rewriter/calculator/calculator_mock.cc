@@ -32,8 +32,8 @@
 #include <string>
 #include <utility>
 
-#include "base/logging.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
 
 namespace mozc {
 

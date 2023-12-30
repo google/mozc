@@ -32,8 +32,8 @@
 
 #include <windows.h>
 
-#include "base/win32/com_implements.h"
 #include "absl/base/call_once.h"
+#include "base/win32/com_implements.h"
 
 namespace mozc {
 namespace win32 {

@@ -40,11 +40,11 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 #include "base/container/freelist.h"
 #include "base/container/trie.h"
 #include "base/thread.h"
-#include "absl/container/flat_hash_set.h"
-#include "absl/strings/string_view.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"

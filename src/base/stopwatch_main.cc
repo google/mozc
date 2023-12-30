@@ -32,11 +32,11 @@
 #include <ostream>
 #include <string>
 
-#include "base/init_mozc.h"
-#include "base/stopwatch.h"
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/init_mozc.h"
+#include "base/stopwatch.h"
 
 ABSL_FLAG(int32_t, sleep_time, 1000, "sleep time (msec)");
 

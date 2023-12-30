@@ -35,10 +35,10 @@
 #include <set>
 #include <vector>
 
-#include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/container/flat_hash_map.h"
+#include "base/port.h"
 #include "testing/gunit_prod.h"
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/engine_interface.h"

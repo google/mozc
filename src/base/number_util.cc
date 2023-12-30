@@ -42,9 +42,6 @@
 
 #include "base/logging.h"
 // TODO(yuryu): This file will also move into strings/.
-#include "base/strings/internal/double_array.h"
-#include "base/strings/internal/japanese_rules.h"
-#include "base/util.h"
 #include "absl/algorithm/container.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
@@ -54,6 +51,9 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/strings/internal/double_array.h"
+#include "base/strings/internal/japanese_rules.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace {

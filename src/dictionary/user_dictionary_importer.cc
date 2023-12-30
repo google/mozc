@@ -40,17 +40,17 @@
 #include <utility>
 #include <vector>
 
+#include "protocol/user_dictionary_storage.pb.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/util.h"
-#include "protocol/user_dictionary_storage.pb.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/match.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "dictionary/user_dictionary_util.h"
 
 namespace mozc {

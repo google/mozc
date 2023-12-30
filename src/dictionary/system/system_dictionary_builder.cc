@@ -41,11 +41,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/file_stream.h"
-#include "base/file_util.h"
-#include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "absl/container/btree_map.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
@@ -53,6 +48,11 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/file_stream.h"
+#include "base/file_util.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"

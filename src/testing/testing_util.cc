@@ -31,10 +31,10 @@
 
 #include <memory>
 
+#include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
-#include "absl/strings/string_view.h"
 #include "testing/gunit.h"
 
 #undef GetMessage  // Undef Win32 macro.

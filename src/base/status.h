@@ -31,9 +31,9 @@
 #define MOZC_BASE_STATUS_H_
 
 
-#include "base/logging.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "base/logging.h"
 
 namespace mozc::status_internal {
 

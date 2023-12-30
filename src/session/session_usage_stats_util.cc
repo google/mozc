@@ -32,13 +32,13 @@
 #include <string>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/algorithm/container.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {

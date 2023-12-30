@@ -35,13 +35,13 @@
 #include <type_traits>
 #include <vector>
 
+#include "protocol/commands.pb.h"
+#include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "protocol/commands.pb.h"
-#include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"

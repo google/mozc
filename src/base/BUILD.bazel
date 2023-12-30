@@ -41,8 +41,8 @@ load(
     "LINUX_MOZC_DOCUMENT_DIR",
     "LINUX_MOZC_SERVER_DIR",
 )
-load("//build_tools:embed_file.bzl", "mozc_embed_file")
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
+load("//build_tools:embed_file.bzl", "mozc_embed_file")
 
 package(default_visibility = ["//:__subpackages__"])
 

@@ -32,10 +32,10 @@
 #include <random>
 #include <string>
 
-#include "base/random.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
+#include "base/random.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"

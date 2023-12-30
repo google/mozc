@@ -32,12 +32,12 @@
 #include <memory>
 #include <string>
 
-#include "base/japanese_util.h"
-#include "base/logging.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"

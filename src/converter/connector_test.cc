@@ -35,9 +35,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/random/random.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "absl/random/random.h"
 #include "data_manager/connection_file_reader.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"

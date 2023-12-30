@@ -49,7 +49,7 @@
             '<(gen_out_dir)/pos_list.inc',
           ],
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/embed_file.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/embed_file.py',
             '--input=<(pos_list)',
             '--name=kPosArray',
             '--output=<(gen_out_dir)/pos_list.inc',

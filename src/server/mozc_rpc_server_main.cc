@@ -47,12 +47,12 @@ using ssize_t = SSIZE_T;
 #include <string>
 #include <vector>
 
+#include "protocol/commands.pb.h"
+#include "absl/flags/flag.h"
 #include "base/init_mozc.h"
 #include "base/protobuf/message.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "protocol/commands.pb.h"
-#include "absl/flags/flag.h"
 #include "engine/engine_factory.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler.h"

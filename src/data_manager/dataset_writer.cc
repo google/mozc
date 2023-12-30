@@ -33,16 +33,16 @@
 #include <string>
 #include <utility>
 
+#include "absl/container/flat_hash_set.h"
+#include "absl/numeric/bits.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/status.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
-#include "absl/container/flat_hash_set.h"
-#include "absl/numeric/bits.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
 #include "data_manager/dataset.pb.h"
 
 namespace mozc {

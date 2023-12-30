@@ -54,7 +54,7 @@
       },
       'copies': [
         {
-          'destination': '<(mozc_data_dir)/data/test/dictionary',
+          'destination': '<(mozc_oss_data_dir)/data/test/dictionary',
           'files': [
               '<(mozc_oss_src_dir)/data/test/dictionary/dictionary.txt',
               '<(mozc_oss_src_dir)/data/test/dictionary/suggestion_filter.txt',
@@ -67,7 +67,7 @@
       'type': 'none',
       'copies': [
         {
-          'destination': '<(mozc_data_dir)/data/test/dictionary',
+          'destination': '<(mozc_oss_data_dir)/data/test/dictionary',
           'files': [
             '<(mozc_oss_src_dir)/data/test/dictionary/connection_single_column.txt',
           ],

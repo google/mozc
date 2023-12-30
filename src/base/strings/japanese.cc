@@ -33,9 +33,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "base/strings/internal/double_array.h"
 #include "base/strings/internal/japanese_rules.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc::japanese {
 

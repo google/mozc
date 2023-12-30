@@ -35,10 +35,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/number_util.h"
-#include "base/strings/assign.h"
-#include "base/version.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/container/flat_hash_map.h"
@@ -46,6 +42,10 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/number_util.h"
+#include "base/strings/assign.h"
+#include "base/version.h"
 #include "client/client_interface.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"

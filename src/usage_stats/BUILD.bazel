@@ -30,13 +30,13 @@
 # Visibility:  please choose a more appropriate default for the package,
 # and update any rules that should be different.
 
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 load(
     "//:build_defs.bzl",
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
 )
-load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
 package(default_visibility = ["//:__subpackages__"])
 

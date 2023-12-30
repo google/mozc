@@ -35,8 +35,8 @@
 #include <limits>
 #include <string>
 
-#include "base/logging.h"
 #include "absl/base/casts.h"
+#include "base/logging.h"
 
 namespace mozc {
 namespace storage {

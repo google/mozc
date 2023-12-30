@@ -33,7 +33,7 @@
       'target_name': 'unittests',
       'type': 'none',
       'dependencies': [
-        '../base/base_test.gyp:base_all_test',
+        '<(mozc_oss_src_dir)/base/base_test.gyp:base_all_test',
         '<(mozc_oss_src_dir)/client/client_test.gyp:client_all_test',
         '<(mozc_oss_src_dir)/config/config_test.gyp:config_all_test',
         '<(mozc_oss_src_dir)/composer/composer_test.gyp:composer_all_test',
@@ -58,7 +58,7 @@
       'conditions': [
         ['target_platform=="Windows"', {
           'dependencies': [
-            '../base/win32/base_win32.gyp:base_win32_all_test',
+            '<(mozc_oss_src_dir)/base/win32/base_win32.gyp:base_win32_all_test',
             '<(mozc_oss_src_dir)/win32/base/win32_base.gyp:win32_base_all_test',
             '<(mozc_oss_src_dir)/win32/tip/tip.gyp:tip_all_test',
           ],

@@ -39,12 +39,6 @@
 #include <string>
 #include <vector>
 
-#include "base/file_stream.h"
-#include "base/file_util.h"
-#include "base/init_mozc.h"
-#include "base/logging.h"
-#include "base/system_util.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "absl/flags/flag.h"
@@ -52,6 +46,12 @@
 #include "absl/strings/match.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/file_stream.h"
+#include "base/file_util.h"
+#include "base/init_mozc.h"
+#include "base/logging.h"
+#include "base/system_util.h"
+#include "base/util.h"
 #include "client/client.h"
 #include "composer/key_parser.h"
 #include "renderer/renderer_client.h"

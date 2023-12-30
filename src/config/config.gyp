@@ -40,11 +40,11 @@
         'config_handler.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:config_file_stream',
-        '<(mozc_src_dir)/base/base.gyp:hash',
-        '<(mozc_src_dir)/base/base.gyp:version',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:config_file_stream',
+        '<(mozc_oss_src_dir)/base/base.gyp:hash',
+        '<(mozc_oss_src_dir)/base/base.gyp:version',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
       ],
     },
@@ -55,7 +55,7 @@
         'stats_config_util.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
         'config_handler',
       ],
     },
@@ -67,9 +67,9 @@
       ],
       'dependencies': [
         'config_handler',
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:config_file_stream',
-        '<(mozc_src_dir)/base/base.gyp:japanese_util',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:config_file_stream',
+        '<(mozc_oss_src_dir)/base/base.gyp:japanese_util',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         # storage.gyp:storage is depended by character_form_manager.
         # TODO(komatsu): delete this line.

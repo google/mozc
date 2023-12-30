@@ -32,8 +32,8 @@
 
 #include "session/internal/ime_context.h"
 
-#include "base/logging.h"
 #include "protocol/commands.pb.h"
+#include "base/logging.h"
 #include "composer/composer.h"
 #include "session/internal/keymap.h"
 #include "session/session_converter_interface.h"

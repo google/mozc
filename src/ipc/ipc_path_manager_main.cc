@@ -29,10 +29,10 @@
 
 #include <string>
 
-#include "base/init_mozc.h"
-#include "base/logging.h"
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"
+#include "base/init_mozc.h"
+#include "base/logging.h"
 #include "ipc/ipc_path_manager.h"
 
 ABSL_FLAG(bool, client, false, "client mode");

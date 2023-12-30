@@ -33,10 +33,10 @@
 #include <map>
 #include <string>
 
-#include "base/file_util.h"
 #include "absl/container/btree_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
+#include "base/file_util.h"
 
 namespace mozc {
 class FileUtilMock : public FileUtilInterface {

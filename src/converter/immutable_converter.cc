@@ -40,10 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/container/trie.h"
-#include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/algorithm/container.h"
@@ -51,6 +47,10 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/container/trie.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "converter/connector.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"

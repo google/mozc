@@ -32,10 +32,10 @@
 #include <memory>
 #include <vector>
 
-#include "base/strings/unicode.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/unicode.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"

@@ -68,6 +68,27 @@ struct KeyValueView {
 
 }  // namespace dictionary_predictor_internal
 
+// Parameters to mix the literal and typing corrected results.
+// These parameters define the position of literal and typing corrected
+// results, and determined dynamically using various quality signals.
+struct TypingCorrectionMixingParams {
+  // Moves the literal candidate to the top position even when
+  // the typing corrected result is placed at top.
+  // Set this flag when the typing correction is less confident.
+  bool literal_on_top = false;
+
+  // Moves the literal candidate to the at least second position.
+  // When the literal candidate is already at the top, do nothing.
+  bool literal_at_least_second = false;
+};
+
+// Computes the typing correction mixing params.
+// from the `base_result` and `typing_corrected_results`.
+// TODO(taku): Introduces more advanced algorithms to make better decision.
+TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
+    const ConversionRequest &request, absl::Span<const Result> base_results,
+    absl::Span<const Result> typing_corrected_results);
+
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
  public:
@@ -89,20 +110,6 @@ class DictionaryPredictor : public PredictorInterface {
                       const SuggestionFilter &suggestion_filter,
                       const prediction::RescorerInterface *rescorer = nullptr,
                       const void *user_arg = nullptr);
-
-  // Parameters to mix the literal and typing corrected results.
-  // These parameters define the position of literal and typing corrected
-  // results, and determined dynamically using various quality signals.
-  struct TypingCorrectionMixingParams {
-    // Moves the literal candidate to the top position even when
-    // the typing corrected result is placed at top.
-    // Set this flag when the typing correction is less confident.
-    bool literal_on_top = false;
-
-    // Moves the literal candidate to the at least second position.
-    // When the literal candidate is already at the top, do nothing.
-    bool literal_at_least_second = false;
-  };
 
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;

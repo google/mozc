@@ -31,9 +31,9 @@
 
 #include <iterator>
 
+#include "absl/strings/string_view.h"
 #include "base/embedded_file.h"
 #include "base/logging.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace testing {

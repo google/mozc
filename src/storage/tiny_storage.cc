@@ -37,16 +37,16 @@
 #include <string>
 #include <utility>
 
-#include "base/bits.h"
-#include "base/file_stream.h"
-#include "base/file_util.h"
-#include "base/logging.h"
-#include "base/mmap.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/bits.h"
+#include "base/file_stream.h"
+#include "base/file_util.h"
+#include "base/logging.h"
+#include "base/mmap.h"
 #include "storage/storage_interface.h"
 
 namespace mozc {

@@ -40,14 +40,14 @@
 #include <utility>
 #include <vector>
 
+#include "protocol/commands.pb.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/protobuf/protobuf.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "protocol/commands.pb.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/strings/string_view.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/emoji_data.h"

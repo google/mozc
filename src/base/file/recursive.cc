@@ -31,18 +31,18 @@
 
 #include <string>
 
-#include "base/logging.h"
-#include "base/strings/zstring_view.h"
 #include "absl/cleanup/cleanup.h"
 #include "absl/status/status.h"
+#include "base/logging.h"
+#include "base/strings/zstring_view.h"
 
 #ifdef _WIN32
 #include <wil/filesystem.h>
 #include <windows.h>
 
+#include "absl/strings/str_cat.h"
 #include "base/win32/hresult.h"
 #include "base/win32/wide_char.h"
-#include "absl/strings/str_cat.h"
 #else  // _WIN32
 #include <fts.h>
 #include <sys/stat.h>
@@ -50,8 +50,8 @@
 
 #include <cerrno>
 
-#include "base/file_util.h"
 #include "absl/base/dynamic_annotations.h"
+#include "base/file_util.h"
 #endif  // !_WIN32
 
 #ifdef __APPLE__

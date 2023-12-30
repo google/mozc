@@ -36,10 +36,10 @@
 #include <utility>
 #include <vector>
 
-#include "base/util.h"
 #include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "base/util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"

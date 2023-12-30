@@ -37,8 +37,8 @@
         'codec.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
       ],
     },
     {
@@ -56,9 +56,9 @@
         'system_dictionary.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/base.gyp:base_core',
-        '<(mozc_src_dir)/base/base.gyp:japanese_util',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/base.gyp:japanese_util',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/storage/louds/louds.gyp:bit_vector_based_array',
         '<(mozc_oss_src_dir)/storage/louds/louds.gyp:louds_trie',
@@ -76,7 +76,7 @@
         'value_dictionary.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/storage/louds/louds.gyp:louds_trie',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
@@ -92,8 +92,8 @@
         'system_dictionary_builder.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base_core',
-        '<(mozc_src_dir)/base/base.gyp:japanese_util',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
+        '<(mozc_oss_src_dir)/base/base.gyp:japanese_util',
         '<(mozc_oss_src_dir)/storage/louds/louds.gyp:bit_vector_based_array_builder',
         '<(mozc_oss_src_dir)/storage/louds/louds.gyp:louds_trie_builder',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',

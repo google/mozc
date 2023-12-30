@@ -34,12 +34,12 @@
 #include <string>
 #include <utility>
 
-#include "base/file/temp_dir.h"
-#include "base/file_util.h"
-#include "base/hash.h"
 #include "protocol/engine_builder.pb.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/file/temp_dir.h"
+#include "base/file_util.h"
+#include "base/hash.h"
 #include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
 #include "testing/gmock.h"

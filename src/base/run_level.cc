@@ -40,12 +40,12 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/system_util.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
-#include "absl/strings/string_view.h"
 #else  // _WIN32
 #include <unistd.h>
 #endif  // _WIN32

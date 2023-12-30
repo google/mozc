@@ -33,13 +33,13 @@
 #include <cstring>
 #include <string>
 
+#include "absl/status/status.h"
+#include "absl/synchronization/mutex.h"
 #include "base/const.h"
 #include "base/environ.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/singleton.h"
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
 
 #ifdef __ANDROID__
 #include "base/android_util.h"
@@ -66,9 +66,9 @@
 
 #include <memory>  // for unique_ptr
 
+#include "absl/strings/str_cat.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
-#include "absl/strings/str_cat.h"
 #else  // _WIN32
 #include <pwd.h>
 #include <sys/mman.h>

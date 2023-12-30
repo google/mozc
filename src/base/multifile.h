@@ -38,8 +38,8 @@
 #include <string>
 #include <vector>
 
-#include "base/file_stream.h"
 #include "absl/strings/string_view.h"
+#include "base/file_stream.h"
 
 namespace mozc {
 

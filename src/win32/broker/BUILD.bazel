@@ -29,13 +29,13 @@
 
 # Win32 broker
 
+load("//bazel:stubs.bzl", "lexan")
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
     "mozc_cc_binary",
     "mozc_cc_library",
 )
-load("//bazel:stubs.bzl", "lexan")
 
 package(
     default_visibility = ["//visibility:private"],

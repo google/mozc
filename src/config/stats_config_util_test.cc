@@ -31,15 +31,15 @@
 
 #include <string>
 
-#include "base/singleton.h"
 #include "absl/base/casts.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
+#include "base/singleton.h"
 #include "testing/gunit.h"
 
 #ifdef __ANDROID__
-#include "base/file/temp_dir.h"
 #include "protocol/config.pb.h"
+#include "base/file/temp_dir.h"
 #include "config/config_handler.h"
 #include "testing/mozctest.h"
 #endif  // __ANDROID__

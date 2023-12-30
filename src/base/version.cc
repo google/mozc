@@ -37,10 +37,10 @@
 #include "base/number_util.h"
 
 // Import the generated version_def.h.
-#include "base/version_def.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/version_def.h"
 
 #ifdef _WIN32
 #include "base/win32/wide_char.h"

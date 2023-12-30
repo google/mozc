@@ -32,9 +32,9 @@
 
 #import "CandidateView.h"
 
+#include "protocol/commands.pb.h"
 #include "base/coordinates.h"
 #include "base/logging.h"
-#include "protocol/commands.pb.h"
 #include "renderer/mac/CandidateWindow.h"
 
 using mozc::commands::Candidates;

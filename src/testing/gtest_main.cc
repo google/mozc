@@ -32,8 +32,8 @@
 #include <crtdbg.h>
 #endif  // _WIN32
 
-#include "base/init_mozc.h"
 #include "absl/flags/flag.h"
+#include "base/init_mozc.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 

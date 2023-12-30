@@ -39,10 +39,10 @@
 #include <string_view>
 #include <utility>
 
-#include "base/logging.h"
-#include "base/util.h"
 #include "absl/algorithm/container.h"
 #include "absl/base/casts.h"
+#include "base/logging.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace win32 {

@@ -46,12 +46,12 @@
 #include <string>
 #include <string_view>
 
-#include "base/logging.h"
-#include "base/system_util.h"
-#include "base/win32/wide_char.h"
 #include "absl/base/call_once.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "base/logging.h"
+#include "base/system_util.h"
+#include "base/win32/wide_char.h"
 
 // Disable StrCat macro to use absl::StrCat.
 #ifdef StrCat

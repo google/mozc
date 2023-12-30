@@ -34,12 +34,12 @@
 #include <string>
 #include <vector>
 
+#include "protocol/user_dictionary_storage.pb.h"
+#include "absl/strings/string_view.h"
 #include "base/file_util.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/system_util.h"
-#include "protocol/user_dictionary_storage.pb.h"
-#include "absl/strings/string_view.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

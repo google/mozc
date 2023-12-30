@@ -32,8 +32,8 @@
 #include <memory>
 #include <set>
 
-#include "base/protobuf/protobuf.h"
 #include "protocol/commands.pb.h"
+#include "base/protobuf/protobuf.h"
 #include "testing/gunit.h"
 
 namespace mozc {

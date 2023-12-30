@@ -42,10 +42,10 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/version.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/version.h"
 #include "client/client.h"
 #include "client/client_interface.h"
 #include "composer/key_event_util.h"

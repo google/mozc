@@ -39,8 +39,8 @@
 #include <string_view>
 #include <vector>
 
-#include "base/strings/zstring_view.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/zstring_view.h"
 
 namespace mozc {
 class Sid {

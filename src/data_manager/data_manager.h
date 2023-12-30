@@ -40,11 +40,11 @@
 #include <utility>
 #include <vector>
 
-#include "base/mmap.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/mmap.h"
 #include "data_manager/data_manager_interface.h"
 
 namespace mozc {

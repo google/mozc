@@ -38,10 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/strings/assign.h"
-#include "base/strings/japanese.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/algorithm/container.h"
 #include "absl/base/attributes.h"
@@ -51,6 +47,10 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/logging.h"
+#include "base/strings/assign.h"
+#include "base/strings/japanese.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
@@ -221,6 +221,48 @@ void MaybeFixRealtimeTopCost(absl::string_view input_key,
 
 }  // namespace
 
+// Computes the typing correction mixing params.
+// from the `base_result` and `typing_corrected_results`
+TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
+    const ConversionRequest &request, absl::Span<const Result> base_results,
+    absl::Span<const Result> typing_corrected_results) {
+  TypingCorrectionMixingParams typing_correction_mixing_params;
+
+  if (base_results.empty() || typing_corrected_results.empty()) {
+    return typing_correction_mixing_params;
+  }
+
+  // Sets literal on top when the corrections do not have sufficient
+  // confidence.
+  auto find_best_result = [](absl::Span<const Result> v) -> const Result & {
+    return *absl::c_max_element(v, [](const auto &lhs, const auto &rhs) {
+      return ResultCostLess()(rhs, lhs);
+    });
+  };
+
+  const Result &base_best_result = find_best_result(base_results);
+  const Result &tc_best_result = find_best_result(typing_corrected_results);
+  const auto &params = request.request().decoder_experiment_params();
+
+  // When the best candidate is SPELLING_CORRECTION (not a typing correction),
+  // do not run literal-on-top.
+  typing_correction_mixing_params.literal_on_top =
+      (!(base_best_result.candidate_attributes &
+         Segment::Candidate::SPELLING_CORRECTION)) &&
+      ((tc_best_result.typing_correction_score <=
+        params.typing_correction_literal_on_top_correction_score_max_diff()) ||
+       ((base_best_result.cost - tc_best_result.cost) <=
+        params.typing_correction_literal_on_top_conversion_cost_max_diff()));
+
+  // Literal-at-least-second parameter is now defined as flag.
+  typing_correction_mixing_params.literal_at_least_second =
+      request.request()
+          .decoder_experiment_params()
+          .typing_correction_literal_at_least_second();
+
+  return typing_correction_mixing_params;
+}
+
 DictionaryPredictor::DictionaryPredictor(
     const DataManagerInterface &data_manager,
     const ConverterInterface *converter,
@@ -379,59 +421,27 @@ void DictionaryPredictor::RewriteResultsForPrediction(
   }
 }
 
-DictionaryPredictor::TypingCorrectionMixingParams
+TypingCorrectionMixingParams
 DictionaryPredictor::MaybePopualteTypingCorrectedResults(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
-  DictionaryPredictor::TypingCorrectionMixingParams
-      typing_correction_mixing_params;
-
   if (results->empty()) {
-    return typing_correction_mixing_params;
+    return {};
   }
 
-  const std::string &key = segments.conversion_segment(0).key();
-  const size_t key_len = Util::CharsLen(key);
+  const size_t key_len = Util::CharsLen(segments.conversion_segment(0).key());
   constexpr int kMinTypingCorrectionKeyLen = 3;
   if (key_len < kMinTypingCorrectionKeyLen) {
-    return typing_correction_mixing_params;
+    return {};
   }
 
   std::vector<Result> typing_corrected_results =
       aggregator_->AggregateTypingCorrectedResults(request, segments);
   RewriteResultsForPrediction(request, segments, &typing_corrected_results);
 
-  if (typing_corrected_results.empty()) {
-    return typing_correction_mixing_params;
-  }
-
-  // Sets literal on top when the corrections do not have sufficient
-  // confidence.
-  auto find_best_result = [](absl::Span<const Result> v) -> const Result & {
-    return *absl::c_max_element(v, [](const auto &lhs, const auto &rhs) {
-      return ResultCostLess()(rhs, lhs);
-    });
-  };
-
-  const Result &base_best_result = find_best_result(*results);
-  const Result &tc_best_result = find_best_result(typing_corrected_results);
-  const auto &params = request.request().decoder_experiment_params();
-
-  // When the best candidate is SPELLING_CORRECTION (not a typing correction),
-  // do not run literal-on-top.
-  typing_correction_mixing_params.literal_on_top =
-      (!(base_best_result.candidate_attributes &
-         Segment::Candidate::SPELLING_CORRECTION)) &&
-      ((tc_best_result.typing_correction_score <=
-        params.typing_correction_literal_on_top_correction_score_max_diff()) ||
-       ((base_best_result.cost - tc_best_result.cost) <=
-        params.typing_correction_literal_on_top_conversion_cost_max_diff()));
-
-  // Literal-at-least-second parameter is now defined as flag.
-  typing_correction_mixing_params.literal_at_least_second =
-      request.request()
-          .decoder_experiment_params()
-          .typing_correction_literal_at_least_second();
+  const TypingCorrectionMixingParams typing_correction_mixing_params =
+      GetTypingCorrectionMixingParams(request, *results,
+                                       typing_corrected_results);
 
   for (auto &result : typing_corrected_results) {
     results->emplace_back(std::move(result));
@@ -519,10 +529,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     ++added;
   }
 
+  MaybeApplyHomonymCorrection(request, segments);
+
   MaybeSuppressAggressiveTypingCorrection(
       request, typing_correction_mixing_params, segments);
-
-  MaybeApplyHomonymCorrection(request, segments);
 
   if (rescorer_ != nullptr && IsDebug(request)) {
     AddRescoringDebugDescription(segments);

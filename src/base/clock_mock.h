@@ -30,9 +30,9 @@
 #ifndef MOZC_BASE_CLOCK_MOCK_H_
 #define MOZC_BASE_CLOCK_MOCK_H_
 
-#include "base/clock.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "base/clock.h"
 
 namespace mozc {
 

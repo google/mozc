@@ -33,9 +33,9 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "absl/container/flat_hash_map.h"
+#include "base/port.h"
 #include "client/client_mock.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"

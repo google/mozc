@@ -36,9 +36,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "absl/strings/string_view.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/user_pos_interface.h"
 #include "testing/gunit.h"

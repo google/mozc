@@ -33,11 +33,11 @@
 #include <string>
 #include <utility>
 
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"

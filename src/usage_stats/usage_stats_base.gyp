@@ -41,7 +41,7 @@
         'usage_stats.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
         'gen_usage_stats_list#host',
@@ -69,7 +69,7 @@
             '<(gen_out_dir)/usage_stats_list.inc',
           ],
           'action': [
-            '<(python)', '<(mozc_src_dir)/build_tools/redirect.py',
+            '<(python)', '<(mozc_oss_src_dir)/build_tools/redirect.py',
             '<(gen_out_dir)/usage_stats_list.inc',
             'gen_stats_list.py',
             '<@(input_files)',
@@ -110,7 +110,7 @@
         'usage_stats_uploader.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
         'gen_usage_stats_list#host',
       ],

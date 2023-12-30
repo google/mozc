@@ -71,7 +71,7 @@
             'mozc_broker_main.cc',
           ],
           'dependencies': [
-            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_oss_src_dir)/base/base.gyp:base',
           ],
           'conditions': [
             ['OS=="win"', {
@@ -80,7 +80,7 @@
                 'prelauncher.cc',
               ],
               'dependencies': [
-                '<(mozc_src_dir)/base/base.gyp:crash_report_handler',
+                '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
                 '<(mozc_oss_src_dir)/client/client.gyp:client',
                 '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
                 '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',

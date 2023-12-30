@@ -38,7 +38,7 @@
         'louds.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'simple_succinct_bit_vector_index',
       ],
     },
@@ -50,8 +50,8 @@
         'louds_trie.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'bit_stream',
         'louds',
         'simple_succinct_bit_vector_index',
@@ -65,7 +65,7 @@
         'louds_trie_builder.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'bit_stream',
       ],
     },
@@ -78,7 +78,7 @@
         'bit_vector_based_array.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'bit_stream',
         'simple_succinct_bit_vector_index',
       ],
@@ -91,7 +91,7 @@
         'bit_vector_based_array_builder.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         'bit_stream',
       ],
     },
@@ -104,7 +104,7 @@
         'simple_succinct_bit_vector_index.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
     # Bit stream implementation for builders.
@@ -116,7 +116,7 @@
         'bit_stream.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
   ],

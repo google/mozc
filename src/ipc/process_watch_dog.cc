@@ -31,11 +31,11 @@
 
 #include <utility>
 
+#include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/thread.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
 
 #ifdef _WIN32
 // clang-format off

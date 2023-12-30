@@ -39,13 +39,13 @@
 #include <utility>
 #include <vector>
 
-#include "base/bits.h"
-#include "base/logging.h"
 #include "absl/numeric/bits.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
+#include "base/bits.h"
+#include "base/logging.h"
 
 namespace mozc {
 namespace storage {

@@ -42,13 +42,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/file/temp_dir.h"
-#include "base/file_stream.h"
-#include "base/init_mozc.h"
-#include "base/logging.h"
-#include "base/status.h"
-#include "base/strings/japanese.h"
-#include "base/util.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
@@ -58,6 +51,13 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/file/temp_dir.h"
+#include "base/file_stream.h"
+#include "base/init_mozc.h"
+#include "base/logging.h"
+#include "base/status.h"
+#include "base/strings/japanese.h"
+#include "base/util.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "rewriter/dictionary_generator.h"

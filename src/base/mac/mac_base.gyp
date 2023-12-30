@@ -41,7 +41,7 @@
         'mac_util_main.cc',
       ],
       'dependencies': [
-        '../base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
   ],

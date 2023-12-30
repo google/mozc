@@ -31,8 +31,8 @@
 
 #include <cstdint>
 
-#include "base/clock.h"
 #include "absl/time/time.h"
+#include "base/clock.h"
 
 namespace mozc {
 

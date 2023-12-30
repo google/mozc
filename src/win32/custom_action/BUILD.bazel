@@ -27,12 +27,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("//bazel:stubs.bzl", "lexan")
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
     "mozc_cc_binary",
 )
-load("//bazel:stubs.bzl", "lexan")
 
 mozc_cc_binary(
     name = "custom_action",

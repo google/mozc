@@ -42,10 +42,10 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/number_util.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 
 #ifndef NDEBUG
 #include "absl/strings/str_cat.h"

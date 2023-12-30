@@ -32,8 +32,8 @@
 #include <sstream>
 #include <string>
 
-#include "base/init_mozc.h"
 #include "absl/flags/flag.h"
+#include "base/init_mozc.h"
 #include "composer/internal/composition.h"
 #include "composer/table.h"
 

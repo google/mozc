@@ -35,11 +35,11 @@
 #include <optional>
 #include <string>
 
-#include "base/logging.h"
-#include "base/util.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/util.h"
 
 namespace mozc::composer::internal {
 namespace {

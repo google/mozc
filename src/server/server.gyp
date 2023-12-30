@@ -47,7 +47,7 @@
         'mozc_server_main.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/session/session.gyp:session',
         'mozc_server_lib',
@@ -100,7 +100,7 @@
         'mozc_server.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:crash_report_handler',
+        '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
         '<(mozc_oss_src_dir)/session/session.gyp:session_server',
         '<(mozc_src_dir)/protocol/protocol.gyp:state_proto',
         '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
@@ -113,7 +113,7 @@
         'mozc_rpc_server_main.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/session/session.gyp:session_handler',
         '<(mozc_oss_src_dir)/session/session.gyp:session_server',
@@ -178,7 +178,7 @@
                 '<(gen_out_dir)/Info.plist',
               ],
               'action': [
-                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist.py',
+                '<(python)', '<(mozc_oss_src_dir)/build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Info.plist',
                 '--input', 'Info.plist',
                 '--version_file', '<(mozc_src_dir)/mozc_version.txt',

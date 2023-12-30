@@ -42,8 +42,8 @@
 #include <string_view>
 #include <utility>
 
-#include "base/coordinates.h"
 #include "absl/types/span.h"
+#include "base/coordinates.h"
 
 namespace mozc {
 namespace renderer {

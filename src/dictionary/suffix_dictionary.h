@@ -32,8 +32,8 @@
 
 #include <cstdint>
 
-#include "base/container/serialized_string_array.h"
 #include "absl/strings/string_view.h"
+#include "base/container/serialized_string_array.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {

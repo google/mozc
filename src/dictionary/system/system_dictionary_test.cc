@@ -40,8 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/file/temp_dir.h"
-#include "base/file_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/container/btree_set.h"
@@ -50,6 +48,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "base/file/temp_dir.h"
+#include "base/file_util.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"

@@ -32,11 +32,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace internal {

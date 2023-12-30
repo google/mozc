@@ -31,12 +31,12 @@
 
 #include <cstdint>
 
-#include "base/config_file_stream.h"
-#include "base/file_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "base/config_file_stream.h"
+#include "base/file_util.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "prediction/user_history_predictor.h"

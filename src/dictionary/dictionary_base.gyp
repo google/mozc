@@ -45,10 +45,10 @@
         'text_dictionary_loader.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:multifile',
-        '<(mozc_src_dir)/base/base.gyp:number_util',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:multifile',
+        '<(mozc_oss_src_dir)/base/base.gyp:number_util',
         'pos_matcher',
       ],
     },
@@ -57,7 +57,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'sources': [
-        '<(mozc_src_dir)/build_tools/code_generator_util.py',
+        '<(mozc_oss_src_dir)/build_tools/code_generator_util.py',
         'pos_util.py',
       ],
     },
@@ -111,8 +111,8 @@
         'user_pos.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
     {
@@ -120,7 +120,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'sources': [
-        '<(mozc_src_dir)/build_tools/code_generator_util.py',
+        '<(mozc_oss_src_dir)/build_tools/code_generator_util.py',
         'gen_pos_map.py',
       ],
 
@@ -157,8 +157,8 @@
         'suppression_dictionary.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
-        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
       ],
     },
     {
@@ -174,12 +174,12 @@
         'user_dictionary_util.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/base/absl.gyp:absl_status',
-        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
-        '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/base/base.gyp:config_file_stream',
-        '<(mozc_src_dir)/base/base.gyp:number_util',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:config_file_stream',
+        '<(mozc_oss_src_dir)/base/base.gyp:number_util',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:user_dictionary_storage_proto',

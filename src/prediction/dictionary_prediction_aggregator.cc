@@ -40,16 +40,16 @@
 #include <utility>
 #include <vector>
 
-#include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/number_util.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/number_util.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"

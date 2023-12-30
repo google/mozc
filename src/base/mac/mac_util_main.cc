@@ -32,10 +32,10 @@
 #include <string>
 #include <vector>
 
+#include "absl/flags/flag.h"
 #include "base/init_mozc.h"
 #include "base/mac/mac_util.h"
 #include "base/util.h"
-#include "absl/flags/flag.h"
 
 ABSL_FLAG(bool, label_for_suffix, false,
           "call GetLabelForSuffix when specified");

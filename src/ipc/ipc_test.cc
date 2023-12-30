@@ -34,10 +34,10 @@
 #include <string>
 #include <vector>
 
-#include "base/thread.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "base/thread.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

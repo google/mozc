@@ -33,9 +33,9 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "absl/strings/string_view.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 

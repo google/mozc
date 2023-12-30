@@ -34,8 +34,8 @@
 #include <string>
 #include <utility>
 
-#include "base/util.h"
 #include "absl/strings/string_view.h"
+#include "base/util.h"
 
 namespace mozc {
 namespace {

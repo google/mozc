@@ -86,9 +86,14 @@ enum EmojiVersion : uint32_t {
 // be search by binary search.
 //
 // The following iterator class can be used to iterate over token array.
-class EmojiDataIterator
-    : public std::iterator<std::random_access_iterator_tag, uint32_t> {
+class EmojiDataIterator {
  public:
+  using iterator_category = std::random_access_iterator_tag;
+  using value_type = uint32_t;
+  using difference_type = std::ptrdiff_t;
+  using pointer = uint32_t *;
+  using reference = uint32_t &;
+
   static constexpr size_t kEmojiDataByteLength = 28;
 
   EmojiDataIterator() : ptr_(nullptr) {}

@@ -34,9 +34,9 @@
 #include <string>
 #include <variant>
 
-#include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
+#include "base/port.h"
 #include "renderer/renderer_interface.h"
 #include "unix/ibus/candidate_window_handler_interface.h"
 #include "unix/ibus/ibus_wrapper.h"

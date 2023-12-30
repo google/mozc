@@ -50,10 +50,10 @@
 #include <sstream>
 #include <string>
 
+#include "protocol/config.pb.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/run_level.h"
-#include "protocol/config.pb.h"
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "config/stats_config_util.h"

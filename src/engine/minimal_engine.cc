@@ -34,9 +34,9 @@
 #include <string>
 #include <vector>
 
-#include "base/strings/assign.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/strings/assign.h"
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"

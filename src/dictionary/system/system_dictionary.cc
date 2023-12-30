@@ -58,14 +58,14 @@
 #include <utility>
 #include <vector>
 
-#include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/mmap.h"
-#include "base/util.h"
 #include "absl/container/btree_set.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/mmap.h"
+#include "base/util.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"

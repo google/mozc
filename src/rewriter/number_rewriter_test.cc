@@ -34,13 +34,13 @@
 #include <memory>
 #include <string>
 
-#include "base/logging.h"
-#include "base/number_util.h"
-#include "base/strings/assign.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/number_util.h"
+#include "base/strings/assign.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"

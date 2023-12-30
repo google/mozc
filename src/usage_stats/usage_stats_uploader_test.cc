@@ -32,8 +32,8 @@
 #include <cstdint>
 #include <string>
 
-#include "base/version.h"
 #include "absl/strings/string_view.h"
+#include "base/version.h"
 #include "storage/registry.h"
 #include "storage/tiny_storage.h"
 #include "testing/gunit.h"

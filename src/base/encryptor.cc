@@ -35,13 +35,13 @@
 #include <string>
 #include <utility>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/password_manager.h"
 #include "base/random.h"
 #include "base/unverified_aes256.h"
 #include "base/unverified_sha1.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 
 #if defined(_WIN32)
 // clang-format off
@@ -52,8 +52,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "base/mac/mac_util.h"
 #include "absl/strings/str_format.h"
+#include "base/mac/mac_util.h"
 #else  // Other platforms
 #include <string.h>
 #endif  // platforms (_WIN32, __APPLE__, ...)

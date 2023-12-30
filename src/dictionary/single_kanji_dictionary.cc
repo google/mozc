@@ -30,17 +30,19 @@
 #include "dictionary/single_kanji_dictionary.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/serialized_dictionary.h"
 
@@ -54,9 +56,14 @@ namespace {
 // iter + 2 -> array[2 * N]
 // ...
 template <size_t N>
-class Uint32ArrayIterator
-    : public std::iterator<std::random_access_iterator_tag, uint32_t> {
+class Uint32ArrayIterator {
  public:
+  using iterator_category = std::random_access_iterator_tag;
+  using value_type = uint32_t;
+  using difference_type = std::ptrdiff_t;
+  using pointer = uint32_t *;
+  using reference = uint32_t &;
+
   explicit Uint32ArrayIterator(const uint32_t *ptr) : ptr_(ptr) {}
 
   uint32_t operator*() const { return *ptr_; }

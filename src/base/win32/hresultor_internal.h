@@ -36,8 +36,8 @@
 #include <type_traits>
 #include <utility>
 
-#include "base/win32/hresult.h"
 #include "absl/base/attributes.h"
+#include "base/win32/hresult.h"
 
 namespace mozc::win32 {
 

@@ -58,12 +58,12 @@
 #ifdef __ANDROID__
 #include "base/const.h"
 #endif  // __ANDROID__
-#include "base/clock.h"
-#include "base/singleton.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "base/clock.h"
+#include "base/singleton.h"
 
 ABSL_FLAG(bool, colored_log, true,
           "Enables colored log messages on tty devices");

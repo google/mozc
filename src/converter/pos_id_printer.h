@@ -34,10 +34,10 @@
 
 #include <string>
 
-#include "base/file_stream.h"
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
+#include "base/file_stream.h"
 
 namespace mozc {
 namespace internal {

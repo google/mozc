@@ -39,10 +39,10 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/util.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
+#include "base/util.h"
 
 namespace mozc {
 

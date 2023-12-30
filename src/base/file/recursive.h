@@ -30,8 +30,8 @@
 #ifndef MOZC_BASE_FILE_RECURSIVE_H_
 #define MOZC_BASE_FILE_RECURSIVE_H_
 
-#include "base/strings/zstring_view.h"
 #include "absl/status/status.h"
+#include "base/strings/zstring_view.h"
 
 namespace mozc::file {
 

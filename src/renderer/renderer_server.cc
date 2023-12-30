@@ -34,9 +34,6 @@
 #include <memory>
 #include <string>
 
-#include "base/const.h"
-#include "base/logging.h"
-#include "base/system_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
@@ -44,6 +41,9 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "base/const.h"
+#include "base/logging.h"
+#include "base/system_util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"

@@ -35,8 +35,8 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
 #include "absl/strings/string_view.h"
+#include "base/logging.h"
 #include "converter/connector.h"
 #include "converter/immutable_converter.h"
 #include "converter/lattice.h"

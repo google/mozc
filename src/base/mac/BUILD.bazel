@@ -37,9 +37,7 @@ load(
     "mozc_select",
 )
 
-package(
-    default_visibility = ["//:__subpackages__"],
-)
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_objc_library(
     name = "mac_process",
