@@ -142,7 +142,7 @@ TEST_F(ComTest, ComQuery) {
   EXPECT_EQ(mock2->Test2(), S_FALSE);
   EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 
-  EXPECT_EQ(ComQueryHR<IShellView>(mock2).hr(), E_NOINTERFACE);
+  EXPECT_EQ(ComQueryHR<IShellView>(mock2).error(), E_NOINTERFACE);
   EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 }
 

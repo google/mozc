@@ -48,7 +48,7 @@ bool TipStatus::IsOpen(ITfThreadMgr *thread_mgr) {
   HResultOr<wil::unique_variant> var =
       TipCompartmentUtil::Get(thread_mgr, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE);
 
-  if (!var.ok()) {
+  if (!var.has_value()) {
     return false;
   }
   // Open/Close compartment should be Int32 (I4).
@@ -60,7 +60,7 @@ bool TipStatus::IsDisabledContext(ITfContext *context) {
   // configuration of this context.
   HResultOr<wil::unique_variant> var =
       TipCompartmentUtil::Get(context, GUID_COMPARTMENT_KEYBOARD_DISABLED);
-  if (!var.ok()) {
+  if (!var.has_value()) {
     return false;
   }
   // Disabled compartment should be Int32 (I4).
@@ -72,7 +72,7 @@ bool TipStatus::IsEmptyContext(ITfContext *context) {
   // configuration of this context.
   HResultOr<wil::unique_variant> var =
       TipCompartmentUtil::Get(context, GUID_COMPARTMENT_EMPTYCONTEXT);
-  if (!var.ok()) {
+  if (!var.has_value()) {
     return false;
   }
   // Empty context compartment should be Int32 (I4).
@@ -95,7 +95,7 @@ bool TipStatus::GetInputModeConversion(ITfThreadMgr *thread_mgr,
       TipCompartmentUtil::GetAndEnsureDataExists(
           thread_mgr, GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION, client_id,
           std::move(default_var));
-  if (!var.ok()) {
+  if (!var.has_value()) {
     return false;
   }
 
