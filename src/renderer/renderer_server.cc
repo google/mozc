@@ -53,6 +53,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include "base/win32/win_util.h"
 #endif  // _WIN32
 
 // By default, mozc_renderer quits when user-input continues to be
@@ -101,7 +102,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
       return false;
     }
 
-    HWND target = reinterpret_cast<HWND>(receiver_handle_);
+    HWND target = WinUtil::DecodeWindowHandle(receiver_handle_);
     if (target == nullptr) {
       LOG(ERROR) << "target window is nullptr";
       return false;
