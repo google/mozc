@@ -147,12 +147,14 @@ absl::StatusOr<size_t> GetPageSize() {
 }
 
 constexpr std::pair<DWORD, DWORD> GetHiAndLo(size_t value) {
-  static_assert(sizeof(size_t) <= 2 * sizeof(DWORD), "");
-  const DWORD hi = sizeof(size_t) > sizeof(DWORD)
-                       ? (value >> (CHAR_BIT * sizeof(DWORD)))
-                       : 0;
-  const DWORD lo = value & std::numeric_limits<DWORD>::max();
-  return {hi, lo};
+  if constexpr (sizeof(size_t) <= sizeof(DWORD)) {
+    return {0, value};
+  } else {
+    static_assert(sizeof(size_t) <= 2 * sizeof(DWORD));
+    const DWORD hi = value >> (CHAR_BIT * sizeof(DWORD));
+    const DWORD lo = value & std::numeric_limits<DWORD>::max();
+    return {hi, lo};
+  }
 }
 
 absl::StatusOr<void *> MapFile(FileDescriptor fd, size_t offset, size_t size,
