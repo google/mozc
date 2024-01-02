@@ -47,6 +47,7 @@ mozc_cc_library(
         "//base:japanese_util",
         "//base:logging",
         "//base:util",
+        "//base:vlog",
         "//base/strings:assign",
         "//base/strings:unicode",
         "//composer/internal:composition",
@@ -60,7 +61,6 @@ mozc_cc_library(
         "//spelling:spellchecker_service_interface",
         "//testing:gunit_prod",
         "//transliteration",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ],
@@ -175,6 +175,7 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:util",
+        "//base:vlog",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/container:flat_hash_map",

@@ -41,6 +41,7 @@
 #include "base/logging.h"
 #include "base/mac/mac_util.h"
 #include "base/singleton.h"
+#include "base/vlog.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 
@@ -144,13 +145,14 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
     if (pid_data == nullptr ||
         launch_data_get_type(pid_data) != LAUNCH_DATA_INTEGER) {
       // PID information is unavailable, which means server is not running.
-      VLOG(2) << "Returned job is formatted wrongly: cannot find PID data.";
+      MOZC_VLOG(2)
+          << "Returned job is formatted wrongly: cannot find PID data.";
       launch_data_free(job);
       return false;
     }
 
-    VLOG(2) << "Server is running with PID "
-            << launch_data_get_integer(pid_data);
+    MOZC_VLOG(2) << "Server is running with PID "
+                 << launch_data_get_integer(pid_data);
     launch_data_free(job);
     return true;
   }

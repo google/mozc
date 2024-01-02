@@ -36,6 +36,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/thread.h"
+#include "base/vlog.h"
 
 #ifdef _WIN32
 // clang-format off
@@ -169,14 +170,14 @@ void ProcessWatchDog::ThreadMain() {
     // set handles
     DWORD size = 1;
     if (process_handle.get() != nullptr) {
-      VLOG(2) << "Inserting process handle";
+      MOZC_VLOG(2) << "Inserting process handle";
       handles[size] = process_handle.get();
       types[size] = SignalType::PROCESS_SIGNALED;
       ++size;
     }
 
     if (thread_handle.get() != nullptr) {
-      VLOG(2) << "Inserting thread handle";
+      MOZC_VLOG(2) << "Inserting thread handle";
       handles[size] = thread_handle.get();
       types[size] = SignalType::THREAD_SIGNALED;
       ++size;
@@ -188,21 +189,21 @@ void ProcessWatchDog::ThreadMain() {
     switch (result) {
       case WAIT_OBJECT_0:
       case WAIT_ABANDONED_0:
-        VLOG(2) << "event is signaled";
+        MOZC_VLOG(2) << "event is signaled";
         event_.ResetEvent();  // reset event to wait for the new request
         break;
       case WAIT_OBJECT_0 + 1:
       case WAIT_ABANDONED_0 + 1:
-        VLOG(2) << "handle 1 is signaled";
+        MOZC_VLOG(2) << "handle 1 is signaled";
         result_type = types[1];
         break;
       case WAIT_OBJECT_0 + 2:
       case WAIT_ABANDONED_0 + 2:
-        VLOG(2) << "handle 2 is signaled";
+        MOZC_VLOG(2) << "handle 2 is signaled";
         result_type = types[2];
         break;
       case WAIT_TIMEOUT:
-        VLOG(2) << "timeout is signaled";
+        MOZC_VLOG(2) << "timeout is signaled";
         result_type = SignalType::TIMEOUT;
         break;
       default:
@@ -211,7 +212,7 @@ void ProcessWatchDog::ThreadMain() {
     }
 
     if (result_type != SignalType::UNKNOWN) {
-      VLOG(1) << "Sending signal: " << static_cast<int>(result_type);
+      MOZC_VLOG(1) << "Sending signal: " << static_cast<int>(result_type);
       handler_(result_type);  // call signal handler
     }
   }

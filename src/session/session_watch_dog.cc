@@ -46,6 +46,7 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/thread.h"
+#include "base/vlog.h"
 #include "client/client.h"
 #include "client/client_interface.h"
 
@@ -112,27 +113,27 @@ void SessionWatchDog::ThreadMain() {
   absl::Time last_cleanup_time = Clock::GetAbslTime();
 
   while (true) {
-    VLOG(1) << "Start sleeping " << idle_interval;
+    MOZC_VLOG(1) << "Start sleeping " << idle_interval;
     if (stop_.WaitForNotificationWithTimeout(idle_interval)) {
-      VLOG(1) << "Received stop signal";
+      MOZC_VLOG(1) << "Received stop signal";
       return;
     }
-    VLOG(1) << "Finish sleeping " << idle_interval;
+    MOZC_VLOG(1) << "Finish sleeping " << idle_interval;
 
     int32_t cpu_loads_index = 0;
     for (absl::Duration n = absl::ZeroDuration(); n < cpu_check_interval;
          n += cpu_check_duration) {
       if (stop_.WaitForNotificationWithTimeout(cpu_check_duration)) {
-        VLOG(1) << "Received stop signal";
+        MOZC_VLOG(1) << "Received stop signal";
         return;
       }
       // save them in stack for debugging
       total_cpu_load = cpu_stats_->GetSystemCPULoad();
       current_process_cpu_load = cpu_stats_->GetCurrentProcessCPULoad();
-      VLOG(1) << "total=" << total_cpu_load
-              << " current=" << current_process_cpu_load
-              << " normalized_current="
-              << current_process_cpu_load / number_of_processors;
+      MOZC_VLOG(1) << "total=" << total_cpu_load
+                   << " current=" << current_process_cpu_load
+                   << " normalized_current="
+                   << current_process_cpu_load / number_of_processors;
       // subtract the CPU load of my process from total CPU load.
       // This is required for running stress test.
       const float extracted_cpu_load =
@@ -146,17 +147,17 @@ void SessionWatchDog::ThreadMain() {
     if (!CanSendCleanupCommand(
             absl::MakeSpan(cpu_loads).subspan(0, cpu_loads_index),
             current_cleanup_time, last_cleanup_time)) {
-      VLOG(1) << "CanSendCleanupCommand returned false";
+      MOZC_VLOG(1) << "CanSendCleanupCommand returned false";
       last_cleanup_time = current_cleanup_time;
       continue;
     }
 
     last_cleanup_time = current_cleanup_time;
 
-    VLOG(2) << "Sending Cleanup command";
+    MOZC_VLOG(2) << "Sending Cleanup command";
     client_->set_timeout(kCleanupTimeout);
     if (client_->Cleanup()) {
-      VLOG(2) << "Cleanup command succeeded";
+      MOZC_VLOG(2) << "Cleanup command succeeded";
       continue;
     }
 
@@ -168,11 +169,11 @@ void SessionWatchDog::ThreadMain() {
     client_->set_timeout(kPingTimeout);
     for (int i = 0; i < kPingTrial; ++i) {
       if (stop_.WaitForNotificationWithTimeout(kPingInterval)) {
-        VLOG(1) << "Received stop signal";
+        MOZC_VLOG(1) << "Received stop signal";
         return;
       }
       if (client_->PingServer()) {
-        VLOG(2) << "Ping command succeeded";
+        MOZC_VLOG(2) << "Ping command succeeded";
         failed = false;
         break;
       }
@@ -182,7 +183,7 @@ void SessionWatchDog::ThreadMain() {
 
     if (failed) {
       if (stop_.WaitForNotificationWithTimeout(absl::Milliseconds(100))) {
-        VLOG(1) << "Parent thread is already terminated";
+        MOZC_VLOG(1) << "Parent thread is already terminated";
         return;
       }
 #ifndef MOZC_NO_LOGGING
@@ -194,7 +195,7 @@ void SessionWatchDog::ThreadMain() {
       char user_name[32];
       const std::string tmp = SystemUtil::GetUserNameAsString();
       strncpy(user_name, tmp.c_str(), sizeof(user_name));
-      VLOG(1) << "user_name: " << user_name;
+      MOZC_VLOG(1) << "user_name: " << user_name;
 #endif  // !MOZC_NO_LOGGING
       LOG(FATAL) << "Cleanup commands failed. Rasing exception...";
     }
@@ -217,12 +218,12 @@ bool SessionWatchDog::CanSendCleanupCommand(
   const float latest_avg =
       std::accumulate(cpu_loads.begin(), cpu_loads.end(), 0.0) / latest_size;
 
-  VLOG(1) << "Average CPU load=" << all_avg
-          << " latest CPU load=" << latest_avg;
+  MOZC_VLOG(1) << "Average CPU load=" << all_avg
+               << " latest CPU load=" << latest_avg;
 
   if (all_avg > kMinimumAllCPULoad || latest_avg > kMinimumLatestCPULoad) {
-    VLOG(1) << "Don't send Cleanup command, since CPU load is too high: "
-            << all_avg << " " << latest_avg;
+    MOZC_VLOG(1) << "Don't send Cleanup command, since CPU load is too high: "
+                 << all_avg << " " << latest_avg;
     return false;
   }
 
@@ -230,12 +231,12 @@ bool SessionWatchDog::CanSendCleanupCommand(
   // is 2 * interval(), assume that the computer went to
   // suspend mode
   if ((current_cleanup_time - last_cleanup_time) > 2 * interval()) {
-    VLOG(1) << "Don't send cleanup because "
-            << "Server went to suspend mode.";
+    MOZC_VLOG(1) << "Don't send cleanup because "
+                 << "Server went to suspend mode.";
     return false;
   }
 
-  VLOG(2) << "CanSendCleanupCommand passed";
+  MOZC_VLOG(2) << "CanSendCleanupCommand passed";
   return true;
 }
 }  // namespace mozc

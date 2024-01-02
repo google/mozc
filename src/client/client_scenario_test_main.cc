@@ -52,6 +52,7 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "client/client.h"
 #include "composer/key_parser.h"
 #include "renderer/renderer_client.h"
@@ -144,22 +145,22 @@ int Loop(std::istream *input) {
       absl::SleepFor(absl::Milliseconds(absl::GetFlag(FLAGS_key_duration)));
 
       if (absl::GetFlag(FLAGS_test_testsendkey)) {
-        VLOG(2) << "Sending to Server: " << keys[i];
+        MOZC_VLOG(2) << "Sending to Server: " << keys[i];
         client.TestSendKey(keys[i], &output);
-        VLOG(2) << "Output of TestSendKey: " << MOZC_LOG_PROTOBUF(output);
+        MOZC_VLOG(2) << "Output of TestSendKey: " << MOZC_LOG_PROTOBUF(output);
         absl::SleepFor(absl::Milliseconds(10));
       }
 
-      VLOG(2) << "Sending to Server: " << keys[i];
+      MOZC_VLOG(2) << "Sending to Server: " << keys[i];
       client.SendKey(keys[i], &output);
-      VLOG(2) << "Output of SendKey: " << MOZC_LOG_PROTOBUF(output);
+      MOZC_VLOG(2) << "Output of SendKey: " << MOZC_LOG_PROTOBUF(output);
 
       if (renderer_client != nullptr) {
         renderer_command.set_type(commands::RendererCommand::UPDATE);
         renderer_command.set_visible(output.has_candidates());
         *renderer_command.mutable_output() = output;
-        VLOG(2) << "Sending to Renderer: "
-                << MOZC_LOG_PROTOBUF(renderer_command);
+        MOZC_VLOG(2) << "Sending to Renderer: "
+                     << MOZC_LOG_PROTOBUF(renderer_command);
         renderer_client->ExecCommand(renderer_command);
       }
     }

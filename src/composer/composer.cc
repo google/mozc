@@ -52,6 +52,7 @@
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/mode_switching_handler.h"
@@ -1105,7 +1106,7 @@ bool Composer::TransformCharactersForNumbers(std::string *query) {
 
   DCHECK_EQ(chars_len, char_scripts.size());
   if (!has_alphanumerics || !has_symbols) {
-    VLOG(1) << "The query contains neither alphanumeric nor symbol.";
+    MOZC_VLOG(1) << "The query contains neither alphanumeric nor symbol.";
     return false;
   }
 

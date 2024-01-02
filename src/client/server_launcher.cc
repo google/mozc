@@ -42,6 +42,7 @@
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
+#include "base/vlog.h"
 #include "client/client.h"
 #include "client/client_interface.h"
 #include "ipc/ipc.h"
@@ -87,7 +88,7 @@ const std::string LoadServerFlags() {
   if (ifs) {
     getline(ifs, flags);
   }
-  VLOG(1) << "New server flag: " << flags;
+  MOZC_VLOG(1) << "New server flag: " << flags;
   return flags;
 }
 #endif  // DEBUG
@@ -187,7 +188,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
 
   // maybe another process will launch mozc_server at the same time.
   if (client->PingServer()) {
-    VLOG(1) << "Another process has launched the server";
+    MOZC_VLOG(1) << "Another process has launched the server";
     return true;
   }
 
@@ -201,8 +202,8 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
                      << "ready within " << kServerWaitTimeout << " msec";
         break;
       case NamedEventListener::EVENT_SIGNALED:
-        VLOG(1) << kProductNameInEnglish << " is launched successfully "
-                << "within " << kServerWaitTimeout << " msec";
+        MOZC_VLOG(1) << kProductNameInEnglish << " is launched successfully "
+                     << "within " << kServerWaitTimeout << " msec";
         break;
       case NamedEventListener::PROCESS_SIGNALED:
         LOG(ERROR) << "Mozc server is terminated";

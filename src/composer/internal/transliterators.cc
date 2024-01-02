@@ -37,6 +37,7 @@
 #include "base/singleton.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/internal/transliterator_interface.h"
 #include "config/character_form_manager.h"
 
@@ -271,7 +272,7 @@ class FullAsciiTransliterator : public TransliteratorInterface {
 // static
 const TransliteratorInterface *Transliterators::GetTransliterator(
     Transliterator transliterator) {
-  VLOG(2) << "Transliterators::GetTransliterator:" << transliterator;
+  MOZC_VLOG(2) << "Transliterators::GetTransliterator:" << transliterator;
   DCHECK(transliterator != LOCAL);
   switch (transliterator) {
     case CONVERSION_STRING:

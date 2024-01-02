@@ -46,6 +46,7 @@
 #include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
@@ -9106,7 +9107,7 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
   EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
   EXPECT_EQ(command.output().result().value(), "m");
   EXPECT_EQ(GetComposition(command), "");
-  VLOG(0) << MOZC_LOG_PROTOBUF(command);
+  MOZC_VLOG(0) << MOZC_LOG_PROTOBUF(command);
   EXPECT_EQ(command.output().preedit().cursor(), 0);
   EXPECT_TRUE(command.output().consumed());
 

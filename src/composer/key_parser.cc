@@ -44,6 +44,7 @@
 #include "absl/types/span.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 
 namespace mozc {
 namespace {
@@ -64,7 +65,7 @@ class KeyParserData {
  private:
   void InitData() {
     //  CHECK(keymap::KeyType::NUM_KEYTYPES < static_cast<int32_t>(' '));
-    VLOG(1) << "Init KeyParser Data";
+    MOZC_VLOG(1) << "Init KeyParser Data";
 
     modifiers_map_["ctrl"] = {KeyEvent::CTRL};
     modifiers_map_["control"] = {KeyEvent::CTRL};

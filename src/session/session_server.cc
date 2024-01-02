@@ -40,6 +40,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "engine/engine_factory.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
@@ -113,7 +114,7 @@ bool SessionServer::Process(absl::string_view request, std::string *response) {
   }
 
   // debug message
-  VLOG(2) << MOZC_LOG_PROTOBUF(command);
+  MOZC_VLOG(2) << MOZC_LOG_PROTOBUF(command);
 
   return true;
 }
