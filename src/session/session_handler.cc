@@ -40,10 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
-#include "protocol/engine_builder.pb.h"
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
@@ -59,6 +55,10 @@
 #include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "protocol/engine_builder.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "session/common.h"
 #include "session/internal/keymap.h"
 #include "session/session.h"

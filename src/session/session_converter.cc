@@ -38,9 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -52,6 +49,9 @@
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"

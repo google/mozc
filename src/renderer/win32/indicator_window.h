@@ -32,8 +32,8 @@
 
 #include <memory>
 
-#include "protocol/renderer_command.pb.h"
 #include "base/coordinates.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_renderer_util.h"
 
 namespace mozc {

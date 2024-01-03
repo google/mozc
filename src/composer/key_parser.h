@@ -34,9 +34,9 @@
 
 #include <string>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 

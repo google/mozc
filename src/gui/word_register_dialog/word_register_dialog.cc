@@ -51,7 +51,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/time/time.h"
 #include "base/const.h"
 #include "base/logging.h"
@@ -62,6 +61,7 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "gui/base/util.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 namespace gui {

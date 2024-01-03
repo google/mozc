@@ -42,7 +42,6 @@
 #include <unistd.h>
 #endif  // _WIN32
 
-#include "protocol/renderer_command.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -50,6 +49,7 @@
 #include "base/logging.h"
 #include "base/vlog.h"
 #include "client/client.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "session/random_keyevents_generator.h"
 

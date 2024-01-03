@@ -32,7 +32,6 @@
 #include <memory>
 #include <string>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/util.h"
@@ -41,6 +40,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
+#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"

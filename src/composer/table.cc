@@ -40,8 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
@@ -52,6 +50,8 @@
 #include "base/util.h"
 #include "composer/internal/special_key.h"
 #include "data_manager/data_manager_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace composer {

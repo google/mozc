@@ -37,11 +37,11 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/container/flat_hash_set.h"
 #include "base/config_file_stream.h"
 #include "composer/key_parser.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

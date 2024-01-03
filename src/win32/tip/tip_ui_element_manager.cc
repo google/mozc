@@ -36,11 +36,11 @@
 #include <cstdint>
 #include <utility>
 
+#include "absl/container/flat_hash_map.h"
+#include "base/win32/com.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
-#include "absl/container/flat_hash_map.h"
-#include "base/win32/com.h"
 #include "win32/base/input_state.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"

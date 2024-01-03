@@ -34,7 +34,6 @@
 #include <memory>
 #include <string>
 
-#include "protocol/config.pb.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -51,6 +50,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/variants_rewriter.h"

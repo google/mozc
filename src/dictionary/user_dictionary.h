@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
@@ -43,6 +42,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_pos_interface.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 
 namespace mozc {

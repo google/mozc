@@ -45,7 +45,7 @@
         '<(mozc_oss_src_dir)/base/base.gyp:config_file_stream',
         '<(mozc_oss_src_dir)/base/base.gyp:hash',
         '<(mozc_oss_src_dir)/base/base.gyp:version',
-        '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
       ],
     },
     {
@@ -70,7 +70,7 @@
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/base/base.gyp:config_file_stream',
         '<(mozc_oss_src_dir)/base/base.gyp:japanese_util',
-        '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         # storage.gyp:storage is depended by character_form_manager.
         # TODO(komatsu): delete this line.
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',

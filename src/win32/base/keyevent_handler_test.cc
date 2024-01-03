@@ -42,7 +42,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/version.h"
@@ -51,6 +50,7 @@
 #include "composer/key_event_util.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
+#include "protocol/commands.pb.h"
 #include "session/key_info_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

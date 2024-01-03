@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/strings/assign.h"
@@ -45,6 +44,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "prediction/result.h"
+#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 
 namespace mozc::prediction {

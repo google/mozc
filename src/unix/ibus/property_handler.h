@@ -33,8 +33,8 @@
 #include <memory>
 #include <vector>
 
-#include "protocol/commands.pb.h"
 #include "client/client.h"
+#include "protocol/commands.pb.h"
 #include "unix/ibus/ibus_header.h"
 #include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/message_translator.h"

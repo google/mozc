@@ -43,8 +43,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/algorithm/container.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
@@ -60,6 +58,8 @@
 #include "base/util.h"
 #include "client/client.h"
 #include "config/config_handler.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/random_keyevents_generator.h"
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");

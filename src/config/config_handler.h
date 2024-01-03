@@ -35,8 +35,8 @@
 #include <memory>
 #include <string>
 
-#include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace config {

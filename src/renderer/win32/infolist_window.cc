@@ -33,14 +33,14 @@
 
 #include <sstream>
 
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
-#include "protocol/renderer_command.pb.h"
-#include "protocol/renderer_style.pb.h"
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/renderer_command.pb.h"
+#include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/win32/text_renderer.h"
 

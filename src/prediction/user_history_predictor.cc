@@ -43,8 +43,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
 #include "absl/strings/ascii.h"
@@ -70,6 +68,8 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/user_history_predictor.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/variants_rewriter.h"
 #include "storage/encrypted_string_storage.h"

@@ -38,8 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/status/statusor.h"
@@ -66,6 +64,8 @@
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
 #include "engine/engine_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 

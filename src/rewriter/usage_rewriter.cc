@@ -35,7 +35,6 @@
 #include <string>
 #include <utility>
 
-#include "protocol/config.pb.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "base/container/serialized_string_array.h"
@@ -45,6 +44,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/usage_rewriter.h"
 

@@ -32,10 +32,10 @@
 #include <memory>
 #include <string>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 
 namespace mozc {

@@ -33,8 +33,6 @@
 #include <string>
 #include <utility>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "composer/composer.h"
@@ -47,6 +45,8 @@
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"

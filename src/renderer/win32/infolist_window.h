@@ -44,11 +44,11 @@
 #include <memory>
 #include <string>
 
-#include "protocol/renderer_command.pb.h"
-#include "protocol/renderer_style.pb.h"
 #include "base/const.h"
 #include "base/coordinates.h"
 #include "client/client_interface.h"
+#include "protocol/renderer_command.pb.h"
+#include "protocol/renderer_style.pb.h"
 #include "renderer/win32/text_renderer.h"
 
 namespace mozc {

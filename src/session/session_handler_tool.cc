@@ -36,9 +36,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -62,6 +59,9 @@
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/user_history_predictor.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/request_test_util.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"

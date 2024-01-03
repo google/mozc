@@ -35,8 +35,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -51,6 +49,8 @@
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_mock.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/gunit.h"
 
 namespace mozc {

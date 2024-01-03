@@ -46,7 +46,7 @@
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/base/base.gyp:serialized_string_array',
         '<(mozc_oss_src_dir)/base/base.gyp:version',
-        '<(mozc_src_dir)/protocol/protocol.gyp:segmenter_data_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:segmenter_data_proto',
         'dataset_reader',
         'serialized_dictionary',
       ],

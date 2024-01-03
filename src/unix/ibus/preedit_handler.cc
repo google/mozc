@@ -31,8 +31,8 @@
 
 #include <string>
 
-#include "protocol/commands.pb.h"
 #include "base/logging.h"
+#include "protocol/commands.pb.h"
 #include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {

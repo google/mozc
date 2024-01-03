@@ -33,8 +33,8 @@
 #include <cstddef>
 #include <string>
 
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/strings/string_view.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 

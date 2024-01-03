@@ -34,10 +34,10 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "data_manager/serialized_dictionary.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace {

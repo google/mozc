@@ -37,13 +37,13 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/rewriter_util.h"

@@ -38,9 +38,6 @@
 #include <sstream>
 #include <string>
 
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -53,6 +50,9 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "client/client.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "renderer/renderer_client.h"
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/engine_registrar.h"

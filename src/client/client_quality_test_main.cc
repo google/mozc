@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "evaluation/scorer.h"
-#include "protocol/commands.pb.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_join.h"
@@ -54,6 +53,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "client/client.h"
+#include "protocol/commands.pb.h"
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");
 ABSL_FLAG(std::string, log_path, "", "specify log output file path");

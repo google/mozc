@@ -36,7 +36,6 @@
 #include <string>
 #include <utility>
 
-#include "protocol/config.pb.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -51,6 +50,7 @@
 #include "base/strings/assign.h"
 #include "base/system_util.h"
 #include "base/version.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace config {

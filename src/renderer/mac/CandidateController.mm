@@ -29,8 +29,8 @@
 
 #import "renderer/mac/CandidateView.h"
 
-#include "protocol/commands.pb.h"
 #include "base/coordinates.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/CandidateController.h"
 #include "renderer/mac/CandidateWindow.h"
 #include "renderer/mac/InfolistWindow.h"

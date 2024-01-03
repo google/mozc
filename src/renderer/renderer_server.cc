@@ -34,9 +34,6 @@
 #include <memory>
 #include <string>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
-#include "protocol/renderer_command.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -49,6 +46,9 @@
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "ipc/process_watch_dog.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 
 #ifdef _WIN32

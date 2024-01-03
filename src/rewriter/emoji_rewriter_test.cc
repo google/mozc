@@ -35,8 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
@@ -46,6 +44,8 @@
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/variants_rewriter.h"
 #include "testing/gunit.h"

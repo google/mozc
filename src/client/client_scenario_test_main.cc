@@ -39,8 +39,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/renderer_command.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
@@ -55,6 +53,8 @@
 #include "base/vlog.h"
 #include "client/client.h"
 #include "composer/key_parser.h"
+#include "protocol/commands.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");

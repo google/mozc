@@ -32,8 +32,6 @@
 #include <random>
 #include <string>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
 #include "base/random.h"
 #include "composer/composer.h"
@@ -42,6 +40,8 @@
 #include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/session_converter.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

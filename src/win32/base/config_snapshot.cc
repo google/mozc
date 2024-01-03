@@ -31,10 +31,10 @@
 
 #include <algorithm>
 
-#include "protocol/config.pb.h"
 #include "base/win32/win_util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace win32 {

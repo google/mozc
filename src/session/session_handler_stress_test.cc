@@ -36,9 +36,9 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
 #include "absl/flags/flag.h"
 #include "engine/engine_factory.h"
+#include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "session/request_test_util.h"
 #include "session/session_handler_tool.h"

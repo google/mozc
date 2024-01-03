@@ -33,8 +33,8 @@
 #include <QTableWidget>
 #include <memory>
 
-#include "protocol/config.pb.h"
 #include "gui/config_dialog/combobox_delegate.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace gui {

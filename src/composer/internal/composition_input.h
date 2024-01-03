@@ -33,10 +33,10 @@
 #include <string>
 #include <utility>
 
-#include "protocol/commands.pb.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/strings/assign.h"
 #include "composer/table.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace composer {

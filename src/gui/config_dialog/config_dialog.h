@@ -38,9 +38,9 @@
 #include <memory>
 #include <string>
 
-#include "protocol/config.pb.h"
 #include "client/client_interface.h"
 #include "gui/config_dialog/ui_config_dialog.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace gui {

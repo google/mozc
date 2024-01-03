@@ -31,12 +31,12 @@
 
 #include <string>
 
-#include "protocol/commands.pb.h"
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "client/client.h"  // For client interface
+#include "protocol/commands.pb.h"
 #include "unix/ibus/ibus_header.h"
 #include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/message_translator.h"

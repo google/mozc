@@ -37,11 +37,11 @@
 #include <iterator>
 #include <string>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/CandidateController.h"
 #include "renderer/mac/mac_server_send_command.h"
 

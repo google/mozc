@@ -50,7 +50,6 @@
 #include <sstream>
 #include <string>
 
-#include "protocol/config.pb.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/run_level.h"
@@ -60,6 +59,7 @@
 #include "gui/base/util.h"
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
+#include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 
 #ifdef __APPLE__

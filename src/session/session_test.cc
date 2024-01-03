@@ -36,9 +36,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -59,6 +56,9 @@
 #include "engine/engine_mock.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/internal/ime_context.h"

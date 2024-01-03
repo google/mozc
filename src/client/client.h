@@ -38,8 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/run_level.h"
@@ -47,6 +45,8 @@
 #include "client/client_interface.h"
 #include "composer/key_event_util.h"
 #include "ipc/ipc.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/gunit_prod.h"
 // for FRIEND_TEST()
 

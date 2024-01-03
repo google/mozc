@@ -33,7 +33,6 @@
 #include <ostream>
 #include <string>
 
-#include "protocol/commands.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "base/file_stream.h"
@@ -46,6 +45,7 @@
 #include "composer/key_parser.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
+#include "protocol/commands.pb.h"
 #include "session/session.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");

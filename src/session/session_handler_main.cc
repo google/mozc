@@ -64,14 +64,14 @@ SHOW_LOG_BY_VALUE       ございました
 #include "base/init_mozc.h"
 #include "base/protobuf/message.h"
 #include "base/system_util.h"
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/numbers.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
 #include "session/session_handler_tool.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");

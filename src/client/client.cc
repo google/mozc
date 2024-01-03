@@ -39,8 +39,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -57,6 +55,8 @@
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/key_info_util.h"
 
 #ifdef _WIN32
