@@ -32,11 +32,11 @@
 #include <memory>
 #include <string>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/util.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace win32 {

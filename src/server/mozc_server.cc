@@ -47,6 +47,7 @@
 #include "base/run_level.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
+#include "base/vlog.h"
 #include "config/stats_config_util.h"
 #include "session/session_server.h"
 
@@ -90,7 +91,7 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
   mozc::InitMozc(arg0, argc, argv);
 
   if (run_level == mozc::RunLevel::RESTRICTED) {
-    VLOG(1) << "Mozc server starts with timeout mode";
+    MOZC_VLOG(1) << "Mozc server starts with timeout mode";
     absl::SetFlag(&FLAGS_restricted, true);
   }
 }

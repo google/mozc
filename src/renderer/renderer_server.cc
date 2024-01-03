@@ -34,9 +34,6 @@
 #include <memory>
 #include <string>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
-#include "protocol/renderer_command.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -49,10 +46,14 @@
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "ipc/process_watch_dog.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 
 #ifdef _WIN32
 #include <windows.h>
+#include "base/win32/win_util.h"
 #endif  // _WIN32
 
 // By default, mozc_renderer quits when user-input continues to be
@@ -101,7 +102,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
       return false;
     }
 
-    HWND target = reinterpret_cast<HWND>(receiver_handle_);
+    HWND target = WinUtil::DecodeWindowHandle(receiver_handle_);
     if (target == nullptr) {
       LOG(ERROR) << "target window is nullptr";
       return false;

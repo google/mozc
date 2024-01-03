@@ -31,11 +31,11 @@
 
 #include <memory>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
 #include "engine/mock_data_engine_factory.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

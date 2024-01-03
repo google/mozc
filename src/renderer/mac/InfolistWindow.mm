@@ -32,10 +32,10 @@
 
 #import "InfolistView.h"
 
-#include "protocol/commands.pb.h"
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "client/client_interface.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/InfolistWindow.h"
 
 using mozc::commands::Candidates;

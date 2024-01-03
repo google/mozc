@@ -41,6 +41,7 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "base/vlog.h"
 
 #ifdef _WIN32
 #include <sddl.h>
@@ -126,7 +127,7 @@ NamedEventListener::NamedEventListener(const char *name)
     is_owner_ = true;
   }
 
-  VLOG(1) << "NamedEventListener " << name << " is created";
+  MOZC_VLOG(1) << "NamedEventListener " << name << " is created";
 }
 
 NamedEventListener::~NamedEventListener() {
@@ -259,7 +260,7 @@ NamedEventListener::NamedEventListener(const char *name)
     return;
   }
 
-  VLOG(1) << "NamedEventNotifier " << name << " is created";
+  MOZC_VLOG(1) << "NamedEventNotifier " << name << " is created";
 }
 
 NamedEventListener::~NamedEventListener() {

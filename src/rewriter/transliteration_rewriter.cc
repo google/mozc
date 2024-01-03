@@ -35,7 +35,6 @@
 #include <type_traits>
 #include <vector>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
@@ -45,6 +44,7 @@
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
+#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 // For T13n normalize
 #include "transliteration/transliteration.h"

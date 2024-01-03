@@ -35,7 +35,6 @@
 #include <string>
 #include <utility>
 
-#include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -49,6 +48,7 @@
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"

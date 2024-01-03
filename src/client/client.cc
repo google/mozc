@@ -39,8 +39,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -53,9 +51,12 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
+#include "base/vlog.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/key_info_util.h"
 
 #ifdef _WIN32
@@ -248,7 +249,7 @@ void Client::PlaybackHistory() {
   }
 
   commands::Output output;
-  VLOG(1) << "Playback history: size=" << history_inputs_.size();
+  MOZC_VLOG(1) << "Playback history: size=" << history_inputs_.size();
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
     history_inputs_[i].set_id(id_);
     if (!Call(history_inputs_[i], &output)) {
@@ -633,7 +634,7 @@ bool Client::CallAndCheckVersion(const commands::Input &input,
 }
 
 bool Client::Call(const commands::Input &input, commands::Output *output) {
-  VLOG(2) << "commands::Input: " << std::endl << MOZC_LOG_PROTOBUF(input);
+  MOZC_VLOG(2) << "commands::Input: " << std::endl << MOZC_LOG_PROTOBUF(input);
 
   // don't repeat Call() if the status is either
   // SERVER_FATAL, SERVER_TIMEOUT, or SERVER_BROKEN_MESSAGE
@@ -718,7 +719,8 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
          server_status_ == SERVER_UNKNOWN /* during StartServer() */)
       << " " << server_status_;
 
-  VLOG(2) << "commands::Output: " << std::endl << MOZC_LOG_PROTOBUF(*output);
+  MOZC_VLOG(2) << "commands::Output: " << std::endl
+               << MOZC_LOG_PROTOBUF(*output);
 
   return true;
 }

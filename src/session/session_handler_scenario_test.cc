@@ -33,7 +33,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -42,6 +41,7 @@
 #include "base/file_util.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
+#include "protocol/commands.pb.h"
 #include "session/request_test_util.h"
 #include "session/session_handler_test_util.h"
 #include "session/session_handler_tool.h"

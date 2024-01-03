@@ -40,10 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
-#include "protocol/engine_builder.pb.h"
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
@@ -51,6 +47,7 @@
 #include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/stopwatch.h"
+#include "base/vlog.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
@@ -58,6 +55,10 @@
 #include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "protocol/engine_builder.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "session/common.h"
 #include "session/internal/keymap.h"
 #include "session/session.h"
@@ -159,7 +160,7 @@ void SessionHandler::Init(std::unique_ptr<EngineInterface> engine,
   key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
 
   if (absl::GetFlag(FLAGS_restricted)) {
-    VLOG(1) << "Server starts with restricted mode";
+    MOZC_VLOG(1) << "Server starts with restricted mode";
     // --restricted is almost always specified when mozc_client is inside Job.
     // The typical case is Startup processes on Vista.
     // On Vista, StartUp processes are in Job for 60 seconds. In order
@@ -246,14 +247,14 @@ void SessionHandler::UpdateSessions(const config::Config &config,
 }
 
 bool SessionHandler::SyncData(commands::Command *command) {
-  VLOG(1) << "Syncing user data";
+  MOZC_VLOG(1) << "Syncing user data";
   engine_->GetUserDataManager()->Sync();
   engine_->GetUserDataManager()->Wait();
   return true;
 }
 
 bool SessionHandler::Shutdown(commands::Command *command) {
-  VLOG(1) << "Shutdown server";
+  MOZC_VLOG(1) << "Shutdown server";
   SyncData(command);
   is_available_ = false;
   UsageStats::IncrementCount("ShutDown");
@@ -261,42 +262,42 @@ bool SessionHandler::Shutdown(commands::Command *command) {
 }
 
 bool SessionHandler::Reload(commands::Command *command) {
-  VLOG(1) << "Reloading server";
+  MOZC_VLOG(1) << "Reloading server";
   UpdateSessions(*config::ConfigHandler::GetConfig(), *request_);
   engine_->Reload();
   return true;
 }
 
 bool SessionHandler::ReloadAndWait(commands::Command *command) {
-  VLOG(1) << "Reloading server and wait for reloader";
+  MOZC_VLOG(1) << "Reloading server and wait for reloader";
   UpdateSessions(*config::ConfigHandler::GetConfig(), *request_);
   engine_->ReloadAndWait();
   return true;
 }
 
 bool SessionHandler::ClearUserHistory(commands::Command *command) {
-  VLOG(1) << "Clearing user history";
+  MOZC_VLOG(1) << "Clearing user history";
   engine_->GetUserDataManager()->ClearUserHistory();
   UsageStats::IncrementCount("ClearUserHistory");
   return true;
 }
 
 bool SessionHandler::ClearUserPrediction(commands::Command *command) {
-  VLOG(1) << "Clearing user prediction";
+  MOZC_VLOG(1) << "Clearing user prediction";
   engine_->GetUserDataManager()->ClearUserPrediction();
   UsageStats::IncrementCount("ClearUserPrediction");
   return true;
 }
 
 bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
-  VLOG(1) << "Clearing unused user prediction";
+  MOZC_VLOG(1) << "Clearing unused user prediction";
   engine_->GetUserDataManager()->ClearUnusedUserPrediction();
   UsageStats::IncrementCount("ClearUnusedUserPrediction");
   return true;
 }
 
 bool SessionHandler::GetConfig(commands::Command *command) {
-  VLOG(1) << "Getting config";
+  MOZC_VLOG(1) << "Getting config";
   config::ConfigHandler::GetConfig(command->mutable_output()->mutable_config());
   // Ensure the onmemory config is same as the locally stored one
   // because the local data could be changed by sync.
@@ -305,7 +306,7 @@ bool SessionHandler::GetConfig(commands::Command *command) {
 }
 
 bool SessionHandler::SetConfig(commands::Command *command) {
-  VLOG(1) << "Setting user config";
+  MOZC_VLOG(1) << "Setting user config";
   if (!command->input().has_config()) {
     LOG(WARNING) << "config is empty";
     return false;
@@ -319,7 +320,7 @@ bool SessionHandler::SetConfig(commands::Command *command) {
 }
 
 bool SessionHandler::SetRequest(commands::Command *command) {
-  VLOG(1) << "Setting client's request";
+  MOZC_VLOG(1) << "Setting client's request";
   if (!command->input().has_request()) {
     LOG(WARNING) << "request is empty";
     return false;
@@ -517,8 +518,8 @@ bool SessionHandler::CreateSession(commands::Command *command) {
     delete oldest_element->value;
     oldest_element->value = nullptr;
     session_map_->Erase(oldest_element->key);
-    VLOG(1) << "Session is FULL, oldest SessionID " << oldest_element->key
-            << " is removed";
+    MOZC_VLOG(1) << "Session is FULL, oldest SessionID " << oldest_element->key
+                 << " is removed";
   }
 
   // Maybe build new engine if new request is received.
@@ -652,7 +653,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
        element != nullptr; element = element->next) {
     session::SessionInterface *session = element->value;
     if (!IsApplicationAlive(session)) {
-      VLOG(2) << "Application is not alive. Removing: " << element->key;
+      MOZC_VLOG(2) << "Application is not alive. Removing: " << element->key;
       remove_ids.push_back(element->key);
     } else if (session->last_command_time() == absl::InfinitePast()) {
       // no command is exectuted
@@ -670,7 +671,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
 
   for (size_t i = 0; i < remove_ids.size(); ++i) {
     DeleteSessionID(remove_ids[i]);
-    VLOG(1) << "Session ID " << remove_ids[i] << " is removed by server";
+    MOZC_VLOG(1) << "Session ID " << remove_ids[i] << " is removed by server";
   }
 
   // Sync all data. This is a regression bug fix http://b/3033708

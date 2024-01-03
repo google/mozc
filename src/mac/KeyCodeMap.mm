@@ -33,8 +33,8 @@
 
 #import <Carbon/Carbon.h>
 
-#include "protocol/commands.pb.h"
 #include "base/logging.h"
+#include "protocol/commands.pb.h"
 
 using mozc::commands::KeyEvent;
 

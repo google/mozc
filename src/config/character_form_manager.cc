@@ -38,7 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/config.pb.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -51,6 +50,7 @@
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "config/config_handler.h"
+#include "protocol/config.pb.h"
 #include "storage/lru_storage.h"
 
 namespace mozc {

@@ -33,12 +33,12 @@
 #include <string>
 #include <utility>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
 #include "base/init_mozc.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 
 ABSL_FLAG(std::string, table, "system://romanji-hiragana.tsv",

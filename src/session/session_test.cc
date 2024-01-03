@@ -36,9 +36,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -46,6 +43,7 @@
 #include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
@@ -58,6 +56,9 @@
 #include "engine/engine_mock.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/internal/ime_context.h"
@@ -9106,7 +9107,7 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
   EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
   EXPECT_EQ(command.output().result().value(), "m");
   EXPECT_EQ(GetComposition(command), "");
-  VLOG(0) << MOZC_LOG_PROTOBUF(command);
+  MOZC_VLOG(0) << MOZC_LOG_PROTOBUF(command);
   EXPECT_EQ(command.output().preedit().cursor(), 0);
   EXPECT_TRUE(command.output().consumed());
 

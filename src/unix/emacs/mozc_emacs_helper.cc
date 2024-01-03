@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -44,6 +43,7 @@
 #include "base/version.h"
 #include "client/client.h"
 #include "config/config_handler.h"
+#include "protocol/commands.pb.h"
 #include "unix/emacs/client_pool.h"
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 

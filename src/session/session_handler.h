@@ -37,8 +37,6 @@
 #include <memory>
 #include <optional>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
@@ -46,6 +44,8 @@
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/common.h"
 #include "session/internal/keymap.h"
 #include "session/session_handler_interface.h"

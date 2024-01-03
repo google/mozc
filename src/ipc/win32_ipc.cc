@@ -50,6 +50,7 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
@@ -201,7 +202,7 @@ uint32_t GetServerProcessIdImpl(HANDLE handle) {
     return static_cast<uint32_t>(-1);  // always deny the connection
   }
 
-  VLOG(1) << "Got server ProcessID: " << pid;
+  MOZC_VLOG(1) << "Got server ProcessID: " << pid;
 
   return static_cast<uint32_t>(pid);
 }
@@ -545,7 +546,7 @@ void IPCServer::Loop() {
             pipe_handle_.get(), quit_event_.get(), INFINITE, &overlapped,
             &ignored, kReadTypeData);
         if (ipc_error == IPC_QUIT_EVENT_SIGNALED) {
-          VLOG(1) << "Received Control event from other thread";
+          MOZC_VLOG(1) << "Received Control event from other thread";
           connected_ = false;
           return;
         }

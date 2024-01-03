@@ -33,10 +33,10 @@
 
 #include <cstdint>
 
-#include "protocol/commands.pb.h"
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/mac/mac_util.h"
+#include "protocol/commands.pb.h"
 #include "renderer/mac/RendererBaseWindow.h"
 
 namespace mozc {

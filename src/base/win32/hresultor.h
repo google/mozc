@@ -281,16 +281,8 @@ class [[nodiscard]] HResultOr
   // has_value() returns true if HResultOr<T> has a valid value.
   using Base::has_value;
 
-  [[nodiscard]] ABSL_DEPRECATED(
-      "Use has_value() instead.") constexpr bool ok() const noexcept {
-    return has_value();
-  }
-
   // Returns error code as HResult.
   using Base::error;
-
-  ABSL_DEPRECATED("Use error() instead.")
-  constexpr HRESULT hr() const noexcept { return error(); }
 
   // value() tests has_value() with `CHECK()` and returns the value.
   constexpr T& value() & ABSL_ATTRIBUTE_LIFETIME_BOUND {
@@ -351,11 +343,11 @@ class [[nodiscard]] HResultOr
       swap(**this, *other);
     } else {
       if (has_value()) {
-        const HRESULT other_hr = other.hr();
+        const HRESULT other_hr = other.error();
         other.ConstructValue(*std::move(*this));
         this->AssignHResult(other_hr);
       } else {
-        const HRESULT this_hr = hr();
+        const HRESULT this_hr = error();
         this->ConstructValue(*std::move(other));
         other.AssignHResult(this_hr);
       }
@@ -374,7 +366,7 @@ constexpr bool operator==(const HResultOr<T>& a, const HResultOr<U>& b) {
   if (a.has_value() && b.has_value()) {
     return *a == *b;
   }
-  return a.hr() == b.hr();
+  return a.error() == b.error();
 }
 
 template <typename T, typename U>
@@ -409,7 +401,7 @@ constexpr bool operator!=(const U& a, const HResultOr<T>& b) {
 // Comparison operators between HResultOr<T> and HResult.
 template <typename T>
 constexpr bool operator==(const HResultOr<T>& a, const HResult b) {
-  return a.hr() == b.hr();
+  return a.error() == b;
 }
 
 template <typename T>

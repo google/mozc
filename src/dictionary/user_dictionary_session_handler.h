@@ -34,12 +34,12 @@
 #include <memory>
 #include <string>
 
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_util.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 namespace user_dictionary {

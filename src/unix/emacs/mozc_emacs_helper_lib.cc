@@ -36,8 +36,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
 #include "absl/base/optimization.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
@@ -49,6 +47,8 @@
 #include "base/protobuf/descriptor.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace emacs {

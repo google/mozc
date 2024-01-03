@@ -33,10 +33,10 @@
 #include <string>
 #include <utility>
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

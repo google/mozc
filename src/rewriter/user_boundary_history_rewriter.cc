@@ -36,7 +36,6 @@
 #include <string>
 #include <utility>
 
-#include "protocol/config.pb.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -46,6 +45,7 @@
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "storage/lru_storage.h"
 #include "usage_stats/usage_stats.h"

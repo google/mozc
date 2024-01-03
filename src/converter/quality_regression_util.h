@@ -35,11 +35,11 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 class Segments;

@@ -31,10 +31,10 @@
 
 #include <string>
 
-#include "protocol/commands.pb.h"
 #include "absl/base/call_once.h"
 #include "base/const.h"
 #include "base/logging.h"
+#include "protocol/commands.pb.h"
 
 GoogleJapaneseInputServer *g_imkServer = nil;
 

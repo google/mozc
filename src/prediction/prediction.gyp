@@ -59,7 +59,7 @@
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
-        '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
         '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',

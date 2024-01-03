@@ -40,8 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
@@ -52,6 +50,7 @@
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/mode_switching_handler.h"
@@ -60,6 +59,8 @@
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -1105,7 +1106,7 @@ bool Composer::TransformCharactersForNumbers(std::string *query) {
 
   DCHECK_EQ(chars_len, char_scripts.size());
   if (!has_alphanumerics || !has_symbols) {
-    VLOG(1) << "The query contains neither alphanumeric nor symbol.";
+    MOZC_VLOG(1) << "The query contains neither alphanumeric nor symbol.";
     return false;
   }
 

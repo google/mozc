@@ -65,10 +65,10 @@
 #include <memory>
 #include <string>
 
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 

@@ -33,11 +33,11 @@
 #include <string>
 #include <vector>
 
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/file_util.h"
 #include "base/system_util.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

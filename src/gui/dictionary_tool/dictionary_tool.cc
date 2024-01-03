@@ -48,7 +48,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
@@ -66,6 +65,7 @@
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 #ifdef _WIN32
 #include <windows.h>

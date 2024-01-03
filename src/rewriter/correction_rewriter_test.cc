@@ -34,12 +34,12 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 

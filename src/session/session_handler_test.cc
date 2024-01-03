@@ -39,8 +39,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
@@ -59,6 +57,8 @@
 #include "engine/engine_stub.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 #include "session/session_handler_interface.h"
 #include "session/session_handler_test_util.h"

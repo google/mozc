@@ -50,6 +50,7 @@
 #include "absl/time/time.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 
@@ -155,7 +156,7 @@ IPCErrorType SendMessage(int socket, const std::string &msg,
     }
     offset += l;
   }
-  VLOG(1) << offset << " bytes sent";
+  MOZC_VLOG(1) << offset << " bytes sent";
   return IPC_NO_ERROR;
 }
 
@@ -185,7 +186,7 @@ IPCErrorType RecvMessage(int socket, std::string *msg, absl::Duration timeout) {
       msg->resize(msg->size() * 2);
     }
   } while (read_length != 0);
-  VLOG(1) << offset << " bytes received";
+  MOZC_VLOG(1) << offset << " bytes received";
   msg->resize(offset);
   return IPC_NO_ERROR;
 }
@@ -298,7 +299,7 @@ IPCClient::~IPCClient() {
     socket_ = kInvalidSocket;
   }
   connected_ = false;
-  VLOG(1) << "connection closed (IPCClient destructed)";
+  MOZC_VLOG(1) << "connection closed (IPCClient destructed)";
 }
 
 // RPC call
@@ -327,7 +328,7 @@ bool IPCClient::Call(const std::string &request, std::string *response,
     LOG(ERROR) << "RecvMessage failed";
     return false;
   }
-  VLOG(1) << "Call succeeded";
+  MOZC_VLOG(1) << "Call succeeded";
   return true;
 }
 
@@ -398,7 +399,7 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
   }
 
   connected_ = true;
-  VLOG(1) << "IPCServer ready";
+  MOZC_VLOG(1) << "IPCServer ready";
 }
 
 IPCServer::~IPCServer() {
@@ -411,7 +412,7 @@ IPCServer::~IPCServer() {
   }
   connected_ = false;
   socket_ = kInvalidSocket;
-  VLOG(1) << "IPCServer destructed";
+  MOZC_VLOG(1) << "IPCServer destructed";
 }
 
 bool IPCServer::Connected() const { return connected_; }

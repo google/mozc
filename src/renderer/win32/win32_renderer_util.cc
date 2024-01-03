@@ -42,9 +42,9 @@
 #include <optional>
 #include <utility>
 
-#include "protocol/renderer_command.pb.h"
 #include "base/logging.h"
 #include "base/win32/win_util.h"
+#include "protocol/renderer_command.pb.h"
 
 namespace mozc {
 namespace renderer {

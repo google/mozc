@@ -37,8 +37,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
@@ -47,6 +45,8 @@
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "dictionary/dictionary_mock.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"

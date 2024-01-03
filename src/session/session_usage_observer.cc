@@ -37,16 +37,17 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
-#include "protocol/state.pb.h"
 #include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "config/stats_config_util.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/state.pb.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
 
@@ -146,7 +147,7 @@ bool SessionUsageObserver::SaveCachedStats(void *data) {
                << "failed to sync its data to disk";
     return false;
   } else {
-    VLOG(3) << "Save Stats";
+    MOZC_VLOG(3) << "Save Stats";
     return true;
   }
 }
@@ -504,7 +505,7 @@ void SessionUsageObserver::EvalCommandHandler(
   }
 
   if (input.id() == 0) {
-    VLOG(3) << "id == 0";
+    MOZC_VLOG(3) << "id == 0";
     return;
   }
 

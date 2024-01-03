@@ -30,8 +30,8 @@
 #ifndef MOZC_SESSION_SESSION_USAGE_STATS_UTIL_H_
 #define MOZC_SESSION_SESSION_USAGE_STATS_UTIL_H_
 
-#include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace session {

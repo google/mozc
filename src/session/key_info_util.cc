@@ -36,8 +36,6 @@
 #include <string>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/config_file_stream.h"
@@ -46,6 +44,8 @@
 #include "composer/key_event_util.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 
 namespace mozc {

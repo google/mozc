@@ -40,7 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/segmenter_data.pb.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -54,6 +53,7 @@
 #include "base/version.h"
 #include "data_manager/dataset_reader.h"
 #include "data_manager/serialized_dictionary.h"
+#include "protocol/segmenter_data.pb.h"
 
 namespace mozc {
 namespace {

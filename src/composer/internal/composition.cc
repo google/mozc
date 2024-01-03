@@ -41,6 +41,7 @@
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/internal/char_chunk.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
@@ -278,7 +279,7 @@ void Composition::GetExpandedStringsWithTransliterator(
   base->clear();
   expanded->clear();
   if (chunks_.empty()) {
-    VLOG(1) << "The composition size is zero.";
+    MOZC_VLOG(1) << "The composition size is zero.";
     return;
   }
 
@@ -295,7 +296,7 @@ void Composition::GetExpandedStringsWithTransliterator(
 void Composition::GetString(std::string *composition) const {
   composition->clear();
   if (chunks_.empty()) {
-    VLOG(1) << "The composition size is zero.";
+    MOZC_VLOG(1) << "The composition size is zero.";
     return;
   }
 

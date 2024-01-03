@@ -71,9 +71,9 @@
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/base/base.gyp:version',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
-        '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
-        '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
       ],
     },
     {
@@ -89,8 +89,8 @@
         '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
-        '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
-        '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
       ],
     },
     {
@@ -175,7 +175,7 @@
         'renderer_style_handler.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
       ],
       'variables': {
         'test_size': 'small',
@@ -188,7 +188,7 @@
         'renderer_style_handler_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'renderer_style_handler',
       ],
@@ -241,9 +241,9 @@
           ],
           'dependencies': [
             '<(mozc_oss_src_dir)/base/base.gyp:base',
-            '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
-            '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-            '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
           ],
         },
         {
@@ -281,7 +281,7 @@
           ],
           'dependencies': [
             '<(mozc_oss_src_dir)/base/base.gyp:base',
-            '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
             'renderer_style_handler',
           ],
           'link_settings': {
@@ -334,9 +334,9 @@
             '<(mozc_oss_src_dir)/client/client.gyp:client',
             '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
             '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
-            '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
-            '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-            '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
             'gen_mozc_renderer_resource_header#host',
             'renderer_server',
             'renderer_style_handler',
@@ -362,7 +362,7 @@
           'dependencies': [
             '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
             '<(mozc_oss_src_dir)/base/base.gyp:base',
-            '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
             'renderer_client',
           ],
         },
@@ -400,9 +400,9 @@
             '<(mozc_oss_src_dir)/client/client.gyp:client',
             '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
             '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
-            '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
-            '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-            '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
+            '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
             'gen_renderer_files#host',
             'renderer_server',
             'renderer_style_handler',

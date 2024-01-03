@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "evaluation/scorer.h"
-#include "protocol/commands.pb.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_join.h"
@@ -52,7 +51,9 @@
 #include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "client/client.h"
+#include "protocol/commands.pb.h"
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");
 ABSL_FLAG(std::string, log_path, "", "specify log output file path");
@@ -167,7 +168,7 @@ std::optional<double> CalculateBleu(client::Client &client,
   for (const commands::KeyEvent &key : *keys) {
     client.SendKey(key, &output);
   }
-  VLOG(2) << "Server response: " << protobuf::Utf8Format(output);
+  MOZC_VLOG(2) << "Server response: " << protobuf::Utf8Format(output);
 
   // Calculate score
   std::string expected_normalized =
@@ -184,10 +185,10 @@ std::optional<double> CalculateBleu(client::Client &client,
 
   double score = Scorer::BLEUScore({expected_normalized}, preedit_normalized);
 
-  VLOG(1) << hiragana_sentence << std::endl
-          << "   score: " << score << std::endl
-          << " preedit: " << preedit_normalized << std::endl
-          << "expected: " << expected_normalized;
+  MOZC_VLOG(1) << hiragana_sentence << std::endl
+               << "   score: " << score << std::endl
+               << " preedit: " << preedit_normalized << std::endl
+               << "expected: " << expected_normalized;
 
   // Revert session to prevent server from learning this conversion
   commands::SessionCommand command;
@@ -243,7 +244,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    VLOG(1) << "Processing " << hiragana_sentence;
+    MOZC_VLOG(1) << "Processing " << hiragana_sentence;
     if (!mozc::IsValidSourceSentence(hiragana_sentence)) {
       LOG(WARNING) << "Invalid test case: " << std::endl
                    << "    source: " << source << std::endl

@@ -36,7 +36,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
 #include "absl/random/distributions.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
@@ -44,6 +43,8 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
+#include "protocol/commands.pb.h"
 #include "session/session_stress_test_data.h"
 
 namespace mozc {
@@ -135,7 +136,7 @@ void RandomKeyEventsGenerator::GenerateMobileSequenceInternal(
     absl::string_view sentence, bool create_probable_key_events,
     std::vector<commands::KeyEvent> *keys) {
   const std::string input = ToRomaji(sentence);
-  VLOG(1) << input;
+  MOZC_VLOG(1) << input;
 
   // Type the sentence
   TypeRawKeys(input, create_probable_key_events, keys);
@@ -176,7 +177,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
 
   const std::string input = ToRomaji(sentence);
 
-  VLOG(1) << input;
+  MOZC_VLOG(1) << input;
 
   // Must send ON event first.
   {
@@ -344,7 +345,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
   }
 
   CHECK_GT(keys->size(), 0);
-  VLOG(1) << "key sequence is generated: " << keys->size();
+  MOZC_VLOG(1) << "key sequence is generated: " << keys->size();
 }
 
 uint32_t RandomKeyEventsGenerator::GetRandomAsciiKey() {

@@ -38,8 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
@@ -53,6 +51,8 @@
 #include "converter/segments.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/key_event_transformer.h"
 #include "session/internal/keymap.h"

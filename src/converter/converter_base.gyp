@@ -85,7 +85,7 @@
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_oss_src_dir)/prediction/prediction_base.gyp:suggestion_filter',
-        '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/transliteration/transliteration.gyp:transliteration',
         'connector',
         'lattice',
@@ -116,8 +116,8 @@
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
-        '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
-        '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_rewriter_files#host',
         'connector',
         'immutable_converter_interface',
@@ -134,7 +134,7 @@
       ],
       'dependencies' : [
         '<(mozc_oss_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/protocol/protocol.gyp:segmenter_data_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:segmenter_data_proto',
       ]
     },
     {

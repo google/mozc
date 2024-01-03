@@ -27,35 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Parser of key events
+#ifndef MOZC_BASE_VLOG_H_
+#define MOZC_BASE_VLOG_H_
 
-#ifndef MOZC_COMPOSER_KEY_PARSER_H_
-#define MOZC_COMPOSER_KEY_PARSER_H_
+#include "base/logging.h"
 
-#include <string>
+#define MOZC_VLOG_IS_ON(severity) VLOG_IS_ON(severity)
 
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
-#include "protocol/commands.pb.h"
+#define MOZC_VLOG(severity) VLOG(severity)
 
-namespace mozc {
+#define MOZC_DVLOG(severity) DVLOG(severity)
 
-class KeyParser {
- public:
-  // Disallow implicit constructors.
-  KeyParser() = delete;
-  KeyParser(const KeyParser &) = delete;
-  KeyParser &operator=(const KeyParser &) = delete;
-
-  static bool ParseKey(absl::string_view key_string,
-                       commands::KeyEvent *key_event);
-  static bool ParseKeyVector(absl::Span<const std::string> keys,
-                             commands::KeyEvent *key_event);
-
-  // Returns corresponding string of SpecialKey (e.g. PAGE_UP → pageup).
-  static std::string GetSpecialKeyString(commands::KeyEvent::SpecialKey key);
-};
-
-}  // namespace mozc
-
-#endif  // MOZC_COMPOSER_KEY_PARSER_H_
+#endif  // MOZC_BASE_VLOG_H_

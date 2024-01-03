@@ -33,8 +33,8 @@
 
 #import "mac/common.h"
 
-#include "protocol/commands.pb.h"
 #include "base/const.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace renderer {

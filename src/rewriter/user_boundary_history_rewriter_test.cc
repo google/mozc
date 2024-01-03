@@ -31,7 +31,6 @@
 
 #include <string>
 
-#include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/file_util.h"
@@ -39,6 +38,7 @@
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"

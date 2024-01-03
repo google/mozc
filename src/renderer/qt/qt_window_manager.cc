@@ -32,9 +32,9 @@
 #include <algorithm>
 #include <string>
 
-#include "protocol/candidates.pb.h"
 #include "absl/strings/str_cat.h"
 #include "base/logging.h"
+#include "protocol/candidates.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/window_util.h"
 

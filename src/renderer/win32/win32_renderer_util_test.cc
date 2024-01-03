@@ -40,10 +40,10 @@
 #include <cstdint>
 #include <memory>
 
-#include "protocol/commands.pb.h"
-#include "protocol/renderer_command.pb.h"
 #include "absl/base/casts.h"
 #include "base/logging.h"
+#include "protocol/commands.pb.h"
+#include "protocol/renderer_command.pb.h"
 #include "testing/gunit.h"
 
 // Following functions should be placed in global namespace for Koenig look-up

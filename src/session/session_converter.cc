@@ -38,9 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "protocol/candidates.pb.h"
-#include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -48,9 +45,13 @@
 #include "base/logging.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"
@@ -501,8 +502,9 @@ bool SessionConverter::SuggestWithPreferences(
     }
   }
   if (!result) {
-    VLOG(1) << "Start(Partial?)(Suggestion|Prediction)ForRequest() returns no "
-               "suggestions.";
+    MOZC_VLOG(1)
+        << "Start(Partial?)(Suggestion|Prediction)ForRequest() returns no "
+           "suggestions.";
     // Clear segments and keep the context
     converter_->CancelConversion(segments_.get());
     return false;
@@ -523,8 +525,9 @@ bool SessionConverter::SuggestWithPreferences(
           incognito_conversion_request, incognito_segments_.get());
     }
     if (!result) {
-      VLOG(1) << "Start(Partial?)SuggestionForRequest() for incognito request "
-                 "returned no suggestions.";
+      MOZC_VLOG(1)
+          << "Start(Partial?)SuggestionForRequest() for incognito request "
+             "returned no suggestions.";
       // TODO(noriyukit): Check if fall through here is ok.
     }
   }
@@ -1048,13 +1051,13 @@ bool SessionConverter::CandidateMoveToShortcut(const char shortcut) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
 
   if (!candidate_list_visible_) {
-    VLOG(1) << "Candidate list is not displayed.";
+    MOZC_VLOG(1) << "Candidate list is not displayed.";
     return false;
   }
 
   const absl::string_view shortcuts(GetCandidateShortcuts(selection_shortcut_));
   if (shortcuts.empty()) {
-    VLOG(1) << "No shortcuts";
+    MOZC_VLOG(1) << "No shortcuts";
     return false;
   }
 
@@ -1063,12 +1066,12 @@ bool SessionConverter::CandidateMoveToShortcut(const char shortcut) {
   // special keys.
   const absl::string_view::size_type index = shortcuts.find(shortcut);
   if (index == absl::string_view::npos) {
-    VLOG(1) << "shortcut is not a member of shortcuts.";
+    MOZC_VLOG(1) << "shortcut is not a member of shortcuts.";
     return false;
   }
 
   if (!candidate_list_->MoveToPageIndex(index)) {
-    VLOG(1) << "shortcut is out of the range.";
+    MOZC_VLOG(1) << "shortcut is out of the range.";
     return false;
   }
   UpdateSelectedCandidateIndex();
@@ -1455,7 +1458,7 @@ void SessionConverter::AppendCandidateList() {
       return;
     }
     // For other modes, records |segment| just in case.
-    VLOG(1) << "T13N is not initialized: " << segment.key();
+    MOZC_VLOG(1) << "T13N is not initialized: " << segment.key();
     return;
   }
 

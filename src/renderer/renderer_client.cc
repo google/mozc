@@ -36,7 +36,6 @@
 #include <optional>
 #include <string>
 
-#include "protocol/renderer_command.pb.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
@@ -49,6 +48,7 @@
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
+#include "protocol/renderer_command.pb.h"
 
 #ifdef __APPLE__
 #include "base/mac/mac_util.h"

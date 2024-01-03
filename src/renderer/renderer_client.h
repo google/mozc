@@ -33,8 +33,8 @@
 #include <memory>
 #include <string>
 
-#include "protocol/renderer_command.pb.h"
 #include "ipc/ipc.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 
 namespace mozc {

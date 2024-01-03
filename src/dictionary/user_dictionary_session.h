@@ -36,9 +36,9 @@
 #include <string>
 #include <vector>
 
-#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/strings/string_view.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 namespace user_dictionary {
