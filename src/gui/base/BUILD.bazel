@@ -197,7 +197,7 @@ mozc_cc_qt_library(
             ":win_util",
             "//base:system_util",
             "//base/win32:wide_char",
-            "//third_party/wil",
+            "@com_microsoft_wil//:wil",
         ],
     ),
 )

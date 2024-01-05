@@ -94,7 +94,7 @@ mozc_cc_library(
             "//base/win32:hresult",
             "//base/win32:wide_char",
             "//bazel/win32:pathcch",
-            "//third_party/wil",
+            "@com_microsoft_wil//:wil",
         ],
     ),
 )
