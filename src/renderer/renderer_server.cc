@@ -41,6 +41,7 @@
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "base/vlog.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
@@ -144,7 +145,7 @@ RendererServer::RendererServer()
       [this](ProcessWatchDog::SignalType type) {
         if (type == ProcessWatchDog::SignalType::PROCESS_SIGNALED ||
             type == ProcessWatchDog::SignalType::THREAD_SIGNALED) {
-          VLOG(1) << "Parent process is terminated: call Hide event";
+          MOZC_VLOG(1) << "Parent process is terminated: call Hide event";
           mozc::commands::RendererCommand command;
           command.set_type(mozc::commands::RendererCommand::UPDATE);
           command.set_visible(false);
@@ -164,7 +165,7 @@ RendererServer::RendererServer()
 
   timeout_ =
       1000 * std::max(3, std::min(24 * 60 * 60, absl::GetFlag(FLAGS_timeout)));
-  VLOG(2) << "timeout is set to be : " << timeout_;
+  MOZC_VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef MOZC_NO_LOGGING
   config::Config config;
@@ -216,7 +217,7 @@ bool RendererServer::ExecCommandInternal(
     return false;
   }
 
-  VLOG(2) << MOZC_LOG_PROTOBUF(command);
+  MOZC_VLOG(2) << MOZC_LOG_PROTOBUF(command);
 
   // Check process info if update mode
   if (command.type() == commands::RendererCommand::UPDATE) {

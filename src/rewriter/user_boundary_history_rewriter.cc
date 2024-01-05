@@ -43,6 +43,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
@@ -122,23 +123,23 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
   }
 
   if (request.config().incognito_mode()) {
-    VLOG(2) << "incognito mode";
+    MOZC_VLOG(2) << "incognito mode";
     return;
   }
 
   if (request.config().history_learning_level() !=
       config::Config::DEFAULT_HISTORY) {
-    VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
+    MOZC_VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
     return;
   }
 
   if (!request.enable_user_history_for_conversion()) {
-    VLOG(2) << "user history for conversion is disabled";
+    MOZC_VLOG(2) << "user history for conversion is disabled";
     return;
   }
 
   if (storage_ == nullptr) {
-    VLOG(2) << "storage is NULL";
+    MOZC_VLOG(2) << "storage is NULL";
     return;
   }
 
@@ -163,22 +164,22 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
 bool UserBoundaryHistoryRewriter::Rewrite(const ConversionRequest &request,
                                           Segments *segments) const {
   if (request.config().incognito_mode()) {
-    VLOG(2) << "incognito mode";
+    MOZC_VLOG(2) << "incognito mode";
     return false;
   }
 
   if (request.config().history_learning_level() == config::Config::NO_HISTORY) {
-    VLOG(2) << "history_learning_level is NO_HISTORY";
+    MOZC_VLOG(2) << "history_learning_level is NO_HISTORY";
     return false;
   }
 
   if (!request.enable_user_history_for_conversion()) {
-    VLOG(2) << "user history for conversion is disabled";
+    MOZC_VLOG(2) << "user history for conversion is disabled";
     return false;
   }
 
   if (storage_ == nullptr) {
-    VLOG(2) << "storage is NULL";
+    MOZC_VLOG(2) << "storage is NULL";
     return false;
   }
 
@@ -257,7 +258,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     keys[i - history_segments_size].first = segment.key();
     const size_t length = Util::CharsLen(segment.key());
     if (length > 255) {  // too long segment
-      VLOG(2) << "too long segment";
+      MOZC_VLOG(2) << "too long segment";
       return false;
     }
     keys[i - history_segments_size].second = length;
@@ -283,16 +284,16 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
             value->ToUCharArray(length_array);
             const int old_segments_size =
                 static_cast<int>(target_segments_size);
-            VLOG(2) << "ResizeSegment key: " << key << " segments: ["
-                    << i - history_segments_size << ", " << j + 1
-                    << ") resize: [" << static_cast<int>(length_array[0]) << " "
-                    << static_cast<int>(length_array[1]) << " "
-                    << static_cast<int>(length_array[2]) << " "
-                    << static_cast<int>(length_array[3]) << " "
-                    << static_cast<int>(length_array[4]) << " "
-                    << static_cast<int>(length_array[5]) << " "
-                    << static_cast<int>(length_array[6]) << " "
-                    << static_cast<int>(length_array[7]) << "]";
+            MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: ["
+                         << i - history_segments_size << ", " << j + 1
+                         << ") resize: [" << static_cast<int>(length_array[0])
+                         << " " << static_cast<int>(length_array[1]) << " "
+                         << static_cast<int>(length_array[2]) << " "
+                         << static_cast<int>(length_array[3]) << " "
+                         << static_cast<int>(length_array[4]) << " "
+                         << static_cast<int>(length_array[5]) << " "
+                         << static_cast<int>(length_array[6]) << " "
+                         << static_cast<int>(length_array[7]) << "]";
             if (parent_converter_->ResizeSegment(segments, request,
                                                  i - history_segments_size,
                                                  j + 1, length_array)) {
@@ -305,16 +306,16 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
           }
         }
       } else if (type == INSERT) {
-        VLOG(2) << "InserteSegment key: " << key << " "
-                << i - history_segments_size << " " << j + 1 << " "
-                << static_cast<int>(length_array[0]) << " "
-                << static_cast<int>(length_array[1]) << " "
-                << static_cast<int>(length_array[2]) << " "
-                << static_cast<int>(length_array[3]) << " "
-                << static_cast<int>(length_array[4]) << " "
-                << static_cast<int>(length_array[5]) << " "
-                << static_cast<int>(length_array[6]) << " "
-                << static_cast<int>(length_array[7]);
+        MOZC_VLOG(2) << "InserteSegment key: " << key << " "
+                     << i - history_segments_size << " " << j + 1 << " "
+                     << static_cast<int>(length_array[0]) << " "
+                     << static_cast<int>(length_array[1]) << " "
+                     << static_cast<int>(length_array[2]) << " "
+                     << static_cast<int>(length_array[3]) << " "
+                     << static_cast<int>(length_array[4]) << " "
+                     << static_cast<int>(length_array[5]) << " "
+                     << static_cast<int>(length_array[6]) << " "
+                     << static_cast<int>(length_array[7]);
         LengthArray inserted_value;
         inserted_value.CopyFromUCharArray(length_array);
         storage_->Insert(key, reinterpret_cast<const char *>(&inserted_value));
@@ -332,7 +333,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
 
 void UserBoundaryHistoryRewriter::Clear() {
   if (storage_ != nullptr) {
-    VLOG(1) << "Clearing user segment data";
+    MOZC_VLOG(1) << "Clearing user segment data";
     storage_->Clear();
   }
 }

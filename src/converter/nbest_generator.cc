@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
 #include "converter/lattice.h"
@@ -397,7 +398,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
     DCHECK(rnode);
 
     if (num_trials++ > KMaxTrial) {  // too many trials
-      VLOG(2) << "too many trials: " << num_trials;
+      MOZC_VLOG(2) << "too many trials: " << num_trials;
       return false;
     }
 

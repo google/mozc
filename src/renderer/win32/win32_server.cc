@@ -38,6 +38,7 @@
 #include "base/logging.h"
 #include "base/run_level.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/window_manager.h"
 
@@ -101,7 +102,7 @@ bool Win32Server::IsAvailable() const {
 }
 
 bool Win32Server::ExecCommand(const commands::RendererCommand &command) {
-  VLOG(2) << command.DebugString();
+  MOZC_VLOG(2) << command.DebugString();
 
   switch (command.type()) {
     case commands::RendererCommand::NOOP:
@@ -196,7 +197,7 @@ int Win32Server::StartMessageLoop() {
         }
         if (msg.message == WM_QUIT) {
           return_code = msg.wParam;
-          VLOG(0) << "Reveiced WM_QUIT.";
+          MOZC_VLOG(0) << "Reveiced WM_QUIT.";
           break;  // exit message pump.
         }
         window_manager_->PreTranslateMessage(msg);

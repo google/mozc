@@ -58,6 +58,7 @@
 #include "base/status.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "rewriter/dictionary_generator.h"
@@ -175,7 +176,7 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
     std::vector<absl::string_view> fields =
         absl::StrSplit(line, '\t', absl::AllowEmpty());
     if (fields.size() < 3 || (fields[1].empty() && fields[2].empty())) {
-      VLOG(3) << "invalid format. skip line: " << line;
+      MOZC_VLOG(3) << "invalid format. skip line: " << line;
       continue;
     }
     std::string pos(fields[0]);

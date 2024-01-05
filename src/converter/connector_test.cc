@@ -38,6 +38,7 @@
 #include "absl/random/random.h"
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/vlog.h"
 #include "data_manager/connection_file_reader.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -105,7 +106,7 @@ TEST(ConnectorTest, BrokenData) {
     *reinterpret_cast<uint16_t *>(&data[0]) = 0;
     const auto status =
         Connector::Create(data.data(), data.size(), 256).status();
-    VLOG(1) << status;
+    MOZC_VLOG(1) << status;
     EXPECT_FALSE(status.ok());
   }
   // Not square.
@@ -116,7 +117,7 @@ TEST(ConnectorTest, BrokenData) {
     array[3] = 200;
     const auto status =
         Connector::Create(data.data(), data.size(), 256).status();
-    VLOG(1) << status;
+    MOZC_VLOG(1) << status;
     EXPECT_FALSE(status.ok());
   }
   // Incomplete data.
@@ -125,7 +126,7 @@ TEST(ConnectorTest, BrokenData) {
     for (size_t divider : {2, 3, 5, 7, 10, 100, 1000}) {
       const auto size = data.size() / divider;
       const auto status = Connector::Create(data.data(), size, 256).status();
-      VLOG(1) << "Divider=" << divider << ": " << status;
+      MOZC_VLOG(1) << "Divider=" << divider << ": " << status;
       EXPECT_FALSE(status.ok());
     }
   }
@@ -135,7 +136,7 @@ TEST(ConnectorTest, BrokenData) {
     data.insert(2, cmmap->begin(), cmmap->size());  // Align at 16-bit boundary.
     const auto status =
         Connector::Create(data.data() + 2, cmmap->size(), 256).status();
-    VLOG(1) << status;
+    MOZC_VLOG(1) << status;
     EXPECT_FALSE(status.ok());
   }
 }

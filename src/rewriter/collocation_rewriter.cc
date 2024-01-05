@@ -47,6 +47,7 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -586,7 +587,7 @@ bool CollocationRewriter::Rewrite(const ConversionRequest &request,
 bool CollocationRewriter::IsName(const Segment::Candidate &cand) const {
   const bool ret = (cand.lid == last_name_id_ || cand.lid == first_name_id_);
   if (ret) {
-    VLOG(3) << cand.value << " is name sagment";
+    MOZC_VLOG(3) << cand.value << " is name sagment";
   }
   return ret;
 }
@@ -621,8 +622,8 @@ bool CollocationRewriter::RewriteFromPrevSegment(
       CollocationUtil::GetNormalizedScript(curs[j], false, &cur);
       if (collocation_filter_.Exists(prev, cur)) {
         if (i != 0) {
-          VLOG(3) << prev << cur << " " << seg->candidate(0).value << "->"
-                  << seg->candidate(i).value;
+          MOZC_VLOG(3) << prev << cur << " " << seg->candidate(0).value << "->"
+                       << seg->candidate(i).value;
         }
         seg->move_candidate(i, 0);
         seg->mutable_candidate(0)->attributes |=

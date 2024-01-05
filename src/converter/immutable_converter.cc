@@ -49,6 +49,7 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "converter/connector.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
@@ -410,17 +411,17 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
 void ImmutableConverterImpl::ApplyResegmentRules(size_t pos,
                                                  Lattice *lattice) const {
   if (ResegmentArabicNumberAndSuffix(pos, lattice)) {
-    VLOG(1) << "ResegmentArabicNumberAndSuffix returned true";
+    MOZC_VLOG(1) << "ResegmentArabicNumberAndSuffix returned true";
     return;
   }
 
   if (ResegmentPrefixAndArabicNumber(pos, lattice)) {
-    VLOG(1) << "ResegmentArabicNumberAndSuffix returned true";
+    MOZC_VLOG(1) << "ResegmentArabicNumberAndSuffix returned true";
     return;
   }
 
   if (ResegmentPersonalName(pos, lattice)) {
-    VLOG(1) << "ResegmentPersonalName returned true";
+    MOZC_VLOG(1) << "ResegmentPersonalName returned true";
     return;
   }
 }
@@ -431,7 +432,7 @@ bool ImmutableConverterImpl::ResegmentArabicNumberAndSuffix(
     size_t pos, Lattice *lattice) const {
   const Node *bnode = lattice->begin_nodes(pos);
   if (bnode == nullptr) {
-    VLOG(1) << "bnode is nullptr";
+    MOZC_VLOG(1) << "bnode is nullptr";
     return false;
   }
 
@@ -490,8 +491,8 @@ bool ImmutableConverterImpl::ResegmentArabicNumberAndSuffix(
 
       // insert suffix into the lattice
       lattice->Insert(pos + number_node->key.size(), suffix_node);
-      VLOG(1) << "Resegmented: " << compound_node->value << " "
-              << number_node->value << " " << suffix_node->value;
+      MOZC_VLOG(1) << "Resegmented: " << compound_node->value << " "
+                   << number_node->value << " " << suffix_node->value;
 
       modified = true;
     }
@@ -504,7 +505,7 @@ bool ImmutableConverterImpl::ResegmentPrefixAndArabicNumber(
     size_t pos, Lattice *lattice) const {
   const Node *bnode = lattice->begin_nodes(pos);
   if (bnode == nullptr) {
-    VLOG(1) << "bnode is nullptr";
+    MOZC_VLOG(1) << "bnode is nullptr";
     return false;
   }
 
@@ -566,8 +567,8 @@ bool ImmutableConverterImpl::ResegmentPrefixAndArabicNumber(
 
       // insert number into the lattice
       lattice->Insert(pos + prefix_node->key.size(), number_node);
-      VLOG(1) << "Resegmented: " << compound_node->value << " "
-              << prefix_node->value << " " << number_node->value;
+      MOZC_VLOG(1) << "Resegmented: " << compound_node->value << " "
+                   << prefix_node->value << " " << number_node->value;
 
       modified = true;
     }
@@ -580,7 +581,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(size_t pos,
                                                    Lattice *lattice) const {
   const Node *bnode = lattice->begin_nodes(pos);
   if (bnode == nullptr) {
-    VLOG(1) << "bnode is nullptr";
+    MOZC_VLOG(1) << "bnode is nullptr";
     return false;
   }
 
@@ -701,8 +702,8 @@ bool ImmutableConverterImpl::ResegmentPersonalName(size_t pos,
     // insert first_name into the lattice
     lattice->Insert(pos + last_name_node->key.size(), first_name_node);
 
-    VLOG(2) << "Resegmented: " << compound_node->value << " "
-            << last_name_node->value << " " << first_name_node->value;
+    MOZC_VLOG(2) << "Resegmented: " << compound_node->value << " "
+                 << last_name_node->value << " " << first_name_node->value;
 
     modified = true;
   }
@@ -1602,22 +1603,22 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
                 compound_node->value.size() -
             connector_.GetTransitionCost(candidate.rid, new_node->lid);
 
-        VLOG(2) << " compound_node->lid=" << compound_node->lid
-                << " compound_node->rid=" << compound_node->rid
-                << " compound_node->wcost=" << compound_node->wcost;
-        VLOG(2) << " last_rid=" << last_rid
-                << " candidate.lid=" << candidate.lid
-                << " candidate.rid=" << candidate.rid
-                << " candidate.cost=" << candidate.cost
-                << " candidate.wcost=" << candidate.wcost;
-        VLOG(2) << " new_node->wcost=" << new_node->wcost;
+        MOZC_VLOG(2) << " compound_node->lid=" << compound_node->lid
+                     << " compound_node->rid=" << compound_node->rid
+                     << " compound_node->wcost=" << compound_node->wcost;
+        MOZC_VLOG(2) << " last_rid=" << last_rid
+                     << " candidate.lid=" << candidate.lid
+                     << " candidate.rid=" << candidate.rid
+                     << " candidate.cost=" << candidate.cost
+                     << " candidate.wcost=" << candidate.wcost;
+        MOZC_VLOG(2) << " new_node->wcost=" << new_node->wcost;
 
         new_node->constrained_prev = rnode;
 
         // Added as new node
         lattice->Insert(segments_pos + rnode->key.size(), new_node);
 
-        VLOG(2) << "Added: " << new_node->key << " " << new_node->value;
+        MOZC_VLOG(2) << "Added: " << new_node->key << " " << new_node->value;
       }
     }
 
@@ -2181,7 +2182,7 @@ bool ImmutableConverterImpl::ConvertForRequest(const ConversionRequest &request,
     }
   }
 
-  VLOG(2) << lattice->DebugString();
+  MOZC_VLOG(2) << lattice->DebugString();
   if (!MakeSegments(request, *lattice, group, segments)) {
     LOG(WARNING) << "make segments failed";
     return false;

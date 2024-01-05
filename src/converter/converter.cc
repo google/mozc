@@ -43,6 +43,7 @@
 #include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
@@ -84,7 +85,7 @@ void SetKey(Segments *segments, const absl::string_view key) {
   seg->set_key(key);
   seg->set_segment_type(mozc::Segment::FREE);
 
-  VLOG(2) << segments->DebugString();
+  MOZC_VLOG(2) << segments->DebugString();
 }
 
 bool ShouldSetKeyForPrediction(const ConversionRequest &request,
@@ -318,8 +319,8 @@ bool ConverterImpl::Convert(const ConversionRequest &request,
     // Conversion can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
-    VLOG(1) << "ConvertForRequest failed for key: "
-            << segments->segment(0).key();
+    MOZC_VLOG(1) << "ConvertForRequest failed for key: "
+                 << segments->segment(0).key();
   }
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
@@ -407,8 +408,8 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
     // Prediction can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
-    VLOG(1) << "PredictForRequest failed for key: "
-            << segments->segment(0).key();
+    MOZC_VLOG(1) << "PredictForRequest failed for key: "
+                 << segments->segment(0).key();
   }
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
@@ -787,8 +788,8 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     // Conversion can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
-    VLOG(1) << "ConvertForRequest failed for key: "
-            << segments->segment(0).key();
+    MOZC_VLOG(1) << "ConvertForRequest failed for key: "
+                 << segments->segment(0).key();
   }
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
@@ -852,8 +853,8 @@ bool ConverterImpl::ResizeSegment(
     // Conversion can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
-    VLOG(1) << "ConvertForRequest failed for key: "
-            << segments->segment(0).key();
+    MOZC_VLOG(1) << "ConvertForRequest failed for key: "
+                 << segments->segment(0).key();
   }
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
@@ -907,17 +908,17 @@ void ConverterImpl::CompletePosIds(Segment::Candidate *candidate) const {
         candidate->cost = ref_candidate.cost;
         candidate->wcost = ref_candidate.wcost;
         candidate->structure_cost = ref_candidate.structure_cost;
-        VLOG(1) << "Set LID: " << candidate->lid;
-        VLOG(1) << "Set RID: " << candidate->rid;
+        MOZC_VLOG(1) << "Set LID: " << candidate->lid;
+        MOZC_VLOG(1) << "Set RID: " << candidate->rid;
         return;
       }
     }
   }
-  DVLOG(2) << "Cannot set lid/rid. use default value. "
-           << "key: " << candidate->key << ", "
-           << "value: " << candidate->value << ", "
-           << "lid: " << candidate->lid << ", "
-           << "rid: " << candidate->rid;
+  MOZC_DVLOG(2) << "Cannot set lid/rid. use default value. "
+                << "key: " << candidate->key << ", "
+                << "value: " << candidate->value << ", "
+                << "lid: " << candidate->lid << ", "
+                << "rid: " << candidate->rid;
 }
 
 void ConverterImpl::RewriteAndSuppressCandidates(
