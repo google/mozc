@@ -71,7 +71,7 @@ mozc_cc_library(
         windows = [
             "//base/win32:win_sandbox",
             "//base/win32:wide_char",
-            "//third_party/wil",
+            "@com_microsoft_wil//:wil",
         ],
     ),
 )
@@ -117,7 +117,7 @@ mozc_cc_library(
         macos = ["//base/mac:mac_util"],
         windows = [
             "//base/win32:wide_char",
-            "//third_party/wil",
+            "@com_microsoft_wil//:wil",
         ],
     ),
 )
@@ -273,7 +273,7 @@ mozc_cc_library(
     ] + mozc_select(
         windows = [
             "//base/win32:hresult",
-            "//third_party/wil",
+            "@com_microsoft_wil//:wil",
         ],
     ),
 )
@@ -295,7 +295,7 @@ mozc_cc_library(
     ] + mozc_select(
         windows = [
             "//base/win32:wide_char",
-            "//third_party/wil",
+            "@com_microsoft_wil//:wil",
         ],
     ),
 )
