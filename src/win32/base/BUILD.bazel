@@ -69,6 +69,7 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         "//base:logging",
+        "//base:vlog",
         "//protocol:commands_cc_proto",
     ],
 )
@@ -497,7 +498,10 @@ mozc_cc_library(
     features = features_gdi(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base:logging"],
+    deps = [
+        "//base:logging",
+        "//base:vlog",
+    ],
 )
 
 mozc_cc_library(

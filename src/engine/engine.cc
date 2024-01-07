@@ -39,6 +39,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter.h"
@@ -300,9 +301,9 @@ bool Engine::Reload() {
   if (!user_dictionary_) {
     return true;
   }
-  VLOG(1) << "Reloading user dictionary";
+  MOZC_VLOG(1) << "Reloading user dictionary";
   bool result_dictionary = user_dictionary_->Reload();
-  VLOG(1) << "Reloading UserDataManager";
+  MOZC_VLOG(1) << "Reloading UserDataManager";
   bool result_user_data = GetUserDataManager()->Reload();
   return result_dictionary && result_user_data;
 }

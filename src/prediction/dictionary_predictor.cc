@@ -50,6 +50,7 @@
 #include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
@@ -309,13 +310,13 @@ void DictionaryPredictor::Finish(const ConversionRequest &request,
 
   const Segment &segment = segments->conversion_segment(0);
   if (segment.candidates_size() < 1) {
-    VLOG(2) << "candidates size < 1";
+    MOZC_VLOG(2) << "candidates size < 1";
     return;
   }
 
   const Segment::Candidate &candidate = segment.candidate(0);
   if (segment.segment_type() != Segment::FIXED_VALUE) {
-    VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
+    MOZC_VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
     return;
   }
 
@@ -363,11 +364,11 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
   if (request.request_type() == ConversionRequest::CONVERSION) {
-    VLOG(2) << "request type is CONVERSION";
+    MOZC_VLOG(2) << "request type is CONVERSION";
     return false;
   }
   if (segments->conversion_segments_size() < 1) {
-    VLOG(2) << "segment size < 1";
+    MOZC_VLOG(2) << "segment size < 1";
     return false;
   }
 

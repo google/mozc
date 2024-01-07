@@ -56,6 +56,7 @@
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
 #include "base/thread.h"
+#include "base/vlog.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -184,7 +185,7 @@ class UserDictionary::TokensIndex {
             Fingerprint(absl::StrCat(reading, "\t", entry.value(), "\t",
                                      absl::string_view(pos_type_as_char, 1)));
         if (!seen.insert(fp).second) {
-          VLOG(1) << "Found dup item";
+          MOZC_VLOG(1) << "Found dup item";
           continue;
         }
 
@@ -235,7 +236,7 @@ class UserDictionary::TokensIndex {
     std::sort(user_pos_tokens_.begin(), user_pos_tokens_.end(),
               OrderByKeyThenById());
 
-    VLOG(1) << user_pos_tokens_.size() << " user dic entries loaded";
+    MOZC_VLOG(1) << user_pos_tokens_.size() << " user dic entries loaded";
 
     usage_stats::UsageStats::SetInteger(
         "UserRegisteredWord", static_cast<int>(user_pos_tokens_.size()));
@@ -363,7 +364,7 @@ void UserDictionary::LookupPredictive(
   absl::ReaderMutexLock l(&mutex_);
 
   if (key.empty()) {
-    VLOG(2) << "string of length zero is passed.";
+    MOZC_VLOG(2) << "string of length zero is passed.";
     return;
   }
   if (tokens_->empty()) {

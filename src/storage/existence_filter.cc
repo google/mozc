@@ -46,6 +46,7 @@
 #include "absl/types/span.h"
 #include "base/bits.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 
 namespace mozc {
 namespace storage {
@@ -174,7 +175,7 @@ absl::StatusOr<ExistenceFilter> ExistenceFilter::Read(
   }
   buf.remove_prefix(kHeaderSize);
 
-  VLOG(1) << "Reading bloom filter with params: " << params;
+  MOZC_VLOG(1) << "Reading bloom filter with params: " << params;
 
   if (buf.size() < BitsToWords(params.size)) {
     return absl::InvalidArgumentError("Not enough bufsize: could not read");
@@ -199,7 +200,7 @@ ExistenceFilterBuilder ExistenceFilterBuilder::CreateOptimal(
     optimal_k = 7;
   }
 
-  VLOG(1) << "optimal_k: " << optimal_k;
+  MOZC_VLOG(1) << "optimal_k: " << optimal_k;
 
   return ExistenceFilterBuilder({m, n, optimal_k});
 }

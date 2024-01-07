@@ -49,6 +49,7 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -623,7 +624,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
   // PREDICTION?
   if (request.request_type() == ConversionRequest::SUGGESTION) {
     if (!request.config().use_dictionary_suggest()) {
-      VLOG(2) << "no_dictionary_suggest";
+      MOZC_VLOG(2) << "no_dictionary_suggest";
       return NO_PREDICTION;
     }
     // Never trigger prediction if the key looks like zip code.

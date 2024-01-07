@@ -62,6 +62,7 @@
 #include "base/protobuf/message.h"
 #include "base/thread.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -254,7 +255,7 @@ bool UserHistoryStorage::Load() {
       << num_deleted << " old entries were not loaded "
       << proto_.entries_size();
 
-  VLOG(1) << "Loaded user history, size=" << proto_.entries_size();
+  MOZC_VLOG(1) << "Loaded user history, size=" << proto_.entries_size();
   return true;
 }
 
@@ -318,7 +319,7 @@ int UserHistoryStorage::DeleteEntriesUntouchedFor62Days() {
 bool UserHistoryPredictor::EntryPriorityQueue::Push(Entry *entry) {
   DCHECK(entry);
   if (!seen_.insert(absl::HashOf(entry->value())).second) {
-    VLOG(2) << "found dups";
+    MOZC_VLOG(2) << "found dups";
     return false;
   }
   const uint32_t score = UserHistoryPredictor::GetScore(*entry);
@@ -410,7 +411,7 @@ bool UserHistoryPredictor::AsyncLoad() {
   }
 
   sync_.emplace([this] {
-    VLOG(1) << "Executing Reload method";
+    MOZC_VLOG(1) << "Executing Reload method";
     Load();
   });
 
@@ -427,7 +428,7 @@ bool UserHistoryPredictor::AsyncSave() {
   }
 
   sync_.emplace([this] {
-    VLOG(1) << "Executing Sync method";
+    MOZC_VLOG(1) << "Executing Sync method";
     Save();
   });
 
@@ -458,7 +459,8 @@ bool UserHistoryPredictor::Load(const UserHistoryStorage &history) {
     dic_->Insert(EntryFingerprint(entry), entry);
   }
 
-  VLOG(1) << "Loaded user history, size=" << history.GetProto().entries_size();
+  MOZC_VLOG(1) << "Loaded user history, size="
+               << history.GetProto().entries_size();
 
   return true;
 }
@@ -502,7 +504,7 @@ bool UserHistoryPredictor::ClearAllHistory() {
   // Waits until syncer finishes
   WaitForSyncer();
 
-  VLOG(1) << "Clearing user prediction";
+  MOZC_VLOG(1) << "Clearing user prediction";
   // Renews DicCache as LruCache tries to reuse the internal value by
   // using FreeList
   dic_ = std::make_unique<DicCache>(UserHistoryPredictor::cache_size());
@@ -521,23 +523,23 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
   // Waits until syncer finishes
   WaitForSyncer();
 
-  VLOG(1) << "Clearing unused prediction";
+  MOZC_VLOG(1) << "Clearing unused prediction";
   const DicElement *head = dic_->Head();
   if (head == nullptr) {
-    VLOG(2) << "dic head is nullptr";
+    MOZC_VLOG(2) << "dic head is nullptr";
     return false;
   }
 
   std::vector<uint32_t> keys;
   for (const DicElement *elm = head; elm != nullptr; elm = elm->next) {
-    VLOG(3) << elm->key << " " << elm->value.suggestion_freq();
+    MOZC_VLOG(3) << elm->key << " " << elm->value.suggestion_freq();
     if (elm->value.suggestion_freq() == 0) {
       keys.push_back(elm->key);
     }
   }
 
   for (const uint32_t key : keys) {
-    VLOG(2) << "Removing: " << key;
+    MOZC_VLOG(2) << "Removing: " << key;
     if (!dic_->Erase(key)) {
       LOG(ERROR) << "cannot erase " << key;
     }
@@ -550,7 +552,7 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
 
   Sync();
 
-  VLOG(1) << keys.size() << " removed";
+  MOZC_VLOG(1) << keys.size() << " removed";
 
   return true;
 }
@@ -943,7 +945,7 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
   }
 
   if (key.size() < input_key.size()) {
-    VLOG(3) << "Cannot find prefix match even after chain rules";
+    MOZC_VLOG(3) << "Cannot find prefix match even after chain rules";
     return false;
   }
 
@@ -1135,7 +1137,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
       Util::CharsLen(segments->conversion_segment(0).key());
   const Entry *prev_entry = LookupPrevEntry(*segments);
   if (input_key_len == 0 && prev_entry == nullptr) {
-    VLOG(1) << "If input_key_len is 0, prev_entry must be set";
+    MOZC_VLOG(1) << "If input_key_len is 0, prev_entry must be set";
     return false;
   }
 
@@ -1150,7 +1152,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
   GetResultsFromHistoryDictionary(request_type, request, *segments, prev_entry,
                                   max_prediction_size * 5, &results);
   if (results.size() == 0) {
-    VLOG(2) << "no prefix match candidate is found.";
+    MOZC_VLOG(2) << "no prefix match candidate is found.";
     return false;
   }
 
@@ -1167,45 +1169,45 @@ bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
   }
 
   if (request.config().incognito_mode()) {
-    VLOG(2) << "incognito mode";
+    MOZC_VLOG(2) << "incognito mode";
     return false;
   }
 
   if (request.config().history_learning_level() == config::Config::NO_HISTORY) {
-    VLOG(2) << "history learning level is NO_HISTORY";
+    MOZC_VLOG(2) << "history learning level is NO_HISTORY";
     return false;
   }
 
   if (request.request_type() == ConversionRequest::CONVERSION) {
-    VLOG(2) << "request type is CONVERSION";
+    MOZC_VLOG(2) << "request type is CONVERSION";
     return false;
   }
 
   if (!request.config().use_history_suggest() &&
       request.request_type() == ConversionRequest::SUGGESTION) {
-    VLOG(2) << "no history suggest";
+    MOZC_VLOG(2) << "no history suggest";
     return false;
   }
 
   if (segments.conversion_segments_size() < 1) {
-    VLOG(2) << "segment size < 1";
+    MOZC_VLOG(2) << "segment size < 1";
     return false;
   }
 
   if (dic_->Head() == nullptr) {
-    VLOG(2) << "dic head is nullptr";
+    MOZC_VLOG(2) << "dic head is nullptr";
     return false;
   }
 
   const std::string &input_key = segments.conversion_segment(0).key();
   if (IsPunctuation(Util::Utf8SubString(input_key, 0, 1))) {
-    VLOG(2) << "input_key starts with punctuations";
+    MOZC_VLOG(2) << "input_key starts with punctuations";
     return false;
   }
 
   const size_t input_key_len = Util::CharsLen(input_key);
   if (input_key_len == 0 && request_type == DEFAULT) {
-    VLOG(2) << "key length is 0";
+    MOZC_VLOG(2) << "key length is 0";
     return false;
   }
 
@@ -1310,7 +1312,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
     }
     if (request.request_type() == ConversionRequest::SUGGESTION &&
         trial++ >= kMaxSuggestionTrial) {
-      VLOG(2) << "too many trials";
+      MOZC_VLOG(2) << "too many trials";
       break;
     }
 
@@ -1398,7 +1400,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       if (IsValidSuggestion(request_type, input_key_len, *result_entry)) {
         is_valid_candidate = true;
       } else if (segment->candidates_size() == 0) {
-        VLOG(2) << "candidates size is 0";
+        MOZC_VLOG(2) << "candidates size is 0";
         return false;
       }
     } else {
@@ -1407,7 +1409,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
     }
 
     if (!is_valid_candidate) {
-      VLOG(2) << "not a valid candidate: " << result_entry->key();
+      MOZC_VLOG(2) << "not a valid candidate: " << result_entry->key();
       continue;
     }
 
@@ -1416,7 +1418,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
         Util::CharsLen(result_entry->value()) > 8) {
       // Don't show long history for mixed conversion
       // TODO(toshiyuki): Better to merge this into IsValidSuggestion logic.
-      VLOG(2) << "long candidate: " << result_entry->value();
+      MOZC_VLOG(2) << "long candidate: " << result_entry->value();
       continue;
     }
 
@@ -1530,7 +1532,7 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
   CHECK(dic_.get());
   DicElement *e = dic_->Insert(dic_key);
   if (e == nullptr) {
-    VLOG(2) << "insert failed";
+    MOZC_VLOG(2) << "insert failed";
     return;
   }
 
@@ -1595,7 +1597,7 @@ void UserHistoryPredictor::Insert(std::string key, std::string value,
 
   DicElement *e = dic_->Insert(dic_key);
   if (e == nullptr) {
-    VLOG(2) << "insert failed";
+    MOZC_VLOG(2) << "insert failed";
     return;
   }
 
@@ -1626,8 +1628,8 @@ void UserHistoryPredictor::Insert(std::string key, std::string value,
     InsertNextEntry(next_entry, entry);
   }
 
-  VLOG(2) << entry->key() << " " << entry->value()
-          << " has been inserted: " << protobuf::Utf8Format(*entry);
+  MOZC_VLOG(2) << entry->key() << " " << entry->value()
+               << " has been inserted: " << protobuf::Utf8Format(*entry);
 
   // New entry is inserted to the cache
   updated_ = true;
@@ -1637,18 +1639,18 @@ void UserHistoryPredictor::MaybeRecordUsageStats(
     const Segments &segments) const {
   const Segment &segment = segments.conversion_segment(0);
   if (segment.candidates_size() < 1) {
-    VLOG(2) << "candidates size < 1";
+    MOZC_VLOG(2) << "candidates size < 1";
     return;
   }
 
   const Segment::Candidate &candidate = segment.candidate(0);
   if (segment.segment_type() != Segment::FIXED_VALUE) {
-    VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
+    MOZC_VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
     return;
   }
 
   if (!(candidate.source_info & Segment::Candidate::USER_HISTORY_PREDICTOR)) {
-    VLOG(2) << "candidate is not from user_history_predictor";
+    MOZC_VLOG(2) << "candidate is not from user_history_predictor";
     return;
   }
 
@@ -1666,19 +1668,19 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   }
 
   if (request.config().incognito_mode()) {
-    VLOG(2) << "incognito mode";
+    MOZC_VLOG(2) << "incognito mode";
     return;
   }
 
   if (request.config().history_learning_level() !=
       config::Config::DEFAULT_HISTORY) {
-    VLOG(2) << "history learning level is not DEFAULT_HISTORY: "
-            << request.config().history_learning_level();
+    MOZC_VLOG(2) << "history learning level is not DEFAULT_HISTORY: "
+                 << request.config().history_learning_level();
     return;
   }
 
   if (!request.config().use_history_suggest()) {
-    VLOG(2) << "no history suggest";
+    MOZC_VLOG(2) << "no history suggest";
     return;
   }
 
@@ -1742,22 +1744,22 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
     const Segment &segment = segments->segment(i);
     if (segment.candidates_size() < 1) {
-      VLOG(2) << "candidates size < 1";
+      MOZC_VLOG(2) << "candidates size < 1";
       return;
     }
     if (segment.segment_type() != Segment::FIXED_VALUE) {
-      VLOG(2) << "segment is not FIXED_VALUE";
+      MOZC_VLOG(2) << "segment is not FIXED_VALUE";
       return;
     }
     const Segment::Candidate &candidate = segment.candidate(0);
     if (candidate.attributes & Segment::Candidate::NO_SUGGEST_LEARNING) {
-      VLOG(2) << "NO_SUGGEST_LEARNING";
+      MOZC_VLOG(2) << "NO_SUGGEST_LEARNING";
       return;
     }
   }
 
   if (IsPrivacySensitive(segments)) {
-    VLOG(2) << "do not remember privacy sensitive input";
+    MOZC_VLOG(2) << "do not remember privacy sensitive input";
     return;
   }
 
@@ -1930,7 +1932,7 @@ void UserHistoryPredictor::Revert(Segments *segments) {
     if (revert_entry.id == UserHistoryPredictor::revert_id() &&
         revert_entry.revert_entry_type == Segments::RevertEntry::CREATE_ENTRY) {
       const uint32_t key = LoadUnaligned<uint32_t>(revert_entry.key.data());
-      VLOG(2) << "Erasing the key: " << key;
+      MOZC_VLOG(2) << "Erasing the key: " << key;
       dic_->Erase(key);
     }
   }

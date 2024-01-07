@@ -150,6 +150,10 @@ mozc_cc_qt_library(
         "msime_user_dictionary_importer.h",
     ],
     deps = [
+        ":encoding_util",
+        "//base:logging",
+        "//base:util",
+        "//base:vlog",
         "//dictionary:user_dictionary_importer",
     ],
 )

@@ -59,6 +59,7 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/status.h"
+#include "base/vlog.h"
 #include "data_manager/dataset_writer.h"
 
 ABSL_FLAG(std::string, magic, "", "Hex-encoded magic number to be embedded");
@@ -103,8 +104,9 @@ int main(int argc, char **argv) {
   {
     mozc::DataSetWriter writer(magic);
     for (const auto &input : inputs) {
-      VLOG(1) << "Writing " << input.name << ", alignment = " << input.alignment
-              << ", file = " << input.filename;
+      MOZC_VLOG(1) << "Writing " << input.name
+                   << ", alignment = " << input.alignment
+                   << ", file = " << input.filename;
       writer.AddFile(input.name, input.alignment, input.filename);
     }
     mozc::OutputFileStream output(tmpfile,

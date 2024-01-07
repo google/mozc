@@ -43,6 +43,7 @@
 #include "base/status.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "data_manager/dataset.pb.h"
 
 namespace mozc {
@@ -86,8 +87,8 @@ void DataSetWriter::Finish(std::ostream *output) {
   image_.append(Util::SerializeUint64(image_.size() + 8));
 
   CHECK(output->write(image_.data(), image_.size()));
-  VLOG(1) << "Wrote data set of " << image_.size() << " bytes:\n"
-          << protobuf::Utf8Format(metadata_);
+  MOZC_VLOG(1) << "Wrote data set of " << image_.size() << " bytes:\n"
+               << protobuf::Utf8Format(metadata_);
 }
 
 void DataSetWriter::AppendPadding(int alignment) {

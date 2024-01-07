@@ -41,6 +41,7 @@
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "gui/base/table_util.h"
 #include "gui/base/util.h"
 
@@ -99,7 +100,7 @@ std::string RomanTableEditorDialog::GetDefaultRomanTable() {
     std::vector<std::string> fields =
         absl::StrSplit(line, '\t', absl::AllowEmpty());
     if (fields.size() < 2) {
-      VLOG(3) << "field size < 2";
+      MOZC_VLOG(3) << "field size < 2";
       continue;
     }
     result += fields[0];
@@ -130,7 +131,7 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
     std::vector<std::string> fields =
         absl::StrSplit(line, '\t', absl::AllowEmpty());
     if (fields.size() < 2) {
-      VLOG(3) << "field size < 2";
+      MOZC_VLOG(3) << "field size < 2";
       continue;
     }
 

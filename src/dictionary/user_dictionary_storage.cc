@@ -45,6 +45,7 @@
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
+#include "base/vlog.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
@@ -121,7 +122,7 @@ absl::Status UserDictionaryStorage::Load() {
     status = LoadInternal();
   } else if (absl::IsNotFound(status)) {
     // This is also an expected scenario: e.g., clean installation, unit tests.
-    VLOG(1) << "User dictionary file has not been created";
+    MOZC_VLOG(1) << "User dictionary file has not been created";
     last_error_type_ = FILE_NOT_EXISTS;
   } else {
     // Failed to check file existnce.

@@ -104,6 +104,7 @@ mozc_cc_library(
         ":engine_interface",
         ":user_data_manager_interface",
         "//base:logging",
+        "//base:vlog",
         "//converter",
         "//converter:connector",
         "//converter:immutable_converter_interface",

@@ -50,6 +50,7 @@
 #include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
@@ -295,7 +296,7 @@ UserDictionaryImporter::TextInputIterator::TextInputIterator(
 
   ime_type_ = DetermineFinalIMEType(ime_type, guessed_type);
 
-  VLOG(1) << "Setting type to: " << static_cast<int>(ime_type_);
+  MOZC_VLOG(1) << "Setting type to: " << static_cast<int>(ime_type_);
 }
 
 bool UserDictionaryImporter::TextInputIterator::IsAvailable() const {
@@ -333,7 +334,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
       continue;
     }
 
-    VLOG(2) << line;
+    MOZC_VLOG(2) << line;
 
     std::vector<std::string> values;
     switch (ime_type_) {

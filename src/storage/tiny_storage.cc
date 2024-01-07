@@ -47,6 +47,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/vlog.h"
 #include "storage/storage_interface.h"
 
 namespace mozc {
@@ -203,7 +204,7 @@ bool TinyStorageImpl::Open(const std::string &filename) {
 // |value_size(uint32_t)|value(variable length)| ...
 bool TinyStorageImpl::Sync() {
   if (!should_sync_) {
-    VLOG(2) << "Already synced";
+    MOZC_VLOG(2) << "Already synced";
     return true;
   }
 
@@ -279,7 +280,7 @@ bool TinyStorageImpl::Insert(const std::string &key, const std::string &value) {
 bool TinyStorageImpl::Erase(const std::string &key) {
   auto node = dic_.extract(key);
   if (node.empty()) {
-    VLOG(2) << "cannot erase key: " << key;
+    MOZC_VLOG(2) << "cannot erase key: " << key;
     return false;
   }
   should_sync_ = true;
@@ -289,7 +290,7 @@ bool TinyStorageImpl::Erase(const std::string &key) {
 bool TinyStorageImpl::Lookup(const std::string &key, std::string *value) const {
   const auto it = dic_.find(key);
   if (it == dic_.end()) {
-    VLOG(3) << "cannot find key: " << key;
+    MOZC_VLOG(3) << "cannot find key: " << key;
     return false;
   }
   *value = it->second;

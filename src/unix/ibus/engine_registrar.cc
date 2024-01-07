@@ -30,6 +30,7 @@
 #include "unix/ibus/engine_registrar.h"
 
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "unix/ibus/engine_interface.h"
 
 namespace mozc {
@@ -63,7 +64,7 @@ void IBusMozcEngineClassDestroy(IBusObject *engine) {
 void IBusMozcEngineClassInit(gpointer klass, gpointer class_data) {
   IBusEngineClass *engine_class = IBUS_ENGINE_CLASS(klass);
 
-  VLOG(2) << "MozcEngineClassInit is called";
+  MOZC_VLOG(2) << "MozcEngineClassInit is called";
   EngineRegistrar::Register(engine_class);
 
   g_parent_class =
