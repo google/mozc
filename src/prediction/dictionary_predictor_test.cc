@@ -1270,6 +1270,55 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigramOnMobile) {
   EXPECT_EQ(exact_count, 30);
 }
 
+TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigrmForHandwriting) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  // Fill handwriting request and composer
+  {
+    request_->set_zero_query_suggestion(true);
+    request_->set_mixed_conversion(false);
+    request_->set_kana_modifier_insensitive_conversion(false);
+    request_->set_auto_partial_suggestion(false);
+
+    commands::SessionCommand command;
+    commands::SessionCommand::CompositionEvent *composition_event =
+        command.add_composition_events();
+    composition_event->set_composition_string("かん字");
+    composition_event->set_probability(1.0);
+    composer_->SetCompositionsForHandwriting(command.composition_events());
+  }
+
+  {
+    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+
+    std::vector<Result> results;
+    for (int i = 0; i < 30; ++i) {
+      // Exact entries
+      results.push_back(CreateResult5("かん字", absl::StrCat(i, "漢字E"),
+                                      5000 + i, prediction::UNIGRAM,
+                                      Token::NONE));
+    }
+
+    EXPECT_CALL(*aggregator, AggregateResults(_, _)).WillOnce(Return(results));
+  }
+
+  Segments segments;
+  InitSegmentsWithKey("かん字", &segments);
+
+  convreq_for_prediction_->set_max_dictionary_prediction_candidates_size(100);
+  EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
+  int exact_count = 0;
+  for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
+    const auto candidate = segments.segment(0).candidate(i);
+    if (absl::StrContains(candidate.value, "漢字E")) {
+      exact_count++;
+    }
+  }
+  EXPECT_EQ(exact_count, 30);
+}
+
 TEST_F(DictionaryPredictorTest, DoNotFilterZeroQueryCandidatesOnMobile) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
       CreateDictionaryPredictorWithMockData();

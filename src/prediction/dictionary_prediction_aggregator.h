@@ -33,8 +33,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -49,7 +49,6 @@
 #include "prediction/number_decoder.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
-#include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
 
@@ -84,6 +83,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   class PredictiveLookupCallback;
   class PrefixLookupCallback;
   class PredictiveBigramLookupCallback;
+  class HandwritingLookupCallback;
 
   using AggregateUnigramFn = PredictionType (DictionaryPredictionAggregator::*)(
       const ConversionRequest &request, const Segments &segments,
@@ -92,6 +92,16 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   struct UnigramConfig {
     AggregateUnigramFn unigram_fn;
     size_t min_key_len;
+  };
+
+  struct HandwritingQueryInfo {
+    // Hiragana key for dictionary look up.
+    // ex. "かんじじてん" for "かん字じ典"
+    std::string query;
+    // The list of non-Hiragana strings. They should be appeared in the result
+    // token value in order.
+    // ex. {"字", "典"} for "かん字じ典"
+    std::vector<std::string> constraints;
   };
 
   // For testing
@@ -262,6 +272,16 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       std::vector<Result> *results) const;
 
   PredictionType AggregateUnigramCandidateForLatinInput(
+      const ConversionRequest &request, const Segments &segments,
+      std::vector<Result> *results) const;
+
+  // Generates `HandwritingQueryInfo` using composer in the `request`.
+  std::optional<HandwritingQueryInfo> GenerateQueryForHandwriting(
+      const ConversionRequest &request, const Segments &segments) const;
+
+  // Generates prediction candidates using composition events in composer and
+  // appends to `results`.
+  PredictionType AggregateUnigramCandidateForHandwriting(
       const ConversionRequest &request, const Segments &segments,
       std::vector<Result> *results) const;
 

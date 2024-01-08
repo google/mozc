@@ -120,6 +120,12 @@ bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
 }
 
+bool IsHandwriting(const ConversionRequest &request) {
+  return !IsMixedConversionEnabled(request.request()) &&
+         request.has_composer() &&
+         !request.composer().GetHandwritingCompositions().empty();
+}
+
 bool ShouldFilterNoisyNumberCandidate(const Request &request) {
   return request.decoder_experiment_params().filter_noisy_number_candidate();
 }
@@ -442,7 +448,7 @@ DictionaryPredictor::MaybePopualteTypingCorrectedResults(
 
   const TypingCorrectionMixingParams typing_correction_mixing_params =
       GetTypingCorrectionMixingParams(request, *results,
-                                       typing_corrected_results);
+                                      typing_corrected_results);
 
   for (auto &result : typing_corrected_results) {
     results->emplace_back(std::move(result));
@@ -684,7 +690,8 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
-      include_exact_key_(IsMixedConversionEnabled(request.request())),
+      include_exact_key_(IsMixedConversionEnabled(request.request()) ||
+                         IsHandwriting(request)),
       filter_number_(ShouldFilterNoisyNumberCandidate(request.request())) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);

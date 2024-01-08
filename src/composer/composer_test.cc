@@ -3393,5 +3393,38 @@ TEST_F(ComposerTest, SpellCheckerServiceTest) {
   EXPECT_EQ(composer_->GetTypeCorrectedQueries("context"), std::nullopt);
 
 }
+
+TEST_F(ComposerTest, UpdateComposition) {
+  {
+    commands::SessionCommand command;
+    commands::SessionCommand::CompositionEvent *composition_event =
+        command.add_composition_events();
+    composition_event->set_composition_string("かん字");
+    composition_event->set_probability(1.0);
+    composer_->SetCompositionsForHandwriting(command.composition_events());
+  }
+  std::string input_key;
+
+  composer_->GetQueryForPrediction(&input_key);
+  EXPECT_EQ(input_key, "かん字");
+  EXPECT_EQ(composer_->GetHandwritingCompositions().size(), 1);
+
+  {
+    commands::SessionCommand command;
+    commands::SessionCommand::CompositionEvent *composition_event =
+        command.add_composition_events();
+    composition_event->set_composition_string("ねこ");
+    composition_event->set_probability(0.9);
+    composition_event = command.add_composition_events();
+    composition_event->set_composition_string("ね二");
+    composition_event->set_probability(0.1);
+    composer_->SetCompositionsForHandwriting(command.composition_events());
+  }
+
+  input_key.clear();
+  composer_->GetQueryForPrediction(&input_key);
+  EXPECT_EQ(input_key, "ねこ");
+  EXPECT_EQ(composer_->GetHandwritingCompositions().size(), 2);
+}
 }  // namespace composer
 }  // namespace mozc
