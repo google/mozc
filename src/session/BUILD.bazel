@@ -120,6 +120,7 @@ mozc_cc_test(
 mozc_cc_test(
     name = "session_converter_stress_test",
     size = "small",
+    timeout = "moderate",
     srcs = ["session_converter_stress_test.cc"],
     requires_full_emulation = False,
     shard_count = 8,
