@@ -38,11 +38,10 @@ Typical usage:
 
 __author__ = "horo"
 
+import argparse
 import dataclasses
-import optparse
 import os
 from copy_file import CopyFiles
-from util import PrintErrorAndExit
 from util import RunOrDie
 
 
@@ -54,20 +53,18 @@ class QtModule:
     name: the name of the component (e.g. 'QtCore')
     version: the version string in framework (e.g. '5' and 'A')
   """
+
   name: str
   version: str
 
 
-def ParseOption():
-  """Parse command line options."""
-  parser = optparse.OptionParser()
-  parser.add_option('--qtdir', dest='qtdir')
-  parser.add_option('--qtver', dest='qtver', type=int, default=None)
-  parser.add_option('--target', dest='target')
-
-  (opts, _) = parser.parse_args()
-
-  return opts
+def ParseArgs():
+  """Parses command line options."""
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--qtdir', required=True)
+  parser.add_argument('--qtver', required=True, type=int)
+  parser.add_argument('--target', required=True)
+  return parser.parse_args()
 
 
 def GetFrameworkPath(module: QtModule):
@@ -96,15 +93,18 @@ def CopyQt(qtdir, module: QtModule, target):
 
   # cp {qtdir}/lib/QtCore.framework/Versions/{ver}/QtCore
   #    {target}/QtCore.framework/Versions/{ver}/QtCore
-  CopyFiles([srcdir + module.name],
-            f'{dstdir}Versions/{module.version}/{module.name}')
+  CopyFiles(
+      [srcdir + module.name], f'{dstdir}Versions/{module.version}/{module.name}'
+  )
 
   # Copies Resources of QtGui
   # cp -r {qtdir}/lib/QtCore.framework/Resources
   #       {target}/QtCore.framework/Versions/{ver}/Resources
-  CopyFiles([srcdir + 'Resources'],
-            f'{dstdir}Versions/{module.version}/Resources',
-            recursive=True)
+  CopyFiles(
+      [srcdir + 'Resources'],
+      f'{dstdir}Versions/{module.version}/Resources',
+      recursive=True,
+  )
 
   # ln -s {ver} {target}/QtCore.framework/Versions/Current
   Symlink(f'{module.version}', dstdir + 'Versions/Current')
@@ -119,9 +119,12 @@ def CopyQt(qtdir, module: QtModule, target):
 def ChangeReferences(path, target, ref_to, ref_framework_paths=None):
   """Change the references of frameworks, by using install_name_tool."""
   # Change id
-  cmd = ['install_name_tool',
-         '-id', '%s/%s' % (ref_to, path),
-         '%s/%s' % (target, path)]
+  cmd = [
+      'install_name_tool',
+      '-id',
+      '%s/%s' % (ref_to, path),
+      '%s/%s' % (target, path),
+  ]
   RunOrDie(cmd)
 
   if not ref_framework_paths:
@@ -129,36 +132,30 @@ def ChangeReferences(path, target, ref_to, ref_framework_paths=None):
 
   # Change references
   for ref_framework_path in ref_framework_paths:
-    change_cmd = ['install_name_tool', '-change',
-                  '@rpath/%s' % ref_framework_path,
-                  '%s/%s' % (ref_to, ref_framework_path),
-                  '%s/%s' % (target, path)]
+    change_cmd = [
+        'install_name_tool',
+        '-change',
+        '@rpath/%s' % ref_framework_path,
+        '%s/%s' % (ref_to, ref_framework_path),
+        '%s/%s' % (target, path),
+    ]
     RunOrDie(change_cmd)
 
 
 def main():
-  opt = ParseOption()
+  args = ParseArgs()
 
-  if not opt.qtdir:
-    PrintErrorAndExit('--qtdir option is mandatory.')
-
-  if not opt.qtver:
-    PrintErrorAndExit('--qtver option is mandatory.')
-
-  if not opt.target:
-    PrintErrorAndExit('--target option is mandatory.')
-
-  qtdir = os.path.abspath(opt.qtdir)
-  target = os.path.abspath(opt.target)
+  qtdir = os.path.abspath(args.qtdir)
+  target = os.path.abspath(args.target)
 
   ref_to = '@executable_path/../../../ConfigDialog.app/Contents/Frameworks'
 
-  if opt.qtver == 5:
+  if args.qtver == 5:
     version = '5'  # Qt5 uses '5' as the version name
-  elif opt.qtver == 6:
+  elif args.qtver == 6:
     version = 'A'  # Qt5 uses 'A' as the version name
   else:
-    raise ValueError(f'Invalid qtver: {opt.qtver}')
+    raise ValueError(f'Invalid qtver: {args.qtver}')
   qt_core = QtModule(name='QtCore', version=version)
   qt_gui = QtModule(name='QtGui', version=version)
   qt_widgets = QtModule(name='QtWidgets', version=version)
@@ -170,8 +167,10 @@ def main():
   CopyQt(qtdir, qt_print_support, target)
 
   libqcocoa = 'QtCore.framework/Resources/plugins/platforms/libqcocoa.dylib'
-  CopyFiles(['%s/plugins/platforms/libqcocoa.dylib' % qtdir],
-            '%s/%s' % (target, libqcocoa))
+  CopyFiles(
+      ['%s/plugins/platforms/libqcocoa.dylib' % qtdir],
+      '%s/%s' % (target, libqcocoa),
+  )
 
   changed_refs = []
   for ref in [

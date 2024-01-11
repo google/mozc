@@ -30,26 +30,34 @@
 
 """Utilitis for copying dependent files for Windows build."""
 
+import argparse
 import datetime
-import logging
-import optparse
 import os
 import shutil
 
-from util import PrintErrorAndExit
 
 def ParseOption():
   """Parse command line options."""
-  parser = optparse.OptionParser()
-  MSG = ' you can use %s as path separator' % os.pathsep
-  parser.add_option('--dll_paths', dest='dll_paths', default='',
-                    help='Search paths for DLLs.' + MSG)
-  parser.add_option('--pdb_paths', dest='pdb_paths', default='',
-                    help='Search paths for PDB files.' + MSG)
-  parser.add_option('--target_dir', dest='target_dir', default='',
-                    help='Deploy target directory.')
-  parser.add_option('--basenames', dest='basenames', default='',
-                    help='The basenames of DLL and/or PDB.' + MSG)
+  parser = argparse.ArgumentParser()
+  additional_desc = ' you can use %s as path separator' % os.pathsep
+  parser.add_argument(
+      '--dll_paths',
+      required=True,
+      help='Search paths for DLLs.' + additional_desc,
+  )
+  parser.add_argument(
+      '--pdb_paths',
+      required=True,
+      help='Search paths for PDB files.' + additional_desc,
+  )
+  parser.add_argument(
+      '--target_dir', required=True, help='Deploy target directory.'
+  )
+  parser.add_argument(
+      '--basenames',
+      required=True,
+      help='The basenames of DLL and/or PDB.' + additional_desc,
+  )
 
   (opts, _) = parser.parse_args()
 
@@ -61,8 +69,8 @@ def DeployMain(full_filename, src_paths, target_absdir):
 
   Args:
     full_filename: A string which represents the filename to be copied.
-    src_paths: A string which represents file search path with delimited by
-        a OS-dependent path separator.
+    src_paths: A string which represents file search path with delimited by a
+      OS-dependent path separator.
     target_absdir: A string which represents target directory name.
   """
   if not src_paths:
@@ -104,12 +112,6 @@ def DeployMain(full_filename, src_paths, target_absdir):
 
 def main():
   opts = ParseOption()
-
-  if not opts.basenames:
-    PrintErrorAndExit('--basenames option is mandatory.')
-
-  if not opts.target_dir:
-    PrintErrorAndExit('--target_dir option is mandatory.')
 
   target_absdir = os.path.abspath(opts.target_dir)
   for basename in opts.basenames.split(os.pathsep):
