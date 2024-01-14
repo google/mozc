@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include "composer/query.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/engine_builder.pb.h"
@@ -45,34 +46,7 @@ namespace spelling {
 
 using commands::CheckSpellingRequest;
 using commands::CheckSpellingResponse;
-
-struct TypeCorrectedQuery {
-  // Bit field of correction type.
-  enum CorrectionType {
-    NO_CORRECTION = 0,
-    CORRECTION = 1,                    // Normal typing correction.
-    COMPLETION = 2,                    // complete the rest of words/phrases.
-    KANA_MODIFIER_INSENTIVE_ONLY = 4,  // Pure katukou conversion.
-  };
-
-  std::string correction;
-
-  uint8_t type = NO_CORRECTION;
-
-  // `score` is the score diff against identity score.
-  // score = hyp_score - identity_score.
-  // `score` can be used to determine the triggering condition.
-  float score = 0.0;
-
-  // `bias` is the score diff against the base score.
-  // bias = hyp_score - base_score.
-  // `bias` is used to calculate the penalty/bonus of the correction cost.
-  // base_score is usually the same as the identity_score, but  We consider that
-  // pure kana modifier insensitive correction is not an actual typing
-  // correction. So when the top is a pure kana modifier insensitive correction,
-  // uses the top score as the base score.
-  float bias = 0.0;
-};
+using composer::TypeCorrectedQuery;
 
 class SpellCheckerServiceInterface {
  public:

@@ -59,6 +59,7 @@
 #include "composer/internal/mode_switching_handler.h"
 #include "composer/internal/transliterators.h"
 #include "composer/key_event_util.h"
+#include "composer/query.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
@@ -883,7 +884,7 @@ void Composer::GetQueriesForPrediction(std::string *base,
   japanese_util::FullWidthAsciiToHalfWidthAscii(base_query, base);
 }
 
-std::optional<std::vector<spelling::TypeCorrectedQuery>>
+std::optional<std::vector<TypeCorrectedQuery>>
 Composer::GetTypeCorrectedQueries(absl::string_view context) const {
 
   return std::nullopt;

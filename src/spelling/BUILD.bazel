@@ -47,6 +47,7 @@ mozc_cc_library(
         "//:__subpackages__",
     ],
     deps = [
+        "//composer:query",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
@@ -69,6 +70,7 @@ mozc_cc_library(
     deps = [
         ":spellchecker_service",
         ":spellchecker_service_interface",
+        "//composer:query",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
@@ -98,6 +100,7 @@ mozc_cc_library(
         "//base:thread",
         "//base:util",
         "//base/strings:japanese",
+        "//composer:query",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
@@ -150,6 +153,7 @@ mozc_cc_test(
         ":spellchecker_service",
         ":spellchecker_service_interface",
         "//base/strings:japanese",
+        "//composer:query",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",

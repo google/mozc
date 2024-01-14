@@ -412,6 +412,7 @@ mozc_cc_test(
         "//base:clock",
         "//base:clock_mock",
         "//base:thread",
+        "//composer:query",
         "//config:config_handler",
         "//converter:segments",
         "//engine",

@@ -37,11 +37,17 @@ load(
 package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
+    name = "query",
+    hdrs = ["query.h"],
+)
+
+mozc_cc_library(
     name = "composer",
     srcs = ["composer.cc"],
     hdrs = ["composer.h"],
     deps = [
         ":key_event_util",
+        ":query",
         ":table",
         "//base:clock",
         "//base:japanese_util",
@@ -76,6 +82,7 @@ mozc_cc_test(
     deps = [
         ":composer",
         ":key_parser",
+        ":query",
         ":table",
         "//base:clock_mock",
         "//base:util",
@@ -85,7 +92,6 @@ mozc_cc_test(
         "//data_manager/testing:mock_data_manager",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//spelling:spellchecker_service_interface",
         "//testing:gunit_main",
         "//transliteration",
         "@com_google_absl//absl/strings",

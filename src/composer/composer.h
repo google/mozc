@@ -45,6 +45,7 @@
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
+#include "composer/query.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -138,8 +139,8 @@ class Composer final {
   // composition. Returns an empty vector when correction is not required.
   // Returns std::nullopt when the underlying composition spellchecker is not
   // available/enabled.
-  std::optional<std::vector<spelling::TypeCorrectedQuery>>
-  GetTypeCorrectedQueries(absl::string_view context = "") const;
+  std::optional<std::vector<TypeCorrectedQuery>> GetTypeCorrectedQueries(
+      absl::string_view context = "") const;
 
   size_t GetLength() const;
   size_t GetCursor() const;

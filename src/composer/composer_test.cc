@@ -39,12 +39,12 @@
 #include <utility>
 #include <vector>
 
-#include "spelling/spellchecker_service_interface.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/clock_mock.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
+#include "composer/query.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
