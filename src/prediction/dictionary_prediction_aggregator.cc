@@ -67,6 +67,7 @@
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "request/conversion_request_util.h"
 #include "transliteration/transliteration.h"
 
 #ifndef NDEBUG
@@ -163,14 +164,6 @@ bool GetNumberHistory(const Segments &segments, std::string *number_key) {
 bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
-
-// LINT.IfChange
-bool IsHandwriting(const ConversionRequest &request) {
-  return !IsMixedConversionEnabled(request.request()) &&
-         request.has_composer() &&
-         !request.composer().GetHandwritingCompositions().empty();
-}
-// LINT.ThenChange(//prediction/dictionary_predictor.cc)
 
 bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
@@ -647,7 +640,7 @@ DictionaryPredictionAggregator::GetUnigramConfig(
             kMinUnigramKeyLen};
   }
 
-  if (IsHandwriting(request)) {
+  if (ConversionRequestUtil::IsHandwriting(request)) {
     constexpr size_t kMinUnigramKeyLen = 1;
     return {&DictionaryPredictionAggregator::
                 AggregateUnigramCandidateForHandwriting,

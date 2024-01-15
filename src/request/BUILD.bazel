@@ -45,3 +45,13 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
     ],
 )
+
+mozc_cc_library(
+    name = "conversion_request_util",
+    hdrs = ["conversion_request_util.h"],
+    deps = [
+        ":conversion_request",
+        "//composer",
+        "//protocol:commands_cc_proto",
+    ],
+)
