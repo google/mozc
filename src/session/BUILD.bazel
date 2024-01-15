@@ -120,6 +120,7 @@ mozc_cc_test(
 mozc_cc_test(
     name = "session_converter_stress_test",
     size = "small",
+    timeout = "moderate",
     srcs = ["session_converter_stress_test.cc"],
     requires_full_emulation = False,
     shard_count = 8,
@@ -825,9 +826,12 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:reflection",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

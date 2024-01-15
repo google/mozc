@@ -60,6 +60,7 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -1053,7 +1054,7 @@ bool DateRewriter::RewriteAd(Segment *segment) {
     return false;
   }
   if (segment->candidates_size() == 0) {
-    VLOG(2) << "No candidates are found";
+    MOZC_VLOG(2) << "No candidates are found";
     return false;
   }
   std::vector<std::string> results, descriptions;
@@ -1144,7 +1145,7 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
   // segment->candidate(0) or segment->meta_candidate(0) is used as reference.
   // Check the existence before generating candidates to save time.
   if (segment->candidates_size() == 0 && segment->meta_candidates_size() == 0) {
-    VLOG(2) << "No (meta) candidates are found";
+    MOZC_VLOG(2) << "No (meta) candidates are found";
     return false;
   }
 
@@ -1370,7 +1371,7 @@ std::string GetExtraFormat(const dictionary::DictionaryInterface *dictionary) {
 bool DateRewriter::Rewrite(const ConversionRequest &request,
                            Segments *segments) const {
   if (!request.config().use_date_conversion()) {
-    VLOG(2) << "no use_date_conversion";
+    MOZC_VLOG(2) << "no use_date_conversion";
     return false;
   }
 

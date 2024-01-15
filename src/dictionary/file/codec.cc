@@ -43,6 +43,7 @@
 #include "base/bits.h"
 #include "base/hash.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "dictionary/file/codec_util.h"
 #include "dictionary/file/section.h"
 
@@ -87,7 +88,7 @@ void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
   // name should be encoded
   // uint64_t needs just 8 bytes.
   DCHECK_EQ(8, name.size());
-  if (VLOG_IS_ON(1)) {
+  if (MOZC_VLOG_IS_ON(1)) {
     LOG(INFO) << "section=" << absl::CHexEscape(name)
               << " length=" << section.len;
   }
@@ -99,13 +100,13 @@ void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
 
 std::string DictionaryFileCodec::GetSectionName(
     const absl::string_view name) const {
-  VLOG(1) << "seed\t" << seed_;
+  MOZC_VLOG(1) << "seed\t" << seed_;
   const uint64_t name_fp = FingerprintWithSeed(name, seed_);
   const std::string fp_string(reinterpret_cast<const char *>(&name_fp),
                               sizeof(name_fp));
-  if (VLOG_IS_ON(1)) {
-    VLOG(1) << "Section name for " << name << ": "
-            << absl::CHexEscape(fp_string);
+  if (MOZC_VLOG_IS_ON(1)) {
+    MOZC_VLOG(1) << "Section name for " << name << ": "
+                 << absl::CHexEscape(fp_string);
   }
   return fp_string;
 }
@@ -169,7 +170,7 @@ absl::Status DictionaryFileCodec::ReadSections(
     }
     const absl::string_view fingerprint(ptr, kFingerprintByteLength);
     ptr += kFingerprintByteLength;
-    if (VLOG_IS_ON(1)) {
+    if (MOZC_VLOG_IS_ON(1)) {
       LOG(INFO) << "section=" << absl::CHexEscape(fingerprint)
                 << " data_size=" << data_size;
     }

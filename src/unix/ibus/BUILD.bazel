@@ -210,6 +210,7 @@ mozc_cc_library(
         "//base:singleton",
         "//base:system_util",
         "//base:util",
+        "//base:vlog",
         "//client",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",

@@ -51,6 +51,7 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/version.h"
+#include "base/vlog.h"
 #include "data_manager/dataset_reader.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/segmenter_data.pb.h"
@@ -352,13 +353,14 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
   }
   if (!reader.Get("a11y_description_token",
                   &a11y_description_token_array_data_)) {
-    VLOG(2) << "A11y description dictionary's token array is not provided";
+    MOZC_VLOG(2) << "A11y description dictionary's token array is not provided";
     a11y_description_token_array_data_ = "";
     // A11y description dictionary is optional, so don't return false here.
   }
   if (!reader.Get("a11y_description_string",
                   &a11y_description_string_array_data_)) {
-    VLOG(2) << "A11y description dictionary's string array is not provided";
+    MOZC_VLOG(2)
+        << "A11y description dictionary's string array is not provided";
     a11y_description_string_array_data_ = "";
     // A11y description dictionary is optional, so don't return false here.
   }
@@ -386,7 +388,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
   }
 
   if (!reader.Get("usage_item_array", &usage_items_data_)) {
-    VLOG(2) << "Usage dictionary is not provided";
+    MOZC_VLOG(2) << "Usage dictionary is not provided";
     // Usage dictionary is optional, so don't return false here.
   } else {
     if (!reader.Get("usage_base_conjugation_suffix",

@@ -40,6 +40,7 @@
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
@@ -237,7 +238,7 @@ int EmoticonRewriter::capability(const ConversionRequest &request) const {
 bool EmoticonRewriter::Rewrite(const ConversionRequest &request,
                                Segments *segments) const {
   if (!request.config().use_emoticon_conversion()) {
-    VLOG(2) << "no use_emoticon_conversion";
+    MOZC_VLOG(2) << "no use_emoticon_conversion";
     return false;
   }
   return RewriteCandidate(segments);

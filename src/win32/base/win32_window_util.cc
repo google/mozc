@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/vlog.h"
 
 namespace mozc {
 namespace win32 {
@@ -83,7 +84,7 @@ bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
     // Note: this actually fails in Internet Explorer 10 on Windows 8
     // with ERROR_ACCESS_DENIED (0x5).
     const int error = ::GetLastError();
-    VLOG(1) << "ChangeWindowMessageFilterEx failed. error = " << error;
+    MOZC_VLOG(1) << "ChangeWindowMessageFilterEx failed. error = " << error;
     return false;
   }
   return true;

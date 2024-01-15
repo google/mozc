@@ -41,6 +41,7 @@
 
 #include "spelling/spellchecker_service_interface.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
@@ -173,6 +174,15 @@ class Composer final {
   // If the input is ascii characters, input mode will be set as HALF_ASCII.
   // This is useful to test the behavior of alphabet keyboard.
   void SetPreeditTextForTestOnly(absl::string_view input);
+
+  // Set compositions from handwriting recognition results.
+  // The composition may contain Kana-Kanji mixed string. (ex. "かん字")
+  // Handwriting engine can generate multiple candidates.
+  void SetCompositionsForHandwriting(
+      absl::Span<const commands::SessionCommand::CompositionEvent *const>
+          compositions);
+  const std::vector<commands::SessionCommand::CompositionEvent> &
+  GetHandwritingCompositions() const;
 
   bool InsertCharacterKeyAndPreedit(absl::string_view key,
                                     absl::string_view preedit);
@@ -315,6 +325,12 @@ class Composer final {
   // Composer doesn't have the ownership of spellchecker_service_,
   // SessionHandler owns this this instance. (usually a singleton object).
   const spelling::SpellCheckerServiceInterface *spellchecker_service_ = nullptr;
+
+  // Example:
+  //   {{"かん字", 0.99}, {"かlv字", 0.01}}
+  // Please refer to commands.proto
+  std::vector<commands::SessionCommand::CompositionEvent>
+      compositions_for_handwriting_;
 };
 
 }  // namespace composer

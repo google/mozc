@@ -44,6 +44,7 @@
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "gui/base/encoding_util.h"
 
 namespace mozc {
@@ -78,7 +79,7 @@ IFEDictionary *CreateIFEDictionary() {
     LOG(ERROR) << "CoCreateInstance() failed: " << result;
     return nullptr;
   }
-  VLOG(1) << "Can create IFEDictionary successfully";
+  MOZC_VLOG(1) << "Can create IFEDictionary successfully";
   return obj;
 }
 

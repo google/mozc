@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "session/session_handler_tool.h"
-
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -65,6 +63,7 @@
 #include "session/request_test_util.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
+#include "session/session_handler_tool.h"
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.h"
@@ -675,6 +674,17 @@ absl::Status SessionHandlerInterpreter::Eval(
         std::vector<std::string>(args.begin() + 1, args.end() - 1),
         *(args.end() - 1), config_.get()));
     MOZC_ASSERT_TRUE(client_->SetConfig(*config_, last_output_.get()));
+  } else if (command == "MERGE_DECODER_EXPERIMENT_PARAMS") {
+    MOZC_ASSERT_EQ(2, args.size());
+    if (const std::string &textproto = args[1]; !textproto.empty()) {
+      mozc::commands::DecoderExperimentParams params;
+      CHECK(mozc::protobuf::TextFormat::ParseFromString(textproto, &params))
+          << "Invalid DecoderExperimentParams: " << textproto;
+      request_->mutable_decoder_experiment_params()->MergeFrom(params);
+      LOG(INFO) << "DecoderExperimentParams was set:\n"
+                << MOZC_LOG_PROTOBUF(request_->decoder_experiment_params());
+      MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
+    }
   } else if (command == "SET_SELECTION_TEXT") {
     MOZC_ASSERT_EQ(2, args.size());
     client_->SetCallbackText(args[1]);
@@ -740,7 +750,10 @@ absl::Status SessionHandlerInterpreter::Eval(
         absl::StrCat(args[2], " is not found\n",
                      protobuf::Utf8Format(last_output_->candidates())));
     if (has_result) {
-      MOZC_EXPECT_EQ(candidate_id, NumberUtil::SimpleAtoi(args[1]));
+      MOZC_EXPECT_EQ_MSG(
+          candidate_id, NumberUtil::SimpleAtoi(args[1]),
+          absl::StrCat(args[1], " is not found\n",
+                       protobuf::Utf8Format(last_output_->candidates())));
     }
   } else if (command == "EXPECT_CANDIDATE_DESCRIPTION") {
     MOZC_ASSERT_EQ(args.size(), 3);

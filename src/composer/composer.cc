@@ -41,9 +41,12 @@
 #include <vector>
 
 #include "spelling/spellchecker_service_interface.h"
+#include "absl/hash/hash.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "absl/types/span.h"
 #include "base/clock.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
@@ -280,6 +283,7 @@ void Composer::Reset() {
   SetOutputMode(transliteration::HIRAGANA);
   source_text_.clear();
   timeout_threshold_msec_ = config_->composing_timeout_threshold_msec();
+  compositions_for_handwriting_.clear();
 }
 
 void Composer::ResetInputMode() { SetInputMode(comeback_input_mode_); }
@@ -488,19 +492,16 @@ void Composer::InsertCharacterPreedit(const absl::string_view input) {
 // Note: This method is only for test.
 void Composer::SetPreeditTextForTestOnly(const absl::string_view input) {
   composition_.SetInputMode(Transliterators::RAW_STRING);
-  size_t begin = 0;
-  const size_t end = input.size();
-  while (begin < end) {
-    const size_t mblen = OneCharLen(input[begin]);
+
+  const Utf8AsChars input_chars(input);
+  for (const absl::string_view c : input_chars) {
     CompositionInput composition_input;
-    composition_input.set_raw(input.substr(begin, mblen));
+    composition_input.set_raw(c);
     composition_input.set_is_new_input(is_new_input_);
     position_ =
         composition_.InsertInput(position_, std::move(composition_input));
     is_new_input_ = false;
-    begin += mblen;
   }
-  DCHECK_EQ(begin, end);
 
   std::string lower_input(input);
   Util::LowerString(&lower_input);
@@ -509,6 +510,37 @@ void Composer::SetPreeditTextForTestOnly(const absl::string_view input) {
     // This is useful to test the behavior of alphabet keyboard.
     SetTemporaryInputMode(transliteration::HALF_ASCII);
   }
+}
+
+void Composer::SetCompositionsForHandwriting(
+    absl::Span<const commands::SessionCommand::CompositionEvent *const>
+        compositions) {
+  Reset();
+  compositions_for_handwriting_.clear();
+  for (const auto &elm : compositions) {
+    compositions_for_handwriting_.push_back(*elm);
+  }
+
+  if (compositions_for_handwriting_.empty()) {
+    return;
+  }
+  composition_.SetInputMode(Transliterators::RAW_STRING);
+
+  const Utf8AsChars input_chars(
+      compositions_for_handwriting_.front().composition_string());
+  for (const absl::string_view c : input_chars) {
+    CompositionInput composition_input;
+    composition_input.set_raw(c);
+    composition_input.set_is_new_input(is_new_input_);
+    position_ =
+        composition_.InsertInput(position_, std::move(composition_input));
+    is_new_input_ = false;
+  }
+}
+
+const std::vector<commands::SessionCommand::CompositionEvent> &
+Composer::GetHandwritingCompositions() const {
+  return compositions_for_handwriting_;
 }
 
 bool Composer::InsertCharacterKeyAndPreedit(const absl::string_view key,

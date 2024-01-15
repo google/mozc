@@ -45,6 +45,7 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -474,7 +475,7 @@ bool NumberRewriter::Rewrite(const ConversionRequest &request,
                              Segments *segments) const {
   DCHECK(segments);
   if (!request.config().use_number_conversion()) {
-    VLOG(2) << "no use_number_conversion";
+    MOZC_VLOG(2) << "no use_number_conversion";
     return false;
   }
 
@@ -568,25 +569,25 @@ std::vector<Segment::Candidate> NumberRewriter::GenerateCandidatesToInsert(
 bool NumberRewriter::ShouldRerankCandidates(const ConversionRequest &request,
                                             const Segments &segments) const {
   if (!IsNumberStyleLearningEnabled(request)) {
-    VLOG(2) << "number style learning is not enabled.";
+    MOZC_VLOG(2) << "number style learning is not enabled.";
     return false;
   }
   if (request.config().incognito_mode()) {
-    VLOG(2) << "incognito mode";
+    MOZC_VLOG(2) << "incognito mode";
     return false;
   }
   if (request.config().history_learning_level() == config::Config::NO_HISTORY) {
-    VLOG(2) << "history learning level is NO_HISTORY";
+    MOZC_VLOG(2) << "history learning level is NO_HISTORY";
     return false;
   }
   if (!request.config().use_history_suggest() &&
       request.request_type() == ConversionRequest::SUGGESTION) {
-    VLOG(2) << "no history suggest";
+    MOZC_VLOG(2) << "no history suggest";
     return false;
   }
   if (segments.conversion_segments_size() != 1) {
     // Rewriting "2|階" to "弐|階" using the history would be noisy.
-    VLOG(2) << "do not apply to the multiple segments.";
+    MOZC_VLOG(2) << "do not apply to the multiple segments.";
     return false;
   }
   return true;
@@ -624,18 +625,18 @@ void NumberRewriter::RerankCandidates(
 void NumberRewriter::Finish(const ConversionRequest &request,
                             Segments *segments) {
   if (!IsNumberStyleLearningEnabled(request)) {
-    VLOG(2) << "number style learning is not enabled.";
+    MOZC_VLOG(2) << "number style learning is not enabled.";
     return;
   }
 
   if (request.config().incognito_mode()) {
-    VLOG(2) << "incognito_mode";
+    MOZC_VLOG(2) << "incognito_mode";
     return;
   }
 
   if (request.config().history_learning_level() !=
       config::Config::DEFAULT_HISTORY) {
-    VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
+    MOZC_VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
     return;
   }
 

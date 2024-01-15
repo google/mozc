@@ -50,6 +50,7 @@
 #include "base/number_util.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
@@ -130,9 +131,9 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
       return i;
     }
   }
-  VLOG(2) << "Cannot find default candidate. "
-          << "key: " << segment.key() << ", "
-          << "candidates_size: " << segment.candidates_size();
+  MOZC_VLOG(2) << "Cannot find default candidate. "
+               << "key: " << segment.key() << ", "
+               << "candidates_size: " << segment.candidates_size();
   return 0;
 }
 
@@ -681,17 +682,17 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
 bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
                                              const Segments &segments) const {
   if (request.config().incognito_mode()) {
-    VLOG(2) << "incognito_mode";
+    MOZC_VLOG(2) << "incognito_mode";
     return false;
   }
 
   if (!request.enable_user_history_for_conversion()) {
-    VLOG(2) << "user history for conversion is disabled";
+    MOZC_VLOG(2) << "user history for conversion is disabled";
     return false;
   }
 
   if (storage_ == nullptr) {
-    VLOG(2) << "storage is NULL";
+    MOZC_VLOG(2) << "storage is NULL";
     return false;
   }
 
@@ -760,7 +761,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
   }
 
   if (request.config().history_learning_level() != Config::DEFAULT_HISTORY) {
-    VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
+    MOZC_VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
     return;
   }
 
@@ -845,7 +846,7 @@ bool UserSegmentHistoryRewriter::ShouldRewrite(
 
 void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
   if (!(segment.candidate(0).attributes & Segment::Candidate::RERANKED)) {
-    VLOG(2) << "InsertTriggerKey is skipped";
+    MOZC_VLOG(2) << "InsertTriggerKey is skipped";
     return;
   }
 
@@ -915,7 +916,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
   }
 
   if (request.config().history_learning_level() == Config::NO_HISTORY) {
-    VLOG(2) << "history_learning_level is NO_HISTORY";
+    MOZC_VLOG(2) << "history_learning_level is NO_HISTORY";
     return false;
   }
 
@@ -958,7 +959,8 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
     }
 
     if (segment->candidates_size() < max_candidates_size) {
-      DVLOG(2) << "Cannot expand candidates. ignored. Rewrite may be failed";
+      MOZC_DVLOG(2)
+          << "Cannot expand candidates. ignored. Rewrite may be failed";
     }
 
     // for each all candidates expanded
@@ -991,7 +993,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
 
 void UserSegmentHistoryRewriter::Clear() {
   if (storage_ != nullptr) {
-    VLOG(1) << "Clearing user segment data";
+    MOZC_VLOG(1) << "Clearing user segment data";
     storage_->Clear();
   }
 }

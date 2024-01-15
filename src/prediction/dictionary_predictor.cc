@@ -50,6 +50,7 @@
 #include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
@@ -117,6 +118,12 @@ bool IsMixedConversionEnabled(const Request &request) {
 
 bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
+}
+
+bool IsHandwriting(const ConversionRequest &request) {
+  return !IsMixedConversionEnabled(request.request()) &&
+         request.has_composer() &&
+         !request.composer().GetHandwritingCompositions().empty();
 }
 
 bool ShouldFilterNoisyNumberCandidate(const Request &request) {
@@ -309,13 +316,13 @@ void DictionaryPredictor::Finish(const ConversionRequest &request,
 
   const Segment &segment = segments->conversion_segment(0);
   if (segment.candidates_size() < 1) {
-    VLOG(2) << "candidates size < 1";
+    MOZC_VLOG(2) << "candidates size < 1";
     return;
   }
 
   const Segment::Candidate &candidate = segment.candidate(0);
   if (segment.segment_type() != Segment::FIXED_VALUE) {
-    VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
+    MOZC_VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
     return;
   }
 
@@ -363,11 +370,11 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
   if (request.request_type() == ConversionRequest::CONVERSION) {
-    VLOG(2) << "request type is CONVERSION";
+    MOZC_VLOG(2) << "request type is CONVERSION";
     return false;
   }
   if (segments->conversion_segments_size() < 1) {
-    VLOG(2) << "segment size < 1";
+    MOZC_VLOG(2) << "segment size < 1";
     return false;
   }
 
@@ -441,7 +448,7 @@ DictionaryPredictor::MaybePopualteTypingCorrectedResults(
 
   const TypingCorrectionMixingParams typing_correction_mixing_params =
       GetTypingCorrectionMixingParams(request, *results,
-                                       typing_corrected_results);
+                                      typing_corrected_results);
 
   for (auto &result : typing_corrected_results) {
     results->emplace_back(std::move(result));
@@ -683,7 +690,8 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
-      include_exact_key_(IsMixedConversionEnabled(request.request())),
+      include_exact_key_(IsMixedConversionEnabled(request.request()) ||
+                         IsHandwriting(request)),
       filter_number_(ShouldFilterNoisyNumberCandidate(request.request())) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);

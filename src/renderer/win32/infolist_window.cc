@@ -36,6 +36,7 @@
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "client/client_interface.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -75,7 +76,7 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
   SessionCommand command;
   command.set_type(SessionCommand::USAGE_STATS_EVENT);
   command.set_usage_stats_event(event);
-  VLOG(2) << "SendUsageStatsEvent " << command.DebugString();
+  MOZC_VLOG(2) << "SendUsageStatsEvent " << command.DebugString();
   Output dummy_output;
   return command_sender->SendCommand(command, &dummy_output);
 }

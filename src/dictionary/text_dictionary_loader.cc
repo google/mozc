@@ -52,6 +52,7 @@
 #include "base/logging.h"
 #include "base/multifile.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 
@@ -226,7 +227,7 @@ TextDictionaryLoader::LoadReadingCorrectionTokens(
     // dictionary.
     if (std::binary_search(ref_sorted_tokens.begin(), ref_sorted_tokens.end(),
                            value_key, OrderByValueThenByKey())) {
-      VLOG(1) << "System dictionary has the same key-value: " << line;
+      MOZC_VLOG(1) << "System dictionary has the same key-value: " << line;
       continue;
     }
 
@@ -238,8 +239,8 @@ TextDictionaryLoader::LoadReadingCorrectionTokens(
         std::equal_range(ref_sorted_tokens.begin(), ref_sorted_tokens.end(),
                          value_key.first, OrderByValue());
     if (begin == end) {
-      VLOG(1) << "Cannot find the value in system dicitonary - ignored:"
-              << line;
+      MOZC_VLOG(1) << "Cannot find the value in system dicitonary - ignored:"
+                   << line;
       continue;
     }
     // Now [begin, end) contains all the tokens that have the same value as

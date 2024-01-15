@@ -49,6 +49,7 @@
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #include "storage/lru_storage.h"
@@ -414,8 +415,8 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
       storage_->Insert(group_key, reinterpret_cast<const char *>(&iform));
     }
   }
-  VLOG(2) << static_cast<uint16_t>(ucs2) << " is stored to " << kFileName
-          << " as " << form;
+  MOZC_VLOG(2) << static_cast<uint16_t>(ucs2) << " is stored to " << kFileName
+               << " as " << form;
 }
 
 void CharacterFormManagerImpl::ConvertString(const absl::string_view str,
@@ -563,7 +564,7 @@ void CharacterFormManagerImpl::AddRule(const absl::string_view key,
     return;
   }
 
-  VLOG(2) << "Adding Rule: " << key << " " << form;
+  MOZC_VLOG(2) << "Adding Rule: " << key << " " << form;
 
   // sort + unique
   // use vector because set is slower.
@@ -693,12 +694,12 @@ Config::CharacterForm CharacterFormManager::GetConversionCharacterForm(
 void CharacterFormManager::ClearHistory() {
   // no need to call, as storage is shared
   // GetPreeditManager()->ClearHistory();
-  VLOG(1) << "CharacterFormManager::ClearHistory() is called";
+  MOZC_VLOG(1) << "CharacterFormManager::ClearHistory() is called";
   data_->GetConversionManager()->ClearHistory();
 }
 
 void CharacterFormManager::Clear() {
-  VLOG(1) << "CharacterFormManager::Clear() is called";
+  MOZC_VLOG(1) << "CharacterFormManager::Clear() is called";
   data_->GetConversionManager()->Clear();
   data_->GetPreeditManager()->Clear();
 }

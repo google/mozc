@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/vlog.h"
 
 namespace mozc {
 namespace {
@@ -335,7 +336,7 @@ bool KeyTranslator::Translate(uint keyval, uint keycode, uint modifiers,
              it != kSpecialKeyMap->end()) {
     out_event->set_special_key(it->second);
   } else {
-    VLOG(1) << "Unknown keyval: " << keyval;
+    MOZC_VLOG(1) << "Unknown keyval: " << keyval;
     return false;
   }
 

@@ -30,6 +30,7 @@
 #include "prediction/dictionary_prediction_aggregator.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -48,7 +49,9 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -161,6 +164,14 @@ bool GetNumberHistory(const Segments &segments, std::string *number_key) {
 bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
+
+// LINT.IfChange
+bool IsHandwriting(const ConversionRequest &request) {
+  return !IsMixedConversionEnabled(request.request()) &&
+         request.has_composer() &&
+         !request.composer().GetHandwritingCompositions().empty();
+}
+// LINT.ThenChange(//prediction/dictionary_predictor.cc)
 
 bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
@@ -346,13 +357,13 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
   const PredictionTypes types_;
   const size_t limit_;
   const size_t original_key_len_;
-  const std::set<std::string> *subsequent_chars_;
+  const std::set<std::string> *subsequent_chars_ = nullptr;
   const Segment::Candidate::SourceInfo source_info_;
   const int zip_code_id_;
   const int unknown_id_;
   absl::string_view non_expanded_original_key_;
   const SpatialCostParams spatial_cost_params_;
-  std::vector<Result> *results_;
+  std::vector<Result> *results_ = nullptr;
 
  private:
   // When the key is number, number token will be noisy if
@@ -491,7 +502,47 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
   const int unknown_id_;
   const int min_value_chars_len_;
   const int input_key_len_;
-  std::vector<Result> *results_;
+  std::vector<Result> *results_ = nullptr;
+};
+
+class DictionaryPredictionAggregator::HandwritingLookupCallback
+    : public DictionaryInterface::Callback {
+ public:
+  HandwritingLookupCallback(size_t limit, absl::string_view original_key,
+                            const std::vector<std::string> &constraints,
+                            std::vector<Result> *results)
+      : limit_(limit),
+        original_key_(original_key),
+        constraints_(constraints),
+        results_(results) {}
+
+  HandwritingLookupCallback(const HandwritingLookupCallback &) = delete;
+  HandwritingLookupCallback &operator=(const HandwritingLookupCallback &) =
+      delete;
+
+  ResultType OnToken(absl::string_view key, absl::string_view actual_key,
+                     const Token &token) override {
+    size_t next_pos = 0;
+    for (const std::string &constraint : constraints_) {
+      const size_t pos = token.value.find(constraint, next_pos);
+      if (pos == std::string::npos) {
+        return TRAVERSE_CONTINUE;
+      }
+      next_pos = pos + 1;
+    }
+
+    Result result;
+    result.InitializeByTokenAndTypes(token, UNIGRAM);
+    result.key = original_key_;
+    results_->emplace_back(result);
+    return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
+  }
+
+ private:
+  const size_t limit_;
+  const absl::string_view original_key_;
+  const std::vector<std::string> constraints_;
+  std::vector<Result> *results_ = nullptr;
 };
 
 DictionaryPredictionAggregator::DictionaryPredictionAggregator(
@@ -597,6 +648,13 @@ DictionaryPredictionAggregator::GetUnigramConfig(
             kMinUnigramKeyLen};
   }
 
+  if (IsHandwriting(request)) {
+    constexpr size_t kMinUnigramKeyLen = 1;
+    return {&DictionaryPredictionAggregator::
+                AggregateUnigramCandidateForHandwriting,
+            kMinUnigramKeyLen};
+  }
+
   // Normal prediction.
   const size_t min_unigram_key_len =
       (request.request_type() == ConversionRequest::PREDICTION) ? 1 : 3;
@@ -623,7 +681,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
   // PREDICTION?
   if (request.request_type() == ConversionRequest::SUGGESTION) {
     if (!request.config().use_dictionary_suggest()) {
-      VLOG(2) << "no_dictionary_suggest";
+      MOZC_VLOG(2) << "no_dictionary_suggest";
       return NO_PREDICTION;
     }
     // Never trigger prediction if the key looks like zip code.
@@ -965,6 +1023,93 @@ PredictionType DictionaryPredictionAggregator::AggregateUnigramCandidate(
   // we don't show the candidates, since disambiguation from
   // 256 candidates is hard. (It may exceed max_results_size, because this is
   // just a limit for each backend, so total number may be larger)
+  if (unigram_results_size >= cutoff_threshold) {
+    results->resize(prev_results_size);
+  }
+  return UNIGRAM;
+}
+
+std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
+DictionaryPredictionAggregator::GenerateQueryForHandwriting(
+    const ConversionRequest &request, const Segments &segments) const {
+  Segments tmp_segments = segments;
+  ConversionRequest request_for_realtime = request;
+  request_for_realtime.set_request_type(ConversionRequest::REVERSE_CONVERSION);
+  if (!immutable_converter_->ConvertForRequest(request_for_realtime,
+                                               &tmp_segments) ||
+      tmp_segments.conversion_segments_size() == 0 ||
+      tmp_segments.conversion_segment(0).candidates_size() == 0) {
+    LOG(WARNING) << "Reverse conversion failed";
+    return std::nullopt;
+  }
+  HandwritingQueryInfo info;
+  for (size_t i = 0; i < tmp_segments.conversion_segments_size(); ++i) {
+    const Segment &segment = tmp_segments.conversion_segment(i);
+    if (segment.candidates_size() == 0) {
+      LOG(WARNING) << "Reverse conversion failed";
+      return std::nullopt;
+    }
+    // Example:
+    // The result of reverse conversion for "見た" can be
+    // a single segment with content value:"み" + functional value:"た"
+    const absl::string_view converted = segment.candidate(0).value;
+    absl::StrAppend(&info.query, converted);
+
+    std::string utf8_str;
+    const Utf8AsChars original_chars(segment.candidate(0).key);
+    for (const absl::string_view c : original_chars) {
+      if (Util::GetScriptType(c) != Util::HIRAGANA) {
+        absl::StrAppend(&utf8_str, c);
+      } else if (!utf8_str.empty()) {
+        info.constraints.emplace_back(utf8_str);
+        utf8_str.clear();
+      }
+    }
+    if (!utf8_str.empty()) {
+      info.constraints.emplace_back(utf8_str);
+    }
+  }
+  return info;
+}
+
+PredictionType
+DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<Result> *results) const {
+  DCHECK(results);
+  DCHECK(dictionary_);
+  DCHECK(request.has_composer());
+  DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
+         request.request_type() == ConversionRequest::SUGGESTION);
+
+  const size_t cutoff_threshold =
+      GetCandidateCutoffThreshold(request.request_type());
+  const size_t prev_results_size = results->size();
+
+  const absl::string_view segment_key = segments.conversion_segment(0).key();
+  for (const commands::SessionCommand::CompositionEvent &elm :
+       request.composer().GetHandwritingCompositions()) {
+    Result result;
+    result.types = UNIGRAM;
+    result.key = elm.composition_string();
+    result.value = elm.composition_string();
+    result.candidate_attributes |= (Segment::Candidate::NO_VARIANTS_EXPANSION |
+                                    Segment::Candidate::NO_EXTRA_DESCRIPTION);
+    // -500 * log(prob)
+    result.wcost = elm.probability() > 0 ? -500.0 * log(elm.probability()) : 0;
+    results->emplace_back(std::move(result));
+  }
+
+  const auto query_info = GenerateQueryForHandwriting(request, segments);
+  if (!query_info.has_value()) {
+    return NO_PREDICTION;
+  }
+
+  HandwritingLookupCallback callback(cutoff_threshold, segment_key,
+                                     query_info->constraints, results);
+  dictionary_->LookupExact(query_info->query, request, &callback);
+
+  const size_t unigram_results_size = results->size() - prev_results_size;
   if (unigram_results_size >= cutoff_threshold) {
     results->resize(prev_results_size);
   }

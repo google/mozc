@@ -33,10 +33,14 @@
 #include <utility>
 #include <vector>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_replace.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "engine/engine_interface.h"
@@ -48,15 +52,21 @@
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
+ABSL_DECLARE_FLAG(bool, use_history_rewriter);
+
 namespace mozc {
 
 using ::mozc::session::SessionHandlerInterpreter;
 using ::mozc::session::testing::SessionHandlerTestBase;
+using ::testing::TestParamInfo;
 using ::testing::WithParamInterface;
 
 class SessionHandlerScenarioTestBase : public SessionHandlerTestBase {
  protected:
   void SetUp() override {
+    flagsaver_ = std::make_unique<absl::FlagSaver>();
+    // Make sure to include history rewriter for testing.
+    absl::SetFlag(&FLAGS_use_history_rewriter, true);
     // Note that singleton Config instance is backed up and restored
     // by SessionHandlerTestBase's SetUp and TearDown methods.
     SessionHandlerTestBase::SetUp();
@@ -69,13 +79,23 @@ class SessionHandlerScenarioTestBase : public SessionHandlerTestBase {
   void TearDown() override {
     handler_.reset();
     SessionHandlerTestBase::TearDown();
+    flagsaver_.reset(nullptr);
   }
 
   std::unique_ptr<SessionHandlerInterpreter> handler_;
+  std::unique_ptr<absl::FlagSaver> flagsaver_;
 };
 
 class SessionHandlerScenarioTest : public SessionHandlerScenarioTestBase,
-                                   public WithParamInterface<const char *> {};
+                                   public WithParamInterface<const char *> {
+ public:
+  static std::string GetTestName(
+      const ::testing::TestParamInfo<ParamType> &info) {
+    return absl::StrReplaceAll(
+        FileUtil::Basename(FileUtil::NormalizeDirectorySeparator(info.param)),
+        {{".", "_"}});
+  }
+};
 
 // Tests should be passed.
 const char *kScenarioFileList[] = {
@@ -117,9 +137,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "insert_characters.txt",
     DATA_DIR "kana_modifier_insensitive_conversion.txt",
     DATA_DIR "mobile_partial_variant_candidates.txt",
-    DATA_DIR "mobile_qwerty_transliteration_scenario.txt",
     DATA_DIR "mobile_revert_user_history_learning.txt",
-    DATA_DIR "mobile_t13n_candidates.txt",
     DATA_DIR "on_off_cancel.txt",
     DATA_DIR "partial_suggestion.txt",
     DATA_DIR "pending_character.txt",
@@ -150,7 +168,8 @@ const char *kScenarioFileList[] = {
 
 INSTANTIATE_TEST_SUITE_P(SessionHandlerScenarioParameters,
                          SessionHandlerScenarioTest,
-                         ::testing::ValuesIn(kScenarioFileList));
+                         ::testing::ValuesIn(kScenarioFileList),
+                         SessionHandlerScenarioTest::GetTestName);
 
 const char *kUsageStatsScenarioFileList[] = {
 #define DATA_DIR "test/session/scenario/usage_stats/"
@@ -186,7 +205,8 @@ const char *kUsageStatsScenarioFileList[] = {
 };
 INSTANTIATE_TEST_SUITE_P(SessionHandlerUsageStatsScenarioParameters,
                          SessionHandlerScenarioTest,
-                         ::testing::ValuesIn(kUsageStatsScenarioFileList));
+                         ::testing::ValuesIn(kUsageStatsScenarioFileList),
+                         SessionHandlerScenarioTest::GetTestName);
 
 // Temporarily disabled test scenario.
 //
@@ -239,6 +259,9 @@ const char *kScenariosForExperimentParams[] = {
 #define DATA_DIR "test/session/scenario/"
     DATA_DIR "mobile_zero_query.txt",
     DATA_DIR "mobile_preedit.txt",
+    DATA_DIR "mobile_apply_user_segment_history_rewriter.txt",
+    DATA_DIR "mobile_qwerty_transliteration_scenario.txt",
+    DATA_DIR "mobile_t13n_candidates.txt",
 #undef DATA_DIR
 };
 

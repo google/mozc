@@ -43,6 +43,7 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/strings/assign.h"
+#include "base/vlog.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -155,7 +156,7 @@ int EmojiRewriter::capability(const ConversionRequest &request) const {
 bool EmojiRewriter::Rewrite(const ConversionRequest &request,
                             Segments *segments) const {
   if (!request.config().use_emoji_conversion()) {
-    VLOG(2) << "no use_emoji_conversion";
+    MOZC_VLOG(2) << "no use_emoji_conversion";
     return false;
   }
 
@@ -241,7 +242,7 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
 
     const auto range = LookUpToken(reading);
     if (range.first == range.second) {
-      VLOG(2) << "Token not found: " << reading;
+      MOZC_VLOG(2) << "Token not found: " << reading;
       continue;
     }
 

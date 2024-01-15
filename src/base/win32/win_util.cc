@@ -51,6 +51,7 @@
 #include "absl/strings/str_cat.h"
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "base/vlog.h"
 #include "base/win32/wide_char.h"
 
 // Disable StrCat macro to use absl::StrCat.
@@ -357,7 +358,7 @@ bool WinUtil::GetNtPath(zwstring_view dos_path, std::wstring *nt_path) {
       FILE_NAME_NORMALIZED | VOLUME_NAME_NT);
   if (copied_len_without_null == 0 || copied_len_without_null > kMaxPath) {
     const DWORD error = ::GetLastError();
-    VLOG(1) << "GetFinalPathNameByHandleW() failed: " << error;
+    MOZC_VLOG(1) << "GetFinalPathNameByHandleW() failed: " << error;
     return false;
   }
 
@@ -375,7 +376,7 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
       ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
 
   if (!process_handle) {
-    VLOG(1) << "OpenProcess() failed: " << ::GetLastError();
+    MOZC_VLOG(1) << "OpenProcess() failed: " << ::GetLastError();
     return false;
   }
 
@@ -385,7 +386,7 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
       process_handle.get(), ntpath_buffer.get(), kMaxPath);
   if (copied_len_without_null == 0 || copied_len_without_null > kMaxPath) {
     const DWORD error = ::GetLastError();
-    VLOG(1) << "GetProcessImageFileNameW() failed: " << error;
+    MOZC_VLOG(1) << "GetProcessImageFileNameW() failed: " << error;
     return false;
   }
 

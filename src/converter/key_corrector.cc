@@ -37,6 +37,7 @@
 #include "absl/strings/match.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 
 namespace mozc {
 namespace {
@@ -386,7 +387,7 @@ bool KeyCorrector::CorrectKey(const std::string &key, InputMode mode,
   }
 
   if (key.empty() || key.size() >= kMaxSize) {
-    VLOG(1) << "invalid key length";
+    MOZC_VLOG(1) << "invalid key length";
     return false;
   }
 

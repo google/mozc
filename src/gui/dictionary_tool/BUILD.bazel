@@ -154,6 +154,7 @@ mozc_cc_qt_library(
         "//base:system_util",
         "//base:util",
         "//base:version",
+        "//base:vlog",
         "//client",
         "//client:client_interface",
         "//config:config_handler",

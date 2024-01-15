@@ -546,9 +546,8 @@ bool Session::UpdateCompositionInternal(commands::Command *command) {
 
   context_->mutable_composer()->Reset();
   // Use the top entry for now.
-  // TODO: Support non-top entries.
-  context_->mutable_composer()->SetPreeditTextForTestOnly(
-      command->input().command().composition_events(0).composition_string());
+  context_->mutable_composer()->SetCompositionsForHandwriting(
+      command->input().command().composition_events());
   ClearUndoContext();
   SetSessionState(ImeContext::COMPOSITION, context_.get());
 

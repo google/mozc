@@ -38,6 +38,7 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
@@ -348,7 +349,7 @@ void SystemDictionaryCodec::DecodeValue(const absl::string_view src,
       c += p[1];
       p += 2;
     } else {
-      VLOG(1) << "should never come here";
+      MOZC_VLOG(1) << "should never come here";
     }
     Util::Ucs4ToUtf8Append(c, dst);
   }

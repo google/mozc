@@ -608,6 +608,7 @@ mozc_cc_library(
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
         windows = [
+            ":vlog",
             "//base/win32:wide_char",
             # win_util.h includes gunit_prod.h for FRIEND_TEST.
             "//testing:gunit_prod",
@@ -645,6 +646,7 @@ mozc_cc_library(
         ":file_util",
         ":logging",
         ":system_util",
+        ":vlog",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select(
@@ -668,6 +670,7 @@ mozc_cc_library(
         ":singleton",
         ":system_util",
         ":util",
+        ":vlog",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(

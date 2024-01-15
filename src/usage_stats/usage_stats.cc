@@ -38,6 +38,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.pb.h"
 #include "usage_stats/usage_stats_uploader.h"
@@ -55,7 +56,7 @@ bool LoadStats(const absl::string_view name, Stats *stats) {
   std::string stats_str;
   const std::string key = absl::StrCat(kRegistryPrefix, name);
   if (!storage::Registry::Lookup(key, &stats_str)) {
-    VLOG(1) << "Usage stats " << name << " is not registered yet.";
+    MOZC_VLOG(1) << "Usage stats " << name << " is not registered yet.";
     return false;
   }
   if (!stats->ParseFromString(stats_str)) {

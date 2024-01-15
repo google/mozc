@@ -54,6 +54,7 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "client/client.h"
 #include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_importer.h"
@@ -290,7 +291,7 @@ CreateTextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
 #endif  // _WIN32
   }
 
-  VLOG(1) << "Setting Encoding to: " << static_cast<int>(encoding_type);
+  MOZC_VLOG(1) << "Setting Encoding to: " << static_cast<int>(encoding_type);
 
   const QString message = QObject::tr("Importing new words...");
 

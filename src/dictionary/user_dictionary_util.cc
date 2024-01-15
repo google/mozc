@@ -45,6 +45,7 @@
 #include "base/protobuf/repeated_field.h"
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
+#include "base/vlog.h"
 #include "dictionary/user_pos_interface.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
@@ -131,16 +132,16 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
   // Validate reading.
   const std::string &reading = entry.key();
   if (reading.empty()) {
-    VLOG(1) << "key is empty";
+    MOZC_VLOG(1) << "key is empty";
     return UserDictionaryCommandStatus::READING_EMPTY;
   }
   if (reading.size() > kMaxKeySize) {
-    VLOG(1) << "Too long key.";
+    MOZC_VLOG(1) << "Too long key.";
     return UserDictionaryCommandStatus::READING_TOO_LONG;
   }
   if (reading.find_first_of(kInvalidChars) != std::string::npos ||
       !strings::IsValidUtf8(reading)) {
-    VLOG(1) << "Invalid reading";
+    MOZC_VLOG(1) << "Invalid reading";
     return UserDictionaryCommandStatus::READING_CONTAINS_INVALID_CHARACTER;
   }
 
@@ -150,31 +151,31 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
     return UserDictionaryCommandStatus::WORD_EMPTY;
   }
   if (word.size() > kMaxValueSize) {
-    VLOG(1) << "Too long value.";
+    MOZC_VLOG(1) << "Too long value.";
     return UserDictionaryCommandStatus::WORD_TOO_LONG;
   }
   if (word.find_first_of(kInvalidChars) != std::string::npos ||
       !strings::IsValidUtf8(word)) {
-    VLOG(1) << "Invalid character in value.";
+    MOZC_VLOG(1) << "Invalid character in value.";
     return UserDictionaryCommandStatus::WORD_CONTAINS_INVALID_CHARACTER;
   }
 
   // Validate comment.
   const std::string &comment = entry.comment();
   if (comment.size() > kMaxCommentSize) {
-    VLOG(1) << "Too long comment.";
+    MOZC_VLOG(1) << "Too long comment.";
     return UserDictionaryCommandStatus::COMMENT_TOO_LONG;
   }
   if (comment.find_first_of(kInvalidChars) != std::string::npos ||
       !strings::IsValidUtf8(comment)) {
-    VLOG(1) << "Invalid character in comment.";
+    MOZC_VLOG(1) << "Invalid character in comment.";
     return UserDictionaryCommandStatus::COMMENT_CONTAINS_INVALID_CHARACTER;
   }
 
   // Validate pos.
   if (!entry.has_pos() ||
       !user_dictionary::UserDictionary::PosType_IsValid(entry.pos())) {
-    VLOG(1) << "Invalid POS";
+    MOZC_VLOG(1) << "Invalid POS";
     return UserDictionaryCommandStatus::INVALID_POS_TYPE;
   }
 
@@ -267,15 +268,15 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateDictionaryName(
     const user_dictionary::UserDictionaryStorage &storage,
     const absl::string_view dictionary_name) {
   if (dictionary_name.empty()) {
-    VLOG(1) << "Empty dictionary name.";
+    MOZC_VLOG(1) << "Empty dictionary name.";
     return UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY;
   }
   if (dictionary_name.size() > kMaxDictionaryNameSize) {
-    VLOG(1) << "Too long dictionary name";
+    MOZC_VLOG(1) << "Too long dictionary name";
     return UserDictionaryCommandStatus::DICTIONARY_NAME_TOO_LONG;
   }
   if (dictionary_name.find_first_of(kInvalidChars) != std::string::npos) {
-    VLOG(1) << "Invalid character in dictionary name: " << dictionary_name;
+    MOZC_VLOG(1) << "Invalid character in dictionary name: " << dictionary_name;
     return UserDictionaryCommandStatus ::
         DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER;
   }

@@ -41,6 +41,7 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/password_manager.h"
+#include "base/vlog.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -139,7 +140,7 @@ bool EncryptedStringStorage::Save(const std::string &input) const {
       return false;
     }
 
-    VLOG(1) << "Syncing user history to: " << filename_;
+    MOZC_VLOG(1) << "Syncing user history to: " << filename_;
     ofs.write(salt.data(), salt.size());
     ofs.write(output.data(), output.size());
   }

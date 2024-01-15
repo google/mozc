@@ -38,6 +38,7 @@
 #include <cstdint>
 
 #include "base/logging.h"
+#include "base/vlog.h"
 
 namespace {
 constexpr uint32_t kAlphaNumeric = 0x0;
@@ -252,36 +253,36 @@ bool ConversionModeUtil::ToMozcMode(uint32_t flag,
   // This behaviour is the same to that of MS-IME 98 or later.
   // http://support.microsoft.com/kb/419357
   if (TestAndClearBits(&flag, kRoman)) {
-    VLOG(2) << "kRoman remains";
+    MOZC_VLOG(2) << "kRoman remains";
   }
 
   // Check remaining flags
   if (TestAndClearBits(&flag, kNative)) {
-    VLOG(1) << "kNative remains";
+    MOZC_VLOG(1) << "kNative remains";
   }
   if (TestAndClearBits(&flag, kKatakana)) {
-    VLOG(1) << "kKatakana remains";
+    MOZC_VLOG(1) << "kKatakana remains";
   }
   if (TestAndClearBits(&flag, kFullShape)) {
-    VLOG(1) << "kFullShape remains";
+    MOZC_VLOG(1) << "kFullShape remains";
   }
   if (TestAndClearBits(&flag, kCharCode)) {
-    VLOG(1) << "kCharCode remains";
+    MOZC_VLOG(1) << "kCharCode remains";
   }
   if (TestAndClearBits(&flag, kSoftKeyboard)) {
-    VLOG(1) << "kSoftKeyboard remains";
+    MOZC_VLOG(1) << "kSoftKeyboard remains";
   }
   if (TestAndClearBits(&flag, kNoConversion)) {
-    VLOG(1) << "kNoConversion remains";
+    MOZC_VLOG(1) << "kNoConversion remains";
   }
   if (TestAndClearBits(&flag, kSymbol)) {
-    VLOG(1) << "kSymbol remains";
+    MOZC_VLOG(1) << "kSymbol remains";
   }
   if (TestAndClearBits(&flag, kEUDC)) {
-    VLOG(1) << "kEUDC remains";
+    MOZC_VLOG(1) << "kEUDC remains";
   }
   if (TestAndClearBits(&flag, kFixed)) {
-    VLOG(1) << "kFixed remains";
+    MOZC_VLOG(1) << "kFixed remains";
   }
 
   return succeeded;

@@ -111,6 +111,7 @@ mozc_cc_library(
         "//base:bits",
         "//base:hash",
         "//base:logging",
+        "//base:vlog",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],

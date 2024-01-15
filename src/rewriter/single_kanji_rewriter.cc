@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/strings/assign.h"
+#include "base/vlog.h"
 #include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
 #include "dictionary/pos_matcher.h"
@@ -112,12 +113,12 @@ int SingleKanjiRewriter::capability(const ConversionRequest &request) const {
 bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
   if (!request.config().use_single_kanji_conversion()) {
-    VLOG(2) << "no use_single_kanji_conversion";
+    MOZC_VLOG(2) << "no use_single_kanji_conversion";
     return false;
   }
   if (request.request().mixed_conversion() &&
       request.request_type() != ConversionRequest::CONVERSION) {
-    VLOG(2) << "single kanji prediction is enabled";
+    MOZC_VLOG(2) << "single kanji prediction is enabled";
     return false;
   }
 

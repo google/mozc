@@ -1639,7 +1639,6 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
     // "なかのです, 中野です", "なかの, 中野"
     candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
-    //    data_and_aggregator->mutable_immutable_converter()->Reset();
     EXPECT_CALL(*data_and_aggregator->mutable_immutable_converter(),
                 ConvertForRequest(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2724,6 +2723,120 @@ TEST_F(DictionaryPredictionAggregatorTest,
   EXPECT_FALSE(aggregator.AggregatePredictionForRequest(*prediction_convreq_,
                                                         segments, &results) &
                SINGLE_KANJI);
+}
+
+TEST_F(DictionaryPredictionAggregatorTest, Handwiritng) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  MockDictionary *mock_dict = data_and_aggregator->mutable_dictionary();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+  Segments segments;
+
+  {
+    // Handwriting request
+    request_->set_zero_query_suggestion(true);
+    request_->set_mixed_conversion(false);
+    request_->set_kana_modifier_insensitive_conversion(false);
+    request_->set_auto_partial_suggestion(false);
+  }
+
+  {
+    commands::SessionCommand command;
+    commands::SessionCommand::CompositionEvent *composition_event =
+        command.add_composition_events();
+    composition_event->set_composition_string("かん字じ典");
+    composition_event->set_probability(0.9);
+    composition_event = command.add_composition_events();
+    composition_event->set_composition_string("かlv字じ典");
+    composition_event->set_probability(0.1);
+    composer_->Reset();
+    composer_->SetCompositionsForHandwriting(command.composition_events());
+
+    Segment *seg = segments.add_segment();
+    seg->set_key("かん字じ典");
+    seg->set_segment_type(Segment::FREE);
+  }
+
+  prediction_convreq_->set_use_actual_converter_for_realtime_conversion(true);
+  // realtime conversion
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("かん字じ典");
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value = "缶字時典";
+    candidate->key = "かん字じ典";
+
+    EXPECT_CALL(*data_and_aggregator->mutable_converter(),
+                StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+    candidate->value = "間字時典";
+    EXPECT_CALL(*data_and_aggregator->mutable_immutable_converter(),
+                ConvertForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+  // reverse conversion
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("かん");
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value = "かん";
+    candidate->key = "かん";
+
+    segment = segments.add_segment();
+    segment->set_key("字じ");
+    candidate = segment->add_candidate();
+    candidate->value = "じじ";
+    candidate->key = "字じ";
+
+    segment = segments.add_segment();
+    segment->set_key("典");
+    candidate = segment->add_candidate();
+    candidate->value = "てん";
+    candidate->key = "典";
+
+    EXPECT_CALL(
+        *data_and_aggregator->mutable_immutable_converter(),
+        ConvertForRequest(Truly([](const ConversionRequest &request) {
+                            return request.request_type() ==
+                                   ConversionRequest::REVERSE_CONVERSION;
+                          }),
+                          _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+
+  EXPECT_CALL(*mock_dict, LookupPredictive(_, _, _)).Times(AnyNumber());
+  EXPECT_CALL(*mock_dict, LookupExact(StrEq("かんじじてん"), _, _))
+      .WillRepeatedly(InvokeCallbackWithKeyValues({
+          {"かんじじてん", "漢字辞典"},
+          {"かんじじてん", "漢字字典"},
+          {"かんじじてん", "感じじてん"},
+          {"かんじじてん", "幹事時点"},
+          {"かんじじてん", "換字字典"},
+          {"かんじじてん", "換字自転"},
+          {"かんじじてん", "換字じてん"},
+      }));
+
+  std::vector<Result> results;
+  EXPECT_TRUE(aggregator.AggregatePredictionForRequest(*prediction_convreq_,
+                                                       segments, &results) &
+              UNIGRAM);
+
+  EXPECT_EQ(results.size(), 7);
+  // composition from handwriting output
+  EXPECT_TRUE(FindResultByValue(results, "かん字じ典"));
+  EXPECT_TRUE(FindResultByValue(results, "かlv字じ典"));
+  // look-up results
+  EXPECT_TRUE(FindResultByValue(results, "漢字辞典"));
+  EXPECT_TRUE(FindResultByValue(results, "漢字字典"));
+  EXPECT_TRUE(FindResultByValue(results, "換字字典"));
+  // realtime top
+  EXPECT_TRUE(FindResultByValue(results, "缶字時典"));
+  // realtime
+  EXPECT_TRUE(FindResultByValue(results, "間字時典"));
 }
 
 }  // namespace

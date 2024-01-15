@@ -46,6 +46,7 @@
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/vlog.h"
 
 #ifndef NDEBUG
 #include "absl/strings/str_cat.h"
@@ -376,7 +377,7 @@ void Segment::move_candidate(int old_idx, int new_idx) {
   // normal segment
   if (old_idx < 0 || old_idx >= static_cast<int>(candidates_size()) ||
       new_idx >= static_cast<int>(candidates_size()) || old_idx == new_idx) {
-    VLOG(1) << "old_idx and new_idx are the same";
+    MOZC_VLOG(1) << "old_idx and new_idx are the same";
     return;
   }
   if (old_idx > new_idx) {  // promotion

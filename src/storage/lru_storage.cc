@@ -52,6 +52,7 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/vlog.h"
 
 namespace mozc {
 namespace storage {
@@ -255,7 +256,7 @@ bool LruStorage::OpenOrCreate(const char *filename, size_t new_value_size,
                               size_t new_size, uint32_t new_seed) {
   if (absl::Status s = FileUtil::FileExists(filename); !s.ok()) {
     // This is also an expected scenario. Let's create a new data file.
-    VLOG(1) << filename << " does not exist. Creating a new one.";
+    MOZC_VLOG(1) << filename << " does not exist. Creating a new one.";
     if (!LruStorage::CreateStorageFile(filename, new_value_size, new_size,
                                        new_seed)) {
       LOG(ERROR) << "CreateStorageFile failed against " << filename;

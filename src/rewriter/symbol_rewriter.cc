@@ -41,6 +41,7 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -372,7 +373,7 @@ int SymbolRewriter::capability(const ConversionRequest &request) const {
 bool SymbolRewriter::Rewrite(const ConversionRequest &request,
                              Segments *segments) const {
   if (!request.config().use_symbol_conversion()) {
-    VLOG(2) << "no use_symbol_conversion";
+    MOZC_VLOG(2) << "no use_symbol_conversion";
     return false;
   }
 

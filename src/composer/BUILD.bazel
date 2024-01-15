@@ -61,8 +61,10 @@ mozc_cc_library(
         "//spelling:spellchecker_service_interface",
         "//testing:gunit_prod",
         "//transliteration",
+        "@com_google_absl//absl/hash",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

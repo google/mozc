@@ -53,6 +53,7 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
@@ -297,8 +298,8 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   }
 
   // Collect high frequent pos.
-  VLOG(1) << "num_freq_pos" << num_freq_pos;
-  VLOG(1) << "Pos threshold=" << freq_threshold;
+  MOZC_VLOG(1) << "num_freq_pos" << num_freq_pos;
+  MOZC_VLOG(1) << "Pos threshold=" << freq_threshold;
   int freq_pos_idx = 0;
   int num_tokens = 0;
   for (auto [combined_pos, freq] : pos_map) {
@@ -310,8 +311,8 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   }
   CHECK(freq_pos_idx == num_freq_pos)
       << "inconsistent result to find frequent pos";
-  VLOG(1) << freq_pos_idx << " high frequent Pos has " << num_tokens
-          << " tokens";
+  MOZC_VLOG(1) << freq_pos_idx << " high frequent Pos has " << num_tokens
+               << " tokens";
 }
 
 void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList &key_info_list) {

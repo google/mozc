@@ -40,6 +40,7 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "base/vlog.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/named_event.h"
@@ -80,7 +81,7 @@ QtServer::QtServer()
 
   timeout_ = 1000 * std::max(3, std::min(24 * 60 * 60,
                                          absl::GetFlag(FLAGS_timeout)));
-  VLOG(2) << "timeout is set to be : " << timeout_;
+  MOZC_VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef MOZC_NO_LOGGING
   config::Config config;
@@ -129,7 +130,7 @@ int QtServer::StartServer(int argc, char **argv) {
 
 bool QtServer::ExecCommandInternal(
     const commands::RendererCommand &command) {
-  VLOG(2) << MOZC_LOG_PROTOBUF(command);
+  MOZC_VLOG(2) << MOZC_LOG_PROTOBUF(command);
 
   return renderer_.ExecCommand(command);
 }

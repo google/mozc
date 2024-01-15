@@ -38,6 +38,7 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "rewriter/number_compound_util.h"
@@ -200,7 +201,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
           return true;
         }
       }
-      VLOG(1) << "could not find close bracket";
+      MOZC_VLOG(1) << "could not find close bracket";
       return false;
     }
   }
@@ -235,7 +236,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
           return true;
         }
       }
-      VLOG(1) << "could not find open bracket";
+      MOZC_VLOG(1) << "could not find open bracket";
       return false;
     }
   }

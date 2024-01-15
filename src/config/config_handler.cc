@@ -50,6 +50,7 @@
 #include "base/strings/assign.h"
 #include "base/system_util.h"
 #include "base/version.h"
+#include "base/vlog.h"
 #include "protocol/config.pb.h"
 
 namespace mozc {
@@ -176,7 +177,7 @@ void ConfigHandlerImpl::SetConfig(const Config &config) {
 
   ConfigHandler::SetMetaData(&output_config);
 
-  VLOG(1) << "Setting new config: " << filename_;
+  MOZC_VLOG(1) << "Setting new config: " << filename_;
   ConfigFileStream::AtomicUpdate(filename_, output_config.SerializeAsString());
 
 #ifdef DEBUG
@@ -198,7 +199,7 @@ void ConfigHandlerImpl::Reload() {
 }
 
 void ConfigHandlerImpl::ReloadUnlocked() {
-  VLOG(1) << "Reloading config file: " << filename_;
+  MOZC_VLOG(1) << "Reloading config file: " << filename_;
   std::unique_ptr<std::istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
 
@@ -215,7 +216,7 @@ void ConfigHandlerImpl::ReloadUnlocked() {
 
 void ConfigHandlerImpl::SetConfigFileName(const absl::string_view filename) {
   absl::MutexLock lock(&mutex_);
-  VLOG(1) << "set new config file name: " << filename;
+  MOZC_VLOG(1) << "set new config file name: " << filename;
   strings::Assign(filename_, filename);
   ReloadUnlocked();
 }
