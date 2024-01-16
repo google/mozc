@@ -59,9 +59,7 @@ def ParseOption():
       help='The basenames of DLL and/or PDB.' + additional_desc,
   )
 
-  (opts, _) = parser.parse_args()
-
-  return opts
+  return parser.parse_args()
 
 
 def DeployMain(full_filename, src_paths, target_absdir):

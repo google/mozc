@@ -68,6 +68,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "request/conversion_request_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 
@@ -118,12 +119,6 @@ bool IsMixedConversionEnabled(const Request &request) {
 
 bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
-}
-
-bool IsHandwriting(const ConversionRequest &request) {
-  return !IsMixedConversionEnabled(request.request()) &&
-         request.has_composer() &&
-         !request.composer().GetHandwritingCompositions().empty();
 }
 
 bool ShouldFilterNoisyNumberCandidate(const Request &request) {
@@ -691,7 +686,7 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
       include_exact_key_(IsMixedConversionEnabled(request.request()) ||
-                         IsHandwriting(request)),
+                         ConversionRequestUtil::IsHandwriting(request)),
       filter_number_(ShouldFilterNoisyNumberCandidate(request.request())) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);

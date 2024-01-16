@@ -40,7 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "spelling/spellchecker_service_interface.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
@@ -49,7 +48,7 @@
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "composer/composer.h"
+#include "composer/query.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
@@ -78,7 +77,7 @@
 namespace mozc {
 namespace prediction {
 
-using ::mozc::spelling::TypeCorrectedQuery;
+using ::mozc::composer::TypeCorrectedQuery;
 
 class DictionaryPredictionAggregatorTestPeer {
  public:

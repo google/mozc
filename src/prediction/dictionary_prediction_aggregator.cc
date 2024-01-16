@@ -41,7 +41,6 @@
 #include <utility>
 #include <vector>
 
-#include "spelling/spellchecker_service_interface.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -52,7 +51,7 @@
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
-#include "composer/composer.h"
+#include "composer/query.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -68,6 +67,7 @@
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "request/conversion_request_util.h"
 #include "transliteration/transliteration.h"
 
 #ifndef NDEBUG
@@ -89,9 +89,9 @@ namespace prediction {
 namespace {
 
 using ::mozc::commands::Request;
+using ::mozc::composer::TypeCorrectedQuery;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::Token;
-using ::mozc::spelling::TypeCorrectedQuery;
 
 // Note that PREDICTION mode is much slower than SUGGESTION.
 // Number of prediction calls should be minimized.
@@ -164,14 +164,6 @@ bool GetNumberHistory(const Segments &segments, std::string *number_key) {
 bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
-
-// LINT.IfChange
-bool IsHandwriting(const ConversionRequest &request) {
-  return !IsMixedConversionEnabled(request.request()) &&
-         request.has_composer() &&
-         !request.composer().GetHandwritingCompositions().empty();
-}
-// LINT.ThenChange(//prediction/dictionary_predictor.cc)
 
 bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
@@ -648,7 +640,7 @@ DictionaryPredictionAggregator::GetUnigramConfig(
             kMinUnigramKeyLen};
   }
 
-  if (IsHandwriting(request)) {
+  if (ConversionRequestUtil::IsHandwriting(request)) {
     constexpr size_t kMinUnigramKeyLen = 1;
     return {&DictionaryPredictionAggregator::
                 AggregateUnigramCandidateForHandwriting,
@@ -1710,15 +1702,14 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     return;
   }
 
-  const std::optional<std::vector<spelling::TypeCorrectedQuery>> corrected =
+  const std::optional<std::vector<TypeCorrectedQuery>> corrected =
       request.composer().GetTypeCorrectedQueries(segments.history_key());
 
   if (!corrected) {
     return;
   }
 
-  const absl::Span<const spelling::TypeCorrectedQuery> queries =
-      corrected.value();
+  const absl::Span<const TypeCorrectedQuery> queries = corrected.value();
 
   if (queries.empty()) {
     return;

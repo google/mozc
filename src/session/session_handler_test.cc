@@ -49,6 +49,7 @@
 #include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/thread.h"
+#include "composer/query.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "engine/engine.h"
