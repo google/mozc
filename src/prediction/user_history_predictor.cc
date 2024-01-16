@@ -1381,10 +1381,6 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       // Pop() returns nullptr when no more valid entry exists.
       break;
     }
-    if (absl::EndsWith(result_entry->key(), " ")) {
-      // Invalid user history entry from alphanumeric input.
-      continue;
-    }
     bool is_valid_candidate = false;
     if (request.request_type() == ConversionRequest::PREDICTION) {
       is_valid_candidate = true;
@@ -1515,6 +1511,11 @@ bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
   }
 
   if (IsEmojiEntry(entry) && IsAndroidPuaEmoji(entry.value())) {
+    return false;
+  }
+
+  if (absl::EndsWith(entry.key(), " ")) {
+    // Invalid user history entry from alphanumeric input.
     return false;
   }
 
