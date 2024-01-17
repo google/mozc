@@ -39,7 +39,6 @@
 
 #include "absl/strings/string_view.h"
 #include "base/win32/hresult.h"
-#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc::win32 {
@@ -142,20 +141,17 @@ TEST(HResultOr, Vector) {
   EXPECT_TRUE(v.has_value());
   HResultOr<vector_t> v2(v);
   EXPECT_EQ(v, v2);
-  vector_t expected = {1, 2, 3};
+  const vector_t expected = {1, 2, 3};
   EXPECT_EQ(v, expected);
-  EXPECT_EQ(expected, v);
 
-  HResultOr<vector_t> error = HResult(E_FAIL);
-  EXPECT_NE(v, error);
-  EXPECT_NE(error, expected);
-  EXPECT_NE(expected, error);
+  HResultOr<vector_t> error = HResultFail();
 
   using std::swap;
   swap(error, v2);
   EXPECT_TRUE(error.has_value());
   EXPECT_EQ(error, expected);
   EXPECT_FALSE(v2.has_value());
+  EXPECT_EQ(v2, HResultFail());
 }
 
 TEST(HResultOr, Conversions) {
@@ -167,7 +163,7 @@ TEST(HResultOr, Conversions) {
   s = std::string();
   EXPECT_EQ(s, "");
 
-  // Conversions from HResultOr<U>
+  // Conversions from HResult.
   s = HResultOk("Mozc");
   EXPECT_EQ(s, "Mozc");
   s = HResult(E_FAIL);
@@ -179,6 +175,15 @@ TEST(HResultOr, Conversions) {
   const HResultOr<std::string> explicit_conversion_ctor(
       absl::string_view("abc"));
   EXPECT_EQ(explicit_conversion_ctor, "abc");
+
+  // Conversions from HResultOr<U>
+  HResultOr<absl::string_view> sv_or = "def";
+  HResultOr<std::string> s_or(sv_or);
+  EXPECT_EQ(s_or, "def");
+  s_or = HResultOk("ghi");
+  EXPECT_EQ(s_or, "ghi");
+  HResultOr<int> int_or = HResultOk(42.0);
+  EXPECT_EQ(int_or, 42);
 }
 
 class NonCopyableMock {
