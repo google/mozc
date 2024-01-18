@@ -44,20 +44,12 @@ TEST(LoggingTest, CompileTest) {
     LOG(ERROR) << "";
     LOG(DFATAL) << "";
     LOG(FATAL) << "";
-    VLOG(0) << "";
-    VLOG(1) << "";
-    VLOG(2) << "";
-    VLOG(3) << "";
   }
   if (false) {
     DLOG(INFO) << "";
     DLOG(WARNING) << "";
     DLOG(ERROR) << "";
     DLOG(FATAL) << "";
-    DVLOG(0) << "";
-    DVLOG(1) << "";
-    DVLOG(2) << "";
-    DVLOG(3) << "";
   }
 
   LOG_IF(INFO, false) << "";
@@ -70,11 +62,6 @@ TEST(LoggingTest, CompileTest) {
   DLOG_IF(WARNING, false) << "";
   DLOG_IF(ERROR, false) << "";
   DLOG_IF(FATAL, false) << "";
-
-  VLOG_IF(0, false) << "";
-  VLOG_IF(1, false) << "";
-  VLOG_IF(2, false) << "";
-  VLOG_IF(3, false) << "";
 
   CHECK(true) << "";
   CHECK_EQ(true, true) << "";

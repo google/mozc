@@ -50,15 +50,6 @@ namespace mozc {
 namespace ibus {
 namespace {
 
-void EnableVerboseLog() {
-#ifndef MOZC_NO_LOGGING
-  constexpr int kDefaultVerboseLevel = 1;
-  if (mozc::Logging::GetVerboseLevel() < kDefaultVerboseLevel) {
-    mozc::Logging::SetVerboseLevel(kDefaultVerboseLevel);
-  }
-#endif  // MOZC_NO_LOGGING
-}
-
 void IgnoreSigChild() {
   // Don't wait() child process termination.
   struct sigaction sa;
@@ -121,7 +112,6 @@ void RunIbus() {
   IbusBusWrapper bus;
   MozcEngine engine;
   InitIbusComponent(&bus, &engine, absl::GetFlag(FLAGS_ibus));
-  EnableVerboseLog();  // Do nothing if MOZC_NO_LOGGING is defined.
   IgnoreSigChild();
   IbusWrapper::Main();
 }

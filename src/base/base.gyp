@@ -110,6 +110,7 @@
         'system_util.cc',
         'text_normalizer.cc',
         'util.cc',
+        'vlog.cc',
       ],
       'dependencies': [
         'clock',

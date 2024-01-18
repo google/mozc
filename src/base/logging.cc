@@ -72,7 +72,6 @@ ABSL_FLAG(bool, logtostderr, false,
     .OnUpdate([] {
       mozc::Logging::SetLogToStderr(absl::GetFlag(FLAGS_logtostderr));
     });
-ABSL_FLAG(int32_t, v, 0, "verbose level");
 
 namespace mozc {
 
@@ -162,12 +161,6 @@ const char *Logging::GetBeginColorEscapeSequence(LogSeverity severity) {
 
 const char *Logging::GetEndColorEscapeSequence() { return ""; }
 
-int Logging::GetVerboseLevel() { return 0; }
-
-void Logging::SetVerboseLevel(int verboselevel) {}
-
-void Logging::SetConfigVerboseLevel(int verboselevel) {}
-
 void Logging::SetLogToStderr(bool log_to_stderr) {}
 
 #else  // MOZC_NO_LOGGING
@@ -181,20 +174,6 @@ class LogStreamImpl {
 
   void Init(const std::string &log_file_path);
   void Reset();
-
-  int verbose_level() const {
-    return std::max(absl::GetFlag(FLAGS_v), config_verbose_level_);
-  }
-
-  void set_verbose_level(int level) {
-    absl::MutexLock l(&mutex_);
-    absl::SetFlag(&FLAGS_v, level);
-  }
-
-  void set_config_verbose_level(int level) {
-    absl::MutexLock l(&mutex_);
-    config_verbose_level_ = level;
-  }
 
   bool support_color() const { return support_color_; }
 
@@ -216,7 +195,6 @@ class LogStreamImpl {
   // This is not thread-safe so must be guarded.
   // If std::cerr is real log stream, this is empty.
   std::unique_ptr<std::ostream> real_log_stream_;
-  int config_verbose_level_;
   bool support_color_ = false;
   bool use_cerr_ = false;
   absl::Mutex mutex_;
@@ -287,7 +265,6 @@ void LogStreamImpl::Reset() {
 
 void LogStreamImpl::ResetUnlocked() {
   real_log_stream_.reset();
-  config_verbose_level_ = 0;
 #if defined(__ANDROID__) || defined(_WIN32)
   // On Android, the standard log library is used.
   // On Windows, coloring is disabled
@@ -379,18 +356,6 @@ const char *Logging::GetEndColorEscapeSequence() {
     return kClearEscapeSequence;
   }
   return "";
-}
-
-int Logging::GetVerboseLevel() {
-  return Singleton<LogStreamImpl>::get()->verbose_level();
-}
-
-void Logging::SetVerboseLevel(int verboselevel) {
-  Singleton<LogStreamImpl>::get()->set_verbose_level(verboselevel);
-}
-
-void Logging::SetConfigVerboseLevel(int verboselevel) {
-  Singleton<LogStreamImpl>::get()->set_config_verbose_level(verboselevel);
 }
 
 void Logging::SetLogToStderr(bool log_to_stderr) {

@@ -27,30 +27,28 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_VLOG_H_
-#define MOZC_BASE_VLOG_H_
+#include "base/vlog.h"
 
-#include "base/logging.h"
+#include <algorithm>
+#include <atomic>
+
+#include "absl/base/attributes.h"
+#include "absl/flags/flag.h"
+
+
+ABSL_FLAG(int, v, 0, "Show all VLOG(m) messages for m <= this.");
 
 namespace mozc::internal {
 
-// Returns the current verbose log level, which is the maximum of --v flag and
-// `verbose_level` in the config.
-int GetVLogLevel();
+ABSL_CONST_INIT std::atomic<int> config_vlog_level = 0;
 
-// Updates the (mirror of) `verbose_level` in the config.
-//
-// To avoid dependency on the config from logging library, vlog holds a copy of
-// the `verbose_level` internally, and config handlers are expected to call this
-// setter accordingly.
-void SetConfigVLogLevel(int v);
+int GetVLogLevel() {
+  return std::max(absl::GetFlag(FLAGS_v),
+                  config_vlog_level.load(std::memory_order_acquire));
+}
+
+void SetConfigVLogLevel(int v) {
+  config_vlog_level.store(v, std::memory_order_release);
+}
 
 }  // namespace mozc::internal
-
-#define MOZC_VLOG_IS_ON(severity) (mozc::internal::GetVLogLevel() >= severity)
-
-#define MOZC_VLOG(severity) LOG_IF(INFO, MOZC_VLOG_IS_ON(severity))
-
-#define MOZC_DVLOG(severity) DLOG_IF(INFO, MOZC_VLOG_IS_ON(severity))
-
-#endif  // MOZC_BASE_VLOG_H_

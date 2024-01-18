@@ -142,7 +142,7 @@ void ConfigHandlerImpl::SetConfigInternal(Config config) {
   }
 #endif  // MOZC_NO_LOGGING
 
-  Logging::SetConfigVerboseLevel(config_.verbose_level());
+  mozc::internal::SetConfigVLogLevel(config_.verbose_level());
 
   // Initialize platform specific configuration.
   if (config_.session_keymap() == Config::NONE) {

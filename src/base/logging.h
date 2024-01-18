@@ -112,18 +112,6 @@ class Logging {
   // Returns "YYYY-MM-DD HH:MM:SS PID TID", e.g. "2008 11-16 19:40:21 100 20"
   static std::string GetLogMessageHeader();
 
-  // Returns FLAGS_v
-  static int GetVerboseLevel();
-
-  // Sets FLAGS_v
-  static void SetVerboseLevel(int verboselevel);
-
-  // Sets Verbose Level for Config.
-  // Since Config dialog will overwrite -v option, we separate
-  // config_verbose_level and FLAGS_v.
-  // real_config_level = max(FLAGS_v, config_verbose_level);
-  static void SetConfigVerboseLevel(int verboselevel);
-
   // Gets an escape sequence to colorize log messages on tty devices.
   static const char *GetBeginColorEscapeSequence(LogSeverity severity);
   static const char *GetEndColorEscapeSequence();
@@ -295,14 +283,6 @@ class NullLogFinalizer {
                 << " [" << #condition << "] "
 #endif  // !MOZC_NO_LOGGING
 
-#define VLOG_IS_ON(verboselevel) \
-  (mozc::Logging::GetVerboseLevel() >= verboselevel)
-
-#define VLOG(verboselevel) LOG_IF(INFO, VLOG_IS_ON(verboselevel))
-
-#define VLOG_IF(verboselevel, condition) \
-  LOG_IF(INFO, ((condition) && VLOG_IS_ON(verboselevel)))
-
 #define CHECK_EQ(a, b) CHECK((a) == (b))
 #define CHECK_NE(a, b) CHECK((a) != (b))
 #define CHECK_GE(a, b) CHECK((a) >= (b))
@@ -350,8 +330,6 @@ class NullLogFinalizer {
   while (false) CHECK_LT(a, b)
 
 #endif  // opt build
-
-#define DVLOG(verboselevel) DLOG_IF(INFO, VLOG_IS_ON(verboselevel))
 
 #ifndef MOZC_LOG_PROTOBUF
 #define MOZC_LOG_PROTOBUF(message) ((message).DebugString())
