@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "ipc/ipc.h"
@@ -60,7 +61,7 @@ MozcConnection::MozcConnection(
     : handler_(new KeyEventHandler),
       preedit_method_(mozc::config::Config::ROMAN),
       client_factory_(client_factory) {
-  VLOG(1) << "MozcConnection is created";
+  MOZC_VLOG(1) << "MozcConnection is created";
   auto client = CreateAndConfigureClient();
   client->SetIPCClientFactory(client_factory_.get());
   client_ = std::move(client);
@@ -68,14 +69,14 @@ MozcConnection::MozcConnection(
   if (client_->EnsureConnection()) {
     UpdatePreeditMethod();
   }
-  VLOG(1)
+  MOZC_VLOG(1)
       << "Current preedit method is "
       << (preedit_method_ == mozc::config::Config::ROMAN ? "Roman" : "Kana");
 }
 
 MozcConnection::~MozcConnection() {
   client_->SyncData();
-  VLOG(1) << "MozcConnection is destroyed";
+  MOZC_VLOG(1) << "MozcConnection is destroyed";
 }
 
 void MozcConnection::UpdatePreeditMethod() {
@@ -103,7 +104,7 @@ bool MozcConnection::TrySendKeyEvent(
   // to establish the server connection.
   if (!client_->EnsureConnection()) {
     *out_error = "EnsureConnection failed";
-    VLOG(1) << "EnsureConnection failed";
+    MOZC_VLOG(1) << "EnsureConnection failed";
     return false;
   }
 
@@ -113,7 +114,7 @@ bool MozcConnection::TrySendKeyEvent(
 
   if ((composition_mode == mozc::commands::DIRECT) &&
       !client_->IsDirectModeCommand(event)) {
-    VLOG(1) << "In DIRECT mode. Not consumed.";
+    MOZC_VLOG(1) << "In DIRECT mode. Not consumed.";
     return false;  // not consumed.
   }
 
@@ -125,13 +126,13 @@ bool MozcConnection::TrySendKeyEvent(
     context.set_following_text(surrounding_text_info.following_text);
   }
 
-  VLOG(1) << "TrySendKeyEvent: " << std::endl << event.DebugString();
+  MOZC_VLOG(1) << "TrySendKeyEvent: " << std::endl << event.DebugString();
   if (!client_->SendKeyWithContext(event, context, out)) {
     *out_error = "SendKey failed";
-    VLOG(1) << "ERROR";
+    MOZC_VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "OK: " << std::endl << out->DebugString();
+  MOZC_VLOG(1) << "OK: " << std::endl << out->DebugString();
   return true;
 }
 
@@ -184,13 +185,13 @@ bool MozcConnection::TrySendRawCommand(
     const mozc::commands::SessionCommand& command,
     mozc::commands::Output *out,
     std::string *out_error) const {
-  VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
+  MOZC_VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
   if (!client_->SendCommand(command, out)) {
     *out_error = "SendCommand failed";
-    VLOG(1) << "ERROR";
+    MOZC_VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "OK: " << std::endl << out->DebugString();
+  MOZC_VLOG(1) << "OK: " << std::endl << out->DebugString();
   return true;
 }
 

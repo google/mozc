@@ -40,6 +40,7 @@
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -55,7 +56,7 @@ namespace fcitx {
 MozcState::MozcState(InputContext* ic, MozcEngine* engine)
     : ic_(ic), engine_(engine), handler_(std::make_unique<KeyEventHandler>()) {
   // mozc::Logging::SetVerboseLevel(1);
-  VLOG(1) << "MozcState created.";
+  MOZC_VLOG(1) << "MozcState created.";
 
   if (GetClient()->EnsureConnection()) {
     UpdatePreeditMethod();
@@ -72,7 +73,7 @@ MozcState::MozcState(InputContext* ic, MozcEngine* engine)
 }
 
 MozcState::~MozcState() {
-  VLOG(1) << "MozcState destroyed.";
+  MOZC_VLOG(1) << "MozcState destroyed.";
 }
 
 void MozcState::UpdatePreeditMethod() {
@@ -114,7 +115,7 @@ bool MozcState::TrySendKeyEvent(
   auto* client = GetClient();
   if (!client->EnsureConnection()) {
     *out_error = "EnsureConnection failed";
-    VLOG(1) << "EnsureConnection failed";
+    MOZC_VLOG(1) << "EnsureConnection failed";
     return false;
   }
 
@@ -125,7 +126,7 @@ bool MozcState::TrySendKeyEvent(
 
   if ((composition_mode == mozc::commands::DIRECT) &&
       !client->IsDirectModeCommand(event)) {
-    VLOG(1) << "In DIRECT mode. Not consumed.";
+    MOZC_VLOG(1) << "In DIRECT mode. Not consumed.";
     return false;  // not consumed.
   }
 
@@ -137,13 +138,13 @@ bool MozcState::TrySendKeyEvent(
     context.set_following_text(surrounding_text_info.following_text);
   }
 
-  VLOG(1) << "TrySendKeyEvent: " << std::endl << event.DebugString();
+  MOZC_VLOG(1) << "TrySendKeyEvent: " << std::endl << event.DebugString();
   if (!client->SendKeyWithContext(event, context, out)) {
     *out_error = "SendKey failed";
-    VLOG(1) << "ERROR";
+    MOZC_VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "OK: " << std::endl << out->DebugString();
+  MOZC_VLOG(1) << "OK: " << std::endl << out->DebugString();
   return true;
 }
 
@@ -189,13 +190,13 @@ bool MozcState::TrySendCommand(mozc::commands::SessionCommand::CommandType type,
 bool MozcState::TrySendRawCommand(const mozc::commands::SessionCommand& command,
                                   mozc::commands::Output* out,
                                   std::string* out_error) const {
-  VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
+  MOZC_VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
   if (!GetClient()->SendCommand(command, out)) {
     *out_error = "SendCommand failed";
-    VLOG(1) << "ERROR";
+    MOZC_VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "OK: " << std::endl << out->DebugString();
+  MOZC_VLOG(1) << "OK: " << std::endl << out->DebugString();
   return true;
 }
 
@@ -242,7 +243,7 @@ void MozcState::SelectCandidate(int32_t id) {
     LOG(ERROR) << "The clicked candidate doesn't have unique ID.";
     return;
   }
-  VLOG(1) << "select_candidate, id=" << id;
+  MOZC_VLOG(1) << "select_candidate, id=" << id;
 
   std::string error;
   mozc::commands::Output raw_response;
@@ -257,7 +258,7 @@ void MozcState::SelectCandidate(int32_t id) {
 
 // This function is called from SCIM framework.
 void MozcState::Reset() {
-  VLOG(1) << "resetim";
+  MOZC_VLOG(1) << "resetim";
   std::string error;
   mozc::commands::Output raw_response;
   if (TrySendCommand(mozc::commands::SessionCommand::REVERT, &raw_response,
@@ -269,7 +270,7 @@ void MozcState::Reset() {
 }
 
 bool MozcState::Paging(bool prev) {
-  VLOG(1) << "paging";
+  MOZC_VLOG(1) << "paging";
   std::string error;
   mozc::commands::SessionCommand::CommandType command =
       prev ? mozc::commands::SessionCommand::CONVERT_PREV_PAGE
@@ -284,7 +285,7 @@ bool MozcState::Paging(bool prev) {
 
 // This function is called when the ic gets focus.
 void MozcState::FocusIn() {
-  VLOG(1) << "MozcState::FocusIn()";
+  MOZC_VLOG(1) << "MozcState::FocusIn()";
 
   UpdatePreeditMethod();
   DrawAll();
@@ -292,7 +293,7 @@ void MozcState::FocusIn() {
 
 // This function is called when the ic loses focus.
 void MozcState::FocusOut(const InputContextEvent& event) {
-  VLOG(1) << "MozcState::FocusOut()";
+  MOZC_VLOG(1) << "MozcState::FocusOut()";
   std::string error;
   mozc::commands::Output raw_response;
 
@@ -313,7 +314,7 @@ bool MozcState::ParseResponse(const mozc::commands::Output& raw_response) {
   ClearAll();
   const bool consumed = engine_->parser()->ParseResponse(raw_response, ic_);
   if (!consumed) {
-    VLOG(1) << "The input was not consumed by Mozc.";
+    MOZC_VLOG(1) << "The input was not consumed by Mozc.";
   }
   OpenUrl();
   DrawAll();

@@ -36,6 +36,7 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "base/port.h"
 #include "base/util.h"
 

@@ -40,6 +40,7 @@
 
 #include "base/const.h"
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "base/process.h"
 #include "base/util.h"
 #include "base/file_util.h"
@@ -130,7 +131,7 @@ FcitxMozc::FcitxMozc ( FcitxInstance* inst,
         composition_mode_ ( mozc::commands::HIRAGANA )
 {
     // mozc::Logging::SetVerboseLevel(1);
-    VLOG ( 1 ) << "FcitxMozc created.";
+    MOZC_VLOG ( 1 ) << "FcitxMozc created.";
     const bool is_vertical = true;
     parser_->set_use_annotation ( is_vertical );
     InitializeBar();
@@ -140,7 +141,7 @@ FcitxMozc::FcitxMozc ( FcitxInstance* inst,
 
 FcitxMozc::~FcitxMozc()
 {
-    VLOG ( 1 ) << "FcitxMozc destroyed.";
+    MOZC_VLOG ( 1 ) << "FcitxMozc destroyed.";
 }
 
 // This function is called from SCIM framework when users press or release a
@@ -170,7 +171,7 @@ void FcitxMozc::select_candidate ( FcitxCandidateWord* candWord )
         LOG ( ERROR ) << "The clicked candidate doesn't have unique ID.";
         return;
     }
-    VLOG ( 1 ) << "select_candidate, id=" << *id;
+    MOZC_VLOG ( 1 ) << "select_candidate, id=" << *id;
 
     std::string error;
     mozc::commands::Output raw_response;
@@ -189,7 +190,7 @@ void FcitxMozc::select_candidate ( FcitxCandidateWord* candWord )
 // This function is called from SCIM framework.
 void FcitxMozc::resetim()
 {
-    VLOG ( 1 ) << "resetim";
+    MOZC_VLOG ( 1 ) << "resetim";
     std::string error;
     mozc::commands::Output raw_response;
     if ( connection_->TrySendCommand (
@@ -218,7 +219,7 @@ void FcitxMozc::reset()
 
 bool FcitxMozc::paging(bool prev)
 {
-    VLOG ( 1 ) << "paging";
+    MOZC_VLOG ( 1 ) << "paging";
     std::string error;
     mozc::commands::SessionCommand::CommandType command =
         prev ? mozc::commands::SessionCommand::CONVERT_PREV_PAGE
@@ -236,7 +237,7 @@ bool FcitxMozc::paging(bool prev)
 // This function is called from SCIM framework when the ic gets focus.
 void FcitxMozc::init()
 {
-    VLOG ( 1 ) << "init";
+    MOZC_VLOG ( 1 ) << "init";
     boolean flag = true;
     FcitxInstanceSetContext(instance, CONTEXT_DISABLE_AUTOENG, &flag);
     FcitxInstanceSetContext(instance, CONTEXT_DISABLE_FULLWIDTH, &flag);
@@ -251,7 +252,7 @@ void FcitxMozc::init()
 // This function is called when the ic loses focus.
 void FcitxMozc::focus_out()
 {
-    VLOG ( 1 ) << "focus_out";
+    MOZC_VLOG ( 1 ) << "focus_out";
     std::string error;
     mozc::commands::Output raw_response;
     if ( connection_->TrySendCommand (
@@ -271,7 +272,7 @@ bool FcitxMozc::ParseResponse ( const mozc::commands::Output &raw_response )
     const bool consumed = parser_->ParseResponse ( raw_response, this );
     if ( !consumed )
     {
-        VLOG ( 1 ) << "The input was not consumed by Mozc.";
+        MOZC_VLOG ( 1 ) << "The input was not consumed by Mozc.";
     }
     OpenUrl();
     DrawAll();
@@ -338,7 +339,7 @@ void FcitxMozc::DrawPreeditInfo()
     FcitxMessagesSetMessageCount(clientpreedit, 0);
     if ( preedit_info_.get() )
     {
-        VLOG ( 1 ) << "DrawPreeditInfo: cursor=" << preedit_info_->cursor_pos;
+        MOZC_VLOG ( 1 ) << "DrawPreeditInfo: cursor=" << preedit_info_->cursor_pos;
 
         FcitxInputContext* ic = FcitxInstanceGetCurrentIC(instance);
         boolean supportPreedit = FcitxInstanceICSupportPreedit(instance, ic);
@@ -402,7 +403,7 @@ static const char* GetMozcToolIcon(void* arg)
 
 void FcitxMozc::InitializeBar()
 {
-    VLOG ( 1 ) << "Registering properties";
+    MOZC_VLOG ( 1 ) << "Registering properties";
 
     FcitxUIRegisterComplexStatus(instance, this,
         "mozc-composition-mode",

@@ -40,6 +40,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "base/process.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
@@ -341,7 +342,7 @@ void MozcResponseParser::ExecuteCallback(const mozc::commands::Output &response,
     range->set_length(abs(surrounding_text_info.relative_selected_length));
   }
 
-  VLOG(1) << "New output" << new_output.DebugString();
+  MOZC_VLOG(1) << "New output" << new_output.DebugString();
 
   ParseResponse(new_output, ic);
 }

@@ -31,6 +31,7 @@
 #include "unix/fcitx5/fcitx_key_translator.h"
 
 #include "base/logging.h"
+#include "base/vlog.h"
 
 namespace fcitx {
 using namespace mozc;
@@ -337,7 +338,7 @@ bool KeyTranslator::Translate(KeySym keyval, uint32_t keycode,
              it != kSpecialKeyMap->end()) {
     out_event->set_special_key(it->second);
   } else {
-    VLOG(1) << "Unknown keyval: " << keyval;
+    MOZC_VLOG(1) << "Unknown keyval: " << keyval;
     return false;
   }
 

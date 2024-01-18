@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/vlog.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "ipc/ipc.h"
@@ -52,10 +53,10 @@ std::unique_ptr<mozc::client::ClientInterface> CreateAndConfigureClient() {
 
 MozcConnection::MozcConnection()
     : client_factory_(mozc::IPCClientFactory::GetIPCClientFactory()) {
-  VLOG(1) << "MozcConnection is created";
+  MOZC_VLOG(1) << "MozcConnection is created";
 }
 
-MozcConnection::~MozcConnection() { VLOG(1) << "MozcConnection is destroyed"; }
+MozcConnection::~MozcConnection() { MOZC_VLOG(1) << "MozcConnection is destroyed"; }
 
 std::unique_ptr<mozc::client::ClientInterface> MozcConnection::CreateClient() {
   auto client = CreateAndConfigureClient();

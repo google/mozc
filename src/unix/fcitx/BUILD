@@ -15,6 +15,7 @@ mozc_cc_library(
         ":surrounding_text_util",
         "//base:port",
         "//base:util",
+        "//base:vlog",
         "//client:client",
         "//protocol:commands_cc_proto",
     ]
@@ -38,6 +39,7 @@ mozc_cc_library(
         "//base:process",
         "//base:run_level",
         "//base:util",
+        "//base:vlog",
         "//protocol:commands_cc_proto",
         "//client:client_interface",
     ],
@@ -56,6 +58,7 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:port",
+        "//base:vlog",
         "//protocol:config_cc_proto",
         "//protocol:commands_cc_proto",
         "@fcitx//:fcitx",
@@ -74,6 +77,7 @@ mozc_cc_library(
         "//base:util",
         "//base:logging",
         "//base:port",
+        "//base:vlog",
         "@fcitx//:fcitx",
     ],
 )
