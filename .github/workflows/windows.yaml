@@ -30,7 +30,7 @@ jobs:
           python -m pip install six requests
 
       - name: Try to restore update_deps cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
@@ -94,7 +94,7 @@ jobs:
           python -m pip install six requests
 
       - name: Try to restore update_deps cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
@@ -139,7 +139,7 @@ jobs:
           python -m pip install requests
 
       - name: Try to restore update_deps cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: src/third_party_cache
           key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
