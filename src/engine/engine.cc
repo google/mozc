@@ -29,10 +29,7 @@
 
 #include "engine/engine.h"
 
-#include <cstdint>
 #include <memory>
-#include <optional>
-#include <string>
 #include <utility>
 
 #include "absl/status/status.h"
@@ -40,25 +37,15 @@
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/vlog.h"
-#include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter.h"
-#include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/dictionary_impl.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
-#include "dictionary/suppression_dictionary.h"
-#include "dictionary/system/system_dictionary.h"
-#include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
-#include "dictionary/user_pos.h"
+#include "engine/modules.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
-#include "prediction/suggestion_filter.h"
 #include "prediction/user_history_predictor.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
@@ -66,14 +53,6 @@
 namespace mozc {
 namespace {
 
-using ::mozc::dictionary::DictionaryImpl;
-using ::mozc::dictionary::PosGroup;
-using ::mozc::dictionary::SuffixDictionary;
-using ::mozc::dictionary::SuppressionDictionary;
-using ::mozc::dictionary::SystemDictionary;
-using ::mozc::dictionary::UserDictionary;
-using ::mozc::dictionary::UserPos;
-using ::mozc::dictionary::ValueDictionary;
 using ::mozc::prediction::PredictorInterface;
 
 class UserDataManagerImpl final : public UserDataManagerInterface {
@@ -164,75 +143,15 @@ absl::Status Engine::Init(
 #define RETURN_IF_NULL(ptr)                                                 \
   do {                                                                      \
     if (!(ptr))                                                             \
-      return absl::ResourceExhaustedError("engigine.cc: " #ptr " is null"); \
+      return absl::ResourceExhaustedError("engine.cc: " #ptr " is null"); \
   } while (false)
 
-  RETURN_IF_NULL(data_manager);
-
-  suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
-  RETURN_IF_NULL(suppression_dictionary_);
-
-  pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
-      data_manager->GetPosMatcherData());
-  RETURN_IF_NULL(pos_matcher_);
-
-  std::unique_ptr<UserPos> user_pos =
-      UserPos::CreateFromDataManager(*data_manager);
-  RETURN_IF_NULL(user_pos);
-
-  user_dictionary_ = std::make_unique<UserDictionary>(
-      std::move(user_pos), *pos_matcher_, suppression_dictionary_.get());
-  RETURN_IF_NULL(user_dictionary_);
-
-  const char *dictionary_data = nullptr;
-  int dictionary_size = 0;
-  data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
-
-  absl::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
-      SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
-  if (!sysdic.ok()) {
-    return std::move(sysdic).status();
-  }
-  auto value_dic = std::make_unique<ValueDictionary>(*pos_matcher_,
-                                                     &(*sysdic)->value_trie());
-  dictionary_ = std::make_unique<DictionaryImpl>(
-      *std::move(sysdic), std::move(value_dic), user_dictionary_.get(),
-      suppression_dictionary_.get(), pos_matcher_.get());
-  RETURN_IF_NULL(dictionary_);
-
-  absl::string_view suffix_key_array_data, suffix_value_array_data;
-  const uint32_t *token_array = nullptr;
-  data_manager->GetSuffixDictionaryData(&suffix_key_array_data,
-                                        &suffix_value_array_data, &token_array);
-  suffix_dictionary_ = std::make_unique<SuffixDictionary>(
-      suffix_key_array_data, suffix_value_array_data, token_array);
-  RETURN_IF_NULL(suffix_dictionary_);
-
-  auto status_or_connector = Connector::CreateFromDataManager(*data_manager);
-  if (!status_or_connector.ok()) {
-    return std::move(status_or_connector).status();
-  }
-  connector_ = *std::move(status_or_connector);
-
-  segmenter_ = Segmenter::CreateFromDataManager(*data_manager);
-  RETURN_IF_NULL(segmenter_);
-
-  pos_group_ = std::make_unique<PosGroup>(data_manager->GetPosGroupData());
-  RETURN_IF_NULL(pos_group_);
-
-  {
-    absl::StatusOr<SuggestionFilter> status_or_suggestion_filter =
-        SuggestionFilter::Create(data_manager->GetSuggestionFilterData());
-    if (!status_or_suggestion_filter.ok()) {
-      return std::move(status_or_suggestion_filter).status();
-    }
-    suggestion_filter_ = *std::move(status_or_suggestion_filter);
+  absl::Status modules_init_status = modules_.Init(data_manager.get());
+  if (!modules_init_status.ok()) {
+    return modules_init_status;
   }
 
-  immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
-      dictionary_.get(), suffix_dictionary_.get(),
-      suppression_dictionary_.get(), connector_, segmenter_.get(),
-      pos_matcher_.get(), pos_group_.get(), suggestion_filter_);
+  immutable_converter_ = std::make_unique<ImmutableConverterImpl>(modules_);
   RETURN_IF_NULL(immutable_converter_);
 
   // Since predictor and rewriter require a pointer to a converter instance,
@@ -246,22 +165,19 @@ absl::Status Engine::Init(
 
   std::unique_ptr<PredictorInterface> predictor;
   {
-    const void *user_arg = nullptr;
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
     auto dictionary_predictor =
         std::make_unique<prediction::DictionaryPredictor>(
             *data_manager, converter_.get(), immutable_converter_.get(),
-            dictionary_.get(), suffix_dictionary_.get(), connector_,
-            segmenter_.get(), *pos_matcher_, suggestion_filter_,
-            rescorer_.get(), user_arg);
+            modules_);
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;
     auto user_history_predictor =
         std::make_unique<prediction::UserHistoryPredictor>(
-            dictionary_.get(), pos_matcher_.get(),
-            suppression_dictionary_.get(), enable_content_word_learning);
+            modules_.GetDictionary(), modules_.GetPosMatcher(),
+            modules_.GetSuppressionDictionary(), enable_content_word_learning);
     RETURN_IF_NULL(user_history_predictor);
 
     if (is_mobile) {
@@ -277,15 +193,15 @@ absl::Status Engine::Init(
   }
   predictor_ = predictor.get();  // Keep the reference
 
-  auto rewriter =
-      std::make_unique<RewriterImpl>(converter_.get(), data_manager.get(),
-                                     pos_group_.get(), dictionary_.get());
+  auto rewriter = std::make_unique<RewriterImpl>(
+      converter_.get(), data_manager.get(), modules_.GetPosGroup(),
+      modules_.GetDictionary());
   RETURN_IF_NULL(rewriter);
   rewriter_ = rewriter.get();  // Keep the reference
 
-  converter_->Init(pos_matcher_.get(), suppression_dictionary_.get(),
-                   std::move(predictor), std::move(rewriter),
-                   immutable_converter_.get());
+  converter_->Init(modules_.GetPosMatcher(),
+                   modules_.GetSuppressionDictionary(), std::move(predictor),
+                   std::move(rewriter), immutable_converter_.get());
 
   user_data_manager_ =
       std::make_unique<UserDataManagerImpl>(predictor_, rewriter_);
@@ -298,11 +214,11 @@ absl::Status Engine::Init(
 }
 
 bool Engine::Reload() {
-  if (!user_dictionary_) {
+  if (!modules_.GetUserDictionary()) {
     return true;
   }
   MOZC_VLOG(1) << "Reloading user dictionary";
-  bool result_dictionary = user_dictionary_->Reload();
+  bool result_dictionary = modules_.GetUserDictionary()->Reload();
   MOZC_VLOG(1) << "Reloading UserDataManager";
   bool result_user_data = GetUserDataManager()->Reload();
   return result_dictionary && result_user_data;
@@ -312,8 +228,8 @@ bool Engine::ReloadAndWait() {
   if (!Reload()) {
     return false;
   }
-  if (user_dictionary_) {
-    user_dictionary_->WaitForReloader();
+  if (modules_.GetUserDictionary()) {
+    modules_.GetUserDictionary()->WaitForReloader();
   }
   return GetUserDataManager()->Wait();
 }

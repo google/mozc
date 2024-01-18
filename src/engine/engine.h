@@ -37,21 +37,15 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "engine/engine_interface.h"
+#include "engine/modules.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
-#include "prediction/rescorer_interface.h"
-#include "prediction/suggestion_filter.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -97,7 +91,7 @@ class Engine : public EngineInterface {
     return predictor_;
   }
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
-    return suppression_dictionary_.get();
+    return modules_.GetMutableSuppressionDictionary();
   }
 
   bool Reload() override;
@@ -117,7 +111,7 @@ class Engine : public EngineInterface {
   }
 
   std::vector<std::string> GetPosList() const override {
-    return user_dictionary_->GetPosList();
+    return modules_.GetUserDictionary()->GetPosList();
   }
 
  private:
@@ -127,16 +121,8 @@ class Engine : public EngineInterface {
                     bool is_mobile);
 
   std::unique_ptr<const DataManagerInterface> data_manager_;
-  std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
-  std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
-  Connector connector_;
-  std::unique_ptr<const Segmenter> segmenter_;
-  std::unique_ptr<dictionary::UserDictionary> user_dictionary_;
-  std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary_;
-  std::unique_ptr<dictionary::DictionaryInterface> dictionary_;
-  std::unique_ptr<const dictionary::PosGroup> pos_group_;
+  engine::Modules modules_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
-  SuggestionFilter suggestion_filter_;
 
   // TODO(noriyukit): Currently predictor and rewriter are created by this class
   // but owned by converter_. Since this class creates these two, it'd be better
@@ -146,7 +132,6 @@ class Engine : public EngineInterface {
 
   std::unique_ptr<ConverterImpl> converter_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
-  std::unique_ptr<const prediction::RescorerInterface> rescorer_;
 };
 
 }  // namespace mozc

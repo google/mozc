@@ -64,6 +64,7 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -281,6 +282,29 @@ Lattice *GetLattice(Segments *segments, bool is_prediction) {
 }
 
 }  // namespace
+
+ImmutableConverterImpl::ImmutableConverterImpl(const engine::Modules &modules)
+    : dictionary_(modules.GetDictionary()),
+      suffix_dictionary_(modules.GetSuffixDictionary()),
+      suppression_dictionary_(modules.GetSuppressionDictionary()),
+      connector_(modules.GetConnector()),
+      segmenter_(modules.GetSegmenter()),
+      pos_matcher_(modules.GetPosMatcher()),
+      pos_group_(modules.GetPosGroup()),
+      suggestion_filter_(modules.GetSuggestionFilter()),
+      first_name_id_(pos_matcher_->GetFirstNameId()),
+      last_name_id_(pos_matcher_->GetLastNameId()),
+      number_id_(pos_matcher_->GetNumberId()),
+      unknown_id_(pos_matcher_->GetUnknownId()),
+      last_to_first_name_transition_cost_(
+          connector_.GetTransitionCost(last_name_id_, first_name_id_)) {
+  DCHECK(dictionary_);
+  DCHECK(suffix_dictionary_);
+  DCHECK(suppression_dictionary_);
+  DCHECK(segmenter_);
+  DCHECK(pos_matcher_);
+  DCHECK(pos_group_);
+}
 
 ImmutableConverterImpl::ImmutableConverterImpl(
     const DictionaryInterface *dictionary,

@@ -94,21 +94,13 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "engine",
-    srcs = [
-        "engine.cc",
-    ],
-    hdrs = ["engine.h"],
-    visibility = ["//:__subpackages__"],
+    name = "modules",
+    srcs = ["modules.cc"],
+    hdrs = ["modules.h"],
     deps = [
-        ":engine_interface",
         ":user_data_manager_interface",
         "//base:logging",
-        "//base:vlog",
-        "//converter",
         "//converter:connector",
-        "//converter:immutable_converter_interface",
-        "//converter:immutable_converter_no_factory",
         "//converter:segmenter",
         "//data_manager:data_manager_interface",
         "//dictionary:dictionary_impl",
@@ -121,11 +113,36 @@ mozc_cc_library(
         "//dictionary:user_pos",
         "//dictionary/system:system_dictionary",
         "//dictionary/system:value_dictionary",
+        "//prediction:rescorer_interface",
+        "//prediction:suggestion_filter",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "engine",
+    srcs = [
+        "engine.cc",
+    ],
+    hdrs = ["engine.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":engine_interface",
+        ":modules",
+        ":user_data_manager_interface",
+        "//base:logging",
+        "//base:vlog",
+        "//converter",
+        "//converter:immutable_converter_interface",
+        "//converter:immutable_converter_no_factory",
+        "//data_manager:data_manager_interface",
+        "//dictionary:suppression_dictionary",
+        "//dictionary:user_dictionary",
         "//prediction:dictionary_predictor",
         "//prediction:predictor",
         "//prediction:predictor_interface",
-        "//prediction:rescorer_interface",
-        "//prediction:suggestion_filter",
         "//prediction:user_history_predictor",
         "//rewriter",
         "//rewriter:rewriter_interface",

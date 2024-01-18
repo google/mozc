@@ -46,6 +46,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "engine/modules.h"
 #include "prediction/number_decoder.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
@@ -67,10 +68,15 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const DataManagerInterface &data_manager,
       const ConverterInterface *converter,
       const ImmutableConverterInterface *immutable_converter,
+      const engine::Modules &modules);
+
+  DictionaryPredictionAggregator(
+      const DataManagerInterface &data_manager,
+      const ConverterInterface *converter,
+      const ImmutableConverterInterface *immutable_converter,
       const dictionary::DictionaryInterface *dictionary,
       const dictionary::DictionaryInterface *suffix_dictionary,
-      const dictionary::PosMatcher *pos_matcher,
-      const void *user_arg = nullptr);
+      const dictionary::PosMatcher *pos_matcher);
 
   std::vector<Result> AggregateResults(const ConversionRequest &request,
                                        const Segments &segments) const override;
@@ -113,8 +119,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const dictionary::DictionaryInterface *suffix_dictionary,
       const dictionary::PosMatcher *pos_matcher,
       std::unique_ptr<PredictionAggregatorInterface>
-          single_kanji_prediction_aggregator,
-      const void *user_arg = nullptr);
+          single_kanji_prediction_aggregator);
 
   // Returns the bitfield that indicates what prediction subroutines
   // were used.  NO_PREDICTION means that no prediction was made.

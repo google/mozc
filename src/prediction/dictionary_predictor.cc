@@ -61,6 +61,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/rescorer_interface.h"
@@ -269,16 +270,29 @@ DictionaryPredictor::DictionaryPredictor(
     const DataManagerInterface &data_manager,
     const ConverterInterface *converter,
     const ImmutableConverterInterface *immutable_converter,
+    const engine::Modules &modules)
+    : DictionaryPredictor(
+          "DictionaryPredictor",
+          std::make_unique<prediction::DictionaryPredictionAggregator>(
+              data_manager, converter, immutable_converter, modules),
+          data_manager, immutable_converter, modules.GetConnector(),
+          modules.GetSegmenter(), *modules.GetPosMatcher(),
+          modules.GetSuggestionFilter(), modules.GetRescorer()) {}
+
+DictionaryPredictor::DictionaryPredictor(
+    const DataManagerInterface &data_manager,
+    const ConverterInterface *converter,
+    const ImmutableConverterInterface *immutable_converter,
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary, const Connector &connector,
     const Segmenter *segmenter, const PosMatcher pos_matcher,
     const SuggestionFilter &suggestion_filter,
-    const prediction::RescorerInterface *rescorer, const void *user_arg)
+    const prediction::RescorerInterface *rescorer)
     : DictionaryPredictor(
           "DictionaryPredictor",
           std::make_unique<prediction::DictionaryPredictionAggregator>(
               data_manager, converter, immutable_converter, dictionary,
-              suffix_dictionary, &pos_matcher, user_arg),
+              suffix_dictionary, &pos_matcher),
           data_manager, immutable_converter, connector, segmenter, pos_matcher,
           suggestion_filter, rescorer) {}
 

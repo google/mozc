@@ -27,37 +27,43 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# immutable_converter.gyp defines targets for immutable_converter that is
+# located in the middle of converter.gyp and converter_base.gyp.
+# This separated file is necessary to avoid circular dependencies.
 {
-  'variables': {
-    'relative_mozc_dir': '',
-    'gen_out_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_mozc_dir)',
-  },
   'targets': [
     {
-      'target_name': 'converter',
+      'target_name': 'immutable_converter_interface',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_mozc_dir)/dictionary/pos_matcher.h',
-        'converter.cc',
+        'immutable_converter_interface.cc',
       ],
       'dependencies': [
-        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_oss_src_dir)/base/base.gyp:number_util',
-        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction',
-        '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction_protocol',
-        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
-        '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
-        'converter_base.gyp:segmenter',
-        'converter_base.gyp:segments',
-        'immutable_converter.gyp:immutable_converter',
-        'immutable_converter.gyp:immutable_converter_interface',
       ],
-      'export_dependent_settings': [
+    },
+    {
+      'target_name': 'immutable_converter',
+      'type': 'static_library',
+      'sources': [
+        'immutable_converter.cc',
+        'key_corrector.cc',
+      ],
+      'dependencies': [
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:japanese_util',
+        '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
+        '<(mozc_oss_src_dir)/converter/converter_base.gyp:connector',
+        '<(mozc_oss_src_dir)/converter/converter_base.gyp:segmenter',
+        '<(mozc_oss_src_dir)/converter/converter_base.gyp:segments',
+        '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
+        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
+        '<(mozc_oss_src_dir)/engine/engine_base.gyp:modules',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
+        '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_rewriter_files#host',
+        'immutable_converter_interface',
       ],
     },
   ],

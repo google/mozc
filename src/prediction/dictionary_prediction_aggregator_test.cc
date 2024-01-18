@@ -89,11 +89,10 @@ class DictionaryPredictionAggregatorTestPeer {
       const dictionary::DictionaryInterface *suffix_dictionary,
       const dictionary::PosMatcher *pos_matcher,
       std::unique_ptr<PredictionAggregatorInterface>
-          single_kanji_prediction_aggregator,
-      const void *user_arg)
+          single_kanji_prediction_aggregator)
       : aggregator_(data_manager, converter, immutable_converter, dictionary,
                     suffix_dictionary, pos_matcher,
-                    std::move(single_kanji_prediction_aggregator), user_arg) {}
+                    std::move(single_kanji_prediction_aggregator)) {}
   virtual ~DictionaryPredictionAggregatorTestPeer() = default;
 
   PredictionTypes AggregatePredictionForRequest(
@@ -388,8 +387,7 @@ class MockDataAndAggregator {
   // nullptr is passed to the |suffix_dictionary|, MockDataManager's suffix
   // dictionary is used.
   // Note that |suffix_dictionary| is owned by this class.
-  void Init(const DictionaryInterface *suffix_dictionary = nullptr,
-            const void *user_arg = nullptr) {
+  void Init(const DictionaryInterface *suffix_dictionary = nullptr) {
     pos_matcher_.Set(data_manager_.GetPosMatcherData());
     mock_dictionary_ = new MockDictionary;
     single_kanji_prediction_aggregator_ =
@@ -406,7 +404,7 @@ class MockDataAndAggregator {
     aggregator_ = std::make_unique<DictionaryPredictionAggregatorTestPeer>(
         data_manager_, &converter_, &mock_immutable_converter_,
         dictionary_.get(), suffix_dictionary_.get(), &pos_matcher_,
-        absl::WrapUnique(single_kanji_prediction_aggregator_), user_arg);
+        absl::WrapUnique(single_kanji_prediction_aggregator_));
   }
 
   MockDictionary *mutable_dictionary() { return mock_dictionary_; }
