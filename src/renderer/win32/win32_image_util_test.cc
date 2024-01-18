@@ -29,13 +29,9 @@
 
 #include "renderer/win32/win32_image_util.h"
 
-// clang-format off
 #include <atlbase.h>
 #include <atltypes.h>
-#include <atlapp.h>
-#include <atlgdi.h>
-#include <atlmisc.h>
-// clang-format on
+#include <wil/resource.h>
 
 #undef StrCat
 
@@ -77,8 +73,6 @@ using ::mozc::renderer::win32::internal::TextLabel;
 using ::mozc::win32::Utf8ToWide;
 using ::mozc::win32::WideToUtf8;
 
-using ::WTL::CBitmap;
-
 using BalloonImageInfo = BalloonImage::BalloonImageInfo;
 using SubdivisionalPixelIterator =
     SubdivisionalPixel::SubdivisionalPixelIterator;
@@ -115,8 +109,8 @@ class BalloonImageTest : public ::testing::Test,
     CPoint tail_offset;
     CSize size;
     std::vector<ARGBColor> buffer;
-    CBitmap dib = TestableBalloonImage::CreateInternal(info, &tail_offset,
-                                                       &size, &buffer);
+    wil::unique_hbitmap dib(TestableBalloonImage::CreateInternal(
+        info, &tail_offset, &size, &buffer));
 
     TestSpec spec = TestSpec();
     BalloonInfoToTextProto(info, &spec);
@@ -335,8 +329,8 @@ TEST_P(BalloonImageTest, TestImpl) {
   CPoint actual_tail_offset;
   CSize actual_size;
   std::vector<ARGBColor> actual_buffer;
-  CBitmap dib = TestableBalloonImage::CreateInternal(
-      info, &actual_tail_offset, &actual_size, &actual_buffer);
+  wil::unique_hbitmap dib(TestableBalloonImage::CreateInternal(
+      info, &actual_tail_offset, &actual_size, &actual_buffer));
 
   EXPECT_EQ(actual_tail_offset.x, spec.output().tail_offset_x());
   EXPECT_EQ(actual_tail_offset.y, spec.output().tail_offset_y());

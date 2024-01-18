@@ -29,14 +29,10 @@
 
 #include "renderer/renderer_style_handler.h"
 
-// clang-format off
 #if defined(_WIN32)
 #include <windows.h>
-#include <atlbase.h>
-#include <atlapp.h>
-#include <atlgdi.h>
+#include <wil/resource.h>
 #endif  // _WIN32
-// clang-format on
 
 #include "base/singleton.h"
 #include "protocol/renderer_style.pb.h"
@@ -205,9 +201,9 @@ void RendererStyleHandler::GetDefaultRendererStyle(RendererStyle *style) {
 
 void RendererStyleHandler::GetDPIScalingFactor(double *x, double *y) {
 #ifdef _WIN32
-  WTL::CDC desktop_dc(::GetDC(nullptr));
-  const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
-  const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);
+  wil::unique_hdc_window desktop_dc(::GetDC(nullptr));
+  const int dpi_x = ::GetDeviceCaps(desktop_dc.get(), LOGPIXELSX);
+  const int dpi_y = ::GetDeviceCaps(desktop_dc.get(), LOGPIXELSY);
   if (x != nullptr) {
     *x = static_cast<double>(dpi_x) / kDefaultDPI;
   }

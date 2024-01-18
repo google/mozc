@@ -86,7 +86,7 @@ QtServer::QtServer()
 #ifndef MOZC_NO_LOGGING
   config::Config config;
   config::ConfigHandler::GetConfig(&config);
-  Logging::SetConfigVerboseLevel(config.verbose_level());
+  mozc::internal::SetConfigVLogLevel(config.verbose_level());
 #endif  // MOZC_NO_LOGGING
 }
 

@@ -70,6 +70,10 @@ mozc_win32_lib(
 )
 
 mozc_win32_lib(
+    name = "gdi32",
+)
+
+mozc_win32_lib(
     name = "gdiplus",
 )
 

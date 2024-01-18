@@ -174,8 +174,13 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "vlog",
+    srcs = ["vlog.cc"],
     hdrs = ["vlog.h"],
-    deps = [":logging"],
+    deps = [
+        ":logging",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/flags:flag",
+    ],
 )
 
 mozc_cc_library(
