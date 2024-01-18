@@ -165,14 +165,12 @@ absl::Status Engine::Init(
 
   std::unique_ptr<PredictorInterface> predictor;
   {
-    const void *user_arg = nullptr;
-
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
     auto dictionary_predictor =
         std::make_unique<prediction::DictionaryPredictor>(
             *data_manager, converter_.get(), immutable_converter_.get(),
-            modules_, user_arg);
+            modules_);
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;

@@ -102,7 +102,7 @@ class DictionaryPredictor : public PredictorInterface {
   DictionaryPredictor(const DataManagerInterface &data_manager,
                       const ConverterInterface *converter,
                       const ImmutableConverterInterface *immutable_converter,
-                      const engine::Modules &modules, const void *user_arg);
+                      const engine::Modules &modules);
 
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
@@ -114,8 +114,7 @@ class DictionaryPredictor : public PredictorInterface {
                       const Connector &connector, const Segmenter *segmenter,
                       dictionary::PosMatcher pos_matcher,
                       const SuggestionFilter &suggestion_filter,
-                      const prediction::RescorerInterface *rescorer = nullptr,
-                      const void *user_arg = nullptr);
+                      const prediction::RescorerInterface *rescorer = nullptr);
 
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
