@@ -58,16 +58,13 @@ def _update_visibility(visibility = None):
         return visibility + ["//:__subpackages__"]
     return visibility
 
-def mozc_cc_library(deps = [], copts = [], features = [], visibility = None, **kwargs):
+def mozc_cc_library(deps = [], copts = [], visibility = None, **kwargs):
     """
     cc_library wrapper adding //:macro dependecny.
     """
     native.cc_library(
         deps = deps + ["//:macro"],
         copts = copts + ["-funsigned-char"],
-        features = mozc_select(
-            windows = ["windows-c++20"],
-        ) + features,
         visibility = _update_visibility(visibility),
         **kwargs
     )
@@ -77,16 +74,13 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def mozc_cc_binary(deps = [], copts = [], features = [], **kwargs):
+def mozc_cc_binary(deps = [], copts = [], **kwargs):
     """
     cc_binary wrapper adding //:macro dependecny.
     """
     native.cc_binary(
         deps = deps + ["//:macro"],
         copts = copts + ["-funsigned-char"],
-        features = mozc_select(
-            windows = ["windows-c++20"],
-        ) + features,
         **kwargs
     )
 
@@ -95,7 +89,7 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def mozc_cc_test(name, tags = [], deps = [], copts = [], features = [], **kwargs):
+def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
     """cc_test wrapper adding //:macro dependecny.
 
     Args:
@@ -112,9 +106,6 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], features = [], **kwargs
         tags = tags,
         deps = deps + ["//:macro"],
         copts = copts + ["-funsigned-char"],
-        features = mozc_select(
-            windows = ["windows-c++20"],
-        ) + features,
         **kwargs
     )
 
