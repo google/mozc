@@ -113,7 +113,6 @@ mozc_cc_library(
         "//dictionary:user_pos",
         "//dictionary/system:system_dictionary",
         "//dictionary/system:value_dictionary",
-        "//prediction:dictionary_predictor",
         "//prediction:rescorer_interface",
         "//prediction:suggestion_filter",
         "@com_google_absl//absl/status",

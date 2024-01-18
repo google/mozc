@@ -46,6 +46,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "engine/modules.h"
 #include "prediction/number_decoder.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
@@ -62,6 +63,12 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   DictionaryPredictionAggregator &operator=(
       const DictionaryPredictionAggregator &) = delete;
   ~DictionaryPredictionAggregator() override = default;
+
+  DictionaryPredictionAggregator(
+      const DataManagerInterface &data_manager,
+      const ConverterInterface *converter,
+      const ImmutableConverterInterface *immutable_converter,
+      const engine::Modules &modules);
 
   DictionaryPredictionAggregator(
       const DataManagerInterface &data_manager,

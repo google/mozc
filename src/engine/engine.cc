@@ -151,11 +151,7 @@ absl::Status Engine::Init(
     return modules_init_status;
   }
 
-  immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
-      modules_.GetDictionary(), modules_.GetSuffixDictionary(),
-      modules_.GetSuppressionDictionary(), modules_.GetConnector(),
-      modules_.GetSegmenter(), modules_.GetPosMatcher(), modules_.GetPosGroup(),
-      modules_.GetSuggestionFilter());
+  immutable_converter_ = std::make_unique<ImmutableConverterImpl>(modules_);
   RETURN_IF_NULL(immutable_converter_);
 
   // Since predictor and rewriter require a pointer to a converter instance,
@@ -176,10 +172,7 @@ absl::Status Engine::Init(
     auto dictionary_predictor =
         std::make_unique<prediction::DictionaryPredictor>(
             *data_manager, converter_.get(), immutable_converter_.get(),
-            modules_.GetDictionary(), modules_.GetSuffixDictionary(),
-            modules_.GetConnector(), modules_.GetSegmenter(),
-            *modules_.GetPosMatcher(), modules_.GetSuggestionFilter(),
-            modules_.GetRescorer(), user_arg);
+            modules_, user_arg);
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;

@@ -361,6 +361,7 @@ mozc_cc_library(
         "//dictionary:pos_group",
         "//dictionary:pos_matcher",
         "//dictionary:suppression_dictionary",
+        "//engine:modules",
         "//prediction:suggestion_filter",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",

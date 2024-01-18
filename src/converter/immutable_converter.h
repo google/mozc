@@ -48,6 +48,7 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 #include "testing/gunit_prod.h"  //  for FRIEND_TEST()
@@ -56,6 +57,7 @@ namespace mozc {
 
 class ImmutableConverterImpl : public ImmutableConverterInterface {
  public:
+  explicit ImmutableConverterImpl(const engine::Modules &modules);
   ImmutableConverterImpl(
       const dictionary::DictionaryInterface *dictionary,
       const dictionary::DictionaryInterface *suffix_dictionary,

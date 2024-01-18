@@ -60,6 +60,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "engine/modules.h"
 #include "prediction/number_decoder.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
@@ -536,6 +537,17 @@ class DictionaryPredictionAggregator::HandwritingLookupCallback
   const std::vector<std::string> constraints_;
   std::vector<Result> *results_ = nullptr;
 };
+
+DictionaryPredictionAggregator::DictionaryPredictionAggregator(
+    const DataManagerInterface &data_manager,
+    const ConverterInterface *converter,
+    const ImmutableConverterInterface *immutable_converter,
+    const engine::Modules &modules)
+    : DictionaryPredictionAggregator(
+          data_manager, converter, immutable_converter, modules.GetDictionary(),
+          modules.GetSuffixDictionary(), modules.GetPosMatcher(),
+          std::make_unique<SingleKanjiPredictionAggregator>(data_manager)) {
+}
 
 DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const DataManagerInterface &data_manager,
