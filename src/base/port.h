@@ -159,14 +159,6 @@ constexpr bool TargetIsChromeOS() {
          port_internal::PlatformType::kChromeOS;
 }
 
-// MSVC uses a vendor-specific attribute for [[no_unique_address]].
-// https://en.cppreference.com/w/cpp/language/attributes/no_unique_address
-#ifdef _MSC_VER
-#define MOZC_NO_UNIQUE_ADDRESS_ATTRIBUTE [[msvc::no_unique_address]]
-#else  // _MSC_VER
-#define MOZC_NO_UNIQUE_ADDRESS_ATTRIBUTE [[no_unique_address]]
-#endif  // !_MSC_VER
-
 }  // namespace mozc
 
 #endif  // MOZC_BASE_PORT_H_
