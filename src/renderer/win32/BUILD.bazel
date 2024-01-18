@@ -301,7 +301,6 @@ mozc_cc_test(
 mozc_cc_test(
     name = "win32_image_util_test",
     srcs = ["win32_image_util_test.cc"],
-    copts = copts_wtl(),
     data = [
         "//data/test/renderer/win32",
     ],
@@ -319,7 +318,7 @@ mozc_cc_test(
         "//data/test/renderer/win32:test_spec_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
-        "//third_party/wtl",
         "@com_google_absl//absl/strings",
+        "@com_microsoft_wil//:wil",
     ],
 )
