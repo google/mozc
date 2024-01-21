@@ -47,6 +47,7 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
+#include "renderer/win32/win32_font_util.h"
 #include "renderer/win32/win32_image_util.h"
 #include "renderer/win32/win32_renderer_util.h"
 
@@ -62,7 +63,6 @@ using ATL::CWinTraits;
 using WTL::CBitmap;
 using WTL::CBitmapHandle;
 using WTL::CDC;
-using WTL::CLogFont;
 
 using ::mozc::commands::Status;
 typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
@@ -254,8 +254,7 @@ class IndicatorWindow::WindowImpl
 
   void LoadSprite(int mode) {
     BalloonImage::BalloonImageInfo info;
-    CLogFont logfont;
-    logfont.SetMessageBoxFont();
+    LOGFONT logfont = GetMessageBoxLogFont();
     Util::WideToUtf8(logfont.lfFaceName, &info.label_font);
 
     info.frame_color = RGBColor(1, 122, 204);
