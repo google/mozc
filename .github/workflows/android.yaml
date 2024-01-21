@@ -33,7 +33,7 @@ jobs:
           bazel build --config oss_android package
 
       - name: upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: native_libs.zip
           path: src/bazel-bin/android/jni/native_libs.zip
