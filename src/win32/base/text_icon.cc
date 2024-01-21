@@ -58,7 +58,6 @@ using ::WTL::CDC;
 using ::WTL::CFont;
 using ::WTL::CFontHandle;
 using ::WTL::CIconHandle;
-using ::WTL::CLogFont;
 
 RGBQUAD ToRGBQuad(DWORD color_ref) {
   const RGBQUAD rgbquad = {GetBValue(color_ref), GetGValue(color_ref),
@@ -115,7 +114,7 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     }
     CBitmapHandle old_bitmap = dc.SelectBitmap(src_dib);
 
-    CLogFont logfont;
+    LOGFONT logfont = {};
     {
       logfont.lfWeight = FW_NORMAL;
       logfont.lfCharSet = DEFAULT_CHARSET;
