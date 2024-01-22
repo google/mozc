@@ -293,7 +293,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "win32_renderer_util_test",
     srcs = ["win32_renderer_util_test.cc"],
-    copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
@@ -303,7 +302,6 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
-        "//third_party/wtl",
         "@com_google_absl//absl/base",
     ],
 )

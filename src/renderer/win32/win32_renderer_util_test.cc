@@ -29,13 +29,9 @@
 
 #include "renderer/win32/win32_renderer_util.h"
 
-// clang-format off
 #include <atlbase.h>
 #include <atltypes.h>
-#include <atlapp.h>
-#include <atlgdi.h>
-#include <atlmisc.h>
-// clang-format on
+#include <windows.h>
 
 #include <cstdint>
 #include <memory>
@@ -56,20 +52,6 @@ void PrintTo(const RECT &rect, ::std::ostream *os) {
       << rect.bottom << ")";
 }
 
-namespace WTL {
-
-// These functions should be placed in WTL namespace for Koenig look-up
-// trick used in GTest.
-void PrintTo(const CPoint &point, ::std::ostream *os) {
-  *os << "(" << point.x << ", " << point.y << ")";
-}
-void PrintTo(const CRect &rect, ::std::ostream *os) {
-  *os << "(" << rect.left << ", " << rect.top << ", " << rect.right << ", "
-      << rect.bottom << ")";
-}
-
-}  // namespace WTL
-
 namespace mozc {
 namespace renderer {
 namespace win32 {
@@ -82,8 +64,6 @@ typedef mozc::commands::RendererCommand_CharacterPosition CharacterPosition;
 typedef mozc::commands::RendererCommand_Rectangle Rectangle;
 
 namespace {
-
-using WTL::PrintTo;
 
 // Casts HWND to uint32_t. HWND can be 64 bits, but it's safe to downcast to
 // uint32_t as 64-bit Windows still uses 32-bit handles.
