@@ -90,8 +90,7 @@ bool WinStatsConfigUtilImpl::IsEnabled() {
 #ifdef CHANNEL_DEV
   return true;
 #else   // CHANNEL_DEV
-  const REGSAM sam_desired =
-      KEY_QUERY_VALUE | (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
+  constexpr REGSAM sam_desired = KEY_QUERY_VALUE | KEY_WOW64_32KEY;
   // Like the crash handler, check the "ClientStateMedium" key first.
   // Then we check "ClientState" key.
   {
@@ -132,8 +131,7 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
 #endif  // CHANNEL_DEV
 
   ATL::CRegKey key;
-  const REGSAM sam_desired =
-      KEY_WRITE | (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
+  constexpr REGSAM sam_desired = KEY_WRITE | KEY_WOW64_32KEY;
   LONG result = key.Create(HKEY_LOCAL_MACHINE, kOmahaUsageKey, REG_NONE,
                            REG_OPTION_NON_VOLATILE, sam_desired);
   if (ERROR_SUCCESS != result) {
