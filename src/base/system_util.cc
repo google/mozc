@@ -735,56 +735,7 @@ bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
   }
   return true;
 }
-#endif  // _WIN32
 
-namespace {
-volatile mozc::SystemUtil::IsWindowsX64Mode g_is_windows_x64_mode =
-    mozc::SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE;
-}  // namespace
-
-bool SystemUtil::IsWindowsX64() {
-  switch (g_is_windows_x64_mode) {
-    case IS_WINDOWS_X64_EMULATE_32BIT_MACHINE:
-      return false;
-    case IS_WINDOWS_X64_EMULATE_64BIT_MACHINE:
-      return true;
-    case IS_WINDOWS_X64_DEFAULT_MODE:
-      // handled below.
-      break;
-    default:
-      // Should never reach here.
-      DLOG(FATAL) << "Unexpected mode specified.  mode = "
-                  << g_is_windows_x64_mode;
-      // handled below.
-      break;
-  }
-
-#ifdef _WIN32
-  SYSTEM_INFO system_info = {};
-  // This function never fails.
-  ::GetNativeSystemInfo(&system_info);
-  return (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-#else   // _WIN32
-  return false;
-#endif  // _WIN32
-}
-
-void SystemUtil::SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode) {
-  g_is_windows_x64_mode = mode;
-  switch (g_is_windows_x64_mode) {
-    case IS_WINDOWS_X64_EMULATE_32BIT_MACHINE:
-    case IS_WINDOWS_X64_EMULATE_64BIT_MACHINE:
-    case IS_WINDOWS_X64_DEFAULT_MODE:
-      // Known mode. OK.
-      break;
-    default:
-      DLOG(FATAL) << "Unexpected mode specified.  mode = "
-                  << g_is_windows_x64_mode;
-      break;
-  }
-}
-
-#ifdef _WIN32
 const wchar_t *SystemUtil::GetSystemDir() {
   DCHECK(Singleton<SystemDirectoryCache>::get()->succeeded());
   return Singleton<SystemDirectoryCache>::get()->system_dir();

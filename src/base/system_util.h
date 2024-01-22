@@ -120,21 +120,7 @@ class SystemUtil {
   //   sandboxed environment, where such kind of fundamental APIs are far more
   //   likely to fail.  See b/3216603.
   static bool EnsureVitalImmutableDataIsAvailable();
-#endif  // _WIN32
 
-  // returns true if the version of Windows is x64 Edition.
-  static bool IsWindowsX64();
-
-  enum IsWindowsX64Mode {
-    IS_WINDOWS_X64_DEFAULT_MODE,
-    IS_WINDOWS_X64_EMULATE_32BIT_MACHINE,
-    IS_WINDOWS_X64_EMULATE_64BIT_MACHINE,
-  };
-
-  // For unit tests, this function overrides the behavior of |IsWindowsX64|.
-  static void SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode);
-
-#ifdef _WIN32
   // return system directory. If failed, return nullptr.
   // You need not to delete the returned pointer.
   // This function is thread safe.
