@@ -48,6 +48,7 @@
 #include "base/logging.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
+#include "renderer/win32/win32_font_util.h"
 
 namespace mozc {
 namespace renderer {
@@ -59,7 +60,6 @@ using ::WTL::CDC;
 using ::WTL::CDCHandle;
 using ::WTL::CFont;
 using ::WTL::CFontHandle;
-using ::WTL::CLogFont;
 
 namespace {
 
@@ -111,19 +111,17 @@ COLORREF GetTextColor(TextRenderer::FONT_TYPE type) {
   return RGB(0, 0, 0);
 }
 
-CLogFont GetLogFont(TextRenderer::FONT_TYPE type) {
+LOGFONT GetLogFont(TextRenderer::FONT_TYPE type) {
+  LOGFONT font = GetMessageBoxLogFont();
+
   switch (type) {
     case TextRenderer::FONTSET_SHORTCUT: {
-      CLogFont font;
-      font.SetMessageBoxFont();
-      font.MakeLarger(3);
+      font.lfHeight += (font.lfHeight > 0 ? 3 : -3);
       font.lfWeight = FW_BOLD;
       return font;
     }
     case TextRenderer::FONTSET_CANDIDATE: {
-      CLogFont font;
-      font.SetMessageBoxFont();
-      font.MakeLarger(3);
+      font.lfHeight += (font.lfHeight > 0 ? 3 : -3);
       font.lfWeight = FW_NORMAL;
       return font;
     }
@@ -131,8 +129,6 @@ CLogFont GetLogFont(TextRenderer::FONT_TYPE type) {
     case TextRenderer::FONTSET_FOOTER_INDEX:
     case TextRenderer::FONTSET_FOOTER_LABEL:
     case TextRenderer::FONTSET_FOOTER_SUBLABEL: {
-      CLogFont font;
-      font.SetMessageBoxFont();
       font.lfWeight = FW_NORMAL;
       return font;
     }
@@ -147,20 +143,14 @@ CLogFont GetLogFont(TextRenderer::FONT_TYPE type) {
   const auto &infostyle = style.infolist_style();
   switch (type) {
     case TextRenderer::FONTSET_INFOLIST_CAPTION: {
-      CLogFont font;
-      font.SetMessageBoxFont();
       font.lfHeight = -infostyle.caption_style().font_size();
       return font;
     }
     case TextRenderer::FONTSET_INFOLIST_TITLE: {
-      CLogFont font;
-      font.SetMessageBoxFont();
       font.lfHeight = -infostyle.title_style().font_size();
       return font;
     }
     case TextRenderer::FONTSET_INFOLIST_DESCRIPTION: {
-      CLogFont font;
-      font.SetMessageBoxFont();
       font.lfHeight = -infostyle.description_style().font_size();
       return font;
     }
@@ -169,8 +159,6 @@ CLogFont GetLogFont(TextRenderer::FONT_TYPE type) {
   }
 
   LOG(DFATAL) << "Unknown type: " << type;
-  CLogFont font;
-  font.SetMessageBoxFont();
   return font;
 }
 
@@ -465,7 +453,7 @@ class DirectWriteTextRenderer : public TextRenderer {
     return color;
   }
 
-  wil::com_ptr_nothrow<IDWriteTextFormat> CreateFormat(CLogFont logfont) {
+  wil::com_ptr_nothrow<IDWriteTextFormat> CreateFormat(const LOGFONT &logfont) {
     HRESULT hr = S_OK;
     wil::com_ptr_nothrow<IDWriteFont> font;
     hr = dwrite_interop_->CreateFontFromLOGFONT(&logfont, font.put());

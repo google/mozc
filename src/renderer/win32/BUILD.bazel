@@ -169,6 +169,7 @@ mozc_cc_library(
         "//visibility:private",  # Only private by automation, not intent. Owner may accept CLs adding visibility. See go/scheuklappen#explicit-private.
     ],
     deps = [
+        ":win32_font_util",
         "//base:coordinates",
         "//base:logging",
         "//bazel/win32:d2d1",
