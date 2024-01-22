@@ -72,6 +72,7 @@
 #include "session/session_watch_dog.h"
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
+
 // TODO(b/275437228): Convert this to use `absl::Duration`. Note that existing
 // clients assume a negative value means we do not timeout at all.
 ABSL_FLAG(int32_t, timeout, -1,
@@ -172,6 +173,7 @@ void SessionHandler::Init(std::unique_ptr<EngineInterface> engine,
     absl::SetFlag(&FLAGS_last_create_session_timeout, 60);
     absl::SetFlag(&FLAGS_last_command_timeout, 60);
   }
+
 
   // allow [2..128] sessions
   max_session_size_ =
@@ -571,6 +573,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
     return false;
   }
 
+
   const SessionID new_id = CreateNewSessionID();
   SessionElement *element = session_map_->Insert(new_id);
   element->value = session;
@@ -721,6 +724,7 @@ bool SessionHandler::CheckSpelling(commands::Command *command) {
       command->input().check_spelling_request().text().empty()) {
     return true;
   }
+
 
   return true;
 }

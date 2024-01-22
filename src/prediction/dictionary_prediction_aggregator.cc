@@ -71,6 +71,7 @@
 #include "request/conversion_request_util.h"
 #include "transliteration/transliteration.h"
 
+
 #ifndef NDEBUG
 #define MOZC_DEBUG
 #define MOZC_WORD_LOG_MESSAGE(message) \
@@ -129,6 +130,12 @@ bool IsLanguageAwareInputEnabled(const ConversionRequest &request) {
   const auto lang_aware = request.request().language_aware_input();
   return lang_aware == Request::LANGUAGE_AWARE_SUGGESTION;
 }
+
+#if MOZC_ENABLE_NGRAM_RESCORING
+bool IsNgramNextWordPredictionEnabled(const ConversionRequest &request) {
+  return request.request().decoder_experiment_params().ngram_enable_nwp();
+}
+#endif  // MOZC_ENABLE_NGRAM_RESCORING
 
 bool IsZeroQuerySuffixPredictionDisabled(const ConversionRequest &request) {
   return request.request()
@@ -1653,6 +1660,7 @@ void DictionaryPredictionAggregator::AggregateZeroQuerySuffixPrediction(
         zip_code_id_, unknown_id_, results);
   }
 }
+
 
 void DictionaryPredictionAggregator::AggregateEnglishPrediction(
     const ConversionRequest &request, const Segments &segments,

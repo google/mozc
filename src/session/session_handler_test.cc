@@ -67,6 +67,7 @@
 #include "testing/gunit.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
+
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
 ABSL_DECLARE_FLAG(int32_t, last_command_timeout);
@@ -857,5 +858,6 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
   ASSERT_TRUE(CreateSession(&handler, &id3));
   EXPECT_EQ(new_engine_ptr, &handler.engine());
 }
+
 
 }  // namespace mozc

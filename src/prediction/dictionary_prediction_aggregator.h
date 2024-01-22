@@ -53,6 +53,7 @@
 #include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
 
+
 namespace mozc {
 namespace prediction {
 
@@ -84,6 +85,12 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   std::vector<Result> AggregateTypingCorrectedResults(
       const ConversionRequest &request,
       const Segments &segments) const override;
+
+#if MOZC_ENABLE_NGRAM_RESCORING
+  void SetNgramModelForTesting(const ngram::NgramModelInterface *ngram_model) {
+      ngram_model_ = ngram_model;
+  }
+#endif  // MOZC_ENABLE_NGRAM_RESCORING
 
  private:
   class PredictiveLookupCallback;
@@ -245,6 +252,12 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
                                           const Segments &segments,
                                           std::vector<Result> *results) const;
 
+#if MOZC_ENABLE_NGRAM_RESCORING
+  void AggregateZeroQueryNgramPrediction(const ConversionRequest &request,
+                                         const Segments &segments,
+                                         std::vector<Result> *results) const;
+#endif  // MOZC_ENABLE_NGRAM_RESCORING
+
   void AggregateEnglishPrediction(const ConversionRequest &request,
                                   const Segments &segments,
                                   std::vector<Result> *results) const;
@@ -312,6 +325,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   NumberDecoder number_decoder_;
   std::unique_ptr<PredictionAggregatorInterface>
       single_kanji_prediction_aggregator_;
+
 };
 
 }  // namespace prediction

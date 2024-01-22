@@ -44,6 +44,7 @@
 #include "prediction/rescorer_interface.h"
 #include "prediction/suggestion_filter.h"
 
+
 namespace mozc {
 namespace engine {
 
@@ -82,6 +83,7 @@ class Modules {
   const prediction::RescorerInterface *GetRescorer() const {
     return rescorer_.get();
   }
+
 
  private:
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
