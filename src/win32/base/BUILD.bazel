@@ -343,18 +343,16 @@ mozc_cc_library(
 mozc_cc_test(
     name = "text_icon_test",
     srcs = ["text_icon_test.cc"],
-    copts = copts_wtl(),
     features = features_gdi(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":text_icon",
-        "//base:logging",
-        "//base:mmap",
-        "//base:util",
         "//base/win32:win_font_test_helper",
+        "//bazel/win32:gdi32",
+        "//bazel/win32:user32",
         "//testing:gunit_main",
-        "//third_party/wtl",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

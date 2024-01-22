@@ -145,6 +145,7 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":win32_font_util",
         ":win32_image_util",
         ":win32_renderer_util",
         "//base:const",
@@ -245,6 +246,14 @@ mozc_cc_library(
         "//renderer:renderer_interface",
         "//renderer:window_util",
     ],
+)
+
+mozc_cc_library(
+    name = "win32_font_util",
+    srcs = [],
+    hdrs = ["win32_font_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
 )
 
 mozc_cc_library(

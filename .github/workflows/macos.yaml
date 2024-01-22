@@ -60,7 +60,7 @@ jobs:
           bazel build --config oss_macos package --macos_cpus=arm64
 
       - name: upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Mozc_arm64.pkg
           path: src/bazel-bin/mac/Mozc.pkg
@@ -112,7 +112,7 @@ jobs:
           bazel build --config oss_macos package --macos_cpus=x86_64
 
       - name: upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Mozc_intel64.pkg
           path: src/bazel-bin/mac/Mozc.pkg
@@ -164,7 +164,7 @@ jobs:
           bazel build --config oss_macos package --macos_cpus=x86_64,arm64
 
       - name: upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Mozc_universal_binary.pkg
           path: src/bazel-bin/mac/Mozc.pkg

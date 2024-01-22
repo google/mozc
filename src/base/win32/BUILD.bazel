@@ -259,8 +259,8 @@ mozc_cc_library(
         ":hresult",
         ":hresultor_internal",
         "//base:logging",
-        "//base:port",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/meta:type_traits",
     ],
 )
 
@@ -269,7 +269,10 @@ mozc_cc_library(
     hdrs = ["hresultor_internal.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = [":hresult"],
+    deps = [
+        ":hresult",
+        "@com_google_absl//absl/base:core_headers",
+    ],
 )
 
 mozc_cc_test(

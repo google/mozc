@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <bitset>
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <vector>
 
@@ -61,7 +62,6 @@ using ::WTL::CBitmapHandle;
 using ::WTL::CDC;
 using ::WTL::CFont;
 using ::WTL::CFontHandle;
-using ::WTL::CLogFont;
 
 Rect GetBalloonBoundingRect(
     double left, double top, double width, double height,
@@ -92,6 +92,17 @@ Rect GetBalloonBoundingRect(
   const int int_bottom = static_cast<int>(ceil(real_bottom));
 
   return Rect(int_left, int_top, int_right - int_left, int_bottom - int_top);
+}
+
+LONG GetHeightFromDeciPoint(LONG height_dp, HDC dc_handle) {
+  POINT transformed = {
+      .x = 0,
+      .y = ::MulDiv(::GetDeviceCaps(dc_handle, LOGPIXELSY), height_dp, 720),
+  };
+  POINT origin = {.x = 0, .y = 0};
+  ::DPtoLP(dc_handle, &transformed, 1);
+  ::DPtoLP(dc_handle, &origin, 1);
+  return -std::abs(transformed.y - origin.y);
 }
 
 class Balloon {
@@ -418,10 +429,10 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
 
   std::wstring wide_fontname;
   Util::Utf8ToWide(fontname, &wide_fontname);
-  CLogFont logfont;
+  LOGFONT logfont = {};
   logfont.lfWeight = FW_NORMAL;
   logfont.lfCharSet = DEFAULT_CHARSET;
-  logfont.SetHeightFromDeciPoint(font_point * 10 * kDivision, dc);
+  logfont.lfHeight = GetHeightFromDeciPoint(font_point * 10 * kDivision, dc);
   logfont.lfQuality = NONANTIALIASED_QUALITY;
   const errno_t error = wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
   if (error != 0) {

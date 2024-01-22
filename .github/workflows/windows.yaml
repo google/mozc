@@ -70,7 +70,7 @@ jobs:
           python build_mozc.py build -c Release package
 
       - name: upload Mozc64.msi
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Mozc64.msi
           path: src/out_win/Release/Mozc64.msi

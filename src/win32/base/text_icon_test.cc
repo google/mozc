@@ -29,16 +29,12 @@
 
 #include "win32/base/text_icon.h"
 
-// clang-format off
-#include <atlbase.h>
-#include <atlapp.h>
-#include <atlmisc.h>
-#include <atlgdi.h>
-// clang-format on
+#include <windows.h>
+#include <wil/resource.h>
 
-#include "base/logging.h"
-#include "base/mmap.h"
-#include "base/util.h"
+#include <cstddef>
+#include <string>
+
 #include "base/win32/win_font_test_helper.h"
 #include "testing/gunit.h"
 
@@ -48,8 +44,6 @@ namespace {
 
 using ::testing::AssertionFailure;
 using ::testing::AssertionSuccess;
-using ::WTL::CBitmap;
-using ::WTL::CIcon;
 
 class TextIconTest : public testing::Test {
  public:
@@ -72,34 +66,34 @@ class TextIconTest : public testing::Test {
   }
 };
 
-::testing::AssertionResult ExpectMonochromeIcon(const CIcon &icon,
+::testing::AssertionResult ExpectMonochromeIcon(const wil::unique_hicon &icon,
                                                 size_t size) {
-  if (icon.IsNull()) {
+  if (!icon) {
     return AssertionFailure() << "|icon| is nullptr.";
   }
 
   ICONINFO info = {};
-  if (!icon.GetIconInfo(&info)) {
+  if (::GetIconInfo(icon.get(), &info) == 0) {
     return AssertionFailure() << "GetIconInfo failed.";
   }
-  CBitmap xor_bmp = info.hbmColor;
-  CBitmap and_bmp = info.hbmMask;
+  wil::unique_hbitmap xor_bmp(info.hbmColor);
+  wil::unique_hbitmap and_bmp(info.hbmMask);
 
-  if (xor_bmp.IsNull()) {
+  if (!xor_bmp) {
     return AssertionFailure()
            << "XOR bitmap (hbmColor) should not be nullptr. This icon causes a "
               "GDI "
               "handle leak when it is passed to ITfLangBarItemButton::GetIcon.";
   }
 
-  if (and_bmp.IsNull()) {
+  if (!and_bmp) {
     return AssertionFailure() << "AND bitmap (hbmMask) should not be nullptr.";
   }
 
   {
     BITMAP xor_bmp_info = {};
-    if (!xor_bmp.GetBitmap(xor_bmp_info)) {
-      return AssertionFailure() << "GetBitmap failed.";
+    if (::GetObject(xor_bmp.get(), sizeof(xor_bmp_info), &xor_bmp_info) == 0) {
+      return AssertionFailure() << "GetObject for xor_bmp failed.";
     }
 
     // There seems no way to retrieve the true color depth of given icon object.
@@ -122,8 +116,8 @@ class TextIconTest : public testing::Test {
 
   {
     BITMAP and_bmp_info = {};
-    if (!and_bmp.GetBitmap(and_bmp_info)) {
-      return AssertionFailure() << "GetBitmap failed.";
+    if (::GetObject(and_bmp.get(), sizeof(and_bmp_info), &and_bmp_info) == 0) {
+      return AssertionFailure() << "GetObject for and_bmp failed.";
     }
 
     if (and_bmp_info.bmBitsPixel != 1) {
@@ -148,16 +142,11 @@ class TextIconTest : public testing::Test {
   return AssertionSuccess();
 }
 
-#define EXPECT_MONOCHROME_ICON(icon, icon_size) \
-  EXPECT_TRUE(ExpectMonochromeIcon((icon), (icon_size)))
-
 TEST_F(TextIconTest, CreateMonochromeIcon) {
-  {
-    constexpr size_t kIconSize = 20;
-    CIcon icon = TextIcon::CreateMonochromeIcon(
-        kIconSize, kIconSize, "A", GetTestFontName(), RGB(0xff, 0x00, 0xff));
-    EXPECT_MONOCHROME_ICON(icon, kIconSize);
-  }
+  constexpr size_t kIconSize = 20;
+  wil::unique_hicon icon(TextIcon::CreateMonochromeIcon(
+      kIconSize, kIconSize, "A", GetTestFontName(), RGB(0xff, 0x00, 0xff)));
+  EXPECT_TRUE(ExpectMonochromeIcon(icon, kIconSize));
 }
 
 }  // namespace

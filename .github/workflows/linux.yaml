@@ -40,7 +40,7 @@ jobs:
           bazel build --config oss_linux package
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mozc.zip
           path: src/bazel-bin/unix/mozc.zip
