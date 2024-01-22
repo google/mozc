@@ -38,7 +38,7 @@ namespace win32 {
 
 inline LOGFONT GetMessageBoxLogFont() {
   NONCLIENTMETRICS info = {};
-  info.cbSize = sizeof(info);
+  info.cbSize = CCSIZEOF_STRUCT(NONCLIENTMETRICS, iPaddedBorderWidth);
   if (::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(info), &info, 0)) {
     return info.lfMessageFont;
   } else {
