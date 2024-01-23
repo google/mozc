@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/session_handler_tool.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -63,7 +65,6 @@
 #include "session/request_test_util.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
-#include "session/session_handler_tool.h"
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.h"
@@ -657,10 +658,7 @@ absl::Status SessionHandlerInterpreter::Eval(
     RequestForUnitTest::FillMobileRequest(request_.get());
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_HANDWRITING_REQUEST") {
-    request_->set_zero_query_suggestion(true);
-    request_->set_mixed_conversion(false);
-    request_->set_kana_modifier_insensitive_conversion(false);
-    request_->set_auto_partial_suggestion(false);
+    RequestForUnitTest::FillMobileRequestForHandwriting(request_.get());
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_REQUEST") {
     MOZC_ASSERT_TRUE(args.size() >= 3);

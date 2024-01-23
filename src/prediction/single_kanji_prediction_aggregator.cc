@@ -46,6 +46,7 @@
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "request/conversion_request_util.h"
 
 namespace mozc::prediction {
 
@@ -92,9 +93,6 @@ SingleKanjiPredictionAggregator::~SingleKanjiPredictionAggregator() = default;
 std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
     const ConversionRequest &request, const Segments &segments) const {
   std::vector<Result> results;
-  if (!request.request().mixed_conversion()) {
-    return results;
-  }
   constexpr int kMinSingleKanjiSize = 5;
 
   const bool use_svs = UseSvs(request);
@@ -103,6 +101,11 @@ std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
   int offset = 0;
   for (std::string key = original_input_key; !key.empty();
        StripLastChar(&key)) {
+    if (!ConversionRequestUtil::IsAutoPartialSuggestionEnabled(request) &&
+        key != original_input_key) {
+      // Do not include partial results
+      break;
+    }
     std::vector<std::string> kanji_list;
     if (!single_kanji_dictionary_->LookupKanjiEntries(key, use_svs,
                                                       &kanji_list)) {

@@ -43,8 +43,12 @@ class ConversionRequestUtil {
   ConversionRequestUtil &operator=(const ConversionRequestUtil &) = delete;
 
   static bool IsHandwriting(const ConversionRequest &request) {
-    return !request.request().mixed_conversion() && request.has_composer() &&
+    return request.has_composer() &&
            !request.composer().GetHandwritingCompositions().empty();
+  }
+
+  static bool IsAutoPartialSuggestionEnabled(const ConversionRequest &request) {
+    return request.request().auto_partial_suggestion();
   }
 };
 

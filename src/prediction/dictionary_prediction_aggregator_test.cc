@@ -2740,15 +2740,8 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwiritng) {
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
   Segments segments;
-
-  {
-    // Handwriting request
-    request_->set_zero_query_suggestion(true);
-    request_->set_mixed_conversion(false);
-    request_->set_kana_modifier_insensitive_conversion(false);
-    request_->set_auto_partial_suggestion(false);
-  }
-
+  // Handwriting request
+  commands::RequestForUnitTest::FillMobileRequestForHandwriting(request_.get());
   {
     commands::SessionCommand command;
     commands::SessionCommand::CompositionEvent *composition_event =

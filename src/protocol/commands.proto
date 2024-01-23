@@ -817,9 +817,9 @@ message Request {
   // by "かつこう".
   optional bool kana_modifier_insensitive_conversion = 9 [default = false];
 
-  // Enables Auto partial suggestion.
-  // For Auto partial suggestion, we can see first segment only candidates
-  // adding to normal realtime conversion suggestion results.
+  // Enables Auto partial suggestion (prefix candidates).
+  // For Auto partial suggestion, we can see candidates that match
+  // the prefix of the input reading.
   // If we commit that candidate, we will show suggestions for remaining part
   // of key.
   //

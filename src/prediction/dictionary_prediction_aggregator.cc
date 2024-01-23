@@ -648,19 +648,19 @@ DictionaryPredictionAggregator::GetUnigramConfig(
         min_key_len_for_latin_input};
   }
 
+  if (ConversionRequestUtil::IsHandwriting(request)) {
+    constexpr size_t kMinUnigramKeyLen = 1;
+    return {&DictionaryPredictionAggregator::
+                AggregateUnigramCandidateForHandwriting,
+            kMinUnigramKeyLen};
+  }
+
   if (is_mixed_conversion) {
     // In mixed conversion mode, we want to show unigram candidates even for
     // short keys to emulate PREDICTION mode.
     constexpr size_t kMinUnigramKeyLen = 1;
     return {&DictionaryPredictionAggregator::
                 AggregateUnigramCandidateForMixedConversion,
-            kMinUnigramKeyLen};
-  }
-
-  if (ConversionRequestUtil::IsHandwriting(request)) {
-    constexpr size_t kMinUnigramKeyLen = 1;
-    return {&DictionaryPredictionAggregator::
-                AggregateUnigramCandidateForHandwriting,
             kMinUnigramKeyLen};
   }
 
@@ -750,7 +750,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     selected_types |= TYPING_CORRECTION;
   }
 
-  if (IsMixedConversionEnabled(request.request())) {
+  if (ConversionRequestUtil::IsAutoPartialSuggestionEnabled(request)) {
     AggregatePrefixCandidates(request, segments, results);
     selected_types |= PREFIX;
   }

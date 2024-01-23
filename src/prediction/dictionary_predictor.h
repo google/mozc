@@ -147,6 +147,7 @@ class DictionaryPredictor : public PredictorInterface {
     const dictionary::PosMatcher pos_matcher_;
     const SuggestionFilter &suggestion_filter_;
     const bool is_mixed_conversion_;
+    const bool auto_partial_suggestion_;
     const bool include_exact_key_;
     const bool filter_number_;
 

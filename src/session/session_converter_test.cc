@@ -3819,36 +3819,5 @@ TEST_F(SessionConverterTest, ResultTokensWithInnerSegements) {
   EXPECT_EQ(output.result().tokens(2).lid(), -1);
   EXPECT_EQ(output.result().tokens(2).rid(), 201);
 }
-
-TEST_F(SessionConverterTest, UpdateComposition) {
-  MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-
-  {
-    commands::SessionCommand command;
-    commands::SessionCommand::CompositionEvent *composition_event =
-        command.add_composition_events();
-    composition_event->set_composition_string("かん字");
-    composition_event->set_probability(1.0);
-    composer_->SetCompositionsForHandwriting(command.composition_events());
-  }
-
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
-    segment->set_key("かん字");
-    candidate = segment->add_candidate();
-    candidate->key = "かん字";
-    candidate->value = "漢字";
-    candidate->content_key = "かん字";
-    candidate->content_value = "漢字";
-  }
-
-  EXPECT_CALL(mock_converter, StartPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-
-  EXPECT_TRUE(converter.Suggest(*composer_));
-}
 }  // namespace session
 }  // namespace mozc

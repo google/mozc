@@ -699,6 +699,8 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
+      auto_partial_suggestion_(
+          ConversionRequestUtil::IsAutoPartialSuggestionEnabled(request)),
       include_exact_key_(IsMixedConversionEnabled(request.request()) ||
                          ConversionRequestUtil::IsHandwriting(request)),
       filter_number_(ShouldFilterNoisyNumberCandidate(request.request())) {
@@ -728,6 +730,13 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
 
   if (result.cost >= kInfinity) {
     *log_message = "Too large cost";
+    return true;
+  }
+
+  if (!auto_partial_suggestion_ &&
+      (result.candidate_attributes &
+       Segment::Candidate::PARTIALLY_KEY_CONSUMED)) {
+    *log_message = "Auto partial suggestion disabled";
     return true;
   }
 
