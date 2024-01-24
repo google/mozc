@@ -261,14 +261,15 @@ mozc_cc_library(
     name = "win32_image_util",
     srcs = ["win32_image_util.cc"],
     hdrs = ["win32_image_util.h"],
-    copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         "//base:coordinates",
         "//base:logging",
         "//base:util",
-        "//third_party/wtl",
+        "//bazel/win32:gdi32",
+        "//bazel/win32:user32",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
