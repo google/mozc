@@ -29,15 +29,9 @@
 
 #include "win32/base/text_icon.h"
 
-// clang-format off
-#include <atlbase.h>
-#include <atltypes.h>
-#include <atlapp.h>
-#include <atlmisc.h>
-#include <atlgdi.h>
-// clang-format on
-
 #include <safeint.h>
+#include <windows.h>
+#include <wil/resource.h>
 
 #include <cstdint>
 #include <memory>
@@ -52,12 +46,6 @@ namespace {
 
 using ::msl::utilities::SafeCast;
 using ::msl::utilities::SafeMultiply;
-using ::WTL::CBitmap;
-using ::WTL::CBitmapHandle;
-using ::WTL::CDC;
-using ::WTL::CFont;
-using ::WTL::CFontHandle;
-using ::WTL::CIconHandle;
 
 RGBQUAD ToRGBQuad(DWORD color_ref) {
   const RGBQUAD rgbquad = {GetBValue(color_ref), GetGValue(color_ref),
@@ -65,17 +53,17 @@ RGBQUAD ToRGBQuad(DWORD color_ref) {
   return rgbquad;
 }
 
-CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
-                                         absl::string_view text,
-                                         absl::string_view fontname,
-                                         COLORREF text_color) {
+HICON CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
+                                   absl::string_view text,
+                                   absl::string_view fontname,
+                                   COLORREF text_color) {
   struct MonochromeBitmapInfo {
     BITMAPINFOHEADER header;
     RGBQUAD color_palette[2];
   };
 
   uint8_t *src_dib_buffer = nullptr;
-  CBitmap src_dib;
+  wil::unique_hbitmap src_dib;
 
   // Step 1. Create a src black-and-white DIB as follows.
   //  - This is a top-down DIB.
@@ -100,20 +88,20 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     info.color_palette[0] = ToRGBQuad(kForegroundColor);
     info.color_palette[1] = ToRGBQuad(kBackgroundColor);
 
-    src_dib.CreateDIBSection(
+    src_dib.reset(::CreateDIBSection(
         nullptr, reinterpret_cast<const BITMAPINFO *>(&info), DIB_RGB_COLORS,
-        reinterpret_cast<void **>(&src_dib_buffer), nullptr, 0);
-    if (src_dib.IsNull()) {
+        reinterpret_cast<void **>(&src_dib_buffer), nullptr, 0));
+    if (!src_dib.is_valid()) {
       return nullptr;
     }
 
-    CDC dc;
-    dc.CreateCompatibleDC(nullptr);
-    if (dc.IsNull()) {
+    wil::unique_hdc dc(::CreateCompatibleDC(nullptr));
+    if (!dc.is_valid()) {
       return nullptr;
     }
-    CBitmapHandle old_bitmap = dc.SelectBitmap(src_dib);
 
+    wil::unique_select_object old_bitmap(
+        wil::SelectObject(dc.get(), src_dib.get()));
     LOGFONT logfont = {};
     {
       logfont.lfWeight = FW_NORMAL;
@@ -122,35 +110,34 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
       logfont.lfQuality = NONANTIALIASED_QUALITY;
       std::wstring wide_fontname;
       Util::Utf8ToWide(fontname, &wide_fontname);
-      const errno_t error = wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
+      const errno_t error =
+          wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
       if (error != 0) {
         return nullptr;
       }
     }
 
-    CFont font_handle;
-    font_handle.CreateFontIndirectW(&logfont);
-    if (font_handle.IsNull()) {
+    wil::unique_hfont font_handle(::CreateFontIndirect(&logfont));
+    if (!font_handle.is_valid()) {
       return nullptr;
     }
 
-    const CFontHandle old_font = dc.SelectFont(font_handle);
-    dc.SetBkMode(OPAQUE);
-    dc.SetBkColor(kBackgroundColor);
-    dc.SetTextColor(kForegroundColor);
+    wil::unique_select_object old_font(
+        wil::SelectObject(dc.get(), font_handle.get()));
+    ::SetBkMode(dc.get(), OPAQUE);
+    ::SetBkColor(dc.get(), kBackgroundColor);
+    ::SetTextColor(dc.get(), kForegroundColor);
     std::wstring wide_text;
     Util::Utf8ToWide(text, &wide_text);
-    CRect rect(0, 0, bitmap_width, bitmap_height);
-    dc.FillSolidRect(rect, kBackgroundColor);
-    dc.DrawTextW(wide_text.c_str(), wide_text.size(), &rect,
-                 DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_CENTER);
-    dc.SelectFont(old_font);
-    dc.SelectBitmap(old_bitmap);
+    RECT rect = {0, 0, bitmap_width, bitmap_height};
+    ::ExtTextOutW(dc.get(), 0, 0, ETO_OPAQUE, &rect, nullptr, 0, nullptr);
+    ::DrawTextW(dc.get(), wide_text.c_str(), wide_text.size(), &rect,
+                DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_CENTER);
     ::GdiFlush();
   }
 
   BITMAP src_bmp_info = {};
-  if (!src_dib.GetBitmap(src_bmp_info)) {
+  if (::GetObject(src_dib.get(), sizeof(src_bmp_info), &src_bmp_info) == 0) {
     return nullptr;
   }
 
@@ -161,7 +148,7 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
   //  - pixel bit is 1 if the pixel should be transparent.
   //    - color palette for this pixel should be RGB(0, 0, 0), which has null
   //      effect when XOR operation is done.
-  CBitmap xor_dib;
+  wil::unique_hbitmap xor_dib;
   {
     MonochromeBitmapInfo info = {};
     info.header.biSize = sizeof(info.header);
@@ -177,16 +164,16 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     info.color_palette[1] = ToRGBQuad(0);
 
     uint8_t *xor_dib_buffer = nullptr;
-    xor_dib.CreateDIBSection(
+    xor_dib.reset(::CreateDIBSection(
         nullptr, reinterpret_cast<const BITMAPINFO *>(&info), DIB_RGB_COLORS,
-        reinterpret_cast<void **>(&xor_dib_buffer), nullptr, 0);
-    if (xor_dib.IsNull()) {
+        reinterpret_cast<void **>(&xor_dib_buffer), nullptr, 0));
+    if (!xor_dib.is_valid()) {
       return nullptr;
     }
 
     // Make sure that |xor_dib| and |src_dib| have the same pixel format.
     BITMAP xor_dib_info = {};
-    if (!xor_dib.GetBitmap(xor_dib_info) ||
+    if (!::GetObject(xor_dib.get(), sizeof(xor_dib_info), &xor_dib_info) ||
         (xor_dib_info.bmBitsPixel != src_bmp_info.bmBitsPixel) ||
         (xor_dib_info.bmWidthBytes != src_bmp_info.bmWidthBytes) ||
         (xor_dib_info.bmHeight != src_bmp_info.bmHeight)) {
@@ -202,7 +189,7 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
   //  - This is a top-down DDB.
   //  - pixel bit is 0 if the pixel should be opaque for text image.
   //  - pixel bit is 1 if the pixel should be transparent.
-  CBitmap mask_ddb;
+  wil::unique_hbitmap mask_ddb;
   {
     // Note: each line should be aligned with 2-byte for DDB while DIB uses
     // 4-byte alignment. Here we need to do alignment conversion.
@@ -217,8 +204,9 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
         ::memcpy(dest_line_start, src_line_start, mask_buffer_stride);
       }
     }
-    mask_ddb.CreateBitmap(bitmap_width, bitmap_height, 1, 1, mask_buffer.get());
-    if (mask_ddb.IsNull()) {
+    mask_ddb.reset(
+        ::CreateBitmap(bitmap_width, bitmap_height, 1, 1, mask_buffer.get()));
+    if (!mask_ddb.is_valid()) {
       return nullptr;
     }
   }
@@ -227,8 +215,8 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
   {
     ICONINFO info = {};
     info.fIcon = TRUE;
-    info.hbmColor = xor_dib;
-    info.hbmMask = mask_ddb;
+    info.hbmColor = xor_dib.get();
+    info.hbmMask = mask_ddb.get();
     info.xHotspot = 0;
     info.yHotspot = 0;
     return ::CreateIconIndirect(&info);

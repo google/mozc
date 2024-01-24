@@ -328,15 +328,16 @@ mozc_cc_library(
     name = "text_icon",
     srcs = ["text_icon.cc"],
     hdrs = ["text_icon.h"],
-    copts = copts_wtl(),
     features = features_gdi(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         "//base:logging",
         "//base:util",
-        "//third_party/wtl",
+        "//bazel/win32:gdi32",
+        "//bazel/win32:user32",
         "@com_google_absl//absl/strings",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
