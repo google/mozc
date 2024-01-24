@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_token.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
@@ -175,6 +176,10 @@ class UserDictionaryInterface : public DictionaryInterface {
 
   // Gets the user POS list.
   virtual std::vector<std::string> GetPosList() const = 0;
+
+  // Loads dictionary from UserDictionaryStorage.
+  // mainly for unit testing
+  virtual bool Load(const user_dictionary::UserDictionaryStorage &storage) = 0;
 };
 
 }  // namespace dictionary

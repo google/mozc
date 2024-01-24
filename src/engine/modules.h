@@ -31,6 +31,7 @@
 #define MOZC_ENGINE_MODULES_H_
 
 #include <memory>
+#include <utility>
 
 #include "absl/status/status.h"
 #include "converter/connector.h"
@@ -40,7 +41,6 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "dictionary/user_dictionary.h"
 #include "prediction/rescorer_interface.h"
 #include "prediction/suggestion_filter.h"
 
@@ -57,8 +57,17 @@ class Modules {
   absl::Status Init(const DataManagerInterface *data_manager);
 
   // Preset functions must be called before Init.
+  void PresetPosMatcher(
+      std::unique_ptr<const dictionary::PosMatcher> pos_matcher);
+  void PresetSuppressionDictionary(
+      std::unique_ptr<dictionary::SuppressionDictionary>
+          suppression_dictionary);
   void PresetUserDictionary(
       std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary);
+  void PresetSuffixDictionary(
+      std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary);
+  void PresetDictionary(
+      std::unique_ptr<dictionary::DictionaryInterface> dictionary);
 
   const dictionary::PosMatcher *GetPosMatcher() const {
     return pos_matcher_.get();

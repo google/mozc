@@ -77,12 +77,16 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
   DCHECK(!initialized_) << "Modules already initialized";
   RETURN_IF_NULL(data_manager);
 
-  suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
-  RETURN_IF_NULL(suppression_dictionary_);
+  if (!suppression_dictionary_) {
+    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
+    RETURN_IF_NULL(suppression_dictionary_);
+  }
 
-  pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
-      data_manager->GetPosMatcherData());
-  RETURN_IF_NULL(pos_matcher_);
+  if (!pos_matcher_) {
+    pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
+        data_manager->GetPosMatcherData());
+    RETURN_IF_NULL(pos_matcher_);
+  }
 
   if (!user_dictionary_) {
     std::unique_ptr<UserPos> user_pos =
@@ -94,29 +98,33 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
     RETURN_IF_NULL(user_dictionary_);
   }
 
-  const char *dictionary_data = nullptr;
-  int dictionary_size = 0;
-  data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
+  if (!dictionary_) {
+    const char *dictionary_data = nullptr;
+    int dictionary_size = 0;
+    data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
-  absl::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
-      SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
-  if (!sysdic.ok()) {
-    return std::move(sysdic).status();
+    absl::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
+        SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
+    if (!sysdic.ok()) {
+      return std::move(sysdic).status();
+    }
+    auto value_dic = std::make_unique<ValueDictionary>(
+        *pos_matcher_, &(*sysdic)->value_trie());
+    dictionary_ = std::make_unique<DictionaryImpl>(
+        *std::move(sysdic), std::move(value_dic), user_dictionary_.get(),
+        suppression_dictionary_.get(), pos_matcher_.get());
+    RETURN_IF_NULL(dictionary_);
   }
-  auto value_dic = std::make_unique<ValueDictionary>(*pos_matcher_,
-                                                     &(*sysdic)->value_trie());
-  dictionary_ = std::make_unique<DictionaryImpl>(
-      *std::move(sysdic), std::move(value_dic), user_dictionary_.get(),
-      suppression_dictionary_.get(), pos_matcher_.get());
-  RETURN_IF_NULL(dictionary_);
 
-  absl::string_view suffix_key_array_data, suffix_value_array_data;
-  const uint32_t *token_array = nullptr;
-  data_manager->GetSuffixDictionaryData(&suffix_key_array_data,
-                                        &suffix_value_array_data, &token_array);
-  suffix_dictionary_ = std::make_unique<SuffixDictionary>(
-      suffix_key_array_data, suffix_value_array_data, token_array);
-  RETURN_IF_NULL(suffix_dictionary_);
+  if (!suffix_dictionary_) {
+    absl::string_view suffix_key_array_data, suffix_value_array_data;
+    const uint32_t *token_array = nullptr;
+    data_manager->GetSuffixDictionaryData(
+        &suffix_key_array_data, &suffix_value_array_data, &token_array);
+    suffix_dictionary_ = std::make_unique<SuffixDictionary>(
+        suffix_key_array_data, suffix_value_array_data, token_array);
+    RETURN_IF_NULL(suffix_dictionary_);
+  }
 
   auto status_or_connector = Connector::CreateFromDataManager(*data_manager);
   if (!status_or_connector.ok()) {
@@ -144,11 +152,34 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
 #undef RETURN_IF_NULL
 }
 
+void Modules::PresetPosMatcher(
+    std::unique_ptr<const dictionary::PosMatcher> pos_matcher) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  pos_matcher_ = std::move(pos_matcher);
+}
+
+void Modules::PresetSuppressionDictionary(
+    std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  suppression_dictionary_ = std::move(suppression_dictionary);
+}
+
 void Modules::PresetUserDictionary(
     std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary) {
   DCHECK(!initialized_) << "Module is already initialized";
   user_dictionary_ = std::move(user_dictionary);
 }
 
+void Modules::PresetSuffixDictionary(
+    std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  suffix_dictionary_ = std::move(suffix_dictionary);
+}
+
+void Modules::PresetDictionary(
+    std::unique_ptr<dictionary::DictionaryInterface> dictionary) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  dictionary_ = std::move(dictionary);
+}
 }  // namespace engine
 }  // namespace mozc

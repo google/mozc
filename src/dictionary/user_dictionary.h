@@ -85,8 +85,8 @@ class UserDictionary : public UserDictionaryInterface {
                      std::string *comment) const override;
 
   // Loads dictionary from UserDictionaryStorage.
-  // mainly for unittesting
-  bool Load(const user_dictionary::UserDictionaryStorage &storage);
+  // mainly for unit testing
+  bool Load(const user_dictionary::UserDictionaryStorage &storage) override;
 
   // Reloads dictionary asynchronously
   bool Reload() override;

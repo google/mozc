@@ -30,7 +30,12 @@
 #ifndef MOZC_DICTIONARY_DICTIONARY_MOCK_H_
 #define MOZC_DICTIONARY_DICTIONARY_MOCK_H_
 
+#include <string>
+#include <vector>
+
+#include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
+#include "request/conversion_request.h"
 #include "testing/gmock.h"
 
 namespace mozc {
@@ -72,6 +77,50 @@ class MockDictionary : public DictionaryInterface {
   MOCK_METHOD(void, ClearReverseLookupCache, (), (const, override));
   MOCK_METHOD(bool, Sync, (), (override));
   MOCK_METHOD(bool, Reload, (), (override));
+};
+
+class MockUserDictionary : public UserDictionaryInterface {
+ public:
+  static constexpr int kDefaultCost = 0;
+  static constexpr int kDefaultPosId = 1;
+
+  MockUserDictionary() = default;
+  ~MockUserDictionary() override = default;
+
+  MOCK_METHOD(bool, HasKey, (absl::string_view key), (const, override));
+  MOCK_METHOD(bool, HasValue, (absl::string_view value), (const, override));
+  MOCK_METHOD(void, LookupPredictive,
+              (absl::string_view key,
+               const ConversionRequest &conversion_request, Callback *callback),
+              (const, override));
+  MOCK_METHOD(void, LookupPrefix,
+              (absl::string_view key,
+               const ConversionRequest &conversion_request, Callback *callback),
+              (const, override));
+  MOCK_METHOD(void, LookupExact,
+              (absl::string_view key,
+               const ConversionRequest &conversion_request, Callback *callback),
+              (const, override));
+  MOCK_METHOD(void, LookupReverse,
+              (absl::string_view str,
+               const ConversionRequest &conversion_request, Callback *callback),
+              (const, override));
+  MOCK_METHOD(bool, LookupComment,
+              (absl::string_view key, absl::string_view value,
+               const ConversionRequest &conversion_request,
+               std::string *comment),
+              (const, override));
+  MOCK_METHOD(void, PopulateReverseLookupCache, (absl::string_view str),
+              (const, override));
+  MOCK_METHOD(void, ClearReverseLookupCache, (), (const, override));
+  MOCK_METHOD(bool, Sync, (), (override));
+  MOCK_METHOD(bool, Reload, (), (override));
+
+  MOCK_METHOD(void, WaitForReloader, (), (override));
+
+  MOCK_METHOD(std::vector<std::string>, GetPosList, (), (const, override));
+  MOCK_METHOD(bool, Load, (const user_dictionary::UserDictionaryStorage &),
+              (override));
 };
 
 }  // namespace dictionary

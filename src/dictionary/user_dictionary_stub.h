@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
@@ -74,6 +75,10 @@ class UserDictionaryStub : public UserDictionaryInterface {
   std::vector<std::string> GetPosList() const override { return {}; }
 
   void WaitForReloader() override {}
+
+  bool Load(const user_dictionary::UserDictionaryStorage &storage) override {
+    return true;
+  }
 };
 
 }  // namespace dictionary
