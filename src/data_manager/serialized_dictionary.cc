@@ -49,7 +49,6 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/status.h"
 
 namespace mozc {
 namespace {

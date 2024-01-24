@@ -36,7 +36,6 @@
 #include "absl/types/span.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "base/status.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
 

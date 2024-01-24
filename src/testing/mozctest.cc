@@ -43,7 +43,6 @@
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/status.h"
 #include "base/system_util.h"
 #include "testing/googletest.h"
 

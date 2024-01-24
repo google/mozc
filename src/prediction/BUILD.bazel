@@ -452,7 +452,6 @@ mozc_cc_library(
     deps = [
         "//base:hash",
         "//base:logging",
-        "//base:status",
         "//base:util",
         "//storage:existence_filter",
         "@com_google_absl//absl/status:statusor",

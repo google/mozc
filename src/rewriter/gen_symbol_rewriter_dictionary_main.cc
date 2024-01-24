@@ -55,7 +55,6 @@
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/status.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
 #include "base/vlog.h"
