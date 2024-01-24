@@ -45,6 +45,7 @@
 #include "prediction/suggestion_filter.h"
 
 
+
 namespace mozc {
 namespace engine {
 
@@ -99,6 +100,7 @@ class Modules {
   }
 
 
+
  private:
   bool initialized_ = false;
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
@@ -111,6 +113,7 @@ class Modules {
   std::unique_ptr<const dictionary::PosGroup> pos_group_;
   SuggestionFilter suggestion_filter_;
   std::unique_ptr<const prediction::RescorerInterface> rescorer_;
+
 
 };
 

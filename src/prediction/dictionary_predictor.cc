@@ -58,7 +58,6 @@
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "engine/modules.h"
@@ -73,6 +72,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 
+
 #ifndef NDEBUG
 #define MOZC_DEBUG
 #endif  // NDEBUG
@@ -81,8 +81,6 @@ namespace mozc::prediction {
 namespace {
 
 using ::mozc::commands::Request;
-using ::mozc::dictionary::DictionaryInterface;
-using ::mozc::dictionary::PosMatcher;
 using ::mozc::prediction::dictionary_predictor_internal::KeyValueView;
 using ::mozc::usage_stats::UsageStats;
 
@@ -293,7 +291,8 @@ DictionaryPredictor::DictionaryPredictor(
       pos_matcher_(*modules.GetPosMatcher()),
       general_symbol_id_(pos_matcher_.GetGeneralSymbolId()),
       predictor_name_(std::move(predictor_name)),
-      rescorer_(modules.GetRescorer()) {}
+      rescorer_(modules.GetRescorer()),
+      modules_(modules) {}
 
 void DictionaryPredictor::Finish(const ConversionRequest &request,
                                  Segments *segments) {
@@ -524,7 +523,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     ++added;
   }
 
-  MaybeApplyHomonymCorrection(request, segments);
+  // TODO(b/320221782): Add unit tests for MaybeApplyHomonymCorrection.
+  MaybeApplyHomonymCorrection(modules_, segments);
 
   MaybeSuppressAggressiveTypingCorrection(
       request, typing_correction_mixing_params, segments);
@@ -596,13 +596,7 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
 
 // static
 void DictionaryPredictor::MaybeApplyHomonymCorrection(
-    const ConversionRequest &request, Segments *segments) {
-  if (!request.has_composer()) return;
-
-  const auto *spellchecker = request.composer().spellchecker_service();
-  if (!spellchecker) return;
-
-  spellchecker->MaybeApplyHomonymCorrection(segments);
+    const engine::Modules &modules, Segments *segments) {
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(

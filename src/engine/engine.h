@@ -48,6 +48,7 @@
 #include "prediction/predictor_interface.h"
 #include "rewriter/rewriter_interface.h"
 
+
 namespace mozc {
 
 // Builds and manages a set of modules that are necessary for conversion engine.
@@ -113,6 +114,7 @@ class Engine : public EngineInterface {
   std::vector<std::string> GetPosList() const override {
     return modules_.GetUserDictionary()->GetPosList();
   }
+
 
  private:
   // Initializes the object by the given data manager and is_mobile flag.
