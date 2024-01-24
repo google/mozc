@@ -140,7 +140,7 @@ class StubRewriter : public RewriterInterface {
   }
 };
 
-class InsertDummyWordsRewriter : public RewriterInterface {
+class InsertPlaceholderWordsRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &, Segments *segments) const override {
     for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
       Segment *seg = segments->mutable_conversion_segment(i);
@@ -288,15 +288,8 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   }
 
   std::unique_ptr<ConverterAndData>
-  CreateConverterAndDataWithInsertDummyWordsRewriter() {
-    return CreateConverterAndData(std::make_unique<InsertDummyWordsRewriter>(),
-                                  STUB_PREDICTOR);
-  }
-
-  std::unique_ptr<ConverterAndData>
   CreateConverterAndDataWithUserDefinedEntries(
       const std::vector<UserDefinedEntry> &user_defined_entries,
-      std::unique_ptr<RewriterInterface> rewriter,
       PredictorType predictor_type) {
     auto converter_and_data = std::make_unique<ConverterAndData>();
     converter_and_data->data_manager =
@@ -329,7 +322,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     absl::Status init = modules.Init(&mock_data_manager_);
     CHECK(init.ok()) << init.message();
 
-    InitConverters(std::move(rewriter), predictor_type,
+    InitConverters(std::make_unique<StubRewriter>(), predictor_type,
                    converter_and_data.get());
     return converter_and_data;
   }
@@ -1254,8 +1247,8 @@ TEST_F(ConverterTest, ComposerKeySelection) {
 }
 
 TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
-  std::unique_ptr<ConverterAndData> ret(
-      CreateConverterAndDataWithInsertDummyWordsRewriter());
+  std::unique_ptr<ConverterAndData> ret(CreateConverterAndData(
+      std::make_unique<InsertPlaceholderWordsRewriter>(), STUB_PREDICTOR));
 
   // Set up suppression dictionary
   ret->modules.GetMutableSuppressionDictionary()->Lock();
@@ -1268,7 +1261,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   composer::Table table;
   config::Config config;
   composer::Composer composer(&table, &default_request(), &config);
-  composer.InsertCharacter("dummy");
+  composer.InsertCharacter("placeholder");
   const ConversionRequest request(&composer, &default_request(), &config);
   Segments segments;
   EXPECT_TRUE(ret->converter->StartConversionForRequest(request, &segments));
@@ -1581,9 +1574,8 @@ TEST_F(ConverterTest, UserEntryShouldBePromoted) {
       UserDefinedEntry("あい", "哀", UserDictionary::NOUN));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          STUB_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   STUB_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1604,9 +1596,8 @@ TEST_F(ConverterTest, UserEntryShouldBePromotedMobilePrediction) {
       UserDefinedEntry("あい", "哀", UserDictionary::NOUN));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          MOBILE_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   MOBILE_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1640,9 +1631,8 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized) {
       UserDefinedEntry("あい", "哀", UserDictionary::SUPPRESSION_WORD));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          STUB_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   STUB_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1667,8 +1657,8 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritizedPrediction) {
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
   for (int i = 0; i < std::size(types); ++i) {
     std::unique_ptr<ConverterAndData> ret =
-        CreateConverterAndDataWithUserDefinedEntries(
-            user_defined_entries, std::make_unique<StubRewriter>(), types[i]);
+        CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                     types[i]);
     ConverterInterface *converter = ret->converter.get();
     CHECK(converter);
     {
@@ -1688,9 +1678,8 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependent) {
       UserDefinedEntry("じゅ", "Google+", UserDictionary::ABBREVIATION));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          STUB_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   STUB_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1712,8 +1701,8 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependentPrediction) {
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
   for (int i = 0; i < std::size(types); ++i) {
     std::unique_ptr<ConverterAndData> ret =
-        CreateConverterAndDataWithUserDefinedEntries(
-            user_defined_entries, std::make_unique<StubRewriter>(), types[i]);
+        CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                     types[i]);
 
     ConverterInterface *converter = ret->converter.get();
     CHECK(converter);
@@ -1735,9 +1724,8 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent) {
       UserDefinedEntry("じゅ", "Google+", UserDictionary::SUGGESTION_ONLY));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          STUB_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   STUB_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1759,8 +1747,8 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependentPrediction) {
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
   for (int i = 0; i < std::size(types); ++i) {
     std::unique_ptr<ConverterAndData> ret =
-        CreateConverterAndDataWithUserDefinedEntries(
-            user_defined_entries, std::make_unique<StubRewriter>(), types[i]);
+        CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                     types[i]);
 
     ConverterInterface *converter = ret->converter.get();
     CHECK(converter);
