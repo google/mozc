@@ -332,6 +332,7 @@ mozc_cc_test(
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_token",
         "//dictionary:pos_matcher",
+        "//engine:modules",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",

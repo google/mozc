@@ -232,9 +232,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     // history predictor, and extra predictor.
     auto dictionary_predictor = std::make_unique<DictionaryPredictor>(
         *converter_and_data.data_manager, converter_and_data.converter.get(),
-        converter_and_data.immutable_converter.get(), modules.GetDictionary(),
-        modules.GetSuffixDictionary(), modules.GetConnector(),
-        modules.GetSegmenter(), *pos_matcher, modules.GetSuggestionFilter());
+        converter_and_data.immutable_converter.get(), modules);
     CHECK(dictionary_predictor);
 
     auto user_history_predictor = std::make_unique<UserHistoryPredictor>(

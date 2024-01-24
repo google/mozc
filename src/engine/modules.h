@@ -68,6 +68,7 @@ class Modules {
       std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary);
   void PresetDictionary(
       std::unique_ptr<dictionary::DictionaryInterface> dictionary);
+  void PresetRescorer(std::unique_ptr<prediction::RescorerInterface> rescorer);
 
   const dictionary::PosMatcher *GetPosMatcher() const {
     return pos_matcher_.get();

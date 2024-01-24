@@ -53,6 +53,7 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
+#include "prediction/rescorer_interface.h"
 #include "prediction/suggestion_filter.h"
 
 using ::mozc::dictionary::DictionaryImpl;
@@ -147,6 +148,7 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
     suggestion_filter_ = *std::move(status_or_suggestion_filter);
   }
 
+
     initialized_ = true;
     return absl::Status();
 #undef RETURN_IF_NULL
@@ -181,5 +183,12 @@ void Modules::PresetDictionary(
   DCHECK(!initialized_) << "Module is already initialized";
   dictionary_ = std::move(dictionary);
 }
+
+void Modules::PresetRescorer(
+    std::unique_ptr<prediction::RescorerInterface> rescorer) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  rescorer_ = std::move(rescorer);
+}
+
 }  // namespace engine
 }  // namespace mozc
