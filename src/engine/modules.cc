@@ -44,6 +44,7 @@
 #include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_impl.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
@@ -73,6 +74,7 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
       return absl::ResourceExhaustedError("modules.cc: " #ptr " is null"); \
   } while (false)
 
+  DCHECK(!initialized_) << "Modules already initialized";
   RETURN_IF_NULL(data_manager);
 
   suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
@@ -82,13 +84,15 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
       data_manager->GetPosMatcherData());
   RETURN_IF_NULL(pos_matcher_);
 
-  std::unique_ptr<UserPos> user_pos =
-      UserPos::CreateFromDataManager(*data_manager);
-  RETURN_IF_NULL(user_pos);
+  if (!user_dictionary_) {
+    std::unique_ptr<UserPos> user_pos =
+        UserPos::CreateFromDataManager(*data_manager);
+    RETURN_IF_NULL(user_pos);
 
-  user_dictionary_ = std::make_unique<UserDictionary>(
-      std::move(user_pos), *pos_matcher_, suppression_dictionary_.get());
-  RETURN_IF_NULL(user_dictionary_);
+    user_dictionary_ = std::make_unique<UserDictionary>(
+        std::move(user_pos), *pos_matcher_, suppression_dictionary_.get());
+    RETURN_IF_NULL(user_dictionary_);
+  }
 
   const char *dictionary_data = nullptr;
   int dictionary_size = 0;
@@ -135,9 +139,15 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
     suggestion_filter_ = *std::move(status_or_suggestion_filter);
   }
 
-  return absl::Status();
-
+    initialized_ = true;
+    return absl::Status();
 #undef RETURN_IF_NULL
+}
+
+void Modules::PresetUserDictionary(
+    std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  user_dictionary_ = std::move(user_dictionary);
 }
 
 }  // namespace engine

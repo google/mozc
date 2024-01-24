@@ -166,6 +166,17 @@ class DictionaryInterface {
   DictionaryInterface() = default;
 };
 
+class UserDictionaryInterface : public DictionaryInterface {
+ public:
+  virtual ~UserDictionaryInterface() = default;
+
+  // Waits until reloader finishes
+  virtual void WaitForReloader() = 0;
+
+  // Gets the user POS list.
+  virtual std::vector<std::string> GetPosList() const = 0;
+};
+
 }  // namespace dictionary
 }  // namespace mozc
 

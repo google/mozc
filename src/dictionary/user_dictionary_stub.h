@@ -31,14 +31,16 @@
 #define MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_
 
 #include <string>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {
 
-class UserDictionaryStub : public DictionaryInterface {
+class UserDictionaryStub : public UserDictionaryInterface {
  public:
   bool HasKey(absl::string_view key) const override { return false; }
   bool HasValue(absl::string_view value) const override { return false; }
@@ -68,6 +70,10 @@ class UserDictionaryStub : public DictionaryInterface {
     }
     return false;
   }
+
+  std::vector<std::string> GetPosList() const override { return {}; }
+
+  void WaitForReloader() override {}
 };
 
 }  // namespace dictionary

@@ -56,6 +56,10 @@ class Modules {
 
   absl::Status Init(const DataManagerInterface *data_manager);
 
+  // Preset functions must be called before Init.
+  void PresetUserDictionary(
+      std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary);
+
   const dictionary::PosMatcher *GetPosMatcher() const {
     return pos_matcher_.get();
   }
@@ -67,7 +71,7 @@ class Modules {
   }
   const Connector &GetConnector() const { return connector_; }
   const Segmenter *GetSegmenter() const { return segmenter_.get(); }
-  dictionary::UserDictionary *GetUserDictionary() const {
+  dictionary::UserDictionaryInterface *GetUserDictionary() const {
     return user_dictionary_.get();
   }
   const dictionary::DictionaryInterface *GetSuffixDictionary() const {
@@ -86,11 +90,12 @@ class Modules {
 
 
  private:
+  bool initialized_ = false;
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   Connector connector_;
   std::unique_ptr<const Segmenter> segmenter_;
-  std::unique_ptr<dictionary::UserDictionary> user_dictionary_;
+  std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary_;
   std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary_;
   std::unique_ptr<dictionary::DictionaryInterface> dictionary_;
   std::unique_ptr<const dictionary::PosGroup> pos_group_;
