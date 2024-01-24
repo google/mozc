@@ -35,7 +35,6 @@
 #include <unknwn.h>
 #include <wil/com.h>
 #include <wil/resource.h>
-#include <wrl/client.h>
 
 #include <new>
 #include <string_view>
