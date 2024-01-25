@@ -36,7 +36,6 @@
 #include <atltypes.h>
 #include <atlwin.h>
 #include <atlapp.h>
-#include <atlcrack.h>
 #include <atlmisc.h>
 #include <atlgdi.h>
 // clang-format on
@@ -68,15 +67,15 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   DECLARE_WND_CLASS_EX(kInfolistWindowClassName, CS_SAVEBITS | CS_DROPSHADOW,
                        COLOR_WINDOW);
 
-  BEGIN_MSG_MAP_EX(InfolistWindow)
-  MSG_WM_DESTROY(OnDestroy)
-  MSG_WM_DPICHANGED(OnDpiChanged)
-  MSG_WM_ERASEBKGND(OnEraseBkgnd)
-  MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
-  MSG_WM_SETTINGCHANGE(OnSettingChange)
-  MSG_WM_PAINT(OnPaint)
-  MSG_WM_PRINTCLIENT(OnPrintClient)
-  MSG_WM_TIMER(OnTimer)
+  BEGIN_MSG_MAP(InfolistWindow)
+  MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+  MESSAGE_HANDLER(WM_DPICHANGED, OnDpiChanged)
+  MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
+  MESSAGE_HANDLER(WM_GETMINMAXINFO, OnGetMinMaxInfo)
+  MESSAGE_HANDLER(WM_SETTINGCHANGE, OnSettingChange)
+  MESSAGE_HANDLER(WM_PAINT, OnPaint)
+  MESSAGE_HANDLER(WM_PRINTCLIENT, OnPrintClient)
+  MESSAGE_HANDLER(WM_TIMER, OnTimer)
   END_MSG_MAP()
 
   InfolistWindow();
@@ -105,6 +104,49 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
  private:
   Size DoPaint(WTL::CDCHandle dc);
   Size DoPaintRow(WTL::CDCHandle dc, int row, int ypos);
+
+  inline LRESULT OnDestroy(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                           BOOL &handled) {
+    OnDestroy();
+    return 0;
+  }
+  inline LRESULT OnDpiChanged(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                              BOOL &handled) {
+    OnDpiChanged(static_cast<UINT>(LOWORD(wparam)),
+                 static_cast<UINT>(HIWORD(wparam)),
+                 reinterpret_cast<RECT *>(lparam));
+    return 0;
+  }
+  inline LRESULT OnEraseBkgnd(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                              BOOL &handled) {
+    return static_cast<LRESULT>(OnEraseBkgnd(reinterpret_cast<HDC>(wparam)));
+  }
+  inline LRESULT OnGetMinMaxInfo(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                                 BOOL &handled) {
+    OnGetMinMaxInfo(reinterpret_cast<MINMAXINFO *>(lparam));
+    return 0;
+  }
+  inline LRESULT OnSettingChange(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                                 BOOL &handled) {
+    OnSettingChange(static_cast<UINT>(wparam),
+                    reinterpret_cast<LPCTSTR>(lparam));
+    return 0;
+  }
+  inline LRESULT OnPaint(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                         BOOL &handled) {
+    OnPaint(reinterpret_cast<HDC>(wparam));
+    return 0;
+  }
+  inline LRESULT OnPrintClient(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                               BOOL &handled) {
+    OnPrintClient(reinterpret_cast<HDC>(wparam), static_cast<UINT>(lparam));
+    return 0;
+  }
+  inline LRESULT OnTimer(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                         BOOL &handled) {
+    OnTimer(static_cast<UINT_PTR>(wparam));
+    return 0;
+  }
 
   client::SendCommandInterface *send_command_interface_;
   std::unique_ptr<commands::Candidates> candidates_;
