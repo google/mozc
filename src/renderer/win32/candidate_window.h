@@ -36,7 +36,6 @@
 #include <atltypes.h>
 #include <atlwin.h>
 #include <atlapp.h>
-#include <atlcrack.h>
 #include <atlmisc.h>
 #include <atlgdi.h>
 // clang-format on
@@ -74,18 +73,18 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   DECLARE_WND_CLASS_EX(kCandidateWindowClassName, CS_SAVEBITS | CS_DROPSHADOW,
                        COLOR_WINDOW);
 
-  BEGIN_MSG_MAP_EX(CandidateWindow)
-  MSG_WM_CREATE(OnCreate)
-  MSG_WM_DESTROY(OnDestroy)
-  MSG_WM_DPICHANGED(OnDpiChanged)
-  MSG_WM_ERASEBKGND(OnEraseBkgnd)
-  MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
-  MSG_WM_LBUTTONDOWN(OnLButtonDown)
-  MSG_WM_LBUTTONUP(OnLButtonUp)
-  MSG_WM_MOUSEMOVE(OnMouseMove)
-  MSG_WM_SETTINGCHANGE(OnSettingChange)
-  MSG_WM_PAINT(OnPaint)
-  MSG_WM_PRINTCLIENT(OnPrintClient)
+  BEGIN_MSG_MAP(CandidateWindow)
+  MESSAGE_HANDLER(WM_CREATE, OnCreate)
+  MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+  MESSAGE_HANDLER(WM_DPICHANGED, OnDpiChanged)
+  MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
+  MESSAGE_HANDLER(WM_GETMINMAXINFO, OnGetMinMaxInfo)
+  MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
+  MESSAGE_HANDLER(WM_LBUTTONUP, OnLButtonUp)
+  MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove)
+  MESSAGE_HANDLER(WM_SETTINGCHANGE, OnSettingChange)
+  MESSAGE_HANDLER(WM_PAINT, OnPaint)
+  MESSAGE_HANDLER(WM_PRINTCLIENT, OnPrintClient)
   END_MSG_MAP()
 
   CandidateWindow();
@@ -136,6 +135,67 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   // accept them when and only when SPI_GETACTIVEWINDOWTRACKING is disabled
   // to avoid problematic side effect as discussed in b/2317702.
   void EnableOrDisableWindowForWorkaround();
+
+  inline LRESULT OnCreate(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                          BOOL &handled) {
+    return static_cast<LRESULT>(
+        OnCreate(reinterpret_cast<LPCREATESTRUCT>(lparam)));
+  }
+  inline LRESULT OnDestroy(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                           BOOL &handled) {
+    OnDestroy();
+    return 0;
+  }
+  inline LRESULT OnDpiChanged(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                              BOOL &handled) {
+    OnDpiChanged(static_cast<UINT>(LOWORD(wparam)),
+                 static_cast<UINT>(HIWORD(wparam)),
+                 reinterpret_cast<RECT *>(lparam));
+    return 0;
+  }
+  inline LRESULT OnEraseBkgnd(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                              BOOL &handled) {
+    return static_cast<LRESULT>(OnEraseBkgnd(reinterpret_cast<HDC>(wparam)));
+  }
+  inline LRESULT OnGetMinMaxInfo(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                                 BOOL &handled) {
+    OnGetMinMaxInfo(reinterpret_cast<MINMAXINFO *>(lparam));
+    return 0;
+  }
+  inline LRESULT OnLButtonDown(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                               BOOL &handled) {
+    OnLButtonDown(static_cast<UINT>(wparam),
+                  CPoint(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)));
+    return 0;
+  }
+  inline LRESULT OnLButtonUp(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                             BOOL &handled) {
+    OnLButtonUp(static_cast<UINT>(wparam),
+                CPoint(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)));
+    return 0;
+  }
+  inline LRESULT OnMouseMove(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                             BOOL &handled) {
+    OnMouseMove(static_cast<UINT>(wparam),
+                CPoint(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)));
+    return 0;
+  }
+  inline LRESULT OnSettingChange(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                                 BOOL &handled) {
+    OnSettingChange(static_cast<UINT>(wparam),
+                    reinterpret_cast<LPCTSTR>(lparam));
+    return 0;
+  }
+  inline LRESULT OnPaint(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                         BOOL &handled) {
+    OnPaint(reinterpret_cast<HDC>(wparam));
+    return 0;
+  }
+  inline LRESULT OnPrintClient(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                               BOOL &handled) {
+    OnPrintClient(reinterpret_cast<HDC>(wparam), static_cast<UINT>(lparam));
+    return 0;
+  }
 
   std::unique_ptr<commands::Candidates> candidates_;
   WTL::CBitmap footer_logo_;
