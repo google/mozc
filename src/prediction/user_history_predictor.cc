@@ -1363,11 +1363,10 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     const ConversionRequest &request, RequestType request_type,
     bool is_top_candidate, uint32_t input_key_len, const Entry &entry) {
   if (request.request().mixed_conversion()) {
-    if (entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8) {
-      // Don't show long history for mixed conversion
-      MOZC_VLOG(2) << "long candidate: " << entry.value();
-      return BAD_RESULT;
+    if (IsValidSuggestionForMixedConversion(request, input_key_len, entry)) {
+      return GOOD_RESULT;
     }
+    return BAD_RESULT;
   }
 
   if (request.request_type() == ConversionRequest::SUGGESTION) {
@@ -2072,6 +2071,30 @@ uint32_t UserHistoryPredictor::LearningSegmentFingerprint(
 std::string UserHistoryPredictor::Uint32ToString(uint32_t fp) {
   std::string buf(reinterpret_cast<const char *>(&fp), sizeof(fp));
   return buf;
+}
+
+bool UserHistoryPredictor::IsValidSuggestionForMixedConversion(
+    const ConversionRequest &request, uint32_t prefix_len, const Entry &entry) {
+  if (entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8) {
+    // Don't show long history for mixed conversion
+    MOZC_VLOG(2) << "long candidate: " << entry.value();
+    return false;
+  }
+
+  const auto &params = request.request().decoder_experiment_params();
+
+  if (params.enable_history_prediction_triggering_v2()) {
+    const uint32_t freq =
+        std::max(entry.suggestion_freq(), entry.conversion_freq());
+    const int remaining_len =
+        std::max<int>(0, Util::CharsLen(entry.key()) - prefix_len);
+    return freq - params.history_prediction_min_freq() -
+               params.history_prediction_remaining_char_length_weight() *
+                   remaining_len >=
+           0.0f;
+  }
+
+  return true;
 }
 
 // static

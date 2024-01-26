@@ -1917,6 +1917,78 @@ TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
       UserHistoryPredictor::DEFAULT, 1, entry));
 }
 
+TEST_F(UserHistoryPredictorTest, IsValidSuggestionForMixedConversion) {
+  UserHistoryPredictor::Entry entry;
+
+  commands::Request request;
+  ConversionRequest conversion_request;
+  conversion_request.set_request(&request);
+
+  entry.set_suggestion_freq(1);
+  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestionForMixedConversion(
+      conversion_request, 1, entry));
+
+  entry.set_value("よろしくおねがいします。");  // too long
+  EXPECT_FALSE(UserHistoryPredictor::IsValidSuggestionForMixedConversion(
+      conversion_request, 1, entry));
+
+  entry.set_value("test");
+  entry.set_key("test");
+
+  auto *params = request.mutable_decoder_experiment_params();
+  params->set_enable_history_prediction_triggering_v2(true);
+
+  // Default param is always true.
+  for (int freq = 0; freq <= 10; ++freq) {
+    entry.set_suggestion_freq(freq);
+    for (int prefix_len = 0; prefix_len <= 4; ++prefix_len) {
+      EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestionForMixedConversion(
+          conversion_request, prefix_len, entry));
+    }
+  }
+
+  // Uses new triggering logic.
+  params->set_enable_history_prediction_triggering_v2(true);
+  params->set_history_prediction_min_freq(2.0);
+  params->set_history_prediction_remaining_char_length_weight(0.5);
+
+  const int key_len = Util::CharsLen(entry.key());
+
+  for (int freq = 0; freq <= 10; ++freq) {
+    entry.set_suggestion_freq(freq);
+    for (int prefix_len = 0; prefix_len <= key_len; ++prefix_len) {
+      const bool expected = (freq - 2.0 - 0.5 * (key_len - prefix_len)) >= 0.0;
+      EXPECT_EQ(UserHistoryPredictor::IsValidSuggestionForMixedConversion(
+                    conversion_request, prefix_len, entry),
+                expected);
+    }
+  }
+
+  // Extreme case 1 (always false).
+  params->set_history_prediction_min_freq(1000.0);
+  params->set_history_prediction_remaining_char_length_weight(0.0);
+
+  for (int freq = 0; freq <= 10; ++freq) {
+    entry.set_suggestion_freq(freq);
+    for (int prefix_len = 0; prefix_len <= key_len; ++prefix_len) {
+      EXPECT_FALSE(UserHistoryPredictor::IsValidSuggestionForMixedConversion(
+          conversion_request, prefix_len, entry));
+    }
+  }
+
+  // Extreme case 2 (Exact match only).
+  params->set_history_prediction_min_freq(0.0);
+  params->set_history_prediction_remaining_char_length_weight(1000.0);
+  for (int freq = 0; freq <= 10; ++freq) {
+    entry.set_suggestion_freq(freq);
+    for (int prefix_len = 0; prefix_len <= key_len; ++prefix_len) {
+      EXPECT_EQ(UserHistoryPredictor::IsValidSuggestionForMixedConversion(
+                    conversion_request, prefix_len, entry),
+                prefix_len == key_len);
+    }
+  }
+}
+
 TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
   // removed automatically
   constexpr int kSize = 10000;

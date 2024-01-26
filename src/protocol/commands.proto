@@ -572,7 +572,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 50
+// Next ID: 53
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -668,6 +668,20 @@ message DecoderExperimentParams {
       [default = false];
 
   optional bool filter_noisy_number_candidate = 45 [default = false];
+
+  // Parameters for new history prediction triggering.
+  // Trigger history prediction if
+  // (freq - history_prediction_min_freq) -
+  //       history_prediction_remaining_char_length_weight *
+  //       remaining_char_length >= 0.0
+  // We can emulate the following extreme cases with these two parameters.
+  // * Disable all history prediction: (inf, 0)
+  // * Always trigger: (0, 0) (current v1 behavior)
+  // * Exact match only: (0, inf)
+  // * freq >= 2:  (2, 0)
+  optional bool enable_history_prediction_triggering_v2 = 50 [default = true];
+  optional float history_prediction_min_freq = 51 [default = 0.0];
+  optional float history_prediction_remaining_char_length_weight = 52 [default = 0.0];
 }
 
 // Clients' request to the server.
