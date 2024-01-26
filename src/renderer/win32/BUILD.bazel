@@ -162,7 +162,6 @@ mozc_cc_library(
     name = "text_renderer",
     srcs = ["text_renderer.cc"],
     hdrs = ["text_renderer.h"],
-    copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     visibility = [
@@ -176,7 +175,6 @@ mozc_cc_library(
         "//bazel/win32:dwrite",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_style_handler",
-        "//third_party/wtl",
         "@com_google_absl//absl/types:span",
         "@com_microsoft_wil//:wil",
     ],
