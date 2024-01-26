@@ -29,18 +29,13 @@
 
 #include "win32/tip/tip_lang_bar_menu.h"
 
-// clang-format off
 #include <atlbase.h>
 #include <atltypes.h>
-#include <atlapp.h>
-#include <atlmisc.h>
-#include <atlgdi.h>
-#include <atluser.h>
+#include <commctrl.h>
 #include <ctfutb.h>
 #include <ole2.h>
 #include <olectl.h>
 #include <strsafe.h>
-// clang-format on
 #include <wil/com.h>
 #include <wil/resource.h>
 #include <windows.h>
@@ -70,10 +65,6 @@ bool IsIIDOf<ITfLangBarItemButton>(REFIID riid) {
 
 namespace tsf {
 namespace {
-
-using WTL::CBitmap;
-using WTL::CDC;
-using WTL::CIcon;
 
 // Represents the cookie for the sink to a TipLangBarButton object.
 constexpr int kTipLangBarMenuCookie =
@@ -119,43 +110,33 @@ HICON LoadIconFromResource(HINSTANCE instance, UINT icon_id) {
                                         LR_CREATEDIBSECTION));
 }
 
+class IconBitmaps {
+ public:
+  IconBitmaps() = default;
+  IconBitmaps(IconBitmaps &&) = default;
+
+  explicit IconBitmaps(const ICONINFO &info)
+      : color_(info.hbmColor), mask_(info.hbmMask) {}
+
+  wil::unique_hbitmap color_;
+  wil::unique_hbitmap mask_;
+};
+
 // Retrieves the bitmap handle loaded by using an icon ID.
-// Returns true if the specified icons is available as bitmaps.
-// Caller can set nullptr for |color| and/or |mask| to represent not to receive
-// the specified handle even if it exists.  Caller should releases any returned
-// bitmap handle and this function releases any handle which is not received
-// by the caller.
-bool LoadIconAsBitmap(HINSTANCE instance, UINT icon_id_for_non_theme,
-                      UINT icon_id_for_theme, HBITMAP *color, HBITMAP *mask) {
-  if (color != nullptr) {
-    *color = nullptr;
-  }
-  if (mask != nullptr) {
-    *mask = nullptr;
-  }
+IconBitmaps LoadIconBitmaps(HINSTANCE instance, UINT icon_id_for_non_theme,
+                            UINT icon_id_for_theme) {
+  wil::unique_hicon icon(LoadIconFromResource(instance, icon_id_for_theme));
 
-  CIcon icon(LoadIconFromResource(instance, icon_id_for_theme));
-
-  if (icon.IsNull()) {
-    return false;
+  if (!icon.is_valid()) {
+    return {};
   }
 
   ICONINFO icon_info = {};
-  if (!::GetIconInfo(icon, &icon_info)) {
-    return false;
+  if (!::GetIconInfo(icon.get(), &icon_info)) {
+    return {};
   }
 
-  CBitmap color_bitmap(icon_info.hbmColor);
-  CBitmap mask_bitmap(icon_info.hbmMask);
-
-  if (color != nullptr) {
-    *color = color_bitmap.Detach();
-  }
-  if (mask != nullptr) {
-    *mask = mask_bitmap.Detach();
-  }
-
-  return true;
+  return IconBitmaps(icon_info);
 }
 
 }  // namespace
@@ -439,9 +420,10 @@ bool TipLangBarButton::CanContextMenuDisplay32bppIcon() {
   // unless the current display mode is 32-bpp.  We cannot assume we can
   // display a 32-bpp icon for a context menu icon on the LangBar unless the
   // current display mode is 32-bpp.  See http://b/2260057
-  CDC display_dc(::GetDC(nullptr));
-  return !display_dc.IsNull() && display_dc.GetDeviceCaps(PLANES) == 1 &&
-         display_dc.GetDeviceCaps(BITSPIXEL) == 32;
+  wil::unique_hdc memory_dc(::GetDC(nullptr));
+  return memory_dc.is_valid() &&
+         ::GetDeviceCaps(memory_dc.get(), PLANES) == 1 &&
+         ::GetDeviceCaps(memory_dc.get(), BITSPIXEL) == 32;
 }
 
 TipLangBarMenuData *TipLangBarButton::menu_data(size_t i) {
@@ -488,14 +470,11 @@ STDMETHODIMP TipLangBarMenuButton::InitMenu(ITfMenu *menu) {
     const UINT icon_id_for_theme = CanContextMenuDisplay32bppIcon()
                                        ? data->icon_id_for_theme_
                                        : data->icon_id_for_non_theme_;
-    CBitmap bitmap;
-    CBitmap mask;
-    // If LoadIconAsBitmap fails, |bitmap.m_hBitmap| and |mask.m_hBitmap|
-    // remain nullptr bitmap handles.
-    LoadIconAsBitmap(TipDllModule::module_handle(),
-                     data->icon_id_for_non_theme_, icon_id_for_theme,
-                     &bitmap.m_hBitmap, &mask.m_hBitmap);
-    result = menu->AddMenuItem(i, data->flags_, bitmap, mask, data->text_,
+    const IconBitmaps icon_bitmaps =
+        LoadIconBitmaps(TipDllModule::module_handle(),
+                        data->icon_id_for_non_theme_, icon_id_for_theme);
+    result = menu->AddMenuItem(i, data->flags_, icon_bitmaps.color_.get(),
+                               icon_bitmaps.mask_.get(), data->text_,
                                data->length_, nullptr);
     if (result != S_OK) {
       break;
@@ -531,20 +510,20 @@ STDMETHODIMP TipLangBarMenuButton::GetInfo(TF_LANGBARITEMINFO *item_info) {
   // Just copies the cached TF_LANGBARITEMINFO object.
   *item_info = *this->item_info();
 
-  CIcon icon;
-  if (FAILED(GetIcon(&icon.m_hIcon)) || icon.IsNull()) {
+  wil::unique_hicon icon;
+  if (FAILED(GetIcon(icon.put())) || !icon.is_valid()) {
     return S_OK;
   }
 
   ICONINFO icon_info = {};
-  const BOOL get_icon_succeeded = icon.GetIconInfo(&icon_info);
-  CBitmap color(icon_info.hbmColor);
-  CBitmap mask(icon_info.hbmMask);
+  const BOOL get_icon_succeeded = ::GetIconInfo(icon.get(), &icon_info);
+  wil::unique_hbitmap color(icon_info.hbmColor);
+  wil::unique_hbitmap mask(icon_info.hbmMask);
   if (!get_icon_succeeded) {
     return S_OK;
   }
 
-  if (color.IsNull() && !mask.IsNull()) {
+  if (!color.is_valid() && mask.is_valid()) {
     item_info->dwStyle |= TF_LBI_STYLE_TEXTCOLORICON;
     return S_OK;
   }
@@ -617,20 +596,20 @@ STDMETHODIMP TipLangBarToggleButton::GetInfo(TF_LANGBARITEMINFO *item_info) {
     return result;
   }
 
-  CIcon icon;
-  if (FAILED(GetIcon(&icon.m_hIcon)) || icon.IsNull()) {
+  wil::unique_hicon icon;
+  if (FAILED(GetIcon(icon.put())) || !icon.is_valid()) {
     return S_OK;
   }
 
   ICONINFO icon_info = {};
-  const BOOL get_icon_succeeded = icon.GetIconInfo(&icon_info);
-  CBitmap color(icon_info.hbmColor);
-  CBitmap mask(icon_info.hbmMask);
+  const BOOL get_icon_succeeded = ::GetIconInfo(icon.get(), &icon_info);
+  wil::unique_hbitmap color(icon_info.hbmColor);
+  wil::unique_hbitmap mask(icon_info.hbmMask);
   if (!get_icon_succeeded) {
     return S_OK;
   }
 
-  if (color.IsNull() && !mask.IsNull()) {
+  if (!color.is_valid() && mask.is_valid()) {
     item_info->dwStyle |= TF_LBI_STYLE_TEXTCOLORICON;
     return S_OK;
   }
@@ -787,14 +766,11 @@ STDMETHODIMP TipSystemLangBarMenu::InitMenu(ITfMenu *menu) {
         TipLangBarButton::CanContextMenuDisplay32bppIcon()
             ? data->icon_id_for_theme_
             : data->icon_id_for_non_theme_;
-    CBitmap bitmap;
-    CBitmap mask;
-    // If LoadIconAsBitmap fails, |bitmap.m_hBitmap| and |mask.m_hBitmap|
-    // remain nullptr bitmap handles.
-    LoadIconAsBitmap(TipDllModule::module_handle(),
-                     data->icon_id_for_non_theme_, icon_id_for_theme,
-                     &bitmap.m_hBitmap, &mask.m_hBitmap);
-    result = menu->AddMenuItem(i, data->flags_, bitmap, mask, data->text_,
+    const IconBitmaps &icon_bitmaps =
+        LoadIconBitmaps(TipDllModule::module_handle(),
+                        data->icon_id_for_non_theme_, icon_id_for_theme);
+    result = menu->AddMenuItem(i, data->flags_, icon_bitmaps.color_.get(),
+                               icon_bitmaps.mask_.get(), data->text_,
                                data->length_, nullptr);
     if (result != S_OK) {
       break;
