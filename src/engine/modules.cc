@@ -44,6 +44,7 @@
 #include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_impl.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
@@ -52,6 +53,7 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
+#include "prediction/rescorer_interface.h"
 #include "prediction/suggestion_filter.h"
 
 using ::mozc::dictionary::DictionaryImpl;
@@ -73,46 +75,57 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
       return absl::ResourceExhaustedError("modules.cc: " #ptr " is null"); \
   } while (false)
 
+  DCHECK(!initialized_) << "Modules already initialized";
   RETURN_IF_NULL(data_manager);
 
-  suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
-  RETURN_IF_NULL(suppression_dictionary_);
-
-  pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
-      data_manager->GetPosMatcherData());
-  RETURN_IF_NULL(pos_matcher_);
-
-  std::unique_ptr<UserPos> user_pos =
-      UserPos::CreateFromDataManager(*data_manager);
-  RETURN_IF_NULL(user_pos);
-
-  user_dictionary_ = std::make_unique<UserDictionary>(
-      std::move(user_pos), *pos_matcher_, suppression_dictionary_.get());
-  RETURN_IF_NULL(user_dictionary_);
-
-  const char *dictionary_data = nullptr;
-  int dictionary_size = 0;
-  data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
-
-  absl::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
-      SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
-  if (!sysdic.ok()) {
-    return std::move(sysdic).status();
+  if (!suppression_dictionary_) {
+    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
+    RETURN_IF_NULL(suppression_dictionary_);
   }
-  auto value_dic = std::make_unique<ValueDictionary>(*pos_matcher_,
-                                                     &(*sysdic)->value_trie());
-  dictionary_ = std::make_unique<DictionaryImpl>(
-      *std::move(sysdic), std::move(value_dic), user_dictionary_.get(),
-      suppression_dictionary_.get(), pos_matcher_.get());
-  RETURN_IF_NULL(dictionary_);
 
-  absl::string_view suffix_key_array_data, suffix_value_array_data;
-  const uint32_t *token_array = nullptr;
-  data_manager->GetSuffixDictionaryData(&suffix_key_array_data,
-                                        &suffix_value_array_data, &token_array);
-  suffix_dictionary_ = std::make_unique<SuffixDictionary>(
-      suffix_key_array_data, suffix_value_array_data, token_array);
-  RETURN_IF_NULL(suffix_dictionary_);
+  if (!pos_matcher_) {
+    pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
+        data_manager->GetPosMatcherData());
+    RETURN_IF_NULL(pos_matcher_);
+  }
+
+  if (!user_dictionary_) {
+    std::unique_ptr<UserPos> user_pos =
+        UserPos::CreateFromDataManager(*data_manager);
+    RETURN_IF_NULL(user_pos);
+
+    user_dictionary_ = std::make_unique<UserDictionary>(
+        std::move(user_pos), *pos_matcher_, suppression_dictionary_.get());
+    RETURN_IF_NULL(user_dictionary_);
+  }
+
+  if (!dictionary_) {
+    const char *dictionary_data = nullptr;
+    int dictionary_size = 0;
+    data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
+
+    absl::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
+        SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
+    if (!sysdic.ok()) {
+      return std::move(sysdic).status();
+    }
+    auto value_dic = std::make_unique<ValueDictionary>(
+        *pos_matcher_, &(*sysdic)->value_trie());
+    dictionary_ = std::make_unique<DictionaryImpl>(
+        *std::move(sysdic), std::move(value_dic), user_dictionary_.get(),
+        suppression_dictionary_.get(), pos_matcher_.get());
+    RETURN_IF_NULL(dictionary_);
+  }
+
+  if (!suffix_dictionary_) {
+    absl::string_view suffix_key_array_data, suffix_value_array_data;
+    const uint32_t *token_array = nullptr;
+    data_manager->GetSuffixDictionaryData(
+        &suffix_key_array_data, &suffix_value_array_data, &token_array);
+    suffix_dictionary_ = std::make_unique<SuffixDictionary>(
+        suffix_key_array_data, suffix_value_array_data, token_array);
+    RETURN_IF_NULL(suffix_dictionary_);
+  }
 
   auto status_or_connector = Connector::CreateFromDataManager(*data_manager);
   if (!status_or_connector.ok()) {
@@ -135,9 +148,46 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
     suggestion_filter_ = *std::move(status_or_suggestion_filter);
   }
 
-  return absl::Status();
 
+    initialized_ = true;
+    return absl::Status();
 #undef RETURN_IF_NULL
+}
+
+void Modules::PresetPosMatcher(
+    std::unique_ptr<const dictionary::PosMatcher> pos_matcher) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  pos_matcher_ = std::move(pos_matcher);
+}
+
+void Modules::PresetSuppressionDictionary(
+    std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  suppression_dictionary_ = std::move(suppression_dictionary);
+}
+
+void Modules::PresetUserDictionary(
+    std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  user_dictionary_ = std::move(user_dictionary);
+}
+
+void Modules::PresetSuffixDictionary(
+    std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  suffix_dictionary_ = std::move(suffix_dictionary);
+}
+
+void Modules::PresetDictionary(
+    std::unique_ptr<dictionary::DictionaryInterface> dictionary) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  dictionary_ = std::move(dictionary);
+}
+
+void Modules::PresetRescorer(
+    std::unique_ptr<prediction::RescorerInterface> rescorer) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  rescorer_ = std::move(rescorer);
 }
 
 }  // namespace engine

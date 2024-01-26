@@ -60,6 +60,7 @@
         '<(mozc_oss_src_dir)/dictionary/system/system_dictionary.gyp:value_dictionary',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine_base.gyp:modules',
         '<(mozc_oss_src_dir)/prediction/prediction_base.gyp:suggestion_filter',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',

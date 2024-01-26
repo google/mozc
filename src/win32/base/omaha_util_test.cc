@@ -158,32 +158,21 @@ class RegistryEmulator {
   static HKEY GetClientStateKey(REGSAM regsam) {
     const REGSAM kReadWrite = (KEY_WRITE | KEY_READ);
     const REGSAM kRead = KEY_READ;
-    if (SystemUtil::IsWindowsX64()) {
-      // 64-bit OS
-      const bool contain_wow64_64_key =
-          ((regsam & KEY_WOW64_64KEY) == KEY_WOW64_64KEY);
-      const bool contain_wow64_32_key =
-          ((regsam & KEY_WOW64_32KEY) == KEY_WOW64_32KEY);
+    const bool contain_wow64_64_key =
+        ((regsam & KEY_WOW64_64KEY) == KEY_WOW64_64KEY);
+    const bool contain_wow64_32_key =
+        ((regsam & KEY_WOW64_32KEY) == KEY_WOW64_32KEY);
 
-      EXPECT_TRUE(contain_wow64_32_key)
-          << "KEY_WOW64_32KEY should be specified just in case.";
+    EXPECT_TRUE(contain_wow64_32_key)
+        << "KEY_WOW64_32KEY should be specified just in case.";
 
-      if ((regsam & kReadWrite) == kReadWrite) {
-        return contain_wow64_64_key ? kHKLM64_ClientState_ReadWrite
-                                    : kHKLM32_ClientState_ReadWrite;
-      }
-      if ((regsam & kRead) == kRead) {
-        return contain_wow64_64_key ? kHKLM64_ClientState_Read
-                                    : kHKLM32_ClientState_Read;
-      }
-    } else {
-      // 32-bit OS
-      if ((regsam & kReadWrite) == kReadWrite) {
-        return kHKLM32_ClientState_ReadWrite;
-      }
-      if ((regsam & kRead) == kRead) {
-        return kHKLM32_ClientState_Read;
-      }
+    if ((regsam & kReadWrite) == kReadWrite) {
+      return contain_wow64_64_key ? kHKLM64_ClientState_ReadWrite
+                                  : kHKLM32_ClientState_ReadWrite;
+    }
+    if ((regsam & kRead) == kRead) {
+      return contain_wow64_64_key ? kHKLM64_ClientState_Read
+                                  : kHKLM32_ClientState_Read;
     }
     ADD_FAILURE() << "Unexpected combination found.  regsam = " << regsam;
     return KRegKey_NotFound;
@@ -447,35 +436,9 @@ class RegistryEmulator {
 
 }  // namespace
 
-class OmahaUtilTestOn32bitMachine : public testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetIsWindowsX64ModeForTest(
-        SystemUtil::IS_WINDOWS_X64_EMULATE_32BIT_MACHINE);
-  }
-
-  virtual void TearDown() {
-    SystemUtil::SetIsWindowsX64ModeForTest(
-        SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE);
-  }
-};
-
-class OmahaUtilTestOn64bitMachine : public testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetIsWindowsX64ModeForTest(
-        SystemUtil::IS_WINDOWS_X64_EMULATE_64BIT_MACHINE);
-  }
-
-  virtual void TearDown() {
-    SystemUtil::SetIsWindowsX64ModeForTest(
-        SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE);
-  }
-};
-
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
 
-TEST_F(OmahaUtilTestOn32bitMachine, ReadWriteClearChannel) {
+TEST(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
   RegistryEmulator<__COUNTER__> test;
 
   // ClientStateKey does not exist.
@@ -517,72 +480,7 @@ TEST_F(OmahaUtilTestOn32bitMachine, ReadWriteClearChannel) {
   EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
 }
 
-TEST_F(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
-  RegistryEmulator<__COUNTER__> test;
-
-  // ClientStateKey does not exist.
-  test.property()->Clear();
-  test.property()->set_omaha_key_exists(false);
-  EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
-  // The ClientState key should be created.
-  EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(test.property()->ap_value(), L"internal-stable");
-  EXPECT_EQ(OmahaUtil::ReadChannel(), L"internal-stable");
-  EXPECT_TRUE(OmahaUtil::ClearChannel());
-  EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
-
-  // ClientStateKey exists. "ap" value does not exist.
-  test.property()->Clear();
-  test.property()->set_omaha_key_exists(true);
-  EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
-  EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(test.property()->ap_value(), L"internal-stable");
-  EXPECT_EQ(OmahaUtil::ReadChannel(), L"internal-stable");
-  EXPECT_TRUE(OmahaUtil::ClearChannel());
-  EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
-
-  // ClientStateKey exists. "ap" value exists.
-  test.property()->Clear();
-  test.property()->set_omaha_key_exists(true);
-  test.property()->mutable_ap_value()->assign(L"internal-dev");
-  EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
-  EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(test.property()->ap_value(), L"internal-stable");
-  EXPECT_EQ(OmahaUtil::ReadChannel(), L"internal-stable");
-  EXPECT_TRUE(OmahaUtil::ClearChannel());
-  EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
-}
-
-TEST_F(OmahaUtilTestOn32bitMachine, WriteClearOmahaError) {
-  RegistryEmulator<__COUNTER__> test;
-
-  // ClientStateKey does not exist.
-  test.property()->Clear();
-  test.property()->set_omaha_key_exists(false);
-  EXPECT_TRUE(OmahaUtil::WriteOmahaError(L"xx", L"yy"));
-  // The ClientState key should be created.
-  EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(test.property()->installer_result(), 1);
-  EXPECT_EQ(test.property()->installer_result_ui_string(), L"yy\r\nxx");
-
-  // If the header does not exist, CRLF disappears.
-  EXPECT_TRUE(OmahaUtil::WriteOmahaError(L"xx", L""));
-  EXPECT_EQ(test.property()->installer_result_ui_string(), L"xx");
-
-  // Check if we can clear the error code.
-  EXPECT_TRUE(OmahaUtil::ClearOmahaError());
-  EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(test.property()->installer_result(), 0);
-  EXPECT_EQ(test.property()->installer_result_ui_string(), L"");
-}
-
-TEST_F(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
+TEST(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
   RegistryEmulator<__COUNTER__> test;
 
   // ClientStateKey does not exist.
@@ -607,7 +505,7 @@ TEST_F(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
 
 #else   // !GOOGLE_JAPANESE_INPUT_BUILD
 
-TEST_F(OmahaUtilTestOn32bitMachine, ReadWriteClearChannel) {
+TEST(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
   RegistryEmulator<__COUNTER__> test;
 
   // ClientStateKey does not exist.
@@ -622,34 +520,7 @@ TEST_F(OmahaUtilTestOn32bitMachine, ReadWriteClearChannel) {
   EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
 }
 
-TEST_F(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
-  RegistryEmulator<__COUNTER__> test;
-
-  // ClientStateKey does not exist.
-  test.property()->Clear();
-  test.property()->set_omaha_key_exists(false);
-  EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
-  // The ClientState key should not be created.
-  EXPECT_FALSE(test.property()->omaha_key_exists());
-  EXPECT_TRUE(OmahaUtil::ClearChannel());
-  EXPECT_FALSE(test.property()->omaha_key_exists());
-  EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
-}
-
-TEST_F(OmahaUtilTestOn32bitMachine, WriteClearOmahaError) {
-  RegistryEmulator<__COUNTER__> test;
-
-  // ClientStateKey does not exist.
-  test.property()->Clear();
-  test.property()->set_omaha_key_exists(false);
-  EXPECT_TRUE(OmahaUtil::WriteOmahaError(L"xx", L"yy"));
-  EXPECT_FALSE(test.property()->omaha_key_exists());
-  EXPECT_FALSE(test.property()->has_installer_result());
-  EXPECT_FALSE(test.property()->has_installer_result_ui_string());
-}
-
-TEST_F(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
+TEST(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
   RegistryEmulator<__COUNTER__> test;
 
   // ClientStateKey does not exist.

@@ -275,46 +275,25 @@ DictionaryPredictor::DictionaryPredictor(
           "DictionaryPredictor",
           std::make_unique<prediction::DictionaryPredictionAggregator>(
               data_manager, converter, immutable_converter, modules),
-          data_manager, immutable_converter, modules.GetConnector(),
-          modules.GetSegmenter(), *modules.GetPosMatcher(),
-          modules.GetSuggestionFilter(), modules.GetRescorer()) {}
-
-DictionaryPredictor::DictionaryPredictor(
-    const DataManagerInterface &data_manager,
-    const ConverterInterface *converter,
-    const ImmutableConverterInterface *immutable_converter,
-    const DictionaryInterface *dictionary,
-    const DictionaryInterface *suffix_dictionary, const Connector &connector,
-    const Segmenter *segmenter, const PosMatcher pos_matcher,
-    const SuggestionFilter &suggestion_filter,
-    const prediction::RescorerInterface *rescorer)
-    : DictionaryPredictor(
-          "DictionaryPredictor",
-          std::make_unique<prediction::DictionaryPredictionAggregator>(
-              data_manager, converter, immutable_converter, dictionary,
-              suffix_dictionary, &pos_matcher),
-          data_manager, immutable_converter, connector, segmenter, pos_matcher,
-          suggestion_filter, rescorer) {}
+          data_manager, immutable_converter, modules) {}
 
 DictionaryPredictor::DictionaryPredictor(
     std::string predictor_name,
     std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator,
     const DataManagerInterface &data_manager,
     const ImmutableConverterInterface *immutable_converter,
-    const Connector &connector, const Segmenter *segmenter,
-    const PosMatcher pos_matcher, const SuggestionFilter &suggestion_filter,
-    const prediction::RescorerInterface *rescorer)
+    const engine::Modules &modules)
     : aggregator_(std::move(aggregator)),
       immutable_converter_(immutable_converter),
-      connector_(connector),
-      segmenter_(segmenter),
-      suggestion_filter_(suggestion_filter),
+      connector_(modules.GetConnector()),
+      segmenter_(modules.GetSegmenter()),
+      suggestion_filter_(modules.GetSuggestionFilter()),
       single_kanji_dictionary_(
           std::make_unique<dictionary::SingleKanjiDictionary>(data_manager)),
-      pos_matcher_(pos_matcher),
-      general_symbol_id_(pos_matcher.GetGeneralSymbolId()),
+      pos_matcher_(*modules.GetPosMatcher()),
+      general_symbol_id_(pos_matcher_.GetGeneralSymbolId()),
       predictor_name_(std::move(predictor_name)),
-      rescorer_(rescorer) {}
+      rescorer_(modules.GetRescorer()) {}
 
 void DictionaryPredictor::Finish(const ConversionRequest &request,
                                  Segments *segments) {
@@ -699,6 +678,8 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
+      auto_partial_suggestion_(
+          ConversionRequestUtil::IsAutoPartialSuggestionEnabled(request)),
       include_exact_key_(IsMixedConversionEnabled(request.request()) ||
                          ConversionRequestUtil::IsHandwriting(request)),
       filter_number_(ShouldFilterNoisyNumberCandidate(request.request())) {
@@ -728,6 +709,13 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
 
   if (result.cost >= kInfinity) {
     *log_message = "Too large cost";
+    return true;
+  }
+
+  if (!auto_partial_suggestion_ &&
+      (result.candidate_attributes &
+       Segment::Candidate::PARTIALLY_KEY_CONSUMED)) {
+    *log_message = "Auto partial suggestion disabled";
     return true;
   }
 

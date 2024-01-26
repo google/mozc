@@ -250,6 +250,7 @@ mozc_cc_library(
         ":tip_resource",
         "//base/win32:com",
         "//base/win32:com_implements",
+        "//bazel/win32:user32",
         "//third_party/wtl",
         "//win32/base:text_icon",
         "//win32/base:tsf_profile",

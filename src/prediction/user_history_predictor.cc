@@ -1359,6 +1359,39 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
   }
 }
 
+UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
+    const ConversionRequest &request, RequestType request_type,
+    bool is_top_candidate, uint32_t input_key_len, const Entry &entry) {
+  if (request.request().mixed_conversion()) {
+    if (entry.suggestion_freq() < 2 && Util::CharsLen(entry.value()) > 8) {
+      // Don't show long history for mixed conversion
+      MOZC_VLOG(2) << "long candidate: " << entry.value();
+      return BAD_RESULT;
+    }
+  }
+
+  if (request.request_type() == ConversionRequest::SUGGESTION) {
+    // The top result of suggestion should be a VALID suggestion candidate.
+    // i.e., SuggestionTriggerFunc should return true for the first
+    // candidate.
+    // If user types "デスノート" too many times, "デスノート" will be
+    // suggested when user types "で". It is expected, but if user types
+    // "です" after that,  showing "デスノート" is annoying.
+    // In this situation, "です" is in the LRU, but SuggestionTriggerFunc
+    // returns false for "です", since it is short.
+    if (IsValidSuggestion(request_type, input_key_len, entry)) {
+      return GOOD_RESULT;
+    }
+    if (is_top_candidate) {
+      MOZC_VLOG(2) << "candidates size is 0";
+      return STOP_ENUMERATION;
+    }
+    return BAD_RESULT;
+  }
+
+  return GOOD_RESULT;
+}
+
 bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
                                             const ConversionRequest &request,
                                             size_t max_prediction_size,
@@ -1368,6 +1401,11 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
   Segment *segment = segments->mutable_conversion_segment(0);
   if (segment == nullptr) {
     LOG(ERROR) << "segment is nullptr";
+    return false;
+  }
+  if (request.request_type() != ConversionRequest::SUGGESTION &&
+      request.request_type() != ConversionRequest::PREDICTION) {
+    LOG(ERROR) << "Unknown mode";
     return false;
   }
   const uint32_t input_key_len = Util::CharsLen(segment->key());
@@ -1381,40 +1419,13 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       // Pop() returns nullptr when no more valid entry exists.
       break;
     }
-    bool is_valid_candidate = false;
-    if (request.request_type() == ConversionRequest::PREDICTION) {
-      is_valid_candidate = true;
-    } else if (request.request_type() == ConversionRequest::SUGGESTION) {
-      // The top result of suggestion should be a VALID suggestion candidate.
-      // i.e., SuggestionTriggerFunc should return true for the first
-      // candidate.
-      // If user types "デスノート" too many times, "デスノート" will be
-      // suggested when user types "で". It is expected, but if user types
-      // "です" after that,  showing "デスノート" is annoying.
-      // In this situation, "です" is in the LRU, but SuggestionTriggerFunc
-      // returns false for "です", since it is short.
-      if (IsValidSuggestion(request_type, input_key_len, *result_entry)) {
-        is_valid_candidate = true;
-      } else if (segment->candidates_size() == 0) {
-        MOZC_VLOG(2) << "candidates size is 0";
-        return false;
-      }
-    } else {
-      LOG(ERROR) << "Unknown mode";
+
+    const ResultType result =
+        GetResultType(request, request_type, segment->candidates_size() == 0,
+                      input_key_len, *result_entry);
+    if (result == STOP_ENUMERATION) {
       return false;
-    }
-
-    if (!is_valid_candidate) {
-      MOZC_VLOG(2) << "not a valid candidate: " << result_entry->key();
-      continue;
-    }
-
-    if (request.request().mixed_conversion() &&
-        result_entry->suggestion_freq() < 2 &&
-        Util::CharsLen(result_entry->value()) > 8) {
-      // Don't show long history for mixed conversion
-      // TODO(toshiyuki): Better to merge this into IsValidSuggestion logic.
-      MOZC_VLOG(2) << "long candidate: " << result_entry->value();
+    } else if (result == BAD_RESULT) {
       continue;
     }
 

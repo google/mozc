@@ -37,7 +37,7 @@
 namespace mozc {
 
 // Perform one-shot conversion with constraints.
-// constraits are encoded in |segments|
+// Constraints are encoded in |segments|
 class ImmutableConverterInterface {
  public:
   virtual ~ImmutableConverterInterface() = default;

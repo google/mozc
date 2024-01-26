@@ -46,6 +46,8 @@ class RequestForUnitTest {
   static void FillMobileRequest(Request *request);
   // Fills mobile request with hardware keyboard
   static void FillMobileRequestWithHardwareKeyboard(Request *request);
+  // Fills mobile request for handwriting keyboard
+  static void FillMobileRequestForHandwriting(Request *request);
 };
 }  // namespace commands
 }  // namespace mozc

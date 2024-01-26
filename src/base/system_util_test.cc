@@ -103,25 +103,6 @@ TEST_F(SystemUtilTest, GetUserProfileDirectory) {
 #endif  // Platforms
 }
 
-TEST_F(SystemUtilTest, IsWindowsX64Test) {
-  // just make sure we can compile it.
-  SystemUtil::IsWindowsX64();
-}
-
-TEST_F(SystemUtilTest, SetIsWindowsX64ModeForTest) {
-  SystemUtil::SetIsWindowsX64ModeForTest(
-      SystemUtil::IS_WINDOWS_X64_EMULATE_64BIT_MACHINE);
-  EXPECT_TRUE(SystemUtil::IsWindowsX64());
-
-  SystemUtil::SetIsWindowsX64ModeForTest(
-      SystemUtil::IS_WINDOWS_X64_EMULATE_32BIT_MACHINE);
-  EXPECT_FALSE(SystemUtil::IsWindowsX64());
-
-  // Clear the emulation.
-  SystemUtil::SetIsWindowsX64ModeForTest(
-      SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE);
-}
-
 TEST_F(SystemUtilTest, GetTotalPhysicalMemoryTest) {
   EXPECT_GT(SystemUtil::GetTotalPhysicalMemory(), 0);
 }

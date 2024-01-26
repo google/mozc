@@ -42,6 +42,9 @@
 #include <strsafe.h>
 // clang-format on
 #include <wil/com.h>
+#include <wil/resource.h>
+#include <windows.h>
+#include <winuser.h>
 
 #include <cstddef>
 #include <string>
@@ -71,8 +74,6 @@ namespace {
 using WTL::CBitmap;
 using WTL::CDC;
 using WTL::CIcon;
-using WTL::CMenu;
-using WTL::CMenuItemInfo;
 
 // Represents the cookie for the sink to a TipLangBarButton object.
 constexpr int kTipLangBarMenuCookie =
@@ -274,12 +275,12 @@ STDMETHODIMP TipLangBarButton::OnClick(TfLBIClick click, POINT point,
     return S_OK;
   }
 
-  CMenu menu;
-  menu.CreatePopupMenu();
+  wil::unique_hmenu menu(::CreatePopupMenu());
   for (size_t i = 0; i < menu_data_size(); ++i) {
     TipLangBarMenuData *data = menu_data(i);
     const UINT id = static_cast<UINT>(data->item_id_);
-    CMenuItemInfo info;
+    MENUITEMINFO info = {};
+    info.cbSize = CCSIZEOF_STRUCT(MENUITEMINFO, hbmpItem);
     if (data->flags_ == TF_LBMENUF_SEPARATOR) {
       info.fMask |= MIIM_FTYPE;
       info.fType |= MFT_SEPARATOR;
@@ -317,7 +318,7 @@ STDMETHODIMP TipLangBarButton::OnClick(TfLBIClick click, POINT point,
           break;
       }
     }
-    menu.InsertMenuItemW(i, TRUE, &info);
+    ::InsertMenuItem(menu.get(), i, TRUE, &info);
   }
 
   // Caveats: TPM_NONOTIFY is important because the attached window may
@@ -325,8 +326,22 @@ STDMETHODIMP TipLangBarButton::OnClick(TfLBIClick click, POINT point,
   // from this issue with Internet Explorer 10 on Windows 8. b/10217103.
   constexpr DWORD kMenuFlags = TPM_NONOTIFY | TPM_RETURNCMD | TPM_LEFTALIGN |
                                TPM_TOPALIGN | TPM_LEFTBUTTON;
-  const BOOL result =
-      menu.TrackPopupMenu(kMenuFlags, point.x, point.y, ::GetFocus());
+
+  // Make sure that the x-coordinate is inside the work-area.
+  const HMONITOR monitor_handle =
+      ::MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+  if (monitor_handle != nullptr) {
+    MONITORINFO monitor_info = {};
+    monitor_info.cbSize = CCSIZEOF_STRUCT(MONITORINFO, dwFlags);
+    if (::GetMonitorInfo(monitor_handle, &monitor_info)) {
+      point.x = std::clamp(point.x,
+                           monitor_info.rcWork.left,
+                           monitor_info.rcWork.right);
+    }
+  }
+
+  const BOOL result = ::TrackPopupMenu(menu.get(), kMenuFlags, point.x, point.y,
+                                       0, ::GetFocus(), nullptr);
   if (!result) {
     return E_FAIL;
   }

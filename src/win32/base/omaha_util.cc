@@ -48,8 +48,7 @@ const wchar_t kClientStateKey[] =
 const wchar_t kChannelKeyName[] = L"ap";
 
 LONG OpenClientStateKey(CRegKey *key, REGSAM base_sam) {
-  const REGSAM sam_desired =
-      base_sam | (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
+  const REGSAM sam_desired = base_sam | KEY_WOW64_32KEY;
   return key->Create(HKEY_LOCAL_MACHINE, kClientStateKey, REG_NONE,
                      REG_OPTION_NON_VOLATILE, sam_desired);
 }

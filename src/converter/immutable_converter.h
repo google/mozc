@@ -58,14 +58,6 @@ namespace mozc {
 class ImmutableConverterImpl : public ImmutableConverterInterface {
  public:
   explicit ImmutableConverterImpl(const engine::Modules &modules);
-  ImmutableConverterImpl(
-      const dictionary::DictionaryInterface *dictionary,
-      const dictionary::DictionaryInterface *suffix_dictionary,
-      const dictionary::SuppressionDictionary *suppression_dictionary,
-      const Connector &connector, const Segmenter *segmenter,
-      const dictionary::PosMatcher *pos_matcher,
-      const dictionary::PosGroup *pos_group,
-      const SuggestionFilter &suggestion_filter);
   ImmutableConverterImpl(const ImmutableConverterImpl &) = delete;
   ImmutableConverterImpl &operator=(const ImmutableConverterImpl &) = delete;
   ~ImmutableConverterImpl() override = default;

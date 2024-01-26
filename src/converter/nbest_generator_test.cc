@@ -32,115 +32,51 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
-#include "converter/connector.h"
 #include "converter/immutable_converter.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
-#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/dictionary_impl.h"
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
-#include "dictionary/suppression_dictionary.h"
-#include "dictionary/system/system_dictionary.h"
-#include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
-#include "prediction/suggestion_filter.h"
+#include "engine/modules.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 
 namespace mozc {
 namespace {
 
-using dictionary::DictionaryImpl;
-using dictionary::DictionaryInterface;
-using dictionary::PosGroup;
-using dictionary::SuffixDictionary;
-using dictionary::SuppressionDictionary;
-using dictionary::SystemDictionary;
 using dictionary::UserDictionaryStub;
-using dictionary::ValueDictionary;
 
 class MockDataAndImmutableConverter {
  public:
   // Initializes data and immutable converter with given dictionaries.
   MockDataAndImmutableConverter() {
     data_manager_ = std::make_unique<testing::MockDataManager>();
-
-    pos_matcher_.Set(data_manager_->GetPosMatcherData());
-
-    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
-    CHECK(suppression_dictionary_);
-
-    const char *dictionary_data = nullptr;
-    int dictionary_size = 0;
-    data_manager_->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
-    std::unique_ptr<SystemDictionary> sysdic =
-        SystemDictionary::Builder(dictionary_data, dictionary_size)
-            .Build()
-            .value();
-    auto value_dic =
-        std::make_unique<ValueDictionary>(pos_matcher_, &sysdic->value_trie());
-    dictionary_ = std::make_unique<DictionaryImpl>(
-        std::move(sysdic), std::move(value_dic), &user_dictionary_stub_,
-        suppression_dictionary_.get(), &pos_matcher_);
-    CHECK(dictionary_);
-
-    absl::string_view suffix_key_array_data, suffix_value_array_data;
-    const uint32_t *token_array = nullptr;
-    data_manager_->GetSuffixDictionaryData(
-        &suffix_key_array_data, &suffix_value_array_data, &token_array);
-    suffix_dictionary_ = std::make_unique<SuffixDictionary>(
-        suffix_key_array_data, suffix_value_array_data, token_array);
-    CHECK(suffix_dictionary_);
-
-    connector_ = Connector::CreateFromDataManager(*data_manager_).value();
-
-    segmenter_ = Segmenter::CreateFromDataManager(*data_manager_);
-    CHECK(segmenter_);
-
-    pos_group_ = std::make_unique<PosGroup>(data_manager_->GetPosGroupData());
-    CHECK(pos_group_);
-
-    suggestion_filter_ =
-        SuggestionFilter::CreateOrDie(data_manager_->GetSuggestionFilterData());
-
-    immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
-        dictionary_.get(), suffix_dictionary_.get(),
-        suppression_dictionary_.get(), connector_, segmenter_.get(),
-        &pos_matcher_, pos_group_.get(), suggestion_filter_);
-    CHECK(immutable_converter_);
+    modules_.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
+    absl::Status status = modules_.Init(data_manager_.get());
+    CHECK(status.ok());
+    immutable_converter_ = std::make_unique<ImmutableConverterImpl>(modules_);
   }
 
   ImmutableConverterImpl *GetConverter() { return immutable_converter_.get(); }
 
   std::unique_ptr<NBestGenerator> CreateNBestGenerator(const Lattice *lattice) {
     return std::make_unique<NBestGenerator>(
-        suppression_dictionary_.get(), segmenter_.get(), connector_,
-        &pos_matcher_, lattice, suggestion_filter_);
+        modules_.GetSuppressionDictionary(), modules_.GetSegmenter(),
+        modules_.GetConnector(), modules_.GetPosMatcher(), lattice,
+        modules_.GetSuggestionFilter());
   }
 
  private:
   std::unique_ptr<const DataManagerInterface> data_manager_;
-  std::unique_ptr<const SuppressionDictionary> suppression_dictionary_;
-  Connector connector_;
-  std::unique_ptr<const Segmenter> segmenter_;
-  std::unique_ptr<const DictionaryInterface> suffix_dictionary_;
-  std::unique_ptr<const DictionaryInterface> dictionary_;
-  std::unique_ptr<const PosGroup> pos_group_;
-  SuggestionFilter suggestion_filter_;
+  engine::Modules modules_;
   std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
-  UserDictionaryStub user_dictionary_stub_;
-  dictionary::PosMatcher pos_matcher_;
 };
 
 }  // namespace
@@ -250,7 +186,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   std::unique_ptr<NBestGenerator> nbest_generator =
       data_and_converter->CreateNBestGenerator(&lattice);
 
-  constexpr bool kSingleSegment = true;  // For realtime conversion
+  constexpr bool kSingleSegment = true;  // For real time conversion
   const Node *begin_node = lattice.bos_nodes();
   const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
                                     group, kSingleSegment);
@@ -302,7 +238,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   std::unique_ptr<NBestGenerator> nbest_generator =
       data_and_converter->CreateNBestGenerator(&lattice);
 
-  constexpr bool kSingleSegment = true;  // For realtime conversion
+  constexpr bool kSingleSegment = true;  // For real time conversion
   const Node *begin_node = lattice.bos_nodes();
   const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
                                     group, kSingleSegment);

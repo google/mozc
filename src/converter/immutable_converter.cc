@@ -306,35 +306,6 @@ ImmutableConverterImpl::ImmutableConverterImpl(const engine::Modules &modules)
   DCHECK(pos_group_);
 }
 
-ImmutableConverterImpl::ImmutableConverterImpl(
-    const DictionaryInterface *dictionary,
-    const DictionaryInterface *suffix_dictionary,
-    const SuppressionDictionary *suppression_dictionary,
-    const Connector &connector, const Segmenter *segmenter,
-    const PosMatcher *pos_matcher, const PosGroup *pos_group,
-    const SuggestionFilter &suggestion_filter)
-    : dictionary_(dictionary),
-      suffix_dictionary_(suffix_dictionary),
-      suppression_dictionary_(suppression_dictionary),
-      connector_(connector),
-      segmenter_(segmenter),
-      pos_matcher_(pos_matcher),
-      pos_group_(pos_group),
-      suggestion_filter_(suggestion_filter),
-      first_name_id_(pos_matcher_->GetFirstNameId()),
-      last_name_id_(pos_matcher_->GetLastNameId()),
-      number_id_(pos_matcher_->GetNumberId()),
-      unknown_id_(pos_matcher_->GetUnknownId()),
-      last_to_first_name_transition_cost_(
-          connector_.GetTransitionCost(last_name_id_, first_name_id_)) {
-  DCHECK(dictionary_);
-  DCHECK(suffix_dictionary_);
-  DCHECK(suppression_dictionary_);
-  DCHECK(segmenter_);
-  DCHECK(pos_matcher_);
-  DCHECK(pos_group_);
-}
-
 void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
                                                    size_t expand_size) const {
   const Segment::Candidate *top_candidate =

@@ -71,6 +71,7 @@
 #include "request/conversion_request_util.h"
 #include "transliteration/transliteration.h"
 
+
 #ifndef NDEBUG
 #define MOZC_DEBUG
 #define MOZC_WORD_LOG_MESSAGE(message) \
@@ -129,6 +130,12 @@ bool IsLanguageAwareInputEnabled(const ConversionRequest &request) {
   const auto lang_aware = request.request().language_aware_input();
   return lang_aware == Request::LANGUAGE_AWARE_SUGGESTION;
 }
+
+#if MOZC_ENABLE_NGRAM_RESCORING
+bool IsNgramNextWordPredictionEnabled(const ConversionRequest &request) {
+  return request.request().decoder_experiment_params().ngram_enable_nwp();
+}
+#endif  // MOZC_ENABLE_NGRAM_RESCORING
 
 bool IsZeroQuerySuffixPredictionDisabled(const ConversionRequest &request) {
   return request.request()
@@ -641,19 +648,19 @@ DictionaryPredictionAggregator::GetUnigramConfig(
         min_key_len_for_latin_input};
   }
 
+  if (ConversionRequestUtil::IsHandwriting(request)) {
+    constexpr size_t kMinUnigramKeyLen = 1;
+    return {&DictionaryPredictionAggregator::
+                AggregateUnigramCandidateForHandwriting,
+            kMinUnigramKeyLen};
+  }
+
   if (is_mixed_conversion) {
     // In mixed conversion mode, we want to show unigram candidates even for
     // short keys to emulate PREDICTION mode.
     constexpr size_t kMinUnigramKeyLen = 1;
     return {&DictionaryPredictionAggregator::
                 AggregateUnigramCandidateForMixedConversion,
-            kMinUnigramKeyLen};
-  }
-
-  if (ConversionRequestUtil::IsHandwriting(request)) {
-    constexpr size_t kMinUnigramKeyLen = 1;
-    return {&DictionaryPredictionAggregator::
-                AggregateUnigramCandidateForHandwriting,
             kMinUnigramKeyLen};
   }
 
@@ -743,7 +750,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     selected_types |= TYPING_CORRECTION;
   }
 
-  if (IsMixedConversionEnabled(request.request())) {
+  if (ConversionRequestUtil::IsAutoPartialSuggestionEnabled(request)) {
     AggregatePrefixCandidates(request, segments, results);
     selected_types |= PREFIX;
   }
@@ -1653,6 +1660,7 @@ void DictionaryPredictionAggregator::AggregateZeroQuerySuffixPrediction(
         zip_code_id_, unknown_id_, results);
   }
 }
+
 
 void DictionaryPredictionAggregator::AggregateEnglishPrediction(
     const ConversionRequest &request, const Segments &segments,

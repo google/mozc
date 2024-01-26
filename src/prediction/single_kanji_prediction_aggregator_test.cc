@@ -175,6 +175,16 @@ TEST_F(SingleKanjiPredictionAggregatorTest, PrefixResult) {
   EXPECT_EQ(result.consumed_key_size, strings::CharsLen("あけぼの"));
 }
 
+TEST_F(SingleKanjiPredictionAggregatorTest, NoPrefixResult) {
+  request_->set_auto_partial_suggestion(false);
+  Segments segments;
+  SetUpInputWithKey("あけぼのの", composer_.get(), &segments);
+  SingleKanjiPredictionAggregator aggregator(*data_manager_);
+  const std::vector<Result> results =
+      aggregator.AggregateResults(*convreq_, segments);
+  EXPECT_EQ(results.size(), 0);  // No "あけぼの"
+}
+
 TEST_F(SingleKanjiPredictionAggregatorTest, SvsVariation) {
   Segments segments;
   SetUpInputWithKey("かみ", composer_.get(), &segments);

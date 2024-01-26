@@ -29,9 +29,8 @@
 
 // Test utility for Request.
 
-#include "session/request_test_util.h"
-
 #include "protocol/commands.pb.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 namespace commands {
@@ -56,6 +55,13 @@ void RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
   request->set_auto_partial_suggestion(false);
   request->set_language_aware_input(Request::NO_LANGUAGE_AWARE_INPUT);
   request->set_candidate_page_size(2);
+}
+
+void RequestForUnitTest::FillMobileRequestForHandwriting(Request *request) {
+  request->set_zero_query_suggestion(true);
+  request->set_mixed_conversion(true);
+  request->set_kana_modifier_insensitive_conversion(false);
+  request->set_auto_partial_suggestion(false);
 }
 }  // namespace commands
 }  // namespace mozc

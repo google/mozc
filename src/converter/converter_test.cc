@@ -45,34 +45,27 @@
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/connector.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/dictionary_impl.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
-#include "dictionary/system/system_dictionary.h"
-#include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "dictionary/user_pos.h"
 #include "engine/engine.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
+#include "engine/modules.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
-#include "prediction/suggestion_filter.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -90,17 +83,13 @@
 namespace mozc {
 namespace {
 
-using ::mozc::dictionary::DictionaryImpl;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::MockDictionary;
-using ::mozc::dictionary::PosGroup;
+using ::mozc::dictionary::MockUserDictionary;
 using ::mozc::dictionary::PosMatcher;
-using ::mozc::dictionary::SuffixDictionary;
 using ::mozc::dictionary::SuppressionDictionary;
-using ::mozc::dictionary::SystemDictionary;
 using ::mozc::dictionary::Token;
 using ::mozc::dictionary::UserDictionaryStub;
-using ::mozc::dictionary::ValueDictionary;
 using ::mozc::prediction::DefaultPredictor;
 using ::mozc::prediction::DictionaryPredictor;
 using ::mozc::prediction::MobilePredictor;
@@ -151,17 +140,7 @@ class StubRewriter : public RewriterInterface {
   }
 };
 
-SuffixDictionary *CreateSuffixDictionaryFromDataManager(
-    const DataManagerInterface &data_manager) {
-  absl::string_view suffix_key_array_data, suffix_value_array_data;
-  const uint32_t *token_array;
-  data_manager.GetSuffixDictionaryData(&suffix_key_array_data,
-                                       &suffix_value_array_data, &token_array);
-  return new SuffixDictionary(suffix_key_array_data, suffix_value_array_data,
-                              token_array);
-}
-
-class InsertDummyWordsRewriter : public RewriterInterface {
+class InsertPlaceholderWordsRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &, Segments *segments) const override {
     for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
       Segment *seg = segments->mutable_conversion_segment(i);
@@ -206,17 +185,9 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   // This struct holds resources used by converter.
   struct ConverterAndData {
     std::unique_ptr<testing::MockDataManager> data_manager;
-    std::unique_ptr<DictionaryInterface> user_dictionary;
-    std::unique_ptr<SuppressionDictionary> suppression_dictionary;
-    std::unique_ptr<DictionaryInterface> suffix_dictionary;
-    Connector connector;
-    std::unique_ptr<const Segmenter> segmenter;
-    std::unique_ptr<DictionaryInterface> dictionary;
-    std::unique_ptr<const PosGroup> pos_group;
-    SuggestionFilter suggestion_filter;
+    engine::Modules modules;
     std::unique_ptr<ImmutableConverterInterface> immutable_converter;
     std::unique_ptr<ConverterImpl> converter;
-    dictionary::PosMatcher pos_matcher;
   };
 
   // Returns initialized predictor for the given type.
@@ -255,22 +226,18 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     }
 
     CHECK(converter_and_data.converter.get()) << "converter should be filled.";
+    const engine::Modules &modules = converter_and_data.modules;
 
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
     auto dictionary_predictor = std::make_unique<DictionaryPredictor>(
         *converter_and_data.data_manager, converter_and_data.converter.get(),
-        converter_and_data.immutable_converter.get(),
-        converter_and_data.dictionary.get(),
-        converter_and_data.suffix_dictionary.get(),
-        converter_and_data.connector, converter_and_data.segmenter.get(),
-        *pos_matcher, converter_and_data.suggestion_filter);
+        converter_and_data.immutable_converter.get(), modules);
     CHECK(dictionary_predictor);
 
     auto user_history_predictor = std::make_unique<UserHistoryPredictor>(
-        converter_and_data.dictionary.get(), pos_matcher,
-        converter_and_data.suppression_dictionary.get(),
-        enable_content_word_learning);
+        modules.GetDictionary(), pos_matcher,
+        modules.GetSuppressionDictionary(), enable_content_word_learning);
     CHECK(user_history_predictor);
 
     auto ret_predictor = (*predictor_factory)(
@@ -282,72 +249,37 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 
   // Initializes ConverterAndData with mock data set using given
   // |user_dictionary| and |suppression_dictionary|.
-  void InitConverterAndData(
-      std::unique_ptr<DictionaryInterface> user_dictionary,
-      std::unique_ptr<SuppressionDictionary> suppression_dictionary,
-      std::unique_ptr<RewriterInterface> rewriter, PredictorType predictor_type,
-      ConverterAndData *converter_and_data) {
-    converter_and_data->data_manager =
-        std::make_unique<testing::MockDataManager>();
-    const auto &data_manager = *converter_and_data->data_manager;
-
-    const char *dictionary_data = nullptr;
-    int dictionary_size = 0;
-    data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
-
-    converter_and_data->pos_matcher.Set(data_manager.GetPosMatcherData());
-
-    std::unique_ptr<SystemDictionary> sysdic =
-        SystemDictionary::Builder(dictionary_data, dictionary_size)
-            .Build()
-            .value();
-    auto value_dic = std::make_unique<ValueDictionary>(
-        converter_and_data->pos_matcher, &sysdic->value_trie());
-    converter_and_data->user_dictionary = std::move(user_dictionary);
-    converter_and_data->suppression_dictionary =
-        std::move(suppression_dictionary);
-    converter_and_data->dictionary = std::make_unique<DictionaryImpl>(
-        std::move(sysdic), std::move(value_dic),
-        converter_and_data->user_dictionary.get(),
-        converter_and_data->suppression_dictionary.get(),
-        &converter_and_data->pos_matcher);
-    converter_and_data->pos_group =
-        std::make_unique<PosGroup>(data_manager.GetPosGroupData());
-    converter_and_data->suggestion_filter =
-        SuggestionFilter::CreateOrDie(data_manager.GetSuggestionFilterData());
-    converter_and_data->suffix_dictionary.reset(
-        CreateSuffixDictionaryFromDataManager(data_manager));
-    converter_and_data->connector =
-        Connector::CreateFromDataManager(data_manager).value();
-    converter_and_data->segmenter =
-        Segmenter::CreateFromDataManager(data_manager);
+  void InitConverters(std::unique_ptr<RewriterInterface> rewriter,
+                      PredictorType predictor_type,
+                      ConverterAndData *converter_and_data) {
+    const engine::Modules &modules = converter_and_data->modules;
     converter_and_data->immutable_converter =
-        std::make_unique<ImmutableConverterImpl>(
-            converter_and_data->dictionary.get(),
-            converter_and_data->suffix_dictionary.get(),
-            converter_and_data->suppression_dictionary.get(),
-            converter_and_data->connector, converter_and_data->segmenter.get(),
-            &converter_and_data->pos_matcher,
-            converter_and_data->pos_group.get(),
-            converter_and_data->suggestion_filter);
+        std::make_unique<ImmutableConverterImpl>(modules);
     converter_and_data->converter = std::make_unique<ConverterImpl>();
 
-    auto predictor = CreatePredictor(
-        predictor_type, &converter_and_data->pos_matcher, *converter_and_data);
+    auto predictor = CreatePredictor(predictor_type, modules.GetPosMatcher(),
+                                     *converter_and_data);
     converter_and_data->converter->Init(
-        &converter_and_data->pos_matcher,
-        converter_and_data->suppression_dictionary.get(), std::move(predictor),
-        std::move(rewriter), converter_and_data->immutable_converter.get());
+        modules.GetPosMatcher(), modules.GetSuppressionDictionary(),
+        std::move(predictor), std::move(rewriter),
+        converter_and_data->immutable_converter.get());
   }
 
   std::unique_ptr<ConverterAndData> CreateConverterAndData(
       std::unique_ptr<RewriterInterface> rewriter,
       PredictorType predictor_type) {
-    auto ret = std::make_unique<ConverterAndData>();
-    InitConverterAndData(std::make_unique<UserDictionaryStub>(),
-                         std::make_unique<SuppressionDictionary>(),
-                         std::move(rewriter), predictor_type, ret.get());
-    return ret;
+    auto converter_and_data = std::make_unique<ConverterAndData>();
+    converter_and_data->data_manager =
+        std::make_unique<testing::MockDataManager>();
+
+    engine::Modules &modules = converter_and_data->modules;
+    modules.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
+    absl::Status init = modules.Init(converter_and_data->data_manager.get());
+    CHECK(init.ok()) << init.message();
+
+    InitConverters(std::move(rewriter), predictor_type,
+                   converter_and_data.get());
+    return converter_and_data;
   }
 
   std::unique_ptr<ConverterAndData> CreateStubbedConverterAndData() {
@@ -356,29 +288,24 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   }
 
   std::unique_ptr<ConverterAndData>
-  CreateConverterAndDataWithInsertDummyWordsRewriter() {
-    return CreateConverterAndData(std::make_unique<InsertDummyWordsRewriter>(),
-                                  STUB_PREDICTOR);
-  }
-
-  std::unique_ptr<ConverterAndData>
   CreateConverterAndDataWithUserDefinedEntries(
       const std::vector<UserDefinedEntry> &user_defined_entries,
-      std::unique_ptr<RewriterInterface> rewriter,
       PredictorType predictor_type) {
-    auto ret = std::make_unique<ConverterAndData>();
+    auto converter_and_data = std::make_unique<ConverterAndData>();
+    converter_and_data->data_manager =
+        std::make_unique<testing::MockDataManager>();
 
-    ret->pos_matcher.Set(mock_data_manager_.GetPosMatcherData());
-
+    auto pos_matcher = std::make_unique<dictionary::PosMatcher>(
+        mock_data_manager_.GetPosMatcherData());
     auto suppression_dictionary = std::make_unique<SuppressionDictionary>();
     auto user_dictionary = std::make_unique<dictionary::UserDictionary>(
         dictionary::UserPos::CreateFromDataManager(mock_data_manager_),
-        ret->pos_matcher, suppression_dictionary.get());
+        *pos_matcher, suppression_dictionary.get());
     {
       user_dictionary::UserDictionaryStorage storage;
       using UserEntry = user_dictionary::UserDictionary::Entry;
       user_dictionary::UserDictionary *dictionary = storage.add_dictionaries();
-      for (const auto &user_entry : user_defined_entries) {
+      for (const UserDefinedEntry &user_entry : user_defined_entries) {
         UserEntry *entry = dictionary->add_entries();
         entry->set_key(user_entry.key);
         entry->set_value(user_entry.value);
@@ -386,10 +313,18 @@ class ConverterTest : public testing::TestWithTempUserProfile {
       }
       user_dictionary->Load(storage);
     }
-    InitConverterAndData(std::move(user_dictionary),
-                         std::move(suppression_dictionary), std::move(rewriter),
-                         predictor_type, ret.get());
-    return ret;
+
+    engine::Modules &modules = converter_and_data->modules;
+    modules.PresetPosMatcher(std::move(pos_matcher));
+    modules.PresetSuppressionDictionary(std::move(suppression_dictionary));
+    modules.PresetUserDictionary(std::move(user_dictionary));
+
+    absl::Status init = modules.Init(&mock_data_manager_);
+    CHECK(init.ok()) << init.message();
+
+    InitConverters(std::make_unique<StubRewriter>(), predictor_type,
+                   converter_and_data.get());
+    return converter_and_data;
   }
 
   std::unique_ptr<EngineInterface> CreateEngineWithMobilePredictor() {
@@ -1228,7 +1163,7 @@ ACTION_P2(InvokeCallbackWithUserDictionaryToken, key, value) {
 TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   // Create Converter with mock user dictionary
   testing::MockDataManager data_manager;
-  auto mock_user_dictionary = std::make_unique<MockDictionary>();
+  auto mock_user_dictionary = std::make_unique<MockUserDictionary>();
 
   EXPECT_CALL(*mock_user_dictionary, LookupPredictive(_, _, _))
       .Times(AnyNumber());
@@ -1238,49 +1173,27 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   EXPECT_CALL(*mock_user_dictionary, LookupPrefix(_, _, _)).Times(AnyNumber());
   EXPECT_CALL(*mock_user_dictionary, LookupPrefix(StrEq("てすとの"), _, _))
       .WillRepeatedly(InvokeCallbackWithUserDictionaryToken("てすと", "<>!?"));
-  auto suppression_dictionary = std::make_unique<SuppressionDictionary>();
 
-  const char *dictionary_data = nullptr;
-  int dictionary_size = 0;
-  data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
+  engine::Modules modules;
+  modules.PresetUserDictionary(std::move(mock_user_dictionary));
+  absl::Status init = modules.Init(&data_manager);
+  CHECK(init.ok()) << init.message();
 
-  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
-
-  std::unique_ptr<SystemDictionary> sysdic =
-      SystemDictionary::Builder(dictionary_data, dictionary_size)
-          .Build()
-          .value();
-  auto value_dic =
-      std::make_unique<ValueDictionary>(pos_matcher, &sysdic->value_trie());
-  auto dictionary = std::make_unique<DictionaryImpl>(
-      std::move(sysdic), std::move(value_dic), mock_user_dictionary.get(),
-      suppression_dictionary.get(), &pos_matcher);
-  PosGroup pos_group(data_manager.GetPosGroupData());
-  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
-      CreateSuffixDictionaryFromDataManager(data_manager));
-  Connector connector = Connector::CreateFromDataManager(data_manager).value();
-  std::unique_ptr<const Segmenter> segmenter(
-      Segmenter::CreateFromDataManager(data_manager));
-  SuggestionFilter suggestion_filter(
-      SuggestionFilter::CreateOrDie(data_manager.GetSuggestionFilterData()));
-  auto immutable_converter = std::make_unique<ImmutableConverterImpl>(
-      dictionary.get(), suffix_dictionary.get(), suppression_dictionary.get(),
-      connector, segmenter.get(), &pos_matcher, &pos_group, suggestion_filter);
+  auto immutable_converter = std::make_unique<ImmutableConverterImpl>(modules);
   ConverterImpl converter;
   const DictionaryInterface *kNullDictionary = nullptr;
-  converter.Init(&pos_matcher, suppression_dictionary.get(),
-                 DefaultPredictor::CreateDefaultPredictor(
-                     std::make_unique<DictionaryPredictor>(
-                         data_manager, &converter, immutable_converter.get(),
-                         dictionary.get(), suffix_dictionary.get(), connector,
-                         segmenter.get(), pos_matcher, suggestion_filter),
-                     std::make_unique<UserHistoryPredictor>(
-                         dictionary.get(), &pos_matcher,
-                         suppression_dictionary.get(), false),
-                     &converter),
-                 std::make_unique<RewriterImpl>(&converter, &data_manager,
-                                                &pos_group, kNullDictionary),
-                 immutable_converter.get());
+  converter.Init(
+      modules.GetPosMatcher(), modules.GetSuppressionDictionary(),
+      DefaultPredictor::CreateDefaultPredictor(
+          std::make_unique<DictionaryPredictor>(
+              data_manager, &converter, immutable_converter.get(), modules),
+          std::make_unique<UserHistoryPredictor>(
+              modules.GetDictionary(), modules.GetPosMatcher(),
+              modules.GetSuppressionDictionary(), false),
+          &converter),
+      std::make_unique<RewriterImpl>(&converter, &data_manager,
+                                     modules.GetPosGroup(), kNullDictionary),
+      immutable_converter.get());
 
   Segments segments;
   {
@@ -1334,20 +1247,21 @@ TEST_F(ConverterTest, ComposerKeySelection) {
 }
 
 TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
-  std::unique_ptr<ConverterAndData> ret(
-      CreateConverterAndDataWithInsertDummyWordsRewriter());
+  std::unique_ptr<ConverterAndData> ret(CreateConverterAndData(
+      std::make_unique<InsertPlaceholderWordsRewriter>(), STUB_PREDICTOR));
 
   // Set up suppression dictionary
-  ret->suppression_dictionary->Lock();
-  ret->suppression_dictionary->AddEntry("tobefiltered", "ToBeFiltered");
-  ret->suppression_dictionary->UnLock();
-  EXPECT_FALSE(ret->suppression_dictionary->IsEmpty());
+  ret->modules.GetMutableSuppressionDictionary()->Lock();
+  ret->modules.GetMutableSuppressionDictionary()->AddEntry("tobefiltered",
+                                                           "ToBeFiltered");
+  ret->modules.GetMutableSuppressionDictionary()->UnLock();
+  EXPECT_FALSE(ret->modules.GetMutableSuppressionDictionary()->IsEmpty());
 
   // Convert
   composer::Table table;
   config::Config config;
   composer::Composer composer(&table, &default_request(), &config);
-  composer.InsertCharacter("dummy");
+  composer.InsertCharacter("placeholder");
   const ConversionRequest request(&composer, &default_request(), &config);
   Segments segments;
   EXPECT_TRUE(ret->converter->StartConversionForRequest(request, &segments));
@@ -1660,9 +1574,8 @@ TEST_F(ConverterTest, UserEntryShouldBePromoted) {
       UserDefinedEntry("あい", "哀", UserDictionary::NOUN));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          STUB_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   STUB_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1683,9 +1596,8 @@ TEST_F(ConverterTest, UserEntryShouldBePromotedMobilePrediction) {
       UserDefinedEntry("あい", "哀", UserDictionary::NOUN));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          MOBILE_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   MOBILE_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1719,9 +1631,8 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized) {
       UserDefinedEntry("あい", "哀", UserDictionary::SUPPRESSION_WORD));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          STUB_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   STUB_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1746,8 +1657,8 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritizedPrediction) {
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
   for (int i = 0; i < std::size(types); ++i) {
     std::unique_ptr<ConverterAndData> ret =
-        CreateConverterAndDataWithUserDefinedEntries(
-            user_defined_entries, std::make_unique<StubRewriter>(), types[i]);
+        CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                     types[i]);
     ConverterInterface *converter = ret->converter.get();
     CHECK(converter);
     {
@@ -1767,9 +1678,8 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependent) {
       UserDefinedEntry("じゅ", "Google+", UserDictionary::ABBREVIATION));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          STUB_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   STUB_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1791,8 +1701,8 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependentPrediction) {
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
   for (int i = 0; i < std::size(types); ++i) {
     std::unique_ptr<ConverterAndData> ret =
-        CreateConverterAndDataWithUserDefinedEntries(
-            user_defined_entries, std::make_unique<StubRewriter>(), types[i]);
+        CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                     types[i]);
 
     ConverterInterface *converter = ret->converter.get();
     CHECK(converter);
@@ -1814,9 +1724,8 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent) {
       UserDefinedEntry("じゅ", "Google+", UserDictionary::SUGGESTION_ONLY));
 
   std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(
-          user_defined_entries, std::make_unique<StubRewriter>(),
-          STUB_PREDICTOR);
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   STUB_PREDICTOR);
 
   ConverterInterface *converter = ret->converter.get();
   CHECK(converter);
@@ -1838,8 +1747,8 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependentPrediction) {
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
   for (int i = 0; i < std::size(types); ++i) {
     std::unique_ptr<ConverterAndData> ret =
-        CreateConverterAndDataWithUserDefinedEntries(
-            user_defined_entries, std::make_unique<StubRewriter>(), types[i]);
+        CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                     types[i]);
 
     ConverterInterface *converter = ret->converter.get();
     CHECK(converter);

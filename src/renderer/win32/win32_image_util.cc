@@ -29,13 +29,8 @@
 
 #include "renderer/win32/win32_image_util.h"
 
-// clang-format off
-#include <atlbase.h>
-#include <atltypes.h>
-#include <atlapp.h>
-#include <atlmisc.h>
-#include <atlgdi.h>
-// clang-format on
+#include <windows.h>
+#include <wil/resource.h>
 
 #include <algorithm>
 #include <bitset>
@@ -44,6 +39,7 @@
 #include <memory>
 #include <vector>
 
+#include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/util.h"
 
@@ -56,12 +52,6 @@ using ::mozc::renderer::win32::internal::GaussianBlur;
 using ::mozc::renderer::win32::internal::SafeFrameBuffer;
 using ::mozc::renderer::win32::internal::SubdivisionalPixel;
 using ::mozc::renderer::win32::internal::TextLabel;
-
-using ::WTL::CBitmap;
-using ::WTL::CBitmapHandle;
-using ::WTL::CDC;
-using ::WTL::CFont;
-using ::WTL::CFontHandle;
 
 Rect GetBalloonBoundingRect(
     double left, double top, double width, double height,
@@ -418,21 +408,20 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
   bitmap_info.color_palette[1] = kForegroundColor;  // white
 
   uint8_t *buffer = nullptr;
-  CBitmap dib;
-  dib.CreateDIBSection(
+  wil::unique_hbitmap dib(::CreateDIBSection(
       nullptr, reinterpret_cast<const BITMAPINFO *>(&bitmap_info),
-      DIB_RGB_COLORS, reinterpret_cast<void **>(&buffer), nullptr, 0);
+      DIB_RGB_COLORS, reinterpret_cast<void **>(&buffer), nullptr, 0));
 
-  CDC dc;
-  dc.CreateCompatibleDC(nullptr);
-  CBitmapHandle old_bitmap = dc.SelectBitmap(dib);
+  wil::unique_hdc dc(::CreateCompatibleDC(nullptr));
+  wil::unique_select_object old_bitmap(wil::SelectObject(dc.get(), dib.get()));
 
   std::wstring wide_fontname;
   Util::Utf8ToWide(fontname, &wide_fontname);
   LOGFONT logfont = {};
   logfont.lfWeight = FW_NORMAL;
   logfont.lfCharSet = DEFAULT_CHARSET;
-  logfont.lfHeight = GetHeightFromDeciPoint(font_point * 10 * kDivision, dc);
+  logfont.lfHeight = GetHeightFromDeciPoint(font_point * 10 * kDivision,
+                                            dc.get());
   logfont.lfQuality = NONANTIALIASED_QUALITY;
   const errno_t error = wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
   if (error != 0) {
@@ -440,24 +429,22 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
     return pixels;
   }
 
-  CFont font_handle;
-  font_handle.CreateFontIndirectW(&logfont);
-  const CFontHandle old_font = dc.SelectFont(font_handle);
-  const CPoint lefttop(
-      static_cast<int>(floor((left - bounding_rect.Left()) * kDivision)),
-      static_cast<int>(floor((top - bounding_rect.Top()) * kDivision)));
-  const CSize size(static_cast<int>(ceil(width * kDivision)),
-                   static_cast<int>(ceil(height * kDivision)));
-
-  CRect rect(lefttop, size);
-  dc.SetBkMode(TRANSPARENT);
-  dc.SetTextColor(RGB(255, 255, 255));
+  wil::unique_hfont font_handle(::CreateFontIndirectW(&logfont));
+  wil::unique_select_object old_font(
+      wil::SelectObject(dc.get(), font_handle.get()));
+  const int rect_left =
+      static_cast<int>(floor((left - bounding_rect.Left()) * kDivision));
+  const int rect_top =
+      static_cast<int>(floor((top - bounding_rect.Top()) * kDivision));
+  RECT rect = {rect_left, rect_top,
+               rect_left + static_cast<int>(ceil(width * kDivision)),
+               rect_top + static_cast<int>(ceil(height * kDivision))};
+  ::SetBkMode(dc.get(), TRANSPARENT);
+  ::SetTextColor(dc.get(), RGB(255, 255, 255));
   std::wstring wide_text;
   Util::Utf8ToWide(text, &wide_text);
-  dc.DrawTextW(wide_text.c_str(), wide_text.size(), &rect,
-               DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_CENTER);
-  dc.SelectFont(old_font);
-  dc.SelectBitmap(old_bitmap);
+  ::DrawTextW(dc.get(), wide_text.c_str(), wide_text.size(), &rect,
+              DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_CENTER);
   ::GdiFlush();
 
   // DIB section requires 32-bit alignment for each line.
@@ -643,9 +630,9 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
   bitmap_info.bmiHeader.biCompression = BI_RGB;
   bitmap_info.bmiHeader.biSizeImage = 0;
   PBGRA *buffer = nullptr;
-  CBitmap dib;
-  dib.CreateDIBSection(nullptr, &bitmap_info, DIB_RGB_COLORS,
-                       reinterpret_cast<void **>(&buffer), nullptr, 0);
+  wil::unique_hbitmap dib(
+      ::CreateDIBSection(nullptr, &bitmap_info, DIB_RGB_COLORS,
+                         reinterpret_cast<void **>(&buffer), nullptr, 0));
 
   struct Accessor {
    public:
@@ -735,7 +722,7 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
     }
   }
 
-  return dib.Detach();
+  return dib.release();
 }
 
 namespace internal {

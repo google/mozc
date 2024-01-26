@@ -27,9 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "session/request_test_util.h"
-
 #include "protocol/commands.pb.h"
+#include "session/request_test_util.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -54,6 +53,15 @@ TEST(RequestForUnitTest, CheckFillMobileRequestWithHardwareKeyboard) {
   EXPECT_FALSE(request.auto_partial_suggestion());
   EXPECT_EQ(request.candidate_page_size(), 2);
   EXPECT_EQ(request.special_romanji_table(), Request::TWELVE_KEYS_TO_HIRAGANA);
+}
+
+TEST(RequestForUnitTest, CheckFillMobileRequestForHandwriting) {
+  Request request;
+  RequestForUnitTest::FillMobileRequestForHandwriting(&request);
+  EXPECT_TRUE(request.zero_query_suggestion());
+  EXPECT_TRUE(request.mixed_conversion());
+  EXPECT_FALSE(request.kana_modifier_insensitive_conversion());
+  EXPECT_FALSE(request.auto_partial_suggestion());
 }
 }  // namespace commands
 }  // namespace mozc

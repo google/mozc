@@ -60,6 +60,7 @@ mozc_cc_library(
     ],
     deps = [
         ":dictionary_token",
+        "//protocol:user_dictionary_storage_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/strings",
     ],
@@ -204,6 +205,8 @@ mozc_cc_library(
     hdrs = ["user_dictionary_stub.h"],
     deps = [
         ":dictionary_interface",
+        "//protocol:user_dictionary_storage_cc_proto",
+        "//request:conversion_request",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -624,7 +627,9 @@ mozc_cc_library(
     hdrs = ["dictionary_mock.h"],
     deps = [
         ":dictionary_interface",
+        "//request:conversion_request",
         "//testing:gunit",
+        "@com_google_absl//absl/strings",
     ],
 )
 

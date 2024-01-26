@@ -468,9 +468,7 @@ bool SessionConverter::SuggestWithPreferences(
   //                  prediction API.
   // - (true, true): Mobile suggestion with richer candidates through
   //                  prediction API, using partial composition text.
-  bool use_prediction_candidate =
-      (request_->mixed_conversion() ||
-       !composer.GetHandwritingCompositions().empty());
+  bool use_prediction_candidate = request_->mixed_conversion();
   bool use_partial_composition = (cursor != composer.GetLength() &&
                                   cursor != 0 && request_->mixed_conversion());
   // Setup request based on the above two flags.

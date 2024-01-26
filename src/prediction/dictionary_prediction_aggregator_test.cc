@@ -74,6 +74,7 @@
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
 
+
 namespace mozc {
 namespace prediction {
 
@@ -148,6 +149,7 @@ class DictionaryPredictionAggregatorTestPeer {
     aggregator_.AggregateZeroQuerySuffixPrediction(request, segments, results);
   }
 
+
   void AggregateEnglishPrediction(const ConversionRequest &request,
                                   const Segments &segments,
                                   std::vector<Result> *results) const {
@@ -203,6 +205,7 @@ using ::testing::SetArgPointee;
 using ::testing::StrEq;
 using ::testing::Truly;
 using ::testing::WithParamInterface;
+
 
 // Action to call the third argument of LookupPrefix/LookupPredictive with the
 // token <key, value>.
@@ -420,6 +423,12 @@ class MockDataAndAggregator {
   const DictionaryPredictionAggregatorTestPeer &aggregator() {
     return *aggregator_;
   }
+
+#if MOZC_ENABLE_NGRAM_RESCORING
+  void set_ngram_model(const ngram::NgramModelInterface *ngram_model) {
+    aggregator_->SetNgramModel(ngram_model);
+  }
+#endif  // MOZC_ENABLE_NGRAM_RESCORING
 
  private:
   const testing::MockDataManager data_manager_;
@@ -1858,6 +1867,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQuerySuffixPrediction) {
   }
 }
 
+
 struct EnglishPredictionTestEntry {
   std::string name;
   transliteration::TransliterationType input_mode;
@@ -1941,6 +1951,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::ValuesIn(*kEnglishPredictionTestEntries),
     [](const ::testing::TestParamInfo<AggregateEnglishPredictionTest::ParamType>
            &info) { return info.param.name; });
+
 
 TEST_F(DictionaryPredictionAggregatorTest, ZeroQuerySuggestionAfterNumbers) {
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
@@ -2729,15 +2740,8 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwiritng) {
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
   Segments segments;
-
-  {
-    // Handwriting request
-    request_->set_zero_query_suggestion(true);
-    request_->set_mixed_conversion(false);
-    request_->set_kana_modifier_insensitive_conversion(false);
-    request_->set_auto_partial_suggestion(false);
-  }
-
+  // Handwriting request
+  commands::RequestForUnitTest::FillMobileRequestForHandwriting(request_.get());
   {
     commands::SessionCommand command;
     commands::SessionCommand::CompositionEvent *composition_event =

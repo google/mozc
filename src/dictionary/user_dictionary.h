@@ -48,7 +48,7 @@
 namespace mozc {
 namespace dictionary {
 
-class UserDictionary : public DictionaryInterface {
+class UserDictionary : public UserDictionaryInterface {
  public:
   UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
                  PosMatcher pos_matcher,
@@ -85,19 +85,19 @@ class UserDictionary : public DictionaryInterface {
                      std::string *comment) const override;
 
   // Loads dictionary from UserDictionaryStorage.
-  // mainly for unittesting
-  bool Load(const user_dictionary::UserDictionaryStorage &storage);
+  // mainly for unit testing
+  bool Load(const user_dictionary::UserDictionaryStorage &storage) override;
 
   // Reloads dictionary asynchronously
   bool Reload() override;
 
   // Waits until reloader finishes
-  void WaitForReloader();
+  void WaitForReloader() override;
 
   // Gets the user POS list.
-  std::vector<std::string> GetPosList() const;
+  std::vector<std::string> GetPosList() const override;
 
-  // Sets user dicitonary filename for unittesting
+  // Sets user dictionary filename for unit testing
   static void SetUserDictionaryName(absl::string_view filename);
 
   enum RequestType { PREFIX, PREDICTIVE, EXACT };
