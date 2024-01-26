@@ -174,7 +174,6 @@ void SessionHandler::Init(std::unique_ptr<EngineInterface> engine,
     absl::SetFlag(&FLAGS_last_command_timeout, 60);
   }
 
-
   // allow [2..128] sessions
   max_session_size_ =
       std::max(2, std::min(absl::GetFlag(FLAGS_max_session_size), 128));
@@ -183,6 +182,7 @@ void SessionHandler::Init(std::unique_ptr<EngineInterface> engine,
   if (!engine_) {
     return;
   }
+
 
   // everything is OK
   is_available_ = true;

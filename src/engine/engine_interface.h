@@ -40,6 +40,7 @@
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
 
+
 namespace mozc {
 
 // Builds and manages a set of modules that are necessary for conversion,
@@ -82,6 +83,7 @@ class EngineInterface {
 
   // Gets the user POS list.
   virtual std::vector<std::string> GetPosList() const = 0;
+
 
  protected:
   EngineInterface() = default;
