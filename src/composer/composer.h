@@ -39,7 +39,6 @@
 #include <string>
 #include <vector>
 
-#include "spelling/spellchecker_service_interface.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/internal/composition.h"
@@ -47,6 +46,7 @@
 #include "composer/internal/transliterators.h"
 #include "composer/query.h"
 #include "composer/table.h"
+#include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
@@ -92,8 +92,7 @@ class Composer final {
 
   void SetRequest(const commands::Request *request);
   void SetConfig(const config::Config *config);
-  void SetSpellCheckerService(
-      const spelling::SpellCheckerServiceInterface *spellchecker_service);
+  void SetSpellchecker(const engine::SpellcheckerInterface *spellchecker);
 
   void SetInputMode(transliteration::TransliterationType mode);
   void SetTemporaryInputMode(transliteration::TransliterationType mode);
@@ -265,10 +264,6 @@ class Composer final {
   int timeout_threshold_msec() const;
   void set_timeout_threshold_msec(int threshold_msec);
 
-  const spelling::SpellCheckerServiceInterface *spellchecker_service() const {
-    return spellchecker_service_;
-  }
-
  private:
   FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);
 
@@ -322,10 +317,10 @@ class Composer final {
   // be true.  When "b" or "c" is typed, the value should be false.
   bool is_new_input_;
 
-  // Spellchecker service. used for composition spellchecking.
+  // Spellchecker is used for composition spellchecking.
   // Composer doesn't have the ownership of spellchecker_service_,
-  // SessionHandler owns this this instance. (usually a singleton object).
-  const spelling::SpellCheckerServiceInterface *spellchecker_service_ = nullptr;
+  // SessionHandler owns this instance. (usually a singleton object).
+  const engine::SpellcheckerInterface *spellchecker_ = nullptr;
 
   // Example:
   //   {{"かん字", 0.99}, {"かlv字", 0.01}}

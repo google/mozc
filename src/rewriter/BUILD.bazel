@@ -876,7 +876,6 @@ mozc_cc_binary(
         "//base:file_stream",
         "//base:init_mozc_buildtool",
         "//base:logging",
-        "//base:status",
         "//base:util",
         "//base:vlog",
         "//base/file:temp_dir",

@@ -39,7 +39,6 @@
 #include <utility>
 #include <vector>
 
-#include "spelling/spellchecker_service_interface.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
@@ -614,8 +613,9 @@ TEST_F(SessionHandlerTest, SyncDataTest) {
 TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
 
-  auto new_engine = std::make_unique<EngineStub>();
-  const auto *new_engine_ptr = new_engine.get();
+  auto new_engine = std::make_unique<MockEngine>();
+  const MockEngine *new_engine_ptr = new_engine.get();
+
 
   EXPECT_CALL(*engine_builder, RegisterRequest(_)).WillRepeatedly(Return(1));
   EXPECT_CALL(*engine_builder, Build(1))

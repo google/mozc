@@ -37,6 +37,7 @@
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
 
@@ -82,6 +83,9 @@ class EngineInterface {
 
   // Gets the user POS list.
   virtual std::vector<std::string> GetPosList() const = 0;
+
+  virtual void SetSpellchecker(
+      const engine::SpellcheckerInterface *spellchecker) {}
 
  protected:
   EngineInterface() = default;

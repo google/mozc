@@ -36,6 +36,7 @@
 #include <dwrite.h>
 #include <objbase.h>
 #include <wil/com.h>
+#include <wil/resource.h>
 
 #include <cstddef>
 #include <memory>
@@ -56,10 +57,6 @@ namespace win32 {
 
 using ::mozc::renderer::RendererStyle;
 using ::mozc::renderer::RendererStyleHandler;
-using ::WTL::CDC;
-using ::WTL::CDCHandle;
-using ::WTL::CFont;
-using ::WTL::CFontHandle;
 
 namespace {
 
@@ -191,8 +188,9 @@ DWORD GetGdiDrawTextStyle(TextRenderer::FONT_TYPE type) {
 
 class GdiTextRenderer : public TextRenderer {
  public:
-  GdiTextRenderer() : render_info_(SIZE_OF_FONT_TYPE) {
-    mem_dc_.CreateCompatibleDC();
+  GdiTextRenderer()
+      : render_info_(SIZE_OF_FONT_TYPE),
+        mem_dc_(::CreateCompatibleDC(nullptr)) {
     OnThemeChanged();
   }
 
@@ -201,15 +199,15 @@ class GdiTextRenderer : public TextRenderer {
     RenderInfo() : color(0), style(0) {}
     COLORREF color;
     DWORD style;
-    CFont font;
+    wil::unique_hfont font;
   };
 
   // TextRenderer overrides:
   void OnThemeChanged() override {
     // delete old fonts
     for (size_t i = 0; i < SIZE_OF_FONT_TYPE; ++i) {
-      if (!render_info_[i].font.IsNull()) {
-        render_info_[i].font.DeleteObject();
+      if (render_info_[i].font.is_valid()) {
+        render_info_[i].font.reset();
       }
     }
 
@@ -217,55 +215,58 @@ class GdiTextRenderer : public TextRenderer {
       const auto font_type = static_cast<FONT_TYPE>(i);
       const auto &log_font = GetLogFont(font_type);
       render_info_[i].style = GetGdiDrawTextStyle(font_type);
-      render_info_[i].font.CreateFontIndirectW(&log_font);
+      render_info_[i].font.reset(::CreateFontIndirectW(&log_font));
       render_info_[i].color = GetTextColor(font_type);
     }
   }
 
   Size MeasureString(FONT_TYPE font_type,
                      const std::wstring_view str) const override {
-    const auto previous_font = mem_dc_.SelectFont(render_info_[font_type].font);
     CRect rect;
-    mem_dc_.DrawTextW(str.data(), str.length(), &rect,
-                      DT_NOPREFIX | DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
-    mem_dc_.SelectFont(previous_font);
+    {
+      const auto previous_font =
+          wil::SelectObject(mem_dc_.get(), render_info_[font_type].font.get());
+      ::DrawTextW(mem_dc_.get(), str.data(), str.length(), &rect,
+                  DT_NOPREFIX | DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
+    }
     return Size(rect.Width(), rect.Height());
   }
 
   Size MeasureStringMultiLine(FONT_TYPE font_type, const std::wstring_view str,
                               const int width) const override {
-    const auto previous_font = mem_dc_.SelectFont(render_info_[font_type].font);
     CRect rect(0, 0, width, 0);
-    mem_dc_.DrawTextW(str.data(), str.length(), &rect,
-                      DT_NOPREFIX | DT_LEFT | DT_WORDBREAK | DT_CALCRECT);
-    mem_dc_.SelectFont(previous_font);
+    {
+      const auto previous_font =
+          wil::SelectObject(mem_dc_.get(), render_info_[font_type].font.get());
+      ::DrawTextW(mem_dc_.get(), str.data(), str.length(), &rect,
+                  DT_NOPREFIX | DT_LEFT | DT_WORDBREAK | DT_CALCRECT);
+    }
     return Size(rect.Width(), rect.Height());
   }
 
-  void RenderText(CDCHandle dc, const std::wstring_view text, const Rect &rect,
+  void RenderText(HDC dc, const std::wstring_view text, const Rect &rect,
                   FONT_TYPE font_type) const override {
     std::vector<TextRenderingInfo> infolist;
     infolist.emplace_back(std::wstring(text), rect);
     RenderTextList(dc, infolist, font_type);
   }
 
-  void RenderTextList(CDCHandle dc,
+  void RenderTextList(HDC dc,
                       const absl::Span<const TextRenderingInfo> display_list,
                       FONT_TYPE font_type) const override {
     const auto &render_info = render_info_[font_type];
-    const auto old_font = dc.SelectFont(render_info.font);
-    const auto previous_color = dc.SetTextColor(render_info.color);
+    const auto old_font = wil::SelectObject(dc, render_info.font.get());
+    const auto previous_color = ::SetTextColor(dc, render_info.color);
     for (const TextRenderingInfo &info : display_list) {
       CRect rect = ToCRect(info.rect);
-      dc.DrawTextW(info.text.data(), info.text.size(), &rect,
-                   render_info.style);
+      ::DrawTextW(dc, info.text.data(), info.text.size(), &rect,
+                  render_info.style);
     }
-    dc.SetTextColor(previous_color);
-    dc.SelectFont(old_font);
+    ::SetTextColor(dc, previous_color);
   }
 
   std::vector<RenderInfo> render_info_;
-  mutable CDC mem_dc_;
+  wil::unique_hdc mem_dc_;
 };
 
 class DirectWriteTextRenderer : public TextRenderer {
@@ -353,14 +354,14 @@ class DirectWriteTextRenderer : public TextRenderer {
     return MeasureStringImpl(font_type, str, width, true);
   }
 
-  void RenderText(CDCHandle dc, const std::wstring_view text, const Rect &rect,
+  void RenderText(HDC dc, const std::wstring_view text, const Rect &rect,
                   FONT_TYPE font_type) const override {
     std::vector<TextRenderingInfo> infolist;
     infolist.emplace_back(std::wstring(text), rect);
     RenderTextList(dc, infolist, font_type);
   }
 
-  void RenderTextList(CDCHandle dc,
+  void RenderTextList(HDC dc,
                       const absl::Span<const TextRenderingInfo> display_list,
                       FONT_TYPE font_type) const override {
     constexpr size_t kMaxTrial = 3;
@@ -385,7 +386,7 @@ class DirectWriteTextRenderer : public TextRenderer {
   }
 
   HRESULT RenderTextListImpl(
-      CDCHandle dc, const absl::Span<const TextRenderingInfo> display_list,
+      HDC dc, const absl::Span<const TextRenderingInfo> display_list,
       FONT_TYPE font_type) const {
     CRect total_rect;
     for (const auto &item : display_list) {

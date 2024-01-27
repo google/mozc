@@ -188,6 +188,7 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, GetScore);
   FRIEND_TEST(UserHistoryPredictorTest, IsValidEntry);
   FRIEND_TEST(UserHistoryPredictorTest, IsValidSuggestion);
+  FRIEND_TEST(UserHistoryPredictorTest, IsValidSuggestionForMixedConversion);
   FRIEND_TEST(UserHistoryPredictorTest, EntryPriorityQueueTest);
   FRIEND_TEST(UserHistoryPredictorTest, RomanFuzzyPrefixMatch);
   FRIEND_TEST(UserHistoryPredictorTest, MaybeRomanMisspelledKey);
@@ -293,6 +294,11 @@ class UserHistoryPredictor : public PredictorInterface {
   // a valid result if the length of user input is |prefix_len|.
   static bool IsValidSuggestion(RequestType request_type, uint32_t prefix_len,
                                 const Entry &entry);
+
+  // IsValidSuggestion used in mixed conversion (mobile).
+  static bool IsValidSuggestionForMixedConversion(
+      const ConversionRequest &request, uint32_t prefix_len,
+      const Entry &entry);
 
   static ResultType GetResultType(const ConversionRequest &request,
                                   RequestType request_type,

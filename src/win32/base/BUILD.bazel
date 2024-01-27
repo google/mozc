@@ -38,7 +38,6 @@ load(
 )
 load(
     "//bazel/win32:build_defs.bzl",
-    "copts_wtl",
     "features_gdi",
 )
 
@@ -493,7 +492,6 @@ mozc_cc_library(
     name = "win32_window_util",
     srcs = ["win32_window_util.cc"],
     hdrs = ["win32_window_util.h"],
-    copts = copts_wtl(),
     features = features_gdi(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],

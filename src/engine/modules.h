@@ -41,6 +41,7 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/spellchecker_interface.h"
 #include "prediction/rescorer_interface.h"
 #include "prediction/suggestion_filter.h"
 
@@ -99,6 +100,13 @@ class Modules {
   }
 
 
+  const engine::SpellcheckerInterface *GetSpellchecker() const {
+    return spellchecker_;
+  }
+  void SetSpellchecker(const engine::SpellcheckerInterface *spellchecker) {
+    spellchecker_ = spellchecker;
+  }
+
  private:
   bool initialized_ = false;
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
@@ -112,6 +120,11 @@ class Modules {
   SuggestionFilter suggestion_filter_;
   std::unique_ptr<const prediction::RescorerInterface> rescorer_;
 
+
+  // Spellchecker used for homonym correction.
+  // Module doesn't have the ownership of spellchecker_,
+  // SessionHandler owns this this instance. (usually a singleton object).
+  const engine::SpellcheckerInterface *spellchecker_ = nullptr;
 };
 
 }  // namespace engine

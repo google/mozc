@@ -48,7 +48,6 @@
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "engine/modules.h"
@@ -307,7 +306,7 @@ class DictionaryPredictor : public PredictorInterface {
       const TypingCorrectionMixingParams &typing_correction_mixing_params,
       Segments *segments);
 
-  static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
+  static void MaybeApplyHomonymCorrection(const engine::Modules &modules,
                                           Segments *segments);
 
   void MaybeRescoreResults(const ConversionRequest &request,
@@ -330,6 +329,7 @@ class DictionaryPredictor : public PredictorInterface {
   const uint16_t general_symbol_id_;
   const std::string predictor_name_;
   const prediction::RescorerInterface *rescorer_ = nullptr;
+  const engine::Modules &modules_;
 };
 
 }  // namespace mozc::prediction

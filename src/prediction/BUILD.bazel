@@ -177,6 +177,7 @@ mozc_cc_library(
         "//dictionary:pos_matcher",
         "//dictionary:single_kanji_dictionary",
         "//engine:modules",
+        "//engine:spellchecker_interface",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
         "//request:conversion_request_util",
@@ -287,6 +288,7 @@ mozc_cc_test(
         "//dictionary:dictionary_token",
         "//dictionary:pos_matcher",
         "//dictionary:suffix_dictionary",
+        "//engine:spellchecker_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
@@ -452,7 +454,6 @@ mozc_cc_library(
     deps = [
         "//base:hash",
         "//base:logging",
-        "//base:status",
         "//base:util",
         "//storage:existence_filter",
         "@com_google_absl//absl/status:statusor",

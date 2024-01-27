@@ -50,6 +50,7 @@
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gmock.h"
@@ -3382,16 +3383,50 @@ TEST_F(ComposerTest, NBforeN_WithHalfWidth) {
   EXPECT_EQ(prediction, "あな");
 }
 
-TEST_F(ComposerTest, SpellCheckerServiceTest) {
+TEST_F(ComposerTest, SpellcheckerTest) {
   table_->AddRule("a", "あ", "");
   table_->AddRule("i", "い", "");
   table_->AddRule("u", "う", "");
   composer_->InsertCharacter("aiu");
 
   const auto preedit = GetPreedit(composer_.get());
-  composer_->SetSpellCheckerService(nullptr);
+  composer_->SetSpellchecker(nullptr);
   EXPECT_EQ(composer_->GetTypeCorrectedQueries("context"), std::nullopt);
 
+  class MockSpellchecker : public engine::SpellcheckerInterface {
+   public:
+    MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
+                (const commands::CheckSpellingRequest &), (const, override));
+    MOCK_METHOD(std::optional<std::vector<TypeCorrectedQuery>>,
+                CheckCompositionSpelling,
+                (absl::string_view, absl::string_view,
+                 const commands::Request &),
+                (const, override));
+    MOCK_METHOD(void, MaybeApplyHomonymCorrection, (Segments *),
+                (const, override));
+  };
+
+  {
+    auto mock = std::make_unique<MockSpellchecker>();
+    EXPECT_CALL(*mock, CheckCompositionSpelling(preedit, "context", _))
+        .WillOnce(Return(std::nullopt));
+    composer_->SetSpellchecker(mock.get());
+    EXPECT_EQ(composer_->GetTypeCorrectedQueries("context"), std::nullopt);
+  }
+
+  {
+    std::vector<TypeCorrectedQuery> expected(1);
+    expected[0].correction = "いろは";
+    auto mock = std::make_unique<MockSpellchecker>();
+    EXPECT_CALL(*mock, CheckCompositionSpelling(preedit, "context", _))
+        .WillOnce(Return(expected));
+    composer_->SetSpellchecker(mock.get());
+    const auto result = composer_->GetTypeCorrectedQueries("context");
+    ASSERT_TRUE(result);
+    const auto &corrections = result.value();
+    ASSERT_EQ(corrections.size(), 1);
+    EXPECT_EQ(corrections[0].correction, "いろは");
+  }
 }
 
 TEST_F(ComposerTest, UpdateComposition) {

@@ -58,7 +58,6 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/status.h"
 #include "base/vlog.h"
 #include "data_manager/dataset_writer.h"
 

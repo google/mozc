@@ -213,7 +213,6 @@ mozc_cc_library(
         ":gunit",
         "//base:file_util",
         "//base:logging",
-        "//base:status",
         "//base:system_util",
         "//base/file:temp_dir",
         "@com_google_absl//absl/flags:flag",

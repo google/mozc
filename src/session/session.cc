@@ -38,7 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "spelling/spellchecker_service_interface.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
@@ -50,6 +49,7 @@
 #include "composer/table.h"
 #include "converter/segments.h"
 #include "engine/engine_interface.h"
+#include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -1201,9 +1201,9 @@ void Session::SetKeyMapManager(
   context_->SetKeyMapManager(key_map_manager);
 }
 
-void Session::SetSpellCheckerService(
-    const spelling::SpellCheckerServiceInterface *spellchecker_service) {
-  context_->mutable_composer()->SetSpellCheckerService(spellchecker_service);
+void Session::SetSpellchecker(
+    const engine::SpellcheckerInterface *spellchecker) {
+  context_->mutable_composer()->SetSpellchecker(spellchecker);
 }
 
 bool Session::GetStatus(commands::Command *command) {

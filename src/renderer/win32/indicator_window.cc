@@ -35,7 +35,6 @@
 #include <atltypes.h>
 #include <atlwin.h>
 #include <atlapp.h>
-#include <atlcrack.h>
 #include <atlmisc.h>
 // clang-format on
 
@@ -112,10 +111,10 @@ class IndicatorWindow::WindowImpl
   WindowImpl(const WindowImpl &) = delete;
   WindowImpl &operator=(const WindowImpl &) = delete;
 
-  BEGIN_MSG_MAP_EX(WindowImpl)
-  MSG_WM_CREATE(OnCreate)
-  MSG_WM_TIMER(OnTimer)
-  MSG_WM_SETTINGCHANGE(OnSettingChange)
+  BEGIN_MSG_MAP(WindowImpl)
+  MESSAGE_HANDLER(WM_CREATE, OnCreate)
+  MESSAGE_HANDLER(WM_TIMER, OnTimer)
+  MESSAGE_HANDLER(WM_SETTINGCHANGE, OnSettingChange)
   END_MSG_MAP()
 
   void OnUpdate(const commands::RendererCommand &command,
@@ -304,6 +303,23 @@ class IndicatorWindow::WindowImpl
       sprites_[mode].bitmap.Attach(
           BalloonImage::Create(info, &sprites_[mode].offset));
     }
+  }
+
+  inline LRESULT OnCreate(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                          BOOL &handled) {
+    return static_cast<LRESULT>(
+        OnCreate(reinterpret_cast<LPCREATESTRUCT>(lparam)));
+  }
+  inline LRESULT OnTimer(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                         BOOL &handled) {
+    OnTimer(static_cast<UINT_PTR>(wparam));
+    return 0;
+  }
+  inline LRESULT OnSettingChange(UINT msg_id, WPARAM wparam, LPARAM lparam,
+                                 BOOL &handled) {
+    OnSettingChange(static_cast<UINT>(wparam),
+                    reinterpret_cast<LPCTSTR>(lparam));
+    return 0;
   }
 
   CBitmapHandle current_image_;

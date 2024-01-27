@@ -39,6 +39,8 @@
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 ABSL_DECLARE_FLAG(bool, logtostderr);
@@ -334,6 +336,25 @@ class NullLogFinalizer {
 #ifndef MOZC_LOG_PROTOBUF
 #define MOZC_LOG_PROTOBUF(message) ((message).DebugString())
 #endif  // MOZC_LOG_PROTOBUF
+
+// CHECK_OK and DCHECK_OK
+namespace mozc::status_internal {
+
+template <typename T>
+inline const absl::Status &AsStatus(const absl::StatusOr<T> &status_or) {
+  return status_or.status();
+}
+
+inline const absl::Status &AsStatus(const absl::Status &status) {
+  return status;
+}
+
+}  // namespace mozc::status_internal
+
+#define CHECK_OK(val) \
+  CHECK_EQ(absl::OkStatus(), ::mozc::status_internal::AsStatus(val))
+#define DCHECK_OK(val) \
+  DCHECK_EQ(absl::OkStatus(), ::mozc::status_internal::AsStatus(val))
 
 
 #ifndef MOZC_LOG_PROTOBUF

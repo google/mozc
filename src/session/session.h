@@ -37,10 +37,10 @@
 #include <memory>
 #include <string>
 
-#include "spelling/spellchecker_service_interface.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "engine/engine_interface.h"
+#include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/ime_context.h"
@@ -246,8 +246,8 @@ class Session : public SessionInterface {
 
   void SetTable(const mozc::composer::Table *table) override;
 
-  void SetSpellCheckerService(const spelling::SpellCheckerServiceInterface
-                                  *spellchecker_service) override;
+  void SetSpellchecker(
+      const engine::SpellcheckerInterface *spellchecker) override;
 
   // Set client capability for this session.  Used by unittest.
   void set_client_capability(
