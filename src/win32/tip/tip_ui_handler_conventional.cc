@@ -37,8 +37,8 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "base/win32/com.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -85,7 +85,7 @@ size_t GetTargetPos(const commands::Output &output) {
         if (annotation == Segment::HIGHLIGHT) {
           return offset;
         }
-        offset += Util::WideCharsLen(segment.value());
+        offset += WideCharsLen(segment.value());
       }
       return offset;
     }

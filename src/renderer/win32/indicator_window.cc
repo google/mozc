@@ -44,6 +44,7 @@
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
@@ -254,7 +255,7 @@ class IndicatorWindow::WindowImpl
   void LoadSprite(int mode) {
     BalloonImage::BalloonImageInfo info;
     LOGFONT logfont = GetMessageBoxLogFont();
-    Util::WideToUtf8(logfont.lfFaceName, &info.label_font);
+    info.label_font = mozc::win32::WideToUtf8(logfont.lfFaceName);
 
     info.frame_color = RGBColor(1, 122, 204);
     info.blur_color = RGBColor(1, 122, 204);

@@ -219,6 +219,7 @@ mozc_cc_test(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":wide_char",
+        "//base:util",
         "//testing:gunit_main",
     ],
 )

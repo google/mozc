@@ -31,12 +31,12 @@
 
 #include <windows.h>
 
-#include <sstream>
+#include <string>
 
 #include "base/coordinates.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "base/vlog.h"
+#include "base/win32/wide_char.h"
 #include "client/client_interface.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -170,14 +170,14 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
                          infostyle.caption_background_color().g(),
                          infostyle.caption_background_color().b()));
 
-    std::wstring caption_str;
     const Rect caption_rect(
         infostyle.window_border() + infostyle.caption_padding() +
             caption_style.left_padding(),
         ypos + infostyle.caption_padding(),
         infostyle.window_width() - infostyle.window_border() * 2,
         caption_height);
-    mozc::Util::Utf8ToWide(infostyle.caption_string(), &caption_str);
+    const std::wstring caption_str =
+        mozc::win32::Utf8ToWide(infostyle.caption_string());
 
     text_renderer_->RenderText(dc, caption_str, caption_rect,
                                TextRenderer::FONTSET_INFOLIST_CAPTION);
@@ -216,13 +216,11 @@ Size InfolistWindow::DoPaintRow(CDCHandle dc, int row, int ypos) {
                          infostyle.row_rect_padding() * 2;
   const Information &info = usages.information(row);
 
-  std::wstring title_str;
-  mozc::Util::Utf8ToWide(info.title(), &title_str);
+  const std::wstring title_str = mozc::win32::Utf8ToWide(info.title());
   const Size title_size = text_renderer_->MeasureStringMultiLine(
       TextRenderer::FONTSET_INFOLIST_TITLE, title_str, title_width);
 
-  std::wstring desc_str;
-  mozc::Util::Utf8ToWide(info.description(), &desc_str);
+  const std::wstring desc_str = mozc::win32::Utf8ToWide(info.description());
   const Size desc_size = text_renderer_->MeasureStringMultiLine(
       TextRenderer::FONTSET_INFOLIST_DESCRIPTION, desc_str, desc_width);
 

@@ -28,8 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "win32/tip/tip_surrounding_text.h"
+#include <string>
 
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -40,8 +41,7 @@ namespace {
 TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
   {
     constexpr char kSource[] = "abcde";
-    std::wstring source;
-    Util::Utf8ToWide(kSource, &source);
+    const std::wstring source = Utf8ToWide(kSource);
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 0, &characters_in_utf16));
@@ -60,8 +60,7 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
   }
   {
     constexpr char kSource[] = "𠮟咤";
-    std::wstring source;
-    Util::Utf8ToWide(kSource, &source);
+    const std::wstring source = Utf8ToWide(kSource);
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 1, &characters_in_utf16));

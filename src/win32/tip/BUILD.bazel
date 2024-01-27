@@ -659,6 +659,7 @@ mozc_cc_test(
     deps = [
         ":tip_surrounding_text",
         "//base:util",
+        "//base/win32:wide_char",
         "//testing:gunit_main",
     ],
 )

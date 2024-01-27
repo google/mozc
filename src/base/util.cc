@@ -578,37 +578,6 @@ size_t Util::Ucs4ToUtf8(char32_t c, char *output) {
   return 6;
 }
 
-#ifdef _WIN32
-size_t Util::WideCharsLen(absl::string_view src) {
-  return win32::WideCharsLen(src);
-}
-
-int Util::Utf8ToWide(absl::string_view input, std::wstring *output) {
-  *output = win32::Utf8ToWide(input);
-  return output->size();
-}
-
-std::wstring Util::Utf8ToWide(absl::string_view input) {
-  return win32::Utf8ToWide(input);
-}
-
-int Util::WideToUtf8(const wchar_t *input, std::string *output) {
-  if (input == nullptr) {
-    return 0;
-  }
-  *output = win32::WideToUtf8(input);
-  return output->size();
-}
-
-int Util::WideToUtf8(const std::wstring &input, std::string *output) {
-  return WideToUtf8(input.c_str(), output);
-}
-
-std::string Util::WideToUtf8(const std::wstring &input) {
-  return win32::WideToUtf8(input);
-}
-#endif  // _WIN32
-
 absl::string_view Util::Utf8SubString(absl::string_view src, size_t start) {
   const char *begin = src.data();
   const char *end = begin + src.size();

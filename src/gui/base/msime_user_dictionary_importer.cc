@@ -43,8 +43,8 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "base/vlog.h"
+#include "base/win32/wide_char.h"
 #include "gui/base/encoding_util.h"
 
 namespace mozc {
@@ -178,8 +178,8 @@ class MSIMEImportIterator
       }
 
       // set key/value
-      Util::WideToUtf8(buf_[index_].pwchReading, &entry->key);
-      Util::WideToUtf8(buf_[index_].pwchDisplay, &entry->value);
+      entry->key = mozc::win32::WideToUtf8(buf_[index_].pwchReading);
+      entry->value = mozc::win32::WideToUtf8(buf_[index_].pwchDisplay);
 
       // set POS
       std::map<int, std::string>::const_iterator it =
@@ -198,9 +198,8 @@ class MSIMEImportIterator
           entry->comment = EncodingUtil::SjisToUtf8(
               reinterpret_cast<const char *>(buf_[index_].pvComment));
         } else if (buf_[index_].uct == IFED_UCT_STRING_UNICODE) {
-          Util::WideToUtf8(
-              reinterpret_cast<const wchar_t *>(buf_[index_].pvComment),
-              &entry->comment);
+          entry->comment = mozc::win32::WideToUtf8(
+              reinterpret_cast<const wchar_t *>(buf_[index_].pvComment));
         }
       }
     }

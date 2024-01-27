@@ -37,11 +37,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "base/coordinates.h"
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 
 namespace mozc {
 namespace renderer {
@@ -415,8 +416,7 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
   wil::unique_hdc dc(::CreateCompatibleDC(nullptr));
   wil::unique_select_object old_bitmap(wil::SelectObject(dc.get(), dib.get()));
 
-  std::wstring wide_fontname;
-  Util::Utf8ToWide(fontname, &wide_fontname);
+  const std::wstring wide_fontname = mozc::win32::Utf8ToWide(fontname);
   LOGFONT logfont = {};
   logfont.lfWeight = FW_NORMAL;
   logfont.lfCharSet = DEFAULT_CHARSET;
@@ -441,8 +441,7 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
                rect_top + static_cast<int>(ceil(height * kDivision))};
   ::SetBkMode(dc.get(), TRANSPARENT);
   ::SetTextColor(dc.get(), RGB(255, 255, 255));
-  std::wstring wide_text;
-  Util::Utf8ToWide(text, &wide_text);
+  const std::wstring wide_text = mozc::win32::Utf8ToWide(text);
   ::DrawTextW(dc.get(), wide_text.c_str(), wide_text.size(), &rect,
               DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_CENTER);
   ::GdiFlush();

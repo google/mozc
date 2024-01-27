@@ -32,6 +32,7 @@
 #include <string>
 #include <string_view>
 
+#include "base/util.h"
 #include "testing/gunit.h"
 
 namespace mozc::win32 {
@@ -49,6 +50,15 @@ TEST(WideCharTest, WideCharsLen) {
   EXPECT_EQ(WideCharsLen("\xFF\xFF"), 2);  // invalid Utf-8 still counts
 }
 
+TEST(WideCharTest, WideCharsLen2) {
+  const std::string input_utf8 = "a\360\240\256\237b";
+  EXPECT_EQ(WideCharsLen(input_utf8), 4);
+  EXPECT_EQ(WideCharsLen(Util::Utf8SubString(input_utf8, 0, 0)), 0);
+  EXPECT_EQ(WideCharsLen(Util::Utf8SubString(input_utf8, 0, 1)), 1);
+  EXPECT_EQ(WideCharsLen(Util::Utf8SubString(input_utf8, 0, 2)), 3);
+  EXPECT_EQ(WideCharsLen(Util::Utf8SubString(input_utf8, 0, 3)), 4);
+}
+
 TEST(WideCharTest, Utf8ToWide) {
   EXPECT_EQ(Utf8ToWide(""), L"");
   EXPECT_EQ(Utf8ToWide("mozc"), L"mozc");
@@ -56,6 +66,13 @@ TEST(WideCharTest, Utf8ToWide) {
   EXPECT_EQ(Utf8ToWide("𡈽"), L"𡈽");
   EXPECT_EQ(Utf8ToWide(kTwoSurrogatePairs), kTwoSurrogatePairsW);
   EXPECT_EQ(Utf8ToWide("\xFF\xFF"), L"\uFFFD\uFFFD");  // invalid Utf-8
+}
+
+TEST(WideCharTest, Utf8ToWide_RoundTrip) {
+  const std::string input_utf8 = "abc";
+  const std::wstring output_wide = Utf8ToWide(input_utf8);
+  const std::string output_utf8 = WideToUtf8(output_wide);
+  EXPECT_EQ(output_utf8, "abc");
 }
 
 TEST(WideCharTest, WideToUtf8) {
@@ -66,6 +83,16 @@ TEST(WideCharTest, WideToUtf8) {
   EXPECT_EQ(WideToUtf8(kTwoSurrogatePairsW), kTwoSurrogatePairs);
   constexpr wchar_t kInvalid[] = {0xD800, 0};
   EXPECT_EQ(WideToUtf8(kInvalid), "\uFFFD");
+}
+
+TEST(WideCharTest, WideToUtf8_SurrogatePairSupport) {
+  // Visual C++ 2008 does not support embedding surrogate pair in string
+  // literals like L"\uD842\uDF9F". This is why we use wchar_t array instead.
+  const wchar_t input_wide[] = {0xD842, 0xDF9F, 0};
+  const std::string output_utf8 = WideToUtf8(input_wide);
+  const std::wstring output_wide = Utf8ToWide(output_utf8);
+  EXPECT_EQ(output_utf8, "\360\240\256\237");
+  EXPECT_EQ(output_wide, input_wide);
 }
 
 TEST(WideCharTest, StrAppendW) {
