@@ -41,13 +41,12 @@
 #include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
-#include "dictionary/user_dictionary.h"
 #include "engine/engine_interface.h"
 #include "engine/modules.h"
+#include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
 #include "rewriter/rewriter_interface.h"
-
 
 namespace mozc {
 
@@ -115,6 +114,10 @@ class Engine : public EngineInterface {
     return modules_.GetUserDictionary()->GetPosList();
   }
 
+  void SetSpellchecker(
+      const engine::SpellcheckerInterface *spellchecker) override {
+    modules_.SetSpellchecker(spellchecker);
+  }
 
  private:
   // Initializes the object by the given data manager and is_mobile flag.

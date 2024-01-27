@@ -40,7 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "spelling/spellchecker_service_interface.h"
 #include "absl/hash/hash.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -63,6 +62,7 @@
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
+#include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
@@ -304,9 +304,9 @@ void Composer::SetRequest(const commands::Request *request) {
   request_ = request;
 }
 
-void Composer::SetSpellCheckerService(
-    const spelling::SpellCheckerServiceInterface *spellchecker_service) {
-  spellchecker_service_ = spellchecker_service;
+void Composer::SetSpellchecker(
+    const engine::SpellcheckerInterface *spellchecker) {
+  spellchecker_ = spellchecker;
 }
 
 void Composer::SetConfig(const config::Config *config) { config_ = config; }
@@ -886,8 +886,13 @@ void Composer::GetQueriesForPrediction(std::string *base,
 
 std::optional<std::vector<TypeCorrectedQuery>>
 Composer::GetTypeCorrectedQueries(absl::string_view context) const {
+  if (spellchecker_ == nullptr) {
+    return std::nullopt;
+  }
 
-  return std::nullopt;
+  std::string asis;
+  composition_.GetStringWithTrimMode(ASIS, &asis);
+  return spellchecker_->CheckCompositionSpelling(asis, context, *request_);
 }
 
 size_t Composer::GetLength() const { return composition_.GetLength(); }

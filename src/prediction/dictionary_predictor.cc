@@ -60,6 +60,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
+#include "engine/spellchecker_interface.h"
 #include "engine/modules.h"
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/prediction_aggregator_interface.h"
@@ -71,7 +72,6 @@
 #include "request/conversion_request_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
-
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
@@ -597,6 +597,11 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
 // static
 void DictionaryPredictor::MaybeApplyHomonymCorrection(
     const engine::Modules &modules, Segments *segments) {
+  const engine::SpellcheckerInterface *spellchecker = modules.GetSpellchecker();
+  if (spellchecker == nullptr) {
+    return;
+  }
+  spellchecker->MaybeApplyHomonymCorrection(segments);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(

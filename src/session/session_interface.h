@@ -32,9 +32,9 @@
 #ifndef MOZC_SESSION_SESSION_INTERFACE_H_
 #define MOZC_SESSION_SESSION_INTERFACE_H_
 
-#include "spelling/spellchecker_service_interface.h"
 #include "absl/time/time.h"
 #include "composer/table.h"
+#include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
@@ -68,8 +68,8 @@ class SessionInterface {
   virtual void SetTable(const composer::Table *table) {}
 
   // Set spellchecker.
-  virtual void SetSpellCheckerService(
-      const spelling::SpellCheckerServiceInterface *spellchecker_service) {}
+  virtual void SetSpellchecker(
+      const engine::SpellcheckerInterface *spellchecker) {}
 
   // Set client capability for this session.  Used by unittest.
   virtual void set_client_capability(

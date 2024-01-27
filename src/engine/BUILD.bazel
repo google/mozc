@@ -84,12 +84,24 @@ mozc_cc_library(
     name = "engine_interface",
     hdrs = ["engine_interface.h"],
     deps = [
+        ":spellchecker_interface",
         ":user_data_manager_interface",
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
         "//prediction:predictor_interface",
-        "//spelling:spellchecker_service_interface",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "spellchecker_interface",
+    hdrs = ["spellchecker_interface.h"],
+    deps = [
+        "//composer:query",
+        "//converter:segments",
+        "//data_manager",
+        "//protocol:commands_cc_proto",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -99,7 +111,7 @@ mozc_cc_library(
     srcs = ["modules.cc"],
     hdrs = ["modules.h"],
     deps = [
-        ":user_data_manager_interface",
+        ":spellchecker_interface",
         "//base:logging",
         "//converter:connector",
         "//converter:segmenter",
@@ -132,6 +144,7 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":modules",
+        ":spellchecker_interface",
         ":user_data_manager_interface",
         "//base:logging",
         "//base:vlog",
@@ -159,12 +172,12 @@ mozc_cc_library(
     hdrs = ["engine_mock.h"],
     deps = [
         ":engine_interface",
+        ":spellchecker_interface",
         ":user_data_manager_interface",
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
         "//prediction:predictor_interface",
-        "//spelling:spellchecker_service_interface",
         "//testing:gunit",
         "@com_google_absl//absl/strings",
     ],

@@ -48,8 +48,7 @@ mozc_cc_library(
     ],
     deps = [
         "//composer:query",
-        "//converter:segments",
-        "//protocol:commands_cc_proto",
+        "//engine:spellchecker_interface",
         "//protocol:engine_builder_cc_proto",
     ],
 )
@@ -57,7 +56,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "spellchecker_service_registration",
     srcs = ["spellchecker_service_registration.cc"],
-    hdrs = ["spellchecker_service_interface.h"],
     tags = [
         "nomac",
         "nowin",

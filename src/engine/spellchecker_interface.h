@@ -27,42 +27,42 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_ENGINE_ENGINE_MOCK_H_
-#define MOZC_ENGINE_ENGINE_MOCK_H_
+#ifndef MOZC_ENGINE_SPELLCHECKER_INTERFACE_H_
+#define MOZC_ENGINE_SPELLCHECKER_INTERFACE_H_
 
-#include <string>
+#include <optional>
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "converter/converter_interface.h"
-#include "data_manager/data_manager_interface.h"
-#include "dictionary/suppression_dictionary.h"
-#include "engine/engine_interface.h"
-#include "engine/spellchecker_interface.h"
-#include "engine/user_data_manager_interface.h"
-#include "prediction/predictor_interface.h"
-#include "testing/gmock.h"
+#include "composer/query.h"
+#include "converter/segments.h"
+#include "protocol/commands.pb.h"
 
-namespace mozc {
+namespace mozc::engine {
 
-class MockEngine : public EngineInterface {
+class SpellcheckerInterface {
  public:
-  MOCK_METHOD(ConverterInterface *, GetConverter, (), (const, override));
-  MOCK_METHOD(prediction::PredictorInterface *, GetPredictor, (),
-              (const, override));
-  MOCK_METHOD(dictionary::SuppressionDictionary *, GetSuppressionDictionary, (),
-              (override));
-  MOCK_METHOD(bool, Reload, (), (override));
-  MOCK_METHOD(bool, ReloadAndWait, (), (override));
-  MOCK_METHOD(UserDataManagerInterface *, GetUserDataManager, (), (override));
-  MOCK_METHOD(absl::string_view, GetDataVersion, (), (const, override));
-  MOCK_METHOD(const DataManagerInterface *, GetDataManager, (),
-              (const, override));
-  MOCK_METHOD(std::vector<std::string>, GetPosList, (), (const, override));
-  MOCK_METHOD(void, SetSpellchecker, (const engine::SpellcheckerInterface *),
-              (override));
+  virtual ~SpellcheckerInterface() = default;
+
+  // Performs spelling correction.
+  // `request.text` may contains multiple sentences.
+  virtual commands::CheckSpellingResponse CheckSpelling(
+      const commands::CheckSpellingRequest &request) const = 0;
+
+  // Performs spelling correction for composition (pre-edit) Hiragana sequence.
+  // Both `query` and `context` must be Hiragana input sequence.
+  // `request` is passed to determine the keyboard layout.
+  // Returns empty result when no correction is required.
+  // Returns std::nullopt when the composition spellchecker is not
+  // enabled/available.
+  virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
+  CheckCompositionSpelling(absl::string_view query, absl::string_view context,
+                           const commands::Request &request) const = 0;
+
+  // Performs homonym spelling correction.
+  virtual void MaybeApplyHomonymCorrection(Segments *segments) const = 0;
 };
 
-}  // namespace mozc
+}  // namespace mozc::engine
 
-#endif  // MOZC_ENGINE_ENGINE_MOCK_H_
+#endif  // MOZC_ENGINE_SPELLCHECKER_INTERFACE_H_

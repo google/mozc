@@ -62,6 +62,7 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
+#include "engine/spellchecker_interface.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
 #include "prediction/zero_query_dict.h"
@@ -1952,6 +1953,70 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<AggregateEnglishPredictionTest::ParamType>
            &info) { return info.param.name; });
 
+TEST_F(DictionaryPredictionAggregatorTest,
+       AggregateExtendedTypeCorrectingPrediction) {
+  class MockSpellchecker : public engine::SpellcheckerInterface {
+   public:
+    MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
+                (const commands::CheckSpellingRequest &), (const, override));
+    MOCK_METHOD(std::optional<std::vector<TypeCorrectedQuery>>,
+                CheckCompositionSpelling,
+                (absl::string_view, absl::string_view,
+                 const commands::Request &),
+                (const, override));
+    MOCK_METHOD(void, MaybeApplyHomonymCorrection, (Segments *),
+                (const, override));
+  };
+
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+
+  config_->set_use_typing_correction(true);
+
+  Segments segments;
+  SetUpInputForSuggestionWithHistory("よろさく", "ほんじつは", "本日は",
+                                     composer_.get(), &segments);
+
+  std::vector<TypeCorrectedQuery> expected;
+
+  auto add_expected = [&](const std::string &key, uint8_t type) {
+    expected.emplace_back(TypeCorrectedQuery{key, type});
+  };
+
+  add_expected("よろしく", TypeCorrectedQuery::CORRECTION);
+  add_expected("よろざく",
+               TypeCorrectedQuery::CORRECTION |
+                   TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
+  add_expected("よろさくです", TypeCorrectedQuery::COMPLETION);
+  add_expected("よろしくです",
+               TypeCorrectedQuery::CORRECTION | TypeCorrectedQuery::COMPLETION);
+  add_expected("よろざくです",
+               TypeCorrectedQuery::CORRECTION | TypeCorrectedQuery::COMPLETION |
+                   TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
+
+  auto mock = std::make_unique<MockSpellchecker>();
+  EXPECT_CALL(*mock, CheckCompositionSpelling("よろさく", "ほんじつは", _))
+      .WillOnce(Return(expected));
+
+  composer_->SetSpellchecker(mock.get());
+
+  std::vector<Result> results;
+  aggregator.AggregateTypingCorrectedPrediction(*prediction_convreq_, segments,
+                                                &results);
+  composer_->SetSpellchecker(nullptr);
+
+  EXPECT_EQ(results.size(), 5);
+  for (int i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(results[i].key, expected[i].correction);
+    if (i == 0 || i == 3) {
+      EXPECT_TRUE(results[i].types & TYPING_CORRECTION);
+    } else {
+      EXPECT_FALSE(results[i].types & TYPING_CORRECTION);
+    }
+  }
+}
 
 TEST_F(DictionaryPredictionAggregatorTest, ZeroQuerySuggestionAfterNumbers) {
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =

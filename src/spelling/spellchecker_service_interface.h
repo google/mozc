@@ -32,43 +32,16 @@
 
 #include <cstdint>
 #include <memory>
-#include <optional>
-#include <string>
-#include <vector>
 
-#include "composer/query.h"
-#include "converter/segments.h"
-#include "protocol/commands.pb.h"
+#include "engine/spellchecker_interface.h"
 #include "protocol/engine_builder.pb.h"
 
 namespace mozc {
 namespace spelling {
 
-using commands::CheckSpellingRequest;
-using commands::CheckSpellingResponse;
-using composer::TypeCorrectedQuery;
-
-class SpellCheckerServiceInterface {
+class SpellCheckerServiceInterface : public engine::SpellcheckerInterface {
  public:
   virtual ~SpellCheckerServiceInterface() = default;
-
-  // Performs spelling correction.
-  // `request.text` may contains multiple sentences.
-  virtual CheckSpellingResponse CheckSpelling(
-      const CheckSpellingRequest &request) const = 0;
-
-  // Performs spelling correction for composition (pre-edit) Hiragana sequence.
-  // Both `query` and `context` must be Hiragana input sequence.
-  // `request` is passed to determine the keyboard layout.
-  // Returns empty result when no correction is required.
-  // Returns std::nullopt when the composition spellchecker is not
-  // enabled/available.
-  virtual std::optional<std::vector<TypeCorrectedQuery>>
-  CheckCompositionSpelling(absl::string_view query, absl::string_view context,
-                           const commands::Request &request) const = 0;
-
-  // Performs homonym spelling correction.
-  virtual void MaybeApplyHomonymCorrection(Segments *segments) const = 0;
 
   // Loads spellchecker model asynchronously defined in the `request`.
   // Returns false if the LoadAsync is already running.
