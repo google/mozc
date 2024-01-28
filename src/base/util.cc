@@ -100,7 +100,7 @@ void Util::SplitStringToUtf8Chars(absl::string_view str,
   const char *begin = str.data();
   const char *const end = str.data() + str.size();
   while (begin < end) {
-    const size_t mblen = OneCharLen(begin);
+    const size_t mblen = strings::OneCharLen(begin);
     output->emplace_back(begin, mblen);
     begin += mblen;
   }
@@ -330,18 +330,13 @@ bool IsUtf8TrailingByte(uint8_t c) { return (c & 0xc0) == 0x80; }
 
 }  // namespace
 
-// Return length of a single UTF-8 source character
-size_t Util::OneCharLen(const char *src) {
-  return strings::OneCharLen(*src);
-}
-
 size_t Util::CharsLen(const char *src, size_t size) {
   const char *begin = src;
   const char *end = src + size;
   int length = 0;
   while (begin < end) {
     ++length;
-    begin += OneCharLen(begin);
+    begin += strings::OneCharLen(begin);
   }
   return length;
 }
@@ -582,7 +577,7 @@ absl::string_view Util::Utf8SubString(absl::string_view src, size_t start) {
   const char *begin = src.data();
   const char *end = begin + src.size();
   for (size_t i = 0; i < start && begin < end; ++i) {
-    begin += OneCharLen(begin);
+    begin += strings::OneCharLen(begin);
   }
   const size_t prefix_len = begin - src.data();
   return absl::string_view(begin, src.size() - prefix_len);
@@ -595,7 +590,7 @@ absl::string_view Util::Utf8SubString(absl::string_view src, size_t start,
   const char *substr_end = src.data();
   const char *const end = src.data() + src.size();
   while (l > 0 && substr_end < end) {
-    substr_end += OneCharLen(substr_end);
+    substr_end += strings::OneCharLen(substr_end);
     --l;
   }
   return absl::string_view(src.data(), substr_end - src.data());

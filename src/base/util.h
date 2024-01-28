@@ -80,9 +80,6 @@ class Util {
   // Returns true if the text in the rage [first, last) is capitalized ASCII.
   static bool IsCapitalizedAscii(absl::string_view s);
 
-  ABSL_DEPRECATED("Use strings::OneCharLen")
-  static size_t OneCharLen(const char *src);
-
   // Returns the lengths of [src, src+size] encoded in UTF8.
   static size_t CharsLen(const char *src, size_t size);
 

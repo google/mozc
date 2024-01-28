@@ -71,7 +71,7 @@ mozc_cc_binary(
         ":ios_engine",
         "//base:init_mozc_buildtool",
         "//base:logging",
-        "//base:util",
+        "//base/strings:unicode",
         "//protocol:candidates_cc_proto",
         "@com_google_absl//absl/flags:flag",
     ],
