@@ -207,7 +207,6 @@ mozc_cc_library(
     name = "infolist_window",
     srcs = ["infolist_window.cc"],
     hdrs = ["infolist_window.h"],
-    copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
@@ -218,12 +217,14 @@ mozc_cc_library(
         "//base:util",
         "//base:vlog",
         "//base/win32:wide_char",
+        "//bazel/win32:gdi32",
+        "//bazel/win32:user32",
         "//client:client_interface",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_style_handler",
-        "//third_party/wtl",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
