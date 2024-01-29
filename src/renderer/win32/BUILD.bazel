@@ -143,7 +143,6 @@ mozc_cc_library(
     name = "indicator_window",
     srcs = ["indicator_window.cc"],
     hdrs = ["indicator_window.h"],
-    copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
@@ -154,9 +153,11 @@ mozc_cc_library(
         "//base:coordinates",
         "//base:logging",
         "//base:util",
+        "//bazel/win32:gdi32",
+        "//bazel/win32:user32",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
-        "//third_party/wtl",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
