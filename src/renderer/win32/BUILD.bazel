@@ -282,7 +282,6 @@ mozc_cc_library(
     name = "win32_renderer_util",
     srcs = ["win32_renderer_util.cc"],
     hdrs = ["win32_renderer_util.h"],
-    copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     visibility = [
@@ -292,7 +291,6 @@ mozc_cc_library(
         "//base:logging",
         "//base:system_util",
         "//protocol:renderer_cc_proto",
-        "//third_party/wtl",
     ],
 )
 
