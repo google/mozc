@@ -62,12 +62,6 @@
     'mac_breakpad_tools_dir': '${BUILT_PRODUCTS_DIR}/Breakpad',
     'mac_breakpad_framework': '<(mac_breakpad_dir)/Breakpad.framework',
 
-    'conditions': [
-      ['target_platform=="Windows"', {
-        'wtl_dir': '<(third_party_dir)/wtl',
-      }],
-    ],
-
     # glob command to get files.
     'glob': '<(python) <(abs_depth)/gyp/glob_files.py',
   },
