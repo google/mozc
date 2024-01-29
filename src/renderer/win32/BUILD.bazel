@@ -110,6 +110,7 @@ mozc_cc_library(
         "//base:util",
         "//base/win32:wide_char",
         "//bazel/win32:gdi32",
+        "//bazel/win32:msimg32",
         "//bazel/win32:user32",
         "//client:client_interface",
         "//protocol:candidates_cc_proto",
