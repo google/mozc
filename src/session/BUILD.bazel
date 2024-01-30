@@ -318,6 +318,7 @@ mozc_cc_library(
         "//config:character_form_manager",
         "//config:config_handler",
         "//converter:converter_interface",
+        "//data_manager:data_manager_interface",
         "//dictionary:user_dictionary_session_handler",
         "//engine:engine_builder",
         "//engine:engine_interface",
