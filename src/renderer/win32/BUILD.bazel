@@ -37,7 +37,6 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
 )
-load("//bazel/win32:build_defs.bzl", "copts_wtl")
 
 package(
     default_visibility = ["//renderer:__pkg__"],
@@ -48,7 +47,6 @@ package(
 mozc_cc_binary(
     name = "win32_renderer_main",
     srcs = ["win32_renderer_main.cc"],
-    copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
@@ -188,7 +186,6 @@ mozc_cc_library(
     name = "win32_server",
     srcs = ["win32_server.cc"],
     hdrs = ["win32_server.h"],
-    copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
@@ -234,7 +231,6 @@ mozc_cc_library(
     name = "window_manager",
     srcs = ["window_manager.cc"],
     hdrs = ["window_manager.h"],
-    copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
