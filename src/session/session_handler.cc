@@ -213,8 +213,7 @@ void SessionHandler::UpdateSessions(const config::Config &config,
           ? nullptr
           : std::make_unique<keymap::KeyMapManager>(*new_config);
 
-  for (SessionElement *element =
-           const_cast<SessionElement *>(session_map_->Head());
+  for (SessionElement *element = session_map_->MutableHead();
        element != nullptr; element = element->next) {
     if (element->value != nullptr) {
       element->value->SetConfig(new_config.get());
@@ -467,8 +466,7 @@ bool SessionHandler::TestSendKey(commands::Command *command) {
 
 bool SessionHandler::SendCommand(commands::Command *command) {
   const SessionID id = command->input().id();
-  auto *session = const_cast<std::unique_ptr<session::Session> *>(
-      session_map_->Lookup(id));
+  std::unique_ptr<session::Session> *session = session_map_->MutableLookup(id);
   if (session == nullptr || !*session) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -565,13 +563,13 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   last_create_session_time_ = current_time;
 
   // if session map is FULL, remove the oldest item from the LRU
-  SessionElement *oldest_element = nullptr;
   if (session_map_->Size() >= max_session_size_) {
-    oldest_element = const_cast<SessionElement *>(session_map_->Tail());
+    SessionElement *oldest_element = session_map_->MutableTail();
     if (oldest_element == nullptr) {
       LOG(ERROR) << "oldest SessionElement is NULL";
       return false;
     }
+
     oldest_element->value.reset();
     session_map_->Erase(oldest_element->key);
     MOZC_VLOG(1) << "Session is FULL, oldest SessionID " << oldest_element->key
@@ -600,9 +598,6 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   SessionElement *element = session_map_->Insert(new_id);
   element->value = std::move(session);
   command->mutable_output()->set_id(new_id);
-
-  // The oldes item should be reused
-  DCHECK(oldest_element == nullptr || oldest_element == element);
 
   // The created session has not been fully initialized yet.
   // SetConfig() will complete the initialization by setting information
@@ -746,7 +741,7 @@ bool SessionHandler::ReloadSpellChecker(commands::Command *command) {
   return true;
 }
 
-// Create Random Session ID in order to make the session id unpredicable
+// Create Random Session ID in order to make the session id unpredictable
 SessionID SessionHandler::CreateNewSessionID() {
   while (true) {
     // don't allow id == 0, as it is reserved for "invalid id"

@@ -55,6 +55,7 @@
 #include "storage/lru_cache.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
 
+
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
@@ -92,6 +93,7 @@ class SessionHandler : public SessionHandlerInterface {
   FRIEND_TEST(SessionHandlerTest, KeyMapTest);
   FRIEND_TEST(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest);
   FRIEND_TEST(SessionHandlerTest, EngineRollbackDataTest);
+
 
   using SessionMap =
       mozc::storage::LruCache<SessionID, std::unique_ptr<session::Session>>;
@@ -168,6 +170,7 @@ class SessionHandler : public SessionHandlerInterface {
 
   // used only in unittest to perform blocking behavior.
   bool always_wait_for_engine_response_future_ = false;
+
 
   absl::BitGen bitgen_;
 };
