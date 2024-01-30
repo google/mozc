@@ -71,14 +71,6 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const ImmutableConverterInterface *immutable_converter,
       const engine::Modules &modules);
 
-  DictionaryPredictionAggregator(
-      const DataManagerInterface &data_manager,
-      const ConverterInterface *converter,
-      const ImmutableConverterInterface *immutable_converter,
-      const dictionary::DictionaryInterface *dictionary,
-      const dictionary::DictionaryInterface *suffix_dictionary,
-      const dictionary::PosMatcher *pos_matcher);
-
   std::vector<Result> AggregateResults(const ConversionRequest &request,
                                        const Segments &segments) const override;
 
@@ -122,9 +114,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const DataManagerInterface &data_manager,
       const ConverterInterface *converter,
       const ImmutableConverterInterface *immutable_converter,
-      const dictionary::DictionaryInterface *dictionary,
-      const dictionary::DictionaryInterface *suffix_dictionary,
-      const dictionary::PosMatcher *pos_matcher,
+      const engine::Modules &modules,
       std::unique_ptr<PredictionAggregatorInterface>
           single_kanji_prediction_aggregator);
 

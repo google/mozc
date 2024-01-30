@@ -29,24 +29,21 @@
 
 #include "base/init_mozc.h"
 
+#include <string>
+
+#include "absl/flags/flag.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #endif  // _WIN32
 
-#include <string>
-
-
+#include "absl/flags/parse.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 
 #ifndef MOZC_BUILDTOOL_BUILD
 #include "base/system_util.h"
 #endif  // MOZC_BUILDTOOL_BUILD
-
-
-#include "absl/flags/flag.h"
-
-#include "absl/flags/parse.h"
 
 // Even if log_dir is modified in the middle of the process, the
 // logging directory will not be changed because the logging stream is
@@ -55,13 +52,11 @@ ABSL_FLAG(std::string, log_dir, "",
           "If specified, logfiles are written into this directory "
           "instead of the default logging directory.");
 
-
 ABSL_FLAG(std::string, program_invocation_name, "",
           "Program name copied from argv[0].");
 
 namespace mozc {
 namespace {
-
 
 #ifdef _WIN32
 LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
@@ -79,7 +74,7 @@ std::string GetLogFilePathFromProgramName(const std::string &program_name) {
     return basename;
 #else   // MOZC_BUILDTOOL_BUILD
     return FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), basename);
-#endif  // MOZC_BUILDTOOL_BUILD
+#endif  // !MOZC_BUILDTOOL_BUILD
   }
   return FileUtil::JoinPath(absl::GetFlag(FLAGS_log_dir), basename);
 }
@@ -97,7 +92,6 @@ void ParseCommandLineFlags(int argc, char **argv) {
       absl::flags_internal::OnUndefinedFlag::kIgnoreUndefined);
 }
 
-
 }  // namespace
 
 void InitMozc(const char *arg0, int *argc, char ***argv) {
@@ -114,7 +108,6 @@ void InitMozc(const char *arg0, int *argc, char ***argv) {
 
   const std::string program_name = *argc > 0 ? (*argv)[0] : "UNKNOWN";
   Logging::InitLogStream(GetLogFilePathFromProgramName(program_name));
-
 }
 
 }  // namespace mozc

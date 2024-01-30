@@ -639,6 +639,7 @@
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:renderer_proto',
         '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
       ],
     },

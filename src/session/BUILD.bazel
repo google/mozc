@@ -303,7 +303,6 @@ mozc_cc_library(
     ) + [
         ":session",
         ":session_handler_interface",
-        ":session_interface",
         ":session_observer_handler",
         ":session_observer_interface",
         "//base:clock",

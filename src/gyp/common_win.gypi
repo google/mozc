@@ -328,7 +328,6 @@
       '_WIN32',
       '_WIN32_WINNT=0x0A00',
       '_WINDOWS',
-      '_WTL_NO_AUTOMATIC_NAMESPACE',
     ],
     'include_dirs': [
       '<@(absl_include_dirs)',
@@ -336,7 +335,6 @@
       '<(SHARED_INTERMEDIATE_DIR)',
       '<@(msvs_includes)',
       '<(third_party_dir)/wil/include',
-      '<(wtl_dir)/include',
     ],
     'msvs_configuration_attributes': {
       'CharacterSet': '<(win_char_set_unicode)',

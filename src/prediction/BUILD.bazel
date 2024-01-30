@@ -288,6 +288,7 @@ mozc_cc_test(
         "//dictionary:dictionary_token",
         "//dictionary:pos_matcher",
         "//dictionary:suffix_dictionary",
+        "//engine:modules",
         "//engine:spellchecker_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",

@@ -326,26 +326,24 @@ TEST(UtilTest, Utf8ToUcs4) {
 }
 
 TEST(UtilTest, Ucs4ToUtf8) {
-  std::string output;
-
   // Do nothing if |c| is NUL. Previous implementation of Ucs4ToUtf8 worked like
   // this even though the reason is unclear.
-  Util::Ucs4ToUtf8(0, &output);
+  std::string output = Util::Ucs4ToUtf8(0);
   EXPECT_TRUE(output.empty());
 
-  Util::Ucs4ToUtf8(0x7F, &output);
+  output = Util::Ucs4ToUtf8(0x7F);
   EXPECT_EQ(output, "\x7F");
-  Util::Ucs4ToUtf8(0x80, &output);
+  output = Util::Ucs4ToUtf8(0x80);
   EXPECT_EQ(output, "\xC2\x80");
-  Util::Ucs4ToUtf8(0x7FF, &output);
+  output = Util::Ucs4ToUtf8(0x7FF);
   EXPECT_EQ(output, "\xDF\xBF");
-  Util::Ucs4ToUtf8(0x800, &output);
+  output = Util::Ucs4ToUtf8(0x800);
   EXPECT_EQ(output, "\xE0\xA0\x80");
-  Util::Ucs4ToUtf8(0xFFFF, &output);
+  output = Util::Ucs4ToUtf8(0xFFFF);
   EXPECT_EQ(output, "\xEF\xBF\xBF");
-  Util::Ucs4ToUtf8(0x10000, &output);
+  output = Util::Ucs4ToUtf8(0x10000);
   EXPECT_EQ(output, "\xF0\x90\x80\x80");
-  Util::Ucs4ToUtf8(0x1FFFFF, &output);
+  output = Util::Ucs4ToUtf8(0x1FFFFF);
   EXPECT_EQ(output, "\xF7\xBF\xBF\xBF");
 
   // Buffer version.
@@ -885,43 +883,6 @@ TEST(UtilTest, IsJisX0208) {
   EXPECT_FALSE(Util::IsJisX0208("𪚲"));  // U+2A6B2
   EXPECT_FALSE(Util::IsJisX0208("𠮷"));  // U+20BB7
 }
-
-#ifdef _WIN32
-TEST(UtilTest, WideCharsLen) {
-  // "að ®b"
-  const std::string input_utf8 = "a\360\240\256\237b";
-  EXPECT_EQ(Util::WideCharsLen(input_utf8), 4);
-  EXPECT_EQ(Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 0)), 0);
-  EXPECT_EQ(Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 1)), 1);
-  EXPECT_EQ(Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 2)), 3);
-  EXPECT_EQ(Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 3)), 4);
-}
-
-TEST(UtilTest, Utf8ToWide) {
-  const std::string input_utf8 = "abc";
-  std::wstring output_wide;
-  Util::Utf8ToWide(input_utf8, &output_wide);
-
-  std::string output_utf8;
-  Util::WideToUtf8(output_wide, &output_utf8);
-  EXPECT_EQ(output_utf8, "abc");
-}
-
-TEST(UtilTest, WideToUtf8_SurrogatePairSupport) {
-  // Visual C++ 2008 does not support embedding surrogate pair in string
-  // literals like L"\uD842\uDF9F". This is why we use wchar_t array instead.
-  // "ð ®"
-  const wchar_t input_wide[] = {0xD842, 0xDF9F, 0};
-  std::string output_utf8;
-  Util::WideToUtf8(input_wide, &output_utf8);
-
-  std::wstring output_wide;
-  Util::Utf8ToWide(output_utf8, &output_wide);
-
-  EXPECT_EQ(output_utf8, "\360\240\256\237");
-  EXPECT_EQ(output_wide, input_wide);
-}
-#endif  // _WIN32
 
 TEST(UtilTest, IsKanaSymbolContained) {
   const std::string kFullstop("。");

@@ -30,15 +30,11 @@
 #ifndef MOZC_RENDERER_WIN32_CANDIDATE_WINDOW_H_
 #define MOZC_RENDERER_WIN32_CANDIDATE_WINDOW_H_
 
-// clang-format off
-#include <windows.h>
 #include <atlbase.h>
 #include <atltypes.h>
 #include <atlwin.h>
-#include <atlapp.h>
-#include <atlmisc.h>
-#include <atlgdi.h>
-// clang-format on
+#include <wil/resource.h>
+#include <windows.h>
 
 #include <memory>
 
@@ -94,13 +90,13 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   LRESULT OnCreate(LPCREATESTRUCT create_struct);
   void OnDestroy();
   void OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect);
-  BOOL OnEraseBkgnd(WTL::CDCHandle dc);
+  BOOL OnEraseBkgnd(HDC dc);
   void OnGetMinMaxInfo(MINMAXINFO *min_max_info);
   void OnLButtonDown(UINT nFlags, CPoint point);
   void OnLButtonUp(UINT nFlags, CPoint point);
   void OnMouseMove(UINT nFlags, CPoint point);
-  void OnPaint(WTL::CDCHandle dc);
-  void OnPrintClient(WTL::CDCHandle dc, UINT uFlags);
+  void OnPaint(HDC dc);
+  void OnPrintClient(HDC dc, UINT uFlags);
   void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
 
   void set_mouse_moving(bool moving);
@@ -116,16 +112,16 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   Rect GetFirstRowInClientCord() const;
 
  private:
-  void DoPaint(WTL::CDCHandle dc);
+  void DoPaint(HDC dc);
 
-  void DrawCells(WTL::CDCHandle dc);
-  void DrawVScrollBar(WTL::CDCHandle dc);
-  void DrawShortcutBackground(WTL::CDCHandle dc);
-  void DrawFooter(WTL::CDCHandle dc);
-  void DrawSelectedRect(WTL::CDCHandle dc);
-  void DrawInformationIcon(WTL::CDCHandle dc);
-  void DrawBackground(WTL::CDCHandle dc);
-  void DrawFrame(WTL::CDCHandle dc);
+  void DrawCells(HDC dc);
+  void DrawVScrollBar(HDC dc);
+  void DrawShortcutBackground(HDC dc);
+  void DrawFooter(HDC dc);
+  void DrawSelectedRect(HDC dc);
+  void DrawInformationIcon(HDC dc);
+  void DrawBackground(HDC dc);
+  void DrawFrame(HDC dc);
 
   // Handles candidate selection by mouse.
   void HandleMouseEvent(UINT nFlags, const CPoint &point,
@@ -198,7 +194,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   }
 
   std::unique_ptr<commands::Candidates> candidates_;
-  WTL::CBitmap footer_logo_;
+  wil::unique_hbitmap footer_logo_;
   Size footer_logo_display_size_;
   client::SendCommandInterface *send_command_interface_;
   std::unique_ptr<TableLayout> table_layout_;

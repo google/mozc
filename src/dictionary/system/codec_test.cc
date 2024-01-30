@@ -394,8 +394,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
   // TODO(toshiyuki): Use 0x10ffff instead when UCS4 is supported.
   constexpr char32_t kMaxUniChar = 0x10ffff;
   for (char32_t c = 0x01; c <= kMaxUniChar; ++c) {
-    std::string original;
-    Util::Ucs4ToUtf8(c, &original);
+    const std::string original = Util::Ucs4ToUtf8(c);
     std::string encoded;
     codec->EncodeValue(original, &encoded);
     EXPECT_TRUE(IsExpectedEncodedSize(c, encoded));

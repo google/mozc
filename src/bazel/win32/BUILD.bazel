@@ -90,6 +90,10 @@ mozc_win32_lib(
 )
 
 mozc_win32_lib(
+    name = "msimg32",
+)
+
+mozc_win32_lib(
     name = "ole32",
 )
 

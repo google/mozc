@@ -35,10 +35,11 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 
 namespace mozc {
 namespace win32 {
@@ -108,8 +109,7 @@ HICON CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
       logfont.lfCharSet = DEFAULT_CHARSET;
       logfont.lfHeight = bitmap_height;
       logfont.lfQuality = NONANTIALIASED_QUALITY;
-      std::wstring wide_fontname;
-      Util::Utf8ToWide(fontname, &wide_fontname);
+      const std::wstring wide_fontname = win32::Utf8ToWide(fontname);
       const errno_t error =
           wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
       if (error != 0) {
@@ -127,8 +127,7 @@ HICON CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     ::SetBkMode(dc.get(), OPAQUE);
     ::SetBkColor(dc.get(), kBackgroundColor);
     ::SetTextColor(dc.get(), kForegroundColor);
-    std::wstring wide_text;
-    Util::Utf8ToWide(text, &wide_text);
+    const std::wstring wide_text = win32::Utf8ToWide(text);
     RECT rect = {0, 0, bitmap_width, bitmap_height};
     ::ExtTextOutW(dc.get(), 0, 0, ETO_OPAQUE, &rect, nullptr, 0, nullptr);
     ::DrawTextW(dc.get(), wide_text.c_str(), wide_text.size(), &rect,

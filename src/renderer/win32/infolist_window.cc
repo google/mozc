@@ -29,14 +29,18 @@
 
 #include "renderer/win32/infolist_window.h"
 
+#include <atlbase.h>
+#include <atltypes.h>
+#include <atlwin.h>
+#include <wil/resource.h>
 #include <windows.h>
 
-#include <sstream>
+#include <string>
 
 #include "base/coordinates.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "base/vlog.h"
+#include "base/win32/wide_char.h"
 #include "client/client_interface.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -48,13 +52,6 @@
 namespace mozc {
 namespace renderer {
 namespace win32 {
-
-using WTL::CBitmap;
-using WTL::CDC;
-using WTL::CDCHandle;
-using WTL::CMemoryDC;
-using WTL::CPaintDC;
-using WTL::CPenHandle;
 
 using mozc::commands::Candidates;
 using mozc::commands::Information;
@@ -80,6 +77,15 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
   Output dummy_output;
   return command_sender->SendCommand(command, &dummy_output);
 }
+
+void FillSolidRect(HDC dc, const RECT *rect, COLORREF color) {
+  COLORREF old_color = ::SetBkColor(dc, color);
+  if (old_color != CLR_INVALID) {
+    ::ExtTextOut(dc, 0, 0, ETO_OPAQUE, rect, nullptr, 0, nullptr);
+    ::SetBkColor(dc, old_color);
+  }
+}
+
 }  // namespace
 
 // ------------------------------------------------------------------------
@@ -109,7 +115,7 @@ void InfolistWindow::OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect) {
   metrics_changed_ = true;
 }
 
-BOOL InfolistWindow::OnEraseBkgnd(CDCHandle dc) {
+BOOL InfolistWindow::OnEraseBkgnd(HDC dc) {
   // We do not have to erase background
   // because all pixels in client area will be drawn in the DoPaint method.
   return TRUE;
@@ -123,38 +129,39 @@ void InfolistWindow::OnGetMinMaxInfo(MINMAXINFO *min_max_info) {
   SetMsgHandled(TRUE);
 }
 
-void InfolistWindow::OnPaint(CDCHandle dc) {
+void InfolistWindow::OnPaint(HDC dc) {
   CRect client_rect;
   this->GetClientRect(&client_rect);
 
-  if (dc != nullptr) {
-    CMemoryDC memdc(dc, client_rect);
-    DoPaint(memdc.m_hDC);
-  } else {
-    CPaintDC paint_dc(this->m_hWnd);
-    {  // Create a copy of |paint_dc| and render the candidate strings in it.
-      // The image rendered to this |memdc| is to be copied into the original
-      // |paint_dc| in its destructor. So, we don't have to explicitly call
-      // any functions that copy this |memdc| to the |paint_dc| but putting
-      // the following code into a local block.
-      CMemoryDC memdc(paint_dc, client_rect);
-      DoPaint(memdc.m_hDC);
-    }
+  wil::unique_hdc_paint paint_dc;
+  if (dc == nullptr) {
+    paint_dc = wil::BeginPaint(this->m_hWnd);
   }
+  HDC target_dc = paint_dc.is_valid() ? paint_dc.get() : dc;
+
+  // Render to off-screen bitmap first to avoid tearing.
+  wil::unique_hdc memdc(::CreateCompatibleDC(target_dc));
+  wil::unique_hbitmap bitmap(::CreateCompatibleBitmap(
+      target_dc, client_rect.Width(), client_rect.Height()));
+  wil::unique_select_object old_bitmap =
+      wil::SelectObject(memdc.get(), bitmap.get());
+  DoPaint(memdc.get());
+  ::BitBlt(target_dc, client_rect.left, client_rect.top, client_rect.Width(),
+           client_rect.Height(), memdc.get(), 0, 0, SRCCOPY);
 }
 
-void InfolistWindow::OnPrintClient(CDCHandle dc, UINT uFlags) { OnPaint(dc); }
+void InfolistWindow::OnPrintClient(HDC dc, UINT uFlags) { OnPaint(dc); }
 
-Size InfolistWindow::DoPaint(CDCHandle dc) {
-  if (dc.m_hDC != nullptr) {
-    dc.SetBkMode(TRANSPARENT);
+Size InfolistWindow::DoPaint(HDC dc) {
+  if (dc != nullptr) {
+    ::SetBkMode(dc, TRANSPARENT);
   }
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
   const InformationList &usages = candidates_->usages();
 
   int ypos = infostyle.window_border();
 
-  if ((dc.m_hDC != nullptr) && infostyle.has_caption_string()) {
+  if ((dc != nullptr) && infostyle.has_caption_string()) {
     const RendererStyle::TextStyle &caption_style = infostyle.caption_style();
     const int caption_height = infostyle.caption_height();
     const Rect backgrounnd_rect(
@@ -165,19 +172,19 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
         backgrounnd_rect.Left(), backgrounnd_rect.Top(),
         backgrounnd_rect.Right(), backgrounnd_rect.Bottom());
 
-    dc.FillSolidRect(&background_crect,
-                     RGB(infostyle.caption_background_color().r(),
-                         infostyle.caption_background_color().g(),
-                         infostyle.caption_background_color().b()));
+    FillSolidRect(dc, &background_crect,
+                  RGB(infostyle.caption_background_color().r(),
+                      infostyle.caption_background_color().g(),
+                      infostyle.caption_background_color().b()));
 
-    std::wstring caption_str;
     const Rect caption_rect(
         infostyle.window_border() + infostyle.caption_padding() +
             caption_style.left_padding(),
         ypos + infostyle.caption_padding(),
         infostyle.window_width() - infostyle.window_border() * 2,
         caption_height);
-    mozc::Util::Utf8ToWide(infostyle.caption_string(), &caption_str);
+    const std::wstring caption_str =
+        mozc::win32::Utf8ToWide(infostyle.caption_string());
 
     text_renderer_->RenderText(dc, caption_str, caption_rect,
                                TextRenderer::FONTSET_INFOLIST_CAPTION);
@@ -190,18 +197,18 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
   }
   ypos += infostyle.window_border();
 
-  if (dc.m_hDC != nullptr) {
+  if (dc != nullptr) {
     const CRect rect(0, 0, infostyle.window_width(), ypos);
-    dc.SetDCBrushColor(RGB(infostyle.border_color().r(),
-                           infostyle.border_color().g(),
-                           infostyle.border_color().b()));
-    dc.FrameRect(&rect, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+    ::SetDCBrushColor(
+        dc, RGB(infostyle.border_color().r(), infostyle.border_color().g(),
+                infostyle.border_color().b()));
+    ::FrameRect(dc, &rect, static_cast<HBRUSH>(::GetStockObject(DC_BRUSH)));
   }
 
   return Size(style_->infolist_style().window_width(), ypos);
 }
 
-Size InfolistWindow::DoPaintRow(CDCHandle dc, int row, int ypos) {
+Size InfolistWindow::DoPaintRow(HDC dc, int row, int ypos) {
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
   const InformationList &usages = candidates_->usages();
   const RendererStyle::TextStyle &title_style = infostyle.title_style();
@@ -216,20 +223,18 @@ Size InfolistWindow::DoPaintRow(CDCHandle dc, int row, int ypos) {
                          infostyle.row_rect_padding() * 2;
   const Information &info = usages.information(row);
 
-  std::wstring title_str;
-  mozc::Util::Utf8ToWide(info.title(), &title_str);
+  const std::wstring title_str = mozc::win32::Utf8ToWide(info.title());
   const Size title_size = text_renderer_->MeasureStringMultiLine(
       TextRenderer::FONTSET_INFOLIST_TITLE, title_str, title_width);
 
-  std::wstring desc_str;
-  mozc::Util::Utf8ToWide(info.description(), &desc_str);
+  const std::wstring desc_str = mozc::win32::Utf8ToWide(info.description());
   const Size desc_size = text_renderer_->MeasureStringMultiLine(
       TextRenderer::FONTSET_INFOLIST_DESCRIPTION, desc_str, desc_width);
 
   int row_height =
       title_size.height + desc_size.height + infostyle.row_rect_padding() * 2;
 
-  if (dc.m_hDC == nullptr) {
+  if (dc == nullptr) {
     return Size(0, row_height);
   }
   const Rect title_rect(
@@ -260,30 +265,31 @@ Size InfolistWindow::DoPaintRow(CDCHandle dc, int row, int ypos) {
         infostyle.window_width() - infostyle.window_border(),
         ypos + title_rect.size.height + desc_rect.size.height +
             infostyle.row_rect_padding() * 2);
-    dc.FillSolidRect(&selected_rect,
-                     RGB(infostyle.focused_background_color().r(),
-                         infostyle.focused_background_color().g(),
-                         infostyle.focused_background_color().b()));
-    dc.SetDCBrushColor(RGB(infostyle.focused_border_color().r(),
-                           infostyle.focused_border_color().g(),
-                           infostyle.focused_border_color().b()));
-    dc.FrameRect(&selected_rect, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+    FillSolidRect(dc, &selected_rect,
+                  RGB(infostyle.focused_background_color().r(),
+                      infostyle.focused_background_color().g(),
+                      infostyle.focused_background_color().b()));
+    ::SetDCBrushColor(dc, RGB(infostyle.focused_border_color().r(),
+                              infostyle.focused_border_color().g(),
+                              infostyle.focused_border_color().b()));
+    ::FrameRect(dc, &selected_rect,
+                static_cast<HBRUSH>(::GetStockObject(DC_BRUSH)));
   } else {
     if (title_style.has_background_color()) {
-      dc.FillSolidRect(&title_back_crect,
-                       RGB(title_style.background_color().r(),
-                           title_style.background_color().g(),
-                           title_style.background_color().b()));
+      FillSolidRect(dc, &title_back_crect,
+                    RGB(title_style.background_color().r(),
+                        title_style.background_color().g(),
+                        title_style.background_color().b()));
     } else {
-      dc.FillSolidRect(&title_back_crect, RGB(255, 255, 255));
+      FillSolidRect(dc, &title_back_crect, RGB(255, 255, 255));
     }
     if (desc_style.has_background_color()) {
-      dc.FillSolidRect(&desc_back_crect,
-                       RGB(title_style.background_color().r(),
-                           title_style.background_color().g(),
-                           title_style.background_color().b()));
+      FillSolidRect(dc, &desc_back_crect,
+                    RGB(title_style.background_color().r(),
+                        title_style.background_color().g(),
+                        title_style.background_color().b()));
     } else {
-      dc.FillSolidRect(&desc_back_crect, RGB(255, 255, 255));
+      FillSolidRect(dc, &desc_back_crect, RGB(255, 255, 255));
     }
   }
 
@@ -371,8 +377,7 @@ void InfolistWindow::SetSendCommandInterface(
 }
 
 Size InfolistWindow::GetLayoutSize() {
-  CDCHandle dmyDc(nullptr);
-  return DoPaint(dmyDc);
+  return DoPaint(nullptr);
 }
 }  // namespace win32
 }  // namespace renderer

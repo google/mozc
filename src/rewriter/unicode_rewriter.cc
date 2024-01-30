@@ -148,8 +148,7 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
     return false;
   }
 
-  std::string value;
-  Util::Ucs4ToUtf8(ucs4, &value);
+  const std::string value = Util::Ucs4ToUtf8(ucs4);
   if (value.empty()) {
     return false;
   }

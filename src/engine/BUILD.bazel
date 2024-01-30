@@ -134,6 +134,24 @@ mozc_cc_library(
     ],
 )
 
+mozc_cc_test(
+    name = "modules_test",
+    srcs = ["modules_test.cc"],
+    deps = [
+        ":modules",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_mock",
+        "//dictionary:pos_matcher",
+        "//dictionary:suppression_dictionary",
+        "//dictionary:user_dictionary_stub",
+        "//prediction:rescorer_interface",
+        "//prediction:rescorer_mock",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/status",
+    ],
+)
+
 mozc_cc_library(
     name = "engine",
     srcs = [

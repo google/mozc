@@ -62,6 +62,7 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
+#include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
@@ -87,13 +88,10 @@ class DictionaryPredictionAggregatorTestPeer {
       const DataManagerInterface &data_manager,
       const ConverterInterface *converter,
       const ImmutableConverterInterface *immutable_converter,
-      const dictionary::DictionaryInterface *dictionary,
-      const dictionary::DictionaryInterface *suffix_dictionary,
-      const dictionary::PosMatcher *pos_matcher,
+      const engine::Modules &modules,
       std::unique_ptr<PredictionAggregatorInterface>
           single_kanji_prediction_aggregator)
-      : aggregator_(data_manager, converter, immutable_converter, dictionary,
-                    suffix_dictionary, pos_matcher,
+      : aggregator_(data_manager, converter, immutable_converter, modules,
                     std::move(single_kanji_prediction_aggregator)) {}
   virtual ~DictionaryPredictionAggregatorTestPeer() = default;
 
@@ -306,7 +304,7 @@ void GenerateKeyEvents(absl::string_view text,
       key.set_key_code(w);
     } else {
       key.set_key_code('?');
-      Util::Ucs4ToUtf8(w, key.mutable_key_string());
+      *key.mutable_key_string() = Util::Ucs4ToUtf8(w);
     }
     keys->push_back(key);
   }
@@ -390,25 +388,27 @@ class MockDataAndAggregator {
   // Initializes aggregator with the given suffix_dictionary.  When
   // nullptr is passed to the |suffix_dictionary|, MockDataManager's suffix
   // dictionary is used.
-  // Note that |suffix_dictionary| is owned by this class.
-  void Init(const DictionaryInterface *suffix_dictionary = nullptr) {
-    pos_matcher_.Set(data_manager_.GetPosMatcherData());
-    mock_dictionary_ = new MockDictionary;
-    single_kanji_prediction_aggregator_ =
-        new MockSingleKanjiPredictionAggregator;
-    dictionary_.reset(mock_dictionary_);
-    if (!suffix_dictionary) {
-      suffix_dictionary_.reset(
-          CreateSuffixDictionaryFromDataManager(data_manager_));
-    } else {
-      suffix_dictionary_.reset(suffix_dictionary);
+  // Note that |suffix_dictionary| is owned by Modules.
+  void Init(std::unique_ptr<DictionaryInterface> suffix_dictionary = nullptr) {
+    auto dictionary = std::make_unique<MockDictionary>();
+    mock_dictionary_ = dictionary.get();
+    modules_.PresetDictionary(std::move(dictionary));
+
+    if (suffix_dictionary) {
+      modules_.PresetSuffixDictionary(std::move(suffix_dictionary));
     }
-    CHECK(suffix_dictionary_.get());
+
+    absl::Status init = modules_.Init(&data_manager_);
+    CHECK_OK(init);
+    CHECK_NE(modules_.GetSuffixDictionary(), nullptr);
+
+    auto kanji_aggregator =
+        std::make_unique<MockSingleKanjiPredictionAggregator>();
+    single_kanji_prediction_aggregator_ =  kanji_aggregator.get();
 
     aggregator_ = std::make_unique<DictionaryPredictionAggregatorTestPeer>(
-        data_manager_, &converter_, &mock_immutable_converter_,
-        dictionary_.get(), suffix_dictionary_.get(), &pos_matcher_,
-        absl::WrapUnique(single_kanji_prediction_aggregator_));
+        data_manager_, &converter_, &mock_immutable_converter_, modules_,
+        std::move(kanji_aggregator));
   }
 
   MockDictionary *mutable_dictionary() { return mock_dictionary_; }
@@ -420,7 +420,7 @@ class MockDataAndAggregator {
   mutable_single_kanji_prediction_aggregator() {
     return single_kanji_prediction_aggregator_;
   }
-  const PosMatcher &pos_matcher() const { return pos_matcher_; }
+  const PosMatcher &pos_matcher() const { return *modules_.GetPosMatcher(); }
   const DictionaryPredictionAggregatorTestPeer &aggregator() {
     return *aggregator_;
   }
@@ -435,9 +435,7 @@ class MockDataAndAggregator {
   const testing::MockDataManager data_manager_;
   MockConverter converter_;
   MockImmutableConverter mock_immutable_converter_;
-  std::unique_ptr<const DictionaryInterface> dictionary_;
-  std::unique_ptr<const DictionaryInterface> suffix_dictionary_;
-  PosMatcher pos_matcher_;
+  engine::Modules modules_;
 
   MockDictionary *mock_dictionary_;
   MockSingleKanjiPredictionAggregator *single_kanji_prediction_aggregator_;
@@ -1788,7 +1786,7 @@ class TestSuffixDictionary : public DictionaryInterface {
 
 TEST_F(DictionaryPredictionAggregatorTest, AggregateSuffixPrediction) {
   auto data_and_aggregator = std::make_unique<MockDataAndAggregator>();
-  data_and_aggregator->Init(new TestSuffixDictionary());
+  data_and_aggregator->Init(std::make_unique<TestSuffixDictionary>());
 
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
@@ -1825,7 +1823,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateSuffixPrediction) {
 
 TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQuerySuffixPrediction) {
   auto data_and_aggregator = std::make_unique<MockDataAndAggregator>();
-  data_and_aggregator->Init(new TestSuffixDictionary());
+  data_and_aggregator->Init(std::make_unique<TestSuffixDictionary>());
 
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();

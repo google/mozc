@@ -112,6 +112,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:mmap",
         "//base:util",
+        "//base/strings:unicode",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
         "//dictionary/file:codec_factory",

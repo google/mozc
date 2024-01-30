@@ -351,6 +351,11 @@
               'AdditionalManifestFiles': 'win32/mozc_renderer.exe.manifest',
               'EmbedManifest': 'true',
             },
+            'VCLinkerTool': {
+              'AdditionalDependencies': [
+                'msimg32.lib',  # used in 'candidate_window.cc'
+              ],
+            },
           },
         },
         {

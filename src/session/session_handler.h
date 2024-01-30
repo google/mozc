@@ -48,12 +48,13 @@
 #include "protocol/config.pb.h"
 #include "session/common.h"
 #include "session/internal/keymap.h"
+#include "session/session.h"
 #include "session/session_handler_interface.h"
-#include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"
 #include "storage/lru_cache.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
+
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
@@ -68,7 +69,7 @@ class SessionHandler : public SessionHandlerInterface {
                  std::unique_ptr<EngineBuilder> engine_builder);
   SessionHandler(const SessionHandler &) = delete;
   SessionHandler &operator=(const SessionHandler &) = delete;
-  ~SessionHandler() override;
+  ~SessionHandler() override = default;
 
   // Returns true if SessionHandle is available.
   bool IsAvailable() const override;
@@ -79,8 +80,7 @@ class SessionHandler : public SessionHandlerInterface {
   void StartWatchDog() override;
 
   // NewSession returns new Session.
-  // Client needs to delete it properly
-  session::SessionInterface *NewSession();
+  std::unique_ptr<session::Session> NewSession();
 
   void AddObserver(session::SessionObserverInterface *observer) override;
   absl::string_view GetDataVersion() const override {
@@ -94,8 +94,9 @@ class SessionHandler : public SessionHandlerInterface {
   FRIEND_TEST(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest);
   FRIEND_TEST(SessionHandlerTest, EngineRollbackDataTest);
 
+
   using SessionMap =
-      mozc::storage::LruCache<SessionID, session::SessionInterface *>;
+      mozc::storage::LruCache<SessionID, std::unique_ptr<session::Session>>;
   using SessionElement = SessionMap::Element;
 
   void Init(std::unique_ptr<EngineInterface> engine,
@@ -124,7 +125,7 @@ class SessionHandler : public SessionHandlerInterface {
   bool SetConfig(commands::Command *command);
   // Updates all the sessions by UpdateSessions() with given |request|.
   bool SetRequest(commands::Command *command);
-  // Sets the given config, request, and delivertive information
+  // Sets the given config, request, and derivative information
   // to all the sessions.
   // Then updates config_ and request_.
   // This method doesn't reload the sessions.
@@ -137,6 +138,9 @@ class SessionHandler : public SessionHandlerInterface {
   bool NoOperation(commands::Command *command);
   bool CheckSpelling(commands::Command *command);
   bool ReloadSpellChecker(commands::Command *command);
+
+  // Replaces engine_ with a new instance if it is ready.
+  void MaybeReloadEngine(commands::Command *command);
 
   SessionID CreateNewSessionID();
   bool DeleteSessionID(SessionID id);
@@ -166,6 +170,7 @@ class SessionHandler : public SessionHandlerInterface {
 
   // used only in unittest to perform blocking behavior.
   bool always_wait_for_engine_response_future_ = false;
+
 
   absl::BitGen bitgen_;
 };

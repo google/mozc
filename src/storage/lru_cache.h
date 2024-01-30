@@ -105,6 +105,7 @@ class LruCache {
 
   // Returns the tail of LRU list
   const Element* Tail() const { return lru_tail_; }
+  Element* MutableTail() const { return lru_tail_; }
 
  private:
   // Allocates a new block containing next_block_size_ elements, updates

@@ -39,7 +39,6 @@ load(
 )
 load(
     "//bazel/win32:build_defs.bzl",
-    "copts_wtl",
     "features_gdi",
 )
 
@@ -514,7 +513,6 @@ mozc_cc_library(
     hdrs = [
         "tip_ui_handler_conventional.h",
     ],
-    copts = copts_wtl(),
     features = features_gdi(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
@@ -659,6 +657,7 @@ mozc_cc_test(
     deps = [
         ":tip_surrounding_text",
         "//base:util",
+        "//base/win32:wide_char",
         "//testing:gunit_main",
     ],
 )

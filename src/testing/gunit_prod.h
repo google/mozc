@@ -38,4 +38,5 @@
   friend class test_case_name##_##test_name##_Test
 #endif  // FRIEND_TEST
 
+
 #endif  // MOZC_TESTING_GUNIT_PROD_H_

@@ -100,7 +100,7 @@ void Util::SplitStringToUtf8Chars(absl::string_view str,
   const char *begin = str.data();
   const char *const end = str.data() + str.size();
   while (begin < end) {
-    const size_t mblen = OneCharLen(begin);
+    const size_t mblen = strings::OneCharLen(begin);
     output->emplace_back(begin, mblen);
     begin += mblen;
   }
@@ -247,7 +247,6 @@ void Util::LowerString(std::string *str) {
   const char *begin = str->data();
   size_t mblen = 0;
 
-  std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
     char32_t ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
@@ -258,7 +257,7 @@ void Util::LowerString(std::string *str) {
     if ((0x0041 <= ucs4 && ucs4 <= 0x005A) ||
         (0xFF21 <= ucs4 && ucs4 <= 0xFF3A)) {
       ucs4 += kOffsetFromUpperToLower;
-      Ucs4ToUtf8(ucs4, &utf8);
+      const std::string utf8 = Ucs4ToUtf8(ucs4);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -275,7 +274,6 @@ void Util::UpperString(std::string *str) {
   const char *begin = str->data();
   size_t mblen = 0;
 
-  std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
     char32_t ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
@@ -283,7 +281,7 @@ void Util::UpperString(std::string *str) {
     if ((0x0061 <= ucs4 && ucs4 <= 0x007A) ||
         (0xFF41 <= ucs4 && ucs4 <= 0xFF5A)) {
       ucs4 -= kOffsetFromUpperToLower;
-      Ucs4ToUtf8(ucs4, &utf8);
+      const std::string utf8 = Ucs4ToUtf8(ucs4);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -330,18 +328,13 @@ bool IsUtf8TrailingByte(uint8_t c) { return (c & 0xc0) == 0x80; }
 
 }  // namespace
 
-// Return length of a single UTF-8 source character
-size_t Util::OneCharLen(const char *src) {
-  return strings::OneCharLen(*src);
-}
-
 size_t Util::CharsLen(const char *src, size_t size) {
   const char *begin = src;
   const char *end = src + size;
   int length = 0;
   while (begin < end) {
     ++length;
-    begin += OneCharLen(begin);
+    begin += strings::OneCharLen(begin);
   }
   return length;
 }
@@ -515,9 +508,10 @@ bool Util::IsValidUtf8(absl::string_view s) {
   return true;
 }
 
-void Util::Ucs4ToUtf8(char32_t c, std::string *output) {
-  output->clear();
-  Ucs4ToUtf8Append(c, output);
+std::string Util::Ucs4ToUtf8(char32_t c) {
+  std::string output;
+  Ucs4ToUtf8Append(c, &output);
+  return output;
 }
 
 void Util::Ucs4ToUtf8Append(char32_t c, std::string *output) {
@@ -578,42 +572,11 @@ size_t Util::Ucs4ToUtf8(char32_t c, char *output) {
   return 6;
 }
 
-#ifdef _WIN32
-size_t Util::WideCharsLen(absl::string_view src) {
-  return win32::WideCharsLen(src);
-}
-
-int Util::Utf8ToWide(absl::string_view input, std::wstring *output) {
-  *output = win32::Utf8ToWide(input);
-  return output->size();
-}
-
-std::wstring Util::Utf8ToWide(absl::string_view input) {
-  return win32::Utf8ToWide(input);
-}
-
-int Util::WideToUtf8(const wchar_t *input, std::string *output) {
-  if (input == nullptr) {
-    return 0;
-  }
-  *output = win32::WideToUtf8(input);
-  return output->size();
-}
-
-int Util::WideToUtf8(const std::wstring &input, std::string *output) {
-  return WideToUtf8(input.c_str(), output);
-}
-
-std::string Util::WideToUtf8(const std::wstring &input) {
-  return win32::WideToUtf8(input);
-}
-#endif  // _WIN32
-
 absl::string_view Util::Utf8SubString(absl::string_view src, size_t start) {
   const char *begin = src.data();
   const char *end = begin + src.size();
   for (size_t i = 0; i < start && begin < end; ++i) {
-    begin += OneCharLen(begin);
+    begin += strings::OneCharLen(begin);
   }
   const size_t prefix_len = begin - src.data();
   return absl::string_view(begin, src.size() - prefix_len);
@@ -626,7 +589,7 @@ absl::string_view Util::Utf8SubString(absl::string_view src, size_t start,
   const char *substr_end = src.data();
   const char *const end = src.data() + src.size();
   while (l > 0 && substr_end < end) {
-    substr_end += OneCharLen(substr_end);
+    substr_end += strings::OneCharLen(substr_end);
     --l;
   }
   return absl::string_view(src.data(), substr_end - src.data());

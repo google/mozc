@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <ostream>
@@ -36,7 +37,7 @@
 #include "absl/flags/flag.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/strings/unicode.h"
 #include "ios/ios_engine.h"
 #include "protocol/candidates.pb.h"
 
@@ -53,7 +54,7 @@ void Convert(const std::string &query, mozc::ios::IosEngine *engine,
   const char *begin = query.data();
   const char *end = query.data() + query.size();
   while (begin < end) {
-    const size_t mblen = mozc::Util::OneCharLen(begin);
+    const size_t mblen = mozc::strings::OneCharLen(begin);
     character.assign(begin, mblen);
     if (character == ">") {
       engine->SendSpecialKey(mozc::commands::KeyEvent::VIRTUAL_RIGHT, command);

@@ -551,8 +551,7 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const ImmutableConverterInterface *immutable_converter,
     const engine::Modules &modules)
     : DictionaryPredictionAggregator(
-          data_manager, converter, immutable_converter, modules.GetDictionary(),
-          modules.GetSuffixDictionary(), modules.GetPosMatcher(),
+          data_manager, converter, immutable_converter, modules,
           std::make_unique<SingleKanjiPredictionAggregator>(data_manager)) {
 }
 
@@ -560,32 +559,19 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const DataManagerInterface &data_manager,
     const ConverterInterface *converter,
     const ImmutableConverterInterface *immutable_converter,
-    const dictionary::DictionaryInterface *dictionary,
-    const dictionary::DictionaryInterface *suffix_dictionary,
-    const dictionary::PosMatcher *pos_matcher)
-    : DictionaryPredictionAggregator(
-          data_manager, converter, immutable_converter, dictionary,
-          suffix_dictionary, pos_matcher,
-          std::make_unique<SingleKanjiPredictionAggregator>(data_manager)) {}
-
-DictionaryPredictionAggregator::DictionaryPredictionAggregator(
-    const DataManagerInterface &data_manager,
-    const ConverterInterface *converter,
-    const ImmutableConverterInterface *immutable_converter,
-    const dictionary::DictionaryInterface *dictionary,
-    const dictionary::DictionaryInterface *suffix_dictionary,
-    const dictionary::PosMatcher *pos_matcher,
+    const engine::Modules &modules,
     std::unique_ptr<PredictionAggregatorInterface>
         single_kanji_prediction_aggregator)
     : converter_(converter),
       immutable_converter_(immutable_converter),
-      dictionary_(dictionary),
-      suffix_dictionary_(suffix_dictionary),
-      counter_suffix_word_id_(pos_matcher->GetCounterSuffixWordId()),
-      kanji_number_id_(pos_matcher->GetKanjiNumberId()),
-      zip_code_id_(pos_matcher->GetZipcodeId()),
-      number_id_(pos_matcher->GetNumberId()),
-      unknown_id_(pos_matcher->GetUnknownId()),
+      dictionary_(modules.GetDictionary()),
+      suffix_dictionary_(modules.GetSuffixDictionary()),
+      counter_suffix_word_id_(
+          modules.GetPosMatcher()->GetCounterSuffixWordId()),
+      kanji_number_id_(modules.GetPosMatcher()->GetKanjiNumberId()),
+      zip_code_id_(modules.GetPosMatcher()->GetZipcodeId()),
+      number_id_(modules.GetPosMatcher()->GetNumberId()),
+      unknown_id_(modules.GetPosMatcher()->GetUnknownId()),
       single_kanji_prediction_aggregator_(
           std::move(single_kanji_prediction_aggregator)) {
   absl::string_view zero_query_token_array_data;

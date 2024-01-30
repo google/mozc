@@ -80,9 +80,6 @@ class Util {
   // Returns true if the text in the rage [first, last) is capitalized ASCII.
   static bool IsCapitalizedAscii(absl::string_view s);
 
-  ABSL_DEPRECATED("Use strings::OneCharLen")
-  static size_t OneCharLen(const char *src);
-
   // Returns the lengths of [src, src+size] encoded in UTF8.
   static size_t CharsLen(const char *src, size_t size);
 
@@ -104,7 +101,7 @@ class Util {
   }
 
   // Converts a UCS4 code point to UTF8 string.
-  static void Ucs4ToUtf8(char32_t c, std::string *output);
+  static std::string Ucs4ToUtf8(char32_t c);
 
   // Converts a UCS4 code point to UTF8 string and appends it to |output|, i.e.,
   // |output| is not cleared.
@@ -133,27 +130,6 @@ class Util {
 
   // Returns true if |s| is a valid UTF8.
   static bool IsValidUtf8(absl::string_view s);
-
-#ifdef _WIN32
-  // Returns how many wide characters are necessary in UTF-16 to represent
-  // given UTF-8 string. Note that the result of this method becomes greater
-  // than that of Util::CharsLen if |src| contains any character which is
-  // encoded by the surrogate-pair in UTF-16.
-  ABSL_DEPRECATED("Use win32::WideCharsLen")
-  static size_t WideCharsLen(absl::string_view src);
-  // Converts the encoding of the specified string from UTF-8 to UTF-16, and
-  // vice versa.
-  ABSL_DEPRECATED("Use win32::Utf8ToWide")
-  static int Utf8ToWide(absl::string_view input, std::wstring *output);
-  ABSL_DEPRECATED("Use win32::Utf8ToWide")
-  static std::wstring Utf8ToWide(absl::string_view input);
-  ABSL_DEPRECATED("Use win32::WideToUtf8")
-  static int WideToUtf8(const wchar_t *input, std::string *output);
-  ABSL_DEPRECATED("Use win32::WideToUtf8")
-  static int WideToUtf8(const std::wstring &input, std::string *output);
-  ABSL_DEPRECATED("Use win32::WideToUtf8")
-  static std::string WideToUtf8(const std::wstring &input);
-#endif  // _WIN32
 
   // Extracts a substring range, where both start and length are in terms of
   // UTF8 size. Note that the returned string view refers to the same memory

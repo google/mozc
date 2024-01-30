@@ -30,15 +30,10 @@
 #ifndef MOZC_RENDERER_WIN32_INFOLIST_WINDOW_H_
 #define MOZC_RENDERER_WIN32_INFOLIST_WINDOW_H_
 
-// clang-format off
-#include <windows.h>
 #include <atlbase.h>
 #include <atltypes.h>
 #include <atlwin.h>
-#include <atlapp.h>
-#include <atlmisc.h>
-#include <atlgdi.h>
-// clang-format on
+#include <windows.h>
 
 #include <memory>
 #include <string>
@@ -84,10 +79,10 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   ~InfolistWindow();
   void OnDestroy();
   void OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect);
-  BOOL OnEraseBkgnd(WTL::CDCHandle dc);
+  BOOL OnEraseBkgnd(HDC dc);
   void OnGetMinMaxInfo(MINMAXINFO *min_max_info);
-  void OnPaint(WTL::CDCHandle dc);
-  void OnPrintClient(WTL::CDCHandle dc, UINT uFlags);
+  void OnPaint(HDC dc);
+  void OnPrintClient(HDC dc, UINT uFlags);
   void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
   void OnTimer(UINT_PTR nIDEvent);
 
@@ -102,8 +97,8 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   void DelayHide(UINT mseconds);
 
  private:
-  Size DoPaint(WTL::CDCHandle dc);
-  Size DoPaintRow(WTL::CDCHandle dc, int row, int ypos);
+  Size DoPaint(HDC dc);
+  Size DoPaintRow(HDC dc, int row, int ypos);
 
   inline LRESULT OnDestroy(UINT msg_id, WPARAM wparam, LPARAM lparam,
                            BOOL &handled) {

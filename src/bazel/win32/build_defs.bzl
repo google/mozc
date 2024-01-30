@@ -31,8 +31,5 @@
 
 load("//:build_defs.bzl", "mozc_select")
 
-def copts_wtl():
-    return mozc_select(windows = ["-Ithird_party/wtl/files/include"])
-
 def features_gdi():
     return mozc_select(windows = ["gdi"])

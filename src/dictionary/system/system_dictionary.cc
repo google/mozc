@@ -66,6 +66,7 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
+#include "base/strings/unicode.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"
@@ -1024,7 +1025,7 @@ void SystemDictionary::PopulateReverseLookupCache(absl::string_view str) const {
     lookup_key.clear();
     codec_->EncodeValue(suffix, &lookup_key);
     AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
-    pos += Util::OneCharLen(suffix.data());
+    pos += strings::OneCharLen(suffix.data());
   }
   // Collect tokens for all IDs.
   ScanTokens(id_set, reverse_lookup_cache_.get());

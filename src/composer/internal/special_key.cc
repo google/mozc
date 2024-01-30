@@ -121,8 +121,7 @@ std::string SpecialKeyMap::Register(const absl::string_view input) {
       LOG(WARNING) << "The size of special keys exceeded: " << key;
     }
     // New special key is replaced with a Unicode PUA and registered.
-    std::string special_key;
-    Util::Ucs4ToUtf8(keycode, &special_key);
+    const std::string special_key = Util::Ucs4ToUtf8(keycode);
     map_.emplace(key, special_key);
     return special_key;
   };

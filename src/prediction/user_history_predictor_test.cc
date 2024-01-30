@@ -1872,7 +1872,7 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   // An android pua emoji. It is obsolete and should return false.
-  Util::Ucs4ToUtf8(0xFE000, entry.mutable_value());
+  *entry.mutable_value() = Util::Ucs4ToUtf8(0xFE000);
   EXPECT_FALSE(predictor->IsValidEntry(entry));
   EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
 

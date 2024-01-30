@@ -106,8 +106,7 @@ SortingKeyMap CreateSortingKeyMap(const std::string &auto_file,
     CHECK_GE(fields.size(), 2);
     uint32_t ucs4 = 0;
     CHECK(absl::SimpleHexAtoi(fields[0], &ucs4));
-    std::string utf8;
-    Util::Ucs4ToUtf8(ucs4, &utf8);
+    const std::string utf8 = Util::Ucs4ToUtf8(ucs4);
     if (sorting_keys.contains(utf8)) {
       // ordered by rule
       continue;

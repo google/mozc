@@ -63,6 +63,10 @@
 #include "gui/base/util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
+#if defined(_WIN32)
+#include "base/win32/wide_char.h"
+#endif  // _WIN32
+
 namespace mozc {
 namespace gui {
 
@@ -78,8 +82,7 @@ constexpr int kMaxReverseConversionLength = 30;
 
 QString GetEnv(const char *envname) {
 #if defined(_WIN32)
-  std::wstring wenvname;
-  mozc::Util::Utf8ToWide(envname, &wenvname);
+  const std::wstring wenvname = mozc::win32::Utf8ToWide(envname);
   const DWORD buffer_size =
       ::GetEnvironmentVariable(wenvname.c_str(), nullptr, 0);
   if (buffer_size == 0) {

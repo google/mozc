@@ -29,14 +29,11 @@
 
 #include "renderer/win32/win32_renderer_util.h"
 
-// clang-format off
 #include <atlbase.h>
 #include <atltypes.h>
-#include <atlapp.h>
-#include <atlgdi.h>
-#include <atlmisc.h>
+#include <commctrl.h> // for CCSIZEOF_STRUCT
+#include <windows.h>
 #include <winuser.h>
-// clang-format on
 
 #include <memory>
 #include <optional>

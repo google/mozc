@@ -111,6 +111,8 @@ mozc_cc_library(
 mozc_cc_library(
     name = "gunit_prod",
     hdrs = ["gunit_prod.h"],
+    deps = [
+    ],
 )
 
 mozc_cc_library(
