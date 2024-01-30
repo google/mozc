@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // This test is only relevant when mozc is using its own test main.
+#ifdef MOZC_USE_MOZC_TESTING
 
 #include "testing/googletest.h"
 
@@ -60,3 +61,4 @@ TEST(GoogleTest, TestFlags) {
 }  // namespace
 }  // namespace mozc
 
+#endif  // MOZC_USE_MOZC_TESTING

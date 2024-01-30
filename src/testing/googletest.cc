@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifdef MOZC_USE_MOZC_TESTING
 
 #include "testing/googletest.h"
 
@@ -71,3 +72,4 @@ void InitTestFlags() {
 
 }  // namespace mozc
 
+#endif  // MOZC_USE_MOZC_TESTING
