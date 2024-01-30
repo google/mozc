@@ -101,7 +101,7 @@ class Util {
   }
 
   // Converts a UCS4 code point to UTF8 string.
-  static void Ucs4ToUtf8(char32_t c, std::string *output);
+  static std::string Ucs4ToUtf8(char32_t c);
 
   // Converts a UCS4 code point to UTF8 string and appends it to |output|, i.e.,
   // |output| is not cleared.

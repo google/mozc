@@ -326,26 +326,24 @@ TEST(UtilTest, Utf8ToUcs4) {
 }
 
 TEST(UtilTest, Ucs4ToUtf8) {
-  std::string output;
-
   // Do nothing if |c| is NUL. Previous implementation of Ucs4ToUtf8 worked like
   // this even though the reason is unclear.
-  Util::Ucs4ToUtf8(0, &output);
+  std::string output = Util::Ucs4ToUtf8(0);
   EXPECT_TRUE(output.empty());
 
-  Util::Ucs4ToUtf8(0x7F, &output);
+  output = Util::Ucs4ToUtf8(0x7F);
   EXPECT_EQ(output, "\x7F");
-  Util::Ucs4ToUtf8(0x80, &output);
+  output = Util::Ucs4ToUtf8(0x80);
   EXPECT_EQ(output, "\xC2\x80");
-  Util::Ucs4ToUtf8(0x7FF, &output);
+  output = Util::Ucs4ToUtf8(0x7FF);
   EXPECT_EQ(output, "\xDF\xBF");
-  Util::Ucs4ToUtf8(0x800, &output);
+  output = Util::Ucs4ToUtf8(0x800);
   EXPECT_EQ(output, "\xE0\xA0\x80");
-  Util::Ucs4ToUtf8(0xFFFF, &output);
+  output = Util::Ucs4ToUtf8(0xFFFF);
   EXPECT_EQ(output, "\xEF\xBF\xBF");
-  Util::Ucs4ToUtf8(0x10000, &output);
+  output = Util::Ucs4ToUtf8(0x10000);
   EXPECT_EQ(output, "\xF0\x90\x80\x80");
-  Util::Ucs4ToUtf8(0x1FFFFF, &output);
+  output = Util::Ucs4ToUtf8(0x1FFFFF);
   EXPECT_EQ(output, "\xF7\xBF\xBF\xBF");
 
   // Buffer version.

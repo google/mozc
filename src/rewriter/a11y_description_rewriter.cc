@@ -193,8 +193,7 @@ void A11yDescriptionRewriter::AddA11yDescription(
       previous_type = current_type;
       current_type = GetCharacterType(codepoint);
       if (current_type == OTHERS) {
-        std::string key;
-        Util::Ucs4ToUtf8(codepoint, &key);
+        const std::string key = Util::Ucs4ToUtf8(codepoint);
         const SerializedDictionary::IterRange range =
             description_map_->equal_range(key);
         if (range.first != range.second) {

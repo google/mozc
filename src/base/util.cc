@@ -247,7 +247,6 @@ void Util::LowerString(std::string *str) {
   const char *begin = str->data();
   size_t mblen = 0;
 
-  std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
     char32_t ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
@@ -258,7 +257,7 @@ void Util::LowerString(std::string *str) {
     if ((0x0041 <= ucs4 && ucs4 <= 0x005A) ||
         (0xFF21 <= ucs4 && ucs4 <= 0xFF3A)) {
       ucs4 += kOffsetFromUpperToLower;
-      Ucs4ToUtf8(ucs4, &utf8);
+      const std::string utf8 = Ucs4ToUtf8(ucs4);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -275,7 +274,6 @@ void Util::UpperString(std::string *str) {
   const char *begin = str->data();
   size_t mblen = 0;
 
-  std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
     char32_t ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
@@ -283,7 +281,7 @@ void Util::UpperString(std::string *str) {
     if ((0x0061 <= ucs4 && ucs4 <= 0x007A) ||
         (0xFF41 <= ucs4 && ucs4 <= 0xFF5A)) {
       ucs4 -= kOffsetFromUpperToLower;
-      Ucs4ToUtf8(ucs4, &utf8);
+      const std::string utf8 = Ucs4ToUtf8(ucs4);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -510,9 +508,10 @@ bool Util::IsValidUtf8(absl::string_view s) {
   return true;
 }
 
-void Util::Ucs4ToUtf8(char32_t c, std::string *output) {
-  output->clear();
-  Ucs4ToUtf8Append(c, output);
+std::string Util::Ucs4ToUtf8(char32_t c) {
+  std::string output;
+  Ucs4ToUtf8Append(c, &output);
+  return output;
 }
 
 void Util::Ucs4ToUtf8Append(char32_t c, std::string *output) {

@@ -34,6 +34,7 @@
 #include <windows.h>
 
 #include <set>
+#include <string>
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
@@ -408,8 +409,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
   // Support VK_PACKET.
   if (virtual_key.virtual_key() == VK_PACKET) {
     const char32_t character = virtual_key.unicode_char();
-    std::string utf8_characters;
-    Util::Ucs4ToUtf8(character, &utf8_characters);
+    const std::string utf8_characters = Util::Ucs4ToUtf8(character);
     if (utf8_characters.empty()) {
       return false;
     }
