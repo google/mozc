@@ -124,7 +124,7 @@ class SessionHandler : public SessionHandlerInterface {
   bool SetConfig(commands::Command *command);
   // Updates all the sessions by UpdateSessions() with given |request|.
   bool SetRequest(commands::Command *command);
-  // Sets the given config, request, and delivertive information
+  // Sets the given config, request, and derivative information
   // to all the sessions.
   // Then updates config_ and request_.
   // This method doesn't reload the sessions.
@@ -137,6 +137,9 @@ class SessionHandler : public SessionHandlerInterface {
   bool NoOperation(commands::Command *command);
   bool CheckSpelling(commands::Command *command);
   bool ReloadSpellChecker(commands::Command *command);
+
+  // Replaces engine_ with a new instance if it is ready.
+  void MaybeReloadEngine(commands::Command *command);
 
   SessionID CreateNewSessionID();
   bool DeleteSessionID(SessionID id);

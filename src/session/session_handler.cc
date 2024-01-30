@@ -489,6 +489,72 @@ bool SessionHandler::SendCommand(commands::Command *command) {
   return true;
 }
 
+void SessionHandler::MaybeReloadEngine(commands::Command *command) {
+  if (!engine_builder_) {
+    return;
+  }
+
+  // Maybe build new engine if new request is received.
+  // EngineBuilder::Build just returns a future object so
+  // client needs to replace the new engine when the future is the ready to use.
+  if (!engine_response_future_ && current_engine_id_ != latest_engine_id_ &&
+      latest_engine_id_ != 0) {
+    engine_response_future_ = engine_builder_->Build(latest_engine_id_);
+    // Wait the engine if the no new engine is loaded so far.
+    if (current_engine_id_ == 0 || always_wait_for_engine_response_future_) {
+      engine_response_future_->Wait();
+    }
+  }
+
+  if (session_map_->Size() > 0) {
+    // Some sessions still use the current engine_.
+    return;
+  }
+
+  if (!engine_response_future_ || !engine_response_future_->Ready()) {
+    // Response is not ready to reload engine_.
+    return;
+  }
+
+  // Replaces the engine when the new engine is ready to use.
+  mozc::EngineBuilder::EngineResponse &&engine_response =
+      std::move(*engine_response_future_).Get();
+  engine_response_future_.reset();
+  *command->mutable_output()->mutable_engine_reload_response() =
+      engine_response.response;
+
+  if (!engine_response.engine ||
+      engine_response.response.status() != EngineReloadResponse::RELOAD_READY) {
+    // The engine_response does not contain a valid result.
+
+    // This engine id causes a critical error, so rollback the id.
+    LOG(ERROR) << "Failure in engine loading: "
+               << protobuf::Utf8Format(engine_response.response);
+    const uint64_t rollback_id =
+        engine_builder_->UnregisterRequest(engine_response.id);
+    // Update latest_engine_id_ if latest_engine_id_ == engine_response.id.
+    // Otherwise, latest_engine_id_ may already be updated by the new request.
+    latest_engine_id_.compare_exchange_strong(engine_response.id, rollback_id);
+
+    return;
+  }
+
+  if (engine_ && engine_->GetUserDataManager()) {
+    engine_->GetUserDataManager()->Wait();
+  }
+  engine_ = std::move(engine_response.engine);
+  if (!engine_) {
+    LOG(FATAL) << "Critical failure in engine replace";
+    return;
+  }
+
+
+  current_engine_id_ = engine_response.id;
+  command->mutable_output()->mutable_engine_reload_response()->set_status(
+      EngineReloadResponse::RELOADED);
+  table_manager_->ClearCaches();
+}
+
 bool SessionHandler::CreateSession(commands::Command *command) {
   // prevent DOS attack
   // don't allow CreateSession in very short period.
@@ -524,48 +590,8 @@ bool SessionHandler::CreateSession(commands::Command *command) {
                  << " is removed";
   }
 
-  // Maybe build new engine if new request is received.
-  // EngineBuilder::Build just returns a future object so
-  // client needs to replace the new engine when the future is the ready to use.
-  if (engine_builder_ && !engine_response_future_ &&
-      current_engine_id_ != latest_engine_id_ && latest_engine_id_ != 0) {
-    engine_response_future_ = engine_builder_->Build(latest_engine_id_);
-    // Wait the engine if the no new engine is loaded so far.
-    if (current_engine_id_ == 0 || always_wait_for_engine_response_future_) {
-      engine_response_future_->Wait();
-    }
-  }
-
-  // Replaces the engine when the new engine is ready to use.
-  if (engine_builder_ && session_map_->Size() == 0 && engine_response_future_ &&
-      engine_response_future_->Ready()) {
-    auto &&engine_response = std::move(*engine_response_future_).Get();
-    engine_response_future_.reset();
-    *command->mutable_output()->mutable_engine_reload_response() =
-        engine_response.response;
-    if (engine_response.engine && engine_response.response.status() ==
-                                      EngineReloadResponse::RELOAD_READY) {
-      if (engine_ && engine_->GetUserDataManager()) {
-        engine_->GetUserDataManager()->Wait();
-      }
-      engine_ = std::move(engine_response.engine);
-      current_engine_id_ = engine_response.id;
-      command->mutable_output()->mutable_engine_reload_response()->set_status(
-          EngineReloadResponse::RELOADED);
-      LOG_IF(FATAL, !engine_) << "Critical failure in engine replace";
-      table_manager_->ClearCaches();
-    } else {
-      // This engine id causes a critical error, so rollback the id.
-      LOG(ERROR) << "Failure in engine loading: "
-                 << protobuf::Utf8Format(engine_response.response);
-      const uint64_t rollback_id =
-          engine_builder_->UnregisterRequest(engine_response.id);
-      // Update latest_engine_id_ if latest_engine_id_ == engine_response.id.
-      // Otherwise, latest_engine_id_ may already be updated by the new request.
-      latest_engine_id_.compare_exchange_strong(engine_response.id,
-                                                rollback_id);
-    }
-  }
+  // CreateSession is called on a relatively safer timing to reload engine_.
+  MaybeReloadEngine(command);
 
   session::SessionInterface *session = NewSession();
   if (session == nullptr) {
