@@ -157,7 +157,7 @@ class SessionRegressionTest : public testing::TestWithTempUserProfile {
   }
 
   void ResetSession() {
-    session_.reset(static_cast<session::Session *>(handler_->NewSession()));
+    session_ = handler_->NewSession();
     commands::Request request;
     table_ = std::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(request, config_, data_manager_);

@@ -48,8 +48,8 @@
 #include "protocol/config.pb.h"
 #include "session/common.h"
 #include "session/internal/keymap.h"
+#include "session/session.h"
 #include "session/session_handler_interface.h"
-#include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"
 #include "storage/lru_cache.h"
@@ -68,7 +68,7 @@ class SessionHandler : public SessionHandlerInterface {
                  std::unique_ptr<EngineBuilder> engine_builder);
   SessionHandler(const SessionHandler &) = delete;
   SessionHandler &operator=(const SessionHandler &) = delete;
-  ~SessionHandler() override;
+  ~SessionHandler() override = default;
 
   // Returns true if SessionHandle is available.
   bool IsAvailable() const override;
@@ -79,8 +79,7 @@ class SessionHandler : public SessionHandlerInterface {
   void StartWatchDog() override;
 
   // NewSession returns new Session.
-  // Client needs to delete it properly
-  session::SessionInterface *NewSession();
+  std::unique_ptr<session::Session> NewSession();
 
   void AddObserver(session::SessionObserverInterface *observer) override;
   absl::string_view GetDataVersion() const override {
@@ -95,7 +94,7 @@ class SessionHandler : public SessionHandlerInterface {
   FRIEND_TEST(SessionHandlerTest, EngineRollbackDataTest);
 
   using SessionMap =
-      mozc::storage::LruCache<SessionID, session::SessionInterface *>;
+      mozc::storage::LruCache<SessionID, std::unique_ptr<session::Session>>;
   using SessionElement = SessionMap::Element;
 
   void Init(std::unique_ptr<EngineInterface> engine,

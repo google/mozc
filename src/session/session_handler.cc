@@ -62,7 +62,6 @@
 #include "session/common.h"
 #include "session/internal/keymap.h"
 #include "session/session.h"
-#include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"
 #include "usage_stats/usage_stats.h"
@@ -110,7 +109,7 @@ namespace {
 
 using mozc::usage_stats::UsageStats;
 
-bool IsApplicationAlive(const session::SessionInterface *session) {
+bool IsApplicationAlive(const session::Session *session) {
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   const commands::ApplicationInfo &info = session->application_info();
   // When the thread/process's current status is unknown, i.e.,
@@ -186,16 +185,6 @@ void SessionHandler::Init(std::unique_ptr<EngineInterface> engine,
 
   // everything is OK
   is_available_ = true;
-}
-
-SessionHandler::~SessionHandler() {
-  for (SessionElement *element =
-           const_cast<SessionElement *>(session_map_->Head());
-       element != nullptr; element = element->next) {
-    delete element->value;
-    element->value = nullptr;
-  }
-  session_map_->Clear();
 }
 
 bool SessionHandler::IsAvailable() const { return is_available_; }
@@ -435,9 +424,9 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
   return is_available_;
 }
 
-session::SessionInterface *SessionHandler::NewSession() {
+std::unique_ptr<session::Session> SessionHandler::NewSession() {
   // Session doesn't take the ownership of engine.
-  return new session::Session(engine_.get());
+  return std::make_unique<session::Session>(engine_.get());
 }
 
 void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
@@ -455,8 +444,8 @@ void SessionHandler::MaybeUpdateConfig(commands::Command *command) {
 
 bool SessionHandler::SendKey(commands::Command *command) {
   const SessionID id = command->input().id();
-  session::SessionInterface **session = session_map_->MutableLookup(id);
-  if (session == nullptr || *session == nullptr) {
+  std::unique_ptr<session::Session> *session = session_map_->MutableLookup(id);
+  if (session == nullptr || !*session) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
   }
@@ -467,8 +456,8 @@ bool SessionHandler::SendKey(commands::Command *command) {
 
 bool SessionHandler::TestSendKey(commands::Command *command) {
   const SessionID id = command->input().id();
-  session::SessionInterface **session = session_map_->MutableLookup(id);
-  if (session == nullptr || *session == nullptr) {
+  std::unique_ptr<session::Session> *session = session_map_->MutableLookup(id);
+  if (session == nullptr || !*session) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
   }
@@ -478,9 +467,9 @@ bool SessionHandler::TestSendKey(commands::Command *command) {
 
 bool SessionHandler::SendCommand(commands::Command *command) {
   const SessionID id = command->input().id();
-  session::SessionInterface **session =
-      const_cast<session::SessionInterface **>(session_map_->Lookup(id));
-  if (session == nullptr || *session == nullptr) {
+  auto *session = const_cast<std::unique_ptr<session::Session> *>(
+      session_map_->Lookup(id));
+  if (session == nullptr || !*session) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
   }
@@ -583,8 +572,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
       LOG(ERROR) << "oldest SessionElement is NULL";
       return false;
     }
-    delete oldest_element->value;
-    oldest_element->value = nullptr;
+    oldest_element->value.reset();
     session_map_->Erase(oldest_element->key);
     MOZC_VLOG(1) << "Session is FULL, oldest SessionID " << oldest_element->key
                  << " is removed";
@@ -593,20 +581,12 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   // CreateSession is called on a relatively safer timing to reload engine_.
   MaybeReloadEngine(command);
 
-  session::SessionInterface *session = NewSession();
-  if (session == nullptr) {
+  std::unique_ptr<session::Session> session = NewSession();
+  if (!session) {
     LOG(ERROR) << "Cannot allocate new Session";
     return false;
   }
 
-
-  const SessionID new_id = CreateNewSessionID();
-  SessionElement *element = session_map_->Insert(new_id);
-  element->value = session;
-  command->mutable_output()->set_id(new_id);
-
-  // The oldes item should be reused
-  DCHECK(oldest_element == nullptr || oldest_element == element);
 
   if (command->input().has_capability()) {
     session->set_client_capability(command->input().capability());
@@ -615,6 +595,14 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   if (command->input().has_application_info()) {
     session->set_application_info(command->input().application_info());
   }
+
+  const SessionID new_id = CreateNewSessionID();
+  SessionElement *element = session_map_->Insert(new_id);
+  element->value = std::move(session);
+  command->mutable_output()->set_id(new_id);
+
+  // The oldes item should be reused
+  DCHECK(oldest_element == nullptr || oldest_element == element);
 
   // The created session has not been fully initialized yet.
   // SetConfig() will complete the initialization by setting information
@@ -677,10 +665,9 @@ bool SessionHandler::Cleanup(commands::Command *command) {
                    absl::Seconds(7200)));
 
   std::vector<SessionID> remove_ids;
-  for (SessionElement *element =
-           const_cast<SessionElement *>(session_map_->Head());
-       element != nullptr; element = element->next) {
-    session::SessionInterface *session = element->value;
+  for (const SessionElement *element = session_map_->Head(); element != nullptr;
+       element = element->next) {
+    const session::Session *session = element->value.get();
     if (!IsApplicationAlive(session)) {
       MOZC_VLOG(2) << "Application is not alive. Removing: " << element->key;
       remove_ids.push_back(element->key);
@@ -775,12 +762,12 @@ SessionID SessionHandler::CreateNewSessionID() {
 }
 
 bool SessionHandler::DeleteSessionID(SessionID id) {
-  session::SessionInterface **session = session_map_->MutableLookup(id);
-  if (session == nullptr || *session == nullptr) {
+  std::unique_ptr<session::Session> *session = session_map_->MutableLookup(id);
+  if (session == nullptr || !*session) {
     LOG_IF(WARNING, id != 0) << "cannot find SessionID " << id;
     return false;
   }
-  delete *session;
+  session->reset();
 
   session_map_->Erase(id);  // remove from LRU
 
