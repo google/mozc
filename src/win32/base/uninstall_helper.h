@@ -36,7 +36,7 @@
 #include <string>
 #include <vector>
 
-#include "testing/gunit_prod.h"  // for FRIEND_TEST()
+#include "testing/friend_test.h"
 
 namespace mozc {
 namespace win32 {

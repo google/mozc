@@ -35,9 +35,7 @@
 #include <set>
 #include <string>
 
-
-// for FRIEND_TEST()
-#include "testing/gunit_prod.h"
+#include "testing/friend_test.h"
 
 namespace mozc {
 

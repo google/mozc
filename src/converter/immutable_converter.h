@@ -51,7 +51,7 @@
 #include "engine/modules.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
-#include "testing/gunit_prod.h"  //  for FRIEND_TEST()
+#include "testing/friend_test.h"
 
 namespace mozc {
 

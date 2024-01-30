@@ -53,7 +53,7 @@
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"
 #include "storage/lru_cache.h"
-#include "testing/gunit_prod.h"  // for FRIEND_TEST()
+#include "testing/friend_test.h"
 
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG

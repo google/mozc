@@ -518,7 +518,7 @@ mozc_cc_library(
         ":tsf_profile",
         "//base:logging",
         "//base:system_util",
-        "//testing:gunit_prod",
+        "//testing:friend_test",
         "@com_microsoft_wil//:wil",
     ],
 )

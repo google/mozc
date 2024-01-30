@@ -65,7 +65,7 @@ mozc_cc_library(
         "//engine:spellchecker_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//testing:gunit_prod",
+        "//testing:friend_test",
         "//transliteration",
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/strings",

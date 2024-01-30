@@ -37,8 +37,7 @@
 
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_token.h"
-#include "testing/gunit_prod.h"
-// for FRIEND_TEST
+#include "testing/friend_test.h"
 
 namespace mozc {
 namespace dictionary {

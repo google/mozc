@@ -46,9 +46,8 @@
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/session_interface.h"
-// for FRIEND_TEST()
 #include "absl/time/time.h"
-#include "testing/gunit_prod.h"
+#include "testing/friend_test.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {

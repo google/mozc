@@ -70,7 +70,7 @@ mozc_cc_library(
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//testing:gunit_prod",
+        "//testing:friend_test",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",

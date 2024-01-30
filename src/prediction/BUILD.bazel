@@ -93,7 +93,7 @@ mozc_cc_library(
         "//rewriter:variants_rewriter",
         "//storage:encrypted_string_storage",
         "//storage:lru_cache",
-        "//testing:gunit_prod",
+        "//testing:friend_test",
         "//usage_stats",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/hash",

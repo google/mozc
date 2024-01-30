@@ -46,7 +46,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/gunit_prod.h"  // for FRIEND_TEST()
+#include "testing/friend_test.h"
 
 namespace mozc {
 
