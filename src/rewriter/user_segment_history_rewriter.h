@@ -87,11 +87,13 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
 
   bool IsAvailable(const ConversionRequest &request,
                    const Segments &segments) const;
-  Score GetScore(const Segments &segments, size_t segment_index,
-                 int candidate_index) const;
-  bool Replaceable(const Segment::Candidate &lhs,
+  Score GetScore(const ConversionRequest &request, const Segments &segments,
+                 size_t segment_index, int candidate_index) const;
+  bool Replaceable(const ConversionRequest &request,
+                   const Segment::Candidate &lhs,
                    const Segment::Candidate &rhs) const;
-  void RememberFirstCandidate(const Segments &segments, size_t segment_index);
+  void RememberFirstCandidate(const ConversionRequest &request,
+                              const Segments &segments, size_t segment_index);
   void RememberNumberPreference(const Segment &segment);
   bool RewriteNumber(Segment *segment) const;
   bool ShouldRewrite(const Segment &segment, size_t *max_candidates_size) const;

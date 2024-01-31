@@ -87,6 +87,12 @@ bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
   return request.request().kana_modifier_insensitive_conversion();
 }
 
+bool IsNewReplaceableEnabled(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .user_segment_history_rewriter_new_replaceable();
+}
+
 class FeatureValue {
  public:
   FeatureValue() : feature_type_(1), reserved_(0) {}
@@ -131,9 +137,8 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
       return i;
     }
   }
-  MOZC_VLOG(2) << "Cannot find default candidate. "
-               << "key: " << segment.key() << ", "
-               << "candidates_size: " << segment.candidates_size();
+  MOZC_VLOG(2) << "Cannot find default candidate. " << "key: " << segment.key()
+               << ", " << "candidates_size: " << segment.candidates_size();
   return 0;
 }
 
@@ -390,7 +395,13 @@ bool GetSameValueCandidatePosition(const Segment *segment,
 }
 
 bool IsT13NCandidate(const Segment::Candidate &cand) {
-  // - The cand with 0-id can be the transliterated candidate.
+  // The cand with 0-id can be the transliterated candidate.
+  return (cand.lid == 0 && cand.rid == 0);
+}
+
+bool IsT13NCandidateV2(const Segment::Candidate &cand) {
+  // In V2, treat single script type candidate as T13N in addition to
+  // the original conditions.
   const Util::ScriptType script_type = Util::GetScriptType(cand.value);
   return ((cand.lid == 0 && cand.rid == 0) || script_type == Util::KATAKANA ||
           script_type == Util::HIRAGANA || script_type == Util::ALPHABET);
@@ -497,7 +508,8 @@ UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
 }
 
 UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
-    const Segments &segments, size_t segment_index, int candidate_index) const {
+    const ConversionRequest &request, const Segments &segments,
+    size_t segment_index, int candidate_index) const {
   const size_t segments_size = segments.conversion_segments_size();
   const Segment::Candidate &top_candidate =
       segments.segment(segment_index).candidate(0);
@@ -535,7 +547,7 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
   score.Update(Fetch(fkey.RightNumber(content_key, content_value),
                      bigram_number_weight));
 
-  const bool is_replaceable = Replaceable(top_candidate, candidate);
+  const bool is_replaceable = Replaceable(request, top_candidate, candidate);
   if (!context_sensitive && is_replaceable) {
     score.Update(Fetch(fkey.Current(all_key, all_value), unigram_weight));
   }
@@ -570,14 +582,21 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
 
 // Returns true if |lhs| candidate can be replaceable with |rhs|.
 bool UserSegmentHistoryRewriter::Replaceable(
-    const Segment::Candidate &lhs, const Segment::Candidate &rhs) const {
+    const ConversionRequest &request, const Segment::Candidate &lhs,
+    const Segment::Candidate &rhs) const {
   const bool same_functional_value =
       (lhs.functional_value() == rhs.functional_value());
   const bool same_pos_group =
       (pos_group_->GetPosGroup(lhs.lid) == pos_group_->GetPosGroup(rhs.lid));
-  return (same_functional_value &&
-          (same_pos_group || IsT13NCandidate(lhs) || IsT13NCandidate(rhs) ||
-           IsSingleKanjiCandidate(lhs) || IsSingleKanjiCandidate(rhs)));
+  if (IsNewReplaceableEnabled(request)) {
+    return (same_functional_value &&
+            (same_pos_group || IsT13NCandidateV2(lhs) ||
+             IsT13NCandidateV2(rhs) || IsSingleKanjiCandidate(lhs) ||
+             IsSingleKanjiCandidate(rhs)));
+  } else {
+    return (same_functional_value &&
+            (same_pos_group || IsT13NCandidate(lhs) || IsT13NCandidate(rhs)));
+  }
 }
 
 void UserSegmentHistoryRewriter::RememberNumberPreference(
@@ -606,7 +625,8 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
 }
 
 void UserSegmentHistoryRewriter::RememberFirstCandidate(
-    const Segments &segments, size_t segment_index) {
+    const ConversionRequest &request, const Segments &segments,
+    size_t segment_index) {
   const Segment &seg = segments.segment(segment_index);
   const Segment::Candidate &candidate = seg.candidate(0);
 
@@ -634,7 +654,8 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   // "SAFELY" be replaceable with the top candidate.
   const int top_index = GetDefaultCandidateIndex(seg);
   const bool is_replaceable_with_top =
-      ((top_index == 0) || Replaceable(seg.candidate(top_index), candidate));
+      ((top_index == 0) ||
+       Replaceable(request, seg.candidate(top_index), candidate));
 
   FeatureKey fkey(segments, *pos_matcher_, segment_index);
   Insert(fkey.LeftRight(all_key, all_value), force_insert);
@@ -780,7 +801,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
       continue;
     }
     InsertTriggerKey(segment);
-    RememberFirstCandidate(target_segments, i);
+    RememberFirstCandidate(request, target_segments, i);
   }
   // update usage stats here
   usage_stats::UsageStats::SetInteger("UserSegmentHistoryEntrySize",
@@ -974,7 +995,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
                               transliteration::NUM_T13N_TYPES);
       }
 
-      const Score score = GetScore(*segments, i, j);
+      const Score score = GetScore(request, *segments, i, j);
       if (score.score > 0) {
         scores.emplace_back(score, &segment->candidate(j));
       }
