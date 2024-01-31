@@ -266,23 +266,6 @@ UINT __stdcall RestoreUserIMEEnvironment(MSIHANDLE msi_handle) {
 }
 
 // [Return='ignore']
-UINT __stdcall EnsureIMEIsDisabledForServiceAccount(MSIHANDLE msi_handle) {
-  DEBUG_BREAK_FOR_DEBUGGER();
-  bool is_service = false;
-  if (!mozc::WinUtil::IsServiceAccount(&is_service)) {
-    return ERROR_INSTALL_FAILURE;
-  }
-  if (!is_service) {
-    // Do nothing if this is not a service account.
-    return ERROR_SUCCESS;
-  }
-
-  const bool result =
-      mozc::win32::UninstallHelper::EnsureIMEIsRemovedForCurrentUser(true);
-  return result ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
-}
-
-// [Return='ignore']
 // Hides the cancel button on a progress dialog shown by the installer shows.
 // Please see the following page for details.
 // http://msdn.microsoft.com/en-us/library/aa368791(VS.85).aspx
