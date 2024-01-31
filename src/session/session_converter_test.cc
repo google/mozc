@@ -127,25 +127,25 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
 
   static void GetSegments(const SessionConverter &converter, Segments *dest) {
     CHECK(dest);
-    *dest = *converter.segments_;
+    *dest = converter.segments_;
   }
 
   static const Segments &GetSegments(const SessionConverter &converter) {
-    return *converter.segments_;
+    return converter.segments_;
   }
 
   static void SetSegments(const Segments &src, SessionConverter *converter) {
     CHECK(converter);
-    *converter->segments_ = src;
+    converter->segments_ = src;
   }
 
   static const commands::Result &GetResult(const SessionConverter &converter) {
-    return *converter.result_;
+    return converter.result_;
   }
 
   static const CandidateList &GetCandidateList(
       const SessionConverter &converter) {
-    return *converter.candidate_list_;
+    return converter.candidate_list_;
   }
 
   static SessionConverterInterface::State GetState(
