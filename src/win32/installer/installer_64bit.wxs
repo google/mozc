@@ -542,15 +542,15 @@
         (NOT (REMOVE="ALL"))
       </Custom>
       <Custom Action='EnsureIMEIsDisabledForServiceAccountAfterInstall'
-          Before='InstallFinalize' >
+          Before='InitialInstallationCommit' >
         (NOT (REMOVE="ALL"))
       </Custom>
       <Custom Action='InitialInstallationCommit'
-          After='EnsureIMEIsDisabledForServiceAccountAfterInstall'>
+          Before='EnableTipProfile'>
         (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
       <Custom Action='EnableTipProfile'
-          After='InitialInstallationCommit'>
+          Before='InstallFinalize'>
         (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
       <!-- show reboot dialog to execute pending file opartions -->
