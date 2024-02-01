@@ -286,6 +286,7 @@ OK:	かいていこう	改訂稿	Conversion Expected 2	改訂稿	2.29.5135
 OK:	けっていこう	決定稿	Conversion Expected	決定稿	2.29.5135
 OK:	さいしゅうこう	最終稿	Conversion Expected	最終稿	2.29.5135
 OK:	しゅうせいこう	修正稿	Conversion Expected	修正稿	2.29.5135
+FAILED:	とりそこなって	取り残って	Conversion Expected	取り損なって	2.29.5346
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
