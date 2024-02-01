@@ -40,7 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -193,7 +192,6 @@ namespace {
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::PosMatcher;
-using ::mozc::dictionary::SuffixDictionary;
 using ::mozc::dictionary::Token;
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -337,14 +335,15 @@ bool FindResultByValue(const std::vector<Result> &results,
   return false;
 }
 
-DictionaryInterface *CreateSuffixDictionaryFromDataManager(
-    const DataManagerInterface &data_manager) {
-  absl::string_view suffix_key_array_data, suffix_value_array_data;
-  const uint32_t *token_array;
-  data_manager.GetSuffixDictionaryData(&suffix_key_array_data,
-                                       &suffix_value_array_data, &token_array);
-  return new SuffixDictionary(suffix_key_array_data, suffix_value_array_data,
-                              token_array);
+bool FindResultByKeyValue(const std::vector<Result> &results,
+                          const absl::string_view key,
+                          const absl::string_view value) {
+  for (const auto &result : results) {
+    if (result.key == key && result.value == value && !result.removed) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Simple immutable converter mock for the realtime conversion test
@@ -404,7 +403,7 @@ class MockDataAndAggregator {
 
     auto kanji_aggregator =
         std::make_unique<MockSingleKanjiPredictionAggregator>();
-    single_kanji_prediction_aggregator_ =  kanji_aggregator.get();
+    single_kanji_prediction_aggregator_ = kanji_aggregator.get();
 
     aggregator_ = std::make_unique<DictionaryPredictionAggregatorTestPeer>(
         data_manager_, &converter_, &mock_immutable_converter_, modules_,
@@ -2810,10 +2809,10 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwiritng) {
     commands::SessionCommand::CompositionEvent *composition_event =
         command.add_composition_events();
     composition_event->set_composition_string("かん字じ典");
-    composition_event->set_probability(0.9);
+    composition_event->set_probability(0.99);
     composition_event = command.add_composition_events();
     composition_event->set_composition_string("かlv字じ典");
-    composition_event->set_probability(0.1);
+    composition_event->set_probability(0.01);
     composer_->Reset();
     composer_->SetCompositionsForHandwriting(command.composition_events());
 
@@ -2822,25 +2821,6 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwiritng) {
     seg->set_segment_type(Segment::FREE);
   }
 
-  prediction_convreq_->set_use_actual_converter_for_realtime_conversion(true);
-  // realtime conversion
-  {
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    segment->set_key("かん字じ典");
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value = "缶字時典";
-    candidate->key = "かん字じ典";
-
-    EXPECT_CALL(*data_and_aggregator->mutable_converter(),
-                StartConversionForRequest(_, _))
-        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-
-    candidate->value = "間字時典";
-    EXPECT_CALL(*data_and_aggregator->mutable_immutable_converter(),
-                ConvertForRequest(_, _))
-        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
-  }
   // reverse conversion
   {
     Segments segments;
@@ -2889,18 +2869,14 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwiritng) {
                                                        segments, &results) &
               UNIGRAM);
 
-  EXPECT_EQ(results.size(), 7);
+  EXPECT_EQ(results.size(), 5);
   // composition from handwriting output
-  EXPECT_TRUE(FindResultByValue(results, "かん字じ典"));
-  EXPECT_TRUE(FindResultByValue(results, "かlv字じ典"));
+  EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "かん字じ典"));
+  EXPECT_TRUE(FindResultByKeyValue(results, "かlv字じ典", "かlv字じ典"));
   // look-up results
-  EXPECT_TRUE(FindResultByValue(results, "漢字辞典"));
-  EXPECT_TRUE(FindResultByValue(results, "漢字字典"));
-  EXPECT_TRUE(FindResultByValue(results, "換字字典"));
-  // realtime top
-  EXPECT_TRUE(FindResultByValue(results, "缶字時典"));
-  // realtime
-  EXPECT_TRUE(FindResultByValue(results, "間字時典"));
+  EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "漢字辞典"));
+  EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "漢字字典"));
+  EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "換字字典"));
 }
 
 }  // namespace

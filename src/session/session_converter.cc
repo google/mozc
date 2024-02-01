@@ -141,11 +141,11 @@ SessionConverter::SessionConverter(const ConverterInterface *converter,
                                    const Request *request, const Config *config)
     : SessionConverterInterface(),
       converter_(converter),
-      segments_(new Segments),
-      incognito_segments_(new Segments),
+      segments_(),
+      incognito_segments_(),
       segment_index_(0),
-      result_(new commands::Result),
-      candidate_list_(new CandidateList(true)),
+      result_(),
+      candidate_list_(true),
       request_(request),
       state_(COMPOSITION),
       request_type_(ConversionRequest::CONVERSION),
@@ -154,7 +154,7 @@ SessionConverter::SessionConverter(const ConverterInterface *converter,
   conversion_preferences_.use_history = true;
   conversion_preferences_.max_history_size = kDefaultMaxHistorySize;
   conversion_preferences_.request_suggestion = true;
-  candidate_list_->set_page_size(request->candidate_page_size());
+  candidate_list_.set_page_size(request->candidate_page_size());
   SetConfig(config);
 }
 
@@ -181,11 +181,10 @@ bool SessionConverter::ConvertWithPreferences(
   DCHECK(CheckState(COMPOSITION | SUGGESTION | CONVERSION));
 
   ConversionRequest conversion_request(&composer, request_, config_);
-  SetConversionPreferences(preferences, segments_.get(), &conversion_request);
+  SetConversionPreferences(preferences, &segments_, &conversion_request);
   SetRequestType(ConversionRequest::CONVERSION, &conversion_request);
 
-  if (!converter_->StartConversionForRequest(conversion_request,
-                                             segments_.get())) {
+  if (!converter_->StartConversionForRequest(conversion_request, &segments_)) {
     LOG(WARNING) << "StartConversionForRequest() failed";
     ResetState();
     return false;
@@ -294,18 +293,18 @@ bool SessionConverter::ConvertToTransliteration(
     // preedit as a single segment.  We should modify
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
     // from the session layer.
-    if (segments_->conversion_segments_size() != 1) {
+    if (segments_.conversion_segments_size() != 1) {
       std::string composition;
-      GetPreedit(0, segments_->conversion_segments_size(), &composition);
+      GetPreedit(0, segments_.conversion_segments_size(), &composition);
       ResizeSegmentWidth(composer, Util::CharsLen(composition));
     }
 
     DCHECK(CheckState(CONVERSION));
-    candidate_list_->MoveToAttributes(query_attr);
+    candidate_list_.MoveToAttributes(query_attr);
   } else {
     DCHECK(CheckState(CONVERSION));
     const Attributes current_attr =
-        candidate_list_->GetDeepestFocusedCandidate().attributes();
+        candidate_list_.GetDeepestFocusedCandidate().attributes();
 
     if ((query_attr & current_attr & ASCII) &&
         ((((query_attr & HALF_WIDTH) && (current_attr & FULL_WIDTH))) ||
@@ -313,7 +312,7 @@ bool SessionConverter::ConvertToTransliteration(
       query_attr |= (current_attr & (UPPER | LOWER | CAPITALIZED));
     }
 
-    candidate_list_->MoveNextAttributes(query_attr);
+    candidate_list_.MoveNextAttributes(query_attr);
   }
   candidate_list_visible_ = false;
   // Treat as top conversion candidate on usage stats.
@@ -370,14 +369,14 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
     // preedit as a single segment.  We should modify
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
     // from the session layer.
-    if (segments_->conversion_segments_size() != 1) {
+    if (segments_.conversion_segments_size() != 1) {
       std::string composition;
-      GetPreedit(0, segments_->conversion_segments_size(), &composition);
+      GetPreedit(0, segments_.conversion_segments_size(), &composition);
       const ConversionRequest conversion_request(&composer, request_, config_);
-      if (!converter_->ResizeSegment(segments_.get(), conversion_request, 0,
+      if (!converter_->ResizeSegment(&segments_, conversion_request, 0,
                                      Util::CharsLen(composition))) {
         LOG(WARNING) << "ResizeSegment failed for segments.";
-        DLOG(WARNING) << segments_->DebugString();
+        DLOG(WARNING) << segments_.DebugString();
       }
       UpdateCandidateList();
     }
@@ -385,7 +384,7 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
     attributes = (FULL_WIDTH | KATAKANA);
   } else {
     const Attributes current_attributes =
-        candidate_list_->GetDeepestFocusedCandidate().attributes();
+        candidate_list_.GetDeepestFocusedCandidate().attributes();
     // "漢字" -> "かんじ" -> "カンジ" -> "ｶﾝｼﾞ" -> "かんじ" -> ...
     if (current_attributes & HIRAGANA) {
       attributes = (FULL_WIDTH | KATAKANA);
@@ -398,7 +397,7 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
   }
 
   DCHECK(CheckState(CONVERSION));
-  candidate_list_->MoveNextAttributes(attributes);
+  candidate_list_.MoveNextAttributes(attributes);
   candidate_list_visible_ = false;
   // Treat as top conversion candidate on usage stats.
   selected_candidate_indices_[segment_index_] = 0;
@@ -454,9 +453,9 @@ bool SessionConverter::SuggestWithPreferences(
 
   ConversionRequest conversion_request(&composer, request_, config_);
   // Initialize the conversion request and segments for suggestion.
-  SetConversionPreferences(preferences, segments_.get(), &conversion_request);
+  SetConversionPreferences(preferences, &segments_, &conversion_request);
 
-  segments_->clear_conversion_segments();
+  segments_.clear_conversion_segments();
 
   const size_t cursor = composer.GetCursor();
 
@@ -491,14 +490,14 @@ bool SessionConverter::SuggestWithPreferences(
   bool result;
   if (use_partial_composition) {
     result = converter_->StartPartialPredictionForRequest(conversion_request,
-                                                          segments_.get());
+                                                          &segments_);
   } else {
     if (use_prediction_candidate) {
-      result = converter_->StartPredictionForRequest(conversion_request,
-                                                     segments_.get());
+      result =
+          converter_->StartPredictionForRequest(conversion_request, &segments_);
     } else {
-      result = converter_->StartSuggestionForRequest(conversion_request,
-                                                     segments_.get());
+      result =
+          converter_->StartSuggestionForRequest(conversion_request, &segments_);
     }
   }
   if (!result) {
@@ -506,7 +505,7 @@ bool SessionConverter::SuggestWithPreferences(
         << "Start(Partial?)(Suggestion|Prediction)ForRequest() returns no "
            "suggestions.";
     // Clear segments and keep the context
-    converter_->CancelConversion(segments_.get());
+    converter_->CancelConversion(&segments_);
     return false;
   }
   // Fill incognito candidates if required.
@@ -516,13 +515,13 @@ bool SessionConverter::SuggestWithPreferences(
     const Config incognito_config = CreateIncognitoConfig();
     const ConversionRequest incognito_conversion_request =
         CreateIncognitoConversionRequest(conversion_request, incognito_config);
-    incognito_segments_->Clear();
+    incognito_segments_.Clear();
     if (use_partial_composition) {
       result = converter_->StartPartialSuggestionForRequest(
-          incognito_conversion_request, incognito_segments_.get());
+          incognito_conversion_request, &incognito_segments_);
     } else {
       result = converter_->StartSuggestionForRequest(
-          incognito_conversion_request, incognito_segments_.get());
+          incognito_conversion_request, &incognito_segments_);
     }
     if (!result) {
       MOZC_VLOG(1)
@@ -531,11 +530,11 @@ bool SessionConverter::SuggestWithPreferences(
       // TODO(noriyukit): Check if fall through here is ok.
     }
   }
-  DCHECK_EQ(1, segments_->conversion_segments_size());
+  DCHECK_EQ(1, segments_.conversion_segments_size());
 
   // Copy current suggestions so that we can merge
   // prediction/suggestions later
-  previous_suggestions_ = segments_->conversion_segment(0);
+  previous_suggestions_ = segments_.conversion_segment(0);
 
   // Overwrite the request type to SUGGESTION.
   // Without this logic, a candidate gets focused that is unexpected behavior.
@@ -569,7 +568,7 @@ bool SessionConverter::PredictWithPreferences(
 
   // Initialize the segments and conversion_request for prediction
   ConversionRequest conversion_request(&composer, request_, config_);
-  SetConversionPreferences(preferences, segments_.get(), &conversion_request);
+  SetConversionPreferences(preferences, &segments_, &conversion_request);
   SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
   SetUseActualConverterForRealtimeConversion(*request_, &conversion_request);
 
@@ -578,14 +577,14 @@ bool SessionConverter::PredictWithPreferences(
 
   const bool predict_expand =
       (CheckState(PREDICTION) && !IsEmptySegment(previous_suggestions_) &&
-       candidate_list_->size() > 0 && candidate_list_->focused() &&
-       candidate_list_->focused_index() == candidate_list_->last_index());
+       candidate_list_.size() > 0 && candidate_list_.focused() &&
+       candidate_list_.focused_index() == candidate_list_.last_index());
 
-  segments_->clear_conversion_segments();
+  segments_.clear_conversion_segments();
 
   if (predict_expand || predict_first) {
     if (!converter_->StartPredictionForRequest(conversion_request,
-                                               segments_.get())) {
+                                               &segments_)) {
       LOG(WARNING) << "StartPredictionForRequest() failed";
       // TODO(komatsu): Perform refactoring after checking the stability test.
       //
@@ -601,7 +600,7 @@ bool SessionConverter::PredictWithPreferences(
   // Merge suggestions and prediction
   std::string preedit;
   composer.GetQueryForPrediction(&preedit);
-  PrependCandidates(previous_suggestions_, std::move(preedit), segments_.get());
+  PrependCandidates(previous_suggestions_, std::move(preedit), &segments_);
 
   segment_index_ = 0;
   state_ = PREDICTION;
@@ -618,21 +617,21 @@ void SessionConverter::MaybeExpandPrediction(
 
   // Expand the current suggestions and fill with Prediction results.
   if (!CheckState(PREDICTION) || IsEmptySegment(previous_suggestions_) ||
-      !candidate_list_->focused() ||
-      candidate_list_->focused_index() != candidate_list_->last_index()) {
+      !candidate_list_.focused() ||
+      candidate_list_.focused_index() != candidate_list_.last_index()) {
     return;
   }
 
   DCHECK(CheckState(PREDICTION));
   ResetResult();
 
-  const size_t previous_index = candidate_list_->focused_index();
+  const size_t previous_index = candidate_list_.focused_index();
   if (!PredictWithPreferences(composer, conversion_preferences_)) {
     return;
   }
 
-  DCHECK_LT(previous_index, candidate_list_->size());
-  candidate_list_->MoveToId(candidate_list_->candidate(previous_index).id());
+  DCHECK_LT(previous_index, candidate_list_.size());
+  candidate_list_.MoveToId(candidate_list_.candidate(previous_index).id());
   UpdateSelectedCandidateIndex();
 }
 
@@ -641,7 +640,7 @@ void SessionConverter::Cancel() {
   ResetResult();
 
   // Clear segments and keep the context
-  converter_->CancelConversion(segments_.get());
+  converter_->CancelConversion(&segments_);
   ResetState();
 }
 
@@ -650,7 +649,7 @@ void SessionConverter::Reset() {
 
   // Even if composition mode, call ResetConversion
   // in order to clear history segments.
-  converter_->ResetConversion(segments_.get());
+  converter_->ResetConversion(&segments_);
 
   if (CheckState(COMPOSITION)) {
     return;
@@ -666,21 +665,21 @@ void SessionConverter::Commit(const composer::Composer &composer,
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();
 
-  if (!UpdateResult(0, segments_->conversion_segments_size(), nullptr)) {
+  if (!UpdateResult(0, segments_.conversion_segments_size(), nullptr)) {
     Cancel();
     ResetState();
     return;
   }
 
-  for (size_t i = 0; i < segments_->conversion_segments_size(); ++i) {
-    if (!converter_->CommitSegmentValue(segments_.get(), i,
+  for (size_t i = 0; i < segments_.conversion_segments_size(); ++i) {
+    if (!converter_->CommitSegmentValue(&segments_, i,
                                         GetCandidateIndexForConverter(i))) {
       LOG(WARNING) << "Failed to commit segment " << i;
     }
   }
   CommitUsageStats(state_, context);
   ConversionRequest conversion_request(&composer, request_, config_);
-  converter_->FinishConversion(conversion_request, segments_.get());
+  converter_->FinishConversion(conversion_request, &segments_);
   ResetState();
 }
 
@@ -693,7 +692,7 @@ bool SessionConverter::CommitSuggestionInternal(
   std::string preedit;
   composer.GetStringForPreedit(&preedit);
 
-  if (!UpdateResult(0, segments_->conversion_segments_size(),
+  if (!UpdateResult(0, segments_.conversion_segments_size(),
                     consumed_key_size)) {
     // Do not need to call Cancel like Commit because the current
     // state is SUGGESTION.
@@ -709,7 +708,7 @@ bool SessionConverter::CommitSuggestionInternal(
       *consumed_key_size < composer.GetLength()) {
     // A candidate was chosen from partial suggestion.
     if (!converter_->CommitPartialSuggestionSegmentValue(
-            segments_.get(), 0, GetCandidateIndexForConverter(0),
+            &segments_, 0, GetCandidateIndexForConverter(0),
             Util::Utf8SubString(preedit, 0, *consumed_key_size),
             Util::Utf8SubString(preedit, *consumed_key_size,
                                 preedit_length - *consumed_key_size))) {
@@ -720,18 +719,18 @@ bool SessionConverter::CommitSuggestionInternal(
     InitializeSelectedCandidateIndices();
     // One or more segments must exist because new segment is inserted
     // just after the committed segment.
-    DCHECK_GT(segments_->conversion_segments_size(), 0);
+    DCHECK_GT(segments_.conversion_segments_size(), 0);
   } else {
     // Not partial suggestion so let's reset the state.
-    if (!converter_->CommitSegmentValue(segments_.get(), 0,
+    if (!converter_->CommitSegmentValue(&segments_, 0,
                                         GetCandidateIndexForConverter(0))) {
       LOG(WARNING) << "CommitSegmentValue failed";
       return false;
     }
     CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
     ConversionRequest conversion_request(&composer, request_, config_);
-    converter_->FinishConversion(conversion_request, segments_.get());
-    DCHECK_EQ(0, segments_->conversion_segments_size());
+    converter_->FinishConversion(conversion_request, &segments_);
+    DCHECK_EQ(0, segments_.conversion_segments_size());
     ResetState();
   }
   return true;
@@ -741,11 +740,11 @@ bool SessionConverter::CommitSuggestionByIndex(
     const size_t index, const composer::Composer &composer,
     const commands::Context &context, size_t *consumed_key_size) {
   DCHECK(CheckState(SUGGESTION));
-  if (index >= candidate_list_->size()) {
+  if (index >= candidate_list_.size()) {
     LOG(ERROR) << "index is out of the range: " << index;
     return false;
   }
-  candidate_list_->MoveToPageIndex(index);
+  candidate_list_.MoveToPageIndex(index);
   UpdateSelectedCandidateIndex();
   return CommitSuggestionInternal(composer, context, consumed_key_size);
 }
@@ -755,7 +754,7 @@ bool SessionConverter::CommitSuggestionById(const int id,
                                             const commands::Context &context,
                                             size_t *consumed_key_size) {
   DCHECK(CheckState(SUGGESTION));
-  if (!candidate_list_->MoveToId(id)) {
+  if (!candidate_list_.MoveToId(id)) {
     // Don't use CandidateMoveToId() method, which overwrites candidates.
     // This is harmful for EXPAND_SUGGESTION session command.
     LOG(ERROR) << "No id found";
@@ -782,13 +781,13 @@ void SessionConverter::CommitSegmentsInternal(
     const composer::Composer &composer, const commands::Context &context,
     size_t segments_to_commit, size_t *consumed_key_size) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
-  DCHECK(segments_->conversion_segments_size() >= segments_to_commit);
+  DCHECK(segments_.conversion_segments_size() >= segments_to_commit);
   ResetResult();
   candidate_list_visible_ = false;
   *consumed_key_size = 0;
 
   // If the number of segments is one, just call Commit.
-  if (segments_->conversion_segments_size() == segments_to_commit) {
+  if (segments_.conversion_segments_size() == segments_to_commit) {
     Commit(composer, context);
     return;
   }
@@ -805,7 +804,7 @@ void SessionConverter::CommitSegmentsInternal(
   std::vector<size_t> candidate_ids;
   for (size_t i = 0; i < segments_to_commit; ++i) {
     // Get the i-th (0 origin) conversion segment and the selected candidate.
-    Segment *segment = segments_->mutable_conversion_segment(i);
+    Segment *segment = segments_.mutable_conversion_segment(i);
     if (!segment) {
       LOG(ERROR) << "There is no segment on position " << i;
       return;
@@ -818,7 +817,7 @@ void SessionConverter::CommitSegmentsInternal(
     // Collect candidate's id for each segment.
     candidate_ids.push_back(GetCandidateIndexForConverter(i));
   }
-  if (!converter_->CommitSegments(segments_.get(), candidate_ids)) {
+  if (!converter_->CommitSegments(&segments_, candidate_ids)) {
     LOG(WARNING) << "CommitSegments failed";
   }
 
@@ -840,25 +839,25 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
   composer.GetQueryForConversion(&key);
   composer.GetStringForSubmission(&preedit);
   std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
-  SessionOutput::FillPreeditResult(preedit, result_.get());
+  SessionOutput::FillPreeditResult(preedit, &result_);
 
   // Add ResultToken
-  commands::ResultToken *token = result_->add_tokens();
+  commands::ResultToken *token = result_.add_tokens();
   token->set_key(preedit);
   token->set_value(preedit);
 
   // Cursor offset needs to be calculated based on normalized text.
   SessionOutput::FillCursorOffsetResult(
-      CalculateCursorOffset(normalized_preedit), result_.get());
+      CalculateCursorOffset(normalized_preedit), &result_);
   InitSegmentsFromString(std::move(key), std::move(normalized_preedit),
-                         segments_.get());
+                         &segments_);
   CommitUsageStats(SessionConverterInterface::COMPOSITION, context);
   ConversionRequest conversion_request(&composer, request_, config_);
   // the request mode is CONVERSION, as the user experience
   // is similar to conversion. UserHistryPredictor distinguishes
   // CONVERSION from SUGGESTION now.
   SetRequestType(ConversionRequest::CONVERSION, &conversion_request);
-  converter_->FinishConversion(conversion_request, segments_.get());
+  converter_->FinishConversion(conversion_request, &segments_);
   ResetState();
 }
 
@@ -874,13 +873,13 @@ void SessionConverter::CommitHead(size_t count,
   }
   Util::Utf8SubString(preedit, 0, *consumed_key_size, &preedit);
   const std::string composition = TextNormalizer::NormalizeText(preedit);
-  SessionOutput::FillPreeditResult(composition, result_.get());
+  SessionOutput::FillPreeditResult(composition, &result_);
   SessionOutput::FillCursorOffsetResult(CalculateCursorOffset(composition),
-                                        result_.get());
+                                        &result_);
 }
 
 void SessionConverter::Revert() {
-  converter_->RevertConversion(segments_.get());
+  converter_->RevertConversion(&segments_);
 }
 
 void SessionConverter::SegmentFocusInternal(size_t index) {
@@ -901,7 +900,7 @@ void SessionConverter::SegmentFocusInternal(size_t index) {
 }
 
 void SessionConverter::SegmentFocusRight() {
-  if (segment_index_ + 1 >= segments_->conversion_segments_size()) {
+  if (segment_index_ + 1 >= segments_.conversion_segments_size()) {
     // If |segment_index_| is at the tail of the segments,
     // focus on the head.
     SegmentFocusLeftEdge();
@@ -911,7 +910,7 @@ void SessionConverter::SegmentFocusRight() {
 }
 
 void SessionConverter::SegmentFocusLast() {
-  const size_t r_edge = segments_->conversion_segments_size() - 1;
+  const size_t r_edge = segments_.conversion_segments_size() - 1;
   SegmentFocusInternal(r_edge);
 }
 
@@ -937,7 +936,7 @@ void SessionConverter::ResizeSegmentWidth(const composer::Composer &composer,
   ResetResult();
 
   const ConversionRequest conversion_request(&composer, request_, config_);
-  if (!converter_->ResizeSegment(segments_.get(), conversion_request,
+  if (!converter_->ResizeSegment(&segments_, conversion_request,
                                  segment_index_, delta)) {
     return;
   }
@@ -945,7 +944,7 @@ void SessionConverter::ResizeSegmentWidth(const composer::Composer &composer,
   UpdateCandidateList();
   // Clears selected index of a focused segment and trailing segments.
   // TODO(hsumita): Keep the indices if the segment type is FIXED_VALUE.
-  selected_candidate_indices_.resize(segments_->conversion_segments_size());
+  selected_candidate_indices_.resize(segments_.conversion_segments_size());
   std::fill(selected_candidate_indices_.begin() + segment_index_ + 1,
             selected_candidate_indices_.end(), 0);
   UpdateSelectedCandidateIndex();
@@ -961,15 +960,15 @@ void SessionConverter::SegmentWidthShrink(const composer::Composer &composer) {
 
 const Segment::Candidate *
 SessionConverter::GetSelectedCandidateOfFocusedSegment() const {
-  if (!candidate_list_->focused()) {
+  if (!candidate_list_.focused()) {
     return nullptr;
   }
-  const Candidate &cand = candidate_list_->focused_candidate();
+  const Candidate &cand = candidate_list_.focused_candidate();
   return GetCandidateById(cand.id());
 }
 
 const Segment::Candidate *SessionConverter::GetCandidateById(int id) const {
-  const Segment &segment = segments_->conversion_segment(segment_index_);
+  const Segment &segment = segments_.conversion_segment(segment_index_);
   if (!segment.is_valid_index(id)) {
     return nullptr;
   }
@@ -981,7 +980,7 @@ void SessionConverter::CandidateNext(const composer::Composer &composer) {
   ResetResult();
 
   MaybeExpandPrediction(composer);
-  candidate_list_->MoveNext();
+  candidate_list_.MoveNext();
   candidate_list_visible_ = true;
   UpdateSelectedCandidateIndex();
   SegmentFocus();
@@ -991,7 +990,7 @@ void SessionConverter::CandidateNextPage() {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();
 
-  candidate_list_->MoveNextPage();
+  candidate_list_.MoveNextPage();
   candidate_list_visible_ = true;
   UpdateSelectedCandidateIndex();
   SegmentFocus();
@@ -1001,7 +1000,7 @@ void SessionConverter::CandidatePrev() {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();
 
-  candidate_list_->MovePrev();
+  candidate_list_.MovePrev();
   candidate_list_visible_ = true;
   UpdateSelectedCandidateIndex();
   SegmentFocus();
@@ -1011,7 +1010,7 @@ void SessionConverter::CandidatePrevPage() {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();
 
-  candidate_list_->MovePrevPage();
+  candidate_list_.MovePrevPage();
   candidate_list_visible_ = true;
   UpdateSelectedCandidateIndex();
   SegmentFocus();
@@ -1031,7 +1030,7 @@ void SessionConverter::CandidateMoveToId(const int id,
   }
   DCHECK(CheckState(PREDICTION | CONVERSION));
 
-  candidate_list_->MoveToId(id);
+  candidate_list_.MoveToId(id);
   candidate_list_visible_ = false;
   UpdateSelectedCandidateIndex();
   SegmentFocus();
@@ -1041,7 +1040,7 @@ void SessionConverter::CandidateMoveToPageIndex(const size_t index) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();
 
-  candidate_list_->MoveToPageIndex(index);
+  candidate_list_.MoveToPageIndex(index);
   candidate_list_visible_ = false;
   UpdateSelectedCandidateIndex();
   SegmentFocus();
@@ -1070,7 +1069,7 @@ bool SessionConverter::CandidateMoveToShortcut(const char shortcut) {
     return false;
   }
 
-  if (!candidate_list_->MoveToPageIndex(index)) {
+  if (!candidate_list_.MoveToPageIndex(index)) {
     MOZC_VLOG(1) << "shortcut is out of the range.";
     return false;
   }
@@ -1126,7 +1125,7 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
     LOG(ERROR) << "output is nullptr.";
     return;
   }
-  if (result_->has_value()) {
+  if (result_.has_value()) {
     FillResult(output->mutable_result());
   }
   if (CheckState(COMPOSITION)) {
@@ -1169,7 +1168,7 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
   // For debug. Removed candidate words through the conversion process.
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     SessionOutput::FillRemovedCandidates(
-        segments_->conversion_segment(segment_index_),
+        segments_.conversion_segment(segment_index_),
         output->mutable_removed_candidate_words_for_debug());
   }
 }
@@ -1194,12 +1193,12 @@ SessionConverter *SessionConverter::Clone() const {
   // moment it's ok because the current design guarantees that the converter is
   // singleton. However, we should refactor such bad design; see also the
   // comment right above.
-  *session_converter->segments_ = *segments_;
-  *session_converter->incognito_segments_ = *incognito_segments_;
+  session_converter->segments_ = segments_;
+  session_converter->incognito_segments_ = incognito_segments_;
   session_converter->segment_index_ = segment_index_;
   session_converter->previous_suggestions_ = previous_suggestions_;
   session_converter->conversion_preferences_ = conversion_preferences();
-  *session_converter->result_ = *result_;
+  session_converter->result_ = result_;
   session_converter->request_ = request_;
   session_converter->config_ = config_;
   session_converter->use_cascading_window_ = use_cascading_window_;
@@ -1209,29 +1208,29 @@ SessionConverter *SessionConverter::Clone() const {
   if (session_converter->CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     // UpdateCandidateList() is not simple setter and it uses some members.
     session_converter->UpdateCandidateList();
-    session_converter->candidate_list_->MoveToId(candidate_list_->focused_id());
+    session_converter->candidate_list_.MoveToId(candidate_list_.focused_id());
     session_converter->SetCandidateListVisible(candidate_list_visible_);
   }
 
   return session_converter;
 }
 
-void SessionConverter::ResetResult() { result_->Clear(); }
+void SessionConverter::ResetResult() { result_.Clear(); }
 
 void SessionConverter::ResetState() {
   state_ = COMPOSITION;
   segment_index_ = 0;
   previous_suggestions_.clear();
   candidate_list_visible_ = false;
-  candidate_list_->Clear();
+  candidate_list_.Clear();
   selected_candidate_indices_.clear();
-  incognito_segments_->Clear();
+  incognito_segments_.Clear();
 }
 
 void SessionConverter::SegmentFocus() {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
   if (!converter_->FocusSegmentValue(
-          segments_.get(), segment_index_,
+          &segments_, segment_index_,
           GetCandidateIndexForConverter(segment_index_))) {
     LOG(ERROR) << "FocusSegmentValue failed";
   }
@@ -1240,7 +1239,7 @@ void SessionConverter::SegmentFocus() {
 void SessionConverter::SegmentFix() {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
   if (!converter_->CommitSegmentValue(
-          segments_.get(), segment_index_,
+          &segments_, segment_index_,
           GetCandidateIndexForConverter(segment_index_))) {
     LOG(WARNING) << "CommitSegmentValue failed";
   }
@@ -1249,14 +1248,14 @@ void SessionConverter::SegmentFix() {
 void SessionConverter::GetPreedit(const size_t index, const size_t size,
                                   std::string *preedit) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  DCHECK(index + size <= segments_->conversion_segments_size());
+  DCHECK(index + size <= segments_.conversion_segments_size());
   DCHECK(preedit);
 
   preedit->clear();
   for (size_t i = index; i < size; ++i) {
     if (CheckState(CONVERSION)) {
       // In conversion mode, all the key of candidates is same.
-      preedit->append(segments_->conversion_segment(i).key());
+      preedit->append(segments_.conversion_segment(i).key());
     } else {
       DCHECK(CheckState(SUGGESTION | PREDICTION));
       // In suggestion or prediction modes, each key may have
@@ -1271,7 +1270,7 @@ void SessionConverter::GetPreedit(const size_t index, const size_t size,
 void SessionConverter::GetConversion(const size_t index, const size_t size,
                                      std::string *conversion) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  DCHECK(index + size <= segments_->conversion_segments_size());
+  DCHECK(index + size <= segments_.conversion_segments_size());
   DCHECK(conversion);
 
   conversion->clear();
@@ -1283,17 +1282,17 @@ void SessionConverter::GetConversion(const size_t index, const size_t size,
 void SessionConverter::UpdateResultTokens(const size_t index,
                                           const size_t size) {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  DCHECK(index + size <= segments_->conversion_segments_size());
+  DCHECK(index + size <= segments_.conversion_segments_size());
 
   auto add_tokens = [this](absl::string_view content_key,
                            absl::string_view content_value,
                            absl::string_view functional_key,
                            absl::string_view functional_value) {
-    commands::ResultToken *token1 = result_->add_tokens();
+    commands::ResultToken *token1 = result_.add_tokens();
     token1->set_key(content_key);
     token1->set_value(content_value);
     if (!functional_key.empty() || !functional_value.empty()) {
-      commands::ResultToken *token2 = result_->add_tokens();
+      commands::ResultToken *token2 = result_.add_tokens();
       token2->set_key(functional_key);
       token2->set_value(functional_value);
     }
@@ -1302,8 +1301,8 @@ void SessionConverter::UpdateResultTokens(const size_t index,
   for (size_t i = index; i < size; ++i) {
     const int cand_idx = GetCandidateIndexForConverter(i);
     const Segment::Candidate &candidate =
-        segments_->conversion_segment(i).candidate(cand_idx);
-    const int first_token_idx = result_->tokens_size();
+        segments_.conversion_segment(i).candidate(cand_idx);
+    const int first_token_idx = result_.tokens_size();
 
     if (Segment::Candidate::InnerSegmentIterator it(&candidate); !it.Done()) {
       // If the candidate has inner segments, fill them to the result tokens.
@@ -1317,21 +1316,21 @@ void SessionConverter::UpdateResultTokens(const size_t index,
     }
     // Set lid and rid to the first and last tokens respectively.
     // Other lids and rids are filled with the default POS (i.e. -1 as unknown).
-    const int last_token_idx = result_->tokens_size() - 1;
+    const int last_token_idx = result_.tokens_size() - 1;
     DCHECK_GE(last_token_idx, first_token_idx);
-    result_->mutable_tokens(first_token_idx)->set_lid(candidate.lid);
-    result_->mutable_tokens(last_token_idx)->set_rid(candidate.rid);
+    result_.mutable_tokens(first_token_idx)->set_lid(candidate.lid);
+    result_.mutable_tokens(last_token_idx)->set_rid(candidate.rid);
   }
 }
 
 size_t SessionConverter::GetConsumedPreeditSize(const size_t index,
                                                 const size_t size) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  DCHECK(index + size <= segments_->conversion_segments_size());
+  DCHECK(index + size <= segments_.conversion_segments_size());
 
   if (CheckState(SUGGESTION | PREDICTION)) {
     DCHECK_EQ(1, size);
-    const Segment &segment = segments_->conversion_segment(0);
+    const Segment &segment = segments_.conversion_segment(0);
     const int id = GetCandidateIndexForConverter(0);
     const Segment::Candidate &candidate = segment.candidate(id);
     return (candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED)
@@ -1344,10 +1343,10 @@ size_t SessionConverter::GetConsumedPreeditSize(const size_t index,
   for (size_t i = index; i < size; ++i) {
     const int id = GetCandidateIndexForConverter(i);
     const Segment::Candidate &candidate =
-        segments_->conversion_segment(i).candidate(id);
+        segments_.conversion_segment(i).candidate(id);
     DCHECK(
         !(candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED));
-    result += Util::CharsLen(segments_->conversion_segment(i).key());
+    result += Util::CharsLen(segments_.conversion_segment(i).key());
   }
   return result;
 }
@@ -1359,7 +1358,7 @@ bool SessionConverter::MaybePerformCommandCandidate(const size_t index,
   for (size_t i = index; i < size; ++i) {
     const int id = GetCandidateIndexForConverter(i);
     const Segment::Candidate &candidate =
-        segments_->conversion_segment(i).candidate(id);
+        segments_.conversion_segment(i).candidate(id);
     if (candidate.attributes & Segment::Candidate::COMMAND_CANDIDATE) {
       switch (candidate.command) {
         case Segment::Candidate::DEFAULT_COMMAND:
@@ -1397,9 +1396,9 @@ bool SessionConverter::UpdateResult(size_t index, size_t size,
   if (consumed_key_size) {
     *consumed_key_size = GetConsumedPreeditSize(index, size);
   }
-  SessionOutput::FillConversionResult(preedit, conversion, result_.get());
+  SessionOutput::FillConversionResult(preedit, conversion, &result_);
   SessionOutput::FillCursorOffsetResult(CalculateCursorOffset(conversion),
-                                        result_.get());
+                                        &result_);
   UpdateResultTokens(index, size);
   return true;
 }
@@ -1423,19 +1422,19 @@ void SessionConverter::AppendCandidateList() {
   // meta candidates are not located in the same list (distributed over
   // some lists), the most appropriate location to be added new meta candidates
   // cannot be decided).
-  const bool add_meta_candidates = (candidate_list_->size() == 0);
+  const bool add_meta_candidates = (candidate_list_.size() == 0);
 
-  DCHECK_LT(segment_index_, segments_->conversion_segments_size());
-  const Segment &segment = segments_->conversion_segment(segment_index_);
-  for (size_t i = candidate_list_->next_available_id();
+  DCHECK_LT(segment_index_, segments_.conversion_segments_size());
+  const Segment &segment = segments_.conversion_segment(segment_index_);
+  for (size_t i = candidate_list_.next_available_id();
        i < segment.candidates_size(); ++i) {
     if (request_->decoder_experiment_params()
             .enable_findability_oriented_order()) {
       const Segment::Candidate &c = segment.candidate(i);
-      candidate_list_->AddCandidate(i,
+      candidate_list_.AddCandidate(i,
                                     absl::StrCat(c.key, c.value, c.category));
     } else {
-      candidate_list_->AddCandidate(i, segment.candidate(i).value);
+      candidate_list_.AddCandidate(i, segment.candidate(i).value);
     }
     // if candidate has spelling correction attribute,
     // always display the candidate to let user know the
@@ -1450,7 +1449,7 @@ void SessionConverter::AppendCandidateList() {
       (request_type_ != ConversionRequest::SUGGESTION &&
        request_type_ != ConversionRequest::PARTIAL_SUGGESTION &&
        request_type_ != ConversionRequest::PARTIAL_PREDICTION);
-  candidate_list_->set_focused(focused);
+  candidate_list_.set_focused(focused);
 
   if (segment.meta_candidates_size() == 0) {
     // For suggestion mode, it is natural that T13N is not initialized.
@@ -1470,13 +1469,13 @@ void SessionConverter::AppendCandidateList() {
   CandidateList *transliterations;
   if (use_cascading_window_) {
     constexpr bool kNoRotate = false;
-    transliterations = candidate_list_->AllocateSubCandidateList(kNoRotate);
+    transliterations = candidate_list_.AllocateSubCandidateList(kNoRotate);
     transliterations->set_focused(true);
 
     constexpr char kT13nLabel[] = "そのほかの文字種";
     transliterations->set_name(kT13nLabel);
   } else {
-    transliterations = candidate_list_.get();
+    transliterations = &candidate_list_;
   }
 
   // Add transliterations.
@@ -1491,7 +1490,7 @@ void SessionConverter::AppendCandidateList() {
 
 void SessionConverter::UpdateCandidateList() {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  candidate_list_->Clear();
+  candidate_list_.Clear();
   AppendCandidateList();
 }
 
@@ -1503,7 +1502,7 @@ int SessionConverter::GetCandidateIndexForConverter(
   if (segment_index != segment_index_) {
     return 0;
   }
-  return candidate_list_->focused_id();
+  return candidate_list_.focused_id();
 }
 
 std::string SessionConverter::GetSelectedCandidateValue(
@@ -1511,7 +1510,7 @@ std::string SessionConverter::GetSelectedCandidateValue(
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
   const int id = GetCandidateIndexForConverter(segment_index);
   const Segment::Candidate &candidate =
-      segments_->conversion_segment(segment_index).candidate(id);
+      segments_.conversion_segment(segment_index).candidate(id);
   if (candidate.attributes & Segment::Candidate::COMMAND_CANDIDATE) {
     // Return an empty string, however this path should not be reached.
     return "";
@@ -1523,17 +1522,17 @@ const Segment::Candidate &SessionConverter::GetSelectedCandidate(
     const size_t segment_index) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
   const int id = GetCandidateIndexForConverter(segment_index);
-  return segments_->conversion_segment(segment_index).candidate(id);
+  return segments_.conversion_segment(segment_index).candidate(id);
 }
 
 void SessionConverter::FillConversion(commands::Preedit *preedit) const {
   DCHECK(CheckState(PREDICTION | CONVERSION));
-  SessionOutput::FillConversion(*segments_, segment_index_,
-                                candidate_list_->focused_id(), preedit);
+  SessionOutput::FillConversion(segments_, segment_index_,
+                                candidate_list_.focused_id(), preedit);
 }
 
 void SessionConverter::FillResult(commands::Result *result) const {
-  *result = *result_;
+  *result = result_;
 }
 
 void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
@@ -1552,17 +1551,17 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
   // Temporarily added to see if this condition is really satisfied in the
   // real world or not.
 #ifdef CHANNEL_DEV
-  CHECK_LT(0, segments_->conversion_segments_size());
+  CHECK_LT(0, segments_.conversion_segments_size());
 #endif  // CHANNEL_DEV
-  if (segment_index_ >= segments_->conversion_segments_size()) {
+  if (segment_index_ >= segments_.conversion_segments_size()) {
     LOG(WARNING) << "Invalid segment_index_: " << segment_index_
                  << ", segments_size: "
-                 << segments_->conversion_segments_size();
+                 << segments_.conversion_segments_size();
     return;
   }
 
-  const Segment &segment = segments_->conversion_segment(segment_index_);
-  SessionOutput::FillCandidates(segment, *candidate_list_, position,
+  const Segment &segment = segments_.conversion_segment(segment_index_);
+  SessionOutput::FillCandidates(segment, candidate_list_, position,
                                 candidates);
 
   // Shortcut keys
@@ -1647,21 +1646,21 @@ void SessionConverter::FillAllCandidateWords(
       break;
   }
 
-  if (segment_index_ >= segments_->conversion_segments_size()) {
+  if (segment_index_ >= segments_.conversion_segments_size()) {
     LOG(WARNING) << "Invalid segment_index_: " << segment_index_
                  << ", segments_size: "
-                 << segments_->conversion_segments_size();
+                 << segments_.conversion_segments_size();
     return;
   }
-  const Segment &segment = segments_->conversion_segment(segment_index_);
-  SessionOutput::FillAllCandidateWords(segment, *candidate_list_, category,
+  const Segment &segment = segments_.conversion_segment(segment_index_);
+  SessionOutput::FillAllCandidateWords(segment, candidate_list_, category,
                                        candidates);
 }
 
 void SessionConverter::FillIncognitoCandidateWords(
     commands::CandidateList *candidates) const {
   const Segment &segment =
-      incognito_segments_->conversion_segment(segment_index_);
+      incognito_segments_.conversion_segment(segment_index_);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     commands::CandidateWord *candidate_word_proto =
         candidates->add_candidates();
@@ -1676,7 +1675,7 @@ void SessionConverter::FillIncognitoCandidateWords(
 
 void SessionConverter::SetRequest(const commands::Request *request) {
   request_ = request;
-  candidate_list_->set_page_size(request->candidate_page_size());
+  candidate_list_.set_page_size(request->candidate_page_size());
 }
 
 void SessionConverter::SetConfig(const config::Config *config) {
@@ -1695,7 +1694,7 @@ void SessionConverter::OnStartComposition(const commands::Context &context) {
   if (!context.has_preceding_text()) {
     // In this case, reset history segments when the revision is mismatched.
     if (revision_changed) {
-      converter_->ResetConversion(segments_.get());
+      converter_->ResetConversion(&segments_);
     }
     return;
   }
@@ -1704,15 +1703,15 @@ void SessionConverter::OnStartComposition(const commands::Context &context) {
   // If preceding text is empty, it is OK to reset the history segments by
   // calling ResetConversion.
   if (preceding_text.empty()) {
-    converter_->ResetConversion(segments_.get());
+    converter_->ResetConversion(&segments_);
     return;
   }
 
   // Hereafter, we keep the existing history segments as long as it is
   // consistent with the preceding text even when revision_changed is true.
   std::string history_text;
-  for (size_t i = 0; i < segments_->segments_size(); ++i) {
-    const Segment &segment = segments_->segment(i);
+  for (size_t i = 0; i < segments_.segments_size(); ++i) {
+    const Segment &segment = segments_.segment(i);
     if (segment.segment_type() != Segment::HISTORY) {
       break;
     }
@@ -1742,30 +1741,30 @@ void SessionConverter::OnStartComposition(const commands::Context &context) {
 
   // Here we reconstruct history segments from |preceding_text| regardless
   // of revision mismatch. If it fails the history segments is cleared anyway.
-  if (!converter_->ReconstructHistory(segments_.get(), preceding_text)) {
+  if (!converter_->ReconstructHistory(&segments_, preceding_text)) {
     LOG(WARNING) << "ReconstructHistory failed.";
     DLOG(WARNING) << "preceding_text: " << preceding_text
-                  << ", segments: " << segments_->DebugString();
+                  << ", segments: " << segments_.DebugString();
   }
 }
 
 void SessionConverter::UpdateSelectedCandidateIndex() {
   int index;
-  const Candidate &focused_candidate = candidate_list_->focused_candidate();
+  const Candidate &focused_candidate = candidate_list_.focused_candidate();
   if (focused_candidate.HasSubcandidateList()) {
     const int t13n_index =
         focused_candidate.subcandidate_list().focused_index();
     index = -1 - t13n_index;
   } else {
     // TODO(hsumita): Use id instead of focused index.
-    index = candidate_list_->focused_index();
+    index = candidate_list_.focused_index();
   }
   selected_candidate_indices_[segment_index_] = index;
 }
 
 void SessionConverter::InitializeSelectedCandidateIndices() {
   selected_candidate_indices_.clear();
-  selected_candidate_indices_.resize(segments_->conversion_segments_size());
+  selected_candidate_indices_.resize(segments_.conversion_segments_size());
 }
 
 void SessionConverter::UpdateCandidateStats(absl::string_view base_name,
@@ -1799,7 +1798,7 @@ void SessionConverter::CommitUsageStats(
       commit_segment_size = 1;
       break;
     case CONVERSION:
-      commit_segment_size = segments_->conversion_segments_size();
+      commit_segment_size = segments_.conversion_segments_size();
       break;
     default:
       LOG(DFATAL) << "Unexpected state: " << commit_state;

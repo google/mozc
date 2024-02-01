@@ -49,7 +49,7 @@
 #include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/gunit_prod.h"  // for FRIEND_TEST()
+#include "testing/friend_test.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {

@@ -51,6 +51,7 @@
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
@@ -200,40 +201,42 @@ void SessionHandler::StartWatchDog() {
 
 void SessionHandler::UpdateSessions(const config::Config &config,
                                     const commands::Request &request) {
-  auto new_config = std::make_unique<config::Config>(config);
-  auto new_request = std::make_unique<commands::Request>(request);
-  const auto *data_manager = engine_->GetDataManager();
-  const composer::Table *table =
-      data_manager != nullptr
-          ? table_manager_->GetTable(*new_request, *new_config, *data_manager)
-          : nullptr;
-  auto new_key_map_manager =
-      keymap::KeyMapManager::IsSameKeyMapManagerApplicable(*config_,
-                                                           *new_config)
-          ? nullptr
-          : std::make_unique<keymap::KeyMapManager>(*new_config);
+  // Since sessions internally use config_, request_ and key_map_manager_,
+  // they are moved to prev_ variables to avoid releasing until sessions switch
+  // those values.
+  std::unique_ptr<const config::Config> prev_config = std::move(config_);
+  std::unique_ptr<const commands::Request> prev_request = std::move(request_);
+  std::unique_ptr<keymap::KeyMapManager> prev_key_map_manager;
+
+  config_ = std::make_unique<config::Config>(config);
+  request_ = std::make_unique<commands::Request>(request);
+  const DataManagerInterface *data_manager = engine_->GetDataManager();
+  const composer::Table *table = nullptr;
+  if (data_manager != nullptr) {
+    table = table_manager_->GetTable(*request_, *config_, *data_manager);
+  }
+
+  if (!keymap::KeyMapManager::IsSameKeyMapManagerApplicable(*prev_config,
+                                                            *config_)) {
+    prev_key_map_manager = std::move(key_map_manager_);
+    key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
+  }
 
   for (SessionElement *element = session_map_->MutableHead();
        element != nullptr; element = element->next) {
-    if (element->value != nullptr) {
-      element->value->SetConfig(new_config.get());
-      element->value->SetKeyMapManager(
-          (new_key_map_manager ? new_key_map_manager : key_map_manager_).get());
-      element->value->SetRequest(new_request.get());
-      if (table != nullptr) {
-        element->value->SetTable(table);
-      }
+    std::unique_ptr<session::Session> &session = element->value;
+    if (!session) {
+      continue;
+    }
+    session->SetConfig(config_.get());
+    session->SetKeyMapManager(key_map_manager_.get());
+    session->SetRequest(request_.get());
+    if (table != nullptr) {
+      session->SetTable(table);
     }
   }
   config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(
-      *new_config);
-  // Now no references to the current config/key_map_manager/request
-  // should exist. We can destroy them here.
-  config_ = std::move(new_config);
-  if (new_key_map_manager) {
-    key_map_manager_ = std::move(new_key_map_manager);
-  }
-  request_ = std::move(new_request);
+      *config_);
 }
 
 bool SessionHandler::SyncData(commands::Command *command) {

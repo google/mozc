@@ -356,14 +356,6 @@
         DllEntry='ShutdownServer' Impersonate='yes' Return='ignore' />
     <CustomAction Id='RestoreUserIMEEnvironment' BinaryKey='mozc_installer_helper.dll'
         DllEntry='RestoreUserIMEEnvironment' Impersonate='yes' Return='ignore'/>
-    <CustomAction Id='EnsureIMEIsDisabledForServiceAccountBeforeUninstall'
-        BinaryKey='mozc_installer_helper.dll' Execute='deferred'
-        DllEntry='EnsureIMEIsDisabledForServiceAccount' Impersonate='no'
-        Return='ignore'/>
-    <CustomAction Id='EnsureIMEIsDisabledForServiceAccountAfterInstall'
-        BinaryKey='mozc_installer_helper.dll' Execute='deferred'
-        DllEntry='EnsureIMEIsDisabledForServiceAccount' Impersonate='no'
-        Return='ignore'/>
     <CustomAction Id='InitialInstallation' BinaryKey='mozc_installer_helper.dll'
         DllEntry='InitialInstallation' Execute='deferred'
         Impersonate='no' />
@@ -397,18 +389,9 @@
       <Custom Action='RestoreUserIMEEnvironment' After='SelfUnregModules'>
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
       </Custom>
-      <!--
-        EnsureIMEIsDisabledForServiceAccountBeforeUninstall should be invoked
-        before Mozc's KLID is removed, which means you should call this action
-        before UnregisterTIPRollback64.
-      -->
-      <Custom Action='EnsureIMEIsDisabledForServiceAccountBeforeUninstall'
-          After='RestoreUserIMEEnvironment' >
-        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
-      </Custom>
       <!-- This action invoked only when removal of the old product failed. -->
       <Custom Action='UnregisterTIPRollback64'
-          After='EnsureIMEIsDisabledForServiceAccountBeforeUninstall' >
+          After='RestoreUserIMEEnvironment' >
         (REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)
       </Custom>
       <Custom Action='UnregisterTIP64' After='UnregisterTIPRollback64' >
@@ -458,19 +441,15 @@
         (NOT (REMOVE="ALL")) AND (VersionNT64)
       </Custom>
       <Custom Action='EnsureAllApplicationPackagesPermisssions'
-          Before='EnsureIMEIsDisabledForServiceAccountAfterInstall' >
-        (NOT (REMOVE="ALL"))
-      </Custom>
-      <Custom Action='EnsureIMEIsDisabledForServiceAccountAfterInstall'
-          Before='InstallFinalize' >
+          Before='InitialInstallationCommit' >
         (NOT (REMOVE="ALL"))
       </Custom>
       <Custom Action='InitialInstallationCommit'
-          After='EnsureIMEIsDisabledForServiceAccountAfterInstall'>
+          Before='EnableTipProfile'>
         (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
       <Custom Action='EnableTipProfile'
-          After='InitialInstallationCommit'>
+          Before='InstallFinalize'>
         (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
       <!-- show reboot dialog to execute pending file opartions -->

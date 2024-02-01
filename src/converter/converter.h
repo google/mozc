@@ -48,7 +48,7 @@
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/gunit_prod.h"  // for FRIEND_TEST()
+#include "testing/friend_test.h"
 
 namespace mozc {
 

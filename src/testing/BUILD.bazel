@@ -109,8 +109,8 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "gunit_prod",
-    hdrs = ["gunit_prod.h"],
+    name = "friend_test",
+    hdrs = ["friend_test.h"],
     deps = [
     ],
 )

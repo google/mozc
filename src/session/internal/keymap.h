@@ -42,7 +42,7 @@
 #include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/gunit_prod.h"
+#include "testing/friend_test.h"
 
 namespace mozc {
 namespace keymap {

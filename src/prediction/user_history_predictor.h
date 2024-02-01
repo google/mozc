@@ -54,7 +54,7 @@
 #include "request/conversion_request.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
-#include "testing/gunit_prod.h"  // IWYU pragma: keep
+#include "testing/friend_test.h"  // IWYU pragma: keep
 
 namespace mozc::prediction {
 

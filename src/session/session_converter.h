@@ -364,17 +364,24 @@ class SessionConverter : public SessionConverterInterface {
   config::Config CreateIncognitoConfig();
 
   const ConverterInterface *converter_;
-  std::unique_ptr<Segments> segments_;
+  // Conversion stats used by converter_.
+  Segments segments_;
 
-  std::unique_ptr<Segments> incognito_segments_;
+  // Segments for Text Conversion API to fill incognito_candidate_words
+  // Note:
+  // Text Conversion API is available in Android Gboard.
+  // It provides the converted candidates from the composition texts.
+  Segments incognito_segments_;
   size_t segment_index_;
 
   // Previous suggestions to be merged with the current predictions.
   Segment previous_suggestions_;
 
-  std::unique_ptr<commands::Result> result_;
+  // A part of Output protobuf to be returned to the client side.
+  commands::Result result_;
 
-  std::unique_ptr<CandidateList> candidate_list_;
+  // Component of the candidate list converted from segments_to result_.
+  CandidateList candidate_list_;
 
   const commands::Request *request_;
   const config::Config *config_;

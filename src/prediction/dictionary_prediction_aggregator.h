@@ -80,7 +80,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
 
 #if MOZC_ENABLE_NGRAM_RESCORING
   void SetNgramModelForTesting(const ngram::NgramModelInterface *ngram_model) {
-      ngram_model_ = ngram_model;
+    ngram_model_ = ngram_model;
   }
 #endif  // MOZC_ENABLE_NGRAM_RESCORING
 
@@ -283,9 +283,11 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const ConversionRequest &request, const Segments &segments,
       std::vector<Result> *results) const;
 
-  // Generates `HandwritingQueryInfo` using composer in the `request`.
+  // Generates `HandwritingQueryInfo` for the given composition event.
   std::optional<HandwritingQueryInfo> GenerateQueryForHandwriting(
-      const ConversionRequest &request, const Segments &segments) const;
+      const ConversionRequest &request,
+      const commands::SessionCommand::CompositionEvent &composition_event)
+      const;
 
   // Generates prediction candidates using composition events in composer and
   // appends to `results`.

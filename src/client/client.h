@@ -47,8 +47,7 @@
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/gunit_prod.h"
-// for FRIEND_TEST()
+#include "testing/friend_test.h"
 
 namespace mozc {
 namespace client {

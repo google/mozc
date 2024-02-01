@@ -508,11 +508,11 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
 class DictionaryPredictionAggregator::HandwritingLookupCallback
     : public DictionaryInterface::Callback {
  public:
-  HandwritingLookupCallback(size_t limit, absl::string_view original_key,
+  HandwritingLookupCallback(size_t limit, int penalty,
                             const std::vector<std::string> &constraints,
                             std::vector<Result> *results)
       : limit_(limit),
-        original_key_(original_key),
+        penalty_(penalty),
         constraints_(constraints),
         results_(results) {}
 
@@ -533,14 +533,14 @@ class DictionaryPredictionAggregator::HandwritingLookupCallback
 
     Result result;
     result.InitializeByTokenAndTypes(token, UNIGRAM);
-    result.key = original_key_;
+    result.wcost += penalty_;
     results_->emplace_back(result);
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
   }
 
  private:
-  const size_t limit_;
-  const absl::string_view original_key_;
+  const size_t limit_;  // The maximum number of results token size.
+  const int penalty_;   // Cost penalty for result tokens.
   const std::vector<std::string> constraints_;
   std::vector<Result> *results_ = nullptr;
 };
@@ -1026,8 +1026,19 @@ PredictionType DictionaryPredictionAggregator::AggregateUnigramCandidate(
 
 std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
 DictionaryPredictionAggregator::GenerateQueryForHandwriting(
-    const ConversionRequest &request, const Segments &segments) const {
-  Segments tmp_segments = segments;
+    const ConversionRequest &request,
+    const commands::SessionCommand::CompositionEvent &composition_event) const {
+  if (composition_event.probability() < 0.1) {
+    // Skip generating the query info for unconfident composition,
+    // since running reverse conversion is slow.
+    return std::nullopt;
+  }
+
+  Segments tmp_segments;
+  {
+    Segment *segment = tmp_segments.add_segment();
+    segment->set_key(composition_event.composition_string());
+  }
   ConversionRequest request_for_realtime = request;
   request_for_realtime.set_request_type(ConversionRequest::REVERSE_CONVERSION);
   if (!immutable_converter_->ConvertForRequest(request_for_realtime,
@@ -1081,28 +1092,37 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
 
-  const absl::string_view segment_key = segments.conversion_segment(0).key();
   for (const commands::SessionCommand::CompositionEvent &elm :
        request.composer().GetHandwritingCompositions()) {
+    if (elm.probability() <= 0.0) {
+      continue;
+    }
+    const int recognition_cost = -500.0 * log(elm.probability());
+    const std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
+        query_info = GenerateQueryForHandwriting(request, elm);
+    absl::string_view key;
+    if (query_info.has_value()) {
+      if (!absl::StrContains(query_info->query, " ")) {
+        // Skip providing converted candidates for queries including white
+        // space.
+        HandwritingLookupCallback callback(cutoff_threshold, recognition_cost,
+                                           query_info->constraints, results);
+        dictionary_->LookupExact(query_info->query, request, &callback);
+      }
+      key = query_info->query;
+    } else {
+      key = elm.composition_string();
+    }
     Result result;
     result.types = UNIGRAM;
-    result.key = elm.composition_string();
+    result.key = key;
     result.value = elm.composition_string();
     result.candidate_attributes |= (Segment::Candidate::NO_VARIANTS_EXPANSION |
                                     Segment::Candidate::NO_EXTRA_DESCRIPTION);
-    // -500 * log(prob)
-    result.wcost = elm.probability() > 0 ? -500.0 * log(elm.probability()) : 0;
+    const int kAsIsCost = 2302;  // 500 * log(100) = ~2302
+    result.wcost = kAsIsCost + recognition_cost;
     results->emplace_back(std::move(result));
   }
-
-  const auto query_info = GenerateQueryForHandwriting(request, segments);
-  if (!query_info.has_value()) {
-    return NO_PREDICTION;
-  }
-
-  HandwritingLookupCallback callback(cutoff_threshold, segment_key,
-                                     query_info->constraints, results);
-  dictionary_->LookupExact(query_info->query, request, &callback);
 
   const size_t unigram_results_size = results->size() - prev_results_size;
   if (unigram_results_size >= cutoff_threshold) {
@@ -1891,6 +1911,11 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
 
 bool DictionaryPredictionAggregator::ShouldAggregateRealTimeConversionResults(
     const ConversionRequest &request, const Segments &segments) {
+  if (ConversionRequestUtil::IsHandwriting(request)) {
+    // TODO(toshiyuki): Implement the logic for handwriting
+    return false;
+  }
+
   constexpr size_t kMaxRealtimeKeySize = 300;  // 300 bytes in UTF8
   const std::string &key = segments.conversion_segment(0).key();
   if (key.empty() || key.size() >= kMaxRealtimeKeySize) {

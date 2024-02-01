@@ -86,7 +86,7 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session:key_info_util",
-        "//testing:gunit_prod",
+        "//testing:friend_test",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
