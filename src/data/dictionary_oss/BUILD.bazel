@@ -27,6 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("//converter:evaluation.bzl", "evaluation")
 
 package(default_visibility = ["//:__subpackages__"])
@@ -133,4 +134,15 @@ evaluation(
         "//data/test/quality_regression_test:oss.tsv",
         "//data/test/quality_regression_test:regression.tsv",
     ],
+)
+
+# Check if the output of `:evalution` is the same as `evalution.tsv`.
+# If this test fails, you need to update evaluation.tsv.
+# % blaze build ...:evaluation
+# % cp blaze-genfiles/.../evaluation_updated.tsv .../evaluation.tsv
+diff_test(
+    name = "evaluation_diff_test",
+    failure_message = "You need to update evaluation.tsv. See the BUILD file",
+    file1 = "evaluation.tsv",
+    file2 = ":evaluation",
 )
