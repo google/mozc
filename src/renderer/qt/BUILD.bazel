@@ -98,6 +98,7 @@ mozc_cc_qt_library(
         "//config:config_handler",
         "//ipc:named_event",
         "//protocol:renderer_cc_proto",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
