@@ -30,7 +30,6 @@
 #ifndef MOZC_TESTING_GOOGLETEST_H_
 #define MOZC_TESTING_GOOGLETEST_H_
 
-#ifdef MOZC_USE_MOZC_TESTING
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 
@@ -53,8 +52,5 @@ namespace mozc {
 void InitTestFlags();
 }  // namespace mozc
 
-#else  // MOZC_USE_MOZC_TESTING
-#include "testing/base/public/googletest.h"  // IWYU pragma: export
-#endif  // MOZC_USE_MOZC_TESTING
 
 #endif  // MOZC_TESTING_GOOGLETEST_H_
