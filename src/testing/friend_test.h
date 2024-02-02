@@ -30,7 +30,6 @@
 #ifndef MOZC_TESTING_GUNIT_PROD_H_
 #define MOZC_TESTING_GUNIT_PROD_H_
 
-#ifdef MOZC_USE_MOZC_TESTING
 // The following macro is originally defined in <gtest/gtest_prod.h>.
 // Here we use a private copy instead to avoid dependency on
 // <gtest/gtest_prod.h> from production code.
@@ -39,8 +38,5 @@
   friend class test_case_name##_##test_name##_Test
 #endif  // FRIEND_TEST
 
-#else  // MOZC_USE_MOZC_TESTING
-#include "testing/production_stub/public/gunit_prod.h"  // IWYU pragma: export
-#endif  // MOZC_USE_MOZC_TESTING
 
 #endif  // MOZC_TESTING_GUNIT_PROD_H_
