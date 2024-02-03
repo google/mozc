@@ -33,6 +33,7 @@
 #include <ostream>
 #include <string>
 
+#include "absl/strings/numbers.h"
 #include "absl/strings/string_view.h"
 #include "base/file_util.h"
 #include "base/logging.h"

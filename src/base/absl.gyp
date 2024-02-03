@@ -176,6 +176,7 @@
       'toolsets': ['host', 'target'],
       'sources': [
         '<!@(<(glob_absl) status "*.cc")',
+        '<!@(<(glob_absl) status/internal "*.cc")',
       ],
       'dependencies': [
         'absl_base',

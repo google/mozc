@@ -54,7 +54,6 @@
 #include "absl/time/time.h"
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "client/client.h"
 #include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_session.h"
@@ -361,13 +360,13 @@ void WordRegisterDialog::LaunchDictionaryTool() {
   QWidget::close();
 }
 
-const QString WordRegisterDialog::GetReading(const QString &str) {
+QString WordRegisterDialog::GetReading(const QString &str) {
   if (str.isEmpty()) {
     LOG(ERROR) << "given string is empty";
     return QLatin1String("");
   }
 
-  if (str.count() >= kMaxReverseConversionLength) {
+  if (str.size() >= kMaxReverseConversionLength) {
     LOG(ERROR) << "too long input";
     return QLatin1String("");
   }
@@ -401,10 +400,7 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
   }
 
   std::string key;
-  for (size_t segment_index = 0;
-       segment_index < output.preedit().segment_size(); ++segment_index) {
-    const commands::Preedit::Segment &segment =
-        output.preedit().segment(segment_index);
+  for (const commands::Preedit::Segment &segment : output.preedit().segment()) {
     if (!segment.has_key()) {
       LOG(ERROR) << "No segment";
       return QLatin1String("");
@@ -483,7 +479,7 @@ bool WordRegisterDialog::SetDefaultEntryFromEnvironmentVariable() {
   return true;
 }
 
-const QString WordRegisterDialog::TrimValue(const QString &str) const {
+QString WordRegisterDialog::TrimValue(const QString &str) const {
   return str.trimmed()
       .replace(QLatin1Char('\r'), QLatin1String(""))
       .replace(QLatin1Char('\n'), QLatin1String(""));

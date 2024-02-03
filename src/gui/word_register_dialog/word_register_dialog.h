@@ -99,11 +99,11 @@ class WordRegisterDialog : public QDialog, private Ui::WordRegisterDialog {
   bool SetDefaultEntryFromEnvironmentVariable();
 
   // Return reading of value with reverse conversion feature.
-  const QString GetReading(const QString &str);
+  QString GetReading(const QString &str);
 
   // remove "\n" "\r" from |value|.
   // remove whitespace from the start and the end.
-  const QString TrimValue(const QString &str) const;
+  QString TrimValue(const QString &str) const;
 
   // turn on IME.
   // When the dialog is shown, it is better to turn on IME.

@@ -78,7 +78,7 @@ TEST(KeyParserTest, ModifierKeys) {
       {"SHIFT", KeyEvent::SHIFT},
   };
 
-  for (const auto [name, modifiers] : kTestData) {
+  for (const auto& [name, modifiers] : kTestData) {
     SCOPED_TRACE(name);
     KeyEvent key_event;
     EXPECT_TRUE(KeyParser::ParseKey(name, &key_event));
@@ -178,7 +178,7 @@ TEST(KeyParserTest, SpecialKeys) {
       {"on", KeyEvent::ON},
   };
 
-  for (const auto [name, modifiers] : kTestData) {
+  for (const auto& [name, modifiers] : kTestData) {
     SCOPED_TRACE(name);
     KeyEvent key_event;
     EXPECT_TRUE(KeyParser::ParseKey(name, &key_event));
