@@ -534,8 +534,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
 
   Segments segments;
   InsertInputSequence("ak", composer_.get());
-  std::string predicton_query;
-  composer_->GetQueryForPrediction(&predicton_query);
+  std::string predicton_query = composer_->GetQueryForPrediction();
   EXPECT_EQ(predicton_query, "あ");
   InitSegmentsWithKey(predicton_query, &segments);
 
@@ -564,8 +563,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
 
   Segments segments;
   InsertInputSequence("あし", composer_.get());
-  std::string predicton_query;
-  composer_->GetQueryForPrediction(&predicton_query);
+  std::string predicton_query = composer_->GetQueryForPrediction();
   EXPECT_EQ(predicton_query, "あし");
   InitSegmentsWithKey(predicton_query, &segments);
 

@@ -1346,7 +1346,7 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
     return;
   }
 
-  request.composer().GetStringForPreedit(input_key);
+  *input_key = request.composer().GetStringForPreedit();
   std::set<std::string> expanded_set;
   request.composer().GetQueriesForPrediction(base, &expanded_set);
   if (!expanded_set.empty()) {

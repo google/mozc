@@ -95,8 +95,7 @@ bool AddAsIsCandidate(const ConversionRequest &request, Segments *segments) {
   if (!request.has_composer()) {
     return false;
   }
-  std::string key;
-  request.composer().GetQueryForConversion(&key);
+  const std::string key = request.composer().GetQueryForConversion();
   return AddAsIsCandidate(key, segments);
 }
 

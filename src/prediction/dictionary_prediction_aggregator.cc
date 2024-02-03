@@ -1834,7 +1834,7 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
 
   std::string input_key;
   if (request.has_composer()) {
-    request.composer().GetQueryForPrediction(&input_key);
+    input_key = request.composer().GetQueryForPrediction();
   } else {
     input_key = segments.conversion_segment(0).key();
   }
@@ -1884,7 +1884,7 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
   const std::string &input_key = [&]() {
     std::string ret;
     if (request.has_composer()) {
-      request.composer().GetQueryForPrediction(&ret);
+      ret = request.composer().GetQueryForPrediction();
     } else {
       ret = segments.conversion_segment(0).key();
     }

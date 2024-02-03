@@ -114,8 +114,7 @@ bool IsRawQuery(const composer::Composer &composer,
 
   // If the composition string is same with the raw_text, there is no
   // need to add the candidate to suggestions.
-  std::string composition;
-  composer.GetStringForPreedit(&composition);
+  const std::string composition = composer.GetStringForPreedit();
   if (composition == raw_text) {
     return false;
   }
@@ -137,8 +136,7 @@ bool IsRawQuery(const composer::Composer &composer,
   //
   // Note, GetQueryForPrediction omits the trailing alphabet characters of
   // the composition string and returns it.
-  std::string key;
-  composer.GetQueryForPrediction(&key);
+  const std::string key = composer.GetQueryForPrediction();
   if (Util::ContainsScriptType(key, Util::ALPHABET)) {
     *rank = 0;
     return true;

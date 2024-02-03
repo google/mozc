@@ -287,10 +287,10 @@ bool ConverterImpl::StartConversionForRequest(
   std::string conversion_key;
   switch (request.composer_key_selection()) {
     case ConversionRequest::CONVERSION_KEY:
-      request.composer().GetQueryForConversion(&conversion_key);
+      conversion_key = request.composer().GetQueryForConversion();
       break;
     case ConversionRequest::PREDICTION_KEY:
-      request.composer().GetQueryForPrediction(&conversion_key);
+      conversion_key = request.composer().GetQueryForPrediction();
       break;
     default:
       LOG(FATAL) << "Should never reach here";
@@ -439,8 +439,7 @@ bool ConverterImpl::StartPredictionForRequest(
     return false;
   }
 
-  std::string prediction_key;
-  request.composer().GetQueryForPrediction(&prediction_key);
+  std::string prediction_key = request.composer().GetQueryForPrediction();
   return Predict(request, prediction_key, segments);
 }
 
@@ -463,8 +462,7 @@ bool ConverterImpl::StartSuggestionForRequest(
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::SUGGESTION);
   DCHECK(request.has_composer());
-  std::string prediction_key;
-  request.composer().GetQueryForPrediction(&prediction_key);
+  std::string prediction_key = request.composer().GetQueryForPrediction();
   return Predict(request, prediction_key, segments);
 }
 
@@ -485,8 +483,7 @@ bool ConverterImpl::StartPartialSuggestionForRequest(
     return StartSuggestionForRequest(request, segments);
   }
 
-  std::string conversion_key;
-  request.composer().GetQueryForConversion(&conversion_key);
+  std::string conversion_key = request.composer().GetQueryForConversion();
   strings::Assign(conversion_key,
                   Util::Utf8SubString(conversion_key, 0, cursor));
   return Predict(request, conversion_key, segments);
@@ -509,8 +506,7 @@ bool ConverterImpl::StartPartialPredictionForRequest(
     return StartPredictionForRequest(request, segments);
   }
 
-  std::string conversion_key;
-  request.composer().GetQueryForConversion(&conversion_key);
+  std::string conversion_key = request.composer().GetQueryForConversion();
   strings::Assign(conversion_key,
                   Util::Utf8SubString(conversion_key, 0, cursor));
 

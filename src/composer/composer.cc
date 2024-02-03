@@ -724,9 +724,10 @@ void Composer::GetPreedit(std::string *left, std::string *focused,
   }
 }
 
-void Composer::GetStringForPreedit(std::string *output) const {
-  composition_.GetString(output);
-  TransformCharactersForNumbers(output);
+std::string Composer::GetStringForPreedit() const {
+  std::string output;
+  composition_.GetString(&output);
+  TransformCharactersForNumbers(&output);
   // If the input field type needs half ascii characters,
   // perform conversion here.
   // Note that this purpose is also achieved by the client by setting
@@ -746,22 +747,23 @@ void Composer::GetStringForPreedit(std::string *output) const {
   if (field_type == commands::Context::NUMBER ||
       field_type == commands::Context::PASSWORD ||
       field_type == commands::Context::TEL) {
-    const std::string tmp = *output;
-    japanese_util::FullWidthAsciiToHalfWidthAscii(tmp, output);
+    const std::string tmp = output;
+    japanese_util::FullWidthAsciiToHalfWidthAscii(tmp, &output);
   }
+  return output;
 }
 
-void Composer::GetStringForSubmission(std::string *output) const {
+std::string Composer::GetStringForSubmission() const {
   // TODO(komatsu): We should make sure if we can integrate this
   // function to GetStringForPreedit after a while.
-  GetStringForPreedit(output);
+  return GetStringForPreedit();
 }
 
-void Composer::GetQueryForConversion(std::string *output) const {
+std::string Composer::GetQueryForConversion() const {
   std::string base_output;
   composition_.GetStringWithTrimMode(FIX, &base_output);
   TransformCharactersForNumbers(&base_output);
-  japanese_util::FullWidthAsciiToHalfWidthAscii(base_output, output);
+  return japanese_util::FullWidthAsciiToHalfWidthAscii(base_output);
 }
 
 namespace {
@@ -822,18 +824,16 @@ std::string *GetBaseQueryForPrediction(std::string *asis_query,
 }
 }  // namespace
 
-void Composer::GetQueryForPrediction(std::string *output) const {
+std::string Composer::GetQueryForPrediction() const {
   std::string asis_query;
   composition_.GetStringWithTrimMode(ASIS, &asis_query);
 
   switch (input_mode_) {
     case transliteration::HALF_ASCII: {
-      output->assign(asis_query);
-      return;
+      return asis_query;
     }
     case transliteration::FULL_ASCII: {
-      japanese_util::FullWidthAsciiToHalfWidthAscii(asis_query, output);
-      return;
+      return japanese_util::FullWidthAsciiToHalfWidthAscii(asis_query);
     }
     default: {
     }
@@ -852,7 +852,7 @@ void Composer::GetQueryForPrediction(std::string *output) const {
   std::string *base_query =
       GetBaseQueryForPrediction(&asis_query, &trimed_query);
   TransformCharactersForNumbers(base_query);
-  japanese_util::FullWidthAsciiToHalfWidthAscii(*base_query, output);
+  return japanese_util::FullWidthAsciiToHalfWidthAscii(*base_query);
 }
 
 void Composer::GetQueriesForPrediction(std::string *base,
@@ -863,7 +863,7 @@ void Composer::GetQueriesForPrediction(std::string *base,
   switch (input_mode_) {
     case transliteration::HALF_ASCII:
     case transliteration::FULL_ASCII: {
-      GetQueryForPrediction(base);
+      *base = GetQueryForPrediction();
       expanded->clear();
       return;
     }

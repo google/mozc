@@ -95,7 +95,7 @@ class LanguageAwareRewriterTest : public testing::TestWithTempUserProfile {
 
     composer::Composer composer(&table, &client_request, &default_config);
     InsertASCIISequence(key, &composer);
-    composer.GetStringForPreedit(composition);
+    *composition = composer.GetStringForPreedit();
 
     // Perform the rewrite command.
     if (segments->conversion_segments_size() == 0) {
@@ -335,10 +335,9 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     table.InitializeWithRequestAndConfig(client_request, default_config,
                                          data_manager_);
 
-    std::string composition;
     composer::Composer composer(&table, &client_request, &default_config);
     InsertASCIISequence("python", &composer);
-    composer.GetStringForPreedit(&composition);
+    const std::string composition = composer.GetStringForPreedit();
     EXPECT_EQ(composition, kPyTeyoN);
 
     // Perform the rewrite command.

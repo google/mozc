@@ -332,7 +332,7 @@ bool SessionConverter::ConvertToHalfWidth(const composer::Composer &composer) {
 
   std::string composition;
   if (CheckState(COMPOSITION | SUGGESTION)) {
-    composer.GetStringForPreedit(&composition);
+    composition = composer.GetStringForPreedit();
   } else {
     composition = GetSelectedCandidate(segment_index_).value;
   }
@@ -598,8 +598,7 @@ bool SessionConverter::PredictWithPreferences(
   }
 
   // Merge suggestions and prediction
-  std::string preedit;
-  composer.GetQueryForPrediction(&preedit);
+  std::string preedit = composer.GetStringForPreedit();
   PrependCandidates(previous_suggestions_, std::move(preedit), &segments_);
 
   segment_index_ = 0;
@@ -689,8 +688,7 @@ bool SessionConverter::CommitSuggestionInternal(
   DCHECK(consumed_key_size);
   DCHECK(CheckState(SUGGESTION));
   ResetResult();
-  std::string preedit;
-  composer.GetStringForPreedit(&preedit);
+  const std::string preedit = composer.GetStringForPreedit();
 
   if (!UpdateResult(0, segments_.conversion_segments_size(),
                     consumed_key_size)) {
@@ -835,9 +833,8 @@ void SessionConverter::CommitSegmentsInternal(
 
 void SessionConverter::CommitPreedit(const composer::Composer &composer,
                                      const commands::Context &context) {
-  std::string key, preedit;
-  composer.GetQueryForConversion(&key);
-  composer.GetStringForSubmission(&preedit);
+  const std::string key = composer.GetQueryForConversion();
+  const std::string preedit = composer.GetStringForSubmission();
   std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
   SessionOutput::FillPreeditResult(preedit, &result_);
 
@@ -864,8 +861,7 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
 void SessionConverter::CommitHead(size_t count,
                                   const composer::Composer &composer,
                                   size_t *consumed_key_size) {
-  std::string preedit;
-  composer.GetStringForSubmission(&preedit);
+  std::string preedit = composer.GetStringForSubmission();
   if (count > preedit.length()) {
     *consumed_key_size = preedit.length();
   } else {

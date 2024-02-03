@@ -3186,8 +3186,7 @@ TEST_F(SessionConverterTest, CommitHead) {
   const commands::Result &result = output.result();
   EXPECT_EQ(result.value(), "あ");
   EXPECT_EQ(result.key(), "あ");
-  std::string preedit;
-  composer_->GetStringForPreedit(&preedit);
+  std::string preedit = composer_->GetStringForPreedit();
   EXPECT_EQ(preedit, "いうえお");
 
   converter.CommitHead(3, *composer_, &committed_size);
@@ -3202,7 +3201,7 @@ TEST_F(SessionConverterTest, CommitHead) {
   const commands::Result &result2 = output.result();
   EXPECT_EQ(result2.value(), "いうえ");
   EXPECT_EQ(result2.key(), "いうえ");
-  composer_->GetStringForPreedit(&preedit);
+  preedit = composer_->GetStringForPreedit();
   EXPECT_EQ(preedit, "お");
 
   EXPECT_STATS_NOT_EXIST("Commit");

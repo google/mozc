@@ -2754,8 +2754,7 @@ void InitSegmentsFromInputSequence(const absl::string_view text,
   request->set_request_type(ConversionRequest::PREDICTION);
   Segment *segment = segments->add_segment();
   CHECK(segment);
-  std::string query;
-  composer->GetQueryForPrediction(&query);
+  std::string query = composer->GetQueryForPrediction();
   segment->set_key(query);
 }
 }  // namespace

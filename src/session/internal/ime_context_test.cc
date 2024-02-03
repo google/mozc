@@ -135,14 +135,12 @@ TEST(ImeContextTest, CopyContext) {
 
     source.SetConfig(&config);
 
-    std::string composition;
-    source.composer().GetStringForSubmission(&composition);
+    std::string composition = source.composer().GetStringForSubmission();
     EXPECT_EQ(composition, "あｎ");
 
     ImeContext::CopyContext(source, &destination);
     EXPECT_EQ(destination.state(), ImeContext::COMPOSITION);
-    composition.clear();
-    source.composer().GetStringForSubmission(&composition);
+    composition = source.composer().GetStringForSubmission();
     EXPECT_EQ(composition, "あｎ");
   }
 
@@ -169,8 +167,7 @@ TEST(ImeContextTest, CopyContext) {
     const std::string &kQuick = "早い";
     source.mutable_composer()->set_source_text(kQuick);
 
-    std::string composition;
-    source.composer().GetQueryForConversion(&composition);
+    std::string composition = source.composer().GetQueryForConversion();
     EXPECT_EQ(composition, "あん");
 
     commands::Output output;
@@ -182,8 +179,7 @@ TEST(ImeContextTest, CopyContext) {
     EXPECT_EQ(destination.create_time(), kCreateTime);
     EXPECT_EQ(destination.last_command_time(), kLastCommandTime);
     EXPECT_EQ(destination.state(), ImeContext::CONVERSION);
-    composition.clear();
-    destination.composer().GetQueryForConversion(&composition);
+    composition = destination.composer().GetQueryForConversion();
     EXPECT_EQ(composition, "あん");
 
     output.Clear();

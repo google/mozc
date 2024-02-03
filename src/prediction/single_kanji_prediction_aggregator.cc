@@ -55,7 +55,7 @@ namespace {
 std::string GetKey(const ConversionRequest &request, const Segments &segments) {
   std::string key;
   if (request.has_composer()) {
-    request.composer().GetQueryForPrediction(&key);
+    key = request.composer().GetQueryForPrediction();
   } else {
     key = segments.conversion_segment(0).key();
   }

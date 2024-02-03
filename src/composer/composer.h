@@ -117,17 +117,17 @@ class Composer final {
                   std::string *right) const;
 
   // Returns a preedit string with user's preferences.
-  void GetStringForPreedit(std::string *output) const;
+  std::string GetStringForPreedit() const;
 
   // Returns a submit string with user's preferences.  The difference
   // from the preedit string is the handling of the last 'n'.
-  void GetStringForSubmission(std::string *output) const;
+  std::string GetStringForSubmission() const;
 
   // Returns a conversion query normalized ascii characters in half width
-  void GetQueryForConversion(std::string *output) const;
+  std::string GetQueryForConversion() const;
 
   // Returns a prediction query trimmed the tail alphabet characters.
-  void GetQueryForPrediction(std::string *output) const;
+  std::string GetQueryForPrediction() const;
 
   // Returns a expanded prediction query.
   void GetQueriesForPrediction(std::string *base,
