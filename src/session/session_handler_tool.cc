@@ -36,8 +36,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/check.h"
-#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -46,6 +44,7 @@
 #include "absl/types/span.h"
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
+#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
