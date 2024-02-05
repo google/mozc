@@ -722,8 +722,7 @@ void Composer::GetPreedit(std::string *left, std::string *focused,
 }
 
 std::string Composer::GetStringForPreedit() const {
-  std::string output;
-  composition_.GetString(&output);
+  std::string output = composition_.GetString();
   TransformCharactersForNumbers(&output);
   // If the input field type needs half ascii characters,
   // perform conversion here.
@@ -744,8 +743,7 @@ std::string Composer::GetStringForPreedit() const {
   if (field_type == commands::Context::NUMBER ||
       field_type == commands::Context::PASSWORD ||
       field_type == commands::Context::TEL) {
-    const std::string tmp = output;
-    japanese_util::FullWidthAsciiToHalfWidthAscii(tmp, &output);
+    output = japanese_util::FullWidthAsciiToHalfWidthAscii(output);
   }
   return output;
 }
@@ -757,8 +755,7 @@ std::string Composer::GetStringForSubmission() const {
 }
 
 std::string Composer::GetQueryForConversion() const {
-  std::string base_output;
-  composition_.GetStringWithTrimMode(FIX, &base_output);
+  std::string base_output = composition_.GetStringWithTrimMode(FIX);
   TransformCharactersForNumbers(&base_output);
   return japanese_util::FullWidthAsciiToHalfWidthAscii(base_output);
 }
@@ -822,8 +819,7 @@ std::string *GetBaseQueryForPrediction(std::string *asis_query,
 }  // namespace
 
 std::string Composer::GetQueryForPrediction() const {
-  std::string asis_query;
-  composition_.GetStringWithTrimMode(ASIS, &asis_query);
+  std::string asis_query = composition_.GetStringWithTrimMode(ASIS);
 
   switch (input_mode_) {
     case transliteration::HALF_ASCII: {
@@ -836,8 +832,7 @@ std::string Composer::GetQueryForPrediction() const {
     }
   }
 
-  std::string trimed_query;
-  composition_.GetStringWithTrimMode(TRIM, &trimed_query);
+  std::string trimed_query = composition_.GetStringWithTrimMode(TRIM);
 
   // NOTE(komatsu): This is a hack to go around the difference
   // expectation between Romanji-Input and Kana-Input.  "かn" in
@@ -874,11 +869,10 @@ void Composer::GetQueriesForPrediction(std::string *base,
   // However, "ざ" is usually composed by explicitly hitting the modifier key.
   // So we don't want to generate prediction from "さ" in this case. The
   // following code removes such unnecessary expansion.
-  std::string asis;
-  composition_.GetStringWithTrimMode(ASIS, &asis);
+  const std::string asis = composition_.GetStringWithTrimMode(ASIS);
   RemoveExpandedCharsForModifier(asis, base_query, expanded);
 
-  japanese_util::FullWidthAsciiToHalfWidthAscii(base_query, base);
+  *base = japanese_util::FullWidthAsciiToHalfWidthAscii(base_query);
 }
 
 std::optional<std::vector<TypeCorrectedQuery>>
@@ -887,8 +881,7 @@ Composer::GetTypeCorrectedQueries(absl::string_view context) const {
     return std::nullopt;
   }
 
-  std::string asis;
-  composition_.GetStringWithTrimMode(ASIS, &asis);
+  const std::string asis = composition_.GetStringWithTrimMode(ASIS);
   return spellchecker_->CheckCompositionSpelling(asis, context, *request_);
 }
 
@@ -899,8 +892,7 @@ size_t Composer::GetCursor() const { return position_; }
 std::string Composer::GetTransliteratedText(
     Transliterators::Transliterator t12r, const size_t position,
     const size_t size) const {
-  std::string full_base;
-  composition_.GetStringWithTransliterator(t12r, &full_base);
+  const std::string full_base = composition_.GetStringWithTransliterator(t12r);
 
   const size_t t13n_start =
       composition_.ConvertPosition(position, Transliterators::LOCAL, t12r);
@@ -963,10 +955,9 @@ void Composer::AutoSwitchMode() {
     return;
   }
 
-  std::string key;
   // Key should be in half-width alphanumeric.
-  composition_.GetStringWithTransliterator(
-      GetTransliterator(transliteration::HALF_ASCII), &key);
+  const std::string key = composition_.GetStringWithTransliterator(
+      GetTransliterator(transliteration::HALF_ASCII));
 
   const ModeSwitchingHandler::Rule mode_switching =
       ModeSwitchingHandler::GetModeSwitchingHandler()->GetModeSwitchingRule(
