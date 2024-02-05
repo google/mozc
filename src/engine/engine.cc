@@ -175,8 +175,7 @@ absl::Status Engine::Init(
     const bool enable_content_word_learning = is_mobile;
     auto user_history_predictor =
         std::make_unique<prediction::UserHistoryPredictor>(
-            modules_.GetDictionary(), modules_.GetPosMatcher(),
-            modules_.GetSuppressionDictionary(), enable_content_word_learning);
+            modules_, enable_content_word_learning);
     RETURN_IF_NULL(user_history_predictor);
 
     if (is_mobile) {

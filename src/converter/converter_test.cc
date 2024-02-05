@@ -236,8 +236,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     CHECK(dictionary_predictor);
 
     auto user_history_predictor = std::make_unique<UserHistoryPredictor>(
-        modules.GetDictionary(), pos_matcher,
-        modules.GetSuppressionDictionary(), enable_content_word_learning);
+        modules, enable_content_word_learning);
     CHECK(user_history_predictor);
 
     auto ret_predictor = (*predictor_factory)(
@@ -1186,10 +1185,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       DefaultPredictor::CreateDefaultPredictor(
           std::make_unique<DictionaryPredictor>(
               data_manager, &converter, immutable_converter.get(), modules),
-          std::make_unique<UserHistoryPredictor>(
-              modules.GetDictionary(), modules.GetPosMatcher(),
-              modules.GetSuppressionDictionary(), false),
-          &converter),
+          std::make_unique<UserHistoryPredictor>(modules, false), &converter),
       std::make_unique<RewriterImpl>(&converter, &data_manager,
                                      modules.GetPosGroup(), kNullDictionary),
       immutable_converter.get());

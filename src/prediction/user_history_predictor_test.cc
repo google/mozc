@@ -59,8 +59,8 @@
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
-#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -124,7 +124,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   SuppressionDictionary *GetSuppressionDictionary() {
-    return data_and_predictor_->suppression_dictionary.get();
+    return data_and_predictor_->modules.GetMutableSuppressionDictionary();
   }
 
   bool IsSuggested(UserHistoryPredictor *predictor, const absl::string_view key,
@@ -408,21 +408,17 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
  private:
   struct DataAndPredictor {
-    std::unique_ptr<MockDictionary> dictionary;
-    std::unique_ptr<SuppressionDictionary> suppression_dictionary;
+    testing::MockDataManager data_manager;
+    engine::Modules modules;
     std::unique_ptr<UserHistoryPredictor> predictor;
-    dictionary::PosMatcher pos_matcher;
   };
 
   std::unique_ptr<DataAndPredictor> CreateDataAndPredictor() const {
     auto ret = std::make_unique<DataAndPredictor>();
-    testing::MockDataManager data_manager;
-    ret->dictionary = std::make_unique<MockDictionary>();
-    ret->suppression_dictionary = std::make_unique<SuppressionDictionary>();
-    ret->pos_matcher.Set(data_manager.GetPosMatcherData());
-    ret->predictor = std::make_unique<UserHistoryPredictor>(
-        ret->dictionary.get(), &ret->pos_matcher,
-        ret->suppression_dictionary.get(), false);
+    ret->modules.PresetDictionary(std::make_unique<MockDictionary>());
+    CHECK_OK(ret->modules.Init(&ret->data_manager));
+    ret->predictor =
+        std::make_unique<UserHistoryPredictor>(ret->modules, false);
     ret->predictor->WaitForSyncer();
     return ret;
   }
