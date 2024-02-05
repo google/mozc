@@ -254,7 +254,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
                       ConverterAndData *converter_and_data) {
     const engine::Modules &modules = converter_and_data->modules;
     converter_and_data->immutable_converter =
-        std::make_unique<ImmutableConverterImpl>(modules);
+        std::make_unique<ImmutableConverter>(modules);
     converter_and_data->converter = std::make_unique<ConverterImpl>();
 
     auto predictor = CreatePredictor(predictor_type, modules.GetPosMatcher(),
@@ -1179,7 +1179,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   absl::Status init = modules.Init(&data_manager);
   CHECK(init.ok()) << init.message();
 
-  auto immutable_converter = std::make_unique<ImmutableConverterImpl>(modules);
+  auto immutable_converter = std::make_unique<ImmutableConverter>(modules);
   ConverterImpl converter;
   const DictionaryInterface *kNullDictionary = nullptr;
   converter.Init(

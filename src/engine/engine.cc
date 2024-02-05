@@ -55,14 +55,13 @@ namespace {
 
 using ::mozc::prediction::PredictorInterface;
 
-class UserDataManagerImpl final : public UserDataManagerInterface {
+class UserDataManager final : public UserDataManagerInterface {
  public:
-  UserDataManagerImpl(PredictorInterface *predictor,
-                      RewriterInterface *rewriter)
+  UserDataManager(PredictorInterface *predictor, RewriterInterface *rewriter)
       : predictor_(predictor), rewriter_(rewriter) {}
 
-  UserDataManagerImpl(const UserDataManagerImpl &) = delete;
-  UserDataManagerImpl &operator=(const UserDataManagerImpl &) = delete;
+  UserDataManager(const UserDataManager &) = delete;
+  UserDataManager &operator=(const UserDataManager &) = delete;
 
   bool Sync() override;
   bool Reload() override;
@@ -78,39 +77,39 @@ class UserDataManagerImpl final : public UserDataManagerInterface {
   RewriterInterface *rewriter_;
 };
 
-bool UserDataManagerImpl::Sync() {
+bool UserDataManager::Sync() {
   // TODO(noriyukit): In the current implementation, if rewriter_->Sync() fails,
   // predictor_->Sync() is never called. Check if we should call
   // predictor_->Sync() or not.
   return rewriter_->Sync() && predictor_->Sync();
 }
 
-bool UserDataManagerImpl::Reload() {
+bool UserDataManager::Reload() {
   // TODO(noriyukit): The same TODO as Sync().
   return rewriter_->Reload() && predictor_->Reload();
 }
 
-bool UserDataManagerImpl::ClearUserHistory() {
+bool UserDataManager::ClearUserHistory() {
   rewriter_->Clear();
   return true;
 }
 
-bool UserDataManagerImpl::ClearUserPrediction() {
+bool UserDataManager::ClearUserPrediction() {
   predictor_->ClearAllHistory();
   return true;
 }
 
-bool UserDataManagerImpl::ClearUnusedUserPrediction() {
+bool UserDataManager::ClearUnusedUserPrediction() {
   predictor_->ClearUnusedHistory();
   return true;
 }
 
-bool UserDataManagerImpl::ClearUserPredictionEntry(
-    const absl::string_view key, const absl::string_view value) {
+bool UserDataManager::ClearUserPredictionEntry(const absl::string_view key,
+                                               const absl::string_view value) {
   return predictor_->ClearHistoryEntry(key, value);
 }
 
-bool UserDataManagerImpl::Wait() { return predictor_->Wait(); }
+bool UserDataManager::Wait() { return predictor_->Wait(); }
 
 }  // namespace
 
@@ -151,7 +150,7 @@ absl::Status Engine::Init(
     return modules_init_status;
   }
 
-  immutable_converter_ = std::make_unique<ImmutableConverterImpl>(modules_);
+  immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
   RETURN_IF_NULL(immutable_converter_);
 
   // Since predictor and rewriter require a pointer to a converter instance,
@@ -203,8 +202,7 @@ absl::Status Engine::Init(
                    modules_.GetSuppressionDictionary(), std::move(predictor),
                    std::move(rewriter), immutable_converter_.get());
 
-  user_data_manager_ =
-      std::make_unique<UserDataManagerImpl>(predictor_, rewriter_);
+  user_data_manager_ = std::make_unique<UserDataManager>(predictor_, rewriter_);
 
   data_manager_ = std::move(data_manager);
 

@@ -109,7 +109,7 @@ class MockDataAndImmutableConverter {
     absl::Status status = modules_.Init(data_manager_.get());
     CHECK(status.ok()) << status.message();
 
-    immutable_converter_ = std::make_unique<ImmutableConverterImpl>(modules_);
+    immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
     CHECK(immutable_converter_);
   }
 
@@ -123,16 +123,16 @@ class MockDataAndImmutableConverter {
     absl::Status status = modules_.Init(data_manager_.get());
     CHECK(status.ok()) << status.message();
 
-    immutable_converter_ = std::make_unique<ImmutableConverterImpl>(modules_);
+    immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
     CHECK(immutable_converter_);
   }
 
-  ImmutableConverterImpl *GetConverter() { return immutable_converter_.get(); }
+  ImmutableConverter *GetConverter() { return immutable_converter_.get(); }
 
  private:
   std::unique_ptr<const DataManagerInterface> data_manager_;
   engine::Modules modules_;
-  std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
+  std::unique_ptr<ImmutableConverter> immutable_converter_;
 };
 
 }  // namespace
@@ -252,7 +252,7 @@ TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
 
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>(
       std::move(dictionary), std::move(suffix_dictionary));
-  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
+  ImmutableConverter *converter = data_and_converter->GetConverter();
   const ConversionRequest request;
   converter->MakeLatticeNodesForPredictiveNodes(segments, request, &lattice);
   EXPECT_FALSE(dictionary_ptr->received_target_query());
@@ -278,7 +278,7 @@ TEST(ImmutableConverterTest, AddPredictiveNodes) {
 
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>(
       std::move(dictionary), std::move(suffix_dictionary));
-  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
+  ImmutableConverter *converter = data_and_converter->GetConverter();
 
   {
     ConversionRequest request;
@@ -355,7 +355,7 @@ TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
 TEST(ImmutableConverterTest, NotConnectedTest) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
-  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
+  ImmutableConverter *converter = data_and_converter->GetConverter();
 
   Segments segments;
 

@@ -55,12 +55,12 @@
 
 namespace mozc {
 
-class ImmutableConverterImpl : public ImmutableConverterInterface {
+class ImmutableConverter : public ImmutableConverterInterface {
  public:
-  explicit ImmutableConverterImpl(const engine::Modules &modules);
-  ImmutableConverterImpl(const ImmutableConverterImpl &) = delete;
-  ImmutableConverterImpl &operator=(const ImmutableConverterImpl &) = delete;
-  ~ImmutableConverterImpl() override = default;
+  explicit ImmutableConverter(const engine::Modules &modules);
+  ImmutableConverter(const ImmutableConverter &) = delete;
+  ImmutableConverter &operator=(const ImmutableConverter &) = delete;
+  ~ImmutableConverter() override = default;
 
   ABSL_MUST_USE_RESULT bool ConvertForRequest(
       const ConversionRequest &request, Segments *segments) const override;
