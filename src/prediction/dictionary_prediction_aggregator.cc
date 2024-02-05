@@ -1701,8 +1701,7 @@ void DictionaryPredictionAggregator::AggregateEnglishPredictionUsingRawInput(
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
 
-  std::string input_key;
-  request.composer().GetRawString(&input_key);
+  const std::string input_key = request.composer().GetRawString();
   GetPredictiveResultsForEnglishKey(*dictionary_, request, input_key, ENGLISH,
                                     cutoff_threshold, results);
 

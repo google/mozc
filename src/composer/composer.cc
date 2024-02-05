@@ -125,60 +125,57 @@ transliteration::TransliterationType GetTransliterationType(
   return default_type;
 }
 
-void Transliterate(const transliteration::TransliterationType mode,
-                   const absl::string_view input, std::string *output) {
+std::string Transliterate(const transliteration::TransliterationType mode,
+                          const absl::string_view input) {
   // When the mode is HALF_KATAKANA, Full width ASCII is also
   // transformed.
   if (mode == transliteration::HALF_KATAKANA) {
-    std::string tmp_input;
-    japanese_util::HiraganaToKatakana(input, &tmp_input);
-    japanese_util::FullWidthToHalfWidth(tmp_input, output);
-    return;
+    const std::string katakana = japanese_util::HiraganaToKatakana(input);
+    return japanese_util::FullWidthToHalfWidth(katakana);
   }
 
   switch (mode) {
     case transliteration::HALF_ASCII:
-      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
-      break;
-    case transliteration::HALF_ASCII_UPPER:
-      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
-      Util::UpperString(output);
-      break;
-    case transliteration::HALF_ASCII_LOWER:
-      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
-      Util::LowerString(output);
-      break;
-    case transliteration::HALF_ASCII_CAPITALIZED:
-      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
-      Util::CapitalizeString(output);
-      break;
-
+      return japanese_util::FullWidthAsciiToHalfWidthAscii(input);
+    case transliteration::HALF_ASCII_UPPER: {
+      std::string output = japanese_util::FullWidthAsciiToHalfWidthAscii(input);
+      Util::UpperString(&output);
+      return output;
+    }
+    case transliteration::HALF_ASCII_LOWER: {
+      std::string output = japanese_util::FullWidthAsciiToHalfWidthAscii(input);
+      Util::LowerString(&output);
+      return output;
+    }
+    case transliteration::HALF_ASCII_CAPITALIZED: {
+      std::string output = japanese_util::FullWidthAsciiToHalfWidthAscii(input);
+      Util::CapitalizeString(&output);
+      return output;
+    }
     case transliteration::FULL_ASCII:
-      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
-      break;
-    case transliteration::FULL_ASCII_UPPER:
-      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
-      Util::UpperString(output);
-      break;
-    case transliteration::FULL_ASCII_LOWER:
-      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
-      Util::LowerString(output);
-      break;
-    case transliteration::FULL_ASCII_CAPITALIZED:
-      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
-      Util::CapitalizeString(output);
-      break;
-
+      return japanese_util::HalfWidthAsciiToFullWidthAscii(input);
+    case transliteration::FULL_ASCII_UPPER: {
+      std::string output = japanese_util::HalfWidthAsciiToFullWidthAscii(input);
+      Util::UpperString(&output);
+      return output;
+    }
+    case transliteration::FULL_ASCII_LOWER: {
+      std::string output = japanese_util::HalfWidthAsciiToFullWidthAscii(input);
+      Util::LowerString(&output);
+      return output;
+    }
+    case transliteration::FULL_ASCII_CAPITALIZED: {
+      std::string output = japanese_util::HalfWidthAsciiToFullWidthAscii(input);
+      Util::CapitalizeString(&output);
+      return output;
+    }
     case transliteration::FULL_KATAKANA:
-      japanese_util::HiraganaToKatakana(input, output);
-      break;
+      return japanese_util::HiraganaToKatakana(input);
     case transliteration::HIRAGANA:
-      strings::Assign(*output, input);
-      break;
+      return std::string{input};
     default:
       LOG(ERROR) << "Unknown TransliterationType: " << mode;
-      strings::Assign(*output, input);
-      break;
+      return std::string{input};
   }
 }
 
@@ -899,10 +896,9 @@ size_t Composer::GetLength() const { return composition_.GetLength(); }
 
 size_t Composer::GetCursor() const { return position_; }
 
-void Composer::GetTransliteratedText(Transliterators::Transliterator t12r,
-                                     const size_t position, const size_t size,
-                                     std::string *result) const {
-  DCHECK(result);
+std::string Composer::GetTransliteratedText(
+    Transliterators::Transliterator t12r, const size_t position,
+    const size_t size) const {
   std::string full_base;
   composition_.GetStringWithTransliterator(t12r, &full_base);
 
@@ -912,18 +908,16 @@ void Composer::GetTransliteratedText(Transliterators::Transliterator t12r,
       position + size, Transliterators::LOCAL, t12r);
   const size_t t13n_size = t13n_end - t13n_start;
 
-  Util::Utf8SubString(full_base, t13n_start, t13n_size, result);
+  return std::string{Util::Utf8SubString(full_base, t13n_start, t13n_size)};
 }
 
-void Composer::GetRawString(std::string *raw_string) const {
-  GetRawSubString(0, GetLength(), raw_string);
+std::string Composer::GetRawString() const {
+  return GetRawSubString(0, GetLength());
 }
 
-void Composer::GetRawSubString(const size_t position, const size_t size,
-                               std::string *raw_sub_string) const {
-  DCHECK(raw_sub_string);
-  GetTransliteratedText(Transliterators::RAW_STRING, position, size,
-                        raw_sub_string);
+std::string Composer::GetRawSubString(const size_t position,
+                                      const size_t size) const {
+  return GetTransliteratedText(Transliterators::RAW_STRING, position, size);
 }
 
 void Composer::GetTransliterations(
@@ -931,24 +925,21 @@ void Composer::GetTransliterations(
   GetSubTransliterations(0, GetLength(), t13ns);
 }
 
-void Composer::GetSubTransliteration(
+std::string Composer::GetSubTransliteration(
     const transliteration::TransliterationType type, const size_t position,
-    const size_t size, std::string *transliteration) const {
+    const size_t size) const {
   const Transliterators::Transliterator t12r = GetTransliterator(type);
-  std::string result;
-  GetTransliteratedText(t12r, position, size, &result);
-  transliteration->clear();
-  Transliterate(type, result, transliteration);
+  const std::string result = GetTransliteratedText(t12r, position, size);
+  return Transliterate(type, result);
 }
 
 void Composer::GetSubTransliterations(
     const size_t position, const size_t size,
     transliteration::Transliterations *transliterations) const {
-  std::string t13n;
   for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
     const transliteration::TransliterationType t13n_type =
         transliteration::TransliterationTypeArray[i];
-    GetSubTransliteration(t13n_type, position, size, &t13n);
+    const std::string t13n = GetSubTransliteration(t13n_type, position, size);
     transliterations->push_back(t13n);
   }
 }

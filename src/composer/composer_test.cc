@@ -1974,16 +1974,14 @@ TEST_F(ComposerTest, Issue1817410) {
 
   EXPECT_EQ(composer_->GetStringForPreedit(), "っｓ");
 
-  std::string t13n;
-  composer_->GetSubTransliteration(transliteration::HALF_ASCII, 0, 2, &t13n);
+  std::string t13n =
+      composer_->GetSubTransliteration(transliteration::HALF_ASCII, 0, 2);
   EXPECT_EQ(t13n, "ss");
 
-  t13n.clear();
-  composer_->GetSubTransliteration(transliteration::HALF_ASCII, 0, 1, &t13n);
+  t13n = composer_->GetSubTransliteration(transliteration::HALF_ASCII, 0, 1);
   EXPECT_EQ(t13n, "s");
 
-  t13n.clear();
-  composer_->GetSubTransliteration(transliteration::HALF_ASCII, 1, 1, &t13n);
+  t13n = composer_->GetSubTransliteration(transliteration::HALF_ASCII, 1, 1);
   EXPECT_EQ(t13n, "s");
 }
 
@@ -2579,15 +2577,13 @@ TEST_F(ComposerTest, GetRawString) {
 
   EXPECT_EQ(composer_->GetStringForPreedit(), "さしみ");
 
-  std::string raw_string;
-  composer_->GetRawString(&raw_string);
+  std::string raw_string = composer_->GetRawString();
   EXPECT_EQ(raw_string, "sashimi");
 
-  std::string raw_sub_string;
-  composer_->GetRawSubString(0, 2, &raw_sub_string);
+  std::string raw_sub_string = composer_->GetRawSubString(0, 2);
   EXPECT_EQ(raw_sub_string, "sashi");
 
-  composer_->GetRawSubString(1, 1, &raw_sub_string);
+  raw_sub_string = composer_->GetRawSubString(1, 1);
   EXPECT_EQ(raw_sub_string, "shi");
 }
 

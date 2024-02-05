@@ -102,8 +102,7 @@ int LanguageAwareRewriter::capability(const ConversionRequest &request) const {
 namespace {
 bool IsRawQuery(const composer::Composer &composer,
                 const DictionaryInterface *dictionary, int *rank) {
-  std::string raw_text;
-  composer.GetRawString(&raw_text);
+  const std::string raw_text = composer.GetRawString();
 
   // Check if the length of text is less than or equal to three.
   // For example, "cat" is not treated as a raw query so far to avoid
@@ -213,8 +212,7 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
     }
   }
 
-  std::string raw_string;
-  request.composer().GetRawString(&raw_string);
+  const std::string raw_string = request.composer().GetRawString();
 
   uint16_t lid = unknown_id_;
   uint16_t rid = unknown_id_;
@@ -264,8 +262,7 @@ bool IsLanguageAwareInputCandidate(const composer::Composer &composer,
     return false;
   }
 
-  std::string raw_string;
-  composer.GetRawString(&raw_string);
+  const std::string raw_string = composer.GetRawString();
   if (raw_string != candidate.value) {
     return false;
   }

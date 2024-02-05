@@ -368,8 +368,8 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
   // Note that only one segment is in the Segments, but sometimes like
   // on partial conversion, segment.key() is different from the size of
   // the whole composition.
-  std::string raw;
-  composer.GetRawSubString(0, Util::CharsLen(segment->key()), &raw);
+  const std::string raw =
+      composer.GetRawSubString(0, Util::CharsLen(segment->key()));
   if (raw.empty()) {
     return false;
   }

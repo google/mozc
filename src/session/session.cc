@@ -1944,8 +1944,7 @@ void Session::CommitSourceTextDirectly(commands::Command *command) {
 }
 
 void Session::CommitRawTextDirectly(commands::Command *command) {
-  std::string raw_text;
-  context_->composer().GetRawString(&raw_text);
+  const std::string raw_text = context_->composer().GetRawString();
   CommitStringDirectly(raw_text, raw_text, command);
 }
 

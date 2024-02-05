@@ -1114,11 +1114,11 @@ bool GetNDigits(const composer::Composer &composer, const Segments &segments,
   }
 
   // 3. Raw input
-  std::string raw;
   // Note that only one segment is in the Segments, but sometimes like
   // on partial conversion, segment.key() is different from the size of
   // the whole composition.
-  composer.GetRawSubString(0, Util::CharsLen(segment.key()), &raw);
+  const std::string raw =
+      composer.GetRawSubString(0, Util::CharsLen(segment.key()));
   if (IsNDigits(raw, n)) {
     japanese_util::FullWidthAsciiToHalfWidthAscii(raw, output);
     return true;
