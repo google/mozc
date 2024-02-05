@@ -198,9 +198,8 @@ absl::Status Engine::Init(
   RETURN_IF_NULL(rewriter);
   rewriter_ = rewriter.get();  // Keep the reference
 
-  converter_->Init(modules_.GetPosMatcher(),
-                   modules_.GetSuppressionDictionary(), std::move(predictor),
-                   std::move(rewriter), immutable_converter_.get());
+  converter_->Init(modules_, std::move(predictor), std::move(rewriter),
+                   immutable_converter_.get());
 
   user_data_manager_ = std::make_unique<UserDataManager>(predictor_, rewriter_);
 

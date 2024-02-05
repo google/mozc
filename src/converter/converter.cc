@@ -49,6 +49,7 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -261,14 +262,13 @@ ConversionRequest CreateConversionRequestWithType(
 
 }  // namespace
 
-void Converter::Init(const PosMatcher *pos_matcher,
-                     const SuppressionDictionary *suppression_dictionary,
+void Converter::Init(const engine::Modules &modules,
                      std::unique_ptr<PredictorInterface> predictor,
                      std::unique_ptr<RewriterInterface> rewriter,
                      ImmutableConverterInterface *immutable_converter) {
   // Initializes in order of declaration.
-  pos_matcher_ = pos_matcher;
-  suppression_dictionary_ = suppression_dictionary;
+  pos_matcher_ = modules.GetPosMatcher();
+  suppression_dictionary_ = modules.GetSuppressionDictionary();
   predictor_ = std::move(predictor);
   rewriter_ = std::move(rewriter);
   immutable_converter_ = immutable_converter;

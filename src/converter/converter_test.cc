@@ -260,8 +260,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     auto predictor = CreatePredictor(predictor_type, modules.GetPosMatcher(),
                                      *converter_and_data);
     converter_and_data->converter->Init(
-        modules.GetPosMatcher(), modules.GetSuppressionDictionary(),
-        std::move(predictor), std::move(rewriter),
+        modules, std::move(predictor), std::move(rewriter),
         converter_and_data->immutable_converter.get());
   }
 
@@ -1183,7 +1182,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   Converter converter;
   const DictionaryInterface *kNullDictionary = nullptr;
   converter.Init(
-      modules.GetPosMatcher(), modules.GetSuppressionDictionary(),
+      modules,
       DefaultPredictor::CreateDefaultPredictor(
           std::make_unique<DictionaryPredictor>(
               data_manager, &converter, immutable_converter.get(), modules),

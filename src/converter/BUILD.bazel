@@ -439,6 +439,7 @@ mozc_cc_library(
         "//composer",
         "//dictionary:pos_matcher",
         "//dictionary:suppression_dictionary",
+        "//engine:modules",
         "//prediction:predictor_interface",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
