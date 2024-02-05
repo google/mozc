@@ -416,6 +416,28 @@ def mozc_select(
         "//conditions:default": default,
     })
 
+# Macros for build config settings.
+#
+# These macros are syntax sugars for the Bazel select statement.
+
+def mozc_select_enable_session_watchdog(on = [], off = []):
+    return select({
+        "//:enable_session_watchdog": on,
+        "//conditions:default": off,
+    })
+
+def mozc_select_enable_spellchecker(on = [], off = []):
+    return select({
+        "//:enable_spellchecker": on,
+        "//conditions:default": off,
+    })
+
+def mozc_select_enable_usage_rewriter(on = [], off = []):
+    return select({
+        "//:enable_usage_rewriter": on,
+        "//conditions:default": off,
+    })
+
 # Tags aliases for build filtering.
 MOZC_TAGS = struct(
     ANDROID_ONLY = ["nolinux", "nomac", "nowin"],
