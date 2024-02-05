@@ -328,13 +328,11 @@ bool IsUtf8TrailingByte(uint8_t c) { return (c & 0xc0) == 0x80; }
 
 }  // namespace
 
-size_t Util::CharsLen(const char *src, size_t size) {
-  const char *begin = src;
-  const char *end = src + size;
-  int length = 0;
-  while (begin < end) {
+size_t Util::CharsLen(absl::string_view str) {
+  size_t length = 0;
+  while (!str.empty()) {
     ++length;
-    begin += strings::OneCharLen(begin);
+    str.remove_prefix(strings::OneCharLen(str.begin()));
   }
   return length;
 }

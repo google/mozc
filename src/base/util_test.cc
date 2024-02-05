@@ -376,7 +376,7 @@ TEST(UtilTest, Ucs4ToUtf8) {
 
 TEST(UtilTest, CharsLen) {
   const std::string src = "私の名前は中野です";
-  EXPECT_EQ(Util::CharsLen(src.c_str(), src.size()), 9);
+  EXPECT_EQ(Util::CharsLen(src), 9);
 }
 
 TEST(UtilTest, Utf8SubString) {

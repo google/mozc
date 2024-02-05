@@ -81,11 +81,7 @@ class Util {
   static bool IsCapitalizedAscii(absl::string_view s);
 
   // Returns the lengths of [src, src+size] encoded in UTF8.
-  static size_t CharsLen(const char *src, size_t size);
-
-  static size_t CharsLen(absl::string_view str) {
-    return CharsLen(str.data(), str.size());
-  }
+  static size_t CharsLen(absl::string_view str);
 
   // Converts a UTF-8 string to UTF-32.
   static std::u32string Utf8ToUtf32(absl::string_view str);

@@ -727,7 +727,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
       while (segment_index + 1 < segments->segments_size()) {
         last_key = segments->segment(segment_index + 1).key();
         segments->erase_segment(segment_index + 1);
-        last_clen = Util::CharsLen(last_key.c_str(), last_key.size());
+        last_clen = Util::CharsLen(last_key);
         length -= static_cast<int>(last_clen);
         if (length <= 0) {
           std::string tmp;
