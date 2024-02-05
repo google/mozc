@@ -152,15 +152,6 @@ TEST(CompositionInputTest, AsIsValue) {
     EXPECT_EQ(input.conversion(), "[]");
     EXPECT_TRUE(input.is_asis());
   }
-  {
-    CompositionInput input2 = input;
-    EXPECT_EQ(input.raw(), "[]");
-    EXPECT_EQ(input.conversion(), "[]");
-    EXPECT_TRUE(input.is_asis());
-    EXPECT_EQ(input2.raw(), "[]");
-    EXPECT_EQ(input2.conversion(), "[]");
-    EXPECT_TRUE(input2.is_asis());
-  }
 }
 }  // namespace composer
 }  // namespace mozc

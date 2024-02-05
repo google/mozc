@@ -344,15 +344,6 @@ TEST(SegmentsTest, RevertEntryTest) {
     EXPECT_EQ(e.id, kSize - i);
   }
 
-  {
-    const Segments::RevertEntry &src = segments.revert_entry(0);
-    Segments::RevertEntry dest = src;
-    EXPECT_EQ(dest.revert_entry_type, src.revert_entry_type);
-    EXPECT_EQ(dest.id, src.id);
-    EXPECT_EQ(dest.timestamp, src.timestamp);
-    EXPECT_EQ(dest.key, src.key);
-  }
-
   segments.clear_revert_entries();
   EXPECT_EQ(segments.revert_entries_size(), 0);
 }

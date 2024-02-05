@@ -94,7 +94,7 @@ class ConfigHandlerImpl final {
   void Reload() ABSL_LOCKS_EXCLUDED(mutex_);
   void SetConfigFileName(absl::string_view filename)
       ABSL_LOCKS_EXCLUDED(mutex_);
-  const std::string &GetConfigFileName() ABSL_LOCKS_EXCLUDED(mutex_);
+  std::string GetConfigFileName() ABSL_LOCKS_EXCLUDED(mutex_);
 
  private:
   // copy config to config_ and do some
@@ -221,7 +221,7 @@ void ConfigHandlerImpl::SetConfigFileName(const absl::string_view filename) {
   ReloadUnlocked();
 }
 
-const std::string &ConfigHandlerImpl::GetConfigFileName() {
+std::string ConfigHandlerImpl::GetConfigFileName() {
   absl::MutexLock lock(&mutex_);
   return filename_;
 }
@@ -285,7 +285,7 @@ void ConfigHandler::SetConfigFileName(const absl::string_view filename) {
   GetConfigHandlerImpl()->SetConfigFileName(filename);
 }
 
-const std::string &ConfigHandler::GetConfigFileName() {
+std::string ConfigHandler::GetConfigFileName() {
   return GetConfigHandlerImpl()->GetConfigFileName();
 }
 
