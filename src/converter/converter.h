@@ -52,9 +52,9 @@
 
 namespace mozc {
 
-class ConverterImpl final : public ConverterInterface {
+class Converter final : public ConverterInterface {
  public:
-  ConverterImpl() = default;
+  Converter() = default;
 
   // Lazily initializes the internal members. Must be called before the use.
   void Init(const dictionary::PosMatcher *pos_matcher,

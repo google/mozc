@@ -86,7 +86,7 @@ class Engine : public EngineInterface {
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
 
-  ConverterImpl *GetConverter() const override { return converter_.get(); }
+  Converter *GetConverter() const override { return converter_.get(); }
   prediction::PredictorInterface *GetPredictor() const override {
     return predictor_;
   }
@@ -135,7 +135,7 @@ class Engine : public EngineInterface {
   prediction::PredictorInterface *predictor_ = nullptr;
   RewriterInterface *rewriter_ = nullptr;
 
-  std::unique_ptr<ConverterImpl> converter_;
+  std::unique_ptr<Converter> converter_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
 };
 

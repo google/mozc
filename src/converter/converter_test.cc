@@ -187,7 +187,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     std::unique_ptr<testing::MockDataManager> data_manager;
     engine::Modules modules;
     std::unique_ptr<ImmutableConverterInterface> immutable_converter;
-    std::unique_ptr<ConverterImpl> converter;
+    std::unique_ptr<Converter> converter;
   };
 
   // Returns initialized predictor for the given type.
@@ -255,7 +255,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     const engine::Modules &modules = converter_and_data->modules;
     converter_and_data->immutable_converter =
         std::make_unique<ImmutableConverter>(modules);
-    converter_and_data->converter = std::make_unique<ConverterImpl>();
+    converter_and_data->converter = std::make_unique<Converter>();
 
     auto predictor = CreatePredictor(predictor_type, modules.GetPosMatcher(),
                                      *converter_and_data);
@@ -863,7 +863,7 @@ TEST_F(ConverterTest, CompletePosIds) {
 
   std::unique_ptr<ConverterAndData> converter_and_data =
       CreateStubbedConverterAndData();
-  ConverterImpl *converter = converter_and_data->converter.get();
+  Converter *converter = converter_and_data->converter.get();
   for (size_t i = 0; i < std::size(kTestKeys); ++i) {
     Segments segments;
     Segment *seg = segments.add_segment();
@@ -1068,7 +1068,7 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
   meta_candidate2->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
   meta_candidate2->consumed_key_size = original_consumed_key_size;
 
-  ConverterImpl::MaybeSetConsumedKeySizeToSegment(consumed_key_size, &segment);
+  Converter::MaybeSetConsumedKeySizeToSegment(consumed_key_size, &segment);
   EXPECT_NE((segment.candidate(0).attributes &
              Segment::Candidate::PARTIALLY_KEY_CONSUMED),
             0);
@@ -1112,7 +1112,7 @@ TEST_F(ConverterTest, PredictSetKey) {
 
   std::unique_ptr<ConverterAndData> converter_and_data(
       CreateStubbedConverterAndData());
-  ConverterImpl *converter = converter_and_data->converter.get();
+  Converter *converter = converter_and_data->converter.get();
   ASSERT_NE(converter, nullptr);
   // Note that TearDown method will reset above stubs.
 
@@ -1180,7 +1180,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   CHECK(init.ok()) << init.message();
 
   auto immutable_converter = std::make_unique<ImmutableConverter>(modules);
-  ConverterImpl converter;
+  Converter converter;
   const DictionaryInterface *kNullDictionary = nullptr;
   converter.Init(
       modules.GetPosMatcher(), modules.GetSuppressionDictionary(),
@@ -1434,7 +1434,7 @@ TEST_F(ConverterTest, StartReverseConversion) {
 TEST_F(ConverterTest, GetLastConnectivePart) {
   std::unique_ptr<ConverterAndData> converter_and_data(
       CreateStubbedConverterAndData());
-  ConverterImpl *converter = converter_and_data->converter.get();
+  Converter *converter = converter_and_data->converter.get();
 
   {
     std::string key;

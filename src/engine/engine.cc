@@ -159,7 +159,7 @@ absl::Status Engine::Init(
   // TODO(noriyukit): This circular dependency is a bad design as careful
   // handling is necessary to avoid infinite loop. Find more beautiful design
   // and fix it!
-  converter_ = std::make_unique<ConverterImpl>();
+  converter_ = std::make_unique<Converter>();
   RETURN_IF_NULL(converter_);
 
   std::unique_ptr<PredictorInterface> predictor;

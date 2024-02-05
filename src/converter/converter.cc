@@ -261,11 +261,11 @@ ConversionRequest CreateConversionRequestWithType(
 
 }  // namespace
 
-void ConverterImpl::Init(const PosMatcher *pos_matcher,
-                         const SuppressionDictionary *suppression_dictionary,
-                         std::unique_ptr<PredictorInterface> predictor,
-                         std::unique_ptr<RewriterInterface> rewriter,
-                         ImmutableConverterInterface *immutable_converter) {
+void Converter::Init(const PosMatcher *pos_matcher,
+                     const SuppressionDictionary *suppression_dictionary,
+                     std::unique_ptr<PredictorInterface> predictor,
+                     std::unique_ptr<RewriterInterface> rewriter,
+                     ImmutableConverterInterface *immutable_converter) {
   // Initializes in order of declaration.
   pos_matcher_ = pos_matcher;
   suppression_dictionary_ = suppression_dictionary;
@@ -275,7 +275,7 @@ void ConverterImpl::Init(const PosMatcher *pos_matcher,
   general_noun_id_ = pos_matcher_->GetGeneralNounId();
 }
 
-bool ConverterImpl::StartConversionForRequest(
+bool Converter::StartConversionForRequest(
     const ConversionRequest &original_request, Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::CONVERSION);
@@ -302,8 +302,8 @@ bool ConverterImpl::StartConversionForRequest(
   return Convert(request, conversion_key, segments);
 }
 
-bool ConverterImpl::StartConversion(Segments *segments,
-                                    const absl::string_view key) const {
+bool Converter::StartConversion(Segments *segments,
+                                const absl::string_view key) const {
   if (key.empty()) {
     return false;
   }
@@ -311,9 +311,8 @@ bool ConverterImpl::StartConversion(Segments *segments,
   return Convert(default_request, key, segments);
 }
 
-bool ConverterImpl::Convert(const ConversionRequest &request,
-                            const absl::string_view key,
-                            Segments *segments) const {
+bool Converter::Convert(const ConversionRequest &request,
+                        const absl::string_view key, Segments *segments) const {
   SetKey(segments, key);
   if (!immutable_converter_->ConvertForRequest(request, segments)) {
     // Conversion can fail for keys like "12". Even in such cases, rewriters
@@ -327,8 +326,8 @@ bool ConverterImpl::Convert(const ConversionRequest &request,
   return IsValidSegments(request, *segments);
 }
 
-bool ConverterImpl::StartReverseConversion(Segments *segments,
-                                           const absl::string_view key) const {
+bool Converter::StartReverseConversion(Segments *segments,
+                                       const absl::string_view key) const {
   segments->Clear();
   if (key.empty()) {
     return false;
@@ -370,7 +369,7 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
 }
 
 // static
-void ConverterImpl::MaybeSetConsumedKeySizeToCandidate(
+void Converter::MaybeSetConsumedKeySizeToCandidate(
     size_t consumed_key_size, Segment::Candidate *candidate) {
   if (candidate->attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
     // If PARTIALLY_KEY_CONSUMED is set already,
@@ -382,8 +381,8 @@ void ConverterImpl::MaybeSetConsumedKeySizeToCandidate(
 }
 
 // static
-void ConverterImpl::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
-                                                     Segment *segment) {
+void Converter::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
+                                                 Segment *segment) {
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     MaybeSetConsumedKeySizeToCandidate(consumed_key_size,
                                        segment->mutable_candidate(i));
@@ -395,9 +394,8 @@ void ConverterImpl::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
 }
 
 // TODO(noriyukit): |key| can be a member of ConversionRequest.
-bool ConverterImpl::Predict(const ConversionRequest &request,
-                            const absl::string_view key,
-                            Segments *segments) const {
+bool Converter::Predict(const ConversionRequest &request,
+                        const absl::string_view key, Segments *segments) const {
   if (ShouldSetKeyForPrediction(request, key, *segments)) {
     SetKey(segments, key);
   }
@@ -430,7 +428,7 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
   return IsValidSegments(request, *segments);
 }
 
-bool ConverterImpl::StartPredictionForRequest(
+bool Converter::StartPredictionForRequest(
     const ConversionRequest &original_request, Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PREDICTION);
@@ -443,21 +441,21 @@ bool ConverterImpl::StartPredictionForRequest(
   return Predict(request, prediction_key, segments);
 }
 
-bool ConverterImpl::StartPrediction(Segments *segments,
-                                    const absl::string_view key) const {
+bool Converter::StartPrediction(Segments *segments,
+                                const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::PREDICTION);
   return Predict(default_request, key, segments);
 }
 
-bool ConverterImpl::StartSuggestion(Segments *segments,
-                                    const absl::string_view key) const {
+bool Converter::StartSuggestion(Segments *segments,
+                                const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::SUGGESTION);
   return Predict(default_request, key, segments);
 }
 
-bool ConverterImpl::StartSuggestionForRequest(
+bool Converter::StartSuggestionForRequest(
     const ConversionRequest &original_request, Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::SUGGESTION);
@@ -466,14 +464,14 @@ bool ConverterImpl::StartSuggestionForRequest(
   return Predict(request, prediction_key, segments);
 }
 
-bool ConverterImpl::StartPartialSuggestion(Segments *segments,
-                                           const absl::string_view key) const {
+bool Converter::StartPartialSuggestion(Segments *segments,
+                                       const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
   return Predict(default_request, key, segments);
 }
 
-bool ConverterImpl::StartPartialSuggestionForRequest(
+bool Converter::StartPartialSuggestionForRequest(
     const ConversionRequest &original_request, Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PARTIAL_SUGGESTION);
@@ -489,14 +487,14 @@ bool ConverterImpl::StartPartialSuggestionForRequest(
   return Predict(request, conversion_key, segments);
 }
 
-bool ConverterImpl::StartPartialPrediction(Segments *segments,
-                                           const absl::string_view key) const {
+bool Converter::StartPartialPrediction(Segments *segments,
+                                       const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::PARTIAL_PREDICTION);
   return Predict(default_request, key, segments);
 }
 
-bool ConverterImpl::StartPartialPredictionForRequest(
+bool Converter::StartPartialPredictionForRequest(
     const ConversionRequest &original_request, Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PARTIAL_PREDICTION);
@@ -513,8 +511,8 @@ bool ConverterImpl::StartPartialPredictionForRequest(
   return Predict(request, conversion_key, segments);
 }
 
-void ConverterImpl::FinishConversion(const ConversionRequest &request,
-                                     Segments *segments) const {
+void Converter::FinishConversion(const ConversionRequest &request,
+                                 Segments *segments) const {
   CommitUsageStats(segments, segments->history_segments_size(),
                    segments->conversion_segments_size());
 
@@ -554,15 +552,13 @@ void ConverterImpl::FinishConversion(const ConversionRequest &request,
   }
 }
 
-void ConverterImpl::CancelConversion(Segments *segments) const {
+void Converter::CancelConversion(Segments *segments) const {
   segments->clear_conversion_segments();
 }
 
-void ConverterImpl::ResetConversion(Segments *segments) const {
-  segments->Clear();
-}
+void Converter::ResetConversion(Segments *segments) const { segments->Clear(); }
 
-void ConverterImpl::RevertConversion(Segments *segments) const {
+void Converter::RevertConversion(Segments *segments) const {
   if (segments->revert_entries_size() == 0) {
     return;
   }
@@ -570,7 +566,7 @@ void ConverterImpl::RevertConversion(Segments *segments) const {
   segments->clear_revert_entries();
 }
 
-bool ConverterImpl::ReconstructHistory(
+bool Converter::ReconstructHistory(
     Segments *segments, const absl::string_view preceding_text) const {
   segments->Clear();
 
@@ -595,7 +591,7 @@ bool ConverterImpl::ReconstructHistory(
   return true;
 }
 
-bool ConverterImpl::CommitSegmentValueInternal(
+bool Converter::CommitSegmentValueInternal(
     Segments *segments, size_t segment_index, int candidate_index,
     Segment::SegmentType segment_type) const {
   segment_index = GetSegmentIndex(segments, segment_index);
@@ -620,13 +616,13 @@ bool ConverterImpl::CommitSegmentValueInternal(
   return true;
 }
 
-bool ConverterImpl::CommitSegmentValue(Segments *segments, size_t segment_index,
-                                       int candidate_index) const {
+bool Converter::CommitSegmentValue(Segments *segments, size_t segment_index,
+                                   int candidate_index) const {
   return CommitSegmentValueInternal(segments, segment_index, candidate_index,
                                     Segment::FIXED_VALUE);
 }
 
-bool ConverterImpl::CommitPartialSuggestionSegmentValue(
+bool Converter::CommitPartialSuggestionSegmentValue(
     Segments *segments, size_t segment_index, int candidate_index,
     const absl::string_view current_segment_key,
     const absl::string_view new_segment_key) const {
@@ -659,8 +655,8 @@ bool ConverterImpl::CommitPartialSuggestionSegmentValue(
   return true;
 }
 
-bool ConverterImpl::FocusSegmentValue(Segments *segments, size_t segment_index,
-                                      int candidate_index) const {
+bool Converter::FocusSegmentValue(Segments *segments, size_t segment_index,
+                                  int candidate_index) const {
   segment_index = GetSegmentIndex(segments, segment_index);
   if (segment_index == kErrorIndex) {
     return false;
@@ -669,7 +665,7 @@ bool ConverterImpl::FocusSegmentValue(Segments *segments, size_t segment_index,
   return rewriter_->Focus(segments, segment_index, candidate_index);
 }
 
-bool ConverterImpl::CommitSegments(
+bool Converter::CommitSegments(
     Segments *segments, const std::vector<size_t> &candidate_index) const {
   const size_t conversion_segment_index = segments->history_segments_size();
   for (size_t i = 0; i < candidate_index.size(); ++i) {
@@ -685,10 +681,9 @@ bool ConverterImpl::CommitSegments(
   return true;
 }
 
-bool ConverterImpl::ResizeSegment(Segments *segments,
-                                  const ConversionRequest &request,
-                                  size_t segment_index,
-                                  int offset_length) const {
+bool Converter::ResizeSegment(Segments *segments,
+                              const ConversionRequest &request,
+                              size_t segment_index, int offset_length) const {
   if (request.request_type() != ConversionRequest::CONVERSION) {
     return false;
   }
@@ -792,10 +787,10 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
   return true;
 }
 
-bool ConverterImpl::ResizeSegment(
-    Segments *segments, const ConversionRequest &request,
-    size_t start_segment_index, size_t segments_size,
-    absl::Span<const uint8_t> new_size_array) const {
+bool Converter::ResizeSegment(Segments *segments,
+                              const ConversionRequest &request,
+                              size_t start_segment_index, size_t segments_size,
+                              absl::Span<const uint8_t> new_size_array) const {
   if (request.request_type() != ConversionRequest::CONVERSION) {
     return false;
   }
@@ -857,7 +852,7 @@ bool ConverterImpl::ResizeSegment(
   return true;
 }
 
-void ConverterImpl::CompletePosIds(Segment::Candidate *candidate) const {
+void Converter::CompletePosIds(Segment::Candidate *candidate) const {
   DCHECK(candidate);
   if (candidate->value.empty() || candidate->key.empty()) {
     return;
@@ -917,8 +912,8 @@ void ConverterImpl::CompletePosIds(Segment::Candidate *candidate) const {
                 << "rid: " << candidate->rid;
 }
 
-void ConverterImpl::RewriteAndSuppressCandidates(
-    const ConversionRequest &request, Segments *segments) const {
+void Converter::RewriteAndSuppressCandidates(const ConversionRequest &request,
+                                             Segments *segments) const {
   if (!rewriter_->Rewrite(request, segments)) {
     return;
   }
@@ -944,8 +939,8 @@ void ConverterImpl::RewriteAndSuppressCandidates(
   }
 }
 
-void ConverterImpl::TrimCandidates(const ConversionRequest &request,
-                                   Segments *segments) const {
+void Converter::TrimCandidates(const ConversionRequest &request,
+                               Segments *segments) const {
   const mozc::commands::Request &request_proto = request.request();
   if (!request_proto.has_candidates_size_limit()) {
     return;
@@ -966,9 +961,9 @@ void ConverterImpl::TrimCandidates(const ConversionRequest &request,
   }
 }
 
-void ConverterImpl::CommitUsageStats(const Segments *segments,
-                                     size_t begin_segment_index,
-                                     size_t segment_length) const {
+void Converter::CommitUsageStats(const Segments *segments,
+                                 size_t begin_segment_index,
+                                 size_t segment_length) const {
   if (segment_length == 0) {
     return;
   }
@@ -997,9 +992,9 @@ void ConverterImpl::CommitUsageStats(const Segments *segments,
   UsageStats::IncrementCountBy("SubmittedTotalLength", submitted_total_length);
 }
 
-bool ConverterImpl::GetLastConnectivePart(
-    const absl::string_view preceding_text, std::string *key,
-    std::string *value, uint16_t *id) const {
+bool Converter::GetLastConnectivePart(const absl::string_view preceding_text,
+                                      std::string *key, std::string *value,
+                                      uint16_t *id) const {
   key->clear();
   value->clear();
   *id = general_noun_id_;
