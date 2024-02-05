@@ -33,6 +33,7 @@
 #include <wil/com.h>
 #include <windows.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -402,9 +403,10 @@ bool UndoCommint(TipTextService *text_service, ITfContext *context) {
       -deletion_range.offset() != deletion_range.length()) {
     return false;
   }
-  const size_t num_characters_to_be_deleted_ucs4 = -deletion_range.offset();
+  const size_t num_characters_to_be_deleted_codepoint =
+      -deletion_range.offset();
   if (!TipSurroundingText::DeletePrecedingText(
-          text_service, context, num_characters_to_be_deleted_ucs4)) {
+          text_service, context, num_characters_to_be_deleted_codepoint)) {
     // If TSF-based delete-preceding-text fails, use backspace forwarding as
     // a fall back.
 

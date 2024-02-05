@@ -285,7 +285,7 @@ void GenerateKeyEvents(absl::string_view text,
       key.set_key_code(w);
     } else {
       key.set_key_code('?');
-      *key.mutable_key_string() = Util::Ucs4ToUtf8(w);
+      *key.mutable_key_string() = Util::CodepointToUtf8(w);
     }
     keys->push_back(key);
   }

@@ -394,7 +394,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
   // TODO(toshiyuki): Use 0x10ffff instead when UCS4 is supported.
   constexpr char32_t kMaxUniChar = 0x10ffff;
   for (char32_t c = 0x01; c <= kMaxUniChar; ++c) {
-    const std::string original = Util::Ucs4ToUtf8(c);
+    const std::string original = Util::CodepointToUtf8(c);
     std::string encoded;
     codec->EncodeValue(original, &encoded);
     EXPECT_TRUE(IsExpectedEncodedSize(c, encoded));
@@ -552,7 +552,7 @@ TEST_F(SystemDictionaryCodecTest, TokenDefaultValueTest) {
 TEST_F(SystemDictionaryCodecTest, UCS4CharactersTest) {
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
-  const std::string ucs4_including =
+  const std::string codepoint_including =
       // "𠀋𡈽𡌛𡑮𡢽𠮟𡚴𡸴𣇄𣗄𣜿𣝣𣳾𤟱𥒎𥔎𥝱𥧄𥶡𦫿𦹀𧃴𧚄𨉷𨏍𪆐𠂉"
       "\xf0\xa0\x80\x8b\xf0\xa1\x88\xbd\xf0\xa1\x8c\x9b\xf0\xa1\x91\xae\xf0"
       "\xa1\xa2\xbd\xf0\xa0\xae\x9f\xf0\xa1\x9a\xb4\xf0\xa1\xb8\xb4\xf0\xa3"
@@ -645,11 +645,11 @@ TEST_F(SystemDictionaryCodecTest, UCS4CharactersTest) {
       "\xf0\xaa\x8e\x8c\xf0\xaa\x90\xb7\xf0\xaa\x97\xb1\xf0\xaa\x98\x82\xf0"
       "\xaa\x98\x9a\xf0\xaa\x9a\xb2";
   std::string encoded;
-  codec->EncodeValue(ucs4_including, &encoded);
+  codec->EncodeValue(codepoint_including, &encoded);
   EXPECT_GT(encoded.size(), 0);
   std::string decoded;
   codec->DecodeValue(encoded, &decoded);
-  EXPECT_EQ(decoded, ucs4_including);
+  EXPECT_EQ(decoded, codepoint_including);
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenSameValueTest) {
@@ -784,9 +784,9 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
   {
     // Value
     // U+4E00-9FFF CJK Unified Ideographs
-    constexpr char32_t a_ucs4 = '!';
+    constexpr char32_t a_codepoint = '!';
     const std::string original =
-        random_.Utf8String(10000, a_ucs4, a_ucs4 + 0x9f00);
+        random_.Utf8String(10000, a_codepoint, a_codepoint + 0x9f00);
     std::string encoded;
     codec->EncodeValue(original, &encoded);
     std::string decoded;
@@ -795,9 +795,9 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
   }
   {
     // Key
-    constexpr char32_t a_ucs4 = 0x3041;  // "ぁ"
+    constexpr char32_t a_codepoint = 0x3041;  // "ぁ"
     const std::string original =
-        random_.Utf8String(1000, a_ucs4, a_ucs4 + 1000);
+        random_.Utf8String(1000, a_codepoint, a_codepoint + 1000);
     std::string encoded;
     codec->EncodeKey(original, &encoded);
     EXPECT_EQ(codec->GetEncodedKeyLength(original), encoded.size());

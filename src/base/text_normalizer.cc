@@ -176,7 +176,7 @@ std::pair<int, int> ConvertJaCjkCompatToSvs(char32_t cjk_compat_char) {
 std::string NormalizeTextForWindows(absl::string_view input) {
   std::string output;
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    Util::Ucs4ToUtf8Append(NormalizeCharForWindows(iter.Get()), &output);
+    Util::CodepointToUtf8Append(NormalizeCharForWindows(iter.Get()), &output);
   }
   return output;
 }

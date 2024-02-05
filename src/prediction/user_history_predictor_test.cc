@@ -1868,7 +1868,7 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   // An android pua emoji. It is obsolete and should return false.
-  *entry.mutable_value() = Util::Ucs4ToUtf8(0xFE000);
+  *entry.mutable_value() = Util::CodepointToUtf8(0xFE000);
   EXPECT_FALSE(predictor->IsValidEntry(entry));
   EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
@@ -2042,18 +2042,18 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
 
 namespace {
 
-std::string RemoveLastUcs4Character(const absl::string_view input) {
-  const size_t ucs4_count = Util::CharsLen(input);
-  if (ucs4_count == 0) {
+std::string RemoveLastCodepointCharacter(const absl::string_view input) {
+  const size_t codepoint_count = Util::CharsLen(input);
+  if (codepoint_count == 0) {
     return "";
   }
 
-  size_t ucs4_processed = 0;
+  size_t codepoint_processed = 0;
   std::string output;
   for (ConstChar32Iterator iter(input);
-       !iter.Done() && (ucs4_processed < ucs4_count - 1);
-       iter.Next(), ++ucs4_processed) {
-    Util::Ucs4ToUtf8Append(iter.Get(), &output);
+       !iter.Done() && (codepoint_processed < codepoint_count - 1);
+       iter.Next(), ++codepoint_processed) {
+    Util::CodepointToUtf8Append(iter.Get(), &output);
   }
   return output;
 }
@@ -2156,7 +2156,7 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
     const std::string description(data.scenario_description);
     const std::string input(data.input);
     const std::string output(data.output);
-    const std::string partial_input(RemoveLastUcs4Character(input));
+    const std::string partial_input(RemoveLastCodepointCharacter(input));
     const bool expect_sensitive = data.is_sensitive;
 
     // Initial commit.
@@ -2734,7 +2734,7 @@ void InitSegmentsFromInputSequence(const absl::string_view text,
 
   while (begin < end) {
     commands::KeyEvent key;
-    const char32_t w = Util::Utf8ToUcs4(begin, end, &mblen);
+    const char32_t w = Util::Utf8ToCodepoint(begin, end, &mblen);
     if (w <= 0x7F) {  // IsAscii, w is unsigned.
       key.set_key_code(*begin);
     } else {

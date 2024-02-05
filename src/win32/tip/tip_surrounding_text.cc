@@ -147,9 +147,9 @@ class SurroudingTextUpdater final : public TipComImplements<ITfEditSession> {
 class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
  public:
   PrecedingTextDeleter(wil::com_ptr_nothrow<ITfContext> context,
-                       size_t num_characters_in_ucs4)
+                       size_t num_characters_in_codepoint)
       : context_(std::move(context)),
-        num_characters_in_ucs4_(num_characters_in_ucs4) {}
+        num_characters_in_codepoint_(num_characters_in_codepoint) {}
 
  private:
   STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) override {
@@ -172,13 +172,13 @@ class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
       return E_FAIL;
     }
 
-    // If all the characters are surrogate-pair, |num_characters_in_ucs4_| * 2
-    // is required.
-    if (num_characters_in_ucs4_ >= kMaxCharacterLength) {
+    // If all the characters are surrogate-pair, |num_characters_in_codepoint_|
+    // * 2 is required.
+    if (num_characters_in_codepoint_ >= kMaxCharacterLength) {
       return E_UNEXPECTED;
     }
     const LONG initial_offset_utf16 =
-        -static_cast<LONG>(num_characters_in_ucs4_) * 2;
+        -static_cast<LONG>(num_characters_in_codepoint_) * 2;
     LONG preceding_range_shifted = 0;
     if (FAILED(preceding_range->ShiftStart(edit_cookie, initial_offset_utf16,
                                            &preceding_range_shifted,
@@ -196,7 +196,7 @@ class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
 
     size_t len_in_utf16 = 0;
     if (!TipSurroundingTextUtil::MeasureCharactersBackward(
-            total_string, num_characters_in_ucs4_, &len_in_utf16)) {
+            total_string, num_characters_in_codepoint_, &len_in_utf16)) {
       return E_FAIL;
     }
 
@@ -216,7 +216,7 @@ class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
   }
 
   wil::com_ptr_nothrow<ITfContext> context_;
-  size_t num_characters_in_ucs4_;
+  size_t num_characters_in_codepoint_;
 };
 
 bool PrepareForReconversionIMM32(ITfContext *context,
@@ -350,7 +350,7 @@ bool TipSurroundingText::PrepareForReconversionFromIme(
 
 bool TipSurroundingText::DeletePrecedingText(
     TipTextService *text_service, ITfContext *context,
-    size_t num_characters_to_be_deleted_in_ucs4) {
+    size_t num_characters_to_be_deleted_in_codepoint) {
   // Use Transitory Extensions when supported. Common controls provides
   // surrounding text via Transitory Extensions.
   wil::com_ptr_nothrow<ITfContext> target_context(
@@ -360,7 +360,7 @@ bool TipSurroundingText::DeletePrecedingText(
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
   auto edit_session = MakeComPtr<PrecedingTextDeleter>(
-      target_context, num_characters_to_be_deleted_in_ucs4);
+      target_context, num_characters_to_be_deleted_in_codepoint);
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
@@ -376,7 +376,7 @@ bool TipSurroundingText::DeletePrecedingText(
 }
 
 bool TipSurroundingTextUtil::MeasureCharactersBackward(
-    const std::wstring_view text, const size_t characters_in_ucs4,
+    const std::wstring_view text, const size_t characters_in_codepoint,
     size_t *characters_in_utf16) {
   if (characters_in_utf16 == nullptr) {
     return false;
@@ -384,12 +384,12 @@ bool TipSurroundingTextUtil::MeasureCharactersBackward(
   *characters_in_utf16 = 0;
 
   // Count characters from the end of |text| with taking surrogate pair into
-  // consideration. Finally, we will find that |num_char_in_ucs4| characters
-  // consist of |checked_len_in_utf16| UTF16 elements.
+  // consideration. Finally, we will find that |num_char_in_codepoint|
+  // characters consist of |checked_len_in_utf16| UTF16 elements.
   size_t checked_len_in_utf16 = 0;
-  size_t num_char_in_ucs4 = 0;
+  size_t num_char_in_codepoint = 0;
   while (true) {
-    if (num_char_in_ucs4 >= characters_in_ucs4) {
+    if (num_char_in_codepoint >= characters_in_codepoint) {
       break;
     }
     if (checked_len_in_utf16 + 1 > text.size()) {
@@ -405,10 +405,10 @@ bool TipSurroundingTextUtil::MeasureCharactersBackward(
         }
       }
     }
-    ++num_char_in_ucs4;
+    ++num_char_in_codepoint;
   }
 
-  if (num_char_in_ucs4 != characters_in_ucs4) {
+  if (num_char_in_codepoint != characters_in_codepoint) {
     return false;
   }
   *characters_in_utf16 = checked_len_in_utf16;

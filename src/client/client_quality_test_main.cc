@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "evaluation/scorer.h"
-#include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
@@ -98,29 +97,30 @@ std::optional<std::vector<commands::KeyEvent>> GenerateKeySequenceFrom(
   }
 
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    const char32_t ucs4 = iter.Get();
+    const char32_t codepoint = iter.Get();
 
-    // TODO(noriyukit) Improve key sequence generation; currently, a few ucs4
-    // codes, like FF5E and 300E, cannot be handled.
+    // TODO(noriyukit) Improve key sequence generation; currently, a few
+    // codepoint codes, like FF5E and 300E, cannot be handled.
     commands::KeyEvent key;
-    if (ucs4 >= 0x20 && ucs4 <= 0x7F) {
-      key.set_key_code(static_cast<int>(ucs4));
-    } else if (ucs4 == 0x3001 || ucs4 == 0xFF64) {
+    if (codepoint >= 0x20 && codepoint <= 0x7F) {
+      key.set_key_code(static_cast<int>(codepoint));
+    } else if (codepoint == 0x3001 || codepoint == 0xFF64) {
       key.set_key_code(0x002C);  // Full-width comma -> Half-width comma
-    } else if (ucs4 == 0x3002 || ucs4 == 0xFF0E || ucs4 == 0xFF61) {
+    } else if (codepoint == 0x3002 || codepoint == 0xFF0E ||
+               codepoint == 0xFF61) {
       key.set_key_code(0x002E);  // Full-width period -> Half-width period
-    } else if (ucs4 == 0x2212 || ucs4 == 0x2015) {
+    } else if (codepoint == 0x2212 || codepoint == 0x2015) {
       key.set_key_code(0x002D);  // "−" -> "-"
-    } else if (ucs4 == 0x300C || ucs4 == 0xff62) {
+    } else if (codepoint == 0x300C || codepoint == 0xff62) {
       key.set_key_code(0x005B);  // "「" -> "["
-    } else if (ucs4 == 0x300D || ucs4 == 0xff63) {
+    } else if (codepoint == 0x300D || codepoint == 0xff63) {
       key.set_key_code(0x005D);  // "」" -> "]"
-    } else if (ucs4 == 0x30FB || ucs4 == 0xFF65) {
+    } else if (codepoint == 0x30FB || codepoint == 0xFF65) {
       key.set_key_code(0x002F);  // "・" -> "/"  "･" -> "/"
     } else {
       LOG(WARNING) << "Unexpected character: " << std::hex
-                   << static_cast<uint32_t>(ucs4) << ": in " << input << " ("
-                   << hiragana_sentence << ")";
+                   << static_cast<uint32_t>(codepoint) << ": in " << input
+                   << " (" << hiragana_sentence << ")";
       return std::nullopt;
     }
     keys.push_back(std::move(key));

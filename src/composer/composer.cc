@@ -1205,7 +1205,7 @@ bool Composer::TransformCharactersForNumbers(std::string *query) {
 
     if (append_char.empty()) {
       // Append one character.
-      Util::Ucs4ToUtf8Append(iter.Get(), &transformed_query);
+      Util::CodepointToUtf8Append(iter.Get(), &transformed_query);
     } else {
       // Append the transformed character.
       transformed_query.append(append_char);

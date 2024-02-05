@@ -98,16 +98,16 @@ void RandomKeyEventsGenerator::TypeRawKeys(
     absl::string_view romaji, bool create_probable_key_events,
     std::vector<commands::KeyEvent> *keys) {
   for (ConstChar32Iterator iter(romaji); !iter.Done(); iter.Next()) {
-    const uint32_t ucs4 = iter.Get();
-    if (ucs4 < 0x20 || ucs4 > 0x7F) {
+    const uint32_t codepoint = iter.Get();
+    if (codepoint < 0x20 || codepoint > 0x7F) {
       continue;
     }
     commands::KeyEvent key;
-    key.set_key_code(ucs4);
+    key.set_key_code(codepoint);
     if (create_probable_key_events) {
       commands::KeyEvent::ProbableKeyEvent *probable_key_event =
           key.add_probable_key_event();
-      probable_key_event->set_key_code(ucs4);
+      probable_key_event->set_key_code(codepoint);
       probable_key_event->set_probability(kMostPossibleKeyProbability);
       for (size_t i = 0; i < kProbableKeyEventSize; ++i) {
         commands::KeyEvent::ProbableKeyEvent *probable_key_event =

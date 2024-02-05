@@ -754,7 +754,7 @@ constexpr char kKawa[] = "川";
 constexpr char kSora[] = "空";
 }  // namespace
 
-TEST_F(ComposerTest, InsertCharacterKeyEventWithUcs4KeyCode) {
+TEST_F(ComposerTest, InsertCharacterKeyEventWithCodepointKeyCode) {
   commands::KeyEvent key;
 
   // Input "山" as key_code.

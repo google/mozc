@@ -465,7 +465,7 @@ UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
   size_t valid_script = 0;
   while (begin < end) {
     size_t mblen = 0;
-    const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
+    const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, &mblen);
     if (mblen == 0) {
       break;
     }
@@ -477,8 +477,9 @@ UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
     }
 
     // "\n\r\t " or Japanese code point
-    if (ucs4 == 0x000A || ucs4 == 0x000D || ucs4 == 0x0020 || ucs4 == 0x0009 ||
-        Util::GetScriptType(ucs4) != Util::UNKNOWN_SCRIPT) {
+    if (codepoint == 0x000A || codepoint == 0x000D || codepoint == 0x0020 ||
+        codepoint == 0x0009 ||
+        Util::GetScriptType(codepoint) != Util::UNKNOWN_SCRIPT) {
       valid_script += mblen;
     }
 

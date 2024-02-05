@@ -47,7 +47,7 @@ class SurrogatePairObserver {
     DO_DEFAULT_ACTION = 0,
     // This key event is a VK_PACKET-related event.
     // The caller replace the VirtualKey instance with new one which conatins
-    // returned ucs4 character code.
+    // returned codepoint.
     // Then the caller must proceed to do the default action.
     DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
     // This key event must be consumed silently. In other words, the caller
@@ -57,10 +57,10 @@ class SurrogatePairObserver {
   };
 
   struct ClientAction {
-    ClientAction(ClientActionType type, char32_t ucs4)
-        : type(type), ucs4(ucs4) {}
+    ClientAction(ClientActionType type, char32_t codepoint)
+        : type(type), codepoint(codepoint) {}
     const ClientActionType type;
-    const char32_t ucs4;
+    const char32_t codepoint;
   };
 
   SurrogatePairObserver();

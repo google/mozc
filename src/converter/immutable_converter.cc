@@ -65,7 +65,6 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "engine/modules.h"
-#include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -775,10 +774,10 @@ Node *ImmutableConverter::AddCharacterTypeBasedNodes(const char *begin,
                                                      Lattice *lattice,
                                                      Node *nodes) const {
   size_t mblen = 0;
-  const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
+  const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, &mblen);
 
-  const Util::ScriptType first_script_type = Util::GetScriptType(ucs4);
-  const Util::FormType first_form_type = Util::GetFormType(ucs4);
+  const Util::ScriptType first_script_type = Util::GetScriptType(codepoint);
+  const Util::FormType first_form_type = Util::GetFormType(codepoint);
 
   // Add 1 character node. It can be either UnknownId or NumberId.
   {
@@ -814,9 +813,9 @@ Node *ImmutableConverter::AddCharacterTypeBasedNodes(const char *begin,
   int num_char = 1;
   const char *p = begin + mblen;
   while (p < end) {
-    const char32_t next_ucs4 = Util::Utf8ToUcs4(p, end, &mblen);
-    if (first_script_type != Util::GetScriptType(next_ucs4) ||
-        first_form_type != Util::GetFormType(next_ucs4)) {
+    const char32_t next_codepoint = Util::Utf8ToCodepoint(p, end, &mblen);
+    if (first_script_type != Util::GetScriptType(next_codepoint) ||
+        first_form_type != Util::GetFormType(next_codepoint)) {
       break;
     }
     p += mblen;

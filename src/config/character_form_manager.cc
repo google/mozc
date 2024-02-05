@@ -277,9 +277,9 @@ char16_t GetNormalizedCharacter(const absl::string_view str) {
       if (strings::AtLeastCharsLen(str, 2) == 1) {  // must be 1 character
         // normalize it to half width
         std::string tmp = japanese::HalfWidthToFullWidth(str);
-        char32_t ucs4 = Utf8AsChars32(tmp).front();
-        if (ucs4 <= 0xffff) {
-          ucs2 = static_cast<char16_t>(ucs4);
+        char32_t codepoint = Utf8AsChars32(tmp).front();
+        if (codepoint <= 0xffff) {
+          ucs2 = static_cast<char16_t>(codepoint);
         } else {
           ucs2 = 0x0000;  // no conversion as fall back
         }
