@@ -314,6 +314,12 @@ INSTANTIATE_TEST_SUITE_P(
               request.mutable_decoder_experiment_params()
                   ->set_user_segment_history_rewriter_new_replaceable(true);
               return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_user_segment_history_rewriter_use_inner_segments(true);
+              return request;
             }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {

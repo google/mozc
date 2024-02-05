@@ -87,6 +87,12 @@ bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
   return request.request().kana_modifier_insensitive_conversion();
 }
 
+bool UseInnerSegments(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .user_segment_history_rewriter_use_inner_segments();
+}
+
 bool IsNewReplaceableEnabled(const ConversionRequest &request) {
   return request.request()
       .decoder_experiment_params()
@@ -730,7 +736,7 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
 
 // Returns segments for learning.
 // Inner segments boundary will be expanded.
-Segments UserSegmentHistoryRewriter::MakeLearningSegmentsForTesting(
+Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
     const Segments &segments) {
   Segments ret;
   for (size_t i = 0; i < segments.segments_size(); ++i) {
@@ -786,7 +792,10 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  const Segments target_segments = MakeLearningSegmentsForTesting(*segments);
+  const Segments target_segments =
+      UseInnerSegments(request)
+          ? MakeLearningSegmentsFromInnerSegments(*segments)
+          : *segments;
   for (size_t i = target_segments.history_segments_size();
        i < target_segments.segments_size(); ++i) {
     const Segment &segment = target_segments.segment(i);

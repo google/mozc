@@ -59,9 +59,9 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool Reload() override;
   void Clear() override;
 
-  static Segments MakeLearningSegmentsForTesting(const Segments &segments);
-
  private:
+  friend class UserSegmentHistoryRewriterTestPeer;
+
   struct Score {
     constexpr void Update(const Score other) {
       score = std::max(score, other.score);
@@ -84,6 +84,9 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
 
     const Segment::Candidate *candidate;
   };
+
+  static Segments MakeLearningSegmentsFromInnerSegments(
+      const Segments &segments);
 
   bool IsAvailable(const ConversionRequest &request,
                    const Segments &segments) const;

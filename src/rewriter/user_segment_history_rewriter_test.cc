@@ -60,6 +60,18 @@
 #include "testing/mozctest.h"
 
 namespace mozc {
+
+class UserSegmentHistoryRewriterTestPeer {
+ public:
+  UserSegmentHistoryRewriterTestPeer() = delete;
+
+  static Segments MakeLearningSegmentsFromInnerSegments(
+      const Segments &segments) {
+    return UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
+        segments);
+  }
+};
+
 namespace {
 
 using config::CharacterFormManager;
@@ -1667,6 +1679,8 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
+  request_->mutable_decoder_experiment_params()
+      ->set_user_segment_history_rewriter_use_inner_segments(true);
   Segments segments;
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1699,8 +1713,8 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
 
     {
-      const Segments learning_segments =
-          UserSegmentHistoryRewriter::MakeLearningSegmentsForTesting(segments);
+      const Segments learning_segments = UserSegmentHistoryRewriterTestPeer::
+          MakeLearningSegmentsFromInnerSegments(segments);
       EXPECT_EQ(learning_segments.segments_size(), 3);
       EXPECT_EQ(learning_segments.segment(0).key(), "わたしの");
       EXPECT_EQ(learning_segments.segment(0).candidate(0).key, "わたしの");
