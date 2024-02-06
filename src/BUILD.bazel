@@ -157,6 +157,7 @@ selects.config_setting_group(
 selects.config_setting_group(
     name = "enable_spellchecker",
     match_any = [
+        "@platforms//:incompatible",  # placeholder for avoiding empty match.
     ],
 )
 
