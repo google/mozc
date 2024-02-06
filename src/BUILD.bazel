@@ -71,7 +71,6 @@ cc_library(
         ],
         linux = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
-            "OS_LINUX",
         ],
         macos = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
@@ -82,7 +81,6 @@ cc_library(
         ],
         oss_linux = [
             "MOZC_BUILD",
-            "OS_LINUX",
         ],
         oss_macos = [
             "MOZC_BUILD",
@@ -91,11 +89,9 @@ cc_library(
             "GOOGLE_JAPANESE_INPUT_BUILD",
             "MOZC_DISABLE_SESSION_WATCHDOG",
             "NO_USAGE_REWRITER",
-            "OS_WASM",
         ],
         windows = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
-            "OS_WIN",
             "WINVER=0x0A00",
             "_WIN32_WINNT=0x0A00",
             "_ATL_ALL_WARNINGS",
