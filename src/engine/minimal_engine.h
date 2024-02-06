@@ -53,7 +53,7 @@ class MinimalEngine : public EngineInterface {
   MinimalEngine &operator=(const MinimalEngine &) = delete;
 
   ConverterInterface *GetConverter() const override;
-  prediction::PredictorInterface *GetPredictor() const override;
+  absl::string_view GetPredictorName() const override;
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override;
   bool Reload() override { return true; }
   bool ReloadAndWait() override { return true; }

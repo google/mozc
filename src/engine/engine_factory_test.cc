@@ -31,19 +31,19 @@
 
 #include <memory>
 
+#include "absl/strings/string_view.h"
 #include "engine/engine_interface.h"
-#include "prediction/predictor_interface.h"
 #include "testing/gunit.h"
 
 namespace mozc {
 
 TEST(EngineFactoryTest, MobilePredictorOnAndroid) {
   std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
-  prediction::PredictorInterface *predictor = engine->GetPredictor();
+  absl::string_view name = engine->GetPredictorName();
 #ifdef __ANDROID__
-  EXPECT_EQ(predictor->GetPredictorName(), "MobilePredictor");
+  EXPECT_EQ(name, "MobilePredictor");
 #else   // __ANDROID__
-  EXPECT_EQ(predictor->GetPredictorName(), "DefaultPredictor");
+  EXPECT_EQ(name, "DefaultPredictor");
 #endif  // __ANDROID__
 }
 

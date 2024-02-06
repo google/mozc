@@ -87,8 +87,8 @@ class Engine : public EngineInterface {
   Engine &operator=(const Engine &) = delete;
 
   Converter *GetConverter() const override { return converter_.get(); }
-  prediction::PredictorInterface *GetPredictor() const override {
-    return predictor_;
+  absl::string_view GetPredictorName() const override {
+    return predictor_ ? predictor_->GetPredictorName() : absl::string_view();
   }
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
     return modules_.GetMutableSuppressionDictionary();

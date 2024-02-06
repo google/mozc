@@ -40,7 +40,6 @@
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "engine/engine_interface.h"
-#include "prediction/predictor_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -91,18 +90,18 @@ TEST_P(EngineBuilderTest, BasicTest) {
     EXPECT_EQ(engine->Get().response.status(),
               EngineReloadResponse::RELOAD_READY);
     EXPECT_EQ(engine->Get().id, id);
-    EXPECT_EQ(engine->Get().engine->GetPredictor()->GetPredictorName(),
+    EXPECT_EQ(engine->Get().engine->GetPredictorName(),
               GetParam().predictor_name);
 
     // Test whether all move operations work.
     auto&& moved_response = std::move(*engine).Get();
     engine.reset();
-    EXPECT_EQ(moved_response.engine->GetPredictor()->GetPredictorName(),
+    EXPECT_EQ(moved_response.engine->GetPredictorName(),
               GetParam().predictor_name);
 
     auto moved_engine = std::move(moved_response.engine);
     moved_response.engine.reset();
-    EXPECT_EQ(moved_engine->GetPredictor()->GetPredictorName(),
+    EXPECT_EQ(moved_engine->GetPredictorName(),
               GetParam().predictor_name);
   }
 
@@ -130,7 +129,7 @@ TEST_P(EngineBuilderTest, BasicTest) {
     EXPECT_EQ(engine->Get().response.status(),
               EngineReloadResponse::RELOAD_READY);
     EXPECT_EQ(engine->Get().id, id);
-    EXPECT_EQ(engine->Get().engine->GetPredictor()->GetPredictorName(),
+    EXPECT_EQ(engine->Get().engine->GetPredictorName(),
               GetParam().predictor_name);
 
     // Verify |src_path| was copied.
@@ -168,7 +167,7 @@ TEST_P(EngineBuilderTest, AsyncBuildRepeatedly) {
   EXPECT_EQ(engine->Get().response.status(),
             EngineReloadResponse::RELOAD_READY);
   EXPECT_EQ(engine->Get().response.request().file_path(), last_path);
-  EXPECT_EQ(engine->Get().engine->GetPredictor()->GetPredictorName(),
+  EXPECT_EQ(engine->Get().engine->GetPredictorName(),
             GetParam().predictor_name);
   EXPECT_EQ(engine->Get().id, latest_id);
 }
@@ -186,7 +185,7 @@ TEST_P(EngineBuilderTest, AsyncBuildWithoutInstall) {
 
   EXPECT_EQ(engine->Get().response.status(),
             EngineReloadResponse::RELOAD_READY);
-  EXPECT_EQ(engine->Get().engine->GetPredictor()->GetPredictorName(),
+  EXPECT_EQ(engine->Get().engine->GetPredictorName(),
             GetParam().predictor_name);
   EXPECT_EQ(engine->Get().id, id);
 }
@@ -220,7 +219,7 @@ TEST_P(EngineBuilderTest, AsyncBuildWithInstall) {
   ASSERT_OK(FileUtil::FileExists(tmp_src));
   ASSERT_OK(FileUtil::FileExists(install_path));
 
-  EXPECT_EQ(engine->Get().engine->GetPredictor()->GetPredictorName(),
+  EXPECT_EQ(engine->Get().engine->GetPredictorName(),
             GetParam().predictor_name);
   EXPECT_EQ(engine->Get().id, id);
 }
