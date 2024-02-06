@@ -90,7 +90,7 @@ class DictionaryPredictionAggregatorTestPeer {
       const engine::Modules &modules,
       std::unique_ptr<PredictionAggregatorInterface>
           single_kanji_prediction_aggregator)
-      : aggregator_(data_manager, converter, immutable_converter, modules,
+      : aggregator_(modules, converter, immutable_converter,
                     std::move(single_kanji_prediction_aggregator)) {}
   virtual ~DictionaryPredictionAggregatorTestPeer() = default;
 

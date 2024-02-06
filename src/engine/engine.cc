@@ -139,9 +139,9 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
 // takes a function pointer to create an instance of predictor class.
 absl::Status Engine::Init(
     std::unique_ptr<const DataManagerInterface> data_manager, bool is_mobile) {
-#define RETURN_IF_NULL(ptr)                                                 \
-  do {                                                                      \
-    if (!(ptr))                                                             \
+#define RETURN_IF_NULL(ptr)                                               \
+  do {                                                                    \
+    if (!(ptr))                                                           \
       return absl::ResourceExhaustedError("engine.cc: " #ptr " is null"); \
   } while (false)
 
@@ -168,8 +168,7 @@ absl::Status Engine::Init(
     // history predictor, and extra predictor.
     auto dictionary_predictor =
         std::make_unique<prediction::DictionaryPredictor>(
-            *data_manager, converter_.get(), immutable_converter_.get(),
-            modules_);
+            modules_, converter_.get(), immutable_converter_.get());
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;

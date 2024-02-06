@@ -79,13 +79,12 @@ namespace mozc::prediction {
 class DictionaryPredictorTestPeer {
  public:
   DictionaryPredictorTestPeer(
+      const engine::Modules &modules,
       std::unique_ptr<const prediction::PredictionAggregatorInterface>
           aggregator,
-      const DataManagerInterface &data_manager,
-      const ImmutableConverterInterface *immutable_converter,
-      const engine::Modules &modules)
-      : predictor_("DictionaryPredictorForTest", std::move(aggregator),
-                   data_manager, immutable_converter, modules) {}
+      const ImmutableConverterInterface *immutable_converter)
+      : predictor_("DictionaryPredictorForTest", modules, std::move(aggregator),
+                   immutable_converter) {}
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const {
@@ -354,8 +353,8 @@ class MockDataAndPredictor {
     CHECK(init.ok()) << init.message();
 
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
-        absl::WrapUnique(mock_aggregator_), data_manager_,
-        &mock_immutable_converter_, modules_);
+        modules_, absl::WrapUnique(mock_aggregator_),
+        &mock_immutable_converter_);
   }
 
   MockImmutableConverter *mutable_immutable_converter() {

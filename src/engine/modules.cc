@@ -69,14 +69,16 @@ namespace mozc {
 namespace engine {
 
 absl::Status Modules::Init(const DataManagerInterface *data_manager) {
-#define RETURN_IF_NULL(ptr)                                                 \
-  do {                                                                      \
-    if (!(ptr))                                                             \
+#define RETURN_IF_NULL(ptr)                                                \
+  do {                                                                     \
+    if (!(ptr))                                                            \
       return absl::ResourceExhaustedError("modules.cc: " #ptr " is null"); \
   } while (false)
 
   DCHECK(!initialized_) << "Modules already initialized";
+  DCHECK(data_manager) << "data_manager is null";
   RETURN_IF_NULL(data_manager);
+  data_manager_ = data_manager;
 
   if (!suppression_dictionary_) {
     suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
