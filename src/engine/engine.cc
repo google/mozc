@@ -55,14 +55,13 @@ namespace {
 
 using ::mozc::prediction::PredictorInterface;
 
-class UserDataManagerImpl final : public UserDataManagerInterface {
+class UserDataManager final : public UserDataManagerInterface {
  public:
-  UserDataManagerImpl(PredictorInterface *predictor,
-                      RewriterInterface *rewriter)
+  UserDataManager(PredictorInterface *predictor, RewriterInterface *rewriter)
       : predictor_(predictor), rewriter_(rewriter) {}
 
-  UserDataManagerImpl(const UserDataManagerImpl &) = delete;
-  UserDataManagerImpl &operator=(const UserDataManagerImpl &) = delete;
+  UserDataManager(const UserDataManager &) = delete;
+  UserDataManager &operator=(const UserDataManager &) = delete;
 
   bool Sync() override;
   bool Reload() override;
@@ -78,39 +77,39 @@ class UserDataManagerImpl final : public UserDataManagerInterface {
   RewriterInterface *rewriter_;
 };
 
-bool UserDataManagerImpl::Sync() {
+bool UserDataManager::Sync() {
   // TODO(noriyukit): In the current implementation, if rewriter_->Sync() fails,
   // predictor_->Sync() is never called. Check if we should call
   // predictor_->Sync() or not.
   return rewriter_->Sync() && predictor_->Sync();
 }
 
-bool UserDataManagerImpl::Reload() {
+bool UserDataManager::Reload() {
   // TODO(noriyukit): The same TODO as Sync().
   return rewriter_->Reload() && predictor_->Reload();
 }
 
-bool UserDataManagerImpl::ClearUserHistory() {
+bool UserDataManager::ClearUserHistory() {
   rewriter_->Clear();
   return true;
 }
 
-bool UserDataManagerImpl::ClearUserPrediction() {
+bool UserDataManager::ClearUserPrediction() {
   predictor_->ClearAllHistory();
   return true;
 }
 
-bool UserDataManagerImpl::ClearUnusedUserPrediction() {
+bool UserDataManager::ClearUnusedUserPrediction() {
   predictor_->ClearUnusedHistory();
   return true;
 }
 
-bool UserDataManagerImpl::ClearUserPredictionEntry(
-    const absl::string_view key, const absl::string_view value) {
+bool UserDataManager::ClearUserPredictionEntry(const absl::string_view key,
+                                               const absl::string_view value) {
   return predictor_->ClearHistoryEntry(key, value);
 }
 
-bool UserDataManagerImpl::Wait() { return predictor_->Wait(); }
+bool UserDataManager::Wait() { return predictor_->Wait(); }
 
 }  // namespace
 
@@ -140,9 +139,9 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
 // takes a function pointer to create an instance of predictor class.
 absl::Status Engine::Init(
     std::unique_ptr<const DataManagerInterface> data_manager, bool is_mobile) {
-#define RETURN_IF_NULL(ptr)                                                 \
-  do {                                                                      \
-    if (!(ptr))                                                             \
+#define RETURN_IF_NULL(ptr)                                               \
+  do {                                                                    \
+    if (!(ptr))                                                           \
       return absl::ResourceExhaustedError("engine.cc: " #ptr " is null"); \
   } while (false)
 
@@ -151,7 +150,7 @@ absl::Status Engine::Init(
     return modules_init_status;
   }
 
-  immutable_converter_ = std::make_unique<ImmutableConverterImpl>(modules_);
+  immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
   RETURN_IF_NULL(immutable_converter_);
 
   // Since predictor and rewriter require a pointer to a converter instance,
@@ -160,7 +159,7 @@ absl::Status Engine::Init(
   // TODO(noriyukit): This circular dependency is a bad design as careful
   // handling is necessary to avoid infinite loop. Find more beautiful design
   // and fix it!
-  converter_ = std::make_unique<ConverterImpl>();
+  converter_ = std::make_unique<Converter>();
   RETURN_IF_NULL(converter_);
 
   std::unique_ptr<PredictorInterface> predictor;
@@ -169,15 +168,13 @@ absl::Status Engine::Init(
     // history predictor, and extra predictor.
     auto dictionary_predictor =
         std::make_unique<prediction::DictionaryPredictor>(
-            *data_manager, converter_.get(), immutable_converter_.get(),
-            modules_);
+            modules_, converter_.get(), immutable_converter_.get());
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;
     auto user_history_predictor =
         std::make_unique<prediction::UserHistoryPredictor>(
-            modules_.GetDictionary(), modules_.GetPosMatcher(),
-            modules_.GetSuppressionDictionary(), enable_content_word_learning);
+            modules_, enable_content_word_learning);
     RETURN_IF_NULL(user_history_predictor);
 
     if (is_mobile) {
@@ -199,12 +196,10 @@ absl::Status Engine::Init(
   RETURN_IF_NULL(rewriter);
   rewriter_ = rewriter.get();  // Keep the reference
 
-  converter_->Init(modules_.GetPosMatcher(),
-                   modules_.GetSuppressionDictionary(), std::move(predictor),
-                   std::move(rewriter), immutable_converter_.get());
+  converter_->Init(modules_, std::move(predictor), std::move(rewriter),
+                   immutable_converter_.get());
 
-  user_data_manager_ =
-      std::make_unique<UserDataManagerImpl>(predictor_, rewriter_);
+  user_data_manager_ = std::make_unique<UserDataManager>(predictor_, rewriter_);
 
   data_manager_ = std::move(data_manager);
 

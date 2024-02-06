@@ -125,60 +125,57 @@ transliteration::TransliterationType GetTransliterationType(
   return default_type;
 }
 
-void Transliterate(const transliteration::TransliterationType mode,
-                   const absl::string_view input, std::string *output) {
+std::string Transliterate(const transliteration::TransliterationType mode,
+                          const absl::string_view input) {
   // When the mode is HALF_KATAKANA, Full width ASCII is also
   // transformed.
   if (mode == transliteration::HALF_KATAKANA) {
-    std::string tmp_input;
-    japanese_util::HiraganaToKatakana(input, &tmp_input);
-    japanese_util::FullWidthToHalfWidth(tmp_input, output);
-    return;
+    const std::string katakana = japanese_util::HiraganaToKatakana(input);
+    return japanese_util::FullWidthToHalfWidth(katakana);
   }
 
   switch (mode) {
     case transliteration::HALF_ASCII:
-      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
-      break;
-    case transliteration::HALF_ASCII_UPPER:
-      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
-      Util::UpperString(output);
-      break;
-    case transliteration::HALF_ASCII_LOWER:
-      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
-      Util::LowerString(output);
-      break;
-    case transliteration::HALF_ASCII_CAPITALIZED:
-      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
-      Util::CapitalizeString(output);
-      break;
-
+      return japanese_util::FullWidthAsciiToHalfWidthAscii(input);
+    case transliteration::HALF_ASCII_UPPER: {
+      std::string output = japanese_util::FullWidthAsciiToHalfWidthAscii(input);
+      Util::UpperString(&output);
+      return output;
+    }
+    case transliteration::HALF_ASCII_LOWER: {
+      std::string output = japanese_util::FullWidthAsciiToHalfWidthAscii(input);
+      Util::LowerString(&output);
+      return output;
+    }
+    case transliteration::HALF_ASCII_CAPITALIZED: {
+      std::string output = japanese_util::FullWidthAsciiToHalfWidthAscii(input);
+      Util::CapitalizeString(&output);
+      return output;
+    }
     case transliteration::FULL_ASCII:
-      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
-      break;
-    case transliteration::FULL_ASCII_UPPER:
-      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
-      Util::UpperString(output);
-      break;
-    case transliteration::FULL_ASCII_LOWER:
-      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
-      Util::LowerString(output);
-      break;
-    case transliteration::FULL_ASCII_CAPITALIZED:
-      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
-      Util::CapitalizeString(output);
-      break;
-
+      return japanese_util::HalfWidthAsciiToFullWidthAscii(input);
+    case transliteration::FULL_ASCII_UPPER: {
+      std::string output = japanese_util::HalfWidthAsciiToFullWidthAscii(input);
+      Util::UpperString(&output);
+      return output;
+    }
+    case transliteration::FULL_ASCII_LOWER: {
+      std::string output = japanese_util::HalfWidthAsciiToFullWidthAscii(input);
+      Util::LowerString(&output);
+      return output;
+    }
+    case transliteration::FULL_ASCII_CAPITALIZED: {
+      std::string output = japanese_util::HalfWidthAsciiToFullWidthAscii(input);
+      Util::CapitalizeString(&output);
+      return output;
+    }
     case transliteration::FULL_KATAKANA:
-      japanese_util::HiraganaToKatakana(input, output);
-      break;
+      return japanese_util::HiraganaToKatakana(input);
     case transliteration::HIRAGANA:
-      strings::Assign(*output, input);
-      break;
+      return std::string{input};
     default:
       LOG(ERROR) << "Unknown TransliterationType: " << mode;
-      strings::Assign(*output, input);
-      break;
+      return std::string{input};
   }
 }
 
@@ -724,9 +721,9 @@ void Composer::GetPreedit(std::string *left, std::string *focused,
   }
 }
 
-void Composer::GetStringForPreedit(std::string *output) const {
-  composition_.GetString(output);
-  TransformCharactersForNumbers(output);
+std::string Composer::GetStringForPreedit() const {
+  std::string output = composition_.GetString();
+  TransformCharactersForNumbers(&output);
   // If the input field type needs half ascii characters,
   // perform conversion here.
   // Note that this purpose is also achieved by the client by setting
@@ -746,22 +743,21 @@ void Composer::GetStringForPreedit(std::string *output) const {
   if (field_type == commands::Context::NUMBER ||
       field_type == commands::Context::PASSWORD ||
       field_type == commands::Context::TEL) {
-    const std::string tmp = *output;
-    japanese_util::FullWidthAsciiToHalfWidthAscii(tmp, output);
+    output = japanese_util::FullWidthAsciiToHalfWidthAscii(output);
   }
+  return output;
 }
 
-void Composer::GetStringForSubmission(std::string *output) const {
+std::string Composer::GetStringForSubmission() const {
   // TODO(komatsu): We should make sure if we can integrate this
   // function to GetStringForPreedit after a while.
-  GetStringForPreedit(output);
+  return GetStringForPreedit();
 }
 
-void Composer::GetQueryForConversion(std::string *output) const {
-  std::string base_output;
-  composition_.GetStringWithTrimMode(FIX, &base_output);
+std::string Composer::GetQueryForConversion() const {
+  std::string base_output = composition_.GetStringWithTrimMode(FIX);
   TransformCharactersForNumbers(&base_output);
-  japanese_util::FullWidthAsciiToHalfWidthAscii(base_output, output);
+  return japanese_util::FullWidthAsciiToHalfWidthAscii(base_output);
 }
 
 namespace {
@@ -822,25 +818,21 @@ std::string *GetBaseQueryForPrediction(std::string *asis_query,
 }
 }  // namespace
 
-void Composer::GetQueryForPrediction(std::string *output) const {
-  std::string asis_query;
-  composition_.GetStringWithTrimMode(ASIS, &asis_query);
+std::string Composer::GetQueryForPrediction() const {
+  std::string asis_query = composition_.GetStringWithTrimMode(ASIS);
 
   switch (input_mode_) {
     case transliteration::HALF_ASCII: {
-      output->assign(asis_query);
-      return;
+      return asis_query;
     }
     case transliteration::FULL_ASCII: {
-      japanese_util::FullWidthAsciiToHalfWidthAscii(asis_query, output);
-      return;
+      return japanese_util::FullWidthAsciiToHalfWidthAscii(asis_query);
     }
     default: {
     }
   }
 
-  std::string trimed_query;
-  composition_.GetStringWithTrimMode(TRIM, &trimed_query);
+  std::string trimed_query = composition_.GetStringWithTrimMode(TRIM);
 
   // NOTE(komatsu): This is a hack to go around the difference
   // expectation between Romanji-Input and Kana-Input.  "かn" in
@@ -852,7 +844,7 @@ void Composer::GetQueryForPrediction(std::string *output) const {
   std::string *base_query =
       GetBaseQueryForPrediction(&asis_query, &trimed_query);
   TransformCharactersForNumbers(base_query);
-  japanese_util::FullWidthAsciiToHalfWidthAscii(*base_query, output);
+  return japanese_util::FullWidthAsciiToHalfWidthAscii(*base_query);
 }
 
 void Composer::GetQueriesForPrediction(std::string *base,
@@ -863,7 +855,7 @@ void Composer::GetQueriesForPrediction(std::string *base,
   switch (input_mode_) {
     case transliteration::HALF_ASCII:
     case transliteration::FULL_ASCII: {
-      GetQueryForPrediction(base);
+      *base = GetQueryForPrediction();
       expanded->clear();
       return;
     }
@@ -877,11 +869,10 @@ void Composer::GetQueriesForPrediction(std::string *base,
   // However, "ざ" is usually composed by explicitly hitting the modifier key.
   // So we don't want to generate prediction from "さ" in this case. The
   // following code removes such unnecessary expansion.
-  std::string asis;
-  composition_.GetStringWithTrimMode(ASIS, &asis);
+  const std::string asis = composition_.GetStringWithTrimMode(ASIS);
   RemoveExpandedCharsForModifier(asis, base_query, expanded);
 
-  japanese_util::FullWidthAsciiToHalfWidthAscii(base_query, base);
+  *base = japanese_util::FullWidthAsciiToHalfWidthAscii(base_query);
 }
 
 std::optional<std::vector<TypeCorrectedQuery>>
@@ -890,8 +881,7 @@ Composer::GetTypeCorrectedQueries(absl::string_view context) const {
     return std::nullopt;
   }
 
-  std::string asis;
-  composition_.GetStringWithTrimMode(ASIS, &asis);
+  const std::string asis = composition_.GetStringWithTrimMode(ASIS);
   return spellchecker_->CheckCompositionSpelling(asis, context, *request_);
 }
 
@@ -899,12 +889,10 @@ size_t Composer::GetLength() const { return composition_.GetLength(); }
 
 size_t Composer::GetCursor() const { return position_; }
 
-void Composer::GetTransliteratedText(Transliterators::Transliterator t12r,
-                                     const size_t position, const size_t size,
-                                     std::string *result) const {
-  DCHECK(result);
-  std::string full_base;
-  composition_.GetStringWithTransliterator(t12r, &full_base);
+std::string Composer::GetTransliteratedText(
+    Transliterators::Transliterator t12r, const size_t position,
+    const size_t size) const {
+  const std::string full_base = composition_.GetStringWithTransliterator(t12r);
 
   const size_t t13n_start =
       composition_.ConvertPosition(position, Transliterators::LOCAL, t12r);
@@ -912,18 +900,16 @@ void Composer::GetTransliteratedText(Transliterators::Transliterator t12r,
       position + size, Transliterators::LOCAL, t12r);
   const size_t t13n_size = t13n_end - t13n_start;
 
-  Util::Utf8SubString(full_base, t13n_start, t13n_size, result);
+  return std::string{Util::Utf8SubString(full_base, t13n_start, t13n_size)};
 }
 
-void Composer::GetRawString(std::string *raw_string) const {
-  GetRawSubString(0, GetLength(), raw_string);
+std::string Composer::GetRawString() const {
+  return GetRawSubString(0, GetLength());
 }
 
-void Composer::GetRawSubString(const size_t position, const size_t size,
-                               std::string *raw_sub_string) const {
-  DCHECK(raw_sub_string);
-  GetTransliteratedText(Transliterators::RAW_STRING, position, size,
-                        raw_sub_string);
+std::string Composer::GetRawSubString(const size_t position,
+                                      const size_t size) const {
+  return GetTransliteratedText(Transliterators::RAW_STRING, position, size);
 }
 
 void Composer::GetTransliterations(
@@ -931,24 +917,21 @@ void Composer::GetTransliterations(
   GetSubTransliterations(0, GetLength(), t13ns);
 }
 
-void Composer::GetSubTransliteration(
+std::string Composer::GetSubTransliteration(
     const transliteration::TransliterationType type, const size_t position,
-    const size_t size, std::string *transliteration) const {
+    const size_t size) const {
   const Transliterators::Transliterator t12r = GetTransliterator(type);
-  std::string result;
-  GetTransliteratedText(t12r, position, size, &result);
-  transliteration->clear();
-  Transliterate(type, result, transliteration);
+  const std::string result = GetTransliteratedText(t12r, position, size);
+  return Transliterate(type, result);
 }
 
 void Composer::GetSubTransliterations(
     const size_t position, const size_t size,
     transliteration::Transliterations *transliterations) const {
-  std::string t13n;
   for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
     const transliteration::TransliterationType t13n_type =
         transliteration::TransliterationTypeArray[i];
-    GetSubTransliteration(t13n_type, position, size, &t13n);
+    const std::string t13n = GetSubTransliteration(t13n_type, position, size);
     transliterations->push_back(t13n);
   }
 }
@@ -972,10 +955,9 @@ void Composer::AutoSwitchMode() {
     return;
   }
 
-  std::string key;
   // Key should be in half-width alphanumeric.
-  composition_.GetStringWithTransliterator(
-      GetTransliterator(transliteration::HALF_ASCII), &key);
+  const std::string key = composition_.GetStringWithTransliterator(
+      GetTransliterator(transliteration::HALF_ASCII));
 
   const ModeSwitchingHandler::Rule mode_switching =
       ModeSwitchingHandler::GetModeSwitchingHandler()->GetModeSwitchingRule(
@@ -1223,7 +1205,7 @@ bool Composer::TransformCharactersForNumbers(std::string *query) {
 
     if (append_char.empty()) {
       // Append one character.
-      Util::Ucs4ToUtf8Append(iter.Get(), &transformed_query);
+      Util::CodepointToUtf8Append(iter.Get(), &transformed_query);
     } else {
       // Append the transformed character.
       transformed_query.append(append_char);

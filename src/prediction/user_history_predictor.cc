@@ -68,6 +68,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -343,13 +344,11 @@ UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
   return pool_.Alloc();
 }
 
-UserHistoryPredictor::UserHistoryPredictor(
-    const DictionaryInterface *dictionary, const PosMatcher *pos_matcher,
-    const SuppressionDictionary *suppression_dictionary,
-    bool enable_content_word_learning)
-    : dictionary_(dictionary),
-      pos_matcher_(pos_matcher),
-      suppression_dictionary_(suppression_dictionary),
+UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules,
+                                           bool enable_content_word_learning)
+    : dictionary_(modules.GetDictionary()),
+      pos_matcher_(modules.GetPosMatcher()),
+      suppression_dictionary_(modules.GetSuppressionDictionary()),
       predictor_name_("UserHistoryPredictor"),
       content_word_learning_enabled_(enable_content_word_learning),
       updated_(false),
@@ -1346,7 +1345,7 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
     return;
   }
 
-  request.composer().GetStringForPreedit(input_key);
+  *input_key = request.composer().GetStringForPreedit();
   std::set<std::string> expanded_set;
   request.composer().GetQueriesForPrediction(base, &expanded_set);
   if (!expanded_set.empty()) {

@@ -409,7 +409,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
   // Support VK_PACKET.
   if (virtual_key.virtual_key() == VK_PACKET) {
     const char32_t character = virtual_key.unicode_char();
-    const std::string utf8_characters = Util::Ucs4ToUtf8(character);
+    const std::string utf8_characters = Util::CodepointToUtf8(character);
     if (utf8_characters.empty()) {
       return false;
     }

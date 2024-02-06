@@ -62,9 +62,9 @@ bool IsComposerApplicable(const ConversionRequest &request,
   std::string conversion_query;
   if (request.request_type() == ConversionRequest::PREDICTION ||
       request.request_type() == ConversionRequest::SUGGESTION) {
-    request.composer().GetQueryForPrediction(&conversion_query);
+    conversion_query = request.composer().GetQueryForPrediction();
   } else {
-    request.composer().GetQueryForConversion(&conversion_query);
+    conversion_query = request.composer().GetQueryForConversion();
     if (request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
         request.request_type() == ConversionRequest::PARTIAL_SUGGESTION) {
       Util::Utf8SubString(conversion_query, 0, request.composer().GetCursor(),
@@ -255,8 +255,7 @@ bool TransliterationRewriter::FillT13nsFromComposer(
     Segment *segment = segments->mutable_conversion_segment(0);
     CHECK(segment);
     ModifyT13ns(request, *segment, &t13ns);
-    std::string key;
-    request.composer().GetQueryForConversion(&key);
+    const std::string key = request.composer().GetQueryForConversion();
     return SetTransliterations(t13ns, key, segment);
   }
 
@@ -369,8 +368,8 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
   // Note that only one segment is in the Segments, but sometimes like
   // on partial conversion, segment.key() is different from the size of
   // the whole composition.
-  std::string raw;
-  composer.GetRawSubString(0, Util::CharsLen(segment->key()), &raw);
+  const std::string raw =
+      composer.GetRawSubString(0, Util::CharsLen(segment->key()));
   if (raw.empty()) {
     return false;
   }

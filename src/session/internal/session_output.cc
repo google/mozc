@@ -445,8 +445,7 @@ bool SessionOutput::AddSegment(const absl::string_view key,
 // static
 void SessionOutput::FillPreedit(const composer::Composer &composer,
                                 commands::Preedit *preedit) {
-  std::string output;
-  composer.GetStringForPreedit(&output);
+  const std::string output = composer.GetStringForPreedit();
 
   constexpr uint32_t kBaseType = PREEDIT;
   AddSegment(output, output, kBaseType, preedit);

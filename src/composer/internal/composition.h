@@ -123,11 +123,10 @@ class Composition final {
   Transliterators::Transliterator GetTransliterator(size_t position) const;
 
   size_t GetLength() const;
-  void GetString(std::string *composition) const;
-  void GetStringWithTransliterator(
-      Transliterators::Transliterator transliterator,
-      std::string *output) const;
-  void GetStringWithTrimMode(TrimMode trim_mode, std::string *output) const;
+  std::string GetString() const;
+  std::string GetStringWithTransliterator(
+      Transliterators::Transliterator transliterator) const;
+  std::string GetStringWithTrimMode(TrimMode trim_mode) const;
   // Get string with consideration for ambiguity from pending input
   void GetExpandedStrings(std::string *base,
                           std::set<std::string> *expanded) const;
@@ -216,8 +215,8 @@ class Composition final {
   }
 
  private:
-  void GetStringWithModes(Transliterators::Transliterator transliterator,
-                          TrimMode trim_mode, std::string *composition) const;
+  std::string GetStringWithModes(Transliterators::Transliterator transliterator,
+                                 TrimMode trim_mode) const;
 
   const Table *table_;
   CharChunkList chunks_;

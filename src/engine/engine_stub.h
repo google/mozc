@@ -39,15 +39,14 @@
 #include "dictionary/suppression_dictionary.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
-#include "prediction/predictor_interface.h"
 
 namespace mozc {
 
 class EngineStub : public EngineInterface {
  public:
   ConverterInterface *GetConverter() const override { return nullptr; }
-  prediction::PredictorInterface *GetPredictor() const override {
-    return nullptr;
+  absl::string_view GetPredictorName() const override {
+    return {};
   }
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
     return nullptr;

@@ -36,13 +36,13 @@
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/flags/reflection.h"
-#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/logging.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
@@ -313,6 +313,12 @@ INSTANTIATE_TEST_SUITE_P(
               auto request = GetMobileRequest();
               request.mutable_decoder_experiment_params()
                   ->set_user_segment_history_rewriter_new_replaceable(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_user_segment_history_rewriter_use_inner_segments(true);
               return request;
             }())));
 

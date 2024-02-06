@@ -117,17 +117,17 @@ class Composer final {
                   std::string *right) const;
 
   // Returns a preedit string with user's preferences.
-  void GetStringForPreedit(std::string *output) const;
+  std::string GetStringForPreedit() const;
 
   // Returns a submit string with user's preferences.  The difference
   // from the preedit string is the handling of the last 'n'.
-  void GetStringForSubmission(std::string *output) const;
+  std::string GetStringForSubmission() const;
 
   // Returns a conversion query normalized ascii characters in half width
-  void GetQueryForConversion(std::string *output) const;
+  std::string GetQueryForConversion() const;
 
   // Returns a prediction query trimmed the tail alphabet characters.
-  void GetQueryForPrediction(std::string *output) const;
+  std::string GetQueryForPrediction() const;
 
   // Returns a expanded prediction query.
   void GetQueriesForPrediction(std::string *base,
@@ -200,21 +200,19 @@ class Composer final {
 
   // Returns raw input from a user.
   // The main purpose is Transliteration.
-  void GetRawString(std::string *raw_string) const;
+  std::string GetRawString() const;
 
   // Returns substring of raw input.  The position and size is based on the
   // composed string.  For example, when [さ|sa][し|shi][み|mi] is the
   // composition, GetRawSubString(0, 2) returns "sashi".
-  void GetRawSubString(size_t position, size_t size,
-                       std::string *raw_sub_string) const;
+  std::string GetRawSubString(size_t position, size_t size) const;
 
   // Generate transliterations.
   void GetTransliterations(transliteration::Transliterations *t13ns) const;
 
   // Generate substrings of specified transliteration.
-  void GetSubTransliteration(transliteration::TransliterationType type,
-                             size_t position, size_t size,
-                             std::string *transliteration) const;
+  std::string GetSubTransliteration(transliteration::TransliterationType type,
+                                    size_t position, size_t size) const;
 
   // Generate substrings of transliterations.
   void GetSubTransliterations(
@@ -228,7 +226,7 @@ class Composer final {
   // status and user's settings.
   void AutoSwitchMode();
 
-  // Return true if the composition is adviced to be committed immediately.
+  // Return true if the composition is advised to be committed immediately.
   bool ShouldCommit() const;
 
   // Returns true if characters at the head of the preedit should be committed
@@ -269,7 +267,7 @@ class Composer final {
 
   bool ProcessCompositionInput(CompositionInput input);
 
-  // Change input mode temporarily accoding to the current context and
+  // Change input mode temporarily according to the current context and
   // the given input character.
   // This function have a bug when key has characters input with Preedit.
   // Expected behavior: InsertPreedit("A") + InsertKey("a") -> "Aあ"
@@ -277,9 +275,8 @@ class Composer final {
   void ApplyTemporaryInputMode(absl::string_view input, bool caps_locked);
 
   // Generate transliterated substrings.
-  void GetTransliteratedText(Transliterators::Transliterator t12r,
-                             size_t position, size_t size,
-                             std::string *result) const;
+  std::string GetTransliteratedText(Transliterators::Transliterator t12r,
+                                    size_t position, size_t size) const;
 
   size_t position_;
   transliteration::TransliterationType input_mode_;

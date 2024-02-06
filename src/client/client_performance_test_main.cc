@@ -90,10 +90,10 @@ class TestSentenceGenerator {
       japanese_util::HiraganaToRomanji(sentences[i], &output);
       std::vector<commands::KeyEvent> tmp;
       for (ConstChar32Iterator iter(output); !iter.Done(); iter.Next()) {
-        const char32_t ucs4 = iter.Get();
-        if (ucs4 >= 'a' && ucs4 <= 'z') {
+        const char32_t codepoint = iter.Get();
+        if (codepoint >= 'a' && codepoint <= 'z') {
           commands::KeyEvent key;
-          key.set_key_code(static_cast<int>(ucs4));
+          key.set_key_code(static_cast<int>(codepoint));
           tmp.push_back(key);
         }
       }

@@ -37,6 +37,7 @@
 #include "absl/flags/flag.h"
 #include "absl/synchronization/mutex.h"
 #include "base/logging.h"
+#include "base/util.h"
 #include "config/config_handler.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
@@ -44,7 +45,6 @@
 #include "engine/minimal_engine.h"
 #include "protocol/commands.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "session/session.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
 
@@ -260,7 +260,7 @@ bool IosEngine::SendKey(const std::string &character,
   input->set_id(session_id_);
   input->set_type(commands::Input::SEND_KEY);
   commands::KeyEvent *key_event = input->mutable_key();
-  key_event->set_key_code(Util::Utf8ToUcs4(character));
+  key_event->set_key_code(Util::Utf8ToCodepoint(character));
   key_event->set_mode(current_input_config_->composition_mode);
   constexpr uint32_t kNoModifiers = 0;
   key_event->set_modifiers(kNoModifiers);

@@ -100,10 +100,9 @@ class DictionaryPredictor : public PredictorInterface {
 
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
-  DictionaryPredictor(const DataManagerInterface &data_manager,
+  DictionaryPredictor(const engine::Modules &modules,
                       const ConverterInterface *converter,
-                      const ImmutableConverterInterface *immutable_converter,
-                      const engine::Modules &modules);
+                      const ImmutableConverterInterface *immutable_converter);
 
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
@@ -162,12 +161,10 @@ class DictionaryPredictor : public PredictorInterface {
 
   // Constructor for testing
   DictionaryPredictor(
-      std::string predictor_name,
+      std::string predictor_name, const engine::Modules &modules,
       std::unique_ptr<const prediction::PredictionAggregatorInterface>
           aggregator,
-      const DataManagerInterface &data_manager,
-      const ImmutableConverterInterface *immutable_converter,
-      const engine::Modules &modules);
+      const ImmutableConverterInterface *immutable_converter);
 
   static void ApplyPenaltyForKeyExpansion(const ConversionRequest &request,
                                           const Segments &segments,

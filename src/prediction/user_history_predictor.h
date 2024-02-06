@@ -49,6 +49,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "request/conversion_request.h"
@@ -95,11 +96,8 @@ class UserHistoryStorage {
 // called by multiple-threads at the same time
 class UserHistoryPredictor : public PredictorInterface {
  public:
-  UserHistoryPredictor(
-      const dictionary::DictionaryInterface *dictionary,
-      const dictionary::PosMatcher *pos_matcher,
-      const dictionary::SuppressionDictionary *suppression_dictionary,
-      bool enable_content_word_learning);
+  UserHistoryPredictor(const engine::Modules &modules,
+                       bool enable_content_word_learning);
   ~UserHistoryPredictor() override;
 
   void set_content_word_learning_enabled(bool value) {

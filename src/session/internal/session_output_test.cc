@@ -33,6 +33,7 @@
 #include <iterator>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
@@ -777,7 +778,7 @@ TEST(SessionOutputTest, AddSegment) {
     const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
     EXPECT_EQ(segment.key(), normalized_key);
     // Normalization is performed in Rewriter.
-    std::string normalized_value = kValue;
+    absl::string_view normalized_value = kValue;
     EXPECT_EQ(segment.value(), normalized_value);
     EXPECT_EQ(segment.value_length(), Util::CharsLen(normalized_value));
     EXPECT_EQ(segment.annotation(), commands::Preedit::Segment::HIGHLIGHT);
@@ -795,7 +796,7 @@ TEST(SessionOutputTest, AddSegment) {
     const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
     EXPECT_EQ(segment.key(), normalized_key);
     // Normalization is performed in Rewriter.
-    std::string normalized_value = kValue;
+    absl::string_view normalized_value = kValue;
     EXPECT_EQ(segment.value(), normalized_value);
     EXPECT_EQ(segment.value_length(), Util::CharsLen(normalized_value));
     EXPECT_EQ(segment.annotation(), commands::Preedit::Segment::UNDERLINE);

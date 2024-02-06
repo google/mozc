@@ -49,7 +49,6 @@ int main(int argc, char **argv) {
   mozc::composer::Composition composition(&table);
 
   std::string command;
-  std::string result;
   size_t pos = 0;
 
   while (std::getline(std::cin, command)) {
@@ -65,7 +64,6 @@ int main(int argc, char **argv) {
     } else {
       pos = composition.InsertAt(pos, command);
     }
-    composition.GetString(&result);
-    std::cout << result << " : " << pos << std::endl;
+    std::cout << composition.GetString() << " : " << pos << std::endl;
   }
 }

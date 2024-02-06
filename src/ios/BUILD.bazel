@@ -43,6 +43,7 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:port",
+        "//base:util",
         "//config:config_handler",
         "//data_manager",
         "//engine",

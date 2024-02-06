@@ -61,10 +61,10 @@ class MockDataAndImmutableConverter {
     modules_.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
     absl::Status status = modules_.Init(data_manager_.get());
     CHECK(status.ok());
-    immutable_converter_ = std::make_unique<ImmutableConverterImpl>(modules_);
+    immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
   }
 
-  ImmutableConverterImpl *GetConverter() { return immutable_converter_.get(); }
+  ImmutableConverter *GetConverter() { return immutable_converter_.get(); }
 
   std::unique_ptr<NBestGenerator> CreateNBestGenerator(const Lattice *lattice) {
     return std::make_unique<NBestGenerator>(
@@ -76,7 +76,7 @@ class MockDataAndImmutableConverter {
  private:
   std::unique_ptr<const DataManagerInterface> data_manager_;
   engine::Modules modules_;
-  std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
+  std::unique_ptr<ImmutableConverter> immutable_converter_;
 };
 
 }  // namespace
@@ -84,7 +84,7 @@ class MockDataAndImmutableConverter {
 class NBestGeneratorTest : public ::testing::Test {
  protected:
   const Node *GetEndNode(const ConversionRequest &request,
-                         const ImmutableConverterImpl &converter,
+                         const ImmutableConverter &converter,
                          const Segments &segments, const Node &begin_node,
                          const std::vector<uint16_t> &group,
                          bool is_single_segment) {
@@ -103,7 +103,7 @@ class NBestGeneratorTest : public ::testing::Test {
 
 TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
-  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
+  ImmutableConverter *converter = data_and_converter->GetConverter();
 
   Segments segments;
   {
@@ -163,7 +163,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
 
 TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
-  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
+  ImmutableConverter *converter = data_and_converter->GetConverter();
 
   Segments segments;
   std::string kText = "わたしのなまえはなかのです";
@@ -215,7 +215,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
 
 TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
-  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
+  ImmutableConverter *converter = data_and_converter->GetConverter();
 
   Segments segments;
   const std::string kInput = "とうきょうかなごやにいきたい";

@@ -265,29 +265,26 @@ TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
 }
 
 DictionaryPredictor::DictionaryPredictor(
-    const DataManagerInterface &data_manager,
-    const ConverterInterface *converter,
-    const ImmutableConverterInterface *immutable_converter,
-    const engine::Modules &modules)
+    const engine::Modules &modules, const ConverterInterface *converter,
+    const ImmutableConverterInterface *immutable_converter)
     : DictionaryPredictor(
-          "DictionaryPredictor",
+          "DictionaryPredictor", modules,
           std::make_unique<prediction::DictionaryPredictionAggregator>(
-              data_manager, converter, immutable_converter, modules),
-          data_manager, immutable_converter, modules) {}
+              modules, converter, immutable_converter),
+          immutable_converter) {}
 
 DictionaryPredictor::DictionaryPredictor(
-    std::string predictor_name,
+    std::string predictor_name, const engine::Modules &modules,
     std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator,
-    const DataManagerInterface &data_manager,
-    const ImmutableConverterInterface *immutable_converter,
-    const engine::Modules &modules)
+    const ImmutableConverterInterface *immutable_converter)
     : aggregator_(std::move(aggregator)),
       immutable_converter_(immutable_converter),
       connector_(modules.GetConnector()),
       segmenter_(modules.GetSegmenter()),
       suggestion_filter_(modules.GetSuggestionFilter()),
       single_kanji_dictionary_(
-          std::make_unique<dictionary::SingleKanjiDictionary>(data_manager)),
+          std::make_unique<dictionary::SingleKanjiDictionary>(
+              modules.GetDataManager())),
       pos_matcher_(*modules.GetPosMatcher()),
       general_symbol_id_(pos_matcher_.GetGeneralSymbolId()),
       predictor_name_(std::move(predictor_name)),

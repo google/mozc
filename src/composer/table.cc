@@ -388,8 +388,8 @@ const Entry *Table::AddRuleWithAttributes(
   if (!case_sensitive_) {
     const std::string trimed_input = DeleteSpecialKeys(input);
     for (ConstChar32Iterator iter(trimed_input); !iter.Done(); iter.Next()) {
-      const char32_t ucs4 = iter.Get();
-      if ('A' <= ucs4 && ucs4 <= 'Z') {
+      const char32_t codepoint = iter.Get();
+      if ('A' <= codepoint && codepoint <= 'Z') {
         case_sensitive_ = true;
         break;
       }

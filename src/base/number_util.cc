@@ -140,14 +140,14 @@ int NumberUtil::SimpleAtoi(absl::string_view str) {
 namespace {
 
 // TODO(hidehiko): Refactoring with GetScriptType in Util class.
-inline bool IsArabicDecimalChar32(char32_t ucs4) {
+inline bool IsArabicDecimalChar32(char32_t codepoint) {
   // Halfwidth digit.
-  if (kAsciiZero <= ucs4 && ucs4 <= kAsciiNine) {
+  if (kAsciiZero <= codepoint && codepoint <= kAsciiNine) {
     return true;
   }
 
   // Fullwidth digit.
-  if (0xFF10 <= ucs4 && ucs4 <= 0xFF19) {
+  if (0xFF10 <= codepoint && codepoint <= 0xFF19) {
     return true;
   }
 
@@ -849,7 +849,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
 
   while (begin < end) {
     size_t mblen = 0;
-    const char32_t wchar = Util::Utf8ToUcs4(begin, end, &mblen);
+    const char32_t wchar = Util::Utf8ToCodepoint(begin, end, &mblen);
     absl::string_view kanji_char(begin, mblen);
 
     std::string tmp;

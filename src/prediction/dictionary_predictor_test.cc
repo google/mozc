@@ -79,13 +79,12 @@ namespace mozc::prediction {
 class DictionaryPredictorTestPeer {
  public:
   DictionaryPredictorTestPeer(
+      const engine::Modules &modules,
       std::unique_ptr<const prediction::PredictionAggregatorInterface>
           aggregator,
-      const DataManagerInterface &data_manager,
-      const ImmutableConverterInterface *immutable_converter,
-      const engine::Modules &modules)
-      : predictor_("DictionaryPredictorForTest", std::move(aggregator),
-                   data_manager, immutable_converter, modules) {}
+      const ImmutableConverterInterface *immutable_converter)
+      : predictor_("DictionaryPredictorForTest", modules, std::move(aggregator),
+                   immutable_converter) {}
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const {
@@ -285,7 +284,7 @@ void GenerateKeyEvents(absl::string_view text,
       key.set_key_code(w);
     } else {
       key.set_key_code('?');
-      *key.mutable_key_string() = Util::Ucs4ToUtf8(w);
+      *key.mutable_key_string() = Util::CodepointToUtf8(w);
     }
     keys->push_back(key);
   }
@@ -354,8 +353,8 @@ class MockDataAndPredictor {
     CHECK(init.ok()) << init.message();
 
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
-        absl::WrapUnique(mock_aggregator_), data_manager_,
-        &mock_immutable_converter_, modules_);
+        modules_, absl::WrapUnique(mock_aggregator_),
+        &mock_immutable_converter_);
   }
 
   MockImmutableConverter *mutable_immutable_converter() {
@@ -534,8 +533,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
 
   Segments segments;
   InsertInputSequence("ak", composer_.get());
-  std::string predicton_query;
-  composer_->GetQueryForPrediction(&predicton_query);
+  std::string predicton_query = composer_->GetQueryForPrediction();
   EXPECT_EQ(predicton_query, "あ");
   InitSegmentsWithKey(predicton_query, &segments);
 
@@ -564,8 +562,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
 
   Segments segments;
   InsertInputSequence("あし", composer_.get());
-  std::string predicton_query;
-  composer_->GetQueryForPrediction(&predicton_query);
+  std::string predicton_query = composer_->GetQueryForPrediction();
   EXPECT_EQ(predicton_query, "あし");
   InitSegmentsWithKey(predicton_query, &segments);
 

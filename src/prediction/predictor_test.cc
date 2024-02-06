@@ -43,6 +43,7 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
@@ -220,15 +221,13 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   MockConverter converter;
-  MockDictionary dictionary_mock;
   testing::MockDataManager data_manager;
-  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
-  const SuppressionDictionary suppression_dictionary;
+  engine::Modules modules;
+  modules.PresetDictionary(std::make_unique<MockDictionary>());
+  CHECK_OK(modules.Init(&data_manager));
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<UserHistoryPredictor>(&dictionary_mock, &pos_matcher,
-                                             &suppression_dictionary, true),
-      &converter);
+      std::make_unique<UserHistoryPredictor>(modules, true), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();

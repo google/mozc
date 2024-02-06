@@ -301,82 +301,82 @@ TEST(UtilTest, Utf32ToUtf8) {
   EXPECT_EQ(Util::Utf32ToUtf8(kU32Str), kExpected);
 }
 
-void VerifyUtf8ToUcs4(absl::string_view text, char32_t expected_ucs4,
-                      size_t expected_len) {
+void VerifyUtf8ToCodepoint(absl::string_view text, char32_t expected_codepoint,
+                           size_t expected_len) {
   const char *begin = text.data();
   const char *end = begin + text.size();
   size_t mblen = 0;
-  char32_t result = Util::Utf8ToUcs4(begin, end, &mblen);
-  EXPECT_EQ(result, expected_ucs4)
-      << text << " " << std::hex << static_cast<uint64_t>(expected_ucs4);
+  char32_t result = Util::Utf8ToCodepoint(begin, end, &mblen);
+  EXPECT_EQ(result, expected_codepoint)
+      << text << " " << std::hex << static_cast<uint64_t>(expected_codepoint);
   EXPECT_EQ(mblen, expected_len) << text << " " << expected_len;
 }
 
-TEST(UtilTest, Utf8ToUcs4) {
-  VerifyUtf8ToUcs4("", 0, 0);
-  VerifyUtf8ToUcs4("\x01", 1, 1);
-  VerifyUtf8ToUcs4("\x7F", 0x7F, 1);
-  VerifyUtf8ToUcs4("\xC2\x80", 0x80, 2);
-  VerifyUtf8ToUcs4("\xDF\xBF", 0x7FF, 2);
-  VerifyUtf8ToUcs4("\xE0\xA0\x80", 0x800, 3);
-  VerifyUtf8ToUcs4("\xEF\xBF\xBF", 0xFFFF, 3);
-  VerifyUtf8ToUcs4("\xF0\x90\x80\x80", 0x10000, 4);
-  VerifyUtf8ToUcs4("\xF7\xBF\xBF\xBF", 0x1FFFFF, 4);
+TEST(UtilTest, Utf8ToCodepoint) {
+  VerifyUtf8ToCodepoint("", 0, 0);
+  VerifyUtf8ToCodepoint("\x01", 1, 1);
+  VerifyUtf8ToCodepoint("\x7F", 0x7F, 1);
+  VerifyUtf8ToCodepoint("\xC2\x80", 0x80, 2);
+  VerifyUtf8ToCodepoint("\xDF\xBF", 0x7FF, 2);
+  VerifyUtf8ToCodepoint("\xE0\xA0\x80", 0x800, 3);
+  VerifyUtf8ToCodepoint("\xEF\xBF\xBF", 0xFFFF, 3);
+  VerifyUtf8ToCodepoint("\xF0\x90\x80\x80", 0x10000, 4);
+  VerifyUtf8ToCodepoint("\xF7\xBF\xBF\xBF", 0x1FFFFF, 4);
   // do not test 5-6 bytes because it's out of spec of UTF8.
 }
 
-TEST(UtilTest, Ucs4ToUtf8) {
-  // Do nothing if |c| is NUL. Previous implementation of Ucs4ToUtf8 worked like
-  // this even though the reason is unclear.
-  std::string output = Util::Ucs4ToUtf8(0);
+TEST(UtilTest, CodepointToUtf8) {
+  // Do nothing if |c| is NUL. Previous implementation of CodepointToUtf8 worked
+  // like this even though the reason is unclear.
+  std::string output = Util::CodepointToUtf8(0);
   EXPECT_TRUE(output.empty());
 
-  output = Util::Ucs4ToUtf8(0x7F);
+  output = Util::CodepointToUtf8(0x7F);
   EXPECT_EQ(output, "\x7F");
-  output = Util::Ucs4ToUtf8(0x80);
+  output = Util::CodepointToUtf8(0x80);
   EXPECT_EQ(output, "\xC2\x80");
-  output = Util::Ucs4ToUtf8(0x7FF);
+  output = Util::CodepointToUtf8(0x7FF);
   EXPECT_EQ(output, "\xDF\xBF");
-  output = Util::Ucs4ToUtf8(0x800);
+  output = Util::CodepointToUtf8(0x800);
   EXPECT_EQ(output, "\xE0\xA0\x80");
-  output = Util::Ucs4ToUtf8(0xFFFF);
+  output = Util::CodepointToUtf8(0xFFFF);
   EXPECT_EQ(output, "\xEF\xBF\xBF");
-  output = Util::Ucs4ToUtf8(0x10000);
+  output = Util::CodepointToUtf8(0x10000);
   EXPECT_EQ(output, "\xF0\x90\x80\x80");
-  output = Util::Ucs4ToUtf8(0x1FFFFF);
+  output = Util::CodepointToUtf8(0x1FFFFF);
   EXPECT_EQ(output, "\xF7\xBF\xBF\xBF");
 
   // Buffer version.
   char buf[7];
 
-  EXPECT_EQ(Util::Ucs4ToUtf8(0, buf), 0);
+  EXPECT_EQ(Util::CodepointToUtf8(0, buf), 0);
   EXPECT_EQ(strcmp(buf, ""), 0);
 
-  EXPECT_EQ(Util::Ucs4ToUtf8(0x7F, buf), 1);
+  EXPECT_EQ(Util::CodepointToUtf8(0x7F, buf), 1);
   EXPECT_EQ(strcmp("\x7F", buf), 0);
 
-  EXPECT_EQ(Util::Ucs4ToUtf8(0x80, buf), 2);
+  EXPECT_EQ(Util::CodepointToUtf8(0x80, buf), 2);
   EXPECT_EQ(strcmp("\xC2\x80", buf), 0);
 
-  EXPECT_EQ(Util::Ucs4ToUtf8(0x7FF, buf), 2);
+  EXPECT_EQ(Util::CodepointToUtf8(0x7FF, buf), 2);
   EXPECT_EQ(strcmp("\xDF\xBF", buf), 0);
 
-  EXPECT_EQ(Util::Ucs4ToUtf8(0x800, buf), 3);
+  EXPECT_EQ(Util::CodepointToUtf8(0x800, buf), 3);
   EXPECT_EQ(strcmp("\xE0\xA0\x80", buf), 0);
 
-  EXPECT_EQ(Util::Ucs4ToUtf8(0xFFFF, buf), 3);
+  EXPECT_EQ(Util::CodepointToUtf8(0xFFFF, buf), 3);
   EXPECT_EQ(strcmp("\xEF\xBF\xBF", buf), 0);
 
-  EXPECT_EQ(Util::Ucs4ToUtf8(0x10000, buf), 4);
+  EXPECT_EQ(Util::CodepointToUtf8(0x10000, buf), 4);
   EXPECT_EQ(strcmp("\xF0\x90\x80\x80", buf), 0);
 
-  EXPECT_EQ(Util::Ucs4ToUtf8(0x1FFFFF, buf), 4);
+  EXPECT_EQ(Util::CodepointToUtf8(0x1FFFFF, buf), 4);
   EXPECT_EQ(strcmp("\xF7\xBF\xBF\xBF", buf), 0);
 }
 
 TEST(UtilTest, CharsLen) {
   const std::string src = "私の名前は中野です";
-  EXPECT_EQ(Util::CharsLen(src.c_str(), src.size()), 9);
+  EXPECT_EQ(Util::CharsLen(src), 9);
 }
 
 TEST(UtilTest, Utf8SubString) {

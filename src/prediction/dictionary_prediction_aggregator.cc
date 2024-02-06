@@ -546,20 +546,17 @@ class DictionaryPredictionAggregator::HandwritingLookupCallback
 };
 
 DictionaryPredictionAggregator::DictionaryPredictionAggregator(
-    const DataManagerInterface &data_manager,
-    const ConverterInterface *converter,
-    const ImmutableConverterInterface *immutable_converter,
-    const engine::Modules &modules)
+    const engine::Modules &modules, const ConverterInterface *converter,
+    const ImmutableConverterInterface *immutable_converter)
     : DictionaryPredictionAggregator(
-          data_manager, converter, immutable_converter, modules,
-          std::make_unique<SingleKanjiPredictionAggregator>(data_manager)) {
+          modules, converter, immutable_converter,
+          std::make_unique<SingleKanjiPredictionAggregator>(
+              modules.GetDataManager())) {
 }
 
 DictionaryPredictionAggregator::DictionaryPredictionAggregator(
-    const DataManagerInterface &data_manager,
-    const ConverterInterface *converter,
+    const engine::Modules &modules, const ConverterInterface *converter,
     const ImmutableConverterInterface *immutable_converter,
-    const engine::Modules &modules,
     std::unique_ptr<PredictionAggregatorInterface>
         single_kanji_prediction_aggregator)
     : converter_(converter),
@@ -578,10 +575,10 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
   absl::string_view zero_query_string_array_data;
   absl::string_view zero_query_number_token_array_data;
   absl::string_view zero_query_number_string_array_data;
-  data_manager.GetZeroQueryData(&zero_query_token_array_data,
-                                &zero_query_string_array_data,
-                                &zero_query_number_token_array_data,
-                                &zero_query_number_string_array_data);
+  modules.GetDataManager().GetZeroQueryData(
+      &zero_query_token_array_data, &zero_query_string_array_data,
+      &zero_query_number_token_array_data,
+      &zero_query_number_string_array_data);
   zero_query_dict_.Init(zero_query_token_array_data,
                         zero_query_string_array_data);
   zero_query_number_dict_.Init(zero_query_number_token_array_data,
@@ -1701,8 +1698,7 @@ void DictionaryPredictionAggregator::AggregateEnglishPredictionUsingRawInput(
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
 
-  std::string input_key;
-  request.composer().GetRawString(&input_key);
+  const std::string input_key = request.composer().GetRawString();
   GetPredictiveResultsForEnglishKey(*dictionary_, request, input_key, ENGLISH,
                                     cutoff_threshold, results);
 
@@ -1834,7 +1830,7 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
 
   std::string input_key;
   if (request.has_composer()) {
-    request.composer().GetQueryForPrediction(&input_key);
+    input_key = request.composer().GetQueryForPrediction();
   } else {
     input_key = segments.conversion_segment(0).key();
   }
@@ -1884,7 +1880,7 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
   const std::string &input_key = [&]() {
     std::string ret;
     if (request.has_composer()) {
-      request.composer().GetQueryForPrediction(&ret);
+      ret = request.composer().GetQueryForPrediction();
     } else {
       ret = segments.conversion_segment(0).key();
     }

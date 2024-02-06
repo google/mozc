@@ -86,12 +86,12 @@ bool HasCharacterFormDescription(const absl::string_view value) {
   Util::FormType prev = Util::UNKNOWN_FORM;
 
   for (ConstChar32Iterator iter(value); !iter.Done(); iter.Next()) {
-    const char32_t ucs4 = iter.Get();
-    const Util::FormType type = Util::GetFormType(ucs4);
+    const char32_t codepoint = iter.Get();
+    const Util::FormType type = Util::GetFormType(codepoint);
     if (prev != Util::UNKNOWN_FORM && prev != type) {
       return false;
     }
-    if (Util::UNKNOWN_SCRIPT != Util::GetScriptType(ucs4)) {
+    if (Util::UNKNOWN_SCRIPT != Util::GetScriptType(codepoint)) {
       return false;
     }
     prev = type;

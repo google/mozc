@@ -45,6 +45,7 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
@@ -52,13 +53,12 @@
 
 namespace mozc {
 
-class ConverterImpl final : public ConverterInterface {
+class Converter final : public ConverterInterface {
  public:
-  ConverterImpl() = default;
+  Converter() = default;
 
   // Lazily initializes the internal members. Must be called before the use.
-  void Init(const dictionary::PosMatcher *pos_matcher,
-            const dictionary::SuppressionDictionary *suppression_dictionary,
+  void Init(const engine::Modules &modules,
             std::unique_ptr<prediction::PredictorInterface> predictor,
             std::unique_ptr<RewriterInterface> rewriter,
             ImmutableConverterInterface *immutable_converter);

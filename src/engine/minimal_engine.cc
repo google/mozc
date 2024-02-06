@@ -95,8 +95,7 @@ bool AddAsIsCandidate(const ConversionRequest &request, Segments *segments) {
   if (!request.has_composer()) {
     return false;
   }
-  std::string key;
-  request.composer().GetQueryForConversion(&key);
+  const std::string key = request.composer().GetQueryForConversion();
   return AddAsIsCandidate(key, segments);
 }
 
@@ -238,8 +237,8 @@ ConverterInterface *MinimalEngine::GetConverter() const {
   return converter_.get();
 }
 
-PredictorInterface *MinimalEngine::GetPredictor() const {
-  return predictor_.get();
+absl::string_view MinimalEngine::GetPredictorName() const {
+  return predictor_ ? predictor_->GetPredictorName() : absl::string_view();
 }
 
 dictionary::SuppressionDictionary *MinimalEngine::GetSuppressionDictionary() {

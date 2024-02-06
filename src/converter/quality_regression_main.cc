@@ -35,11 +35,11 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
-#include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "base/file/temp_dir.h"
 #include "base/init_mozc.h"
+#include "base/logging.h"
 #include "base/system_util.h"
 #include "converter/quality_regression_util.h"
 #include "engine/engine.h"

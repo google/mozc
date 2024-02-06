@@ -90,7 +90,7 @@ class DictionaryPredictionAggregatorTestPeer {
       const engine::Modules &modules,
       std::unique_ptr<PredictionAggregatorInterface>
           single_kanji_prediction_aggregator)
-      : aggregator_(data_manager, converter, immutable_converter, modules,
+      : aggregator_(modules, converter, immutable_converter,
                     std::move(single_kanji_prediction_aggregator)) {}
   virtual ~DictionaryPredictionAggregatorTestPeer() = default;
 
@@ -302,7 +302,7 @@ void GenerateKeyEvents(absl::string_view text,
       key.set_key_code(w);
     } else {
       key.set_key_code('?');
-      *key.mutable_key_string() = Util::Ucs4ToUtf8(w);
+      *key.mutable_key_string() = Util::CodepointToUtf8(w);
     }
     keys->push_back(key);
   }

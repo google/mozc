@@ -96,7 +96,7 @@ class VirtualKey {
   // Otherwise, the lowest byte of |combined_virtual_key| will be
   // used as |virtual_key_|.
   static constexpr VirtualKey FromCombinedVirtualKey(UINT combined_virtual_key);
-  // Construct an instance from a given ucs4 character.
+  // Construct an instance from a given codepoint.
   // In this case, |virtual_key_| will be set to VK_PACKET.
   static constexpr VirtualKey FromUnicode(char32_t unicode);
 

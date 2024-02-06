@@ -45,7 +45,6 @@
 #include "absl/algorithm/container.h"
 #include "absl/numeric/bits.h"
 #include "absl/strings/ascii.h"
-#include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
@@ -127,7 +126,7 @@ void Util::SplitStringToUtf8Graphemes(absl::string_view str,
   new_graphemes.reserve(graphemes->capacity());
 
   for (std::string &grapheme : *graphemes) {
-    const char32_t codepoint = Util::Utf8ToUcs4(grapheme);
+    const char32_t codepoint = Util::Utf8ToCodepoint(grapheme);
     const bool is_dakuten = (codepoint == 0x3099 || codepoint == 0x309A);
     const bool is_svs = (0xFE00 <= codepoint && codepoint <= 0xFE0F);
     const bool is_ivs = (0xE0100 <= codepoint && codepoint <= 0xE01EF);
@@ -249,15 +248,17 @@ void Util::LowerString(std::string *str) {
 
   size_t pos = 0;
   while (pos < str->size()) {
-    char32_t ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
+    char32_t codepoint =
+        Utf8ToCodepoint(begin + pos, begin + str->size(), &mblen);
     if (mblen == 0) {
       break;
     }
-    // ('A' <= ucs4 && ucs4 <= 'Z') || ('Ａ' <= ucs4 && ucs4 <= 'Ｚ')
-    if ((0x0041 <= ucs4 && ucs4 <= 0x005A) ||
-        (0xFF21 <= ucs4 && ucs4 <= 0xFF3A)) {
-      ucs4 += kOffsetFromUpperToLower;
-      const std::string utf8 = Ucs4ToUtf8(ucs4);
+    // ('A' <= codepoint && codepoint <= 'Z') ||
+    // ('Ａ' <= codepoint && codepoint <= 'Ｚ')
+    if ((0x0041 <= codepoint && codepoint <= 0x005A) ||
+        (0xFF21 <= codepoint && codepoint <= 0xFF3A)) {
+      codepoint += kOffsetFromUpperToLower;
+      const std::string utf8 = CodepointToUtf8(codepoint);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -276,12 +277,14 @@ void Util::UpperString(std::string *str) {
 
   size_t pos = 0;
   while (pos < str->size()) {
-    char32_t ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
-    // ('a' <= ucs4 && ucs4 <= 'z') || ('ａ' <= ucs4 && ucs4 <= 'ｚ')
-    if ((0x0061 <= ucs4 && ucs4 <= 0x007A) ||
-        (0xFF41 <= ucs4 && ucs4 <= 0xFF5A)) {
-      ucs4 -= kOffsetFromUpperToLower;
-      const std::string utf8 = Ucs4ToUtf8(ucs4);
+    char32_t codepoint =
+        Utf8ToCodepoint(begin + pos, begin + str->size(), &mblen);
+    // ('a' <= codepoint && codepoint <= 'z') ||
+    // ('ａ' <= codepoint && codepoint <= 'ｚ')
+    if ((0x0061 <= codepoint && codepoint <= 0x007A) ||
+        (0xFF41 <= codepoint && codepoint <= 0xFF5A)) {
+      codepoint -= kOffsetFromUpperToLower;
+      const std::string utf8 = CodepointToUtf8(codepoint);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -328,13 +331,11 @@ bool IsUtf8TrailingByte(uint8_t c) { return (c & 0xc0) == 0x80; }
 
 }  // namespace
 
-size_t Util::CharsLen(const char *src, size_t size) {
-  const char *begin = src;
-  const char *end = src + size;
-  int length = 0;
-  while (begin < end) {
+size_t Util::CharsLen(absl::string_view str) {
+  size_t length = 0;
+  while (!str.empty()) {
     ++length;
-    begin += strings::OneCharLen(begin);
+    str.remove_prefix(strings::OneCharLen(str.begin()));
   }
   return length;
 }
@@ -351,12 +352,13 @@ std::u32string Util::Utf8ToUtf32(absl::string_view str) {
 std::string Util::Utf32ToUtf8(const std::u32string_view str) {
   std::string output;
   for (const char32_t codepoint : str) {
-    Ucs4ToUtf8Append(codepoint, &output);
+    CodepointToUtf8Append(codepoint, &output);
   }
   return output;
 }
 
-char32_t Util::Utf8ToUcs4(const char *begin, const char *end, size_t *mblen) {
+char32_t Util::Utf8ToCodepoint(const char *begin, const char *end,
+                               size_t *mblen) {
   absl::string_view s(begin, end - begin);
   absl::string_view rest;
   char32_t c = 0;
@@ -508,21 +510,21 @@ bool Util::IsValidUtf8(absl::string_view s) {
   return true;
 }
 
-std::string Util::Ucs4ToUtf8(char32_t c) {
+std::string Util::CodepointToUtf8(char32_t c) {
   std::string output;
-  Ucs4ToUtf8Append(c, &output);
+  CodepointToUtf8Append(c, &output);
   return output;
 }
 
-void Util::Ucs4ToUtf8Append(char32_t c, std::string *output) {
+void Util::CodepointToUtf8Append(char32_t c, std::string *output) {
   char buf[7];
-  output->append(buf, Ucs4ToUtf8(c, buf));
+  output->append(buf, CodepointToUtf8(c, buf));
 }
 
-size_t Util::Ucs4ToUtf8(char32_t c, char *output) {
+size_t Util::CodepointToUtf8(char32_t c, char *output) {
   if (c == 0) {
-    // Do nothing if |c| is NUL. Previous implementation of Ucs4ToUtf8Append
-    // worked like this.
+    // Do nothing if |c| is NUL. Previous implementation of
+    // CodepointToUtf8Append worked like this.
     output[0] = '\0';
     return 0;
   }
@@ -905,7 +907,7 @@ Util::FormType Util::GetFormType(char32_t w) {
 // return script type of first character in str
 Util::ScriptType Util::GetScriptType(const char *begin, const char *end,
                                      size_t *mblen) {
-  const char32_t w = Utf8ToUcs4(begin, end, mblen);
+  const char32_t w = Utf8ToCodepoint(begin, end, mblen);
   return GetScriptType(w);
 }
 
@@ -1017,17 +1019,17 @@ namespace {
 // constexpr uint64_t kJisX0208BitmapIndex
 #include "base/character_set.inc"
 
-bool IsJisX0208Char(char32_t ucs4) {
-  if (ucs4 <= 0x7F) {
+bool IsJisX0208Char(char32_t codepoint) {
+  if (codepoint <= 0x7F) {
     return true;  // ASCII
   }
 
-  if ((65377 <= ucs4 && ucs4 <= 65439)) {
+  if ((65377 <= codepoint && codepoint <= 65439)) {
     return true;  // JISX0201
   }
 
-  if (ucs4 < 65536) {
-    const int index = ucs4 / 1024;
+  if (codepoint < 65536) {
+    const int index = codepoint / 1024;
     if ((kJisX0208BitmapIndex & (static_cast<uint64_t>(1) << index)) == 0) {
       return false;
     }
@@ -1035,7 +1037,7 @@ bool IsJisX0208Char(char32_t ucs4) {
     const int bitmap_index =
         absl::popcount(kJisX0208BitmapIndex << (63 - index)) - 1;
     const uint32_t *bitmap = kJisX0208Bitmap[bitmap_index];
-    if ((bitmap[(ucs4 % 1024) / 32] >> (ucs4 % 32)) & 0b1) {
+    if ((bitmap[(codepoint % 1024) / 32] >> (codepoint % 32)) & 0b1) {
       return true;  // JISX0208
     }
     return false;

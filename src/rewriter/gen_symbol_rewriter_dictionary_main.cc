@@ -104,9 +104,9 @@ SortingKeyMap CreateSortingKeyMap(const std::string &auto_file,
     const std::vector<absl::string_view> fields =
         absl::StrSplit(line, absl::ByAnyChar("\t "), absl::SkipEmpty());
     CHECK_GE(fields.size(), 2);
-    uint32_t ucs4 = 0;
-    CHECK(absl::SimpleHexAtoi(fields[0], &ucs4));
-    const std::string utf8 = Util::Ucs4ToUtf8(ucs4);
+    uint32_t codepoint = 0;
+    CHECK(absl::SimpleHexAtoi(fields[0], &codepoint));
+    const std::string utf8 = Util::CodepointToUtf8(codepoint);
     if (sorting_keys.contains(utf8)) {
       // ordered by rule
       continue;

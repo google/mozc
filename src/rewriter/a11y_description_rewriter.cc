@@ -102,7 +102,7 @@ std::string A11yDescriptionRewriter::GetKanaCharacterLabel(
        current_type != HALF_WIDTH_KATAKANA_SMALL_LETTER)) {
     // The expected result of "あい" is "あい。 ヒラガナ あい",
     // thus the output of "い" should be "い" only rather than "ヒラガナ い".
-    Util::Ucs4ToUtf8Append(codepoint, &buf);
+    Util::CodepointToUtf8Append(codepoint, &buf);
     return buf;
   }
   absl::StrAppend(&buf, "。");
@@ -146,7 +146,7 @@ std::string A11yDescriptionRewriter::GetKanaCharacterLabel(
     default:
       break;
   }
-  Util::Ucs4ToUtf8Append(codepoint, &buf);
+  Util::CodepointToUtf8Append(codepoint, &buf);
   return buf;
 }
 
@@ -193,7 +193,7 @@ void A11yDescriptionRewriter::AddA11yDescription(
       previous_type = current_type;
       current_type = GetCharacterType(codepoint);
       if (current_type == OTHERS) {
-        const std::string key = Util::Ucs4ToUtf8(codepoint);
+        const std::string key = Util::CodepointToUtf8(codepoint);
         const SerializedDictionary::IterRange range =
             description_map_->equal_range(key);
         if (range.first != range.second) {

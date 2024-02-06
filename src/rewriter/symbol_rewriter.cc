@@ -105,8 +105,8 @@ std::string SymbolRewriter::GetDescription(
 // static function
 bool SymbolRewriter::IsSymbol(const absl::string_view key) {
   for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
-    const char32_t ucs4 = iter.Get();
-    if (ucs4 >= 0x3041 && ucs4 <= 0x309F) {  // hiragana
+    const char32_t codepoint = iter.Get();
+    if (codepoint >= 0x3041 && codepoint <= 0x309F) {  // hiragana
       return false;
     }
   }

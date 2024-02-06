@@ -34,6 +34,7 @@
 #include <utility>
 
 #include "absl/status/status.h"
+#include "base/logging.h"
 #include "converter/connector.h"
 #include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"
@@ -70,6 +71,12 @@ class Modules {
   void PresetDictionary(
       std::unique_ptr<dictionary::DictionaryInterface> dictionary);
   void PresetRescorer(std::unique_ptr<prediction::RescorerInterface> rescorer);
+
+  const DataManagerInterface &GetDataManager() const {
+    // DataManager must be valid.
+    DCHECK(data_manager_);
+    return *data_manager_;
+  }
 
   const dictionary::PosMatcher *GetPosMatcher() const {
     return pos_matcher_.get();
@@ -109,6 +116,7 @@ class Modules {
 
  private:
   bool initialized_ = false;
+  const DataManagerInterface *data_manager_ = nullptr;
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   Connector connector_;

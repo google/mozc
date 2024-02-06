@@ -298,7 +298,7 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
     return FileUtil::JoinPath(pw.pw_dir, ".mozc");
   }
 
-  const std::string old_dir = FileUtil::JoinPath(home, ".mozc");
+  std::string old_dir = FileUtil::JoinPath(home, ".mozc");
   if (FileUtil::DirectoryExists(old_dir).ok()) {
     return old_dir;
   }

@@ -97,11 +97,11 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   const ConversionRequest request;
 
   struct UCS4UTF8Data {
-    absl::string_view ucs4;
+    absl::string_view codepoint;
     absl::string_view utf8;
   };
 
-  constexpr UCS4UTF8Data kUcs4Utf8Data[] = {
+  constexpr UCS4UTF8Data kCodepointUtf8Data[] = {
       // Hiragana
       {"U+3042", "あ"},
       {"U+3044", "い"},
@@ -159,8 +159,8 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
 
   // All ascii code would be accepted.
   for (uint32_t ascii = 0x20; ascii < 0x7F; ++ascii) {
-    const std::string ucs4 = absl::StrFormat("U+00%02X", ascii);
-    InitSegments(ucs4, ucs4, &segments);
+    const std::string codepoint = absl::StrFormat("U+00%02X", ascii);
+    InitSegments(codepoint, codepoint, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(segments.segment(0).candidate(0).value.at(0), ascii);
     EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
@@ -168,10 +168,11 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   }
 
   // Mozc accepts Japanese characters
-  for (size_t i = 0; i < std::size(kUcs4Utf8Data); ++i) {
-    InitSegments(kUcs4Utf8Data[i].ucs4, kUcs4Utf8Data[i].ucs4, &segments);
+  for (size_t i = 0; i < std::size(kCodepointUtf8Data); ++i) {
+    InitSegments(kCodepointUtf8Data[i].codepoint,
+                 kCodepointUtf8Data[i].codepoint, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_TRUE(ContainCandidate(segments, kUcs4Utf8Data[i].utf8));
+    EXPECT_TRUE(ContainCandidate(segments, kCodepointUtf8Data[i].utf8));
     EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
                 Segment::Candidate::NO_MODIFICATION);
   }

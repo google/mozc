@@ -37,7 +37,7 @@ namespace win32 {
 namespace {
 
 // TODO(yukawa): Move this to util.cc.
-char32_t SurrogatePairToUcs4(wchar_t high, wchar_t low) {
+char32_t SurrogatePairToCodepoint(wchar_t high, wchar_t low) {
   return (((high - 0xD800) & 0x3FF) << 10) + ((low - 0xDC00) & 0x3FF) + 0x10000;
 }
 
@@ -105,12 +105,13 @@ SurrogatePairObserver::ClientAction SurrogatePairObserver::OnKeyEvent(
       }
       if (IS_LOW_SURROGATE(ucs2)) {
         if (is_keydown) {
-          const char32_t ucs4 = SurrogatePairToUcs4(surrogate_high_, ucs2);
+          const char32_t codepoint =
+              SurrogatePairToCodepoint(surrogate_high_, ucs2);
           if (!is_test_key) {
             surrogate_low_ = ucs2;
             state_ = WAIT_FOR_SURROGATE_LOW_UP;
           }
-          return ClientAction(DO_DEFAULT_ACTION_WITH_RETURNED_UCS4, ucs4);
+          return ClientAction(DO_DEFAULT_ACTION_WITH_RETURNED_UCS4, codepoint);
         }
         // Ignore orhpaned key-up of low surrogate.
         return ClientAction(CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER, 0);
@@ -135,12 +136,13 @@ SurrogatePairObserver::ClientAction SurrogatePairObserver::OnKeyEvent(
       }
       if (IS_LOW_SURROGATE(ucs2)) {
         if (is_keydown) {
-          const char32_t ucs4 = SurrogatePairToUcs4(surrogate_high_, ucs2);
+          const char32_t codepoint =
+              SurrogatePairToCodepoint(surrogate_high_, ucs2);
           if (!is_test_key) {
             surrogate_low_ = ucs2;
             state_ = WAIT_FOR_SURROGATE_LOW_UP;
           }
-          return ClientAction(DO_DEFAULT_ACTION_WITH_RETURNED_UCS4, ucs4);
+          return ClientAction(DO_DEFAULT_ACTION_WITH_RETURNED_UCS4, codepoint);
         }
         // Ignore orhpaned key-up of low surrogate.
         return ClientAction(CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER, 0);
@@ -177,14 +179,14 @@ SurrogatePairObserver::ClientAction SurrogatePairObserver::OnKeyEvent(
           // Ignore orhpaned key-up of low surrogate.
           return ClientAction(CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER, 0);
         }
-        const char32_t ucs4 =
-            SurrogatePairToUcs4(surrogate_high_, surrogate_low_);
+        const char32_t codepoint =
+            SurrogatePairToCodepoint(surrogate_high_, surrogate_low_);
         if (!is_test_key) {
           state_ = INITIAL_STATE;
           surrogate_high_ = L'\0';
           surrogate_low_ = L'\0';
         }
-        return ClientAction(DO_DEFAULT_ACTION_WITH_RETURNED_UCS4, ucs4);
+        return ClientAction(DO_DEFAULT_ACTION_WITH_RETURNED_UCS4, codepoint);
       }
       if (!is_test_key) {
         state_ = INITIAL_STATE;

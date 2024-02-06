@@ -59,8 +59,8 @@
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
-#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -124,7 +124,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   SuppressionDictionary *GetSuppressionDictionary() {
-    return data_and_predictor_->suppression_dictionary.get();
+    return data_and_predictor_->modules.GetMutableSuppressionDictionary();
   }
 
   bool IsSuggested(UserHistoryPredictor *predictor, const absl::string_view key,
@@ -408,21 +408,17 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
  private:
   struct DataAndPredictor {
-    std::unique_ptr<MockDictionary> dictionary;
-    std::unique_ptr<SuppressionDictionary> suppression_dictionary;
+    testing::MockDataManager data_manager;
+    engine::Modules modules;
     std::unique_ptr<UserHistoryPredictor> predictor;
-    dictionary::PosMatcher pos_matcher;
   };
 
   std::unique_ptr<DataAndPredictor> CreateDataAndPredictor() const {
     auto ret = std::make_unique<DataAndPredictor>();
-    testing::MockDataManager data_manager;
-    ret->dictionary = std::make_unique<MockDictionary>();
-    ret->suppression_dictionary = std::make_unique<SuppressionDictionary>();
-    ret->pos_matcher.Set(data_manager.GetPosMatcherData());
-    ret->predictor = std::make_unique<UserHistoryPredictor>(
-        ret->dictionary.get(), &ret->pos_matcher,
-        ret->suppression_dictionary.get(), false);
+    ret->modules.PresetDictionary(std::make_unique<MockDictionary>());
+    CHECK_OK(ret->modules.Init(&ret->data_manager));
+    ret->predictor =
+        std::make_unique<UserHistoryPredictor>(ret->modules, false);
     ret->predictor->WaitForSyncer();
     return ret;
   }
@@ -1872,7 +1868,7 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   // An android pua emoji. It is obsolete and should return false.
-  *entry.mutable_value() = Util::Ucs4ToUtf8(0xFE000);
+  *entry.mutable_value() = Util::CodepointToUtf8(0xFE000);
   EXPECT_FALSE(predictor->IsValidEntry(entry));
   EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
@@ -2046,18 +2042,18 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
 
 namespace {
 
-std::string RemoveLastUcs4Character(const absl::string_view input) {
-  const size_t ucs4_count = Util::CharsLen(input);
-  if (ucs4_count == 0) {
+std::string RemoveLastCodepointCharacter(const absl::string_view input) {
+  const size_t codepoint_count = Util::CharsLen(input);
+  if (codepoint_count == 0) {
     return "";
   }
 
-  size_t ucs4_processed = 0;
+  size_t codepoint_processed = 0;
   std::string output;
   for (ConstChar32Iterator iter(input);
-       !iter.Done() && (ucs4_processed < ucs4_count - 1);
-       iter.Next(), ++ucs4_processed) {
-    Util::Ucs4ToUtf8Append(iter.Get(), &output);
+       !iter.Done() && (codepoint_processed < codepoint_count - 1);
+       iter.Next(), ++codepoint_processed) {
+    Util::CodepointToUtf8Append(iter.Get(), &output);
   }
   return output;
 }
@@ -2160,7 +2156,7 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
     const std::string description(data.scenario_description);
     const std::string input(data.input);
     const std::string output(data.output);
-    const std::string partial_input(RemoveLastUcs4Character(input));
+    const std::string partial_input(RemoveLastCodepointCharacter(input));
     const bool expect_sensitive = data.is_sensitive;
 
     // Initial commit.
@@ -2738,7 +2734,7 @@ void InitSegmentsFromInputSequence(const absl::string_view text,
 
   while (begin < end) {
     commands::KeyEvent key;
-    const char32_t w = Util::Utf8ToUcs4(begin, end, &mblen);
+    const char32_t w = Util::Utf8ToCodepoint(begin, end, &mblen);
     if (w <= 0x7F) {  // IsAscii, w is unsigned.
       key.set_key_code(*begin);
     } else {
@@ -2754,8 +2750,7 @@ void InitSegmentsFromInputSequence(const absl::string_view text,
   request->set_request_type(ConversionRequest::PREDICTION);
   Segment *segment = segments->add_segment();
   CHECK(segment);
-  std::string query;
-  composer->GetQueryForPrediction(&query);
+  std::string query = composer->GetQueryForPrediction();
   segment->set_key(query);
 }
 }  // namespace

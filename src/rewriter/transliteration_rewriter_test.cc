@@ -67,9 +67,7 @@ void InsertASCIISequence(const absl::string_view text,
 
 void SetAkann(composer::Composer *composer) {
   InsertASCIISequence("akann", composer);
-  std::string query;
-  composer->GetQueryForConversion(&query);
-  EXPECT_EQ(query, "あかん");
+  EXPECT_EQ(composer->GetQueryForConversion(), "あかん");
 }
 
 }  // namespace
@@ -240,9 +238,7 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
   // Set kamabokoinbou to composer.
   {
     InsertASCIISequence("kamabokonoinbou", &composer);
-    std::string query;
-    composer.GetQueryForConversion(&query);
-    EXPECT_EQ(query, "かまぼこのいんぼう");
+    EXPECT_EQ(composer.GetQueryForConversion(), "かまぼこのいんぼう");
   }
 
   Segments segments;
@@ -284,9 +280,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
   // Set kan to composer.
   {
     InsertASCIISequence("kan", &composer);
-    std::string query;
-    composer.GetQueryForConversion(&query);
-    EXPECT_EQ(query, "かん");
+    EXPECT_EQ(composer.GetQueryForConversion(), "かん");
   }
 
   Segments segments;
@@ -513,9 +507,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
 
   {
     InsertASCIISequence("11#", &composer);
-    std::string query;
-    composer.GetQueryForConversion(&query);
-    EXPECT_EQ(query, "い、");
+    EXPECT_EQ(composer.GetQueryForConversion(), "い、");
   }
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -563,9 +555,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
 
   {
     InsertASCIISequence("1212", &composer);
-    std::string query;
-    composer.GetQueryForConversion(&query);
-    EXPECT_EQ(query, "あかあか");
+    EXPECT_EQ(composer.GetQueryForConversion(), "あかあか");
   }
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -618,9 +608,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
 
   {
     InsertASCIISequence("1a", &composer);
-    std::string query;
-    composer.GetQueryForConversion(&query);
-    EXPECT_EQ(query, "あき");
+    EXPECT_EQ(composer.GetQueryForConversion(), "あき");
   }
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -671,9 +659,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     composer::Composer composer(&table, &client_request, &default_config());
 
     InsertASCIISequence("shi", &composer);
-    std::string query;
-    composer.GetQueryForConversion(&query);
-    EXPECT_EQ(query, kShi);
+    EXPECT_EQ(composer.GetQueryForConversion(), kShi);
 
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -689,9 +675,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     composer::Composer composer(&table, &client_request, &default_config());
 
     InsertASCIISequence("si", &composer);
-    std::string query;
-    composer.GetQueryForConversion(&query);
-    EXPECT_EQ(query, kShi);
+    EXPECT_EQ(composer.GetQueryForConversion(), kShi);
 
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -719,9 +703,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
   composer::Composer composer(&table, &request, &default_config());
   {
     InsertASCIISequence("<'de", &composer);
-    std::string query;
-    composer.GetQueryForConversion(&query);
-    EXPECT_EQ(query, "あん゜で");
+    EXPECT_EQ(composer.GetQueryForConversion(), "あん゜で");
   }
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -802,8 +784,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
 
     std::string ascii_input(1, static_cast<char>(i));
     InsertASCIISequence(ascii_input, &composer);
-    std::string query;
-    composer.GetQueryForConversion(&query);
+    const std::string query = composer.GetQueryForConversion();
     SCOPED_TRACE(absl::StrFormat("char code = %d, ascii_input = %s, query = %s",
                                  i, ascii_input, query));
 
@@ -847,9 +828,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
     composer::Composer composer(&table, &client_request, &default_config());
 
     InsertASCIISequence("ssh", &composer);
-    std::string query;
-    composer.GetQueryForPrediction(&query);
-    EXPECT_EQ(query, kXtsu);
+    EXPECT_EQ(composer.GetQueryForPrediction(), kXtsu);
 
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -879,9 +858,7 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
     composer::Composer composer(&table, &client_request, &default_config());
 
     InsertASCIISequence("ssh", &composer);  // "っsh|"
-    std::string query;
-    composer.GetQueryForPrediction(&query);
-    EXPECT_EQ(query, kXtsu);
+    EXPECT_EQ(composer.GetQueryForPrediction(), kXtsu);
 
     composer.MoveCursorTo(1);  // "っ|sh"
 

@@ -89,7 +89,6 @@ mozc_cc_library(
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
-        "//prediction:predictor_interface",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -195,7 +194,6 @@ mozc_cc_library(
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
-        "//prediction:predictor_interface",
         "//testing:gunit",
         "@com_google_absl//absl/strings",
     ],
@@ -212,7 +210,6 @@ mozc_cc_library(
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
-        "//prediction:predictor_interface",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -234,8 +231,8 @@ mozc_cc_test(
     deps = [
         ":engine_factory",
         ":engine_interface",
-        "//prediction:predictor_interface",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 

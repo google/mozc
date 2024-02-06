@@ -118,11 +118,11 @@ std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
       // length of kanji <= 2.
       has_kanji = true;
       ++pos;
-      Util::Ucs4ToUtf8Append(w, &result);
+      Util::CodepointToUtf8Append(w, &result);
       continue;
     } else if (pos > 0 && s == Util::HIRAGANA) {
       has_hiragana = true;
-      Util::Ucs4ToUtf8Append(w, &result);
+      Util::CodepointToUtf8Append(w, &result);
       break;
     } else {
       return "";

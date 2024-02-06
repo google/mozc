@@ -210,7 +210,7 @@ bool KeyParser::ParseKeyVector(const absl::Span<const std::string> keys,
         // Multiple keys are not supported.
         return false;
       }
-      key_event->set_key_code(Util::Utf8ToUcs4(key));
+      key_event->set_key_code(Util::Utf8ToCodepoint(key));
       continue;
     }
 

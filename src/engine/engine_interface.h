@@ -39,7 +39,6 @@
 #include "dictionary/suppression_dictionary.h"
 #include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
-#include "prediction/predictor_interface.h"
 
 namespace mozc {
 
@@ -58,9 +57,8 @@ class EngineInterface {
   // engine class and should not be deleted by callers.
   virtual ConverterInterface *GetConverter() const = 0;
 
-  // Returns a reference to a predictor. The returned instance is managed by the
-  // engine class and should not be deleted by callers.
-  virtual prediction::PredictorInterface *GetPredictor() const = 0;
+  // Returns the predictor name.
+  virtual absl::string_view GetPredictorName() const = 0;
 
   // Returns a reference to the suppression dictionary. The returned instance is
   // managed by the engine class and should not be deleted by callers.

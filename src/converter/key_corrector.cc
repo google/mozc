@@ -55,8 +55,8 @@ bool RewriteNN(size_t key_pos, const char *begin, const char *end,
     return false;
   }
 
-  const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, mblen);
-  if (ucs4 != 0x3093) {  // "ん"
+  const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, mblen);
+  if (codepoint != 0x3093) {  // "ん"
     *mblen = 0;
     return false;
   }
@@ -67,31 +67,32 @@ bool RewriteNN(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const uint16_t next_ucs4 = Util::Utf8ToUcs4(begin + *mblen, end, &mblen2);
-  uint16_t output_ucs4 = 0x0000;
-  switch (next_ucs4) {
-    case 0x3042:             // "あ"
-      output_ucs4 = 0x306A;  // "な"
+  const uint16_t next_codepoint =
+      Util::Utf8ToCodepoint(begin + *mblen, end, &mblen2);
+  uint16_t output_codepoint = 0x0000;
+  switch (next_codepoint) {
+    case 0x3042:                  // "あ"
+      output_codepoint = 0x306A;  // "な"
       break;
-    case 0x3044:             // "い"
-      output_ucs4 = 0x306B;  // "に"
+    case 0x3044:                  // "い"
+      output_codepoint = 0x306B;  // "に"
       break;
-    case 0x3046:             // "う"
-      output_ucs4 = 0x306C;  // "ぬ"
+    case 0x3046:                  // "う"
+      output_codepoint = 0x306C;  // "ぬ"
       break;
-    case 0x3048:             // "え"
-      output_ucs4 = 0x306D;  // "ね"
+    case 0x3048:                  // "え"
+      output_codepoint = 0x306D;  // "ね"
       break;
-    case 0x304A:             // "お"
-      output_ucs4 = 0x306E;  // "の"
+    case 0x304A:                  // "お"
+      output_codepoint = 0x306E;  // "の"
       break;
     default:
       break;
   }
 
-  if (output_ucs4 != 0x0000) {  // "ん[あいうえお]"
-    Util::Ucs4ToUtf8Append(ucs4, output);
-    Util::Ucs4ToUtf8Append(output_ucs4, output);
+  if (output_codepoint != 0x0000) {  // "ん[あいうえお]"
+    Util::CodepointToUtf8Append(codepoint, output);
+    Util::CodepointToUtf8Append(output_codepoint, output);
     *mblen += mblen2;
     return true;
   } else {  // others
@@ -120,13 +121,13 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
       return false;
     }
     size_t mblen2 = 0;
-    const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen2);
-    if ((kPattern[i] == 0x0000 && ucs4 != 0x3093 &&
-         Util::GetScriptType(ucs4) == Util::HIRAGANA) ||
-        (kPattern[i] == 0x3093 && ucs4 == 0x3093)) {
+    const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, &mblen2);
+    if ((kPattern[i] == 0x0000 && codepoint != 0x3093 &&
+         Util::GetScriptType(codepoint) == Util::HIRAGANA) ||
+        (kPattern[i] == 0x3093 && codepoint == 0x3093)) {
       if (i == 0) {
         first_mblen = mblen2;
-        first_char = ucs4;
+        first_char = codepoint;
       }
     } else {
       *mblen = 0;
@@ -147,22 +148,22 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen2);
-  if (ucs4 == 0x3093) {  // "ん" ignore
+  const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, &mblen2);
+  if (codepoint == 0x3093) {  // "ん" ignore
     *mblen = 0;
     return false;
-  } else if (ucs4 == 0x3042 ||  // "[あいうえお]"
-             ucs4 == 0x3044 || ucs4 == 0x3046 || ucs4 == 0x3048 ||
-             ucs4 == 0x304A) {
+  } else if (codepoint == 0x3042 ||  // "[あいうえお]"
+             codepoint == 0x3044 || codepoint == 0x3046 ||
+             codepoint == 0x3048 || codepoint == 0x304A) {
     // drop first "ん" and leave "ん[あいうえお]"
     // remained part will be handled by RewriteNN(), e.g., "んあ" -> "んな"
-    Util::Ucs4ToUtf8Append(first_char, output);
+    Util::CodepointToUtf8Append(first_char, output);
     // Skip one Hiragana character in UTF-8, which is 3 bytes.
     *mblen = first_mblen + 3;
     return true;
   } else {  // "[^あいうえお]"
-    Util::Ucs4ToUtf8Append(first_char, output);
-    Util::Ucs4ToUtf8Append(0x3093, output);  // "ん"
+    Util::CodepointToUtf8Append(first_char, output);
+    Util::CodepointToUtf8Append(0x3093, output);  // "ん"
     return true;
   }
 
@@ -175,8 +176,8 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
 // "にょ" -> "んよ"
 bool RewriteNI(size_t key_pos, const char *begin, const char *end,
                size_t *mblen, std::string *output) {
-  const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, mblen);
-  if (ucs4 != 0x306B) {  // "に"
+  const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, mblen);
+  if (codepoint != 0x306B) {  // "に"
     *mblen = 0;
     return false;
   }
@@ -187,26 +188,27 @@ bool RewriteNI(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const uint16_t next_ucs4 = Util::Utf8ToUcs4(begin + *mblen, end, &mblen2);
-  uint16_t output_ucs4 = 0x0000;
-  switch (next_ucs4) {
-    case 0x3083:             // "ゃ"
-      output_ucs4 = 0x3084;  // "や"
+  const uint16_t next_codepoint =
+      Util::Utf8ToCodepoint(begin + *mblen, end, &mblen2);
+  uint16_t output_codepoint = 0x0000;
+  switch (next_codepoint) {
+    case 0x3083:                  // "ゃ"
+      output_codepoint = 0x3084;  // "や"
       break;
-    case 0x3085:             // "ゅ"
-      output_ucs4 = 0x3086;  // "ゆ"
+    case 0x3085:                  // "ゅ"
+      output_codepoint = 0x3086;  // "ゆ"
       break;
-    case 0x3087:             // "ょ"
-      output_ucs4 = 0x3088;  // "よ"
+    case 0x3087:                  // "ょ"
+      output_codepoint = 0x3088;  // "よ"
       break;
     default:
-      output_ucs4 = 0x0000;
+      output_codepoint = 0x0000;
       break;
   }
 
-  if (output_ucs4 != 0x0000) {
-    Util::Ucs4ToUtf8Append(0x3093, output);  // "ん"
-    Util::Ucs4ToUtf8Append(output_ucs4, output);
+  if (output_codepoint != 0x0000) {
+    Util::CodepointToUtf8Append(0x3093, output);  // "ん"
+    Util::CodepointToUtf8Append(output_codepoint, output);
     *mblen += mblen2;
     return true;
   } else {
@@ -225,9 +227,9 @@ bool RewriteM(size_t key_pos, const char *begin, const char *end, size_t *mblen,
     *mblen = 0;
     return false;
   }
-  const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, mblen);
+  const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, mblen);
   // "m" or "ｍ" (don't take capitial letter, as "M" might not be a misspelling)
-  if (ucs4 != 0x006D && ucs4 != 0xFF4D) {
+  if (codepoint != 0x006D && codepoint != 0xFF4D) {
     *mblen = 0;
     return false;
   }
@@ -238,13 +240,14 @@ bool RewriteM(size_t key_pos, const char *begin, const char *end, size_t *mblen,
   }
 
   size_t mblen2 = 0;
-  const uint16_t next_ucs4 = Util::Utf8ToUcs4(begin + *mblen, end, &mblen2);
+  const uint16_t next_codepoint =
+      Util::Utf8ToCodepoint(begin + *mblen, end, &mblen2);
   // "[はばぱひびぴふぶぷへべぺほぼぽ]" => [0x306F .. 0X307D]
   // Here we want to take "[は..ぽ]" except for "はひふへほ"
-  if (next_ucs4 % 3 != 0 &&                          // not "はひふへほ"
-      next_ucs4 >= 0x306F && next_ucs4 <= 0x307D) {  // "は..ぽ"
-    Util::Ucs4ToUtf8Append(0x3093, output);          // "ん"
-    Util::Ucs4ToUtf8Append(next_ucs4, output);
+  if (next_codepoint % 3 != 0 &&  // not "はひふへほ"
+      next_codepoint >= 0x306F && next_codepoint <= 0x307D) {  // "は..ぽ"
+    Util::CodepointToUtf8Append(0x3093, output);               // "ん"
+    Util::CodepointToUtf8Append(next_codepoint, output);
     *mblen += mblen2;
     return true;
   } else {
@@ -273,14 +276,14 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
       return false;
     }
     size_t mblen2 = 0;
-    const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen2);
-    if ((kPattern[i] == 0x0000 && ucs4 != 0x3063 &&
-         Util::GetScriptType(ucs4) == Util::HIRAGANA) ||
-        (kPattern[i] == 0x3063 && ucs4 == 0x3063)) {
+    const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, &mblen2);
+    if ((kPattern[i] == 0x0000 && codepoint != 0x3063 &&
+         Util::GetScriptType(codepoint) == Util::HIRAGANA) ||
+        (kPattern[i] == 0x3063 && codepoint == 0x3063)) {
       if (i == 0) {
-        first_char = ucs4;
+        first_char = codepoint;
       } else if (i == std::size(kPattern) - 1) {
-        last_char = ucs4;
+        last_char = codepoint;
       }
     } else {
       *mblen = 0;
@@ -295,9 +298,9 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
     return false;
   }
 
-  Util::Ucs4ToUtf8Append(first_char, output);
-  Util::Ucs4ToUtf8Append(0x3063, output);  // "っ"
-  Util::Ucs4ToUtf8Append(last_char, output);
+  Util::CodepointToUtf8Append(first_char, output);
+  Util::CodepointToUtf8Append(0x3063, output);  // "っ"
+  Util::CodepointToUtf8Append(last_char, output);
 
   return true;
 }
@@ -312,7 +315,7 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
 // "りゅ[^う] -> りゅう"
 bool RewriteYu(size_t key_pos, const char *begin, const char *end,
                size_t *mblen, std::string *output) {
-  const char32_t first_char = Util::Utf8ToUcs4(begin, end, mblen);
+  const char32_t first_char = Util::Utf8ToCodepoint(begin, end, mblen);
   if (first_char != 0x304D && first_char != 0x3057 && first_char != 0x3061 &&
       first_char != 0x306B && first_char != 0x3072 &&
       first_char != 0x308A) {  // !"きしちにひり"
@@ -326,7 +329,8 @@ bool RewriteYu(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const char32_t next_char = Util::Utf8ToUcs4(begin + *mblen, end, &mblen2);
+  const char32_t next_char =
+      Util::Utf8ToCodepoint(begin + *mblen, end, &mblen2);
   if (next_char != 0x3085) {  // "ゅ"
     *mblen = 0;
     return false;
@@ -339,7 +343,7 @@ bool RewriteYu(size_t key_pos, const char *begin, const char *end,
 
   size_t mblen3 = 0;
   const char32_t last_char =
-      Util::Utf8ToUcs4(begin + *mblen + mblen2, end, &mblen3);
+      Util::Utf8ToCodepoint(begin + *mblen + mblen2, end, &mblen3);
   if (last_char == 0x3046) {  // "う"
     *mblen = 0;
     return false;
@@ -347,9 +351,9 @@ bool RewriteYu(size_t key_pos, const char *begin, const char *end,
 
   // OK, rewrite
   *mblen += mblen2;
-  Util::Ucs4ToUtf8Append(first_char, output);
-  Util::Ucs4ToUtf8Append(next_char, output);  // "ゅ"
-  Util::Ucs4ToUtf8Append(0x3046, output);     // "う"
+  Util::CodepointToUtf8Append(first_char, output);
+  Util::CodepointToUtf8Append(next_char, output);  // "ゅ"
+  Util::CodepointToUtf8Append(0x3046, output);     // "う"
 
   return true;
 }
@@ -408,8 +412,8 @@ bool KeyCorrector::CorrectKey(const std::string &key, InputMode mode,
          !RewriteNI(key_pos, begin, end, &mblen, &corrected_key_) &&
          !RewriteSmallTSU(key_pos, begin, end, &mblen, &corrected_key_) &&
          !RewriteM(key_pos, begin, end, &mblen, &corrected_key_))) {
-      const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
-      Util::Ucs4ToUtf8Append(ucs4, &corrected_key_);
+      const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, &mblen);
+      Util::CodepointToUtf8Append(codepoint, &corrected_key_);
     }
 
     const size_t corrected_mblen = corrected_key_.size() - org_len;

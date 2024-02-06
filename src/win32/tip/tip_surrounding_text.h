@@ -84,25 +84,25 @@ class TipSurroundingText {
 
   // Returns true when succeeds to delete preceding text from the beginning of
   // the selected range.
-  // Caveats: |num_characters_to_be_deleted_in_ucs4| is not the number of
+  // Caveats: |num_characters_to_be_deleted_in_codepoint| is not the number of
   //     elements in UTF16. Beware of surrogate pairs.
   // Caveats: This method internally depends on synchronous edit session.
   //     You should call this method when and only when a synchronous edit
   //     session is guaranteed to be safe. A keyevent hander is one of
   //     examples. See the following document for details.
   //     http://blogs.msdn.com/b/tsfaware/archive/2007/05/17/rules-of-text-services.aspx
-  static bool DeletePrecedingText(TipTextService *text_service,
-                                  ITfContext *context,
-                                  size_t num_characters_to_be_deleted_in_ucs4);
+  static bool DeletePrecedingText(
+      TipTextService *text_service, ITfContext *context,
+      size_t num_characters_to_be_deleted_in_codepoint);
 };
 
 class TipSurroundingTextUtil {
  public:
-  // Returns true if |text| has more than |characters_in_ucs4| characters.
+  // Returns true if |text| has more than |characters_in_codepoint| characters.
   // When succeeds, the last |*characters_in_utf16| characters in |text|
-  // can be measured as |characters_in_ucs4| in the unit of UCS4.
+  // can be measured as |characters_in_codepoint| in the unit of UCS4.
   static bool MeasureCharactersBackward(std::wstring_view text,
-                                        size_t characters_in_ucs4,
+                                        size_t characters_in_codepoint,
                                         size_t *characters_in_utf16);
 };
 

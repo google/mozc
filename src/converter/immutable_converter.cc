@@ -65,7 +65,6 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "engine/modules.h"
-#include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -283,7 +282,7 @@ Lattice *GetLattice(Segments *segments, bool is_prediction) {
 
 }  // namespace
 
-ImmutableConverterImpl::ImmutableConverterImpl(const engine::Modules &modules)
+ImmutableConverter::ImmutableConverter(const engine::Modules &modules)
     : dictionary_(modules.GetDictionary()),
       suffix_dictionary_(modules.GetSuffixDictionary()),
       suppression_dictionary_(modules.GetSuppressionDictionary()),
@@ -306,8 +305,8 @@ ImmutableConverterImpl::ImmutableConverterImpl(const engine::Modules &modules)
   DCHECK(pos_group_);
 }
 
-void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
-                                                   size_t expand_size) const {
+void ImmutableConverter::InsertDummyCandidates(Segment *segment,
+                                               size_t expand_size) const {
   const Segment::Candidate *top_candidate =
       segment->candidates_size() == 0 ? nullptr : segment->mutable_candidate(0);
   const Segment::Candidate *last_candidate =
@@ -403,8 +402,8 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
   DCHECK_GT(segment->candidates_size(), 0);
 }
 
-void ImmutableConverterImpl::ApplyResegmentRules(size_t pos,
-                                                 Lattice *lattice) const {
+void ImmutableConverter::ApplyResegmentRules(size_t pos,
+                                             Lattice *lattice) const {
   if (ResegmentArabicNumberAndSuffix(pos, lattice)) {
     MOZC_VLOG(1) << "ResegmentArabicNumberAndSuffix returned true";
     return;
@@ -423,7 +422,7 @@ void ImmutableConverterImpl::ApplyResegmentRules(size_t pos,
 
 // Currently, only arabic_number + suffix patterns are resegmented
 // TODO(taku): consider kanji number into consideration
-bool ImmutableConverterImpl::ResegmentArabicNumberAndSuffix(
+bool ImmutableConverter::ResegmentArabicNumberAndSuffix(
     size_t pos, Lattice *lattice) const {
   const Node *bnode = lattice->begin_nodes(pos);
   if (bnode == nullptr) {
@@ -496,7 +495,7 @@ bool ImmutableConverterImpl::ResegmentArabicNumberAndSuffix(
   return modified;
 }
 
-bool ImmutableConverterImpl::ResegmentPrefixAndArabicNumber(
+bool ImmutableConverter::ResegmentPrefixAndArabicNumber(
     size_t pos, Lattice *lattice) const {
   const Node *bnode = lattice->begin_nodes(pos);
   if (bnode == nullptr) {
@@ -572,8 +571,8 @@ bool ImmutableConverterImpl::ResegmentPrefixAndArabicNumber(
   return modified;
 }
 
-bool ImmutableConverterImpl::ResegmentPersonalName(size_t pos,
-                                                   Lattice *lattice) const {
+bool ImmutableConverter::ResegmentPersonalName(size_t pos,
+                                               Lattice *lattice) const {
   const Node *bnode = lattice->begin_nodes(pos);
   if (bnode == nullptr) {
     MOZC_VLOG(1) << "bnode is nullptr";
@@ -730,10 +729,10 @@ class NodeListBuilderWithCacheEnabled : public NodeListBuilderForLookupPrefix {
 
 }  // namespace
 
-Node *ImmutableConverterImpl::Lookup(const int begin_pos, const int end_pos,
-                                     const ConversionRequest &request,
-                                     bool is_reverse, bool is_prediction,
-                                     Lattice *lattice) const {
+Node *ImmutableConverter::Lookup(const int begin_pos, const int end_pos,
+                                 const ConversionRequest &request,
+                                 bool is_reverse, bool is_prediction,
+                                 Lattice *lattice) const {
   CHECK_LE(begin_pos, end_pos);
   const char *begin = lattice->key().data() + begin_pos;
   const char *end = lattice->key().data() + end_pos;
@@ -770,15 +769,15 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos, const int end_pos,
   return AddCharacterTypeBasedNodes(begin, end, lattice, result_node);
 }
 
-Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(const char *begin,
-                                                         const char *end,
-                                                         Lattice *lattice,
-                                                         Node *nodes) const {
+Node *ImmutableConverter::AddCharacterTypeBasedNodes(const char *begin,
+                                                     const char *end,
+                                                     Lattice *lattice,
+                                                     Node *nodes) const {
   size_t mblen = 0;
-  const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
+  const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, &mblen);
 
-  const Util::ScriptType first_script_type = Util::GetScriptType(ucs4);
-  const Util::FormType first_form_type = Util::GetFormType(ucs4);
+  const Util::ScriptType first_script_type = Util::GetScriptType(codepoint);
+  const Util::FormType first_form_type = Util::GetFormType(codepoint);
 
   // Add 1 character node. It can be either UnknownId or NumberId.
   {
@@ -814,9 +813,9 @@ Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(const char *begin,
   int num_char = 1;
   const char *p = begin + mblen;
   while (p < end) {
-    const char32_t next_ucs4 = Util::Utf8ToUcs4(p, end, &mblen);
-    if (first_script_type != Util::GetScriptType(next_ucs4) ||
-        first_form_type != Util::GetFormType(next_ucs4)) {
+    const char32_t next_codepoint = Util::Utf8ToCodepoint(p, end, &mblen);
+    if (first_script_type != Util::GetScriptType(next_codepoint) ||
+        first_form_type != Util::GetFormType(next_codepoint)) {
       break;
     }
     p += mblen;
@@ -965,8 +964,8 @@ inline void ViterbiInternal(const Connector &connector, size_t pos,
 }
 }  // namespace
 
-bool ImmutableConverterImpl::Viterbi(const Segments &segments,
-                                     Lattice *lattice) const {
+bool ImmutableConverter::Viterbi(const Segments &segments,
+                                 Lattice *lattice) const {
   const std::string &key = lattice->key();
 
   // Process BOS.
@@ -1094,8 +1093,8 @@ bool ImmutableConverterImpl::Viterbi(const Segments &segments,
 // TODO(toshiyuki): We may be able to use faster viterbi for
 // conversion/suggestion if we use richer info as contraction group.
 
-bool ImmutableConverterImpl::PredictionViterbi(const Segments &segments,
-                                               Lattice *lattice) const {
+bool ImmutableConverter::PredictionViterbi(const Segments &segments,
+                                           Lattice *lattice) const {
   const size_t key_length = lattice->key().size();
   const size_t history_segments_size = segments.history_segments_size();
   size_t history_length = 0;
@@ -1141,9 +1140,9 @@ BestMap::iterator LowerBound(BestMap &best_map,
 
 }  // namespace
 
-void ImmutableConverterImpl::PredictionViterbiInternal(int calc_begin_pos,
-                                                       int calc_end_pos,
-                                                       Lattice *lattice) const {
+void ImmutableConverter::PredictionViterbiInternal(int calc_begin_pos,
+                                                   int calc_end_pos,
+                                                   Lattice *lattice) const {
   CHECK_LE(calc_begin_pos, calc_end_pos);
 
   BestMap lbest, rbest;
@@ -1272,7 +1271,7 @@ class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
 }  // namespace
 
 // Add predictive nodes from conversion key.
-void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
+void ImmutableConverter::MakeLatticeNodesForPredictiveNodes(
     const Segments &segments, const ConversionRequest &request,
     Lattice *lattice) const {
   const std::string &key = lattice->key();
@@ -1350,9 +1349,9 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
   }
 }
 
-bool ImmutableConverterImpl::MakeLattice(const ConversionRequest &request,
-                                         Segments *segments,
-                                         Lattice *lattice) const {
+bool ImmutableConverter::MakeLattice(const ConversionRequest &request,
+                                     Segments *segments,
+                                     Lattice *lattice) const {
   if (segments == nullptr) {
     LOG(ERROR) << "Segments is nullptr";
     return false;
@@ -1472,7 +1471,7 @@ bool ImmutableConverterImpl::MakeLattice(const ConversionRequest &request,
   return true;
 }
 
-bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
+bool ImmutableConverter::MakeLatticeNodesForHistorySegments(
     const Segments &segments, const ConversionRequest &request,
     Lattice *lattice) const {
   const bool is_reverse =
@@ -1625,7 +1624,7 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
   return true;
 }
 
-void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
+void ImmutableConverter::MakeLatticeNodesForConversionSegments(
     const Segments &segments, const ConversionRequest &request,
     const std::string &history_key, Lattice *lattice) const {
   const std::string &key = lattice->key();
@@ -1672,7 +1671,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
   }
 }
 
-void ImmutableConverterImpl::ApplyPrefixSuffixPenalty(
+void ImmutableConverter::ApplyPrefixSuffixPenalty(
     const std::string &conversion_key, Lattice *lattice) const {
   const std::string &key = lattice->key();
   DCHECK_LE(conversion_key.size(), key.size());
@@ -1693,10 +1692,10 @@ void ImmutableConverterImpl::ApplyPrefixSuffixPenalty(
   }
 }
 
-void ImmutableConverterImpl::Resegment(const Segments &segments,
-                                       const std::string &history_key,
-                                       const std::string &conversion_key,
-                                       Lattice *lattice) const {
+void ImmutableConverter::Resegment(const Segments &segments,
+                                   const std::string &history_key,
+                                   const std::string &conversion_key,
+                                   Lattice *lattice) const {
   for (size_t pos = history_key.size();
        pos < history_key.size() + conversion_key.size(); ++pos) {
     ApplyResegmentRules(pos, lattice);
@@ -1724,7 +1723,7 @@ void ImmutableConverterImpl::Resegment(const Segments &segments,
 }
 
 // Single segment conversion results should be set to |segments|.
-void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
+void ImmutableConverter::InsertFirstSegmentToCandidates(
     const ConversionRequest &request, Segments *segments,
     const Lattice &lattice, absl::Span<const uint16_t> group,
     size_t max_candidates_size, bool allow_exact) const {
@@ -1794,11 +1793,11 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
   }
 }
 
-bool ImmutableConverterImpl::IsSegmentEndNode(const ConversionRequest &request,
-                                              const Segments &segments,
-                                              const Node *node,
-                                              absl::Span<const uint16_t> group,
-                                              bool is_single_segment) const {
+bool ImmutableConverter::IsSegmentEndNode(const ConversionRequest &request,
+                                          const Segments &segments,
+                                          const Node *node,
+                                          absl::Span<const uint16_t> group,
+                                          bool is_single_segment) const {
   DCHECK(node->next);
   if (node->next->node_type == Node::EOS_NODE) {
     return true;
@@ -1845,7 +1844,7 @@ bool ImmutableConverterImpl::IsSegmentEndNode(const ConversionRequest &request,
   return false;
 }
 
-Segment *ImmutableConverterImpl::GetInsertTargetSegment(
+Segment *ImmutableConverter::GetInsertTargetSegment(
     const Lattice &lattice, absl::Span<const uint16_t> group,
     InsertCandidatesType type, size_t begin_pos, const Node *node,
     Segments *segments) const {
@@ -1864,12 +1863,12 @@ Segment *ImmutableConverterImpl::GetInsertTargetSegment(
   return segment;
 }
 
-void ImmutableConverterImpl::InsertCandidates(const ConversionRequest &request,
-                                              Segments *segments,
-                                              const Lattice &lattice,
-                                              absl::Span<const uint16_t> group,
-                                              size_t max_candidates_size,
-                                              InsertCandidatesType type) const {
+void ImmutableConverter::InsertCandidates(const ConversionRequest &request,
+                                          Segments *segments,
+                                          const Lattice &lattice,
+                                          absl::Span<const uint16_t> group,
+                                          size_t max_candidates_size,
+                                          InsertCandidatesType type) const {
   // skip HIS_NODE(s)
   Node *prev = lattice.bos_nodes();
   for (Node *node = lattice.bos_nodes()->next;
@@ -1940,10 +1939,10 @@ void ImmutableConverterImpl::InsertCandidates(const ConversionRequest &request,
   }
 }
 
-bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
-                                          const Lattice &lattice,
-                                          absl::Span<const uint16_t> group,
-                                          Segments *segments) const {
+bool ImmutableConverter::MakeSegments(const ConversionRequest &request,
+                                      const Lattice &lattice,
+                                      absl::Span<const uint16_t> group,
+                                      Segments *segments) const {
   if (segments == nullptr) {
     LOG(WARNING) << "Segments is nullptr";
     return false;
@@ -1961,7 +1960,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
   return true;
 }
 
-void ImmutableConverterImpl::InsertCandidatesForConversion(
+void ImmutableConverter::InsertCandidatesForConversion(
     const ConversionRequest &request, const Lattice &lattice,
     absl::Span<const uint16_t> group, Segments *segments) const {
   DCHECK(!request.create_partial_candidates());
@@ -1988,7 +1987,7 @@ void ImmutableConverterImpl::InsertCandidatesForConversion(
   }
 }
 
-void ImmutableConverterImpl::InsertCandidatesForRealtime(
+void ImmutableConverter::InsertCandidatesForRealtime(
     const ConversionRequest &request, const Lattice &lattice,
     absl::Span<const uint16_t> group, Segments *segments) const {
   Segment *target_segment = segments->mutable_conversion_segment(0);
@@ -2071,7 +2070,7 @@ void ImmutableConverterImpl::InsertCandidatesForRealtime(
   }
 }
 
-void ImmutableConverterImpl::InsertCandidatesForPrediction(
+void ImmutableConverter::InsertCandidatesForPrediction(
     const ConversionRequest &request, const Lattice &lattice,
     absl::Span<const uint16_t> group, Segments *segments) const {
   const size_t max_candidates_size = request.max_conversion_candidates_size();
@@ -2138,8 +2137,8 @@ void ImmutableConverterImpl::InsertCandidatesForPrediction(
   }
 }
 
-void ImmutableConverterImpl::MakeGroup(const Segments &segments,
-                                       std::vector<uint16_t> *group) const {
+void ImmutableConverter::MakeGroup(const Segments &segments,
+                                   std::vector<uint16_t> *group) const {
   group->clear();
   for (size_t i = 0; i < segments.segments_size(); ++i) {
     for (size_t j = 0; j < segments.segment(i).key().size(); ++j) {
@@ -2149,8 +2148,8 @@ void ImmutableConverterImpl::MakeGroup(const Segments &segments,
   group->push_back(static_cast<uint16_t>(segments.segments_size()));
 }
 
-bool ImmutableConverterImpl::ConvertForRequest(const ConversionRequest &request,
-                                               Segments *segments) const {
+bool ImmutableConverter::ConvertForRequest(const ConversionRequest &request,
+                                           Segments *segments) const {
   const bool is_prediction =
       (request.request_type() == ConversionRequest::PREDICTION ||
        request.request_type() == ConversionRequest::SUGGESTION);

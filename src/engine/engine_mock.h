@@ -40,7 +40,6 @@
 #include "engine/engine_interface.h"
 #include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
-#include "prediction/predictor_interface.h"
 #include "testing/gmock.h"
 
 namespace mozc {
@@ -48,8 +47,7 @@ namespace mozc {
 class MockEngine : public EngineInterface {
  public:
   MOCK_METHOD(ConverterInterface *, GetConverter, (), (const, override));
-  MOCK_METHOD(prediction::PredictorInterface *, GetPredictor, (),
-              (const, override));
+  MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
   MOCK_METHOD(dictionary::SuppressionDictionary *, GetSuppressionDictionary, (),
               (override));
   MOCK_METHOD(bool, Reload, (), (override));

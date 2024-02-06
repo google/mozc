@@ -234,36 +234,36 @@ size_t Composition::GetLength() const {
   return GetPosition(Transliterators::LOCAL, chunks_.end());
 }
 
-void Composition::GetStringWithModes(
-    Transliterators::Transliterator transliterator, const TrimMode trim_mode,
-    std::string *composition) const {
-  composition->clear();
+std::string Composition::GetStringWithModes(
+    Transliterators::Transliterator transliterator,
+    const TrimMode trim_mode) const {
   if (chunks_.empty()) {
     // This is not an error. For example, the composition should be empty for
     // the first keydown event after turning on the IME.
-    DCHECK(composition->empty()) << "An empty string should be returned.";
-    return;
+    return std::string();
   }
 
   CharChunkList::const_iterator it;
+  std::string composition;
   for (it = chunks_.begin(); it != std::prev(chunks_.end()); ++it) {
-    it->AppendResult(transliterator, composition);
+    it->AppendResult(transliterator, &composition);
   }
 
   switch (trim_mode) {
     case TRIM:
-      it->AppendTrimedResult(transliterator, composition);
+      it->AppendTrimedResult(transliterator, &composition);
       break;
     case ASIS:
-      it->AppendResult(transliterator, composition);
+      it->AppendResult(transliterator, &composition);
       break;
     case FIX:
-      it->AppendFixedResult(transliterator, composition);
+      it->AppendFixedResult(transliterator, &composition);
       break;
     default:
       LOG(WARNING) << "Unexpected trim mode: " << trim_mode;
       break;
   }
+  return composition;
 }
 
 void Composition::GetExpandedStrings(std::string *base,
@@ -293,33 +293,32 @@ void Composition::GetExpandedStringsWithTransliterator(
   chunks_.back().GetExpandedResults(expanded);
 }
 
-void Composition::GetString(std::string *composition) const {
-  composition->clear();
+std::string Composition::GetString() const {
   if (chunks_.empty()) {
     MOZC_VLOG(1) << "The composition size is zero.";
-    return;
+    return std::string();
   }
 
+  std::string composition;
   for (CharChunkList::const_iterator it = chunks_.begin(); it != chunks_.end();
        ++it) {
-    it->AppendResult(Transliterators::LOCAL, composition);
+    it->AppendResult(Transliterators::LOCAL, &composition);
   }
+  return composition;
 }
 
-void Composition::GetStringWithTransliterator(
-    Transliterators::Transliterator transliterator, std::string *output) const {
-  GetStringWithModes(transliterator, FIX, output);
+std::string Composition::GetStringWithTransliterator(
+    Transliterators::Transliterator transliterator) const {
+  return GetStringWithModes(transliterator, FIX);
 }
 
-void Composition::GetStringWithTrimMode(const TrimMode trim_mode,
-                                        std::string *output) const {
-  GetStringWithModes(Transliterators::LOCAL, trim_mode, output);
+std::string Composition::GetStringWithTrimMode(const TrimMode trim_mode) const {
+  return GetStringWithModes(Transliterators::LOCAL, trim_mode);
 }
 
 void Composition::GetPreedit(size_t position, std::string *left,
                              std::string *focused, std::string *right) const {
-  std::string composition;
-  GetString(&composition);
+  const std::string composition = GetString();
   Util::Utf8SubString(composition, 0, position, left);
   Util::Utf8SubString(composition, position, 1, focused);
   Util::Utf8SubString(composition, position + 1, std::string::npos, right);

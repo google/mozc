@@ -70,7 +70,7 @@ bool IsControlCode(char32_t c) {
 }
 
 // TODO(yukawa): Move this to util.cc.
-char32_t SurrogatePairToUcs4(wchar_t high, wchar_t low) {
+char32_t SurrogatePairToCodepoint(wchar_t high, wchar_t low) {
   return (((high - 0xD800) & 0x3FF) << 10) + ((low - 0xDC00) & 0x3FF) + 0x10000;
 }
 
@@ -285,8 +285,8 @@ bool ReconvertString::EnsureCompositionIsNotEmpty() {
       IS_SURROGATE_PAIR(ss.preceding_text.back(), ss.following_text.front())) {
     ++involved_following_len;
     ++involved_preceding_len;
-    const char32_t unichar = SurrogatePairToUcs4(ss.preceding_text.back(),
-                                                 ss.following_text.front());
+    const char32_t unichar = SurrogatePairToCodepoint(
+        ss.preceding_text.back(), ss.following_text.front());
     script_type = Util::GetScriptType(unichar);
   }
 
@@ -304,7 +304,7 @@ bool ReconvertString::EnsureCompositionIsNotEmpty() {
       const char32_t high_surrogate = unichar;
       const char32_t low_surrogate =
           ss.following_text[involved_following_len + 1];
-      unichar = SurrogatePairToUcs4(high_surrogate, low_surrogate);
+      unichar = SurrogatePairToCodepoint(high_surrogate, low_surrogate);
       num_wchar = 2;
     }
     // Stop searching when any control code is found.
@@ -337,7 +337,7 @@ bool ReconvertString::EnsureCompositionIsNotEmpty() {
         IS_HIGH_SURROGATE(ss.preceding_text[index - 1])) {
       const char32_t high_surrogate = ss.preceding_text[index - 1];
       const char32_t low_surrogate = unichar;
-      unichar = SurrogatePairToUcs4(high_surrogate, low_surrogate);
+      unichar = SurrogatePairToCodepoint(high_surrogate, low_surrogate);
       num_wchar = 2;
     }
     // Stop searching when any control code is found.

@@ -30,7 +30,6 @@
 #include "dictionary/system/codec.h"
 
 #include <cstdint>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -106,10 +105,10 @@ constexpr uint8_t kValueCharMarkOtherUcs2 = 0xfe;
 // UCS4 characters never exceed 10FFFF. (three 8bits, A-B-C).
 // For left most 8bits A, we will use upper 2bits for the flag
 // that indicating whether B and C is 0 or not.
-constexpr uint8_t kValueCharMarkUcs4 = 0xff;
-constexpr uint8_t kValueCharMarkUcs4Middle0 = 0x80;
-constexpr uint8_t kValueCharMarkUcs4Right0 = 0x40;
-constexpr uint8_t kValueCharMarkUcs4LeftMask = 0x1f;
+constexpr uint8_t kValueCharMarkCodepoint = 0xff;
+constexpr uint8_t kValueCharMarkCodepointMiddle0 = 0x80;
+constexpr uint8_t kValueCharMarkCodepointRight0 = 0x40;
+constexpr uint8_t kValueCharMarkCodepointLeftMask = 0x1f;
 
 // character code related constants
 constexpr int kValueKanjiOffset = 0x01;
@@ -280,12 +279,12 @@ void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
       const int middle = ((c >> 8) & 255);
       const int right = (c & 255);
       if (middle == 0) {
-        left |= kValueCharMarkUcs4Middle0;
+        left |= kValueCharMarkCodepointMiddle0;
       }
       if (right == 0) {
-        left |= kValueCharMarkUcs4Right0;
+        left |= kValueCharMarkCodepointRight0;
       }
-      dst->push_back(kValueCharMarkUcs4);
+      dst->push_back(kValueCharMarkCodepoint);
       dst->push_back(left);
       if (middle != 0) {
         dst->push_back(middle);
@@ -327,14 +326,14 @@ void SystemDictionaryCodec::DecodeValue(const absl::string_view src,
       // xx00
       c = (p[1] << 8);
       p += 2;
-    } else if (cc == kValueCharMarkUcs4) {
+    } else if (cc == kValueCharMarkCodepoint) {
       // UCS4
-      c = ((p[1] & kValueCharMarkUcs4LeftMask) << 16);
+      c = ((p[1] & kValueCharMarkCodepointLeftMask) << 16);
       int pos = 2;
-      if (!(p[1] & kValueCharMarkUcs4Middle0)) {
+      if (!(p[1] & kValueCharMarkCodepointMiddle0)) {
         c += (p[pos++] << 8);
       }
-      if (!(p[1] & kValueCharMarkUcs4Right0)) {
+      if (!(p[1] & kValueCharMarkCodepointRight0)) {
         c += p[pos++];
       }
       p += pos;
@@ -351,7 +350,7 @@ void SystemDictionaryCodec::DecodeValue(const absl::string_view src,
     } else {
       MOZC_VLOG(1) << "should never come here";
     }
-    Util::Ucs4ToUtf8Append(c, dst);
+    Util::CodepointToUtf8Append(c, dst);
   }
 }
 
@@ -507,7 +506,7 @@ void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst) {
       code -= offset;
     }
     DCHECK_GT(code, 0);
-    Util::Ucs4ToUtf8Append(code, dst);
+    Util::CodepointToUtf8Append(code, dst);
   }
 }
 

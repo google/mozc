@@ -1533,8 +1533,7 @@ bool Session::InsertCharacter(commands::Command *command) {
     return true;
   }
 
-  std::string composition;
-  context_->composer().GetQueryForConversion(&composition);
+  const std::string composition = context_->composer().GetQueryForConversion();
   bool should_commit = (context_->state() == ImeContext::CONVERSION);
 
   if (context_->GetRequest().space_on_alphanumeric() ==
@@ -1932,9 +1931,8 @@ void Session::CommitHeadToFocusedSegmentsInternal(
 }
 
 void Session::CommitCompositionDirectly(commands::Command *command) {
-  std::string composition, conversion;
-  context_->composer().GetQueryForConversion(&composition);
-  context_->composer().GetStringForSubmission(&conversion);
+  const std::string composition = context_->composer().GetQueryForConversion();
+  const std::string conversion = context_->composer().GetStringForSubmission();
   CommitStringDirectly(composition, conversion, command);
 }
 
@@ -1946,8 +1944,7 @@ void Session::CommitSourceTextDirectly(commands::Command *command) {
 }
 
 void Session::CommitRawTextDirectly(commands::Command *command) {
-  std::string raw_text;
-  context_->composer().GetRawString(&raw_text);
+  const std::string raw_text = context_->composer().GetRawString();
   CommitStringDirectly(raw_text, raw_text, command);
 }
 
@@ -2366,8 +2363,7 @@ bool Session::StopKeyToggling(commands::Command *command) {
 
 bool Session::Convert(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  std::string composition;
-  context_->composer().GetQueryForConversion(&composition);
+  const std::string composition = context_->composer().GetQueryForConversion();
 
   // TODO(komatsu): Make a function like ConvertOrSpace.
   // Handle a space key on the ASCII composition mode.
@@ -2869,8 +2865,7 @@ bool Session::CanStartAutoConversion(
 
   const uint32_t key_code = key_event.key_code();
 
-  std::string preedit;
-  context_->composer().GetStringForPreedit(&preedit);
+  const std::string preedit = context_->composer().GetStringForPreedit();
   const absl::string_view last_char =
       Util::Utf8SubString(preedit, length - 1, 1);
   if (last_char.empty()) {
