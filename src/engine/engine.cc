@@ -190,7 +190,7 @@ absl::Status Engine::Init(
   }
   predictor_ = predictor.get();  // Keep the reference
 
-  auto rewriter = std::make_unique<RewriterImpl>(modules_, *converter_);
+  auto rewriter = std::make_unique<Rewriter>(modules_, *converter_);
   RETURN_IF_NULL(rewriter);
   rewriter_ = rewriter.get();  // Keep the reference
 

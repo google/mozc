@@ -1185,7 +1185,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
           std::make_unique<DictionaryPredictor>(modules, &converter,
                                                 immutable_converter.get()),
           std::make_unique<UserHistoryPredictor>(modules, false), &converter),
-      std::make_unique<RewriterImpl>(modules, converter),
+      std::make_unique<Rewriter>(modules, converter),
       immutable_converter.get());
 
   Segments segments;

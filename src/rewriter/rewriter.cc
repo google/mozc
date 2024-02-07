@@ -83,8 +83,8 @@ ABSL_FLAG(bool, use_history_rewriter, true, "Use history rewriter or not.");
 
 namespace mozc {
 
-RewriterImpl::RewriterImpl(const engine::Modules &modules,
-                           const ConverterInterface &parent_converter) {
+Rewriter::Rewriter(const engine::Modules &modules,
+                   const ConverterInterface &parent_converter) {
   const DataManagerInterface *data_manager = &modules.GetDataManager();
   const dictionary::DictionaryInterface *dictionary = modules.GetDictionary();
   const dictionary::PosMatcher &pos_matcher = *modules.GetPosMatcher();

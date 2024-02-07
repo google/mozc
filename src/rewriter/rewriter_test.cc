@@ -66,7 +66,7 @@ class RewriterTest : public testing::TestWithTempUserProfile {
     data_manager_ = std::make_unique<testing::MockDataManager>();
     modules_ = std::make_unique<engine::Modules>();
     CHECK_OK(modules_->Init(data_manager_.get()));
-    rewriter_ = std::make_unique<RewriterImpl>(*modules_, mock_converter_);
+    rewriter_ = std::make_unique<Rewriter>(*modules_, mock_converter_);
   }
 
   const RewriterInterface *GetRewriter() const { return rewriter_.get(); }
@@ -74,7 +74,7 @@ class RewriterTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<testing::MockDataManager> data_manager_;
   std::unique_ptr<engine::Modules> modules_;
   MockConverter mock_converter_;
-  std::unique_ptr<RewriterImpl> rewriter_;
+  std::unique_ptr<Rewriter> rewriter_;
 };
 
 // Command rewriter should be disabled on Android build. b/5851240
