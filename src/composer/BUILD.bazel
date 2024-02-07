@@ -47,7 +47,6 @@ mozc_cc_library(
     hdrs = ["composer.h"],
     deps = [
         ":key_event_util",
-        ":query",
         ":table",
         "//base:clock",
         "//base:japanese_util",
@@ -82,13 +81,11 @@ mozc_cc_test(
     deps = [
         ":composer",
         ":key_parser",
-        ":query",
         ":table",
         "//base:clock_mock",
         "//base:util",
         "//config:character_form_manager",
         "//config:config_handler",
-        "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//engine:spellchecker_interface",
         "//protocol:commands_cc_proto",

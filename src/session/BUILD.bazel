@@ -47,7 +47,6 @@ mozc_cc_library(
     hdrs = ["session_interface.h"],
     deps = [
         "//composer:table",
-        "//engine:spellchecker_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session/internal:keymap",
@@ -160,7 +159,6 @@ mozc_cc_library(
         "//composer:table",
         "//converter:segments",
         "//engine:engine_interface",
-        "//engine:spellchecker_interface",
         "//engine:user_data_manager_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",

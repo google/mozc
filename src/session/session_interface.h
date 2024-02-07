@@ -34,7 +34,6 @@
 
 #include "absl/time/time.h"
 #include "composer/table.h"
-#include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
@@ -66,10 +65,6 @@ class SessionInterface {
 
   // Set composition Table. Currently, this is especial for session::Session.
   virtual void SetTable(const composer::Table *table) {}
-
-  // Set spellchecker.
-  virtual void SetSpellchecker(
-      const engine::SpellcheckerInterface *spellchecker) {}
 
   // Set client capability for this session.  Used by unittest.
   virtual void set_client_capability(
