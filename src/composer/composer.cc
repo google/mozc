@@ -885,6 +885,10 @@ Composer::GetTypeCorrectedQueries(absl::string_view context) const {
   return spellchecker_->CheckCompositionSpelling(asis, context, *request_);
 }
 
+std::string Composer::GetStringForTypeCorrection() const {
+  return composition_.GetStringWithTrimMode(ASIS);
+}
+
 size_t Composer::GetLength() const { return composition_.GetLength(); }
 
 size_t Composer::GetCursor() const { return position_; }

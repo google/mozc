@@ -140,6 +140,7 @@ class Composer final {
   // available/enabled.
   std::optional<std::vector<TypeCorrectedQuery>> GetTypeCorrectedQueries(
       absl::string_view context = "") const;
+  std::string GetStringForTypeCorrection() const;
 
   size_t GetLength() const;
   size_t GetCursor() const;

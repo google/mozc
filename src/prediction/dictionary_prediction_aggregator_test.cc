@@ -60,7 +60,6 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "prediction/prediction_aggregator_interface.h"
@@ -422,6 +421,9 @@ class MockDataAndAggregator {
   const PosMatcher &pos_matcher() const { return *modules_.GetPosMatcher(); }
   const DictionaryPredictionAggregatorTestPeer &aggregator() {
     return *aggregator_;
+  }
+  void set_spellchecker(const engine::SpellcheckerInterface *spellchecker) {
+    modules_.SetSpellchecker(spellchecker);
   }
 
 #if MOZC_ENABLE_NGRAM_RESCORING
@@ -1997,12 +1999,12 @@ TEST_F(DictionaryPredictionAggregatorTest,
   EXPECT_CALL(*mock, CheckCompositionSpelling("よろさく", "ほんじつは", _))
       .WillOnce(Return(expected));
 
-  composer_->SetSpellchecker(mock.get());
+  data_and_aggregator->set_spellchecker(mock.get());
 
   std::vector<Result> results;
   aggregator.AggregateTypingCorrectedPrediction(*prediction_convreq_, segments,
                                                 &results);
-  composer_->SetSpellchecker(nullptr);
+  data_and_aggregator->set_spellchecker(nullptr);
 
   EXPECT_EQ(results.size(), 5);
   for (int i = 0; i < results.size(); ++i) {

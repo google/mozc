@@ -72,7 +72,7 @@ using ::mozc::config::Config;
 using ::testing::_;
 using ::testing::Return;
 
-// ProbableKeyEvent is the innter-class member so needs to define as alias.
+// ProbableKeyEvent is the inner-class member so needs to define as alias.
 using ProbableKeyEvent = ::mozc::commands::KeyEvent::ProbableKeyEvent;
 
 bool InsertKey(const absl::string_view key_string, Composer *composer) {
@@ -157,7 +157,7 @@ TEST_F(ComposerTest, Reset) {
   composer_->Reset();
 
   EXPECT_TRUE(composer_->Empty());
-  // The input mode ramains as the previous mode.
+  // The input mode remains as the previous mode.
   EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
   EXPECT_EQ(composer_->GetInputFieldType(), commands::Context::PASSWORD);
   // The output mode should be reset.
@@ -3022,6 +3022,8 @@ TEST_F(ComposerTest, SpellcheckerTest) {
   table_->AddRule("i", "い", "");
   table_->AddRule("u", "う", "");
   composer_->InsertCharacter("aiu");
+
+  EXPECT_EQ(composer_->GetStringForTypeCorrection(), "あいう");
 
   const auto preedit = composer_->GetStringForPreedit();
   composer_->SetSpellchecker(nullptr);
