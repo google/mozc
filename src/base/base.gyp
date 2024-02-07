@@ -139,7 +139,6 @@
               'VCLinkerTool': {
                 'AdditionalDependencies': [
                   'aux_ulib.lib',  # used in 'win_util.cc'
-                  'KtmW32.lib',  # used in 'file_util.cc'
                   'pathcch.lib',  # used in 'file/recursive.cc'
                 ],
               },

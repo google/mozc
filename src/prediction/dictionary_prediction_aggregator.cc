@@ -61,6 +61,7 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
+#include "engine/spellchecker_interface.h"
 #include "prediction/number_decoder.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
@@ -559,7 +560,8 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const ImmutableConverterInterface *immutable_converter,
     std::unique_ptr<PredictionAggregatorInterface>
         single_kanji_prediction_aggregator)
-    : converter_(converter),
+    : modules_(modules),
+      converter_(converter),
       immutable_converter_(immutable_converter),
       dictionary_(modules.GetDictionary()),
       suffix_dictionary_(modules.GetSuffixDictionary()),
@@ -1722,9 +1724,15 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     return;
   }
 
-  const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      request.composer().GetTypeCorrectedQueries(segments.history_key());
+  const engine::SpellcheckerInterface *corrector = modules_.GetSpellchecker();
+  if (corrector == nullptr) {
+    return;
+  }
 
+  const std::string asis = request.composer().GetStringForTypeCorrection();
+  const std::optional<std::vector<TypeCorrectedQuery>> corrected =
+      corrector->CheckCompositionSpelling(asis, segments.history_key(),
+                                          request.request());
   if (!corrected) {
     return;
   }

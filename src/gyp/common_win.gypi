@@ -310,7 +310,6 @@
       'BUILD_MOZC',  # for ime_shared library
       'ID_TRACE_LEVEL=1',
       'NOMINMAX',
-      'OS_WIN',
       'PSAPI_VERSION=2',
       'UNICODE',
       'WIN32',

@@ -299,6 +299,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // Test peer to access private methods
   friend class DictionaryPredictionAggregatorTestPeer;
 
+  const engine::Modules &modules_;
   const ConverterInterface *converter_;
   const ImmutableConverterInterface *immutable_converter_;
   const dictionary::DictionaryInterface *dictionary_;

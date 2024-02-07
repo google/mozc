@@ -33,10 +33,12 @@
 #include <memory>
 #include <string>
 
+#include "base/logging.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
+#include "engine/modules.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
@@ -44,9 +46,6 @@
 
 namespace mozc {
 namespace {
-
-using ::mozc::dictionary::DictionaryInterface;
-using ::mozc::dictionary::PosGroup;
 
 size_t CommandCandidatesSize(const Segment &segment) {
   size_t result = 0;
@@ -64,18 +63,18 @@ size_t CommandCandidatesSize(const Segment &segment) {
 class RewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    const testing::MockDataManager data_manager;
-    pos_group_ = std::make_unique<PosGroup>(data_manager.GetPosGroupData());
-    const DictionaryInterface *kNullDictionary = nullptr;
-    rewriter_ = std::make_unique<RewriterImpl>(
-        &mock_converter_, &data_manager, pos_group_.get(), kNullDictionary);
+    data_manager_ = std::make_unique<testing::MockDataManager>();
+    modules_ = std::make_unique<engine::Modules>();
+    CHECK_OK(modules_->Init(data_manager_.get()));
+    rewriter_ = std::make_unique<Rewriter>(*modules_, mock_converter_);
   }
 
   const RewriterInterface *GetRewriter() const { return rewriter_.get(); }
 
+  std::unique_ptr<testing::MockDataManager> data_manager_;
+  std::unique_ptr<engine::Modules> modules_;
   MockConverter mock_converter_;
-  std::unique_ptr<const PosGroup> pos_group_;
-  std::unique_ptr<RewriterImpl> rewriter_;
+  std::unique_ptr<Rewriter> rewriter_;
 };
 
 // Command rewriter should be disabled on Android build. b/5851240

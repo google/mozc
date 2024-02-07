@@ -54,14 +54,12 @@
 #include "base/singleton.h"
 
 #ifdef _WIN32
-// clang-format off
-#include <windows.h>  // Include windows.h before ktmw32.h
-#include <ktmw32.h>
-// clang-format on
-#include <wil/resource.h>
-
 #include "base/util.h"
 #include "base/win32/wide_char.h"
+
+#include <wil/resource.h>
+#include <windows.h>
+
 #else  // _WIN32
 #include <sys/stat.h>
 #include <unistd.h>
@@ -350,53 +348,6 @@ absl::Status FileUtilImpl::DirectoryExists(const std::string &dirname) const {
 }
 
 #ifdef _WIN32
-namespace {
-
-absl::Status TransactionalMoveFile(const std::wstring &from,
-                                   const std::wstring &to) {
-  constexpr DWORD kTimeout = 5000;  // 5 sec.
-  wil::unique_hfile handle(
-      ::CreateTransaction(nullptr, 0, 0, 0, 0, kTimeout, nullptr));
-  if (!handle) {
-    const DWORD create_transaction_error = ::GetLastError();
-    return absl::UnknownError(absl::StrFormat("CreateTransaction failed: %d",
-                                              create_transaction_error));
-  }
-
-  WIN32_FILE_ATTRIBUTE_DATA file_attribute_data = {};
-  if (!::GetFileAttributesTransactedW(from.c_str(), GetFileExInfoStandard,
-                                      &file_attribute_data, handle.get())) {
-    const DWORD get_file_attributes_error = ::GetLastError();
-    return absl::UnknownError(absl::StrFormat(
-        "GetFileAttributesTransactedW failed: %d", get_file_attributes_error));
-  }
-
-  if (!::MoveFileTransactedW(from.c_str(), to.c_str(), nullptr, nullptr,
-                             MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING,
-                             handle.get())) {
-    const DWORD move_file_transacted_error = ::GetLastError();
-    return absl::UnknownError(absl::StrFormat("MoveFileTransactedW failed: %d",
-                                              move_file_transacted_error));
-  }
-
-  if (!::SetFileAttributesTransactedW(
-          to.c_str(), file_attribute_data.dwFileAttributes, handle.get())) {
-    const DWORD set_file_attributes_error = ::GetLastError();
-    return absl::UnknownError(absl::StrFormat(
-        "SetFileAttributesTransactedW failed: %d", set_file_attributes_error));
-  }
-
-  if (!::CommitTransaction(handle.get())) {
-    const DWORD commit_transaction_error = ::GetLastError();
-    return absl::UnknownError(absl::StrFormat("CommitTransaction failed: %d",
-                                              commit_transaction_error));
-  }
-
-  return absl::OkStatus();
-}
-
-}  // namespace
-
 bool FileUtil::HideFile(const std::string &filename) {
   return HideFileWithExtraAttributes(filename, 0);
 }
@@ -543,43 +494,30 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
   const std::wstring fromw = win32::Utf8ToWide(from);
   const std::wstring tow = win32::Utf8ToWide(to);
 
-  absl::Status move_status = TransactionalMoveFile(fromw, tow);
-  if (move_status.ok()) {
-    return absl::OkStatus();
-  }
-  LOG(WARNING) << "TransactionalMoveFile failed: from: " << from
-               << ", to: " << to << ", status: " << move_status;
-
   const absl::StatusOr<DWORD> original_attributes = GetFileAttributes(fromw);
   if (!original_attributes.ok()) {
     return absl::Status(
         original_attributes.status().code(),
         absl::StrFormat(
-            "GetFileAttributes failed: %s; Status of TransactionalMoveFile: %s",
-            original_attributes.status().message(), move_status.ToString()));
+            "GetFileAttributes failed: %s",
+            original_attributes.status().message()));
   }
   if (absl::Status s = StripWritePreventingAttributesIfExists(to); !s.ok()) {
     return absl::Status(
         s.code(),
-        absl::StrFormat("StripWritePreventingAttributesIfExists failed: %s; "
-                        "Status of TransactionalMoveFile: %s",
-                        s.message(), move_status.ToString()));
+        absl::StrFormat("StripWritePreventingAttributesIfExists failed: %s",
+                        s.message()));
   }
   if (!::MoveFileExW(fromw.c_str(), tow.c_str(),
                      MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)) {
     const DWORD move_file_ex_error = ::GetLastError();
-    return Win32ErrorToStatus(
-        move_file_ex_error,
-        absl::StrFormat(
-            "MoveFileExW failed; Status of TransactionalMoveFile: %s",
-            move_status.ToString()));
+    return Win32ErrorToStatus(move_file_ex_error, "MoveFileExW failed");
   }
   if (absl::Status s = SetFileAttributes(tow, *original_attributes); !s.ok()) {
     return absl::Status(
         s.code(),
-        absl::StrFormat("SetFileAttributes failed: original_attrs: %d; Status "
-                        "of TransactionalMoveFile: %s",
-                        *original_attributes, move_status.ToString()));
+        absl::StrFormat("SetFileAttributes failed: original_attrs: %d",
+                        *original_attributes));
   }
   return absl::OkStatus();
 #else   // !_WIN32

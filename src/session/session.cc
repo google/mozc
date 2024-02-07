@@ -49,7 +49,6 @@
 #include "composer/table.h"
 #include "converter/segments.h"
 #include "engine/engine_interface.h"
-#include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -1199,11 +1198,6 @@ void Session::SetRequest(const commands::Request *request) {
 void Session::SetKeyMapManager(
     const mozc::keymap::KeyMapManager *key_map_manager) {
   context_->SetKeyMapManager(key_map_manager);
-}
-
-void Session::SetSpellchecker(
-    const engine::SpellcheckerInterface *spellchecker) {
-  context_->mutable_composer()->SetSpellchecker(spellchecker);
 }
 
 bool Session::GetStatus(commands::Command *command) {

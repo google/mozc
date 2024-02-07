@@ -33,7 +33,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -58,11 +57,9 @@
 #include "composer/internal/mode_switching_handler.h"
 #include "composer/internal/transliterators.h"
 #include "composer/key_event_util.h"
-#include "composer/query.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
@@ -299,11 +296,6 @@ void Composer::SetTable(const Table *table) {
 
 void Composer::SetRequest(const commands::Request *request) {
   request_ = request;
-}
-
-void Composer::SetSpellchecker(
-    const engine::SpellcheckerInterface *spellchecker) {
-  spellchecker_ = spellchecker;
 }
 
 void Composer::SetConfig(const config::Config *config) { config_ = config; }
@@ -875,14 +867,8 @@ void Composer::GetQueriesForPrediction(std::string *base,
   *base = japanese_util::FullWidthAsciiToHalfWidthAscii(base_query);
 }
 
-std::optional<std::vector<TypeCorrectedQuery>>
-Composer::GetTypeCorrectedQueries(absl::string_view context) const {
-  if (spellchecker_ == nullptr) {
-    return std::nullopt;
-  }
-
-  const std::string asis = composition_.GetStringWithTrimMode(ASIS);
-  return spellchecker_->CheckCompositionSpelling(asis, context, *request_);
+std::string Composer::GetStringForTypeCorrection() const {
+  return composition_.GetStringWithTrimMode(ASIS);
 }
 
 size_t Composer::GetLength() const { return composition_.GetLength(); }

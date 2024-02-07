@@ -82,10 +82,6 @@ mozc_win32_lib(
 )
 
 mozc_win32_lib(
-    name = "ktmw32",
-)
-
-mozc_win32_lib(
     name = "msi",
 )
 

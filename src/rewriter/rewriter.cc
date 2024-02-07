@@ -32,11 +32,12 @@
 #include <memory>
 
 #include "absl/flags/flag.h"
-#include "base/logging.h"
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
+#include "engine/modules.h"
 #include "rewriter/a11y_description_rewriter.h"
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/collocation_rewriter.h"
@@ -81,48 +82,39 @@
 ABSL_FLAG(bool, use_history_rewriter, true, "Use history rewriter or not.");
 
 namespace mozc {
-namespace {
 
-using dictionary::DictionaryInterface;
-using dictionary::PosGroup;
-
-}  // namespace
-
-RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
-                           const DataManagerInterface *data_manager,
-                           const PosGroup *pos_group,
-                           const DictionaryInterface *dictionary)
-    : pos_matcher_(data_manager->GetPosMatcherData()) {
-  DCHECK(parent_converter);
-  DCHECK(data_manager);
-  DCHECK(pos_group);
-  // |dictionary| can be NULL
+Rewriter::Rewriter(const engine::Modules &modules,
+                   const ConverterInterface &parent_converter) {
+  const DataManagerInterface *data_manager = &modules.GetDataManager();
+  const dictionary::DictionaryInterface *dictionary = modules.GetDictionary();
+  const dictionary::PosMatcher &pos_matcher = *modules.GetPosMatcher();
+  const dictionary::PosGroup *pos_group = modules.GetPosGroup();
 
   AddRewriter(std::make_unique<UserDictionaryRewriter>());
   AddRewriter(std::make_unique<FocusCandidateRewriter>(data_manager));
-  AddRewriter(
-      std::make_unique<LanguageAwareRewriter>(pos_matcher_, dictionary));
-  AddRewriter(std::make_unique<TransliterationRewriter>(pos_matcher_));
-  AddRewriter(std::make_unique<EnglishVariantsRewriter>(pos_matcher_));
+  AddRewriter(std::make_unique<LanguageAwareRewriter>(pos_matcher, dictionary));
+  AddRewriter(std::make_unique<TransliterationRewriter>(pos_matcher));
+  AddRewriter(std::make_unique<EnglishVariantsRewriter>(pos_matcher));
   AddRewriter(std::make_unique<NumberRewriter>(data_manager));
   AddRewriter(CollocationRewriter::Create(*data_manager));
   AddRewriter(std::make_unique<SingleKanjiRewriter>(*data_manager));
   AddRewriter(std::make_unique<IvsVariantsRewriter>());
   AddRewriter(std::make_unique<EmojiRewriter>(*data_manager));
   AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager));
-  AddRewriter(std::make_unique<CalculatorRewriter>(parent_converter));
-  AddRewriter(std::make_unique<SymbolRewriter>(parent_converter, data_manager));
-  AddRewriter(std::make_unique<UnicodeRewriter>(parent_converter));
-  AddRewriter(std::make_unique<VariantsRewriter>(pos_matcher_));
-  AddRewriter(std::make_unique<ZipcodeRewriter>(pos_matcher_));
+  AddRewriter(std::make_unique<CalculatorRewriter>(&parent_converter));
+  AddRewriter(
+      std::make_unique<SymbolRewriter>(&parent_converter, data_manager));
+  AddRewriter(std::make_unique<UnicodeRewriter>(&parent_converter));
+  AddRewriter(std::make_unique<VariantsRewriter>(pos_matcher));
+  AddRewriter(std::make_unique<ZipcodeRewriter>(pos_matcher));
   AddRewriter(std::make_unique<DiceRewriter>());
-  AddRewriter(std::make_unique<SmallLetterRewriter>(parent_converter));
+  AddRewriter(std::make_unique<SmallLetterRewriter>(&parent_converter));
 
   if (absl::GetFlag(FLAGS_use_history_rewriter)) {
     AddRewriter(
-        std::make_unique<UserBoundaryHistoryRewriter>(parent_converter));
+        std::make_unique<UserBoundaryHistoryRewriter>(&parent_converter));
     AddRewriter(
-        std::make_unique<UserSegmentHistoryRewriter>(&pos_matcher_, pos_group));
+        std::make_unique<UserSegmentHistoryRewriter>(&pos_matcher, pos_group));
   }
 
   AddRewriter(std::make_unique<DateRewriter>(dictionary));

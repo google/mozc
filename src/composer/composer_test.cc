@@ -33,7 +33,6 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
-#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -44,11 +43,9 @@
 #include "base/clock_mock.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
-#include "composer/query.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
@@ -72,7 +69,7 @@ using ::mozc::config::Config;
 using ::testing::_;
 using ::testing::Return;
 
-// ProbableKeyEvent is the innter-class member so needs to define as alias.
+// ProbableKeyEvent is the inner-class member so needs to define as alias.
 using ProbableKeyEvent = ::mozc::commands::KeyEvent::ProbableKeyEvent;
 
 bool InsertKey(const absl::string_view key_string, Composer *composer) {
@@ -157,7 +154,7 @@ TEST_F(ComposerTest, Reset) {
   composer_->Reset();
 
   EXPECT_TRUE(composer_->Empty());
-  // The input mode ramains as the previous mode.
+  // The input mode remains as the previous mode.
   EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
   EXPECT_EQ(composer_->GetInputFieldType(), commands::Context::PASSWORD);
   // The output mode should be reset.
@@ -3017,50 +3014,13 @@ TEST_F(ComposerTest, NBforeN_WithHalfWidth) {
   EXPECT_EQ(composer_->GetQueryForPrediction(), "あな");
 }
 
-TEST_F(ComposerTest, SpellcheckerTest) {
+TEST_F(ComposerTest, GetStringForTypeCorrectionTest) {
   table_->AddRule("a", "あ", "");
   table_->AddRule("i", "い", "");
   table_->AddRule("u", "う", "");
   composer_->InsertCharacter("aiu");
 
-  const auto preedit = composer_->GetStringForPreedit();
-  composer_->SetSpellchecker(nullptr);
-  EXPECT_EQ(composer_->GetTypeCorrectedQueries("context"), std::nullopt);
-
-  class MockSpellchecker : public engine::SpellcheckerInterface {
-   public:
-    MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
-                (const commands::CheckSpellingRequest &), (const, override));
-    MOCK_METHOD(std::optional<std::vector<TypeCorrectedQuery>>,
-                CheckCompositionSpelling,
-                (absl::string_view, absl::string_view,
-                 const commands::Request &),
-                (const, override));
-    MOCK_METHOD(void, MaybeApplyHomonymCorrection, (Segments *),
-                (const, override));
-  };
-
-  {
-    auto mock = std::make_unique<MockSpellchecker>();
-    EXPECT_CALL(*mock, CheckCompositionSpelling(preedit, "context", _))
-        .WillOnce(Return(std::nullopt));
-    composer_->SetSpellchecker(mock.get());
-    EXPECT_EQ(composer_->GetTypeCorrectedQueries("context"), std::nullopt);
-  }
-
-  {
-    std::vector<TypeCorrectedQuery> expected(1);
-    expected[0].correction = "いろは";
-    auto mock = std::make_unique<MockSpellchecker>();
-    EXPECT_CALL(*mock, CheckCompositionSpelling(preedit, "context", _))
-        .WillOnce(Return(expected));
-    composer_->SetSpellchecker(mock.get());
-    const auto result = composer_->GetTypeCorrectedQueries("context");
-    ASSERT_TRUE(result);
-    const auto &corrections = result.value();
-    ASSERT_EQ(corrections.size(), 1);
-    EXPECT_EQ(corrections[0].correction, "いろは");
-  }
+  EXPECT_EQ(composer_->GetStringForTypeCorrection(), "あいう");
 }
 
 TEST_F(ComposerTest, UpdateComposition) {

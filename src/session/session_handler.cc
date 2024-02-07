@@ -588,7 +588,6 @@ bool SessionHandler::CreateSession(commands::Command *command) {
     return false;
   }
 
-
   if (command->input().has_capability()) {
     session->set_client_capability(command->input().capability());
   }

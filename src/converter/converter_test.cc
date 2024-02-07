@@ -1179,15 +1179,13 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
 
   auto immutable_converter = std::make_unique<ImmutableConverter>(modules);
   Converter converter;
-  const DictionaryInterface *kNullDictionary = nullptr;
   converter.Init(
       modules,
       DefaultPredictor::CreateDefaultPredictor(
           std::make_unique<DictionaryPredictor>(modules, &converter,
                                                 immutable_converter.get()),
           std::make_unique<UserHistoryPredictor>(modules, false), &converter),
-      std::make_unique<RewriterImpl>(&converter, &data_manager,
-                                     modules.GetPosGroup(), kNullDictionary),
+      std::make_unique<Rewriter>(modules, converter),
       immutable_converter.get());
 
   Segments segments;

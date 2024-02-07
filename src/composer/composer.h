@@ -34,7 +34,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -44,9 +43,7 @@
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
-#include "composer/query.h"
 #include "composer/table.h"
-#include "engine/spellchecker_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/friend_test.h"
@@ -92,7 +89,6 @@ class Composer final {
 
   void SetRequest(const commands::Request *request);
   void SetConfig(const config::Config *config);
-  void SetSpellchecker(const engine::SpellcheckerInterface *spellchecker);
 
   void SetInputMode(transliteration::TransliterationType mode);
   void SetTemporaryInputMode(transliteration::TransliterationType mode);
@@ -133,13 +129,8 @@ class Composer final {
   void GetQueriesForPrediction(std::string *base,
                                std::set<std::string> *expanded) const;
 
-  // Returns type-corrected composition strings with SpellCheckerService.
-  // `context` is the hiragana sequence typed just before the current
-  // composition. Returns an empty vector when correction is not required.
-  // Returns std::nullopt when the underlying composition spellchecker is not
-  // available/enabled.
-  std::optional<std::vector<TypeCorrectedQuery>> GetTypeCorrectedQueries(
-      absl::string_view context = "") const;
+  // Returns a string to be used for type correction.
+  std::string GetStringForTypeCorrection() const;
 
   size_t GetLength() const;
   size_t GetCursor() const;
@@ -313,11 +304,6 @@ class Composer final {
   // "abc<left-cursor>d", when "a" or "d" is typed, this value should
   // be true.  When "b" or "c" is typed, the value should be false.
   bool is_new_input_;
-
-  // Spellchecker is used for composition spellchecking.
-  // Composer doesn't have the ownership of spellchecker_service_,
-  // SessionHandler owns this instance. (usually a singleton object).
-  const engine::SpellcheckerInterface *spellchecker_ = nullptr;
 
   // Example:
   //   {{"かん字", 0.99}, {"かlv字", 0.01}}

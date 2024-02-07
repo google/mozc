@@ -30,14 +30,7 @@
 # Description:
 #   Declaration of package_group for visibility managing.
 
-load("@bazel_skylib//lib:selects.bzl", "selects")
-load(
-    "//:build_defs.bzl",
-    "mozc_select",
-    "mozc_select_enable_session_watchdog",
-    "mozc_select_enable_spellchecker",
-    "mozc_select_enable_usage_rewriter",
-)
+load("//:build_defs.bzl", "mozc_select")
 load("//bazel:stubs.bzl", "bzl_library")
 
 package(default_visibility = ["//:__subpackages__"])
@@ -61,38 +54,44 @@ cc_library(
     name = "macro",
     defines = mozc_select(
         android = [
+            "MOZC_DISABLE_SESSION_WATCHDOG",
+            "NO_USAGE_REWRITER",
         ],
         chromiumos = [
+            "MOZC_DISABLE_SESSION_WATCHDOG",
             "MOZC_USE_MOZC_TESTING",
+            "NO_USAGE_REWRITER",
         ],
         default = [
         ],
         ios = [
+            "MOZC_DISABLE_SESSION_WATCHDOG",
             "MOZC_USE_MOZC_TESTING",
+            "NO_USAGE_REWRITER",
         ],
         linux = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
-            "OS_LINUX",
         ],
         macos = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
         ],
         oss_android = [
+            "MOZC_DISABLE_SESSION_WATCHDOG",
+            "NO_USAGE_REWRITER",
         ],
         oss_linux = [
             "MOZC_BUILD",
-            "OS_LINUX",
         ],
         oss_macos = [
             "MOZC_BUILD",
         ],
         wasm = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
-            "OS_WASM",
+            "MOZC_DISABLE_SESSION_WATCHDOG",
+            "NO_USAGE_REWRITER",
         ],
         windows = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
-            "OS_WIN",
             "WINVER=0x0A00",
             "_WIN32_WINNT=0x0A00",
             "_ATL_ALL_WARNINGS",
@@ -106,11 +105,6 @@ cc_library(
             "UNICODE",
             "_UNICODE",
         ],
-    ) + mozc_select_enable_session_watchdog(
-        off = ["MOZC_DISABLE_SESSION_WATCHDOG"],
-    ) + mozc_select_enable_spellchecker([
-    ]) + mozc_select_enable_usage_rewriter(
-        off = ["NO_USAGE_REWRITER"],
     ),
 )
 
@@ -143,29 +137,4 @@ filegroup(
         linux = ["//unix:package"],
         macos = ["//mac:package"],
     ),
-)
-
-selects.config_setting_group(
-    name = "enable_session_watchdog",
-    match_any = [
-        "@platforms//os:linux",
-        "@platforms//os:macos",
-        "@platforms//os:windows",
-    ],
-)
-
-selects.config_setting_group(
-    name = "enable_spellchecker",
-    match_any = [
-        "@platforms//:incompatible",  # placeholder for avoiding empty match.
-    ],
-)
-
-selects.config_setting_group(
-    name = "enable_usage_rewriter",
-    match_any = [
-        "@platforms//os:linux",
-        "@platforms//os:macos",
-        "@platforms//os:windows",
-    ],
 )
