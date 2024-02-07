@@ -30,9 +30,7 @@
 #ifndef MOZC_REWRITER_REWRITER_H_
 #define MOZC_REWRITER_REWRITER_H_
 
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
+#include "engine/modules.h"
 #include "rewriter/merger_rewriter.h"
 
 namespace mozc {
@@ -42,15 +40,10 @@ class DataManagerInterface;
 
 class RewriterImpl : public MergerRewriter {
  public:
-  RewriterImpl(const ConverterInterface *parent_converter,
-               const DataManagerInterface *data_manager,
-               const dictionary::PosGroup *pos_group,
-               const dictionary::DictionaryInterface *dictionary);
+  RewriterImpl(const engine::Modules &modules,
+               const ConverterInterface &parent_converter);
   RewriterImpl(const RewriterImpl &) = delete;
   RewriterImpl &operator=(const RewriterImpl &) = delete;
-
- private:
-  const dictionary::PosMatcher pos_matcher_;
 };
 
 }  // namespace mozc
