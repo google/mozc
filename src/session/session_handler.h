@@ -99,9 +99,6 @@ class SessionHandler : public SessionHandlerInterface {
       mozc::storage::LruCache<SessionID, std::unique_ptr<session::Session>>;
   using SessionElement = SessionMap::Element;
 
-  void Init(std::unique_ptr<EngineInterface> engine,
-            std::unique_ptr<EngineBuilder> engine_builder);
-
   // Updates the config, if the |command| contains the config.
   void MaybeUpdateConfig(commands::Command *command);
 
