@@ -36,6 +36,7 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
+    "mozc_select_enable_usage_rewriter",
 )
 
 package(default_visibility = ["//:__subpackages__"])
@@ -1275,10 +1276,11 @@ mozc_cc_binary(
 
 mozc_cc_library(
     name = "usage_rewriter",
-    srcs = [
-        "usage_rewriter.cc",
-    ],
+    srcs = ["usage_rewriter.cc"],
     hdrs = ["usage_rewriter.h"],
+    target_compatible_with = mozc_select_enable_usage_rewriter(
+        off = ["@platforms//:incompatible"],
+    ),
     deps = [
         ":rewriter_interface",
         "//base:logging",
@@ -1302,6 +1304,10 @@ mozc_cc_test(
     size = "small",
     srcs = ["usage_rewriter_test.cc"],
     requires_full_emulation = False,
+    tags = ["noandroid"],
+    target_compatible_with = mozc_select_enable_usage_rewriter(
+        off = ["@platforms//:incompatible"],
+    ),
     deps = [
         ":usage_rewriter",
         "//config:config_handler",
@@ -1437,7 +1443,6 @@ mozc_cc_library(
         ":t13n_promotion_rewriter",
         ":transliteration_rewriter",
         ":unicode_rewriter",
-        ":usage_rewriter",
         ":user_boundary_history_rewriter",
         ":user_dictionary_rewriter",
         ":user_segment_history_rewriter",
@@ -1452,7 +1457,7 @@ mozc_cc_library(
         "//dictionary:pos_matcher",
         "//engine:modules",
         "@com_google_absl//absl/flags:flag",
-    ],
+    ] + mozc_select_enable_usage_rewriter([":usage_rewriter"]),
     alwayslink = 1,
 )
 
