@@ -134,24 +134,17 @@ bool IsApplicationAlive(const session::Session *session) {
 }
 }  // namespace
 
-SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine) {
-  Init(std::move(engine), std::unique_ptr<EngineBuilder>());
-}
+SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine)
+    : SessionHandler(std::move(engine), std::make_unique<EngineBuilder>()) {}
 
 SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine,
-                               std::unique_ptr<EngineBuilder> engine_builder) {
-  Init(std::move(engine), std::move(engine_builder));
-}
-
-void SessionHandler::Init(std::unique_ptr<EngineInterface> engine,
-                          std::unique_ptr<EngineBuilder> engine_builder) {
+                               std::unique_ptr<EngineBuilder> engine_builder)
+    : engine_(std::move(engine)), engine_builder_(std::move(engine_builder)) {
   is_available_ = false;
   max_session_size_ = 0;
   last_session_empty_time_ = Clock::GetAbslTime();
   last_cleanup_time_ = absl::InfinitePast();
   last_create_session_time_ = absl::InfinitePast();
-  engine_ = std::move(engine);
-  engine_builder_ = std::move(engine_builder);
   observer_handler_ = std::make_unique<session::SessionObserverHandler>();
   user_dictionary_session_handler_ =
       std::make_unique<user_dictionary::UserDictionarySessionHandler>();
@@ -166,7 +159,7 @@ void SessionHandler::Init(std::unique_ptr<EngineInterface> engine,
     // The typical case is Startup processes on Vista.
     // On Vista, StartUp processes are in Job for 60 seconds. In order
     // to launch new mozc_server inside sandbox, we set the timeout
-    // to be 60sec. Client application hopefully re-launch mozc_server.
+    // to be 60sec. Client application hopefully relaunch mozc_server.
     absl::SetFlag(&FLAGS_timeout, 60);
     absl::SetFlag(&FLAGS_max_session_size, 8);
     absl::SetFlag(&FLAGS_watch_dog_interval, 15);
@@ -556,7 +549,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   const absl::Time current_time = Clock::GetAbslTime();
   const absl::Duration create_session_interval =
       current_time - last_create_session_time_;
-  // `create_session_interval` can be nagative if a user modifies their system
+  // `create_session_interval` can be negative if a user modifies their system
   // clock.
   if (create_session_interval >= absl::Duration() &&
       create_session_interval < create_session_minimum_interval) {
@@ -669,7 +662,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
       MOZC_VLOG(2) << "Application is not alive. Removing: " << element->key;
       remove_ids.push_back(element->key);
     } else if (session->last_command_time() == absl::InfinitePast()) {
-      // no command is exectuted
+      // no command is executed
       if ((current_time - session->create_session_time()) >=
           create_session_timeout) {
         remove_ids.push_back(element->key);

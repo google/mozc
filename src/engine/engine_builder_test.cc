@@ -39,6 +39,7 @@
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/hash.h"
+#include "base/logging.h"
 #include "engine/engine_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "testing/gmock.h"
@@ -82,27 +83,28 @@ TEST_P(EngineBuilderTest, BasicTest) {
     request_.set_file_path(mock_data_path_);
     request_.set_magic_number(kMockMagicNumber);
 
-    const auto id = builder_.RegisterRequest(request_);
-    auto engine = builder_.Build(id);
+    const uint64_t id = builder_.RegisterRequest(request_);
+    std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
+        builder_.Build(id);
 
-    engine->Wait();
+    response_future->Wait();
+    const EngineBuilder::EngineResponse &response = response_future->Get();
 
-    EXPECT_EQ(engine->Get().response.status(),
-              EngineReloadResponse::RELOAD_READY);
-    EXPECT_EQ(engine->Get().id, id);
-    EXPECT_EQ(engine->Get().engine->GetPredictorName(),
-              GetParam().predictor_name);
+    EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
+    EXPECT_EQ(response.id, id);
+    EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
 
     // Test whether all move operations work.
-    auto&& moved_response = std::move(*engine).Get();
-    engine.reset();
+    EngineBuilder::EngineResponse &&moved_response =
+        std::move(*response_future).Get();
+    response_future.reset();
     EXPECT_EQ(moved_response.engine->GetPredictorName(),
               GetParam().predictor_name);
 
-    auto moved_engine = std::move(moved_response.engine);
+    std::unique_ptr<EngineInterface> moved_engine =
+        std::move(moved_response.engine);
     moved_response.engine.reset();
-    EXPECT_EQ(moved_engine->GetPredictorName(),
-              GetParam().predictor_name);
+    EXPECT_EQ(moved_engine->GetPredictorName(), GetParam().predictor_name);
   }
 
   Clear();
@@ -121,16 +123,16 @@ TEST_P(EngineBuilderTest, BasicTest) {
     request_.set_file_path(src_path);
     request_.set_install_location(install_path);
     request_.set_magic_number(kMockMagicNumber);
-    const auto id = builder_.RegisterRequest(request_);
+    const uint64_t id = builder_.RegisterRequest(request_);
 
-    auto engine = builder_.Build(id);
-    engine->Wait();
+    std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
+        builder_.Build(id);
+    response_future->Wait();
+    const EngineBuilder::EngineResponse &response = response_future->Get();
 
-    EXPECT_EQ(engine->Get().response.status(),
-              EngineReloadResponse::RELOAD_READY);
-    EXPECT_EQ(engine->Get().id, id);
-    EXPECT_EQ(engine->Get().engine->GetPredictorName(),
-              GetParam().predictor_name);
+    EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
+    EXPECT_EQ(response.id, id);
+    EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
 
     // Verify |src_path| was copied.
     EXPECT_OK(FileUtil::FileExists(src_path));
@@ -160,16 +162,16 @@ TEST_P(EngineBuilderTest, AsyncBuildRepeatedly) {
     }
   }
 
-  auto engine = builder_.Build(latest_id);
+  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
+      builder_.Build(latest_id);
 
-  engine->Wait();
+  response_future->Wait();
+  const EngineBuilder::EngineResponse &response = response_future->Get();
 
-  EXPECT_EQ(engine->Get().response.status(),
-            EngineReloadResponse::RELOAD_READY);
-  EXPECT_EQ(engine->Get().response.request().file_path(), last_path);
-  EXPECT_EQ(engine->Get().engine->GetPredictorName(),
-            GetParam().predictor_name);
-  EXPECT_EQ(engine->Get().id, latest_id);
+  EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
+  EXPECT_EQ(response.response.request().file_path(), last_path);
+  EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
+  EXPECT_EQ(response.id, latest_id);
 }
 
 TEST_P(EngineBuilderTest, AsyncBuildWithoutInstall) {
@@ -177,17 +179,17 @@ TEST_P(EngineBuilderTest, AsyncBuildWithoutInstall) {
   request_.set_engine_type(GetParam().type);
   request_.set_file_path(mock_data_path_);
   request_.set_magic_number(kMockMagicNumber);
-  const auto id = builder_.RegisterRequest(request_);
+  const uint64_t id = builder_.RegisterRequest(request_);
 
-  auto engine = builder_.Build(id);
+  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
+      builder_.Build(id);
 
-  engine->Wait();
+  response_future->Wait();
+  const EngineBuilder::EngineResponse &response = response_future->Get();
 
-  EXPECT_EQ(engine->Get().response.status(),
-            EngineReloadResponse::RELOAD_READY);
-  EXPECT_EQ(engine->Get().engine->GetPredictorName(),
-            GetParam().predictor_name);
-  EXPECT_EQ(engine->Get().id, id);
+  EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
+  EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
+  EXPECT_EQ(response.id, id);
 }
 
 TEST_P(EngineBuilderTest, AsyncBuildWithInstall) {
@@ -205,23 +207,23 @@ TEST_P(EngineBuilderTest, AsyncBuildWithInstall) {
   request_.set_file_path(tmp_src);
   request_.set_install_location(install_path);
   request_.set_magic_number(kMockMagicNumber);
-  const auto id = builder_.RegisterRequest(request_);
+  const uint64_t id = builder_.RegisterRequest(request_);
 
-  auto engine = builder_.Build(id);
+  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
+      builder_.Build(id);
 
-  engine->Wait();
+  response_future->Wait();
+  const EngineBuilder::EngineResponse &response = response_future->Get();
 
   // Builder should be ready now.
-  EXPECT_EQ(engine->Get().response.status(),
-            EngineReloadResponse::RELOAD_READY);
+  EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
 
   // |tmp_src| should be copied to |install_path|.
   ASSERT_OK(FileUtil::FileExists(tmp_src));
   ASSERT_OK(FileUtil::FileExists(install_path));
 
-  EXPECT_EQ(engine->Get().engine->GetPredictorName(),
-            GetParam().predictor_name);
-  EXPECT_EQ(engine->Get().id, id);
+  EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
+  EXPECT_EQ(response.id, id);
 }
 
 TEST_P(EngineBuilderTest, FailureCaseDataBroken) {
@@ -230,15 +232,17 @@ TEST_P(EngineBuilderTest, FailureCaseDataBroken) {
   request_.set_file_path(testing::GetSourceFileOrDie(
       {MOZC_SRC_COMPONENTS("engine"), "engine_builder_test.cc"}));
   request_.set_magic_number(kMockMagicNumber);
-  const auto id = builder_.RegisterRequest(request_);
+  const uint64_t id = builder_.RegisterRequest(request_);
 
-  auto engine = builder_.Build(id);
+  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
+      builder_.Build(id);
 
-  engine->Wait();
+  response_future->Wait();
+  const EngineBuilder::EngineResponse &response = response_future->Get();
 
-  EXPECT_EQ(engine->Get().response.status(), EngineReloadResponse::DATA_BROKEN);
-  EXPECT_FALSE(engine->Get().engine);
-  EXPECT_EQ(engine->Get().id, id);
+  EXPECT_EQ(response.response.status(), EngineReloadResponse::DATA_BROKEN);
+  EXPECT_FALSE(response.engine);
+  EXPECT_EQ(response.id, id);
 }
 
 TEST_P(EngineBuilderTest, InvalidId) {
@@ -246,17 +250,18 @@ TEST_P(EngineBuilderTest, InvalidId) {
   request_.set_engine_type(GetParam().type);
   request_.set_file_path(mock_data_path_);
   request_.set_magic_number(kMockMagicNumber);
-  const auto id =
+  const uint64_t id =
       builder_.RegisterRequest(request_) + 1;  // + 1 to make invalid id.
 
-  auto engine = builder_.Build(id);
+  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
+      builder_.Build(id);
 
-  engine->Wait();
+  response_future->Wait();
+  const EngineBuilder::EngineResponse &response = response_future->Get();
 
-  EXPECT_EQ(engine->Get().response.status(),
-            EngineReloadResponse::DATA_MISSING);
-  EXPECT_FALSE(engine->Get().engine);
-  EXPECT_EQ(engine->Get().id, id);
+  EXPECT_EQ(response.response.status(), EngineReloadResponse::DATA_MISSING);
+  EXPECT_FALSE(response.engine);
+  EXPECT_EQ(response.id, id);
 }
 
 TEST_P(EngineBuilderTest, FailureCaseFileDoesNotExist) {
@@ -265,15 +270,16 @@ TEST_P(EngineBuilderTest, FailureCaseFileDoesNotExist) {
   request_.set_file_path("file_does_not_exist");
   request_.set_magic_number(kMockMagicNumber);
 
-  const auto id = builder_.RegisterRequest(request_);
-  auto engine = builder_.Build(id);
+  const uint64_t id = builder_.RegisterRequest(request_);
+  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
+      builder_.Build(id);
 
-  engine->Wait();
+  response_future->Wait();
+  const EngineBuilder::EngineResponse &response = response_future->Get();
 
-  EXPECT_EQ(engine->Get().response.status(),
-            EngineReloadResponse::MMAP_FAILURE);
-  EXPECT_FALSE(engine->Get().engine);
-  EXPECT_EQ(engine->Get().id, id);
+  EXPECT_EQ(response.response.status(), EngineReloadResponse::MMAP_FAILURE);
+  EXPECT_FALSE(response.engine);
+  EXPECT_EQ(response.id, id);
 }
 
 TEST_P(EngineBuilderTest, RegisterRequestTest) {

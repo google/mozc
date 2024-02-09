@@ -30,7 +30,14 @@
 # Description:
 #   Declaration of package_group for visibility managing.
 
-load("//:build_defs.bzl", "mozc_select")
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load(
+    "//:build_defs.bzl",
+    "mozc_select",
+    "mozc_select_enable_session_watchdog",
+    "mozc_select_enable_spellchecker",
+    "mozc_select_enable_usage_rewriter",
+)
 load("//bazel:stubs.bzl", "bzl_library")
 
 package(default_visibility = ["//:__subpackages__"])
@@ -54,20 +61,14 @@ cc_library(
     name = "macro",
     defines = mozc_select(
         android = [
-            "MOZC_DISABLE_SESSION_WATCHDOG",
-            "NO_USAGE_REWRITER",
         ],
         chromiumos = [
-            "MOZC_DISABLE_SESSION_WATCHDOG",
             "MOZC_USE_MOZC_TESTING",
-            "NO_USAGE_REWRITER",
         ],
         default = [
         ],
         ios = [
-            "MOZC_DISABLE_SESSION_WATCHDOG",
             "MOZC_USE_MOZC_TESTING",
-            "NO_USAGE_REWRITER",
         ],
         linux = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
@@ -76,8 +77,6 @@ cc_library(
             "GOOGLE_JAPANESE_INPUT_BUILD",
         ],
         oss_android = [
-            "MOZC_DISABLE_SESSION_WATCHDOG",
-            "NO_USAGE_REWRITER",
         ],
         oss_linux = [
             "MOZC_BUILD",
@@ -87,8 +86,6 @@ cc_library(
         ],
         wasm = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
-            "MOZC_DISABLE_SESSION_WATCHDOG",
-            "NO_USAGE_REWRITER",
         ],
         windows = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
@@ -105,6 +102,11 @@ cc_library(
             "UNICODE",
             "_UNICODE",
         ],
+    ) + mozc_select_enable_session_watchdog(
+        off = ["MOZC_DISABLE_SESSION_WATCHDOG"],
+    ) + mozc_select_enable_spellchecker([
+    ]) + mozc_select_enable_usage_rewriter(
+        off = ["NO_USAGE_REWRITER"],
     ),
 )
 
@@ -137,4 +139,43 @@ filegroup(
         linux = ["//unix:package"],
         macos = ["//mac:package"],
     ),
+)
+
+selects.config_setting_group(
+    name = "enable_session_watchdog",
+    match_any = [
+        # TODO(yuryu): define platforms and use bazel_platforms.
+        "//bazel/cc_target_os:linux",
+        "//bazel/cc_target_os:oss_linux",
+        "//bazel/cc_target_os:prod_linux",
+        "//bazel/cc_target_os:darwin",
+        "//bazel/cc_target_os:oss_macos",
+        "//bazel/cc_target_os:prod_macos",
+        "//bazel/cc_target_os:windows",
+        "//bazel/cc_target_os:oss_windows",
+        "//bazel/cc_target_os:prod_windows",
+    ],
+)
+
+selects.config_setting_group(
+    name = "enable_spellchecker",
+    match_any = [
+        "@platforms//:incompatible",  # placeholder to avoid empty match.
+    ],
+)
+
+selects.config_setting_group(
+    name = "enable_usage_rewriter",
+    match_any = [
+        # TODO(yuryu): define platforms and use bazel_platforms.
+        "//bazel/cc_target_os:linux",
+        "//bazel/cc_target_os:oss_linux",
+        "//bazel/cc_target_os:prod_linux",
+        "//bazel/cc_target_os:darwin",
+        "//bazel/cc_target_os:oss_macos",
+        "//bazel/cc_target_os:prod_macos",
+        "//bazel/cc_target_os:windows",
+        "//bazel/cc_target_os:oss_windows",
+        "//bazel/cc_target_os:prod_windows",
+    ],
 )
