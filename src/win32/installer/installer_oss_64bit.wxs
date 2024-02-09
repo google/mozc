@@ -179,6 +179,11 @@
                   DiskId='1' Checksum='yes'
                   Source='$(var.ReleaseRedistCrt64Dir)/msvcp140_1.dll' />
             </Component>
+            <Component Id='msvcp140_2' Guid='*'>
+              <File Id='msvcp140_2.dll' Name='msvcp140_2.dll'
+                  DiskId='1' Checksum='yes'
+                  Source='$(var.ReleaseRedistCrt64Dir)/msvcp140_2.dll' />
+            </Component>
             <Component Id='vcruntime140' Guid='*'>
               <File Id='vcruntime140.dll' Name='vcruntime140.dll'
                   DiskId='1' Checksum='yes'
@@ -319,6 +324,7 @@
       <?if $(var.VSConfigurationName) = "Release" ?>
         <ComponentRef Id='msvcp140' />
         <ComponentRef Id='msvcp140_1' />
+        <ComponentRef Id='msvcp140_2' />
         <ComponentRef Id='vcruntime140' />
         <ComponentRef Id='vcruntime140_1' />
         <ComponentRef Id='QtCoreDll' />
