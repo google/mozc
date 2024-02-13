@@ -1061,7 +1061,10 @@ DictionaryPredictionAggregator::GenerateQueryForHandwriting(
     absl::StrAppend(&info.query, converted);
 
     std::string utf8_str;
-    const Utf8AsChars original_chars(segment.candidate(0).key);
+    // b/324976556:
+    // We have to use the segment key instead of the candidate key.
+    // candidate key does not always match segment key for T13N chars.
+    const Utf8AsChars original_chars(segment.key());
     for (const absl::string_view c : original_chars) {
       if (Util::GetScriptType(c) != Util::HIRAGANA) {
         absl::StrAppend(&utf8_str, c);

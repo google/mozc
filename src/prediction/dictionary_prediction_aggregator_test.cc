@@ -2797,7 +2797,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
                SINGLE_KANJI);
 }
 
-TEST_F(DictionaryPredictionAggregatorTest, Handwiritng) {
+TEST_F(DictionaryPredictionAggregatorTest, Handwriting) {
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
       CreateAggregatorWithMockData();
   MockDictionary *mock_dict = data_and_aggregator->mutable_dictionary();
@@ -2879,6 +2879,70 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwiritng) {
   EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "漢字辞典"));
   EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "漢字字典"));
   EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "換字字典"));
+}
+
+TEST_F(DictionaryPredictionAggregatorTest, HandwritingT13N) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  MockDictionary *mock_dict = data_and_aggregator->mutable_dictionary();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+  Segments segments;
+  // Handwriting request
+  commands::RequestForUnitTest::FillMobileRequestForHandwriting(request_.get());
+  {
+    commands::SessionCommand command;
+    commands::SessionCommand::CompositionEvent *composition_event =
+        command.add_composition_events();
+    composition_event->set_composition_string("キた");
+    composition_event->set_probability(0.99);
+    composition_event = command.add_composition_events();
+    composition_event->set_composition_string("もた");
+    composition_event->set_probability(0.01);
+    composer_->Reset();
+    composer_->SetCompositionsForHandwriting(command.composition_events());
+
+    Segment *seg = segments.add_segment();
+    seg->set_key("キた");
+    seg->set_segment_type(Segment::FREE);
+  }
+
+  // reverse conversion
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("キた");
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value = "きた";
+    candidate->key = "きた";  // T13N key can be looked up
+
+    EXPECT_CALL(
+        *data_and_aggregator->mutable_immutable_converter(),
+        ConvertForRequest(Truly([](const ConversionRequest &request) {
+                            return request.request_type() ==
+                                   ConversionRequest::REVERSE_CONVERSION;
+                          }),
+                          _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+
+  EXPECT_CALL(*mock_dict, LookupPredictive(_, _, _)).Times(AnyNumber());
+  EXPECT_CALL(*mock_dict, LookupExact(StrEq("きた"), _, _))
+      .WillRepeatedly(InvokeCallbackWithKeyValues({
+          {"きた", "きた"},
+          {"きた", "北"},
+      }));
+
+  std::vector<Result> results;
+  EXPECT_TRUE(aggregator.AggregatePredictionForRequest(*prediction_convreq_,
+                                                       segments, &results) &
+              UNIGRAM);
+
+  EXPECT_EQ(results.size(), 2);
+  // composition from handwriting output
+  EXPECT_TRUE(FindResultByKeyValue(results, "きた", "キた"));
+  EXPECT_TRUE(FindResultByKeyValue(results, "もた", "もた"));
+  // No "きた", "北"
 }
 
 }  // namespace
