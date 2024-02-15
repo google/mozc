@@ -166,10 +166,6 @@ class DictionaryPredictor : public PredictorInterface {
           aggregator,
       const ImmutableConverterInterface *immutable_converter);
 
-  static void ApplyPenaltyForKeyExpansion(const ConversionRequest &request,
-                                          const Segments &segments,
-                                          std::vector<Result> *results);
-
   bool AddPredictionToCandidates(
       const ConversionRequest &request, Segments *segments,
       const TypingCorrectionMixingParams &typing_correction_mixing_params,
