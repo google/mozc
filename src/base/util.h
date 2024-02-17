@@ -142,7 +142,7 @@ class Util {
                             std::string *result);
 
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
-  static void StripUtf8Bom(std::string *line);
+  static absl::string_view StripUtf8Bom(absl::string_view line);
 
   // return true the line starts with UTF16-LE/UTF16-BE BOM.
   static bool IsUtf16Bom(absl::string_view line);
