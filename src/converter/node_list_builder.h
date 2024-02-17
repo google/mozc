@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_NODE_LIST_BUILDER_H_
 #define MOZC_CONVERTER_NODE_LIST_BUILDER_H_
 
+#include <cstddef>
 #include <cstdint>
 
 #include "absl/strings/string_view.h"
@@ -44,33 +45,12 @@
 
 namespace mozc {
 
-// The cost is 500 * log(30): 30 times in freq.
-static const int32_t kKanaModifierInsensitivePenalty = 1700;
-
-struct SpatialCostParams {
-  bool enable_new_spatial_scoring = false;
-  int penalty = kKanaModifierInsensitivePenalty;
-  int min_char_length = 0;
-  int GetPenalty(absl::string_view key) const {
-    return (min_char_length > 0 && Util::CharsLen(key) < min_char_length)
-               ? kKanaModifierInsensitivePenalty
-               : penalty;
-  }
-};
-
-// Propagates the spatial_cost_params only when enable_new_spatial_scoring is
-// enabled.
-inline SpatialCostParams GetSpatialCostParams(
-    const ConversionRequest &request) {
-  const auto &experiment_params = request.request().decoder_experiment_params();
-  SpatialCostParams result;
-  if (experiment_params.enable_new_spatial_scoring()) {
-    result.enable_new_spatial_scoring = true;
-    result.penalty = experiment_params.spatial_cost_penalty();
-    result.min_char_length =
-        experiment_params.spatial_cost_penalty_min_char_length();
-  }
-  return result;
+// Spatial cost penalty added to the token expanded via
+// the legacy dictionary-based variant handler. We currently add large cost so
+// the variant expansion happen only when the counter examples don't exist.
+inline int32_t GetLegacySpatialCostPenalty() {
+  static constexpr int32_t gKanaModifierInsensitivePenalty = 20000;
+  return gKanaModifierInsensitivePenalty;
 }
 
 // Provides basic functionality for building a list of nodes.
@@ -78,13 +58,8 @@ inline SpatialCostParams GetSpatialCostParams(
 // dictionary lookup.
 class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
  public:
-  BaseNodeListBuilder(mozc::NodeAllocator *allocator, int limit,
-                      const SpatialCostParams &spatial_cost_param)
-      : allocator_(allocator),
-        limit_(limit),
-        penalty_(0),
-        spatial_cost_params_(spatial_cost_param),
-        result_(nullptr) {
+  BaseNodeListBuilder(mozc::NodeAllocator *allocator, int limit)
+      : allocator_(allocator), limit_(limit), penalty_(0), result_(nullptr) {
     DCHECK(allocator_) << "Allocator must not be nullptr";
   }
 
@@ -94,7 +69,7 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
   // Determines a penalty for tokens of this (key, actual_key) pair.
   ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
                          int num_expanded) override {
-    penalty_ = num_expanded > 0 ? spatial_cost_params_.GetPenalty(key) : 0;
+    penalty_ = num_expanded > 0 ? GetLegacySpatialCostPenalty() : 0;
     return TRAVERSE_CONTINUE;
   }
 
@@ -125,11 +100,10 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
   }
 
  protected:
-  NodeAllocator *allocator_;
-  int limit_;
-  int penalty_;
-  const SpatialCostParams spatial_cost_params_;
-  Node *result_;
+  NodeAllocator *allocator_ = nullptr;
+  int limit_ = 0;
+  int penalty_ = 0;
+  Node *result_ = nullptr;
 };
 
 // Implements key filtering rule for LookupPrefix().
@@ -137,9 +111,8 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
 class NodeListBuilderForLookupPrefix : public BaseNodeListBuilder {
  public:
   NodeListBuilderForLookupPrefix(mozc::NodeAllocator *allocator, int limit,
-                                 size_t min_key_length,
-                                 const SpatialCostParams &spatial_cost_params)
-      : BaseNodeListBuilder(allocator, limit, spatial_cost_params),
+                                 size_t min_key_length)
+      : BaseNodeListBuilder(allocator, limit),
         min_key_length_(min_key_length) {}
 
   NodeListBuilderForLookupPrefix(const NodeListBuilderForLookupPrefix &) =
@@ -152,7 +125,7 @@ class NodeListBuilderForLookupPrefix : public BaseNodeListBuilder {
   }
 
  protected:
-  const size_t min_key_length_;
+  const size_t min_key_length_ = 0;
 };
 
 }  // namespace mozc

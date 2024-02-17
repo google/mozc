@@ -60,8 +60,8 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
-#include "engine/spellchecker_interface.h"
 #include "engine/modules.h"
+#include "engine/spellchecker_interface.h"
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/rescorer_interface.h"
@@ -98,12 +98,6 @@ bool IsDebug(const ConversionRequest &request) {
 #else   // NDEBUG
   return request.config().verbose_level() >= 1;
 #endif  // NDEBUG
-}
-
-bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_new_spatial_scoring();
 }
 
 bool IsLatinInputMode(const ConversionRequest &request) {
@@ -402,7 +396,6 @@ void DictionaryPredictor::RewriteResultsForPrediction(
     SetPredictionCost(request.request_type(), segments, results);
   }
 
-  ApplyPenaltyForKeyExpansion(request, segments, results);
   MaybeRescoreResults(request, segments, absl::MakeSpan(*results));
 
   if (!is_mixed_conversion) {
@@ -1189,48 +1182,6 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
           .decoder_experiment_params()
           .apply_user_segment_history_rewriter_for_prediction()) {
     MaybeFixRealtimeTopCost(input_key, *results);
-  }
-}
-
-// This method should be deprecated, as it is unintentionally adding extra
-// spatial penalty to the candidate.
-
-// static
-void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) {
-  if (IsEnableNewSpatialScoring(request) ||
-      segments.conversion_segments_size() == 0) {
-    return;
-  }
-  const std::string &conversion_key = segments.conversion_segment(0).key();
-  if (conversion_key.empty()) {  // Next word prediction
-    return;
-  }
-
-  const KeyValueView history = GetHistoryKeyAndValue(segments);
-
-  for (Result &result : *results) {
-    // For TYPING_CORRECTION, query cost is already added.
-    // (DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection)
-    if (result.types & PredictionType::TYPING_CORRECTION ||
-        result.types &
-            PredictionType::ENGLISH ||  // Can be looked up with raw query
-        result.candidate_attributes &
-            Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-      continue;
-    }
-
-    const absl::string_view lookup_key =
-        GetCandidateOriginalLookupKey(conversion_key, result, history.key);
-    const absl::string_view result_key = GetCandidateKey(result, history.key);
-    if (!absl::StartsWith(result_key, lookup_key)) {
-      result.cost += kKeyExpansionPenalty;
-      result.penalty += kKeyExpansionPenalty;
-      MOZC_WORD_LOG(
-          result, absl::StrCat("KeyExpansionPenalty: ", result.cost,
-                               "; expansion penalty: ", kKeyExpansionPenalty));
-    }
   }
 }
 

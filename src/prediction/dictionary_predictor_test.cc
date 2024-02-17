@@ -113,13 +113,6 @@ class DictionaryPredictorTestPeer {
                                                             results);
   }
 
-  static void ApplyPenaltyForKeyExpansion(const ConversionRequest &request,
-                                          const Segments &segments,
-                                          std::vector<Result> *results) {
-    return DictionaryPredictor::ApplyPenaltyForKeyExpansion(request, segments,
-                                                            results);
-  }
-
   static void SetDebugDescription(PredictionTypes types,
                                   Segment::Candidate *candidate) {
     DictionaryPredictor::SetDebugDescription(types, candidate);
@@ -525,66 +518,6 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
     EXPECT_EQ(results[0].types, prediction::UNIGRAM);
     EXPECT_EQ(results[1].types, prediction::UNIGRAM);
   }
-}
-
-TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
-  table_->LoadFromFile("system://romanji-hiragana.tsv");
-  composer_->SetTable(table_.get());
-
-  Segments segments;
-  InsertInputSequence("ak", composer_.get());
-  std::string predicton_query = composer_->GetQueryForPrediction();
-  EXPECT_EQ(predicton_query, "あ");
-  InitSegmentsWithKey(predicton_query, &segments);
-
-  std::vector<Result> results = {
-      CreateResult4("あか", "赤", prediction::UNIGRAM, Token::NONE),
-      CreateResult4("あき", "秋", prediction::UNIGRAM, Token::NONE),
-      CreateResult4("あかぎ", "アカギ", prediction::UNIGRAM, Token::NONE),
-  };
-  EXPECT_EQ(results.size(), 3);
-  EXPECT_EQ(results[0].cost, 0);
-  EXPECT_EQ(results[1].cost, 0);
-  EXPECT_EQ(results[2].cost, 0);
-
-  DictionaryPredictorTestPeer::ApplyPenaltyForKeyExpansion(
-      *convreq_for_prediction_, segments, &results);
-
-  // no penalties
-  EXPECT_EQ(results[0].cost, 0);
-  EXPECT_EQ(results[1].cost, 0);
-  EXPECT_EQ(results[2].cost, 0);
-}
-
-TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
-  table_->LoadFromFile("system://kana.tsv");
-  composer_->SetTable(table_.get());
-
-  Segments segments;
-  InsertInputSequence("あし", composer_.get());
-  std::string predicton_query = composer_->GetQueryForPrediction();
-  EXPECT_EQ(predicton_query, "あし");
-  InitSegmentsWithKey(predicton_query, &segments);
-
-  std::vector<Result> results{
-      CreateResult4("あし", "足", prediction::UNIGRAM, Token::NONE),
-      CreateResult4("あじ", "味", prediction::UNIGRAM, Token::NONE),
-      CreateResult4("あした", "明日", prediction::UNIGRAM, Token::NONE),
-      CreateResult4("あじあ", "アジア", prediction::UNIGRAM, Token::NONE),
-  };
-  EXPECT_EQ(results.size(), 4);
-  EXPECT_EQ(results[0].cost, 0);
-  EXPECT_EQ(results[1].cost, 0);
-  EXPECT_EQ(results[2].cost, 0);
-  EXPECT_EQ(results[3].cost, 0);
-
-  DictionaryPredictorTestPeer::ApplyPenaltyForKeyExpansion(
-      *convreq_for_prediction_, segments, &results);
-
-  EXPECT_EQ(results[0].cost, 0);
-  EXPECT_LT(0, results[1].cost);
-  EXPECT_EQ(results[2].cost, 0);
-  EXPECT_LT(0, results[3].cost);
 }
 
 TEST_F(DictionaryPredictorTest, GetLMCost) {

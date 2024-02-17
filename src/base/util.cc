@@ -604,9 +604,9 @@ void Util::Utf8SubString(absl::string_view src, size_t start, size_t length,
   result->assign(substr.data(), substr.size());
 }
 
-void Util::StripUtf8Bom(std::string *line) {
+absl::string_view Util::StripUtf8Bom(absl::string_view line) {
   static constexpr char kUtf8Bom[] = "\xef\xbb\xbf";
-  *line = std::string(absl::StripPrefix(*line, kUtf8Bom));
+  return absl::StripPrefix(line, kUtf8Bom);
 }
 
 bool Util::IsUtf16Bom(absl::string_view line) {

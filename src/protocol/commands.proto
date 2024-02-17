@@ -583,15 +583,9 @@ message DecoderExperimentParams {
 
   reserved 3;  // Deprecated enable_strict_candidate_filter
 
-  // whether to use new spatial scoring function.
-  // TODO(taku): This flag will be deleted after the migration.
-  optional bool enable_new_spatial_scoring = 4;
-  optional int32 spatial_cost_penalty = 5 [default = 1700];
-  // Apply the adaptive `spatial_cost_penalty` penalty only if the
-  // `key_length` >= spatial_cost_penalty_min_char_length.
-  // Otherwise, use the default penalty 1700.
-  optional int32 spatial_cost_penalty_min_char_length = 6 [default = 0];
-
+  reserved 4;  // Deprecated enable_new_spatial_scoring
+  reserved 5;  // Deprecated spatial_cost_penalty
+  reserved 6;  // Deprecated spatial_cost_penalty_min_char_length
   reserved 7;  // Deprecated enrich_partial_candidates
 
   enum VariationCharacterType {

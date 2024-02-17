@@ -472,46 +472,32 @@ TEST(UtilTest, StripUtf8Bom) {
   std::string line;
 
   // Should be stripped.
-  line =
-      "\xef\xbb\xbf"
-      "abc";
-  Util::StripUtf8Bom(&line);
-  EXPECT_EQ(line, "abc");
+  EXPECT_EQ(Util::StripUtf8Bom("\xef\xbb\xbf"
+                               "abc"),
+            "abc");
 
   // Should be stripped.
-  line = "\xef\xbb\xbf";
-  Util::StripUtf8Bom(&line);
-  EXPECT_EQ(line, "");
+  EXPECT_EQ(Util::StripUtf8Bom("\xef\xbb\xbf"), "");
 
   // BOM in the middle of text. Shouldn't be stripped.
-  line =
-      "a"
-      "\xef\xbb\xbf"
-      "bc";
-  Util::StripUtf8Bom(&line);
-  EXPECT_EQ(line,
+  EXPECT_EQ(Util::StripUtf8Bom("a"
+                               "\xef\xbb\xbf"
+                               "bc"),
             "a"
             "\xef\xbb\xbf"
             "bc");
 
   // Incomplete BOM. Shouldn't be stripped.
-  line =
-      "\xef\xbb"
-      "abc";
-  Util::StripUtf8Bom(&line);
-  EXPECT_EQ(line,
+  EXPECT_EQ(Util::StripUtf8Bom("\xef\xbb"
+                               "abc"),
             "\xef\xbb"
             "abc");
 
   // String shorter than the BOM. Do nothing.
-  line = "a";
-  Util::StripUtf8Bom(&line);
-  EXPECT_EQ(line, "a");
+  EXPECT_EQ(Util::StripUtf8Bom("a"), "a");
 
   // Empty string. Do nothing.
-  line = "";
-  Util::StripUtf8Bom(&line);
-  EXPECT_EQ(line, "");
+  EXPECT_EQ(Util::StripUtf8Bom(""), "");
 }
 
 TEST(UtilTest, IsUtf16Bom) {

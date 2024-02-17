@@ -268,7 +268,6 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
                            Segment::Candidate::SourceInfo source_info,
                            int zip_code_id, int unknown_id,
                            absl::string_view non_expanded_original_key,
-                           const SpatialCostParams &spatial_cost_params,
                            std::vector<Result> *results)
       : penalty_(0),
         types_(types),
@@ -279,7 +278,6 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
         zip_code_id_(zip_code_id),
         unknown_id_(unknown_id),
         non_expanded_original_key_(non_expanded_original_key),
-        spatial_cost_params_(spatial_cost_params),
         results_(results) {}
 
   PredictiveLookupCallback(const PredictiveLookupCallback &) = delete;
@@ -313,13 +311,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
 
   ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
                          int num_expanded) override {
-    penalty_ = 0;
-    if (num_expanded > 0 ||
-        (spatial_cost_params_.enable_new_spatial_scoring &&
-         !non_expanded_original_key_.empty() &&
-         !absl::StartsWith(actual_key, non_expanded_original_key_))) {
-      penalty_ = spatial_cost_params_.GetPenalty(key);
-    }
+    penalty_ = num_expanded > 0 ? GetLegacySpatialCostPenalty() : 0;
     return TRAVERSE_CONTINUE;
   }
 
@@ -363,7 +355,6 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
   const int zip_code_id_;
   const int unknown_id_;
   absl::string_view non_expanded_original_key_;
-  const SpatialCostParams spatial_cost_params_;
   std::vector<Result> *results_ = nullptr;
 
  private:
@@ -413,12 +404,10 @@ class DictionaryPredictionAggregator::PredictiveBigramLookupCallback
                                  Segment::Candidate::SourceInfo source_info,
                                  int zip_code_id, int unknown_id,
                                  absl::string_view non_expanded_original_key,
-                                 const SpatialCostParams spatial_cost_params,
                                  std::vector<Result> *results)
-      : PredictiveLookupCallback(types, limit, original_key_len,
-                                 subsequent_chars, source_info, zip_code_id,
-                                 unknown_id, non_expanded_original_key,
-                                 spatial_cost_params, results),
+      : PredictiveLookupCallback(
+            types, limit, original_key_len, subsequent_chars, source_info,
+            zip_code_id, unknown_id, non_expanded_original_key, results),
         history_value_(history_value) {}
 
   PredictiveBigramLookupCallback(const PredictiveBigramLookupCallback &) =
@@ -1061,7 +1050,10 @@ DictionaryPredictionAggregator::GenerateQueryForHandwriting(
     absl::StrAppend(&info.query, converted);
 
     std::string utf8_str;
-    const Utf8AsChars original_chars(segment.candidate(0).key);
+    // b/324976556:
+    // We have to use the segment key instead of the candidate key.
+    // candidate key does not always match segment key for T13N chars.
+    const Utf8AsChars original_chars(segment.key());
     for (const absl::string_view c : original_chars) {
       if (Util::GetScriptType(c) != Util::HIRAGANA) {
         absl::StrAppend(&utf8_str, c);
@@ -1381,9 +1373,9 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   if (!request.has_composer()) {
     std::string input_key(history_key);
     input_key.append(segments.conversion_segment(0).key());
-    PredictiveLookupCallback callback(
-        types, lookup_limit, input_key.size(), nullptr, source_info,
-        zip_code_id, unknown_id, "", GetSpatialCostParams(request), results);
+    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
+                                      nullptr, source_info, zip_code_id,
+                                      unknown_id, "", results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1399,9 +1391,9 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   std::string input_key;
   if (expanded.empty()) {
     input_key = absl::StrCat(history_key, base);
-    PredictiveLookupCallback callback(
-        types, lookup_limit, input_key.size(), nullptr, source_info,
-        zip_code_id, unknown_id, "", GetSpatialCostParams(request), results);
+    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
+                                      nullptr, source_info, zip_code_id,
+                                      unknown_id, "", results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1417,10 +1409,9 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   // by |lookup_limit|.
   for (const std::string &expanded_char : expanded) {
     input_key = absl::StrCat(history_key, base, expanded_char);
-    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      nullptr, source_info, zip_code_id,
-                                      unknown_id, non_expanded_original_key,
-                                      GetSpatialCostParams(request), results);
+    PredictiveLookupCallback callback(
+        types, lookup_limit, input_key.size(), nullptr, source_info,
+        zip_code_id, unknown_id, non_expanded_original_key, results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
 }
@@ -1436,8 +1427,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
     input_key.append(segments.conversion_segment(0).key());
     PredictiveBigramLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr, history_value,
-        source_info, zip_code_id_, unknown_id_, "",
-        GetSpatialCostParams(request), results);
+        source_info, zip_code_id_, unknown_id_, "", results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1457,8 +1447,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
   PredictiveBigramLookupCallback callback(
       types, lookup_limit, input_key.size(),
       expanded.empty() ? nullptr : &expanded, history_value, source_info,
-      zip_code_id_, unknown_id_, non_expanded_original_key,
-      GetSpatialCostParams(request), results);
+      zip_code_id_, unknown_id_, non_expanded_original_key, results);
   dictionary.LookupPredictive(input_key, request, &callback);
 }
 
@@ -1474,8 +1463,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
                                       Segment::Candidate::SOURCE_INFO_NONE,
-                                      zip_code_id_, unknown_id_, "",
-                                      GetSpatialCostParams(request), results);
+                                      zip_code_id_, unknown_id_, "", results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::UpperString(&(*results)[i].value);
@@ -1487,18 +1475,17 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
                                       Segment::Candidate::SOURCE_INFO_NONE,
-                                      zip_code_id_, unknown_id_, "",
-                                      GetSpatialCostParams(request), results);
+                                      zip_code_id_, unknown_id_, "", results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::CapitalizeString(&(*results)[i].value);
     }
   } else {
     // For other cases (lower and as-is), just look up directly.
-    PredictiveLookupCallback callback(
-        types, lookup_limit, input_key.size(), nullptr,
-        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_, "",
-        GetSpatialCostParams(request), results);
+    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
+                                      nullptr,
+                                      Segment::Candidate::SOURCE_INFO_NONE,
+                                      zip_code_id_, unknown_id_, "", results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
   // If input mode is FULL_ASCII, then convert the results to full-width.

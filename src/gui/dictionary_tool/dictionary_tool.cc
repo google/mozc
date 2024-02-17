@@ -251,7 +251,7 @@ class MultiByteTextLineIterator
 
     // strip UTF8 BOM
     if (first_line_ && encoding_type_ == UserDictionaryImporter::UTF8) {
-      Util::StripUtf8Bom(line);
+      *line = Util::StripUtf8Bom(*line);
     }
 
     Util::ChopReturns(line);
