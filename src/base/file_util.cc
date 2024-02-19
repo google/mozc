@@ -633,9 +633,8 @@ absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
 #endif  // _WIN32
 }
 
-absl::Status FileUtil::GetContents(const std::string &filename,
-                                   std::string *output,
-                                   std::ios_base::openmode mode) {
+absl::StatusOr<std::string> FileUtil::GetContents(
+    const std::string &filename, std::ios_base::openmode mode) {
   InputFileStream ifs(filename, mode | std::ios::ate);
   if (ifs.fail()) {
     const int err = errno;
@@ -647,15 +646,16 @@ absl::Status FileUtil::GetContents(const std::string &filename,
     return absl::ErrnoToStatus(err, absl::StrCat("tellg failed: ", filename));
   }
   ifs.seekg(0, std::ios_base::beg);
+  std::string content;
   if (mode & std::ios::binary) {
-    output->resize(size);
-    ifs.read(&(*output)[0], size);
+    content.resize(size);
+    ifs.read(content.data(), size);
   } else {
     // In the text mode, the read size can be smaller than the file size as
     // "\r\n" can be translated to "\n" on Windows. Therefore, we just reserve a
     // buffer size and perform sequential read.
-    output->reserve(size);
-    output->assign(std::istreambuf_iterator<char>(ifs),
+    content.reserve(size);
+    content.assign(std::istreambuf_iterator<char>(ifs),
                    std::istreambuf_iterator<char>());
   }
   ifs.close();
@@ -663,15 +663,6 @@ absl::Status FileUtil::GetContents(const std::string &filename,
     const int err = errno;
     return absl::ErrnoToStatus(err, absl::StrCat("Cannot read ", filename,
                                                  " of size ", size, " bytes"));
-  }
-  return absl::OkStatus();
-}
-
-absl::StatusOr<std::string> FileUtil::GetContents(
-    const std::string &filename, std::ios_base::openmode mode) {
-  std::string content;
-  if (absl::Status s = GetContents(filename, &content, mode); !s.ok()) {
-    return s;
   }
   return content;
 }

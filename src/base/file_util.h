@@ -169,11 +169,6 @@ class FileUtil {
   static absl::StatusOr<FileTimeStamp> GetModificationTime(
       const std::string &filename);
 
-  // Reads the contents of the file `filename` into `output`.
-  static absl::Status GetContents(
-      const std::string &filename, std::string *output,
-      std::ios_base::openmode mode = std::ios::binary);
-
   // Reads the contents of the file `filename` and returns it.
   static absl::StatusOr<std::string> GetContents(
       const std::string &filename,

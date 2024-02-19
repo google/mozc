@@ -160,10 +160,11 @@ TEST_F(CodecTest, DefaultTest) {
     ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
-  std::string buf;  // sections will reference this buffer.
+  // sections will reference this buffer.
+  absl::StatusOr<std::string> buf = FileUtil::GetContents(test_file_.path());
   std::vector<DictionaryFileSection> sections;
-  ASSERT_OK(FileUtil::GetContents(test_file_.path(), &buf));
-  ASSERT_OK(codec->ReadSections(buf.data(), buf.size(), &sections));
+  ASSERT_OK(buf);
+  ASSERT_OK(codec->ReadSections(buf->data(), buf->size(), &sections));
   ASSERT_EQ(2, sections.size());
   int index = -1;
   ASSERT_TRUE(FindSection(codec, sections, "Section 0", &index));
@@ -193,10 +194,11 @@ TEST_F(CodecTest, RandomizedCodecTest) {
     ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
-  std::string buf;  // sections will reference this buffer.
+  // sections will reference this buffer.
+  absl::StatusOr<std::string> buf = FileUtil::GetContents(test_file_.path());
   std::vector<DictionaryFileSection> sections;
-  ASSERT_OK(FileUtil::GetContents(test_file_.path(), &buf));
-  ASSERT_OK(codec->ReadSections(buf.data(), buf.size(), &sections));
+  ASSERT_OK(buf);
+  ASSERT_OK(codec->ReadSections(buf->data(), buf->size(), &sections));
   ASSERT_EQ(2, sections.size());
   int index = -1;
   ASSERT_TRUE(FindSection(codec, sections, "Section 0", &index));
