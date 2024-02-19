@@ -91,9 +91,8 @@ std::optional<std::vector<commands::KeyEvent>> GenerateKeySequenceFrom(
 
   std::string input;
   {
-    std::string tmp;
-    japanese_util::HiraganaToRomanji(hiragana_sentence, &tmp);
-    japanese_util::FullWidthToHalfWidth(tmp, &input);
+    std::string tmp = japanese_util::HiraganaToRomanji(hiragana_sentence);
+    input = japanese_util::FullWidthToHalfWidth(tmp);
   }
 
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {

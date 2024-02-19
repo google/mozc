@@ -520,8 +520,7 @@ bool SystemDictionary::HasValue(absl::string_view value) const {
 
   // Normalize the value as the key.  This process depends on the
   // implementation of SystemDictionaryBuilder::BuildValueTrie.
-  std::string key;
-  japanese_util::KatakanaToHiragana(value, &key);
+  std::string key = japanese_util::KatakanaToHiragana(value);
 
   std::string encoded_key;
   codec_->EncodeKey(key, &encoded_key);
@@ -1051,8 +1050,7 @@ class FilterTokenForRegisterReverseLookupTokensForT13N {
     if (token_info.value_type != TokenInfo::AS_IS_HIRAGANA &&
         token_info.value_type != TokenInfo::AS_IS_KATAKANA) {
       // SAME_AS_PREV_VALUE may be t13n token.
-      tmp_str_.clear();
-      japanese_util::KatakanaToHiragana(token_info.token->value, &tmp_str_);
+      tmp_str_ = japanese_util::KatakanaToHiragana(token_info.token->value);
       if (token_info.token->key != tmp_str_) {
         return false;
       }
@@ -1068,8 +1066,8 @@ class FilterTokenForRegisterReverseLookupTokensForT13N {
 
 void SystemDictionary::RegisterReverseLookupTokensForT13N(
     absl::string_view value, Callback *callback) const {
-  std::string hiragana_value, encoded_key;
-  japanese_util::KatakanaToHiragana(value, &hiragana_value);
+  std::string hiragana_value = japanese_util::KatakanaToHiragana(value);
+  std::string encoded_key;
   codec_->EncodeKey(hiragana_value, &encoded_key);
   RunCallbackOnEachPrefix(key_trie_, value_trie_, token_array_, codec_,
                           frequent_pos_, hiragana_value.data(), encoded_key,

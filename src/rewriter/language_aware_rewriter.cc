@@ -120,9 +120,8 @@ bool IsRawQuery(const composer::Composer &composer,
 
   // If the composition string is the full width form of the raw_text,
   // there is no need to add the candidate to suggestions.
-  std::string composition_in_half_width_ascii;
-  japanese_util::FullWidthAsciiToHalfWidthAscii(
-      composition, &composition_in_half_width_ascii);
+  std::string composition_in_half_width_ascii =
+      japanese_util::FullWidthAsciiToHalfWidthAscii(composition);
   if (composition_in_half_width_ascii == raw_text) {
     return false;
   }

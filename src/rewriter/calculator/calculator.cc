@@ -119,8 +119,8 @@ bool CalculatorImpl::CalculateString(const absl::string_view key,
     LOG(ERROR) << "Key is empty.";
     return false;
   }
-  std::string normalized_key;
-  japanese_util::FullWidthAsciiToHalfWidthAscii(key, &normalized_key);
+  std::string normalized_key =
+      japanese_util::FullWidthAsciiToHalfWidthAscii(key);
 
   absl::string_view expression_body;
   if (normalized_key.front() == '=') {

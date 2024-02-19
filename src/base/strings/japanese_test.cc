@@ -29,7 +29,6 @@
 
 #include "base/strings/japanese.h"
 
-#include <iterator>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,8 +44,7 @@ TEST(JapaneseUtilTest, HiraganaToKatakana) {
         "あいうえおぁぃぅぇぉかきくけこがぎぐげごさしすせそざじずぜぞたちつてと"
         "だぢづでどっなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよゃ"
         "ゅょらりるれろわゎをんゔ";
-    std::string output;
-    HiraganaToKatakana(input, &output);
+    std::string output = HiraganaToKatakana(input);
     EXPECT_EQ(
         output,
         "アイウエオァィゥェォカキクケコガギグゲゴサシスセソザジズゼゾタチツテト"
@@ -55,14 +53,12 @@ TEST(JapaneseUtilTest, HiraganaToKatakana) {
   }
   {
     const std::string input = "わたしのなまえはなかのですうまーよろしゅう";
-    std::string output;
-    HiraganaToKatakana(input, &output);
+    std::string output = HiraganaToKatakana(input);
     EXPECT_EQ(output, "ワタシノナマエハナカノデスウマーヨロシュウ");
   }
   {
     const std::string input = "グーグル工藤よろしくabc";
-    std::string output;
-    HiraganaToKatakana(input, &output);
+    std::string output = HiraganaToKatakana(input);
     EXPECT_EQ(output, "グーグル工藤ヨロシクabc");
   }
 }
@@ -73,8 +69,7 @@ TEST(JapaneseUtilTest, KatakanaToHiragana) {
         "アイウエオァィゥェォカキクケコガギグゲゴサシスセソザジズゼゾタチツテト"
         "ダヂヅデドッナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨャ"
         "ュョラリルレロワヮヲンヰヱヴ";
-    std::string output;
-    KatakanaToHiragana(input, &output);
+    std::string output = KatakanaToHiragana(input);
     EXPECT_EQ(
         output,
         "あいうえおぁぃぅぇぉかきくけこがぎぐげごさしすせそざじずぜぞたちつてと"
@@ -83,14 +78,12 @@ TEST(JapaneseUtilTest, KatakanaToHiragana) {
   }
   {
     const std::string input = "ワタシノナマエハナカノデスウマーヨロシュウ";
-    std::string output;
-    KatakanaToHiragana(input, &output);
+    std::string output = KatakanaToHiragana(input);
     EXPECT_EQ(output, "わたしのなまえはなかのですうまーよろしゅう");
   }
   {
     const std::string input = "グーグル工藤ヨロシクabc";
-    std::string output;
-    KatakanaToHiragana(input, &output);
+    std::string output = KatakanaToHiragana(input);
     EXPECT_EQ(output, "ぐーぐる工藤よろしくabc");
   }
 }
@@ -107,13 +100,12 @@ TEST(JapaneseUtilTest, RomanjiToHiragana) {
       {"xyz", "xyz"},
   };
   for (const auto &test_case : kTestCases) {
-    std::string actual;
-    RomanjiToHiragana(test_case.input, &actual);
+    std::string actual = RomanjiToHiragana(test_case.input);
     EXPECT_EQ(actual, test_case.expected);
   }
 }
 
-TEST(JapaneseUtilTest, HiraganaToRomaji) {
+TEST(JapaneseUtilTest, HiraganaToRomanji) {
   struct {
     const char *input;
     const char *expected;
@@ -131,67 +123,65 @@ TEST(JapaneseUtilTest, HiraganaToRomaji) {
       {"xyz", "xyz"},
   };
   for (const auto &test_case : kTestCases) {
-    std::string actual;
-    HiraganaToRomanji(test_case.input, &actual);
+    std::string actual = HiraganaToRomanji(test_case.input);
     EXPECT_EQ(actual, test_case.expected);
   }
 }
 
 TEST(JapaneseUtilTest, NormalizeVoicedSoundMark) {
   const std::string input = "僕のう゛ぁいおりん";
-  std::string output;
-  NormalizeVoicedSoundMark(input, &output);
+  std::string output = NormalizeVoicedSoundMark(input);
   EXPECT_EQ(output, "僕のゔぁいおりん");
 }
 
 TEST(JapaneseUtilTest, FullWidthAndHalfWidth) {
   std::string output;
 
-  FullWidthToHalfWidth("", &output);
+  output = FullWidthToHalfWidth("");
   EXPECT_EQ(output, "");
 
-  HalfWidthToFullWidth("", &output);
+  output = HalfWidthToFullWidth("");
   EXPECT_EQ(output, "");
 
-  HalfWidthToFullWidth("abc[]?.", &output);
+  output = HalfWidthToFullWidth("abc[]?.");
   EXPECT_EQ(output, "ａｂｃ［］？．");
 
-  HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄ｢」", &output);
+  output = HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄ｢」");
   EXPECT_EQ(output, "インターネット「」");
 
-  HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄグーグル", &output);
+  output = HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄグーグル");
   EXPECT_EQ(output, "インターネットグーグル");
 
-  FullWidthToHalfWidth("ａｂｃ［］？．", &output);
+  output = FullWidthToHalfWidth("ａｂｃ［］？．");
   EXPECT_EQ(output, "abc[]?.");
 
-  FullWidthToHalfWidth("インターネット", &output);
+  output = FullWidthToHalfWidth("インターネット");
   EXPECT_EQ(output, "ｲﾝﾀｰﾈｯﾄ");
 
-  FullWidthToHalfWidth("ｲﾝﾀｰﾈｯﾄグーグル", &output);
+  output = FullWidthToHalfWidth("ｲﾝﾀｰﾈｯﾄグーグル");
   EXPECT_EQ(output, "ｲﾝﾀｰﾈｯﾄｸﾞｰｸﾞﾙ");
 
   // spaces
-  FullWidthToHalfWidth(" 　", &output);  // Half- and full-width spaces
+  output = FullWidthToHalfWidth(" 　");  // Half- and full-width spaces
   EXPECT_EQ(output, "  ");               // 2 half-width spaces
 
-  HalfWidthToFullWidth(" 　", &output);  // Half- and full-width spaces
+  output = HalfWidthToFullWidth(" 　");  // Half- and full-width spaces
   EXPECT_EQ(output, "　　");             // 2 full-width spaces
 
   // Spaces are treated as Ascii here
   // Half- and full-width spaces
-  FullWidthAsciiToHalfWidthAscii(" 　", &output);
+  output = FullWidthAsciiToHalfWidthAscii(" 　");
   EXPECT_EQ(output, "  ");  // 2 half-width spaces
 
-  HalfWidthAsciiToFullWidthAscii("  ", &output);
+  output = HalfWidthAsciiToFullWidthAscii("  ");
   EXPECT_EQ(output, "　　");  // 2 full-width spaces
 
   // Half- and full-width spaces
-  FullWidthKatakanaToHalfWidthKatakana(" 　", &output);
+  output = FullWidthKatakanaToHalfWidthKatakana(" 　");
   EXPECT_EQ(output, " 　");  // Not changed
 
   // Half- and full-width spaces
-  HalfWidthKatakanaToFullWidthKatakana(" 　", &output);
+  output = HalfWidthKatakanaToFullWidthKatakana(" 　");
   EXPECT_EQ(output, " 　");  // Not changed
 }
 

@@ -62,8 +62,7 @@ bool IsConvertibleToHalfWidthForm(const absl::string_view full) {
   const std::string tmp =
       absl::StrReplaceAll(full, {{"＼", "\\"}, {"￥", "¥"}});
 
-  std::string half;
-  japanese_util::FullWidthToHalfWidth(tmp, &half);
+  std::string half = japanese_util::FullWidthToHalfWidth(tmp);
   return full != half;
 }
 

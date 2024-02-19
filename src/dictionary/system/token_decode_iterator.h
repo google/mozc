@@ -165,7 +165,7 @@ inline void TokenDecodeIterator::NextInternal() {
     }
     case TokenInfo::AS_IS_KATAKANA: {
       if (!key_.empty() && key_katakana_.empty()) {
-        japanese_util::HiraganaToKatakana(key_, &key_katakana_);
+        key_katakana_ = japanese_util::HiraganaToKatakana(key_);
       }
       token_.value = key_katakana_;
       break;

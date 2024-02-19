@@ -123,10 +123,8 @@ void RandomKeyEventsGenerator::TypeRawKeys(
 
 // Converts from Hiragana to Romaji.
 std::string ToRomaji(absl::string_view hiragana) {
-  std::string tmp, result;
-  japanese_util::HiraganaToRomanji(hiragana, &tmp);
-  japanese_util::FullWidthToHalfWidth(tmp, &result);
-  return result;
+  std::string tmp = japanese_util::HiraganaToRomanji(hiragana);
+  return japanese_util::FullWidthToHalfWidth(tmp);
 }
 
 // Generates KeyEvent instances based on |sentence| and stores into |keys|.

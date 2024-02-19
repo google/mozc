@@ -219,9 +219,8 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
     for (int i = 0; i < 10; ++i) {
       EXPECT_EQ(seg->candidate(3 * i + 1).value, std::to_string(i));
       EXPECT_EQ(seg->candidate(3 * i + 1).content_value, std::to_string(i));
-      std::string full_width;
-      japanese_util::HalfWidthToFullWidth(seg->candidate(3 * i + 1).value,
-                                          &full_width);
+      std::string full_width =
+          japanese_util::HalfWidthToFullWidth(seg->candidate(3 * i + 1).value);
       EXPECT_EQ(seg->candidate(3 * i).value, full_width);
       EXPECT_EQ(seg->candidate(3 * i).content_value, full_width);
       EXPECT_EQ(seg->candidate(3 * i + 2).value, "ぐーぐる");
@@ -249,9 +248,8 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
     for (int i = 0; i < 10; ++i) {
       EXPECT_EQ(seg->candidate(3 * i + 2).value, std::to_string(i));
       EXPECT_EQ(seg->candidate(3 * i + 2).content_value, std::to_string(i));
-      std::string full_width;
-      japanese_util::HalfWidthToFullWidth(seg->candidate(3 * i + 2).value,
-                                          &full_width);
+      std::string full_width =
+          japanese_util::HalfWidthToFullWidth(seg->candidate(3 * i + 2).value);
       EXPECT_EQ(seg->candidate(3 * i + 1).value, full_width);
       EXPECT_EQ(seg->candidate(3 * i + 1).content_value, full_width);
       EXPECT_EQ(seg->candidate(3 * i).value, "ぐーぐる");

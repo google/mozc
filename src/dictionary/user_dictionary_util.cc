@@ -111,20 +111,11 @@ bool UserDictionaryUtil::IsValidReading(const absl::string_view reading) {
   return InternalValidateNormalizedReading(NormalizeReading(reading));
 }
 
-void UserDictionaryUtil::NormalizeReading(const absl::string_view input,
-                                          std::string *output) {
-  output->clear();
-  std::string tmp1, tmp2;
-  japanese::FullWidthAsciiToHalfWidthAscii(input, &tmp1);
-  japanese::HalfWidthKatakanaToFullWidthKatakana(tmp1, &tmp2);
-  japanese::KatakanaToHiragana(tmp2, output);
-}
-
 std::string UserDictionaryUtil::NormalizeReading(
     const absl::string_view input) {
-  std::string output;
-  NormalizeReading(input, &output);
-  return output;
+  std::string tmp1 = japanese::FullWidthAsciiToHalfWidthAscii(input);
+  std::string tmp2 = japanese::HalfWidthKatakanaToFullWidthKatakana(tmp1);
+  return japanese::KatakanaToHiragana(tmp2);
 }
 
 UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(

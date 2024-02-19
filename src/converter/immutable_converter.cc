@@ -212,18 +212,18 @@ void NormalizeHistorySegments(Segments *segments) {
       continue;
     }
 
-    std::string key;
     Segment::Candidate *c = segment->mutable_candidate(0);
     const std::string &history_key =
         (c->key.size() > segment->key().size()) ? c->key : segment->key();
     const std::string value = c->value;
     const std::string content_value = c->content_value;
     const std::string content_key = c->content_key;
-    japanese_util::FullWidthAsciiToHalfWidthAscii(history_key, &key);
-    japanese_util::FullWidthAsciiToHalfWidthAscii(value, &c->value);
-    japanese_util::FullWidthAsciiToHalfWidthAscii(content_value,
-                                                  &c->content_value);
-    japanese_util::FullWidthAsciiToHalfWidthAscii(content_key, &c->content_key);
+    std::string key =
+        japanese_util::FullWidthAsciiToHalfWidthAscii(history_key);
+    c->value = japanese_util::FullWidthAsciiToHalfWidthAscii(value);
+    c->content_value =
+        japanese_util::FullWidthAsciiToHalfWidthAscii(content_value);
+    c->content_key = japanese_util::FullWidthAsciiToHalfWidthAscii(content_key);
     c->key = key;
     segment->set_key(key);
 
@@ -326,8 +326,8 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
     DCHECK(new_candidate);
 
     *new_candidate = *top_candidate;
-    japanese_util::HiraganaToKatakana(segment->candidate(0).content_key,
-                                      &new_candidate->content_value);
+    new_candidate->content_value =
+        japanese_util::HiraganaToKatakana(segment->candidate(0).content_key);
     new_candidate->value.clear();
     absl::StrAppend(&new_candidate->value, new_candidate->content_value,
                     top_candidate->functional_value());
@@ -373,8 +373,8 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
   }
 
   // Insert a dummy katakana candidate.
-  std::string katakana_value;
-  japanese_util::HiraganaToKatakana(segment->key(), &katakana_value);
+  std::string katakana_value =
+      japanese_util::HiraganaToKatakana(segment->key());
   if (segment->candidates_size() > 0 &&
       segment->candidates_size() < expand_size &&
       Util::GetScriptType(katakana_value) == Util::KATAKANA) {

@@ -166,9 +166,8 @@ bool KeyEventTransformer::TransformKeyEventForNumpad(
   const std::string half_width_key_string(1, static_cast<char>(key_code));
 
   if (is_full_width) {
-    std::string full_width_key_string;
-    japanese_util::HalfWidthAsciiToFullWidthAscii(half_width_key_string,
-                                                  &full_width_key_string);
+    std::string full_width_key_string =
+        japanese_util::HalfWidthAsciiToFullWidthAscii(half_width_key_string);
     key_event->set_key_string(full_width_key_string);
   } else {
     key_event->set_key_string(half_width_key_string);

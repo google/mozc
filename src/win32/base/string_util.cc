@@ -76,8 +76,7 @@ void Utf8ToSjis(absl::string_view input, std::string *output) {
 }  // namespace
 
 std::wstring StringUtil::KeyToReading(absl::string_view key) {
-  std::string katakana;
-  japanese_util::HiraganaToKatakana(key, &katakana);
+  std::string katakana = japanese_util::HiraganaToKatakana(key);
 
   DWORD lcid =
       MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT), SORT_JAPANESE_XJIS);

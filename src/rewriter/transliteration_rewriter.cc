@@ -156,8 +156,8 @@ void ModifyT13nsForGodan(const absl::string_view key,
   //   Thus, as a work around, we set the original key, so that it'll be
   //   removed in the later phase of de-dupping.
   const absl::string_view half_ascii = dst.empty() ? key : dst;
-  std::string full_ascii;
-  japanese_util::HalfWidthAsciiToFullWidthAscii(half_ascii, &full_ascii);
+  std::string full_ascii =
+      japanese_util::HalfWidthAsciiToFullWidthAscii(half_ascii);
   std::string half_ascii_upper(half_ascii);
   std::string half_ascii_lower(half_ascii);
   std::string half_ascii_capitalized(half_ascii);
@@ -292,13 +292,14 @@ bool TransliterationRewriter::FillT13nsFromKey(Segments *segments) const {
       continue;
     }
     const std::string &hiragana = segment->key();
-    std::string full_katakana, ascii;
-    japanese_util::HiraganaToKatakana(hiragana, &full_katakana);
-    japanese_util::HiraganaToRomanji(hiragana, &ascii);
-    std::string half_ascii, full_ascii, half_katakana;
-    japanese_util::FullWidthAsciiToHalfWidthAscii(ascii, &half_ascii);
-    japanese_util::HalfWidthAsciiToFullWidthAscii(half_ascii, &full_ascii);
-    japanese_util::FullWidthToHalfWidth(full_katakana, &half_katakana);
+    std::string full_katakana = japanese_util::HiraganaToKatakana(hiragana);
+    std::string ascii = japanese_util::HiraganaToRomanji(hiragana);
+    std::string half_ascii =
+        japanese_util::FullWidthAsciiToHalfWidthAscii(ascii);
+    std::string full_ascii =
+        japanese_util::HalfWidthAsciiToFullWidthAscii(half_ascii);
+    std::string half_katakana =
+        japanese_util::FullWidthToHalfWidth(full_katakana);
     std::string half_ascii_upper = half_ascii;
     std::string half_ascii_lower = half_ascii;
     std::string half_ascii_capitalized = half_ascii;
@@ -392,8 +393,7 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
   }
 
   // Do the same thing on full form.
-  std::string full_raw;
-  japanese_util::HalfWidthAsciiToFullWidthAscii(raw, &full_raw);
+  std::string full_raw = japanese_util::HalfWidthAsciiToFullWidthAscii(raw);
   DCHECK(!full_raw.empty());
   if (segment->meta_candidates_size() < transliteration::FULL_ASCII ||
       segment->meta_candidate(transliteration::FULL_ASCII).value != full_raw) {

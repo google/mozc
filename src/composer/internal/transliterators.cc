@@ -138,8 +138,8 @@ class HiraganaTransliterator : public TransliteratorInterface {
 
   std::string Transliterate(const absl::string_view raw,
                             const absl::string_view converted) const override {
-    std::string full, output;
-    japanese_util::HalfWidthToFullWidth(converted, &full);
+    std::string full = japanese_util::HalfWidthToFullWidth(converted);
+    std::string output;
     CharacterFormManager::GetCharacterFormManager()->ConvertPreeditString(
         full, &output);
     return output;
@@ -161,9 +161,8 @@ class FullKatakanaTransliterator : public TransliteratorInterface {
 
   std::string Transliterate(const absl::string_view raw,
                             const absl::string_view converted) const override {
-    std::string t13n, full;
-    japanese_util::HiraganaToKatakana(converted, &t13n);
-    japanese_util::HalfWidthToFullWidth(t13n, &full);
+    std::string t13n = japanese_util::HiraganaToKatakana(converted);
+    std::string full = japanese_util::HalfWidthToFullWidth(t13n);
 
     std::string output;
     CharacterFormManager::GetCharacterFormManager()->ConvertPreeditString(
@@ -185,21 +184,17 @@ class HalfKatakanaTransliterator : public TransliteratorInterface {
  public:
   ~HalfKatakanaTransliterator() override = default;
 
-  static void HalfKatakanaToHiragana(const absl::string_view half_katakana,
-                                     std::string *hiragana) {
-    std::string full_katakana;
-    japanese_util::HalfWidthKatakanaToFullWidthKatakana(half_katakana,
-                                                        &full_katakana);
-    japanese_util::KatakanaToHiragana(full_katakana, hiragana);
+  static std::string HalfKatakanaToHiragana(
+      const absl::string_view half_katakana) {
+    std::string full_katakana =
+        japanese_util::HalfWidthKatakanaToFullWidthKatakana(half_katakana);
+    return japanese_util::KatakanaToHiragana(full_katakana);
   }
 
   std::string Transliterate(const absl::string_view raw,
                             const absl::string_view converted) const override {
-    std::string t13n;
-    std::string katakana_output;
-    japanese_util::HiraganaToKatakana(converted, &katakana_output);
-    japanese_util::FullWidthToHalfWidth(katakana_output, &t13n);
-    return t13n;
+    std::string katakana_output = japanese_util::HiraganaToKatakana(converted);
+    return japanese_util::FullWidthToHalfWidth(katakana_output);
   }
 
   bool Split(size_t position, const absl::string_view raw,
@@ -216,11 +211,11 @@ class HalfKatakanaTransliterator : public TransliteratorInterface {
       *raw_lhs = hk_raw_lhs;
       *raw_rhs = hk_raw_rhs;
     } else {
-      HalfKatakanaToHiragana(hk_raw_lhs, raw_lhs);
-      HalfKatakanaToHiragana(hk_raw_rhs, raw_rhs);
+      *raw_lhs = HalfKatakanaToHiragana(hk_raw_lhs);
+      *raw_rhs = HalfKatakanaToHiragana(hk_raw_rhs);
     }
-    HalfKatakanaToHiragana(hk_converted_lhs, converted_lhs);
-    HalfKatakanaToHiragana(hk_converted_rhs, converted_rhs);
+    *converted_lhs = HalfKatakanaToHiragana(hk_converted_lhs);
+    *converted_rhs = HalfKatakanaToHiragana(hk_converted_rhs);
     return result;
   }
 };
@@ -231,10 +226,8 @@ class HalfAsciiTransliterator : public TransliteratorInterface {
 
   std::string Transliterate(const absl::string_view raw,
                             const absl::string_view converted) const override {
-    std::string t13n;
     const absl::string_view input = raw.empty() ? converted : raw;
-    japanese_util::FullWidthAsciiToHalfWidthAscii(input, &t13n);
-    return t13n;
+    return japanese_util::FullWidthAsciiToHalfWidthAscii(input);
   }
 
   bool Split(size_t position, const absl::string_view raw,
@@ -252,10 +245,8 @@ class FullAsciiTransliterator : public TransliteratorInterface {
 
   std::string Transliterate(const absl::string_view raw,
                             const absl::string_view converted) const override {
-    std::string t13n;
     const absl::string_view input = raw.empty() ? converted : raw;
-    japanese_util::HalfWidthAsciiToFullWidthAscii(input, &t13n);
-    return t13n;
+    return japanese_util::HalfWidthAsciiToFullWidthAscii(input);
   }
 
   bool Split(size_t position, const absl::string_view raw,

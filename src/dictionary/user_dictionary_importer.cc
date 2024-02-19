@@ -69,11 +69,9 @@ uint64_t EntryFingerprint(const UserDictionary::Entry &entry) {
                      static_cast<char>(entry.pos()));
 }
 
-void NormalizePos(const absl::string_view input, std::string *output) {
-  std::string tmp;
-  output->clear();
-  japanese_util::FullWidthAsciiToHalfWidthAscii(input, &tmp);
-  japanese_util::HalfWidthKatakanaToFullWidthKatakana(tmp, output);
+std::string NormalizePos(const absl::string_view input) {
+  std::string tmp = japanese_util::FullWidthAsciiToHalfWidthAscii(input);
+  return japanese_util::HalfWidthKatakanaToFullWidthKatakana(tmp);
 }
 
 // A data type to hold conversion rules of POSes. If mozc_pos is set to be an
@@ -111,8 +109,7 @@ bool ConvertEntryInternal(const PosMap *pos_map, size_t map_size,
   }
 
   // Normalize POS (remove full width ascii and half width katakana)
-  std::string pos;
-  NormalizePos(from.pos, &pos);
+  std::string pos = NormalizePos(from.pos);
 
   std::string locale;
   // TODO(all): Better to use StrSplit.
@@ -154,8 +151,7 @@ bool ConvertEntryInternal(const PosMap *pos_map, size_t map_size,
   to->set_pos(found->mozc_pos);
 
   // Normalize reading.
-  std::string normalized_key;
-  UserDictionaryUtil::NormalizeReading(to->key(), &normalized_key);
+  std::string normalized_key = UserDictionaryUtil::NormalizeReading(to->key());
   to->set_key(normalized_key);
 
   // Copy comment.

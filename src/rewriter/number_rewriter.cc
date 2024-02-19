@@ -109,9 +109,8 @@ RewriteType GetRewriteTypeAndBase(const SerializedStringArray &suffix_array,
     return KANJI_FIRST;
   }
 
-  std::string half_width_new_content_value;
-  japanese_util::FullWidthToHalfWidth(c.content_key,
-                                      &half_width_new_content_value);
+  std::string half_width_new_content_value =
+      japanese_util::FullWidthToHalfWidth(c.content_key);
   // Try to get normalized kanji_number and arabic_number.
   // If it failed, do nothing.
   // Retain suffix for later use.
@@ -512,9 +511,8 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
       break;
     }
 
-    std::string arabic_content_value;
-    japanese_util::FullWidthToHalfWidth(info.candidate.content_value,
-                                        &arabic_content_value);
+    std::string arabic_content_value =
+        japanese_util::FullWidthToHalfWidth(info.candidate.content_value);
     if (Util::GetScriptType(arabic_content_value) != Util::NUMBER) {
       if (Util::GetFirstScriptType(arabic_content_value) == Util::NUMBER) {
         // Rewrite for number suffix

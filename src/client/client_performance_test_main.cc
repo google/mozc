@@ -86,8 +86,7 @@ class TestSentenceGenerator {
     const size_t size = std::min<size_t>(200, sentences.size());
 
     for (size_t i = 0; i < size; ++i) {
-      std::string output;
-      japanese_util::HiraganaToRomanji(sentences[i], &output);
+      std::string output = japanese_util::HiraganaToRomanji(sentences[i]);
       std::vector<commands::KeyEvent> tmp;
       for (ConstChar32Iterator iter(output); !iter.Done(); iter.Next()) {
         const char32_t codepoint = iter.Get();

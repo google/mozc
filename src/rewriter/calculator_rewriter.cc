@@ -133,9 +133,8 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
   const Segment::Candidate &base_candidate = segment->candidate(0);
 
   // Normalize the expression, used in description.
-  std::string expression;
-  japanese_util::FullWidthAsciiToHalfWidthAscii(base_candidate.content_key,
-                                                &expression);
+  std::string expression =
+      japanese_util::FullWidthAsciiToHalfWidthAscii(base_candidate.content_key);
   absl::StrReplaceAll({{"・", "/"}, {"ー", "-"}}, &expression);  // "ー", onbiki
 
   size_t offset = std::min(insert_pos, segment->candidates_size());

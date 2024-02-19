@@ -189,8 +189,7 @@ TokenInfo::ValueType GetValueType(const Token *token) {
   if (token->value == token->key) {
     return TokenInfo::AS_IS_HIRAGANA;
   }
-  std::string katakana;
-  japanese_util::HiraganaToKatakana(token->key, &katakana);
+  std::string katakana = japanese_util::HiraganaToKatakana(token->key);
   if (token->value == katakana) {
     return TokenInfo::AS_IS_KATAKANA;
   }
