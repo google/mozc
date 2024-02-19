@@ -29,6 +29,7 @@
 
 #include "converter/segments.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
@@ -600,5 +601,47 @@ TEST(SegmentTest, MetaCandidateTest) {
   // clear
   segment.clear_meta_candidates();
   EXPECT_EQ(segment.meta_candidates_size(), 0);
+}
+
+TEST(SegmentTest, Iterator) {
+  // Create a test `Segments`.
+  constexpr int kHistorySize = 2;
+  constexpr int kConversionSize = 3;
+  Segments segments;
+  std::vector<Segment *> segment_list;
+  for (int i = 0; i < kHistorySize; ++i) {
+    Segment *segment = segments.push_back_segment();
+    segment->set_segment_type(Segment::HISTORY);
+    segment_list.push_back(segment);
+  }
+  for (int i = 0; i < kConversionSize; ++i) {
+    Segment *segment = segments.push_back_segment();
+    segment->set_segment_type(Segment::FIXED_VALUE);
+    segment_list.push_back(segment);
+  }
+
+  // Test the iterator for `Segments`.
+  int i = 0;
+  for (const Segment &segment : segments) {
+    EXPECT_EQ(&segment, segment_list[i++]);
+  }
+  EXPECT_EQ(i, kHistorySize + kConversionSize);
+
+  // Test the iterator for `Segments::history_segments()`.
+  i = 0;
+  for (const Segment &segment : segments.history_segments()) {
+    EXPECT_EQ(&segment, segment_list[i++]);
+  }
+  EXPECT_EQ(i, kHistorySize);
+  EXPECT_EQ(segments.history_segments_size(), kHistorySize);
+  EXPECT_EQ(segments.history_segments().size(), kHistorySize);
+
+  // Test the iterator for `Segments::conversion_segments()`.
+  for (const Segment &segment : segments.conversion_segments()) {
+    EXPECT_EQ(&segment, segment_list[i++]);
+  }
+  EXPECT_EQ(i, kHistorySize + kConversionSize);
+  EXPECT_EQ(segments.conversion_segments_size(), kConversionSize);
+  EXPECT_EQ(segments.conversion_segments().size(), kConversionSize);
 }
 }  // namespace mozc
