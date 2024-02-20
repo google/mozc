@@ -47,6 +47,7 @@
 #include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/stopwatch.h"
+#include "base/version.h"
 #include "base/vlog.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
@@ -389,6 +390,9 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
     case commands::Input::RELOAD_SPELL_CHECKER:
       eval_succeeded = ReloadSpellChecker(command);
       break;
+    case commands::Input::GET_SERVER_VERSION:
+      eval_succeeded = GetServerVersion(command);
+      break;
     default:
       eval_succeeded = false;
   }
@@ -407,7 +411,7 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
   }
 
   if (eval_succeeded) {
-    // TODO(komatsu): Make sre if checking eval_succeeded is necessary or not.
+    // TODO(komatsu): Make sure if checking eval_succeeded is necessary or not.
     observer_handler_->EvalCommandHandler(*command);
   }
 
@@ -536,6 +540,14 @@ void SessionHandler::MaybeReloadEngine(commands::Command *command) {
   command->mutable_output()->mutable_engine_reload_response()->set_status(
       EngineReloadResponse::RELOADED);
   table_manager_->ClearCaches();
+}
+
+bool SessionHandler::GetServerVersion(mozc::commands::Command *command) const {
+  commands::Output::VersionInfo *version_info =
+      command->mutable_output()->mutable_server_version();
+  version_info->set_mozc_version(Version::GetMozcVersion());
+  version_info->set_data_version(engine_->GetDataVersion());
+  return true;
 }
 
 bool SessionHandler::CreateSession(commands::Command *command) {
