@@ -54,7 +54,7 @@
 #include "engine/engine.h"
 #include "engine/engine_builder.h"
 #include "engine/engine_mock.h"
-#include "engine/engine_stub.h"
+#include "engine/minimal_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
 #include "protocol/commands.pb.h"
@@ -631,7 +631,7 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
                 return result;
               })));
 
-  SessionHandler handler(std::make_unique<EngineStub>(),
+  SessionHandler handler(std::make_unique<MinimalEngine>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
@@ -655,8 +655,8 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
 TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
 
-  auto new_engine1 = std::make_unique<EngineStub>();
-  auto new_engine2 = std::make_unique<EngineStub>();
+  auto new_engine1 = std::make_unique<MinimalEngine>();
+  auto new_engine2 = std::make_unique<MinimalEngine>();
 
   const auto *new_engine_ptr1 = new_engine1.get();
   const auto *new_engine_ptr2 = new_engine2.get();
@@ -677,7 +677,7 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
                 return result;
               })));
 
-  SessionHandler handler(std::make_unique<EngineStub>(),
+  SessionHandler handler(std::make_unique<MinimalEngine>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
   handler.always_wait_for_engine_response_future_ = true;
 
@@ -718,7 +718,7 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
 
   InSequence seq;  // EXPECT_CALL is called sequentially.
 
-  auto old_engine = std::make_unique<EngineStub>();
+  auto old_engine = std::make_unique<MinimalEngine>();
   const auto *old_engine_ptr = old_engine.get();
   SessionHandler handler(std::move(old_engine),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
@@ -761,9 +761,9 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
 
   InSequence seq;  // EXPECT_CALL is called sequentially.
 
-  auto new_engine = std::make_unique<EngineStub>();
+  auto new_engine = std::make_unique<MinimalEngine>();
   const auto *new_engine_ptr = new_engine.get();
-  SessionHandler handler(std::make_unique<EngineStub>(),
+  SessionHandler handler(std::make_unique<MinimalEngine>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
   handler.always_wait_for_engine_response_future_ = true;
 
@@ -811,8 +811,8 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
 // Tests the interaction with EngineBuilder in the situation where
 // sessions exist in create session event.
 TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
-  auto old_engine = std::make_unique<EngineStub>();
-  auto new_engine = std::make_unique<EngineStub>();
+  auto old_engine = std::make_unique<MinimalEngine>();
+  auto new_engine = std::make_unique<MinimalEngine>();
   const auto *old_engine_ptr = old_engine.get();
   const auto *new_engine_ptr = new_engine.get();
 
