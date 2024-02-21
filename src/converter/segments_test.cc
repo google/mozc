@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -643,5 +644,42 @@ TEST(SegmentTest, Iterator) {
   EXPECT_EQ(i, kHistorySize + kConversionSize);
   EXPECT_EQ(segments.conversion_segments_size(), kConversionSize);
   EXPECT_EQ(segments.conversion_segments().size(), kConversionSize);
+}
+
+TEST(SegmentTest, IteratorConstness) {
+  // Create a test `Segments`.
+  Segments segments;
+  Segment *segment = segments.push_back_segment();
+  segment->set_segment_type(Segment::FIXED_VALUE);
+
+  // Dereferencing the iterator of non-const `Segments` should be non-const.
+  static_assert(
+      !std::is_const_v<std::remove_reference_t<decltype(*segments.begin())>>);
+
+  // Dereferencing the iterator of const `Segments` should be const.
+  const Segments &segments_const_ref = segments;
+  auto it_const = segments_const_ref.begin();
+  static_assert(std::is_const_v<std::remove_reference_t<decltype(*it_const)>>);
+  auto &value_const_ref = *it_const;
+  static_assert(
+      std::is_const_v<std::remove_reference_t<decltype(value_const_ref)>>);
+
+  // Check `conversion_segments()` is const too when it's from `const Segments`.
+  auto it_const_conversion_segments =
+      segments_const_ref.conversion_segments().begin();
+  static_assert(
+      std::is_const_v<
+          std::remove_reference_t<decltype(*it_const_conversion_segments)>>);
+  auto &value_const_conversion_segments = *it_const_conversion_segments;
+  static_assert(
+      std::is_const_v<
+          std::remove_reference_t<decltype(value_const_conversion_segments)>>);
+
+  // As per the STL requirements, `iterator` should be type convertible to
+  // `const_iterator`.
+  it_const = segments.begin();
+  auto &value_const_ref2 = *it_const;
+  static_assert(
+      std::is_const_v<std::remove_reference_t<decltype(value_const_ref2)>>);
 }
 }  // namespace mozc

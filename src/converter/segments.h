@@ -475,19 +475,32 @@ class Segments final {
   // This class wraps an iterator as is, except that `operator*` dereferences
   // twice. For example, if `InnnerIterator` is the iterator of
   // `std::deque<Segment *>`, `operator*` dereferences to `Segment&`.
-  template <typename InnerIterator>
+  using inner_iterator = std::deque<Segment *>::iterator;
+  using inner_const_iterator = std::deque<Segment *>::const_iterator;
+  template <typename InnerIterator, bool is_const = false>
   class Iterator {
    public:
+    using inner_value_type =
+        typename std::iterator_traits<InnerIterator>::value_type;
+
     using iterator_category =
         typename std::iterator_traits<InnerIterator>::iterator_category;
-    using value_type = typename std::remove_pointer_t<
-        typename std::iterator_traits<InnerIterator>::value_type>;
+    using value_type = std::conditional_t<
+        is_const,
+        typename std::add_const_t<std::remove_pointer_t<inner_value_type>>,
+        typename std::remove_pointer_t<inner_value_type>>;
     using difference_type =
         typename std::iterator_traits<InnerIterator>::difference_type;
     using pointer = value_type *;
     using reference = value_type &;
 
     explicit Iterator(const InnerIterator &iterator) : iterator_(iterator) {}
+
+    // Make `iterator` type convertible to `const_iterator`.
+    template <bool enable = is_const>
+    Iterator(typename std::enable_if_t<enable, const Iterator<inner_iterator>>
+                 iterator)
+        : iterator_(iterator.iterator_) {}
 
     reference operator*() const { return **iterator_; }
     pointer operator->() const { return *iterator_; }
@@ -520,6 +533,8 @@ class Segments final {
     }
 
    private:
+    friend class Iterator<inner_const_iterator, /*is_const=*/true>;
+
     InnerIterator iterator_;
   };
 
@@ -548,8 +563,10 @@ class Segments final {
   }
 
   // iterators
-  using iterator = Iterator<std::deque<Segment *>::iterator>;
-  using const_iterator = Iterator<std::deque<Segment *>::const_iterator>;
+  using iterator = Iterator<inner_iterator>;
+  using const_iterator = Iterator<inner_const_iterator, /*is_const=*/true>;
+  static_assert(!std::is_const_v<iterator::value_type>);
+  static_assert(std::is_const_v<const_iterator::value_type>);
 
   iterator begin() { return iterator{segments_.begin()}; }
   iterator end() { return iterator{segments_.end()}; }
