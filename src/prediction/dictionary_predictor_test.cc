@@ -55,7 +55,6 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
-#include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -338,12 +337,9 @@ class MockDataAndPredictor {
 
   explicit MockDataAndPredictor(
       std::unique_ptr<prediction::RescorerInterface> rescorer)
-      : data_manager_(),
-        mock_immutable_converter_(),
-        mock_aggregator_(new MockAggregator()) {
+      : mock_immutable_converter_(), mock_aggregator_(new MockAggregator()) {
     modules_.PresetRescorer(std::move(rescorer));
-    absl::Status init = modules_.Init(&data_manager_);
-    CHECK(init.ok()) << init.message();
+    CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
 
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
         modules_, absl::WrapUnique(mock_aggregator_),
@@ -362,7 +358,6 @@ class MockDataAndPredictor {
   DictionaryPredictorTestPeer *mutable_predictor() { return predictor_.get(); }
 
  private:
-  const testing::MockDataManager data_manager_;
   MockImmutableConverter mock_immutable_converter_;
   MockAggregator *mock_aggregator_;
   engine::Modules modules_;

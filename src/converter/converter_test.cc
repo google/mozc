@@ -184,7 +184,6 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 
   // This struct holds resources used by converter.
   struct ConverterAndData {
-    std::unique_ptr<testing::MockDataManager> data_manager;
     engine::Modules modules;
     std::unique_ptr<ImmutableConverterInterface> immutable_converter;
     std::unique_ptr<Converter> converter;
@@ -267,13 +266,10 @@ class ConverterTest : public testing::TestWithTempUserProfile {
       std::unique_ptr<RewriterInterface> rewriter,
       PredictorType predictor_type) {
     auto converter_and_data = std::make_unique<ConverterAndData>();
-    converter_and_data->data_manager =
-        std::make_unique<testing::MockDataManager>();
 
     engine::Modules &modules = converter_and_data->modules;
     modules.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
-    absl::Status init = modules.Init(converter_and_data->data_manager.get());
-    CHECK(init.ok()) << init.message();
+    CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
 
     InitConverters(std::move(rewriter), predictor_type,
                    converter_and_data.get());
@@ -290,14 +286,13 @@ class ConverterTest : public testing::TestWithTempUserProfile {
       const std::vector<UserDefinedEntry> &user_defined_entries,
       PredictorType predictor_type) {
     auto converter_and_data = std::make_unique<ConverterAndData>();
-    converter_and_data->data_manager =
-        std::make_unique<testing::MockDataManager>();
+    auto data_manager = std::make_unique<testing::MockDataManager>();
 
     auto pos_matcher = std::make_unique<dictionary::PosMatcher>(
-        mock_data_manager_.GetPosMatcherData());
+        data_manager->GetPosMatcherData());
     auto suppression_dictionary = std::make_unique<SuppressionDictionary>();
     auto user_dictionary = std::make_unique<dictionary::UserDictionary>(
-        dictionary::UserPos::CreateFromDataManager(mock_data_manager_),
+        dictionary::UserPos::CreateFromDataManager(*data_manager),
         *pos_matcher, suppression_dictionary.get());
     {
       user_dictionary::UserDictionaryStorage storage;
@@ -317,8 +312,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     modules.PresetSuppressionDictionary(std::move(suppression_dictionary));
     modules.PresetUserDictionary(std::move(user_dictionary));
 
-    absl::Status init = modules.Init(&mock_data_manager_);
-    CHECK(init.ok()) << init.message();
+    CHECK_OK(modules.Init(std::move(data_manager)));
 
     InitConverters(std::make_unique<StubRewriter>(), predictor_type,
                    converter_and_data.get());
@@ -352,7 +346,6 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   const commands::Request &default_request() const { return default_request_; }
 
  private:
-  const testing::MockDataManager mock_data_manager_;
   const commands::Request default_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
@@ -1160,9 +1153,7 @@ ACTION_P2(InvokeCallbackWithUserDictionaryToken, key, value) {
 
 TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   // Create Converter with mock user dictionary
-  testing::MockDataManager data_manager;
   auto mock_user_dictionary = std::make_unique<MockUserDictionary>();
-
   EXPECT_CALL(*mock_user_dictionary, LookupPredictive(_, _, _))
       .Times(AnyNumber());
   EXPECT_CALL(*mock_user_dictionary, LookupPredictive(StrEq("てすと"), _, _))
@@ -1174,8 +1165,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
 
   engine::Modules modules;
   modules.PresetUserDictionary(std::move(mock_user_dictionary));
-  absl::Status init = modules.Init(&data_manager);
-  CHECK(init.ok()) << init.message();
+  CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
 
   auto immutable_converter = std::make_unique<ImmutableConverter>(modules);
   Converter converter;

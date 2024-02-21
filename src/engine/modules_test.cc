@@ -58,9 +58,7 @@ TEST(ModulesTest, Init) {
   EXPECT_EQ(modules.GetPosGroup(), nullptr);
   EXPECT_EQ(modules.GetRescorer(), nullptr);
 
-  testing::MockDataManager data_manager;
-  absl::Status status = modules.Init(&data_manager);
-  ASSERT_OK(status);
+  ASSERT_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
 
   EXPECT_NE(modules.GetPosMatcher(), nullptr);
   EXPECT_NE(modules.GetSuppressionDictionary(), nullptr);
@@ -115,9 +113,7 @@ TEST(ModulesTest, Preset) {
   EXPECT_NE(rescorer_ptr, nullptr);
   modules.PresetRescorer(std::move(rescorer));
 
-  testing::MockDataManager data_manager;
-  absl::Status status = modules.Init(&data_manager);
-  ASSERT_OK(status);
+  ASSERT_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
 
   EXPECT_EQ(modules.GetPosMatcher(), pos_matcher_ptr);
   EXPECT_EQ(modules.GetSuppressionDictionary(), suppression_dictionary_ptr);

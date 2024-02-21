@@ -41,7 +41,6 @@
 #include "converter/lattice.h"
 #include "converter/node.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "engine/modules.h"
@@ -57,9 +56,9 @@ class MockDataAndImmutableConverter {
  public:
   // Initializes data and immutable converter with given dictionaries.
   MockDataAndImmutableConverter() {
-    data_manager_ = std::make_unique<testing::MockDataManager>();
     modules_.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
-    absl::Status status = modules_.Init(data_manager_.get());
+    absl::Status status =
+        modules_.Init(std::make_unique<testing::MockDataManager>());
     CHECK(status.ok());
     immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
   }
@@ -74,7 +73,6 @@ class MockDataAndImmutableConverter {
   }
 
  private:
-  std::unique_ptr<const DataManagerInterface> data_manager_;
   engine::Modules modules_;
   std::unique_ptr<ImmutableConverter> immutable_converter_;
 };

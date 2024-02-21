@@ -145,7 +145,7 @@ absl::Status Engine::Init(
       return absl::ResourceExhaustedError("engine.cc: " #ptr " is null"); \
   } while (false)
 
-  absl::Status modules_init_status = modules_.Init(data_manager.get());
+  absl::Status modules_init_status = modules_.Init(std::move(data_manager));
   if (!modules_init_status.ok()) {
     return modules_init_status;
   }
@@ -198,8 +198,6 @@ absl::Status Engine::Init(
                    immutable_converter_.get());
 
   user_data_manager_ = std::make_unique<UserDataManager>(predictor_, rewriter_);
-
-  data_manager_ = std::move(data_manager);
 
   return absl::Status();
 

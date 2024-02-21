@@ -103,11 +103,11 @@ class Engine : public EngineInterface {
   }
 
   absl::string_view GetDataVersion() const override {
-    return data_manager_->GetDataVersion();
+    return GetDataManager()->GetDataVersion();
   }
 
   const DataManagerInterface *GetDataManager() const override {
-    return data_manager_.get();
+    return &modules_.GetDataManager();
   }
 
   std::vector<std::string> GetPosList() const override {
@@ -125,7 +125,6 @@ class Engine : public EngineInterface {
   absl::Status Init(std::unique_ptr<const DataManagerInterface> data_manager,
                     bool is_mobile);
 
-  std::unique_ptr<const DataManagerInterface> data_manager_;
   engine::Modules modules_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
 
