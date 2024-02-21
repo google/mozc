@@ -115,42 +115,53 @@ bool UserDataManager::Wait() { return predictor_->Wait(); }
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
+  constexpr bool kIsMobile = false;
+
+  auto modules = std::make_unique<engine::Modules>();
+  absl::Status modules_status = modules->Init(std::move(data_manager));
+  if (!modules_status.ok()) {
+    return modules_status;
+  }
+
   auto engine = std::make_unique<Engine>();
-  constexpr bool is_mobile = false;
-  auto status = engine->Init(std::move(data_manager), is_mobile);
-  if (!status.ok()) {
-    return status;
+  absl::Status engine_status = engine->Init(std::move(modules), kIsMobile);
+  if (!engine_status.ok()) {
+    return engine_status;
   }
   return engine;
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
+  constexpr bool kIsMobile = true;
+
+  auto modules = std::make_unique<engine::Modules>();
+  absl::Status modules_status = modules->Init(std::move(data_manager));
+  if (!modules_status.ok()) {
+    return modules_status;
+  }
+
   auto engine = std::make_unique<Engine>();
-  constexpr bool is_mobile = true;
-  auto status = engine->Init(std::move(data_manager), is_mobile);
-  if (!status.ok()) {
-    return status;
+  absl::Status engine_status = engine->Init(std::move(modules), kIsMobile);
+  if (!engine_status.ok()) {
+    return engine_status;
   }
   return engine;
 }
 
 // Since the composite predictor class differs on desktop and mobile, Init()
 // takes a function pointer to create an instance of predictor class.
-absl::Status Engine::Init(
-    std::unique_ptr<const DataManagerInterface> data_manager, bool is_mobile) {
+absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
+                          bool is_mobile) {
 #define RETURN_IF_NULL(ptr)                                               \
   do {                                                                    \
     if (!(ptr))                                                           \
       return absl::ResourceExhaustedError("engine.cc: " #ptr " is null"); \
   } while (false)
 
-  absl::Status modules_init_status = modules_.Init(std::move(data_manager));
-  if (!modules_init_status.ok()) {
-    return modules_init_status;
-  }
+  modules_ = std::move(modules);
 
-  immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
+  immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
   RETURN_IF_NULL(immutable_converter_);
 
   // Since predictor and rewriter require a pointer to a converter instance,
@@ -168,13 +179,13 @@ absl::Status Engine::Init(
     // history predictor, and extra predictor.
     auto dictionary_predictor =
         std::make_unique<prediction::DictionaryPredictor>(
-            modules_, converter_.get(), immutable_converter_.get());
+            *modules_, converter_.get(), immutable_converter_.get());
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;
     auto user_history_predictor =
         std::make_unique<prediction::UserHistoryPredictor>(
-            modules_, enable_content_word_learning);
+            *modules_, enable_content_word_learning);
     RETURN_IF_NULL(user_history_predictor);
 
     if (is_mobile) {
@@ -190,11 +201,11 @@ absl::Status Engine::Init(
   }
   predictor_ = predictor.get();  // Keep the reference
 
-  auto rewriter = std::make_unique<Rewriter>(modules_, *converter_);
+  auto rewriter = std::make_unique<Rewriter>(*modules_, *converter_);
   RETURN_IF_NULL(rewriter);
   rewriter_ = rewriter.get();  // Keep the reference
 
-  converter_->Init(modules_, std::move(predictor), std::move(rewriter),
+  converter_->Init(*modules_, std::move(predictor), std::move(rewriter),
                    immutable_converter_.get());
 
   user_data_manager_ = std::make_unique<UserDataManager>(predictor_, rewriter_);
@@ -205,11 +216,11 @@ absl::Status Engine::Init(
 }
 
 bool Engine::Reload() {
-  if (!modules_.GetUserDictionary()) {
+  if (!modules_->GetUserDictionary()) {
     return true;
   }
   MOZC_VLOG(1) << "Reloading user dictionary";
-  bool result_dictionary = modules_.GetUserDictionary()->Reload();
+  bool result_dictionary = modules_->GetUserDictionary()->Reload();
   MOZC_VLOG(1) << "Reloading UserDataManager";
   bool result_user_data = GetUserDataManager()->Reload();
   return result_dictionary && result_user_data;
@@ -219,8 +230,8 @@ bool Engine::ReloadAndWait() {
   if (!Reload()) {
     return false;
   }
-  if (modules_.GetUserDictionary()) {
-    modules_.GetUserDictionary()->WaitForReloader();
+  if (modules_->GetUserDictionary()) {
+    modules_->GetUserDictionary()->WaitForReloader();
   }
   return GetUserDataManager()->Wait();
 }

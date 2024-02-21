@@ -91,7 +91,7 @@ class Engine : public EngineInterface {
     return predictor_ ? predictor_->GetPredictorName() : absl::string_view();
   }
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
-    return modules_.GetMutableSuppressionDictionary();
+    return modules_->GetMutableSuppressionDictionary();
   }
 
   bool Reload() override;
@@ -107,25 +107,24 @@ class Engine : public EngineInterface {
   }
 
   const DataManagerInterface *GetDataManager() const override {
-    return &modules_.GetDataManager();
+    return &modules_->GetDataManager();
   }
 
   std::vector<std::string> GetPosList() const override {
-    return modules_.GetUserDictionary()->GetPosList();
+    return modules_->GetUserDictionary()->GetPosList();
   }
 
   void SetSpellchecker(
       const engine::SpellcheckerInterface *spellchecker) override {
-    modules_.SetSpellchecker(spellchecker);
+    modules_->SetSpellchecker(spellchecker);
   }
 
  private:
-  // Initializes the object by the given data manager and is_mobile flag.
+  // Initializes the engine object by the given modules and is_mobile flag.
   // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
-  absl::Status Init(std::unique_ptr<const DataManagerInterface> data_manager,
-                    bool is_mobile);
+  absl::Status Init(std::unique_ptr<engine::Modules> modules, bool is_mobile);
 
-  engine::Modules modules_;
+  std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
 
   // TODO(noriyukit): Currently predictor and rewriter are created by this class
