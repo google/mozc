@@ -1009,13 +1009,13 @@ bool Converter::GetLastConnectivePart(const absl::string_view preceding_text,
   // Currently only NUMBER and ALPHABET are supported.
   switch (last_script_type) {
     case Util::NUMBER: {
-      japanese_util::FullWidthAsciiToHalfWidthAscii(last_token, key);
+      *key = japanese_util::FullWidthAsciiToHalfWidthAscii(last_token);
       *value = std::move(last_token);
       *id = pos_matcher_->GetNumberId();
       return true;
     }
     case Util::ALPHABET: {
-      japanese_util::FullWidthAsciiToHalfWidthAscii(last_token, key);
+      *key = japanese_util::FullWidthAsciiToHalfWidthAscii(last_token);
       *value = std::move(last_token);
       *id = pos_matcher_->GetUniqueNounId();
       return true;

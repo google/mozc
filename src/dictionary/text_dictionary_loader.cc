@@ -302,14 +302,14 @@ std::unique_ptr<Token> TextDictionaryLoader::ParseTSV(
   auto token = std::make_unique<Token>();
 
   // Parse key, lid, rid, cost, value.
-  japanese_util::NormalizeVoicedSoundMark(columns[0], &token->key);
+  token->key = japanese_util::NormalizeVoicedSoundMark(columns[0]);
   CHECK(absl::SimpleAtoi(columns[1], &token->lid))
       << "Wrong lid: " << columns[1];
   CHECK(absl::SimpleAtoi(columns[2], &token->rid))
       << "Wrong rid: " << columns[2];
   CHECK(absl::SimpleAtoi(columns[3], &token->cost))
       << "Wrong cost: " << columns[3];
-  japanese_util::NormalizeVoicedSoundMark(columns[4], &token->value);
+  token->value = japanese_util::NormalizeVoicedSoundMark(columns[4]);
 
   // Optionally, label (SPELLING_CORRECTION, ZIP_CODE, etc.) may be provided in
   // column 6.

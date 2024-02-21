@@ -166,7 +166,7 @@ bool GetNumberHistory(const Segments &segments, std::string *number_key) {
     return false;
   }
 
-  japanese_util::FullWidthToHalfWidth(history_value, number_key);
+  *number_key = japanese_util::FullWidthToHalfWidth(history_value);
   return true;
 }
 
@@ -1494,7 +1494,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
     std::string tmp;
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       tmp.assign((*results)[i].value);
-      japanese_util::HalfWidthAsciiToFullWidthAscii(tmp, &(*results)[i].value);
+      (*results)[i].value = japanese_util::HalfWidthAsciiToFullWidthAscii(tmp);
     }
   }
 }

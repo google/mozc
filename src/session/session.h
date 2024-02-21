@@ -37,6 +37,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/time/time.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "engine/engine_interface.h"
@@ -45,7 +46,6 @@
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/session_interface.h"
-#include "absl/time/time.h"
 #include "testing/friend_test.h"
 #include "transliteration/transliteration.h"
 

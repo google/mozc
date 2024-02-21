@@ -859,5 +859,17 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
   EXPECT_EQ(new_engine_ptr, &handler.engine());
 }
 
+TEST_F(SessionHandlerTest, GetServerVersionTest) {
+  auto engine = std::make_unique<MockEngine>();
+  EXPECT_CALL(*engine, GetDataVersion())
+      .WillRepeatedly(Return("24.20240101.01"));
+
+  SessionHandler handler(std::move(engine));
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::GET_SERVER_VERSION);
+  handler.EvalCommand(&command);
+  EXPECT_EQ(command.output().server_version().data_version(), "24.20240101.01");
+}
+
 
 }  // namespace mozc

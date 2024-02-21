@@ -1109,13 +1109,11 @@ message Input {
     // Sends reload spellchecker.
     RELOAD_SPELL_CHECKER = 29;
 
+    GET_SERVER_VERSION = 19;
+
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
-    //
-    // Note: This enum lack the value for 19 and it may cause a crash.
-    //       Please reuse these value if you can.
-    //       19 was used to clear synced data on dev channel.
     NUM_OF_COMMANDS = 30;
   }
   required CommandType type = 1;
@@ -1328,7 +1326,7 @@ message DeletionRange {
   optional int32 length = 2;
 }
 
-// Next ID: 26
+// Next ID: 27
 message Output {
   optional uint64 id = 1 [jstype = JS_STRING];
 
@@ -1420,6 +1418,12 @@ message Output {
   // Candidate words stored in 1D array. The field should be filled without
   // using any personal data.
   optional CandidateList incognito_candidate_words = 25;
+
+  message VersionInfo {
+    optional string mozc_version = 1;
+    optional string data_version = 2;
+  }
+  optional VersionInfo server_version = 26;
 }
 
 message Command {

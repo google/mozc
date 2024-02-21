@@ -90,9 +90,9 @@ TEST_F(TempDirectoryTest, Default) {
   constexpr absl::string_view kTestContent = "testing temp dir";
   TempFile temp_file = CreateFile(temp_dir);
   EXPECT_OK(FileUtil::SetContents(temp_file.path(), kTestContent));
-  std::string content;
-  EXPECT_OK(FileUtil::GetContents(temp_file.path(), &content));
-  EXPECT_EQ(content, kTestContent);
+  absl::StatusOr<std::string> content = FileUtil::GetContents(temp_file.path());
+  EXPECT_OK(content);
+  EXPECT_EQ(*content, kTestContent);
   std::ofstream of1(FileUtil::JoinPath(temp_dir.path(), "test"));
   EXPECT_TRUE(of1.good());
 

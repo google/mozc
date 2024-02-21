@@ -135,6 +135,7 @@ class SessionHandler : public SessionHandlerInterface {
   bool NoOperation(commands::Command *command);
   bool CheckSpelling(commands::Command *command);
   bool ReloadSpellChecker(commands::Command *command);
+  bool GetServerVersion(commands::Command *command) const;
 
   // Replaces engine_ with a new instance if it is ready.
   void MaybeReloadEngine(commands::Command *command);

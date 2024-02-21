@@ -1018,8 +1018,8 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
     return false;
   }
 
-  std::string year_str;
-  japanese_util::FullWidthAsciiToHalfWidthAscii(current_key, &year_str);
+  std::string year_str =
+      japanese_util::FullWidthAsciiToHalfWidthAscii(current_key);
 
   uint32_t year = 0;
   if (!absl::SimpleAtoi(year_str, &year)) {
@@ -1100,15 +1100,15 @@ bool GetNDigits(const composer::Composer &composer, const Segments &segments,
 
   // 1. Segment's key
   if (IsNDigits(segment.key(), n)) {
-    japanese_util::FullWidthAsciiToHalfWidthAscii(segment.key(), output);
+    *output = japanese_util::FullWidthAsciiToHalfWidthAscii(segment.key());
     return true;
   }
 
   // 2. Meta candidates
   for (size_t i = 0; i < segment.meta_candidates_size(); ++i) {
     if (IsNDigits(segment.meta_candidate(i).value, n)) {
-      japanese_util::FullWidthAsciiToHalfWidthAscii(
-          segment.meta_candidate(i).value, output);
+      *output = japanese_util::FullWidthAsciiToHalfWidthAscii(
+          segment.meta_candidate(i).value);
       return true;
     }
   }
@@ -1120,7 +1120,7 @@ bool GetNDigits(const composer::Composer &composer, const Segments &segments,
   const std::string raw =
       composer.GetRawSubString(0, Util::CharsLen(segment.key()));
   if (IsNDigits(raw, n)) {
-    japanese_util::FullWidthAsciiToHalfWidthAscii(raw, output);
+    *output = japanese_util::FullWidthAsciiToHalfWidthAscii(raw);
     return true;
   }
 

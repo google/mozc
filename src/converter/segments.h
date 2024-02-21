@@ -33,9 +33,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <iterator>
 #include <memory>
 #include <ostream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -470,6 +472,95 @@ class Segments final {
   Segments(const Segments &x);
   Segments &operator=(const Segments &x);
 
+  // This class wraps an iterator as is, except that `operator*` dereferences
+  // twice. For example, if `InnnerIterator` is the iterator of
+  // `std::deque<Segment *>`, `operator*` dereferences to `Segment&`.
+  template <typename InnerIterator>
+  class Iterator {
+   public:
+    using iterator_category =
+        typename std::iterator_traits<InnerIterator>::iterator_category;
+    using value_type = typename std::remove_pointer_t<
+        typename std::iterator_traits<InnerIterator>::value_type>;
+    using difference_type =
+        typename std::iterator_traits<InnerIterator>::difference_type;
+    using pointer = value_type *;
+    using reference = value_type &;
+
+    explicit Iterator(const InnerIterator &iterator) : iterator_(iterator) {}
+
+    reference operator*() const { return **iterator_; }
+    pointer operator->() const { return *iterator_; }
+
+    Iterator &operator++() {
+      ++iterator_;
+      return *this;
+    }
+    Iterator &operator--() {
+      --iterator_;
+      return *this;
+    }
+    Iterator operator+(difference_type diff) const {
+      return Iterator{iterator_ + diff};
+    }
+    Iterator &operator+=(difference_type diff) {
+      iterator_ += diff;
+      return *this;
+    }
+
+    difference_type operator-(const Iterator &other) const {
+      return iterator_ - other.iterator_;
+    }
+
+    bool operator==(const Iterator &other) const {
+      return iterator_ == other.iterator_;
+    }
+    bool operator!=(const Iterator &other) const {
+      return iterator_ != other.iterator_;
+    }
+
+   private:
+    InnerIterator iterator_;
+  };
+
+  // This class represents `begin` and `end`, like a `std::span` for
+  // non-contiguous iterators.
+  template <typename Iterator>
+  class Range {
+   public:
+    Range(const Iterator &begin, const Iterator &end)
+        : begin_(begin), end_(end) {}
+
+    Iterator begin() const { return begin_; }
+    Iterator end() const { return end_; }
+
+    typename Iterator::difference_type size() const { return end_ - begin_; }
+
+   private:
+    Iterator begin_;
+    Iterator end_;
+  };
+
+  template <typename Iterator>
+  static Range<Iterator> make_range(const Iterator &begin,
+                                    const Iterator &end) {
+    return Range<Iterator>(begin, end);
+  }
+
+  // iterators
+  using iterator = Iterator<std::deque<Segment *>::iterator>;
+  using const_iterator = Iterator<std::deque<Segment *>::const_iterator>;
+
+  iterator begin() { return iterator{segments_.begin()}; }
+  iterator end() { return iterator{segments_.end()}; }
+  const_iterator begin() const { return const_iterator{segments_.begin()}; }
+  const_iterator end() const { return const_iterator{segments_.end()}; }
+
+  Range<iterator> history_segments();
+  Range<const_iterator> history_segments() const;
+  Range<iterator> conversion_segments();
+  Range<const_iterator> conversion_segments() const;
+
   // getter
   const Segment &segment(size_t i) const { return *segments_[i]; }
   const Segment &conversion_segment(size_t i) const {
@@ -546,6 +637,9 @@ class Segments final {
   Lattice *mutable_cached_lattice() { return &cached_lattice_; }
 
  private:
+  iterator history_segments_end();
+  const_iterator history_segments_end() const;
+
   // LINT.IfChange
   size_t max_history_segments_size_;
   bool resized_;

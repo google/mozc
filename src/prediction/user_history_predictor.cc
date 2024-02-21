@@ -163,9 +163,7 @@ bool IsSentenceLikeCandidate(const Segment::Candidate &candidate) {
 
 // Returns romanaized string.
 std::string ToRoman(const absl::string_view str) {
-  std::string result;
-  japanese_util::HiraganaToRomanji(str, &result);
-  return result;
+  return japanese_util::HiraganaToRomanji(str);
 }
 
 // Returns true if value looks like a content word.

@@ -220,7 +220,7 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
 
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
-    japanese_util::FullWidthAsciiToHalfWidthAscii(segment->key(), &reading);
+    reading = japanese_util::FullWidthAsciiToHalfWidthAscii(segment->key());
     if (reading.empty()) {
       continue;
     }

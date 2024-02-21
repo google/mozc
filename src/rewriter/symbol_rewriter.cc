@@ -271,9 +271,10 @@ void SymbolRewriter::AddDescForCurrentCandidates(
     const SerializedDictionary::IterRange &range, Segment *segment) {
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     Segment::Candidate *candidate = segment->mutable_candidate(i);
-    std::string full_width_value, half_width_value;
-    japanese_util::HalfWidthToFullWidth(candidate->value, &full_width_value);
-    japanese_util::FullWidthToHalfWidth(candidate->value, &half_width_value);
+    std::string full_width_value =
+        japanese_util::HalfWidthToFullWidth(candidate->value);
+    std::string half_width_value =
+        japanese_util::FullWidthToHalfWidth(candidate->value);
 
     for (auto iter = range.first; iter != range.second; ++iter) {
       if (candidate->value == iter.value() ||

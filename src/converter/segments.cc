@@ -480,16 +480,52 @@ Segment *Segments::push_front_segment() {
   return segment;
 }
 
-size_t Segments::history_segments_size() const {
-  size_t result = 0;
-  for (size_t i = 0; i < segments_size(); ++i) {
-    if (segment(i).segment_type() != Segment::HISTORY &&
-        segment(i).segment_type() != Segment::SUBMITTED) {
+// Returns an `Iterator` for the end of history segments.
+template <typename Iterator>
+static Iterator history_segments_end_of(Iterator begin, Iterator end) {
+  Iterator it = begin;
+  for (; it != end; ++it) {
+    const Segment &segment = **it;
+    if (segment.segment_type() != Segment::HISTORY &&
+        segment.segment_type() != Segment::SUBMITTED) {
       break;
     }
-    ++result;
   }
-  return result;
+  return it;
+}
+
+Segments::const_iterator Segments::history_segments_end() const {
+  return const_iterator{
+      history_segments_end_of<decltype(segments_)::const_iterator>(
+          segments_.begin(), segments_.end())};
+}
+
+Segments::iterator Segments::history_segments_end() {
+  return iterator{history_segments_end_of<decltype(segments_)::iterator>(
+      segments_.begin(), segments_.end())};
+}
+
+size_t Segments::history_segments_size() const {
+  const auto end = history_segments_end_of<decltype(segments_)::const_iterator>(
+      segments_.begin(), segments_.end());
+  return end - segments_.begin();
+}
+
+Segments::Range<Segments::iterator> Segments::history_segments() {
+  return make_range(begin(), history_segments_end());
+}
+
+Segments::Range<Segments::const_iterator> Segments::history_segments() const {
+  return make_range(begin(), history_segments_end());
+}
+
+Segments::Range<Segments::iterator> Segments::conversion_segments() {
+  return make_range(history_segments_end(), end());
+}
+
+Segments::Range<Segments::const_iterator> Segments::conversion_segments()
+    const {
+  return make_range(history_segments_end(), end());
 }
 
 void Segments::erase_segment(size_t i) {

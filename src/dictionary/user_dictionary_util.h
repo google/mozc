@@ -62,7 +62,6 @@ class UserDictionaryUtil {
   // katakana-> hiragana and full-width ascii -> half width
   // ascii. Identity of reading of a word should be defined by the
   // output of this function.
-  static void NormalizeReading(absl::string_view input, std::string *output);
   static std::string NormalizeReading(absl::string_view input);
 
   // Returns true if all fields of the given data is properly set and
