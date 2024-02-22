@@ -38,7 +38,7 @@
       'type': 'static_library',
       'sources': [
         '<(gen_out_dir)/../dictionary/pos_matcher.h',
-        'engine_builder.cc',
+        'data_loader.cc',
       ],
       'dependencies': [
         'engine',

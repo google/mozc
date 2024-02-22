@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/engine_builder.h"
+#include "engine/data_loader.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -68,7 +68,7 @@ EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
 }
 }  // namespace
 
-uint64_t EngineBuilder::RegisterRequest(const EngineReloadRequest &request) {
+uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
   const uint64_t id = Fingerprint(request.SerializeAsString());
 
   absl::WriterMutexLock lock(&mutex_);
@@ -105,7 +105,7 @@ uint64_t EngineBuilder::RegisterRequest(const EngineReloadRequest &request) {
   return requests_.front().id;
 }
 
-uint64_t EngineBuilder::UnregisterRequest(uint64_t id) {
+uint64_t DataLoader::UnregisterRequest(uint64_t id) {
   absl::WriterMutexLock lock(&mutex_);
 
   const auto it =
@@ -119,10 +119,10 @@ uint64_t EngineBuilder::UnregisterRequest(uint64_t id) {
   return requests_.empty() ? 0 : requests_.front().id;
 }
 
-std::unique_ptr<EngineBuilder::EngineResponseFuture> EngineBuilder::Build(
+std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
     uint64_t id) const {
-  return std::make_unique<BackgroundFuture<EngineResponse>>([&, id]() {
-    EngineResponse result;
+  return std::make_unique<BackgroundFuture<Response>>([&, id]() {
+    Response result;
     result.id = id;
     result.response.set_status(EngineReloadResponse::DATA_MISSING);
 
@@ -189,7 +189,7 @@ std::unique_ptr<EngineBuilder::EngineResponseFuture> EngineBuilder::Build(
   });
 }
 
-void EngineBuilder::Clear() {
+void DataLoader::Clear() {
   absl::WriterMutexLock lock(&mutex_);
   requests_.clear();
   sequence_id_ = 0;

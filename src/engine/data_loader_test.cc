@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/engine_builder.h"
+#include "engine/data_loader.h"
 
 #include <cstdint>
 #include <memory>
@@ -56,10 +56,10 @@ struct Param {
   std::string predictor_name;
 };
 
-class EngineBuilderTest : public testing::TestWithTempUserProfile,
-                          public ::testing::WithParamInterface<Param> {
+class DataLoaderTest : public testing::TestWithTempUserProfile,
+                       public ::testing::WithParamInterface<Param> {
  protected:
-  EngineBuilderTest()
+  DataLoaderTest()
       : mock_data_path_(
             testing::GetSourcePath({MOZC_SRC_COMPONENTS("data_manager"),
                                     "testing", "mock_mozc.data"})) {
@@ -67,28 +67,28 @@ class EngineBuilderTest : public testing::TestWithTempUserProfile,
   }
 
   void Clear() {
-    builder_.Clear();
+    loader_.Clear();
     request_.Clear();
   }
 
   const std::string mock_data_path_;
-  EngineBuilder builder_;
+  DataLoader loader_;
   EngineReloadRequest request_;
 };
 
-TEST_P(EngineBuilderTest, BasicTest) {
+TEST_P(DataLoaderTest, BasicTest) {
   {
     // Test request without install.
     request_.set_engine_type(GetParam().type);
     request_.set_file_path(mock_data_path_);
     request_.set_magic_number(kMockMagicNumber);
 
-    const uint64_t id = builder_.RegisterRequest(request_);
-    std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
-        builder_.Build(id);
+    const uint64_t id = loader_.RegisterRequest(request_);
+    std::unique_ptr<DataLoader::ResponseFuture> response_future =
+        loader_.Build(id);
 
     response_future->Wait();
-    const EngineBuilder::EngineResponse &response = response_future->Get();
+    const DataLoader::Response &response = response_future->Get();
 
     DataManager data_manager;
     data_manager.InitFromFile(mock_data_path_, kMockMagicNumber);
@@ -123,12 +123,12 @@ TEST_P(EngineBuilderTest, BasicTest) {
     request_.set_file_path(src_path);
     request_.set_install_location(install_path);
     request_.set_magic_number(kMockMagicNumber);
-    const uint64_t id = builder_.RegisterRequest(request_);
+    const uint64_t id = loader_.RegisterRequest(request_);
 
-    std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
-        builder_.Build(id);
+    std::unique_ptr<DataLoader::ResponseFuture> response_future =
+        loader_.Build(id);
     response_future->Wait();
-    const EngineBuilder::EngineResponse &response = response_future->Get();
+    const DataLoader::Response &response = response_future->Get();
 
     DataManager data_manager;
     data_manager.InitFromFile(src_path, kMockMagicNumber);
@@ -151,7 +151,7 @@ TEST_P(EngineBuilderTest, BasicTest) {
   }
 }
 
-TEST_P(EngineBuilderTest, AsyncBuildRepeatedly) {
+TEST_P(DataLoaderTest, AsyncBuildRepeatedly) {
   // Calls RegisterRequest multiple times.
   // Makes sure that the last request is processed.
   TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
@@ -169,15 +169,15 @@ TEST_P(EngineBuilderTest, AsyncBuildRepeatedly) {
       ASSERT_OK(FileUtil::CopyFile(mock_data_path_, last_path));
       request_.set_file_path(last_path);
       request_.set_magic_number(kMockMagicNumber);
-      latest_id = builder_.RegisterRequest(request_);
+      latest_id = loader_.RegisterRequest(request_);
     }
   }
 
-  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
-      builder_.Build(latest_id);
+  std::unique_ptr<DataLoader::ResponseFuture> response_future =
+      loader_.Build(latest_id);
 
   response_future->Wait();
-  const EngineBuilder::EngineResponse &response = response_future->Get();
+  const DataLoader::Response &response = response_future->Get();
 
   DataManager data_manager;
   data_manager.InitFromFile(last_path, kMockMagicNumber);
@@ -196,18 +196,18 @@ TEST_P(EngineBuilderTest, AsyncBuildRepeatedly) {
   EXPECT_EQ(response.id, latest_id);
 }
 
-TEST_P(EngineBuilderTest, AsyncBuildWithoutInstall) {
+TEST_P(DataLoaderTest, AsyncBuildWithoutInstall) {
   // Request preparation without install.
   request_.set_engine_type(GetParam().type);
   request_.set_file_path(mock_data_path_);
   request_.set_magic_number(kMockMagicNumber);
-  const uint64_t id = builder_.RegisterRequest(request_);
+  const uint64_t id = loader_.RegisterRequest(request_);
 
-  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
-      builder_.Build(id);
+  std::unique_ptr<DataLoader::ResponseFuture> response_future =
+      loader_.Build(id);
 
   response_future->Wait();
-  const EngineBuilder::EngineResponse &response = response_future->Get();
+  const DataLoader::Response &response = response_future->Get();
 
   DataManager data_manager;
   data_manager.InitFromFile(mock_data_path_, kMockMagicNumber);
@@ -225,7 +225,7 @@ TEST_P(EngineBuilderTest, AsyncBuildWithoutInstall) {
   EXPECT_EQ(response.id, id);
 }
 
-TEST_P(EngineBuilderTest, AsyncBuildWithInstall) {
+TEST_P(DataLoaderTest, AsyncBuildWithInstall) {
   TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   const std::string tmp_src = FileUtil::JoinPath({temp_dir.path(), "src.data"});
   const std::string install_path =
@@ -240,13 +240,13 @@ TEST_P(EngineBuilderTest, AsyncBuildWithInstall) {
   request_.set_file_path(tmp_src);
   request_.set_install_location(install_path);
   request_.set_magic_number(kMockMagicNumber);
-  const uint64_t id = builder_.RegisterRequest(request_);
+  const uint64_t id = loader_.RegisterRequest(request_);
 
-  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
-      builder_.Build(id);
+  std::unique_ptr<DataLoader::ResponseFuture> response_future =
+      loader_.Build(id);
 
   response_future->Wait();
-  const EngineBuilder::EngineResponse &response = response_future->Get();
+  const DataLoader::Response &response = response_future->Get();
 
   // Builder should be ready now.
   EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
@@ -270,63 +270,63 @@ TEST_P(EngineBuilderTest, AsyncBuildWithInstall) {
   EXPECT_EQ(response.id, id);
 }
 
-TEST_P(EngineBuilderTest, FailureCaseDataBroken) {
+TEST_P(DataLoaderTest, FailureCaseDataBroken) {
   // Test the case where input file is invalid.
   request_.set_engine_type(GetParam().type);
   request_.set_file_path(testing::GetSourceFileOrDie(
-      {MOZC_SRC_COMPONENTS("engine"), "engine_builder_test.cc"}));
+      {MOZC_SRC_COMPONENTS("engine"), "data_loader_test.cc"}));
   request_.set_magic_number(kMockMagicNumber);
-  const uint64_t id = builder_.RegisterRequest(request_);
+  const uint64_t id = loader_.RegisterRequest(request_);
 
-  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
-      builder_.Build(id);
+  std::unique_ptr<DataLoader::ResponseFuture> response_future =
+      loader_.Build(id);
 
   response_future->Wait();
-  const EngineBuilder::EngineResponse &response = response_future->Get();
+  const DataLoader::Response &response = response_future->Get();
 
   EXPECT_EQ(response.response.status(), EngineReloadResponse::DATA_BROKEN);
   EXPECT_FALSE(response.modules);
   EXPECT_EQ(response.id, id);
 }
 
-TEST_P(EngineBuilderTest, InvalidId) {
+TEST_P(DataLoaderTest, InvalidId) {
   // Test the case where input file is invalid.
   request_.set_engine_type(GetParam().type);
   request_.set_file_path(mock_data_path_);
   request_.set_magic_number(kMockMagicNumber);
   const uint64_t id =
-      builder_.RegisterRequest(request_) + 1;  // + 1 to make invalid id.
+      loader_.RegisterRequest(request_) + 1;  // + 1 to make invalid id.
 
-  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
-      builder_.Build(id);
+  std::unique_ptr<DataLoader::ResponseFuture> response_future =
+      loader_.Build(id);
 
   response_future->Wait();
-  const EngineBuilder::EngineResponse &response = response_future->Get();
+  const DataLoader::Response &response = response_future->Get();
 
   EXPECT_EQ(response.response.status(), EngineReloadResponse::DATA_MISSING);
   EXPECT_FALSE(response.modules);
   EXPECT_EQ(response.id, id);
 }
 
-TEST_P(EngineBuilderTest, FailureCaseFileDoesNotExist) {
+TEST_P(DataLoaderTest, FailureCaseFileDoesNotExist) {
   // Test the case where input file doesn't exist.
   request_.set_engine_type(GetParam().type);
   request_.set_file_path("file_does_not_exist");
   request_.set_magic_number(kMockMagicNumber);
 
-  const uint64_t id = builder_.RegisterRequest(request_);
-  std::unique_ptr<EngineBuilder::EngineResponseFuture> response_future =
-      builder_.Build(id);
+  const uint64_t id = loader_.RegisterRequest(request_);
+  std::unique_ptr<DataLoader::ResponseFuture> response_future =
+      loader_.Build(id);
 
   response_future->Wait();
-  const EngineBuilder::EngineResponse &response = response_future->Get();
+  const DataLoader::Response &response = response_future->Get();
 
   EXPECT_EQ(response.response.status(), EngineReloadResponse::MMAP_FAILURE);
   EXPECT_FALSE(response.modules);
   EXPECT_EQ(response.id, id);
 }
 
-TEST_P(EngineBuilderTest, RegisterRequestTest) {
+TEST_P(DataLoaderTest, RegisterRequestTest) {
   Clear();
 
   auto id = [&](absl::string_view file_path, int32_t priority) {
@@ -342,11 +342,11 @@ TEST_P(EngineBuilderTest, RegisterRequestTest) {
     request.set_engine_type(GetParam().type);
     request.set_file_path(file_path);
     request.set_priority(priority);
-    return builder_.RegisterRequest(request);
+    return loader_.RegisterRequest(request);
   };
 
   auto unregister_request = [&](absl::string_view file_path, int32_t priority) {
-    return builder_.UnregisterRequest(id(file_path, priority));
+    return loader_.UnregisterRequest(id(file_path, priority));
   };
 
   // Register request.
@@ -379,10 +379,10 @@ TEST_P(EngineBuilderTest, RegisterRequestTest) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    EngineBuilderTest, EngineBuilderTest,
+    DataLoaderTest, DataLoaderTest,
     ::testing::Values(Param{EngineReloadRequest::DESKTOP, "DefaultPredictor"},
                       Param{EngineReloadRequest::MOBILE, "MobilePredictor"}),
-    [](const ::testing::TestParamInfo<Param>& info) -> std::string {
+    [](const ::testing::TestParamInfo<Param> &info) -> std::string {
       return info.param.predictor_name;
     });
 

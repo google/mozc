@@ -39,7 +39,7 @@
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
-#include "engine/engine_builder.h"
+#include "engine/data_loader.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -101,8 +101,7 @@ class EngineInterface {
   virtual bool SendEngineReloadRequest(const EngineReloadRequest &request) {
     return false;
   }
-  virtual void SetEngineBuilderForTesting(
-      std::unique_ptr<EngineBuilder> builder) {}
+  virtual void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) {}
   virtual void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {}
 
  protected:

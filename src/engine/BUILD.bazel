@@ -38,8 +38,8 @@ package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
     name = "engine_builder",
-    srcs = ["engine_builder.cc"],
-    hdrs = ["engine_builder.h"],
+    srcs = ["data_loader.cc"],
+    hdrs = ["data_loader.h"],
     deps = [
         ":modules",
         "//base:file_util",
@@ -57,10 +57,10 @@ mozc_cc_library(
 )
 
 mozc_cc_test(
-    name = "engine_builder_test",
-    srcs = ["engine_builder_test.cc"],
+    name = "data_loader_test",
+    srcs = ["data_loader_test.cc"],
     data = [
-        "engine_builder_test.cc",
+        "data_loader_test.cc",
         "//data_manager/testing:mock_mozc.data",
     ],
     requires_full_emulation = False,

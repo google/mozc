@@ -34,25 +34,25 @@
   },
   'targets': [
     {
-      'target_name': 'engine_builder_test',
+      'target_name': 'data_loader_test',
       'type': 'executable',
-      'sources': ['engine_builder_test.cc'],
+      'sources': ['data_loader_test.cc'],
       'dependencies': [
         'engine.gyp:engine_builder',
-        'install_engine_builder_test_src',
+        'install_data_loader_test_src',
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
       ],
     },
     {
-      'target_name': 'install_engine_builder_test_src',
+      'target_name': 'install_data_loader_test_src',
       'type': 'none',
       'copies': [
         {
           'destination': '<(mozc_oss_data_dir)/engine',
           'files': [
-            'engine_builder_test.cc',
+            'data_loader_test.cc',
           ],
         }
       ],
@@ -62,7 +62,7 @@
       'target_name': 'engine_all_test',
       'type': 'none',
       'dependencies': [
-        'engine_builder_test',
+        'data_loader_test',
       ],
     },
   ],

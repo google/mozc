@@ -44,7 +44,7 @@
 #include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
-#include "engine/engine_builder.h"
+#include "engine/data_loader.h"
 #include "engine/engine_interface.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
@@ -135,9 +135,8 @@ class Engine : public EngineInterface {
   // Maybe reload a new data manager. Returns true if reloaded.
   bool MaybeReloadEngine(EngineReloadResponse *response) override;
   bool SendEngineReloadRequest(const EngineReloadRequest& request) override;
-  void SetEngineBuilderForTesting(
-      std::unique_ptr<EngineBuilder> builder) override {
-    builder_ = std::move(builder);
+  void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) override {
+    loader_ = std::move(loader);
   }
   void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {
     always_wait_for_engine_response_future_ = value;
@@ -150,7 +149,7 @@ class Engine : public EngineInterface {
   // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
   absl::Status Init(std::unique_ptr<engine::Modules> modules, bool is_mobile);
 
-  std::unique_ptr<EngineBuilder> builder_;
+  std::unique_ptr<DataLoader> loader_;
   std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
 
@@ -165,7 +164,7 @@ class Engine : public EngineInterface {
 
   std::atomic<uint64_t> latest_engine_id_ = 0;
   std::atomic<uint64_t> current_engine_id_ = 0;
-  std::unique_ptr<EngineBuilder::EngineResponseFuture> engine_response_future_;
+  std::unique_ptr<DataLoader::ResponseFuture> engine_response_future_;
   // used only in unittest to perform blocking behavior.
   bool always_wait_for_engine_response_future_ = false;
 

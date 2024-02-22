@@ -43,7 +43,7 @@
 #include "converter/converter.h"
 #include "converter/immutable_converter.h"
 #include "data_manager/data_manager_interface.h"
-#include "engine/engine_builder.h"
+#include "engine/data_loader.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -156,7 +156,7 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
 }
 
 Engine::Engine()
-    : builder_(std::make_unique<EngineBuilder>()),
+    : loader_(std::make_unique<DataLoader>()),
       modules_(std::make_unique<engine::Modules>()) {}
 
 absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
@@ -258,7 +258,7 @@ bool Engine::ReloadAndWait() {
 }
 
 bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
-  if (!builder_ || response == nullptr) {
+  if (!loader_ || response == nullptr) {
     return false;
   }
 
@@ -267,7 +267,7 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
   // client needs to replace the new engine when the future is the ready to use.
   if (!engine_response_future_ && current_engine_id_ != latest_engine_id_ &&
       latest_engine_id_ != 0) {
-    engine_response_future_ = builder_->Build(latest_engine_id_);
+    engine_response_future_ = loader_->Build(latest_engine_id_);
     // Wait the engine if the no new engine is loaded so far.
     if (current_engine_id_ == 0 || always_wait_for_engine_response_future_) {
       engine_response_future_->Wait();
@@ -280,7 +280,7 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
   }
 
   // Replaces the engine when the new engine is ready to use.
-  mozc::EngineBuilder::EngineResponse &&engine_response =
+  mozc::DataLoader::Response &&engine_response =
       std::move(*engine_response_future_).Get();
   engine_response_future_.reset();
   *response = engine_response.response;
@@ -293,7 +293,7 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
     LOG(ERROR) << "Failure in engine loading: "
                << protobuf::Utf8Format(engine_response.response);
     const uint64_t rollback_id =
-        builder_->UnregisterRequest(engine_response.id);
+        loader_->UnregisterRequest(engine_response.id);
     // Update latest_engine_id_ if latest_engine_id_ == engine_response.id.
     // Otherwise, latest_engine_id_ may already be updated by the new request.
     latest_engine_id_.compare_exchange_strong(engine_response.id, rollback_id);
@@ -321,10 +321,10 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
 }
 
 bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
-  if (!builder_) {
+  if (!loader_) {
     return false;
   }
-  latest_engine_id_ = builder_->RegisterRequest(request);
+  latest_engine_id_ = loader_->RegisterRequest(request);
   return true;
 }
 
