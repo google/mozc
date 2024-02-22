@@ -42,6 +42,7 @@
 #include "base/util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "request/request_util.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -136,9 +137,7 @@ int OrderRewriter::capability(const ConversionRequest &request) const {
 
 bool OrderRewriter::Rewrite(const ConversionRequest &request,
                             Segments *segments) const {
-  if (!request.request()
-           .decoder_experiment_params()
-           .enable_findability_oriented_order()) {
+  if (!request_util::IsFindabilityOrientedOrderEnabled(request)) {
     return false;
   }
   if (segments->conversion_segments_size() != 1) {

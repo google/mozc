@@ -42,7 +42,6 @@
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -57,7 +56,6 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "engine/modules.h"
@@ -69,7 +67,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "request/conversion_request_util.h"
+#include "request/request_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 
@@ -668,9 +666,9 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
       auto_partial_suggestion_(
-          ConversionRequestUtil::IsAutoPartialSuggestionEnabled(request)),
+          request_util::IsAutoPartialSuggestionEnabled(request)),
       include_exact_key_(IsMixedConversionEnabled(request.request()) ||
-                         ConversionRequestUtil::IsHandwriting(request)),
+                         request_util::IsHandwriting(request)),
       filter_number_(ShouldFilterNoisyNumberCandidate(request.request())) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);

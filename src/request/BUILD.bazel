@@ -47,8 +47,8 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "conversion_request_util",
-    hdrs = ["conversion_request_util.h"],
+    name = "request_util",
+    hdrs = ["request_util.h"],
     deps = [
         ":conversion_request",
         "//composer",

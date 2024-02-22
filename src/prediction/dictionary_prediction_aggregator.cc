@@ -69,7 +69,7 @@
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "request/conversion_request_util.h"
+#include "request/request_util.h"
 #include "transliteration/transliteration.h"
 
 
@@ -622,7 +622,7 @@ DictionaryPredictionAggregator::GetUnigramConfig(
         min_key_len_for_latin_input};
   }
 
-  if (ConversionRequestUtil::IsHandwriting(request)) {
+  if (request_util::IsHandwriting(request)) {
     constexpr size_t kMinUnigramKeyLen = 1;
     return {&DictionaryPredictionAggregator::
                 AggregateUnigramCandidateForHandwriting,
@@ -724,7 +724,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     selected_types |= TYPING_CORRECTION;
   }
 
-  if (ConversionRequestUtil::IsAutoPartialSuggestionEnabled(request)) {
+  if (request_util::IsAutoPartialSuggestionEnabled(request)) {
     AggregatePrefixCandidates(request, segments, results);
     selected_types |= PREFIX;
   }
@@ -1902,7 +1902,7 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
 
 bool DictionaryPredictionAggregator::ShouldAggregateRealTimeConversionResults(
     const ConversionRequest &request, const Segments &segments) {
-  if (ConversionRequestUtil::IsHandwriting(request)) {
+  if (request_util::IsHandwriting(request)) {
     // TODO(toshiyuki): Implement the logic for handwriting
     return false;
   }
