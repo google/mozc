@@ -29,6 +29,7 @@
 
 #include "engine/engine.h"
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 
@@ -37,11 +38,12 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
+#include "base/protobuf/message.h"
 #include "base/vlog.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/user_dictionary.h"
+#include "engine/engine_builder.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -49,6 +51,7 @@
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
+#include "protocol/engine_builder.pb.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -152,7 +155,9 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
   return engine;
 }
 
-Engine::Engine() : modules_(std::make_unique<engine::Modules>()) {}
+Engine::Engine()
+    : builder_(std::make_unique<EngineBuilder>()),
+      modules_(std::make_unique<engine::Modules>()) {}
 
 absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
                                    bool is_mobile) {
@@ -250,6 +255,77 @@ bool Engine::ReloadAndWait() {
     modules_->GetUserDictionary()->WaitForReloader();
   }
   return GetUserDataManager()->Wait();
+}
+
+bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
+  if (!builder_ || response == nullptr) {
+    return false;
+  }
+
+  // Maybe build new engine if new request is received.
+  // EngineBuilder::Build just returns a future object so
+  // client needs to replace the new engine when the future is the ready to use.
+  if (!engine_response_future_ && current_engine_id_ != latest_engine_id_ &&
+      latest_engine_id_ != 0) {
+    engine_response_future_ = builder_->Build(latest_engine_id_);
+    // Wait the engine if the no new engine is loaded so far.
+    if (current_engine_id_ == 0 || always_wait_for_engine_response_future_) {
+      engine_response_future_->Wait();
+    }
+  }
+
+  if (!engine_response_future_ || !engine_response_future_->Ready()) {
+    // Response is not ready to reload engine_.
+    return false;
+  }
+
+  // Replaces the engine when the new engine is ready to use.
+  mozc::EngineBuilder::EngineResponse &&engine_response =
+      std::move(*engine_response_future_).Get();
+  engine_response_future_.reset();
+  *response = engine_response.response;
+
+  if (!engine_response.modules ||
+      engine_response.response.status() != EngineReloadResponse::RELOAD_READY) {
+    // The engine_response does not contain a valid result.
+
+    // This engine id causes a critical error, so rollback the id.
+    LOG(ERROR) << "Failure in engine loading: "
+               << protobuf::Utf8Format(engine_response.response);
+    const uint64_t rollback_id =
+        builder_->UnregisterRequest(engine_response.id);
+    // Update latest_engine_id_ if latest_engine_id_ == engine_response.id.
+    // Otherwise, latest_engine_id_ may already be updated by the new request.
+    latest_engine_id_.compare_exchange_strong(engine_response.id, rollback_id);
+
+    return false;
+  }
+
+  if (user_data_manager_) {
+    user_data_manager_->Wait();
+  }
+
+  // Reloads DataManager.
+  const bool is_mobile = engine_response.response.request().engine_type() ==
+                         EngineReloadRequest::MOBILE;
+  absl::Status reload_status =
+      ReloadModules(std::move(engine_response.modules), is_mobile);
+  if (!reload_status.ok()) {
+    LOG(ERROR) << reload_status;
+    return false;
+  }
+
+  current_engine_id_ = engine_response.id;
+  response->set_status(EngineReloadResponse::RELOADED);
+  return true;
+}
+
+bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
+  if (!builder_) {
+    return false;
+  }
+  latest_engine_id_ = builder_->RegisterRequest(request);
+  return true;
 }
 
 }  // namespace mozc

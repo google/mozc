@@ -39,9 +39,11 @@
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/engine_builder.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
+#include "protocol/engine_builder.pb.h"
 
 namespace mozc {
 
@@ -91,6 +93,17 @@ class EngineInterface {
 
   virtual void SetSpellchecker(
       const engine::SpellcheckerInterface *spellchecker) {}
+
+  virtual void SetEngineBuilder(std::unique_ptr<EngineBuilder> builder) {}
+
+  // Maybe reload a new data manager. Returns true if reloaded.
+  virtual bool MaybeReloadEngine(EngineReloadResponse *response) {
+    return false;
+  }
+  virtual bool SendEngineReloadRequest(const EngineReloadRequest &request) {
+    return false;
+  }
+  virtual void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {}
 
  protected:
   EngineInterface() = default;

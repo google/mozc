@@ -699,7 +699,7 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
   EXPECT_OK(engine_status);
   SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
 
-  handler.always_wait_for_engine_response_future_ = true;
+  handler.engine_->SetAlwaysWaitForEngineResponseFutureForTesting(true);
 
   // engine_id = 1
   ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
@@ -736,20 +736,22 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
 // Tests the interaction with EngineBuilder in the situation where
 // requested data is broken.
 TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
-  MockEngineBuilder *engine_builder = new MockEngineBuilder();
+  auto engine_builder = std::make_unique<MockEngineBuilder>();
+  MockEngineBuilder *engine_builder_ptr = engine_builder.get();
 
   InSequence seq;  // EXPECT_CALL is called sequentially.
 
-  auto old_engine = std::make_unique<MinimalEngine>();
-  const auto *old_engine_ptr = old_engine.get();
-  SessionHandler handler(std::move(old_engine),
-                         std::unique_ptr<MockEngineBuilder>(engine_builder));
+  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
+      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
+  EXPECT_OK(engine_status);
+  const Engine *old_engine_ptr = engine_status.value().get();
+  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
 
-  EXPECT_CALL(*engine_builder, RegisterRequest(_)).WillOnce(Return(1));
+  EXPECT_CALL(*engine_builder_ptr, RegisterRequest(_)).WillOnce(Return(1));
 
   ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
 
-  EXPECT_CALL(*engine_builder, Build(1))
+  EXPECT_CALL(*engine_builder_ptr, Build(1))
       .WillOnce(Return(
           std::make_unique<BackgroundFuture<EngineBuilder::EngineResponse>>(
               [&]() {
@@ -759,7 +761,7 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
                 result.response.set_status(EngineReloadResponse::DATA_BROKEN);
                 return result;
               })));
-  EXPECT_CALL(*engine_builder, UnregisterRequest(1)).WillOnce(Return(0));
+  EXPECT_CALL(*engine_builder_ptr, UnregisterRequest(1)).WillOnce(Return(0));
 
   // Build() is called, but it returns invalid engine, so new engine is not
   // used.
@@ -770,7 +772,7 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
 
   // Sends the same request again, but the request is already marked as
   // unregistered.
-  EXPECT_CALL(*engine_builder, RegisterRequest(_)).WillOnce(Return(0));
+  EXPECT_CALL(*engine_builder_ptr, RegisterRequest(_)).WillOnce(Return(0));
   ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
   ASSERT_TRUE(DeleteSession(&handler, id));
   ASSERT_TRUE(CreateSession(&handler, &id));
@@ -795,7 +797,7 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
   EXPECT_OK(engine_status);
   SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
 
-  handler.always_wait_for_engine_response_future_ = true;
+  handler.engine_->SetAlwaysWaitForEngineResponseFutureForTesting(true);
 
   // Sends multiple requests three times. 1 -> 2 -> 3.
   // 3 is the latest id.

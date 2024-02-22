@@ -30,8 +30,11 @@
 #ifndef MOZC_ENGINE_ENGINE_H_
 #define MOZC_ENGINE_ENGINE_H_
 
+#include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -41,6 +44,7 @@
 #include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
@@ -128,6 +132,17 @@ class Engine : public EngineInterface {
   // For testing only.
   engine::Modules *GetModulesForTesting() const { return modules_.get(); }
 
+  // TODO(komatsu): Rename functions.
+  void SetEngineBuilder(std::unique_ptr<EngineBuilder> builder) override {
+    builder_ = std::move(builder);
+  }
+  // Maybe reload a new data manager. Returns true if reloaded.
+  bool MaybeReloadEngine(EngineReloadResponse *response) override;
+  bool SendEngineReloadRequest(const EngineReloadRequest& request) override;
+  void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {
+    always_wait_for_engine_response_future_ = value;
+  }
+
  private:
   Engine();
 
@@ -135,6 +150,7 @@ class Engine : public EngineInterface {
   // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
   absl::Status Init(std::unique_ptr<engine::Modules> modules, bool is_mobile);
 
+  std::unique_ptr<EngineBuilder> builder_;
   std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
 
@@ -146,6 +162,13 @@ class Engine : public EngineInterface {
 
   std::unique_ptr<Converter> converter_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
+
+  std::atomic<uint64_t> latest_engine_id_ = 0;
+  std::atomic<uint64_t> current_engine_id_ = 0;
+  std::unique_ptr<EngineBuilder::EngineResponseFuture> engine_response_future_;
+  // used only in unittest to perform blocking behavior.
+  bool always_wait_for_engine_response_future_ = false;
+
 };
 
 }  // namespace mozc

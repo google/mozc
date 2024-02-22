@@ -45,7 +45,6 @@
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/logging.h"
-#include "base/protobuf/message.h"
 #include "base/stopwatch.h"
 #include "base/version.h"
 #include "base/vlog.h"
@@ -140,7 +139,7 @@ SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine)
 
 SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine,
                                std::unique_ptr<EngineBuilder> engine_builder)
-    : engine_(std::move(engine)), engine_builder_(std::move(engine_builder)) {
+    : engine_(std::move(engine)) {
   is_available_ = false;
   max_session_size_ = 0;
   last_session_empty_time_ = Clock::GetAbslTime();
@@ -176,6 +175,7 @@ SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine,
   if (!engine_) {
     return;
   }
+  engine_->SetEngineBuilder(std::move(engine_builder));
 
 
   // everything is OK
@@ -286,7 +286,7 @@ bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
 bool SessionHandler::GetConfig(commands::Command *command) {
   MOZC_VLOG(1) << "Getting config";
   config::ConfigHandler::GetConfig(command->mutable_output()->mutable_config());
-  // Ensure the onmemory config is same as the locally stored one
+  // Ensure the on-memory config is same as the locally stored one
   // because the local data could be changed by sync.
   UpdateSessions(command->output().config(), *request_);
   return true;
@@ -477,72 +477,16 @@ bool SessionHandler::SendCommand(commands::Command *command) {
 }
 
 void SessionHandler::MaybeReloadEngine(commands::Command *command) {
-  if (!engine_builder_) {
-    return;
-  }
-
-  // Maybe build new engine if new request is received.
-  // EngineBuilder::Build just returns a future object so
-  // client needs to replace the new engine when the future is the ready to use.
-  if (!engine_response_future_ && current_engine_id_ != latest_engine_id_ &&
-      latest_engine_id_ != 0) {
-    engine_response_future_ = engine_builder_->Build(latest_engine_id_);
-    // Wait the engine if the no new engine is loaded so far.
-    if (current_engine_id_ == 0 || always_wait_for_engine_response_future_) {
-      engine_response_future_->Wait();
-    }
-  }
-
   if (session_map_->Size() > 0) {
     // Some sessions still use the current engine_.
     return;
   }
 
-  if (!engine_response_future_ || !engine_response_future_->Ready()) {
-    // Response is not ready to reload engine_.
+  if (!engine_->MaybeReloadEngine(
+      command->mutable_output()->mutable_engine_reload_response())) {
     return;
   }
 
-  // Replaces the engine when the new engine is ready to use.
-  mozc::EngineBuilder::EngineResponse &&engine_response =
-      std::move(*engine_response_future_).Get();
-  engine_response_future_.reset();
-  *command->mutable_output()->mutable_engine_reload_response() =
-      engine_response.response;
-
-  if (!engine_response.modules ||
-      engine_response.response.status() != EngineReloadResponse::RELOAD_READY) {
-    // The engine_response does not contain a valid result.
-
-    // This engine id causes a critical error, so rollback the id.
-    LOG(ERROR) << "Failure in engine loading: "
-               << protobuf::Utf8Format(engine_response.response);
-    const uint64_t rollback_id =
-        engine_builder_->UnregisterRequest(engine_response.id);
-    // Update latest_engine_id_ if latest_engine_id_ == engine_response.id.
-    // Otherwise, latest_engine_id_ may already be updated by the new request.
-    latest_engine_id_.compare_exchange_strong(engine_response.id, rollback_id);
-
-    return;
-  }
-
-  if (engine_ && engine_->GetUserDataManager()) {
-    engine_->GetUserDataManager()->Wait();
-  }
-
-  // Reloads Modules.
-  const bool is_mobile = (engine_response.response.request().engine_type() ==
-                          EngineReloadRequest::MOBILE);
-  absl::Status reload_status =
-      engine_->ReloadModules(std::move(engine_response.modules), is_mobile);
-  if (!reload_status.ok()) {
-    LOG(ERROR) << reload_status;
-    return;
-  }
-
-  current_engine_id_ = engine_response.id;
-  command->mutable_output()->mutable_engine_reload_response()->set_status(
-      EngineReloadResponse::RELOADED);
   table_manager_->ClearCaches();
 }
 
@@ -726,11 +670,13 @@ bool SessionHandler::SendUserDictionaryCommand(commands::Command *command) {
 }
 
 bool SessionHandler::SendEngineReloadRequest(commands::Command *command) {
-  if (!engine_builder_ || !command->input().has_engine_reload_request()) {
+  if (!command->input().has_engine_reload_request()) {
     return false;
   }
-  latest_engine_id_ = engine_builder_->RegisterRequest(
-      command->input().engine_reload_request());
+  if (!engine_->SendEngineReloadRequest(
+          command->input().engine_reload_request())) {
+    return false;
+  }
   command->mutable_output()->mutable_engine_reload_response()->set_status(
       EngineReloadResponse::ACCEPTED);
   return true;
