@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_ENGINE_ENGINE_BUILDER_H_
-#define MOZC_ENGINE_ENGINE_BUILDER_H_
+#ifndef MOZC_ENGINE_DATA_LOADER_H_
+#define MOZC_ENGINE_DATA_LOADER_H_
 
 #include <atomic>
 #include <cstdint>
@@ -39,27 +39,27 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/synchronization/mutex.h"
 #include "base/thread.h"
-#include "engine/engine_interface.h"
+#include "engine/modules.h"
 #include "protocol/engine_builder.pb.h"
 
 namespace mozc {
 
-class EngineBuilder {
+class DataLoader {
  public:
-  EngineBuilder() = default;
-  EngineBuilder(const EngineBuilder &) = delete;
-  EngineBuilder &operator=(const EngineBuilder &) = delete;
-  virtual ~EngineBuilder() = default;
+  DataLoader() = default;
+  DataLoader(const DataLoader &) = delete;
+  DataLoader &operator=(const DataLoader &) = delete;
+  virtual ~DataLoader() = default;
 
-  struct EngineResponse {
+  struct Response {
     uint64_t id = 0;  // engine id. Fingerprint of EngineReloadRequest.
     EngineReloadResponse response;
-    std::unique_ptr<EngineInterface> engine;
+    std::unique_ptr<engine::Modules> modules;
   };
 
   // Wrapped with BackgroundFuture so the data loading is
   // executed asynchronously.
-  using EngineResponseFuture = BackgroundFuture<EngineResponse>;
+  using ResponseFuture = BackgroundFuture<Response>;
 
   // Accepts engine reload request and immediately returns the engine id with
   // the highest priority defined as follows:
@@ -81,7 +81,7 @@ class EngineBuilder {
   // Since BackgroundFuture is not movable/copyable, we wrap it with
   // std::unique_ptr. This method doesn't return nullptr. All errors
   // are stored in EngineReloadResponse::response::status.
-  virtual std::unique_ptr<EngineResponseFuture> Build(uint64_t id) const;
+  virtual std::unique_ptr<ResponseFuture> Build(uint64_t id) const;
 
   void Clear();
 
@@ -103,4 +103,4 @@ class EngineBuilder {
 
 }  // namespace mozc
 
-#endif  // MOZC_ENGINE_ENGINE_BUILDER_H_
+#endif  // MOZC_ENGINE_DATA_LOADER_H_

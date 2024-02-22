@@ -198,10 +198,14 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
     segment->set_key("あいうえお");
     candidate = segment->add_candidate();
     candidate->key = "あいうえお";
+    candidate->content_key = candidate->key;
     candidate->value = candidate->key;
+    candidate->content_value = candidate->value;
     candidate = segment->add_candidate();
     candidate->key = "あいうえお";
+    candidate->content_key = candidate->key;
     candidate->value = "アイウエオ";
+    candidate->content_value = candidate->value;
   }
 
   // set result for "かまぼこのいんぼう"
@@ -214,15 +218,27 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
 
     segment->set_key("かまぼこの");
     candidate = segment->add_candidate();
+    candidate->key = "かまぼこの";
+    candidate->content_key = candidate->key;
     candidate->value = "かまぼこの";
+    candidate->content_value = candidate->value;
     candidate = segment->add_candidate();
+    candidate->key = "かまぼこの";
+    candidate->content_key = candidate->key;
     candidate->value = "カマボコの";
+    candidate->content_value = candidate->value;
     segment = segments->add_segment();
     segment->set_key("いんぼう");
     candidate = segment->add_candidate();
+    candidate->key = "いんぼう";
+    candidate->content_key = candidate->key;
     candidate->value = "陰謀";
+    candidate->content_value = candidate->value;
     candidate = segment->add_candidate();
+    candidate->key = "いんぼう";
+    candidate->content_key = candidate->key;
     candidate->value = "印房";
+    candidate->content_value = candidate->value;
 
     // Set dummy T13Ns
     std::vector<Segment::Candidate> *meta_candidates =
@@ -252,6 +268,7 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
       for (size_t j = 0; j < transliteration::NUM_T13N_TYPES; ++j) {
         meta_candidates->at(j).value = t13ns[j];
         meta_candidates->at(j).content_value = t13ns[j];
+        meta_candidates->at(j).key = segment->key();
         meta_candidates->at(j).content_key = segment->key();
       }
       composition_pos += composition_len;
@@ -415,6 +432,7 @@ TEST_F(SessionConverterTest, Convert) {
   {
     Segments segments;
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     EXPECT_CALL(mock_converter, StartConversionForRequest(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -475,6 +493,7 @@ TEST_F(SessionConverterTest, ConvertWithSpellingCorrection) {
   {
     Segments segments;
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::SPELLING_CORRECTION;
@@ -1383,6 +1402,7 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   SetKamaboko(&segments);
+  composer_->InsertCharacterPreedit("かまぼこ");
   FillT13Ns(&segments, composer_.get());
   EXPECT_CALL(mock_converter, StartConversionForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2322,6 +2342,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
 
   {
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
 
     SetSegments(segments, &converter);
@@ -2381,33 +2402,40 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
 
 TEST_F(SessionConverterTest, AppendCandidateListWithCategory) {
   MockConverter mock_converter;
+  RequestForUnitTest::FillMobileRequest(request_.get());
   request_->mutable_decoder_experiment_params()
       ->set_enable_findability_oriented_order(true);
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  converter.set_use_cascading_window(false);
   SetState(SessionConverterInterface::PREDICTION, &converter);
   Segments segments;
 
   {
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-
-    SetSegments(segments, &converter);
 
     Segment *segment = segments.mutable_conversion_segment(0);
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->key = "あいうえお";
+    candidate->content_key = candidate->key;
     candidate->value = "あいうえお";
+    candidate->content_value = candidate->value;
     candidate->category = Segment::Candidate::OTHER;
 
     candidate = segment->add_candidate();
     candidate->key = "あいうえお";
+    candidate->content_key = candidate->key;
     candidate->value = "あいうえお";
+    candidate->content_value = candidate->value;
 
+    SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::SUGGESTION, &converter);
     const CandidateList &candidate_list = GetCandidateList(converter);
 
-    // default あいうえお, default アイウエオ, other あいうえお
-    EXPECT_EQ(candidate_list.size(), 3);
+    // default あいうえお, default アイウエオ, other あいうえお, default
+    // ｱｲｳｴｵ(T13n)
+    EXPECT_EQ(candidate_list.size(), 4);
     EXPECT_FALSE(candidate_list.focused());
   }
 }
@@ -2420,6 +2448,7 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
 
   {
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::SUGGESTION, &converter);
@@ -2430,6 +2459,7 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
   segments.Clear();
   {
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::PARTIAL_SUGGESTION, &converter);
@@ -2440,10 +2470,51 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
   segments.Clear();
   {
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::PARTIAL_PREDICTION, &converter);
     const CandidateList &candidate_list = GetCandidateList(converter);
+    EXPECT_FALSE(candidate_list.focused());
+  }
+}
+
+TEST_F(SessionConverterTest, AppendCandidateListHandwriting) {
+  // b/326155138
+  MockConverter mock_converter;
+  RequestForUnitTest::FillMobileRequestForHandwriting(request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_enable_findability_oriented_order(true);
+  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  converter.set_use_cascading_window(false);
+  SetState(SessionConverterInterface::PREDICTION, &converter);
+  Segments segments;
+
+  {
+    SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
+    FillT13Ns(&segments, composer_.get());
+
+    Segment *segment = segments.mutable_conversion_segment(0);
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "あいうえお";
+    candidate->content_key = candidate->key;
+    candidate->value = "アイウエオ";
+    candidate->content_value = candidate->value;
+
+    candidate = segment->add_candidate();
+    candidate->key = "アイウエオ";
+    candidate->content_key = candidate->key;
+    candidate->value = "アイウエオ";
+    candidate->content_value = candidate->value;
+
+    SetSegments(segments, &converter);
+    AppendCandidateList(ConversionRequest::SUGGESTION, &converter);
+    const CandidateList &candidate_list = GetCandidateList(converter);
+
+    // Deduped using value
+    // あいうえお, アイウエオ, ｱｲｳｴｵ（from T13N)
+    EXPECT_EQ(candidate_list.size(), 3);
     EXPECT_FALSE(candidate_list.focused());
   }
 }
@@ -2453,6 +2524,7 @@ TEST_F(SessionConverterTest, ReloadConfig) {
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   SetAiueo(&segments);
+  composer_->InsertCharacterPreedit("あいうえお");
   FillT13Ns(&segments, composer_.get());
   EXPECT_CALL(mock_converter, StartConversionForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2594,10 +2666,12 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   candidate->key = "[key:conversion1-1]";
   candidate->content_key = "[content_key:conversion1-1]";
   candidate->value = "[value:conversion1-1]";
+  candidate->content_value = "[content_value:conversion1-1]";
   candidate = segment->add_candidate();
   candidate->key = "[key:conversion1-2]";
   candidate->content_key = "[content_key:conversion1-2]";
   candidate->value = "[value:conversion1-2]";
+  candidate->content_value = "[content_value:conversion1-2]";
   {
     // PREDICTION
     MockConverter mock_converter;
@@ -2636,10 +2710,12 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   candidate->key = "[key:conversion2-1]";
   candidate->content_key = "[content_key:conversion2-1]";
   candidate->value = "[value:conversion2-1]";
+  candidate->content_value = "[content_value:conversion2-1]";
   candidate = segment->add_candidate();
   candidate->key = "[key:conversion2-2]";
   candidate->content_key = "[content_key:conversion2-2]";
   candidate->value = "[value:conversion2-2]";
+  candidate->content_value = "[content_value:conversion2-2]";
   {
     // CONVERSION
     MockConverter mock_converter;
@@ -3213,6 +3289,7 @@ TEST_F(SessionConverterTest, CommandCandidate) {
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   SetAiueo(&segments);
+  composer_->InsertCharacterPreedit("あいうえお");
   FillT13Ns(&segments, composer_.get());
   // set COMMAND_CANDIDATE.
   SetCommandCandidate(&segments, 0, 0, Segment::Candidate::DEFAULT_COMMAND);
@@ -3435,6 +3512,7 @@ TEST_F(SessionConverterTest, PropagateConfigToRenderer) {
     SessionConverter converter(&mock_converter, request_.get(), config_.get());
     Segments segments;
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     EXPECT_CALL(mock_converter, StartConversionForRequest(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -3553,6 +3631,7 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
   {
     Segments segments;
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     for (size_t i = 0; i < segments.segments_size(); ++i) {
       Segment *segment = segments.mutable_segment(i);
@@ -3568,6 +3647,7 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
   {
     Segments segments;
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     for (size_t i = 0; i < segments.segments_size(); ++i) {
       Segment *segment = segments.mutable_segment(i);
@@ -3585,6 +3665,7 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
   {
     Segments segments;
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     for (size_t i = 0; i < segments.segments_size(); ++i) {
       Segment *segment = segments.mutable_segment(i);
@@ -3604,6 +3685,7 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
   {
     Segments segments;
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     for (size_t i = 0; i < segments.segments_size(); ++i) {
       Segment *segment = segments.mutable_segment(i);
@@ -3620,6 +3702,7 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
   {
     Segments segments;
     SetAiueo(&segments);
+    composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     for (size_t i = 0; i < segments.segments_size(); ++i) {
       Segment *segment = segments.mutable_segment(i);

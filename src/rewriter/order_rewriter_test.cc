@@ -125,6 +125,7 @@ TEST_F(OrderRewriterTest, NotAvailable) {
 
 TEST_F(OrderRewriterTest, Rewrite) {
   Segments segments = BuildTestSegments();
+  commands::RequestForUnitTest::FillMobileRequest(&request_);
   request_.mutable_decoder_experiment_params()
       ->set_enable_findability_oriented_order(true);
   request_.mutable_decoder_experiment_params()

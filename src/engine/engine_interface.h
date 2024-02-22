@@ -30,15 +30,20 @@
 #ifndef MOZC_ENGINE_ENGINE_INTERFACE_H_
 #define MOZC_ENGINE_ENGINE_INTERFACE_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/data_loader.h"
+#include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
+#include "protocol/engine_builder.pb.h"
 
 namespace mozc {
 
@@ -70,6 +75,10 @@ class EngineInterface {
   // Reloads internal data and wait for reloader.
   virtual bool ReloadAndWait() = 0;
 
+  // Reloads the modules and update objects in Engine.
+  virtual absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
+                                     bool is_mobile) = 0;
+
   // Gets a user data manager.
   virtual UserDataManagerInterface *GetUserDataManager() = 0;
 
@@ -84,6 +93,16 @@ class EngineInterface {
 
   virtual void SetSpellchecker(
       const engine::SpellcheckerInterface *spellchecker) {}
+
+  // Maybe reload a new data manager. Returns true if reloaded.
+  virtual bool MaybeReloadEngine(EngineReloadResponse *response) {
+    return false;
+  }
+  virtual bool SendEngineReloadRequest(const EngineReloadRequest &request) {
+    return false;
+  }
+  virtual void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) {}
+  virtual void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {}
 
  protected:
   EngineInterface() = default;

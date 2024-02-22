@@ -46,7 +46,7 @@
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "request/conversion_request_util.h"
+#include "request/request_util.h"
 
 namespace mozc::prediction {
 
@@ -101,7 +101,7 @@ std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
   int offset = 0;
   for (std::string key = original_input_key; !key.empty();
        StripLastChar(&key)) {
-    if (!ConversionRequestUtil::IsAutoPartialSuggestionEnabled(request) &&
+    if (!request_util::IsAutoPartialSuggestionEnabled(request) &&
         key != original_input_key) {
       // Do not include partial results
       break;

@@ -101,6 +101,7 @@
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/base_test.gyp:clock_mock',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:minimal_engine',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',

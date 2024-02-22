@@ -54,7 +54,6 @@
 #include "converter/converter_mock.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
@@ -83,7 +82,6 @@ using ::mozc::composer::TypeCorrectedQuery;
 class DictionaryPredictionAggregatorTestPeer {
  public:
   DictionaryPredictionAggregatorTestPeer(
-      const DataManagerInterface &data_manager,
       const ConverterInterface *converter,
       const ImmutableConverterInterface *immutable_converter,
       const engine::Modules &modules,
@@ -396,8 +394,7 @@ class MockDataAndAggregator {
       modules_.PresetSuffixDictionary(std::move(suffix_dictionary));
     }
 
-    absl::Status init = modules_.Init(&data_manager_);
-    CHECK_OK(init);
+    CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
     CHECK_NE(modules_.GetSuffixDictionary(), nullptr);
 
     auto kanji_aggregator =
@@ -405,7 +402,7 @@ class MockDataAndAggregator {
     single_kanji_prediction_aggregator_ = kanji_aggregator.get();
 
     aggregator_ = std::make_unique<DictionaryPredictionAggregatorTestPeer>(
-        data_manager_, &converter_, &mock_immutable_converter_, modules_,
+        &converter_, &mock_immutable_converter_, modules_,
         std::move(kanji_aggregator));
   }
 
@@ -433,7 +430,6 @@ class MockDataAndAggregator {
 #endif  // MOZC_ENABLE_NGRAM_RESCORING
 
  private:
-  const testing::MockDataManager data_manager_;
   MockConverter converter_;
   MockImmutableConverter mock_immutable_converter_;
   engine::Modules modules_;

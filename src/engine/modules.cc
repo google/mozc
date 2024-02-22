@@ -68,7 +68,8 @@ using ::mozc::dictionary::ValueDictionary;
 namespace mozc {
 namespace engine {
 
-absl::Status Modules::Init(const DataManagerInterface *data_manager) {
+absl::Status Modules::Init(
+    std::unique_ptr<const DataManagerInterface> data_manager) {
 #define RETURN_IF_NULL(ptr)                                                \
   do {                                                                     \
     if (!(ptr))                                                            \
@@ -78,7 +79,7 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
   DCHECK(!initialized_) << "Modules already initialized";
   DCHECK(data_manager) << "data_manager is null";
   RETURN_IF_NULL(data_manager);
-  data_manager_ = data_manager;
+  data_manager_ = std::move(data_manager);
 
   if (!suppression_dictionary_) {
     suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
@@ -87,13 +88,13 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
 
   if (!pos_matcher_) {
     pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
-        data_manager->GetPosMatcherData());
+        data_manager_->GetPosMatcherData());
     RETURN_IF_NULL(pos_matcher_);
   }
 
   if (!user_dictionary_) {
     std::unique_ptr<UserPos> user_pos =
-        UserPos::CreateFromDataManager(*data_manager);
+        UserPos::CreateFromDataManager(*data_manager_);
     RETURN_IF_NULL(user_pos);
 
     user_dictionary_ = std::make_unique<UserDictionary>(
@@ -104,7 +105,7 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
   if (!dictionary_) {
     const char *dictionary_data = nullptr;
     int dictionary_size = 0;
-    data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
+    data_manager_->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
     absl::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
         SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
@@ -122,28 +123,28 @@ absl::Status Modules::Init(const DataManagerInterface *data_manager) {
   if (!suffix_dictionary_) {
     absl::string_view suffix_key_array_data, suffix_value_array_data;
     const uint32_t *token_array = nullptr;
-    data_manager->GetSuffixDictionaryData(
+    data_manager_->GetSuffixDictionaryData(
         &suffix_key_array_data, &suffix_value_array_data, &token_array);
     suffix_dictionary_ = std::make_unique<SuffixDictionary>(
         suffix_key_array_data, suffix_value_array_data, token_array);
     RETURN_IF_NULL(suffix_dictionary_);
   }
 
-  auto status_or_connector = Connector::CreateFromDataManager(*data_manager);
+  auto status_or_connector = Connector::CreateFromDataManager(*data_manager_);
   if (!status_or_connector.ok()) {
     return std::move(status_or_connector).status();
   }
   connector_ = *std::move(status_or_connector);
 
-  segmenter_ = Segmenter::CreateFromDataManager(*data_manager);
+  segmenter_ = Segmenter::CreateFromDataManager(*data_manager_);
   RETURN_IF_NULL(segmenter_);
 
-  pos_group_ = std::make_unique<PosGroup>(data_manager->GetPosGroupData());
+  pos_group_ = std::make_unique<PosGroup>(data_manager_->GetPosGroupData());
   RETURN_IF_NULL(pos_group_);
 
   {
     absl::StatusOr<SuggestionFilter> status_or_suggestion_filter =
-        SuggestionFilter::Create(data_manager->GetSuggestionFilterData());
+        SuggestionFilter::Create(data_manager_->GetSuggestionFilterData());
     if (!status_or_suggestion_filter.ok()) {
       return std::move(status_or_suggestion_filter).status();
     }

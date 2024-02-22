@@ -27,31 +27,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_REQUEST_CONVERSION_REQUEST_UTIL_H_
-#define MOZC_REQUEST_CONVERSION_REQUEST_UTIL_H_
+#ifndef MOZC_REQUEST_REQUEST_UTIL_H_
+#define MOZC_REQUEST_REQUEST_UTIL_H_
 
 #include "composer/composer.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
+namespace request_util {
 
-class ConversionRequestUtil {
- public:
-  ConversionRequestUtil() = delete;
-  ConversionRequestUtil(const ConversionRequestUtil &) = delete;
-  ConversionRequestUtil &operator=(const ConversionRequestUtil &) = delete;
+static bool IsHandwriting(const ConversionRequest &conversion_request) {
+  return conversion_request.has_composer() &&
+         !conversion_request.composer().GetHandwritingCompositions().empty();
+}
 
-  static bool IsHandwriting(const ConversionRequest &request) {
-    return request.has_composer() &&
-           !request.composer().GetHandwritingCompositions().empty();
-  }
+static bool IsAutoPartialSuggestionEnabled(
+    const ConversionRequest &conversion_request) {
+  return conversion_request.request().auto_partial_suggestion();
+}
 
-  static bool IsAutoPartialSuggestionEnabled(const ConversionRequest &request) {
-    return request.request().auto_partial_suggestion();
-  }
-};
+static bool IsFindabilityOrientedOrderEnabled(
+    const commands::Request &request) {
+  return (
+      request.auto_partial_suggestion() && request.mixed_conversion() &&
+      request.decoder_experiment_params().enable_findability_oriented_order());
+}
 
+static bool IsFindabilityOrientedOrderEnabled(
+    const ConversionRequest &conversion_request) {
+  return IsFindabilityOrientedOrderEnabled(conversion_request.request());
+}
+
+}  // namespace request_util
 }  // namespace mozc
 
-#endif  // MOZC_REQUEST_CONVERSION_REQUEST_UTIL_H_
+#endif  // MOZC_REQUEST_REQUEST_UTIL_H_

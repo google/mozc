@@ -30,8 +30,11 @@
 #ifndef MOZC_ENGINE_ENGINE_H_
 #define MOZC_ENGINE_ENGINE_H_
 
+#include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -41,6 +44,7 @@
 #include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/data_loader.h"
 #include "engine/engine_interface.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
@@ -82,7 +86,10 @@ class Engine : public EngineInterface {
     return CreateMobileEngine(std::make_unique<const DataManagerType>());
   }
 
-  Engine() = default;
+  // Creates an instance with the given modules and is_mobile flag.
+  static absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(
+      std::unique_ptr<engine::Modules> modules, bool is_mobile);
+
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
 
@@ -91,42 +98,59 @@ class Engine : public EngineInterface {
     return predictor_ ? predictor_->GetPredictorName() : absl::string_view();
   }
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
-    return modules_.GetMutableSuppressionDictionary();
+    return modules_->GetMutableSuppressionDictionary();
   }
 
   bool Reload() override;
 
   bool ReloadAndWait() override;
 
+  absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
+                             bool is_mobile) override;
+
   UserDataManagerInterface *GetUserDataManager() override {
     return user_data_manager_.get();
   }
 
   absl::string_view GetDataVersion() const override {
-    return data_manager_->GetDataVersion();
+    return GetDataManager()->GetDataVersion();
   }
 
   const DataManagerInterface *GetDataManager() const override {
-    return data_manager_.get();
+    return &modules_->GetDataManager();
   }
 
   std::vector<std::string> GetPosList() const override {
-    return modules_.GetUserDictionary()->GetPosList();
+    return modules_->GetUserDictionary()->GetPosList();
   }
 
   void SetSpellchecker(
       const engine::SpellcheckerInterface *spellchecker) override {
-    modules_.SetSpellchecker(spellchecker);
+    modules_->SetSpellchecker(spellchecker);
+  }
+
+  // For testing only.
+  engine::Modules *GetModulesForTesting() const { return modules_.get(); }
+
+  // Maybe reload a new data manager. Returns true if reloaded.
+  bool MaybeReloadEngine(EngineReloadResponse *response) override;
+  bool SendEngineReloadRequest(const EngineReloadRequest& request) override;
+  void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) override {
+    loader_ = std::move(loader);
+  }
+  void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {
+    always_wait_for_engine_response_future_ = value;
   }
 
  private:
-  // Initializes the object by the given data manager and is_mobile flag.
-  // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
-  absl::Status Init(std::unique_ptr<const DataManagerInterface> data_manager,
-                    bool is_mobile);
+  Engine();
 
-  std::unique_ptr<const DataManagerInterface> data_manager_;
-  engine::Modules modules_;
+  // Initializes the engine object by the given modules and is_mobile flag.
+  // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
+  absl::Status Init(std::unique_ptr<engine::Modules> modules, bool is_mobile);
+
+  std::unique_ptr<DataLoader> loader_;
+  std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
 
   // TODO(noriyukit): Currently predictor and rewriter are created by this class
@@ -137,6 +161,13 @@ class Engine : public EngineInterface {
 
   std::unique_ptr<Converter> converter_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
+
+  std::atomic<uint64_t> latest_engine_id_ = 0;
+  std::atomic<uint64_t> current_engine_id_ = 0;
+  std::unique_ptr<DataLoader::ResponseFuture> engine_response_future_;
+  // used only in unittest to perform blocking behavior.
+  bool always_wait_for_engine_response_future_ = false;
+
 };
 
 }  // namespace mozc

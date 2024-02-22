@@ -53,6 +53,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_util.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"
 #include "session/session_converter_interface.h"
@@ -874,9 +875,7 @@ void SessionConverter::CommitHead(size_t count,
                                         &result_);
 }
 
-void SessionConverter::Revert() {
-  converter_->RevertConversion(&segments_);
-}
+void SessionConverter::Revert() { converter_->RevertConversion(&segments_); }
 
 void SessionConverter::SegmentFocusInternal(size_t index) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
@@ -932,8 +931,8 @@ void SessionConverter::ResizeSegmentWidth(const composer::Composer &composer,
   ResetResult();
 
   const ConversionRequest conversion_request(&composer, request_, config_);
-  if (!converter_->ResizeSegment(&segments_, conversion_request,
-                                 segment_index_, delta)) {
+  if (!converter_->ResizeSegment(&segments_, conversion_request, segment_index_,
+                                 delta)) {
     return;
   }
 
@@ -1422,16 +1421,17 @@ void SessionConverter::AppendCandidateList() {
 
   DCHECK_LT(segment_index_, segments_.conversion_segments_size());
   const Segment &segment = segments_.conversion_segment(segment_index_);
+
+  auto get_candidate_dedup_key =
+      request_util::IsFindabilityOrientedOrderEnabled(*request_)
+          ? [](const Segment::Candidate
+                   &c) { return absl::StrCat(c.key, c.value, c.category); }
+          : [](const Segment::Candidate &c) { return c.value; };
+
   for (size_t i = candidate_list_.next_available_id();
        i < segment.candidates_size(); ++i) {
-    if (request_->decoder_experiment_params()
-            .enable_findability_oriented_order()) {
-      const Segment::Candidate &c = segment.candidate(i);
-      candidate_list_.AddCandidate(i,
-                                    absl::StrCat(c.key, c.value, c.category));
-    } else {
-      candidate_list_.AddCandidate(i, segment.candidate(i).value);
-    }
+    const Segment::Candidate &c = segment.candidate(i);
+    candidate_list_.AddCandidate(i, get_candidate_dedup_key(c));
     // if candidate has spelling correction attribute,
     // always display the candidate to let user know the
     // miss spelled candidate.
@@ -1479,7 +1479,7 @@ void SessionConverter::AppendCandidateList() {
     const transliteration::TransliterationType type =
         transliteration::TransliterationTypeArray[i];
     transliterations->AddCandidateWithAttributes(
-        GetT13nId(type), segment.meta_candidate(i).value,
+        GetT13nId(type), get_candidate_dedup_key(segment.meta_candidate(i)),
         GetT13nAttributes(type));
   }
 }
@@ -1551,14 +1551,12 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
 #endif  // CHANNEL_DEV
   if (segment_index_ >= segments_.conversion_segments_size()) {
     LOG(WARNING) << "Invalid segment_index_: " << segment_index_
-                 << ", segments_size: "
-                 << segments_.conversion_segments_size();
+                 << ", segments_size: " << segments_.conversion_segments_size();
     return;
   }
 
   const Segment &segment = segments_.conversion_segment(segment_index_);
-  SessionOutput::FillCandidates(segment, candidate_list_, position,
-                                candidates);
+  SessionOutput::FillCandidates(segment, candidate_list_, position, candidates);
 
   // Shortcut keys
   if (CheckState(PREDICTION | CONVERSION)) {
@@ -1644,8 +1642,7 @@ void SessionConverter::FillAllCandidateWords(
 
   if (segment_index_ >= segments_.conversion_segments_size()) {
     LOG(WARNING) << "Invalid segment_index_: " << segment_index_
-                 << ", segments_size: "
-                 << segments_.conversion_segments_size();
+                 << ", segments_size: " << segments_.conversion_segments_size();
     return;
   }
   const Segment &segment = segments_.conversion_segment(segment_index_);

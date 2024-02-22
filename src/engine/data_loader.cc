@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/engine_builder.h"
+#include "engine/data_loader.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -35,7 +35,6 @@
 #include <utility>
 
 #include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/hash.h"
@@ -43,13 +42,15 @@
 #include "base/protobuf/message.h"
 #include "base/thread.h"
 #include "data_manager/data_manager.h"
-#include "engine/engine.h"
+#include "engine/modules.h"
 #include "protocol/engine_builder.pb.h"
 
 namespace mozc {
 namespace {
 EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
   switch (status) {
+    case DataManager::Status::OK:
+      return EngineReloadResponse::RELOAD_READY;
     case DataManager::Status::ENGINE_VERSION_MISMATCH:
       return EngineReloadResponse::ENGINE_VERSION_MISMATCH;
     case DataManager::Status::DATA_MISSING:
@@ -67,7 +68,7 @@ EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
 }
 }  // namespace
 
-uint64_t EngineBuilder::RegisterRequest(const EngineReloadRequest &request) {
+uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
   const uint64_t id = Fingerprint(request.SerializeAsString());
 
   absl::WriterMutexLock lock(&mutex_);
@@ -84,7 +85,7 @@ uint64_t EngineBuilder::RegisterRequest(const EngineReloadRequest &request) {
   ++sequence_id_;
 
   auto it = std::find_if(requests_.begin(), requests_.end(),
-                         [id](const auto &v) { return v.id == id; });
+                         [id](const RequestData &v) { return v.id == id; });
   if (it != requests_.end()) {
     it->sequence_id = sequence_id_.load();
   } else {
@@ -95,7 +96,7 @@ uint64_t EngineBuilder::RegisterRequest(const EngineReloadRequest &request) {
   // Sorts the requests so requests[0] stores the request with
   // the highest priority.
   std::sort(requests_.begin(), requests_.end(),
-            [](const auto &lhs, const auto &rhs) {
+            [](const RequestData &lhs, const RequestData &rhs) {
               return (lhs.priority < rhs.priority ||
                       (lhs.priority == rhs.priority &&
                        lhs.sequence_id > rhs.sequence_id));
@@ -104,11 +105,12 @@ uint64_t EngineBuilder::RegisterRequest(const EngineReloadRequest &request) {
   return requests_.front().id;
 }
 
-uint64_t EngineBuilder::UnregisterRequest(uint64_t id) {
+uint64_t DataLoader::UnregisterRequest(uint64_t id) {
   absl::WriterMutexLock lock(&mutex_);
 
-  const auto it = std::remove_if(requests_.begin(), requests_.end(),
-                                 [id](const auto &v) { return v.id == id; });
+  const auto it =
+      std::remove_if(requests_.begin(), requests_.end(),
+                     [id](const RequestData &v) { return v.id == id; });
   if (it != requests_.end()) {
     requests_.erase(it, requests_.end());
     unregistered_.emplace(id);
@@ -117,79 +119,77 @@ uint64_t EngineBuilder::UnregisterRequest(uint64_t id) {
   return requests_.empty() ? 0 : requests_.front().id;
 }
 
-std::unique_ptr<EngineBuilder::EngineResponseFuture> EngineBuilder::Build(
+std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
     uint64_t id) const {
-  return std::make_unique<BackgroundFuture<EngineResponse>>([&, id]() {
-    EngineResponse result;
+  return std::make_unique<BackgroundFuture<Response>>([&, id]() {
+    Response result;
     result.id = id;
     result.response.set_status(EngineReloadResponse::DATA_MISSING);
 
     // Finds the request associated with `id`.
     {
       absl::ReaderMutexLock lock(&mutex_);
-      const auto it = std::find_if(requests_.begin(), requests_.end(),
-                                   [id](const auto &v) { return v.id == id; });
+      const auto it =
+          std::find_if(requests_.begin(), requests_.end(),
+                       [id](const RequestData &v) { return v.id == id; });
       if (it == requests_.end()) {
         return result;
       }
       *result.response.mutable_request() = it->request;
     }
 
-    const auto &request = result.response.request();
+    const EngineReloadRequest &request = result.response.request();
 
     // Initializes DataManager
     auto data_manager = std::make_unique<DataManager>();
-
-    const auto status = request.has_magic_number()
-                            ? data_manager->InitFromFile(request.file_path(),
-                                                         request.magic_number())
-                            : data_manager->InitFromFile(request.file_path());
-
-    result.response.set_status(EngineReloadResponse::RELOAD_READY);
-
-    if (status != DataManager::Status::OK) {
-      LOG(ERROR) << "Failed to load data [" << status << "] "
-                 << protobuf::Utf8Format(request);
-      result.response.set_status(ConvertStatus(status));
-    } else if (request.has_install_location()) {
-      if (const absl::Status s = FileUtil::LinkOrCopyFile(
-              request.file_path(), request.install_location());
-          !s.ok()) {
-        LOG(ERROR) << "Copy faild: " << protobuf::Utf8Format(request) << ": "
-                   << s;
-        result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
+    {
+      const DataManager::Status status =
+          request.has_magic_number()
+              ? data_manager->InitFromFile(request.file_path(),
+                                          request.magic_number())
+              : data_manager->InitFromFile(request.file_path());
+      if (status != DataManager::Status::OK) {
+        LOG(ERROR) << "Failed to load data [" << status << "] "
+                  << protobuf::Utf8Format(request);
+        result.response.set_status(ConvertStatus(status));
+        DCHECK_NE(result.response.status(), EngineReloadResponse::RELOAD_READY);
+        return result;
       }
     }
 
-    if (result.response.status() != EngineReloadResponse::RELOAD_READY) {
-      return result;
+    // Copies file to install location.
+    if (request.has_install_location()) {
+      const absl::Status s = FileUtil::LinkOrCopyFile(
+          request.file_path(), request.install_location());
+      if (!s.ok()) {
+        LOG(ERROR) << "Copy faild: " << protobuf::Utf8Format(request) << ": "
+                   << s;
+        result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
+        return result;
+      }
     }
 
-    // Initializes engine.
-    absl::StatusOr<std::unique_ptr<Engine>> engine;
-    switch (request.engine_type()) {
-      case EngineReloadRequest::DESKTOP:
-        engine = Engine::CreateDesktopEngine(std::move(data_manager));
-        break;
-      case EngineReloadRequest::MOBILE:
-        engine = Engine::CreateMobileEngine(std::move(data_manager));
-        break;
-      default:
-        LOG(DFATAL) << "Should not reach here";
-        break;
+    auto modules = std::make_unique<engine::Modules>();
+    {
+      const absl::Status status = modules->Init(std::move(data_manager));
+      if (!status.ok()) {
+        LOG(ERROR) << "Failed to load modules [" << status << "] "
+                   << protobuf::Utf8Format(request);
+        result.response.set_status(EngineReloadResponse::DATA_BROKEN);
+        return result;
+      }
     }
 
-    if (engine.ok()) {
-      result.engine = *std::move(engine);
-    } else {
-      LOG(ERROR) << engine.status();
-    }
+    result.response.set_status(EngineReloadResponse::RELOAD_READY);
+
+    // Stores modules.
+    result.modules = std::move(modules);
 
     return result;
   });
 }
 
-void EngineBuilder::Clear() {
+void DataLoader::Clear() {
   absl::WriterMutexLock lock(&mutex_);
   requests_.clear();
   sequence_id_ = 0;

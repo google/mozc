@@ -42,25 +42,14 @@
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "converter/connector.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
-#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
-#include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/dictionary_impl.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
-#include "dictionary/suppression_dictionary.h"
-#include "dictionary/system/system_dictionary.h"
-#include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "engine/modules.h"
-#include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
@@ -70,14 +59,8 @@
 namespace mozc {
 namespace {
 
-using dictionary::DictionaryImpl;
 using dictionary::DictionaryInterface;
-using dictionary::PosGroup;
-using dictionary::SuffixDictionary;
-using dictionary::SuppressionDictionary;
-using dictionary::SystemDictionary;
 using dictionary::UserDictionaryStub;
-using dictionary::ValueDictionary;
 using ::testing::StrEq;
 
 void SetCandidate(absl::string_view key, absl::string_view value,
@@ -104,10 +87,8 @@ class MockDataAndImmutableConverter {
   // first argument dictionary but doesn't the second because the same
   // dictionary may be passed to the arguments.
   MockDataAndImmutableConverter() {
-    data_manager_ = std::make_unique<testing::MockDataManager>();
     modules_.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
-    absl::Status status = modules_.Init(data_manager_.get());
-    CHECK(status.ok()) << status.message();
+    CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
 
     immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
     CHECK(immutable_converter_);
@@ -116,12 +97,10 @@ class MockDataAndImmutableConverter {
   MockDataAndImmutableConverter(
       std::unique_ptr<DictionaryInterface> dictionary,
       std::unique_ptr<DictionaryInterface> suffix_dictionary) {
-    data_manager_ = std::make_unique<testing::MockDataManager>();
     modules_.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
     modules_.PresetDictionary(std::move(dictionary));
     modules_.PresetSuffixDictionary(std::move(suffix_dictionary));
-    absl::Status status = modules_.Init(data_manager_.get());
-    CHECK(status.ok()) << status.message();
+    CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
 
     immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
     CHECK(immutable_converter_);
@@ -130,7 +109,6 @@ class MockDataAndImmutableConverter {
   ImmutableConverter *GetConverter() { return immutable_converter_.get(); }
 
  private:
-  std::unique_ptr<const DataManagerInterface> data_manager_;
   engine::Modules modules_;
   std::unique_ptr<ImmutableConverter> immutable_converter_;
 };

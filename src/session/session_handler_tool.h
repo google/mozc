@@ -86,6 +86,7 @@ class SessionHandlerTool {
   bool SetConfig(const config::Config &config, commands::Output *output);
   bool SyncData();
   void SetCallbackText(absl::string_view text);
+  bool ReloadSpellchecker(absl::string_view model_path);
 
  private:
   bool EvalCommand(commands::Input *input, commands::Output *output);
@@ -121,6 +122,7 @@ class SessionHandlerInterpreter final {
   std::vector<std::string> Parse(absl::string_view line);
   absl::Status Eval(absl::Span<const std::string> args);
   void SetRequest(const commands::Request &request);
+  void ReloadSpellchecker(absl::string_view model_path);
 
  private:
   std::unique_ptr<SessionHandlerTool> client_;

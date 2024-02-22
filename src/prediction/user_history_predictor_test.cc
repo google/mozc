@@ -408,7 +408,6 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
  private:
   struct DataAndPredictor {
-    testing::MockDataManager data_manager;
     engine::Modules modules;
     std::unique_ptr<UserHistoryPredictor> predictor;
   };
@@ -416,7 +415,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<DataAndPredictor> CreateDataAndPredictor() const {
     auto ret = std::make_unique<DataAndPredictor>();
     ret->modules.PresetDictionary(std::make_unique<MockDictionary>());
-    CHECK_OK(ret->modules.Init(&ret->data_manager));
+    CHECK_OK(ret->modules.Init(std::make_unique<testing::MockDataManager>()));
     ret->predictor =
         std::make_unique<UserHistoryPredictor>(ret->modules, false);
     ret->predictor->WaitForSyncer();

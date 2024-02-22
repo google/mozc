@@ -30,6 +30,7 @@
 #include "rewriter/t13n_promotion_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 
 #include "absl/container/flat_hash_set.h"
@@ -39,6 +40,8 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_util.h"
+#include "rewriter/rewriter_interface.h"
 #include "rewriter/rewriter_util.h"
 #include "transliteration/transliteration.h"
 
@@ -142,9 +145,7 @@ bool MaybePromoteT13n(const ConversionRequest &request, Segment *segment) {
   if (IsLatinInputMode(request) || Util::IsAscii(segment->key())) {
     return MaybeInsertLatinT13n(segment);
   }
-  if (request.request()
-          .decoder_experiment_params()
-          .enable_findability_oriented_order()) {
+  if (request_util::IsFindabilityOrientedOrderEnabled(request)) {
     return false;
   }
   return MaybePromoteKatakana(segment);

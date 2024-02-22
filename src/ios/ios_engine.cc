@@ -41,7 +41,6 @@
 #include "config/config_handler.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
-#include "engine/engine_builder.h"
 #include "engine/minimal_engine.h"
 #include "protocol/commands.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -79,8 +78,7 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
 std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
     const std::string &data_file_path) {
   std::unique_ptr<EngineInterface> engine = CreateMobileEngine(data_file_path);
-  return std::make_unique<SessionHandler>(std::move(engine),
-                                          std::make_unique<EngineBuilder>());
+  return std::make_unique<SessionHandler>(std::move(engine));
   // TODO(noriyukit): Add SessionUsageObserver by AddObserver().
 }
 

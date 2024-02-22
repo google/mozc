@@ -56,7 +56,7 @@ class Modules {
   Modules(const Modules &) = delete;
   Modules &operator=(const Modules &) = delete;
 
-  absl::Status Init(const DataManagerInterface *data_manager);
+  absl::Status Init(std::unique_ptr<const DataManagerInterface> data_manager);
 
   // Preset functions must be called before Init.
   void PresetPosMatcher(
@@ -116,7 +116,7 @@ class Modules {
 
  private:
   bool initialized_ = false;
-  const DataManagerInterface *data_manager_ = nullptr;
+  std::unique_ptr<const DataManagerInterface> data_manager_;
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   Connector connector_;

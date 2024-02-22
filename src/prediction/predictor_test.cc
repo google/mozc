@@ -221,10 +221,9 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   MockConverter converter;
-  testing::MockDataManager data_manager;
   engine::Modules modules;
   modules.PresetDictionary(std::make_unique<MockDictionary>());
-  CHECK_OK(modules.Init(&data_manager));
+  CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       std::make_unique<UserHistoryPredictor>(modules, true), &converter);

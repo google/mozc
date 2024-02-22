@@ -30,7 +30,9 @@
 #ifndef MOZC_DATA_MANAGER_TESTING_MOCK_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_TESTING_MOCK_DATA_MANAGER_H_
 
+#include "absl/strings/string_view.h"
 #include "data_manager/data_manager.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace testing {
@@ -40,6 +42,8 @@ class MockDataManager : public DataManager {
   MockDataManager();
   MockDataManager(const MockDataManager&) = delete;
   MockDataManager& operator=(const MockDataManager&) = delete;
+
+  MOCK_METHOD(absl::string_view, GetDataVersion, (), (const, override));
 };
 
 }  // namespace testing
