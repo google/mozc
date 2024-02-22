@@ -54,6 +54,7 @@
 #include "config/config_handler.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/user_dictionary_session_handler.h"
+#include "engine/engine.h"
 #include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -510,7 +511,7 @@ void SessionHandler::MaybeReloadEngine(commands::Command *command) {
   *command->mutable_output()->mutable_engine_reload_response() =
       engine_response.response;
 
-  if (!engine_response.engine ||
+  if (!engine_response.modules ||
       engine_response.response.status() != EngineReloadResponse::RELOAD_READY) {
     // The engine_response does not contain a valid result.
 
@@ -529,7 +530,19 @@ void SessionHandler::MaybeReloadEngine(commands::Command *command) {
   if (engine_ && engine_->GetUserDataManager()) {
     engine_->GetUserDataManager()->Wait();
   }
-  engine_ = std::move(engine_response.engine);
+
+  // Initializes engine.
+  absl::StatusOr<std::unique_ptr<EngineInterface>> engine;
+  const bool is_mobile = (engine_response.response.request().engine_type() ==
+                          EngineReloadRequest::MOBILE);
+  engine = Engine::CreateEngine(std::move(engine_response.modules), is_mobile);
+
+  if (engine.ok()) {
+    engine_ = *std::move(engine);
+  } else {
+    LOG(ERROR) << engine.status();
+  }
+
   if (!engine_) {
     LOG(FATAL) << "Critical failure in engine replace";
     return;

@@ -82,6 +82,10 @@ class Engine : public EngineInterface {
     return CreateMobileEngine(std::make_unique<const DataManagerType>());
   }
 
+  // Creates an instance with the given modules and is_mobile flag.
+  static absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(
+      std::unique_ptr<engine::Modules> modules, bool is_mobile);
+
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
 

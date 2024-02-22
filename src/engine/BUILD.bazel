@@ -41,8 +41,7 @@ mozc_cc_library(
     srcs = ["engine_builder.cc"],
     hdrs = ["engine_builder.h"],
     deps = [
-        ":engine",
-        ":engine_interface",
+        ":modules",
         "//base:file_util",
         "//base:hash",
         "//base:logging",
@@ -53,7 +52,6 @@ mozc_cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -68,11 +66,12 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":engine_builder",
-        ":engine_interface",
         "//base:file_util",
         "//base:hash",
         "//base:logging",
         "//base/file:temp_dir",
+        "//data_manager",
+        "//data_manager:data_manager_interface",
         "//protocol:engine_builder_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",

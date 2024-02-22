@@ -125,13 +125,7 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
     return modules_status;
   }
 
-  // Since Engine() is a private function, std::make_unique does not work.
-  auto engine = absl::WrapUnique(new Engine());
-  absl::Status engine_status = engine->Init(std::move(modules), kIsMobile);
-  if (!engine_status.ok()) {
-    return engine_status;
-  }
-  return engine;
+  return CreateEngine(std::move(modules), kIsMobile);
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
@@ -144,9 +138,14 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
     return modules_status;
   }
 
+  return CreateEngine(std::move(modules), kIsMobile);
+}
+
+absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
+    std::unique_ptr<engine::Modules> modules, bool is_mobile) {
   // Since Engine() is a private function, std::make_unique does not work.
   auto engine = absl::WrapUnique(new Engine());
-  absl::Status engine_status = engine->Init(std::move(modules), kIsMobile);
+  absl::Status engine_status = engine->Init(std::move(modules), is_mobile);
   if (!engine_status.ok()) {
     return engine_status;
   }

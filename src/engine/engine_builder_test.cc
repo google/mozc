@@ -32,7 +32,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <utility>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -40,7 +39,8 @@
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "engine/engine_interface.h"
+#include "data_manager/data_manager.h"
+#include "data_manager/data_manager_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -90,21 +90,21 @@ TEST_P(EngineBuilderTest, BasicTest) {
     response_future->Wait();
     const EngineBuilder::EngineResponse &response = response_future->Get();
 
+    DataManager data_manager;
+    data_manager.InitFromFile(mock_data_path_, kMockMagicNumber);
+    absl::string_view expected_version = data_manager.GetDataVersion();
+    std::string expected_filename = data_manager.GetFilename().value();
+
     EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
     EXPECT_EQ(response.id, id);
-    EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
+    ASSERT_TRUE(response.modules);
 
-    // Test whether all move operations work.
-    EngineBuilder::EngineResponse &&moved_response =
-        std::move(*response_future).Get();
-    response_future.reset();
-    EXPECT_EQ(moved_response.engine->GetPredictorName(),
-              GetParam().predictor_name);
-
-    std::unique_ptr<EngineInterface> moved_engine =
-        std::move(moved_response.engine);
-    moved_response.engine.reset();
-    EXPECT_EQ(moved_engine->GetPredictorName(), GetParam().predictor_name);
+    const DataManagerInterface &response_data_manager =
+        response.modules->GetDataManager();
+    EXPECT_EQ(response_data_manager.GetDataVersion(), expected_version);
+    EXPECT_TRUE(response_data_manager.GetFilename());
+    EXPECT_EQ(response_data_manager.GetFilename().value(), expected_filename);
+    EXPECT_EQ(response.response.request().engine_type(), GetParam().type);
   }
 
   Clear();
@@ -130,9 +130,20 @@ TEST_P(EngineBuilderTest, BasicTest) {
     response_future->Wait();
     const EngineBuilder::EngineResponse &response = response_future->Get();
 
+    DataManager data_manager;
+    data_manager.InitFromFile(src_path, kMockMagicNumber);
+    absl::string_view expected_version = data_manager.GetDataVersion();
+    std::string expected_filename = data_manager.GetFilename().value();
+
     EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
     EXPECT_EQ(response.id, id);
-    EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
+    ASSERT_TRUE(response.modules);
+
+    const DataManagerInterface &response_data_manager =
+        response.modules->GetDataManager();
+    EXPECT_EQ(response_data_manager.GetDataVersion(), expected_version);
+    EXPECT_TRUE(response_data_manager.GetFilename());
+    EXPECT_EQ(response_data_manager.GetFilename().value(), expected_filename);
 
     // Verify |src_path| was copied.
     EXPECT_OK(FileUtil::FileExists(src_path));
@@ -168,9 +179,20 @@ TEST_P(EngineBuilderTest, AsyncBuildRepeatedly) {
   response_future->Wait();
   const EngineBuilder::EngineResponse &response = response_future->Get();
 
+  DataManager data_manager;
+  data_manager.InitFromFile(last_path, kMockMagicNumber);
+  absl::string_view expected_version = data_manager.GetDataVersion();
+  std::string expected_filename = data_manager.GetFilename().value();
+
   EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
   EXPECT_EQ(response.response.request().file_path(), last_path);
-  EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
+  ASSERT_TRUE(response.modules);
+
+  const DataManagerInterface &response_data_manager =
+      response.modules->GetDataManager();
+  EXPECT_EQ(response_data_manager.GetDataVersion(), expected_version);
+  EXPECT_TRUE(response_data_manager.GetFilename());
+  EXPECT_EQ(response_data_manager.GetFilename().value(), expected_filename);
   EXPECT_EQ(response.id, latest_id);
 }
 
@@ -187,8 +209,19 @@ TEST_P(EngineBuilderTest, AsyncBuildWithoutInstall) {
   response_future->Wait();
   const EngineBuilder::EngineResponse &response = response_future->Get();
 
+  DataManager data_manager;
+  data_manager.InitFromFile(mock_data_path_, kMockMagicNumber);
+  absl::string_view expected_version = data_manager.GetDataVersion();
+  std::string expected_filename = data_manager.GetFilename().value();
+
   EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
-  EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
+  ASSERT_TRUE(response.modules);
+
+  const DataManagerInterface &response_data_manager =
+      response.modules->GetDataManager();
+  EXPECT_EQ(response_data_manager.GetDataVersion(), expected_version);
+  EXPECT_TRUE(response_data_manager.GetFilename());
+  EXPECT_EQ(response_data_manager.GetFilename().value(), expected_filename);
   EXPECT_EQ(response.id, id);
 }
 
@@ -222,7 +255,18 @@ TEST_P(EngineBuilderTest, AsyncBuildWithInstall) {
   ASSERT_OK(FileUtil::FileExists(tmp_src));
   ASSERT_OK(FileUtil::FileExists(install_path));
 
-  EXPECT_EQ(response.engine->GetPredictorName(), GetParam().predictor_name);
+  DataManager data_manager;
+  data_manager.InitFromFile(tmp_src, kMockMagicNumber);
+  absl::string_view expected_version = data_manager.GetDataVersion();
+  std::string expected_filename = data_manager.GetFilename().value();
+
+  ASSERT_TRUE(response.modules);
+
+  const DataManagerInterface &response_data_manager =
+      response.modules->GetDataManager();
+  EXPECT_EQ(response_data_manager.GetDataVersion(), expected_version);
+  EXPECT_TRUE(response_data_manager.GetFilename());
+  EXPECT_EQ(response_data_manager.GetFilename().value(), expected_filename);
   EXPECT_EQ(response.id, id);
 }
 
@@ -241,7 +285,7 @@ TEST_P(EngineBuilderTest, FailureCaseDataBroken) {
   const EngineBuilder::EngineResponse &response = response_future->Get();
 
   EXPECT_EQ(response.response.status(), EngineReloadResponse::DATA_BROKEN);
-  EXPECT_FALSE(response.engine);
+  EXPECT_FALSE(response.modules);
   EXPECT_EQ(response.id, id);
 }
 
@@ -260,7 +304,7 @@ TEST_P(EngineBuilderTest, InvalidId) {
   const EngineBuilder::EngineResponse &response = response_future->Get();
 
   EXPECT_EQ(response.response.status(), EngineReloadResponse::DATA_MISSING);
-  EXPECT_FALSE(response.engine);
+  EXPECT_FALSE(response.modules);
   EXPECT_EQ(response.id, id);
 }
 
@@ -278,7 +322,7 @@ TEST_P(EngineBuilderTest, FailureCaseFileDoesNotExist) {
   const EngineBuilder::EngineResponse &response = response_future->Get();
 
   EXPECT_EQ(response.response.status(), EngineReloadResponse::MMAP_FAILURE);
-  EXPECT_FALSE(response.engine);
+  EXPECT_FALSE(response.modules);
   EXPECT_EQ(response.id, id);
 }
 

@@ -39,7 +39,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/synchronization/mutex.h"
 #include "base/thread.h"
-#include "engine/engine_interface.h"
+#include "engine/modules.h"
 #include "protocol/engine_builder.pb.h"
 
 namespace mozc {
@@ -54,7 +54,7 @@ class EngineBuilder {
   struct EngineResponse {
     uint64_t id = 0;  // engine id. Fingerprint of EngineReloadRequest.
     EngineReloadResponse response;
-    std::unique_ptr<EngineInterface> engine;
+    std::unique_ptr<engine::Modules> modules;
   };
 
   // Wrapped with BackgroundFuture so the data loading is
