@@ -463,15 +463,6 @@ class Segments final {
     std::string key;
   };
 
-  Segments()
-      : max_history_segments_size_(0),
-        resized_(false),
-        pool_(32),
-        cached_lattice_() {}
-
-  Segments(const Segments &x);
-  Segments &operator=(const Segments &x);
-
   // This class wraps an iterator as is, except that `operator*` dereferences
   // twice. For example, if `InnnerIterator` is the iterator of
   // `std::deque<Segment *>`, `operator*` dereferences to `Segment&`.
@@ -537,6 +528,10 @@ class Segments final {
 
     InnerIterator iterator_;
   };
+  using iterator = Iterator<inner_iterator>;
+  using const_iterator = Iterator<inner_const_iterator, /*is_const=*/true>;
+  static_assert(!std::is_const_v<iterator::value_type>);
+  static_assert(std::is_const_v<const_iterator::value_type>);
 
   // This class represents `begin` and `end`, like a `std::span` for
   // non-contiguous iterators.
@@ -556,22 +551,28 @@ class Segments final {
     Iterator end_;
   };
 
+  // constructors
+  Segments()
+      : max_history_segments_size_(0),
+        resized_(false),
+        pool_(32),
+        cached_lattice_() {}
+
+  Segments(const Segments &x);
+  Segments &operator=(const Segments &x);
+
+  // iterators
+  iterator begin() { return iterator{segments_.begin()}; }
+  iterator end() { return iterator{segments_.end()}; }
+  const_iterator begin() const { return const_iterator{segments_.begin()}; }
+  const_iterator end() const { return const_iterator{segments_.end()}; }
+
+  // ranges
   template <typename Iterator>
   static Range<Iterator> make_range(const Iterator &begin,
                                     const Iterator &end) {
     return Range<Iterator>(begin, end);
   }
-
-  // iterators
-  using iterator = Iterator<inner_iterator>;
-  using const_iterator = Iterator<inner_const_iterator, /*is_const=*/true>;
-  static_assert(!std::is_const_v<iterator::value_type>);
-  static_assert(std::is_const_v<const_iterator::value_type>);
-
-  iterator begin() { return iterator{segments_.begin()}; }
-  iterator end() { return iterator{segments_.end()}; }
-  const_iterator begin() const { return const_iterator{segments_.begin()}; }
-  const_iterator end() const { return const_iterator{segments_.end()}; }
 
   Range<iterator> history_segments();
   Range<const_iterator> history_segments() const;
