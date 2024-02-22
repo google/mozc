@@ -243,6 +243,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
   actual_value->clear();
 
   composer::Table table;
+  config_.set_use_typing_correction(true);
 
   if (command == kConversionExpect || command == kConversionNotExpect ||
       command == kConversionMatch || command == kConversionNotMatch) {

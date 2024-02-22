@@ -49,6 +49,7 @@
 #include "session/request_test_util.h"
 #include "session/session_handler_test_util.h"
 #include "session/session_handler_tool.h"
+#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -70,10 +71,10 @@ class SessionHandlerScenarioTestBase : public SessionHandlerTestBase {
     // Note that singleton Config instance is backed up and restored
     // by SessionHandlerTestBase's SetUp and TearDown methods.
     SessionHandlerTestBase::SetUp();
-
     std::unique_ptr<EngineInterface> engine =
         MockDataEngineFactory::Create().value();
     handler_ = std::make_unique<SessionHandlerInterpreter>(std::move(engine));
+
   }
 
   void TearDown() override {
@@ -105,7 +106,6 @@ const char *kScenarioFileList[] = {
     DATA_DIR "b16123009_scenario.txt",
     DATA_DIR "b18112966_scenario.txt",
     DATA_DIR "b7132535_scenario.txt",
-    // DATA_DIR "b7321313_scenario.txt",
     DATA_DIR "b7548679_scenario.txt",
     DATA_DIR "b8690065_scenario.txt",
     DATA_DIR "b8703702_scenario.txt",
@@ -135,7 +135,6 @@ const char *kScenarioFileList[] = {
 #endif  // !__APPLE__
     DATA_DIR "handwriting.txt",
     DATA_DIR "insert_characters.txt",
-    // DATA_DIR "kana_modifier_insensitive_conversion.txt",
     DATA_DIR "mobile_partial_variant_candidates.txt",
     DATA_DIR "mobile_revert_user_history_learning.txt",
     DATA_DIR "on_off_cancel.txt",

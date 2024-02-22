@@ -235,6 +235,14 @@ void SessionHandlerTool::SetCallbackText(const absl::string_view text) {
   strings::Assign(callback_text_, text);
 }
 
+bool SessionHandlerTool::ReloadSpellchecker(absl::string_view model_path) {
+  commands::Input input;
+  input.mutable_engine_reload_request()->set_file_path(model_path);
+  input.set_type(commands::Input::RELOAD_SPELL_CHECKER);
+  commands::Output output;
+  return EvalCommand(&input, &output);
+}
+
 bool SessionHandlerTool::EvalCommandInternal(commands::Input *input,
                                              commands::Output *output,
                                              bool allow_callback) {
@@ -849,6 +857,11 @@ absl::Status SessionHandlerInterpreter::Eval(
 
 void SessionHandlerInterpreter::SetRequest(const commands::Request &request) {
   *request_ = request;
+}
+
+void SessionHandlerInterpreter::ReloadSpellchecker(
+    absl::string_view model_path) {
+  client_->ReloadSpellchecker(model_path);
 }
 
 }  // namespace session

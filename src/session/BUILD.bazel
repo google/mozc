@@ -784,7 +784,8 @@ mozc_cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ],
+    ] + mozc_select_enable_spellchecker([
+    ]),
 )
 
 mozc_cc_library(
