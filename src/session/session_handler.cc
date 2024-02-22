@@ -54,7 +54,6 @@
 #include "config/config_handler.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/user_dictionary_session_handler.h"
-#include "engine/engine.h"
 #include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -531,23 +530,15 @@ void SessionHandler::MaybeReloadEngine(commands::Command *command) {
     engine_->GetUserDataManager()->Wait();
   }
 
-  // Initializes engine.
-  absl::StatusOr<std::unique_ptr<EngineInterface>> engine;
+  // Reloads Modules.
   const bool is_mobile = (engine_response.response.request().engine_type() ==
                           EngineReloadRequest::MOBILE);
-  engine = Engine::CreateEngine(std::move(engine_response.modules), is_mobile);
-
-  if (engine.ok()) {
-    engine_ = *std::move(engine);
-  } else {
-    LOG(ERROR) << engine.status();
-  }
-
-  if (!engine_) {
-    LOG(FATAL) << "Critical failure in engine replace";
+  absl::Status reload_status =
+      engine_->ReloadModules(std::move(engine_response.modules), is_mobile);
+  if (!reload_status.ok()) {
+    LOG(ERROR) << reload_status;
     return;
   }
-
 
   current_engine_id_ = engine_response.id;
   command->mutable_output()->mutable_engine_reload_response()->set_status(

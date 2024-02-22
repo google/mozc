@@ -42,6 +42,7 @@
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -614,8 +615,6 @@ TEST_F(SessionHandlerTest, SyncDataTest) {
 // Tests the interaction with EngineBuilder for successful Engine
 // reload event.
 TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
-  MockEngineBuilder *engine_builder = new MockEngineBuilder();
-
   auto data_manager = std::make_unique<testing::MockDataManager>();
   absl::string_view data_version = "EngineReloadSuccessfulScenarioTest";
   EXPECT_CALL(*data_manager, GetDataVersion())
@@ -623,6 +622,7 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   auto modules = std::make_unique<engine::Modules>();
   CHECK_OK(modules->Init(std::move(data_manager)));
 
+  auto engine_builder = std::make_unique<MockEngineBuilder>();
   EXPECT_CALL(*engine_builder, RegisterRequest(_)).WillRepeatedly(Return(1));
   EXPECT_CALL(*engine_builder, Build(1))
       .WillOnce(Return(
@@ -637,8 +637,10 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
                 return result;
               })));
 
-  SessionHandler handler(std::make_unique<MinimalEngine>(),
-                         std::unique_ptr<MockEngineBuilder>(engine_builder));
+  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
+      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
+  EXPECT_OK(engine_status);
+  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
 
   ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
 
@@ -659,7 +661,8 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
 
 // Tests situations to handle multiple new requests.
 TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
-  MockEngineBuilder *engine_builder = new MockEngineBuilder();
+  auto engine_builder = std::make_unique<MockEngineBuilder>();
+  MockEngineBuilder *engine_builder_ptr = engine_builder.get();
 
   auto data_manager1 = std::make_unique<testing::MockDataManager>();
   absl::string_view data_version1 = "EngineUpdateSuccessfulScenarioTest_1";
@@ -691,8 +694,11 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
                 return result;
               })));
 
-  SessionHandler handler(std::make_unique<MinimalEngine>(),
-                         std::unique_ptr<MockEngineBuilder>(engine_builder));
+  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
+      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
+  EXPECT_OK(engine_status);
+  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
+
   handler.always_wait_for_engine_response_future_ = true;
 
   // engine_id = 1
@@ -703,9 +709,11 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
   ASSERT_TRUE(CreateSession(&handler, &id));
   EXPECT_EQ(handler.engine().GetDataVersion(), data_version1);
 
-  EXPECT_CALL(*engine_builder, RegisterRequest(_)).WillRepeatedly(Return(2));
+  // Use engine_builder_ptr after std::move(engine_build).
+  EXPECT_CALL(*engine_builder_ptr, RegisterRequest(_))
+      .WillRepeatedly(Return(2));
 
-  EXPECT_CALL(*engine_builder, Build(2))
+  EXPECT_CALL(*engine_builder_ptr, Build(2))
       .WillOnce(Return(
           std::make_unique<BackgroundFuture<EngineBuilder::EngineResponse>>(
               [&]() {
@@ -771,7 +779,8 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
 
 // Tests the rollback scenario
 TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
-  MockEngineBuilder *engine_builder = new MockEngineBuilder();
+  auto engine_builder = std::make_unique<MockEngineBuilder>();
+  MockEngineBuilder *engine_builder_ptr = engine_builder.get();
 
   InSequence seq;  // EXPECT_CALL is called sequentially.
 
@@ -781,20 +790,23 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
   auto modules = std::make_unique<engine::Modules>();
   CHECK_OK(modules->Init(std::move(data_manager)));
 
-  SessionHandler handler(std::make_unique<MinimalEngine>(),
-                         std::unique_ptr<MockEngineBuilder>(engine_builder));
+  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
+      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
+  EXPECT_OK(engine_status);
+  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
+
   handler.always_wait_for_engine_response_future_ = true;
 
   // Sends multiple requests three times. 1 -> 2 -> 3.
   // 3 is the latest id.
   for (int eid = 1; eid <= 3; ++eid) {
-    EXPECT_CALL(*engine_builder, RegisterRequest(_)).WillOnce(Return(eid));
+    EXPECT_CALL(*engine_builder_ptr, RegisterRequest(_)).WillOnce(Return(eid));
     ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
   }
 
   for (int eid = 3; eid >= 1; --eid) {
     // Rollback as 3 -> 2 -> 1.  1 is only valid engine.
-    EXPECT_CALL(*engine_builder, Build(eid))
+    EXPECT_CALL(*engine_builder_ptr, Build(eid))
         .WillOnce(Return(
             std::make_unique<BackgroundFuture<EngineBuilder::EngineResponse>>(
                 [&]() {
@@ -814,7 +826,7 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
     // Engine of 3, and 2 are unregistered.
     // The second best id (2, and 1) are used.
     if (eid > 1) {
-      EXPECT_CALL(*engine_builder, UnregisterRequest(eid))
+      EXPECT_CALL(*engine_builder_ptr, UnregisterRequest(eid))
           .WillOnce(Return(eid - 1));
     }
     uint64_t id = 0;
@@ -832,9 +844,6 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
 // Tests the interaction with EngineBuilder in the situation where
 // sessions exist in create session event.
 TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
-  auto old_engine = std::make_unique<MinimalEngine>();
-  const auto *old_engine_ptr = old_engine.get();
-
   auto data_manager = std::make_unique<testing::MockDataManager>();
   absl::string_view data_version = "EngineReloadSessionExistsTest";
   EXPECT_CALL(*data_manager, GetDataVersion())
@@ -842,7 +851,7 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
   auto modules = std::make_unique<engine::Modules>();
   CHECK_OK(modules->Init(std::move(data_manager)));
 
-  MockEngineBuilder *engine_builder = new MockEngineBuilder();
+  auto engine_builder = std::make_unique<MockEngineBuilder>();
 
   EXPECT_CALL(*engine_builder, RegisterRequest(_)).WillOnce(Return(1));
   EXPECT_CALL(*engine_builder, Build(1))
@@ -857,32 +866,38 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
                 return result;
               })));
 
-  SessionHandler handler(std::move(old_engine),
-                         std::unique_ptr<MockEngineBuilder>(engine_builder));
+  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
+      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
+  EXPECT_OK(engine_status);
+  const Engine *old_engine_ptr = engine_status.value().get();
+  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
 
   // A session is created before data is loaded.
-  // engine_builder->Build() is called, but engine is not replaced.
+  // engine_builder->Build() is called, but engine is not reloaded.
   uint64_t id1 = 0;
   ASSERT_TRUE(CreateSession(&handler, &id1));
   EXPECT_EQ(&handler.engine(), old_engine_ptr);
+  EXPECT_NE(handler.engine().GetDataVersion(), data_version);
 
   ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
 
-  // Another session is created.  Since the handler already holds one session
-  // (id1), new engine is not used.
+  // Another session is created. Since the handler already holds one session
+  // (id1), new data manager is not used.
   uint64_t id2 = 0;
   ASSERT_TRUE(CreateSession(&handler, &id2));
   EXPECT_EQ(&handler.engine(), old_engine_ptr);
+  EXPECT_NE(handler.engine().GetDataVersion(), data_version);
 
   // All the sessions were deleted.
   ASSERT_TRUE(DeleteSession(&handler, id1));
   ASSERT_TRUE(DeleteSession(&handler, id2));
 
-  // A new session is created.  Since the handler holds no session, new engine
-  // is used.
+  // A new session is created. Since the handler holds no session, engine
+  // reloads the new data manager.
   uint64_t id3 = 0;
   ASSERT_TRUE(CreateSession(&handler, &id3));
-  EXPECT_NE(&handler.engine(), old_engine_ptr);
+  // New data is reloaded, but the engine is the same object.
+  EXPECT_EQ(&handler.engine(), old_engine_ptr);
   EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
 }
 

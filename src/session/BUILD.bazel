@@ -384,6 +384,8 @@ mozc_cc_test(
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select_enable_spellchecker([
