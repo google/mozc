@@ -640,7 +640,8 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   absl::StatusOr<std::unique_ptr<Engine>> engine_status =
       Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
   EXPECT_OK(engine_status);
-  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
+  (*engine_status)->SetEngineBuilderForTesting(std::move(engine_builder));
+  SessionHandler handler(std::move(*engine_status));
 
   ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
 
@@ -697,9 +698,9 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
   absl::StatusOr<std::unique_ptr<Engine>> engine_status =
       Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
   EXPECT_OK(engine_status);
-  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
-
-  handler.engine_->SetAlwaysWaitForEngineResponseFutureForTesting(true);
+  (*engine_status)->SetEngineBuilderForTesting(std::move(engine_builder));
+  (*engine_status)->SetAlwaysWaitForEngineResponseFutureForTesting(true);
+  SessionHandler handler(std::move(*engine_status));
 
   // engine_id = 1
   ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
@@ -745,7 +746,8 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
       Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
   EXPECT_OK(engine_status);
   const Engine *old_engine_ptr = engine_status.value().get();
-  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
+  (*engine_status)->SetEngineBuilderForTesting(std::move(engine_builder));
+  SessionHandler handler(std::move(*engine_status));
 
   EXPECT_CALL(*engine_builder_ptr, RegisterRequest(_)).WillOnce(Return(1));
 
@@ -795,9 +797,9 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
   absl::StatusOr<std::unique_ptr<Engine>> engine_status =
       Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
   EXPECT_OK(engine_status);
-  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
-
-  handler.engine_->SetAlwaysWaitForEngineResponseFutureForTesting(true);
+  (*engine_status)->SetEngineBuilderForTesting(std::move(engine_builder));
+  (*engine_status)->SetAlwaysWaitForEngineResponseFutureForTesting(true);
+  SessionHandler handler(std::move(*engine_status));
 
   // Sends multiple requests three times. 1 -> 2 -> 3.
   // 3 is the latest id.
@@ -872,7 +874,8 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
       Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
   EXPECT_OK(engine_status);
   const Engine *old_engine_ptr = engine_status.value().get();
-  SessionHandler handler(std::move(*engine_status), std::move(engine_builder));
+  (*engine_status)->SetEngineBuilderForTesting(std::move(engine_builder));
+  SessionHandler handler(std::move(*engine_status));
 
   // A session is created before data is loaded.
   // engine_builder->Build() is called, but engine is not reloaded.

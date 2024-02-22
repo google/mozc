@@ -53,7 +53,6 @@
 #include "config/config_handler.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/user_dictionary_session_handler.h"
-#include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
@@ -135,10 +134,6 @@ bool IsApplicationAlive(const session::Session *session) {
 }  // namespace
 
 SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine)
-    : SessionHandler(std::move(engine), std::make_unique<EngineBuilder>()) {}
-
-SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine,
-                               std::unique_ptr<EngineBuilder> engine_builder)
     : engine_(std::move(engine)) {
   is_available_ = false;
   max_session_size_ = 0;
@@ -175,7 +170,6 @@ SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine,
   if (!engine_) {
     return;
   }
-  engine_->SetEngineBuilder(std::move(engine_builder));
 
 
   // everything is OK

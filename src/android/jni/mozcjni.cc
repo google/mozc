@@ -45,7 +45,6 @@
 #include "base/util.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
-#include "engine/engine_builder.h"
 #include "engine/minimal_engine.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler.h"
@@ -137,8 +136,7 @@ std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
     engine = CreateMobileEngine(data_file_path);
   }
   DCHECK(engine);
-  auto result = std::make_unique<SessionHandler>(
-      std::move(engine), std::make_unique<EngineBuilder>());
+  auto result = std::make_unique<SessionHandler>(std::move(engine));
   result->AddObserver(Singleton<session::SessionUsageObserver>::get());
   return result;
 }

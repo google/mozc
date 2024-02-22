@@ -32,7 +32,6 @@
 #ifndef MOZC_SESSION_SESSION_HANDLER_H_
 #define MOZC_SESSION_SESSION_HANDLER_H_
 
-#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -42,7 +41,6 @@
 #include "absl/time/time.h"
 #include "composer/table.h"
 #include "dictionary/user_dictionary_session_handler.h"
-#include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -65,8 +63,6 @@ namespace mozc {
 class SessionHandler : public SessionHandlerInterface {
  public:
   explicit SessionHandler(std::unique_ptr<EngineInterface> engine);
-  SessionHandler(std::unique_ptr<EngineInterface> engine,
-                 std::unique_ptr<EngineBuilder> engine_builder);
   SessionHandler(const SessionHandler &) = delete;
   SessionHandler &operator=(const SessionHandler &) = delete;
   ~SessionHandler() override = default;

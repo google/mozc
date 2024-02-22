@@ -302,7 +302,6 @@ mozc_cc_library(
         "//data_manager:data_manager_interface",
         "//dictionary:user_dictionary_session_handler",
         "//engine",
-        "//engine:engine_builder",
         "//engine:engine_interface",
         "//engine:spellchecker_interface",
         "//engine:user_data_manager_interface",

@@ -47,7 +47,6 @@ mozc_cc_library(
         "//config:config_handler",
         "//data_manager",
         "//engine",
-        "//engine:engine_builder",
         "//engine:minimal_engine",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",

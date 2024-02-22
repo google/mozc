@@ -94,8 +94,6 @@ class EngineInterface {
   virtual void SetSpellchecker(
       const engine::SpellcheckerInterface *spellchecker) {}
 
-  virtual void SetEngineBuilder(std::unique_ptr<EngineBuilder> builder) {}
-
   // Maybe reload a new data manager. Returns true if reloaded.
   virtual bool MaybeReloadEngine(EngineReloadResponse *response) {
     return false;
@@ -103,6 +101,8 @@ class EngineInterface {
   virtual bool SendEngineReloadRequest(const EngineReloadRequest &request) {
     return false;
   }
+  virtual void SetEngineBuilderForTesting(
+      std::unique_ptr<EngineBuilder> builder) {}
   virtual void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {}
 
  protected:

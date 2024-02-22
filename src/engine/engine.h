@@ -132,13 +132,13 @@ class Engine : public EngineInterface {
   // For testing only.
   engine::Modules *GetModulesForTesting() const { return modules_.get(); }
 
-  // TODO(komatsu): Rename functions.
-  void SetEngineBuilder(std::unique_ptr<EngineBuilder> builder) override {
-    builder_ = std::move(builder);
-  }
   // Maybe reload a new data manager. Returns true if reloaded.
   bool MaybeReloadEngine(EngineReloadResponse *response) override;
   bool SendEngineReloadRequest(const EngineReloadRequest& request) override;
+  void SetEngineBuilderForTesting(
+      std::unique_ptr<EngineBuilder> builder) override {
+    builder_ = std::move(builder);
+  }
   void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {
     always_wait_for_engine_response_future_ = value;
   }
