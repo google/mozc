@@ -61,6 +61,7 @@
     'mozc_data_varname': 'kOssMozcDataSet',
     'out_mozc_data': 'mozc.data',
     'out_mozc_data_header': 'mozc_data.inc',
+    'additional_dendencies': [],
   },
   # This 'includes' defines the following targets:
   #   - oss_data_manager  (type: static_library)

@@ -57,6 +57,7 @@ mozc_cc_library(
         "//base:embedded_file",
         "//base:logging",
         "//data_manager",
+        "//testing:gunit",
         "@com_google_absl//absl/strings",
     ],
 )
