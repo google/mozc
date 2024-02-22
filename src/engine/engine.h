@@ -82,7 +82,6 @@ class Engine : public EngineInterface {
     return CreateMobileEngine(std::make_unique<const DataManagerType>());
   }
 
-  Engine() = default;
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
 
@@ -97,6 +96,9 @@ class Engine : public EngineInterface {
   bool Reload() override;
 
   bool ReloadAndWait() override;
+
+  absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
+                             bool is_mobile) override;
 
   UserDataManagerInterface *GetUserDataManager() override {
     return user_data_manager_.get();
@@ -119,7 +121,12 @@ class Engine : public EngineInterface {
     modules_->SetSpellchecker(spellchecker);
   }
 
+  // For testing only.
+  engine::Modules *GetModulesForTesting() const { return modules_.get(); }
+
  private:
+  Engine();
+
   // Initializes the engine object by the given modules and is_mobile flag.
   // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
   absl::Status Init(std::unique_ptr<engine::Modules> modules, bool is_mobile);

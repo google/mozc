@@ -84,11 +84,13 @@ mozc_cc_library(
     name = "engine_interface",
     hdrs = ["engine_interface.h"],
     deps = [
+        ":modules",
         ":spellchecker_interface",
         ":user_data_manager_interface",
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -177,7 +179,25 @@ mozc_cc_library(
         "//prediction:user_history_predictor",
         "//rewriter",
         "//rewriter:rewriter_interface",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "engine_test",
+    srcs = ["engine_test.cc"],
+    deps = [
+        ":engine",
+        ":modules",
+        ":spellchecker_interface",
+        "//base:logging",
+        "//composer:query",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//testing:gunit_main",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
@@ -189,12 +209,14 @@ mozc_cc_library(
     hdrs = ["engine_mock.h"],
     deps = [
         ":engine_interface",
+        ":modules",
         ":spellchecker_interface",
         ":user_data_manager_interface",
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
         "//testing:gunit",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -343,6 +365,7 @@ mozc_cc_library(
     ],
     deps = [
         ":engine_interface",
+        ":modules",
         ":user_data_manager_interface",
         "//base/strings:assign",
         "//composer",
@@ -353,6 +376,7 @@ mozc_cc_library(
         "//dictionary:suppression_dictionary",
         "//prediction:predictor_interface",
         "//request:conversion_request",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],

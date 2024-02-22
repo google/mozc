@@ -32,6 +32,7 @@
 #include <memory>
 #include <utility>
 
+#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -42,6 +43,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/user_dictionary.h"
 #include "engine/modules.h"
+#include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
@@ -123,7 +125,8 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
     return modules_status;
   }
 
-  auto engine = std::make_unique<Engine>();
+  // Since Engine() is a private function, std::make_unique does not work.
+  auto engine = absl::WrapUnique(new Engine());
   absl::Status engine_status = engine->Init(std::move(modules), kIsMobile);
   if (!engine_status.ok()) {
     return engine_status;
@@ -141,7 +144,8 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
     return modules_status;
   }
 
-  auto engine = std::make_unique<Engine>();
+  // Since Engine() is a private function, std::make_unique does not work.
+  auto engine = absl::WrapUnique(new Engine());
   absl::Status engine_status = engine->Init(std::move(modules), kIsMobile);
   if (!engine_status.ok()) {
     return engine_status;
@@ -149,17 +153,30 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
   return engine;
 }
 
-// Since the composite predictor class differs on desktop and mobile, Init()
-// takes a function pointer to create an instance of predictor class.
-absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
-                          bool is_mobile) {
+Engine::Engine() : modules_(std::make_unique<engine::Modules>()) {}
+
+absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
+                                   bool is_mobile) {
+  ReloadAndWait();
+  return Init(std::move(modules), is_mobile);
+}
+
+absl::Status Engine::Init(
+    std::unique_ptr<engine::Modules> modules, bool is_mobile) {
 #define RETURN_IF_NULL(ptr)                                               \
   do {                                                                    \
     if (!(ptr))                                                           \
       return absl::ResourceExhaustedError("engine.cc: " #ptr " is null"); \
   } while (false)
 
+  RETURN_IF_NULL(modules);
+
+  // Keeps the previous spellchecker if exists.
+  const engine::SpellcheckerInterface *spellchecker =
+      modules_->GetSpellchecker();
+
   modules_ = std::move(modules);
+  modules_->SetSpellchecker(spellchecker);
 
   immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
   RETURN_IF_NULL(immutable_converter_);
