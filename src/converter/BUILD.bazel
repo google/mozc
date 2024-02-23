@@ -55,6 +55,7 @@ mozc_cc_library(
         "//base:vlog",
         "//base/container:freelist",
         "//base/strings:assign",
+        "//testing:friend_test",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],

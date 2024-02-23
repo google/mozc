@@ -92,16 +92,19 @@ TEST(SegmentsTest, BasicTest) {
   segments.erase_segment(1);
   EXPECT_EQ(segments.mutable_segment(0), seg[0]);
   EXPECT_EQ(segments.mutable_segment(1), seg[2]);
+  EXPECT_EQ(segments.pool_.released_.size(), 1);
 
   segments.erase_segments(1, 2);
   EXPECT_EQ(segments.mutable_segment(0), seg[0]);
   EXPECT_EQ(segments.mutable_segment(1), seg[4]);
+  EXPECT_EQ(segments.pool_.released_.size(), 3);
 
   EXPECT_EQ(segments.segments_size(), 2);
 
   segments.erase_segments(0, 1);
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.mutable_segment(0), seg[4]);
+  EXPECT_EQ(segments.pool_.released_.size(), 4);
 
   // insert
   seg[1] = segments.insert_segment(1);

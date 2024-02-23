@@ -37,6 +37,8 @@
 #include <utility>
 #include <vector>
 
+#include "testing/friend_test.h"
+
 namespace mozc {
 
 // This class runs unneeded T's constructor along with the memory chunk
@@ -204,6 +206,8 @@ class ObjectPool {
   friend void swap(ObjectPool& lhs, ObjectPool& rhs) noexcept { lhs.swap(rhs); }
 
  private:
+  FRIEND_TEST(SegmentsTest, BasicTest);
+
   std::vector<T*> released_;
   FreeList<T> freelist_;
 };
