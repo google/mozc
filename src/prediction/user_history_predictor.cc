@@ -521,17 +521,16 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
   WaitForSyncer();
 
   MOZC_VLOG(1) << "Clearing unused prediction";
-  const DicElement *head = dic_->Head();
-  if (head == nullptr) {
-    MOZC_VLOG(2) << "dic head is nullptr";
+  if (dic_->empty()) {
+    MOZC_VLOG(2) << "dic is empty";
     return false;
   }
 
   std::vector<uint32_t> keys;
-  for (const DicElement *elm = head; elm != nullptr; elm = elm->next) {
-    MOZC_VLOG(3) << elm->key << " " << elm->value.suggestion_freq();
-    if (elm->value.suggestion_freq() == 0) {
-      keys.push_back(elm->key);
+  for (const DicElement &elm : *dic_) {
+    MOZC_VLOG(3) << elm.key << " " << elm.value.suggestion_freq();
+    if (elm.value.suggestion_freq() == 0) {
+      keys.push_back(elm.key);
     }
   }
 
@@ -669,9 +668,8 @@ bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
     // Finds a chain of history entries that produces key and value. If exists,
     // remove the link so that N-gram history prediction never generates this
     // key value pair..
-    for (DicElement *elm = dic_->MutableHead(); elm != nullptr;
-         elm = elm->next) {
-      Entry *entry = &elm->value;
+    for (DicElement &elm : *dic_) {
+      Entry *entry = &elm.value;
       if (!absl::StartsWith(key, entry->key()) ||
           !absl::StartsWith(value, entry->value())) {
         continue;
@@ -1191,8 +1189,8 @@ bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
     return false;
   }
 
-  if (dic_->Head() == nullptr) {
-    MOZC_VLOG(2) << "dic head is nullptr";
+  if (dic_->empty()) {
+    MOZC_VLOG(2) << "dic is empty";
     return false;
   }
 
@@ -1244,9 +1242,11 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
                                         ? history_segment.candidate(0).value
                                         : prev_entry->value();
     int trial = 0;
-    for (const DicElement *elm = dic_->Head();
-         trial++ < kMaxPrevValueTrial && elm != nullptr; elm = elm->next) {
-      const Entry *entry = &(elm->value);
+    for (const DicElement &elm : *dic_) {
+      if (++trial > kMaxPrevValueTrial) {
+        break;
+      }
+      const Entry *entry = &(elm.value);
       // entry->value() equals to the prev_value or
       // entry->value() is a SUFFIX of prev_value.
       // length of entry->value() must be >= 2, as single-length
@@ -1299,11 +1299,11 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
 
   const absl::Time now = Clock::GetAbslTime();
   int trial = 0;
-  for (const DicElement *elm = dic_->Head(); elm != nullptr; elm = elm->next) {
-    if (!IsValidEntryIgnoringRemovedField(elm->value)) {
+  for (const DicElement &elm : *dic_) {
+    if (!IsValidEntryIgnoringRemovedField(elm.value)) {
       continue;
     }
-    if (absl::FromUnixSeconds(elm->value.last_access_time()) + k62Days < now) {
+    if (absl::FromUnixSeconds(elm.value.last_access_time()) + k62Days < now) {
       updated_ = true;  // We found an entry to be deleted at next save.
       continue;
     }
@@ -1317,8 +1317,8 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
     // If a new entry is found, the entry is pushed to the results.
     // TODO(team): make KanaFuzzyLookupEntry().
     if (!LookupEntry(request_type, input_key, base_key, expanded.get(),
-                     &(elm->value), prev_entry, results) &&
-        !RomanFuzzyLookupEntry(roman_input_key, &(elm->value), results)) {
+                     &(elm.value), prev_entry, results) &&
+        !RomanFuzzyLookupEntry(roman_input_key, &(elm.value), results)) {
       continue;
     }
 
@@ -1713,7 +1713,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   // This is a fix for http://b/issue?id=2216838
   //
   // Note: We don't make such candidates for mobile.
-  if (request_type != ZERO_QUERY_SUGGESTION && dic_->Head() != nullptr &&
+  if (request_type != ZERO_QUERY_SUGGESTION && !dic_->empty() &&
       dic_->Head()->value.last_access_time() + 5 > last_access_time &&
       // Check if the current value is a punctuation.
       segments->conversion_segments_size() == 1 &&

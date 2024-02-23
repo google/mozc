@@ -622,10 +622,12 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
     predictor->Finish(*convreq_, &segments);
 
     // All added items must be suggestion entries.
-    const UserHistoryPredictor::DicCache::Element *element;
-    for (element = predictor->dic_->Head(); element->next;
-         element = element->next) {
-      const user_history_predictor::UserHistory::Entry &entry = element->value;
+    for (const UserHistoryPredictor::DicCache::Element &element :
+         *predictor->dic_) {
+      if (!element.next) {
+        break;  // Except the last one.
+      }
+      const user_history_predictor::UserHistory::Entry &entry = element.value;
       EXPECT_TRUE(entry.has_suggestion_freq() && entry.suggestion_freq() == 1);
       EXPECT_TRUE(!entry.has_conversion_freq() && entry.conversion_freq() == 0);
     }
@@ -4168,10 +4170,9 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
 
   // Verify also that on-memory data structure doesn't contain node for 中野.
   bool found_takahashi = false;
-  for (const auto *elem = predictor->dic_->Head(); elem != nullptr;
-       elem = elem->next) {
-    EXPECT_EQ(elem->value.value().find("中野"), std::string::npos);
-    if (elem->value.value().find("高橋")) {
+  for (const auto &elem : *predictor->dic_) {
+    EXPECT_EQ(elem.value.value().find("中野"), std::string::npos);
+    if (elem.value.value().find("高橋")) {
       found_takahashi = true;
     }
   }

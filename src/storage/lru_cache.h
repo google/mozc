@@ -30,7 +30,10 @@
 #ifndef MOZC_STORAGE_LRU_CACHE_H_
 #define MOZC_STORAGE_LRU_CACHE_H_
 
+#include <cstddef>
+#include <iterator>
 #include <memory>
+#include <type_traits>
 
 #include "absl/container/flat_hash_map.h"
 #include "base/logging.h"
@@ -44,13 +47,6 @@ namespace storage {
 template <typename Key, typename Value>
 class LruCache {
  public:
-  // Constructs a new LruCache that can hold at most max_elements
-  explicit LruCache(size_t max_elements);
-  ~LruCache() = default;
-
-  LruCache(const LruCache&) = delete;
-  LruCache& operator=(const LruCache&) = delete;
-
   // Every Element is either on the free list or the lru list.  The
   // free list is singly-linked and only uses the next pointer, while
   // the LRU list is doubly-linked and uses both next and prev.
@@ -60,6 +56,55 @@ class LruCache {
     Key key;
     Value value;
   };
+
+  template <bool is_const>
+  class Iterator {
+   public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = std::conditional_t<is_const, const Element, Element>;
+    using difference_type = ptrdiff_t;
+    using pointer = value_type*;
+    using reference = value_type&;
+
+    explicit Iterator(pointer element)
+        : current_(element), next_(element ? element->next : nullptr) {}
+
+    reference operator*() const { return *current_; }
+    pointer operator->() const { return current_; }
+
+    Iterator& operator++() {
+      current_ = next_;
+      // Capture `next` for when it's changed before the next increment.
+      next_ = current_ ? current_->next : nullptr;
+      return *this;
+    }
+
+    bool operator==(const Iterator& other) const {
+      return current_ == other.current_;
+    }
+    bool operator!=(const Iterator& other) const {
+      return current_ != other.current_;
+    }
+
+   private:
+    pointer current_;
+    pointer next_;
+  };
+  using iterator = Iterator</*is_const=*/false>;
+  using const_iterator = Iterator</*is_const=*/true>;
+
+  // Constructs a new LruCache that can hold at most max_elements
+  explicit LruCache(size_t max_elements);
+  ~LruCache() = default;
+
+  LruCache(const LruCache&) = delete;
+  LruCache& operator=(const LruCache&) = delete;
+
+  // Iterators
+  iterator begin() { return iterator{lru_head_}; }
+  iterator end() { return iterator{nullptr}; }
+  const_iterator begin() const { return const_iterator{lru_head_}; }
+  const_iterator end() const { return const_iterator{nullptr}; }
 
   // Adds the specified key/value pair into the cache, putting it at the head
   // of the LRU list.
@@ -96,6 +141,7 @@ class LruCache {
 
   // Returns the number of entries currently in the cache.
   size_t Size() const { return table_.size(); }
+  bool empty() const { return lru_head_ == nullptr; }
 
   bool HasKey(const Key& key) const { return table_.find(key) != table_.end(); }
 
@@ -106,6 +152,9 @@ class LruCache {
   // Returns the tail of LRU list
   const Element* Tail() const { return lru_tail_; }
   Element* MutableTail() const { return lru_tail_; }
+
+  // Expose the free list only for testing purposes.
+  const Element* FreeListForTesting() const { return free_list_; }
 
  private:
   // Allocates a new block containing next_block_size_ elements, updates
@@ -352,11 +401,8 @@ bool LruCache<Key, Value>::Erase(const Key& key) {
 template <typename Key, typename Value>
 void LruCache<Key, Value>::Clear() {
   table_.clear();
-  Element* e = lru_head_;
-  while (e != nullptr) {
-    Element* next = e->next;
-    PushFreeList(e);
-    e = next;
+  for (Element& e : *this) {
+    PushFreeList(&e);
   }
   lru_head_ = lru_tail_ = nullptr;
 }
