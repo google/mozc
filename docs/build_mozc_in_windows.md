@@ -68,7 +68,7 @@ In this step, additional build dependencies will be downloaded.
 
   * [Ninja 1.11.0](https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-win.zip)
   * [Qt 6.6.1](https://download.qt.io/archive/qt/6.6/6.6.1/submodules/qtbase-everywhere-src-6.6.1.tar.xz)
-  * [WiX 3.14.0.6526](https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip)
+  * [WiX 3.14](https://github.com/wixtoolset/wix3/releases/download/wix314rtm/wix314-binaries.zip)
   * [git submodules](../.gitmodules)
 
 You can skip this step if you would like to manually download these libraries.

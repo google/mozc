@@ -87,9 +87,9 @@ QT6 = ArchiveInfo(
 )
 
 WIX = ArchiveInfo(
-    url='https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip',
-    size=41223699,
-    sha256='4c89898df3bcab13e12f7ca54399c35ad273475ad2cb6284611d00ae2d063c2c',
+    url='https://github.com/wixtoolset/wix3/releases/download/wix314rtm/wix314-binaries.zip',
+    size=41282726,
+    sha256='13f067f38969faf163d93a804b48ea0576790a202c8f10291f2000f0e356e934',
 )
 
 NINJA_MAC = ArchiveInfo(
