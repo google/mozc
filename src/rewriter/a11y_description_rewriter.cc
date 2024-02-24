@@ -29,15 +29,20 @@
 
 #include "rewriter/a11y_description_rewriter.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
+#include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
+#include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 namespace {
@@ -226,10 +231,9 @@ int A11yDescriptionRewriter::capability(
 bool A11yDescriptionRewriter::Rewrite(const ConversionRequest &request,
                                       Segments *segments) const {
   bool modified = false;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
-    for (size_t j = 0; j < segment->candidates_size(); ++j) {
-      Segment::Candidate *candidate = segment->mutable_candidate(j);
+  for (Segment &segment : segments->conversion_segments()) {
+    for (size_t j = 0; j < segment.candidates_size(); ++j) {
+      Segment::Candidate *candidate = segment.mutable_candidate(j);
       AddA11yDescription(candidate);
       modified = true;
     }

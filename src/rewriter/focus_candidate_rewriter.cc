@@ -178,18 +178,17 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
 
     if (Util::IsOpenBracket(left_value, &right_value)) {
       int num_nest = 1;
-      for (size_t i = segment_index + 1; i < segments->segments_size(); ++i) {
-        Segment *target_right_seg = segments->mutable_segment(i);
-        if (target_right_seg == nullptr ||
-            target_right_seg->candidates_size() <= 0) {
+      for (Segment &target_right_seg :
+           segments->all().drop(segment_index + 1)) {
+        if (target_right_seg.candidates_size() <= 0) {
           LOG(WARNING) << "target right seg is not valid";
           return false;
         }
-        if (!IsValidSegment(*target_right_seg)) {
+        if (!IsValidSegment(target_right_seg)) {
           continue;
         }
         const std::string &target_right_value =
-            target_right_seg->candidate(0).content_value;
+            target_right_seg.candidate(0).content_value;
         absl::string_view tmp;
         if (Util::IsOpenBracket(target_right_value, &tmp)) {
           ++num_nest;
@@ -197,7 +196,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
           --num_nest;
         }
 
-        if (num_nest == 0 && RewriteCandidate(target_right_seg, right_value)) {
+        if (num_nest == 0 && RewriteCandidate(&target_right_seg, right_value)) {
           return true;
         }
       }

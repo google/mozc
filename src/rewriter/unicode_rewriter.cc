@@ -130,8 +130,8 @@ bool UnicodeRewriter::RewriteToUnicodeCharFormat(
 bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
     const ConversionRequest &request, Segments *segments) const {
   std::string key;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    key += segments->conversion_segment(i).key();
+  for (const Segment &segment : segments->conversion_segments()) {
+    key += segment.key();
   }
 
   if (!IsValidCodepointExpression(key)) {

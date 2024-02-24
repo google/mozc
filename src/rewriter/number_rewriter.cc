@@ -480,15 +480,15 @@ bool NumberRewriter::Rewrite(const ConversionRequest &request,
 
   bool modified = false;
 
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    modified |= RewriteOneSegment(request, i, segments);
+  for (Segment &segment : segments->conversion_segments()) {
+    modified |= RewriteOneSegment(request, &segment, segments);
   }
 
   return modified;
 }
 
 bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
-                                       size_t index, Segments *segments) const {
+                                       Segment *seg, Segments *segments) const {
   DCHECK(segments);
   // Radix conversion is done only for conversion mode.
   // Showing radix candidates is annoying for a user.
@@ -496,8 +496,6 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
       (segments->conversion_segments_size() == 1 &&
        request.request_type() == ConversionRequest::CONVERSION);
   const bool should_rarank = ShouldRerankCandidates(request, *segments);
-
-  Segment *seg = segments->mutable_conversion_segment(index);
 
   bool modified = false;
   std::vector<RewriteCandidateInfo> rewrite_candidate_infos;
@@ -638,9 +636,7 @@ void NumberRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
-    const Segment &segment = segments->segment(i);
+  for (const Segment &segment : segments->conversion_segments()) {
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &

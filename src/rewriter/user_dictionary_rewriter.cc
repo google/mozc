@@ -29,6 +29,8 @@
 
 #include "rewriter/user_dictionary_rewriter.h"
 
+#include <cstddef>
+
 #include "base/logging.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -44,16 +46,13 @@ bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
   DCHECK(segments);
 
   bool modified = false;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
-    DCHECK(segment);
-
+  for (Segment &segment : segments->conversion_segments()) {
     // final destination of the user dictionary candidate.
     int move_to_start = 1;
 
-    for (size_t move_from = 2; move_from < segment->candidates_size();
+    for (size_t move_from = 2; move_from < segment.candidates_size();
          ++move_from) {
-      if (!(segment->candidate(move_from).attributes &
+      if (!(segment.candidate(move_from).attributes &
             Segment::Candidate::USER_DICTIONARY)) {
         continue;
       }
@@ -62,7 +61,7 @@ bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
       // from [move_to_start .. move_from).
       int move_to = -1;
       for (int j = move_to_start; j < static_cast<int>(move_from); ++j) {
-        if (!(segment->candidate(j).attributes &
+        if (!(segment.candidate(j).attributes &
               Segment::Candidate::USER_DICTIONARY)) {
           move_to = j;
           break;
@@ -73,7 +72,7 @@ bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
       if (move_to == -1) {
         move_to_start = move_from + 1;
       } else {
-        segment->move_candidate(move_from, move_to);
+        segment.move_candidate(move_from, move_to);
         modified = true;
         move_to_start = move_to + 1;
       }

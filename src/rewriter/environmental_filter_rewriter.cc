@@ -399,13 +399,10 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
           request.request().additional_renderable_character_groups());
 
   bool modified = false;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
-    DCHECK(segment);
-
+  for (Segment &segment : segments->conversion_segments()) {
     // Meta candidate
-    for (size_t j = 0; j < segment->meta_candidates_size(); ++j) {
-      Segment::Candidate *candidate = segment->mutable_meta_candidate(j);
+    for (size_t j = 0; j < segment.meta_candidates_size(); ++j) {
+      Segment::Candidate *candidate = segment.mutable_meta_candidate(j);
       DCHECK(candidate);
       if (ShouldKeepCandidate(*candidate)) {
         continue;
@@ -414,11 +411,11 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
     }
 
     // Regular candidate.
-    const size_t candidates_size = segment->candidates_size();
+    const size_t candidates_size = segment.candidates_size();
 
     for (size_t j = 0; j < candidates_size; ++j) {
       const size_t reversed_j = candidates_size - j - 1;
-      Segment::Candidate *candidate = segment->mutable_candidate(reversed_j);
+      Segment::Candidate *candidate = segment.mutable_candidate(reversed_j);
       DCHECK(candidate);
 
       if (ShouldKeepCandidate(*candidate)) {
@@ -432,7 +429,7 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
 
       // Check acceptability of code points as a candidate.
       if (!CheckCodepointsAcceptable(codepoints)) {
-        segment->erase_candidate(reversed_j);
+        segment.erase_candidate(reversed_j);
         modified = true;
         continue;
       }
@@ -500,7 +497,7 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
             break;
         }
         if (found_nonrenderable) {
-          segment->erase_candidate(reversed_j);
+          segment.erase_candidate(reversed_j);
           modified = true;
           break;
         }

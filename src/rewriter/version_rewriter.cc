@@ -30,12 +30,12 @@
 #include "rewriter/version_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "base/const.h"
-#include "base/logging.h"
 #include "base/version.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -80,26 +80,23 @@ VersionRewriter::VersionRewriter(absl::string_view data_version) {
 bool VersionRewriter::Rewrite(const ConversionRequest &request,
                               Segments *segments) const {
   bool result = false;
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
-    Segment *seg = segments->mutable_segment(i);
-    DCHECK(seg);
-    const auto it = entries_.find(seg->key());
+  for (Segment &segment : segments->conversion_segments()) {
+    const auto it = entries_.find(segment.key());
     if (it != entries_.end()) {
-      for (size_t j = 0; j < seg->candidates_size(); ++j) {
+      for (size_t j = 0; j < segment.candidates_size(); ++j) {
         const VersionEntry &ent = it->second;
-        const Segment::Candidate &c = seg->candidate(static_cast<int>(j));
+        const Segment::Candidate &c = segment.candidate(static_cast<int>(j));
         if (c.value == ent.base_candidate) {
-          Segment::Candidate *new_cand = seg->insert_candidate(
-              std::min<int>(seg->candidates_size(), ent.rank));
+          Segment::Candidate *new_cand = segment.insert_candidate(
+              std::min<int>(segment.candidates_size(), ent.rank));
           if (new_cand != nullptr) {
             new_cand->lid = c.lid;
             new_cand->rid = c.rid;
             new_cand->cost = c.cost;
             new_cand->value = ent.output;
             new_cand->content_value = ent.output;
-            new_cand->key = seg->key();
-            new_cand->content_key = seg->key();
+            new_cand->key = segment.key();
+            new_cand->content_key = segment.key();
             // we don't learn version
             new_cand->attributes |= Segment::Candidate::NO_LEARNING;
             result = true;

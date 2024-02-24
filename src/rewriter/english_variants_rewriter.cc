@@ -212,11 +212,8 @@ int EnglishVariantsRewriter::capability(
 bool EnglishVariantsRewriter::Rewrite(const ConversionRequest &request,
                                       Segments *segments) const {
   bool modified = false;
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
-    Segment *seg = segments->mutable_segment(i);
-    DCHECK(seg);
-    modified |= ExpandEnglishVariantsWithSegment(seg);
+  for (Segment &segment : segments->conversion_segments()) {
+    modified |= ExpandEnglishVariantsWithSegment(&segment);
   }
 
   return modified;

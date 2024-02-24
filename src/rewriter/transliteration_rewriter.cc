@@ -29,6 +29,7 @@
 
 #include "rewriter/transliteration_rewriter.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <string>
@@ -73,8 +74,8 @@ bool IsComposerApplicable(const ConversionRequest &request,
   }
 
   std::string segments_key;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    segments_key.append(segments->conversion_segment(i).key());
+  for (const Segment &segment : segments->conversion_segments()) {
+    segments_key.append(segment.key());
   }
   if (conversion_query != segments_key) {
     DLOG(WARNING) << "composer seems invalid: composer_key " << conversion_query
@@ -261,10 +262,8 @@ bool TransliterationRewriter::FillT13nsFromComposer(
 
   bool modified = false;
   size_t composition_pos = 0;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
-    CHECK(segment);
-    const std::string &key = segment->key();
+  for (Segment &segment : segments->conversion_segments()) {
+    const std::string &key = segment.key();
     if (key.empty()) {
       continue;
     }
@@ -274,8 +273,8 @@ bool TransliterationRewriter::FillT13nsFromComposer(
                                               &t13ns);
     composition_pos += composition_len;
 
-    ModifyT13ns(request, *segment, &t13ns);
-    modified |= SetTransliterations(t13ns, key, segment);
+    ModifyT13ns(request, segment, &t13ns);
+    modified |= SetTransliterations(t13ns, key, &segment);
   }
   return modified;
 }
@@ -285,13 +284,11 @@ bool TransliterationRewriter::FillT13nsFromComposer(
 // ('n' or 'nn' for "ん", etc)
 bool TransliterationRewriter::FillT13nsFromKey(Segments *segments) const {
   bool modified = false;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
-    CHECK(segment);
-    if (segment->key().empty()) {
+  for (Segment &segment : segments->conversion_segments()) {
+    if (segment.key().empty()) {
       continue;
     }
-    const std::string &hiragana = segment->key();
+    const std::string &hiragana = segment.key();
     std::string full_katakana = japanese_util::HiraganaToKatakana(hiragana);
     std::string ascii = japanese_util::HiraganaToRomanji(hiragana);
     std::string half_ascii =
@@ -328,7 +325,7 @@ bool TransliterationRewriter::FillT13nsFromKey(Segments *segments) const {
     t13ns[transliteration::FULL_ASCII_CAPITALIZED] = full_ascii_capitalized;
 
     NormalizeT13ns(&t13ns);
-    modified |= SetTransliterations(t13ns, segment->key(), segment);
+    modified |= SetTransliterations(t13ns, segment.key(), &segment);
   }
   return modified;
 }

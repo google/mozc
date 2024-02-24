@@ -525,8 +525,7 @@ void VariantsRewriter::Finish(const ConversionRequest &request,
   }
 
   // save character form
-  for (int i = 0; i < segments->conversion_segments_size(); ++i) {
-    const Segment &segment = segments->conversion_segment(i);
+  for (const Segment &segment : segments->conversion_segments()) {
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &
@@ -593,11 +592,8 @@ bool VariantsRewriter::Rewrite(const ConversionRequest &request,
     type = EXPAND_VARIANT;
   }
 
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
-    Segment *seg = segments->mutable_segment(i);
-    DCHECK(seg);
-    modified |= RewriteSegment(type, seg);
+  for (Segment &segment : segments->conversion_segments()) {
+    modified |= RewriteSegment(type, &segment);
   }
 
   return modified;
