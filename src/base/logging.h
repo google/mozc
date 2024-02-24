@@ -30,335 +30,37 @@
 #ifndef MOZC_BASE_LOGGING_H_
 #define MOZC_BASE_LOGGING_H_
 
-#include <string>
+// These includes are kept for legacy reasons. Prefer including them directly,
+// unless you use DFATAL severity backported below.
+#include "absl/log/check.h"  // IWYU pragma: keep
+#include "absl/log/log.h"    // IWYU pragma: keep
 
-
-#include <iostream>
-#include <sstream>
-#include <type_traits>
-
-#include "absl/flags/declare.h"
-#include "absl/flags/flag.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
-
-ABSL_DECLARE_FLAG(bool, logtostderr);
-
-namespace mozc {
-
-enum LogSeverity {
-#ifdef __ANDROID__
-  // Defined in <android/log.h>
-  LOG_UNKNOWN = 0,  // ANDROID_LOG_UNKNOWN
-  LOG_DEFAULT = 1,  // ANDROID_LOG_DEFAULT
-  LOG_VERBOSE = 2,  // ANDROID_LOG_VERBOSE
-  LOG_DEBUG = 3,    // ANDROID_LOG_DEBUG
-  LOG_INFO = 4,     // ANDROID_LOG_INFO
-  LOG_WARNING = 5,  // ANDROID_LOG_WARN
-  LOG_ERROR = 6,    // ANDROID_LOG_ERROR
-  LOG_FATAL = 7,    // ANDROID_LOG_FATAL
-  LOG_SILENT = 8,   // ANDROID_LOG_SILENT
-  LOG_SEVERITY_SIZE = 9,
-#else  // __ANDROID__
-  LOG_INFO = 0,
-  LOG_WARNING = 1,
-  LOG_ERROR = 2,
-// Special hack for Windows build, where ERROR is defined as 0 in wingdi.h.
-#ifdef _WIN32
-  LOG_0 = LOG_ERROR,
-#endif  // _WIN32
-  LOG_FATAL = 3,
-  LOG_SEVERITY_SIZE = 4,
-#endif  // !__ANDROID__
-};
-
-// DFATAL is FATAL in debug mode, ERROR in normal mode
+// Note that abseil HEAD has ABSL_LTS_RELEASE_VERSION undefined.
+#if defined(ABSL_LTS_RELEASE_VERSION) && ABSL_LTS_RELEASE_VERSION < 20240116
+// Older version of abseil doesn't ship with DFATAL. This is a very hacky
+// backport that needs to be removed as soon as we migrate to Abseil LTS
+// 20240116.
 #ifdef DEBUG
-#define LOG_DFATAL LOG_FATAL
+#define ABSL_LOG_INTERNAL_CONDITION_DFATAL(type, condition) \
+  ABSL_LOG_INTERNAL_CONDITION_FATAL(type, condition)
+
+namespace absl {
+ABSL_NAMESPACE_BEGIN
+static constexpr absl::LogSeverity kLogDebugFatal = absl::LogSeverity::kFatal;
+ABSL_NAMESPACE_END
+}  // namespace absl
 #else  // DEBUG
-#define LOG_DFATAL LOG_ERROR
+#define ABSL_LOG_INTERNAL_CONDITION_DFATAL(type, condition) \
+  ABSL_LOG_INTERNAL_CONDITION_ERROR(type, condition)
+
+namespace absl {
+ABSL_NAMESPACE_BEGIN
+static constexpr absl::LogSeverity kLogDebugFatal = absl::LogSeverity::kError;
+ABSL_NAMESPACE_END
+}  // namespace absl
 #endif  // !DEBUG
+#endif  // ABSL_LTS_RELEASE_VERSION < 20240116
 
-class WorkingLogStream;
-class NullLogStream;
-
-class Logging {
- public:
-  Logging() = delete;
-  Logging(const Logging &) = delete;
-  Logging &operator=(const Logging &) = delete;
-  // Initializes log stream with the output file path and --logtostderr.
-  static void InitLogStream(const std::string &log_file_path);
-
-  // Closes the logging stream
-  static void CloseLogStream();
-
-  // Gets working log stream. The log message can be written to the stream.
-  // The stream must be finalized by FinalizeWorkingLogStream().
-  static WorkingLogStream &GetWorkingLogStream();
-
-  // Finalizes the working stream.
-  // - Appends std::endl to working stream.
-  // - Writes the content to real backing logging stream, which is initialized
-  //     by InitLogStream().
-  // - Deletes the working stream object.
-  static void FinalizeWorkingLogStream(LogSeverity, WorkingLogStream *);
-
-  // Gets NullLogStream for MOZC_NO_LOGGING mode
-  static NullLogStream &GetNullLogStream();
-
-  // Converts LogSeverity to the string name
-  static const char *GetLogSeverityName(LogSeverity severity);
-
-  // Returns "YYYY-MM-DD HH:MM:SS PID TID", e.g. "2008 11-16 19:40:21 100 20"
-  static std::string GetLogMessageHeader();
-
-  // Gets an escape sequence to colorize log messages on tty devices.
-  static const char *GetBeginColorEscapeSequence(LogSeverity severity);
-  static const char *GetEndColorEscapeSequence();
-
-  static void SetLogToStderr(bool log_to_stderr);
-};
-
-namespace logging_internal {
-
-// Based on
-// https://github.com/abseil/abseil-cpp/blob/master/absl/strings/internal/has_absl_stringify.h
-//
-// This can be removed once Abseil LTS supports `absl::HasAbslStringify`.
-template <typename T, typename = void>
-struct HasAbslStringify : std::false_type {};
-
-template <typename T>
-struct HasAbslStringify<
-    T, std::void_t<decltype(AbslStringify(std::declval<WorkingLogStream &>(),
-                                          std::declval<const T &>()))>>
-    : std::true_type {};
-
-}  // namespace logging_internal
-
-// WorkingLogStream is a std::ostringstream that also implements Abseil's Sink.
-class WorkingLogStream {
- public:
-  WorkingLogStream() = default;
-
-  // Sink methods.
-  // https://github.com/abseil/abseil-cpp/blob/master/absl/strings/internal/stringify_sink.h
-  void Append(size_t count, char ch);
-  void Append(absl::string_view v);
-  friend void AbslFormatFlush(WorkingLogStream *sink, absl::string_view v) {
-    sink->Append(v);
-  }
-
-  template <typename T,
-            std::enable_if_t<logging_internal::HasAbslStringify<T>::value,
-                             std::nullptr_t> = nullptr>
-  WorkingLogStream &operator<<(const T &v) {
-    AbslStringify(*this, v);
-    return *this;
-  }
-  template <typename T,
-            std::enable_if_t<!logging_internal::HasAbslStringify<T>::value,
-                             std::nullptr_t> = nullptr>
-  WorkingLogStream &operator<<(const T &v) {
-    os_ << v;
-    return *this;
-  }
-  WorkingLogStream &operator<<(std::ostream &(*func)(std::ostream &)) {
-    os_ << func;
-    return *this;
-  }
-
-  std::string str() const { return os_.str(); }
-
- private:
-  std::ostringstream os_;
-};
-
-// Finalizer to flush/delete working log stream.
-// Finalizer takes woking log stream instance through operator&()
-// and finalizes it in destructor.
-class LogFinalizer {
- public:
-  explicit LogFinalizer(LogSeverity severity);
-  ~LogFinalizer();
-
-  void operator&(WorkingLogStream &);
-
- private:
-  const LogSeverity severity_;
-  WorkingLogStream *working_stream_;
-};
-
-// When using NullLogStream, all debug message will be stripped
-class NullLogStream {
- public:
-  template <typename T>
-  NullLogStream &operator<<(const T &value) {
-    return *this;
-  }
-  NullLogStream &operator<<(std::ostream &(*pfunc)(std::ostream &)) {
-    return *this;
-  }
-};
-
-class NullLogFinalizer {
- public:
-  explicit NullLogFinalizer(LogSeverity severity) : severity_(severity) {}
-
-  ~NullLogFinalizer() {
-    if (severity_ >= LOG_FATAL) {
-      OnFatal();
-    }
-  }
-
-  void operator&(NullLogStream &) {}
-
- private:
-  static void OnFatal();
-
-  const LogSeverity severity_;
-};
-
-}  // namespace mozc
-
-// ad-hoc porting of google-glog
-#ifdef MOZC_NO_LOGGING  // don't use logging feature.
-
-// in release binary, we don't want to evaluate the outputs for logging.
-// LOG(FATAL) is an exception.
-#define LOG(severity)                                  \
-  (mozc::LOG_##severity < mozc::LOG_FATAL)             \
-      ? (void)0                                        \
-      : mozc::NullLogFinalizer(mozc::LOG_##severity) & \
-            mozc::Logging::GetNullLogStream()
-
-// To suppress the "statement has no effect" waring, (void) is
-// inserted.  This technique is suggested by the gcc manual
-// -Wunused-variable section.
-#define LOG_IF(severity, condition)                        \
-  (mozc::LOG_##severity < mozc::LOG_FATAL || !(condition)) \
-      ? (void)0                                            \
-      : mozc::NullLogFinalizer(mozc::LOG_##severity) &     \
-            mozc::Logging::GetNullLogStream()
-
-#define CHECK(condition)                                  \
-  (condition) ? (void)0                                   \
-              : mozc::NullLogFinalizer(mozc::LOG_FATAL) & \
-                    mozc::Logging::GetNullLogStream()
-
-#else  // MOZC_NO_LOGGING
-
-#define LOG(severity)                                                          \
-  mozc::LogFinalizer(mozc::LOG_##severity) &                                   \
-      mozc::Logging::GetWorkingLogStream()                                     \
-          << mozc::Logging::GetLogMessageHeader() << " " << __FILE__ << "("    \
-          << __LINE__ << ") "                                                  \
-          << mozc::Logging::GetBeginColorEscapeSequence(mozc::LOG_##severity)  \
-          << "LOG(" << mozc::Logging::GetLogSeverityName(mozc::LOG_##severity) \
-          << ")" << mozc::Logging::GetEndColorEscapeSequence() << " "
-
-#define LOG_IF(severity, condition)                                          \
-  (!(condition))                                                             \
-      ? (void)0                                                              \
-      : mozc::LogFinalizer(mozc::LOG_##severity) &                           \
-            mozc::Logging::GetWorkingLogStream()                             \
-                << mozc::Logging::GetLogMessageHeader() << " " << __FILE__   \
-                << "(" << __LINE__ << ") "                                   \
-                << mozc::Logging::GetBeginColorEscapeSequence(               \
-                       mozc::LOG_##severity)                                 \
-                << "LOG("                                                    \
-                << mozc::Logging::GetLogSeverityName(mozc::LOG_##severity)   \
-                << ")" << mozc::Logging::GetEndColorEscapeSequence() << " [" \
-                << #condition << "] "
-
-#define CHECK(condition)                                                       \
-  (condition)                                                                  \
-      ? (void)0                                                                \
-      : mozc::LogFinalizer(mozc::LOG_FATAL) &                                  \
-            mozc::Logging::GetWorkingLogStream()                               \
-                << mozc::Logging::GetLogMessageHeader() << " " << __FILE__     \
-                << "(" << __LINE__ << ") "                                     \
-                << mozc::Logging::GetBeginColorEscapeSequence(mozc::LOG_FATAL) \
-                << "CHECK" << mozc::Logging::GetEndColorEscapeSequence()       \
-                << " [" << #condition << "] "
-#endif  // !MOZC_NO_LOGGING
-
-#define CHECK_EQ(a, b) CHECK((a) == (b))
-#define CHECK_NE(a, b) CHECK((a) != (b))
-#define CHECK_GE(a, b) CHECK((a) >= (b))
-#define CHECK_LE(a, b) CHECK((a) <= (b))
-#define CHECK_GT(a, b) CHECK((a) > (b))
-#define CHECK_LT(a, b) CHECK((a) < (b))
-
-// Debug build
-#if defined(DEBUG) || defined(_DEBUG)
-
-#define DLOG(severity) LOG(severity)
-#define DLOG_IF(severity, condition) LOG_IF(severity, condition)
-#define DCHECK(condition) CHECK(condition)
-#define DCHECK_EQ(a, b) CHECK_EQ(a, b)
-#define DCHECK_NE(a, b) CHECK_NE(a, b)
-#define DCHECK_GE(a, b) CHECK_GE(a, b)
-#define DCHECK_LE(a, b) CHECK_LE(a, b)
-#define DCHECK_GT(a, b) CHECK_GT(a, b)
-#define DCHECK_LT(a, b) CHECK_LT(a, b)
-
-#else  // opt build
-
-#define DLOG(severity)                           \
-  mozc::NullLogFinalizer(mozc::LOG_##severity) & \
-      mozc::Logging::GetNullLogStream()
-
-#define DLOG_IF(severity, condition)                                      \
-  (true || !(condition)) ? (void)0                                        \
-                         : mozc::NullLogFinalizer(mozc::LOG_##severity) & \
-                               mozc::Logging::GetNullLogStream()
-
-#define DCHECK(condition) \
-  while (false) CHECK(condition)
-#define DCHECK_EQ(a, b) \
-  while (false) CHECK_EQ(a, b)
-#define DCHECK_NE(a, b) \
-  while (false) CHECK_NE(a, b)
-#define DCHECK_GE(a, b) \
-  while (false) CHECK_GE(a, b)
-#define DCHECK_LE(a, b) \
-  while (false) CHECK_LE(a, b)
-#define DCHECK_GT(a, b) \
-  while (false) CHECK_GT(a, b)
-#define DCHECK_LT(a, b) \
-  while (false) CHECK_LT(a, b)
-
-#endif  // opt build
-
-#ifndef MOZC_LOG_PROTOBUF
 #define MOZC_LOG_PROTOBUF(message) ((message).DebugString())
-#endif  // MOZC_LOG_PROTOBUF
-
-// CHECK_OK and DCHECK_OK
-namespace mozc::status_internal {
-
-template <typename T>
-inline const absl::Status &AsStatus(const absl::StatusOr<T> &status_or) {
-  return status_or.status();
-}
-
-inline const absl::Status &AsStatus(const absl::Status &status) {
-  return status;
-}
-
-}  // namespace mozc::status_internal
-
-#define CHECK_OK(val) \
-  CHECK_EQ(absl::OkStatus(), ::mozc::status_internal::AsStatus(val))
-#define DCHECK_OK(val) \
-  DCHECK_EQ(absl::OkStatus(), ::mozc::status_internal::AsStatus(val))
-
-
-#ifndef MOZC_LOG_PROTOBUF
-#define MOZC_LOG_PROTOBUF(message) (message)
-#endif  // !MOZC_LOG_PROTOBUF
 
 #endif  // MOZC_BASE_LOGGING_H_

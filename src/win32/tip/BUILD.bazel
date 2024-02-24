@@ -140,6 +140,7 @@ mozc_cc_library(
         ":tip_ui_handler",
         "//base:const",
         "//base:file_util",
+        "//base:log_file",
         "//base:logging",
         "//base:process",
         "//base:system_util",

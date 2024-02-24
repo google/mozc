@@ -202,7 +202,6 @@ Java_com_google_android_apps_inputmethod_libs_mozc_session_MozcJNI_initialize(
     return false;
   }
 
-  mozc::Logging::InitLogStream("");  // Android doesn't stream log to a file.
   return true;
 }
 

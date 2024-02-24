@@ -128,12 +128,11 @@ bazel test base:util_test --config oss_linux -c dbg
 ### Output logs to stderr
 
 ```
-bazel test base:util_test --config oss_linux --test_arg=--logtostderr --test_output=all
+bazel test base:util_test --config oss_linux --test_arg=--stderrthreshold=0 --test_output=all
 ```
 
-* The `--test_arg=--logtostderr --test_output=all` flags shows the output of
-unitests to stderr.
-
+*   The `--test_arg=--stderrthreshold=0 --test_output=all` flags shows the
+    output of unitests to stderr.
 
 ## Build Mozc on other Linux environment
 

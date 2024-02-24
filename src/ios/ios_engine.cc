@@ -154,13 +154,6 @@ IosEngine::InputConfigTuple IosEngine::GetInputConfigTupleFromLayoutName(
           {Request::QWERTY_MOBILE_TO_HALFWIDTHASCII, commands::HALF_ASCII}};
 }
 
-void IosEngine::InitMozc() {
-  // Output logs to stderr so that they are displayed in XCode's console.
-  // This must be set before Logging::InitLogStream().
-  absl::SetFlag(&FLAGS_logtostderr, true);
-  Logging::InitLogStream("MOZC_IOS_ENGINE");
-}
-
 IosEngine::IosEngine(const std::string &data_file_path)
     : session_handler_(CreateSessionHandler(data_file_path)),
       session_id_(0),

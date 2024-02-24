@@ -47,6 +47,7 @@
 #include "absl/functional/any_invocable.h"
 #include "base/const.h"
 #include "base/file_util.h"
+#include "base/log_file.h"
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/system_util.h"
@@ -509,7 +510,7 @@ class TipTextServiceImpl
     StorePointerForCurrentThread(this);
 
     HRESULT result = E_UNEXPECTED;
-    Logging::InitLogStream(
+    RegisterLogFileSink(
         FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), kLogFileName));
 
     EnsureKanaLockUnlocked();

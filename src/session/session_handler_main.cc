@@ -30,7 +30,7 @@
 // session_handler_main.cc
 //
 // Usage:
-// session_handler_main --logtostderr --input input.txt --profile /tmp/mozc
+// session_handler_main --input input.txt --profile /tmp/mozc
 //                      --dictionary oss --engine desktop
 //
 /* Example of input.txt (tsv format)
