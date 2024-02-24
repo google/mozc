@@ -508,6 +508,9 @@ class Segments final {
     Iterator operator+(difference_type diff) const {
       return Iterator{iterator_ + diff};
     }
+    Iterator operator-(difference_type diff) const {
+      return Iterator{iterator_ - diff};
+    }
     Iterator &operator+=(difference_type diff) {
       iterator_ += diff;
       return *this;
@@ -541,6 +544,7 @@ class Segments final {
   class Range {
    public:
     using difference_type = typename Iterator::difference_type;
+    using reference = typename Iterator::reference;
 
     Range(const Iterator &begin, const Iterator &end)
         : begin_(begin), end_(end) {}
@@ -549,6 +553,21 @@ class Segments final {
     Iterator end() const { return end_; }
 
     difference_type size() const { return end_ - begin_; }
+    bool empty() const { return begin_ == end_; }
+
+    reference operator[](difference_type index) const {
+      CHECK_GE(index, 0);
+      CHECK_LT(index, size());
+      return *(begin_ + index);
+    }
+    reference front() const {
+      CHECK(!empty());
+      return *begin_;
+    }
+    reference back() const {
+      CHECK(!empty());
+      return *(end_ - 1);
+    }
 
     // Skip first `count` elements, similar to `std::ranges::views::drop`.
     Range drop(difference_type count) const {
@@ -564,6 +583,11 @@ class Segments final {
     Range take_last(difference_type count) const {
       CHECK_GE(count, 0);
       return drop(std::max<difference_type>(0, size() - count));
+    }
+    // Same as `drop(drop_count).take(count)`, providing better readability.
+    // `std::ranges::subrange` may not provide the same argument types though.
+    Range subrange(difference_type index, difference_type count) const {
+      return drop(index).take(count);
     }
 
    private:
@@ -594,6 +618,8 @@ class Segments final {
     return Range<Iterator>(begin, end);
   }
 
+  Range<iterator> all() { return make_range(begin(), end()); }
+  Range<const_iterator> all() const { return make_range(begin(), end()); }
   Range<iterator> history_segments();
   Range<const_iterator> history_segments() const;
   Range<iterator> conversion_segments();
