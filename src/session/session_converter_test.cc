@@ -43,8 +43,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -255,21 +255,19 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
   static void FillT13Ns(Segments *segments,
                         const composer::Composer *composer) {
     size_t composition_pos = 0;
-    for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-      Segment *segment = segments->mutable_conversion_segment(i);
-      CHECK(segment);
-      const size_t composition_len = Util::CharsLen(segment->key());
+    for (Segment &segment : segments->conversion_segments()) {
+      const size_t composition_len = Util::CharsLen(segment.key());
       std::vector<std::string> t13ns;
       composer->GetSubTransliterations(composition_pos, composition_len,
                                        &t13ns);
       std::vector<Segment::Candidate> *meta_candidates =
-          segment->mutable_meta_candidates();
+          segment.mutable_meta_candidates();
       meta_candidates->resize(transliteration::NUM_T13N_TYPES);
       for (size_t j = 0; j < transliteration::NUM_T13N_TYPES; ++j) {
         meta_candidates->at(j).value = t13ns[j];
         meta_candidates->at(j).content_value = t13ns[j];
-        meta_candidates->at(j).key = segment->key();
-        meta_candidates->at(j).content_key = segment->key();
+        meta_candidates->at(j).key = segment.key();
+        meta_candidates->at(j).content_key = segment.key();
       }
       composition_pos += composition_len;
     }
@@ -341,9 +339,8 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
     GetSegments(rhs, &segments_rhs);
     EXPECT_EQ(segments_lhs.segments_size(), segments_rhs.segments_size());
     for (size_t i = 0; i < segments_lhs.segments_size(); ++i) {
-      Segment segment_lhs, segment_rhs;
-      segment_lhs = segments_lhs.segment(i);
-      segment_rhs = segments_rhs.segment(i);
+      const Segment &segment_lhs = segments_lhs.segment(i);
+      const Segment &segment_rhs = segments_rhs.segment(i);
       EXPECT_EQ(segment_lhs.key(), segment_rhs.key()) << " i=" << i;
       EXPECT_EQ(segment_lhs.segment_type(), segment_rhs.segment_type())
           << " i=" << i;
@@ -460,7 +457,7 @@ TEST_F(SessionConverterTest, Convert) {
   EXPECT_EQ(conversion.segment(0).value(), kChars_Aiueo);
   EXPECT_EQ(conversion.segment(0).key(), kChars_Aiueo);
 
-  // Converter should be active before submittion
+  // Converter should be active before submission
   EXPECT_TRUE(converter.IsActive());
   EXPECT_FALSE(IsCandidateListVisible(converter));
 
@@ -478,7 +475,7 @@ TEST_F(SessionConverterTest, Convert) {
   EXPECT_EQ(result.value(), kChars_Aiueo);
   EXPECT_EQ(result.key(), kChars_Aiueo);
 
-  // Converter should be inactive after submittion
+  // Converter should be inactive after submission
   EXPECT_FALSE(converter.IsActive());
   EXPECT_FALSE(IsCandidateListVisible(converter));
 
@@ -1721,7 +1718,7 @@ TEST_F(SessionConverterTest, ClearSegmentsBeforeSuggest) {
   EXPECT_TRUE(converter.Suggest(*composer_));
   Mock::VerifyAndClearExpectations(&mock_converter);
 
-  // Then, call Suggest() again. It should be called with the brandnew segments.
+  // Then, call Suggest() again. It should be called with brand new segments.
   Segments empty;
   empty.set_max_history_segments_size(
       converter.conversion_preferences().max_history_size);
@@ -3633,9 +3630,8 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (size_t i = 0; i < segments.segments_size(); ++i) {
-      Segment *segment = segments.mutable_segment(i);
-      segment->set_segment_type(Segment::HISTORY);
+    for (Segment &segment : segments) {
+      segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
     converter.OnStartComposition(Context::default_instance());
@@ -3649,9 +3645,8 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (size_t i = 0; i < segments.segments_size(); ++i) {
-      Segment *segment = segments.mutable_segment(i);
-      segment->set_segment_type(Segment::HISTORY);
+    for (Segment &segment : segments) {
+      segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
     Context context;
@@ -3667,9 +3662,8 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (size_t i = 0; i < segments.segments_size(); ++i) {
-      Segment *segment = segments.mutable_segment(i);
-      segment->set_segment_type(Segment::HISTORY);
+    for (Segment &segment : segments) {
+      segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
     Context context;
@@ -3687,9 +3681,8 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (size_t i = 0; i < segments.segments_size(); ++i) {
-      Segment *segment = segments.mutable_segment(i);
-      segment->set_segment_type(Segment::HISTORY);
+    for (Segment &segment : segments) {
+      segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
     Context context;
@@ -3704,9 +3697,8 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
-    for (size_t i = 0; i < segments.segments_size(); ++i) {
-      Segment *segment = segments.mutable_segment(i);
-      segment->set_segment_type(Segment::HISTORY);
+    for (Segment &segment : segments) {
+      segment.set_segment_type(Segment::HISTORY);
     }
     SetSegments(segments, &converter);
     Context context;
@@ -3753,7 +3745,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
     converter.OnStartComposition(context);
     EXPECT_THAT(GetSegments(converter), EqualsSegments(mock_result));
 
-    // Increment the revesion. Since the history segments for kKey was already
+    // Increment the revision. Since the history segments for kKey was already
     // constructed, ReconstructHistory should not be called.
     context.set_revision(1);
     context.set_preceding_text(kKey);
@@ -3775,7 +3767,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
     converter.OnStartComposition(context);
     EXPECT_THAT(GetSegments(converter), EqualsSegments(mock_result));
 
-    // Revesion is not present but, since the history segments for kKey was
+    // Revision is not present but, since the history segments for kKey was
     // already constructed, ReconstructHistory should not be called.
     context.set_preceding_text(kKey);
     converter.OnStartComposition(context);
