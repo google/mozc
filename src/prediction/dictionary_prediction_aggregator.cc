@@ -539,17 +539,6 @@ class DictionaryPredictionAggregator::HandwritingLookupCallback
 DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const engine::Modules &modules, const ConverterInterface *converter,
     const ImmutableConverterInterface *immutable_converter)
-    : DictionaryPredictionAggregator(
-          modules, converter, immutable_converter,
-          std::make_unique<SingleKanjiPredictionAggregator>(
-              modules.GetDataManager())) {
-}
-
-DictionaryPredictionAggregator::DictionaryPredictionAggregator(
-    const engine::Modules &modules, const ConverterInterface *converter,
-    const ImmutableConverterInterface *immutable_converter,
-    std::unique_ptr<PredictionAggregatorInterface>
-        single_kanji_prediction_aggregator)
     : modules_(modules),
       converter_(converter),
       immutable_converter_(immutable_converter),
@@ -560,9 +549,7 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       kanji_number_id_(modules.GetPosMatcher()->GetKanjiNumberId()),
       zip_code_id_(modules.GetPosMatcher()->GetZipcodeId()),
       number_id_(modules.GetPosMatcher()->GetNumberId()),
-      unknown_id_(modules.GetPosMatcher()->GetUnknownId()),
-      single_kanji_prediction_aggregator_(
-          std::move(single_kanji_prediction_aggregator)) {
+      unknown_id_(modules.GetPosMatcher()->GetUnknownId()) {
   absl::string_view zero_query_token_array_data;
   absl::string_view zero_query_string_array_data;
   absl::string_view zero_query_number_token_array_data;
@@ -575,6 +562,7 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
                         zero_query_string_array_data);
   zero_query_number_dict_.Init(zero_query_number_token_array_data,
                                zero_query_number_string_array_data);
+
 }
 
 std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
@@ -735,8 +723,8 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     // (i.e., Desktop, or Hardware Keyboard in Mobile), since they contain
     // partial results.
     const std::vector<Result> single_kanji_results =
-        single_kanji_prediction_aggregator_->AggregateResults(request,
-                                                              segments);
+        modules_.GetSingleKanjiPredictionAggregator()->AggregateResults(
+            request, segments);
     if (!single_kanji_results.empty()) {
       results->insert(results->end(), single_kanji_results.begin(),
                       single_kanji_results.end());

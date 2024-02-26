@@ -54,6 +54,7 @@
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
 #include "prediction/rescorer_interface.h"
+#include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/suggestion_filter.h"
 
 using ::mozc::dictionary::DictionaryImpl;
@@ -151,6 +152,13 @@ absl::Status Modules::Init(
     suggestion_filter_ = *std::move(status_or_suggestion_filter);
   }
 
+  if (!single_kanji_prediction_aggregator_) {
+    single_kanji_prediction_aggregator_ =
+        std::make_unique<prediction::SingleKanjiPredictionAggregator>(
+            *data_manager_);
+    RETURN_IF_NULL(single_kanji_prediction_aggregator_);
+  }
+
 
     initialized_ = true;
     return absl::Status();
@@ -185,6 +193,14 @@ void Modules::PresetDictionary(
     std::unique_ptr<dictionary::DictionaryInterface> dictionary) {
   DCHECK(!initialized_) << "Module is already initialized";
   dictionary_ = std::move(dictionary);
+}
+
+void Modules::PresetSingleKanjiPredictionAggregator(
+    std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
+        single_kanji_prediction_aggregator) {
+  DCHECK(!initialized_) << "Module is already initialized";
+  single_kanji_prediction_aggregator_ =
+      std::move(single_kanji_prediction_aggregator);
 }
 
 void Modules::PresetRescorer(
