@@ -51,7 +51,6 @@
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "data_manager/data_manager_interface.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -198,11 +197,8 @@ void SessionHandler::UpdateSessions(const config::Config &config,
 
   config_ = std::make_unique<config::Config>(config);
   request_ = std::make_unique<commands::Request>(request);
-  const DataManagerInterface *data_manager = engine_->GetDataManager();
   const composer::Table *table = nullptr;
-  if (data_manager != nullptr) {
-    table = table_manager_->GetTable(*request_, *config_, *data_manager);
-  }
+  table = table_manager_->GetTable(*request_, *config_);
 
   if (!keymap::KeyMapManager::IsSameKeyMapManagerApplicable(*prev_config,
                                                             *config_)) {

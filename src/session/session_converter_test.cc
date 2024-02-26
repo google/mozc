@@ -112,8 +112,7 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
     request_ = std::make_unique<Request>();
 
     table_ = std::make_unique<composer::Table>();
-    table_->InitializeWithRequestAndConfig(*request_, *config_,
-                                           mock_data_manager_);
+    table_->InitializeWithRequestAndConfig(*request_, *config_);
     composer_ = std::make_unique<composer::Composer>(
         table_.get(), request_.get(), config_.get());
   }

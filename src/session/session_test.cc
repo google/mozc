@@ -526,7 +526,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
     session->SetRequest(&request);
     table_ = std::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+        request, config::ConfigHandler::DefaultConfig());
     session->SetTable(table_.get());
   }
 
@@ -8417,8 +8417,8 @@ TEST_F(SessionTest, Issue4437420) {
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(&request);
   auto table = std::make_unique<composer::Table>();
-  table->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+  table->InitializeWithRequestAndConfig(request,
+                                        config::ConfigHandler::DefaultConfig());
   session.SetTable(table.get());
   // Type "2*" to produce "A".
   SetSendKeyCommand("2", &command);
@@ -8437,8 +8437,8 @@ TEST_F(SessionTest, Issue4437420) {
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(&request);
   table = std::make_unique<composer::Table>();
-  table->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+  table->InitializeWithRequestAndConfig(request,
+                                        config::ConfigHandler::DefaultConfig());
   session.SetTable(table.get());
   // Type "2" to produce "Aa".
   SetSendKeyCommand("2", &command);
@@ -8502,7 +8502,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
 
     // Type "2" to produce "a".
@@ -8547,7 +8547,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
     // Type "33{<}{<}" to produce "さ"->"し"->"さ"->"そ".
     SetSendKeyCommand("3", &command);
@@ -8589,7 +8589,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
     // Type "3*{<}*{<}", and composition should change
     // "さ"->"ざ"->(No change)->"さ"->(No change).
@@ -8637,7 +8637,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
     // Type "{<}" and do nothing
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
@@ -8718,7 +8718,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetRequest(&request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
 
     // commit "あ" to push UNDO stack
@@ -8770,7 +8770,7 @@ TEST_F(SessionTest, DedupAfterUndo) {
 
     composer::Table table;
     table.InitializeWithRequestAndConfig(
-        request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+        request, config::ConfigHandler::DefaultConfig());
     session.SetTable(&table);
 
     // Type "!" to produce "！".
@@ -9149,8 +9149,8 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
   session.SetRequest(&request);
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
+  table.InitializeWithRequestAndConfig(request,
+                                       config::ConfigHandler::DefaultConfig());
   session.SetTable(&table);
 
   SwitchInputFieldType(commands::Context::PASSWORD, &session);

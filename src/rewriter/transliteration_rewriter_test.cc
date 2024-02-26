@@ -147,8 +147,7 @@ TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
       CreateTransliterationRewriter());
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(&table, &default_request(), &default_config());
   SetAkann(&composer);
 
@@ -195,8 +194,7 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
       CreateTransliterationRewriter());
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(&table, &default_request(), &default_config());
   InsertASCIISequence("ssh", &composer);
 
@@ -231,8 +229,7 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
       CreateTransliterationRewriter());
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(&table, &default_request(), &default_config());
 
   // Set kamabokoinbou to composer.
@@ -273,8 +270,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
       CreateTransliterationRewriter());
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(&table, &default_request(), &default_config());
 
   // Set kan to composer.
@@ -319,8 +315,8 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
       CreateTransliterationRewriter());
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(default_request(), default_config());
+
   composer::Composer composer(&table, &default_request(), &default_config());
   SetAkann(&composer);
 
@@ -435,8 +431,7 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
       CreateTransliterationRewriter());
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(&table, &default_request(), &default_config());
   InsertASCIISequence("a", &composer);
 
@@ -462,8 +457,7 @@ TEST_F(TransliterationRewriterTest, NoRewriteTest) {
       CreateTransliterationRewriter());
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(default_request(), default_config());
 
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -501,8 +495,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
   request.set_special_romanji_table(commands::Request::TWELVE_KEYS_TO_HIRAGANA);
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(request, default_config());
   composer::Composer composer(&table, &request, &default_config());
 
   {
@@ -549,8 +542,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
   request.set_special_romanji_table(commands::Request::TWELVE_KEYS_TO_HIRAGANA);
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(request, default_config());
   composer::Composer composer(&table, &request, &default_config());
 
   {
@@ -602,8 +594,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
       commands::Request::TOGGLE_FLICK_TO_HIRAGANA);
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(request, default_config());
   composer::Composer composer(&table, &request, &default_config());
 
   {
@@ -652,8 +643,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
 
   const std::string kShi = "し";
   composer::Table table;
-  table.InitializeWithRequestAndConfig(client_request, default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(client_request, default_config());
 
   {
     composer::Composer composer(&table, &client_request, &default_config());
@@ -698,8 +688,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
   request.set_special_romanji_table(commands::Request::GODAN_TO_HIRAGANA);
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(request, default_config());
   composer::Composer composer(&table, &request, &default_config());
   {
     InsertASCIISequence("<'de", &composer);
@@ -748,8 +737,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
   request.set_special_romanji_table(commands::Request::GODAN_TO_HIRAGANA);
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(request, default_config());
 
   // Expected t13n of Godan keyboard.
   std::vector<const char *> keycode_to_t13n_map(
@@ -822,8 +810,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
   const std::string kXtsu = "っ";
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(client_request, default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(client_request, default_config());
   {
     composer::Composer composer(&table, &client_request, &default_config());
 
@@ -852,8 +839,7 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
   const std::string kXtsu = "っ";
 
   composer::Table table;
-  table.InitializeWithRequestAndConfig(client_request, default_config(),
-                                       mock_data_manager_);
+  table.InitializeWithRequestAndConfig(client_request, default_config());
   {
     composer::Composer composer(&table, &client_request, &default_config());
 

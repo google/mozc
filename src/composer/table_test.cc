@@ -151,8 +151,8 @@ TEST_F(TableTest, Punctuations) {
     config::Config config;
     config.set_punctuation_method(test_case.method);
     Table table;
-    ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config,
-                                                     mock_data_manager_));
+    ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config));
+
     const Entry *entry = table.LookUp(test_case.input);
     EXPECT_NE(entry, nullptr) << "Failed index = " << index;
     if (entry) {
@@ -188,8 +188,8 @@ TEST_F(TableTest, Symbols) {
     config::Config config;
     config.set_symbol_method(test_case.method);
     Table table;
-    ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config,
-                                                     mock_data_manager_));
+    ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config));
+
     const Entry *entry = table.LookUp(test_case.input);
     EXPECT_NE(entry, nullptr) << "Failed index = " << index;
     if (entry) {
@@ -205,8 +205,7 @@ TEST_F(TableTest, KanaSuppressed) {
   commands::Request request;
 
   Table table;
-  ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config_,
-                                                   mock_data_manager_));
+  ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config_));
 
   const Entry *entry = table.LookUp("a");
   ASSERT_NE(entry, nullptr);
@@ -217,8 +216,8 @@ TEST_F(TableTest, KanaSuppressed) {
 TEST_F(TableTest, KanaCombination) {
   Table table;
   commands::Request request;
-  ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config_,
-                                                   mock_data_manager_));
+  ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config_));
+
   const Entry *entry = table.LookUp("か゛");
   ASSERT_NE(entry, nullptr);
   EXPECT_EQ(entry->result(), "が");
@@ -355,7 +354,7 @@ TEST_F(TableTest, CustomPunctuationsAndSymbols) {
 
   Table table;
   commands::Request request;
-  table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+  table.InitializeWithRequestAndConfig(request, config_);
 
   const Entry *entry = nullptr;
   entry = table.LookUp("mozc");
@@ -459,36 +458,36 @@ TEST_F(TableTest, CaseSensitivity) {
   commands::Request request;
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
     EXPECT_FALSE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("", "", "");
     EXPECT_FALSE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("a", "", "");
     EXPECT_FALSE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("A", "", "");
     EXPECT_TRUE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("a{A}a", "", "");
     EXPECT_FALSE(table.case_sensitive());
   }
   {
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
     table.AddRule("A{A}A", "", "");
     EXPECT_TRUE(table.case_sensitive());
   }
@@ -504,7 +503,7 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
   // config::Config::OFF
   {
     config_.set_shift_key_mode_switch(config::Config::OFF);
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     table.AddRule("a", "[a]", "");
     table.AddRule("A", "[A]", "");
@@ -544,7 +543,7 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
   // config::Config::ASCII_INPUT_MODE
   {
     config_.set_shift_key_mode_switch(config::Config::ASCII_INPUT_MODE);
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     table.AddRule("a", "[a]", "");
     table.AddRule("A", "[A]", "");
@@ -584,7 +583,7 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
   // config::Config::KATAKANA_INPUT_MODE
   {
     config_.set_shift_key_mode_switch(config::Config::KATAKANA_INPUT_MODE);
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     table.AddRule("a", "[a]", "");
     table.AddRule("A", "[A]", "");
@@ -628,7 +627,7 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
 // This feature was implemented as b/2910223 as per following request.
 // http://www.google.com/support/forum/p/ime/thread?tid=4ea9aed4ac8a2ba6&hl=ja
 //
-// The following test checks if a case-sensitive and a case-inensitive roman
+// The following test checks if a case-sensitive and a case-insensitive roman
 // table enables and disables this "case-sensitive mode", respectively.
 TEST_F(TableTest, AutomaticCaseSensitiveDetection) {
   constexpr absl::string_view kCaseInsensitiveRomanTable = {
@@ -649,8 +648,8 @@ TEST_F(TableTest, AutomaticCaseSensitiveDetection) {
     EXPECT_FALSE(table.case_sensitive())
         << "case-sensitive mode should be desabled by default.";
     // Load a custom config with case-sensitive custom roman table.
-    ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config,
-                                                     mock_data_manager_));
+    ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config));
+
     EXPECT_TRUE(table.case_sensitive())
         << "Case sensitive roman table should enable case-sensitive mode.";
     // Explicitly disable case-sensitive mode.
@@ -663,8 +662,8 @@ TEST_F(TableTest, AutomaticCaseSensitiveDetection) {
     // Load a custom config with case-insensitive custom roman table.
     config::Config config(config::ConfigHandler::DefaultConfig());
     config.set_custom_roman_table(kCaseInsensitiveRomanTable);
-    ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config,
-                                                     mock_data_manager_));
+    ASSERT_TRUE(table.InitializeWithRequestAndConfig(request, config));
+
     EXPECT_FALSE(table.case_sensitive())
         << "Case insensitive roman table should disable case-sensitive mode.";
     // Explicitly enable case-sensitive mode.
@@ -683,7 +682,7 @@ TEST_F(TableTest, MobileMode) {
     request.set_special_romanji_table(
         mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA);
     mozc::composer::Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
     {
       const mozc::composer::Entry *entry = nullptr;
       size_t key_length = 0;
@@ -715,7 +714,7 @@ TEST_F(TableTest, MobileMode) {
     request.set_special_romanji_table(
         mozc::commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
     const mozc::composer::Entry *entry = nullptr;
     size_t key_length = 0;
     bool fixed = false;
@@ -730,7 +729,7 @@ TEST_F(TableTest, MobileMode) {
     request.set_special_romanji_table(
         mozc::commands::Request::GODAN_TO_HIRAGANA);
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
     {
       const mozc::composer::Entry *entry = nullptr;
       size_t key_length = 0;
@@ -745,7 +744,7 @@ TEST_F(TableTest, MobileMode) {
     request.set_special_romanji_table(
         mozc::commands::Request::FLICK_TO_HIRAGANA);
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     size_t key_length = 0;
     bool fixed = false;
@@ -759,7 +758,7 @@ TEST_F(TableTest, MobileMode) {
     request.set_special_romanji_table(
         mozc::commands::Request::NOTOUCH_TO_HIRAGANA);
     Table table;
-    table.InitializeWithRequestAndConfig(request, config_, mock_data_manager_);
+    table.InitializeWithRequestAndConfig(request, config_);
 
     size_t key_length = 0;
     bool fixed = false;
@@ -1026,11 +1025,9 @@ TEST_F(TableTest, TableManager) {
           config.set_preedit_method(preedit);
           config.set_punctuation_method(punctuation);
           config.set_symbol_method(symbol);
-          const Table *table =
-              table_manager.GetTable(request, config, mock_data_manager_);
+          const Table *table = table_manager.GetTable(request, config);
           EXPECT_NE(table, nullptr);
-          EXPECT_EQ(table_manager.GetTable(request, config,
-                                             mock_data_manager_), table);
+          EXPECT_EQ(table_manager.GetTable(request, config), table);
           EXPECT_FALSE(table_set.contains(table));
           table_set.insert(table);
         }
@@ -1049,11 +1046,9 @@ TEST_F(TableTest, TableManager) {
     config.set_punctuation_method(Config::KUTEN_TOUTEN);
     config.set_symbol_method(Config::CORNER_BRACKET_MIDDLE_DOT);
     config.set_custom_roman_table(kRule);
-    const Table *table =
-        table_manager.GetTable(request, config, mock_data_manager_);
+    const Table *table = table_manager.GetTable(request, config);
     EXPECT_NE(table, nullptr);
-    EXPECT_EQ(table_manager.GetTable(request, config, mock_data_manager_),
-                table);
+    EXPECT_EQ(table_manager.GetTable(request, config), table);
     EXPECT_NE(table->LookUp("a"), nullptr);
     EXPECT_EQ(table->LookUp("kk"), nullptr);
 
@@ -1061,11 +1056,9 @@ TEST_F(TableTest, TableManager) {
         "a\t[A]\n"       // 2 entry rule
         "kk\t[X]\tk\n";  // 3 entry rule
     config.set_custom_roman_table(kRule2);
-    const Table *table2 =
-        table_manager.GetTable(request, config, mock_data_manager_);
+    const Table *table2 = table_manager.GetTable(request, config);
     EXPECT_NE(table2, nullptr);
-    EXPECT_EQ(table_manager.GetTable(request, config, mock_data_manager_),
-                table2);
+    EXPECT_EQ(table_manager.GetTable(request, config), table2);
     EXPECT_NE(table2->LookUp("a"), nullptr);
     EXPECT_NE(table2->LookUp("kk"), nullptr);
   }

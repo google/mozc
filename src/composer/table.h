@@ -37,7 +37,6 @@
 #include <istream>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
@@ -45,7 +44,6 @@
 #include "absl/strings/string_view.h"
 #include "base/container/trie.h"
 #include "composer/internal/special_key.h"
-#include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 
@@ -94,8 +92,7 @@ class Table final {
   Table &operator=(const Table &) = delete;
 
   bool InitializeWithRequestAndConfig(const commands::Request &request,
-                                      const config::Config &config,
-                                      const DataManagerInterface &data_manager);
+                                      const config::Config &config);
 
   // Return true if adding the input-pending pair makes a loop of
   // conversion rules.
@@ -161,8 +158,7 @@ class TableManager {
   // Return Table for the request and the config
   // TableManager has ownership of the return value;
   const Table *GetTable(const commands::Request &request,
-                        const config::Config &config,
-                        const DataManagerInterface &data_manager);
+                        const config::Config &config);
 
   void ClearCaches();
 
