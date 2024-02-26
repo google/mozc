@@ -77,6 +77,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:port",
         "//base:vlog",
+        "//base:singleton",
         "//protocol:config_cc_proto",
         "//protocol:commands_cc_proto",
         "@fcitx5//:fcitx5",
