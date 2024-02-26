@@ -185,8 +185,7 @@ class NumberUtil {
 
   // Note: this function just does charcter-by-character conversion
   // "百二十" -> 10020
-  static void KanjiNumberToArabicNumber(absl::string_view input,
-                                        std::string *output);
+  static std::string KanjiNumberToArabicNumber(absl::string_view input);
 };
 
 }  // namespace mozc

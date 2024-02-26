@@ -104,7 +104,6 @@
       'type': 'executable',
       'sources': [
         'container/bitarray_test.cc',
-        'logging_test.cc',
         'mmap_test.cc',
         'random_test.h',
         'singleton_test.cc',

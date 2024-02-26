@@ -30,12 +30,14 @@
 #include "rewriter/correction_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -106,22 +108,20 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
   bool modified = false;
   std::vector<ReadingCorrectionItem> results;
 
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
-    DCHECK(segment);
-    if (segment->candidates_size() == 0) {
+  for (Segment &segment : segments->conversion_segments()) {
+    if (segment.candidates_size() == 0) {
       continue;
     }
 
-    for (size_t j = 0; j < segment->candidates_size(); ++j) {
-      const Segment::Candidate &candidate = segment->candidate(j);
+    for (size_t j = 0; j < segment.candidates_size(); ++j) {
+      const Segment::Candidate &candidate = segment.candidate(j);
       if (!LookupCorrection(candidate.content_key, candidate.content_value,
                             &results)) {
         continue;
       }
       CHECK_GT(results.size(), 0);
       // results.size() should be 1, but we don't check it here.
-      Segment::Candidate *mutable_candidate = segment->mutable_candidate(j);
+      Segment::Candidate *mutable_candidate = segment.mutable_candidate(j);
       DCHECK(mutable_candidate);
       SetCandidate(results[0], mutable_candidate);
       modified = true;
@@ -136,14 +136,14 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
     // defined in the tsv file, we want to add miss-read entries to
     // the system dictionary.
     const size_t kInsertPosition =
-        std::min<size_t>(3, segment->candidates_size());
-    const Segment::Candidate &top_candidate = segment->candidate(0);
+        std::min<size_t>(3, segment.candidates_size());
+    const Segment::Candidate &top_candidate = segment.candidate(0);
     if (!LookupCorrection(top_candidate.content_key, "", &results)) {
       continue;
     }
     for (size_t k = 0; k < results.size(); ++k) {
       Segment::Candidate *mutable_candidate =
-          segment->insert_candidate(kInsertPosition);
+          segment.insert_candidate(kInsertPosition);
       DCHECK(mutable_candidate);
       *mutable_candidate = top_candidate;
       mutable_candidate->key.clear();

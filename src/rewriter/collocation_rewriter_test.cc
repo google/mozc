@@ -35,6 +35,7 @@
 #include <memory>
 #include <string>
 
+#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
@@ -110,9 +111,8 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
   // Returns the concatenated string of top candidates.
   static std::string GetTopValue(const Segments &segments) {
     std::string result;
-    for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {
-      const Segment::Candidate &candidate =
-          segments.conversion_segment(i).candidate(0);
+    for (const Segment &segment : segments.conversion_segments()) {
+      const Segment::Candidate &candidate = segment.candidate(0);
       result.append(candidate.value);
     }
     return result;

@@ -484,9 +484,7 @@ inline bool IsKeyUnknown(const Segment &seg) {
 bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
   // Return false if at least one segment is fixed or at least one segment
   // contains no candidates.
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
-    const Segment &seg = segments->segment(i);
+  for (const Segment &seg : segments->conversion_segments()) {
     if (seg.segment_type() == Segment::FIXED_VALUE ||
         seg.candidates_size() == 0) {
       return false;

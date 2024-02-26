@@ -171,8 +171,7 @@ void EmojiRewriter::Finish(const ConversionRequest &request,
   }
 
   // Update usage stats
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    const Segment &segment = segments->conversion_segment(i);
+  for (const Segment &segment : segments->conversion_segments()) {
     // Ignores segments which are not converted or not committed.
     if (segment.candidates_size() == 0 ||
         segment.segment_type() != Segment::FIXED_VALUE) {
@@ -218,9 +217,8 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
     return true;
   };
 
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
-    reading = japanese_util::FullWidthAsciiToHalfWidthAscii(segment->key());
+  for (Segment &segment : segments->conversion_segments()) {
+    reading = japanese_util::FullWidthAsciiToHalfWidthAscii(segment.key());
     if (reading.empty()) {
       continue;
     }
@@ -233,10 +231,10 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
         continue;
       }
 
-      const int cost = GetEmojiCost(*segment);
+      const int cost = GetEmojiCost(segment);
       std::vector<std::unique_ptr<Segment::Candidate>> candidates =
           CreateAllEmojiData(reading, cost, utf8_emoji_list);
-      modified |= insert_candidates(std::move(candidates), segment);
+      modified |= insert_candidates(std::move(candidates), &segment);
       continue;
     }
 
@@ -246,10 +244,10 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
       continue;
     }
 
-    const int cost = GetEmojiCost(*segment);
+    const int cost = GetEmojiCost(segment);
     std::vector<std::unique_ptr<Segment::Candidate>> candidates =
         CreateEmojiData(reading, cost, range, string_array_);
-    modified |= insert_candidates(std::move(candidates), segment);
+    modified |= insert_candidates(std::move(candidates), &segment);
   }
   return modified;
 }

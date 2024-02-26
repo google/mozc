@@ -142,15 +142,14 @@ class StubRewriter : public RewriterInterface {
 
 class InsertPlaceholderWordsRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &, Segments *segments) const override {
-    for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-      Segment *seg = segments->mutable_conversion_segment(i);
+    for (Segment &segment : segments->conversion_segments()) {
       {
-        Segment::Candidate *cand = seg->add_candidate();
+        Segment::Candidate *cand = segment.add_candidate();
         cand->key = "tobefiltered";
         cand->value = "ToBeFiltered";
       }
       {
-        Segment::Candidate *cand = seg->add_candidate();
+        Segment::Candidate *cand = segment.add_candidate();
         cand->key = "nottobefiltered";
         cand->value = "NotToBeFiltered";
       }
@@ -825,9 +824,8 @@ TEST_F(ConverterTest, Regression3437022) {
   EXPECT_TRUE(converter->StartConversion(&segments, kKey1 + kKey2));
 
   int rest_size = 0;
-  for (size_t i = 1; i < segments.conversion_segments_size(); ++i) {
-    rest_size +=
-        Util::CharsLen(segments.conversion_segment(i).candidate(0).key);
+  for (const Segment &segment : segments.conversion_segments().drop(1)) {
+    rest_size += Util::CharsLen(segment.candidate(0).key);
   }
 
   // Expand segment so that the entire part will become one segment
@@ -1251,10 +1249,9 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
 
   // Verify that words inserted by the rewriter is suppressed if its in the
   // suppression_dictionary.
-  for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {
-    const Segment &seg = segments.conversion_segment(i);
-    EXPECT_FALSE(FindCandidateByValue("ToBeFiltered", seg));
-    EXPECT_TRUE(FindCandidateByValue("NotToBeFiltered", seg));
+  for (const Segment &segment : segments.conversion_segments()) {
+    EXPECT_FALSE(FindCandidateByValue("ToBeFiltered", segment));
+    EXPECT_TRUE(FindCandidateByValue("NotToBeFiltered", segment));
   }
 }
 

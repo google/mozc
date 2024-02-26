@@ -30,6 +30,7 @@
 #include "rewriter/calculator_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 
 #include "absl/strings/str_cat.h"
@@ -99,8 +100,8 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
 
   // Merge keys of all conversion segments and try calculation.
   std::string merged_key;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    merged_key += segments->conversion_segment(i).key();
+  for (const Segment &segment : segments->conversion_segments()) {
+    merged_key += segment.key();
   }
   // The decision to calculate and calculation itself are both done by the
   // calculator.

@@ -33,9 +33,9 @@
 #include <cstdint>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -178,18 +178,17 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
 
     if (Util::IsOpenBracket(left_value, &right_value)) {
       int num_nest = 1;
-      for (size_t i = segment_index + 1; i < segments->segments_size(); ++i) {
-        Segment *target_right_seg = segments->mutable_segment(i);
-        if (target_right_seg == nullptr ||
-            target_right_seg->candidates_size() <= 0) {
+      for (Segment &target_right_seg :
+           segments->all().drop(segment_index + 1)) {
+        if (target_right_seg.candidates_size() <= 0) {
           LOG(WARNING) << "target right seg is not valid";
           return false;
         }
-        if (!IsValidSegment(*target_right_seg)) {
+        if (!IsValidSegment(target_right_seg)) {
           continue;
         }
         const std::string &target_right_value =
-            target_right_seg->candidate(0).content_value;
+            target_right_seg.candidate(0).content_value;
         absl::string_view tmp;
         if (Util::IsOpenBracket(target_right_value, &tmp)) {
           ++num_nest;
@@ -197,7 +196,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
           --num_nest;
         }
 
-        if (num_nest == 0 && RewriteCandidate(target_right_seg, right_value)) {
+        if (num_nest == 0 && RewriteCandidate(&target_right_seg, right_value)) {
           return true;
         }
       }
@@ -245,20 +244,19 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
     if (IsNumberCandidate(seg.candidate(candidate_index))) {
       bool modified = false;
       int distance = 0;
-      for (size_t i = segment_index + 1; i < segments->segments_size(); ++i) {
-        Segment *target_right_seg = segments->mutable_segment(i);
-        if (target_right_seg == nullptr ||
-            target_right_seg->candidates_size() <= 0) {
+      for (Segment &target_right_seg :
+           segments->all().drop(segment_index + 1)) {
+        if (target_right_seg.candidates_size() <= 0) {
           LOG(WARNING) << "target right seg is not valid";
           return false;
         }
-        if (!IsValidSegment(*target_right_seg)) {
+        if (!IsValidSegment(target_right_seg)) {
           continue;
         }
 
         // Make sure the first candidate of the segment is number.
-        if (IsNumberSegment(*target_right_seg) &&
-            RewriteNumber(target_right_seg, seg.candidate(candidate_index))) {
+        if (IsNumberSegment(target_right_seg) &&
+            RewriteNumber(&target_right_seg, seg.candidate(candidate_index))) {
           modified = true;
           distance = 0;
         } else {
@@ -282,28 +280,25 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
             seg.candidate(candidate_index).content_key) {
       int next_stat = CONNECTOR | NUMBER;
       bool modified = false;
-      for (size_t i = segment_index + 1; i < segments->segments_size(); ++i) {
+      for (Segment &segment : segments->all().drop(segment_index + 1)) {
         if (next_stat == (CONNECTOR | NUMBER)) {
-          if (IsConnectorSegment(segments->segment(i))) {
+          if (IsConnectorSegment(segment)) {
             next_stat = NUMBER;
-          } else if (IsNumberSegment(segments->segment(i))) {
+          } else if (IsNumberSegment(segment)) {
             next_stat = SUFFIX;
           } else {
             break;
           }
-        } else if (next_stat == NUMBER &&
-                   IsNumberSegment(segments->segment(i))) {
+        } else if (next_stat == NUMBER && IsNumberSegment(segment)) {
           next_stat = SUFFIX;
-        } else if (next_stat == SUFFIX &&
-                   segments->segment(i).candidates_size() > 0 &&
-                   segments->segment(i).candidate(0).content_key ==
+        } else if (next_stat == SUFFIX && segment.candidates_size() > 0 &&
+                   segment.candidate(0).content_key ==
                        seg.candidate(0).content_key) {
-          if (!IsValidSegment(segments->segment(i))) {
+          if (!IsValidSegment(segment)) {
             continue;
           }
-          modified |=
-              RewriteCandidate(segments->mutable_segment(i),
-                               seg.candidate(candidate_index).content_value);
+          modified |= RewriteCandidate(
+              &segment, seg.candidate(candidate_index).content_value);
           next_stat = CONNECTOR | NUMBER;
         } else {
           break;
@@ -334,9 +329,8 @@ bool FocusCandidateRewriter::RerankNumberCandidates(Segments *segments,
   // compound style of the focused candidate.
   bool modified = false;
   int distance = 0;
-  for (size_t i = segment_index + 1; i < segments->segments_size(); ++i) {
-    Segment *seg = segments->mutable_segment(i);
-    const int index = FindMatchingCandidates(*seg, number_script_type, suffix);
+  for (Segment &seg : segments->all().drop(segment_index + 1)) {
+    const int index = FindMatchingCandidates(seg, number_script_type, suffix);
     if (index == -1) {
       // If there's no appropriate candidate having the same style, we increment
       // the distance not to modify segments far from the focused one.
@@ -348,7 +342,7 @@ bool FocusCandidateRewriter::RerankNumberCandidates(Segments *segments,
     // Move the target candidate to the top.  We don't need to move if the
     // target is already at top (i.g., the case where index == 0).
     if (index > 0) {
-      seg->move_candidate(index, 0);
+      seg.move_candidate(index, 0);
       modified = true;
       distance = 0;
     }

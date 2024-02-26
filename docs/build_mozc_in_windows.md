@@ -67,7 +67,7 @@ python build_tools/update_deps.py
 In this step, additional build dependencies will be downloaded.
 
   * [Ninja 1.11.0](https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-win.zip)
-  * [Qt 6.6.1](https://download.qt.io/archive/qt/6.6/6.6.1/submodules/qtbase-everywhere-src-6.6.1.tar.xz)
+  * [Qt 6.6.2](https://download.qt.io/archive/qt/6.6/6.6.2/submodules/qtbase-everywhere-src-6.6.2.tar.xz)
   * [WiX 3.14](https://github.com/wixtoolset/wix3/releases/download/wix314rtm/wix314-binaries.zip)
   * [git submodules](../.gitmodules)
 

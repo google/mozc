@@ -39,10 +39,11 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -213,8 +214,7 @@ bool SessionConverter::GetReadingText(absl::string_view source_text,
     LOG(WARNING) << "no segments from reverse conversion";
     return false;
   }
-  for (size_t i = 0; i < reverse_segments.segments_size(); ++i) {
-    const mozc::Segment &segment = reverse_segments.segment(i);
+  for (const Segment &segment : reverse_segments) {
     if (segment.candidates_size() == 0) {
       LOG(WARNING) << "got an empty segment from reverse conversion";
       return false;
@@ -1703,8 +1703,7 @@ void SessionConverter::OnStartComposition(const commands::Context &context) {
   // Hereafter, we keep the existing history segments as long as it is
   // consistent with the preceding text even when revision_changed is true.
   std::string history_text;
-  for (size_t i = 0; i < segments_.segments_size(); ++i) {
-    const Segment &segment = segments_.segment(i);
+  for (const Segment &segment : segments_) {
     if (segment.segment_type() != Segment::HISTORY) {
       break;
     }

@@ -45,6 +45,8 @@
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -58,14 +60,12 @@
 #include "base/container/trie.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "engine/modules.h"
@@ -81,9 +81,6 @@
 namespace mozc::prediction {
 namespace {
 
-using ::mozc::dictionary::DictionaryInterface;
-using ::mozc::dictionary::PosMatcher;
-using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::usage_stats::UsageStats;
 
 // Finds suggestion candidates from the most recent 3000 history in LRU.
@@ -521,17 +518,16 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
   WaitForSyncer();
 
   MOZC_VLOG(1) << "Clearing unused prediction";
-  const DicElement *head = dic_->Head();
-  if (head == nullptr) {
-    MOZC_VLOG(2) << "dic head is nullptr";
+  if (dic_->empty()) {
+    MOZC_VLOG(2) << "dic is empty";
     return false;
   }
 
   std::vector<uint32_t> keys;
-  for (const DicElement *elm = head; elm != nullptr; elm = elm->next) {
-    MOZC_VLOG(3) << elm->key << " " << elm->value.suggestion_freq();
-    if (elm->value.suggestion_freq() == 0) {
-      keys.push_back(elm->key);
+  for (const DicElement &elm : *dic_) {
+    MOZC_VLOG(3) << elm.key << " " << elm.value.suggestion_freq();
+    if (elm.value.suggestion_freq() == 0) {
+      keys.push_back(elm.key);
     }
   }
 
@@ -669,9 +665,8 @@ bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
     // Finds a chain of history entries that produces key and value. If exists,
     // remove the link so that N-gram history prediction never generates this
     // key value pair..
-    for (DicElement *elm = dic_->MutableHead(); elm != nullptr;
-         elm = elm->next) {
-      Entry *entry = &elm->value;
+    for (DicElement &elm : *dic_) {
+      Entry *entry = &elm.value;
       if (!absl::StartsWith(key, entry->key()) ||
           !absl::StartsWith(value, entry->value())) {
         continue;
@@ -1191,8 +1186,8 @@ bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
     return false;
   }
 
-  if (dic_->Head() == nullptr) {
-    MOZC_VLOG(2) << "dic head is nullptr";
+  if (dic_->empty()) {
+    MOZC_VLOG(2) << "dic is empty";
     return false;
   }
 
@@ -1213,17 +1208,17 @@ bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
 
 const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
     const Segments &segments) const {
-  const size_t history_segments_size = segments.history_segments_size();
+  const Segments::Range<Segments::const_iterator> history_segments =
+      segments.history_segments();
   const Entry *prev_entry = nullptr;
   // When there are non-zero history segments, lookup an entry
   // from the LRU dictionary, which is corresponding to the last
   // history segment.
-  if (history_segments_size == 0) {
+  if (history_segments.empty()) {
     return nullptr;
   }
 
-  const Segment &history_segment =
-      segments.history_segment(history_segments_size - 1);
+  const Segment &history_segment = history_segments.back();
 
   // Simply lookup the history_segment.
   prev_entry = dic_->LookupWithoutInsert(SegmentFingerprint(history_segment));
@@ -1244,9 +1239,11 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
                                         ? history_segment.candidate(0).value
                                         : prev_entry->value();
     int trial = 0;
-    for (const DicElement *elm = dic_->Head();
-         trial++ < kMaxPrevValueTrial && elm != nullptr; elm = elm->next) {
-      const Entry *entry = &(elm->value);
+    for (const DicElement &elm : *dic_) {
+      if (++trial > kMaxPrevValueTrial) {
+        break;
+      }
+      const Entry *entry = &(elm.value);
       // entry->value() equals to the prev_value or
       // entry->value() is a SUFFIX of prev_value.
       // length of entry->value() must be >= 2, as single-length
@@ -1299,11 +1296,11 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
 
   const absl::Time now = Clock::GetAbslTime();
   int trial = 0;
-  for (const DicElement *elm = dic_->Head(); elm != nullptr; elm = elm->next) {
-    if (!IsValidEntryIgnoringRemovedField(elm->value)) {
+  for (const DicElement &elm : *dic_) {
+    if (!IsValidEntryIgnoringRemovedField(elm.value)) {
       continue;
     }
-    if (absl::FromUnixSeconds(elm->value.last_access_time()) + k62Days < now) {
+    if (absl::FromUnixSeconds(elm.value.last_access_time()) + k62Days < now) {
       updated_ = true;  // We found an entry to be deleted at next save.
       continue;
     }
@@ -1317,8 +1314,8 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
     // If a new entry is found, the entry is pushed to the results.
     // TODO(team): make KanaFuzzyLookupEntry().
     if (!LookupEntry(request_type, input_key, base_key, expanded.get(),
-                     &(elm->value), prev_entry, results) &&
-        !RomanFuzzyLookupEntry(roman_input_key, &(elm->value), results)) {
+                     &(elm.value), prev_entry, results) &&
+        !RomanFuzzyLookupEntry(roman_input_key, &(elm.value), results)) {
       continue;
     }
 
@@ -1560,7 +1557,7 @@ bool UserHistoryPredictor::ShouldInsert(
     return false;
   }
 
-  // For mobile, we do not learn candidates that ends with puctuation.
+  // For mobile, we do not learn candidates that ends with punctuation.
   if (request_type == ZERO_QUERY_SUGGESTION && Util::CharsLen(value) > 1 &&
       IsPunctuation(Util::Utf8SubString(value, Util::CharsLen(value) - 1, 1))) {
     return false;
@@ -1713,25 +1710,21 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   // This is a fix for http://b/issue?id=2216838
   //
   // Note: We don't make such candidates for mobile.
-  if (request_type != ZERO_QUERY_SUGGESTION && dic_->Head() != nullptr &&
+  if (request_type != ZERO_QUERY_SUGGESTION && !dic_->empty() &&
       dic_->Head()->value.last_access_time() + 5 > last_access_time &&
       // Check if the current value is a punctuation.
       segments->conversion_segments_size() == 1 &&
       segments->conversion_segment(0).candidates_size() > 0 &&
       IsPunctuation(segments->conversion_segment(0).candidate(0).value) &&
       // Check if the previous value looks like a sentence.
-      segments->history_segments_size() > 0 &&
-      segments->history_segment(segments->history_segments_size() - 1)
-              .candidates_size() > 0 &&
+      !segments->history_segments().empty() &&
+      segments->history_segments().back().candidates_size() > 0 &&
       IsSentenceLikeCandidate(
-          segments->history_segment(segments->history_segments_size() - 1)
-              .candidate(0))) {
+          segments->history_segments().back().candidate(0))) {
     const Entry *entry = &(dic_->Head()->value);
     DCHECK(entry);
     const std::string &last_value =
-        segments->history_segment(segments->history_segments_size() - 1)
-            .candidate(0)
-            .value;
+        segments->history_segments().back().candidate(0).value;
     // Check if the head value in LRU ends with the candidate value in history
     // segments.
     if (absl::EndsWith(entry->value(), last_value)) {
@@ -1746,11 +1739,8 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     }
   }
 
-  const size_t history_segments_size = segments->history_segments_size();
-
   // Checks every segment is valid.
-  for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
-    const Segment &segment = segments->segment(i);
+  for (const Segment &segment : segments->conversion_segments()) {
     if (segment.candidates_size() < 1) {
       MOZC_VLOG(2) << "candidates size < 1";
       return;
@@ -1778,8 +1768,7 @@ void UserHistoryPredictor::MakeLearningSegments(
     const Segments &segments, SegmentsForLearning *learning_segments) const {
   DCHECK(learning_segments);
 
-  for (size_t i = 0; i < segments.history_segments_size(); ++i) {
-    const Segment &segment = segments.history_segment(i);
+  for (const Segment &segment : segments.history_segments()) {
     DCHECK_LE(1, segment.candidates_size());
     auto &candidate = segment.candidate(0);
     learning_segments->history_segments.push_back(
@@ -1788,8 +1777,7 @@ void UserHistoryPredictor::MakeLearningSegments(
   }
 
   std::string all_key, all_value;
-  for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {
-    const Segment &segment = segments.conversion_segment(i);
+  for (const Segment &segment : segments.conversion_segments()) {
     const Segment::Candidate &candidate = segment.candidate(0);
     absl::StrAppend(&all_key, candidate.key);
     absl::StrAppend(&all_value, candidate.value);

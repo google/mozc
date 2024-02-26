@@ -63,10 +63,6 @@ class IosEngine {
 
   ~IosEngine();
 
-  // Initializes global modules.  This function should be called before the
-  // initialization of IosEngine.
-  static void InitMozc();
-
   // The following methods are helpers to populate command proto and send it
   // to the session handler.  Input to and output from the session handler are
   // recorded in |command|.  The return value is the return value of

@@ -206,15 +206,14 @@ void DecomposePrefixAndNumber(const std::string &input, std::string *prefix,
 }
 
 void NormalizeHistorySegments(Segments *segments) {
-  for (size_t i = 0; i < segments->history_segments_size(); ++i) {
-    Segment *segment = segments->mutable_history_segment(i);
-    if (segment == nullptr || segment->candidates_size() == 0) {
+  for (Segment &segment : segments->history_segments()) {
+    if (segment.candidates_size() == 0) {
       continue;
     }
 
-    Segment::Candidate *c = segment->mutable_candidate(0);
+    Segment::Candidate *c = segment.mutable_candidate(0);
     const std::string &history_key =
-        (c->key.size() > segment->key().size()) ? c->key : segment->key();
+        (c->key.size() > segment.key().size()) ? c->key : segment.key();
     const std::string value = c->value;
     const std::string content_value = c->content_value;
     const std::string content_key = c->content_key;
@@ -225,7 +224,7 @@ void NormalizeHistorySegments(Segments *segments) {
         japanese_util::FullWidthAsciiToHalfWidthAscii(content_value);
     c->content_key = japanese_util::FullWidthAsciiToHalfWidthAscii(content_key);
     c->key = key;
-    segment->set_key(key);
+    segment.set_key(key);
 
     // Ad-hoc rewrite for Numbers
     // Since number candidate is generative, i.e., any number can be
@@ -236,7 +235,7 @@ void NormalizeHistorySegments(Segments *segments) {
         Util::GetScriptType(key) == Util::NUMBER &&
         IsNumber(key[key.size() - 1])) {
       key = key[key.size() - 1];  // use the last digit only
-      segment->set_key(key);
+      segment.set_key(key);
       c->value = key;
       c->content_value = key;
       c->content_key = key;
@@ -250,15 +249,13 @@ Lattice *GetLattice(Segments *segments, bool is_prediction) {
     return nullptr;
   }
 
-  const size_t history_segments_size = segments->history_segments_size();
-
   std::string history_key = "";
-  for (size_t i = 0; i < history_segments_size; ++i) {
-    history_key.append(segments->segment(i).key());
+  for (const Segment &segment : segments->history_segments()) {
+    history_key.append(segment.key());
   }
   std::string conversion_key = "";
-  for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
-    conversion_key.append(segments->segment(i).key());
+  for (const Segment &segment : segments->conversion_segments()) {
+    conversion_key.append(segment.key());
   }
 
   const size_t lattice_history_end_pos = lattice->history_end_pos();
@@ -987,7 +984,6 @@ bool ImmutableConverter::Viterbi(const Segments &segments,
   }
 
   size_t left_boundary = 0;
-  const size_t segments_size = segments.segments_size();
 
   // Specialization for the first segment.
   // Don't run on the left boundary (the connection with BOS node),
@@ -1002,10 +998,9 @@ bool ImmutableConverter::Viterbi(const Segments &segments,
   }
 
   // The condition to break is in the loop.
-  for (size_t i = 1; i < segments_size; ++i) {
+  for (const Segment &segment : segments.all().drop(1)) {
     // Run Viterbi for each position the segment.
-    const size_t right_boundary =
-        left_boundary + segments.segment(i).key().size();
+    const size_t right_boundary = left_boundary + segment.key().size();
     for (size_t pos = left_boundary; pos < right_boundary; ++pos) {
       ViterbiInternal(connector_, pos, right_boundary, lattice);
     }
@@ -1023,8 +1018,7 @@ bool ImmutableConverter::Viterbi(const Segments &segments,
     // No constrained prev.
     DCHECK(eos_node->constrained_prev == nullptr);
 
-    left_boundary =
-        key.size() - segments.segment(segments_size - 1).key().size();
+    left_boundary = key.size() - segments.all().back().key().size();
     // Find a valid node which connects to the rnode with minimum cost.
     int best_cost = kVeryBigCost;
     Node *best_node = nullptr;
@@ -1089,10 +1083,9 @@ bool ImmutableConverter::Viterbi(const Segments &segments,
 bool ImmutableConverter::PredictionViterbi(const Segments &segments,
                                            Lattice *lattice) const {
   const size_t key_length = lattice->key().size();
-  const size_t history_segments_size = segments.history_segments_size();
   size_t history_length = 0;
-  for (size_t i = 0; i < history_segments_size; ++i) {
-    history_length += segments.segment(i).key().size();
+  for (const Segment &segment : segments.history_segments()) {
+    history_length += segment.key().size();
   }
   PredictionViterbiInternal(0, history_length, lattice);
   PredictionViterbiInternal(history_length, key_length, lattice);
@@ -1266,8 +1259,8 @@ void ImmutableConverter::MakeLatticeNodesForPredictiveNodes(
     Lattice *lattice) const {
   const std::string &key = lattice->key();
   std::string conversion_key;
-  for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {
-    conversion_key += segments.conversion_segment(i).key();
+  for (const Segment &segment : segments.conversion_segments()) {
+    conversion_key += segment.key();
   }
   DCHECK_NE(std::string::npos, key.find(conversion_key));
   std::vector<std::string> conversion_key_chars;
@@ -1366,19 +1359,21 @@ bool ImmutableConverter::MakeLattice(const ConversionRequest &request,
 
   // In suggestion mode, ImmutableConverter will not accept multiple-segments.
   // The result always consists of one segment.
-  if ((is_reverse || is_prediction) &&
-      (segments->conversion_segments_size() != 1 ||
-       segments->conversion_segment(0).segment_type() != Segment::FREE)) {
-    LOG(WARNING) << "ImmutableConverter doesn't support constrained requests";
-    return false;
+  if (is_reverse || is_prediction) {
+    const Segments::Range<Segments::iterator> conversion_segments =
+        segments->conversion_segments();
+    if (conversion_segments.size() != 1 ||
+        conversion_segments.front().segment_type() != Segment::FREE) {
+      LOG(WARNING) << "ImmutableConverter doesn't support constrained requests";
+      return false;
+    }
   }
 
   // Make the conversion key.
   std::string conversion_key;
-  const size_t history_segments_size = segments->history_segments_size();
-  for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
-    DCHECK(!segments->segment(i).key().empty());
-    conversion_key.append(segments->segment(i).key());
+  for (const Segment &segment : segments->conversion_segments()) {
+    DCHECK(!segment.key().empty());
+    conversion_key.append(segment.key());
   }
   const size_t max_char_len =
       is_reverse ? kMaxCharLengthForReverseConversion : kMaxCharLength;
@@ -1389,9 +1384,9 @@ bool ImmutableConverter::MakeLattice(const ConversionRequest &request,
 
   // Make the history key.
   std::string history_key;
-  for (size_t i = 0; i < history_segments_size; ++i) {
-    DCHECK(!segments->segment(i).key().empty());
-    history_key.append(segments->segment(i).key());
+  for (const Segment &segment : segments->history_segments()) {
+    DCHECK(!segment.key().empty());
+    history_key.append(segment.key());
   }
   // Check if the total length (length of history_key + conversion_key) doesn't
   // exceed the maximum key length. If it exceeds the limit, we simply clears
@@ -1691,8 +1686,7 @@ void ImmutableConverter::Resegment(const Segments &segments,
 
   // Enable constrained node.
   size_t segments_pos = 0;
-  for (size_t s = 0; s < segments.segments_size(); ++s) {
-    const Segment &segment = segments.segment(s);
+  for (const Segment &segment : segments) {
     if (segment.segment_type() == Segment::FIXED_VALUE) {
       const Segment::Candidate &candidate = segment.candidate(0);
       Node *rnode = lattice->NewNode();
@@ -1875,8 +1869,8 @@ void ImmutableConverter::InsertCandidates(const ConversionRequest &request,
                                  suggestion_filter_);
 
   std::string original_key;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    original_key.append(segments->conversion_segment(i).key());
+  for (const Segment &segment : segments->conversion_segments()) {
+    original_key.append(segment.key());
   }
 
   size_t begin_pos = std::string::npos;

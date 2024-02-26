@@ -65,9 +65,9 @@ class VersionRewriterTest : public testing::TestWithTempUserProfile {
 
   static bool FindCandidateWithPrefix(const absl::string_view prefix,
                                       const Segments &segments) {
-    for (size_t i = 0; i < segments.segments_size(); ++i) {
-      for (size_t j = 0; j < segments.segment(i).candidates_size(); ++j) {
-        if (absl::StartsWith(segments.segment(i).candidate(j).value, prefix)) {
+    for (const Segment &segment : segments) {
+      for (size_t j = 0; j < segment.candidates_size(); ++j) {
+        if (absl::StartsWith(segment.candidate(j).value, prefix)) {
           return true;
         }
       }

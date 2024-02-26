@@ -168,9 +168,8 @@ int T13nPromotionRewriter::capability(const ConversionRequest &request) const {
 bool T13nPromotionRewriter::Rewrite(const ConversionRequest &request,
                                     Segments *segments) const {
   bool modified = false;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    modified |=
-        MaybePromoteT13n(request, segments->mutable_conversion_segment(i));
+  for (Segment &segment : segments->conversion_segments()) {
+    modified |= MaybePromoteT13n(request, &segment);
   }
   return modified;
 }

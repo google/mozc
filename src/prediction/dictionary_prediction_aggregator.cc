@@ -41,12 +41,14 @@
 #include <utility>
 #include <vector>
 
+#include "ngram/neg_log_prob.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
@@ -833,7 +835,7 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
       size = mixed_conversion ? max_size : default_size;
       break;
     case ConversionRequest::SUGGESTION:
-      // Fewer candidatats are needed basically.
+      // Fewer candidates are needed basically.
       // But on mixed_conversion mode we should behave like as conversion mode.
       size = mixed_conversion ? default_size : 1;
       break;
@@ -891,8 +893,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
   // TODO(noriyukit): This is code duplicate in converter/nbest_generator.cc and
   // we should refactor code after finding more good design.
   bool inner_segment_boundary_success = true;
-  for (size_t i = 0; i < tmp_segments.conversion_segments_size(); ++i) {
-    const Segment &segment = tmp_segments.conversion_segment(i);
+  for (const Segment &segment : tmp_segments.conversion_segments()) {
     const Segment::Candidate &candidate = segment.candidate(0);
     result->value.append(candidate.value);
     result->key.append(candidate.key);
@@ -1037,8 +1038,7 @@ DictionaryPredictionAggregator::GenerateQueryForHandwriting(
     return std::nullopt;
   }
   HandwritingQueryInfo info;
-  for (size_t i = 0; i < tmp_segments.conversion_segments_size(); ++i) {
-    const Segment &segment = tmp_segments.conversion_segment(i);
+  for (const Segment &segment : tmp_segments.conversion_segments()) {
     if (segment.candidates_size() == 0) {
       LOG(WARNING) << "Reverse conversion failed";
       return std::nullopt;

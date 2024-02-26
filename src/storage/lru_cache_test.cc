@@ -29,6 +29,7 @@
 
 #include "storage/lru_cache.h"
 
+#include <cstddef>
 #include <vector>
 
 #include "testing/gmock.h"
@@ -41,11 +42,22 @@ namespace {
 using ::testing::ElementsAre;
 
 template <typename Key, typename Value>
+size_t SizeOfFreeList(const LruCache<Key, Value> &cache) {
+  size_t size = 0;
+  for (const typename LruCache<Key, Value>::Element *e =
+           cache.FreeListForTesting();
+       e; e = e->next) {
+    ++size;
+  }
+  return size;
+}
+
+template <typename Key, typename Value>
 std::vector<Key> GetOrderedKeys(const LruCache<Key, Value> &cache) {
   std::vector<Key> keys;
   keys.reserve(cache.Size());
-  for (auto *elem = cache.Head(); elem != nullptr; elem = elem->next) {
-    keys.push_back(elem->key);
+  for (const typename LruCache<Key, Value>::Element &elem : cache) {
+    keys.push_back(elem.key);
   }
   return keys;
 }
@@ -126,8 +138,10 @@ TEST(LruCacheTest, Clear) {
     cache.Insert(i, i);
   }
   EXPECT_THAT(GetOrderedKeys(cache), ElementsAre(2, 1, 0));
+  EXPECT_EQ(SizeOfFreeList(cache), 2);
   cache.Clear();
   EXPECT_EQ(cache.Size(), 0);
+  EXPECT_EQ(SizeOfFreeList(cache), 5);
 }
 
 TEST(LruCacheTest, LargeCapacity) {

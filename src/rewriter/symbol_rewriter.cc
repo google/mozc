@@ -292,8 +292,8 @@ void SymbolRewriter::AddDescForCurrentCandidates(
 bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest &request,
                                           Segments *segments) const {
   bool modified = false;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    const std::string &key = segments->conversion_segment(i).key();
+  for (Segment &segment : segments->conversion_segments()) {
+    const std::string &key = segment.key();
     const SerializedDictionary::IterRange range = dictionary_->equal_range(key);
     if (range.first == range.second) {
       continue;
@@ -303,7 +303,7 @@ bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest &request,
     const bool context_sensitive = !IsSymbol(key);
 
     InsertCandidates(GetOffset(request, key), range, context_sensitive,
-                     segments->mutable_conversion_segment(i));
+                     &segment);
 
     modified = true;
   }
@@ -318,8 +318,8 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
   }
 
   std::string key;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    key += segments->conversion_segment(i).key();
+  for (const Segment &segment : segments->conversion_segments()) {
+    key += segment.key();
   }
 
   const SerializedDictionary::IterRange range = dictionary_->equal_range(key);

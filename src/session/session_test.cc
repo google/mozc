@@ -440,7 +440,9 @@ class SessionTest : public testing::TestWithTempUserProfile {
     constexpr uint32_t kNoModifiers = 0;
     auto chars_it = chars.begin();
     for (const absl::string_view key : Utf8AsChars(key_strings)) {
-      CHECK_NE(chars_it, chars.end());
+      // MSVC fails to compile if this is spelled as
+      // `CHECK_NE(chars_it, chars.end())`.
+      CHECK(chars_it != chars.end());
       command->Clear();
       command->mutable_input()->set_type(commands::Input::SEND_KEY);
       commands::KeyEvent *key_event = command->mutable_input()->mutable_key();

@@ -55,6 +55,7 @@ mozc_cc_library(
         "//base:vlog",
         "//base/container:freelist",
         "//base/strings:assign",
+        "//testing:friend_test",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -229,7 +230,6 @@ mozc_cc_library(
     deps = [
         ":node",
         ":segments",
-        "//base:logging",
         "//base:number_util",
         "//base:util",
         "//base:vlog",
@@ -240,6 +240,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/hash",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],

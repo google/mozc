@@ -27,66 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+#ifndef MOZC_BASE_LOG_FILE_H_
+#define MOZC_BASE_LOG_FILE_H_
 
-#include "ios/ios_engine.h"
+#include <string>
 
 namespace mozc {
 
-class SessionHandlerInterface {
- public:
-  SessionHandlerInterface() = default;
-  ~SessionHandlerInterface() = default;
-};
+// Registers an `absl::LogSink` tied to a file at `path`.
+//
+// This function becomes no-op when MOZC_NO_LOGGING or __ANDROID__ is defined.
+void RegisterLogFileSink(const std::string &path);
 
-namespace ios {
-
-IosEngine::IosEngine(const std::string &data_file_path)
-    : session_handler_(new SessionHandlerInterface), session_id_(0) {}
-
-IosEngine::~IosEngine() = default;
-
-bool IosEngine::SetMobileRequest(const std::string &keyboard_layout,
-                                 commands::Command *command) {
-  return true;
-}
-
-void FillMobileConfig(config::Config *config) {
-  // Do nothing.
-}
-
-bool IosEngine::SetConfig(const config::Config &config,
-                          commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::CreateSession(commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::DeleteSession(commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::ResetContext(commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
-                               commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::SendKey(const std::string &character,
-                        commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::SendSessionCommand(
-    const commands::SessionCommand &session_command,
-    commands::Command *command) {
-  return true;
-}
-
-}  // namespace ios
 }  // namespace mozc
+
+#endif  // MOZC_BASE_LOG_FILE_H_

@@ -63,7 +63,6 @@ mozc_cc_library(
     deps = [
         ":session_converter_interface",
         ":session_usage_stats_util",
-        "//base:logging",
         "//base:text_normalizer",
         "//base:util",
         "//base:vlog",
@@ -80,6 +79,8 @@ mozc_cc_library(
         "//transliteration",
         "//usage_stats",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -96,7 +97,6 @@ mozc_cc_test(
         ":request_test_util",
         ":session_converter",
         ":session_converter_interface",
-        "//base:logging",
         "//base:util",
         "//composer",
         "//composer:table",
@@ -115,6 +115,7 @@ mozc_cc_test(
         "//transliteration",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )

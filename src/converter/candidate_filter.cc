@@ -39,9 +39,9 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -601,8 +601,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
         ++number_nodes;
       } else if (first_value_script_type == Util::KANJI) {
         const auto first_kanji = value.substr(0, mblen);
-        std::string converted;
-        NumberUtil::KanjiNumberToArabicNumber(first_kanji, &converted);
+        const std::string converted =
+            NumberUtil::KanjiNumberToArabicNumber(first_kanji);
         if (first_kanji != converted && prev_lid != node->lid) {
           ++number_nodes;
         }

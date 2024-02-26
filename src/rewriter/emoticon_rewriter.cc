@@ -149,8 +149,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
 
 bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
   bool modified = false;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    const Segment &segment = segments->conversion_segment(i);
+  for (Segment &segment : segments->conversion_segments()) {
     const std::string &key = segment.key();
     if (key.empty()) {
       // This case happens for zero query suggestion.
@@ -209,7 +208,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
     }
 
     InsertCandidates(begin, end, initial_insert_pos, initial_insert_size,
-                     is_no_learning, segments->mutable_conversion_segment(i));
+                     is_no_learning, &segment);
     modified = true;
   }
 

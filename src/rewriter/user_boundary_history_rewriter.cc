@@ -30,6 +30,7 @@
 #include "rewriter/user_boundary_history_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <memory>
@@ -238,8 +239,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
   // Get the prefix of segments having FIXED_VALUE state.
   if (type == INSERT) {
     target_segments_size = history_segments_size;
-    for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
-      const Segment &segment = segments->segment(i);
+    for (const Segment &segment : segments->all().drop(history_segments_size)) {
       if (segment.segment_type() == Segment::FIXED_VALUE) {
         ++target_segments_size;
       }

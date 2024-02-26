@@ -53,6 +53,7 @@ mozc_cc_library(
     copts = ["-DMOZC_BUILDTOOL_BUILD"],
     visibility = ["//:__subpackages__"],
     deps = [
+        ":log_file",
         ":system_util",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
@@ -81,6 +82,7 @@ mozc_cc_library(
     hdrs = ["init_mozc.h"],
     visibility = ["//:__subpackages__"],
     deps = [
+        ":log_file",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
         android = ["//base"],
@@ -128,49 +130,24 @@ mozc_cc_library(
 
 mozc_cc_library(
     name = "logging",
-    srcs = ["logging.cc"],
     hdrs = ["logging.h"],
-    linkopts = mozc_select(
-        # Android requires linking logging library.
-        android = ["-llog"],
-    ),
-    deps = mozc_select(
-        default = [
-            "@com_google_absl//absl/log",
-            "@com_google_absl//absl/log:check",
-            "//base:vlog",
-        ],
-        oss = [
-            ":clock",
-            ":const",
-            ":singleton",
-            "@com_google_absl//absl/strings",
-            "@com_google_absl//absl/strings:str_format",
-        ],
-        wasm = [
-            ":clock",
-            ":const",
-            ":singleton",
-            "@com_google_absl//absl/strings",
-            "@com_google_absl//absl/strings:str_format",
-        ],
-    ) + [
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/synchronization",
+    deps = [
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
-mozc_cc_test(
-    name = "logging_test",
-    size = "small",
-    srcs = ["logging_test.cc"],
-    requires_full_emulation = False,
+mozc_cc_library(
+    name = "log_file",
+    srcs = ["log_file.cc"],
+    hdrs = ["log_file.h"],
     deps = [
-        ":logging",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/strings:str_format",
+        ":file_stream",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:log_entry",
+        "@com_google_absl//absl/log:log_sink",
+        "@com_google_absl//absl/log:log_sink_registry",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -182,6 +159,7 @@ mozc_cc_library(
         ":logging",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:flags",
     ],
 )
 
@@ -373,11 +351,11 @@ mozc_cc_library(
     hdrs = ["number_util.h"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":logging",
         ":util",
         "//base/strings/internal:double_array",
         "//base/strings/internal:japanese_rules",
         "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",

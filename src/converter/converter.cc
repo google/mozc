@@ -60,8 +60,6 @@
 namespace mozc {
 namespace {
 
-using ::mozc::dictionary::PosMatcher;
-using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::prediction::PredictorInterface;
 using ::mozc::usage_stats::UsageStats;
 
@@ -127,15 +125,15 @@ bool IsMobile(const ConversionRequest &request) {
 bool IsValidSegments(const ConversionRequest &request,
                      const Segments &segments) {
   // All segments should have candidate
-  for (size_t i = 0; i < segments.segments_size(); ++i) {
-    if (segments.segment(i).candidates_size() != 0) {
+  for (const Segment &segment : segments) {
+    if (segment.candidates_size() != 0) {
       continue;
     }
     // On mobile, we don't distinguish candidates and meta candidates
     // So it's ok if we have meta candidates even if we don't have candidates
     // TODO(team): we may remove mobile check if other platforms accept
     // meta candidate only segment
-    if (IsMobile(request) && segments.segment(i).meta_candidates_size() != 0) {
+    if (IsMobile(request) && segment.meta_candidates_size() != 0) {
       continue;
     }
     return false;
@@ -357,8 +355,7 @@ bool Converter::StartReverseConversion(Segments *segments,
     LOG(WARNING) << "no segments from reverse conversion";
     return false;
   }
-  for (int i = 0; i < segments->segments_size(); ++i) {
-    const mozc::Segment &seg = segments->segment(i);
+  for (const Segment &seg : *segments) {
     if (seg.candidates_size() == 0 || seg.candidate(0).value.empty()) {
       segments->Clear();
       LOG(WARNING) << "got an empty segment from reverse conversion";
@@ -516,19 +513,17 @@ void Converter::FinishConversion(const ConversionRequest &request,
   CommitUsageStats(segments, segments->history_segments_size(),
                    segments->conversion_segments_size());
 
-  for (size_t i = 0; i < segments->segments_size(); ++i) {
-    Segment *seg = segments->mutable_segment(i);
-    DCHECK(seg);
+  for (Segment &segment : *segments) {
     // revert SUBMITTED segments to FIXED_VALUE
     // SUBMITTED segments are created by "submit first segment" operation
     // (ctrl+N for ATOK keymap).
     // To learn the conversion result, we should change the segment types
     // to FIXED_VALUE.
-    if (seg->segment_type() == Segment::SUBMITTED) {
-      seg->set_segment_type(Segment::FIXED_VALUE);
+    if (segment.segment_type() == Segment::SUBMITTED) {
+      segment.set_segment_type(Segment::FIXED_VALUE);
     }
-    if (seg->candidates_size() > 0) {
-      CompletePosIds(seg->mutable_candidate(0));
+    if (segment.candidates_size() > 0) {
+      CompletePosIds(segment.mutable_candidate(0));
     }
   }
 
@@ -545,10 +540,8 @@ void Converter::FinishConversion(const ConversionRequest &request,
   }
 
   // Remaining segments are used as history segments.
-  for (size_t i = 0; i < segments->segments_size(); ++i) {
-    Segment *seg = segments->mutable_segment(i);
-    DCHECK(seg);
-    seg->set_segment_type(Segment::HISTORY);
+  for (Segment &segment : *segments) {
+    segment.set_segment_type(Segment::HISTORY);
   }
 }
 
@@ -806,8 +799,9 @@ bool Converter::ResizeSegment(Segments *segments,
   }
 
   std::string key;
-  for (size_t i = start_segment_index; i < end_segment_index; ++i) {
-    key += segments->segment(i).key();
+  for (const Segment &segment :
+       segments->all().subrange(start_segment_index, segments_size)) {
+    key += segment.key();
   }
 
   if (key.empty()) {
@@ -926,12 +920,11 @@ void Converter::RewriteAndSuppressCandidates(const ConversionRequest &request,
   // layer, there's possibility that bad words are generated from multiple nodes
   // and by rewriters. Hence, we need to apply it again at the last stage of
   // converter.
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *seg = segments->mutable_conversion_segment(i);
-    for (size_t j = 0; j < seg->candidates_size();) {
-      const Segment::Candidate &cand = seg->candidate(j);
+  for (Segment &segment : segments->conversion_segments()) {
+    for (size_t j = 0; j < segment.candidates_size();) {
+      const Segment::Candidate &cand = segment.candidate(j);
       if (suppression_dictionary_->SuppressEntry(cand.key, cand.value)) {
-        seg->erase_candidate(j);
+        segment.erase_candidate(j);
       } else {
         ++j;
       }
@@ -947,17 +940,16 @@ void Converter::TrimCandidates(const ConversionRequest &request,
   }
 
   const int limit = request_proto.candidates_size_limit();
-  for (size_t segment_index = 0;
-       segment_index < segments->conversion_segments_size(); ++segment_index) {
-    Segment *seg = segments->mutable_conversion_segment(segment_index);
-    const int candidates_size = seg->candidates_size();
+  for (Segment &segment : segments->conversion_segments()) {
+    const int candidates_size = segment.candidates_size();
     // A segment should have at least one candidate.
     const int candidates_limit =
-        std::max<int>(1, limit - seg->meta_candidates_size());
+        std::max<int>(1, limit - segment.meta_candidates_size());
     if (candidates_size < candidates_limit) {
       continue;
     }
-    seg->erase_candidates(candidates_limit, candidates_size - candidates_limit);
+    segment.erase_candidates(candidates_limit,
+                             candidates_size - candidates_limit);
   }
 }
 
@@ -976,8 +968,8 @@ void Converter::CommitUsageStats(const Segments *segments,
   // Timing stats are scaled by 1,000 to improve the accuracy of average values.
 
   uint64_t submitted_total_length = 0;
-  for (size_t i = 0; i < segment_length; ++i) {
-    const Segment &segment = segments->segment(begin_segment_index + i);
+  for (const Segment &segment :
+       segments->all().subrange(begin_segment_index, segment_length)) {
     const uint32_t submitted_length =
         Util::CharsLen(segment.candidate(0).value);
     UsageStats::UpdateTiming("SubmittedSegmentLengthx1000",

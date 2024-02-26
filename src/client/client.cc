@@ -234,7 +234,6 @@ void Client::DumpHistorySnapshot(const absl::string_view filename,
   OutputFileStream output(snapshot_file, std::ios::app);
 
   output << "---- Start history snapshot for " << label << std::endl;
-  output << "Created at " << Logging::GetLogMessageHeader() << std::endl;
   output << "Version " << Version::GetMozcVersion() << std::endl;
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
     output << absl::StrCat(history_inputs_[i]);

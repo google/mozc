@@ -37,10 +37,12 @@
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/util.h"
+#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "prediction/predictor_interface.h"
 #include "protocol/commands.pb.h"
@@ -313,11 +315,10 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
 namespace {
 // Fills empty lid and rid of candidates with the candidates of the same value.
 void MaybeFillFallbackPos(Segments *segments) {
-  for (size_t si = 0; si < segments->conversion_segments_size(); ++si) {
+  for (Segment &segment : segments->conversion_segments()) {
     absl::flat_hash_map<absl::string_view, Segment::Candidate *> posless_cands;
-    Segment *seg = segments->mutable_conversion_segment(si);
-    for (size_t ci = 0; ci < seg->candidates_size(); ++ci) {
-      Segment::Candidate *cand = seg->mutable_candidate(ci);
+    for (size_t ci = 0; ci < segment.candidates_size(); ++ci) {
+      Segment::Candidate *cand = segment.mutable_candidate(ci);
       // Candidates with empty POS come before candidates with filled POS.
       if (cand->lid == 0 || cand->rid == 0) {
         posless_cands[cand->value] = cand;

@@ -59,7 +59,7 @@ class NumberRewriter : public RewriterInterface {
   void Finish(const ConversionRequest &request, Segments *segments) override;
 
  private:
-  bool RewriteOneSegment(const ConversionRequest &request, size_t index,
+  bool RewriteOneSegment(const ConversionRequest &request, Segment *segment,
                          Segments *segments) const;
   void RememberNumberStyle(const Segment::Candidate &candidate);
   std::vector<Segment::Candidate> GenerateCandidatesToInsert(

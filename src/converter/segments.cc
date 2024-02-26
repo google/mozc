@@ -532,8 +532,12 @@ void Segments::erase_segment(size_t i) {
   if (i >= segments_size()) {
     return;
   }
-  pool_.Release(mutable_segment(i));
-  segments_.erase(segments_.begin() + i);
+  erase_segment(begin() + i);
+}
+
+Segments::iterator Segments::erase_segment(iterator position) {
+  pool_.Release(&*position);
+  return iterator{segments_.erase(position.iterator_)};
 }
 
 void Segments::erase_segments(size_t i, size_t size) {
@@ -541,10 +545,14 @@ void Segments::erase_segments(size_t i, size_t size) {
   if (i >= segments_size() || end > segments_size()) {
     return;
   }
-  for (size_t j = i; j < end; ++j) {
-    pool_.Release(mutable_segment(j));
+  erase_segments(begin() + i, begin() + end);
+}
+
+Segments::iterator Segments::erase_segments(iterator first, iterator last) {
+  for (auto it = first; it != last; ++it) {
+    pool_.Release(&*it);
   }
-  segments_.erase(segments_.begin() + i, segments_.begin() + end);
+  return iterator{segments_.erase(first.iterator_, last.iterator_)};
 }
 
 void Segments::pop_front_segment() {
@@ -586,12 +594,8 @@ void Segments::clear_history_segments() {
 }
 
 void Segments::clear_conversion_segments() {
-  const size_t size = history_segments_size();
-  for (size_t i = size; i < segments_size(); ++i) {
-    pool_.Release(mutable_segment(i));
-  }
   resized_ = false;
-  segments_.resize(size);
+  erase_segments(history_segments_end(), end());
 }
 
 void Segments::set_max_history_segments_size(size_t max_history_segments_size) {
@@ -611,12 +615,13 @@ Segments::RevertEntry *Segments::push_back_revert_entry() {
 }
 
 std::string Segments::history_key(int size) const {
-  const int hsize = history_segments_size();
-  const int start = size == -1 ? 0 : std::max<int>(0, hsize - size);
+  Range<const_iterator> segments = history_segments();
+  if (size != -1) {
+    segments = segments.take_last(size);
+  }
 
   std::string history_key;
-  for (size_t i = start; i < hsize; ++i) {
-    const Segment &seg = history_segment(i);
+  for (const Segment &seg : segments) {
     if (seg.candidates_size() == 0) continue;
     history_key.append(seg.candidate(0).key);
   }
@@ -625,12 +630,13 @@ std::string Segments::history_key(int size) const {
 }
 
 std::string Segments::history_value(int size) const {
-  const int hsize = history_segments_size();
-  const int start = size == -1 ? 0 : std::max<int>(0, hsize - size);
+  Range<const_iterator> segments = history_segments();
+  if (size != -1) {
+    segments = segments.take_last(size);
+  }
 
   std::string history_value;
-  for (size_t i = start; i < hsize; ++i) {
-    const Segment &seg = history_segment(i);
+  for (const Segment &seg : segments) {
     if (seg.candidates_size() == 0) continue;
     history_value.append(seg.candidate(0).value);
   }

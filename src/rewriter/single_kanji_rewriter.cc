@@ -29,6 +29,7 @@
 
 #include "rewriter/single_kanji_rewriter.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -123,17 +124,18 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
   }
 
   bool modified = false;
-  const size_t segments_size = segments->conversion_segments_size();
+  const Segments::Range<Segments::iterator> conversion_segments =
+      segments->conversion_segments();
+  const size_t segments_size = conversion_segments.size();
   const bool is_single_segment = (segments_size == 1);
   const bool use_svs = (request.request()
                             .decoder_experiment_params()
                             .variation_character_types() &
                         commands::DecoderExperimentParams::SVS_JAPANESE);
-  for (size_t i = 0; i < segments_size; ++i) {
-    AddDescriptionForExistingCandidates(
-        segments->mutable_conversion_segment(i));
+  for (Segment &segment : conversion_segments) {
+    AddDescriptionForExistingCandidates(&segment);
 
-    const std::string &key = segments->conversion_segment(i).key();
+    const std::string &key = segment.key();
     std::vector<std::string> kanji_list;
     if (!single_kanji_dictionary_->LookupKanjiEntries(key, use_svs,
                                                       &kanji_list)) {
@@ -141,20 +143,21 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
     }
     modified |=
         InsertCandidate(is_single_segment, pos_matcher_.GetGeneralSymbolId(),
-                        kanji_list, segments->mutable_conversion_segment(i));
+                        kanji_list, &segment);
   }
 
   // Tweak for noun prefix.
   // TODO(team): Ideally, this issue can be fixed via the language model
   // and dictionary generation.
   for (size_t i = 0; i < segments_size; ++i) {
-    if (segments->conversion_segment(i).candidates_size() == 0) {
+    Segment &segment = conversion_segments[i];
+    if (segment.candidates_size() == 0) {
       continue;
     }
 
     if (i + 1 < segments_size) {
       const Segment::Candidate &right_candidate =
-          segments->conversion_segment(i + 1).candidate(0);
+          conversion_segments[i + 1].candidate(0);
       // right segment must be a noun.
       if (!pos_matcher_.IsContentNoun(right_candidate.lid)) {
         continue;
@@ -163,13 +166,12 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
       continue;
     }
 
-    const std::string &key = segments->conversion_segment(i).key();
+    const std::string &key = segment.key();
     const auto range = single_kanji_dictionary_->LookupNounPrefixEntries(key);
     if (range.first == range.second) {
       continue;
     }
-    InsertNounPrefix(pos_matcher_, segments->mutable_conversion_segment(i),
-                     range.first, range.second);
+    InsertNounPrefix(pos_matcher_, &segment, range.first, range.second);
     // Ignore the next noun content word.
     ++i;
     modified = true;

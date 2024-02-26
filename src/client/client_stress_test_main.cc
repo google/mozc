@@ -67,8 +67,6 @@ ABSL_FLAG(bool, test_testsendkey, true, "test TestSendKey");
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  absl::SetFlag(&FLAGS_logtostderr, true);
-
   mozc::client::Client client;
   if (!absl::GetFlag(FLAGS_server_path).empty()) {
     client.set_server_program(absl::GetFlag(FLAGS_server_path));

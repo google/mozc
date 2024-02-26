@@ -40,8 +40,7 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
-// TODO(yuryu): This file will also move into strings/.
+#include "absl/log/check.h"
 #include "absl/algorithm/container.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
@@ -363,7 +362,7 @@ bool NumberUtil::ArabicToSeparatedArabic(absl::string_view input_num,
 
     // integral part
     for (absl::string_view::size_type j = 0; j < integer.size(); ++j) {
-      // We don't add separater first
+      // We don't add separator first
       if (j != 0 && (integer.size() - j) % 3 == 0) {
         absl::StrAppend(&result, variation.separator);
       }
@@ -852,9 +851,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
     const char32_t wchar = Util::Utf8ToCodepoint(begin, end, &mblen);
     absl::string_view kanji_char(begin, mblen);
 
-    std::string tmp;
-    NumberUtil::KanjiNumberToArabicNumber(kanji_char, &tmp);
-
+    const std::string tmp = NumberUtil::KanjiNumberToArabicNumber(kanji_char);
     uint64_t n = 0;
     if (!absl::SimpleAtoi(tmp, &n)) {
       break;
@@ -933,10 +930,9 @@ bool NumberUtil::NormalizeNumbersWithSuffix(absl::string_view input,
                                   kanji_output, arabic_output, suffix);
 }
 
-void NumberUtil::KanjiNumberToArabicNumber(absl::string_view input,
-                                           std::string *output) {
+std::string NumberUtil::KanjiNumberToArabicNumber(absl::string_view input) {
   // TODO(yuryu): This file will also move into strings/.
-  *output = japanese::internal::ConvertUsingDoubleArray(
+  return japanese::internal::ConvertUsingDoubleArray(
       japanese::internal::kanjinumber_to_arabicnumber_da,
       japanese::internal::kanjinumber_to_arabicnumber_table, input);
 }

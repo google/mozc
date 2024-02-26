@@ -75,8 +75,7 @@ void SetSegment(const absl::string_view key, const absl::string_view value,
 // Counts the number of enumerated emoji candidates in the segments.
 int CountEmojiCandidates(const Segments &segments) {
   int emoji_size = 0;
-  for (size_t i = 0; i < segments.segments_size(); ++i) {
-    const Segment &segment = segments.segment(i);
+  for (const Segment &segment : segments) {
     for (size_t j = 0; j < segment.candidates_size(); ++j) {
       if (EmojiRewriter::IsEmojiCandidate(segment.candidate(j))) {
         ++emoji_size;

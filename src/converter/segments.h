@@ -47,6 +47,7 @@
 #include "base/number_util.h"
 #include "base/strings/assign.h"
 #include "converter/lattice.h"
+#include "testing/friend_test.h"
 
 #ifndef NDEBUG
 #define MOZC_CANDIDATE_DEBUG
@@ -507,6 +508,9 @@ class Segments final {
     Iterator operator+(difference_type diff) const {
       return Iterator{iterator_ + diff};
     }
+    Iterator operator-(difference_type diff) const {
+      return Iterator{iterator_ - diff};
+    }
     Iterator &operator+=(difference_type diff) {
       iterator_ += diff;
       return *this;
@@ -525,6 +529,7 @@ class Segments final {
 
    private:
     friend class Iterator<inner_const_iterator, /*is_const=*/true>;
+    friend class Segments;
 
     InnerIterator iterator_;
   };
@@ -538,13 +543,52 @@ class Segments final {
   template <typename Iterator>
   class Range {
    public:
+    using difference_type = typename Iterator::difference_type;
+    using reference = typename Iterator::reference;
+
     Range(const Iterator &begin, const Iterator &end)
         : begin_(begin), end_(end) {}
 
     Iterator begin() const { return begin_; }
     Iterator end() const { return end_; }
 
-    typename Iterator::difference_type size() const { return end_ - begin_; }
+    difference_type size() const { return end_ - begin_; }
+    bool empty() const { return begin_ == end_; }
+
+    reference operator[](difference_type index) const {
+      CHECK_GE(index, 0);
+      CHECK_LT(index, size());
+      return *(begin_ + index);
+    }
+    reference front() const {
+      CHECK(!empty());
+      return *begin_;
+    }
+    reference back() const {
+      CHECK(!empty());
+      return *(end_ - 1);
+    }
+
+    // Skip first `count` elements, similar to `std::ranges::views::drop`.
+    Range drop(difference_type count) const {
+      CHECK_GE(count, 0);
+      return Range{count < size() ? begin_ + count : end_, end_};
+    }
+    // Take first `count` elements, similar to `std::ranges::views::take`.
+    Range take(difference_type count) const {
+      CHECK_GE(count, 0);
+      return Range{begin_, count < size() ? begin_ + count : end_};
+    }
+    // Take `count` segments from the end.
+    Range take_last(difference_type count) const {
+      CHECK_GE(count, 0);
+      return drop(std::max<difference_type>(0, size() - count));
+    }
+    // Same as `drop(drop_count).take(count)`, providing better readability.
+    // `std::ranges::subrange` may not provide the same argument types though.
+    Range subrange(difference_type index, difference_type count) const {
+      return drop(index).take(count);
+    }
 
    private:
     Iterator begin_;
@@ -574,6 +618,8 @@ class Segments final {
     return Range<Iterator>(begin, end);
   }
 
+  Range<iterator> all() { return make_range(begin(), end()); }
+  Range<const_iterator> all() const { return make_range(begin(), end()); }
   Range<iterator> history_segments();
   Range<const_iterator> history_segments() const;
   Range<iterator> conversion_segments();
@@ -611,7 +657,9 @@ class Segments final {
   void pop_front_segment();
   void pop_back_segment();
   void erase_segment(size_t i);
+  iterator erase_segment(iterator position);
   void erase_segments(size_t i, size_t size);
+  iterator erase_segments(iterator first, iterator last);
 
   // erase all segments
   void clear_history_segments();
@@ -655,6 +703,8 @@ class Segments final {
   Lattice *mutable_cached_lattice() { return &cached_lattice_; }
 
  private:
+  FRIEND_TEST(SegmentsTest, BasicTest);
+
   iterator history_segments_end();
   const_iterator history_segments_end() const;
 

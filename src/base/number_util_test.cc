@@ -287,8 +287,7 @@ TEST(NumberUtilTest, KanjiNumberToArabicNumber) {
                                            "10000000000000000"};
 
   for (size_t i = 0; i < std::size(inputs); ++i) {
-    std::string arabic;
-    NumberUtil::KanjiNumberToArabicNumber(inputs[i], &arabic);
+    const std::string arabic = NumberUtil::KanjiNumberToArabicNumber(inputs[i]);
     EXPECT_EQ(arabic, expects[i]);
   }
 }

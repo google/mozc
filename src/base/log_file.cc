@@ -27,66 +27,45 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/log_file.h"
+
 #include <string>
 
-#include "ios/ios_engine.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/log/log_entry.h"
+#include "absl/log/log_sink.h"
+#include "absl/log/log_sink_registry.h"
+#include "absl/synchronization/mutex.h"
+#include "base/file_stream.h"
 
 namespace mozc {
+namespace {
 
-class SessionHandlerInterface {
+class LogFileSink : public absl::LogSink {
  public:
-  SessionHandlerInterface() = default;
-  ~SessionHandlerInterface() = default;
+  explicit LogFileSink(const std::string &path) : file_(path) {}
+
+  void Send(const absl::LogEntry &entry) override {
+    absl::MutexLock lock(&mutex_);
+    file_ << entry.text_message_with_prefix();
+  }
+
+  void Flush() override {
+    absl::MutexLock lock(&mutex_);
+    file_.flush();
+  }
+
+ private:
+  absl::Mutex mutex_;
+  OutputFileStream file_ ABSL_GUARDED_BY(mutex_);
 };
 
-namespace ios {
+}  // namespace
 
-IosEngine::IosEngine(const std::string &data_file_path)
-    : session_handler_(new SessionHandlerInterface), session_id_(0) {}
-
-IosEngine::~IosEngine() = default;
-
-bool IosEngine::SetMobileRequest(const std::string &keyboard_layout,
-                                 commands::Command *command) {
-  return true;
+void RegisterLogFileSink(const std::string &path) {
+#if !defined(MOZC_NO_LOGGING) && !defined(__ANDROID__)
+  absl::AddLogSink(new LogFileSink(path));
+#endif  // !MOZC_NO_LOGGING && !__ANDROID__
 }
 
-void FillMobileConfig(config::Config *config) {
-  // Do nothing.
-}
-
-bool IosEngine::SetConfig(const config::Config &config,
-                          commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::CreateSession(commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::DeleteSession(commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::ResetContext(commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
-                               commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::SendKey(const std::string &character,
-                        commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::SendSessionCommand(
-    const commands::SessionCommand &session_command,
-    commands::Command *command) {
-  return true;
-}
-
-}  // namespace ios
 }  // namespace mozc

@@ -210,9 +210,8 @@ void SessionHandler::UpdateSessions(const config::Config &config,
     key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
   }
 
-  for (SessionElement *element = session_map_->MutableHead();
-       element != nullptr; element = element->next) {
-    std::unique_ptr<session::Session> &session = element->value;
+  for (SessionElement &element : *session_map_) {
+    std::unique_ptr<session::Session> &session = element.value;
     if (!session) {
       continue;
     }
@@ -609,22 +608,21 @@ bool SessionHandler::Cleanup(commands::Command *command) {
                    absl::Seconds(7200)));
 
   std::vector<SessionID> remove_ids;
-  for (const SessionElement *element = session_map_->Head(); element != nullptr;
-       element = element->next) {
-    const session::Session *session = element->value.get();
+  for (const SessionElement &element : *session_map_) {
+    const session::Session *session = element.value.get();
     if (!IsApplicationAlive(session)) {
-      MOZC_VLOG(2) << "Application is not alive. Removing: " << element->key;
-      remove_ids.push_back(element->key);
+      MOZC_VLOG(2) << "Application is not alive. Removing: " << element.key;
+      remove_ids.push_back(element.key);
     } else if (session->last_command_time() == absl::InfinitePast()) {
       // no command is executed
       if ((current_time - session->create_session_time()) >=
           create_session_timeout) {
-        remove_ids.push_back(element->key);
+        remove_ids.push_back(element.key);
       }
     } else {  // some commands are executed already
       if ((current_time - session->last_command_time()) >=
           last_command_timeout) {
-        remove_ids.push_back(element->key);
+        remove_ids.push_back(element.key);
       }
     }
   }

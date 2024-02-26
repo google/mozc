@@ -318,8 +318,8 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     return true;
   }
 
-  for (size_t i = 0; i < segments_.segments_size(); ++i) {
-    *actual_value += segments_.segment(i).candidate(0).value;
+  for (const Segment &segment : segments_) {
+    *actual_value += segment.candidate(0).value;
   }
 
   if (command == kConversionMatch) {

@@ -39,7 +39,7 @@
 
 #include "absl/flags/parse.h"
 #include "base/file_util.h"
-#include "base/logging.h"
+#include "base/log_file.h"
 
 #ifndef MOZC_BUILDTOOL_BUILD
 #include "base/system_util.h"
@@ -51,6 +51,15 @@
 ABSL_FLAG(std::string, log_dir, "",
           "If specified, logfiles are written into this directory "
           "instead of the default logging directory.");
+
+ABSL_RETIRED_FLAG(
+    bool, logtostderr, false,
+    "[Deprecated; no-op] Log messages only go to stderr, not log files.");
+
+ABSL_RETIRED_FLAG(
+    bool, colored_log, true,
+    "[Deprecated; no-op] Enables colored log messages on tty devices");
+
 
 ABSL_FLAG(std::string, program_invocation_name, "",
           "Program name copied from argv[0].");
@@ -107,7 +116,7 @@ void InitMozc(const char *arg0, int *argc, char ***argv) {
   ParseCommandLineFlags(*argc, *argv);
 
   const std::string program_name = *argc > 0 ? (*argv)[0] : "UNKNOWN";
-  Logging::InitLogStream(GetLogFilePathFromProgramName(program_name));
+  RegisterLogFileSink(GetLogFilePathFromProgramName(program_name));
 }
 
 }  // namespace mozc

@@ -112,7 +112,6 @@ mozc_cc_library(
     hdrs = ["session_output.h"],
     deps = [
         ":candidate_list",
-        "//base:logging",
         "//base:text_normalizer",
         "//base:util",
         "//base:version",
@@ -122,6 +121,8 @@ mozc_cc_library(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -40,6 +40,7 @@
 #include <vector>
 
 #include "absl/container/btree_set.h"
+#include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -724,8 +725,8 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
   }
 
   // check that all segments have candidate
-  for (size_t i = 0; i < segments.segments_size(); ++i) {
-    if (segments.segment(i).candidates_size() == 0) {
+  for (const Segment &segment : segments) {
+    if (segment.candidates_size() == 0) {
       LOG(ERROR) << "candidate size is 0";
       return false;
     }
@@ -739,8 +740,7 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
 Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
     const Segments &segments) {
   Segments ret;
-  for (size_t i = 0; i < segments.segments_size(); ++i) {
-    const Segment &segment = segments.segment(i);
+  for (const Segment &segment : segments) {
     const Segment::Candidate &candidate = segment.candidate(0);
     if (candidate.inner_segment_boundary.size() <= 1) {
       // No inner segment info
@@ -951,11 +951,9 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
   }
 
   // set BEST_CANDIDATE marker in advance
-  for (size_t i = 0; i < segments->segments_size(); ++i) {
-    Segment *segment = segments->mutable_segment(i);
-    DCHECK(segment);
-    DCHECK_GT(segment->candidates_size(), 0);
-    segment->mutable_candidate(0)->attributes |=
+  for (Segment &segment : *segments) {
+    DCHECK_GT(segment.candidates_size(), 0);
+    segment.mutable_candidate(0)->attributes |=
         Segment::Candidate::BEST_CANDIDATE;
   }
 
