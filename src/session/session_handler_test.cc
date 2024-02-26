@@ -41,6 +41,7 @@
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
 #include "absl/random/random.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -48,14 +49,13 @@
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "base/logging.h"
 #include "base/thread.h"
 #include "composer/query.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "engine/engine.h"
 #include "engine/data_loader.h"
+#include "engine/engine.h"
 #include "engine/engine_mock.h"
 #include "engine/minimal_engine.h"
 #include "engine/mock_data_engine_factory.h"
@@ -649,8 +649,15 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
 
   // A new engine should be built on create session event because the session
   // handler currently holds no session.
-  uint64_t id = 0;
-  ASSERT_TRUE(CreateSession(&handler, &id));
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
+  handler.EvalCommand(&command);
+  EXPECT_EQ(command.output().error_code(), commands::Output::SESSION_SUCCESS);
+  EXPECT_TRUE(command.output().has_engine_reload_response());
+  EXPECT_EQ(command.output().engine_reload_response().status(),
+            EngineReloadResponse::RELOADED);
+  EXPECT_NE(command.output().id(), 0);
+
   // When the engine is created first, we wait until the engine gets ready.
   EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
 
@@ -658,6 +665,7 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
             EngineReloadResponse::ACCEPTED);
 
+  uint64_t id = 0;
   ASSERT_TRUE(DeleteSession(&handler, id));
   ASSERT_TRUE(CreateSession(&handler, &id));
   EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
@@ -778,12 +786,20 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
 
   // Build() is called, but it returns invalid data, so new data is not used.
   EXPECT_EQ(&handler.engine(), old_engine_ptr);
-  uint64_t id = 0;
-  ASSERT_TRUE(CreateSession(&handler, &id));
+
+  // CreateSession does not contain engine_reload_response.
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
+  handler.EvalCommand(&command);
+  EXPECT_EQ(command.output().error_code(), commands::Output::SESSION_SUCCESS);
+  EXPECT_FALSE(command.output().has_engine_reload_response());
+  EXPECT_NE(command.output().id(), 0);
+
   EXPECT_EQ(&handler.engine(), old_engine_ptr);
 
   // Sends the same request again, but the request is already marked as
   // unregistered.
+  uint64_t id = 0;
   ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
             EngineReloadResponse::ACCEPTED);
   ASSERT_TRUE(DeleteSession(&handler, id));

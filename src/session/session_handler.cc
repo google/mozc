@@ -41,6 +41,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
@@ -471,11 +472,14 @@ void SessionHandler::MaybeReloadEngine(commands::Command *command) {
     return;
   }
 
-  if (!engine_->MaybeReloadEngine(
-      command->mutable_output()->mutable_engine_reload_response())) {
+  EngineReloadResponse engine_reload_response;
+  if (!engine_->MaybeReloadEngine(&engine_reload_response)) {
+    // Engine is not reloaded. output.engine_reload_response must be empty.
     return;
   }
 
+  *command->mutable_output()->mutable_engine_reload_response() =
+      engine_reload_response;
   table_manager_->ClearCaches();
 }
 
