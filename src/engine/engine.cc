@@ -265,11 +265,11 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
   // Maybe build new engine if new request is received.
   // EngineBuilder::Build just returns a future object so
   // client needs to replace the new engine when the future is the ready to use.
-  if (!engine_response_future_ && current_engine_id_ != latest_engine_id_ &&
-      latest_engine_id_ != 0) {
-    engine_response_future_ = loader_->Build(latest_engine_id_);
+  if (!engine_response_future_ && current_data_id_ != latest_data_id_ &&
+      latest_data_id_ != 0) {
+    engine_response_future_ = loader_->Build(latest_data_id_);
     // Wait the engine if the no new engine is loaded so far.
-    if (current_engine_id_ == 0 || always_wait_for_engine_response_future_) {
+    if (current_data_id_ == 0 || always_wait_for_engine_response_future_) {
       engine_response_future_->Wait();
     }
   }
@@ -296,7 +296,7 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
         loader_->UnregisterRequest(engine_response.id);
     // Update latest_engine_id_ if latest_engine_id_ == engine_response.id.
     // Otherwise, latest_engine_id_ may already be updated by the new request.
-    latest_engine_id_.compare_exchange_strong(engine_response.id, rollback_id);
+    latest_data_id_.compare_exchange_strong(engine_response.id, rollback_id);
 
     return false;
   }
@@ -315,7 +315,7 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
     return false;
   }
 
-  current_engine_id_ = engine_response.id;
+  current_data_id_ = engine_response.id;
   response->set_status(EngineReloadResponse::RELOADED);
   return true;
 }
@@ -324,7 +324,7 @@ bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
   if (!loader_) {
     return false;
   }
-  latest_engine_id_ = loader_->RegisterRequest(request);
+  latest_data_id_ = loader_->RegisterRequest(request);
   return true;
 }
 
