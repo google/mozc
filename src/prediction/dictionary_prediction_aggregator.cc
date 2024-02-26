@@ -41,7 +41,6 @@
 #include <utility>
 #include <vector>
 
-#include "ngram/neg_log_prob.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
