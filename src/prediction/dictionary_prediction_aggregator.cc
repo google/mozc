@@ -34,7 +34,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
-#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -57,14 +56,12 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "prediction/number_decoder.h"
-#include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
@@ -549,20 +546,9 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       kanji_number_id_(modules.GetPosMatcher()->GetKanjiNumberId()),
       zip_code_id_(modules.GetPosMatcher()->GetZipcodeId()),
       number_id_(modules.GetPosMatcher()->GetNumberId()),
-      unknown_id_(modules.GetPosMatcher()->GetUnknownId()) {
-  absl::string_view zero_query_token_array_data;
-  absl::string_view zero_query_string_array_data;
-  absl::string_view zero_query_number_token_array_data;
-  absl::string_view zero_query_number_string_array_data;
-  modules.GetDataManager().GetZeroQueryData(
-      &zero_query_token_array_data, &zero_query_string_array_data,
-      &zero_query_number_token_array_data,
-      &zero_query_number_string_array_data);
-  zero_query_dict_.Init(zero_query_token_array_data,
-                        zero_query_string_array_data);
-  zero_query_number_dict_.Init(zero_query_number_token_array_data,
-                               zero_query_number_string_array_data);
-
+      unknown_id_(modules.GetPosMatcher()->GetUnknownId()),
+      zero_query_dict_(modules.GetZeroQueryDict()),
+      zero_query_number_dict_(modules.GetZeroQueryNumberDict()) {
 }
 
 std::vector<Result> DictionaryPredictionAggregator::AggregateResults(

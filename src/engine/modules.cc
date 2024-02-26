@@ -159,6 +159,19 @@ absl::Status Modules::Init(
     RETURN_IF_NULL(single_kanji_prediction_aggregator_);
   }
 
+  absl::string_view zero_query_token_array_data;
+  absl::string_view zero_query_string_array_data;
+  absl::string_view zero_query_number_token_array_data;
+  absl::string_view zero_query_number_string_array_data;
+  data_manager_->GetZeroQueryData(&zero_query_token_array_data,
+                                  &zero_query_string_array_data,
+                                  &zero_query_number_token_array_data,
+                                  &zero_query_number_string_array_data);
+  zero_query_dict_.Init(zero_query_token_array_data,
+                        zero_query_string_array_data);
+  zero_query_number_dict_.Init(zero_query_number_token_array_data,
+                               zero_query_number_string_array_data);
+
 
     initialized_ = true;
     return absl::Status();

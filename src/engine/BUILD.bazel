@@ -131,6 +131,7 @@ mozc_cc_library(
         "//prediction:rescorer_interface",
         "//prediction:single_kanji_prediction_aggregator",
         "//prediction:suggestion_filter",
+        "//prediction:zero_query_dict",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

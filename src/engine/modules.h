@@ -46,6 +46,7 @@
 #include "prediction/rescorer_interface.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/suggestion_filter.h"
+#include "prediction/zero_query_dict.h"
 
 
 namespace mozc {
@@ -110,6 +111,10 @@ class Modules {
   GetSingleKanjiPredictionAggregator() const {
     return single_kanji_prediction_aggregator_.get();
   }
+  const ZeroQueryDict &GetZeroQueryDict() const { return zero_query_dict_; }
+  const ZeroQueryDict &GetZeroQueryNumberDict() const {
+    return zero_query_number_dict_;
+  }
   const prediction::RescorerInterface *GetRescorer() const {
     return rescorer_.get();
   }
@@ -136,6 +141,8 @@ class Modules {
   SuggestionFilter suggestion_filter_;
   std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
       single_kanji_prediction_aggregator_;
+  ZeroQueryDict zero_query_dict_;
+  ZeroQueryDict zero_query_number_dict_;
   std::unique_ptr<const prediction::RescorerInterface> rescorer_;
 
 

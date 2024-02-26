@@ -300,8 +300,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   const uint16_t zip_code_id_;
   const uint16_t number_id_;
   const uint16_t unknown_id_;
-  ZeroQueryDict zero_query_dict_;
-  ZeroQueryDict zero_query_number_dict_;
+  const ZeroQueryDict &zero_query_dict_;
+  const ZeroQueryDict &zero_query_number_dict_;
   NumberDecoder number_decoder_;
   std::unique_ptr<PredictionAggregatorInterface>
       single_kanji_prediction_aggregator_;
