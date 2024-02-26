@@ -162,8 +162,8 @@ class Engine : public EngineInterface {
   std::unique_ptr<Converter> converter_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
 
-  std::atomic<uint64_t> latest_engine_id_ = 0;
-  std::atomic<uint64_t> current_engine_id_ = 0;
+  std::atomic<uint64_t> latest_data_id_ = 0;
+  std::atomic<uint64_t> current_data_id_ = 0;
   std::unique_ptr<DataLoader::ResponseFuture> engine_response_future_;
   // used only in unittest to perform blocking behavior.
   bool always_wait_for_engine_response_future_ = false;

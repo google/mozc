@@ -194,15 +194,18 @@ mozc_cc_test(
     srcs = ["engine_test.cc"],
     deps = [
         ":engine",
+        ":engine_builder",
         ":modules",
         ":spellchecker_interface",
         "//base:logging",
+        "//base:thread",
         "//composer:query",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
 )
 

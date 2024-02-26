@@ -613,7 +613,8 @@ TEST_F(SessionHandlerTest, SyncDataTest) {
   handler.EvalCommand(&command);
 }
 
-// Tests the interaction with EngineBuilder for successful Engine
+// TODO(b/326372188): Reduce redundancy with EngineTest.
+// Tests the interaction with DataLoader for successful Engine
 // reload event.
 TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   auto data_manager = std::make_unique<testing::MockDataManager>();
@@ -662,6 +663,7 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
 }
 
+// TODO(b/326372188): Reduce redundancy with EngineTest.
 // Tests situations to handle multiple new requests.
 TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
   auto data_loader = std::make_unique<MockDataLoader>();
@@ -736,7 +738,8 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
   EXPECT_EQ(handler.engine().GetDataVersion(), data_version2);
 }
 
-// Tests the interaction with EngineBuilder in the situation where
+// TODO(b/326372188): Reduce redundancy with EngineTest.
+// Tests the interaction with DataLoader in the situation where
 // requested data is broken.
 TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
   auto data_loader = std::make_unique<MockDataLoader>();
@@ -767,8 +770,7 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
           })));
   EXPECT_CALL(*data_loader_ptr, UnregisterRequest(1)).WillOnce(Return(0));
 
-  // Build() is called, but it returns invalid engine, so new engine is not
-  // used.
+  // Build() is called, but it returns invalid data, so new data is not used.
   EXPECT_EQ(&handler.engine(), old_engine_ptr);
   uint64_t id = 0;
   ASSERT_TRUE(CreateSession(&handler, &id));
@@ -784,6 +786,7 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
   EXPECT_EQ(&handler.engine(), old_engine_ptr);
 }
 
+// TODO(b/326372188): Reduce redundancy with EngineTest.
 // Tests the rollback scenario
 TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
   auto data_loader = std::make_unique<MockDataLoader>();
@@ -846,7 +849,7 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
   EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
 }
 
-// Tests the interaction with EngineBuilder in the situation where
+// Tests the interaction with DataLoader in the situation where
 // sessions exist in create session event.
 TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
   auto data_manager = std::make_unique<testing::MockDataManager>();
