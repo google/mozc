@@ -619,8 +619,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   suggestion_convreq_->set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
 
   // StartConversion should not be called for partial.
-  EXPECT_CALL(*data_and_aggregator->mutable_converter(),
-              StartConversionForRequest(_, _))
+  EXPECT_CALL(*data_and_aggregator->mutable_converter(), StartConversion(_, _))
       .Times(0);
   EXPECT_CALL(*data_and_aggregator->mutable_immutable_converter(),
               ConvertForRequest(_, _))
@@ -1626,7 +1625,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     add_segment("なかのです", "Nakanodesu");
 
     EXPECT_CALL(*data_and_aggregator->mutable_converter(),
-                StartConversionForRequest(_, _))
+                StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
   // Set up mock immutable converter

@@ -64,38 +64,38 @@ class Converter final : public ConverterInterface {
             ImmutableConverterInterface *immutable_converter);
 
   ABSL_MUST_USE_RESULT
-  bool StartConversionForRequest(const ConversionRequest &request,
-                                 Segments *segments) const override;
+  bool StartConversion(const ConversionRequest &request,
+                       Segments *segments) const override;
   ABSL_MUST_USE_RESULT
-  bool StartConversion(Segments *segments,
-                       absl::string_view key) const override;
+  bool StartConversionWithKey(Segments *segments,
+                              absl::string_view key) const override;
   ABSL_MUST_USE_RESULT
   bool StartReverseConversion(Segments *segments,
                               absl::string_view key) const override;
   ABSL_MUST_USE_RESULT
-  bool StartPredictionForRequest(const ConversionRequest &request,
-                                 Segments *segments) const override;
+  bool StartPrediction(const ConversionRequest &request,
+                       Segments *segments) const override;
   ABSL_MUST_USE_RESULT
-  bool StartPrediction(Segments *segments,
-                       absl::string_view key) const override;
-  ABSL_MUST_USE_RESULT
-  bool StartSuggestionForRequest(const ConversionRequest &request,
-                                 Segments *segments) const override;
-  ABSL_MUST_USE_RESULT
-  bool StartSuggestion(Segments *segments,
-                       absl::string_view key) const override;
-  ABSL_MUST_USE_RESULT
-  bool StartPartialPredictionForRequest(const ConversionRequest &request,
-                                        Segments *segments) const override;
-  ABSL_MUST_USE_RESULT
-  bool StartPartialPrediction(Segments *segments,
+  bool StartPredictionWithKey(Segments *segments,
                               absl::string_view key) const override;
   ABSL_MUST_USE_RESULT
-  bool StartPartialSuggestionForRequest(const ConversionRequest &request,
-                                        Segments *segments) const override;
+  bool StartSuggestion(const ConversionRequest &request,
+                       Segments *segments) const override;
   ABSL_MUST_USE_RESULT
-  bool StartPartialSuggestion(Segments *segments,
+  bool StartSuggestionWithKey(Segments *segments,
                               absl::string_view key) const override;
+  ABSL_MUST_USE_RESULT
+  bool StartPartialPrediction(const ConversionRequest &request,
+                              Segments *segments) const override;
+  ABSL_MUST_USE_RESULT
+  bool StartPartialPredictionWithKey(Segments *segments,
+                                     absl::string_view key) const override;
+  ABSL_MUST_USE_RESULT
+  bool StartPartialSuggestion(const ConversionRequest &request,
+                              Segments *segments) const override;
+  ABSL_MUST_USE_RESULT
+  bool StartPartialSuggestionWithKey(Segments *segments,
+                                     absl::string_view key) const override;
 
   void FinishConversion(const ConversionRequest &request,
                         Segments *segments) const override;

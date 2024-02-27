@@ -844,7 +844,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
   // partial candidates.
   tmp_request.set_create_partial_candidates(false);
   tmp_request.set_request_type(ConversionRequest::CONVERSION);
-  if (!converter_->StartConversionForRequest(tmp_request, &tmp_segments)) {
+  if (!converter_->StartConversion(tmp_request, &tmp_segments)) {
     return false;
   }
 
@@ -860,7 +860,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
   result->candidate_attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
 
   // Concatenate the top candidates.
-  // Note that since StartConversionForRequest() runs in conversion mode, the
+  // Note that since StartConversion() runs in conversion mode, the
   // resulting |tmp_segments| doesn't have inner_segment_boundary. We need to
   // construct it manually here.
   // TODO(noriyukit): This is code duplicate in converter/nbest_generator.cc and
@@ -898,7 +898,7 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
   DCHECK(results);
   // First insert a top conversion result.
   // Note: Do not call actual converter for partial suggestion / prediction.
-  // Converter::StartConversionForRequest() resets conversion key from composer
+  // Converter::StartConversion() resets conversion key from composer
   // rather than using the key in segments.
   if (request.use_actual_converter_for_realtime_conversion() &&
       request.request_type() != ConversionRequest::PARTIAL_SUGGESTION &&

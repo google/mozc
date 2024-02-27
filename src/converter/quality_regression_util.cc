@@ -250,7 +250,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     composer::Composer composer(&table, &request_, &config_);
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest conv_req(&composer, &request_, &config_);
-    if (!converter_->StartConversionForRequest(conv_req, &segments_)) {
+    if (!converter_->StartConversion(conv_req, &segments_)) {
       return absl::UnknownError(absl::StrCat(
           "StartConversionForRequest failed: ", item.OutputAsTSV()));
     }
@@ -263,7 +263,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     composer::Composer composer(&table, &request_, &config_);
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest conv_req(&composer, &request_, &config_);
-    if (!converter_->StartPredictionForRequest(conv_req, &segments_)) {
+    if (!converter_->StartPrediction(conv_req, &segments_)) {
       return absl::UnknownError(absl::StrCat(
           "StartPredictionForRequest failed: ", item.OutputAsTSV()));
     }
@@ -271,9 +271,9 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     composer::Composer composer(&table, &request_, &config_);
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest conv_req(&composer, &request_, &config_);
-    if (!converter_->StartSuggestionForRequest(conv_req, &segments_)) {
-      return absl::UnknownError(absl::StrCat(
-          "StartSuggestionForRequest failed: ", item.OutputAsTSV()));
+    if (!converter_->StartSuggestion(conv_req, &segments_)) {
+      return absl::UnknownError(
+          absl::StrCat("StartSuggestion failed: ", item.OutputAsTSV()));
     }
   } else if (command == kZeroQueryExpect || command == kZeroQueryNotExpect) {
     commands::Request request = request_;
@@ -284,9 +284,9 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
       composer.SetPreeditTextForTestOnly(key);
       ConversionRequest conv_req(&composer, &request, &config_);
       conv_req.set_max_conversion_candidates_size(10);
-      if (!converter_->StartSuggestionForRequest(conv_req, &segments_)) {
-        return absl::UnknownError(absl::StrCat(
-            "StartSuggestionForRequest failed: ", item.OutputAsTSV()));
+      if (!converter_->StartSuggestion(conv_req, &segments_)) {
+        return absl::UnknownError(
+            absl::StrCat("StartSuggestion failed: ", item.OutputAsTSV()));
       }
       if (!converter_->CommitSegmentValue(&segments_, 0, 0)) {
         return absl::UnknownError(
@@ -299,7 +299,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
       composer::Composer composer(&table, &request, &config_);
       ConversionRequest conv_req(&composer, &request, &config_);
       conv_req.set_max_conversion_candidates_size(10);
-      if (!converter_->StartPredictionForRequest(conv_req, &segments_)) {
+      if (!converter_->StartPrediction(conv_req, &segments_)) {
         return absl::UnknownError(absl::StrCat(
             "StartPredictionForRequest failed: ", item.OutputAsTSV()));
       }

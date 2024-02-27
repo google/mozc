@@ -422,7 +422,6 @@ mozc_cc_library(
         ":immutable_converter_interface",
         ":segments",
         "//base:japanese_util",
-        "//base:logging",
         "//base:util",
         "//base:vlog",
         "//base/strings:assign",
@@ -438,6 +437,8 @@ mozc_cc_library(
         "//transliteration",
         "//usage_stats",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],
@@ -644,7 +645,11 @@ mozc_cc_library(
     hdrs = ["converter_mock.h"],
     deps = [
         ":converter_interface",
+        ":segments",
+        "//request:conversion_request",
         "//testing:gunit",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

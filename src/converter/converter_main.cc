@@ -296,14 +296,14 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
     composer.SetPreeditTextForTestOnly(fields[1]);
-    return converter.StartConversionForRequest(*conversion_request, segments);
+    return converter.StartConversion(*conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
     CHECK_FIELDS_LENGTH(5);
     Lattice::SetDebugDisplayNode(
         NumberUtil::SimpleAtoi(fields[2]),  // begin pos
         NumberUtil::SimpleAtoi(fields[3]),  // end pos
         fields[4]);
-    const bool result = converter.StartConversion(segments, fields[1]);
+    const bool result = converter.StartConversionWithKey(segments, fields[1]);
     Lattice::ResetDebugDisplayNode();
     return result;
   } else if (func == "reverseconversion" || func == "reverse" || func == "r") {
@@ -312,16 +312,16 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
   } else if (func == "startprediction" || func == "predict" || func == "p") {
     if (fields.size() >= 2) {
       composer.SetPreeditTextForTestOnly(fields[1]);
-      return converter.StartPredictionForRequest(*conversion_request, segments);
+      return converter.StartPrediction(*conversion_request, segments);
     } else {
-      return converter.StartPredictionForRequest(*conversion_request, segments);
+      return converter.StartPrediction(*conversion_request, segments);
     }
   } else if (func == "startsuggestion" || func == "suggest") {
     if (fields.size() >= 2) {
       composer.SetPreeditTextForTestOnly(fields[1]);
-      return converter.StartSuggestionForRequest(*conversion_request, segments);
+      return converter.StartSuggestion(*conversion_request, segments);
     } else {
-      return converter.StartSuggestionForRequest(*conversion_request, segments);
+      return converter.StartSuggestion(*conversion_request, segments);
     }
   } else if (func == "finishconversion" || func == "finish") {
     converter.FinishConversion(*conversion_request, segments);

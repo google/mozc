@@ -186,8 +186,8 @@ bool SessionConverter::ConvertWithPreferences(
   SetConversionPreferences(preferences, &segments_, &conversion_request);
   SetRequestType(ConversionRequest::CONVERSION, &conversion_request);
 
-  if (!converter_->StartConversionForRequest(conversion_request, &segments_)) {
-    LOG(WARNING) << "StartConversionForRequest() failed";
+  if (!converter_->StartConversion(conversion_request, &segments_)) {
+    LOG(WARNING) << "StartConversion() failed";
     ResetState();
     return false;
   }
@@ -490,15 +490,12 @@ bool SessionConverter::SuggestWithPreferences(
   // Start actual suggestion/prediction.
   bool result;
   if (use_partial_composition) {
-    result = converter_->StartPartialPredictionForRequest(conversion_request,
-                                                          &segments_);
+    result = converter_->StartPartialPrediction(conversion_request, &segments_);
   } else {
     if (use_prediction_candidate) {
-      result =
-          converter_->StartPredictionForRequest(conversion_request, &segments_);
+      result = converter_->StartPrediction(conversion_request, &segments_);
     } else {
-      result =
-          converter_->StartSuggestionForRequest(conversion_request, &segments_);
+      result = converter_->StartSuggestion(conversion_request, &segments_);
     }
   }
   if (!result) {
@@ -518,11 +515,11 @@ bool SessionConverter::SuggestWithPreferences(
         CreateIncognitoConversionRequest(conversion_request, incognito_config);
     incognito_segments_.Clear();
     if (use_partial_composition) {
-      result = converter_->StartPartialSuggestionForRequest(
-          incognito_conversion_request, &incognito_segments_);
+      result = converter_->StartPartialSuggestion(incognito_conversion_request,
+                                                  &incognito_segments_);
     } else {
-      result = converter_->StartSuggestionForRequest(
-          incognito_conversion_request, &incognito_segments_);
+      result = converter_->StartSuggestion(incognito_conversion_request,
+                                           &incognito_segments_);
     }
     if (!result) {
       MOZC_VLOG(1)
@@ -584,9 +581,8 @@ bool SessionConverter::PredictWithPreferences(
   segments_.clear_conversion_segments();
 
   if (predict_expand || predict_first) {
-    if (!converter_->StartPredictionForRequest(conversion_request,
-                                               &segments_)) {
-      LOG(WARNING) << "StartPredictionForRequest() failed";
+    if (!converter_->StartPrediction(conversion_request, &segments_)) {
+      LOG(WARNING) << "StartPrediction() failed";
       // TODO(komatsu): Perform refactoring after checking the stability test.
       //
       // If predict_expand is true, it means we have prevous_suggestions_.

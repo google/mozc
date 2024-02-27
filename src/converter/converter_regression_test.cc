@@ -54,16 +54,16 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
   CHECK(converter);
   {
     Segments segments;
-    EXPECT_TRUE(converter->StartConversion(&segments, "りゅきゅけmぽ"));
+    EXPECT_TRUE(converter->StartConversionWithKey(&segments, "りゅきゅけmぽ"));
   }
   {
     Segments segments;
-    EXPECT_TRUE(converter->StartConversion(&segments, "5.1,||t:1"));
+    EXPECT_TRUE(converter->StartConversionWithKey(&segments, "5.1,||t:1"));
   }
   {
     Segments segments;
     // Converter returns false, but not crash.
-    EXPECT_FALSE(converter->StartConversion(&segments, ""));
+    EXPECT_FALSE(converter->StartConversionWithKey(&segments, ""));
   }
   {
     Segments segments;
@@ -74,7 +74,7 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
     composer::Composer composer(&table, &request, nullptr);
     conv_request.set_composer(&composer);
     // Converter returns false, but not crash.
-    EXPECT_FALSE(converter->StartConversionForRequest(conv_request, &segments));
+    EXPECT_FALSE(converter->StartConversion(conv_request, &segments));
   }
 }
 
@@ -83,7 +83,8 @@ TEST_F(ConverterRegressionTest, Regression3323108) {
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
-  EXPECT_TRUE(converter->StartConversion(&segments, "ここではきものをぬぐ"));
+  EXPECT_TRUE(
+      converter->StartConversionWithKey(&segments, "ここではきものをぬぐ"));
   EXPECT_EQ(segments.conversion_segments_size(), 3);
   const ConversionRequest default_request;
   EXPECT_TRUE(converter->ResizeSegment(&segments, default_request, 1, 2));
