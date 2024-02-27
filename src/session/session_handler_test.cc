@@ -718,7 +718,7 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
       Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
   EXPECT_OK(engine_status);
   (*engine_status)->SetDataLoaderForTesting(std::move(data_loader));
-  (*engine_status)->SetAlwaysWaitForEngineResponseFutureForTesting(true);
+  (*engine_status)->SetAlwaysWaitForLoaderResponseFutureForTesting(true);
   SessionHandler handler(std::move(*engine_status));
 
   // engine_id = 1
@@ -825,7 +825,7 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
       Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
   EXPECT_OK(engine_status);
   (*engine_status)->SetDataLoaderForTesting(std::move(data_loader));
-  (*engine_status)->SetAlwaysWaitForEngineResponseFutureForTesting(true);
+  (*engine_status)->SetAlwaysWaitForLoaderResponseFutureForTesting(true);
   SessionHandler handler(std::move(*engine_status));
 
   EngineReloadRequest request1_ready;

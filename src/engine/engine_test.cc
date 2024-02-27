@@ -195,7 +195,7 @@ TEST(EngineTest, DataUpdateSuccessfulScenarioTest) {
 
   Engine &engine = *engine_status.value();
   engine.SetDataLoaderForTesting(std::move(data_loader));
-  engine.SetAlwaysWaitForEngineResponseFutureForTesting(true);
+  engine.SetAlwaysWaitForLoaderResponseFutureForTesting(true);
 
   // Send a request, and get a response with id=1.
   EXPECT_TRUE(engine.SendEngineReloadRequest(request1));
@@ -282,7 +282,7 @@ TEST(EngineTest, RollbackDataTest) {
   Engine &engine = *engine_status.value();
 
   engine.SetDataLoaderForTesting(std::move(data_loader));
-  engine.SetAlwaysWaitForEngineResponseFutureForTesting(true);
+  engine.SetAlwaysWaitForLoaderResponseFutureForTesting(true);
 
   EngineReloadRequest request1_ready;
   request1_ready.set_engine_type(EngineReloadRequest::MOBILE);
