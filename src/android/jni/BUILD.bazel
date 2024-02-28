@@ -39,6 +39,9 @@ load("//:build_defs.bzl", "MOZC_TAGS", "mozc_cc_library", "mozc_py_binary", "moz
 mozc_cc_library(
     name = "mozcjni",
     srcs = ["mozcjni.cc"],
+    linkopts = mozc_select(
+        android = ["-llog"],
+    ),
     tags = MOZC_TAGS.ANDROID_ONLY,
     # Scheuklappen: keep
     visibility = [
