@@ -47,7 +47,7 @@ class LogFileSink : public absl::LogSink {
 
   void Send(const absl::LogEntry &entry) override {
     absl::MutexLock lock(&mutex_);
-    file_ << entry.text_message_with_prefix();
+    file_ << entry.text_message_with_prefix_and_newline();
   }
 
   void Flush() override {

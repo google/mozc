@@ -76,16 +76,13 @@ def _mozc_run_build_tool_impl(ctx):
             args.append(src.path)
             in_files.append(src)
 
-    tools, tools_manifests = ctx.resolve_tools(tools = [ctx.attr.tool])
     ctx.actions.run(
         outputs = outputs,
         inputs = in_files,
-        tools = tools,
         executable = ctx.executable.tool,
         arguments = args,
         mnemonic = "MozcRunBuildTool",
         env = dicts.add(ctx.configuration.default_shell_env, ctx.attr.env),
-        input_manifests = tools_manifests,
         toolchain = None,
     )
     return DefaultInfo(
