@@ -41,6 +41,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_converter.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
 
@@ -114,7 +115,7 @@ TEST(ImeContextTest, CopyContext) {
   segment->set_key("あん");
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "庵";
-  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+  EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   {

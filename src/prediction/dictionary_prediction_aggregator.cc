@@ -34,7 +34,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
-#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -57,14 +56,12 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "prediction/number_decoder.h"
-#include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
@@ -539,17 +536,6 @@ class DictionaryPredictionAggregator::HandwritingLookupCallback
 DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const engine::Modules &modules, const ConverterInterface *converter,
     const ImmutableConverterInterface *immutable_converter)
-    : DictionaryPredictionAggregator(
-          modules, converter, immutable_converter,
-          std::make_unique<SingleKanjiPredictionAggregator>(
-              modules.GetDataManager())) {
-}
-
-DictionaryPredictionAggregator::DictionaryPredictionAggregator(
-    const engine::Modules &modules, const ConverterInterface *converter,
-    const ImmutableConverterInterface *immutable_converter,
-    std::unique_ptr<PredictionAggregatorInterface>
-        single_kanji_prediction_aggregator)
     : modules_(modules),
       converter_(converter),
       immutable_converter_(immutable_converter),
@@ -561,20 +547,8 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       zip_code_id_(modules.GetPosMatcher()->GetZipcodeId()),
       number_id_(modules.GetPosMatcher()->GetNumberId()),
       unknown_id_(modules.GetPosMatcher()->GetUnknownId()),
-      single_kanji_prediction_aggregator_(
-          std::move(single_kanji_prediction_aggregator)) {
-  absl::string_view zero_query_token_array_data;
-  absl::string_view zero_query_string_array_data;
-  absl::string_view zero_query_number_token_array_data;
-  absl::string_view zero_query_number_string_array_data;
-  modules.GetDataManager().GetZeroQueryData(
-      &zero_query_token_array_data, &zero_query_string_array_data,
-      &zero_query_number_token_array_data,
-      &zero_query_number_string_array_data);
-  zero_query_dict_.Init(zero_query_token_array_data,
-                        zero_query_string_array_data);
-  zero_query_number_dict_.Init(zero_query_number_token_array_data,
-                               zero_query_number_string_array_data);
+      zero_query_dict_(modules.GetZeroQueryDict()),
+      zero_query_number_dict_(modules.GetZeroQueryNumberDict()) {
 }
 
 std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
@@ -735,8 +709,8 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     // (i.e., Desktop, or Hardware Keyboard in Mobile), since they contain
     // partial results.
     const std::vector<Result> single_kanji_results =
-        single_kanji_prediction_aggregator_->AggregateResults(request,
-                                                              segments);
+        modules_.GetSingleKanjiPredictionAggregator()->AggregateResults(
+            request, segments);
     if (!single_kanji_results.empty()) {
       results->insert(results->end(), single_kanji_results.begin(),
                       single_kanji_results.end());
@@ -870,7 +844,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
   // partial candidates.
   tmp_request.set_create_partial_candidates(false);
   tmp_request.set_request_type(ConversionRequest::CONVERSION);
-  if (!converter_->StartConversionForRequest(tmp_request, &tmp_segments)) {
+  if (!converter_->StartConversion(tmp_request, &tmp_segments)) {
     return false;
   }
 
@@ -886,7 +860,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
   result->candidate_attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
 
   // Concatenate the top candidates.
-  // Note that since StartConversionForRequest() runs in conversion mode, the
+  // Note that since StartConversion() runs in conversion mode, the
   // resulting |tmp_segments| doesn't have inner_segment_boundary. We need to
   // construct it manually here.
   // TODO(noriyukit): This is code duplicate in converter/nbest_generator.cc and
@@ -924,7 +898,7 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
   DCHECK(results);
   // First insert a top conversion result.
   // Note: Do not call actual converter for partial suggestion / prediction.
-  // Converter::StartConversionForRequest() resets conversion key from composer
+  // Converter::StartConversion() resets conversion key from composer
   // rather than using the key in segments.
   if (request.use_actual_converter_for_realtime_conversion() &&
       request.request_type() != ConversionRequest::PARTIAL_SUGGESTION &&

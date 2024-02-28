@@ -68,8 +68,12 @@ EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
 }
 }  // namespace
 
+uint64_t DataLoader::GetRequestId(const EngineReloadRequest &request) const {
+  return Fingerprint(request.SerializeAsString());
+}
+
 uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
-  const uint64_t id = Fingerprint(request.SerializeAsString());
+  const uint64_t id = GetRequestId(request);
 
   absl::WriterMutexLock lock(&mutex_);
 

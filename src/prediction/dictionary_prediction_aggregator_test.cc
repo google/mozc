@@ -54,6 +54,7 @@
 #include "converter/converter_mock.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
@@ -61,8 +62,8 @@
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
-#include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
+#include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -84,11 +85,8 @@ class DictionaryPredictionAggregatorTestPeer {
   DictionaryPredictionAggregatorTestPeer(
       const ConverterInterface *converter,
       const ImmutableConverterInterface *immutable_converter,
-      const engine::Modules &modules,
-      std::unique_ptr<PredictionAggregatorInterface>
-          single_kanji_prediction_aggregator)
-      : aggregator_(modules, converter, immutable_converter,
-                    std::move(single_kanji_prediction_aggregator)) {}
+      const engine::Modules &modules)
+      : aggregator_(modules, converter, immutable_converter) {}
   virtual ~DictionaryPredictionAggregatorTestPeer() = default;
 
   PredictionTypes AggregatePredictionForRequest(
@@ -369,9 +367,11 @@ class MockImmutableConverter : public ImmutableConverterInterface {
 };
 
 class MockSingleKanjiPredictionAggregator
-    : public PredictionAggregatorInterface {
+    : public SingleKanjiPredictionAggregator {
  public:
-  MockSingleKanjiPredictionAggregator() = default;
+  explicit MockSingleKanjiPredictionAggregator(
+      const DataManagerInterface &data_manager)
+      : SingleKanjiPredictionAggregator(data_manager) {}
   ~MockSingleKanjiPredictionAggregator() override = default;
   MOCK_METHOD(std::vector<Result>, AggregateResults,
               (const ConversionRequest &request, const Segments &Segments),
@@ -390,20 +390,22 @@ class MockDataAndAggregator {
     mock_dictionary_ = dictionary.get();
     modules_.PresetDictionary(std::move(dictionary));
 
+    auto data_manager = std::make_unique<testing::MockDataManager>();
+
+    auto kanji_aggregator =
+        std::make_unique<MockSingleKanjiPredictionAggregator>(*data_manager);
+    single_kanji_prediction_aggregator_ = kanji_aggregator.get();
+    modules_.PresetSingleKanjiPredictionAggregator(std::move(kanji_aggregator));
+
     if (suffix_dictionary) {
       modules_.PresetSuffixDictionary(std::move(suffix_dictionary));
     }
 
-    CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
+    CHECK_OK(modules_.Init(std::move(data_manager)));
     CHECK_NE(modules_.GetSuffixDictionary(), nullptr);
 
-    auto kanji_aggregator =
-        std::make_unique<MockSingleKanjiPredictionAggregator>();
-    single_kanji_prediction_aggregator_ = kanji_aggregator.get();
-
     aggregator_ = std::make_unique<DictionaryPredictionAggregatorTestPeer>(
-        &converter_, &mock_immutable_converter_, modules_,
-        std::move(kanji_aggregator));
+        &converter_, &mock_immutable_converter_, modules_);
   }
 
   MockDictionary *mutable_dictionary() { return mock_dictionary_; }
@@ -617,8 +619,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   suggestion_convreq_->set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
 
   // StartConversion should not be called for partial.
-  EXPECT_CALL(*data_and_aggregator->mutable_converter(),
-              StartConversionForRequest(_, _))
+  EXPECT_CALL(*data_and_aggregator->mutable_converter(), StartConversion(_, _))
       .Times(0);
   EXPECT_CALL(*data_and_aggregator->mutable_immutable_converter(),
               ConvertForRequest(_, _))
@@ -1624,7 +1625,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     add_segment("なかのです", "Nakanodesu");
 
     EXPECT_CALL(*data_and_aggregator->mutable_converter(),
-                StartConversionForRequest(_, _))
+                StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
   // Set up mock immutable converter

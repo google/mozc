@@ -138,8 +138,7 @@ constexpr absl::string_view kSquareClose = "]";
 constexpr absl::string_view kMiddleDot = "・";
 
 bool Table::InitializeWithRequestAndConfig(
-    const commands::Request &request, const config::Config &config,
-    const DataManagerInterface &data_manager) {
+    const commands::Request &request, const config::Config &config) {
   case_sensitive_ = false;
   bool result = false;
   if (request.special_romanji_table() !=
@@ -566,9 +565,8 @@ const Table &Table::GetDefaultTable() {
 TableManager::TableManager()
     : custom_roman_table_fingerprint_(Fingerprint32("")) {}
 
-const Table *TableManager::GetTable(
-    const mozc::commands::Request &request, const mozc::config::Config &config,
-    const mozc::DataManagerInterface &data_manager) {
+const Table *TableManager::GetTable(const mozc::commands::Request &request,
+                                    const mozc::config::Config &config) {
   // calculate the hash depending on the request and the config
   uint32_t hash = request.special_romanji_table();
   hash = hash * (mozc::config::Config_PreeditMethod_PreeditMethod_MAX + 1) +
@@ -602,7 +600,7 @@ const Table *TableManager::GetTable(
   }
 
   auto table = std::make_unique<Table>();
-  if (!table->InitializeWithRequestAndConfig(request, config, data_manager)) {
+  if (!table->InitializeWithRequestAndConfig(request, config)) {
     return nullptr;
   }
 

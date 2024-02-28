@@ -160,7 +160,7 @@ class SessionRegressionTest : public testing::TestWithTempUserProfile {
     session_ = handler_->NewSession();
     commands::Request request;
     table_ = std::make_unique<composer::Table>();
-    table_->InitializeWithRequestAndConfig(request, config_, data_manager_);
+    table_->InitializeWithRequestAndConfig(request, config_);
     session_->SetTable(table_.get());
   }
 

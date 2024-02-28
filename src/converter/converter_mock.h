@@ -30,7 +30,15 @@
 #ifndef MOZC_CONVERTER_CONVERTER_MOCK_H_
 #define MOZC_CONVERTER_CONVERTER_MOCK_H_
 
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
+#include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "converter/converter_interface.h"
+#include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "testing/gmock.h"
 
 namespace mozc {
@@ -40,32 +48,32 @@ class StrictMockConverter : public ConverterInterface {
   StrictMockConverter() = default;
   ~StrictMockConverter() override = default;
 
-  MOCK_METHOD(bool, StartConversionForRequest,
+  MOCK_METHOD(bool, StartConversion,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
-  MOCK_METHOD(bool, StartConversion,
+  MOCK_METHOD(bool, StartConversionWithKey,
               (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartReverseConversion,
               (Segments * segments, absl::string_view key), (const, override));
-  MOCK_METHOD(bool, StartPredictionForRequest,
-              (const ConversionRequest &request, Segments *segments),
-              (const, override));
   MOCK_METHOD(bool, StartPrediction,
-              (Segments * segments, absl::string_view key), (const, override));
-  MOCK_METHOD(bool, StartSuggestionForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
+  MOCK_METHOD(bool, StartPredictionWithKey,
+              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartSuggestion,
-              (Segments * segments, absl::string_view key), (const, override));
-  MOCK_METHOD(bool, StartPartialPredictionForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
+  MOCK_METHOD(bool, StartSuggestionWithKey,
+              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartPartialPrediction,
-              (Segments * segments, absl::string_view key), (const, override));
-  MOCK_METHOD(bool, StartPartialSuggestionForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
+  MOCK_METHOD(bool, StartPartialPredictionWithKey,
+              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartPartialSuggestion,
+              (const ConversionRequest &request, Segments *segments),
+              (const, override));
+  MOCK_METHOD(bool, StartPartialSuggestionWithKey,
               (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(void, FinishConversion,
               (const ConversionRequest &request, Segments *segments),

@@ -41,6 +41,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
@@ -51,7 +52,6 @@
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "data_manager/data_manager_interface.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -198,11 +198,8 @@ void SessionHandler::UpdateSessions(const config::Config &config,
 
   config_ = std::make_unique<config::Config>(config);
   request_ = std::make_unique<commands::Request>(request);
-  const DataManagerInterface *data_manager = engine_->GetDataManager();
   const composer::Table *table = nullptr;
-  if (data_manager != nullptr) {
-    table = table_manager_->GetTable(*request_, *config_, *data_manager);
-  }
+  table = table_manager_->GetTable(*request_, *config_);
 
   if (!keymap::KeyMapManager::IsSameKeyMapManagerApplicable(*prev_config,
                                                             *config_)) {
@@ -475,11 +472,14 @@ void SessionHandler::MaybeReloadEngine(commands::Command *command) {
     return;
   }
 
-  if (!engine_->MaybeReloadEngine(
-      command->mutable_output()->mutable_engine_reload_response())) {
+  EngineReloadResponse engine_reload_response;
+  if (!engine_->MaybeReloadEngine(&engine_reload_response)) {
+    // Engine is not reloaded. output.engine_reload_response must be empty.
     return;
   }
 
+  *command->mutable_output()->mutable_engine_reload_response() =
+      engine_reload_response;
   table_manager_->ClearCaches();
 }
 

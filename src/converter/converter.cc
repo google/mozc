@@ -37,10 +37,11 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -273,8 +274,8 @@ void Converter::Init(const engine::Modules &modules,
   general_noun_id_ = pos_matcher_->GetGeneralNounId();
 }
 
-bool Converter::StartConversionForRequest(
-    const ConversionRequest &original_request, Segments *segments) const {
+bool Converter::StartConversion(const ConversionRequest &original_request,
+                                Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::CONVERSION);
   if (!request.has_composer()) {
@@ -300,8 +301,8 @@ bool Converter::StartConversionForRequest(
   return Convert(request, conversion_key, segments);
 }
 
-bool Converter::StartConversion(Segments *segments,
-                                const absl::string_view key) const {
+bool Converter::StartConversionWithKey(Segments *segments,
+                                       const absl::string_view key) const {
   if (key.empty()) {
     return false;
   }
@@ -425,8 +426,8 @@ bool Converter::Predict(const ConversionRequest &request,
   return IsValidSegments(request, *segments);
 }
 
-bool Converter::StartPredictionForRequest(
-    const ConversionRequest &original_request, Segments *segments) const {
+bool Converter::StartPrediction(const ConversionRequest &original_request,
+                                Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PREDICTION);
   if (!request.has_composer()) {
@@ -438,22 +439,22 @@ bool Converter::StartPredictionForRequest(
   return Predict(request, prediction_key, segments);
 }
 
-bool Converter::StartPrediction(Segments *segments,
-                                const absl::string_view key) const {
+bool Converter::StartPredictionWithKey(Segments *segments,
+                                       const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::PREDICTION);
   return Predict(default_request, key, segments);
 }
 
-bool Converter::StartSuggestion(Segments *segments,
-                                const absl::string_view key) const {
+bool Converter::StartSuggestionWithKey(Segments *segments,
+                                       const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::SUGGESTION);
   return Predict(default_request, key, segments);
 }
 
-bool Converter::StartSuggestionForRequest(
-    const ConversionRequest &original_request, Segments *segments) const {
+bool Converter::StartSuggestion(const ConversionRequest &original_request,
+                                Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::SUGGESTION);
   DCHECK(request.has_composer());
@@ -461,21 +462,21 @@ bool Converter::StartSuggestionForRequest(
   return Predict(request, prediction_key, segments);
 }
 
-bool Converter::StartPartialSuggestion(Segments *segments,
-                                       const absl::string_view key) const {
+bool Converter::StartPartialSuggestionWithKey(
+    Segments *segments, const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
   return Predict(default_request, key, segments);
 }
 
-bool Converter::StartPartialSuggestionForRequest(
+bool Converter::StartPartialSuggestion(
     const ConversionRequest &original_request, Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PARTIAL_SUGGESTION);
   DCHECK(request.has_composer());
   const size_t cursor = request.composer().GetCursor();
   if (cursor == 0 || cursor == request.composer().GetLength()) {
-    return StartSuggestionForRequest(request, segments);
+    return StartSuggestion(request, segments);
   }
 
   std::string conversion_key = request.composer().GetQueryForConversion();
@@ -484,21 +485,21 @@ bool Converter::StartPartialSuggestionForRequest(
   return Predict(request, conversion_key, segments);
 }
 
-bool Converter::StartPartialPrediction(Segments *segments,
-                                       const absl::string_view key) const {
+bool Converter::StartPartialPredictionWithKey(
+    Segments *segments, const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::PARTIAL_PREDICTION);
   return Predict(default_request, key, segments);
 }
 
-bool Converter::StartPartialPredictionForRequest(
+bool Converter::StartPartialPrediction(
     const ConversionRequest &original_request, Segments *segments) const {
   ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PARTIAL_PREDICTION);
   DCHECK(request.has_composer());
   const size_t cursor = request.composer().GetCursor();
   if (cursor == 0 || cursor == request.composer().GetLength()) {
-    return StartPredictionForRequest(request, segments);
+    return StartPrediction(request, segments);
   }
 
   std::string conversion_key = request.composer().GetQueryForConversion();

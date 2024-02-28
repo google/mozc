@@ -44,7 +44,9 @@
 #include "dictionary/suppression_dictionary.h"
 #include "engine/spellchecker_interface.h"
 #include "prediction/rescorer_interface.h"
+#include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/suggestion_filter.h"
+#include "prediction/zero_query_dict.h"
 
 
 namespace mozc {
@@ -71,6 +73,9 @@ class Modules {
   void PresetDictionary(
       std::unique_ptr<dictionary::DictionaryInterface> dictionary);
   void PresetRescorer(std::unique_ptr<prediction::RescorerInterface> rescorer);
+  void PresetSingleKanjiPredictionAggregator(
+      std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
+          single_kanji_prediction_aggregator);
 
   const DataManagerInterface &GetDataManager() const {
     // DataManager must be valid.
@@ -102,6 +107,14 @@ class Modules {
   const SuggestionFilter &GetSuggestionFilter() const {
     return suggestion_filter_;
   }
+  const prediction::SingleKanjiPredictionAggregator *
+  GetSingleKanjiPredictionAggregator() const {
+    return single_kanji_prediction_aggregator_.get();
+  }
+  const ZeroQueryDict &GetZeroQueryDict() const { return zero_query_dict_; }
+  const ZeroQueryDict &GetZeroQueryNumberDict() const {
+    return zero_query_number_dict_;
+  }
   const prediction::RescorerInterface *GetRescorer() const {
     return rescorer_.get();
   }
@@ -126,6 +139,10 @@ class Modules {
   std::unique_ptr<dictionary::DictionaryInterface> dictionary_;
   std::unique_ptr<const dictionary::PosGroup> pos_group_;
   SuggestionFilter suggestion_filter_;
+  std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
+      single_kanji_prediction_aggregator_;
+  ZeroQueryDict zero_query_dict_;
+  ZeroQueryDict zero_query_number_dict_;
   std::unique_ptr<const prediction::RescorerInterface> rescorer_;
 
 

@@ -272,8 +272,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":dictionary_prediction_aggregator",
-        ":prediction_aggregator_interface",
         ":result",
+        ":single_kanji_prediction_aggregator",
         ":zero_query_dict",
         "//base:logging",
         "//base:util",
@@ -285,6 +285,7 @@ mozc_cc_test(
         "//converter:converter_mock",
         "//converter:immutable_converter_interface",
         "//converter:segments",
+        "//data_manager:data_manager_interface",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_mock",
@@ -299,7 +300,6 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:mozctest",
         "//transliteration",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -358,7 +358,7 @@ mozc_cc_library(
         "single_kanji_prediction_aggregator.cc",
     ],
     hdrs = ["single_kanji_prediction_aggregator.h"],
-    visibility = ["//visibility:private"],
+    visibility = ["//engine:__subpackages__"],
     deps = [
         ":prediction_aggregator_interface",
         ":result",
@@ -469,7 +469,7 @@ mozc_cc_library(
 mozc_cc_library(
     name = "zero_query_dict",
     hdrs = ["zero_query_dict.h"],
-    visibility = ["//visibility:private"],
+    visibility = ["//engine:__subpackages__"],
     deps = [
         "//base/container:serialized_string_array",
         "@com_google_absl//absl/strings",

@@ -86,8 +86,6 @@ mozc_cc_test(
         "//base:util",
         "//config:character_form_manager",
         "//config:config_handler",
-        "//data_manager/testing:mock_data_manager",
-        "//engine:spellchecker_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",

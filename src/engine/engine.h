@@ -132,14 +132,17 @@ class Engine : public EngineInterface {
   // For testing only.
   engine::Modules *GetModulesForTesting() const { return modules_.get(); }
 
+  bool MaybeBuildDataLoader();
+  std::unique_ptr<DataLoader::Response> GetDataLoaderResponse();
+
   // Maybe reload a new data manager. Returns true if reloaded.
   bool MaybeReloadEngine(EngineReloadResponse *response) override;
   bool SendEngineReloadRequest(const EngineReloadRequest& request) override;
   void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) override {
     loader_ = std::move(loader);
   }
-  void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {
-    always_wait_for_engine_response_future_ = value;
+  void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) {
+    always_wait_for_loader_response_future_ = value;
   }
 
  private:
@@ -164,10 +167,9 @@ class Engine : public EngineInterface {
 
   std::atomic<uint64_t> latest_data_id_ = 0;
   std::atomic<uint64_t> current_data_id_ = 0;
-  std::unique_ptr<DataLoader::ResponseFuture> engine_response_future_;
+  std::unique_ptr<DataLoader::ResponseFuture> loader_response_future_;
   // used only in unittest to perform blocking behavior.
-  bool always_wait_for_engine_response_future_ = false;
-
+  bool always_wait_for_loader_response_future_ = false;
 };
 
 }  // namespace mozc

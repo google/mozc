@@ -42,10 +42,8 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "prediction/number_decoder.h"
 #include "prediction/prediction_aggregator_interface.h"
@@ -106,13 +104,6 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
     // ex. {"字", "典"} for "かん字じ典"
     std::vector<std::string> constraints;
   };
-
-  // For testing
-  DictionaryPredictionAggregator(
-      const engine::Modules &modules, const ConverterInterface *converter,
-      const ImmutableConverterInterface *immutable_converter,
-      std::unique_ptr<PredictionAggregatorInterface>
-          single_kanji_prediction_aggregator);
 
   // Returns the bitfield that indicates what prediction subroutines
   // were used.  NO_PREDICTION means that no prediction was made.
@@ -309,8 +300,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   const uint16_t zip_code_id_;
   const uint16_t number_id_;
   const uint16_t unknown_id_;
-  ZeroQueryDict zero_query_dict_;
-  ZeroQueryDict zero_query_number_dict_;
+  const ZeroQueryDict &zero_query_dict_;
+  const ZeroQueryDict &zero_query_number_dict_;
   NumberDecoder number_decoder_;
   std::unique_ptr<PredictionAggregatorInterface>
       single_kanji_prediction_aggregator_;

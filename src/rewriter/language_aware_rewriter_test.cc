@@ -90,8 +90,7 @@ class LanguageAwareRewriterTest : public testing::TestWithTempUserProfile {
 
     composer::Table table;
     config::Config default_config;
-    table.InitializeWithRequestAndConfig(client_request, default_config,
-                                         data_manager_);
+    table.InitializeWithRequestAndConfig(client_request, default_config);
 
     composer::Composer composer(&table, &client_request, &default_config);
     InsertASCIISequence(key, &composer);
@@ -332,8 +331,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
 
     composer::Table table;
     config::Config default_config;
-    table.InitializeWithRequestAndConfig(client_request, default_config,
-                                         data_manager_);
+    table.InitializeWithRequestAndConfig(client_request, default_config);
 
     composer::Composer composer(&table, &client_request, &default_config);
     InsertASCIISequence("python", &composer);
@@ -417,7 +415,7 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
     config.set_preedit_method(param.preedit_method);
 
     composer::Table table;
-    table.InitializeWithRequestAndConfig(request, config, data_manager_);
+    table.InitializeWithRequestAndConfig(request, config);
 
     composer::Composer composer(&table, &request, &config);
     InsertASCIISequence("query", &composer);
