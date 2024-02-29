@@ -32,6 +32,7 @@
 #include <string>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/log/initialize.h"
 #include "absl/log/log_entry.h"
 #include "absl/log/log_sink.h"
 #include "absl/log/log_sink_registry.h"
@@ -64,6 +65,7 @@ class LogFileSink : public absl::LogSink {
 
 void RegisterLogFileSink(const std::string &path) {
 #if !defined(MOZC_NO_LOGGING) && !defined(__ANDROID__)
+  absl::InitializeLog();
   absl::AddLogSink(new LogFileSink(path));
 #endif  // !MOZC_NO_LOGGING && !__ANDROID__
 }

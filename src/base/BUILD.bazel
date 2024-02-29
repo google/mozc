@@ -144,6 +144,7 @@ mozc_cc_library(
     deps = [
         ":file_stream",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:initialize",
         "@com_google_absl//absl/log:log_entry",
         "@com_google_absl//absl/log:log_sink",
         "@com_google_absl//absl/log:log_sink_registry",
