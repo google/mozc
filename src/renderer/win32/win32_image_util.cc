@@ -29,8 +29,8 @@
 
 #include "renderer/win32/win32_image_util.h"
 
-#include <windows.h>
 #include <wil/resource.h>
+#include <windows.h>
 
 #include <algorithm>
 #include <bitset>
@@ -40,6 +40,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/base/optimization.h"
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/win32/wide_char.h"
@@ -163,8 +164,7 @@ class Balloon {
       case BalloonImage::BalloonImageInfo::kLeft:
         return left_ - balloon_tail_height_;
       default:
-        CHECK(false) << "Do not reach here";
-        return 0.0;
+        ABSL_UNREACHABLE();
     }
   }
   double GetTailY() const {
@@ -178,8 +178,7 @@ class Balloon {
       case BalloonImage::BalloonImageInfo::kLeft:
         return top_ + height_ / 2.0;
       default:
-        CHECK(false) << "Do not reach here";
-        return 0.0;
+        ABSL_UNREACHABLE();
     }
   }
 

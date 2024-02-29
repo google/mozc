@@ -33,7 +33,8 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {
@@ -85,7 +86,7 @@ bool KeyEventUtil::GetKeyInformation(const KeyEvent &key_event,
                                    : KeyEvent::NO_SPECIALKEY;
   const uint32_t key_code = key_event.has_key_code() ? key_event.key_code() : 0;
 
-  // Make sure the translation from the obsolete spesification.
+  // Make sure the translation from the obsolete specification.
   // key_code should no longer contain control characters.
   if (0 < key_code && key_code <= 32) {
     return false;
@@ -173,7 +174,7 @@ void KeyEventUtil::NormalizeNumpadKey(const KeyEvent &key_event,
       new_key_code = ',';
       break;
     default:
-      LOG(ERROR) << "Should not reach here.";
+      LOG(ERROR) << "Unexpected numpad key: " << numpad_key;
       return;
   }
 

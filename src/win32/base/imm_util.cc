@@ -43,6 +43,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/base/optimization.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/win32/wide_char.h"
@@ -144,8 +145,7 @@ bool ImeUtil::WaitForAsmCacheReady(uint32_t timeout_msec) {
       LOG(ERROR) << "WaitForSingleObject with unknown error: " << result;
       return false;
   }
-  LOG(FATAL) << "Should never reach here.";
-  return false;
+  ABSL_UNREACHABLE();
 }
 
 }  // namespace win32

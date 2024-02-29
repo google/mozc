@@ -266,10 +266,10 @@ mozc_cc_library(
     deps = [
         "//base:coordinates",
         "//base:logging",
-        "//base:util",
         "//base/win32:wide_char",
         "//bazel/win32:gdi32",
         "//bazel/win32:user32",
+        "@com_google_absl//absl/base:core_headers",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -326,6 +326,7 @@ mozc_cc_test(
         "//data/test/renderer/win32:test_spec_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
         "@com_microsoft_wil//:wil",
     ],

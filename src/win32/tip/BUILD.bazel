@@ -169,9 +169,8 @@ mozc_cc_library(
         ":tip_dll_module",
         ":tip_text_service",
         ":tip_ui_element_delegate",
-        "//base:logging",
         "//base/win32:com",
-        "//base/win32:com_implements",
+        "@com_google_absl//absl/base:core_headers",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -426,6 +425,7 @@ mozc_cc_library(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
+        "@com_google_absl//absl/log",
         "@com_microsoft_wil//:wil",
     ],
 )

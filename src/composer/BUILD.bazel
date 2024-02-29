@@ -152,8 +152,9 @@ mozc_cc_library(
     srcs = ["key_event_util.cc"],
     hdrs = ["key_event_util.h"],
     deps = [
-        "//base:logging",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
     ],
 )
 

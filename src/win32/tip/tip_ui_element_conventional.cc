@@ -37,7 +37,7 @@
 #include <memory>
 #include <utility>
 
-#include "base/logging.h"
+#include "absl/base/optimization.h"
 #include "base/win32/com.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_text_service.h"
@@ -145,8 +145,7 @@ class TipCandidateListImpl final
       case TipUiElementConventional::kCandidateWindow:
         return TipUiElementDelegateFactory::kConventionalCandidateWindow;
       default:
-        LOG(FATAL) << "must not reach here.";
-        return TipUiElementDelegateFactory::kConventionalCandidateWindow;
+        ABSL_UNREACHABLE();
     }
   }
 

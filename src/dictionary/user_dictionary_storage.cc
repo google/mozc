@@ -35,6 +35,7 @@
 #include <ostream>
 #include <string>
 
+#include "absl/base/optimization.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -462,7 +463,7 @@ bool UserDictionaryStorage::IsValidDictionaryName(
       LOG(WARNING) << "Unknown status: " << status;
       return false;
   }
-  // Should never reach here.
+  ABSL_UNREACHABLE();
 }
 
 std::string UserDictionaryStorage::default_sync_dictionary_name() {

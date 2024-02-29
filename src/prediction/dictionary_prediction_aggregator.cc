@@ -823,7 +823,7 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
       size = default_size;
       break;
     default:
-      size = 0;  // Never reach here
+      DLOG(FATAL) << "Unexpected request type: " << request_type;
   }
 
   return std::min(max_size, size);
