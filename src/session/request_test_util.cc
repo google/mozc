@@ -29,8 +29,9 @@
 
 // Test utility for Request.
 
-#include "protocol/commands.pb.h"
 #include "session/request_test_util.h"
+
+#include "protocol/commands.pb.h"
 
 namespace mozc {
 namespace commands {
@@ -39,6 +40,9 @@ void RequestForUnitTest::FillMobileRequest(Request *request) {
   request->set_zero_query_suggestion(true);
   request->set_mixed_conversion(true);
   request->set_update_input_mode_from_surrounding_text(false);
+  // TODO(toshiyuki):
+  // Change the romanji table to TOGGLE_FLICK_TO_HIRAGANA
+  // TWELVE_KEYS_TO_HIRAGANA is not used from anywhere in the current Gboard.
   request->set_special_romanji_table(Request::TWELVE_KEYS_TO_HIRAGANA);
   request->set_kana_modifier_insensitive_conversion(true);
   request->set_auto_partial_suggestion(true);
