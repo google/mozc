@@ -211,10 +211,10 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
 
   // Aggregate* methods aggregate the candidates with different resources
   // and algorithms.
-  void AggregateRealtimeConversion(const ConversionRequest &request,
-                                   size_t realtime_candidates_size,
-                                   const Segments &segments,
-                                   std::vector<Result> *results) const;
+  void AggregateRealtimeConversion(
+      const ConversionRequest &request, size_t realtime_candidates_size,
+      bool insert_realtime_top_from_actual_converter, const Segments &segments,
+      std::vector<Result> *results) const;
 
   void AggregateBigramPrediction(const ConversionRequest &request,
                                  const Segments &segments,
