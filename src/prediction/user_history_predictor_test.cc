@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/random/random.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -49,8 +50,8 @@
 #include "base/container/trie.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/random.h"
+#include "base/strings/unicode.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -2729,20 +2730,15 @@ void InitSegmentsFromInputSequence(const absl::string_view text,
   DCHECK(composer);
   DCHECK(request);
   DCHECK(segments);
-  const char *begin = text.data();
-  const char *end = text.data() + text.size();
-  size_t mblen = 0;
-
-  while (begin < end) {
+  for (const UnicodeChar ch : Utf8AsUnicodeChar(text)) {
     commands::KeyEvent key;
-    const char32_t w = Util::Utf8ToCodepoint(begin, end, &mblen);
+    const char32_t w = ch.char32();
     if (w <= 0x7F) {  // IsAscii, w is unsigned.
-      key.set_key_code(*begin);
+      key.set_key_code(w);
     } else {
       key.set_key_code('?');
-      key.set_key_string(std::string(begin, mblen));
+      key.set_key_string(ch.utf8());
     }
-    begin += mblen;
     composer->InsertCharacterKeyEvent(key);
   }
 
