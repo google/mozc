@@ -110,7 +110,6 @@ mozc_cc_test(
     name = "client_test",
     size = "small",
     srcs = ["client_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":client",
         ":client_interface",

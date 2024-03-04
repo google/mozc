@@ -162,11 +162,11 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":input_dll",
-        ":msctf_dll",
         ":tsf_profile",
         "//base:logging",
         "//base:system_util",
         "//base/win32:wide_char",
+        "@com_google_absl//absl/base:core_headers",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -308,7 +308,7 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":keyboard",
-        "//base:logging",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 

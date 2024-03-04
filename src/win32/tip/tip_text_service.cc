@@ -45,10 +45,10 @@
 #include "absl/base/casts.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/functional/any_invocable.h"
+#include "absl/log/log.h"
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/log_file.h"
-#include "base/logging.h"
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/update_util.h"
@@ -206,7 +206,8 @@ commands::CompositionMode GetMozcMode(TipLangBarCallback::ItemId menu_id) {
     case TipLangBarCallback::kHalfKatakana:
       return commands::HALF_KATAKANA;
     default:
-      DLOG(FATAL) << "Must not reach here.";
+      DLOG(FATAL) << "Unexpected item id: " << menu_id;
+      // Fall back to DIRECT in release builds.
       return commands::DIRECT;
   }
 }
@@ -226,7 +227,7 @@ std::string GetMozcToolCommand(TipLangBarCallback::ItemId menu_id) {
       // Open the about dialog.
       return "about_dialog";
     default:
-      DLOG(FATAL) << "Must not reach here.";
+      DLOG(FATAL) << "Unexpected item id: " << menu_id;
       return "";
   }
 }

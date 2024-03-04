@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/optimization.h"
 #include "absl/container/fixed_array.h"
 #include "absl/strings/string_view.h"
 #include "base/logging.h"
@@ -409,7 +410,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::Save() {
       default:
         return UserDictionaryCommandStatus::UNKNOWN_ERROR;
     }
-    // Should never reach here.
+    ABSL_UNREACHABLE();
   }
 
   return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
@@ -505,7 +506,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::RenameDictionary(
         LOG(ERROR) << "Unknown error code: " << storage_->GetLastError();
         return UserDictionaryCommandStatus::UNKNOWN_ERROR;
     }
-    // Should never reach here.
+    ABSL_UNREACHABLE();
   }
 
   AddUndoCommand(std::make_unique<UndoRenameDictionaryCommand>(dictionary_id,

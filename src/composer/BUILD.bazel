@@ -77,7 +77,6 @@ mozc_cc_test(
     name = "composer_test",
     size = "small",
     srcs = ["composer_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":composer",
         ":key_parser",
@@ -133,7 +132,6 @@ mozc_cc_test(
     name = "table_test",
     size = "small",
     srcs = ["table_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":table",
         "//composer/internal:special_key",
@@ -152,8 +150,9 @@ mozc_cc_library(
     srcs = ["key_event_util.cc"],
     hdrs = ["key_event_util.h"],
     deps = [
-        "//base:logging",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -161,7 +160,6 @@ mozc_cc_test(
     name = "key_event_util_test",
     size = "small",
     srcs = ["key_event_util_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":key_event_util",
         ":key_parser",
@@ -193,7 +191,6 @@ mozc_cc_test(
     name = "key_parser_test",
     size = "small",
     srcs = ["key_parser_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":key_event_util",
         ":key_parser",

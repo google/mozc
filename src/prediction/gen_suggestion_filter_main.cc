@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/optimization.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "base/codegen_bytearray_stream.h"
@@ -130,7 +129,6 @@ ExistenceFilterBuilder SetupFilter(
     }
   }
   LOG(FATAL) << "Gave up retrying suggestion filter generation.";
-  ABSL_UNREACHABLE();
 }
 
 }  // namespace

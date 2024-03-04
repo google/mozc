@@ -29,7 +29,7 @@
 
 #include "win32/base/surrogate_pair_observer.h"
 
-#include "base/logging.h"
+#include "absl/base/optimization.h"
 #include "win32/base/keyboard.h"
 
 namespace mozc {
@@ -196,8 +196,7 @@ SurrogatePairObserver::ClientAction SurrogatePairObserver::OnKeyEvent(
       return ClientAction(DO_DEFAULT_ACTION_WITH_RETURNED_UCS4, ucs2);
     }
     default:
-      DLOG(FATAL) << "must not reach here.";
-      return ClientAction(DO_DEFAULT_ACTION, 0);
+      ABSL_UNREACHABLE();
   }
 }
 

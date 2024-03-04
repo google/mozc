@@ -33,12 +33,15 @@
 #include <atlstr.h>
 #include <msctf.h>
 #include <wil/com.h>
+#include <wil/resource.h>
 
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
+#include "absl/log/log.h"
 #include "base/logging.h"
 #include "base/win32/com.h"
 #include "base/win32/wide_char.h"
@@ -467,7 +470,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     std::wstring msg;
     switch (status.mode()) {
       case commands::DIRECT:
-        DLOG(FATAL) << "Must not reach here.";
+        DLOG(FATAL) << "Unexpected last output status mode: DIRECT";
         break;
       case commands::HIRAGANA:
         msg = L"\u3042";

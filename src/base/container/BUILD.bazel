@@ -46,7 +46,6 @@ mozc_cc_test(
     name = "bitarray_test",
     size = "small",
     srcs = ["bitarray_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":bitarray",
         "//testing:gunit_main",
@@ -88,7 +87,6 @@ mozc_cc_test(
     name = "serialized_string_array_test",
     size = "small",
     srcs = ["serialized_string_array_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":serialized_string_array",
         "//testing:gunit_main",
@@ -112,7 +110,6 @@ mozc_cc_test(
     name = "trie_test",
     size = "small",
     srcs = ["trie_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":trie",
         "//testing:gunit_main",

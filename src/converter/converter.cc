@@ -37,6 +37,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
@@ -292,7 +293,7 @@ bool Converter::StartConversion(const ConversionRequest &original_request,
       conversion_key = request.composer().GetQueryForPrediction();
       break;
     default:
-      LOG(FATAL) << "Should never reach here";
+      ABSL_UNREACHABLE();
   }
   if (conversion_key.empty()) {
     return false;

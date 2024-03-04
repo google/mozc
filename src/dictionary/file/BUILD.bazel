@@ -70,7 +70,6 @@ mozc_cc_test(
     name = "dictionary_file_test",
     size = "small",
     srcs = ["dictionary_file_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":codec_factory",
         ":dictionary_file",
@@ -143,7 +142,6 @@ mozc_cc_test(
     name = "codec_test",
     size = "small",
     srcs = ["codec_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":codec",
         ":codec_factory",

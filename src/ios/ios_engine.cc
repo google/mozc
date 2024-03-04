@@ -34,13 +34,15 @@
 #include <string>
 #include <utility>
 
-#include "absl/flags/flag.h"
+#include "absl/base/optimization.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/log/log.h"
 #include "absl/synchronization/mutex.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
+#include "engine/engine_interface.h"
 #include "engine/minimal_engine.h"
 #include "protocol/commands.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -317,8 +319,7 @@ bool IosEngine::SwitchInputMode(InputMode mode) {
       target_config = &current_config_tuple_.digit_config;
       break;
     default:
-      LOG(DFATAL) << "Should never reach here";
-      return false;
+      ABSL_UNREACHABLE();
   }
   if (current_input_config_ == target_config) {
     return true;

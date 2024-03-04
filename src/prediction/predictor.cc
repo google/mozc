@@ -307,7 +307,7 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
       break;
     }
     default:
-      DLOG(ERROR) << "Never reach here.";
+      DLOG(ERROR) << "Unexpected request type: " << request.request_type();
   }
   return ret;
 }
@@ -391,8 +391,8 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
                                                          segments);
       break;
     }
-    default: {
-    }  // Never reach here
+    default:
+      DLOG(FATAL) << "Unexpected request type: " << request.request_type();
   }
 
   MaybeFillFallbackPos(segments);

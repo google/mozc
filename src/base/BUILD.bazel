@@ -144,6 +144,7 @@ mozc_cc_library(
     deps = [
         ":file_stream",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:initialize",
         "@com_google_absl//absl/log:log_entry",
         "@com_google_absl//absl/log:log_sink",
         "@com_google_absl//absl/log:log_sink_registry",
@@ -184,7 +185,6 @@ mozc_cc_test(
     name = "codegen_bytearray_stream_test",
     size = "small",
     srcs = ["codegen_bytearray_stream_test.cc"],
-    requires_full_emulation = False,
     tags = ["noandroid"],
     target_compatible_with = mozc_select(
         android = ["@platforms//:incompatible"],
@@ -211,7 +211,6 @@ mozc_cc_test(
     name = "singleton_test",
     size = "small",
     srcs = ["singleton_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":singleton",
         ":thread",
@@ -251,7 +250,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "hash_test",
     srcs = ["hash_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":hash",
         "//testing:gunit_main",
@@ -271,7 +269,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "clock_test",
     srcs = ["clock_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":clock",
         ":clock_mock",
@@ -325,7 +322,6 @@ mozc_cc_test(
     srcs = [
         "util_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":logging",
         ":util",
@@ -366,7 +362,6 @@ mozc_cc_test(
     name = "number_util_test",
     size = "small",
     srcs = ["number_util_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":number_util",
         "//testing:gunit_main",
@@ -389,7 +384,6 @@ mozc_cc_test(
     name = "text_normalizer_test",
     size = "small",
     srcs = ["text_normalizer_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":text_normalizer",
         ":util",
@@ -415,7 +409,6 @@ mozc_cc_test(
     name = "clock_mock_test",
     size = "small",
     srcs = ["clock_mock_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":clock_mock",
         "//testing:gunit_main",
@@ -454,7 +447,6 @@ mozc_cc_test(
     name = "mmap_test",
     size = "small",
     srcs = ["mmap_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":file_util",
         ":mmap",
@@ -522,7 +514,6 @@ mozc_cc_test(
     name = "file_util_mock_test",
     size = "small",
     srcs = ["file_util_mock_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":file_util_mock",
         "//testing:gunit_main",
@@ -533,7 +524,6 @@ mozc_cc_test(
     name = "file_util_test",
     size = "small",
     srcs = ["file_util_test.cc"],
-    requires_full_emulation = False,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":file_util",
@@ -600,7 +590,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "system_util_test",
     srcs = ["system_util_test.cc"],
-    requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
         ":environ_mock",
@@ -672,7 +661,6 @@ mozc_cc_test(
     name = "process_mutex_test",
     size = "small",
     srcs = ["process_mutex_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":file_util",
         ":logging",
@@ -748,7 +736,6 @@ mozc_cc_test(
     name = "config_file_stream_test",
     size = "small",
     srcs = ["config_file_stream_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":config_file_stream",
         ":file_util",
@@ -819,7 +806,6 @@ mozc_cc_test(
     name = "version_test",
     size = "small",
     srcs = ["version_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":util",
         ":version",
@@ -857,7 +843,6 @@ mozc_cc_test(
         "unverified_aes256_test.cc",
         "unverified_sha1_test.cc",
     ],
-    requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
         ":obfuscator_support",
@@ -909,7 +894,6 @@ mozc_cc_test(
         "encryptor_test.cc",
         "password_manager_test.cc",
     ],
-    requires_full_emulation = False,
     # Skipped for Windows Presubmit as CryptProtectData doesn't work on a headless Windows VM.
     # Background: https://github.com/Azure/azure-cli/issues/20695#issuecomment-992086316
     tags = ["nowin"],
@@ -934,7 +918,6 @@ mozc_cc_test(
     name = "cpu_stats_test",
     size = "small",
     srcs = ["cpu_stats_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":cpu_stats",
         "//testing:gunit_main",
@@ -970,7 +953,6 @@ mozc_cc_test(
     name = "stopwatch_test",
     size = "small",
     srcs = ["stopwatch_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":clock",
         ":clock_mock",
@@ -1006,7 +988,6 @@ mozc_cc_test(
     name = "url_test",
     size = "small",
     srcs = ["url_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":url",
         "//testing:gunit_main",
@@ -1031,7 +1012,6 @@ mozc_cc_test(
     name = "multifile_test",
     size = "small",
     srcs = ["multifile_test.cc"],
-    requires_full_emulation = False,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":file_stream",
@@ -1086,7 +1066,6 @@ mozc_cc_test(
         ":gen_embedded_file_test_data",
     ],
     data = ["embedded_file.h"],
-    requires_full_emulation = False,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":embedded_file",

@@ -96,7 +96,6 @@ mozc_cc_test(
     srcs = [
         "transliterators_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":transliterator_interface",
         ":transliterators",
@@ -110,7 +109,6 @@ mozc_cc_test(
     srcs = [
         "char_chunk_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":char_chunk",
         ":composition_input",
@@ -144,7 +142,6 @@ mozc_cc_test(
     srcs = [
         "composition_input_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":composition_input",
         "//composer:table",
@@ -179,7 +176,6 @@ mozc_cc_test(
     srcs = [
         "composition_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":char_chunk",
         ":composition",
@@ -217,7 +213,6 @@ mozc_cc_test(
     name = "converter_test",
     size = "small",
     srcs = ["converter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":converter",
         "//composer:table",
@@ -240,7 +235,6 @@ mozc_cc_test(
     name = "mode_switching_handler_test",
     size = "small",
     srcs = ["mode_switching_handler_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":mode_switching_handler",
         "//testing:gunit_main",

@@ -68,7 +68,6 @@ mozc_cc_test(
     name = "codec_test",
     size = "small",
     srcs = ["codec_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":codec",
         ":words_info",
@@ -192,7 +191,6 @@ mozc_cc_test(
         "system_dictionary_test.cc",
     ],
     data = ["//data/dictionary_oss:dictionary00.txt"],
-    requires_full_emulation = False,
     deps = [
         ":system_dictionary",
         ":system_dictionary_builder",
@@ -221,7 +219,6 @@ mozc_cc_test(
     name = "value_dictionary_test",
     size = "medium",
     srcs = ["value_dictionary_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":codec",
         ":value_dictionary",
@@ -249,7 +246,6 @@ mozc_cc_test(
     name = "key_expansion_table_test",
     size = "small",
     srcs = ["key_expansion_table_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":key_expansion_table",
         "//testing:gunit_main",

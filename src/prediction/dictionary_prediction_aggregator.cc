@@ -478,7 +478,7 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
     const int key_len = Util::CharsLen(key);
     if (key_len < input_key_len_) {
       result.candidate_attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
-      result.consumed_key_size = Util::CharsLen(key);
+      result.consumed_key_size = key_len;
     }
     results_->emplace_back(result);
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
@@ -649,7 +649,11 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
   }
   PredictionTypes selected_types = NO_PREDICTION;
   if (ShouldAggregateRealTimeConversionResults(request, segments)) {
-    AggregateRealtimeConversion(request, realtime_max_size, segments, results);
+    AggregateRealtimeConversion(
+        request, realtime_max_size,
+        /* insert_realtime_top_from_actual_converter= */
+        request.use_actual_converter_for_realtime_conversion(),
+        segments, results);
     selected_types |= REALTIME;
   }
 
@@ -823,7 +827,7 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
       size = default_size;
       break;
     default:
-      size = 0;  // Never reach here
+      DLOG(FATAL) << "Unexpected request type: " << request_type;
   }
 
   return std::min(max_size, size);
@@ -892,24 +896,25 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
 
 void DictionaryPredictionAggregator::AggregateRealtimeConversion(
     const ConversionRequest &request, size_t realtime_candidates_size,
-    const Segments &segments, std::vector<Result> *results) const {
+    bool insert_realtime_top_from_actual_converter, const Segments &segments,
+    std::vector<Result> *results) const {
   DCHECK(converter_);
   DCHECK(immutable_converter_);
   DCHECK(results);
+  if (realtime_candidates_size == 0) {
+    return;
+  }
+
   // First insert a top conversion result.
   // Note: Do not call actual converter for partial suggestion / prediction.
   // Converter::StartConversion() resets conversion key from composer
   // rather than using the key in segments.
-  if (request.use_actual_converter_for_realtime_conversion() &&
+  if (insert_realtime_top_from_actual_converter &&
       request.request_type() != ConversionRequest::PARTIAL_SUGGESTION &&
       request.request_type() != ConversionRequest::PARTIAL_PREDICTION) {
     if (!PushBackTopConversionResult(request, segments, results)) {
       LOG(WARNING) << "Realtime conversion with converter failed";
     }
-  }
-
-  if (realtime_candidates_size == 0) {
-    return;
   }
 
   const ConversionRequest request_for_realtime =
@@ -1727,8 +1732,10 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 
     if (is_realtime_only) {
       constexpr int kRealtimeSize = 1;
-      AggregateRealtimeConversion(corrected_request, kRealtimeSize,
-                                  corrected_segments, &corrected_results);
+      AggregateRealtimeConversion(
+          corrected_request, kRealtimeSize,
+          /* insert_realtime_top_from_actual_converter= */ false,
+          corrected_segments, &corrected_results);
 
     } else {
       const UnigramConfig &unigram_config = GetUnigramConfig(request);
@@ -1740,8 +1747,10 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 
       if (base_selected_types & REALTIME) {
         constexpr int kRealtimeSize = 2;
-        AggregateRealtimeConversion(corrected_request, kRealtimeSize,
-                                    corrected_segments, &corrected_results);
+        AggregateRealtimeConversion(
+            corrected_request, kRealtimeSize,
+            /* insert_realtime_top_from_actual_converter= */ false,
+            corrected_segments, &corrected_results);
       }
 
       if (base_selected_types & BIGRAM) {

@@ -70,7 +70,6 @@ mozc_cc_test(
     name = "dictionary_impl_test",
     size = "small",
     srcs = ["dictionary_impl_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":dictionary_impl",
         ":dictionary_interface",
@@ -170,7 +169,6 @@ mozc_cc_test(
     srcs = [
         "user_dictionary_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":dictionary_interface",
         ":dictionary_test_util",
@@ -279,6 +277,7 @@ mozc_cc_library(
         "//base/protobuf:repeated_field",
         "//base/strings:assign",
         "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/strings",
     ],
@@ -288,7 +287,6 @@ mozc_cc_test(
     name = "user_dictionary_session_test",
     size = "medium",
     srcs = ["user_dictionary_session_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":user_dictionary_session",
         ":user_dictionary_storage",
@@ -322,7 +320,6 @@ mozc_cc_test(
     name = "user_dictionary_session_handler_test",
     size = "small",
     srcs = ["user_dictionary_session_handler_test.cc"],
-    requires_full_emulation = True,
     deps = [
         ":user_dictionary_session_handler",
         "//base:file_util",
@@ -350,6 +347,7 @@ mozc_cc_library(
         "//base:vlog",
         "//base/protobuf:zero_copy_stream_impl",
         "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -361,7 +359,6 @@ mozc_cc_test(
     name = "user_dictionary_storage_test",
     size = "small",
     srcs = ["user_dictionary_storage_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":user_dictionary_importer",
         ":user_dictionary_storage",
@@ -406,7 +403,6 @@ mozc_cc_test(
     name = "user_dictionary_util_test",
     size = "small",
     srcs = ["user_dictionary_util_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":user_dictionary_util",
         "//testing:gunit_main",
@@ -442,7 +438,6 @@ mozc_cc_test(
     name = "user_dictionary_importer_test",
     size = "small",
     srcs = ["user_dictionary_importer_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":user_dictionary_importer",
         ":user_dictionary_storage",
@@ -480,7 +475,6 @@ mozc_cc_test(
     srcs = [
         "text_dictionary_loader_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":dictionary_token",
         ":pos_matcher",
@@ -512,7 +506,6 @@ mozc_cc_test(
     name = "user_pos_test",
     size = "small",
     srcs = ["user_pos_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":user_pos",
         ":user_pos_interface",
@@ -611,7 +604,6 @@ mozc_cc_test(
     name = "suppression_dictionary_test",
     size = "small",
     srcs = ["suppression_dictionary_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":suppression_dictionary",
         "//base:thread",
@@ -645,7 +637,6 @@ mozc_cc_test(
     name = "suffix_dictionary_test",
     size = "small",
     srcs = ["suffix_dictionary_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":dictionary_interface",
         ":dictionary_test_util",
@@ -704,7 +695,6 @@ mozc_cc_test(
     name = "single_kanji_dictionary_test",
     size = "small",
     srcs = ["single_kanji_dictionary_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":single_kanji_dictionary",
         "//data_manager/testing:mock_data_manager",

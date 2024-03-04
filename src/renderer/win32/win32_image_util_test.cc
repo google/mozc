@@ -33,6 +33,8 @@
 #include <atltypes.h>
 #include <wil/resource.h>
 
+#include <cstdlib>
+
 #undef StrCat
 
 #include <cstddef>
@@ -41,10 +43,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/protobuf/text_format.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_font_test_helper.h"
@@ -240,8 +243,7 @@ class BalloonImageTest : public ::testing::Test,
       case BalloonImageInfo::kRight:
         return TestSpec::RIGHT;
       default:
-        CHECK(false) << "Unexpected direction=" << direction;
-        return TestSpec::UNSPECIFIED;  // must not reach here.
+        LOG(FATAL) << "Unexpected direction: " << direction;
     }
   }
 
@@ -249,9 +251,7 @@ class BalloonImageTest : public ::testing::Test,
       TestSpec::TailDirection direction) {
     switch (direction) {
       case TestSpec::UNSPECIFIED:
-        CHECK(false) << "TailDirection must be set";
-        // must not reach here.
-        return BalloonImageInfo::TailDirection::kTop;
+        LOG(FATAL) << "TailDirection must be set.";
       case TestSpec::TOP:
         return BalloonImageInfo::TailDirection::kTop;
       case TestSpec::BOTTOM:
@@ -261,9 +261,7 @@ class BalloonImageTest : public ::testing::Test,
       case TestSpec::RIGHT:
         return BalloonImageInfo::TailDirection::kRight;
       default:
-        CHECK(false) << "Unexpected direction=" << direction;
-        // must not reach here.
-        return BalloonImageInfo::TailDirection::kTop;
+        LOG(FATAL) << "Unexpected direction: " << direction;
     }
   }
 

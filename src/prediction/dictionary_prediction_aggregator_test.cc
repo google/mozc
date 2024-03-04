@@ -40,12 +40,13 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "composer/query.h"
 #include "composer/table.h"
@@ -122,12 +123,13 @@ class DictionaryPredictionAggregatorTestPeer {
                                           results);
   }
 
-  void AggregateRealtimeConversion(const ConversionRequest &request,
-                                   size_t realtime_candidates_size,
-                                   const Segments &segments,
-                                   std::vector<Result> *results) const {
-    aggregator_.AggregateRealtimeConversion(request, realtime_candidates_size,
-                                            segments, results);
+  void AggregateRealtimeConversion(
+      const ConversionRequest &request, size_t realtime_candidates_size,
+      bool insert_realtime_top_from_actual_converter, const Segments &segments,
+      std::vector<Result> *results) const {
+    aggregator_.AggregateRealtimeConversion(
+        request, realtime_candidates_size,
+        insert_realtime_top_from_actual_converter, segments, results);
   }
 
   void AggregateSuffixPrediction(const ConversionRequest &request,
@@ -1660,11 +1662,8 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     segments.mutable_conversion_segment(0)->add_candidate()->value = "history2";
 
     std::vector<Result> results;
-    suggestion_convreq_->set_use_actual_converter_for_realtime_conversion(
-        false);
-
-    aggregator.AggregateRealtimeConversion(*suggestion_convreq_, 10, segments,
-                                           &results);
+    aggregator.AggregateRealtimeConversion(*suggestion_convreq_, 10, false,
+                                           segments, &results);
     ASSERT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].types, REALTIME);
     EXPECT_EQ(results[0].key, kKey);
@@ -1683,10 +1682,9 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     segments.mutable_conversion_segment(0)->add_candidate()->value = "history2";
 
     std::vector<Result> results;
-    suggestion_convreq_->set_use_actual_converter_for_realtime_conversion(true);
 
-    aggregator.AggregateRealtimeConversion(*suggestion_convreq_, 10, segments,
-                                           &results);
+    aggregator.AggregateRealtimeConversion(*suggestion_convreq_, 10, true,
+                                           segments, &results);
 
     // When |request.use_actual_converter_for_realtime_conversion| is true,
     // the extra label REALTIME_TOP is expected to be added.
@@ -1702,6 +1700,100 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
       }
     }
     EXPECT_TRUE(realtime_top_found);
+  }
+}
+
+TEST_F(DictionaryPredictionAggregatorTest, UseActualConverterRequest) {
+  auto data_and_aggregator = std::make_unique<MockDataAndAggregator>();
+  data_and_aggregator->Init();
+
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+
+  constexpr char kKey[] = "わたしのなまえはなかのです";
+
+  // Set up mock converter
+  {
+    // Make segments like:
+    // "わたしの"    | "なまえは" | "なかのです"
+    // "Watashino" | "Namaeha" | "Nakanodesu"
+    Segments segments;
+
+    auto add_segment = [&segments](absl::string_view key,
+                                   absl::string_view value) {
+      Segment *segment = segments.add_segment();
+      segment->set_key(key);
+      Segment::Candidate *candidate = segment->add_candidate();
+      candidate->key = std::string(key);
+      candidate->value = std::string(value);
+    };
+
+    add_segment("わたしの", "Watashino");
+    add_segment("なまえは", "Namaeha");
+    add_segment("なかのです", "Nakanodesu");
+
+    EXPECT_CALL(*data_and_aggregator->mutable_converter(),
+                StartConversion(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+  // Set up mock immutable converter
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("わたしのなまえはなかのです");
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value = "私の名前は中野です";
+    candidate->key = ("わたしのなまえはなかのです");
+    // "わたしの, 私の", "わたし, 私"
+    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    // "なまえは, 名前は", "なまえ, 名前"
+    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    // "なかのです, 中野です", "なかの, 中野"
+    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
+    EXPECT_CALL(*data_and_aggregator->mutable_immutable_converter(),
+                ConvertForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+
+  {
+    Segments segments;
+
+    InitSegmentsWithKey(kKey, &segments);
+    suggestion_convreq_->set_use_actual_converter_for_realtime_conversion(true);
+
+    std::vector<Result> results;
+    aggregator.AggregatePredictionForRequest(*suggestion_convreq_, segments,
+                                             &results);
+    ASSERT_GT(results.size(), 0);
+    bool has_realtime_top = false;
+    for (const Result &r : results) {
+      if (r.types & PredictionType::REALTIME_TOP) {
+        has_realtime_top = true;
+        break;
+      }
+    }
+    EXPECT_TRUE(has_realtime_top);
+  }
+
+  {
+    Segments segments;
+
+    InitSegmentsWithKey(kKey, &segments);
+
+    suggestion_convreq_->set_use_actual_converter_for_realtime_conversion(
+        false);
+    std::vector<Result> results;
+    aggregator.AggregatePredictionForRequest(*suggestion_convreq_, segments,
+                                             &results);
+    ASSERT_GT(results.size(), 0);
+    bool has_realtime_top = false;
+    for (const Result &r : results) {
+      if (r.types & PredictionType::REALTIME_TOP) {
+        has_realtime_top = true;
+        break;
+      }
+    }
+    EXPECT_FALSE(has_realtime_top);
   }
 }
 
@@ -2291,9 +2383,8 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
   std::vector<Result> results;
 
-  suggestion_convreq_->set_use_actual_converter_for_realtime_conversion(false);
-  aggregator.AggregateRealtimeConversion(*suggestion_convreq_, 10, segments,
-                                         &results);
+  aggregator.AggregateRealtimeConversion(*suggestion_convreq_, 10, false,
+                                         segments, &results);
   ASSERT_EQ(2, results.size());
 
   EXPECT_EQ(results[0].types, REALTIME);
@@ -2358,8 +2449,8 @@ TEST_F(DictionaryPredictionAggregatorTest,
   }
 
   SetUpInputForSuggestion(kKeyWithDe, composer_.get(), &segments);
-  aggregator.AggregateRealtimeConversion(*suggestion_convreq_, 1, segments,
-                                         &results);
+  aggregator.AggregateRealtimeConversion(*suggestion_convreq_, 1, false,
+                                         segments, &results);
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].types, REALTIME);
   EXPECT_NE(0, (results[0].candidate_attributes &

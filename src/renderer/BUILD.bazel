@@ -78,7 +78,6 @@ mozc_cc_test(
     name = "renderer_client_test",
     size = "medium",
     srcs = ["renderer_client_test.cc"],
-    requires_full_emulation = False,
     tags = ["noandroid"],
     deps = [
         ":renderer_client",
@@ -125,7 +124,6 @@ mozc_cc_test(
     name = "renderer_server_test",
     size = "medium",
     srcs = ["renderer_server_test.cc"],
-    requires_full_emulation = False,
     tags = ["noandroid"],
     deps = [
         ":renderer_client",
@@ -161,7 +159,6 @@ mozc_cc_test(
         "table_layout_interface.h",
         "table_layout_test.cc",
     ],
-    requires_full_emulation = False,
     tags = ["noandroid"],
     deps = [
         ":table_layout",
@@ -201,7 +198,6 @@ mozc_cc_test(
     name = "window_util_test",
     size = "small",
     srcs = ["window_util_test.cc"],
-    requires_full_emulation = False,
     tags = ["noandroid"],
     deps = [
         ":window_util",
@@ -231,7 +227,6 @@ mozc_cc_test(
     name = "renderer_style_handler_test",
     size = "small",
     srcs = ["renderer_style_handler_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":renderer_style_handler",
         "//protocol:renderer_cc_proto",

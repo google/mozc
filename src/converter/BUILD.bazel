@@ -65,7 +65,6 @@ mozc_cc_test(
     name = "segments_test",
     size = "small",
     srcs = ["segments_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":segments",
         "//base:number_util",
@@ -160,7 +159,6 @@ mozc_cc_test(
         "//data/test/dictionary:connection_single_column.txt",
         "//data_manager/testing:mozc_dataset_for_testing@connection",
     ],
-    requires_full_emulation = False,
     deps = [
         ":connector",
         "//base:logging",
@@ -201,7 +199,6 @@ mozc_cc_test(
     srcs = [
         "nbest_generator_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":connector",
         ":immutable_converter_no_factory",
@@ -250,7 +247,6 @@ mozc_cc_test(
     name = "candidate_filter_test",
     size = "small",
     srcs = ["candidate_filter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":candidate_filter",
         ":node",
@@ -303,7 +299,6 @@ mozc_cc_test(
     name = "lattice_test",
     size = "small",
     srcs = ["lattice_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":lattice",
         ":node",
@@ -374,7 +369,6 @@ mozc_cc_test(
     srcs = [
         "immutable_converter_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":immutable_converter_no_factory",
         ":lattice",
@@ -449,7 +443,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["converter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":converter",
         ":converter_interface",
@@ -499,7 +492,6 @@ mozc_cc_test(
     name = "converter_regression_test",
     size = "medium",
     srcs = ["converter_regression_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":converter_interface",
         ":segments",
@@ -533,7 +525,6 @@ mozc_cc_test(
     size = "small",
     srcs = ["pos_id_printer_test.cc"],
     data = ["//data/test/dictionary:id.def"],
-    requires_full_emulation = False,
     deps = [
         ":pos_id_printer",
         "//base:file_stream",
@@ -632,7 +623,6 @@ mozc_cc_test(
     name = "key_corrector_test",
     size = "small",
     srcs = ["key_corrector_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":key_corrector",
         "//testing:gunit_main",

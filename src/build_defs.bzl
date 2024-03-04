@@ -70,7 +70,7 @@ def mozc_cc_library(deps = [], copts = [], visibility = None, **kwargs):
     )
 
 register_extension_info(
-    extension = "mozc_cc_library",
+    extension = mozc_cc_library,
     label_regex_for_dep = "{extension_name}",
 )
 
@@ -85,7 +85,7 @@ def mozc_cc_binary(deps = [], copts = [], **kwargs):
     )
 
 register_extension_info(
-    extension = "mozc_cc_binary",
+    extension = mozc_cc_binary,
     label_regex_for_dep = "{extension_name}",
 )
 
@@ -99,8 +99,6 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
       copts: copts for cc_test.  -funsigned-char is added.
       **kwargs: other args for cc_test.
     """
-
-    requires_full_emulation = kwargs.pop("requires_full_emulation", False)
     native.cc_test(
         name = name,
         tags = tags,
@@ -110,7 +108,7 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
     )
 
 register_extension_info(
-    extension = "mozc_cc_test",
+    extension = mozc_cc_test,
     label_regex_for_dep = "{extension_name}",
 )
 
@@ -124,7 +122,7 @@ def mozc_py_library(name, srcs, srcs_version = "PY3", **kwargs):
     )
 
 register_extension_info(
-    extension = "mozc_py_library",
+    extension = mozc_py_library,
     label_regex_for_dep = "{extension_name}",
 )
 
@@ -147,7 +145,7 @@ def mozc_py_binary(name, srcs, python_version = "PY3", srcs_version = "PY3", tes
     )
 
 register_extension_info(
-    extension = "mozc_py_binary",
+    extension = mozc_py_binary,
     label_regex_for_dep = "{extension_name}",
 )
 
@@ -210,7 +208,7 @@ def mozc_objc_library(
     )
 
 register_extension_info(
-    extension = "mozc_objc_library",
+    extension = mozc_objc_library,
     label_regex_for_dep = "{extension_name}",
 )
 
@@ -268,7 +266,7 @@ def mozc_objc_test(
     )
 
 register_extension_info(
-    extension = "mozc_objc_test",
+    extension = mozc_objc_test,
     label_regex_for_dep = "{extension_name}",
 )
 
@@ -392,6 +390,11 @@ def mozc_select(
       oss_android: value for OSS Android build.
       oss_linux: value for OSS Linux build.
       oss_macos: value for OSS macOS build.
+      oss_windows: value for OSS Windows build.
+      prod: value for prod build.
+      prod_linux: value for prod Linux build.
+      prod_macos: value for prod macOS build.
+      prod_windows: value for prod Windows build.
       wasm: value for wasm build.
       windows: value for Windows build. (placeholder)
 
