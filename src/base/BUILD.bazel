@@ -348,6 +348,7 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":util",
+        "//base/strings:unicode",
         "//base/strings/internal:double_array",
         "//base/strings/internal:japanese_rules",
         "@com_google_absl//absl/algorithm:container",
