@@ -90,7 +90,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["session_converter_test.cc"],
-    requires_full_emulation = False,
     shard_count = 8,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
@@ -125,7 +124,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["session_converter_stress_test.cc"],
-    requires_full_emulation = False,
     shard_count = 8,
     deps = [
         ":session_converter",
@@ -182,7 +180,6 @@ mozc_cc_test(
     name = "session_test",
     size = "small",
     srcs = ["session_test.cc"],
-    requires_full_emulation = False,
     shard_count = 8,
     deps = [
         ":request_test_util",
@@ -228,7 +225,6 @@ mozc_cc_test(
         "common.h",
         "session_regression_test.cc",
     ],
-    requires_full_emulation = False,
     shard_count = 8,
     deps = [
         ":request_test_util",
@@ -266,7 +262,6 @@ mozc_cc_test(
     name = "session_observer_handler_test",
     size = "small",
     srcs = ["session_observer_handler_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":session_observer_handler",
         ":session_observer_interface",
@@ -358,7 +353,6 @@ mozc_cc_test(
         "common.h",
         "session_handler_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":session_handler",
         ":session_handler_interface",
@@ -435,7 +429,6 @@ mozc_cc_test(
     name = "request_test_util_test",
     size = "small",
     srcs = ["request_test_util_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":request_test_util",
         "//protocol:commands_cc_proto",
@@ -491,7 +484,6 @@ mozc_cc_test(
     name = "session_watch_dog_test",
     size = "small",
     srcs = ["session_watch_dog_test.cc"],
-    requires_full_emulation = False,
     tags = [
         "noandroid",
         "nomac",  # TODO(b/281742982) flaky for mac on forge
@@ -534,7 +526,6 @@ mozc_cc_test(
     name = "session_usage_observer_test",
     size = "small",
     srcs = ["session_usage_observer_test.cc"],
-    requires_full_emulation = False,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":session_usage_observer",
@@ -575,7 +566,6 @@ mozc_cc_test(
     name = "key_info_util_test",
     size = "small",
     srcs = ["key_info_util_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":key_info_util",
         "//composer:key_event_util",
@@ -605,7 +595,6 @@ mozc_cc_test(
     name = "session_usage_stats_util_test",
     size = "small",
     srcs = ["session_usage_stats_util_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":session_usage_stats_util",
         "//composer:key_parser",
@@ -662,7 +651,6 @@ mozc_cc_test(
     name = "random_keyevents_generator_test",
     size = "small",
     srcs = ["random_keyevents_generator_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":random_keyevents_generator",
         "//protocol:commands_cc_proto",
@@ -678,7 +666,6 @@ mozc_cc_test(
         "common.h",
         "session_handler_stress_test.cc",
     ],
-    requires_full_emulation = False,
     shard_count = 16,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
@@ -768,7 +755,6 @@ mozc_cc_test(
         "//data/test/session/scenario:scenario_files",
         "//data/test/session/scenario/usage_stats:usage_stats_scenario_files",
     ],
-    requires_full_emulation = False,
     shard_count = 8,
     tags = [
         "noandroid",  # TODO(b/73698251): disabled due to errors

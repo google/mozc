@@ -137,7 +137,6 @@ mozc_cc_test(
         "//data/dictionary_oss:connection_single_column.txt",
         "//data/dictionary_oss:suggestion_filter.txt",
     ],
-    requires_full_emulation = False,
     deps = [
         ":oss_data_manager",
         "//data_manager:data_manager_test_base",

@@ -164,7 +164,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "dataset_writer_test",
     srcs = ["dataset_writer_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":dataset_cc_proto",
         ":dataset_writer",
@@ -215,7 +214,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "dataset_reader_test",
     srcs = ["dataset_reader_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":dataset_cc_proto",
         ":dataset_reader",
@@ -265,7 +263,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "serialized_dictionary_test",
     srcs = ["serialized_dictionary_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":serialized_dictionary",
         "//base/container:serialized_string_array",

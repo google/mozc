@@ -54,7 +54,6 @@ mozc_cc_test(
     name = "merger_rewriter_test",
     size = "small",
     srcs = ["merger_rewriter_test.cc"],
-    requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
         ":merger_rewriter",
@@ -96,7 +95,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "collocation_rewriter_test",
     srcs = ["collocation_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":collocation_rewriter",
         "//converter:segments",
@@ -144,7 +142,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["user_segment_history_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":number_rewriter",
         ":user_segment_history_rewriter",
@@ -199,7 +196,6 @@ mozc_cc_test(
     name = "user_boundary_history_rewriter_test",
     size = "small",
     srcs = ["user_boundary_history_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":user_boundary_history_rewriter",
         "//base:file_util",
@@ -246,7 +242,6 @@ mozc_cc_test(
     name = "date_rewriter_test",
     size = "small",
     srcs = ["date_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":date_rewriter",
         "//base:clock",
@@ -299,7 +294,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["number_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":number_rewriter",
         ":rewriter_interface",
@@ -343,7 +337,6 @@ mozc_cc_test(
     name = "small_letter_rewriter_test",
     size = "small",
     srcs = ["small_letter_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":small_letter_rewriter",
         "//base/strings:assign",
@@ -386,7 +379,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["transliteration_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":transliteration_rewriter",
         "//base:logging",
@@ -436,7 +428,6 @@ mozc_cc_test(
     name = "language_aware_rewriter_test",
     size = "small",
     srcs = ["language_aware_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":language_aware_rewriter",
         "//composer",
@@ -478,7 +469,6 @@ mozc_cc_test(
     name = "version_rewriter_test",
     size = "small",
     srcs = ["version_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":version_rewriter",
         "//converter:segments",
@@ -519,7 +509,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["symbol_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":symbol_rewriter",
         "//base:logging",
@@ -563,7 +552,6 @@ mozc_cc_test(
     name = "emoticon_rewriter_test",
     size = "small",
     srcs = ["emoticon_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":emoticon_rewriter",
         ":rewriter_interface",
@@ -605,7 +593,6 @@ mozc_cc_test(
     name = "variants_rewriter_test",
     size = "small",
     srcs = ["variants_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":variants_rewriter",
         "//base:japanese_util",
@@ -646,7 +633,6 @@ mozc_cc_test(
     name = "english_variants_rewriter_test",
     size = "small",
     srcs = ["english_variants_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":english_variants_rewriter",
         "//converter:segments",
@@ -680,7 +666,6 @@ mozc_cc_test(
     name = "fortune_rewriter_test",
     size = "small",
     srcs = ["fortune_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":fortune_rewriter",
         "//base:logging",
@@ -711,7 +696,6 @@ mozc_cc_test(
     name = "dice_rewriter_test",
     size = "small",
     srcs = ["dice_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":dice_rewriter",
         "//converter:segments",
@@ -747,7 +731,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["calculator_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":calculator_rewriter",
         "//base:logging",
@@ -792,7 +775,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["unicode_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":unicode_rewriter",
         "//composer",
@@ -826,7 +808,6 @@ mozc_cc_test(
     name = "user_dictionary_rewriter_test",
     size = "small",
     srcs = ["user_dictionary_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":user_dictionary_rewriter",
         "//base:logging",
@@ -859,7 +840,6 @@ mozc_cc_test(
     name = "dictionary_generator_test",
     size = "small",
     srcs = ["dictionary_generator_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":dictionary_generator",
         "//data_manager/testing:mock_data_manager",
@@ -946,7 +926,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["emoji_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":emoji_rewriter",
         ":variants_rewriter",
@@ -1015,7 +994,6 @@ mozc_cc_test(
     name = "single_kanji_rewriter_test",
     size = "small",
     srcs = ["single_kanji_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":single_kanji_rewriter",
         "//converter:segments",
@@ -1065,7 +1043,6 @@ mozc_cc_test(
     name = "focus_candidate_rewriter_test",
     size = "small",
     srcs = ["focus_candidate_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":focus_candidate_rewriter",
         "//base:number_util",
@@ -1102,7 +1079,6 @@ mozc_cc_test(
     srcs = [
         "zipcode_rewriter_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":zipcode_rewriter",
         "//base:logging",
@@ -1141,7 +1117,6 @@ mozc_cc_test(
     name = "t13n_promotion_rewriter_test",
     size = "small",
     srcs = ["t13n_promotion_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":t13n_promotion_rewriter",
         ":transliteration_rewriter",
@@ -1178,7 +1153,6 @@ mozc_cc_test(
     name = "command_rewriter_test",
     size = "small",
     srcs = ["command_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":command_rewriter",
         "//config:config_handler",
@@ -1216,7 +1190,6 @@ mozc_cc_test(
     name = "environmental_filter_rewriter_test",
     size = "small",
     srcs = ["environmental_filter_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":emoji_rewriter",
         ":environmental_filter_rewriter",
@@ -1251,7 +1224,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["remove_redundant_candidate_rewriter_test.cc"],
-    requires_full_emulation = True,
     deps = [
         ":remove_redundant_candidate_rewriter",
         "//converter:segments",
@@ -1305,7 +1277,6 @@ mozc_cc_test(
     name = "usage_rewriter_test",
     size = "small",
     srcs = ["usage_rewriter_test.cc"],
-    requires_full_emulation = False,
     tags = ["noandroid"],
     target_compatible_with = mozc_select_enable_usage_rewriter(
         off = ["@platforms//:incompatible"],
@@ -1358,7 +1329,6 @@ mozc_cc_test(
     name = "correction_rewriter_test",
     size = "small",
     srcs = ["correction_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":correction_rewriter",
         "//base/container:serialized_string_array",
@@ -1403,7 +1373,6 @@ mozc_cc_test(
     name = "a11y_description_rewriter_test",
     size = "small",
     srcs = ["a11y_description_rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":a11y_description_rewriter",
         "//data_manager",
@@ -1470,7 +1439,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["rewriter_test.cc"],
-    requires_full_emulation = False,
     deps = [
         "rewriter",
         ":rewriter_interface",
@@ -1500,7 +1468,6 @@ mozc_cc_test(
     name = "collocation_util_test",
     size = "small",
     srcs = ["collocation_util_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":collocation_util",
         "//testing:gunit_main",
@@ -1580,7 +1547,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "number_compound_util_test",
     srcs = ["number_compound_util_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":number_compound_util",
         "//base/container:serialized_string_array",

@@ -124,7 +124,6 @@ mozc_cc_test(
     srcs = [
         "japanese_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":japanese",
         "//testing:gunit_main",

@@ -75,7 +75,6 @@ mozc_cc_test(
         "//data/test/dictionary:dictionary_data",
         "//data/test/dictionary:suggestion_filter.txt",
     ],
-    requires_full_emulation = False,
     deps = [
         ":mock_data_manager",
         "//data_manager:data_manager_test_base",

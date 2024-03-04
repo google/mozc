@@ -110,7 +110,6 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["user_history_predictor_test.cc"],
-    requires_full_emulation = False,
     tags = [
         "nowin",
     ],  # TODO(yuryu): depends on //base:encryptor
@@ -270,7 +269,6 @@ mozc_cc_test(
     srcs = [
         "dictionary_prediction_aggregator_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":dictionary_prediction_aggregator",
         ":result",
@@ -314,7 +312,6 @@ mozc_cc_test(
     srcs = [
         "dictionary_predictor_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":dictionary_predictor",
         ":prediction_aggregator_interface",
@@ -384,7 +381,6 @@ mozc_cc_test(
     srcs = [
         "single_kanji_prediction_aggregator_test.cc",
     ],
-    requires_full_emulation = False,
     deps = [
         ":result",
         ":single_kanji_prediction_aggregator",
@@ -428,7 +424,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "predictor_test",
     srcs = ["predictor_test.cc"],
-    requires_full_emulation = False,
     deps = [
         ":dictionary_predictor",
         ":predictor",
@@ -481,7 +476,6 @@ mozc_cc_library(
 mozc_cc_test(
     name = "zero_query_dict_test",
     srcs = ["zero_query_dict_test.cc"],
-    requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
         ":zero_query_dict",
