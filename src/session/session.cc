@@ -1973,6 +1973,10 @@ bool SuppressSuggestion(const commands::Input &input) {
   if (!input.has_context()) {
     return false;
   }
+  if (input.context().has_suppress_suggestion() &&
+      input.context().suppress_suggestion()) {
+    return true;
+  }
   // If the target input field is in Chrome's Omnibox or Google
   // search box, the suggest window is hidden.
   for (size_t i = 0; i < input.context().experimental_features_size(); ++i) {

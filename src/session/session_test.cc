@@ -9761,6 +9761,12 @@ TEST_F(SessionTest, SuppressSuggestion) {
   SendKey("d", &session, &command);
   EXPECT_TRUE(command.output().has_candidates());
 
+  // Suppress suggestion context
+  SetSendKeyCommand("e", &command);
+  command.mutable_input()->mutable_context()->set_suppress_suggestion(true);
+  session.SendKey(&command);
+  EXPECT_FALSE(command.output().has_candidates());
+
   // With an invalid identifier.  It should be the same with the
   // default behavior.
   SetSendKeyCommand("i", &command);
