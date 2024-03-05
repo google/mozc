@@ -42,7 +42,7 @@
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -249,7 +249,7 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
 TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileSymbolKey) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   commands::Request command_request;
-  commands::RequestForUnitTest::FillMobileRequest(&command_request);
+  request_test_util::FillMobileRequest(&command_request);
   ConversionRequest request;
   request.set_request(&command_request);
 
@@ -273,7 +273,7 @@ TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileSymbolKey) {
 TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileAlphabetKey) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   commands::Request command_request;
-  commands::RequestForUnitTest::FillMobileRequest(&command_request);
+  request_test_util::FillMobileRequest(&command_request);
   ConversionRequest request;
   request.set_request(&command_request);
 

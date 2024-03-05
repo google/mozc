@@ -70,9 +70,9 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_test_util.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -291,8 +291,8 @@ class ConverterTest : public testing::TestWithTempUserProfile {
         data_manager->GetPosMatcherData());
     auto suppression_dictionary = std::make_unique<SuppressionDictionary>();
     auto user_dictionary = std::make_unique<dictionary::UserDictionary>(
-        dictionary::UserPos::CreateFromDataManager(*data_manager),
-        *pos_matcher, suppression_dictionary.get());
+        dictionary::UserPos::CreateFromDataManager(*data_manager), *pos_matcher,
+        suppression_dictionary.get());
     {
       user_dictionary::UserDictionaryStorage storage;
       using UserEntry = user_dictionary::UserDictionary::Entry;
@@ -1751,7 +1751,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   config::ConfigHandler::GetDefaultConfig(&config);
   composer::Table table;
   composer::Composer composer(&table, &request, &config);
-  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request_test_util::FillMobileRequest(&request);
   ConversionRequest conversion_request(&composer, &request, &config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
 
@@ -1805,7 +1805,7 @@ TEST_F(ConverterTest,
   config::ConfigHandler::GetDefaultConfig(&config);
   composer::Table table;
   composer::Composer composer(&table, &request, &config);
-  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request_test_util::FillMobileRequest(&request);
   ConversionRequest conversion_request(&composer, &request, &config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
 
@@ -1830,7 +1830,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   config::ConfigHandler::GetDefaultConfig(&config);
   composer::Table table;
   composer::Composer composer(&table, &request, &config);
-  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request_test_util::FillMobileRequest(&request);
   const dictionary::PosMatcher pos_matcher(
       engine->GetDataManager()->GetPosMatcherData());
   ConversionRequest conversion_request(&composer, &request, &config);

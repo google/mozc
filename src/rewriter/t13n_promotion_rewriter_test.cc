@@ -39,8 +39,8 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_test_util.h"
 #include "rewriter/transliteration_rewriter.h"
-#include "session/request_test_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -76,7 +76,7 @@ class T13nPromotionRewriterTest : public testing::TestWithTempUserProfile {
     composer_ = composer::Composer();
     mobile_request_ = commands::Request();
 
-    commands::RequestForUnitTest::FillMobileRequest(&mobile_request_);
+    request_test_util::FillMobileRequest(&mobile_request_);
     composer_.SetRequest(&mobile_request_);
     mobile_conv_request_.set_request(&mobile_request_);
     mobile_conv_request_.set_composer(&composer_);

@@ -27,28 +27,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef MOZC_REQUEST_REQUEST_TEST_UTIL_H_
+#define MOZC_REQUEST_REQUEST_TEST_UTIL_H_
 // Test utility for Request.
 
-#ifndef MOZC_SESSION_REQUEST_TEST_UTIL_H_
-#define MOZC_SESSION_REQUEST_TEST_UTIL_H_
+#include "protocol/commands.pb.h"
 
 namespace mozc {
-namespace commands {
+namespace request_test_util {
 
-class Request;
+void FillMobileRequest(commands::Request *request);
 
-class RequestForUnitTest {
- public:
-  RequestForUnitTest() = delete;
-  RequestForUnitTest(const RequestForUnitTest &) = delete;
-  RequestForUnitTest &operator=(const RequestForUnitTest &) = delete;
-  // Fills mobile request with software keyboard
-  static void FillMobileRequest(Request *request);
-  // Fills mobile request with hardware keyboard
-  static void FillMobileRequestWithHardwareKeyboard(Request *request);
-  // Fills mobile request for handwriting keyboard
-  static void FillMobileRequestForHandwriting(Request *request);
-};
-}  // namespace commands
+void FillMobileRequestWithHardwareKeyboard(commands::Request *request);
+
+void FillMobileRequestForHandwriting(commands::Request *request);
+
+}  // namespace request_test_util
 }  // namespace mozc
-#endif  // MOZC_SESSION_REQUEST_TEST_UTIL_H_
+
+#endif  // MOZC_REQUEST_REQUEST_TEST_UTIL_H_

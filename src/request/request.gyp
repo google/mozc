@@ -41,5 +41,15 @@
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
       ],
     },
+    {
+      'target_name': 'request_test_util',
+      'type': 'static_library',
+      'sources': [
+        'request_test_util.cc',
+      ],
+      'dependencies': [
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+      ],
+    },
   ],
 }

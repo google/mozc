@@ -44,7 +44,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -82,7 +82,7 @@ class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
  protected:
   void SetUp() override {
     request_ = std::make_unique<commands::Request>();
-    commands::RequestForUnitTest::FillMobileRequest(request_.get());
+    request_test_util::FillMobileRequest(request_.get());
     config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
     table_ = std::make_unique<composer::Table>();
@@ -116,8 +116,7 @@ TEST_F(SingleKanjiPredictionAggregatorTest, NoResultForHardwareKeyboard) {
   Segments segments;
   SetUpInputWithKey("あけぼのの", composer_.get(), &segments);
   SingleKanjiPredictionAggregator aggregator(*data_manager_);
-  commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
-      request_.get());
+  request_test_util::FillMobileRequestWithHardwareKeyboard(request_.get());
   const std::vector<Result> results =
       aggregator.AggregateResults(*convreq_, segments);
   EXPECT_EQ(results.size(), 0);

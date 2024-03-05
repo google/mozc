@@ -49,7 +49,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -162,7 +162,7 @@ class MobilePredictorTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(config_.get());
 
     request_ = std::make_unique<commands::Request>();
-    commands::RequestForUnitTest::FillMobileRequest(request_.get());
+    request_test_util::FillMobileRequest(request_.get());
     composer_ = std::make_unique<composer::Composer>(nullptr, request_.get(),
                                                      config_.get());
 

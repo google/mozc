@@ -66,7 +66,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -718,7 +718,7 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuery) {
 
   PrependHistorySegments("だいがく", "大学", &segments);
 
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   predictor.PredictForRequest(*convreq_for_prediction_, &segments);
 
   EXPECT_TRUE(FindCandidateByKeyValue(segments.conversion_segment(0),
@@ -749,7 +749,7 @@ TEST_F(DictionaryPredictorTest, PredictivePenaltyForBigramResults) {
   InitSegmentsWithKey("にゅうし", &segments);
   PrependHistorySegments("だいがく", "大学", &segments);
 
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   predictor.PredictForRequest(*convreq_for_prediction_, &segments);
 
   auto get_rank_by_value = [&](absl::string_view value) {
@@ -774,7 +774,7 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
       data_and_predictor->mutable_immutable_converter();
 
   // Exact key will not be filtered in mobile request
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   // Small prefix penalty
   {
@@ -1056,7 +1056,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   // turn on mobile mode
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
@@ -1127,7 +1127,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigramOnMobile) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
@@ -1214,7 +1214,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterZeroQueryCandidatesOnMobile) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
@@ -1243,7 +1243,7 @@ TEST_F(DictionaryPredictorTest,
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   // turn on mobile mode
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
@@ -1289,7 +1289,7 @@ TEST_F(DictionaryPredictorTest, FixSRealtimeTopCandidatesCostOnMobile) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   // turn on mobile mode
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   request_->mutable_decoder_experiment_params()
       ->set_apply_user_segment_history_rewriter_for_prediction(true);
 
@@ -1321,7 +1321,7 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   // turn on mobile mode
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
@@ -1403,7 +1403,7 @@ TEST_F(DictionaryPredictorTest, SingleKanjiFallbackOffsetCost) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   // turn on mobile mode
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
@@ -1450,7 +1450,7 @@ TEST_F(DictionaryPredictorTest, Dedup) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   // turn on mobile mode
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     constexpr int kSize = 5;
@@ -1513,7 +1513,7 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   // turn on mobile mode
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   request_->mutable_decoder_experiment_params()
       ->set_typing_correction_max_count(5);
@@ -1556,7 +1556,7 @@ TEST_F(DictionaryPredictorTest, SortResult) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   // turn on mobile mode
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   std::vector<Result> results = {
       CreateResult6("test", "テストＡ", 0, 10, prediction::UNIGRAM,
@@ -1676,7 +1676,7 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
       data_and_predictor->mutable_immutable_converter();
 
   // Exact key will not be filtered in mobile request
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     Segments segments;
@@ -1718,7 +1718,7 @@ TEST_F(DictionaryPredictorTest, FilterNoisyNumberCandidate) {
       data_and_predictor->mutable_immutable_converter();
 
   // Exact key will not be filtered in mobile request
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   request_->mutable_decoder_experiment_params()
       ->set_filter_noisy_number_candidate(true);
 

@@ -40,7 +40,7 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -243,7 +243,7 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
     InitSegments("あ", "あ", &segments);
 
     commands::Request request;
-    commands::RequestForUnitTest::FillMobileRequest(&request);
+    request_test_util::FillMobileRequest(&request);
     ConversionRequest convreq;
     convreq.set_request_type(ConversionRequest::PREDICTION);
     convreq.set_request(&request);
@@ -256,8 +256,7 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
     InitSegments("あ", "あ", &segments);
 
     commands::Request request;
-    commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
-        &request);
+    request_test_util::FillMobileRequestWithHardwareKeyboard(&request);
     ConversionRequest convreq;
     convreq.set_request_type(ConversionRequest::PREDICTION);
     convreq.set_request(&request);
@@ -269,8 +268,7 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
     InitSegments("あ", "あ", &segments);
 
     commands::Request request;
-    commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
-        &request);
+    request_test_util::FillMobileRequestWithHardwareKeyboard(&request);
     ConversionRequest convreq;
     convreq.set_request_type(ConversionRequest::CONVERSION);
     convreq.set_request(&request);

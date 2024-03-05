@@ -46,7 +46,7 @@
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "session/session_handler_test_util.h"
 #include "session/session_handler_tool.h"
 #include "testing/googletest.h"
@@ -266,7 +266,7 @@ const char *kScenariosForExperimentParams[] = {
 
 commands::Request GetMobileRequest() {
   commands::Request request = commands::Request::default_instance();
-  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request_test_util::FillMobileRequest(&request);
   return request;
 }
 

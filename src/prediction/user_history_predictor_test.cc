@@ -66,7 +66,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 #include "testing/gmock.h"
@@ -962,7 +962,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
 
 TEST_F(UserHistoryPredictorTest, TrailingPunctuationMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   Segments segments;
 
   SetUpInputForConversion("です。", composer_.get(), &segments);
@@ -3040,7 +3040,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
 TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   Segments segments;
   for (size_t i = 0; i < 3; ++i) {
@@ -3770,7 +3770,7 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
 
 TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   Segments segments;
 
   SetUpInputForConversion("わたしの", composer_.get(), &segments);
@@ -3882,7 +3882,7 @@ TEST_F(UserHistoryPredictorTest, UsageStats) {
 
 TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   Segments segments;
   {
     SetUpInputForConversion("ございます", composer_.get(), &segments);
@@ -4264,7 +4264,7 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
 
 TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   Segments segments;
   {
     SetUpInputForPrediction("てすと", composer_.get(), &segments);

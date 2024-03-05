@@ -61,7 +61,7 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
 #include "session/session_usage_observer.h"
@@ -78,7 +78,6 @@ using ::mozc::commands::Input;
 using ::mozc::commands::KeyEvent;
 using ::mozc::commands::Output;
 using ::mozc::commands::Request;
-using ::mozc::commands::RequestForUnitTest;
 using ::mozc::config::CharacterFormManager;
 using ::mozc::config::Config;
 using ::mozc::config::ConfigHandler;
@@ -662,10 +661,10 @@ absl::Status SessionHandlerInterpreter::Eval(
     *request_ = Request::default_instance();
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_MOBILE_REQUEST") {
-    RequestForUnitTest::FillMobileRequest(request_.get());
+    request_test_util::FillMobileRequest(request_.get());
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_HANDWRITING_REQUEST") {
-    RequestForUnitTest::FillMobileRequestForHandwriting(request_.get());
+    request_test_util::FillMobileRequestForHandwriting(request_.get());
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_REQUEST") {
     MOZC_ASSERT_TRUE(args.size() >= 3);

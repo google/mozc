@@ -66,7 +66,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
@@ -456,8 +456,8 @@ int main(int argc, char **argv) {
     absl::SetFlag(&FLAGS_magic, path_and_magic.second);
   }
   CHECK(!absl::GetFlag(FLAGS_engine_data_path).empty())
-      << "--engine_data_path or --engine is invalid: "
-      << "--engine_data_path=" << absl::GetFlag(FLAGS_engine_data_path) << " "
+      << "--engine_data_path or --engine is invalid: " << "--engine_data_path="
+      << absl::GetFlag(FLAGS_engine_data_path) << " "
       << "--engine_name=" << absl::GetFlag(FLAGS_engine_name);
 
   if (absl::GetFlag(FLAGS_id_def).empty()) {
@@ -488,7 +488,7 @@ int main(int argc, char **argv) {
         mozc::Engine::CreateDesktopEngine(*std::move(data_manager)).value();
   } else if (absl::GetFlag(FLAGS_engine_type) == "mobile") {
     engine = mozc::Engine::CreateMobileEngine(*std::move(data_manager)).value();
-    mozc::commands::RequestForUnitTest::FillMobileRequest(&request);
+    mozc::request_test_util::FillMobileRequest(&request);
     config.set_use_kana_modifier_insensitive_conversion(true);
   } else {
     LOG(FATAL) << "Invalid type: --engine_type="

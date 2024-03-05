@@ -60,10 +60,10 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_test_util.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -395,7 +395,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
     UsageStats::ClearAllStatsForTest();
 
     mobile_request_ = std::make_unique<Request>();
-    commands::RequestForUnitTest::FillMobileRequest(mobile_request_.get());
+    request_test_util::FillMobileRequest(mobile_request_.get());
 
     mock_data_engine_ = MockDataEngineFactory::Create().value();
 

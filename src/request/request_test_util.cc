@@ -27,16 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Test utility for Request.
-
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 
 #include "protocol/commands.pb.h"
 
 namespace mozc {
-namespace commands {
+namespace request_test_util {
+using commands::Request;
 
-void RequestForUnitTest::FillMobileRequest(Request *request) {
+void FillMobileRequest(Request *request) {
   request->set_zero_query_suggestion(true);
   request->set_mixed_conversion(true);
   request->set_update_input_mode_from_surrounding_text(false);
@@ -49,8 +48,7 @@ void RequestForUnitTest::FillMobileRequest(Request *request) {
   request->set_language_aware_input(Request::NO_LANGUAGE_AWARE_INPUT);
 }
 
-void RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
-    Request *request) {
+void FillMobileRequestWithHardwareKeyboard(Request *request) {
   request->set_zero_query_suggestion(false);
   request->set_mixed_conversion(false);
   request->set_update_input_mode_from_surrounding_text(true);
@@ -61,11 +59,11 @@ void RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
   request->set_candidate_page_size(2);
 }
 
-void RequestForUnitTest::FillMobileRequestForHandwriting(Request *request) {
+void FillMobileRequestForHandwriting(Request *request) {
   request->set_zero_query_suggestion(true);
   request->set_mixed_conversion(true);
   request->set_kana_modifier_insensitive_conversion(false);
   request->set_auto_partial_suggestion(false);
 }
-}  // namespace commands
+}  // namespace request_test_util
 }  // namespace mozc

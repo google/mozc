@@ -35,8 +35,8 @@
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "request/conversion_request.h"
+#include "request/request_test_util.h"
 #include "rewriter/rewriter_interface.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -68,7 +68,7 @@ TEST_F(OrderRewriterTest, Capability) {
   EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::NOT_AVAILABLE);
 
   // Mobile
-  commands::RequestForUnitTest::FillMobileRequest(&request_);
+  request_test_util::FillMobileRequest(&request_);
   EXPECT_EQ(rewriter_->capability(convreq_),
             RewriterInterface::PREDICTION | RewriterInterface::SUGGESTION);
 }
@@ -125,7 +125,7 @@ TEST_F(OrderRewriterTest, NotAvailable) {
 
 TEST_F(OrderRewriterTest, Rewrite) {
   Segments segments = BuildTestSegments();
-  commands::RequestForUnitTest::FillMobileRequest(&request_);
+  request_test_util::FillMobileRequest(&request_);
   request_.mutable_decoder_experiment_params()
       ->set_enable_findability_oriented_order(true);
   request_.mutable_decoder_experiment_params()

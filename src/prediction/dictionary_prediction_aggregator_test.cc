@@ -69,7 +69,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -716,7 +716,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
   config_->set_use_dictionary_suggest(true);
   config_->set_use_realtime_conversion(false);
   if (is_mobile) {
-    commands::RequestForUnitTest::FillMobileRequest(request_.get());
+    request_test_util::FillMobileRequest(request_.get());
   }
 
   // Keys of normal lengths.
@@ -949,7 +949,7 @@ TEST_F(DictionaryPredictionAggregatorTest, TriggerConditionsLatinInputMode) {
     request_->Clear();
     const bool is_mobile = test_case.platform == MOBILE;
     if (is_mobile) {
-      commands::RequestForUnitTest::FillMobileRequest(request_.get());
+      request_test_util::FillMobileRequest(request_.get());
     }
 
     Segments segments;
@@ -1128,7 +1128,7 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileUnigram) {
   constexpr char kKey[] = "とうきょう";
   SetUpInputForSuggestion(kKey, composer_.get(), &segments);
 
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     constexpr auto kPosId = MockDictionary::kDefaultPosId;
@@ -1206,7 +1206,7 @@ TEST_F(DictionaryPredictionAggregatorTest, DISABLED_MobileZeroQueryAfterEOS) {
       {"むすめ。", "娘。", pos_matcher.GetUniqueNounId(), true},
   };
 
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   for (const auto &test_case : kTestcases) {
     Segments segments;
@@ -1296,7 +1296,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     Segments segments;
@@ -1402,7 +1402,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     Segments segments;
@@ -1917,7 +1917,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQuerySuffixPrediction) {
 
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   Segments segments;
 
   // Zero query
@@ -2310,7 +2310,7 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileZipcodeEntries) {
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   const PosMatcher &pos_matcher = data_and_aggregator->pos_matcher();
   MockDictionary *mock = data_and_aggregator->mutable_dictionary();
@@ -2527,7 +2527,7 @@ TEST_F(DictionaryPredictionAggregatorTest, EnrichPartialCandidates) {
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   Segments segments;
   SetUpInputForSuggestion("ぐーぐる", composer_.get(), &segments);
@@ -2542,7 +2542,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PrefixCandidates) {
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   Segments segments;
   SetUpInputForSuggestion("ぐーぐるあ", composer_.get(), &segments);
@@ -2566,7 +2566,7 @@ TEST_F(DictionaryPredictionAggregatorTest, CandidatesFromUserDictionary) {
       data_and_aggregator->aggregator();
   const PosMatcher &pos_matcher = data_and_aggregator->pos_matcher();
 
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     MockDictionary *mock = data_and_aggregator->mutable_dictionary();
@@ -2769,7 +2769,7 @@ TEST_F(DictionaryPredictionAggregatorTest, NumberDecoderCandidates) {
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   Segments segments;
   SetUpInputForSuggestion("よんじゅうごかい", composer_.get(), &segments);
@@ -2792,7 +2792,7 @@ TEST_F(DictionaryPredictionAggregatorTest, DoNotPredictNoisyNumberEntries) {
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     MockDictionary *mock = data_and_aggregator->mutable_dictionary();
@@ -2828,7 +2828,7 @@ TEST_F(DictionaryPredictionAggregatorTest, SingleKanji) {
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
 
   {
     auto create_single_kanji_result = [](absl::string_view key,
@@ -2867,8 +2867,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
-      request_.get());
+  request_test_util::FillMobileRequestWithHardwareKeyboard(request_.get());
 
   {
     MockSingleKanjiPredictionAggregator *mock =
@@ -2893,7 +2892,7 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwriting) {
       data_and_aggregator->aggregator();
   Segments segments;
   // Handwriting request
-  commands::RequestForUnitTest::FillMobileRequestForHandwriting(request_.get());
+  request_test_util::FillMobileRequestForHandwriting(request_.get());
   {
     commands::SessionCommand command;
     commands::SessionCommand::CompositionEvent *composition_event =
@@ -2977,7 +2976,7 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingT13N) {
       data_and_aggregator->aggregator();
   Segments segments;
   // Handwriting request
-  commands::RequestForUnitTest::FillMobileRequestForHandwriting(request_.get());
+  request_test_util::FillMobileRequestForHandwriting(request_.get());
   {
     commands::SessionCommand command;
     commands::SessionCommand::CompositionEvent *composition_event =

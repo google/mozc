@@ -65,6 +65,7 @@
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine',
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
@@ -84,6 +85,7 @@
       'dependencies': [
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'session.gyp:session',
@@ -121,13 +123,13 @@
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:testing',
         '<(mozc_oss_src_dir)/testing/testing.gyp:testing_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session',
-        'session_base.gyp:request_test_util',
       ],
     },
     {
@@ -222,6 +224,7 @@
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'session.gyp:random_keyevents_generator',
@@ -265,21 +268,6 @@
       },
     },
     {
-      'target_name': 'request_test_util_test',
-      'type': 'executable',
-      'sources': [
-        'request_test_util_test.cc'
-      ],
-      'dependencies': [
-        '<(mozc_oss_src_dir)/base/base.gyp:base',
-        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
-        'session_base.gyp:request_test_util',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
       'target_name': 'session_handler_scenario_test',
       'type': 'executable',
       'sources': [
@@ -295,12 +283,12 @@
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:candidates_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session_handler',
         'session.gyp:session_handler_tool',
-        'session_base.gyp:request_test_util',
         'session_handler_test_util',
       ],
       'variables': {
@@ -320,7 +308,6 @@
         # 'session_handler_scenario_test',
         # 'session_handler_stress_test',
         'random_keyevents_generator_test',
-        'request_test_util_test',
         'session_converter_test',
         'session_handler_test',
         'session_key_handling_test',

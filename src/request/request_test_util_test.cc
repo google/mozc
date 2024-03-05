@@ -27,16 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "protocol/commands.pb.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
+
 #include "testing/gunit.h"
 
 namespace mozc {
-namespace commands {
+namespace request_test_util {
+using commands::Request;
 
-TEST(RequestForUnitTest, CheckFillMobileRequest) {
+TEST(RequestTestUtil, CheckFillMobileRequest) {
   Request request;
-  RequestForUnitTest::FillMobileRequest(&request);
+  FillMobileRequest(&request);
   EXPECT_TRUE(request.zero_query_suggestion());
   EXPECT_TRUE(request.mixed_conversion());
   EXPECT_FALSE(request.update_input_mode_from_surrounding_text());
@@ -44,9 +45,9 @@ TEST(RequestForUnitTest, CheckFillMobileRequest) {
   EXPECT_EQ(request.special_romanji_table(), Request::TWELVE_KEYS_TO_HIRAGANA);
 }
 
-TEST(RequestForUnitTest, CheckFillMobileRequestWithHardwareKeyboard) {
+TEST(RequestTestUtil, CheckFillMobileRequestWithHardwareKeyboard) {
   Request request;
-  RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(&request);
+  FillMobileRequestWithHardwareKeyboard(&request);
   EXPECT_FALSE(request.zero_query_suggestion());
   EXPECT_FALSE(request.mixed_conversion());
   EXPECT_TRUE(request.update_input_mode_from_surrounding_text());
@@ -55,13 +56,13 @@ TEST(RequestForUnitTest, CheckFillMobileRequestWithHardwareKeyboard) {
   EXPECT_EQ(request.special_romanji_table(), Request::TWELVE_KEYS_TO_HIRAGANA);
 }
 
-TEST(RequestForUnitTest, CheckFillMobileRequestForHandwriting) {
+TEST(RequestTestUtil, CheckFillMobileRequestForHandwriting) {
   Request request;
-  RequestForUnitTest::FillMobileRequestForHandwriting(&request);
+  FillMobileRequestForHandwriting(&request);
   EXPECT_TRUE(request.zero_query_suggestion());
   EXPECT_TRUE(request.mixed_conversion());
   EXPECT_FALSE(request.kana_modifier_insensitive_conversion());
   EXPECT_FALSE(request.auto_partial_suggestion());
 }
-}  // namespace commands
+}  // namespace request_test_util
 }  // namespace mozc

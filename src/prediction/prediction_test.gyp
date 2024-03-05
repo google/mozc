@@ -64,7 +64,7 @@
         '<(mozc_oss_src_dir)/dictionary/system/system_dictionary.gyp:value_dictionary',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',	
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
