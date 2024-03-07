@@ -30,6 +30,7 @@
 load(
     "//:build_defs.bzl",
     "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package(default_visibility = ["//:__subpackages__"])
@@ -53,5 +54,25 @@ mozc_cc_library(
         ":conversion_request",
         "//composer",
         "//protocol:commands_cc_proto",
+    ],
+)
+
+mozc_cc_library(
+    name = "request_test_util",
+    testonly = 1,
+    srcs = ["request_test_util.cc"],
+    hdrs = ["request_test_util.h"],
+    deps = [
+        "//protocol:commands_cc_proto",
+    ],
+)
+
+mozc_cc_test(
+    name = "request_test_util_test",
+    srcs = ["request_test_util_test.cc"],
+    deps = [
+        ":request_test_util",
+        "//testing:gunit_main",
+        "//testing:mozctest",
     ],
 )

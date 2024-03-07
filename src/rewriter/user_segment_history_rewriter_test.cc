@@ -52,9 +52,9 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_test_util.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/variants_rewriter.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -1358,13 +1358,12 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         []() {
           commands::Request request;
-          commands::RequestForUnitTest::FillMobileRequest(&request);
+          request_test_util::FillMobileRequest(&request);
           return request;
         }(),
         []() {
           commands::Request request;
-          commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
-              &request);
+          request_test_util::FillMobileRequestWithHardwareKeyboard(&request);
           return request;
         }()));
 

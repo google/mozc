@@ -56,8 +56,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_test_util.h"
 #include "session/internal/candidate_list.h"
-#include "session/request_test_util.h"
 #include "session/session_converter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -73,7 +73,6 @@ namespace {
 
 using ::mozc::commands::Context;
 using ::mozc::commands::Request;
-using ::mozc::commands::RequestForUnitTest;
 using ::mozc::config::Config;
 using ::testing::_;
 using ::testing::DoAll;
@@ -1894,7 +1893,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
 }
 
 TEST_F(SessionConverterTest, PartialPrediction) {
-  RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   MockConverter mock_converter;
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments1, segments2;
@@ -2398,7 +2397,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
 
 TEST_F(SessionConverterTest, AppendCandidateListWithCategory) {
   MockConverter mock_converter;
-  RequestForUnitTest::FillMobileRequest(request_.get());
+  request_test_util::FillMobileRequest(request_.get());
   request_->mutable_decoder_experiment_params()
       ->set_enable_findability_oriented_order(true);
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
@@ -2478,7 +2477,7 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
 TEST_F(SessionConverterTest, AppendCandidateListHandwriting) {
   // b/326155138
   MockConverter mock_converter;
-  RequestForUnitTest::FillMobileRequestForHandwriting(request_.get());
+  request_test_util::FillMobileRequestForHandwriting(request_.get());
   request_->mutable_decoder_experiment_params()
       ->set_enable_findability_oriented_order(true);
   SessionConverter converter(&mock_converter, request_.get(), config_.get());

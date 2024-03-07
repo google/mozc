@@ -137,6 +137,7 @@
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
       ],
     },
     {

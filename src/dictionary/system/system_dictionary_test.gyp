@@ -55,7 +55,6 @@
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'system_dictionary.gyp:key_expansion_table',
       ],
-      
       'variables': {
         'test_size': 'small',
       },
@@ -74,7 +73,7 @@
         '<(mozc_oss_src_dir)/data_manager/oss/oss_data_manager_test.gyp:install_oss_data_manager_test_data',
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
-        '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',	
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:dictionary_test_util',

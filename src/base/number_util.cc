@@ -40,8 +40,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/check.h"
 #include "absl/algorithm/container.h"
+#include "absl/log/check.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
@@ -52,6 +52,7 @@
 #include "absl/types/span.h"
 #include "base/strings/internal/double_array.h"
 #include "base/strings/internal/japanese_rules.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -836,8 +837,6 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
                               std::string *arabic_output, std::string *suffix) {
   DCHECK(kanji_output);
   DCHECK(arabic_output);
-  const char *begin = input.data();
-  const char *end = input.data() + input.size();
   std::vector<uint64_t> numbers;
   numbers.reserve(input.size());
 
@@ -846,36 +845,33 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
   kanji_output->clear();
   arabic_output->clear();
 
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32_t wchar = Util::Utf8ToCodepoint(begin, end, &mblen);
-    absl::string_view kanji_char(begin, mblen);
+  for (const UnicodeChar ch : Utf8AsUnicodeChar(input)) {
+    absl::string_view kanji_char = ch.utf8();
 
     const std::string tmp = NumberUtil::KanjiNumberToArabicNumber(kanji_char);
     uint64_t n = 0;
     if (!absl::SimpleAtoi(tmp, &n)) {
+      if (!allow_suffix) {
+        return false;
+      }
+      DCHECK(suffix);
+      *suffix = input.substr(ch.utf8().data() - input.data());
+      if (Util::ContainsScriptType(*suffix, Util::NUMBER)) {
+        // We do want to treat "2,000" as "2" + ",000".
+        return false;
+      }
       break;
     }
 
-    if (wchar >= 0x0030 && wchar <= 0x0039) {  // '0' <= wchar <= '9'
-      kanji_char = kNumKanjiDigits[wchar - 0x0030];
-    } else if (wchar >= 0xFF10 && wchar <= 0xFF19) {  // '０' <= wchar <= '９'
-      kanji_char = kNumKanjiDigits[wchar - 0xFF10];
+    const char32_t codepoint = ch.char32();
+    if (absl::ascii_isdigit(codepoint)) {  // '0' <= codepoint <= '9'
+      kanji_char = kNumKanjiDigits[codepoint - 0x0030];
+    } else if (codepoint >= 0xFF10 &&
+               codepoint <= 0xFF19) {  // '０' <= codepoint <= '９'
+      kanji_char = kNumKanjiDigits[codepoint - 0xFF10];
     }
     absl::StrAppend(kanji_output, kanji_char);
     numbers.push_back(n);
-    begin += mblen;
-  }
-  if (begin < end) {
-    if (!allow_suffix) {
-      return false;
-    }
-    DCHECK(suffix);
-    suffix->assign(begin, end);
-    if (Util::ContainsScriptType(*suffix, Util::NUMBER)) {
-      // We do want to treat "2,000" as "2" + ",000".
-      return false;
-    }
   }
 
   if (numbers.empty()) {

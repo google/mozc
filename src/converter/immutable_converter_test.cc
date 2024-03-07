@@ -52,7 +52,7 @@
 #include "engine/modules.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -496,7 +496,7 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
 
 TEST(ImmutableConverterTest, FirstInnerSegment) {
   commands::Request request;
-  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request_test_util::FillMobileRequest(&request);
   request.mutable_decoder_experiment_params()
       ->set_enable_realtime_conversion_v2(true);
   ConversionRequest conversion_request;

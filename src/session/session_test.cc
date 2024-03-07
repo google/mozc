@@ -60,10 +60,10 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_test_util.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -395,7 +395,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
     UsageStats::ClearAllStatsForTest();
 
     mobile_request_ = std::make_unique<Request>();
-    commands::RequestForUnitTest::FillMobileRequest(mobile_request_.get());
+    request_test_util::FillMobileRequest(mobile_request_.get());
 
     mock_data_engine_ = MockDataEngineFactory::Create().value();
 
@@ -9760,6 +9760,12 @@ TEST_F(SessionTest, SuppressSuggestion) {
   // Default behavior.
   SendKey("d", &session, &command);
   EXPECT_TRUE(command.output().has_candidates());
+
+  // Suppress suggestion context
+  SetSendKeyCommand("e", &command);
+  command.mutable_input()->mutable_context()->set_suppress_suggestion(true);
+  session.SendKey(&command);
+  EXPECT_FALSE(command.output().has_candidates());
 
   // With an invalid identifier.  It should be the same with the
   // default behavior.

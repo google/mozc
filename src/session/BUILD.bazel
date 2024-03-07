@@ -93,7 +93,6 @@ mozc_cc_test(
     shard_count = 8,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
-        ":request_test_util",
         ":session_converter",
         ":session_converter_interface",
         "//base:util",
@@ -107,6 +106,7 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
+        "//request:request_test_util",
         "//session/internal:candidate_list",
         "//testing:gunit_main",
         "//testing:mozctest",
@@ -182,7 +182,6 @@ mozc_cc_test(
     srcs = ["session_test.cc"],
     shard_count = 8,
     deps = [
-        ":request_test_util",
         ":session",
         "//base:logging",
         "//base:vlog",
@@ -204,6 +203,7 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
+        "//request:request_test_util",
         "//rewriter:transliteration_rewriter",
         "//session/internal:ime_context",
         "//session/internal:keymap",
@@ -227,7 +227,6 @@ mozc_cc_test(
     ],
     shard_count = 8,
     deps = [
-        ":request_test_util",
         ":session",
         ":session_handler",
         "//base:logging",
@@ -241,6 +240,7 @@ mozc_cc_test(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//request:request_test_util",
         "//session/internal:ime_context",
         "//testing:gunit_main",
         "//testing:mozctest",
@@ -408,31 +408,6 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_library(
-    name = "request_test_util",
-    srcs = ["request_test_util.cc"],
-    hdrs = ["request_test_util.h"],
-    deps = [
-        "//composer:table",
-        "//protocol:commands_cc_proto",
-    ],
-    # TODO(team): Ideally this target is testonly but evaluation/ shares
-    # this target to change the request object in a scoped way. We can
-    # again make this testonly after removing the global request object.
-    # testonly = True
-)
-
-mozc_cc_test(
-    name = "request_test_util_test",
-    size = "small",
-    srcs = ["request_test_util_test.cc"],
-    deps = [
-        ":request_test_util",
-        "//protocol:commands_cc_proto",
-        "//testing:gunit_main",
     ],
 )
 
@@ -670,10 +645,10 @@ mozc_cc_test(
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":random_keyevents_generator",
-        ":request_test_util",
         ":session_handler_tool",
         "//engine:engine_factory",
         "//protocol:commands_cc_proto",
+        "//request:request_test_util",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",
@@ -682,11 +657,11 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "session_handler_tool",
+    testonly = 1,
     srcs = ["session_handler_tool.cc"],
     hdrs = ["session_handler_tool.h"],
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
-        ":request_test_util",
         ":session_handler",
         ":session_handler_interface",
         ":session_observer_interface",
@@ -710,6 +685,7 @@ mozc_cc_library(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//request:request_test_util",
         "//storage:registry",
         "//usage_stats",
         "@com_google_absl//absl/status",
@@ -720,6 +696,7 @@ mozc_cc_library(
 
 mozc_cc_binary(
     name = "session_handler_main",
+    testonly = 1,
     srcs = ["session_handler_main.cc"],
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
@@ -760,7 +737,6 @@ mozc_cc_test(
         "noandroid",  # TODO(b/73698251): disabled due to errors
     ],
     deps = [
-        ":request_test_util",
         ":session_handler_test_util",
         ":session_handler_tool",
         "//base:file_stream",
@@ -770,6 +746,7 @@ mozc_cc_test(
         "//engine:mock_data_engine_factory",
         "//prediction:user_history_predictor",
         "//protocol:commands_cc_proto",
+        "//request:request_test_util",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",

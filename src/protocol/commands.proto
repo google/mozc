@@ -519,7 +519,6 @@ message Context {
   // by the user's configuration.  If you want to omit interim
   // suggestions during the key typing, you might want to use
   // request_suggestion.
-  // TODO(komatsu): Delete this field and use experimental_features.
   optional bool suppress_suggestion = 3 [default = false];
 
   // Input field type.

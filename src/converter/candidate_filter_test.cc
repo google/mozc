@@ -47,7 +47,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
+#include "request/request_test_util.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -709,7 +709,7 @@ TEST_P(CandidateFilterTestWithParam,
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> top_nodes, nodes;
   commands::Request req;
-  commands::RequestForUnitTest::FillMobileRequest(&req);
+  request_test_util::FillMobileRequest(&req);
   request_->set_request(&req);
   request_->set_request_type(type);
 
@@ -783,7 +783,7 @@ TEST_P(CandidateFilterTestWithParam,
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> top_nodes, nodes;
   commands::Request req;
-  commands::RequestForUnitTest::FillMobileRequest(&req);
+  request_test_util::FillMobileRequest(&req);
   request_->set_request(&req);
   request_->set_request_type(type);
 
@@ -856,7 +856,7 @@ TEST_P(CandidateFilterTestWithParam, FilterCandidatesForStrictMode) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> top_nodes, nodes;
   commands::Request req;
-  commands::RequestForUnitTest::FillMobileRequest(&req);
+  request_test_util::FillMobileRequest(&req);
   request_->set_request(&req);
   request_->set_request_type(type);
 

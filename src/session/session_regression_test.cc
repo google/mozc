@@ -48,8 +48,8 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/request_test_util.h"
 #include "session/internal/ime_context.h"
-#include "session/request_test_util.h"
 #include "session/session.h"
 #include "session/session_handler.h"
 #include "testing/gunit.h"
@@ -354,11 +354,11 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
 // and suggestion.
 // Currently the restriction is removed. This test checks that the logic
 // works well or not.
-TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggesion) {
+TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggestion) {
   constexpr char kKey[] = "aio";
 
   commands::Request request;
-  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request_test_util::FillMobileRequest(&request);
   session_->SetRequest(&request);
 
   InitSessionToPrecomposition(session_.get());
@@ -531,7 +531,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
   // This is the test for http://b/6934881.
   // Pending char chunk remains after committing transliteration.
   commands::Request request;
-  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request_test_util::FillMobileRequest(&request);
   session_->SetRequest(&request);
 
   InitSessionToPrecomposition(session_.get());
@@ -552,7 +552,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
 
 TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
   commands::Request request;
-  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request_test_util::FillMobileRequest(&request);
   session_->SetRequest(&request);
 
   InitSessionToPrecomposition(session_.get());
