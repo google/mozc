@@ -274,3 +274,24 @@ Restart IBus as follows for your change to take effect.
 ```
 ibus restart
 ```
+
+### Kana input
+
+The Kana key map with Japanese keyboard layout is here.
+
+![kana](./kana.png)
+
+Note, in the ibus-mozc implementation, Kana characters are mapped from Ascii
+characters, but not physical positions. So if you change the position of the `Q`
+key, the position of the `た` key is also changed. Ideally the position of `た`
+should not be changed, but this is a limitation of the current implementation.
+
+The Kana key map with US keyboard layout is here.
+
+![kana_us](./kana_us.png)
+
+If the `engine.layout` is set to `us`, this mapping rule is used. The
+highlighted keys are different points from the Japanese layout.
+
+If the `engine.layout` is set to `default` or other values, the above mapping
+for the Japanese layout is used.
