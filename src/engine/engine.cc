@@ -33,11 +33,11 @@
 #include <memory>
 #include <utility>
 
+#include "absl/log/log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/vlog.h"
 #include "converter/converter.h"
@@ -259,6 +259,7 @@ bool Engine::ReloadAndWait() {
 
 bool Engine::MaybeBuildDataLoader() {
   if (!loader_) {
+    LOG(ERROR) << "loader_ is null";
     return false;
   }
 
@@ -267,6 +268,8 @@ bool Engine::MaybeBuildDataLoader() {
   // the new data manager when the future is the ready to use.
   if (!loader_response_future_ && current_data_id_ != latest_data_id_ &&
       latest_data_id_ != 0) {
+    LOG(INFO) << "New data is ready (current_data_id_=" << current_data_id_
+              << ", latest_data_id_=" << latest_data_id_ << ")";
     loader_response_future_ = loader_->Build(latest_data_id_);
     // Wait the engine if the no new engine is loaded so far.
     if (current_data_id_ == 0 || always_wait_for_loader_response_future_) {
@@ -304,16 +307,20 @@ std::unique_ptr<DataLoader::Response> Engine::GetDataLoaderResponse() {
 
 bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
   if (response == nullptr) {
+    LOG(ERROR) << "response is null";
     return false;
   }
 
   if (!MaybeBuildDataLoader()) {
     return false;
   }
+  LOG(INFO) << "New data is ready (install_location="
+            << response->request().install_location() << ")";
 
   std::unique_ptr<DataLoader::Response> loader_response =
       GetDataLoaderResponse();
   if (!loader_response) {
+    LOG(ERROR) << "loader_response is null";
     return false;
   }
   *response = loader_response->response;
