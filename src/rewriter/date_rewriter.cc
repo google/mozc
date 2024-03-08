@@ -47,6 +47,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
@@ -57,7 +58,6 @@
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -1405,7 +1405,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
 
   if (request.has_composer() && segments->conversion_segments_size() > 0) {
     // Select the insert position by Romaji table.  Note:
-    // TWELVE_KEYS_TO_HIRAGANA uses digits for Hiragana composing, date/time
+    // TOGGLE_FLICK_TO_HIRAGANA uses digits for Hiragana composing, date/time
     // conversion is performed even when typing Hiragana characters.  Thus, it
     // should not be promoted.
     int insert_pos =

@@ -37,7 +37,6 @@
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
@@ -47,6 +46,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_test_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
@@ -490,9 +490,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
       CreateTransliterationRewriter());
 
   commands::Request request;
-  request.set_zero_query_suggestion(true);
-  request.set_mixed_conversion(true);
-  request.set_special_romanji_table(commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+  request_test_util::FillMobileRequest(&request);
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());
@@ -537,9 +535,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
       CreateTransliterationRewriter());
 
   commands::Request request;
-  request.set_zero_query_suggestion(true);
-  request.set_mixed_conversion(true);
-  request.set_special_romanji_table(commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+  request_test_util::FillMobileRequest(&request);
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());

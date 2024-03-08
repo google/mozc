@@ -36,13 +36,13 @@
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/flags/reflection.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
@@ -146,6 +146,17 @@ const char *kScenarioFileList[] = {
     DATA_DIR "segment_focus.txt",
     DATA_DIR "segment_width.txt",
     DATA_DIR "suggest_after_zero_query.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_a.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_ka.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_sa.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_ta.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_na.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_ha.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_ma.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_ya.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_ra.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_wa.txt",
+    DATA_DIR "toggle_flick_hiragana_preedit_symbol.txt",
     DATA_DIR "twelvekeys_switch_inputmode_scenario.txt",
     DATA_DIR "twelvekeys_toggle_flick_alphabet_scenario.txt",
     DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_a.txt",

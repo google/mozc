@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -7496,6 +7497,7 @@ TEST_F(SessionTest, KeitaiInputToggle) {
 TEST_F(SessionTest, KeitaiInputFlick) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
+  mobile_request_->set_special_romanji_table(Request::TWELVE_KEYS_TO_HIRAGANA);
   commands::Command command;
 
   MockConverter converter;
@@ -7596,6 +7598,101 @@ TEST_F(SessionTest, KeitaiInputFlick) {
     SendKey("6", &session, &command);
     EXPECT_EQ(command.output().preedit().segment(0).value(),
               "あるぱかしんのふくしゅう");
+    Mock::VerifyAndClearExpectations(&converter);
+  }
+}
+
+TEST_F(SessionTest, ToggleFlick) {
+  config::Config config;
+  config.set_session_keymap(config::Config::MSIME);
+  mobile_request_->set_special_romanji_table(Request::TOGGLE_FLICK_TO_HIRAGANA);
+  commands::Command command;
+
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+  {
+    Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
+    session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
+    InitSessionToPrecomposition(&session, *mobile_request_);
+    InsertCharacterChars("6d*888888;", &session, &command);
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "はじょう");
+    Mock::VerifyAndClearExpectations(&converter);
+  }
+  {
+    Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
+    session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
+    InitSessionToPrecomposition(&session, *mobile_request_);
+
+    InsertCharacterChars("1233", &session, &command);  // Toggle
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "あかし");
+    EXPECT_TRUE(command.output().preedit().is_toggleable());
+
+    InsertCharacterChars("%bd", &session, &command);  // Flick
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "あかしのくし");
+    EXPECT_FALSE(command.output().preedit().is_toggleable());
+    EXPECT_EQ(command.output().preedit().cursor(), 6);
+
+    SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+    EXPECT_FALSE(command.output().preedit().is_toggleable());
+    EXPECT_EQ(command.output().preedit().cursor(), 5);
+
+    SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+    SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+    SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+    SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+    EXPECT_EQ(command.output().preedit().cursor(), 1);
+    EXPECT_FALSE(command.output().preedit().is_toggleable());
+
+    InsertCharacterChars("99999999", &session, &command);
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "あるかしのくし");
+    EXPECT_EQ(command.output().preedit().cursor(), 2);
+
+    SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
+    SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
+    EXPECT_EQ(command.output().preedit().cursor(), 4);
+
+    InsertCharacterChars("/", &session, &command);
+    EXPECT_EQ(command.output().preedit().segment(0).value(),
+              "あるかしんのくし");
+
+    SendSpecialKey(commands::KeyEvent::END, &session, &command);
+    EXPECT_EQ(command.output().preedit().cursor(), 8);
+    EXPECT_FALSE(command.output().preedit().is_toggleable());
+
+    InsertCharacterChars("111*", &session, &command);
+    EXPECT_EQ(command.output().preedit().segment(0).value(),
+              "あるかしんのくしぅ");
+
+    SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+    InsertCharacterChars("u*", &session, &command);
+    EXPECT_EQ(command.output().preedit().segment(0).value(),
+              "あるかしんのくしゅぅ");
+
+    SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
+    InsertCharacterChars("**", &session, &command);
+    EXPECT_EQ(command.output().preedit().segment(0).value(),
+              "あるかしんのくしゅう");
+
+    SendSpecialKey(commands::KeyEvent::HOME, &session, &command);
+    SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
+    SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
+    InsertCharacterChars("6*****", &session, &command);
+    EXPECT_EQ(command.output().preedit().segment(0).value(),
+              "あるぱかしんのくしゅう");
+
+    SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
+    SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
+    SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
+    SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
+    InsertCharacterChars("n", &session, &command);
+    EXPECT_EQ(command.output().preedit().segment(0).value(),
+              "あるぱかしんのふくしゅう");
+    EXPECT_FALSE(command.output().preedit().is_toggleable());
     Mock::VerifyAndClearExpectations(&converter);
   }
 }
