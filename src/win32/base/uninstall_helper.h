@@ -30,33 +30,8 @@
 #ifndef MOZC_WIN32_BASE_UNINSTALL_HELPER_H_
 #define MOZC_WIN32_BASE_UNINSTALL_HELPER_H_
 
-#include <guiddef.h>
-#include <windows.h>
-
-#include <string>
-#include <vector>
-
-#include "testing/friend_test.h"
-
 namespace mozc {
 namespace win32 {
-struct KeyboardLayoutInfo {
-  KeyboardLayoutInfo();
-  DWORD klid;
-  std::wstring ime_filename;
-};
-
-struct LayoutProfileInfo {
-  LayoutProfileInfo();
-  LANGID langid;
-  CLSID clsid;
-  GUID profile_guid;
-  DWORD klid;
-  std::wstring ime_filename;
-  bool is_default;
-  bool is_tip;
-  bool is_enabled;
-};
 
 // This class is used to determine the new enabled layout/profile for the
 // current user after Google Japanese Input is uninstalled.
@@ -75,59 +50,8 @@ class UninstallHelper {
   // Please beware that this method touches HKCU hive especially when you
   // call this method from a custom action.
   static bool RestoreUserIMEEnvironmentMain();
-
-  // Returns true if Mozc is successfully removed from the per-user
-  // settings.  Please beware that this method touches HKCU hive especially
-  // when you call this method from a custom action.  If you call this
-  // function from the deferred custom action which does not use
-  // impersonation, it is highly recommended to set true for
-  // |disable_hkcu_cache| so that HKCU points HKU/.Default as expected.
-  static bool EnsureIMEIsRemovedForCurrentUser(bool disable_hkcu_cache);
-
-  // Returns true if installed the list of keyboard layout and TIP is
-  // retrieved in successful.
-  static bool GetInstalledProfilesByLanguage(
-      LANGID langid, std::vector<LayoutProfileInfo> *installed_profiles);
-
- private:
-  // This function is the main part of RestoreUserIMEEnvironmentMain for
-  // Windows Vista and later.
-  static bool RestoreUserIMEEnvironmentForVista(bool broadcast_change);
-
-  // Returns true if both new enabled profiles and new default profile are
-  // successfully determined.
-  static bool GetNewEnabledProfileForVista(
-      const std::vector<LayoutProfileInfo> &current_profiles,
-      const std::vector<LayoutProfileInfo> &installed_profiles,
-      LayoutProfileInfo *current_default, LayoutProfileInfo *new_default,
-      std::vector<LayoutProfileInfo> *removed_profiles);
-
-  // Returns true if the list of keyboard layout and TIP for the current user
-  // is retrieved in successful.
-  static bool GetCurrentProfilesForVista(
-      std::vector<LayoutProfileInfo> *current_profiles);
-
-  // Returns true if the list of keyboard layout and TIP for the current user
-  // is updated with the specified list as |profiles_to_be_removed|.
-  static bool RemoveProfilesForVista(
-      const std::vector<LayoutProfileInfo> &profiles_to_be_removed);
-
-  // Returns true if |profile| is set as the new default IME or TIP.
-  static bool SetDefaultForVista(const LayoutProfileInfo &current_default,
-                                 const LayoutProfileInfo &new_default,
-                                 bool broadcast_change);
-
-  // Returns a string in which the list of profile information specified in
-  // |profiles| is encoded.  See input_dll.h for the format.
-  // Returns an empty string if it fails.
-  static std::wstring ComposeProfileStringForVista(
-      const std::vector<LayoutProfileInfo> &profiles);
-
-  FRIEND_TEST(UninstallHelperTest, BasicCaseForVista);
-  FRIEND_TEST(UninstallHelperTest, BasicCaseForWin8);
-  FRIEND_TEST(UninstallHelperTest, LoadKeyboardProfilesTest);
-  FRIEND_TEST(UninstallHelperTest, ComposeProfileStringForVistaTest);
 };
+
 }  // namespace win32
 }  // namespace mozc
 #endif  // MOZC_WIN32_BASE_UNINSTALL_HELPER_H_
