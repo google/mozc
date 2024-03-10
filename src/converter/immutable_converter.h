@@ -69,6 +69,7 @@ class ImmutableConverter : public ImmutableConverterInterface {
   FRIEND_TEST(ImmutableConverterTest, AddPredictiveNodes);
   FRIEND_TEST(ImmutableConverterTest, DummyCandidatesCost);
   FRIEND_TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary);
+  FRIEND_TEST(ImmutableConverterTest, MakeLatticeKatakana);
   FRIEND_TEST(ImmutableConverterTest, NotConnectedTest);
   FRIEND_TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey);
   FRIEND_TEST(NBestGeneratorTest, InnerSegmentBoundary);
