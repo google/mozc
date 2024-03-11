@@ -50,6 +50,7 @@
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
 #include "base/strings/assign.h"
+#include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "config/character_form_manager.h"
@@ -720,7 +721,8 @@ absl::Status SessionHandlerInterpreter::Eval(
     MOZC_EXPECT_EQ(last_output_->consumed(), args[1] == "true");
   } else if (command == "EXPECT_PREEDIT") {
     // Concat preedit segments and assert.
-    const std::string &expected_preedit = args.size() == 1 ? "" : args[1];
+    const std::string &expected_preedit =
+        TextNormalizer::NormalizeText(args.size() == 1 ? "" : args[1]);
     std::string preedit_string;
     const mozc::commands::Preedit &preedit = last_output_->preedit();
     for (int i = 0; i < preedit.segment_size(); ++i) {
@@ -735,7 +737,8 @@ absl::Status SessionHandlerInterpreter::Eval(
     const mozc::commands::Preedit &preedit = last_output_->preedit();
     MOZC_ASSERT_EQ(preedit.segment_size(), args.size() - 1);
     for (int i = 0; i < preedit.segment_size(); ++i) {
-      MOZC_EXPECT_EQ_MSG(preedit.segment(i).value(), args[i + 1],
+      MOZC_EXPECT_EQ_MSG(preedit.segment(i).value(),
+                         TextNormalizer::NormalizeText(args[i + 1]),
                          absl::StrCat("Segment index = ", i));
     }
   } else if (command == "EXPECT_PREEDIT_CURSOR_POS") {
@@ -774,7 +777,8 @@ absl::Status SessionHandlerInterpreter::Eval(
     if (args.size() == 2 && !args[1].empty()) {
       MOZC_ASSERT_TRUE(last_output_->has_result());
       const mozc::commands::Result &result = last_output_->result();
-      MOZC_EXPECT_EQ_MSG(result.value(), args[1], protobuf::Utf8Format(result));
+      MOZC_EXPECT_EQ_MSG(result.value(), TextNormalizer::NormalizeText(args[1]),
+                         protobuf::Utf8Format(result));
     } else {
       MOZC_EXPECT_TRUE_MSG(!last_output_->has_result(),
                            protobuf::Utf8Format(last_output_->result()));

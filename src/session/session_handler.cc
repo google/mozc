@@ -478,6 +478,7 @@ void SessionHandler::MaybeReloadEngine(commands::Command *command) {
     return;
   }
 
+  LOG(INFO) << "Engine reloaded";
   *command->mutable_output()->mutable_engine_reload_response() =
       engine_reload_response;
   table_manager_->ClearCaches();

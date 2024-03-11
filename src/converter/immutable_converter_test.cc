@@ -38,9 +38,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
@@ -328,6 +328,29 @@ TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
     const Segment::Candidate &cand = segments.segment(0).candidate(i);
     EXPECT_TRUE(cand.inner_segment_boundary.empty());
   }
+}
+
+TEST(ImmutableConverterTest, MakeLatticeKatakana) {
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter);
+  ImmutableConverter *converter = data_and_converter->GetConverter();
+
+  Segments segments;
+
+  Segment *segment = segments.add_segment();
+  segment->set_segment_type(Segment::FREE);
+  segment->set_key("カタカナです");
+
+  Lattice lattice;
+  lattice.SetKey("カタカナです");
+  const ConversionRequest request;
+  converter->MakeLattice(request, &segments, &lattice);
+
+  // If the first character of a node is `ALPHABET` or `KATAKANA`,
+  // `AddCharacterTypeBasedNodes` should create a node of the character type.
+  Node *node = lattice.begin_nodes(0);
+  EXPECT_EQ(node->key, "カタカナ");
+  EXPECT_EQ(node->value, "カタカナ");
 }
 
 TEST(ImmutableConverterTest, NotConnectedTest) {

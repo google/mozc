@@ -511,29 +511,10 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":imm_util",
         ":input_dll",
-        ":keyboard_layout_id",
         ":msctf_dll",
         ":tsf_profile",
         "//base:logging",
-        "//base:system_util",
-        "//testing:friend_test",
-        "@com_microsoft_wil//:wil",
-    ],
-)
-
-mozc_cc_test(
-    name = "uninstall_helper_test",
-    srcs = ["uninstall_helper_test.cc"],
-    features = features_gdi(),
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":tsf_profile",
-        ":uninstall_helper",
-        "//base:const",
         "//base/win32:wide_char",
-        "//testing:gunit_main",
     ],
 )

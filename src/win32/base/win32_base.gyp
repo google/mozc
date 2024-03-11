@@ -193,7 +193,6 @@
           'type': 'executable',
           'sources': [
             'omaha_util_test.cc',
-            'uninstall_helper_test.cc',
           ],
           'dependencies': [
             '<(mozc_oss_src_dir)/base/base.gyp:base',

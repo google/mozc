@@ -29,10 +29,6 @@
 
 #include "rewriter/date_rewriter.h"
 
-#include <cstddef>
-#include <cstdint>
-#include <iterator>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -1048,7 +1044,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
   // Test case where results are inserted after the last candidate.
   {
     request.set_special_romanji_table(
-        commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+        commands::Request::TOGGLE_FLICK_TO_HIRAGANA);
 
     DateRewriter rewriter;
     Segments segments = test_segments;

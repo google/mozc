@@ -39,10 +39,7 @@ void FillMobileRequest(Request *request) {
   request->set_zero_query_suggestion(true);
   request->set_mixed_conversion(true);
   request->set_update_input_mode_from_surrounding_text(false);
-  // TODO(toshiyuki):
-  // Change the romanji table to TOGGLE_FLICK_TO_HIRAGANA
-  // TWELVE_KEYS_TO_HIRAGANA is not used from anywhere in the current Gboard.
-  request->set_special_romanji_table(Request::TWELVE_KEYS_TO_HIRAGANA);
+  request->set_special_romanji_table(Request::TOGGLE_FLICK_TO_HIRAGANA);
   request->set_kana_modifier_insensitive_conversion(true);
   request->set_auto_partial_suggestion(true);
   request->set_language_aware_input(Request::NO_LANGUAGE_AWARE_INPUT);
@@ -52,7 +49,7 @@ void FillMobileRequestWithHardwareKeyboard(Request *request) {
   request->set_zero_query_suggestion(false);
   request->set_mixed_conversion(false);
   request->set_update_input_mode_from_surrounding_text(true);
-  request->set_special_romanji_table(Request::TWELVE_KEYS_TO_HIRAGANA);
+  request->set_special_romanji_table(Request::TOGGLE_FLICK_TO_HIRAGANA);
   request->set_kana_modifier_insensitive_conversion(true);
   request->set_auto_partial_suggestion(false);
   request->set_language_aware_input(Request::NO_LANGUAGE_AWARE_INPUT);

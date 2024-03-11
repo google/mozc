@@ -42,7 +42,7 @@ TEST(RequestTestUtil, CheckFillMobileRequest) {
   EXPECT_TRUE(request.mixed_conversion());
   EXPECT_FALSE(request.update_input_mode_from_surrounding_text());
   EXPECT_TRUE(request.auto_partial_suggestion());
-  EXPECT_EQ(request.special_romanji_table(), Request::TWELVE_KEYS_TO_HIRAGANA);
+  EXPECT_EQ(request.special_romanji_table(), Request::TOGGLE_FLICK_TO_HIRAGANA);
 }
 
 TEST(RequestTestUtil, CheckFillMobileRequestWithHardwareKeyboard) {
@@ -53,7 +53,7 @@ TEST(RequestTestUtil, CheckFillMobileRequestWithHardwareKeyboard) {
   EXPECT_TRUE(request.update_input_mode_from_surrounding_text());
   EXPECT_FALSE(request.auto_partial_suggestion());
   EXPECT_EQ(request.candidate_page_size(), 2);
-  EXPECT_EQ(request.special_romanji_table(), Request::TWELVE_KEYS_TO_HIRAGANA);
+  EXPECT_EQ(request.special_romanji_table(), Request::TOGGLE_FLICK_TO_HIRAGANA);
 }
 
 TEST(RequestTestUtil, CheckFillMobileRequestForHandwriting) {

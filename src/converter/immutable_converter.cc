@@ -41,13 +41,15 @@
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/container/trie.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/connector.h"
@@ -63,7 +65,6 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/modules.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -73,9 +74,7 @@ namespace mozc {
 namespace {
 
 using ::mozc::dictionary::DictionaryInterface;
-using ::mozc::dictionary::PosGroup;
 using ::mozc::dictionary::PosMatcher;
-using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::dictionary::Token;
 
 constexpr size_t kMaxSegmentsSize = 256;
@@ -722,49 +721,45 @@ class NodeListBuilderWithCacheEnabled : public NodeListBuilderForLookupPrefix {
 
 }  // namespace
 
-Node *ImmutableConverter::Lookup(const int begin_pos, const int end_pos,
+Node *ImmutableConverter::Lookup(const int begin_pos,
                                  const ConversionRequest &request,
                                  bool is_reverse, bool is_prediction,
                                  Lattice *lattice) const {
-  CHECK_LE(begin_pos, end_pos);
-  const char *begin = lattice->key().data() + begin_pos;
-  const char *end = lattice->key().data() + end_pos;
-  const size_t len = end_pos - begin_pos;
+  const std::string &key = lattice->key();
+  CHECK_LT(begin_pos, key.size());
+  const absl::string_view key_substr = absl::string_view{key}.substr(begin_pos);
 
   lattice->node_allocator()->set_max_nodes_size(8192);
   Node *result_node = nullptr;
   if (is_reverse) {
     BaseNodeListBuilder builder(lattice->node_allocator(),
                                 lattice->node_allocator()->max_nodes_size());
-    dictionary_->LookupReverse(absl::string_view(begin, len), request,
-                               &builder);
+    dictionary_->LookupReverse(key_substr, request, &builder);
     result_node = builder.result();
   } else {
     if (is_prediction) {
       NodeListBuilderWithCacheEnabled builder(
           lattice->node_allocator(), lattice->cache_info(begin_pos) + 1);
-      dictionary_->LookupPrefix(absl::string_view(begin, len), request,
-                                &builder);
+      dictionary_->LookupPrefix(key_substr, request, &builder);
       result_node = builder.result();
-      lattice->SetCacheInfo(begin_pos, len);
+      lattice->SetCacheInfo(begin_pos, key_substr.length());
     } else {
       // When cache feature is not used, look up normally
       BaseNodeListBuilder builder(lattice->node_allocator(),
                                   lattice->node_allocator()->max_nodes_size());
-      dictionary_->LookupPrefix(absl::string_view(begin, len), request,
-                                &builder);
+      dictionary_->LookupPrefix(key_substr, request, &builder);
       result_node = builder.result();
     }
   }
-  return AddCharacterTypeBasedNodes(begin, end, lattice, result_node);
+  return AddCharacterTypeBasedNodes(key_substr, lattice, result_node);
 }
 
-Node *ImmutableConverter::AddCharacterTypeBasedNodes(const char *begin,
-                                                     const char *end,
-                                                     Lattice *lattice,
-                                                     Node *nodes) const {
-  size_t mblen = 0;
-  const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, &mblen);
+Node *ImmutableConverter::AddCharacterTypeBasedNodes(
+    absl::string_view key_substr, Lattice *lattice, Node *nodes) const {
+  const Utf8AsChars32 utf8_as_chars32(key_substr);
+  Utf8AsChars32::const_iterator it = utf8_as_chars32.begin();
+  CHECK(it != utf8_as_chars32.end());
+  const char32_t codepoint = it.char32();
 
   const Util::ScriptType first_script_type = Util::GetScriptType(codepoint);
   const Util::FormType first_form_type = Util::GetFormType(codepoint);
@@ -782,8 +777,8 @@ Node *ImmutableConverter::AddCharacterTypeBasedNodes(const char *begin,
     }
 
     new_node->wcost = kMaxCost;
-    new_node->value.assign(begin, mblen);
-    new_node->key.assign(begin, mblen);
+    new_node->value.assign(it.view());
+    new_node->key.assign(it.view());
     new_node->node_type = Node::NOR_NODE;
     new_node->bnext = nodes;
     nodes = new_node;
@@ -801,19 +796,16 @@ Node *ImmutableConverter::AddCharacterTypeBasedNodes(const char *begin,
 
   // group by same char type
   int num_char = 1;
-  const char *p = begin + mblen;
-  while (p < end) {
-    const char32_t next_codepoint = Util::Utf8ToCodepoint(p, end, &mblen);
+  CHECK(it != utf8_as_chars32.end());
+  for (++it; it != utf8_as_chars32.end(); ++it, ++num_char) {
+    const char32_t next_codepoint = it.char32();
     if (first_script_type != Util::GetScriptType(next_codepoint) ||
         first_form_type != Util::GetFormType(next_codepoint)) {
       break;
     }
-    p += mblen;
-    ++num_char;
   }
 
   if (num_char > 1) {
-    mblen = static_cast<uint32_t>(p - begin);
     Node *new_node = lattice->NewNode();
     CHECK(new_node);
     if (first_script_type == Util::NUMBER) {
@@ -824,8 +816,10 @@ Node *ImmutableConverter::AddCharacterTypeBasedNodes(const char *begin,
       new_node->rid = unknown_id_;
     }
     new_node->wcost = kMaxCost / 2;
-    new_node->value.assign(begin, mblen);
-    new_node->key.assign(begin, mblen);
+    const absl::string_view key_substr_up_to_it =
+        key_substr.substr(0, it.view().data() - key_substr.data());
+    new_node->value.assign(key_substr_up_to_it);
+    new_node->key.assign(key_substr_up_to_it);
     new_node->node_type = Node::NOR_NODE;
     new_node->bnext = nodes;
     nodes = new_node;
@@ -1460,7 +1454,6 @@ bool ImmutableConverter::MakeLatticeNodesForHistorySegments(
   const bool is_reverse =
       (request.request_type() == ConversionRequest::REVERSE_CONVERSION);
   const size_t history_segments_size = segments.history_segments_size();
-  const std::string &key = lattice->key();
 
   size_t segments_pos = 0;
   uint16_t last_rid = 0;
@@ -1532,11 +1525,11 @@ bool ImmutableConverter::MakeLatticeNodesForHistorySegments(
         (request.request_type() == ConversionRequest::SUGGESTION ||
          request.request_type() == ConversionRequest::PREDICTION);
     if (!is_prediction && s + 1 == history_segments_size) {
-      const Node *node = Lookup(segments_pos, key.size(), request, is_reverse,
-                                is_prediction, lattice);
+      const Node *node =
+          Lookup(segments_pos, request, is_reverse, is_prediction, lattice);
       for (const Node *compound_node = node; compound_node != nullptr;
            compound_node = compound_node->bnext) {
-        // No overlapps
+        // No overlaps
         if (compound_node->key.size() <= rnode->key.size() ||
             compound_node->value.size() <= rnode->value.size() ||
             !absl::StartsWith(compound_node->key, rnode->key) ||
@@ -1632,8 +1625,7 @@ void ImmutableConverter::MakeLatticeNodesForConversionSegments(
        request.request_type() == ConversionRequest::PREDICTION);
   for (size_t pos = history_key.size(); pos < key.size(); ++pos) {
     if (lattice->end_nodes(pos) != nullptr) {
-      Node *rnode =
-          Lookup(pos, key.size(), request, is_reverse, is_prediction, lattice);
+      Node *rnode = Lookup(pos, request, is_reverse, is_prediction, lattice);
       // If history key is NOT empty and user input seems to starts with
       // a particle ("はにで..."), mark the node as STARTS_WITH_PARTICLE.
       // We change the segment boundary if STARTS_WITH_PARTICLE attribute
@@ -1889,11 +1881,11 @@ void ImmutableConverter::InsertCandidates(const ConversionRequest &request,
 
     NBestGenerator::Options options;
     if (type == SINGLE_SEGMENT || type == FIRST_INNER_SEGMENT) {
-      // For realtime conversion.
+      // For real time conversion.
       options.boundary_mode = NBestGenerator::ONLY_EDGE;
       options.candidate_mode |= NBestGenerator::FILL_INNER_SEGMENT_INFO;
     } else if (segment->segment_type() == Segment::FIXED_BOUNDARY) {
-      // Boundary is specified. Skip boundary check in nbest generator.
+      // Boundary is specified. Skip boundary check in n-best generator.
       options.boundary_mode = NBestGenerator::ONLY_MID;
     }
     if (type == FIRST_INNER_SEGMENT) {

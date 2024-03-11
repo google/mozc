@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "absl/base/attributes.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/connector.h"
 #include "converter/immutable_converter_interface.h"
@@ -69,6 +70,7 @@ class ImmutableConverter : public ImmutableConverterInterface {
   FRIEND_TEST(ImmutableConverterTest, AddPredictiveNodes);
   FRIEND_TEST(ImmutableConverterTest, DummyCandidatesCost);
   FRIEND_TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary);
+  FRIEND_TEST(ImmutableConverterTest, MakeLatticeKatakana);
   FRIEND_TEST(ImmutableConverterTest, NotConnectedTest);
   FRIEND_TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey);
   FRIEND_TEST(NBestGeneratorTest, InnerSegmentBoundary);
@@ -91,9 +93,9 @@ class ImmutableConverter : public ImmutableConverterInterface {
                         const std::string &original_key, NBestGenerator *nbest,
                         Segment *segment, size_t expand_size) const;
   void InsertDummyCandidates(Segment *segment, size_t expand_size) const;
-  Node *Lookup(int begin_pos, int end_pos, const ConversionRequest &request,
-               bool is_reverse, bool is_prediction, Lattice *lattice) const;
-  Node *AddCharacterTypeBasedNodes(const char *begin, const char *end,
+  Node *Lookup(int begin_pos, const ConversionRequest &request, bool is_reverse,
+               bool is_prediction, Lattice *lattice) const;
+  Node *AddCharacterTypeBasedNodes(absl::string_view key_substr,
                                    Lattice *lattice, Node *nodes) const;
 
   void Resegment(const Segments &segments, const std::string &history_key,
