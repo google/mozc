@@ -40,6 +40,7 @@
 
 #include "absl/base/attributes.h"
 #include "absl/base/optimization.h"
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/internal/utf8_internal.h"
 
@@ -191,6 +192,7 @@ class Utf8CharIterator {
 
   // Returns the current character.
   reference operator*() const {
+    DCHECK(!dr_.IsSentinel());
     if constexpr (std::is_same_v<ValueType, char32_t>) {
       return char32();
     } else if constexpr (std::is_same_v<ValueType, absl::string_view>) {
@@ -202,6 +204,7 @@ class Utf8CharIterator {
 
   // Moves the iterator to the next Unicode character.
   Utf8CharIterator& operator++() {
+    DCHECK(!dr_.IsSentinel());
     ptr_ += dr_.bytes_seen();
     Decode();
     return *this;
@@ -213,10 +216,14 @@ class Utf8CharIterator {
   }
 
   // Returns the code point of the current character as char32_t.
-  char32_t char32() const { return dr_.code_point(); }
+  char32_t char32() const {
+    DCHECK(!dr_.IsSentinel());
+    return dr_.code_point();
+  }
 
   // Returns the UTF-8 string of the current character as absl::string_view.
   absl::string_view view() const {
+    DCHECK(!dr_.IsSentinel());
     return absl::string_view(ptr_, dr_.bytes_seen());
   }
 
@@ -245,11 +252,7 @@ class Utf8CharIterator {
   }
 
  private:
-  void Decode() {
-    if (ptr_ != last_) {
-      dr_ = utf8_internal::Decode(ptr_, last_);
-    }
-  }
+  void Decode() { dr_ = utf8_internal::Decode(ptr_, last_); }
 
   // TODO(yuryu): Use a contiguous iterator instead in C++20.
   const char* ptr_;

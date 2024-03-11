@@ -90,6 +90,10 @@ class DecodeResult {
     return DecodeResult{kReplacementCharacter, false, bytes_seen};
   }
 
+  // Indicates that the decoded position is the `end` sentinel.
+  static inline DecodeResult Sentinel() { return DecodeResult{0, false, 0}; }
+  bool IsSentinel() const { return bytes_seen_ == 0; }
+
   constexpr char32_t code_point() const { return code_point_; }
   constexpr bool ok() const { return ok_; }
   constexpr uint_fast8_t bytes_seen() const { return bytes_seen_; }
@@ -115,7 +119,8 @@ constexpr uint_fast8_t OneCharLen(const char c) {
 EncodeResult Encode(char32_t cp);
 
 // Decodes a single UTF-8 character and returns the result.
-// REQUIRES: [it, last) to be a valid non-empty range.
+// Returns `DecodeResult::Sentinel()` if the given range is empty.
+// REQUIRES: [it, last) to be a valid range.
 DecodeResult Decode(const char* ptr, const char* last);
 
 // Implementations
