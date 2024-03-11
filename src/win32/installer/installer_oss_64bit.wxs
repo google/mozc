@@ -75,7 +75,7 @@
       Privileged
     </Condition>
     <Media Id="1" Cabinet="Mozc.cab" EmbedCab="yes"
-        CompressionLevel="high"/>
+        CompressionLevel="high" />
 
     <!-- Set Add/Remove Program Icon -->
     <Icon Id="add_remove_program_icon.ico"
@@ -303,7 +303,7 @@
       <UpgradeVersion
           Minimum="0.0.0.0" IncludeMinimum="yes"
           Maximum="$(var.MozcVersion)" IncludeMaximum="yes"
-          OnlyDetect="no" Property="UPGRADING"/>
+          OnlyDetect="no" Property="UPGRADING" />
       <UpgradeVersion
           Minimum="$(var.MozcVersion)" IncludeMinimum="no"
           OnlyDetect="yes" Property="NEWERVERSIONDETECTED" />
@@ -361,7 +361,7 @@
     <CustomAction Id="ShutdownServer" BinaryKey="mozc_installer_helper.dll"
         DllEntry="ShutdownServer" Impersonate="yes" Return="ignore" />
     <CustomAction Id="RestoreUserIMEEnvironment" BinaryKey="mozc_installer_helper.dll"
-        DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore"/>
+        DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore" />
     <CustomAction Id="InitialInstallation" BinaryKey="mozc_installer_helper.dll"
         DllEntry="InitialInstallation" Execute="deferred"
         Impersonate="no" />
@@ -381,14 +381,14 @@
     <CustomAction Id="StopCacheServiceForRollback" BinaryKey="mozc_installer_helper.dll"
         DllEntry="StopCacheService" Impersonate="no"
         Execute="rollback" Return="ignore" />
-    <CustomAction Id="NewerVersionError" Error="4000"/>
+    <CustomAction Id="NewerVersionError" Error="4000" />
 
     <InstallExecuteSequence>
       <Custom Action="HideCancelButton" After="InitialInstallation" />
       <Custom Action="InitialInstallation" After="InstallInitialize">
         (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
-      <Custom Action="SaveCustomActionData" Before="StopServices" >
+      <Custom Action="SaveCustomActionData" Before="StopServices">
         (NOT (REMOVE="ALL"))
       </Custom>
       <SelfUnregModules />
@@ -397,10 +397,10 @@
       </Custom>
       <!-- This action invoked only when removal of the old product failed. -->
       <Custom Action="UnregisterTIPRollback64"
-          After="RestoreUserIMEEnvironment" >
+          After="RestoreUserIMEEnvironment">
         (REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)
       </Custom>
-      <Custom Action="UnregisterTIP64" After="UnregisterTIPRollback64" >
+      <Custom Action="UnregisterTIP64" After="UnregisterTIPRollback64">
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)
       </Custom>
       <SelfRegModules />
@@ -410,7 +410,7 @@
         are currenly running. So the ShutdownServer action
         needs to be callled before the InstallValidate action.
       -->
-      <Custom Action="ShutdownServer" Before="InstallValidate" >
+      <Custom Action="ShutdownServer" Before="InstallValidate">
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
       </Custom>
       <Custom Action="NewerVersionError" After="FindRelatedProducts">
@@ -439,15 +439,15 @@
         the registration needs to be canceled by registering the old product.
         So RegisterTIP64 needs to be scheduled after RemoveExistingProduct.
       -->
-      <Custom Action="RegisterTIPRollback64" Before="RegisterTIP64" >
+      <Custom Action="RegisterTIPRollback64" Before="RegisterTIP64">
         (NOT (REMOVE="ALL")) AND (VersionNT64) AND (NOT UPGRADING)
       </Custom>
       <Custom Action="RegisterTIP64"
-          Before="EnsureAllApplicationPackagesPermisssions" >
+          Before="EnsureAllApplicationPackagesPermisssions">
         (NOT (REMOVE="ALL")) AND (VersionNT64)
       </Custom>
       <Custom Action="EnsureAllApplicationPackagesPermisssions"
-          Before="InitialInstallationCommit" >
+          Before="InitialInstallationCommit">
         (NOT (REMOVE="ALL"))
       </Custom>
       <Custom Action="InitialInstallationCommit"

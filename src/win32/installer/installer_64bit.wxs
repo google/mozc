@@ -75,7 +75,7 @@
       Privileged
     </Condition>
     <Media Id="1" Cabinet="GoogleJapaneseInput.cab" EmbedCab="yes"
-        CompressionLevel="high"/>
+        CompressionLevel="high" />
 
     <!-- Set Add/Remove Program Icon -->
     <Icon Id="add_remove_program_icon.ico"
@@ -102,8 +102,7 @@
       <!-- Retrieves previous channel name for Omaha -->
       <Property Id="PREVIOUSCHANNELNAME">
         <RegistrySearch Id="OmahaApValue" Type="raw" Root="HKLM"
-            Key="$(var.OmahaClientStateKey)" Name="ap" Win64="no">
-        </RegistrySearch>
+            Key="$(var.OmahaClientStateKey)" Name="ap" Win64="no" />
       </Property>
 
       <Condition
@@ -366,7 +365,7 @@
       <UpgradeVersion
           Minimum="0.0.0.0" IncludeMinimum="yes"
           Maximum="$(var.MozcVersion)" IncludeMaximum="yes"
-          OnlyDetect="no" Property="UPGRADING"/>
+          OnlyDetect="no" Property="UPGRADING" />
       <UpgradeVersion
           Minimum="$(var.MozcVersion)" IncludeMinimum="no"
           OnlyDetect="yes" Property="NEWERVERSIONDETECTED" />
@@ -428,7 +427,7 @@
     <CustomAction Id="ShutdownServer" BinaryKey="GoogleIMEJaInstallerHelper.dll"
         DllEntry="ShutdownServer" Impersonate="yes" Return="ignore" />
     <CustomAction Id="RestoreUserIMEEnvironment" BinaryKey="GoogleIMEJaInstallerHelper.dll"
-        DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore"/>
+        DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore" />
     <CustomAction Id="InitialInstallation" BinaryKey="GoogleIMEJaInstallerHelper.dll"
         DllEntry="InitialInstallation" Execute="deferred"
         Impersonate="no" />
@@ -452,20 +451,20 @@
         DllEntry="WriteApValue" Execute="deferred" Impersonate="no" />
     <CustomAction Id="WriteApValueRollback" BinaryKey="GoogleIMEJaInstallerHelper.dll"
         DllEntry="WriteApValueRollback" Execute="rollback" Impersonate="no" />
-    <CustomAction Id="NewerVersionError" Error="4000"/>
+    <CustomAction Id="NewerVersionError" Error="4000" />
 
     <InstallExecuteSequence>
       <Custom Action="HideCancelButton" After="InitialInstallation" />
       <Custom Action="InitialInstallation" After="InstallInitialize">
         (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
-      <Custom Action="SaveCustomActionData" Before="StopServices" >
+      <Custom Action="SaveCustomActionData" Before="StopServices">
         (NOT (REMOVE="ALL"))
       </Custom>
-      <Custom Action="WriteApValueRollback" Before="WriteApValue" >
+      <Custom Action="WriteApValueRollback" Before="WriteApValue">
         (NOT (REMOVE="ALL"))
       </Custom>
-      <Custom Action="WriteApValue" Before="SelfUnregModules" >
+      <Custom Action="WriteApValue" Before="SelfUnregModules">
         (NOT (REMOVE="ALL"))
       </Custom>
       <SelfUnregModules />
@@ -474,13 +473,13 @@
       </Custom>
       <!-- This action invoked only when removal of the old product failed. -->
       <Custom Action="UnregisterTIPRollback64"
-          After="RestoreUserIMEEnvironment" >
+          After="RestoreUserIMEEnvironment">
         (REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)
       </Custom>
-      <Custom Action="UnregisterTIP64" After="UnregisterTIPRollback64" >
+      <Custom Action="UnregisterTIP64" After="UnregisterTIPRollback64">
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)
       </Custom>
-      <Custom Action="OpenUninstallSurveyPage" After="UnregisterTIP64" >
+      <Custom Action="OpenUninstallSurveyPage" After="UnregisterTIP64">
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)
       </Custom>
       <SelfRegModules />
@@ -490,7 +489,7 @@
         are currenly running. So the ShutdownServer action
         needs to be callled before the InstallValidate action.
       -->
-      <Custom Action="ShutdownServer" Before="InstallValidate" >
+      <Custom Action="ShutdownServer" Before="InstallValidate">
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
       </Custom>
       <Custom Action="NewerVersionError" After="FindRelatedProducts">
@@ -519,15 +518,15 @@
         the registration needs to be canceled by registering the old product.
         So RegisterTIP64 needs to be scheduled after RemoveExistingProduct.
       -->
-      <Custom Action="RegisterTIPRollback64" Before="RegisterTIP64" >
+      <Custom Action="RegisterTIPRollback64" Before="RegisterTIP64">
         (NOT (REMOVE="ALL")) AND (VersionNT64) AND (NOT UPGRADING)
       </Custom>
       <Custom Action="RegisterTIP64"
-          Before="EnsureAllApplicationPackagesPermisssions" >
+          Before="EnsureAllApplicationPackagesPermisssions">
         (NOT (REMOVE="ALL")) AND (VersionNT64)
       </Custom>
       <Custom Action="EnsureAllApplicationPackagesPermisssions"
-          Before="InitialInstallationCommit" >
+          Before="InitialInstallationCommit">
         (NOT (REMOVE="ALL"))
       </Custom>
       <Custom Action="InitialInstallationCommit"
