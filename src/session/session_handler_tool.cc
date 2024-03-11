@@ -687,7 +687,7 @@ absl::Status SessionHandlerInterpreter::Eval(
           << "Invalid DecoderExperimentParams: " << textproto;
       request_->mutable_decoder_experiment_params()->MergeFrom(params);
       LOG(INFO) << "DecoderExperimentParams was set:\n"
-                << MOZC_LOG_PROTOBUF(request_->decoder_experiment_params());
+                << request_->decoder_experiment_params();
       MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
     }
   } else if (command == "SET_SELECTION_TEXT") {
