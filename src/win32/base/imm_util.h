@@ -30,8 +30,6 @@
 #ifndef MOZC_WIN32_BASE_IMM_UTIL_H_
 #define MOZC_WIN32_BASE_IMM_UTIL_H_
 
-#include <cstdint>
-
 namespace mozc {
 namespace win32 {
 
@@ -49,27 +47,6 @@ class ImeUtil {
   // have not tested. If this is true, you cannot freely call SetDefault()
   // in some special situations like CustomAction.
   static bool SetDefault();
-
-  // Looks like the TSF needs to rebuild a certain cache after changing the
-  // input details. This task usually takes a few hundreds msec. However,
-  // if we broadcast WM_INPUTLANGCHANGEREQUEST message to all the desktop
-  // UI threads before the TSF finishes rebuilding its internal cache, all
-  // the UI threads which receive the WM_INPUTLANGCHANGEREQUEST message start
-  // waiting for "MSCTF.AsmCacheReady.<desktop name><session #>" event and
-  // later waiting for an IMM critical section that the former threads own.
-  // Perhaps TSF's rebuiding process is not resilient enough for a relatively
-  // lot of threads. As a result, all the desktop UI threads will be blocked
-  // for about a minute, as reported in b/5765783.
-  //
-  // This method waits for
-  //   "Local\MSCTF.AsmCacheReady.<desktop name><session #>"
-  // event to cope with the above TSF's behavior.
-  // You can pass INFINITE to |timeout_msec| to wait for the event forever.
-  // Returns true if the operation is completed successfully.
-  // Returns true if "MSCTF.AsmCacheReady.<desktop name><session #>" event does
-  // not exist.
-  // Otherwise returns false.
-  static bool WaitForAsmCacheReady(uint32_t timeout_msec);
 };
 
 }  // namespace win32

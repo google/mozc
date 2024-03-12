@@ -29,16 +29,12 @@
 
 #include "win32/base/imm_util.h"
 
-// clang-format off
-#include <windows.h>  // windows.h needs to come before imm.h
-// clang-format on
-#include <imm.h>
 #include <msctf.h>
 #include <objbase.h>
 #include <wil/com.h>
 #include <wil/resource.h>
+#include <windows.h>
 
-#include <cstdint>
 #include <iterator>
 #include <string>
 #include <vector>
