@@ -298,23 +298,23 @@
 
     <Binary Id="GoogleIMEJaInstallerHelper.dll" SourceFile="$(var.CustomActions64Path)" />
 
-    <CustomAction Id="RegisterTIP64" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="RegisterTIP" Execute="deferred" Impersonate="no" />
-    <CustomAction Id="RegisterTIPRollback64" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="RegisterTIPRollback" Execute="rollback" Impersonate="no" />
-    <CustomAction Id="UnregisterTIP64" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="UnregisterTIP" Execute="deferred" Impersonate="no" Return="ignore" />
-    <CustomAction Id="UnregisterTIPRollback64" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="UnregisterTIPRollback" Execute="rollback" Impersonate="no" Return="ignore" />
-    <CustomAction Id="EnsureAllApplicationPackagesPermisssions" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="EnsureAllApplicationPackagesPermisssions" Execute="deferred" Impersonate="no" Return="ignore" />
-    <CustomAction Id="OpenUninstallSurveyPage" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="OpenUninstallSurveyPage" Impersonate="yes" Return="ignore" />
-    <CustomAction Id="ShutdownServer" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="ShutdownServer" Impersonate="yes" Return="ignore" />
-    <CustomAction Id="RestoreUserIMEEnvironment" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore" />
-    <CustomAction Id="InitialInstallation" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="InitialInstallation" Execute="deferred" Impersonate="no" />
-    <CustomAction Id="InitialInstallationCommit" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="InitialInstallationCommit" Execute="commit" Impersonate="no" />
-    <CustomAction Id="EnableTipProfile" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="EnableTipProfile" Execute="commit" Impersonate="yes" />
-    <CustomAction Id="HideCancelButton" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="HideCancelButton" Return="ignore" />
-    <CustomAction Id="SaveCustomActionData" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="SaveCustomActionData" />
-    <CustomAction Id="RestoreServiceState" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="RestoreServiceState" Impersonate="no" Execute="deferred" Return="ignore" />
-    <CustomAction Id="StopCacheServiceForRollback" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="StopCacheService" Impersonate="no" Execute="rollback" Return="ignore" />
-    <CustomAction Id="WriteApValue" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="WriteApValue" Execute="deferred" Impersonate="no" />
-    <CustomAction Id="WriteApValueRollback" BinaryKey="GoogleIMEJaInstallerHelper.dll" DllEntry="WriteApValueRollback" Execute="rollback" Impersonate="no" />
+    <CustomAction Id="RegisterTIP64" DllEntry="RegisterTIP" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="RegisterTIPRollback64" DllEntry="RegisterTIPRollback" Execute="rollback" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="UnregisterTIP64" DllEntry="UnregisterTIP" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="UnregisterTIPRollback64" DllEntry="UnregisterTIPRollback" Execute="rollback" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="EnsureAllApplicationPackagesPermisssions" DllEntry="EnsureAllApplicationPackagesPermisssions" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="OpenUninstallSurveyPage" DllEntry="OpenUninstallSurveyPage" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="ShutdownServer" DllEntry="ShutdownServer" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="RestoreUserIMEEnvironment" DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="InitialInstallation" DllEntry="InitialInstallation" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="InitialInstallationCommit" DllEntry="InitialInstallationCommit" Execute="commit" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="EnableTipProfile" DllEntry="EnableTipProfile" Execute="commit" Impersonate="yes" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="HideCancelButton" DllEntry="HideCancelButton" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="SaveCustomActionData" DllEntry="SaveCustomActionData" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="RestoreServiceState" DllEntry="RestoreServiceState" Impersonate="no" Execute="deferred" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="StopCacheServiceForRollback" DllEntry="StopCacheService" Impersonate="no" Execute="rollback" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="WriteApValue" DllEntry="WriteApValue" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="WriteApValueRollback" DllEntry="WriteApValueRollback" Execute="rollback" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
     <CustomAction Id="NewerVersionError" Error="4000" />
 
     <InstallExecuteSequence>

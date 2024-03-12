@@ -260,20 +260,20 @@
 
     <Binary Id="mozc_installer_helper.dll" SourceFile="$(var.CustomActions64Path)" />
 
-    <CustomAction Id="RegisterTIP64" BinaryKey="mozc_installer_helper.dll" DllEntry="RegisterTIP" Execute="deferred" Impersonate="no" />
-    <CustomAction Id="RegisterTIPRollback64" BinaryKey="mozc_installer_helper.dll" DllEntry="RegisterTIPRollback" Execute="rollback" Impersonate="no" />
-    <CustomAction Id="UnregisterTIP64" BinaryKey="mozc_installer_helper.dll" DllEntry="UnregisterTIP" Execute="deferred" Impersonate="no" Return="ignore" />
-    <CustomAction Id="UnregisterTIPRollback64" BinaryKey="mozc_installer_helper.dll" DllEntry="UnregisterTIPRollback" Execute="rollback" Impersonate="no" Return="ignore" />
-    <CustomAction Id="EnsureAllApplicationPackagesPermisssions" BinaryKey="mozc_installer_helper.dll" DllEntry="EnsureAllApplicationPackagesPermisssions" Execute="deferred" Impersonate="no" Return="ignore" />
-    <CustomAction Id="ShutdownServer" BinaryKey="mozc_installer_helper.dll" DllEntry="ShutdownServer" Impersonate="yes" Return="ignore" />
-    <CustomAction Id="RestoreUserIMEEnvironment" BinaryKey="mozc_installer_helper.dll" DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore" />
-    <CustomAction Id="InitialInstallation" BinaryKey="mozc_installer_helper.dll" DllEntry="InitialInstallation" Execute="deferred" Impersonate="no" />
-    <CustomAction Id="InitialInstallationCommit" BinaryKey="mozc_installer_helper.dll" DllEntry="InitialInstallationCommit" Execute="commit" Impersonate="no" />
-    <CustomAction Id="EnableTipProfile" BinaryKey="mozc_installer_helper.dll" DllEntry="EnableTipProfile" Execute="commit" Impersonate="yes" />
-    <CustomAction Id="HideCancelButton" BinaryKey="mozc_installer_helper.dll" DllEntry="HideCancelButton" Return="ignore" />
-    <CustomAction Id="SaveCustomActionData" BinaryKey="mozc_installer_helper.dll" DllEntry="SaveCustomActionData" />
-    <CustomAction Id="RestoreServiceState" BinaryKey="mozc_installer_helper.dll" DllEntry="RestoreServiceState" Impersonate="no" Execute="deferred" Return="ignore" />
-    <CustomAction Id="StopCacheServiceForRollback" BinaryKey="mozc_installer_helper.dll" DllEntry="StopCacheService" Impersonate="no" Execute="rollback" Return="ignore" />
+    <CustomAction Id="RegisterTIP64" DllEntry="RegisterTIP" Execute="deferred" Impersonate="no" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="RegisterTIPRollback64" DllEntry="RegisterTIPRollback" Execute="rollback" Impersonate="no" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="UnregisterTIP64" DllEntry="UnregisterTIP" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="UnregisterTIPRollback64" DllEntry="UnregisterTIPRollback" Execute="rollback" Impersonate="no" Return="ignore" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="EnsureAllApplicationPackagesPermisssions" DllEntry="EnsureAllApplicationPackagesPermisssions" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="ShutdownServer" DllEntry="ShutdownServer" Impersonate="yes" Return="ignore" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="RestoreUserIMEEnvironment" DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="InitialInstallation" DllEntry="InitialInstallation" Execute="deferred" Impersonate="no" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="InitialInstallationCommit" DllEntry="InitialInstallationCommit" Execute="commit" Impersonate="no" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="EnableTipProfile" DllEntry="EnableTipProfile" Execute="commit" Impersonate="yes" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="HideCancelButton" DllEntry="HideCancelButton" Return="ignore" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="SaveCustomActionData" DllEntry="SaveCustomActionData" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="RestoreServiceState" DllEntry="RestoreServiceState" Impersonate="no" Execute="deferred" Return="ignore" BinaryKey="mozc_installer_helper.dll" />
+    <CustomAction Id="StopCacheServiceForRollback" DllEntry="StopCacheService" Impersonate="no" Execute="rollback" Return="ignore" BinaryKey="mozc_installer_helper.dll" />
     <CustomAction Id="NewerVersionError" Error="4000" />
 
     <InstallExecuteSequence>
