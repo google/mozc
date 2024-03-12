@@ -43,12 +43,13 @@
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/numeric/bits.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
-#include "base/logging.h"
 #include "base/strings/unicode.h"
 
 #ifdef _WIN32
@@ -243,16 +244,8 @@ constexpr size_t kOffsetFromUpperToLower = 0x0020;
 }
 
 void Util::LowerString(std::string *str) {
-  const char *begin = str->data();
-  size_t mblen = 0;
-
-  size_t pos = 0;
-  while (pos < str->size()) {
-    char32_t codepoint =
-        Utf8ToCodepoint(begin + pos, begin + str->size(), &mblen);
-    if (mblen == 0) {
-      break;
-    }
+  for (const UnicodeChar ch : Utf8AsUnicodeChar(*str)) {
+    char32_t codepoint = ch.char32();
     // ('A' <= codepoint && codepoint <= 'Z') ||
     // ('Ａ' <= codepoint && codepoint <= 'Ｚ')
     if ((0x0041 <= codepoint && codepoint <= 0x005A) ||
@@ -261,24 +254,19 @@ void Util::LowerString(std::string *str) {
       const std::string utf8 = CodepointToUtf8(codepoint);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
-      if (utf8.size() != mblen) {
+      if (utf8.size() != ch.utf8().size()) {
         LOG(ERROR) << "The generated size differs from the source.";
         return;
       }
-      str->replace(pos, mblen, utf8);
+      const size_t pos = ch.utf8().data() - str->data();
+      str->replace(pos, ch.utf8().size(), utf8);
     }
-    pos += mblen;
   }
 }
 
 void Util::UpperString(std::string *str) {
-  const char *begin = str->data();
-  size_t mblen = 0;
-
-  size_t pos = 0;
-  while (pos < str->size()) {
-    char32_t codepoint =
-        Utf8ToCodepoint(begin + pos, begin + str->size(), &mblen);
+  for (const UnicodeChar ch : Utf8AsUnicodeChar(*str)) {
+    char32_t codepoint = ch.char32();
     // ('a' <= codepoint && codepoint <= 'z') ||
     // ('ａ' <= codepoint && codepoint <= 'ｚ')
     if ((0x0061 <= codepoint && codepoint <= 0x007A) ||
@@ -287,13 +275,13 @@ void Util::UpperString(std::string *str) {
       const std::string utf8 = CodepointToUtf8(codepoint);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
-      if (utf8.size() != mblen) {
+      if (utf8.size() != ch.utf8().size()) {
         LOG(ERROR) << "The generated size differs from the source.";
         return;
       }
-      str->replace(pos, mblen, utf8);
+      const size_t pos = ch.utf8().data() - str->data();
+      str->replace(pos, ch.utf8().size(), utf8);
     }
-    pos += mblen;
   }
 }
 
@@ -523,7 +511,7 @@ void Util::CodepointToUtf8Append(char32_t c, std::string *output) {
 
 size_t Util::CodepointToUtf8(char32_t c, char *output) {
   if (c == 0) {
-    // Do nothing if |c| is NUL. Previous implementation of
+    // Do nothing if |c| is `\0`. Previous implementation of
     // CodepointToUtf8Append worked like this.
     output[0] = '\0';
     return 0;
@@ -921,7 +909,7 @@ Util::ScriptType GetScriptTypeInternal(absl::string_view str,
     const char32_t w = iter.Get();
     Util::ScriptType type = Util::GetScriptType(w);
     if ((w == 0x30FC || w == 0x30FB || (w >= 0x3099 && w <= 0x309C)) &&
-        // PROLONGEDSOUND MARK|MIDLE_DOT|VOICED_SOUND_MARKS
+        // PROLONGED SOUND MARK|MIDLE_DOT|VOICED_SOUND_MARKS
         // are HIRAGANA as well
         (result == Util::SCRIPT_TYPE_SIZE || result == Util::HIRAGANA ||
          result == Util::KATAKANA)) {
