@@ -93,6 +93,122 @@
       <Condition Message="このパッケージは開発版です。配布サーバーの設定ミスの可能性があるため、インストールを中止しました。Google 日本語入力チームまでご連絡下さい。">(PREVIOUSCHANNELNAME="external-dev64") OR (PREVIOUSCHANNELNAME="internal-dev64") OR (PREVIOUSCHANNELNAME="external-dev-universal") OR (PREVIOUSCHANNELNAME="internal-dev-universal") OR (REMOVE="ALL")</Condition>
     <?endif?>
 
+    <!--
+       TODO: Consider migrating to "MajorUpgrade" rule.
+       See https://github.com/google/mozc/issues/734#issuecomment-1524294119
+    -->
+    <Upgrade Id="$(var.UpgradeCode)">
+      <UpgradeVersion Minimum="0.0.0.0" IncludeMinimum="yes" Maximum="$(var.MozcVersion)" IncludeMaximum="yes" OnlyDetect="no" Property="UPGRADING" />
+      <UpgradeVersion Minimum="$(var.MozcVersion)" IncludeMinimum="no" OnlyDetect="yes" Property="NEWERVERSIONDETECTED" />
+    </Upgrade>
+
+    <UI>
+      <Error Id="4000">新しいバージョンの Google 日本語入力が既にインストールされています。</Error>
+    </UI>
+
+    <Feature Id="GIMEJaInstall" Title="Google 日本語入力" Level="1">
+      <ComponentRef Id="GIMEJaTIP32" />
+      <ComponentRef Id="GIMEJaTIP64" />
+      <ComponentRef Id="GIMEJaBroker" />
+      <ComponentRef Id="GIMEJaConverter" />
+      <ComponentRef Id="GIMEJaCacheService" />
+      <ComponentRef Id="GIMEJaRenderer" />
+      <ComponentRef Id="GIMEJaTool" />
+      <?if $(var.VSConfigurationName) = "Release" ?>
+        <ComponentRef Id="msvcp140" />
+        <ComponentRef Id="msvcp140_1" />
+        <ComponentRef Id="msvcp140_2" />
+        <ComponentRef Id="vcruntime140" />
+        <ComponentRef Id="vcruntime140_1" />
+        <ComponentRef Id="QtCoreDll" />
+        <ComponentRef Id="QtGuiDll" />
+        <ComponentRef Id="QtWidgetsDll" />
+        <ComponentRef Id="QWindowsDll" />
+      <?else?>
+        <ComponentRef Id="QtCoredDll" />
+        <ComponentRef Id="QtGuidDll" />
+        <ComponentRef Id="QtWidgetsdDll" />
+        <ComponentRef Id="QWindowsdDll" />
+      <?endif?>
+      <ComponentRef Id="OmahaRegister" />
+      <ComponentRef Id="OmahaRegLaunchCmdLine" />
+      <ComponentRef Id="SysProcs" />
+      <ComponentRef Id="PrelaunchProcesses" />
+      <ComponentRef Id="CreditsEn" />
+    </Feature>
+
+    <Binary Id="GoogleIMEJaInstallerHelper.dll" SourceFile="$(var.CustomActions64Path)" />
+
+    <CustomAction Id="RegisterTIP64" DllEntry="RegisterTIP" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="RegisterTIPRollback64" DllEntry="RegisterTIPRollback" Execute="rollback" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="UnregisterTIP64" DllEntry="UnregisterTIP" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="UnregisterTIPRollback64" DllEntry="UnregisterTIPRollback" Execute="rollback" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="EnsureAllApplicationPackagesPermisssions" DllEntry="EnsureAllApplicationPackagesPermisssions" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="OpenUninstallSurveyPage" DllEntry="OpenUninstallSurveyPage" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="ShutdownServer" DllEntry="ShutdownServer" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="RestoreUserIMEEnvironment" DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="InitialInstallation" DllEntry="InitialInstallation" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="InitialInstallationCommit" DllEntry="InitialInstallationCommit" Execute="commit" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="EnableTipProfile" DllEntry="EnableTipProfile" Execute="commit" Impersonate="yes" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="HideCancelButton" DllEntry="HideCancelButton" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="SaveCustomActionData" DllEntry="SaveCustomActionData" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="RestoreServiceState" DllEntry="RestoreServiceState" Impersonate="no" Execute="deferred" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="StopCacheServiceForRollback" DllEntry="StopCacheService" Impersonate="no" Execute="rollback" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="WriteApValue" DllEntry="WriteApValue" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="WriteApValueRollback" DllEntry="WriteApValueRollback" Execute="rollback" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="NewerVersionError" Error="4000" />
+
+    <InstallExecuteSequence>
+      <Custom Action="HideCancelButton" After="InitialInstallation" />
+      <Custom Action="InitialInstallation" After="InstallInitialize">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
+      <Custom Action="SaveCustomActionData" Before="StopServices">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="WriteApValueRollback" Before="WriteApValue">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="WriteApValue" Before="SelfUnregModules">(NOT (REMOVE="ALL"))</Custom>
+      <SelfUnregModules />
+      <Custom Action="RestoreUserIMEEnvironment" After="SelfUnregModules">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
+      <!-- This action invoked only when removal of the old product failed. -->
+      <Custom Action="UnregisterTIPRollback64" After="RestoreUserIMEEnvironment">(REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)</Custom>
+      <Custom Action="UnregisterTIP64" After="UnregisterTIPRollback64">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)</Custom>
+      <Custom Action="OpenUninstallSurveyPage" After="UnregisterTIP64">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)</Custom>
+      <SelfRegModules />
+      <!--
+        The InstallValidate action notifies the user
+        if GoogleIMEJaConverter.exe and GoogleIMEJaRenderer.exe
+        are currenly running. So the ShutdownServer action
+        needs to be callled before the InstallValidate action.
+      -->
+      <Custom Action="ShutdownServer" Before="InstallValidate">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
+      <Custom Action="NewerVersionError" After="FindRelatedProducts">NEWERVERSIONDETECTED</Custom>
+      <!--
+        RemoveExistingProducts needs to be scheduled between InstallExecute and
+        InstallFinalize to correctly deal with errors which occur when the old
+        product is removed on upgrade.
+        http://msdn.microsoft.com/en-us/library/aa371197(VS.85).aspx
+      -->
+      <InstallExecute Before="RemoveExistingProducts" />
+      <RemoveExistingProducts Before="StopCacheServiceForRollback" />
+      <!--
+        When the installer enters rollback mode, the cache service should be
+        stopped before RemoveExistingProducts is invoked.
+      -->
+      <Custom Action="StopCacheServiceForRollback" Before="RestoreServiceState">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="RestoreServiceState" Before="RegisterTIPRollback64">(NOT (REMOVE="ALL"))</Custom>
+      <!--
+        If error occurs after RegisterTIP64,
+        the registration needs to be canceled by registering the old product.
+        So RegisterTIP64 needs to be scheduled after RemoveExistingProduct.
+      -->
+      <Custom Action="RegisterTIPRollback64" Before="RegisterTIP64">(NOT (REMOVE="ALL")) AND (VersionNT64) AND (NOT UPGRADING)</Custom>
+      <Custom Action="RegisterTIP64" Before="EnsureAllApplicationPackagesPermisssions">(NOT (REMOVE="ALL")) AND (VersionNT64)</Custom>
+      <Custom Action="EnsureAllApplicationPackagesPermisssions" Before="InitialInstallationCommit">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="InitialInstallationCommit" Before="EnableTipProfile">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
+      <Custom Action="EnableTipProfile" Before="InstallFinalize">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
+      <!-- show reboot dialog to execute pending file opartions -->
+      <?if ($(var.VSConfigurationName) = "Release") ?>
+        <ScheduleReboot After="InstallFinalize">(REMOVE="ALL")</ScheduleReboot>
+      <?endif?>
+    </InstallExecuteSequence>
+
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="PFiles">
         <Directory Id="GoogleDir" Name="Google">
@@ -252,120 +368,5 @@
       </Component>
     </Directory>
 
-    <!--
-       TODO: Consider migrating to "MajorUpgrade" rule.
-       See https://github.com/google/mozc/issues/734#issuecomment-1524294119
-    -->
-    <Upgrade Id="$(var.UpgradeCode)">
-      <UpgradeVersion Minimum="0.0.0.0" IncludeMinimum="yes" Maximum="$(var.MozcVersion)" IncludeMaximum="yes" OnlyDetect="no" Property="UPGRADING" />
-      <UpgradeVersion Minimum="$(var.MozcVersion)" IncludeMinimum="no" OnlyDetect="yes" Property="NEWERVERSIONDETECTED" />
-    </Upgrade>
-
-    <UI>
-      <Error Id="4000">新しいバージョンの Google 日本語入力が既にインストールされています。</Error>
-    </UI>
-
-    <Feature Id="GIMEJaInstall" Title="Google 日本語入力" Level="1">
-      <ComponentRef Id="GIMEJaTIP32" />
-      <ComponentRef Id="GIMEJaTIP64" />
-      <ComponentRef Id="GIMEJaBroker" />
-      <ComponentRef Id="GIMEJaConverter" />
-      <ComponentRef Id="GIMEJaCacheService" />
-      <ComponentRef Id="GIMEJaRenderer" />
-      <ComponentRef Id="GIMEJaTool" />
-      <?if $(var.VSConfigurationName) = "Release" ?>
-        <ComponentRef Id="msvcp140" />
-        <ComponentRef Id="msvcp140_1" />
-        <ComponentRef Id="msvcp140_2" />
-        <ComponentRef Id="vcruntime140" />
-        <ComponentRef Id="vcruntime140_1" />
-        <ComponentRef Id="QtCoreDll" />
-        <ComponentRef Id="QtGuiDll" />
-        <ComponentRef Id="QtWidgetsDll" />
-        <ComponentRef Id="QWindowsDll" />
-      <?else?>
-        <ComponentRef Id="QtCoredDll" />
-        <ComponentRef Id="QtGuidDll" />
-        <ComponentRef Id="QtWidgetsdDll" />
-        <ComponentRef Id="QWindowsdDll" />
-      <?endif?>
-      <ComponentRef Id="OmahaRegister" />
-      <ComponentRef Id="OmahaRegLaunchCmdLine" />
-      <ComponentRef Id="SysProcs" />
-      <ComponentRef Id="PrelaunchProcesses" />
-      <ComponentRef Id="CreditsEn" />
-    </Feature>
-
-    <Binary Id="GoogleIMEJaInstallerHelper.dll" SourceFile="$(var.CustomActions64Path)" />
-
-    <CustomAction Id="RegisterTIP64" DllEntry="RegisterTIP" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="RegisterTIPRollback64" DllEntry="RegisterTIPRollback" Execute="rollback" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="UnregisterTIP64" DllEntry="UnregisterTIP" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="UnregisterTIPRollback64" DllEntry="UnregisterTIPRollback" Execute="rollback" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="EnsureAllApplicationPackagesPermisssions" DllEntry="EnsureAllApplicationPackagesPermisssions" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="OpenUninstallSurveyPage" DllEntry="OpenUninstallSurveyPage" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="ShutdownServer" DllEntry="ShutdownServer" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="RestoreUserIMEEnvironment" DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="InitialInstallation" DllEntry="InitialInstallation" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="InitialInstallationCommit" DllEntry="InitialInstallationCommit" Execute="commit" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="EnableTipProfile" DllEntry="EnableTipProfile" Execute="commit" Impersonate="yes" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="HideCancelButton" DllEntry="HideCancelButton" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="SaveCustomActionData" DllEntry="SaveCustomActionData" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="RestoreServiceState" DllEntry="RestoreServiceState" Impersonate="no" Execute="deferred" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="StopCacheServiceForRollback" DllEntry="StopCacheService" Impersonate="no" Execute="rollback" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="WriteApValue" DllEntry="WriteApValue" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="WriteApValueRollback" DllEntry="WriteApValueRollback" Execute="rollback" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
-    <CustomAction Id="NewerVersionError" Error="4000" />
-
-    <InstallExecuteSequence>
-      <Custom Action="HideCancelButton" After="InitialInstallation" />
-      <Custom Action="InitialInstallation" After="InstallInitialize">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
-      <Custom Action="SaveCustomActionData" Before="StopServices">(NOT (REMOVE="ALL"))</Custom>
-      <Custom Action="WriteApValueRollback" Before="WriteApValue">(NOT (REMOVE="ALL"))</Custom>
-      <Custom Action="WriteApValue" Before="SelfUnregModules">(NOT (REMOVE="ALL"))</Custom>
-      <SelfUnregModules />
-      <Custom Action="RestoreUserIMEEnvironment" After="SelfUnregModules">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
-      <!-- This action invoked only when removal of the old product failed. -->
-      <Custom Action="UnregisterTIPRollback64" After="RestoreUserIMEEnvironment">(REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)</Custom>
-      <Custom Action="UnregisterTIP64" After="UnregisterTIPRollback64">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)</Custom>
-      <Custom Action="OpenUninstallSurveyPage" After="UnregisterTIP64">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)</Custom>
-      <SelfRegModules />
-      <!--
-        The InstallValidate action notifies the user
-        if GoogleIMEJaConverter.exe and GoogleIMEJaRenderer.exe
-        are currenly running. So the ShutdownServer action
-        needs to be callled before the InstallValidate action.
-      -->
-      <Custom Action="ShutdownServer" Before="InstallValidate">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
-      <Custom Action="NewerVersionError" After="FindRelatedProducts">NEWERVERSIONDETECTED</Custom>
-      <!--
-        RemoveExistingProducts needs to be scheduled between InstallExecute and
-        InstallFinalize to correctly deal with errors which occur when the old
-        product is removed on upgrade.
-        http://msdn.microsoft.com/en-us/library/aa371197(VS.85).aspx
-      -->
-      <InstallExecute Before="RemoveExistingProducts" />
-      <RemoveExistingProducts Before="StopCacheServiceForRollback" />
-      <!--
-        When the installer enters rollback mode, the cache service should be
-        stopped before RemoveExistingProducts is invoked.
-      -->
-      <Custom Action="StopCacheServiceForRollback" Before="RestoreServiceState">(NOT (REMOVE="ALL"))</Custom>
-      <Custom Action="RestoreServiceState" Before="RegisterTIPRollback64">(NOT (REMOVE="ALL"))</Custom>
-      <!--
-        If error occurs after RegisterTIP64,
-        the registration needs to be canceled by registering the old product.
-        So RegisterTIP64 needs to be scheduled after RemoveExistingProduct.
-      -->
-      <Custom Action="RegisterTIPRollback64" Before="RegisterTIP64">(NOT (REMOVE="ALL")) AND (VersionNT64) AND (NOT UPGRADING)</Custom>
-      <Custom Action="RegisterTIP64" Before="EnsureAllApplicationPackagesPermisssions">(NOT (REMOVE="ALL")) AND (VersionNT64)</Custom>
-      <Custom Action="EnsureAllApplicationPackagesPermisssions" Before="InitialInstallationCommit">(NOT (REMOVE="ALL"))</Custom>
-      <Custom Action="InitialInstallationCommit" Before="EnableTipProfile">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
-      <Custom Action="EnableTipProfile" Before="InstallFinalize">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
-      <!-- show reboot dialog to execute pending file opartions -->
-      <?if ($(var.VSConfigurationName) = "Release") ?>
-        <ScheduleReboot After="InstallFinalize">(REMOVE="ALL")</ScheduleReboot>
-      <?endif?>
-    </InstallExecuteSequence>
   </Product>
 </Wix>
