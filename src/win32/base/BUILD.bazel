@@ -235,27 +235,6 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "keyboard_layout_id",
-    srcs = ["keyboard_layout_id.cc"],
-    hdrs = ["keyboard_layout_id.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base:logging"],
-)
-
-mozc_cc_test(
-    name = "keyboard_layout_id_test",
-    srcs = ["keyboard_layout_id_test.cc"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":keyboard_layout_id",
-        "//base:util",
-        "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
     name = "keyevent_handler",
     srcs = ["keyevent_handler.cc"],
     hdrs = ["keyevent_handler.h"],
