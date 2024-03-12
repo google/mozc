@@ -164,9 +164,7 @@ mozc_cc_library(
         ":input_dll",
         ":tsf_profile",
         "//base:logging",
-        "//base:system_util",
         "//base/win32:wide_char",
-        "@com_google_absl//absl/base:core_headers",
         "@com_microsoft_wil//:wil",
     ],
 )
