@@ -102,7 +102,7 @@ class EngineInterface {
     return false;
   }
   virtual void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) {}
-  virtual void SetAlwaysWaitForEngineResponseFutureForTesting(bool value) {}
+  virtual void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) {}
 
  protected:
   EngineInterface() = default;

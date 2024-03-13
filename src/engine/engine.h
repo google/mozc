@@ -156,7 +156,7 @@ class Engine : public EngineInterface {
   void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) override {
     loader_ = std::move(loader);
   }
-  void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) {
+  void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) override {
     always_wait_for_loader_response_future_ = value;
   }
 
