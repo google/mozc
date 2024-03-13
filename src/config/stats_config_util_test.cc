@@ -124,7 +124,7 @@ class RegistryEmulator {
       }
       return i->second;
     }
-    absl::flat_hash_map<HKEY, DWORD> &usagestats_map() const {
+    const absl::flat_hash_map<HKEY, DWORD> &usagestats_map() const {
       return usagestats_map_;
     }
     int run_level() const { return run_level_; }
