@@ -323,7 +323,7 @@ size_t Util::CharsLen(absl::string_view str) {
   size_t length = 0;
   while (!str.empty()) {
     ++length;
-    str.remove_prefix(strings::OneCharLen(str.begin()));
+    str = absl::ClippedSubstr(str, strings::OneCharLen(str.begin()));
   }
   return length;
 }

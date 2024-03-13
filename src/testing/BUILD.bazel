@@ -125,7 +125,7 @@ mozc_cc_library(
         "//base:logging",
         "//base/protobuf:message",
         "//base/protobuf:text_format",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

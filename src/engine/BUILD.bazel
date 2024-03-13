@@ -75,6 +75,7 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -208,7 +209,7 @@ mozc_cc_test(
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ],
 )
@@ -227,7 +228,7 @@ mozc_cc_library(
         "//dictionary:suppression_dictionary",
         "//testing:gunit",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -248,7 +249,7 @@ mozc_cc_test(
         ":engine_factory",
         ":engine_interface",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

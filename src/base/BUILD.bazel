@@ -273,7 +273,7 @@ mozc_cc_test(
         ":clock",
         ":clock_mock",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ],
 )
@@ -403,7 +403,7 @@ mozc_cc_library(
     deps = [
         ":clock",
         ":logging",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ],
 )
@@ -415,7 +415,7 @@ mozc_cc_test(
     deps = [
         ":clock_mock",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ],
 )

@@ -206,6 +206,6 @@ mozc_cc_test(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )

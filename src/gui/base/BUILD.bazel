@@ -66,7 +66,7 @@ mozc_cc_test(
         ":encoding_util",
         "//base:logging",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ] + mozc_select(
         windows = ["//base/win32:wide_char"],
     ),
@@ -195,7 +195,7 @@ mozc_cc_qt_library(
         "//base:version",
         "//ipc",
         "//ipc:window_info_cc_proto",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ] + mozc_select(
         windows = [
             ":win_util",

@@ -379,6 +379,12 @@ TEST(UtilTest, CharsLen) {
   EXPECT_EQ(Util::CharsLen(src), 9);
 }
 
+TEST(UtilTest, CharsLenInvalid) {
+  const absl::string_view kText = "あいうえお";
+  EXPECT_EQ(Util::CharsLen(kText.substr(0, 1)), 1);
+  EXPECT_EQ(Util::CharsLen(kText.substr(0, 4)), 2);
+}
+
 TEST(UtilTest, Utf8SubString) {
   const absl::string_view src = "私の名前は中野です";
   absl::string_view result;
