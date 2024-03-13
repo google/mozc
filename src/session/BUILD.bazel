@@ -377,6 +377,7 @@ mozc_cc_test(
         "//protocol:config_cc_proto",
         "//session/internal:keymap",
         "//testing:gunit_main",
+        "//testing:mozctest",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:check",

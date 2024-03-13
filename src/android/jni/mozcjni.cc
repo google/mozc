@@ -45,7 +45,6 @@
 #include "base/util.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
-#include "engine/minimal_engine.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
@@ -99,7 +98,7 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
     LOG(ERROR)
         << "Fallback to minimal engine due to data manager creation failure: "
         << data_manager.status();
-    return std::make_unique<MinimalEngine>();
+    return Engine::CreateEngine();
   }
   // NOTE: we need to copy the data version to our local string before calling
   // `Engine::CreateMobileEngine` because, if the engine creation below fails,
@@ -113,7 +112,7 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
     LOG(ERROR) << "Failed to create a mobile engine: file " << data_file_path
                << ", data version: " << data_version << ": " << engine.status()
                << ": Fallback to minimal engine";
-    return std::make_unique<MinimalEngine>();
+    return Engine::CreateEngine();
   }
   LOG(INFO) << "Successfully created a mobile engine from " << data_file_path
             << ", data version=" << data_version;
@@ -129,7 +128,7 @@ std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
   std::unique_ptr<EngineInterface> engine;
   if (j_data_file_path == nullptr) {
     LOG(ERROR) << "j_data_file_path is null.  Fallback to minimal engine.";
-    engine = std::make_unique<MinimalEngine>();
+    engine = Engine::CreateEngine();
   } else {
     const std::string &data_file_path =
         JstringToCcString(env, j_data_file_path);

@@ -33,6 +33,7 @@
 #include <memory>
 #include <utility>
 
+#include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -155,6 +156,10 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
   return engine;
 }
 
+std::unique_ptr<Engine> Engine::CreateEngine() {
+  return absl::WrapUnique(new Engine());
+}
+
 Engine::Engine()
     : loader_(std::make_unique<DataLoader>()),
       modules_(std::make_unique<engine::Modules>()) {}
@@ -231,6 +236,7 @@ absl::Status Engine::Init(
 
   user_data_manager_ = std::make_unique<UserDataManager>(predictor_, rewriter_);
 
+  initialized_ = true;
   return absl::Status();
 
 #undef RETURN_IF_NULL

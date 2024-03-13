@@ -41,11 +41,13 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter.h"
+#include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
 #include "engine/data_loader.h"
 #include "engine/engine_interface.h"
+#include "engine/minimal_engine.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -90,15 +92,25 @@ class Engine : public EngineInterface {
   static absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(
       std::unique_ptr<engine::Modules> modules, bool is_mobile);
 
+  // Creates an engine with no initialization.
+  static std::unique_ptr<Engine> CreateEngine();
+
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
 
-  Converter *GetConverter() const override { return converter_.get(); }
+  ConverterInterface *GetConverter() const override {
+    return initialized_ ? converter_.get() : minimal_engine_.GetConverter();
+  }
   absl::string_view GetPredictorName() const override {
-    return predictor_ ? predictor_->GetPredictorName() : absl::string_view();
+    if (initialized_) {
+      return predictor_ ? predictor_->GetPredictorName() : absl::string_view();
+    } else {
+      return minimal_engine_.GetPredictorName();
+    }
   }
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
-    return modules_->GetMutableSuppressionDictionary();
+    return initialized_ ? modules_->GetMutableSuppressionDictionary()
+                        : minimal_engine_.GetSuppressionDictionary();
   }
 
   bool Reload() override;
@@ -109,7 +121,8 @@ class Engine : public EngineInterface {
                              bool is_mobile) override;
 
   UserDataManagerInterface *GetUserDataManager() override {
-    return user_data_manager_.get();
+    return initialized_ ? user_data_manager_.get()
+                        : minimal_engine_.GetUserDataManager();
   }
 
   absl::string_view GetDataVersion() const override {
@@ -117,11 +130,13 @@ class Engine : public EngineInterface {
   }
 
   const DataManagerInterface *GetDataManager() const override {
-    return &modules_->GetDataManager();
+    return initialized_ ? &modules_->GetDataManager()
+                        : minimal_engine_.GetDataManager();
   }
 
   std::vector<std::string> GetPosList() const override {
-    return modules_->GetUserDictionary()->GetPosList();
+    return initialized_ ? modules_->GetUserDictionary()->GetPosList()
+                        : minimal_engine_.GetPosList();
   }
 
   void SetSpellchecker(
@@ -151,6 +166,10 @@ class Engine : public EngineInterface {
   // Initializes the engine object by the given modules and is_mobile flag.
   // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
   absl::Status Init(std::unique_ptr<engine::Modules> modules, bool is_mobile);
+
+  // If initialized_ is false, minimal_engine_ is used as a fallback engine.
+  bool initialized_ = false;
+  MinimalEngine minimal_engine_;
 
   std::unique_ptr<DataLoader> loader_;
   std::unique_ptr<engine::Modules> modules_;
