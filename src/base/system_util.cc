@@ -740,24 +740,6 @@ const wchar_t *SystemUtil::GetSystemDir() {
   DCHECK(Singleton<SystemDirectoryCache>::get()->succeeded());
   return Singleton<SystemDirectoryCache>::get()->system_dir();
 }
-
-std::string SystemUtil::GetMSCTFAsmCacheReadyEventName() {
-  const std::string &session_id = GetSessionIdString();
-  if (session_id.empty()) {
-    DLOG(ERROR) << "Failed to retrieve session id";
-    return "";
-  }
-
-  const std::string &desktop_name = GetInputDesktopName();
-
-  if (desktop_name.empty()) {
-    DLOG(ERROR) << "Failed to retrieve desktop name";
-    return "";
-  }
-
-  // Compose "Local\MSCTF.AsmCacheReady.<desktop name><session #>".
-  return ("Local\\MSCTF.AsmCacheReady." + desktop_name + session_id);
-}
 #endif  // _WIN32
 
 // TODO(toshiyuki): move this to the initialization module and calculate

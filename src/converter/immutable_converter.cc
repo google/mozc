@@ -817,7 +817,7 @@ Node *ImmutableConverter::AddCharacterTypeBasedNodes(
     }
     new_node->wcost = kMaxCost / 2;
     const absl::string_view key_substr_up_to_it =
-        key_substr.substr(0, it.view().data() - key_substr.data());
+        key_substr.substr(0, it.to_address() - key_substr.data());
     new_node->value.assign(key_substr_up_to_it);
     new_node->key.assign(key_substr_up_to_it);
     new_node->node_type = Node::NOR_NODE;

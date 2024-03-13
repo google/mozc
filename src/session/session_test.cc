@@ -9205,7 +9205,7 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
   EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
   EXPECT_EQ(command.output().result().value(), "m");
   EXPECT_EQ(GetComposition(command), "");
-  MOZC_VLOG(0) << MOZC_LOG_PROTOBUF(command);
+  MOZC_VLOG(0) << command;
   EXPECT_EQ(command.output().preedit().cursor(), 0);
   EXPECT_TRUE(command.output().consumed());
 

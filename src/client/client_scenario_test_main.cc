@@ -147,20 +147,19 @@ int Loop(std::istream *input) {
       if (absl::GetFlag(FLAGS_test_testsendkey)) {
         MOZC_VLOG(2) << "Sending to Server: " << keys[i];
         client.TestSendKey(keys[i], &output);
-        MOZC_VLOG(2) << "Output of TestSendKey: " << MOZC_LOG_PROTOBUF(output);
+        MOZC_VLOG(2) << "Output of TestSendKey: " << output;
         absl::SleepFor(absl::Milliseconds(10));
       }
 
       MOZC_VLOG(2) << "Sending to Server: " << keys[i];
       client.SendKey(keys[i], &output);
-      MOZC_VLOG(2) << "Output of SendKey: " << MOZC_LOG_PROTOBUF(output);
+      MOZC_VLOG(2) << "Output of SendKey: " << output;
 
       if (renderer_client != nullptr) {
         renderer_command.set_type(commands::RendererCommand::UPDATE);
         renderer_command.set_visible(output.has_candidates());
         *renderer_command.mutable_output() = output;
-        MOZC_VLOG(2) << "Sending to Renderer: "
-                     << MOZC_LOG_PROTOBUF(renderer_command);
+        MOZC_VLOG(2) << "Sending to Renderer: " << renderer_command;
         renderer_client->ExecCommand(renderer_command);
       }
     }

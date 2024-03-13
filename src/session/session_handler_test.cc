@@ -974,5 +974,49 @@ TEST_F(SessionHandlerTest, GetServerVersionTest) {
   EXPECT_EQ(command.output().server_version().data_version(), "24.20240101.01");
 }
 
+TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
+  std::unique_ptr<Engine> engine = Engine::CreateEngine();
+
+  auto data_manager = std::make_unique<testing::MockDataManager>();
+  absl::string_view data_version = "ReloadFromMinimalEngine";
+  EXPECT_CALL(*data_manager, GetDataVersion())
+      .WillRepeatedly(Return(data_version));
+  auto modules = std::make_unique<engine::Modules>();
+  CHECK_OK(modules->Init(std::move(data_manager)));
+
+  auto data_loader = std::make_unique<MockDataLoader>();
+
+  EngineReloadRequest request;
+  request.set_engine_type(EngineReloadRequest::MOBILE);
+  request.set_file_path("placeholder");  // OK for MockDataLoader
+  const uint64_t data_id = data_loader->GetRequestId(request);
+
+  EXPECT_CALL(*data_loader, Build(data_id))
+      .WillOnce(Return(
+          std::make_unique<BackgroundFuture<DataLoader::Response>>([&]() {
+            absl::SleepFor(absl::Milliseconds(100));
+            DataLoader::Response result;
+            result.id = data_id;
+            result.response.mutable_request()->set_engine_type(
+                EngineReloadRequest::MOBILE);
+            result.response.set_status(EngineReloadResponse::RELOAD_READY);
+            result.modules = std::move(modules);
+            return result;
+          })));
+  engine->SetDataLoaderForTesting(std::move(data_loader));
+
+  SessionHandler handler(std::move(engine));
+  EXPECT_EQ(handler.engine().GetPredictorName(), "MinimalPredictor");
+
+  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
+            EngineReloadResponse::ACCEPTED);
+
+  // CreateSession updates the Engine including the Predictor.
+  uint64_t id = 0;
+  ASSERT_TRUE(CreateSession(&handler, &id));
+  EXPECT_EQ(handler.engine().GetPredictorName(), "MobilePredictor");
+  EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
+}
+
 
 }  // namespace mozc

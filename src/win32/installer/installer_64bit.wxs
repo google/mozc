@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
  Copyright 2010-2021, Google Inc.
  All rights reserved.
@@ -38,7 +38,7 @@
 <?define QtWidgetsFilename="Qt$(var.QtVer)Widgets.dll" ?>
 <?define QtWidgetsdFilename="Qt$(var.QtVer)Widgetsd.dll" ?>
 
-<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
   <!--
     It appears that Windows Installer emits error on upgrade saying "Another
@@ -47,14 +47,9 @@
     http://msdn.microsoft.com/en-us/library/aa367850.aspx.
     So we change the product ID for every new version.
   -->
-  <Product Name='Google 日本語入力' Id='*'
-      Language='1041' Codepage='932' Version='$(var.MozcVersion)'
-      Manufacturer='Google Inc.' UpgradeCode='$(var.UpgradeCode)'>
+  <Product Name="Google 日本語入力" Id="*" Language="1041" Codepage="932" Version="$(var.MozcVersion)" Manufacturer="Google Inc." UpgradeCode="$(var.UpgradeCode)">
 
-    <Package Keywords='Installer' Description='Google 日本語入力 インストーラー'
-        Manufacturer='Google Inc.' Languages='1041' SummaryCodepage='932'
-        InstallerVersion='500' InstallPrivileges='elevated'
-        Compressed='yes' Platform='x64' />
+    <Package Keywords="Installer" Description="Google 日本語入力 インストーラー" Manufacturer="Google Inc." Languages="1041" SummaryCodepage="932" InstallerVersion="500" InstallPrivileges="elevated" Compressed="yes" Platform="x64" />
 
     <!--
                      VersionNT
@@ -64,31 +59,22 @@
        Windows 11       603
        https://learn.microsoft.com/en-us/troubleshoot/windows-client/application-management/versionnt-value-for-windows-10-server
     -->
-    <Condition
-        Message='Google 日本語入力をインストールするには Windows 10 以降にアップグレードする必要があります。'>
-        VersionNT &gt;= 603
-    </Condition>
+    <Condition Message="Google 日本語入力をインストールするには Windows 10 以降にアップグレードする必要があります。">VersionNT &gt;= 603</Condition>
 
     <!-- Check if the user have the administrative privileges. -->
-    <Condition
-        Message='Google 日本語入力をインストールするには管理者権限が必要です。'>
-      Privileged
-    </Condition>
-    <Media Id='1' Cabinet='GoogleJapaneseInput.cab' EmbedCab='yes'
-        CompressionLevel='high'/>
+    <Condition Message="Google 日本語入力をインストールするには管理者権限が必要です。">Privileged</Condition>
+    <Media Id="1" Cabinet="GoogleJapaneseInput.cab" EmbedCab="yes" CompressionLevel="high" />
 
     <!-- Set Add/Remove Program Icon -->
-    <Icon Id="add_remove_program_icon.ico"
-          SourceFile="$(var.AddRemoveProgramIconPath)" />
-    <Property Id="ARPPRODUCTICON"
-        Value="add_remove_program_icon.ico" />
+    <Icon Id="add_remove_program_icon.ico" SourceFile="$(var.AddRemoveProgramIconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="add_remove_program_icon.ico" />
 
     <!-- Install the product for all users. -->
-    <Property Id='ALLUSERS' Value='1' />
+    <Property Id="ALLUSERS" Value="1" />
 
     <!-- Disable Modify and Repair buttons. -->
-    <Property Id='ARPNOMODIFY' Value='1' />
-    <Property Id='ARPNOREPAIR' Value='1' />
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="ARPNOREPAIR" Value="1" />
 
     <!--
       A fail-fast mechanism against channel mismatch.  Currently we focus on
@@ -101,53 +87,151 @@
     <?if ($(var.VSConfigurationName) = "Release") and ($(var.OmahaChannelType) = "dev") ?>
       <!-- Retrieves previous channel name for Omaha -->
       <Property Id="PREVIOUSCHANNELNAME">
-        <RegistrySearch Id='OmahaApValue' Type='raw' Root='HKLM'
-            Key='$(var.OmahaClientStateKey)' Name='ap' Win64='no'>
-        </RegistrySearch>
+        <RegistrySearch Id="OmahaApValue" Type="raw" Root="HKLM" Key="$(var.OmahaClientStateKey)" Name="ap" Win64="no" />
       </Property>
 
-      <Condition
-          Message='このパッケージは開発版です。配布サーバーの設定ミスの可能性があるため、インストールを中止しました。Google 日本語入力チームまでご連絡下さい。'>
-        (PREVIOUSCHANNELNAME="external-dev64") OR
-        (PREVIOUSCHANNELNAME="internal-dev64") OR
-        (PREVIOUSCHANNELNAME="external-dev-universal") OR
-        (PREVIOUSCHANNELNAME="internal-dev-universal") OR
-        (REMOVE="ALL")
-      </Condition>
+      <Condition Message="このパッケージは開発版です。配布サーバーの設定ミスの可能性があるため、インストールを中止しました。Google 日本語入力チームまでご連絡下さい。">(PREVIOUSCHANNELNAME="external-dev64") OR (PREVIOUSCHANNELNAME="internal-dev64") OR (PREVIOUSCHANNELNAME="external-dev-universal") OR (PREVIOUSCHANNELNAME="internal-dev-universal") OR (REMOVE="ALL")</Condition>
     <?endif?>
 
-    <Directory Id='TARGETDIR' Name='SourceDir'>
-      <Directory Id='ProgramFilesFolder' Name='PFiles'>
-        <Directory Id='GoogleDir' Name='Google'>
-          <Directory Id='GIMEJaDir' Name='Google Japanese Input'>
-            <Component Id='GIMEJaConverter' Guid='*'>
-              <File Id='GoogleIMEJaConverter.exe'
-                  Name='GoogleIMEJaConverter.exe' DiskId='1'
-                  Checksum='yes' Source='$(var.MozcServer64Path)' Vital='yes' />
+    <!--
+       TODO: Consider migrating to "MajorUpgrade" rule.
+       See https://github.com/google/mozc/issues/734#issuecomment-1524294119
+    -->
+    <Upgrade Id="$(var.UpgradeCode)">
+      <UpgradeVersion Minimum="0.0.0.0" IncludeMinimum="yes" Maximum="$(var.MozcVersion)" IncludeMaximum="yes" OnlyDetect="no" Property="UPGRADING" />
+      <UpgradeVersion Minimum="$(var.MozcVersion)" IncludeMinimum="no" OnlyDetect="yes" Property="NEWERVERSIONDETECTED" />
+    </Upgrade>
+
+    <UI>
+      <Error Id="4000">新しいバージョンの Google 日本語入力が既にインストールされています。</Error>
+    </UI>
+
+    <Feature Id="GIMEJaInstall" Title="Google 日本語入力" Level="1">
+      <ComponentRef Id="GIMEJaTIP32" />
+      <ComponentRef Id="GIMEJaTIP64" />
+      <ComponentRef Id="GIMEJaBroker" />
+      <ComponentRef Id="GIMEJaConverter" />
+      <ComponentRef Id="GIMEJaCacheService" />
+      <ComponentRef Id="GIMEJaRenderer" />
+      <ComponentRef Id="GIMEJaTool" />
+      <?if $(var.VSConfigurationName) = "Release" ?>
+        <ComponentRef Id="msvcp140" />
+        <ComponentRef Id="msvcp140_1" />
+        <ComponentRef Id="msvcp140_2" />
+        <ComponentRef Id="vcruntime140" />
+        <ComponentRef Id="vcruntime140_1" />
+        <ComponentRef Id="QtCoreDll" />
+        <ComponentRef Id="QtGuiDll" />
+        <ComponentRef Id="QtWidgetsDll" />
+        <ComponentRef Id="QWindowsDll" />
+      <?else?>
+        <ComponentRef Id="QtCoredDll" />
+        <ComponentRef Id="QtGuidDll" />
+        <ComponentRef Id="QtWidgetsdDll" />
+        <ComponentRef Id="QWindowsdDll" />
+      <?endif?>
+      <ComponentRef Id="OmahaRegister" />
+      <ComponentRef Id="OmahaRegLaunchCmdLine" />
+      <ComponentRef Id="SysProcs" />
+      <ComponentRef Id="PrelaunchProcesses" />
+      <ComponentRef Id="CreditsEn" />
+    </Feature>
+
+    <Binary Id="GoogleIMEJaInstallerHelper.dll" SourceFile="$(var.CustomActions64Path)" />
+
+    <CustomAction Id="RegisterTIP64" DllEntry="RegisterTIP" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="RegisterTIPRollback64" DllEntry="RegisterTIPRollback" Execute="rollback" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="UnregisterTIP64" DllEntry="UnregisterTIP" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="UnregisterTIPRollback64" DllEntry="UnregisterTIPRollback" Execute="rollback" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="EnsureAllApplicationPackagesPermisssions" DllEntry="EnsureAllApplicationPackagesPermisssions" Execute="deferred" Impersonate="no" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="OpenUninstallSurveyPage" DllEntry="OpenUninstallSurveyPage" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="ShutdownServer" DllEntry="ShutdownServer" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="RestoreUserIMEEnvironment" DllEntry="RestoreUserIMEEnvironment" Impersonate="yes" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="InitialInstallation" DllEntry="InitialInstallation" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="InitialInstallationCommit" DllEntry="InitialInstallationCommit" Execute="commit" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="EnableTipProfile" DllEntry="EnableTipProfile" Execute="commit" Impersonate="yes" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="HideCancelButton" DllEntry="HideCancelButton" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="SaveCustomActionData" DllEntry="SaveCustomActionData" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="RestoreServiceState" DllEntry="RestoreServiceState" Impersonate="no" Execute="deferred" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="StopCacheServiceForRollback" DllEntry="StopCacheService" Impersonate="no" Execute="rollback" Return="ignore" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="WriteApValue" DllEntry="WriteApValue" Execute="deferred" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="WriteApValueRollback" DllEntry="WriteApValueRollback" Execute="rollback" Impersonate="no" BinaryKey="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="NewerVersionError" Error="4000" />
+
+    <InstallExecuteSequence>
+      <Custom Action="HideCancelButton" After="InitialInstallation" />
+      <Custom Action="InitialInstallation" After="InstallInitialize">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
+      <Custom Action="SaveCustomActionData" Before="StopServices">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="WriteApValueRollback" Before="WriteApValue">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="WriteApValue" Before="SelfUnregModules">(NOT (REMOVE="ALL"))</Custom>
+      <SelfUnregModules />
+      <Custom Action="RestoreUserIMEEnvironment" After="SelfUnregModules">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
+      <!-- This action invoked only when removal of the old product failed. -->
+      <Custom Action="UnregisterTIPRollback64" After="RestoreUserIMEEnvironment">(REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)</Custom>
+      <Custom Action="UnregisterTIP64" After="UnregisterTIPRollback64">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)</Custom>
+      <Custom Action="OpenUninstallSurveyPage" After="UnregisterTIP64">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)</Custom>
+      <SelfRegModules />
+      <!--
+        The InstallValidate action notifies the user
+        if GoogleIMEJaConverter.exe and GoogleIMEJaRenderer.exe
+        are currenly running. So the ShutdownServer action
+        needs to be callled before the InstallValidate action.
+      -->
+      <Custom Action="ShutdownServer" Before="InstallValidate">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
+      <Custom Action="NewerVersionError" After="FindRelatedProducts">NEWERVERSIONDETECTED</Custom>
+      <!--
+        RemoveExistingProducts needs to be scheduled between InstallExecute and
+        InstallFinalize to correctly deal with errors which occur when the old
+        product is removed on upgrade.
+        http://msdn.microsoft.com/en-us/library/aa371197(VS.85).aspx
+      -->
+      <InstallExecute Before="RemoveExistingProducts" />
+      <RemoveExistingProducts Before="StopCacheServiceForRollback" />
+      <!--
+        When the installer enters rollback mode, the cache service should be
+        stopped before RemoveExistingProducts is invoked.
+      -->
+      <Custom Action="StopCacheServiceForRollback" Before="RestoreServiceState">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="RestoreServiceState" Before="RegisterTIPRollback64">(NOT (REMOVE="ALL"))</Custom>
+      <!--
+        If error occurs after RegisterTIP64,
+        the registration needs to be canceled by registering the old product.
+        So RegisterTIP64 needs to be scheduled after RemoveExistingProduct.
+      -->
+      <Custom Action="RegisterTIPRollback64" Before="RegisterTIP64">(NOT (REMOVE="ALL")) AND (VersionNT64) AND (NOT UPGRADING)</Custom>
+      <Custom Action="RegisterTIP64" Before="EnsureAllApplicationPackagesPermisssions">(NOT (REMOVE="ALL")) AND (VersionNT64)</Custom>
+      <Custom Action="EnsureAllApplicationPackagesPermisssions" Before="InitialInstallationCommit">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="InitialInstallationCommit" Before="EnableTipProfile">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
+      <Custom Action="EnableTipProfile" Before="InstallFinalize">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
+      <!-- show reboot dialog to execute pending file opartions -->
+      <?if ($(var.VSConfigurationName) = "Release") ?>
+        <ScheduleReboot After="InstallFinalize">(REMOVE="ALL")</ScheduleReboot>
+      <?endif?>
+    </InstallExecuteSequence>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder" Name="PFiles">
+        <Directory Id="GoogleDir" Name="Google">
+          <Directory Id="GIMEJaDir" Name="Google Japanese Input">
+            <Component Id="GIMEJaConverter" Guid="*">
+              <File Id="GoogleIMEJaConverter.exe" Name="GoogleIMEJaConverter.exe" DiskId="1" Checksum="yes" Source="$(var.MozcServer64Path)" Vital="yes" />
             </Component>
-            <Component Id='GIMEJaCacheService' Guid='*'>
-              <File Id='GoogleIMEJaCacheService.exe'
-                  Name='GoogleIMEJaCacheService.exe' DiskId='1'
-                  Checksum='yes' Source='$(var.MozcCacheService64Path)'
-                  Vital='yes' KeyPath='yes' />
+            <Component Id="GIMEJaCacheService" Guid="*">
+              <File Id="GoogleIMEJaCacheService.exe" Name="GoogleIMEJaCacheService.exe" DiskId="1" Checksum="yes" Source="$(var.MozcCacheService64Path)" Vital="yes" KeyPath="yes" />
               <!--
                 To use localized description, set Description as follows:
-                  Description='@[#GoogleIMEJaCacheService.exe],-N'
+                  Description="@[#GoogleIMEJaCacheService.exe],-N"
                 where N is the resource ID for the description.
                 http://msdn.microsoft.com/en-us/library/ms685156.aspx
 
                 See server/mozc_cache_service_resource.h for resource IDs
                 used below.
 
-                The servie name specified in 'Name' needs to be the same to
+                The servie name specified in "Name" needs to be the same to
                 |mozc::kMozcCacheServiceName| defined in base/const.h.
                 TODO(yukawa): Share these parameters. http://b/2357270
               -->
-              <ServiceInstall Id='GoogleIMEJaCacheService'
-                  Name='GoogleIMEJaCacheService'
-                  DisplayName='@[#GoogleIMEJaCacheService.exe],-100'
-                  Description='@[#GoogleIMEJaCacheService.exe],-101'
-                  Type='ownProcess' Start='auto' ErrorControl='normal' />
+              <ServiceInstall Id="GoogleIMEJaCacheService" Name="GoogleIMEJaCacheService" DisplayName="@[#GoogleIMEJaCacheService.exe],-100" Description="@[#GoogleIMEJaCacheService.exe],-101" Type="ownProcess" Start="auto" ErrorControl="normal" />
               <!--
                 The following entry which stops our cache service both on
                 installation and uninstallation should be the first entry in
@@ -155,139 +239,92 @@
                 recognise that the specified service will be stopped during the
                 instalaltion.  See http://b/2440272 for details.
               -->
-              <ServiceControl Id='StopGoogleIMEJaCacheService'
-                  Name='GoogleIMEJaCacheService' Stop='both' Remove='uninstall'
-                  Wait='yes' />
+              <ServiceControl Id="StopGoogleIMEJaCacheService" Name="GoogleIMEJaCacheService" Stop="both" Remove="uninstall" Wait="yes" />
             </Component>
-            <Component Id='GIMEJaTIP32' Guid='*' Permanent='no' Win64="no">
-              <File Id='GoogleIMEJaTIP32.dll'
-                  Name='GoogleIMEJaTIP32.dll'
-                  DiskId='1' Checksum='yes'
-                  Source='$(var.MozcTIP32Path)' Vital='yes'>
-                <Class Context="InprocServer32" ThreadingModel="apartment"
-                    Description="Google Japanese Input"
-                    Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
+            <Component Id="GIMEJaTIP32" Guid="*" Permanent="no" Win64="no">
+              <File Id="GoogleIMEJaTIP32.dll" Name="GoogleIMEJaTIP32.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP32Path)" Vital="yes">
+                <Class Context="InprocServer32" ThreadingModel="apartment" Description="Google Japanese Input" Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
               </File>
             </Component>
-            <Component Id='GIMEJaTIP64' Guid='*' Permanent='no' Win64="yes">
-              <File Id='GoogleIMEJaTIP64.dll'
-                  Name='GoogleIMEJaTIP64.dll'
-                  DiskId='1' Checksum='yes'
-                  Source='$(var.MozcTIP64Path)' Vital='yes'>
-                <Class Context="InprocServer32" ThreadingModel="apartment"
-                    Description="Google Japanese Input"
-                    Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
+            <Component Id="GIMEJaTIP64" Guid="*" Permanent="no" Win64="yes">
+              <File Id="GoogleIMEJaTIP64.dll" Name="GoogleIMEJaTIP64.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64Path)" Vital="yes">
+                <Class Context="InprocServer32" ThreadingModel="apartment" Description="Google Japanese Input" Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
               </File>
             </Component>
-            <Component Id='GIMEJaBroker' Guid='*' Permanent='no'>
-              <File Id='GoogleIMEJaBroker.exe'
-                  Name='GoogleIMEJaBroker.exe'
-                  DiskId='1' Checksum='yes'
-                  Source='$(var.MozcBroker64Path)' Vital='yes' />
+            <Component Id="GIMEJaBroker" Guid="*" Permanent="no">
+              <File Id="GoogleIMEJaBroker.exe" Name="GoogleIMEJaBroker.exe" DiskId="1" Checksum="yes" Source="$(var.MozcBroker64Path)" Vital="yes" />
             </Component>
-            <Component Id='GIMEJaRenderer' Guid='*'>
-              <File Id='GoogleIMEJaRenderer.exe'
-                  Name='GoogleIMEJaRenderer.exe' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.MozcRenderer64Path)' />
+            <Component Id="GIMEJaRenderer" Guid="*">
+              <File Id="GoogleIMEJaRenderer.exe" Name="GoogleIMEJaRenderer.exe" DiskId="1" Vital="yes" Checksum="yes" Source="$(var.MozcRenderer64Path)" />
             </Component>
-            <Component Id='GIMEJaTool' Guid='*'>
-              <File Id='GoogleIMEJaTool.exe'
-                  Name='GoogleIMEJaTool.exe' DiskId='1'
-                  Checksum='yes' Source='$(var.MozcToolPath)' Vital='yes' />
+            <Component Id="GIMEJaTool" Guid="*">
+              <File Id="GoogleIMEJaTool.exe" Name="GoogleIMEJaTool.exe" DiskId="1" Checksum="yes" Source="$(var.MozcToolPath)" Vital="yes" />
             </Component>
             <?if $(var.VSConfigurationName) = "Release" ?>
-              <Component Id='msvcp140' Guid='*'>
-                <File Id='msvcp140.dll' Name='msvcp140.dll'
-                    DiskId='1' Checksum='yes'
-                    Source='$(var.ReleaseRedistCrt64Dir)/msvcp140.dll' />
+              <Component Id="msvcp140" Guid="*">
+                <File Id="msvcp140.dll" Name="msvcp140.dll" DiskId="1" Checksum="yes" Source="$(var.ReleaseRedistCrt64Dir)/msvcp140.dll" />
               </Component>
-              <Component Id='msvcp140_1' Guid='*'>
-                <File Id='msvcp140_1.dll' Name='msvcp140_1.dll'
-                    DiskId='1' Checksum='yes'
-                    Source='$(var.ReleaseRedistCrt64Dir)/msvcp140_1.dll' />
+              <Component Id="msvcp140_1" Guid="*">
+                <File Id="msvcp140_1.dll" Name="msvcp140_1.dll" DiskId="1" Checksum="yes" Source="$(var.ReleaseRedistCrt64Dir)/msvcp140_1.dll" />
               </Component>
-              <Component Id='msvcp140_2' Guid='*'>
-                <File Id='msvcp140_2.dll' Name='msvcp140_2.dll'
-                    DiskId='1' Checksum='yes'
-                    Source='$(var.ReleaseRedistCrt64Dir)/msvcp140_2.dll' />
+              <Component Id="msvcp140_2" Guid="*">
+                <File Id="msvcp140_2.dll" Name="msvcp140_2.dll" DiskId="1" Checksum="yes" Source="$(var.ReleaseRedistCrt64Dir)/msvcp140_2.dll" />
               </Component>
-              <Component Id='vcruntime140' Guid='*'>
-                <File Id='vcruntime140.dll' Name='vcruntime140.dll'
-                    DiskId='1' Checksum='yes'
-                    Source='$(var.ReleaseRedistCrt64Dir)/vcruntime140.dll' />
+              <Component Id="vcruntime140" Guid="*">
+                <File Id="vcruntime140.dll" Name="vcruntime140.dll" DiskId="1" Checksum="yes" Source="$(var.ReleaseRedistCrt64Dir)/vcruntime140.dll" />
               </Component>
-              <Component Id='vcruntime140_1' Guid='*'>
-                <File Id='vcruntime140_1.dll' Name='vcruntime140_1.dll'
-                    DiskId='1' Checksum='yes'
-                    Source='$(var.ReleaseRedistCrt64Dir)/vcruntime140_1.dll' />
+              <Component Id="vcruntime140_1" Guid="*">
+                <File Id="vcruntime140_1.dll" Name="vcruntime140_1.dll" DiskId="1" Checksum="yes" Source="$(var.ReleaseRedistCrt64Dir)/vcruntime140_1.dll" />
               </Component>
-              <Component Id='QtCoreDll' Guid='*'>
+              <Component Id="QtCoreDll" Guid="*">
                 <!-- Always overwrite: b/31845781 -->
-                <RemoveFile Id='$(var.QtCoreFilename)' Name='$(var.QtCoreFilename)' On="install" />
-                <File Id='$(var.QtCoreFilename)'
-                    Name='$(var.QtCoreFilename)' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.QtDir)/bin/$(var.QtCoreFilename)' />
+                <RemoveFile Id="$(var.QtCoreFilename)" Name="$(var.QtCoreFilename)" On="install" />
+                <File Id="$(var.QtCoreFilename)" Name="$(var.QtCoreFilename)" DiskId="1" Vital="yes" Checksum="yes" Source="$(var.QtDir)/bin/$(var.QtCoreFilename)" />
               </Component>
-              <Component Id='QtGuiDll' Guid='*'>
+              <Component Id="QtGuiDll" Guid="*">
                 <!-- Always overwrite: b/31845781 -->
-                <RemoveFile Id='$(var.QtGuiFilename)' Name='$(var.QtGuiFilename)' On="install" />
-                <File Id='$(var.QtGuiFilename)'
-                    Name='$(var.QtGuiFilename)' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.QtDir)/bin/$(var.QtGuiFilename)' />
+                <RemoveFile Id="$(var.QtGuiFilename)" Name="$(var.QtGuiFilename)" On="install" />
+                <File Id="$(var.QtGuiFilename)" Name="$(var.QtGuiFilename)" DiskId="1" Vital="yes" Checksum="yes" Source="$(var.QtDir)/bin/$(var.QtGuiFilename)" />
               </Component>
-              <Component Id='QtWidgetsDll' Guid='*'>
+              <Component Id="QtWidgetsDll" Guid="*">
                 <!-- Always overwrite: b/31845781 -->
-                <RemoveFile Id='$(var.QtWidgetsFilename)' Name='$(var.QtWidgetsFilename)' On="install" />
-                <File Id='$(var.QtWidgetsFilename)'
-                    Name='$(var.QtWidgetsFilename)' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.QtDir)/bin/$(var.QtWidgetsFilename)' />
+                <RemoveFile Id="$(var.QtWidgetsFilename)" Name="$(var.QtWidgetsFilename)" On="install" />
+                <File Id="$(var.QtWidgetsFilename)" Name="$(var.QtWidgetsFilename)" DiskId="1" Vital="yes" Checksum="yes" Source="$(var.QtDir)/bin/$(var.QtWidgetsFilename)" />
               </Component>
             <?else?>
-              <Component Id='QtCoredDll' Guid='*'>
+              <Component Id="QtCoredDll" Guid="*">
                 <!-- Always overwrite: b/31845781 -->
-                <RemoveFile Id='$(var.QtCoredFilename)' Name='$(var.QtCoredFilename)' On="install" />
-                <File Id='$(var.QtCoredFilename)'
-                    Name='$(var.QtCoredFilename)' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.QtDir)/bin/$(var.QtCoredFilename)' />
+                <RemoveFile Id="$(var.QtCoredFilename)" Name="$(var.QtCoredFilename)" On="install" />
+                <File Id="$(var.QtCoredFilename)" Name="$(var.QtCoredFilename)" DiskId="1" Vital="yes" Checksum="yes" Source="$(var.QtDir)/bin/$(var.QtCoredFilename)" />
               </Component>
-              <Component Id='QtGuidDll' Guid='*'>
+              <Component Id="QtGuidDll" Guid="*">
                 <!-- Always overwrite: b/31845781 -->
-                <RemoveFile Id='$(var.QtGuidFilename)' Name='$(var.QtGuidFilename)' On="install" />
-                <File Id='$(var.QtGuidFilename)'
-                    Name='$(var.QtGuidFilename)' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.QtDir)/bin/$(var.QtGuidFilename)' />
+                <RemoveFile Id="$(var.QtGuidFilename)" Name="$(var.QtGuidFilename)" On="install" />
+                <File Id="$(var.QtGuidFilename)" Name="$(var.QtGuidFilename)" DiskId="1" Vital="yes" Checksum="yes" Source="$(var.QtDir)/bin/$(var.QtGuidFilename)" />
               </Component>
-              <Component Id='QtWidgetsdDll' Guid='*'>
+              <Component Id="QtWidgetsdDll" Guid="*">
                 <!-- Always overwrite: b/31845781 -->
-                <RemoveFile Id='$(var.QtWidgetsdFilename)' Name='$(var.QtWidgetsdFilename)' On="install" />
-                <File Id='$(var.QtWidgetsdFilename)'
-                    Name='$(var.QtWidgetsdFilename)' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.QtDir)/bin/$(var.QtWidgetsdFilename)' />
+                <RemoveFile Id="$(var.QtWidgetsdFilename)" Name="$(var.QtWidgetsdFilename)" On="install" />
+                <File Id="$(var.QtWidgetsdFilename)" Name="$(var.QtWidgetsdFilename)" DiskId="1" Vital="yes" Checksum="yes" Source="$(var.QtDir)/bin/$(var.QtWidgetsdFilename)" />
               </Component>
             <?endif?>
-            <Directory Id='DocumentsDir' Name='documents'>
-              <Component Id='CreditsEn' Guid='*'>
-                <File Id='credits_en.html' Name='credits_en.html' DiskId='1'
-                      Checksum='yes' Vital='yes'
-                      Source='$(var.DocumentsDir)/credits_en.html' />
+            <Directory Id="DocumentsDir" Name="documents">
+              <Component Id="CreditsEn" Guid="*">
+                <File Id="credits_en.html" Name="credits_en.html" DiskId="1" Checksum="yes" Vital="yes" Source="$(var.DocumentsDir)/credits_en.html" />
               </Component>
             </Directory>
-            <Directory Id='QtPlatformsPluginDir' Name='platforms'>
+            <Directory Id="QtPlatformsPluginDir" Name="platforms">
               <?if $(var.VSConfigurationName) = "Debug" ?>
-                <Component Id='QWindowsdDll' Guid='*'>
+                <Component Id="QWindowsdDll" Guid="*">
                   <!-- Always overwrite: b/31845781 -->
-                  <RemoveFile Id='qwindowsd.dll' Name='qwindowsd.dll' On="install" />
-                  <File Id='qwindowsd.dll'
-                      Name='qwindowsd.dll' DiskId='1' Vital='yes'
-                      Checksum='yes' Source='$(var.QtDir)/plugins/platforms/qwindowsd.dll' />
+                  <RemoveFile Id="qwindowsd.dll" Name="qwindowsd.dll" On="install" />
+                  <File Id="qwindowsd.dll" Name="qwindowsd.dll" DiskId="1" Vital="yes" Checksum="yes" Source="$(var.QtDir)/plugins/platforms/qwindowsd.dll" />
                 </Component>
               <?else?>
-                <Component Id='QWindowsDll' Guid='*'>
+                <Component Id="QWindowsDll" Guid="*">
                   <!-- Always overwrite: b/31845781 -->
-                  <RemoveFile Id='qwindows.dll' Name='qwindows.dll' On="install" />
-                  <File Id='qwindows.dll'
-                      Name='qwindows.dll' DiskId='1' Vital='yes'
-                      Checksum='yes' Source='$(var.QtDir)/plugins/platforms/qwindows.dll' />
+                  <RemoveFile Id="qwindows.dll" Name="qwindows.dll" On="install" />
+                  <File Id="qwindows.dll" Name="qwindows.dll" DiskId="1" Vital="yes" Checksum="yes" Source="$(var.QtDir)/plugins/platforms/qwindows.dll" />
                 </Component>
               <?endif?>
             </Directory>
@@ -296,29 +333,14 @@
       </Directory>
 
       <!-- Write registry keys to make the installer compatible with Omaha. -->
-      <Component Id='OmahaRegister' Guid='*'>
-        <RegistryValue Id='OmahaClientRegPv' Root='HKLM'
-            Key='$(var.OmahaClientKey)'
-            Name='pv' Value='$(var.MozcVersion)' Action='write'
-            Type='string' />
-        <RegistryValue Id='OmahaClientRegName' Root='HKLM'
-            Key='$(var.OmahaClientKey)'
-            Name='name' Value='Google 日本語入力' Action='write'
-            Type='string' />
-        <RegistryValue Id='OmahaClientRegLang' Root='HKLM'
-            Key='$(var.OmahaClientKey)'
-            Name='lang' Value='ja' Action='write'
-            Type='string' />
-        <RegistryValue Id='OmahaClientRegOOPCrashes' Root='HKLM'
-            Key='$(var.OmahaClientKey)'
-            Name='oopcrashes' Value='1' Action='write'
-            Type='integer' />
+      <Component Id="OmahaRegister" Guid="*">
+        <RegistryValue Id="OmahaClientRegPv" Root="HKLM" Key="$(var.OmahaClientKey)" Name="pv" Value="$(var.MozcVersion)" Action="write" Type="string" />
+        <RegistryValue Id="OmahaClientRegName" Root="HKLM" Key="$(var.OmahaClientKey)" Name="name" Value="Google 日本語入力" Action="write" Type="string" />
+        <RegistryValue Id="OmahaClientRegLang" Root="HKLM" Key="$(var.OmahaClientKey)" Name="lang" Value="ja" Action="write" Type="string" />
+        <RegistryValue Id="OmahaClientRegOOPCrashes" Root="HKLM" Key="$(var.OmahaClientKey)" Name="oopcrashes" Value="1" Action="write" Type="integer" />
         <!-- enable usagestats for dev channel users -->
         <?if ($(var.OmahaChannelType) = "dev") ?>
-          <RegistryValue Id='OmahaUsageStats' Root='HKLM'
-              Key='$(var.OmahaClientStateKey)'
-              Name='usagestats' Value='1' Action='write'
-              Type='integer' />
+          <RegistryValue Id="OmahaUsageStats" Root="HKLM" Key="$(var.OmahaClientStateKey)" Name="usagestats" Value="1" Action="write" Type="integer" />
         <?endif?>
       </Component>
 
@@ -327,223 +349,24 @@
         GoogleIMEJaRenderer.exe exit when a user logoff via remote desctop
         connection.
       -->
-      <Component Id='SysProcs' Guid='*'>
-        <RegistryValue Id='SysProcsGIMEJaConverter' Root='HKLM'
-            Key='SYSTEM\CurrentControlSet\Control\Terminal Server\SysProcs'
-            Name='GoogleIMEJaConverter.exe' Value='0' Action='write'
-            Type='integer' />
-        <RegistryValue Id='SysProcsGIMEJaRenderer' Root='HKLM'
-            Key='SYSTEM\CurrentControlSet\Control\Terminal Server\SysProcs'
-            Name='GoogleIMEJaRenderer.exe' Value='0' Action='write'
-            Type='integer' />
+      <Component Id="SysProcs" Guid="*">
+        <RegistryValue Id="SysProcsGIMEJaConverter" Root="HKLM" Key="SYSTEM\CurrentControlSet\Control\Terminal Server\SysProcs" Name="GoogleIMEJaConverter.exe" Value="0" Action="write" Type="integer" />
+        <RegistryValue Id="SysProcsGIMEJaRenderer" Root="HKLM" Key="SYSTEM\CurrentControlSet\Control\Terminal Server\SysProcs" Name="GoogleIMEJaRenderer.exe" Value="0" Action="write" Type="integer" />
       </Component>
 
-      <Component Id='OmahaRegLaunchCmdLine' Guid='*' Permanent='no'>
+      <Component Id="OmahaRegLaunchCmdLine" Guid="*" Permanent="no">
         <Condition>(NOT UPGRADING)</Condition>
-        <RegistryValue Id='OmahaLaunchCmdLineValue' Root='HKLM'
-            Key='$(var.OmahaClientStateKey)'
-            Name='InstallerSuccessLaunchCmdLine' Action='write' Type='string'
-            Value='&quot;[GIMEJaDir]GoogleIMEJaTool.exe&quot; --mode=post_install_dialog' />
+        <RegistryValue Id="OmahaLaunchCmdLineValue" Root="HKLM" Key="$(var.OmahaClientStateKey)" Name="InstallerSuccessLaunchCmdLine" Action="write" Type="string" Value="&quot;[GIMEJaDir]GoogleIMEJaTool.exe&quot; --mode=post_install_dialog" />
       </Component>
 
       <!--
         Write a registry key to launch GoogleIMEJaConverter.exe and
         GoogleIMEJaRenderer.exe automatically after user logon.
       -->
-      <Component Id='PrelaunchProcesses' Guid='*'>
-        <RegistryValue Id='RunBroker' Root='HKLM'
-            Key='Software\Microsoft\Windows\CurrentVersion\Run'
-            Name='Google Japanese Input Prelauncher' Action='write' Type='string'
-            Value='&quot;[GIMEJaDir]GoogleIMEJaBroker.exe&quot; --mode=prelaunch_processes' />
+      <Component Id="PrelaunchProcesses" Guid="*">
+        <RegistryValue Id="RunBroker" Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Run" Name="Google Japanese Input Prelauncher" Action="write" Type="string" Value="&quot;[GIMEJaDir]GoogleIMEJaBroker.exe&quot; --mode=prelaunch_processes" />
       </Component>
     </Directory>
 
-    <!--
-       TODO: Consider migrating to 'MajorUpgrade' rule.
-       See https://github.com/google/mozc/issues/734#issuecomment-1524294119
-    -->
-    <Upgrade Id='$(var.UpgradeCode)'>
-      <UpgradeVersion
-          Minimum='0.0.0.0' IncludeMinimum='yes'
-          Maximum='$(var.MozcVersion)' IncludeMaximum='yes'
-          OnlyDetect='no' Property='UPGRADING'/>
-      <UpgradeVersion
-          Minimum='$(var.MozcVersion)' IncludeMinimum='no'
-          OnlyDetect='yes' Property='NEWERVERSIONDETECTED' />
-    </Upgrade>
-
-    <UI>
-      <Error Id="4000">新しいバージョンの Google 日本語入力が既にインストールされています。</Error>
-    </UI>
-
-    <Feature Id='GIMEJaInstall' Title='Google 日本語入力' Level='1'>
-      <ComponentRef Id='GIMEJaTIP32' />
-      <ComponentRef Id='GIMEJaTIP64' />
-      <ComponentRef Id='GIMEJaBroker' />
-      <ComponentRef Id='GIMEJaConverter' />
-      <ComponentRef Id='GIMEJaCacheService' />
-      <ComponentRef Id='GIMEJaRenderer' />
-      <ComponentRef Id='GIMEJaTool' />
-      <?if $(var.VSConfigurationName) = "Release" ?>
-        <ComponentRef Id='msvcp140' />
-        <ComponentRef Id='msvcp140_1' />
-        <ComponentRef Id='msvcp140_2' />
-        <ComponentRef Id='vcruntime140' />
-        <ComponentRef Id='vcruntime140_1' />
-        <ComponentRef Id='QtCoreDll' />
-        <ComponentRef Id='QtGuiDll' />
-        <ComponentRef Id='QtWidgetsDll' />
-        <ComponentRef Id='QWindowsDll' />
-      <?else?>
-        <ComponentRef Id='QtCoredDll' />
-        <ComponentRef Id='QtGuidDll' />
-        <ComponentRef Id='QtWidgetsdDll' />
-        <ComponentRef Id='QWindowsdDll' />
-      <?endif?>
-      <ComponentRef Id='OmahaRegister' />
-      <ComponentRef Id='OmahaRegLaunchCmdLine' />
-      <ComponentRef Id='SysProcs' />
-      <ComponentRef Id='PrelaunchProcesses' />
-      <ComponentRef Id='CreditsEn' />
-    </Feature>
-
-    <Binary Id='GoogleIMEJaInstallerHelper.dll' SourceFile='$(var.CustomActions64Path)' />
-
-    <CustomAction Id='RegisterTIP64' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='RegisterTIP' Execute='deferred' Impersonate='no' />
-    <CustomAction Id='RegisterTIPRollback64' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='RegisterTIPRollback' Execute='rollback' Impersonate='no' />
-    <CustomAction Id='UnregisterTIP64' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='UnregisterTIP' Execute='deferred' Impersonate='no'
-        Return='ignore' />
-    <CustomAction Id='UnregisterTIPRollback64' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='UnregisterTIPRollback' Execute='rollback' Impersonate='no'
-        Return='ignore' />
-    <CustomAction Id='EnsureAllApplicationPackagesPermisssions'
-        BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='EnsureAllApplicationPackagesPermisssions' Execute='deferred'
-        Impersonate='no' Return='ignore' />
-    <CustomAction Id='OpenUninstallSurveyPage' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='OpenUninstallSurveyPage' Impersonate='yes' Return='ignore' />
-    <CustomAction Id='ShutdownServer' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='ShutdownServer' Impersonate='yes' Return='ignore' />
-    <CustomAction Id='RestoreUserIMEEnvironment' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='RestoreUserIMEEnvironment' Impersonate='yes' Return='ignore'/>
-    <CustomAction Id='InitialInstallation' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='InitialInstallation' Execute='deferred'
-        Impersonate='no' />
-    <CustomAction Id='InitialInstallationCommit' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='InitialInstallationCommit' Execute='commit'
-        Impersonate='no' />
-    <CustomAction Id='EnableTipProfile' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='EnableTipProfile' Execute='commit'
-        Impersonate='yes' />
-    <CustomAction Id='HideCancelButton' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='HideCancelButton' Return='ignore' />
-    <CustomAction Id='SaveCustomActionData' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='SaveCustomActionData' />
-    <CustomAction Id='RestoreServiceState' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='RestoreServiceState' Impersonate='no' Execute='deferred'
-        Return='ignore' />
-    <CustomAction Id='StopCacheServiceForRollback' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='StopCacheService' Impersonate='no'
-        Execute='rollback' Return='ignore' />
-    <CustomAction Id='WriteApValue' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='WriteApValue' Execute='deferred' Impersonate='no' />
-    <CustomAction Id='WriteApValueRollback' BinaryKey='GoogleIMEJaInstallerHelper.dll'
-        DllEntry='WriteApValueRollback' Execute='rollback' Impersonate='no' />
-    <CustomAction Id="NewerVersionError" Error="4000"/>
-
-    <InstallExecuteSequence>
-      <Custom Action='HideCancelButton' After='InitialInstallation' />
-      <Custom Action='InitialInstallation' After='InstallInitialize'>
-        (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
-      </Custom>
-      <Custom Action='SaveCustomActionData' Before='StopServices' >
-        (NOT (REMOVE="ALL"))
-      </Custom>
-      <Custom Action='WriteApValueRollback' Before='WriteApValue' >
-        (NOT (REMOVE="ALL"))
-      </Custom>
-      <Custom Action='WriteApValue' Before='SelfUnregModules' >
-        (NOT (REMOVE="ALL"))
-      </Custom>
-      <SelfUnregModules />
-      <Custom Action='RestoreUserIMEEnvironment' After='SelfUnregModules'>
-        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
-      </Custom>
-      <!-- This action invoked only when removal of the old product failed. -->
-      <Custom Action='UnregisterTIPRollback64'
-          After='RestoreUserIMEEnvironment' >
-        (REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)
-      </Custom>
-      <Custom Action='UnregisterTIP64' After='UnregisterTIPRollback64' >
-        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)
-      </Custom>
-      <Custom Action='OpenUninstallSurveyPage' After='UnregisterTIP64' >
-        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)
-      </Custom>
-      <SelfRegModules />
-      <!--
-        The InstallValidate action notifies the user
-        if GoogleIMEJaConverter.exe and GoogleIMEJaRenderer.exe
-        are currenly running. So the ShutdownServer action
-        needs to be callled before the InstallValidate action.
-      -->
-      <Custom Action='ShutdownServer' Before='InstallValidate' >
-        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
-      </Custom>
-      <Custom Action='NewerVersionError' After='FindRelatedProducts'>
-        NEWERVERSIONDETECTED
-      </Custom>
-      <!--
-        RemoveExistingProducts needs to be scheduled between InstallExecute and
-        InstallFinalize to correctly deal with errors which occur when the old
-        product is removed on upgrade.
-        http://msdn.microsoft.com/en-us/library/aa371197(VS.85).aspx
-      -->
-      <InstallExecute Before='RemoveExistingProducts' />
-      <RemoveExistingProducts Before='StopCacheServiceForRollback' />
-      <!--
-        When the installer enters rollback mode, the cache service should be
-        stopped before RemoveExistingProducts is invoked.
-      -->
-      <Custom Action='StopCacheServiceForRollback' Before='RestoreServiceState'>
-        (NOT (REMOVE="ALL"))
-      </Custom>
-      <Custom Action='RestoreServiceState' Before='RegisterTIPRollback64'>
-        (NOT (REMOVE="ALL"))
-      </Custom>
-      <!--
-        If error occurs after RegisterTIP64,
-        the registration needs to be canceled by registering the old product.
-        So RegisterTIP64 needs to be scheduled after RemoveExistingProduct.
-      -->
-      <Custom Action='RegisterTIPRollback64' Before='RegisterTIP64' >
-        (NOT (REMOVE="ALL")) AND (VersionNT64) AND (NOT UPGRADING)
-      </Custom>
-      <Custom Action='RegisterTIP64'
-          Before='EnsureAllApplicationPackagesPermisssions' >
-        (NOT (REMOVE="ALL")) AND (VersionNT64)
-      </Custom>
-      <Custom Action='EnsureAllApplicationPackagesPermisssions'
-          Before='InitialInstallationCommit' >
-        (NOT (REMOVE="ALL"))
-      </Custom>
-      <Custom Action='InitialInstallationCommit'
-          Before='EnableTipProfile'>
-        (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
-      </Custom>
-      <Custom Action='EnableTipProfile'
-          Before='InstallFinalize'>
-        (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
-      </Custom>
-      <!-- show reboot dialog to execute pending file opartions -->
-      <?if ($(var.VSConfigurationName) = "Release") ?>
-        <ScheduleReboot After='InstallFinalize'>
-          (REMOVE="ALL")
-        </ScheduleReboot>
-      <?endif?>
-    </InstallExecuteSequence>
   </Product>
 </Wix>

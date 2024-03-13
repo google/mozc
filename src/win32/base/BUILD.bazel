@@ -164,9 +164,7 @@ mozc_cc_library(
         ":input_dll",
         ":tsf_profile",
         "//base:logging",
-        "//base:system_util",
         "//base/win32:wide_char",
-        "@com_google_absl//absl/base:core_headers",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -231,27 +229,6 @@ mozc_cc_test(
         ":keyboard",
         "//testing:gunit_main",
         "@com_google_absl//absl/base",
-    ],
-)
-
-mozc_cc_library(
-    name = "keyboard_layout_id",
-    srcs = ["keyboard_layout_id.cc"],
-    hdrs = ["keyboard_layout_id.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base:logging"],
-)
-
-mozc_cc_test(
-    name = "keyboard_layout_id_test",
-    srcs = ["keyboard_layout_id_test.cc"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":keyboard_layout_id",
-        "//base:util",
-        "//testing:gunit_main",
     ],
 )
 

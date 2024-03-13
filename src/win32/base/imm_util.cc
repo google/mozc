@@ -29,23 +29,17 @@
 
 #include "win32/base/imm_util.h"
 
-// clang-format off
-#include <windows.h>  // windows.h needs to come before imm.h
-// clang-format on
-#include <imm.h>
 #include <msctf.h>
 #include <objbase.h>
 #include <wil/com.h>
 #include <wil/resource.h>
+#include <windows.h>
 
-#include <cstdint>
 #include <iterator>
 #include <string>
 #include <vector>
 
-#include "absl/base/optimization.h"
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/win32/wide_char.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/tsf_profile.h"
@@ -56,15 +50,6 @@
 
 namespace mozc {
 namespace win32 {
-namespace {
-
-// Timeout value used by a work around against b/5765783. As b/6165722
-// this value is determined to be:
-// - smaller than the default time-out used in IsHungAppWindow API.
-// - similar to the same timeout used by TSF.
-constexpr uint32_t kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
-
-}  // namespace
 
 bool ImeUtil::SetDefault() {
   wchar_t clsid[64] = {};
@@ -113,39 +98,6 @@ bool ImeUtil::SetDefault() {
   }
 
   return true;
-}
-
-// Wait for "MSCTF.AsmCacheReady.<desktop name><session #>" event signal to
-// work around b/5765783.
-bool ImeUtil::WaitForAsmCacheReady(uint32_t timeout_msec) {
-  const std::wstring event_name =
-      Utf8ToWide(SystemUtil::GetMSCTFAsmCacheReadyEventName());
-  if (event_name.empty()) {
-    LOG(ERROR) << "Failed to compose event name.";
-    return false;
-  }
-  wil::unique_event_nothrow event;
-  if (!event.try_open(event_name.c_str(), SYNCHRONIZE, false)) {
-    // Event not found.
-    // Returns true assuming that we need not to wait anything.
-    return true;
-  }
-  const DWORD result = ::WaitForSingleObject(event.get(), timeout_msec);
-  switch (result) {
-    case WAIT_OBJECT_0:
-      return true;
-    case WAIT_TIMEOUT:
-      LOG(ERROR) << "WaitForSingleObject timeout. timeout_msec: "
-                 << timeout_msec;
-      return false;
-    case WAIT_ABANDONED:
-      LOG(ERROR) << "Event was abandoned";
-      return false;
-    default:
-      LOG(ERROR) << "WaitForSingleObject with unknown error: " << result;
-      return false;
-  }
-  ABSL_UNREACHABLE();
 }
 
 }  // namespace win32

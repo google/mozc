@@ -104,7 +104,6 @@
           'sources': [
             'imm_reconvert_string.cc',
             'imm_util.cc',
-            'keyboard_layout_id.cc',
             'tsf_profile.cc',
             'tsf_registrar.cc',
           ],
@@ -120,7 +119,6 @@
           'sources': [
             'imm_reconvert_string_test.cc',
             'input_dll_test.cc',
-            'keyboard_layout_id_test.cc',
           ],
           'dependencies': [
             '<(mozc_oss_src_dir)/base/base.gyp:base',

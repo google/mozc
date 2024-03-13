@@ -114,7 +114,7 @@ bool SessionServer::Process(absl::string_view request, std::string *response) {
   }
 
   // debug message
-  MOZC_VLOG(2) << MOZC_LOG_PROTOBUF(command);
+  MOZC_VLOG(2) << command;
 
   return true;
 }

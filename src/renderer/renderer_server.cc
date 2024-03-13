@@ -217,7 +217,7 @@ bool RendererServer::ExecCommandInternal(
     return false;
   }
 
-  MOZC_VLOG(2) << MOZC_LOG_PROTOBUF(command);
+  MOZC_VLOG(2) << command;
 
   // Check process info if update mode
   if (command.type() == commands::RendererCommand::UPDATE) {

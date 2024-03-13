@@ -188,6 +188,9 @@ EncodeResult Encode(const char32_t cp) {
 }
 
 DecodeResult Decode(const char* ptr, const char* last) {
+  if (ptr == last) {
+    return DecodeResult::Sentinel();
+  }
   // https://encoding.spec.whatwg.org/#utf-8-decoder
   // Note that bytes needed and bytes seen include the leading byte here.
   if (*ptr < 0x80) {

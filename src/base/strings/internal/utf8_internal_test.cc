@@ -86,6 +86,18 @@ TEST(EncodeTest, Invalid) {
   EXPECT_EQ(absl::string_view(actual.data(), actual.size()), "\ufffd");
 }
 
+TEST(DecodeTest, Empty) {
+  const absl::string_view kEmptyString{""};
+  const DecodeResult actual = Decode(kEmptyString.data(), kEmptyString.data());
+  EXPECT_TRUE(actual.IsSentinel());
+  // Check if the `Sentinel()` has the following characteristics. Not too
+  // critical but they are chosen to minimize the risk when the sentinel was
+  // accidentally read.
+  EXPECT_FALSE(actual.ok());
+  EXPECT_EQ(actual.code_point(), 0);
+  EXPECT_EQ(actual.bytes_seen(), 0);
+}
+
 class DecodeInvalidTest
     : public ::testing::TestWithParam<std::pair<absl::string_view, int>> {};
 

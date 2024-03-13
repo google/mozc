@@ -380,6 +380,30 @@ TEST_P(Utf8AsCharsTest, Substring) {
   EXPECT_EQ(substr2.end(), sv.end());
 }
 
+// Tests if the `DCHECK` fo reading the `end` iterator hits.
+// `DCHECK` is enabled only if `NDEBUG` is not defined.
+#if !defined(NDEBUG)
+TEST(Utf8AsCharsDeathTest, Empty) {
+  Utf8AsUnicodeChar utf8_as_unicode_char("");
+  auto it = utf8_as_unicode_char.begin();
+  EXPECT_DEATH(*it, "");
+  EXPECT_DEATH(it.view(), "");
+  EXPECT_DEATH(it.char32(), "");
+  EXPECT_DEATH(++it, "");
+}
+
+TEST(Utf8AsCharsDeathTest, End) {
+  Utf8AsUnicodeChar utf8_as_unicode_char("a");
+  auto it = utf8_as_unicode_char.begin();
+  EXPECT_EQ(it.char32(), 'a');
+  ++it;
+  EXPECT_DEATH(*it, "");
+  EXPECT_DEATH(it.view(), "");
+  EXPECT_DEATH(it.char32(), "");
+  EXPECT_DEATH(++it, "");
+}
+#endif  // !defined(NDEBUG)
+
 TEST(Utf8AsCharsStandaloneTest, Comparators) {
   const Utf8AsChars a("aA");
   const Utf8AsChars32 b("aあ");

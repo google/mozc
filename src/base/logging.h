@@ -61,6 +61,4 @@ ABSL_NAMESPACE_END
 #endif  // !DEBUG
 #endif  // ABSL_LTS_RELEASE_VERSION < 20240116
 
-#define MOZC_LOG_PROTOBUF(message) ((message).DebugString())
-
 #endif  // MOZC_BASE_LOGGING_H_

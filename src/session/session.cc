@@ -397,7 +397,7 @@ bool Session::SendCommand(commands::Command *command) {
       result = UpdateComposition(command);
       break;
     default:
-      LOG(WARNING) << "Unknown command" << MOZC_LOG_PROTOBUF(*command);
+      LOG(WARNING) << "Unknown command" << *command;
       result = DoNothing(command);
       break;
   }
@@ -1483,7 +1483,7 @@ absl::Time Session::last_command_time() const {
 
 bool Session::InsertCharacter(commands::Command *command) {
   if (!command->input().has_key()) {
-    LOG(ERROR) << "No key event: " << MOZC_LOG_PROTOBUF(command->input());
+    LOG(ERROR) << "No key event: " << command->input();
     return false;
   }
 

@@ -125,14 +125,6 @@ class SystemUtil {
   // You need not to delete the returned pointer.
   // This function is thread safe.
   static const wchar_t *GetSystemDir();
-
-  // Returns "MSCTF.AsmCacheReady.<desktop name><session #>" to work around
-  // b/5765783.
-  // Returns an empty string if fails.
-  // Currently this method is defined in util.h because it depends on some
-  // utility functions defined in util.cc.
-  // TODO(yukawa): Move this method to win32/base/*
-  static std::string GetMSCTFAsmCacheReadyEventName();
 #endif  // _WIN32
 
   // return string representing os version
