@@ -149,12 +149,11 @@ mozc_cc_library(
     deps = [
         ":dataset_cc_proto",
         "//base:file_util",
-        "//base:logging",
         "//base:obfuscator_support",
         "//base:util",
         "//base:vlog",
-        "//base/protobuf:message",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -201,12 +200,10 @@ mozc_cc_library(
     hdrs = ["dataset_reader.h"],
     deps = [
         ":dataset_cc_proto",
-        "//base:logging",
         "//base:obfuscator_support",
         "//base:util",
-        "//base/protobuf",
-        "//base/protobuf:message",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -34,12 +34,12 @@
 #include <memory>
 #include <utility>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/hash.h"
-#include "base/logging.h"
-#include "base/protobuf/message.h"
 #include "base/thread.h"
 #include "data_manager/data_manager.h"
 #include "engine/modules.h"
@@ -153,8 +153,7 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
                                           request.magic_number())
               : data_manager->InitFromFile(request.file_path());
       if (status != DataManager::Status::OK) {
-        LOG(ERROR) << "Failed to load data [" << status << "] "
-                  << protobuf::Utf8Format(request);
+        LOG(ERROR) << "Failed to load data [" << status << "] " << request;
         result.response.set_status(ConvertStatus(status));
         DCHECK_NE(result.response.status(), EngineReloadResponse::RELOAD_READY);
         return result;
@@ -166,8 +165,7 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
       const absl::Status s = FileUtil::LinkOrCopyFile(
           request.file_path(), request.install_location());
       if (!s.ok()) {
-        LOG(ERROR) << "Copy faild: " << protobuf::Utf8Format(request) << ": "
-                   << s;
+        LOG(ERROR) << "Copy faild: " << request << ": " << s;
         result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
         return result;
       }
@@ -177,8 +175,7 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
     {
       const absl::Status status = modules->Init(std::move(data_manager));
       if (!status.ok()) {
-        LOG(ERROR) << "Failed to load modules [" << status << "] "
-                   << protobuf::Utf8Format(request);
+        LOG(ERROR) << "Failed to load modules [" << status << "] " << request;
         result.response.set_status(EngineReloadResponse::DATA_BROKEN);
         return result;
       }

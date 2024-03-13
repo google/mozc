@@ -39,7 +39,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "base/protobuf/message.h"
 #include "base/vlog.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter.h"
@@ -298,8 +297,7 @@ std::unique_ptr<DataLoader::Response> Engine::GetDataLoaderResponse() {
     // The loader_response does not contain a valid result.
 
     // This engine id causes a critical error, so rollback the id.
-    LOG(ERROR) << "Failure in engine loading: "
-               << protobuf::Utf8Format(loader_response.response);
+    LOG(ERROR) << "Failure in engine loading: " << loader_response.response;
     const uint64_t rollback_id =
         loader_->UnregisterRequest(loader_response.id);
     // Update latest_data_id_ if latest_data_id_ == loader_response.id.

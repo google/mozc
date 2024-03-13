@@ -40,6 +40,8 @@
 
 #include "evaluation/scorer.h"
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
@@ -47,8 +49,6 @@
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
-#include "base/protobuf/message.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "client/client.h"
@@ -167,7 +167,7 @@ std::optional<double> CalculateBleu(client::Client &client,
   for (const commands::KeyEvent &key : *keys) {
     client.SendKey(key, &output);
   }
-  MOZC_VLOG(2) << "Server response: " << protobuf::Utf8Format(output);
+  MOZC_VLOG(2) << "Server response: " << output;
 
   // Calculate score
   std::string expected_normalized =
