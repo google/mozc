@@ -40,13 +40,14 @@
 #include <vector>
 
 #include "absl/base/attributes.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/const.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/process.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -690,12 +691,8 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
     return false;
   }
 
-  // Drop DebugString() as it raises segmentation fault.
-  // http://b/2126375
-  // TODO(taku): Investigate the error in detail.
   if (!client->Call(request, &response_, timeout_)) {
-    LOG(ERROR) << "Call failure";
-    //               << input.DebugString();
+    LOG(ERROR) << "Call failure" << input.DebugString();
     if (client->GetLastIPCError() == IPC_TIMEOUT_ERROR) {
       server_status_ = SERVER_TIMEOUT;
     } else {
@@ -706,8 +703,8 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
   }
 
   if (!output->ParseFromString(response_)) {
-    LOG(ERROR) << "Parse failure of the result of the request:";
-    //               << input.DebugString();
+    LOG(ERROR) << "Parse failure of the result of the request:"
+               << input.DebugString();
     server_status_ = SERVER_BROKEN_MESSAGE;
     return false;
   }

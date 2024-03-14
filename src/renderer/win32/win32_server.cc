@@ -33,11 +33,10 @@
 
 #include <memory>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
-#include "base/logging.h"
-#include "base/run_level.h"
-#include "base/util.h"
 #include "base/vlog.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/window_manager.h"
@@ -102,7 +101,7 @@ bool Win32Server::IsAvailable() const {
 }
 
 bool Win32Server::ExecCommand(const commands::RendererCommand &command) {
-  MOZC_VLOG(2) << command.DebugString();
+  MOZC_VLOG(2) << command;
 
   switch (command.type()) {
     case commands::RendererCommand::NOOP:

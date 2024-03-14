@@ -38,7 +38,6 @@
 #include <string>
 
 #include "base/coordinates.h"
-#include "base/logging.h"
 #include "base/vlog.h"
 #include "base/win32/wide_char.h"
 #include "client/client_interface.h"
@@ -53,13 +52,11 @@ namespace mozc {
 namespace renderer {
 namespace win32 {
 
-using mozc::commands::Candidates;
 using mozc::commands::Information;
 using mozc::commands::InformationList;
 using mozc::commands::Output;
 using mozc::commands::SessionCommand;
 using mozc::renderer::RendererStyle;
-using mozc::renderer::RendererStyleHandler;
 
 namespace {
 const COLORREF kDefaultBackgroundColor = RGB(0xff, 0xff, 0xff);
@@ -73,7 +70,7 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
   SessionCommand command;
   command.set_type(SessionCommand::USAGE_STATS_EVENT);
   command.set_usage_stats_event(event);
-  MOZC_VLOG(2) << "SendUsageStatsEvent " << command.DebugString();
+  MOZC_VLOG(2) << "SendUsageStatsEvent " << command;
   Output dummy_output;
   return command_sender->SendCommand(command, &dummy_output);
 }
@@ -376,9 +373,7 @@ void InfolistWindow::SetSendCommandInterface(
   send_command_interface_ = send_command_interface;
 }
 
-Size InfolistWindow::GetLayoutSize() {
-  return DoPaint(nullptr);
-}
+Size InfolistWindow::GetLayoutSize() { return DoPaint(nullptr); }
 }  // namespace win32
 }  // namespace renderer
 }  // namespace mozc

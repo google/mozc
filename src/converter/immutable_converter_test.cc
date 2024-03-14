@@ -509,9 +509,9 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
     for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
       const Segment::Candidate &cand = segments.segment(0).candidate(i);
       if (cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-        EXPECT_LT(cand.key.size(), segment_key.size()) << cand.DebugString();
+        EXPECT_LT(cand.key.size(), segment_key.size()) << cand;
       } else {
-        EXPECT_GE(cand.key.size(), segment_key.size()) << cand.DebugString();
+        EXPECT_GE(cand.key.size(), segment_key.size()) << cand;
       }
     }
   }

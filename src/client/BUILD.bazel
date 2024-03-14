@@ -88,6 +88,8 @@ mozc_cc_library(
         "//session:key_info_util",
         "//testing:friend_test",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select(

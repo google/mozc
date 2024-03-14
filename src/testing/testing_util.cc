@@ -31,8 +31,10 @@
 
 #include <memory>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
 #include "testing/gunit.h"
@@ -196,11 +198,9 @@ bool EqualsProtoInternal(const Message &message1, const Message &message2,
 
   return ::testing::AssertionFailure()
          << "EXPECT_PROTO_" << (is_partial ? "P" : "") << "EQ(" << expect_string
-         << ", " << actual_string << ")"
-         << " evaluates to false, where\n"
-         << expect_string << " evaluates to " << expect.Utf8DebugString()
-         << "\n"
-         << actual_string << " evaluates to " << actual.Utf8DebugString();
+         << ", " << actual_string << ")" << " evaluates to false, where\n"
+         << expect_string << " evaluates to " << absl::StrCat(expect) << "\n"
+         << actual_string << " evaluates to " << absl::StrCat(actual);
 }
 
 }  // namespace internal
