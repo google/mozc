@@ -527,11 +527,6 @@ def GypMain(options, unused_args):
   short_basename = GetBuildShortBaseName(target_platform)
   gyp_options.extend(['-G', 'output_dir=%s' % short_basename])
 
-  # Enable cross-compile
-  # TODO(yukawa): Enable GYP_CROSSCOMPILE for Windows.
-  if not IsWindows():
-    os.environ['GYP_CROSSCOMPILE'] = '1'
-
   if IsWindows() and multiprocessing.cpu_count() > 63:
     # GYP fails on Windows with more than 63 cores:
     #   "ValueError: need at most 63 handles"
