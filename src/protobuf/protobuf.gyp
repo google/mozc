@@ -71,13 +71,14 @@
       '<!@(<(glob_protobuf) . "*.cc" --exclude "*.pb.cc" reflection_tester.cc)',
       '<!@(<(glob_protobuf) io "*.cc")',
       '<!@(<(glob_protobuf) stubs "*.cc")',
-      '<!@(<(glob) --notest --base <(protobuf_root)/third_party/utf8_range "*.cc")',
+      '<!@(<(glob) --notest --base <(protobuf_root)/third_party/utf8_range utf8_validity.cc utf8_range.c)',
     ],
     # Sources for protoc (common part and C++ generator only).
     'protoc_sources': [
-      '<!@(<(glob_protobuf) compiler "*.cc" --exclude "*_tester.cc" fake_plugin.cc test_plugin.cc main.cc)',
+      '<!@(<(glob_protobuf) compiler "*.cc" --exclude "*_tester.cc" fake_plugin.cc test_plugin.cc main.cc main_no_generators.cc)',
       '<!@(<(glob_protobuf) compiler/allowlists "*.cc")',
-      '<!@(<(glob_protobuf) compiler/cpp "**/*.cc" --exclude main.cc)',
+      '<!@(<(glob_protobuf) compiler/cpp "*.cc" --exclude main.cc)',
+      '<!@(<(glob_protobuf) compiler/cpp/field_generators "*.cc")',
       'custom_protoc_main.cc',
     ],
   },
