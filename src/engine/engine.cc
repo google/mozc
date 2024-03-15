@@ -29,7 +29,6 @@
 
 #include "engine/engine.h"
 
-#include <cstdint>
 #include <memory>
 #include <utility>
 
@@ -262,67 +261,20 @@ bool Engine::ReloadAndWait() {
   return GetUserDataManager()->Wait();
 }
 
-bool Engine::MaybeBuildDataLoader() {
-  if (!loader_) {
-    LOG(ERROR) << "loader_ is null";
-    return false;
-  }
-
-  // Maybe build new data loader if new request is received.
-  // DataLoader::Build just returns a future object so client needs to replace
-  // the new data manager when the future is the ready to use.
-  if (!loader_response_future_ && current_data_id_ != latest_data_id_ &&
-      latest_data_id_ != 0) {
-    LOG(INFO) << "New data is ready (current_data_id_=" << current_data_id_
-              << ", latest_data_id_=" << latest_data_id_ << ")";
-    loader_response_future_ = loader_->Build(latest_data_id_);
-    // Wait the engine if the no new engine is loaded so far.
-    if (current_data_id_ == 0 || always_wait_for_loader_response_future_) {
-      loader_response_future_->Wait();
-    }
-  }
-
-  bool is_ready = loader_response_future_ && loader_response_future_->Ready();
-  return is_ready;
-}
-
-std::unique_ptr<DataLoader::Response> Engine::GetDataLoaderResponse() {
-  // Replaces the engine when the new engine is ready to use.
-  mozc::DataLoader::Response loader_response =
-      std::move(*loader_response_future_).Get();
-  loader_response_future_.reset();
-
-  if (!loader_response.modules ||
-      loader_response.response.status() != EngineReloadResponse::RELOAD_READY) {
-    // The loader_response does not contain a valid result.
-
-    // This engine id causes a critical error, so rollback the id.
-    LOG(ERROR) << "Failure in engine loading: " << loader_response.response;
-    const uint64_t rollback_id =
-        loader_->UnregisterRequest(loader_response.id);
-    // Update latest_data_id_ if latest_data_id_ == loader_response.id.
-    // Otherwise, latest_data_id_ may already be updated by the new request.
-    latest_data_id_.compare_exchange_strong(loader_response.id, rollback_id);
-
-    return nullptr;
-  }
-  return std::make_unique<DataLoader::Response>(std::move(loader_response));
-}
-
 bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
-  if (response == nullptr) {
-    LOG(ERROR) << "response is null";
+  if (response == nullptr || !loader_) {
+    LOG(ERROR) << "response or loader_ is null";
     return false;
   }
 
-  if (!MaybeBuildDataLoader()) {
+  if (!loader_->MaybeBuildDataLoader()) {
     return false;
   }
   LOG(INFO) << "New data is ready (install_location="
             << response->request().install_location() << ")";
 
   std::unique_ptr<DataLoader::Response> loader_response =
-      GetDataLoaderResponse();
+      loader_->MaybeMoveDataLoaderResponse();
   if (!loader_response) {
     LOG(ERROR) << "loader_response is null";
     return false;
@@ -340,10 +292,11 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
       ReloadModules(std::move(loader_response->modules), is_mobile);
   if (!reload_status.ok()) {
     LOG(ERROR) << reload_status;
+    loader_->UnregisterRequest(loader_response->id);
     return false;
   }
 
-  current_data_id_ = loader_response->id;
+  loader_->SetLoaded(loader_response->id);
   response->set_status(EngineReloadResponse::RELOADED);
   return true;
 }
@@ -352,7 +305,7 @@ bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
   if (!loader_) {
     return false;
   }
-  latest_data_id_ = loader_->RegisterRequest(request);
+  loader_->RegisterRequest(request);
   return true;
 }
 
