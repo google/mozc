@@ -346,7 +346,7 @@ TEST_P(DataLoaderTest, RegisterRequestTest) {
   };
 
   auto unregister_request = [&](absl::string_view file_path, int32_t priority) {
-    return loader_.UnregisterRequest(id(file_path, priority));
+    return loader_.ReportLoadFailure(id(file_path, priority));
   };
 
   // Register request.

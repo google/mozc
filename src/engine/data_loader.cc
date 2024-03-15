@@ -114,7 +114,7 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
   return latest_data_id_;
 }
 
-uint64_t DataLoader::UnregisterRequest(uint64_t id) {
+uint64_t DataLoader::ReportLoadFailure(uint64_t id) {
   absl::WriterMutexLock lock(&mutex_);
 
   const auto it =
@@ -234,7 +234,7 @@ DataLoader::MaybeMoveDataLoaderResponse() {
     // This engine id causes a critical error, so rollback the id.
     LOG(ERROR) << "Failure in engine loading: "
                << protobuf::Utf8Format(loader_response.response);
-    UnregisterRequest(loader_response.id);
+    ReportLoadFailure(loader_response.id);
     return nullptr;
   }
   return std::make_unique<DataLoader::Response>(std::move(loader_response));
