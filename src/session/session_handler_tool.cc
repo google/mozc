@@ -36,6 +36,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -44,7 +46,6 @@
 #include "absl/types/span.h"
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
@@ -71,6 +72,7 @@
 
 namespace mozc {
 namespace session {
+namespace {
 
 using ::mozc::commands::CandidateWord;
 using ::mozc::commands::Command;
@@ -86,6 +88,14 @@ using ::mozc::protobuf::FieldDescriptor;
 using ::mozc::protobuf::Message;
 using ::mozc::protobuf::TextFormat;
 using ::mozc::session::SessionHandlerTool;
+
+std::string ToTextFormat(const Message &proto) {
+  std::string str;
+  TextFormat::PrintToString(proto, &str);
+  return str;
+}
+
+}  // namespace
 
 SessionHandlerTool::SessionHandlerTool(std::unique_ptr<EngineInterface> engine)
     : id_(0),
@@ -731,7 +741,7 @@ absl::Status SessionHandlerInterpreter::Eval(
     MOZC_EXPECT_EQ_MSG(
         preedit_string, expected_preedit,
         absl::StrCat("Expected preedit: ", expected_preedit, "\n",
-                     "Actual preedit: ", protobuf::Utf8Format(preedit)));
+                     "Actual preedit: ", ToTextFormat(preedit)));
   } else if (command == "EXPECT_PREEDIT_IN_DETAIL") {
     MOZC_ASSERT_TRUE(!args.empty());
     const mozc::commands::Preedit &preedit = last_output_->preedit();
@@ -746,63 +756,59 @@ absl::Status SessionHandlerInterpreter::Eval(
     MOZC_ASSERT_EQ(args.size(), 2);
     const size_t expected_pos = NumberUtil::SimpleAtoi(args[1]);
     const mozc::commands::Preedit &preedit = last_output_->preedit();
-    MOZC_EXPECT_EQ_MSG(preedit.cursor(), expected_pos,
-                       protobuf::Utf8Format(preedit));
+    MOZC_EXPECT_EQ_MSG(preedit.cursor(), expected_pos, ToTextFormat(preedit));
   } else if (command == "EXPECT_CANDIDATE") {
     MOZC_ASSERT_EQ(args.size(), 3);
     uint32_t candidate_id = 0;
     const bool has_result = GetCandidateIdByValue(args[2], &candidate_id);
     MOZC_EXPECT_TRUE_MSG(
-        has_result,
-        absl::StrCat(args[2], " is not found\n",
-                     protobuf::Utf8Format(last_output_->candidates())));
+        has_result, absl::StrCat(args[2], " is not found\n",
+                                 ToTextFormat(last_output_->candidates())));
     if (has_result) {
       MOZC_EXPECT_EQ_MSG(
           candidate_id, NumberUtil::SimpleAtoi(args[1]),
           absl::StrCat(args[1], " is not found\n",
-                       protobuf::Utf8Format(last_output_->candidates())));
+                       ToTextFormat(last_output_->candidates())));
     }
   } else if (command == "EXPECT_CANDIDATE_DESCRIPTION") {
     MOZC_ASSERT_EQ(args.size(), 3);
     const CandidateWord &cand = GetCandidateByValue(args[1]);
     const bool has_cand = !cand.value().empty();
     MOZC_EXPECT_TRUE_MSG(
-        has_cand,
-        absl::StrCat(args[1], " is not found\n",
-                     protobuf::Utf8Format(last_output_->candidates())));
+        has_cand, absl::StrCat(args[1], " is not found\n",
+                               ToTextFormat(last_output_->candidates())));
     MOZC_EXPECT_TRUE(has_cand);
     MOZC_EXPECT_EQ_MSG(cand.annotation().description(), args[2],
-                       protobuf::Utf8Format(cand));
+                       ToTextFormat(cand));
   } else if (command == "EXPECT_RESULT") {
     if (args.size() == 2 && !args[1].empty()) {
       MOZC_ASSERT_TRUE(last_output_->has_result());
       const mozc::commands::Result &result = last_output_->result();
       MOZC_EXPECT_EQ_MSG(result.value(), TextNormalizer::NormalizeText(args[1]),
-                         protobuf::Utf8Format(result));
+                         ToTextFormat(result));
     } else {
       MOZC_EXPECT_TRUE_MSG(!last_output_->has_result(),
-                           protobuf::Utf8Format(last_output_->result()));
+                           ToTextFormat(last_output_->result()));
     }
   } else if (command == "EXPECT_IN_ALL_CANDIDATE_WORDS") {
     MOZC_ASSERT_EQ(args.size(), 2);
     uint32_t candidate_id = 0;
     const bool has_result = GetCandidateIdByValue(args[1], &candidate_id);
-    MOZC_EXPECT_TRUE_MSG(has_result,
-                         absl::StrCat(args[1], " is not found.\n",
-                                      protobuf::Utf8Format(*last_output_)));
+    MOZC_EXPECT_TRUE_MSG(has_result, absl::StrCat(args[1], " is not found.\n",
+                                                  ToTextFormat(*last_output_)));
   } else if (command == "EXPECT_NOT_IN_ALL_CANDIDATE_WORDS") {
     MOZC_ASSERT_EQ(args.size(), 2);
     uint32_t candidate_id = 0;
     const bool has_result = GetCandidateIdByValue(args[1], &candidate_id);
-    MOZC_EXPECT_TRUE_MSG(!has_result,
-                         absl::StrCat(args[1], " is found.\n",
-                                      protobuf::Utf8Format(*last_output_)));
+    MOZC_EXPECT_TRUE_MSG(
+        !has_result,
+        absl::StrCat(args[1], " is found.\n", ToTextFormat(*last_output_)));
   } else if (command == "EXPECT_HAS_CANDIDATES") {
     if (args.size() == 2 && !args[1].empty()) {
       MOZC_ASSERT_TRUE(last_output_->has_candidates());
       MOZC_ASSERT_TRUE_MSG(
           last_output_->candidates().size() > NumberUtil::SimpleAtoi(args[1]),
-          protobuf::Utf8Format(*last_output_));
+          ToTextFormat(*last_output_));
     } else {
       MOZC_ASSERT_TRUE(last_output_->has_candidates());
     }

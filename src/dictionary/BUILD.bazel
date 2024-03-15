@@ -621,7 +621,7 @@ mozc_cc_library(
         ":dictionary_interface",
         "//request:conversion_request",
         "//testing:gunit",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

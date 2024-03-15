@@ -34,12 +34,11 @@
 #include <utility>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
 #include "absl/numeric/bits.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "base/file_util.h"
-#include "base/logging.h"
-#include "base/protobuf/message.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -87,7 +86,7 @@ void DataSetWriter::Finish(std::ostream *output) {
 
   CHECK(output->write(image_.data(), image_.size()));
   MOZC_VLOG(1) << "Wrote data set of " << image_.size() << " bytes:\n"
-               << protobuf::Utf8Format(metadata_);
+               << metadata_;
 }
 
 void DataSetWriter::AppendPadding(int alignment) {

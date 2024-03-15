@@ -353,15 +353,13 @@ bool IosEngine::ImportUserDictionary(const std::string &tsv_content,
       return false;
     }
     if (!LoadUserDictionaryIfExists(session.user_dict_session_id(), command)) {
-      LOG(ERROR) << "Failed to load user dictionary: "
-                 << command->Utf8DebugString();
+      LOG(ERROR) << "Failed to load user dictionary: " << command;
       return false;
     }
     if (!DeleteUserDictionaryIfExists(session.user_dict_session_id(),
                                       kIosSystemDictionaryName, command)) {
       LOG(ERROR) << "Failed to delete a user dictionary ["
-                 << kIosSystemDictionaryName
-                 << "]: " << command->Utf8DebugString();
+                 << kIosSystemDictionaryName << "]: " << command;
       return false;
     }
     // Import data only when tsv_content is nonempty.
@@ -370,13 +368,11 @@ bool IosEngine::ImportUserDictionary(const std::string &tsv_content,
                                        kIosSystemDictionaryName, tsv_content,
                                        command)) {
       LOG(ERROR) << "Failed to import data to a new user dictionary ["
-                 << kIosSystemDictionaryName
-                 << "]: " << command->Utf8DebugString();
+                 << kIosSystemDictionaryName << "]: " << command;
       return false;
     }
     if (!SaveUserDictionary(session.user_dict_session_id(), command)) {
-      LOG(ERROR) << "Failed to save user dictionary to storage: "
-                 << command->Utf8DebugString();
+      LOG(ERROR) << "Failed to save user dictionary to storage: " << command;
       return false;
     }
   }
@@ -423,8 +419,7 @@ IosEngine::ScopedUserDictionarySession::ScopedUserDictionarySession(
   auto *user_dict_cmd = input->mutable_user_dictionary_command();
   user_dict_cmd->set_type(UserDictionaryCommand::CREATE_SESSION);
   if (!engine->EvalCommandLockGuarded(&command)) {
-    LOG(ERROR) << "Failed to create a user dictionary session: "
-               << command.Utf8DebugString();
+    LOG(ERROR) << "Failed to create a user dictionary session: " << command;
     return;
   }
   user_dict_session_id_ =
@@ -446,7 +441,7 @@ IosEngine::ScopedUserDictionarySession::~ScopedUserDictionarySession() {
   if (!engine_->EvalCommandLockGuarded(&command)) {
     LOG(ERROR) << "Failed to delete user dictionary session "
                << user_dict_session_id_
-               << ".  This session may leak: " << command.Utf8DebugString();
+               << ".  This session may leak: " << command;
   }
 }
 

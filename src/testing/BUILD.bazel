@@ -122,10 +122,12 @@ mozc_cc_library(
     hdrs = ["testing_util.h"],
     deps = [
         ":gunit",
-        "//base:logging",
         "//base/protobuf:message",
         "//base/protobuf:text_format",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

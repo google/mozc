@@ -69,10 +69,11 @@ mozc_cc_binary(
     deps = [
         ":ios_engine",
         "//base:init_mozc_buildtool",
-        "//base:logging",
         "//base/strings:unicode",
         "//protocol:candidates_cc_proto",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/strings",
     ],
 )
 

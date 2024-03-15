@@ -165,8 +165,8 @@ mozc_cc_test(
         ":key_parser",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -196,6 +196,6 @@ mozc_cc_test(
         ":key_parser",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )

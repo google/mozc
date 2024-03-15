@@ -219,6 +219,7 @@ mozc_cc_library(
         "//testing:friend_test",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
@@ -370,6 +371,7 @@ mozc_cc_test(
     deps = [
         ":candidate_window_handler",
         "//base:coordinates",
+        "//base/protobuf:text_format",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",

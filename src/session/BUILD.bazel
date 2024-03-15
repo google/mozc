@@ -384,7 +384,7 @@ mozc_cc_test(
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ] + mozc_select_enable_spellchecker([
     ]),
@@ -419,20 +419,21 @@ mozc_cc_binary(
         "session_client_main.cc",
     ],
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # session_client_main.cc
+    tags = ["noandroid"],
     deps = [
         ":session",
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc",
-        "//base:logging",
         "//base:system_util",
         "//base:util",
-        "//base/protobuf:message",
+        "//base/protobuf:text_format",
         "//composer:key_parser",
         "//engine:engine_factory",
         "//engine:engine_interface",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
     ],
 )
@@ -579,7 +580,7 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -670,7 +671,6 @@ mozc_cc_library(
         ":session_usage_observer",
         "//base:config_file_stream",
         "//base:file_util",
-        "//base:logging",
         "//base:number_util",
         "//base:text_normalizer",
         "//base:util",
@@ -691,6 +691,8 @@ mozc_cc_library(
         "//request:request_test_util",
         "//storage:registry",
         "//usage_stats",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",

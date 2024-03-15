@@ -80,7 +80,6 @@ mozc_cc_library(
         "//base:vlog",
         "//base/container:freelist",
         "//base/container:trie",
-        "//base/protobuf:message",
         "//composer",
         "//converter:segments",
         "//dictionary:dictionary_interface",
@@ -444,7 +443,7 @@ mozc_cc_test(
         "//request:conversion_request",
         "//request:request_test_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

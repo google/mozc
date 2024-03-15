@@ -60,7 +60,6 @@
 #include "base/container/trie.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
-#include "base/protobuf/message.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -446,8 +445,7 @@ bool UserHistoryPredictor::Load(const UserHistoryStorage &history) {
     // Workaround for b/116826494: Some garbled characters are suggested
     // from user history. This filters such entries.
     if (!Util::IsValidUtf8(entry.value())) {
-      LOG(ERROR) << "Invalid UTF8 found in user history: "
-                 << protobuf::Utf8Format(entry);
+      LOG(ERROR) << "Invalid UTF8 found in user history: " << entry;
       continue;
     }
     dic_->Insert(EntryFingerprint(entry), entry);
@@ -1634,7 +1632,7 @@ void UserHistoryPredictor::Insert(std::string key, std::string value,
   }
 
   MOZC_VLOG(2) << entry->key() << " " << entry->value()
-               << " has been inserted: " << protobuf::Utf8Format(*entry);
+               << " has been inserted: " << *entry;
 
   // New entry is inserted to the cache
   updated_ = true;

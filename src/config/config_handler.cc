@@ -37,6 +37,7 @@
 #include <utility>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
@@ -44,7 +45,6 @@
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/hash.h"
-#include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/strings/assign.h"
@@ -184,7 +184,7 @@ void ConfigHandlerImpl::SetConfig(const Config &config) {
   std::string debug_content = absl::StrCat(
       "# This is a text-based config file for debugging.\n"
       "# Nothing happens when you edit this file manually.\n",
-      output_config.DebugString());
+      output_config);
   ConfigFileStream::AtomicUpdate(absl::StrCat(filename_, ".txt"),
                                  debug_content);
 #endif  // DEBUG

@@ -88,6 +88,22 @@ class DataLoader {
 
   void Clear();
 
+  // Maybe build new data loader if a reload request has been already received.
+  // Returns true, a new data loader response is already available.
+  bool MaybeBuildDataLoader();
+
+  // Maybe move the data loader response to the caller.
+  // Otherwise nullptr is returned.
+  std::unique_ptr<DataLoader::Response> MaybeMoveDataLoaderResponse();
+
+  // Sets the id of DataLoader::Response as the ID of the currently using data.
+  void SetLoaded(uint64_t id) { current_data_id_ = id; }
+
+  // Used only in unittest to perform blocking behavior.
+  void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) {
+    always_wait_for_loader_response_future_ = value;
+  }
+
  private:
   struct RequestData {
     uint64_t id = 0;           // Fingerprint of request.
@@ -102,6 +118,13 @@ class DataLoader {
   mutable absl::Mutex mutex_;
   absl::flat_hash_set<uint64_t> unregistered_ ABSL_GUARDED_BY(mutex_);
   std::vector<RequestData> requests_ ABSL_GUARDED_BY(mutex_);
+
+  // 0 means that no data has been updated yet.
+  std::atomic<uint64_t> latest_data_id_ = 0;
+  std::atomic<uint64_t> current_data_id_ = 0;
+  std::unique_ptr<DataLoader::ResponseFuture> loader_response_future_;
+  // used only in unittest to perform blocking behavior.
+  bool always_wait_for_loader_response_future_ = false;
 };
 
 }  // namespace mozc

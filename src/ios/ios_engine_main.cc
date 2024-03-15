@@ -35,8 +35,9 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/strings/unicode.h"
 #include "ios/ios_engine.h"
 #include "protocol/candidates.pb.h"
@@ -101,16 +102,16 @@ int main(int argc, char **argv) {
     Convert(query, &ios_engine, &command);
 
     if (absl::GetFlag(FLAGS_show_full)) {
-      std::cout << command.Utf8DebugString() << std::endl;
+      std::cout << absl::StrCat(command) << std::endl;
     } else {
       std::cout << "----- preedit -----\n"
-                << command.output().preedit().Utf8DebugString() << std::endl;
+                << absl::StrCat(command.output().preedit()) << std::endl;
       const auto &cands = command.output().candidates();
-      const int size = std::min(absl::GetFlag(FLAGS_candsize),
-                                cands.candidate_size());
+      const int size =
+          std::min(absl::GetFlag(FLAGS_candsize), cands.candidate_size());
       for (int i = 0; i < size; ++i) {
         std::cout << "----- candidate " << i << " -----\n"
-                  << cands.candidate(i).Utf8DebugString() << std::endl;
+                  << absl::StrCat(cands.candidate(i)) << std::endl;
       }
     }
   }

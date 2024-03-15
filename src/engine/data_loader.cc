@@ -34,11 +34,12 @@
 #include <memory>
 #include <utility>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/hash.h"
-#include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/thread.h"
 #include "data_manager/data_manager.h"
@@ -79,11 +80,14 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
 
   // Already requesting latest id.
   if (!requests_.empty() && requests_.front().id == id) {
-    return id;
+    latest_data_id_ = id;
+    return latest_data_id_;
   }
 
+  // The request is invalid since it has already been unregistered.
   if (unregistered_.contains(id)) {
-    return requests_.empty() ? 0 : requests_.front().id;
+    latest_data_id_ = requests_.empty() ? 0 : requests_.front().id;
+    return latest_data_id_;
   }
 
   ++sequence_id_;
@@ -106,7 +110,8 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
                        lhs.sequence_id > rhs.sequence_id));
             });
 
-  return requests_.front().id;
+  latest_data_id_ = requests_.front().id;
+  return latest_data_id_;
 }
 
 uint64_t DataLoader::UnregisterRequest(uint64_t id) {
@@ -119,8 +124,9 @@ uint64_t DataLoader::UnregisterRequest(uint64_t id) {
     requests_.erase(it, requests_.end());
     unregistered_.emplace(id);
   }
-
-  return requests_.empty() ? 0 : requests_.front().id;
+  const uint64_t rollback_id = requests_.empty() ? 0 : requests_.front().id;
+  latest_data_id_.compare_exchange_strong(id, rollback_id);
+  return rollback_id;
 }
 
 std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
@@ -153,8 +159,7 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
                                           request.magic_number())
               : data_manager->InitFromFile(request.file_path());
       if (status != DataManager::Status::OK) {
-        LOG(ERROR) << "Failed to load data [" << status << "] "
-                  << protobuf::Utf8Format(request);
+        LOG(ERROR) << "Failed to load data [" << status << "] " << request;
         result.response.set_status(ConvertStatus(status));
         DCHECK_NE(result.response.status(), EngineReloadResponse::RELOAD_READY);
         return result;
@@ -166,8 +171,7 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
       const absl::Status s = FileUtil::LinkOrCopyFile(
           request.file_path(), request.install_location());
       if (!s.ok()) {
-        LOG(ERROR) << "Copy faild: " << protobuf::Utf8Format(request) << ": "
-                   << s;
+        LOG(ERROR) << "Copy faild: " << request << ": " << s;
         result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
         return result;
       }
@@ -177,8 +181,7 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
     {
       const absl::Status status = modules->Init(std::move(data_manager));
       if (!status.ok()) {
-        LOG(ERROR) << "Failed to load modules [" << status << "] "
-                   << protobuf::Utf8Format(request);
+        LOG(ERROR) << "Failed to load modules [" << status << "] " << request;
         result.response.set_status(EngineReloadResponse::DATA_BROKEN);
         return result;
       }
@@ -191,6 +194,50 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
 
     return result;
   });
+}
+
+bool DataLoader::MaybeBuildDataLoader() {
+  // Maybe build new data loader if new request is received.
+  // DataLoader::Build just returns a future object so client needs to replace
+  // the new data manager when the future is the ready to use.
+  if (!loader_response_future_ && current_data_id_ != latest_data_id_ &&
+      latest_data_id_ != 0) {
+    LOG(INFO) << "Building a new module (current_data_id_=" << current_data_id_
+              << ", latest_data_id_=" << latest_data_id_ << ")";
+    loader_response_future_ = Build(latest_data_id_);
+    // Wait the engine if the no new engine is loaded so far.
+    if (current_data_id_ == 0 || always_wait_for_loader_response_future_) {
+      loader_response_future_->Wait();
+    }
+  }
+
+  const bool is_ready =
+      loader_response_future_ && loader_response_future_->Ready();
+  return is_ready;
+}
+
+std::unique_ptr<DataLoader::Response>
+DataLoader::MaybeMoveDataLoaderResponse() {
+  if (!loader_response_future_ || !loader_response_future_->Ready()) {
+    return nullptr;
+  }
+
+  // Replaces the engine when the new engine is ready to use.
+  mozc::DataLoader::Response loader_response =
+      std::move(*loader_response_future_).Get();
+  loader_response_future_.reset();
+
+  if (!loader_response.modules ||
+      loader_response.response.status() != EngineReloadResponse::RELOAD_READY) {
+    // The loader_response does not contain a valid result.
+
+    // This engine id causes a critical error, so rollback the id.
+    LOG(ERROR) << "Failure in engine loading: "
+               << protobuf::Utf8Format(loader_response.response);
+    UnregisterRequest(loader_response.id);
+    return nullptr;
+  }
+  return std::make_unique<DataLoader::Response>(std::move(loader_response));
 }
 
 void DataLoader::Clear() {
