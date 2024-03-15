@@ -306,6 +306,8 @@ bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
     return false;
   }
   loader_->RegisterRequest(request);
+  loader_->MaybeBuildDataLoader();
+
   return true;
 }
 

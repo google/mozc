@@ -84,6 +84,7 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
     return latest_data_id_;
   }
 
+  // The request is invalid since it has already been unregistered.
   if (unregistered_.contains(id)) {
     latest_data_id_ = requests_.empty() ? 0 : requests_.front().id;
     return latest_data_id_;
