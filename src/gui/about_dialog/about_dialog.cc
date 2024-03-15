@@ -92,6 +92,7 @@ AboutDialog::AboutDialog(QWidget *parent)
   setWindowModality(Qt::NonModal);
   QPalette window_palette;
   window_palette.setColor(QPalette::Window, QColor(255, 255, 255));
+  window_palette.setColor(QPalette::WindowText, QColor(0, 0, 0));
   setPalette(window_palette);
   setAutoFillBackground(true);
   std::string version_info = "(" + Version::GetMozcVersion() + ")";
