@@ -69,8 +69,6 @@
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.h"
-#include "third_party/protobuf/message.h"
-#include "third_party/protobuf/text_format.h"
 
 namespace mozc {
 namespace session {
