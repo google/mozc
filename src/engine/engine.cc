@@ -292,11 +292,11 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
       ReloadModules(std::move(loader_response->modules), is_mobile);
   if (!reload_status.ok()) {
     LOG(ERROR) << reload_status;
-    loader_->UnregisterRequest(loader_response->id);
+    loader_->ReportLoadFailure(loader_response->id);
     return false;
   }
 
-  loader_->SetLoaded(loader_response->id);
+  loader_->ReportLoadSuccess(loader_response->id);
   response->set_status(EngineReloadResponse::RELOADED);
   return true;
 }

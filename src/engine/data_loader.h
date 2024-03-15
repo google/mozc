@@ -77,7 +77,10 @@ class DataLoader {
   // avoid the multiple loading operations.  Client needs to load or use the
   // engine of returned id. The unregistered request will not be accepted after
   // calling this method.
-  uint64_t UnregisterRequest(uint64_t id);
+  uint64_t ReportLoadFailure(uint64_t id);
+
+  // Sets the id of DataLoader::Response as the ID of the currently using data.
+  void ReportLoadSuccess(uint64_t id) { current_data_id_ = id; }
 
   // Builds the new engine associated with `id`.
   // This method returns the future object immediately.
@@ -95,9 +98,6 @@ class DataLoader {
   // Maybe move the data loader response to the caller.
   // Otherwise nullptr is returned.
   std::unique_ptr<DataLoader::Response> MaybeMoveDataLoaderResponse();
-
-  // Sets the id of DataLoader::Response as the ID of the currently using data.
-  void SetLoaded(uint64_t id) { current_data_id_ = id; }
 
   // Used only in unittest to perform blocking behavior.
   void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) {
