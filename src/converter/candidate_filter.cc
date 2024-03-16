@@ -590,17 +590,17 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     int number_nodes = 0;
     uint16_t prev_lid = 0;
     for (const auto &node : nodes) {
-      absl::string_view value = node->value;
-      size_t mblen = 0;
       if (Util::IsScriptType(node->key, Util::NUMBER)) {
         continue;
       }
-      const Util::ScriptType first_value_script_type = Util::GetScriptType(
-          node->value.data(), node->value.data() + node->value.size(), &mblen);
+      const absl::string_view value = node->value;
+      size_t mblen = 0;
+      const Util::ScriptType first_value_script_type =
+          Util::GetFirstScriptType(value, &mblen);
       if (first_value_script_type == Util::NUMBER && prev_lid != node->lid) {
         ++number_nodes;
       } else if (first_value_script_type == Util::KANJI) {
-        const auto first_kanji = value.substr(0, mblen);
+        const absl::string_view first_kanji = value.substr(0, mblen);
         const std::string converted =
             NumberUtil::KanjiNumberToArabicNumber(first_kanji);
         if (first_kanji != converted && prev_lid != node->lid) {
