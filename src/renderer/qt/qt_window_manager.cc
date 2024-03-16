@@ -30,6 +30,7 @@
 #include "renderer/qt/qt_window_manager.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 #include "absl/strings/str_cat.h"
