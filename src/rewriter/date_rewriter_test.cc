@@ -40,10 +40,13 @@
 #include "composer/table.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
+#include "dictionary/dictionary_token.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -507,7 +510,7 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
   EXPECT_THAT(DateRewriter::ConvertDateWithYear(2011, 4, 17),
               ElementsAre("2011/04/17", "2011-04-17", "2011年4月17日"));
 
-  // January, March, May, July, Auguest, October, December has 31 days April,
+  // January, March, May, July, August, October, December has 31 days April,
   // June, September, November has 30 days February is dealt as a special case,
   // see below:
   const struct {
@@ -1031,7 +1034,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
     Segments segments = test_segments;
     EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
 
-    // Verify that the top candidate wans't modified and the next two were
+    // Verify that the top candidate wasn't modified and the next two were
     // moved to last.
     const auto &segment = segments.segment(0);
     const auto cand_size = segment.candidates_size();
