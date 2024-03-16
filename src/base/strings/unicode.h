@@ -148,17 +148,38 @@ absl::string_view Utf8Substring(absl::string_view sv, size_t pos, size_t count);
 // Represents both a UTF-8 string and its decoded result.
 class UnicodeChar {
  public:
+  UnicodeChar(const char* utf8, bool ok, const uint_fast8_t bytes_seen,
+              char32_t codepoint)
+      : utf8_(utf8), dr_(GetDecodeResult(ok, bytes_seen, codepoint)) {}
   UnicodeChar(const char* utf8, const uint_fast8_t bytes_seen,
               char32_t codepoint)
-      : utf8_(utf8),
-        dr_(utf8_internal::DecodeResult::Continue(codepoint, bytes_seen)) {}
+      : mozc::UnicodeChar(utf8, /*ok=*/true, bytes_seen, codepoint) {}
 
   char32_t char32() const { return dr_.code_point(); }
   absl::string_view utf8() const {
     return absl::string_view(utf8_, dr_.bytes_seen());
   }
 
+  // Returns if the current character has a valid UTF-8 encoding.
+  //
+  // Most of the time, it's not necessary to explicitly call this function as
+  // invalid characters are replaced with U+FFFD when the iterator is
+  // dereferenced. Use this if you need to distinguish decoding errors from
+  // U+FFFD in the source string when processing untrusted UTF-8 inputs.
+  bool ok() const { return dr_.ok(); }
+
  private:
+  static utf8_internal::DecodeResult GetDecodeResult(
+      bool ok, const uint_fast8_t bytes_seen, char32_t codepoint) {
+    if (ok) {
+      return utf8_internal::DecodeResult::Continue(codepoint, bytes_seen);
+    }
+    if (bytes_seen) {
+      return utf8_internal::DecodeResult::Error(bytes_seen);
+    }
+    return utf8_internal::DecodeResult::Sentinel();
+  }
+
   const char* utf8_;
   utf8_internal::DecodeResult dr_;
 };
@@ -198,7 +219,7 @@ class Utf8CharIterator {
     } else if constexpr (std::is_same_v<ValueType, absl::string_view>) {
       return view();
     } else if constexpr (std::is_same_v<ValueType, UnicodeChar>) {
-      return ValueType{ptr_, dr_.bytes_seen(), dr_.code_point()};
+      return ValueType{ptr_, dr_.ok(), dr_.bytes_seen(), dr_.code_point()};
     }
   }
 
