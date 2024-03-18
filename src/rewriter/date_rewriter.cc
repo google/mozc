@@ -138,7 +138,8 @@ constexpr DateRewriter::DateData kDateData[] = {
     {"じこく", "時刻", "現在の時刻", 0, CURRENT_TIME},
 
     // Date and time rewrites.
-    {"にちじ", "日時", "現在の日時", 0, DATE_AND_CURRENT_TIME}};
+    {"にちじ", "日時", "現在の日時", 0, DATE_AND_CURRENT_TIME},
+    {"なう", "ナウ", "現在の日時", 0, DATE_AND_CURRENT_TIME}};
 
 // Absl::Weekday starts from Monday, while std::tm.tm_wday starts from Sunday.
 constexpr absl::string_view kWeekDayString[] = {"月", "火", "水", "木",

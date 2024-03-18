@@ -187,23 +187,31 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
                     ValueAndDescAre("水曜日", kDesc),
                 }));
   }
-  {
-    InitSegment("にちじ", "日時", &segments);
+  const std::pair<std::string, std::string> kCurrentDateTimeKeyValues[]{
+      {"にちじ", "日時"},
+      {"なう", "ナウ"},
+  };
+  for (const auto &[key, value] : kCurrentDateTimeKeyValues) {
+    InitSegment(key, value, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0),
                 CandidatesAreArray({
-                    ValueAndDescAre("日時", ""),
+                    ValueAndDescAre(value, ""),
                     ValueAndDescAre("2011/04/18 15:06", "現在の日時"),
                 }));
   }
-  {
-    InitSegment("いま", "今", &segments);
+  const std::pair<std::string, std::string> kCurrentTimeKeyValues[]{
+      {"いま", "今"},
+      {"じこく", "時刻"},
+  };
+  for (const auto &[key, value] : kCurrentTimeKeyValues) {
+    InitSegment(key, value, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     constexpr absl::string_view kDesc = "現在の時刻";
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0), CandidatesAreArray({
-                                         ValueAndDescAre("今", ""),
+                                         ValueAndDescAre(value, ""),
                                          ValueAndDescAre("15:06", kDesc),
                                          ValueAndDescAre("15時06分", kDesc),
                                          ValueAndDescAre("午後3時6分", kDesc),
