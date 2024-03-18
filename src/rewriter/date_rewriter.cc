@@ -48,6 +48,8 @@
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
@@ -916,7 +918,7 @@ std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
       results.push_back(absl::StrFormat("%d年", cm.year()));
 
       std::vector<std::string> era;
-      if (DateRewriter::AdToEra(cm.year(), 0, /* unknown mounth */ &era) &&
+      if (DateRewriter::AdToEra(cm.year(), 0, /* unknown month */ &era) &&
           !era.empty()) {
         for (auto rit = era.crbegin(); rit != era.crend(); ++rit) {
           results.push_back(absl::StrFormat("%s年", *rit));
