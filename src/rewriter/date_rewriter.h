@@ -146,7 +146,8 @@ class DateRewriter : public RewriterInterface {
 
  private:
   static bool RewriteDate(Segment *segment, absl::string_view extra_format);
-  static bool RewriteEra(Segment *current_segment, const Segment &next_segment);
+  // Returns the number of segments processed.
+  static size_t RewriteEra(Segments::Range<Segments::iterator> segments_range);
   static bool RewriteAd(Segment *segment);
 
   // When only one conversion segment has consecutive number characters,

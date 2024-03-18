@@ -996,29 +996,34 @@ bool DateRewriter::RewriteDate(Segment *segment,
   return true;
 }
 
-bool DateRewriter::RewriteEra(Segment *current_segment,
-                              const Segment &next_segment) {
-  if (current_segment->candidates_size() <= 0 ||
+size_t DateRewriter::RewriteEra(
+    Segments::Range<Segments::iterator> segments_range) {
+  if (segments_range.size() < 2) {
+    return 0;
+  }
+  Segment &current_segment = segments_range.front();
+  const Segment &next_segment = segments_range[1];
+  if (current_segment.candidates_size() <= 0 ||
       next_segment.candidates_size() <= 0) {
     LOG(ERROR) << "Candidate size is 0";
-    return false;
+    return 0;
   }
 
-  const std::string &current_key = current_segment->key();
+  const std::string &current_key = current_segment.key();
   const std::string &next_value = next_segment.candidate(0).value;
 
   if (next_value != "年") {
-    return false;
+    return 0;
   }
 
   if (Util::GetScriptType(current_key) != Util::NUMBER) {
-    return false;
+    return 0;
   }
 
   const size_t len = Util::CharsLen(current_key);
   if (len < 3 || len > 4) {
     LOG(WARNING) << "Too long year";
-    return false;
+    return 0;
   }
 
   std::string year_str =
@@ -1026,16 +1031,16 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
 
   uint32_t year = 0;
   if (!absl::SimpleAtoi(year_str, &year)) {
-    return false;
+    return 0;
   }
 
   std::vector<std::string> results;
   if (!AdToEra(year, 0, /* unknown month */ &results)) {
-    return false;
+    return 0;
   }
 
   constexpr absl::string_view kDescription = "和暦";
-  const Segment::Candidate &base_cand = current_segment->candidate(0);
+  const Segment::Candidate &base_cand = current_segment.candidate(0);
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(results.size());
   for (std::string &value : results) {
@@ -1046,9 +1051,9 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   }
 
   constexpr int kInsertPosition = 2;
-  current_segment->insert_candidates(kInsertPosition, std::move(candidates));
+  current_segment.insert_candidates(kInsertPosition, std::move(candidates));
 
-  return true;
+  return 2;  // Consumed 2 segments.
 }
 
 bool DateRewriter::RewriteAd(Segment *segment) {
@@ -1405,11 +1410,13 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
       num_done = 1;
       continue;
     }
-    if (rest_segments.size() >= 2 && RewriteEra(seg, rest_segments[1])) {
+
+    num_done = RewriteEra(rest_segments);
+    if (num_done) {
       modified = true;
-      num_done = 2;  // Skip one more.
       continue;
     }
+
     num_done = 1;
   }
 
