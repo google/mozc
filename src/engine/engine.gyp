@@ -37,7 +37,7 @@
       'target_name': 'engine_builder',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/../dictionary/pos_matcher.h',
+        '<(gen_out_dir)/../dictionary/pos_matcher_impl.inc',
         'data_loader.cc',
       ],
       'dependencies': [
@@ -54,7 +54,7 @@
       'target_name': 'engine',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/../dictionary/pos_matcher.h',
+        '<(gen_out_dir)/../dictionary/pos_matcher_impl.inc',
         'engine.cc',
       ],
       'dependencies': [
@@ -63,6 +63,7 @@
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/converter/converter.gyp:converter',
+        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_dictionary',
         '<(mozc_oss_src_dir)/engine/engine_base.gyp:modules',
         '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction',
@@ -86,7 +87,7 @@
       'target_name': 'mock_data_engine_factory',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/../dictionary/pos_matcher.h',
+        '<(gen_out_dir)/../dictionary/pos_matcher_impl.inc',
         'mock_data_engine_factory.cc',
       ],
       'dependencies': [
@@ -113,12 +114,14 @@
       'target_name': 'minimal_engine',
       'type': 'static_library',
       'sources': [
+        '<(gen_out_dir)/../dictionary/pos_matcher_impl.inc',
         'minimal_engine.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '<(mozc_oss_src_dir)/converter/converter.gyp:converter',
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
+        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
