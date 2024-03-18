@@ -1381,17 +1381,20 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
   bool modified = false;
 
   // Japanese ERA to AD works for resegmented input only
-  if (segments->conversion_segments_size() == 1) {
-    Segment *seg = segments->mutable_segment(0);
-    if (RewriteAd(seg)) {
+  const Segments::Range<Segments::iterator> conversion_segments =
+      segments->conversion_segments();
+  if (conversion_segments.size() == 1) {
+    Segment &seg = conversion_segments.front();
+    if (RewriteAd(&seg)) {
       return true;
     }
   }
 
   const std::string extra_format = GetExtraFormat(dictionary_);
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
-    Segment *seg = segments->mutable_segment(i);
+  size_t num_done = 1;
+  for (Segments::Range<Segments::iterator> rest_segments = conversion_segments;
+       !rest_segments.empty(); rest_segments = rest_segments.drop(num_done)) {
+    Segment *seg = &rest_segments.front();
     if (seg == nullptr) {
       LOG(ERROR) << "Segment is nullptr";
       return false;
@@ -1399,20 +1402,24 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
 
     if (RewriteDate(seg, extra_format)) {
       modified = true;
-    } else if (i + 1 < segments->segments_size() &&
-               RewriteEra(seg, segments->segment(i + 1))) {
-      modified = true;
-      ++i;  // skip one more
+      num_done = 1;
+      continue;
     }
+    if (rest_segments.size() >= 2 && RewriteEra(seg, rest_segments[1])) {
+      modified = true;
+      num_done = 2;  // Skip one more.
+      continue;
+    }
+    num_done = 1;
   }
 
-  if (request.has_composer() && segments->conversion_segments_size() > 0) {
+  if (request.has_composer() && !conversion_segments.empty()) {
     // Select the insert position by Romaji table.  Note:
     // TOGGLE_FLICK_TO_HIRAGANA uses digits for Hiragana composing, date/time
     // conversion is performed even when typing Hiragana characters.  Thus, it
     // should not be promoted.
     int insert_pos =
-        static_cast<int>(segments->conversion_segment(0).candidates_size());
+        static_cast<int>(conversion_segments.front().candidates_size());
     switch (request.request().special_romanji_table()) {
       case commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII:
         insert_pos = 1;

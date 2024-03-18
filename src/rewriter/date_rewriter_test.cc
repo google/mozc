@@ -1172,4 +1172,24 @@ TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
   Clock::SetClockForUnitTest(nullptr);
 }
 
+TEST_F(DateRewriterTest, RewriteAd) {
+  MockDictionary dictionary;
+  DateRewriter rewriter(&dictionary);
+  Segments segments;
+  InitSegment("へいせい23ねん", "平成23年", &segments);
+  const ConversionRequest request;
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+  EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("2011年")));
+}
+
+TEST_F(DateRewriterTest, RewriteAdBeforeAfterSegments) {
+  MockDictionary dictionary;
+  DateRewriter rewriter(&dictionary);
+  Segments segments;
+  InitSegment("きょうは", "今日は", &segments);
+  AppendSegment("へいせい23ねん", "平成23年", &segments);
+  AppendSegment("です", "です", &segments);
+  const ConversionRequest request;
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+}
 }  // namespace mozc
