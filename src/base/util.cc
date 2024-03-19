@@ -892,11 +892,20 @@ Util::FormType Util::GetFormType(char32_t w) {
 
 #undef INRANGE
 
-// return script type of first character in str
-Util::ScriptType Util::GetScriptType(const char *begin, const char *end,
-                                     size_t *mblen) {
-  const char32_t w = Utf8ToCodepoint(begin, end, mblen);
-  return GetScriptType(w);
+// Returns the script type of the first character in `str`.
+Util::ScriptType Util::GetFirstScriptType(absl::string_view str,
+                                          size_t *mblen) {
+  if (str.empty()) {
+    if (mblen) {
+      *mblen = 0;
+    }
+    return GetScriptType(0);
+  }
+  const Utf8AsChars32 utf8_as_char32(str);
+  if (mblen) {
+    *mblen = utf8_as_char32.begin().ok()? utf8_as_char32.begin().size() : 0;
+  }
+  return GetScriptType(utf8_as_char32.front());
 }
 
 namespace {
@@ -905,10 +914,10 @@ Util::ScriptType GetScriptTypeInternal(absl::string_view str,
                                        bool ignore_symbols) {
   Util::ScriptType result = Util::SCRIPT_TYPE_SIZE;
 
-  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    const char32_t w = iter.Get();
-    Util::ScriptType type = Util::GetScriptType(w);
-    if ((w == 0x30FC || w == 0x30FB || (w >= 0x3099 && w <= 0x309C)) &&
+  for (const char32_t codepoint : Utf8AsChars32(str)) {
+    Util::ScriptType type = Util::GetScriptType(codepoint);
+    if ((codepoint == 0x30FC || codepoint == 0x30FB ||
+         (codepoint >= 0x3099 && codepoint <= 0x309C)) &&
         // PROLONGED SOUND MARK|MIDLE_DOT|VOICED_SOUND_MARKS
         // are HIRAGANA as well
         (result == Util::SCRIPT_TYPE_SIZE || result == Util::HIRAGANA ||
@@ -925,7 +934,8 @@ Util::ScriptType GetScriptTypeInternal(absl::string_view str,
 
     // Periods are NUMBER as well, if it is not the first character.
     // 0xFF0E == '．', 0x002E == '.' in UCS4 encoding.
-    if (result == Util::NUMBER && (w == 0xFF0E || w == 0x002E)) {
+    if (result == Util::NUMBER &&
+        (codepoint == 0xFF0E || codepoint == 0x002E)) {
       continue;
     }
 
@@ -949,11 +959,6 @@ Util::ScriptType GetScriptTypeInternal(absl::string_view str,
 
 Util::ScriptType Util::GetScriptType(absl::string_view str) {
   return GetScriptTypeInternal(str, false);
-}
-
-Util::ScriptType Util::GetFirstScriptType(absl::string_view str) {
-  size_t mblen = 0;
-  return GetScriptType(str.data(), str.data() + str.size(), &mblen);
 }
 
 Util::ScriptType Util::GetScriptTypeWithoutSymbols(absl::string_view str) {

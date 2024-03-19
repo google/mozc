@@ -241,6 +241,7 @@ TEST(EngineTest, ReloadInvalidDataTest) {
   request.set_engine_type(EngineReloadRequest::MOBILE);
   request.set_file_path("placeholder");  // OK for MockDataLoader
   const uint64_t id = data_loader_ptr->GetRequestId(request);
+  EXPECT_TRUE(engine.SendEngineReloadRequest(request));
 
   EXPECT_CALL(*data_loader_ptr, Build(id))
       .WillOnce(Return(
@@ -251,8 +252,6 @@ TEST(EngineTest, ReloadInvalidDataTest) {
             result.response.set_status(EngineReloadResponse::DATA_BROKEN);
             return result;
           })));
-
-  EXPECT_TRUE(engine.SendEngineReloadRequest(request));
 
   // Build() is called, but it returns invalid data, so new data is not used.
   EngineReloadResponse response;
@@ -271,17 +270,11 @@ TEST(EngineTest, RollbackDataTest) {
 
   InSequence seq;  // EXPECT_CALL is called sequentially.
 
-  auto data_manager1 = std::make_unique<testing::MockDataManager>();
-  testing::MockDataManager *data_manager_ptr1 = data_manager1.get();
-  absl::string_view data_version1 = "EngineRollbackDataTest1";
-  auto modules1 = std::make_unique<engine::Modules>();
-  CHECK_OK(modules1->Init(std::move(data_manager1)));
-
-  auto data_manager2 = std::make_unique<testing::MockDataManager>();
-  testing::MockDataManager *data_manager_ptr2 = data_manager2.get();
-  absl::string_view data_version2 = "EngineRollbackDataTest2";
-  auto modules2 = std::make_unique<engine::Modules>();
-  CHECK_OK(modules2->Init(std::move(data_manager2)));
+  auto data_manager = std::make_unique<testing::MockDataManager>();
+  testing::MockDataManager *data_manager_ptr = data_manager.get();
+  absl::string_view data_version = "EngineRollbackDataTest";
+  auto modules = std::make_unique<engine::Modules>();
+  CHECK_OK(modules->Init(std::move(data_manager)));
 
   absl::StatusOr<std::unique_ptr<Engine>> engine_status =
       Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
@@ -296,75 +289,22 @@ TEST(EngineTest, RollbackDataTest) {
   request1_ready.set_file_path("placeholder1");  // OK for MockDataLoader
   const uint64_t id1 = data_loader_ptr->GetRequestId(request1_ready);
 
-  EngineReloadRequest request2_ready;
-  request2_ready.set_engine_type(EngineReloadRequest::MOBILE);
-  request2_ready.set_file_path("placeholder2");  // OK for MockDataLoader
-  const uint64_t id2 = data_loader_ptr->GetRequestId(request2_ready);
+  EngineReloadRequest request2_broken;
+  request2_broken.set_engine_type(EngineReloadRequest::MOBILE);
+  request2_broken.set_file_path("placeholder2");  // OK for MockDataLoader
+  const uint64_t id2 = data_loader_ptr->GetRequestId(request2_broken);
 
   EngineReloadRequest request3_broken;
   request3_broken.set_engine_type(EngineReloadRequest::MOBILE);
   request3_broken.set_file_path("placeholder3");  // OK for MockDataLoader
   const uint64_t id3 = data_loader_ptr->GetRequestId(request3_broken);
 
-  EngineReloadRequest request4_broken;
-  request4_broken.set_engine_type(EngineReloadRequest::MOBILE);
-  request4_broken.set_file_path("placeholder4");  // OK for MockDataLoader
-  const uint64_t id4 = data_loader_ptr->GetRequestId(request4_broken);
-
-  EXPECT_CALL(*data_loader_ptr, Build(id1))
-      .WillOnce(Return(
-          std::make_unique<BackgroundFuture<DataLoader::Response>>([&]() {
-            absl::SleepFor(absl::Milliseconds(100));
-            DataLoader::Response result;
-            result.id = id1;
-            result.response.set_status(EngineReloadResponse::RELOAD_READY);
-            result.modules = std::move(modules1);
-            return result;
-          })));
-
-  // Sends multiple requests.
-
-  // Request#1
-  // Build is called and Module1 is initialized since this is the first call.
-  // Build initializes Module1 and sets Modules1 to response_.
+  // Sends multiple requests three times. 1 -> 2 -> 3.
+  // 3 is the latest id.
   ASSERT_TRUE(engine.SendEngineReloadRequest(request1_ready));
-
-  // Request#2
-  // Module2 will be initialized later, since Module1 is already in response_.
-  ASSERT_TRUE(engine.SendEngineReloadRequest(request2_ready));
-
-  // Request#3
-  // The initialization of Module3 will fail later and will fallback to Module2.
+  ASSERT_TRUE(engine.SendEngineReloadRequest(request2_broken));
   ASSERT_TRUE(engine.SendEngineReloadRequest(request3_broken));
 
-  // Request#4
-  // The initialization of Module3 will fail later and will fallback to Module2.
-  ASSERT_TRUE(engine.SendEngineReloadRequest(request4_broken));
-
-  // Engine loads Module1 is used and response_ is cleared.
-  EngineReloadResponse response;
-  EXPECT_TRUE(engine.MaybeReloadEngine(&response));
-
-  EXPECT_CALL(*data_manager_ptr1, GetDataVersion())
-    .WillRepeatedly(Return(data_version1));
-  EXPECT_EQ(engine.GetDataVersion(), data_version1);
-
-  // Request#4 fails for the initialization. The current Request#1 is used.
-  EXPECT_CALL(*data_loader_ptr, Build(id4))
-      .WillOnce(Return(
-          std::make_unique<BackgroundFuture<DataLoader::Response>>([&]() {
-            absl::SleepFor(absl::Milliseconds(100));
-            DataLoader::Response result;
-            result.id = id4;
-            result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-            return result;
-          })));
-  EXPECT_FALSE(engine.MaybeReloadEngine(&response));
-  EXPECT_CALL(*data_manager_ptr1, GetDataVersion())
-    .WillRepeatedly(Return(data_version1));
-  EXPECT_EQ(engine.GetDataVersion(), data_version1);
-
-  // Request#3 fails for the initialization. The current Request#1 is used.
   EXPECT_CALL(*data_loader_ptr, Build(id3))
       .WillOnce(Return(
           std::make_unique<BackgroundFuture<DataLoader::Response>>([&]() {
@@ -374,34 +314,39 @@ TEST(EngineTest, RollbackDataTest) {
             result.response.set_status(EngineReloadResponse::DATA_BROKEN);
             return result;
           })));
-  EXPECT_FALSE(engine.MaybeReloadEngine(&response));
-  EXPECT_CALL(*data_manager_ptr1, GetDataVersion())
-    .WillRepeatedly(Return(data_version1));
-  EXPECT_EQ(engine.GetDataVersion(), data_version1);
-
-  // Request#2 is initialized.
   EXPECT_CALL(*data_loader_ptr, Build(id2))
       .WillOnce(Return(
           std::make_unique<BackgroundFuture<DataLoader::Response>>([&]() {
             absl::SleepFor(absl::Milliseconds(100));
             DataLoader::Response result;
             result.id = id2;
-            result.response.set_status(EngineReloadResponse::RELOAD_READY);
-            result.modules = std::move(modules2);
+            result.response.set_status(EngineReloadResponse::DATA_BROKEN);
             return result;
           })));
-  EXPECT_TRUE(engine.MaybeReloadEngine(&response));
+  EXPECT_CALL(*data_loader_ptr, Build(id1))
+      .WillOnce(Return(
+          std::make_unique<BackgroundFuture<DataLoader::Response>>([&]() {
+            absl::SleepFor(absl::Milliseconds(100));
+            DataLoader::Response result;
+            result.id = id1;
+            result.response.set_status(EngineReloadResponse::RELOAD_READY);
+            result.modules = std::move(modules);
+            return result;
+          })));
 
-  // Engine uses Module2
-  EXPECT_CALL(*data_manager_ptr2, GetDataVersion())
-      .WillRepeatedly(Return(data_version2));
-  EXPECT_EQ(engine.GetDataVersion(), data_version2);
+  for (int eid = 3; eid >= 1; --eid) {
+    // Rollback as 3 -> 2 -> 1.  1 is only valid engine.
+    // Engine of 3, and 2 are unregistered.
+    // The second best id (2, and 1) are used.
+    EngineReloadResponse response;
+    EXPECT_EQ(engine.MaybeReloadEngine(&response), eid == 1);
+  }
 
-  // Engine already uses Module2. No need to reload the same request.
-  EXPECT_FALSE(engine.MaybeReloadEngine(&response));
-  EXPECT_CALL(*data_manager_ptr2, GetDataVersion())
-      .WillRepeatedly(Return(data_version2));
-  EXPECT_EQ(engine.GetDataVersion(), data_version2);
+  EXPECT_CALL(*data_manager_ptr, GetDataVersion())
+      .WillRepeatedly(Return(data_version));
+
+  // Finally rollback to the new engine 1.
+  EXPECT_EQ(engine.GetDataVersion(), data_version);
 }
 
 }  // namespace engine

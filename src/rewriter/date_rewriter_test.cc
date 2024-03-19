@@ -40,10 +40,13 @@
 #include "composer/table.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
+#include "dictionary/dictionary_token.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -184,23 +187,31 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
                     ValueAndDescAre("水曜日", kDesc),
                 }));
   }
-  {
-    InitSegment("にちじ", "日時", &segments);
+  const std::pair<std::string, std::string> kCurrentDateTimeKeyValues[]{
+      {"にちじ", "日時"},
+      {"なう", "ナウ"},
+  };
+  for (const auto &[key, value] : kCurrentDateTimeKeyValues) {
+    InitSegment(key, value, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0),
                 CandidatesAreArray({
-                    ValueAndDescAre("日時", ""),
+                    ValueAndDescAre(value, ""),
                     ValueAndDescAre("2011/04/18 15:06", "現在の日時"),
                 }));
   }
-  {
-    InitSegment("いま", "今", &segments);
+  const std::pair<std::string, std::string> kCurrentTimeKeyValues[]{
+      {"いま", "今"},
+      {"じこく", "時刻"},
+  };
+  for (const auto &[key, value] : kCurrentTimeKeyValues) {
+    InitSegment(key, value, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     constexpr absl::string_view kDesc = "現在の時刻";
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0), CandidatesAreArray({
-                                         ValueAndDescAre("今", ""),
+                                         ValueAndDescAre(value, ""),
                                          ValueAndDescAre("15:06", kDesc),
                                          ValueAndDescAre("15時06分", kDesc),
                                          ValueAndDescAre("午後3時6分", kDesc),
@@ -507,7 +518,7 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
   EXPECT_THAT(DateRewriter::ConvertDateWithYear(2011, 4, 17),
               ElementsAre("2011/04/17", "2011-04-17", "2011年4月17日"));
 
-  // January, March, May, July, Auguest, October, December has 31 days April,
+  // January, March, May, July, August, October, December has 31 days April,
   // June, September, November has 30 days February is dealt as a special case,
   // see below:
   const struct {
@@ -1031,7 +1042,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
     Segments segments = test_segments;
     EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
 
-    // Verify that the top candidate wans't modified and the next two were
+    // Verify that the top candidate wasn't modified and the next two were
     // moved to last.
     const auto &segment = segments.segment(0);
     const auto cand_size = segment.candidates_size();
@@ -1161,4 +1172,24 @@ TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
   Clock::SetClockForUnitTest(nullptr);
 }
 
+TEST_F(DateRewriterTest, RewriteAd) {
+  MockDictionary dictionary;
+  DateRewriter rewriter(&dictionary);
+  Segments segments;
+  InitSegment("へいせい23ねん", "平成23年", &segments);
+  const ConversionRequest request;
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+  EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("2011年")));
+}
+
+TEST_F(DateRewriterTest, RewriteAdBeforeAfterSegments) {
+  MockDictionary dictionary;
+  DateRewriter rewriter(&dictionary);
+  Segments segments;
+  InitSegment("きょうは", "今日は", &segments);
+  AppendSegment("へいせい23ねん", "平成23年", &segments);
+  AppendSegment("です", "です", &segments);
+  const ConversionRequest request;
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+}
 }  // namespace mozc

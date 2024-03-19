@@ -38,6 +38,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "base/protobuf/message.h"
 #include "base/vlog.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter.h"
@@ -281,13 +282,24 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
   }
   *response = loader_response->response;
 
+  if (!loader_response->modules ||
+      response->status() != EngineReloadResponse::RELOAD_READY) {
+    // The loader_response does not contain a valid result.
+
+    // This request id causes a critical error, so rollback the id.
+    LOG(ERROR) << "Failure in loading response: "
+               << protobuf::Utf8Format(*response);
+    loader_->ReportLoadFailure(loader_response->id);
+    return false;
+  }
+
   if (user_data_manager_) {
     user_data_manager_->Wait();
   }
 
   // Reloads DataManager.
-  const bool is_mobile = loader_response->response.request().engine_type() ==
-                         EngineReloadRequest::MOBILE;
+  const bool is_mobile =
+      response->request().engine_type() == EngineReloadRequest::MOBILE;
   absl::Status reload_status =
       ReloadModules(std::move(loader_response->modules), is_mobile);
   if (!reload_status.ok()) {
@@ -306,8 +318,6 @@ bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
     return false;
   }
   loader_->RegisterRequest(request);
-  loader_->MaybeBuildDataLoader();
-
   return true;
 }
 

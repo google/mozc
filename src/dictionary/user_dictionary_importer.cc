@@ -40,15 +40,17 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "dictionary/user_dictionary_util.h"
@@ -212,7 +214,7 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
       continue;
     }
 
-    // Don't register words if it is aleady in the current dictionary.
+    // Don't register words if it is already in the current dictionary.
     if (!existent_entries.insert(EntryFingerprint(entry)).second) {
       continue;
     }
@@ -455,31 +457,21 @@ UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
 
   // Count valid UTF8 characters.
   // TODO(taku): Improve the accuracy by making a DFA.
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
   size_t valid_utf8 = 0;
   size_t valid_script = 0;
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32_t codepoint = Util::Utf8ToCodepoint(begin, end, &mblen);
-    if (mblen == 0) {
+  for (const UnicodeChar ch : Utf8AsUnicodeChar(str)) {
+    if (!ch.ok()) {
       break;
     }
-    ++valid_utf8;
-    for (size_t i = 1; i < mblen; ++i) {
-      if (begin[i] >= 0x80 && begin[i] <= 0xBF) {
-        ++valid_utf8;
-      }
-    }
+    valid_utf8 += ch.utf8().size();
 
     // "\n\r\t " or Japanese code point
+    const char32_t codepoint = ch.char32();
     if (codepoint == 0x000A || codepoint == 0x000D || codepoint == 0x0020 ||
         codepoint == 0x0009 ||
         Util::GetScriptType(codepoint) != Util::UNKNOWN_SCRIPT) {
-      valid_script += mblen;
+      valid_script += ch.utf8().size();
     }
-
-    begin += mblen;
   }
 
   // TODO(taku): No theoretical justification for these parameters.

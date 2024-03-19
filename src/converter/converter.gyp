@@ -37,7 +37,7 @@
       'target_name': 'converter',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_mozc_dir)/dictionary/pos_matcher.h',
+        '<(gen_out_mozc_dir)/dictionary/pos_matcher_impl.inc',
         'converter.cc',
       ],
       'dependencies': [

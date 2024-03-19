@@ -37,7 +37,7 @@
       'target_name': 'modules',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/../dictionary/pos_matcher.h',
+        '<(gen_out_dir)/../dictionary/pos_matcher_impl.inc',
         'modules.cc',
       ],
       'dependencies': [

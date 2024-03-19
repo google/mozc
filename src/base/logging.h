@@ -30,35 +30,9 @@
 #ifndef MOZC_BASE_LOGGING_H_
 #define MOZC_BASE_LOGGING_H_
 
-// These includes are kept for legacy reasons. Prefer including them directly,
-// unless you use DFATAL severity backported below.
+// These includes are kept for legacy reasons. Prefer including them directly.
 #include "absl/log/check.h"  // IWYU pragma: keep
 #include "absl/log/log.h"    // IWYU pragma: keep
 
-// Note that abseil HEAD has ABSL_LTS_RELEASE_VERSION undefined.
-#if defined(ABSL_LTS_RELEASE_VERSION) && ABSL_LTS_RELEASE_VERSION < 20240116
-// Older version of abseil doesn't ship with DFATAL. This is a very hacky
-// backport that needs to be removed as soon as we migrate to Abseil LTS
-// 20240116.
-#ifdef DEBUG
-#define ABSL_LOG_INTERNAL_CONDITION_DFATAL(type, condition) \
-  ABSL_LOG_INTERNAL_CONDITION_FATAL(type, condition)
-
-namespace absl {
-ABSL_NAMESPACE_BEGIN
-static constexpr absl::LogSeverity kLogDebugFatal = absl::LogSeverity::kFatal;
-ABSL_NAMESPACE_END
-}  // namespace absl
-#else  // DEBUG
-#define ABSL_LOG_INTERNAL_CONDITION_DFATAL(type, condition) \
-  ABSL_LOG_INTERNAL_CONDITION_ERROR(type, condition)
-
-namespace absl {
-ABSL_NAMESPACE_BEGIN
-static constexpr absl::LogSeverity kLogDebugFatal = absl::LogSeverity::kError;
-ABSL_NAMESPACE_END
-}  // namespace absl
-#endif  // !DEBUG
-#endif  // ABSL_LTS_RELEASE_VERSION < 20240116
 
 #endif  // MOZC_BASE_LOGGING_H_

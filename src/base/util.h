@@ -192,15 +192,12 @@ class Util {
   // return script type of w
   static ScriptType GetScriptType(char32_t w);
 
-  // return script type of first character in [begin, end)
+  // Returns the script type of the first character in `str`.
   // This function finds the first UTF-8 chars and returns its script type.
-  // The length of the character will be returned in *mblen.
   // This function calls GetScriptType(char32_t) internally.
-  static ScriptType GetScriptType(const char *begin, const char *end,
-                                  size_t *mblen);
-
-  // return script type of first character in str
-  static ScriptType GetFirstScriptType(absl::string_view str);
+  // Also sets the UTF-8 byte size of the chracter to `*mblen` if it's given.
+  static ScriptType GetFirstScriptType(absl::string_view str,
+                                       size_t *mblen = nullptr);
 
   // return script type of string. all chars in str must be
   // KATAKANA/HIRAGANA/KANJI/NUMBER or ALPHABET.

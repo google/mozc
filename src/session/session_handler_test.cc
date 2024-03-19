@@ -771,6 +771,8 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
   request.set_engine_type(EngineReloadRequest::MOBILE);
   request.set_file_path("placeholder");  // OK for MockDataLoader
   const uint64_t data_id = data_loader_ptr->GetRequestId(request);
+  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
+            EngineReloadResponse::ACCEPTED);
 
   EXPECT_CALL(*data_loader_ptr, Build(data_id))
       .WillOnce(Return(
@@ -781,9 +783,6 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
             result.response.set_status(EngineReloadResponse::DATA_BROKEN);
             return result;
           })));
-
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
-            EngineReloadResponse::ACCEPTED);
 
   // Build() is called, but it returns invalid data, so new data is not used.
   EXPECT_EQ(&handler.engine(), old_engine_ptr);
@@ -844,19 +843,8 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
   request3_broken.set_file_path("placeholder3");  // OK for MockDataLoader
   const uint64_t data_id3 = data_loader_ptr->GetRequestId(request3_broken);
 
-  EXPECT_CALL(*data_loader_ptr, Build(data_id1))
-      .WillOnce(Return(
-          std::make_unique<BackgroundFuture<DataLoader::Response>>([&]() {
-            absl::SleepFor(absl::Milliseconds(100));
-            DataLoader::Response result;
-            result.id = data_id1;
-            result.response.set_status(EngineReloadResponse::RELOAD_READY);
-            result.modules = std::move(modules);
-            return result;
-          })));
-
   // Sends multiple requests three times. 1 -> 2 -> 3.
-  // 3 is the latest id. 1 is initialized soon as the first request.
+  // 3 is the latest id.
   ASSERT_EQ(SendMockEngineReloadRequest(&handler, request1_ready),
             EngineReloadResponse::ACCEPTED);
   ASSERT_EQ(SendMockEngineReloadRequest(&handler, request2_broken),
@@ -881,6 +869,16 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
             DataLoader::Response result;
             result.id = data_id2;
             result.response.set_status(EngineReloadResponse::DATA_BROKEN);
+            return result;
+          })));
+  EXPECT_CALL(*data_loader_ptr, Build(data_id1))
+      .WillOnce(Return(
+          std::make_unique<BackgroundFuture<DataLoader::Response>>([&]() {
+            absl::SleepFor(absl::Milliseconds(100));
+            DataLoader::Response result;
+            result.id = data_id1;
+            result.response.set_status(EngineReloadResponse::RELOAD_READY);
+            result.modules = std::move(modules);
             return result;
           })));
 
