@@ -40,7 +40,6 @@
 #include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/hash.h"
-#include "base/protobuf/message.h"
 #include "base/thread.h"
 #include "data_manager/data_manager.h"
 #include "engine/modules.h"
@@ -227,16 +226,6 @@ DataLoader::MaybeMoveDataLoaderResponse() {
       std::move(*loader_response_future_).Get();
   loader_response_future_.reset();
 
-  if (!loader_response.modules ||
-      loader_response.response.status() != EngineReloadResponse::RELOAD_READY) {
-    // The loader_response does not contain a valid result.
-
-    // This engine id causes a critical error, so rollback the id.
-    LOG(ERROR) << "Failure in engine loading: "
-               << protobuf::Utf8Format(loader_response.response);
-    ReportLoadFailure(loader_response.id);
-    return nullptr;
-  }
   return std::make_unique<DataLoader::Response>(std::move(loader_response));
 }
 
