@@ -511,20 +511,19 @@ size_t Segments::history_segments_size() const {
   return end - segments_.begin();
 }
 
-Segments::Range<Segments::iterator> Segments::history_segments() {
+Segments::range Segments::history_segments() {
   return make_range(begin(), history_segments_end());
 }
 
-Segments::Range<Segments::const_iterator> Segments::history_segments() const {
+Segments::const_range Segments::history_segments() const {
   return make_range(begin(), history_segments_end());
 }
 
-Segments::Range<Segments::iterator> Segments::conversion_segments() {
+Segments::range Segments::conversion_segments() {
   return make_range(history_segments_end(), end());
 }
 
-Segments::Range<Segments::const_iterator> Segments::conversion_segments()
-    const {
+Segments::const_range Segments::conversion_segments() const {
   return make_range(history_segments_end(), end());
 }
 
@@ -615,7 +614,7 @@ Segments::RevertEntry *Segments::push_back_revert_entry() {
 }
 
 std::string Segments::history_key(int size) const {
-  Range<const_iterator> segments = history_segments();
+  const_range segments = history_segments();
   if (size != -1) {
     segments = segments.take_last(size);
   }
@@ -630,7 +629,7 @@ std::string Segments::history_key(int size) const {
 }
 
 std::string Segments::history_value(int size) const {
-  Range<const_iterator> segments = history_segments();
+  const_range segments = history_segments();
   if (size != -1) {
     segments = segments.take_last(size);
   }

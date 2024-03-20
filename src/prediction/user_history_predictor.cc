@@ -1206,8 +1206,7 @@ bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
 
 const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
     const Segments &segments) const {
-  const Segments::Range<Segments::const_iterator> history_segments =
-      segments.history_segments();
+  const Segments::const_range history_segments = segments.history_segments();
   const Entry *prev_entry = nullptr;
   // When there are non-zero history segments, lookup an entry
   // from the LRU dictionary, which is corresponding to the last

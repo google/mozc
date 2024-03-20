@@ -462,7 +462,7 @@ void SessionOutput::FillConversion(const Segments &segments,
   constexpr uint32_t kBaseType = CONVERSION;
   // Cursor position in conversion state should be the end of the preedit.
   size_t cursor = 0;
-  const Segments::Range<Segments::const_iterator> conversion_segments =
+  const Segments::const_range conversion_segments =
       segments.conversion_segments();
   const Segment &current_segment = conversion_segments[segment_index];
   for (const Segment &segment : conversion_segments) {

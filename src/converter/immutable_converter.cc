@@ -1354,8 +1354,7 @@ bool ImmutableConverter::MakeLattice(const ConversionRequest &request,
   // In suggestion mode, ImmutableConverter will not accept multiple-segments.
   // The result always consists of one segment.
   if (is_reverse || is_prediction) {
-    const Segments::Range<Segments::iterator> conversion_segments =
-        segments->conversion_segments();
+    const Segments::range conversion_segments = segments->conversion_segments();
     if (conversion_segments.size() != 1 ||
         conversion_segments.front().segment_type() != Segment::FREE) {
       LOG(WARNING) << "ImmutableConverter doesn't support constrained requests";

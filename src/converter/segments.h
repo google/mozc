@@ -594,6 +594,8 @@ class Segments final {
     Iterator begin_;
     Iterator end_;
   };
+  using range = Range<iterator>;
+  using const_range = Range<const_iterator>;
 
   // constructors
   Segments()
@@ -618,12 +620,12 @@ class Segments final {
     return Range<Iterator>(begin, end);
   }
 
-  Range<iterator> all() { return make_range(begin(), end()); }
-  Range<const_iterator> all() const { return make_range(begin(), end()); }
-  Range<iterator> history_segments();
-  Range<const_iterator> history_segments() const;
-  Range<iterator> conversion_segments();
-  Range<const_iterator> conversion_segments() const;
+  range all() { return make_range(begin(), end()); }
+  const_range all() const { return make_range(begin(), end()); }
+  range history_segments();
+  const_range history_segments() const;
+  range conversion_segments();
+  const_range conversion_segments() const;
 
   // getter
   const Segment &segment(size_t i) const { return *segments_[i]; }
