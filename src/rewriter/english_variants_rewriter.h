@@ -55,11 +55,15 @@ class EnglishVariantsRewriter : public RewriterInterface {
 
  private:
   FRIEND_TEST(EnglishVariantsRewriterTest, ExpandEnglishVariants);
+  FRIEND_TEST(EnglishVariantsRewriterTest, ExpandSpacePrefixedVariants);
   bool IsT13NCandidate(Segment::Candidate *candidate) const;
   bool IsEnglishCandidate(Segment::Candidate *candidate) const;
   bool ExpandEnglishVariants(absl::string_view input,
                              std::vector<std::string> *variants) const;
-  bool ExpandEnglishVariantsWithSegment(Segment *seg) const;
+  bool ExpandSpacePrefixedVariants(absl::string_view input,
+                                   std::vector<std::string> *variants) const;
+  bool ExpandEnglishVariantsWithSegment(bool need_space_prefix,
+                                        Segment *seg) const;
 
   const dictionary::PosMatcher pos_matcher_;
 };
