@@ -77,16 +77,16 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
 
   absl::WriterMutexLock lock(&mutex_);
 
-  // Already requesting latest id.
-  if (!requests_.empty() && requests_.front().id == id) {
-    latest_data_id_ = id;
-    return latest_data_id_;
+  // Already requesting the top priority request.
+  if (top_request_id_ == id) {
+    DCHECK(!requests_.empty() && requests_.front().id == id);
+    return top_request_id_;
   }
 
   // The request is invalid since it has already been unregistered.
   if (unregistered_.contains(id)) {
-    latest_data_id_ = requests_.empty() ? 0 : requests_.front().id;
-    return latest_data_id_;
+    DCHECK_EQ(top_request_id_, requests_.empty() ? 0 : requests_.front().id);
+    return top_request_id_;
   }
 
   ++sequence_id_;
@@ -109,8 +109,8 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
                        lhs.sequence_id > rhs.sequence_id));
             });
 
-  latest_data_id_ = requests_.front().id;
-  return latest_data_id_;
+  top_request_id_ = requests_.front().id;
+  return top_request_id_;
 }
 
 uint64_t DataLoader::ReportLoadFailure(uint64_t id) {
@@ -123,9 +123,10 @@ uint64_t DataLoader::ReportLoadFailure(uint64_t id) {
     requests_.erase(it, requests_.end());
     unregistered_.emplace(id);
   }
-  const uint64_t rollback_id = requests_.empty() ? 0 : requests_.front().id;
-  latest_data_id_.compare_exchange_strong(id, rollback_id);
-  return rollback_id;
+
+  // Update the top request ID from the remaining sorted requests.
+  top_request_id_ = requests_.empty() ? 0 : requests_.front().id;
+  return top_request_id_;
 }
 
 namespace {
@@ -209,17 +210,17 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
 
 void DataLoader::MaybeBuildNewData() {
   // Checks if an existing build process, or already using the top request.
-  if (loader_response_future_ || current_data_id_ == latest_data_id_ ||
-      latest_data_id_ == 0) {
+  if (loader_response_future_ || current_request_id_ == top_request_id_ ||
+      top_request_id_ == 0) {
     return;
   }
 
-  LOG(INFO) << "Building a new module (current_data_id_=" << current_data_id_
-            << ", latest_data_id_=" << latest_data_id_ << ")";
-  loader_response_future_ = Build(latest_data_id_);
+  LOG(INFO) << "Building a new module (current ID =" << current_request_id_
+            << ", top ID =" << top_request_id_ << ")";
+  loader_response_future_ = Build(top_request_id_);
 
   // Waits the engine if the no new engine is loaded so far.
-  if (current_data_id_ == 0 || always_wait_for_loader_response_future_) {
+  if (current_request_id_ == 0 || always_wait_for_loader_response_future_) {
     loader_response_future_->Wait();
   }
 }
