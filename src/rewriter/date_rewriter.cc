@@ -996,8 +996,7 @@ bool DateRewriter::RewriteDate(Segment *segment,
   return true;
 }
 
-size_t DateRewriter::RewriteEra(
-    Segments::Range<Segments::iterator> segments_range) {
+size_t DateRewriter::RewriteEra(Segments::range segments_range) {
   if (segments_range.size() < 2) {
     return 0;
   }
@@ -1386,8 +1385,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
   bool modified = false;
 
   // Japanese ERA to AD works for resegmented input only
-  const Segments::Range<Segments::iterator> conversion_segments =
-      segments->conversion_segments();
+  const Segments::range conversion_segments = segments->conversion_segments();
   if (conversion_segments.size() == 1) {
     Segment &seg = conversion_segments.front();
     if (RewriteAd(&seg)) {
@@ -1397,7 +1395,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
 
   const std::string extra_format = GetExtraFormat(dictionary_);
   size_t num_done = 1;
-  for (Segments::Range<Segments::iterator> rest_segments = conversion_segments;
+  for (Segments::range rest_segments = conversion_segments;
        !rest_segments.empty(); rest_segments = rest_segments.drop(num_done)) {
     Segment *seg = &rest_segments.front();
     if (seg == nullptr) {

@@ -124,8 +124,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
   }
 
   bool modified = false;
-  const Segments::Range<Segments::iterator> conversion_segments =
-      segments->conversion_segments();
+  const Segments::range conversion_segments = segments->conversion_segments();
   const size_t segments_size = conversion_segments.size();
   const bool is_single_segment = (segments_size == 1);
   const bool use_svs = (request.request()

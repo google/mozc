@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 55
+// Next ID: 56
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -659,8 +659,10 @@ message DecoderExperimentParams {
 
   optional bool apply_user_segment_history_rewriter_for_prediction = 44
       [default = false];
-  optional bool user_segment_history_rewriter_new_replaceable = 53 [default = false];
-  optional bool user_segment_history_rewriter_use_inner_segments = 54 [default = false];
+  optional bool user_segment_history_rewriter_new_replaceable = 53
+      [default = false];
+  optional bool user_segment_history_rewriter_use_inner_segments = 54
+      [default = false];
 
   optional bool filter_noisy_number_candidate = 45 [default = false];
 
@@ -676,7 +678,23 @@ message DecoderExperimentParams {
   // * freq >= 2:  (2, 0)
   optional bool enable_history_prediction_triggering_v2 = 50 [default = true];
   optional float history_prediction_min_freq = 51 [default = 0.0];
-  optional float history_prediction_remaining_char_length_weight = 52 [default = 0.0];
+  optional float history_prediction_remaining_char_length_weight = 52
+      [default = 0.0];
+
+  // Parameter for space-insertion for English compounds
+  // value 0: no insertion. Candidates will be like this.
+  // - "Google"
+  // - "GOOGLE"
+  // - "google"
+  // value 1: expand for all English candidates
+  // This mode adds space-prefixed candidates for three style, like this.
+  // - "Google"
+  // - " Google"
+  // - "GOOGLE"
+  // - " GOOGLE"
+  // - "google"
+  // - " google"
+  optional int32 english_variation_space_insertion_mode = 55 [default = 0];
 }
 
 // Clients' request to the server.

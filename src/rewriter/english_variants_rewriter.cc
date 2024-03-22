@@ -29,21 +29,56 @@
 
 #include "rewriter/english_variants_rewriter.h"
 
+#include <cstddef>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
+
+// Add space-prefixed variants to enable Space-joined English words conversion.
+// 'Google Japan' consists of 'ぐーぐる': 'Google', and 'じゃぱん': 'Japan'
+// Therefore, when a user types 'ぐーぐるじゃぱん', it will be 'GoogleJapan'
+// instead. To avoid this, in non-first segments which follow english word
+// segments, add these space-prefixed candidates.
+bool EnglishVariantsRewriter::ExpandSpacePrefixedVariants(
+    const absl::string_view input, std::vector<std::string> *variants) const {
+  DCHECK(variants);
+
+  if (input.empty()) {
+    return false;
+  }
+  if (absl::StartsWith(input, " ")) {
+    return false;
+  }
+  std::vector<std::string> space_prefixed_variants;
+  space_prefixed_variants.push_back(absl::StrCat(" ", input));
+  for (const std::string &word : *variants) {
+    if (word.empty()) {
+      continue;
+    }
+    if (!absl::StartsWith(word, " ")) {
+      space_prefixed_variants.push_back(word);
+      space_prefixed_variants.push_back(absl::StrCat(" ", word));
+    } else {
+      space_prefixed_variants.push_back(word);
+    }
+  }
+  // replace the content of variants
+  *variants = std::move(space_prefixed_variants);
+  return true;
+}
 
 bool EnglishVariantsRewriter::ExpandEnglishVariants(
     const absl::string_view input, std::vector<std::string> *variants) const {
@@ -104,7 +139,7 @@ bool EnglishVariantsRewriter::IsEnglishCandidate(
 }
 
 bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
-    Segment *seg) const {
+     bool need_space_prefix, Segment *seg) const {
   CHECK(seg);
 
   bool modified = false;
@@ -156,7 +191,13 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
 
       // Expand T13N candidate variants
       std::vector<std::string> variants;
-      if (ExpandEnglishVariants(original_candidate->content_value, &variants)) {
+      bool expanded =
+          ExpandEnglishVariants(original_candidate->content_value, &variants);
+      if (need_space_prefix) {
+        expanded |= ExpandSpacePrefixedVariants(
+            original_candidate->content_value, &variants);
+      }
+      if (expanded) {
         CHECK(!variants.empty());
         for (auto it = variants.rbegin(); it != variants.rend(); ++it) {
           const std::string new_value =
@@ -211,9 +252,22 @@ int EnglishVariantsRewriter::capability(
 
 bool EnglishVariantsRewriter::Rewrite(const ConversionRequest &request,
                                       Segments *segments) const {
+  const commands::DecoderExperimentParams &params =
+      request.request().decoder_experiment_params();
+  // 1: enable space insertion
+  const bool enable_space_insersion =
+      params.english_variation_space_insertion_mode() == 1;
   bool modified = false;
+  bool is_previous_candidate_english = false;
   for (Segment &segment : segments->conversion_segments()) {
-    modified |= ExpandEnglishVariantsWithSegment(&segment);
+    // if the top candidate of previous segment is an english word,
+    // need_space_prefix = true
+    const bool need_space_prefix =
+        enable_space_insersion && is_previous_candidate_english;
+    modified |= ExpandEnglishVariantsWithSegment(need_space_prefix, &segment);
+    is_previous_candidate_english =
+        segment.candidates_size() > 0 &&
+        Util::IsScriptType(segment.candidate(0).value, Util::ALPHABET);
   }
 
   return modified;

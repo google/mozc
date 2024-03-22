@@ -312,6 +312,7 @@ TEST(EngineTest, RollbackDataTest) {
             DataLoader::Response result;
             result.id = id3;
             result.response.set_status(EngineReloadResponse::DATA_BROKEN);
+            *result.response.mutable_request() = request3_broken;
             return result;
           })));
   EXPECT_CALL(*data_loader_ptr, Build(id2))
@@ -321,6 +322,7 @@ TEST(EngineTest, RollbackDataTest) {
             DataLoader::Response result;
             result.id = id2;
             result.response.set_status(EngineReloadResponse::DATA_BROKEN);
+            *result.response.mutable_request() = request2_broken;
             return result;
           })));
   EXPECT_CALL(*data_loader_ptr, Build(id1))
@@ -330,22 +332,22 @@ TEST(EngineTest, RollbackDataTest) {
             DataLoader::Response result;
             result.id = id1;
             result.response.set_status(EngineReloadResponse::RELOAD_READY);
+            *result.response.mutable_request() = request1_ready;
             result.modules = std::move(modules);
             return result;
           })));
 
-  for (int eid = 3; eid >= 1; --eid) {
-    // Rollback as 3 -> 2 -> 1.  1 is only valid engine.
-    // Engine of 3, and 2 are unregistered.
-    // The second best id (2, and 1) are used.
-    EngineReloadResponse response;
-    EXPECT_EQ(engine.MaybeReloadEngine(&response), eid == 1);
-  }
+  // Both request#3 and request#2 are broken. request#1 is immediately used as a
+  // fallback.
+  EngineReloadResponse response;
+  EXPECT_TRUE(engine.MaybeReloadEngine(&response));
+  EXPECT_EQ(response.request().file_path(), request1_ready.file_path());
+  EXPECT_NE(response.request().file_path(), request2_broken.file_path());
+  EXPECT_NE(response.request().file_path(), request3_broken.file_path());
 
+  // DataManager built with request#1 is used.
   EXPECT_CALL(*data_manager_ptr, GetDataVersion())
       .WillRepeatedly(Return(data_version));
-
-  // Finally rollback to the new engine 1.
   EXPECT_EQ(engine.GetDataVersion(), data_version);
 }
 

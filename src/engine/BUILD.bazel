@@ -185,6 +185,7 @@ mozc_cc_library(
         "//protocol:engine_builder_cc_proto",
         "//rewriter",
         "//rewriter:rewriter_interface",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/memory",

@@ -201,7 +201,7 @@ class UserDictionary::TokensIndex {
           // "品詞なし"
           const absl::string_view comment =
               absl::StripAsciiWhitespace(entry.comment());
-          UserPos::Token token{.key = entry.key(),
+          UserPos::Token token{.key = reading,
                                .value = entry.value(),
                                .id = 0,
                                .attributes = UserPos::Token::SHORTCUT,

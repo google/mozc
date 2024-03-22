@@ -80,7 +80,7 @@ class DataLoader {
   uint64_t ReportLoadFailure(uint64_t id);
 
   // Sets the id of DataLoader::Response as the ID of the currently using data.
-  void ReportLoadSuccess(uint64_t id) { current_data_id_ = id; }
+  void ReportLoadSuccess(uint64_t id) { current_request_id_ = id; }
 
   // Builds the new engine associated with `id`.
   // This method returns the future object immediately.
@@ -91,9 +91,12 @@ class DataLoader {
 
   void Clear();
 
-  // Maybe build new data loader if a reload request has been already received.
-  // Returns true, a new data loader response is already available.
-  bool MaybeBuildDataLoader();
+  // Maybe build a new data from the top priority request if a reload request
+  // has been already received and no existing build process is running.
+  void MaybeBuildNewData();
+
+  // Returns true if a new data loader response is ready.
+  bool IsBuildResponseReady();
 
   // Maybe move the data loader response to the caller.
   // Otherwise nullptr is returned.
@@ -119,9 +122,14 @@ class DataLoader {
   absl::flat_hash_set<uint64_t> unregistered_ ABSL_GUARDED_BY(mutex_);
   std::vector<RequestData> requests_ ABSL_GUARDED_BY(mutex_);
 
+  // Id of the highest priority request in the registered requests.
+  // 0 means that no request have been registered or valid yet.
+  std::atomic<uint64_t> top_request_id_ = 0;
+
+  // Id of the request for the current data.
   // 0 means that no data has been updated yet.
-  std::atomic<uint64_t> latest_data_id_ = 0;
-  std::atomic<uint64_t> current_data_id_ = 0;
+  std::atomic<uint64_t> current_request_id_ = 0;
+
   std::unique_ptr<DataLoader::ResponseFuture> loader_response_future_;
   // used only in unittest to perform blocking behavior.
   bool always_wait_for_loader_response_future_ = false;

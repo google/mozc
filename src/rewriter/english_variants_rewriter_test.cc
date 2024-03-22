@@ -40,6 +40,7 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -103,13 +104,43 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishVariants) {
   EXPECT_FALSE(rewriter_->ExpandEnglishVariants("グーグル", &variants));
 }
 
-TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
-  Segments segments;
-  const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+TEST_F(EnglishVariantsRewriterTest, ExpandSpacePrefixedVariants) {
+  {
+    std::vector<std::string> variants;
 
+    EXPECT_TRUE(rewriter_->ExpandSpacePrefixedVariants("Watch", &variants));
+    EXPECT_EQ(variants.size(), 1);
+    EXPECT_EQ(variants[0], " Watch");
+
+    variants.clear();
+    EXPECT_FALSE(rewriter_->ExpandSpacePrefixedVariants(" Watch", &variants));
+    EXPECT_EQ(variants.size(), 0);
+
+    variants.clear();
+    EXPECT_FALSE(rewriter_->ExpandSpacePrefixedVariants("", &variants));
+    EXPECT_EQ(variants.size(), 0);
+  }
+  {
+    std::vector<std::string> variants;
+    variants.push_back("PIXEL");
+    variants.push_back("pixel");
+
+    EXPECT_TRUE(rewriter_->ExpandSpacePrefixedVariants("Pixel", &variants));
+    EXPECT_EQ(variants.size(), 5);
+    EXPECT_EQ(variants[0], " Pixel");
+    EXPECT_EQ(variants[1], "PIXEL");
+    EXPECT_EQ(variants[2], " PIXEL");
+    EXPECT_EQ(variants[3], "pixel");
+    EXPECT_EQ(variants[4], " pixel");
+  }
+}
+
+TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
   // T13N
   {
+    Segments segments;
+    const ConversionRequest request;
+    Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
@@ -130,7 +161,133 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     EXPECT_EQ(seg->candidate(2).content_value, "GOOGLE");
   }
 
+  // 'Google Japan'
   {
+    Segments segments;
+    ConversionRequest conversion_request;
+    commands::Request request;
+    request.mutable_decoder_experiment_params()
+        ->set_english_variation_space_insertion_mode(1);
+    conversion_request.set_request(&request);
+
+    Segment *seg1 = segments.push_back_segment();
+    Segment *seg2 = segments.push_back_segment();
+    Segment::Candidate *candidate1 = seg1->add_candidate();
+    candidate1->content_key = "ぐーぐる";
+    candidate1->key = "ぐーぐる";
+    candidate1->value = "Google";
+    candidate1->content_value = "Google";
+    candidate1->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    Segment::Candidate *candidate2 = seg2->add_candidate();
+    candidate2->content_key = "じゃぱん";
+    candidate2->key = "じゃぱん";
+    candidate2->value = "Japan";
+    candidate2->content_value = "Japan";
+    candidate2->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    EXPECT_EQ(seg1->candidates_size(), 1);
+    EXPECT_EQ(seg1->candidate(0).value, "Google");
+    EXPECT_EQ(seg1->candidate(0).content_value, "Google");
+    EXPECT_EQ(seg2->candidates_size(), 1);
+    EXPECT_EQ(seg2->candidate(0).value, "Japan");
+    EXPECT_EQ(seg2->candidate(0).content_value, "Japan");
+    EXPECT_TRUE(rewriter_->Rewrite(conversion_request, &segments));
+    EXPECT_EQ(seg1->candidates_size(), 3);
+    EXPECT_EQ(seg1->candidate(0).value, "Google");
+    EXPECT_EQ(seg1->candidate(0).content_value, "Google");
+    EXPECT_EQ(seg1->candidate(1).value, "google");
+    EXPECT_EQ(seg1->candidate(1).content_value, "google");
+    EXPECT_EQ(seg1->candidate(2).value, "GOOGLE");
+    EXPECT_EQ(seg1->candidate(2).content_value, "GOOGLE");
+    EXPECT_EQ(seg2->candidates_size(), 6);
+    EXPECT_EQ(seg2->candidate(0).value, "Japan");
+    EXPECT_EQ(seg2->candidate(0).content_value, "Japan");
+    EXPECT_EQ(seg2->candidate(1).value, " Japan");
+    EXPECT_EQ(seg2->candidate(1).content_value, " Japan");
+    EXPECT_EQ(seg2->candidate(2).value, "japan");
+    EXPECT_EQ(seg2->candidate(2).content_value, "japan");
+    EXPECT_EQ(seg2->candidate(3).value, " japan");
+    EXPECT_EQ(seg2->candidate(3).content_value, " japan");
+    EXPECT_EQ(seg2->candidate(4).value, "JAPAN");
+    EXPECT_EQ(seg2->candidate(4).content_value, "JAPAN");
+    EXPECT_EQ(seg2->candidate(5).value, " JAPAN");
+    EXPECT_EQ(seg2->candidate(5).content_value, " JAPAN");
+  }
+
+  // '<NO CANDIDATE> Japan'
+  {
+    Segments segments;
+    ConversionRequest conversion_request;
+    commands::Request request;
+    request.mutable_decoder_experiment_params()
+        ->set_english_variation_space_insertion_mode(1);
+    conversion_request.set_request(&request);
+
+    Segment *seg1 = segments.push_back_segment();
+    Segment *seg2 = segments.push_back_segment();
+    // When seg1 has no candidates, seg2 will not be expanded.
+    Segment::Candidate *candidate2 = seg2->add_candidate();
+    candidate2->content_key = "じゃぱん";
+
+    candidate2->key = "じゃぱん";
+    candidate2->value = "Japan";
+    candidate2->content_value = "Japan";
+    candidate2->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    EXPECT_EQ(seg1->candidates_size(), 0);
+    EXPECT_EQ(seg2->candidates_size(), 1);
+    EXPECT_EQ(seg2->candidate(0).value, "Japan");
+    EXPECT_EQ(seg2->candidate(0).content_value, "Japan");
+    EXPECT_TRUE(rewriter_->Rewrite(conversion_request, &segments));
+    EXPECT_EQ(seg1->candidates_size(), 0);
+    EXPECT_EQ(seg2->candidates_size(), 3);
+    EXPECT_EQ(seg2->candidate(0).value, "Japan");
+    EXPECT_EQ(seg2->candidate(0).content_value, "Japan");
+    EXPECT_EQ(seg2->candidate(1).value, "japan");
+    EXPECT_EQ(seg2->candidate(1).content_value, "japan");
+    EXPECT_EQ(seg2->candidate(2).value, "JAPAN");
+    EXPECT_EQ(seg2->candidate(2).content_value, "JAPAN");
+  }
+  // 'ぐーぐるJapan'
+  {
+    Segments segments;
+    ConversionRequest conversion_request;
+    commands::Request request;
+    request.mutable_decoder_experiment_params()
+        ->set_english_variation_space_insertion_mode(1);
+    conversion_request.set_request(&request);
+
+    Segment *seg1 = segments.push_back_segment();
+    Segment *seg2 = segments.push_back_segment();
+
+    // When seg1 is not an English word, seg2 will not be expanded.
+    Segment::Candidate *candidate1 = seg1->add_candidate();
+    candidate1->content_key = "ぐーぐる";
+    candidate1->key = "ぐーぐる";
+    candidate1->value = "ぐーぐる";
+    candidate1->content_value = "ぐーぐる";
+    candidate1->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    Segment::Candidate *candidate2 = seg2->add_candidate();
+    candidate2->content_key = "じゃぱん";
+    candidate2->key = "じゃぱん";
+    candidate2->value = "Japan";
+    candidate2->content_value = "Japan";
+    candidate2->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    EXPECT_EQ(seg1->candidates_size(), 1);
+    EXPECT_EQ(seg1->candidate(0).value, "ぐーぐる");
+    EXPECT_EQ(seg1->candidate(0).content_value, "ぐーぐる");
+    EXPECT_TRUE(rewriter_->Rewrite(conversion_request, &segments));
+    EXPECT_EQ(seg2->candidates_size(), 3);
+    EXPECT_EQ(seg2->candidate(0).value, "Japan");
+    EXPECT_EQ(seg2->candidate(0).content_value, "Japan");
+    EXPECT_EQ(seg2->candidate(1).value, "japan");
+    EXPECT_EQ(seg2->candidate(1).content_value, "japan");
+    EXPECT_EQ(seg2->candidate(2).value, "JAPAN");
+    EXPECT_EQ(seg2->candidate(2).content_value, "JAPAN");
+  }
+
+  {
+    Segments segments;
+    const ConversionRequest request;
+    Segment *seg = segments.push_back_segment();
     seg->Clear();
 
     for (int i = 0; i < 10; ++i) {

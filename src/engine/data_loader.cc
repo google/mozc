@@ -77,16 +77,16 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
 
   absl::WriterMutexLock lock(&mutex_);
 
-  // Already requesting latest id.
-  if (!requests_.empty() && requests_.front().id == id) {
-    latest_data_id_ = id;
-    return latest_data_id_;
+  // Already requesting the top priority request.
+  if (top_request_id_ == id) {
+    DCHECK(!requests_.empty() && requests_.front().id == id);
+    return top_request_id_;
   }
 
   // The request is invalid since it has already been unregistered.
   if (unregistered_.contains(id)) {
-    latest_data_id_ = requests_.empty() ? 0 : requests_.front().id;
-    return latest_data_id_;
+    DCHECK_EQ(top_request_id_, requests_.empty() ? 0 : requests_.front().id);
+    return top_request_id_;
   }
 
   ++sequence_id_;
@@ -109,8 +109,8 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
                        lhs.sequence_id > rhs.sequence_id));
             });
 
-  latest_data_id_ = requests_.front().id;
-  return latest_data_id_;
+  top_request_id_ = requests_.front().id;
+  return top_request_id_;
 }
 
 uint64_t DataLoader::ReportLoadFailure(uint64_t id) {
@@ -123,101 +123,115 @@ uint64_t DataLoader::ReportLoadFailure(uint64_t id) {
     requests_.erase(it, requests_.end());
     unregistered_.emplace(id);
   }
-  const uint64_t rollback_id = requests_.empty() ? 0 : requests_.front().id;
-  latest_data_id_.compare_exchange_strong(id, rollback_id);
-  return rollback_id;
+
+  // Update the top request ID from the remaining sorted requests.
+  top_request_id_ = requests_.empty() ? 0 : requests_.front().id;
+  return top_request_id_;
 }
 
-std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
-    uint64_t id) const {
-  return std::make_unique<BackgroundFuture<Response>>([&, id]() {
-    Response result;
-    result.id = id;
-    result.response.set_status(EngineReloadResponse::DATA_MISSING);
+namespace {
+DataLoader::Response BuildResponse(uint64_t id, EngineReloadRequest request) {
+  DataLoader::Response result;
+  result.id = id;
+  result.response.set_status(EngineReloadResponse::DATA_MISSING);
+  *result.response.mutable_request() = request;
 
-    // Finds the request associated with `id`.
-    {
-      absl::ReaderMutexLock lock(&mutex_);
-      const auto it =
-          std::find_if(requests_.begin(), requests_.end(),
-                       [id](const RequestData &v) { return v.id == id; });
-      if (it == requests_.end()) {
-        return result;
-      }
-      *result.response.mutable_request() = it->request;
-    }
-
-    const EngineReloadRequest &request = result.response.request();
-
-    // Initializes DataManager
-    auto data_manager = std::make_unique<DataManager>();
-    {
-      const DataManager::Status status =
-          request.has_magic_number()
-              ? data_manager->InitFromFile(request.file_path(),
-                                          request.magic_number())
-              : data_manager->InitFromFile(request.file_path());
-      if (status != DataManager::Status::OK) {
-        LOG(ERROR) << "Failed to load data [" << status << "] " << request;
-        result.response.set_status(ConvertStatus(status));
-        DCHECK_NE(result.response.status(), EngineReloadResponse::RELOAD_READY);
-        return result;
-      }
-    }
-
-    // Copies file to install location.
-    if (request.has_install_location()) {
-      const absl::Status s = FileUtil::LinkOrCopyFile(
-          request.file_path(), request.install_location());
-      if (!s.ok()) {
-        LOG(ERROR) << "Copy faild: " << request << ": " << s;
-        result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
-        return result;
-      }
-    }
-
-    auto modules = std::make_unique<engine::Modules>();
-    {
-      const absl::Status status = modules->Init(std::move(data_manager));
-      if (!status.ok()) {
-        LOG(ERROR) << "Failed to load modules [" << status << "] " << request;
-        result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-        return result;
-      }
-    }
-
-    result.response.set_status(EngineReloadResponse::RELOAD_READY);
-
-    // Stores modules.
-    result.modules = std::move(modules);
-
-    return result;
-  });
-}
-
-bool DataLoader::MaybeBuildDataLoader() {
-  // Maybe build new data loader if new request is received.
-  // DataLoader::Build just returns a future object so client needs to replace
-  // the new data manager when the future is the ready to use.
-  if (!loader_response_future_ && current_data_id_ != latest_data_id_ &&
-      latest_data_id_ != 0) {
-    LOG(INFO) << "Building a new module (current_data_id_=" << current_data_id_
-              << ", latest_data_id_=" << latest_data_id_ << ")";
-    loader_response_future_ = Build(latest_data_id_);
-    // Wait the engine if the no new engine is loaded so far.
-    if (current_data_id_ == 0 || always_wait_for_loader_response_future_) {
-      loader_response_future_->Wait();
+  // Initializes DataManager
+  auto data_manager = std::make_unique<DataManager>();
+  {
+    const DataManager::Status status =
+        request.has_magic_number()
+            ? data_manager->InitFromFile(request.file_path(),
+                                         request.magic_number())
+            : data_manager->InitFromFile(request.file_path());
+    if (status != DataManager::Status::OK) {
+      LOG(ERROR) << "Failed to load data [" << status << "] " << request;
+      result.response.set_status(ConvertStatus(status));
+      DCHECK_NE(result.response.status(), EngineReloadResponse::RELOAD_READY);
+      return result;
     }
   }
 
-  const bool is_ready =
-      loader_response_future_ && loader_response_future_->Ready();
-  return is_ready;
+  // Copies file to install location.
+  if (request.has_install_location()) {
+    const absl::Status s = FileUtil::LinkOrCopyFile(request.file_path(),
+                                                    request.install_location());
+    if (!s.ok()) {
+      LOG(ERROR) << "Copy faild: " << request << ": " << s;
+      result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
+      return result;
+    }
+  }
+
+  auto modules = std::make_unique<engine::Modules>();
+  {
+    const absl::Status status = modules->Init(std::move(data_manager));
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to load modules [" << status << "] " << request;
+      result.response.set_status(EngineReloadResponse::DATA_BROKEN);
+      return result;
+    }
+  }
+
+  result.response.set_status(EngineReloadResponse::RELOAD_READY);
+
+  // Stores modules.
+  result.modules = std::move(modules);
+
+  return result;
+}
+}  // namespace
+
+std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
+    uint64_t id) const {
+  EngineReloadRequest request;
+  // Finds the request associated with `id`.
+  {
+    absl::ReaderMutexLock lock(&mutex_);
+    const auto it =
+        std::find_if(requests_.begin(), requests_.end(),
+                     [id](const RequestData &v) { return v.id == id; });
+    if (it == requests_.end()) {
+      return std::make_unique<DataLoader::ResponseFuture>([id]() {
+        Response response;
+        response.id = id;
+        response.response.set_status(EngineReloadResponse::DATA_MISSING);
+        return response;
+      });
+    }
+    request = it->request;
+  }
+
+  return std::make_unique<DataLoader::ResponseFuture>(
+      [id, request = std::move(request)]() {
+        return BuildResponse(id, request);
+      });
+}
+
+void DataLoader::MaybeBuildNewData() {
+  // Checks if an existing build process, or already using the top request.
+  if (loader_response_future_ || current_request_id_ == top_request_id_ ||
+      top_request_id_ == 0) {
+    return;
+  }
+
+  LOG(INFO) << "Building a new module (current ID =" << current_request_id_
+            << ", top ID =" << top_request_id_ << ")";
+  loader_response_future_ = Build(top_request_id_);
+
+  // Waits the engine if the no new engine is loaded so far.
+  if (current_request_id_ == 0 || always_wait_for_loader_response_future_) {
+    loader_response_future_->Wait();
+  }
+}
+
+bool DataLoader::IsBuildResponseReady() {
+  return loader_response_future_ && loader_response_future_->Ready();
 }
 
 std::unique_ptr<DataLoader::Response>
 DataLoader::MaybeMoveDataLoaderResponse() {
-  if (!loader_response_future_ || !loader_response_future_->Ready()) {
+  if (!IsBuildResponseReady()) {
     return nullptr;
   }
 

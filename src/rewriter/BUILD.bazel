@@ -621,7 +621,6 @@ mozc_cc_library(
     hdrs = ["english_variants_rewriter.h"],
     deps = [
         ":rewriter_interface",
-        "//base:logging",
         "//base:util",
         "//converter:segments",
         "//dictionary:pos_matcher",
@@ -629,6 +628,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "//testing:friend_test",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -640,6 +640,7 @@ mozc_cc_test(
     srcs = ["english_variants_rewriter_test.cc"],
     deps = [
         ":english_variants_rewriter",
+        ":rewriter_interface",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher",
