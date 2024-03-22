@@ -128,71 +128,83 @@ uint64_t DataLoader::ReportLoadFailure(uint64_t id) {
   return rollback_id;
 }
 
+namespace {
+DataLoader::Response BuildResponse(uint64_t id, EngineReloadRequest request) {
+  DataLoader::Response result;
+  result.id = id;
+  result.response.set_status(EngineReloadResponse::DATA_MISSING);
+  *result.response.mutable_request() = request;
+
+  // Initializes DataManager
+  auto data_manager = std::make_unique<DataManager>();
+  {
+    const DataManager::Status status =
+        request.has_magic_number()
+            ? data_manager->InitFromFile(request.file_path(),
+                                         request.magic_number())
+            : data_manager->InitFromFile(request.file_path());
+    if (status != DataManager::Status::OK) {
+      LOG(ERROR) << "Failed to load data [" << status << "] " << request;
+      result.response.set_status(ConvertStatus(status));
+      DCHECK_NE(result.response.status(), EngineReloadResponse::RELOAD_READY);
+      return result;
+    }
+  }
+
+  // Copies file to install location.
+  if (request.has_install_location()) {
+    const absl::Status s = FileUtil::LinkOrCopyFile(request.file_path(),
+                                                    request.install_location());
+    if (!s.ok()) {
+      LOG(ERROR) << "Copy faild: " << request << ": " << s;
+      result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
+      return result;
+    }
+  }
+
+  auto modules = std::make_unique<engine::Modules>();
+  {
+    const absl::Status status = modules->Init(std::move(data_manager));
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to load modules [" << status << "] " << request;
+      result.response.set_status(EngineReloadResponse::DATA_BROKEN);
+      return result;
+    }
+  }
+
+  result.response.set_status(EngineReloadResponse::RELOAD_READY);
+
+  // Stores modules.
+  result.modules = std::move(modules);
+
+  return result;
+}
+}  // namespace
+
 std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
     uint64_t id) const {
-  return std::make_unique<BackgroundFuture<Response>>([&, id]() {
-    Response result;
-    result.id = id;
-    result.response.set_status(EngineReloadResponse::DATA_MISSING);
-
-    // Finds the request associated with `id`.
-    {
-      absl::ReaderMutexLock lock(&mutex_);
-      const auto it =
-          std::find_if(requests_.begin(), requests_.end(),
-                       [id](const RequestData &v) { return v.id == id; });
-      if (it == requests_.end()) {
-        return result;
-      }
-      *result.response.mutable_request() = it->request;
+  EngineReloadRequest request;
+  // Finds the request associated with `id`.
+  {
+    absl::ReaderMutexLock lock(&mutex_);
+    const auto it =
+        std::find_if(requests_.begin(), requests_.end(),
+                     [id](const RequestData &v) { return v.id == id; });
+    if (it == requests_.end()) {
+      return std::make_unique<DataLoader::ResponseFuture>([id]() {
+        Response response;
+        response.id = id;
+        response.response.set_status(EngineReloadResponse::DATA_MISSING);
+        return response;
+      });
     }
+    request = it->request;
+  }
 
-    const EngineReloadRequest &request = result.response.request();
-
-    // Initializes DataManager
-    auto data_manager = std::make_unique<DataManager>();
-    {
-      const DataManager::Status status =
-          request.has_magic_number()
-              ? data_manager->InitFromFile(request.file_path(),
-                                          request.magic_number())
-              : data_manager->InitFromFile(request.file_path());
-      if (status != DataManager::Status::OK) {
-        LOG(ERROR) << "Failed to load data [" << status << "] " << request;
-        result.response.set_status(ConvertStatus(status));
-        DCHECK_NE(result.response.status(), EngineReloadResponse::RELOAD_READY);
-        return result;
-      }
-    }
-
-    // Copies file to install location.
-    if (request.has_install_location()) {
-      const absl::Status s = FileUtil::LinkOrCopyFile(
-          request.file_path(), request.install_location());
-      if (!s.ok()) {
-        LOG(ERROR) << "Copy faild: " << request << ": " << s;
-        result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
-        return result;
-      }
-    }
-
-    auto modules = std::make_unique<engine::Modules>();
-    {
-      const absl::Status status = modules->Init(std::move(data_manager));
-      if (!status.ok()) {
-        LOG(ERROR) << "Failed to load modules [" << status << "] " << request;
-        result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-        return result;
-      }
-    }
-
-    result.response.set_status(EngineReloadResponse::RELOAD_READY);
-
-    // Stores modules.
-    result.modules = std::move(modules);
-
-    return result;
-  });
+  return std::make_unique<DataLoader::ResponseFuture>(
+      [id, request = std::move(request)]() {
+        return BuildResponse(id, request);
+      });
 }
 
 void DataLoader::MaybeBuildNewData() {
