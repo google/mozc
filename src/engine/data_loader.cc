@@ -195,29 +195,30 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
   });
 }
 
-bool DataLoader::MaybeBuildDataLoader() {
-  // Maybe build new data loader if new request is received.
-  // DataLoader::Build just returns a future object so client needs to replace
-  // the new data manager when the future is the ready to use.
-  if (!loader_response_future_ && current_data_id_ != latest_data_id_ &&
-      latest_data_id_ != 0) {
-    LOG(INFO) << "Building a new module (current_data_id_=" << current_data_id_
-              << ", latest_data_id_=" << latest_data_id_ << ")";
-    loader_response_future_ = Build(latest_data_id_);
-    // Wait the engine if the no new engine is loaded so far.
-    if (current_data_id_ == 0 || always_wait_for_loader_response_future_) {
-      loader_response_future_->Wait();
-    }
+void DataLoader::MaybeBuildNewData() {
+  // Checks if an existing build process, or already using the top request.
+  if (loader_response_future_ || current_data_id_ == latest_data_id_ ||
+      latest_data_id_ == 0) {
+    return;
   }
 
-  const bool is_ready =
-      loader_response_future_ && loader_response_future_->Ready();
-  return is_ready;
+  LOG(INFO) << "Building a new module (current_data_id_=" << current_data_id_
+            << ", latest_data_id_=" << latest_data_id_ << ")";
+  loader_response_future_ = Build(latest_data_id_);
+
+  // Waits the engine if the no new engine is loaded so far.
+  if (current_data_id_ == 0 || always_wait_for_loader_response_future_) {
+    loader_response_future_->Wait();
+  }
+}
+
+bool DataLoader::IsBuildResponseReady() {
+  return loader_response_future_ && loader_response_future_->Ready();
 }
 
 std::unique_ptr<DataLoader::Response>
 DataLoader::MaybeMoveDataLoaderResponse() {
-  if (!loader_response_future_ || !loader_response_future_->Ready()) {
+  if (!IsBuildResponseReady()) {
     return nullptr;
   }
 

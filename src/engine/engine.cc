@@ -32,6 +32,7 @@
 #include <memory>
 #include <utility>
 
+#include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/memory/memory.h"
@@ -268,49 +269,63 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
     return false;
   }
 
-  if (!loader_->MaybeBuildDataLoader()) {
-    return false;
-  }
-  LOG(INFO) << "New data is ready (install_location="
-            << response->request().install_location() << ")";
+  // Sends a build request to the loader_ and checks if a new data is available.
+  // In the while loop, tries to reload the new data. If the new data is broken,
+  // tries it again as a next round of this while loop.
+  while (true) {
+    loader_->MaybeBuildNewData();
 
-  std::unique_ptr<DataLoader::Response> loader_response =
-      loader_->MaybeMoveDataLoaderResponse();
-  if (!loader_response) {
-    LOG(ERROR) << "loader_response is null";
-    return false;
-  }
-  *response = loader_response->response;
+    if (!loader_->IsBuildResponseReady()) {
+      // No need to handle the new request.
+      return false;
+    }
 
-  if (!loader_response->modules ||
+    LOG(INFO) << "New data is ready (install_location="
+              << response->request().install_location() << ")";
+
+    std::unique_ptr<DataLoader::Response> loader_response =
+        loader_->MaybeMoveDataLoaderResponse();
+    if (!loader_response) {
+      LOG(ERROR) << "loader_response is null";
+      return false;
+    }
+    *response = loader_response->response;
+
+    if (!loader_response->modules ||
       response->status() != EngineReloadResponse::RELOAD_READY) {
-    // The loader_response does not contain a valid result.
+      // The loader_response does not contain a valid result.
 
-    // This request id causes a critical error, so rollback the id.
-    LOG(ERROR) << "Failure in loading response: "
-               << protobuf::Utf8Format(*response);
-    loader_->ReportLoadFailure(loader_response->id);
-    return false;
+      // This request id causes a critical error.
+      LOG(ERROR) << "Failure in loading response: "
+                << protobuf::Utf8Format(*response);
+
+      // Unregisters the invalid ID and continues to rebuild a new data loader.
+      loader_->ReportLoadFailure(loader_response->id);
+      continue;
+    }
+
+    if (user_data_manager_) {
+      user_data_manager_->Wait();
+    }
+
+    // Reloads DataManager.
+    const bool is_mobile = response->request().engine_type() ==
+                           EngineReloadRequest::MOBILE;
+    absl::Status reload_status =
+        ReloadModules(std::move(loader_response->modules), is_mobile);
+    if (!reload_status.ok()) {
+      LOG(ERROR) << reload_status;
+
+      // Unregisters the invalid ID and continues to rebuild a new data loader.
+      loader_->ReportLoadFailure(loader_response->id);
+      continue;
+    }
+
+    loader_->ReportLoadSuccess(loader_response->id);
+    response->set_status(EngineReloadResponse::RELOADED);
+    return true;
   }
-
-  if (user_data_manager_) {
-    user_data_manager_->Wait();
-  }
-
-  // Reloads DataManager.
-  const bool is_mobile =
-      response->request().engine_type() == EngineReloadRequest::MOBILE;
-  absl::Status reload_status =
-      ReloadModules(std::move(loader_response->modules), is_mobile);
-  if (!reload_status.ok()) {
-    LOG(ERROR) << reload_status;
-    loader_->ReportLoadFailure(loader_response->id);
-    return false;
-  }
-
-  loader_->ReportLoadSuccess(loader_response->id);
-  response->set_status(EngineReloadResponse::RELOADED);
-  return true;
+  ABSL_UNREACHABLE();
 }
 
 bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {

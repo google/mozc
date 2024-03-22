@@ -91,9 +91,12 @@ class DataLoader {
 
   void Clear();
 
-  // Maybe build new data loader if a reload request has been already received.
-  // Returns true, a new data loader response is already available.
-  bool MaybeBuildDataLoader();
+  // Maybe build a new data from the top priority request if a reload request
+  // has been already received and no existing build process is running.
+  void MaybeBuildNewData();
+
+  // Returns true if a new data loader response is ready.
+  bool IsBuildResponseReady();
 
   // Maybe move the data loader response to the caller.
   // Otherwise nullptr is returned.
