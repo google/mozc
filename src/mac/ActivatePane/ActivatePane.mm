@@ -293,13 +293,14 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
   if (!_alreadyActivated && dir == InstallerDirectionForward) {
     // Make the package visible from i18n system preference
     RegisterGoogleJapaneseInput();
-    if ([_activateCell state] == NSOnState && [_doNotActivateCell state] == NSOffState) {
+    if ([_activateCell state] == NSControlStateValueOn &&
+        [_doNotActivateCell state] == NSControlStateValueOff) {
       // means clicks "next page" when "activate" menu is on
       ActivateGoogleJapaneseInput();
       _alreadyActivated = YES;
     }
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-    if (!_hasUsageStatsDB && [_putUsageStatsDB state] == NSOnState) {
+    if (!_hasUsageStatsDB && [_putUsageStatsDB state] == NSControlStateValueOn) {
       StoreDefaultConfigWithSendingUsageStats();
     }
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD

@@ -47,8 +47,8 @@
 }
 
 - (IBAction)checkBoxClicked:(id)sender {
-  _understandFlag = ([_understandCheckBox state] == NSOnState);
-  _agreeFlag = ([_agreeCheckBox state] == NSOnState);
+  _understandFlag = ([_understandCheckBox state] == NSControlStateValueOn);
+  _agreeFlag = ([_agreeCheckBox state] == NSControlStateValueOn);
   if (_understandFlag && _agreeFlag) {
     [self setNextEnabled:YES];
   } else {
@@ -85,10 +85,10 @@
   }
 
   if (_understandFlag) {
-    [_understandCheckBox setState:NSOnState];
+    [_understandCheckBox setState:NSControlStateValueOn];
   }
   if (_agreeFlag) {
-    [_agreeCheckBox setState:NSOnState];
+    [_agreeCheckBox setState:NSControlStateValueOn];
   }
 
   if (_understandFlag && _agreeFlag) {
