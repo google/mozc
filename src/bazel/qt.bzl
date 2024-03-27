@@ -29,7 +29,7 @@
 
 """Qt build rules."""
 
-load("//bazel:stubs.bzl", "register_extension_info")
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
@@ -41,7 +41,7 @@ load(
     "MACOS_BUNDLE_ID_PREFIX",
     "MACOS_MIN_OS_VER",
 )
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
+load("//bazel:stubs.bzl", "register_extension_info")
 
 def mozc_cc_qt_library(name, deps = [], **kwargs):
     mozc_cc_library(

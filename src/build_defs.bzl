@@ -42,11 +42,10 @@ See also: https://bazel.build/rules/bzl-style#rules
 
 """
 
-load("//bazel:stubs.bzl", "register_extension_info")
-load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle", "macos_unit_test")
 load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle", "macos_unit_test")
+load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library", "register_extension_info")
 
 def _update_visibility(visibility = None):
     """
