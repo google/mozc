@@ -54,6 +54,8 @@ class MockEngine : public EngineInterface {
   MOCK_METHOD(dictionary::SuppressionDictionary *, GetSuppressionDictionary, (),
               (override));
   MOCK_METHOD(bool, Reload, (), (override));
+  MOCK_METHOD(bool, Sync, (), (override));
+  MOCK_METHOD(bool, Wait, (), (override));
   MOCK_METHOD(bool, ReloadAndWait, (), (override));
   MOCK_METHOD(absl::Status, ReloadModules,
               (std::unique_ptr<engine::Modules>, bool), (override));

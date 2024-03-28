@@ -113,8 +113,11 @@ class Engine : public EngineInterface {
                         : minimal_engine_.GetSuppressionDictionary();
   }
 
+  // Functions for Reload, Sync, Wait return true if successfully operated
+  // or did nothing.
   bool Reload() override;
-
+  bool Sync() override;
+  bool Wait() override;
   bool ReloadAndWait() override;
 
   absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,

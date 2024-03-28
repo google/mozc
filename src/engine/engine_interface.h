@@ -70,9 +70,21 @@ class EngineInterface {
   virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() = 0;
 
   // Reloads internal data, e.g., user dictionary, etc.
+  // This function may read data from local files.
+  // Returns true if successfully reloaded or did nothing.
   virtual bool Reload() = 0;
 
+  // Synchronizes internal data, e.g., user dictionary, etc.
+  // This function may write data into local files.
+  // Returns true if successfully synced or did nothing.
+  virtual bool Sync() = 0;
+
+  // Waits for reloader.
+  // Returns true if successfully waited or did nothing.
+  virtual bool Wait() = 0;
+
   // Reloads internal data and wait for reloader.
+  // Returns true if successfully reloaded and waited, or did nothing.
   virtual bool ReloadAndWait() = 0;
 
   // Reloads the modules and update objects in Engine.

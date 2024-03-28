@@ -253,14 +253,25 @@ bool Engine::Reload() {
   return result_dictionary && result_user_data;
 }
 
-bool Engine::ReloadAndWait() {
-  if (!Reload()) {
-    return false;
+bool Engine::Sync() {
+  if (!modules_->GetUserDictionary()) {
+    return true;
   }
+  return modules_->GetUserDictionary()->Sync();
+}
+
+bool Engine::Wait() {
   if (modules_->GetUserDictionary()) {
     modules_->GetUserDictionary()->WaitForReloader();
   }
   return GetUserDataManager()->Wait();
+}
+
+bool Engine::ReloadAndWait() {
+  if (!Reload()) {
+    return false;
+  }
+  return Wait();
 }
 
 bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
