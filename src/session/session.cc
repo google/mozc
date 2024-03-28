@@ -2011,10 +2011,11 @@ bool Session::Suggest(const commands::Input &input) {
         context_->converter().conversion_preferences();
     conversion_preferences.request_suggestion = input.request_suggestion();
     return context_->mutable_converter()->SuggestWithPreferences(
-        context_->composer(), conversion_preferences);
+        context_->composer(), input.context(), conversion_preferences);
   }
 
-  return context_->mutable_converter()->Suggest(context_->composer());
+  return context_->mutable_converter()->Suggest(context_->composer(),
+                                                input.context());
 }
 
 bool Session::ConvertToTransliteration(

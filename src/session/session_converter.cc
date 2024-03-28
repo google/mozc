@@ -433,12 +433,13 @@ void PrependCandidates(const Segment &previous_segment, std::string preedit,
 }
 }  // namespace
 
-bool SessionConverter::Suggest(const composer::Composer &composer) {
-  return SuggestWithPreferences(composer, conversion_preferences_);
+bool SessionConverter::Suggest(const composer::Composer &composer,
+                               const commands::Context &context) {
+  return SuggestWithPreferences(composer, context, conversion_preferences_);
 }
 
 bool SessionConverter::SuggestWithPreferences(
-    const composer::Composer &composer,
+    const composer::Composer &composer, const commands::Context &context,
     const ConversionPreferences &preferences) {
   DCHECK(CheckState(COMPOSITION | SUGGESTION));
   candidate_list_visible_ = false;
@@ -452,7 +453,7 @@ bool SessionConverter::SuggestWithPreferences(
     return false;
   }
 
-  ConversionRequest conversion_request(&composer, request_, config_);
+  ConversionRequest conversion_request(&composer, request_, &context, config_);
   // Initialize the conversion request and segments for suggestion.
   SetConversionPreferences(preferences, &segments_, &conversion_request);
 
@@ -674,7 +675,7 @@ void SessionConverter::Commit(const composer::Composer &composer,
     }
   }
   CommitUsageStats(state_, context);
-  ConversionRequest conversion_request(&composer, request_, config_);
+  ConversionRequest conversion_request(&composer, request_, &context, config_);
   converter_->FinishConversion(conversion_request, &segments_);
   ResetState();
 }
@@ -723,7 +724,8 @@ bool SessionConverter::CommitSuggestionInternal(
       return false;
     }
     CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
-    ConversionRequest conversion_request(&composer, request_, config_);
+    ConversionRequest conversion_request(&composer, request_, &context,
+                                         config_);
     converter_->FinishConversion(conversion_request, &segments_);
     DCHECK_EQ(0, segments_.conversion_segments_size());
     ResetState();
@@ -846,9 +848,9 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
   InitSegmentsFromString(std::move(key), std::move(normalized_preedit),
                          &segments_);
   CommitUsageStats(SessionConverterInterface::COMPOSITION, context);
-  ConversionRequest conversion_request(&composer, request_, config_);
+  ConversionRequest conversion_request(&composer, request_, &context, config_);
   // the request mode is CONVERSION, as the user experience
-  // is similar to conversion. UserHistryPredictor distinguishes
+  // is similar to conversion. UserHistoryPredictor distinguishes
   // CONVERSION from SUGGESTION now.
   SetRequestType(ConversionRequest::CONVERSION, &conversion_request);
   converter_->FinishConversion(conversion_request, &segments_);
