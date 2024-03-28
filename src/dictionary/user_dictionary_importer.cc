@@ -44,6 +44,7 @@
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/hash.h"
@@ -327,7 +328,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
     // Skip comment lines.
     // TODO(yukawa): Use string::front once C++11 is enabled on Mac.
     if (((ime_type_ == MSIME || ime_type_ == ATOK) && line[0] == '!') ||
-        (ime_type_ == MOZC && line[0] == '#') ||
+        ((ime_type_ == MOZC || ime_type_ == GBOARD_V1) && line[0] == '#') ||
         (ime_type_ == KOTOERI && absl::StartsWith(line, "//"))) {
       continue;
     }
@@ -339,13 +340,21 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
       case MSIME:
       case ATOK:
       case MOZC:
+      case GBOARD_V1:
         values = absl::StrSplit(line, '\t', absl::AllowEmpty());
         if (values.size() < 3) {
           continue;  // Ignore this line.
         }
         entry->key = std::move(values[0]);
         entry->value = std::move(values[1]);
-        entry->pos = std::move(values[2]);
+        if (ime_type_ == GBOARD_V1) {
+          // values[2] specifies locale, not POS.
+          // Use NO_POS as a default value.
+          // pos = "品詞なし" + ":" + locale
+          entry->pos = absl::StrCat("品詞なし:", std::move(values[2]));
+        } else {
+          entry->pos = std::move(values[2]);
+        }
         if (values.size() >= 4) {
           entry->comment = std::move(values[3]);
         }
@@ -406,6 +415,10 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
   if (*line.begin() == '"' && *line.rbegin() == '"' &&
       !absl::StrContains(line, "\t")) {
     return KOTOERI;
+  }
+
+  if (absl::StartsWith(lower, "# gboard dictionary version:1")) {
+    return GBOARD_V1;
   }
 
   if (*line.begin() == '#' || absl::StrContains(line, "\t")) {
