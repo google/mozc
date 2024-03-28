@@ -329,9 +329,14 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
         '-qt-libpng',
         '-qt-pcre',
     ]
+
+    # Set the target CPUs for macOS
+    # Host: arm64  -> Targets: --macos_cpus or ["x86_64", "arm64"]
+    # Host: x86_64 -> Targets: --macos_cpus or ["x86_64"]
+    host_arch = os.uname().machine
+    macos_cpus = ['x86_64', 'arm64'] if host_arch == 'arm64' else ['x86_64']
     if args.macos_cpus:
       macos_cpus = args.macos_cpus.split(',')
-      host_arch = os.uname().machine
       if host_arch == 'x86_64' and macos_cpus == ['arm64']:
         # Haven't figured out how to make this work...
         raise ValueError('--macos_cpus=arm64 on Intel64 mac is not supported.')
@@ -340,9 +345,10 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
       if 'x86_64' in macos_cpus and macos_cpus[0] != 'x86_64':
         macos_cpus.remove('x86_64')
         macos_cpus = ['x86_64'] + macos_cpus
-      cmake_options += [
-          '-DCMAKE_OSX_ARCHITECTURES:STRING=' + ';'.join(macos_cpus),
-      ]
+    cmake_options += [
+        '-DCMAKE_OSX_ARCHITECTURES:STRING=' + ';'.join(macos_cpus),
+    ]
+
   elif is_windows():
     qt_configure_options += ['-force-debug-info',
                              '-intelcet',
