@@ -58,6 +58,8 @@ class MinimalEngine : public EngineInterface {
   absl::string_view GetPredictorName() const override;
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override;
   bool Reload() override { return true; }
+  bool Sync() override { return true; }
+  bool Wait() override { return true; }
   bool ReloadAndWait() override { return true; }
   absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
                              bool is_mobile) override {

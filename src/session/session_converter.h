@@ -105,9 +105,10 @@ class SessionConverter : public SessionConverterInterface {
   bool SwitchKanaType(const composer::Composer &composer) override;
 
   // Sends a suggestion request to the converter.
-  bool Suggest(const composer::Composer &composer) override;
+  bool Suggest(const composer::Composer &composer,
+               const commands::Context &context) override;
   bool SuggestWithPreferences(
-      const composer::Composer &composer,
+      const composer::Composer &composer, const commands::Context &context,
       const ConversionPreferences &preferences) override;
 
   // Sends a prediction request to the converter.

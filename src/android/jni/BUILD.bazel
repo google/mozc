@@ -44,9 +44,7 @@ mozc_cc_library(
     ),
     tags = MOZC_TAGS.ANDROID_ONLY,
     # Scheuklappen: keep
-    visibility = [
-        "//visibility:private",  # Only private by automation, not intent. Owner may accept CLs adding visibility. See go/scheuklappen#explicit-private.
-    ],
+    visibility = ["//visibility:private"],
     deps = [
         "//base:logging",
         "//base:singleton",

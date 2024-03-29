@@ -29,9 +29,7 @@
 
 """Stub build rules."""
 
-load("@rules_python//python:defs.bzl", "py_binary")
-load("@rules_python//python:defs.bzl", "py_test")
-load("@rules_python//python:defs.bzl", "py_library")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 def android_cc_test(name, cc_test_name, **kwargs):
     # 'foo_test' and 'foo_test_android' are identical for OSS yet.

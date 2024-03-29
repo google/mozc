@@ -29,7 +29,6 @@
 
 # Mozc TIP (Text Input Processor) for Windows Text Services Framework.
 
-load("//bazel:stubs.bzl", "lexan")
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
@@ -37,6 +36,7 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
 )
+load("//bazel:stubs.bzl", "lexan")
 load(
     "//bazel/win32:build_defs.bzl",
     "features_gdi",

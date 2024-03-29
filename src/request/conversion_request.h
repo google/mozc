@@ -30,9 +30,11 @@
 #ifndef MOZC_REQUEST_CONVERSION_REQUEST_H_
 #define MOZC_REQUEST_CONVERSION_REQUEST_H_
 
+#include <cstddef>
 #include <type_traits>
 
-#include "base/logging.h"
+#include "absl/base/attributes.h"
+#include "absl/log/check.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
@@ -75,13 +77,23 @@ class ConversionRequest {
 
   ConversionRequest()
       : ConversionRequest(nullptr, &commands::Request::default_instance(),
+                          &commands::Context::default_instance(),
                           &config::ConfigHandler::DefaultConfig()) {}
+  // TODO: b/329532981 - Replace with the another constructor and remove this.
+  ABSL_DEPRECATED("Use the constructor with Context")
   ConversionRequest(const composer::Composer *c,
                     const commands::Request *request,
+                    const config::Config *config)
+      : ConversionRequest(c, request, &commands::Context::default_instance(),
+                          config) {}
+  ConversionRequest(const composer::Composer *c,
+                    const commands::Request *request,
+                    const commands::Context *context,
                     const config::Config *config)
       : request_type_(ConversionRequest::CONVERSION),
         composer_(c),
         request_(request),
+        context_(context),
         config_(config) {}
 
   // Copyable.
@@ -131,6 +143,12 @@ class ConversionRequest {
     return *request_;
   }
   void set_request(const commands::Request *request) { request_ = request; }
+
+  const commands::Context &context() const {
+    DCHECK(context_);
+    return *context_;
+  }
+  void set_context(const commands::Context *context) { context_ = context; }
 
   const config::Config &config() const {
     DCHECK(config_);
@@ -198,6 +216,9 @@ class ConversionRequest {
 
   // Input request.
   const commands::Request *request_;
+
+  // Input context.
+  const commands::Context *context_;
 
   // Input config.
   const config::Config *config_;

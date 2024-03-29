@@ -124,9 +124,10 @@ class SessionConverterInterface {
   virtual bool SwitchKanaType(const composer::Composer &composer) = 0;
 
   // Send a suggestion request to the converter.
-  virtual bool Suggest(const composer::Composer &composer) = 0;
+  virtual bool Suggest(const composer::Composer &composer,
+                       const commands::Context &context) = 0;
   virtual bool SuggestWithPreferences(
-      const composer::Composer &composer,
+      const composer::Composer &composer, const commands::Context &context,
       const ConversionPreferences &preferences) = 0;
 
   // Send a prediction request to the converter.

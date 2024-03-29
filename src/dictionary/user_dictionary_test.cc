@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
@@ -584,6 +585,65 @@ TEST_F(UserDictionaryTest, TestLookupWithShortCut) {
               UnorderedElementsAreArray(kExpectedPrediction));
   EXPECT_THAT(LookupPrefix("key", *user_dic),
               UnorderedElementsAreArray(kExpected2));
+}
+
+TEST_F(UserDictionaryTest, TestKeyNormalization) {
+  std::unique_ptr<UserDictionary> user_dic(CreateDictionary());
+  user_dic->WaitForReloader();
+
+  // Create dictionary
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename =
+      FileUtil::JoinPath(temp_dir.path(), "normalization_test.db");
+  UserDictionaryStorage storage(filename);
+  {
+    uint64_t id = 0;
+    EXPECT_TRUE(storage.CreateDictionary("normalization_test", &id));
+    UserDictionaryStorage::UserDictionary *dic =
+        storage.GetProto().mutable_dictionaries(0);
+
+    // "名詞"(NOUN)
+    // Full width will be normalized to half width.
+    UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+    entry->set_key("１％");
+    entry->set_value("１％");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
+
+    // Half width katakana will be normalized to full width hiragana.
+    entry = dic->add_entries();
+    entry->set_key("ｸﾞｰｸﾞﾙ");
+    entry->set_value("Google");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
+
+    // NO POS word is handled as SHORTCUT word.
+    // voiced sound mark in「う゛」 will be normalized to be 「ゔ」.
+    entry = dic->add_entries();
+    entry->set_key("う゛ぃくとりー");
+    entry->set_value("ヴィクトリー");
+    entry->set_pos(user_dictionary::UserDictionary::NO_POS);
+
+    // Katakana will be normalized to hiragana.
+    entry = dic->add_entries();
+    entry->set_key("ジーボード");
+    entry->set_value("Gboard");
+    entry->set_pos(user_dictionary::UserDictionary::NO_POS);
+
+    user_dic->Load(storage.GetProto());
+  }
+
+  EXPECT_EQ(LookupExact("1%", *user_dic).size(), 1);
+  EXPECT_EQ(LookupExact("１％", *user_dic).size(), 0);
+
+  EXPECT_EQ(LookupExact("ぐーぐる", *user_dic).size(), 1);
+  EXPECT_EQ(LookupExact("グーグル", *user_dic).size(), 0);
+  EXPECT_EQ(LookupExact("ｸﾞｰｸﾞﾙ", *user_dic).size(), 0);
+
+  EXPECT_EQ(LookupExact("ゔぃくとりー", *user_dic).size(), 1);
+  EXPECT_EQ(LookupExact("う゛ぃくとりー", *user_dic).size(), 0);
+  EXPECT_EQ(LookupExact("ヴィクトリー", *user_dic).size(), 0);
+
+  EXPECT_EQ(LookupExact("じーぼーど", *user_dic).size(), 1);
+  EXPECT_EQ(LookupExact("ジーボード", *user_dic).size(), 0);
 }
 
 TEST_F(UserDictionaryTest, IncognitoModeTest) {

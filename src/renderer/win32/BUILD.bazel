@@ -29,7 +29,6 @@
 
 # Mozc Windows renderer.
 
-load("//bazel:stubs.bzl", "lexan")
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
@@ -37,6 +36,7 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
 )
+load("//bazel:stubs.bzl", "lexan")
 
 package(
     default_visibility = ["//renderer:__pkg__"],
@@ -166,9 +166,7 @@ mozc_cc_library(
     hdrs = ["text_renderer.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    visibility = [
-        "//visibility:private",  # Only private by automation, not intent. Owner may accept CLs adding visibility. See go/scheuklappen#explicit-private.
-    ],
+    visibility = ["//visibility:private"],
     deps = [
         ":win32_font_util",
         "//base:coordinates",
@@ -277,9 +275,7 @@ mozc_cc_library(
     hdrs = ["win32_renderer_util.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    visibility = [
-        "//visibility:private",  # Only private by automation, not intent. Owner may accept CLs adding visibility. See go/scheuklappen#explicit-private.
-    ],
+    visibility = ["//visibility:private"],
     deps = [
         "//base:logging",
         "//base:system_util",

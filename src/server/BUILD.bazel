@@ -30,7 +30,6 @@
 # Visibility:  please choose a more appropriate default for the package,
 # and update any rules that should be different.
 
-load("//bazel:stubs.bzl", "lexan")
 load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
@@ -43,6 +42,7 @@ load(
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
 )
+load("//bazel:stubs.bzl", "lexan")
 
 package(default_visibility = ["//:__subpackages__"])
 

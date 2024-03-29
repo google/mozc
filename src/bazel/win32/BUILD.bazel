@@ -32,8 +32,8 @@
 #  - Windows SDK library link options.
 #  - (that's it for now)
 
-load("//bazel/win32:internal.bzl", "mozc_win32_lib")
 load("//bazel:stubs.bzl", "bzl_library")
+load("//bazel/win32:internal.bzl", "mozc_win32_lib")
 
 package(default_visibility = ["//:__subpackages__"])
 

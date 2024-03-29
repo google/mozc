@@ -577,8 +577,7 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalledTest) {
   for (size_t i = 0; i < std::size(command_types); ++i) {
     MockUserDataManager mock_user_data_manager;
     auto engine = std::make_unique<MockEngine>();
-    EXPECT_CALL(*engine, GetUserDataManager())
-        .WillRepeatedly(Return(&mock_user_data_manager));
+    EXPECT_CALL(*engine, Sync()).WillOnce(Return(true));
 
     // Set up a session handler and a input command.
     SessionHandler handler(std::move(engine));
@@ -586,7 +585,6 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalledTest) {
     command.mutable_input()->set_id(0);
     command.mutable_input()->set_type(command_types[i]);
 
-    EXPECT_CALL(mock_user_data_manager, Sync()).WillOnce(Return(true));
     handler.EvalCommand(&command);
   }
 }
@@ -594,8 +592,8 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalledTest) {
 TEST_F(SessionHandlerTest, SyncDataTest) {
   MockUserDataManager mock_user_data_manager;
   auto engine = std::make_unique<MockEngine>();
-  EXPECT_CALL(*engine, GetUserDataManager())
-      .WillRepeatedly(Return(&mock_user_data_manager));
+  EXPECT_CALL(*engine, Sync()).WillOnce(Return(true));
+  EXPECT_CALL(*engine, Wait()).WillOnce(Return(true));
 
   // Set up a session handler and a input command.
   SessionHandler handler(std::move(engine));
@@ -603,8 +601,6 @@ TEST_F(SessionHandlerTest, SyncDataTest) {
   command.mutable_input()->set_id(0);
   command.mutable_input()->set_type(commands::Input::SYNC_DATA);
 
-  EXPECT_CALL(mock_user_data_manager, Sync()).WillOnce(Return(true));
-  EXPECT_CALL(mock_user_data_manager, Wait()).WillOnce(Return(true));
   handler.EvalCommand(&command);
 }
 

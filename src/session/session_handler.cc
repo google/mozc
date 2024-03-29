@@ -225,8 +225,8 @@ void SessionHandler::UpdateSessions(const config::Config &config,
 
 bool SessionHandler::SyncData(commands::Command *command) {
   MOZC_VLOG(1) << "Syncing user data";
-  engine_->GetUserDataManager()->Sync();
-  engine_->GetUserDataManager()->Wait();
+  engine_->Sync();
+  engine_->Wait();
   return true;
 }
 
@@ -564,9 +564,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 
 bool SessionHandler::DeleteSession(commands::Command *command) {
   DeleteSessionID(command->input().id());
-  if (engine_->GetUserDataManager()) {
-    engine_->GetUserDataManager()->Sync();
-  }
+  engine_->Sync();
   return true;
 }
 
@@ -634,7 +632,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   }
 
   // Sync all data. This is a regression bug fix http://b/3033708
-  engine_->GetUserDataManager()->Sync();
+  engine_->Sync();
 
   // timeout is enabled.
   if (absl::GetFlag(FLAGS_timeout) > 0 &&
