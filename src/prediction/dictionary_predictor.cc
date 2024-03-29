@@ -217,7 +217,8 @@ void MaybeFixRealtimeTopCost(absl::string_view input_key,
 // Computes the typing correction mixing params.
 // from the `base_result` and `typing_corrected_results`
 TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
-    const ConversionRequest &request, absl::Span<const Result> base_results,
+    const ConversionRequest &request, const Segments &segments,
+    absl::Span<const Result> base_results,
     absl::Span<const Result> typing_corrected_results) {
   TypingCorrectionMixingParams typing_correction_mixing_params;
 
@@ -237,15 +238,40 @@ TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
   const Result &tc_best_result = find_best_result(typing_corrected_results);
   const auto &params = request.request().decoder_experiment_params();
 
-  // When the best candidate is SPELLING_CORRECTION (not a typing correction),
-  // do not run literal-on-top.
-  typing_correction_mixing_params.literal_on_top =
-      (!(base_best_result.candidate_attributes &
-         Segment::Candidate::SPELLING_CORRECTION)) &&
-      ((tc_best_result.typing_correction_score <=
-        params.typing_correction_literal_on_top_correction_score_max_diff()) ||
-       ((base_best_result.cost - tc_best_result.cost) <=
-        params.typing_correction_literal_on_top_conversion_cost_max_diff()));
+  auto is_literal_on_top = [&]() {
+    // When the best candidate is SPELLING_CORRECTION (not a typing correction),
+    // do not run literal-on-top.
+    if (base_best_result.candidate_attributes &
+        Segment::Candidate::SPELLING_CORRECTION) {
+      return false;
+    }
+
+    if (tc_best_result.typing_correction_score <=
+        params.typing_correction_literal_on_top_correction_score_max_diff()) {
+      return true;
+    }
+
+    if ((base_best_result.cost - tc_best_result.cost) <=
+        params.typing_correction_literal_on_top_conversion_cost_max_diff()) {
+      return true;
+    }
+
+    const size_t input_key_len =
+        Util::CharsLen(segments.conversion_segment(0).key());
+
+    if (params.typing_correction_literal_on_top_length_score_max_diff() > 0.0 &&
+        params.typing_correction_literal_on_top_length_decay() > 0.0 &&
+        tc_best_result.typing_correction_score <=
+            params.typing_correction_literal_on_top_length_score_max_diff() *
+                std::pow(params.typing_correction_literal_on_top_length_decay(),
+                         std::max<int>(input_key_len - 3, 0))) {
+      return true;
+    }
+
+    return false;
+  };
+
+  typing_correction_mixing_params.literal_on_top = is_literal_on_top();
 
   // Literal-at-least-second parameter is now defined as flag.
   typing_correction_mixing_params.literal_at_least_second =
@@ -422,7 +448,7 @@ DictionaryPredictor::MaybePopualteTypingCorrectedResults(
   RewriteResultsForPrediction(request, segments, &typing_corrected_results);
 
   const TypingCorrectionMixingParams typing_correction_mixing_params =
-      GetTypingCorrectionMixingParams(request, *results,
+      GetTypingCorrectionMixingParams(request, segments, *results,
                                       typing_corrected_results);
 
   for (auto &result : typing_corrected_results) {

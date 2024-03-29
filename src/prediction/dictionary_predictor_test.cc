@@ -2005,5 +2005,104 @@ TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
   EXPECT_EQ(cand3->description, "1→3");
 }
 
+TEST_F(DictionaryPredictorTest, TypingCorrectionMixingParamsTest) {
+  Segments segments;
+  InitSegmentsWithKey("かつこうのもの", &segments);  // 7 chars.
+
+  Segment *segment = segments.mutable_conversion_segment(0);
+  auto *candidate = segment->add_candidate();
+  candidate->key = "かつこうのもの";
+
+  std::vector<Result> corrected = {
+      CreateResult6("がっこう", "学校", 100, 100, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+      CreateResult6("かっこう", "格好", 100, 200, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+  };
+
+  corrected[0].typing_correction_score = 1.0;
+  corrected[1].typing_correction_score = 0.5;
+
+  const std::vector<Result> base = {
+      CreateResult6("かつこう", "かつこう", 200, 300, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("かつこう", "カツコウ", 200, 300, prediction::UNIGRAM,
+                    Token::NONE),
+
+  };
+
+  auto *params = request_->mutable_decoder_experiment_params();
+
+  auto reset_params = [&]() {
+    params->set_typing_correction_literal_on_top_correction_score_max_diff(0.0);
+    params->set_typing_correction_literal_on_top_conversion_cost_max_diff(0);
+    params->set_typing_correction_literal_on_top_length_score_max_diff(0.0);
+    params->set_typing_correction_literal_on_top_length_decay(0.0);
+  };
+
+  reset_params();
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_at_least_second);
+
+  // literal-on-top with correction_score_max_diff
+  params->set_typing_correction_literal_on_top_correction_score_max_diff(2.0);
+  EXPECT_TRUE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                              segments, base, corrected)
+                  .literal_on_top);
+
+  params->set_typing_correction_literal_on_top_correction_score_max_diff(0.5);
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+
+  reset_params();
+
+  // literal-on-top with conversion_cost_max_diff
+  params->set_typing_correction_literal_on_top_conversion_cost_max_diff(500);
+  EXPECT_TRUE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                              segments, base, corrected)
+                  .literal_on_top);
+
+  params->set_typing_correction_literal_on_top_conversion_cost_max_diff(50);
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+
+  reset_params();
+
+  // literal-on-top with
+  // typing_correction_literal_on_top_length_score_max_diff and
+  // typing_correction_literal_on_top_length_decay
+  params->set_typing_correction_literal_on_top_length_score_max_diff(2.0);
+  params->set_typing_correction_literal_on_top_length_decay(0.8);
+
+  // 2.0 * (0.8)^(7-3) < 1.0
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+
+  // 2.0 * (0.9)^(7-3) > 1.0
+  params->set_typing_correction_literal_on_top_length_decay(0.9);
+  EXPECT_TRUE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                              segments, base, corrected)
+                  .literal_on_top);
+
+  // 1.5 * (0.9)^(7-3) < 1.0
+  params->set_typing_correction_literal_on_top_length_score_max_diff(1.5);
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+
+  // literal at least second.
+  params->set_typing_correction_literal_at_least_second(true);
+  EXPECT_TRUE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                              segments, base, corrected)
+                  .literal_at_least_second);
+}
+
 }  // namespace
 }  // namespace mozc::prediction

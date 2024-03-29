@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 56
+// Next ID: 58
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -625,6 +625,10 @@ message DecoderExperimentParams {
   //  OR
   // conversion_cost_diff <=
   //          typing_correction_literal_on_top_spatial_score_max_diff
+  //  OR
+  // correction_score <=
+  //   typing_correction_literal_on_top_length_score_max_diff
+  //     * (typing_correction_literal_on_top_length_decay^(input_length-3))
   optional float typing_correction_literal_on_top_correction_score_max_diff = 47
       [default = 0.5];
   optional int32 typing_correction_literal_on_top_conversion_cost_max_diff = 48
@@ -632,6 +636,11 @@ message DecoderExperimentParams {
   // Literal candidate is placed at least second position.
   optional bool typing_correction_literal_at_least_second = 49
       [default = false];
+  // Character-length based triggering.
+  optional float typing_correction_literal_on_top_length_score_max_diff = 56
+      [default = 0.0];
+  optional float typing_correction_literal_on_top_length_decay = 57
+      [default = 0.0];
 
   // Parameters for completion
   // The diff against the identity score.
