@@ -112,10 +112,6 @@ bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
 }
 
-bool ShouldFilterNoisyNumberCandidate(const Request &request) {
-  return request.decoder_experiment_params().filter_noisy_number_candidate();
-}
-
 bool IsTypingCorrectionMixerV2Enabled(const ConversionRequest &request) {
   return request.request()
       .decoder_experiment_params()
@@ -694,8 +690,7 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       auto_partial_suggestion_(
           request_util::IsAutoPartialSuggestionEnabled(request)),
       include_exact_key_(IsMixedConversionEnabled(request.request()) ||
-                         request_util::IsHandwriting(request)),
-      filter_number_(ShouldFilterNoisyNumberCandidate(request.request())) {
+                         request_util::IsHandwriting(request)) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);
   strings::Assign(history_value_, history.value);
@@ -779,18 +774,6 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
 
   if (!is_mixed_conversion_) {
     return CheckDupAndReturn(candidate.value, result, log_message);
-  }
-
-  if (filter_number_ && !(result.types & (PredictionType::REALTIME_TOP |
-                                          PredictionType::NUMBER))) {
-    // Filter number candidates other than REALTIME_TOP or NUMBER.
-    if (pos_matcher_.IsNumber(result.lid) ||
-        pos_matcher_.IsKanjiNumber(result.lid)) {
-      *log_message =
-          "Already added NumberDecoder result. "
-          "Other candidates for number can be noisy.";
-      return true;
-    }
   }
 
   // Suppress long candidates to show more candidates in the candidate view.
