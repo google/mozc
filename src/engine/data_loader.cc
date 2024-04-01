@@ -225,7 +225,7 @@ void DataLoader::MaybeBuildNewData() {
   }
 }
 
-bool DataLoader::IsBuildResponseReady() {
+bool DataLoader::IsBuildResponseReady() const {
   return loader_response_future_ && loader_response_future_->Ready();
 }
 
