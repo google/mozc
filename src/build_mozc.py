@@ -310,6 +310,8 @@ def ExpandMetaTarget(options, meta_target_name):
         'out_win/%s_x64:mozc_win32_build64' % config,
         'out_win/%s:mozc_installers_win' % config,
     ]
+  else:
+    raise ValueError('unrecognized platform: %s' % target_platform)
 
   return dependencies + targets
 
