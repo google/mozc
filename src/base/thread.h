@@ -47,9 +47,9 @@ namespace mozc {
 // Represents a thread, exposing a subset of `std::thread` APIs.
 //
 // Most notably, threads are undetachable unlike `std::thread`, thus must be
-// `join()`ed before destruction. This means that the `mozc::Thread` instance
-// must be retained even for a long-running one, though which may be until
-// the end of the process.
+// `Join()`ed before destruction if `Joinable()`. This means that the
+// `mozc::Thread` instance must be retained even for a long-running one, though
+// which may be until the end of the process.
 //
 // The semantics of the present APIs are mostly the same as `std::thread`
 // counterpart of the same (but lowercase) name, except that the behavior of
@@ -76,6 +76,8 @@ class Thread {
 
   Thread(Thread &&) noexcept = default;
   Thread &operator=(Thread &&) noexcept = default;
+
+  bool Joinable() const noexcept { return thread_.joinable(); }
 
   void Join() { thread_.join(); }
 
@@ -182,7 +184,9 @@ BackgroundFuture<R>::BackgroundFuture(F &&f, Args &&...args)
 
 template <class R>
 BackgroundFuture<R>::~BackgroundFuture() {
-  thread_.Join();
+  if (thread_.Joinable()) {
+    thread_.Join();
+  }
 }
 
 template <class R>
@@ -229,7 +233,11 @@ BackgroundFuture<void>::BackgroundFuture(F &&f, Args &&...args)
         done.Notify();
       }) {}
 
-inline BackgroundFuture<void>::~BackgroundFuture() { thread_.Join(); }
+inline BackgroundFuture<void>::~BackgroundFuture() {
+  if (thread_.Joinable()) {
+    thread_.Join();
+  }
+}
 
 inline void BackgroundFuture<void>::Wait() const {
   done_->WaitForNotification();
