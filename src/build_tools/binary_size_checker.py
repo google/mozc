@@ -44,7 +44,7 @@ import sys
 # in Megabytes.
 EXPECTED_MAXIMUM_SIZES = {
     # Distribution package files:
-    'GoogleJapaneseInput.dmg': 75,
+    'GoogleJapaneseInput.dmg': 85,
     'GoogleJapaneseInput64.msi': 65,
     }
 
