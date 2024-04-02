@@ -35,10 +35,10 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "base/container/freelist.h"
-#include "base/logging.h"
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -1070,6 +1070,133 @@ TEST_P(CandidateFilterTestWithParam, FilterMultipleNumberNodesWord) {
   c3->structure_cost = 500;
 
   EXPECT_EQ(filter->FilterCandidate(*request_, c3->key, c3, nodes1, nodes3),
+            CandidateFilter::GOOD_CANDIDATE);
+}
+
+TEST_P(CandidateFilterTestWithParam, FilterNoisyNumberCandidate) {
+  ConversionRequest::RequestType type = GetParam();
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::vector<const Node *> nodes1;
+  request_->set_request_type(type);
+  commands::Request req = commands::Request::default_instance();
+  req.mutable_decoder_experiment_params()->set_filter_noisy_number_candidate(
+      true);
+  request_->set_request(&req);
+
+  {
+    Node *n1 = NewNode();
+    n1->key = "さん";
+    n1->value = "3";
+    n1->lid = pos_matcher().GetNumberId();
+    n1->rid = pos_matcher().GetNumberId();
+    nodes1.push_back(n1);
+
+    Node *n2 = NewNode();
+    n2->key = "です";
+    n2->value = "です";
+    n2->lid = pos_matcher().GetSuffixWordId();
+    n2->rid = pos_matcher().GetSuffixWordId();
+    nodes1.push_back(n2);
+  }
+
+  Segment::Candidate *c1 = NewCandidate();
+  c1->key = "さんです";
+  c1->value = "3です";
+  c1->content_key = "さん";
+  c1->content_value = "3";
+  c1->cost = 1000;
+  c1->structure_cost = 50;
+
+  EXPECT_EQ(filter->FilterCandidate(*request_, c1->key, c1, nodes1, nodes1),
+            CandidateFilter::BAD_CANDIDATE);
+
+  std::vector<const Node *> nodes2;
+  {
+    Node *n1 = NewNode();
+    n1->key = "しんじゅく";
+    n1->value = "新宿";
+    n1->lid = pos_matcher().GetUniqueNounId();
+    n1->rid = pos_matcher().GetUniqueNounId();
+    nodes2.push_back(n1);
+
+    Node *n2 = NewNode();
+    n2->key = "に";
+    n2->value = "二";
+    n2->lid = pos_matcher().GetNumberId();
+    n2->rid = pos_matcher().GetNumberId();
+    nodes2.push_back(n2);
+  }
+
+  Segment::Candidate *c2 = NewCandidate();
+  c2->key = "しんじゅくに";
+  c2->value = "新宿二";
+  c2->content_key = "しんじゅく";
+  c2->content_value = "新宿";
+  c2->cost = 1000;
+  c2->structure_cost = 50;
+
+  EXPECT_EQ(filter->FilterCandidate(*request_, c2->key, c2, nodes2, nodes2),
+            CandidateFilter::BAD_CANDIDATE);
+
+  std::vector<const Node *> nodes3;
+  {
+    Node *n1 = NewNode();
+    n1->key = "ginza";
+    n1->value = "GINZA";
+    n1->lid = pos_matcher().GetUniqueNounId();
+    n1->rid = pos_matcher().GetUniqueNounId();
+    nodes3.push_back(n1);
+
+    Node *n2 = NewNode();
+    n2->key = "7";
+    n2->value = "7";
+    n2->lid = pos_matcher().GetNumberId();
+    n2->rid = pos_matcher().GetNumberId();
+    nodes3.push_back(n2);
+  }
+
+  Segment::Candidate *c3 = NewCandidate();
+  c3->key = "ginza7";
+  c3->value = "GINZA7";
+  c3->content_key = "ginza";
+  c3->content_value = "GINZA";
+  c3->cost = 1000;
+  c3->structure_cost = 50;
+
+  EXPECT_EQ(filter->FilterCandidate(*request_, c3->key, c3, nodes3, nodes3),
+            CandidateFilter::GOOD_CANDIDATE);
+
+  std::vector<const Node *> nodes4;
+  {
+    Node *n1 = NewNode();
+    n1->key = "に";
+    n1->value = "2";
+    n1->lid = pos_matcher().GetNumberId();
+    n1->rid = pos_matcher().GetNumberId();
+    nodes4.push_back(n1);
+
+    Node *n2 = NewNode();
+    n2->key = "ねん";
+    n2->value = "年";
+    n2->lid = pos_matcher().GetCounterSuffixWordId();
+    n2->rid = pos_matcher().GetCounterSuffixWordId();
+    nodes3.push_back(n2);
+
+    Node *n3 = NewNode();
+    n3->key = "ご";
+    n3->value = "後";
+    nodes3.push_back(n3);
+  }
+
+  Segment::Candidate *c4 = NewCandidate();
+  c3->key = "にねんご";
+  c3->value = "2年後";
+  c3->content_key = "に";
+  c3->content_value = "2";
+  c3->cost = 1000;
+  c3->structure_cost = 50;
+
+  EXPECT_EQ(filter->FilterCandidate(*request_, c4->key, c4, nodes4, nodes4),
             CandidateFilter::GOOD_CANDIDATE);
 }
 

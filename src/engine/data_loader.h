@@ -96,7 +96,7 @@ class DataLoader {
   void MaybeBuildNewData();
 
   // Returns true if a new data loader response is ready.
-  bool IsBuildResponseReady();
+  bool IsBuildResponseReady() const;
 
   // Maybe move the data loader response to the caller.
   // Otherwise nullptr is returned.

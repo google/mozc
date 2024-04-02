@@ -1709,70 +1709,6 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "子"));
 }
 
-TEST_F(DictionaryPredictorTest, FilterNoisyNumberCandidate) {
-  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  const DictionaryPredictorTestPeer &predictor =
-      data_and_predictor->predictor();
-  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
-  MockImmutableConverter *immutable_converter =
-      data_and_predictor->mutable_immutable_converter();
-
-  // Exact key will not be filtered in mobile request
-  request_test_util::FillMobileRequest(request_.get());
-  request_->mutable_decoder_experiment_params()
-      ->set_filter_noisy_number_candidate(true);
-
-  // Small prefix penalty for the following "五霞".
-  {
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->cost = 10;
-    EXPECT_CALL(*immutable_converter, ConvertForRequest(_, _))
-        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
-  }
-
-  {
-    const int number_id = data_and_predictor->pos_matcher().GetNumberId();
-    const int kanji_number_id =
-        data_and_predictor->pos_matcher().GetKanjiNumberId();
-    const int unknown_id = data_and_predictor->pos_matcher().GetUnknownId();
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
-        .WillRepeatedly(Return(std::vector<Result>{
-            CreateResult8("ごかい", "五回", 0, 10, kanji_number_id, unknown_id,
-                          prediction::REALTIME | prediction::REALTIME_TOP,
-                          Token::NONE),
-            CreateResult8("ご", "5", 0, 100, number_id, number_id,
-                          prediction::NUMBER, Token::NONE),
-            CreateResult8("ごかい", "五会", 0, 200, kanji_number_id, unknown_id,
-                          prediction::REALTIME, Token::NONE),
-            CreateResult8("ごかい", "五戒", 0, 300, kanji_number_id, unknown_id,
-                          prediction::UNIGRAM, Token::NONE),
-            CreateResult8("ごかい", "誤解", 0, 300, unknown_id, unknown_id,
-                          prediction::UNIGRAM, Token::NONE),
-            CreateResult8("ごか", "五霞", 0, 300, unknown_id, unknown_id,
-                          prediction::PREFIX, Token::NONE)}));
-  }
-
-  Segments segments;
-  InitSegmentsWithKey("ごかい", &segments);
-  EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
-  EXPECT_THAT(segments.conversion_segment(0),
-              ContainsCandidate(Field(&Segment::Candidate::value, "五回")));
-  EXPECT_THAT(segments.conversion_segment(0),
-              ContainsCandidate(Field(&Segment::Candidate::value, "5")));
-  EXPECT_THAT(segments.conversion_segment(0),
-              ContainsCandidate(Field(&Segment::Candidate::value, "誤解")));
-  EXPECT_THAT(segments.conversion_segment(0),
-              ContainsCandidate(Field(&Segment::Candidate::value, "五霞")));
-  EXPECT_THAT(
-      segments.conversion_segment(0),
-      Not(ContainsCandidate(Field(&Segment::Candidate::value, "五会"))));
-  EXPECT_THAT(
-      segments.conversion_segment(0),
-      Not(ContainsCandidate(Field(&Segment::Candidate::value, "五戒"))));
-}
-
 TEST_F(DictionaryPredictorTest, MaybePopualteTypingCorrectedResultsTest) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
@@ -2003,6 +1939,105 @@ TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
   EXPECT_EQ(cand1->description, "3→1");
   EXPECT_EQ(cand2->description, "2→2");
   EXPECT_EQ(cand3->description, "1→3");
+}
+
+TEST_F(DictionaryPredictorTest, TypingCorrectionMixingParamsTest) {
+  Segments segments;
+  InitSegmentsWithKey("かつこうのもの", &segments);  // 7 chars.
+
+  Segment *segment = segments.mutable_conversion_segment(0);
+  auto *candidate = segment->add_candidate();
+  candidate->key = "かつこうのもの";
+
+  std::vector<Result> corrected = {
+      CreateResult6("がっこう", "学校", 100, 100, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+      CreateResult6("かっこう", "格好", 100, 200, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+  };
+
+  corrected[0].typing_correction_score = 1.0;
+  corrected[1].typing_correction_score = 0.5;
+
+  const std::vector<Result> base = {
+      CreateResult6("かつこう", "かつこう", 200, 300, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("かつこう", "カツコウ", 200, 300, prediction::UNIGRAM,
+                    Token::NONE),
+
+  };
+
+  auto *params = request_->mutable_decoder_experiment_params();
+
+  auto reset_params = [&]() {
+    params->set_typing_correction_literal_on_top_correction_score_max_diff(0.0);
+    params->set_typing_correction_literal_on_top_conversion_cost_max_diff(0);
+    params->set_typing_correction_literal_on_top_length_score_max_diff(0.0);
+    params->set_typing_correction_literal_on_top_length_decay(0.0);
+  };
+
+  reset_params();
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_at_least_second);
+
+  // literal-on-top with correction_score_max_diff
+  params->set_typing_correction_literal_on_top_correction_score_max_diff(2.0);
+  EXPECT_TRUE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                              segments, base, corrected)
+                  .literal_on_top);
+
+  params->set_typing_correction_literal_on_top_correction_score_max_diff(0.5);
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+
+  reset_params();
+
+  // literal-on-top with conversion_cost_max_diff
+  params->set_typing_correction_literal_on_top_conversion_cost_max_diff(500);
+  EXPECT_TRUE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                              segments, base, corrected)
+                  .literal_on_top);
+
+  params->set_typing_correction_literal_on_top_conversion_cost_max_diff(50);
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+
+  reset_params();
+
+  // literal-on-top with
+  // typing_correction_literal_on_top_length_score_max_diff and
+  // typing_correction_literal_on_top_length_decay
+  params->set_typing_correction_literal_on_top_length_score_max_diff(2.0);
+  params->set_typing_correction_literal_on_top_length_decay(0.8);
+
+  // 2.0 * (0.8)^(7-3) < 1.0
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+
+  // 2.0 * (0.9)^(7-3) > 1.0
+  params->set_typing_correction_literal_on_top_length_decay(0.9);
+  EXPECT_TRUE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                              segments, base, corrected)
+                  .literal_on_top);
+
+  // 1.5 * (0.9)^(7-3) < 1.0
+  params->set_typing_correction_literal_on_top_length_score_max_diff(1.5);
+  EXPECT_FALSE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                               segments, base, corrected)
+                   .literal_on_top);
+
+  // literal at least second.
+  params->set_typing_correction_literal_at_least_second(true);
+  EXPECT_TRUE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
+                                              segments, base, corrected)
+                  .literal_at_least_second);
 }
 
 }  // namespace

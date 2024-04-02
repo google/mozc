@@ -9,10 +9,13 @@ If you are not sure what the following commands do, please check the description
 and make sure the operations before running them.
 
 ```
-python3 -m pip install requests
-
 git clone https://github.com/google/mozc.git
 cd mozc/src
+
+export PYTHON_VENV_ROOT=${PWD}/python-venv
+python3 -m venv ${PYTHON_VENV_ROOT}
+source ${PYTHON_VENV_ROOT}/bin/activate
+python3 -m pip install requests
 
 python3 build_tools/update_deps.py
 
@@ -61,6 +64,19 @@ cd mozc/src
 ```
 
 Hereafter you can do all the operations without changing directory.
+
+### Set up and enable Python virtual environment
+
+The following commands set up Python virtual environment under `mozc/src/python-venv`.
+
+```
+export PYTHON_VENV_ROOT=${PWD}/python-venv
+python3 -m venv ${PYTHON_VENV_ROOT}
+source ${PYTHON_VENV_ROOT}/bin/activate
+python3 -m pip install requests
+```
+
+Using `mozc/src/python-venv` as the virtual environment location is not mandatory. Any other location should also work.
 
 ### Check out additional build dependencies
 

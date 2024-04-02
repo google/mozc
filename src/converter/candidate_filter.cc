@@ -52,6 +52,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "request/request_util.h"
 
 namespace mozc {
 namespace converter {
@@ -222,6 +223,36 @@ bool IsStrictModeEnabled(const ConversionRequest &request) {
               .enable_realtime_conversion_v2();
 }
 
+// Returns true if there is a number node that does not follow the
+bool IsNoisyNumberCandidate(const dictionary::PosMatcher &pos_matcher,
+                            const absl::Span<const Node *const> nodes) {
+  auto is_converted_number = [&](const Node &node) {
+    if (node.lid != node.rid) {
+      return false;
+    }
+    if (!Util::IsScriptType(node.key, Util::HIRAGANA)) {
+      return false;
+    }
+    return pos_matcher.IsNumber(node.lid) ||
+           pos_matcher.IsKanjiNumber(node.rid);
+  };
+  for (int i = 0; i < nodes.size(); ++i) {
+    if (!is_converted_number(*nodes[i])) {
+      continue;
+    }
+    if (i + 1 < nodes.size() && !is_converted_number(*nodes[i + 1]) &&
+        !pos_matcher.IsCounterSuffixWord(nodes[i + 1]->lid)) {
+      // "にいく": "2行く"
+      return true;
+    }
+    if (i - 1 >= 0 && pos_matcher.IsUniqueNoun(nodes[i - 1]->rid)) {
+      // "しんじゅくに": "新宿2"
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace
 
 CandidateFilter::CandidateFilter(
@@ -319,6 +350,12 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // node for CandidateFilter.
   if (candidate->attributes & Segment::Candidate::CONTEXT_SENSITIVE) {
     return CandidateFilter::GOOD_CANDIDATE;
+  }
+
+  if (request_util::ShouldFilterNoisyNumberCandidate(request)) {
+    if (IsNoisyNumberCandidate(*pos_matcher_, nodes)) {
+      return CandidateFilter::BAD_CANDIDATE;
+    }
   }
 
   const size_t candidate_size = seen_.size();
@@ -542,8 +579,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
           candidate->structure_cost) {
     // Stops candidates enumeration when we see sufficiently high cost
     // candidate.
-    MOZC_VLOG(2) << "cost is invalid: "
-                 << "top_cost=" << top_cost << " cost_offset=" << cost_offset
+    MOZC_VLOG(2) << "cost is invalid: " << "top_cost=" << top_cost
+                 << " cost_offset=" << cost_offset
                  << " value=" << candidate->value << " cost=" << candidate->cost
                  << " top_structure_cost=" << top_structure_cost
                  << " structure_cost=" << candidate->structure_cost

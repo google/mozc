@@ -86,7 +86,8 @@ struct TypingCorrectionMixingParams {
 // from the `base_result` and `typing_corrected_results`.
 // TODO(taku): Introduces more advanced algorithms to make better decision.
 TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
-    const ConversionRequest &request, absl::Span<const Result> base_results,
+    const ConversionRequest &request, const Segments &segments,
+    absl::Span<const Result> base_results,
     absl::Span<const Result> typing_corrected_results);
 
 // Dictionary-based predictor
@@ -137,7 +138,6 @@ class DictionaryPredictor : public PredictorInterface {
     const bool is_mixed_conversion_;
     const bool auto_partial_suggestion_;
     const bool include_exact_key_;
-    const bool filter_number_;
 
     std::string history_key_;
     std::string history_value_;

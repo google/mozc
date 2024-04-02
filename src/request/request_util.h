@@ -37,26 +37,33 @@
 namespace mozc {
 namespace request_util {
 
-static bool IsHandwriting(const ConversionRequest &conversion_request) {
+inline bool IsHandwriting(const ConversionRequest &conversion_request) {
   return conversion_request.has_composer() &&
          !conversion_request.composer().GetHandwritingCompositions().empty();
 }
 
-static bool IsAutoPartialSuggestionEnabled(
+inline bool IsAutoPartialSuggestionEnabled(
     const ConversionRequest &conversion_request) {
   return conversion_request.request().auto_partial_suggestion();
 }
 
-static bool IsFindabilityOrientedOrderEnabled(
+inline bool IsFindabilityOrientedOrderEnabled(
     const commands::Request &request) {
   return (
       request.auto_partial_suggestion() && request.mixed_conversion() &&
       request.decoder_experiment_params().enable_findability_oriented_order());
 }
 
-static bool IsFindabilityOrientedOrderEnabled(
+inline bool IsFindabilityOrientedOrderEnabled(
     const ConversionRequest &conversion_request) {
   return IsFindabilityOrientedOrderEnabled(conversion_request.request());
+}
+
+inline bool ShouldFilterNoisyNumberCandidate(
+    const ConversionRequest &conversion_request) {
+  return conversion_request.request()
+      .decoder_experiment_params()
+      .filter_noisy_number_candidate();
 }
 
 }  // namespace request_util

@@ -31,6 +31,7 @@
 
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/synchronization/notification.h"
@@ -91,6 +92,16 @@ TEST(ThreadTest, CopiesThingsAtMostOnce) {
 
   EXPECT_EQ(counter1.count(), 1);
   EXPECT_EQ(c2->load(), 0);
+}
+
+TEST(ThreadTest, Joinable) {
+  Thread default_constructed;
+  EXPECT_FALSE(default_constructed.Joinable());
+
+  Thread real_work([] {});
+  EXPECT_TRUE(real_work.Joinable());
+  real_work.Join();
+  EXPECT_FALSE(real_work.Joinable());
 }
 
 TEST(BackgroundFutureTest, ReturnsComputedValueOnReady) {
@@ -162,6 +173,15 @@ TEST(BackgroundFutureTest, CopiesThingsAtMostOnce) {
     EXPECT_EQ(counter1.count(), 1);
     EXPECT_EQ(c2->load(), 0);
   }
+}
+
+TEST(BackgroundFutureTest, DestructingMovedOutFutureDoesNotCrash) {
+  std::optional<BackgroundFuture<int>> f;
+  {
+    auto g = BackgroundFuture<int>([] { return 42; });
+    f = std::move(g);
+  }
+  EXPECT_EQ(f->Get(), 42);
 }
 
 }  // namespace
