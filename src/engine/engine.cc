@@ -39,7 +39,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "base/protobuf/message.h"
 #include "base/vlog.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter.h"
@@ -170,8 +169,8 @@ absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
   return Init(std::move(modules), is_mobile);
 }
 
-absl::Status Engine::Init(
-    std::unique_ptr<engine::Modules> modules, bool is_mobile) {
+absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
+                          bool is_mobile) {
 #define RETURN_IF_NULL(ptr)                                               \
   do {                                                                    \
     if (!(ptr))                                                           \
@@ -303,12 +302,11 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
     *response = loader_response->response;
 
     if (!loader_response->modules ||
-      response->status() != EngineReloadResponse::RELOAD_READY) {
+        response->status() != EngineReloadResponse::RELOAD_READY) {
       // The loader_response does not contain a valid result.
 
       // This request id causes a critical error.
-      LOG(ERROR) << "Failure in loading response: "
-                << protobuf::Utf8Format(*response);
+      LOG(ERROR) << "Failure in loading response: " << *response;
 
       // Unregisters the invalid ID and continues to rebuild a new data loader.
       loader_->ReportLoadFailure(loader_response->id);
@@ -320,8 +318,8 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
     }
 
     // Reloads DataManager.
-    const bool is_mobile = response->request().engine_type() ==
-                           EngineReloadRequest::MOBILE;
+    const bool is_mobile =
+        response->request().engine_type() == EngineReloadRequest::MOBILE;
     absl::Status reload_status =
         ReloadModules(std::move(loader_response->modules), is_mobile);
     if (!reload_status.ok()) {

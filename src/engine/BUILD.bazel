@@ -171,7 +171,6 @@ mozc_cc_library(
         ":spellchecker_interface",
         ":user_data_manager_interface",
         "//base:vlog",
-        "//base/protobuf:message",
         "//converter",
         "//converter:converter_interface",
         "//converter:immutable_converter_interface",
