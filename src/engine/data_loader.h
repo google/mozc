@@ -33,6 +33,7 @@
 #include <atomic>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
@@ -84,10 +85,8 @@ class DataLoader {
 
   // Builds the new engine associated with `id`.
   // This method returns the future object immediately.
-  // Since BackgroundFuture is not movable/copyable, we wrap it with
-  // std::unique_ptr. This method doesn't return nullptr. All errors
-  // are stored in EngineReloadResponse::response::status.
-  virtual std::unique_ptr<ResponseFuture> Build(uint64_t id) const;
+  // All errors are stored in EngineReloadResponse::response::status.
+  virtual ResponseFuture Build(uint64_t id) const;
 
   void Clear();
 
@@ -130,7 +129,7 @@ class DataLoader {
   // 0 means that no data has been updated yet.
   std::atomic<uint64_t> current_request_id_ = 0;
 
-  std::unique_ptr<DataLoader::ResponseFuture> loader_response_future_;
+  std::optional<DataLoader::ResponseFuture> loader_response_future_;
   // used only in unittest to perform blocking behavior.
   bool always_wait_for_loader_response_future_ = false;
 };

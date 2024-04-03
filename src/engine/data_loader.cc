@@ -182,8 +182,7 @@ DataLoader::Response BuildResponse(uint64_t id, EngineReloadRequest request) {
 }
 }  // namespace
 
-std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
-    uint64_t id) const {
+DataLoader::ResponseFuture DataLoader::Build(uint64_t id) const {
   EngineReloadRequest request;
   // Finds the request associated with `id`.
   {
@@ -192,7 +191,7 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
         std::find_if(requests_.begin(), requests_.end(),
                      [id](const RequestData &v) { return v.id == id; });
     if (it == requests_.end()) {
-      return std::make_unique<DataLoader::ResponseFuture>([id]() {
+      return DataLoader::ResponseFuture([id]() {
         Response response;
         response.id = id;
         response.response.set_status(EngineReloadResponse::DATA_MISSING);
@@ -202,16 +201,15 @@ std::unique_ptr<DataLoader::ResponseFuture> DataLoader::Build(
     request = it->request;
   }
 
-  return std::make_unique<DataLoader::ResponseFuture>(
-      [id, request = std::move(request)]() {
-        return BuildResponse(id, request);
-      });
+  return DataLoader::ResponseFuture([id, request = std::move(request)]() {
+    return BuildResponse(id, request);
+  });
 }
 
 void DataLoader::MaybeBuildNewData() {
   // Checks if an existing build process, or already using the top request.
-  if (loader_response_future_ || current_request_id_ == top_request_id_ ||
-      top_request_id_ == 0) {
+  if (loader_response_future_.has_value() ||
+      current_request_id_ == top_request_id_ || top_request_id_ == 0) {
     return;
   }
 
@@ -226,7 +224,8 @@ void DataLoader::MaybeBuildNewData() {
 }
 
 bool DataLoader::IsBuildResponseReady() const {
-  return loader_response_future_ && loader_response_future_->Ready();
+  return loader_response_future_.has_value() &&
+         loader_response_future_->Ready();
 }
 
 std::unique_ptr<DataLoader::Response>
