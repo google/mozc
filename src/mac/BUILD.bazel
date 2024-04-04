@@ -495,7 +495,7 @@ mozc_py_binary(
 )
 
 # AUTO_UPDATER_DIR should be replaced with a valid directory.
-AUTO_UPDATER_DIR = "Releases/Keystone"  # Placeholder
+AUTO_UPDATER_DIR = "installer/client/mac-universal"  # Placeholder
 
 genrule(
     name = "installer_oss_macos",

@@ -84,11 +84,10 @@ TEST_P(DataLoaderTest, BasicTest) {
     request_.set_magic_number(kMockMagicNumber);
 
     const uint64_t id = loader_.RegisterRequest(request_);
-    std::unique_ptr<DataLoader::ResponseFuture> response_future =
-        loader_.Build(id);
+    DataLoader::ResponseFuture response_future = loader_.Build(id);
 
-    response_future->Wait();
-    const DataLoader::Response &response = response_future->Get();
+    response_future.Wait();
+    const DataLoader::Response &response = response_future.Get();
 
     DataManager data_manager;
     data_manager.InitFromFile(mock_data_path_, kMockMagicNumber);
@@ -125,10 +124,9 @@ TEST_P(DataLoaderTest, BasicTest) {
     request_.set_magic_number(kMockMagicNumber);
     const uint64_t id = loader_.RegisterRequest(request_);
 
-    std::unique_ptr<DataLoader::ResponseFuture> response_future =
-        loader_.Build(id);
-    response_future->Wait();
-    const DataLoader::Response &response = response_future->Get();
+    DataLoader::ResponseFuture response_future = loader_.Build(id);
+    response_future.Wait();
+    const DataLoader::Response &response = response_future.Get();
 
     DataManager data_manager;
     data_manager.InitFromFile(src_path, kMockMagicNumber);
@@ -173,11 +171,10 @@ TEST_P(DataLoaderTest, AsyncBuildRepeatedly) {
     }
   }
 
-  std::unique_ptr<DataLoader::ResponseFuture> response_future =
-      loader_.Build(latest_id);
+  DataLoader::ResponseFuture response_future = loader_.Build(latest_id);
 
-  response_future->Wait();
-  const DataLoader::Response &response = response_future->Get();
+  response_future.Wait();
+  const DataLoader::Response &response = response_future.Get();
 
   DataManager data_manager;
   data_manager.InitFromFile(last_path, kMockMagicNumber);
@@ -203,11 +200,10 @@ TEST_P(DataLoaderTest, AsyncBuildWithoutInstall) {
   request_.set_magic_number(kMockMagicNumber);
   const uint64_t id = loader_.RegisterRequest(request_);
 
-  std::unique_ptr<DataLoader::ResponseFuture> response_future =
-      loader_.Build(id);
+  DataLoader::ResponseFuture response_future = loader_.Build(id);
 
-  response_future->Wait();
-  const DataLoader::Response &response = response_future->Get();
+  response_future.Wait();
+  const DataLoader::Response &response = response_future.Get();
 
   DataManager data_manager;
   data_manager.InitFromFile(mock_data_path_, kMockMagicNumber);
@@ -242,11 +238,10 @@ TEST_P(DataLoaderTest, AsyncBuildWithInstall) {
   request_.set_magic_number(kMockMagicNumber);
   const uint64_t id = loader_.RegisterRequest(request_);
 
-  std::unique_ptr<DataLoader::ResponseFuture> response_future =
-      loader_.Build(id);
+  DataLoader::ResponseFuture response_future = loader_.Build(id);
 
-  response_future->Wait();
-  const DataLoader::Response &response = response_future->Get();
+  response_future.Wait();
+  const DataLoader::Response &response = response_future.Get();
 
   // Builder should be ready now.
   EXPECT_EQ(response.response.status(), EngineReloadResponse::RELOAD_READY);
@@ -278,11 +273,10 @@ TEST_P(DataLoaderTest, FailureCaseDataBroken) {
   request_.set_magic_number(kMockMagicNumber);
   const uint64_t id = loader_.RegisterRequest(request_);
 
-  std::unique_ptr<DataLoader::ResponseFuture> response_future =
-      loader_.Build(id);
+  DataLoader::ResponseFuture response_future = loader_.Build(id);
 
-  response_future->Wait();
-  const DataLoader::Response &response = response_future->Get();
+  response_future.Wait();
+  const DataLoader::Response &response = response_future.Get();
 
   EXPECT_EQ(response.response.status(), EngineReloadResponse::DATA_BROKEN);
   EXPECT_FALSE(response.modules);
@@ -297,11 +291,10 @@ TEST_P(DataLoaderTest, InvalidId) {
   const uint64_t id =
       loader_.RegisterRequest(request_) + 1;  // + 1 to make invalid id.
 
-  std::unique_ptr<DataLoader::ResponseFuture> response_future =
-      loader_.Build(id);
+  DataLoader::ResponseFuture response_future = loader_.Build(id);
 
-  response_future->Wait();
-  const DataLoader::Response &response = response_future->Get();
+  response_future.Wait();
+  const DataLoader::Response &response = response_future.Get();
 
   EXPECT_EQ(response.response.status(), EngineReloadResponse::DATA_MISSING);
   EXPECT_FALSE(response.modules);
@@ -315,11 +308,10 @@ TEST_P(DataLoaderTest, FailureCaseFileDoesNotExist) {
   request_.set_magic_number(kMockMagicNumber);
 
   const uint64_t id = loader_.RegisterRequest(request_);
-  std::unique_ptr<DataLoader::ResponseFuture> response_future =
-      loader_.Build(id);
+  DataLoader::ResponseFuture response_future = loader_.Build(id);
 
-  response_future->Wait();
-  const DataLoader::Response &response = response_future->Get();
+  response_future.Wait();
+  const DataLoader::Response &response = response_future.Get();
 
   EXPECT_EQ(response.response.status(), EngineReloadResponse::MMAP_FAILURE);
   EXPECT_FALSE(response.modules);
