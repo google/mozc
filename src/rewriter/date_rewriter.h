@@ -91,19 +91,18 @@ class DateRewriter : public RewriterInterface {
 
   // Converts AD to Japanese ERA.
   // If given string is invalid, this function does not nothing and
-  // returns false
+  // returns an empty vector.
   // The results will have multiple variants.
   // e.g.)
-  //   key              -> results, descriptions
+  //   key              -> list of result and description
   //   -----------------------------------------------
-  //   "へいせい20ねん" -> {"2008年", "２００８年", "二〇〇八年"},
-  //                       {"平成20年", "平成20年", "平成20年"}
-  //   "しょうわ2ねん"  -> {"1927年", "１９２７年", "一九二七年",
-  //                        "1313年", "１３１３年", "一三一三年" },
-  //                       {"昭和2年", "昭和2年", "昭和2年",
-  //                        "正和2年", "正和2年", "正和2年"}
-  static bool EraToAd(absl::string_view key, std::vector<std::string> *results,
-                      std::vector<std::string> *descriptions);
+  //   "へいせい20ねん" -> {{"2008年", "平成20年"}, {"２００８年", "平成20年"},
+  //                       {"二〇〇八年", "平成20年"}}
+  //   "しょうわ2ねん"  -> {{"1927年", "昭和2年"}, {"１９２７年", "昭和2年"},
+  //                       {"一九二七年", "昭和2年"}, {"1313年", "正和2年"},
+  //                       {"１３１３年", "正和2年"}, {"一三一三年", "正和2年"}}
+  static std::vector<std::pair<std::string, std::string>> EraToAd(
+      absl::string_view key);
 
   // Converts given time to string expression.
   // If given time information is invalid, this function does nothing and

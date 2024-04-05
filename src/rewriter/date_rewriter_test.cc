@@ -386,110 +386,96 @@ TEST_F(DateRewriterTest, ADToERA) {
 }
 
 TEST_F(DateRewriterTest, ERAToAD) {
-  std::vector<std::string> results, descriptions;
+#define PAIR_STR(a, b) std::make_pair(std::string(a), std::string(b))
 
-  EXPECT_FALSE(DateRewriter::EraToAd("", &results, &descriptions));
+  EXPECT_TRUE(DateRewriter::EraToAd("").empty());
 
   // "たいか1ねん" is "645年" or "６４５年" or "六四五年"
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(DateRewriter::EraToAd("たいか1ねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("六四五年", "６４５年", "645年"));
-  EXPECT_THAT(descriptions, Each("大化1年"));
+  EXPECT_THAT(DateRewriter::EraToAd("たいか1ねん"),
+              ElementsAre(PAIR_STR("六四五年", "大化1年"),
+                          PAIR_STR("６４５年", "大化1年"),
+                          PAIR_STR("645年", "大化1年")));
 
   // "たいか2ねん" is "646年" or "６４６年" or "六四六年"
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(DateRewriter::EraToAd("たいか2ねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("六四六年", "６４６年", "646年"));
-  EXPECT_THAT(descriptions, Each("大化2年"));
+  EXPECT_THAT(DateRewriter::EraToAd("たいか2ねん"),
+              ElementsAre(PAIR_STR("六四六年", "大化2年"),
+                          PAIR_STR("６４６年", "大化2年"),
+                          PAIR_STR("646年", "大化2年")));
 
   // "しょうわ2ねん" is AD.1313 or AD.1927
   // "1313年", "１３１３年", "一三一三年"
   // "1927年", "１９２７年", "一九二七年"
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(DateRewriter::EraToAd("しょうわ2ねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("一三一三年", "１３１３年", "1313年",
-                                   "一九二七年", "１９２７年", "1927年"));
-  EXPECT_THAT(descriptions, ElementsAre("正和2年", "正和2年", "正和2年",
-                                        "昭和2年", "昭和2年", "昭和2年"));
+  EXPECT_THAT(
+      DateRewriter::EraToAd("しょうわ2ねん"),
+      ElementsAre(
+          PAIR_STR("一三一三年", "正和2年"), PAIR_STR("１３１３年", "正和2年"),
+          PAIR_STR("1313年", "正和2年"), PAIR_STR("一九二七年", "昭和2年"),
+          PAIR_STR("１９２７年", "昭和2年"), PAIR_STR("1927年", "昭和2年")));
 
   // North court test
   // "げんとく1ねん" is AD.1329
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(DateRewriter::EraToAd("げんとく1ねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("一三二九年", "１３２９年", "1329年"));
-  EXPECT_THAT(descriptions, Each("元徳1年"));
+  EXPECT_THAT(DateRewriter::EraToAd("げんとく1ねん"),
+              ElementsAre(PAIR_STR("一三二九年", "元徳1年"),
+                          PAIR_STR("１３２９年", "元徳1年"),
+                          PAIR_STR("1329年", "元徳1年")));
 
   // "めいとく3ねん" is AD.1392
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(DateRewriter::EraToAd("めいとく3ねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("一三九二年", "１３９２年", "1392年"));
-  EXPECT_THAT(descriptions, Each("明徳3年"));
+  EXPECT_THAT(DateRewriter::EraToAd("めいとく3ねん"),
+              ElementsAre(PAIR_STR("一三九二年", "明徳3年"),
+                          PAIR_STR("１３９２年", "明徳3年"),
+                          PAIR_STR("1392年", "明徳3年")));
 
   // "けんむ1ねん" is AD.1334 (requires dedupe)
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(DateRewriter::EraToAd("けんむ1ねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("一三三四年", "１３３４年", "1334年"));
-  EXPECT_THAT(descriptions, Each("建武1年"));
+  EXPECT_THAT(DateRewriter::EraToAd("けんむ1ねん"),
+              ElementsAre(PAIR_STR("一三三四年", "建武1年"),
+                          PAIR_STR("１３３４年", "建武1年"),
+                          PAIR_STR("1334年", "建武1年")));
 
   // Big number test
   // "昭和80年" is AD.2005
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(DateRewriter::EraToAd("しょうわ80ねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("一三九一年", "１３９１年", "1391年",
-                                   "二〇〇五年", "２００５年", "2005年"));
-  EXPECT_THAT(descriptions, ElementsAre("正和80年", "正和80年", "正和80年",
-                                        "昭和80年", "昭和80年", "昭和80年"));
+  EXPECT_THAT(DateRewriter::EraToAd("しょうわ80ねん"),
+              ElementsAre(PAIR_STR("一三九一年", "正和80年"),
+                          PAIR_STR("１３９１年", "正和80年"),
+                          PAIR_STR("1391年", "正和80年"),
+                          PAIR_STR("二〇〇五年", "昭和80年"),
+                          PAIR_STR("２００５年", "昭和80年"),
+                          PAIR_STR("2005年", "昭和80年")));
 
   // "大正101年" is AD.2012
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(
-      DateRewriter::EraToAd("たいしょう101ねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("二〇一二年", "２０１２年", "2012年"));
-  EXPECT_THAT(descriptions, Each("大正101年"));
+  EXPECT_THAT(DateRewriter::EraToAd("たいしょう101ねん"),
+              ElementsAre(PAIR_STR("二〇一二年", "大正101年"),
+                          PAIR_STR("２０１２年", "大正101年"),
+                          PAIR_STR("2012年", "大正101年")));
 
   // "元年" test
   // "れいわがんねん" is AD.2019
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(DateRewriter::EraToAd("れいわがんねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("二〇一九年", "２０１９年", "2019年"));
-  EXPECT_THAT(descriptions, Each("令和元年"));
+  EXPECT_THAT(DateRewriter::EraToAd("れいわがんねん"),
+              ElementsAre(PAIR_STR("二〇一九年", "令和元年"),
+                          PAIR_STR("２０１９年", "令和元年"),
+                          PAIR_STR("2019年", "令和元年")));
 
   // "元年" test
   // "へいせいがんねん" is AD.1989
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(
-      DateRewriter::EraToAd("へいせいがんねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("一九八九年", "１９８９年", "1989年"));
-  EXPECT_THAT(descriptions, Each("平成元年"));
+  EXPECT_THAT(DateRewriter::EraToAd("へいせいがんねん"),
+              ElementsAre(PAIR_STR("一九八九年", "平成元年"),
+                          PAIR_STR("１９８９年", "平成元年"),
+                          PAIR_STR("1989年", "平成元年")));
 
   // "しょうわがんねん" is AD.1926 or AD.1312
-  results.clear();
-  descriptions.clear();
-  EXPECT_TRUE(
-      DateRewriter::EraToAd("しょうわがんねん", &results, &descriptions));
-  EXPECT_THAT(results, ElementsAre("一三一二年", "１３１２年", "1312年",
-                                   "一九二六年", "１９２６年", "1926年"));
-  EXPECT_THAT(descriptions, ElementsAre("正和元年", "正和元年", "正和元年",
-                                        "昭和元年", "昭和元年", "昭和元年"));
+  EXPECT_THAT(DateRewriter::EraToAd("しょうわがんねん"),
+              ElementsAre(PAIR_STR("一三一二年", "正和元年"),
+                          PAIR_STR("１３１２年", "正和元年"),
+                          PAIR_STR("1312年", "正和元年"),
+                          PAIR_STR("一九二六年", "昭和元年"),
+                          PAIR_STR("１９２６年", "昭和元年"),
+                          PAIR_STR("1926年", "昭和元年")));
 
   // Negative Test
   // 0 or negative number input are expected false return
-  results.clear();
-  descriptions.clear();
-  EXPECT_FALSE(
-      DateRewriter::EraToAd("しょうわ-1ねん", &results, &descriptions));
-  EXPECT_FALSE(DateRewriter::EraToAd("しょうわ0ねん", &results, &descriptions));
-  EXPECT_FALSE(DateRewriter::EraToAd("0ねん", &results, &descriptions));
+  EXPECT_TRUE(DateRewriter::EraToAd("しょうわ-1ねん").empty());
+  EXPECT_TRUE(DateRewriter::EraToAd("しょうわ0ねん").empty());
+  EXPECT_TRUE(DateRewriter::EraToAd("0ねん").empty());
+#undef PAIR_STR
 }
 
 TEST_F(DateRewriterTest, ConvertTime) {

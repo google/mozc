@@ -588,15 +588,14 @@ bool ExtractYearFromKey(const YearData &year_data, const absl::string_view key,
   return true;
 }
 
-bool EraToAdForCourt(const YearData *data, size_t size,
+void EraToAdForCourt(const YearData *data, size_t size,
                      const absl::string_view key,
-                     std::vector<std::string> *results,
-                     std::vector<std::string> *descriptions) {
+                     std::vector<std::pair<std::string, std::string>>
+                         &results_and_descriptions) {
   if (!absl::EndsWith(key, kNenKey)) {
-    return false;
+    return;
   }
 
-  bool modified = false;
   for (size_t i = 0; i < size; ++i) {
     const YearData &year_data = data[i];
     if (!absl::StartsWith(key, year_data.key)) {
@@ -624,15 +623,16 @@ bool EraToAdForCourt(const YearData *data, size_t size,
     for (size_t j = 0; j < output.size(); ++j) {
       // "元徳", "建武" and "明徳" require dedupe
       std::string value = absl::StrCat(output[j].value, kNenValue);
-      if (absl::c_find(*results, value) != results->end()) {
+      if (absl::c_find_if(results_and_descriptions,
+                          [&value](const std::pair<std::string, std::string>
+                                       &result_and_description) {
+                            return result_and_description.first == value;
+                          }) != results_and_descriptions.end()) {
         continue;
       }
-      results->push_back(std::move(value));
-      descriptions->push_back(description);
+      results_and_descriptions.push_back({std::move(value), description});
     }
-    modified = true;
   }
-  return modified;
 }
 
 // Checks if the given date is valid or not.
@@ -785,16 +785,14 @@ std::vector<std::string> DateRewriter::AdToEra(int year, int month) {
   return results;
 }
 
-bool DateRewriter::EraToAd(const absl::string_view key,
-                           std::vector<std::string> *results,
-                           std::vector<std::string> *descriptions) {
-  bool ret = false;
+std::vector<std::pair<std::string, std::string>> DateRewriter::EraToAd(
+    const absl::string_view key) {
+  std::vector<std::pair<std::string, std::string>> results_and_descriptions;
   // The order is south to north, older to newer
-  ret |= EraToAdForCourt(kEraData, std::size(kEraData), key, results,
-                         descriptions);
-  ret |= EraToAdForCourt(kNorthEraData, std::size(kNorthEraData), key, results,
-                         descriptions);
-  return ret;
+  EraToAdForCourt(kEraData, std::size(kEraData), key, results_and_descriptions);
+  EraToAdForCourt(kNorthEraData, std::size(kNorthEraData), key,
+                  results_and_descriptions);
+  return results_and_descriptions;
 }
 
 bool DateRewriter::ConvertTime(uint32_t hour, uint32_t min,
@@ -1067,19 +1065,18 @@ bool DateRewriter::RewriteAd(Segment *segment) {
   }
 
   // Try to convert era to AD.
-  std::vector<std::string> results, descriptions;
-  EraToAd(key, &results, &descriptions);
-  DCHECK_EQ(results.size(), descriptions.size());
-  if (results.empty()) {
+  const std::vector<std::pair<std::string, std::string>>
+      results_anddescriptions = EraToAd(key);
+  if (results_anddescriptions.empty()) {
     return false;
   }
 
   const Segment::Candidate &base_cand = segment->candidate(0);
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
-  candidates.reserve(results.size());
-  for (size_t i = 0; i < results.size(); ++i) {
-    candidates.push_back(CreateCandidate(base_cand, std::move(results[i]),
-                                         std::move(descriptions[i])));
+  candidates.reserve(results_anddescriptions.size());
+  for (auto &[result, description] : results_anddescriptions) {
+    candidates.push_back(
+        CreateCandidate(base_cand, std::move(result), std::move(description)));
   }
 
   // Insert position is the last of candidates
@@ -1143,10 +1140,9 @@ bool DateRewriter::ResizeSegmentsForRewriteAd(
   DCHECK(!key.empty());
 
   // Try to convert era to AD.
-  std::vector<std::string> results, descriptions;
-  EraToAd(key, &results, &descriptions);
-  DCHECK_EQ(results.size(), descriptions.size());
-  if (results.empty()) {
+  const std::vector<std::pair<std::string, std::string>>
+      results_anddescriptions = EraToAd(key);
+  if (results_anddescriptions.empty()) {
     return false;
   }
 
