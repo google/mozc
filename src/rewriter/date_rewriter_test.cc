@@ -29,6 +29,8 @@
 
 #include "rewriter/date_rewriter.h"
 
+#include <cstddef>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -36,13 +38,17 @@
 #include "absl/strings/string_view.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_token.h"
+#include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -63,7 +69,10 @@ using ::testing::ElementsAre;
 using ::testing::Field;
 using ::testing::Matcher;
 using ::testing::Not;
+using ::testing::Ref;
+using ::testing::Return;
 using ::testing::StrEq;
+using ::testing::Values;
 
 void InitCandidate(const absl::string_view key, const absl::string_view value,
                    Segment::Candidate *candidate) {
@@ -1113,7 +1122,8 @@ TEST_F(DateRewriterTest, ExtraFormatTest) {
               LookupExact(StrEq(DateRewriter::kExtraFormatKey), _, _))
       .WillOnce(InvokeCallbackWithUserDictionaryToken("{YEAR}{MONTH}{DATE}"));
 
-  DateRewriter rewriter(&dictionary);
+  MockConverter converter;
+  DateRewriter rewriter(&converter, &dictionary);
 
   Segments segments;
   InitSegment("きょう", "今日", &segments);
@@ -1146,7 +1156,8 @@ TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
     EXPECT_CALL(dictionary,
                 LookupExact(StrEq(DateRewriter::kExtraFormatKey), _, _))
         .WillOnce(InvokeCallbackWithUserDictionaryToken(input));
-    DateRewriter rewriter(&dictionary);
+    MockConverter converter;
+    DateRewriter rewriter(&converter, &dictionary);
     Segments segments;
     InitSegment("きょう", "今日", &segments);
     const ConversionRequest request;
@@ -1172,24 +1183,159 @@ TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
   Clock::SetClockForUnitTest(nullptr);
 }
 
-TEST_F(DateRewriterTest, RewriteAd) {
+struct RewriteAdData {
+  std::vector<std::pair<std::string, std::string>> segments;
+  size_t segment_index = 0;
+  std::string candidate;
+  std::string resized_key;
+};
+
+class RewriteAdTest : public DateRewriterTest,
+                      public ::testing::WithParamInterface<RewriteAdData> {};
+
+INSTANTIATE_TEST_SUITE_P(
+    DateRewriterTest, RewriteAdTest,
+    Values(
+        // One segment, the most basic case.
+        RewriteAdData{{{"へいせい23ねん", "平成23年"}}, 0, "2011年"},
+        // The `value` should be ignored when rewriting.
+        RewriteAdData{{{"へいせい23ねん", "兵勢23年"}}, 0, "2011年"},
+        RewriteAdData{{{"へいせい23ねん", "兵勢23念"}}, 0, "2011年"},
+        // Invalid era name.
+        RewriteAdData{{{"ああ23ねん", "ああ23年"}}, 0, ""},
+        // One segment, with preceding and following segments.
+        RewriteAdData{{{"きょうは", "今日は"},
+                       {"へいせい23ねん", "平成23年"},
+                       {"です", "です"}},
+                      1,
+                      "2011年"},
+        // Multiple segments.
+        RewriteAdData{{{"へいせい23", "平成23"}, {"ねん", "年"}},
+                      0,
+                      "",
+                      "へいせい23ねん"},
+        RewriteAdData{{{"へいせい", "平成"}, {"23ねん", "23年"}},
+                      0,
+                      "",
+                      "へいせい23ねん"},
+        RewriteAdData{{{"へいせい", "平成"}, {"23", "23"}, {"ねん", "年"}},
+                      0,
+                      "",
+                      "へいせい23ねん"},
+        // Reject more than 3 segments.
+        RewriteAdData{
+            {{"へい", "平"}, {"せい", "成"}, {"23", "23"}, {"ねん", "年"}}},
+        // The `value` should be ignored when merging too.
+        RewriteAdData{{{"へいせい", "兵勢"}, {"23ねん", "23年"}},
+                      0,
+                      "",
+                      "へいせい23ねん"},
+        // Multiple segments with preceding and following segments.
+        RewriteAdData{{{"きょうは", "今日は"},
+                       {"へいせい23", "平成23"},
+                       {"ねん", "年"},
+                       {"です", "です"}},
+                      1,
+                      "",
+                      "へいせい23ねん"},
+        RewriteAdData{{{"きょうは", "今日は"},
+                       {"へいせい", "平成"},
+                       {"23", "23"},
+                       {"ねん", "年"},
+                       {"です", "です"}},
+                      1,
+                      "",
+                      "へいせい23ねん"},
+        // Extra characters in the segment of "nen".
+        RewriteAdData{
+            {{"へいせい23ねんです", "平成23年です"}}, 0, "", "へいせい23ねん"},
+        RewriteAdData{
+            {{"きょうは", "今日は"}, {"へいせい23ねんです", "平成23年です"}},
+            1,
+            "",
+            "へいせい23ねん"},
+        RewriteAdData{{{"きょうは", "今日は"},
+                       {"へいせい", "平成"},
+                       {"23", "23"},
+                       {"ねんです", "年です"}},
+                      1,
+                      "",
+                      "へいせい23ねん"}));
+
+TEST_P(RewriteAdTest, MockConverter) {
+  const RewriteAdData &data = GetParam();
   MockDictionary dictionary;
-  DateRewriter rewriter(&dictionary);
+  MockConverter converter;
+  DateRewriter rewriter(&converter, &dictionary);
   Segments segments;
-  InitSegment("へいせい23ねん", "平成23年", &segments);
+  for (const auto &[key, value] : data.segments) {
+    AppendSegment(key, value, &segments);
+  }
   const ConversionRequest request;
-  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("2011年")));
+  EXPECT_CALL(dictionary, LookupExact(_, _, _));
+
+  // If resizing, it should call `converter.ResizeSegment()`.
+  if (!data.resized_key.empty()) {
+    int resize_length = Util::CharsLen(data.resized_key) -
+                        Util::CharsLen(data.segments[data.segment_index].first);
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request),
+                                         data.segment_index, resize_length))
+        .WillOnce(Return(true));
+  }
+  EXPECT_EQ(rewriter.Rewrite(request, &segments),
+            !data.candidate.empty() || !data.resized_key.empty());
+
+  // The `MockConverter` doesn't actually resize, so don't check candidates if
+  // resized.
+  if (data.resized_key.empty() && !data.candidate.empty()) {
+    const Segment &segment = segments.segment(data.segment_index);
+    EXPECT_THAT(segment, ContainsCandidate(ValueIs(data.candidate)));
+  }
 }
 
-TEST_F(DateRewriterTest, RewriteAdBeforeAfterSegments) {
+TEST_P(RewriteAdTest, MockDataManager) {
+  const RewriteAdData &data = GetParam();
   MockDictionary dictionary;
-  DateRewriter rewriter(&dictionary);
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
+  DateRewriter rewriter(engine->GetConverter(), &dictionary);
   Segments segments;
-  InitSegment("きょうは", "今日は", &segments);
-  AppendSegment("へいせい23ねん", "平成23年", &segments);
-  AppendSegment("です", "です", &segments);
+  for (const auto &[key, value] : data.segments) {
+    AppendSegment(key, value, &segments);
+  }
   const ConversionRequest request;
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  EXPECT_CALL(dictionary, LookupExact(_, _, _));
+  EXPECT_EQ(rewriter.Rewrite(request, &segments),
+            !data.candidate.empty() || !data.resized_key.empty());
+
+  EXPECT_EQ(segments.resized(), !data.resized_key.empty());
+  const Segment &segment = segments.segment(data.segment_index);
+  if (!data.resized_key.empty()) {
+    // If resized, the key should match the `resized_key`. The `MockDataManager`
+    // doesn't call `Rewriter::Rewrite()`, so candidates are not rewritten.
+    EXPECT_EQ(segment.key(), data.resized_key);
+  } else if (!data.candidate.empty()) {
+    // If not resized, the candidates should contain the `cadidate`.
+    EXPECT_THAT(segment, ContainsCandidate(ValueIs(data.candidate)));
+  }
 }
+
+// Test if `Segments::set_resized(true)` prevents merging segments.
+TEST_F(DateRewriterTest, RewriteAdResizedSegments) {
+  MockDictionary dictionary;
+  MockConverter converter;
+  DateRewriter rewriter(&converter, &dictionary);
+  Segments segments;
+  InitSegment("へいせい23", "平成23", &segments);
+  AppendSegment("ねん", "年", &segments);
+  const ConversionRequest request;
+  segments.set_resized(true);
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+
+  segments.set_resized(false);
+  EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request), 0, 2))
+      .WillOnce(Return(true));
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+}
+
 }  // namespace mozc

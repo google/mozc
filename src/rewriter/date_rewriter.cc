@@ -54,6 +54,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/civil_time.h"
@@ -634,7 +635,7 @@ bool EraToAdForCourt(const YearData *data, size_t size,
   return modified;
 }
 
-// Checkes if the given date is valid or not.
+// Checks if the given date is valid or not.
 // Over 24 hour expression is allowed in this function.
 // Acceptable hour is between 0 and 29.
 bool IsValidTime(uint32_t hour, uint32_t minute) {
@@ -651,7 +652,7 @@ uint32_t GetFebruaryLastDay(uint32_t year) {
   return february_end;
 }
 
-// Checkes given date is valid or not.
+// Checks given date is valid or not.
 bool IsValidDate(uint32_t year, uint32_t month, uint32_t day) {
   if (day < 1) {
     return false;
@@ -1061,11 +1062,17 @@ bool DateRewriter::RewriteAd(Segment *segment) {
     return false;
   }
   if (segment->candidates_size() == 0) {
-    MOZC_VLOG(2) << "No candidates are found";
+    LOG(WARNING) << "No candidates are found";
     return false;
   }
+
+  // Try to convert era to AD.
   std::vector<std::string> results, descriptions;
-  const bool ret = EraToAd(key, &results, &descriptions);
+  EraToAd(key, &results, &descriptions);
+  DCHECK_EQ(results.size(), descriptions.size());
+  if (results.empty()) {
+    return false;
+  }
 
   const Segment::Candidate &base_cand = segment->candidate(0);
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
@@ -1078,7 +1085,89 @@ bool DateRewriter::RewriteAd(Segment *segment) {
   // Insert position is the last of candidates
   const int position = static_cast<int>(segment->candidates_size());
   segment->insert_candidates(position, std::move(candidates));
-  return ret;
+  return true;
+}
+
+// This function changes the default conversion behavior. For example, when the
+// input is "taishou2nen", it is converted to 3 segments by default without this
+// function, but this function merges them to 1 segment. Users can still resize
+// segments to get the behavior without this function, and the engine learns the
+// resize for the same string next time, but there will be cases where the
+// default conversion looks degraded from what users expect.
+//
+// Supporting multiple segments without resizing has benefits for users, such as
+// they can still see other candidates of the era segment. But unlike
+// `RewriteEra` which supports multiple segments without merging, this function
+// needs to produce a candidate for 2 segments (the era and the digits), which
+// isn't easy.
+bool DateRewriter::ResizeSegmentsForRewriteAd(
+    const ConversionRequest &request, Segments::const_range segments_range,
+    Segments *segments) const {
+  if (segments_range.empty()) {
+    LOG(WARNING) << "No candidates are found";
+    return false;
+  }
+  if (segments->resized()) {
+    // If the given segments are resized by user, don't modify anymore.
+    return false;
+  }
+
+  // Find the first segment that ends with `kNenKey`.
+  constexpr size_t kMaxSegments = 3;  // Only up to 3 segments.
+  bool has_suffix = false;
+  bool should_resize_last_segment = false;
+  std::vector<absl::string_view> keys;
+  for (const Segment &segment : segments_range) {
+    const absl::string_view key{segment.key()};
+    if (auto pos = key.find(kNenKey); pos != absl::string_view::npos) {
+      pos += kNenKey.size();
+      if (pos == key.size()) {
+        keys.push_back(key);
+      } else {
+        // The segment has `kNenKey` and following characters; e.g., "nendesu".
+        keys.push_back(key.substr(0, pos));
+        should_resize_last_segment = true;
+      }
+      has_suffix = true;
+      break;
+    }
+    if (keys.size() >= kMaxSegments - 1) {
+      return false;
+    }
+    keys.push_back(key);
+  }
+  if (!has_suffix || (keys.size() <= 1 && !should_resize_last_segment)) {
+    return false;
+  }
+  const std::string key = absl::StrJoin(keys, "");
+  DCHECK(!key.empty());
+
+  // Try to convert era to AD.
+  std::vector<std::string> results, descriptions;
+  EraToAd(key, &results, &descriptions);
+  DCHECK_EQ(results.size(), descriptions.size());
+  if (results.empty()) {
+    return false;
+  }
+
+  return ResizeSegments(request, segments_range.begin(), key, segments);
+}
+
+// Extend or shrink the `*segments_begin` to the `key`.
+bool DateRewriter::ResizeSegments(const ConversionRequest &request,
+                                  Segments::const_iterator segments_begin,
+                                  const absl::string_view key,
+                                  Segments *segments) const {
+  const absl::string_view key0 = segments_begin->key();
+  DCHECK_NE(key.size(), key0.size());
+  const int diff = Util::CharsLen(key) - Util::CharsLen(key0);
+  const size_t segment_index = segments_begin - segments->all().begin();
+  if (!parent_converter_->ResizeSegment(segments, request, segment_index,
+                                        diff)) {
+    LOG(ERROR) << "Failed to merge conversion segments";
+    return false;
+  }
+  return true;
 }
 
 namespace {
@@ -1384,15 +1473,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
 
   bool modified = false;
 
-  // Japanese ERA to AD works for resegmented input only
   const Segments::range conversion_segments = segments->conversion_segments();
-  if (conversion_segments.size() == 1) {
-    Segment &seg = conversion_segments.front();
-    if (RewriteAd(&seg)) {
-      return true;
-    }
-  }
-
   const std::string extra_format = GetExtraFormat(dictionary_);
   size_t num_done = 1;
   for (Segments::range rest_segments = conversion_segments;
@@ -1403,7 +1484,16 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
       return false;
     }
 
-    if (RewriteDate(seg, extra_format)) {
+    if (ResizeSegmentsForRewriteAd(request, rest_segments, segments)) {
+      // Return without further rewrites when segments were resized. Views for
+      // `segments` may be invalidated.
+      // `ResizeSegment()` calls `Rewriter::Rewrite()`, which recursively calls
+      // `DateRewriter::Rewrite()` with merged segments. Other rewrites were
+      // done by the recursive call.
+      return true;
+    }
+
+    if (RewriteAd(seg) || RewriteDate(seg, extra_format)) {
       modified = true;
       num_done = 1;
       continue;

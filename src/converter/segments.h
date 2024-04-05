@@ -548,6 +548,8 @@ class Segments final {
 
     Range(const Iterator &begin, const Iterator &end)
         : begin_(begin), end_(end) {}
+    // Make `range` type convertible to `const_range`.
+    Range(const Range<iterator> &range) : Range(range.begin(), range.end()) {}
 
     Iterator begin() const { return begin_; }
     Iterator end() const { return end_; }
