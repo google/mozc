@@ -7,13 +7,14 @@
   <name>Mozc for Fcitx 5</name>
   <summary>Japanese input method based on Mozc</summary>
   <developer id="org.fcitx-im">
-      <name>The Fcitx Team</name>
+    <name>The Fcitx Team</name>
   </developer>
   <url type="homepage">https://fcitx-im.org</url>
   <url type="bugtracker">https://github.com/fcitx/mozc/issues</url>
   <url type="vcs-browser">https://github.com/fcitx/mozc</url>
   <project_group>Fcitx</project_group>
   <releases>
+    <release version="2.30.5432.102" date="2024-04-06"></release>
     <release version="2.29.5400.102" date="2024-03-07"></release>
     <release version="2.29.5374.102" date="2024-02-09"></release>
     <release version="2.29.5372.102" date="2024-02-07"></release>
