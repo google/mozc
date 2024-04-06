@@ -81,9 +81,9 @@ class ArchiveInfo:
 
 
 QT6 = ArchiveInfo(
-    url='https://download.qt.io/archive/qt/6.6/6.6.3/submodules/qtbase-everywhere-src-6.6.3.tar.xz',
-    size=48784716,
-    sha256='0493fd0b380c4edf8872f011a7f26d245aa4cdd75b349904ef340a22dedf7462',
+    url='https://download.qt.io/archive/qt/6.6/6.7.0/submodules/qtbase-everywhere-src-6.7.0.tar.xz',
+    size=49314276,
+    sha256='11b2e29e2e52fb0e3b453ea13bbe51a10fdff36e1c192d8868c5a40233b8b254',
 )
 
 WIX = ArchiveInfo(
