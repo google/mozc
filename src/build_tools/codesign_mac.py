@@ -131,7 +131,6 @@ def ParseOption():
                     default=False)
   parser.add_option("--verify", dest="verify", action="store_true",
                     default=False)
-  parser.add_option("--notarization_id", dest="notarization_id")
   parser.add_option("--output", dest="output")
   (options, unused_args) = parser.parse_args()
 
@@ -150,7 +149,7 @@ def DumpEnviron():
   print("==================")
 
 
-def Notarize(target, bundle_id):
+def Notarize(target):
   """Execute the notariazation commands."""
 
 
@@ -170,9 +169,7 @@ def main():
   UnlockKeychain(keychain, opts.password)
 
   Codesign(opts.target, keychain=keychain)
-
-  if opts.notarization_id:
-    Notarize(opts.target, opts.notarization_id)
+  Notarize(opts.target)
 
   # Output something to make the processes trackable.
   if opts.output:
