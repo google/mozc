@@ -106,8 +106,11 @@ class RendererLauncher : public RendererLauncherInterface {
       const std::string &name, const std::string &path,
       bool disable_renderer_path_check,
       IPCClientFactoryInterface *ipc_client_factory_interface) override {
-    if (Status() == RendererStatus::RENDERER_LAUNCHING) {
+    if (Status() == RendererStatus::RENDERER_LAUNCHING ||
+        Status() == RendererStatus::RENDERER_READY ||
+        Status() == RendererStatus::RENDERER_TIMEOUT) {
       // Renderer is already launching.
+      // The renderer is still up and running when in the pending command state.
       return;
     }
     SetStatus(RendererStatus::RENDERER_LAUNCHING);
