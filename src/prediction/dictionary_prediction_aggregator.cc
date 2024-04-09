@@ -176,12 +176,6 @@ bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
 }
 
-bool IsTypingCorrectionMixerV2Enabled(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_typing_correction_mixer_v2();
-}
-
 bool HasHistoryKeyLongerThanOrEqualTo(const Segments &segments,
                                       size_t utf8_len) {
   const size_t history_segments_size = segments.history_segments_size();
@@ -652,8 +646,8 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     AggregateRealtimeConversion(
         request, realtime_max_size,
         /* insert_realtime_top_from_actual_converter= */
-        request.use_actual_converter_for_realtime_conversion(),
-        segments, results);
+        request.use_actual_converter_for_realtime_conversion(), segments,
+        results);
     selected_types |= REALTIME;
   }
 
@@ -689,18 +683,6 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
       key_len >= min_unigram_key_len) {
     AggregateEnglishPredictionUsingRawInput(request, segments, results);
     selected_types |= ENGLISH;
-  }
-
-  // Add typing correction candidates.
-  // When v2 mixer is enabled, typing corrected results are merged inside
-  // the predictor using various quality signals.
-  constexpr int kMinTypingCorrectionKeyLen = 3;
-  if (IsTypingCorrectionEnabled(request) &&
-      !IsTypingCorrectionMixerV2Enabled(request) &&
-      key_len >= kMinTypingCorrectionKeyLen) {
-    AggregateTypingCorrectedPrediction(request, segments, selected_types,
-                                       results);
-    selected_types |= TYPING_CORRECTION;
   }
 
   if (request_util::IsAutoPartialSuggestionEnabled(request)) {
@@ -921,6 +903,7 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
       GetConversionRequestForRealtimeCandidates(request,
                                                 realtime_candidates_size);
   Segments tmp_segments = GetSegmentsForRealtimeCandidatesGeneration(segments);
+
   if (!immutable_converter_->ConvertForRequest(request_for_realtime,
                                                &tmp_segments) ||
       tmp_segments.conversion_segments_size() == 0 ||
@@ -1728,7 +1711,10 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 
     // Since COMPLETION query already performs predictive lookup,
     // no need to run UNIGRAM and BIGRAM lookup.
-    const bool is_realtime_only = (query.type & TypeCorrectedQuery::COMPLETION);
+    const bool is_realtime_only =
+        (query.type & TypeCorrectedQuery::COMPLETION ||
+         request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
+         request.request_type() == ConversionRequest::PARTIAL_PREDICTION);
 
     if (is_realtime_only) {
       constexpr int kRealtimeSize = 1;
@@ -1736,7 +1722,6 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
           corrected_request, kRealtimeSize,
           /* insert_realtime_top_from_actual_converter= */ false,
           corrected_segments, &corrected_results);
-
     } else {
       const UnigramConfig &unigram_config = GetUnigramConfig(request);
       if (key_len >= unigram_config.min_key_len) {
@@ -1764,15 +1749,8 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     for (Result &result : corrected_results) {
       // If the correction is a pure kana modifier insensitive correction,
       // typing correction annotation is not necessary.
-      if (IsTypingCorrectionMixerV2Enabled(request)) {
-        if (query.type & TypeCorrectedQuery::CORRECTION) {
-          result.types |= TYPING_CORRECTION;
-        }
-      } else {
-        if (!(query.type & TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY) &&
-            query.type & TypeCorrectedQuery::CORRECTION) {
-          result.types |= TYPING_CORRECTION;
-        }
+      if (query.type & TypeCorrectedQuery::CORRECTION) {
+        result.types |= TYPING_CORRECTION;
       }
       result.typing_correction_score = query.score;
       // bias = hyp_score - base_score, so larger is better.
@@ -1783,7 +1761,11 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     }
   }
 
-  const int lookup_limit = GetCandidateCutoffThreshold(request.request_type());
+  const int lookup_limit =
+      (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
+       request.request_type() == ConversionRequest::PARTIAL_PREDICTION)
+          ? kSuggestionMaxResultsSize
+          : GetCandidateCutoffThreshold(request.request_type());
   if (results->size() - prev_results_size >= lookup_limit) {
     results->resize(prev_results_size);
   }

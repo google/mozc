@@ -612,13 +612,9 @@ message DecoderExperimentParams {
   optional float typing_correction_identity_score_max_diff = 21 [default = 0.0];
   optional float typing_correction_top_score_max_diff = 22 [default = 1.0];
 
-  // TODO(taku): deprecate it once v2 mixer is enabled.
-  optional int32 typing_correction_conversion_cost_max_diff = 38 [default = 0];
+  reserved 38;  // Deprecated typing_correction_conversion_cost_max_diff
+  reserved 46;  // Deprecated enable_typing_correction_mixer_v2
 
-  // Parameters for new typing correction mixing logic.
-  // `typing_correction_literal_on_top_*` are available only when
-  // enable_typing_correction_mixer_v2 is true.
-  optional bool enable_typing_correction_mixer_v2 = 46 [default = false];
   // Trigger literal on top if
   // correction_score <=
   //          typing_correction_literal_on_top_correction_score_max_diff

@@ -112,12 +112,6 @@ bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
 }
 
-bool IsTypingCorrectionMixerV2Enabled(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_typing_correction_mixer_v2();
-}
-
 KeyValueView GetCandidateKeyAndValue(const Result &result
                                          ABSL_ATTRIBUTE_LIFETIME_BOUND,
                                      const KeyValueView history) {
@@ -376,22 +370,13 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  // When v2 mixer is disabled, typing corrected results are
-  // aggregated inside the `AggregateResults` method.
   std::vector<Result> results =
       aggregator_->AggregateResults(request, *segments);
   RewriteResultsForPrediction(request, *segments, &results);
 
-  // When v2 mixer is enabled, we have to explicitly
-  // populate the typing corrected results.
-  // This design allows to implement any mixing and filtering logic
-  // inside `MaybePopualteTypingCorrectedResults`.
-  TypingCorrectionMixingParams typing_correction_mixing_params;
-  if (IsTypingCorrectionEnabled(request) &&
-      IsTypingCorrectionMixerV2Enabled(request)) {
-    typing_correction_mixing_params =
-        MaybePopualteTypingCorrectedResults(request, *segments, &results);
-  }
+  // Explicitly populate the typing corrected results.
+  const TypingCorrectionMixingParams typing_correction_mixing_params =
+      MaybePopulateTypingCorrectedResults(request, *segments, &results);
 
   return AddPredictionToCandidates(request, segments,
                                    typing_correction_mixing_params,
@@ -426,9 +411,13 @@ void DictionaryPredictor::RewriteResultsForPrediction(
 }
 
 TypingCorrectionMixingParams
-DictionaryPredictor::MaybePopualteTypingCorrectedResults(
+DictionaryPredictor::MaybePopulateTypingCorrectedResults(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
+  if (!IsTypingCorrectionEnabled(request)) {
+    return {};
+  }
+
   if (results->empty()) {
     return {};
   }
@@ -565,25 +554,15 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
     return;
   }
 
-  // `typing_correction_conversion_cost_max_diff` is only
-  // used in v1 mixier.
-  // TODO(taku): remove `max_diff` once v2 migration is finished.
-  const int max_diff = IsTypingCorrectionMixerV2Enabled(request)
-                           ? 0
-                           : request.request()
-                                 .decoder_experiment_params()
-                                 .typing_correction_conversion_cost_max_diff();
-
   const bool force_literal_on_top =
       typing_correction_mixing_params.literal_on_top;
   const bool literal_at_least_second =
       typing_correction_mixing_params.literal_at_least_second;
 
-  if (!force_literal_on_top && max_diff == 0 && !literal_at_least_second) {
+  if (!force_literal_on_top && !literal_at_least_second) {
     return;
   }
 
-  const auto &top = segment->candidate(0);
   const int max_size = std::min<int>(10, segment->candidates_size());
   for (int i = 1; i < max_size; ++i) {
     const auto &c = segment->candidate(i);
@@ -591,8 +570,7 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
     if (!(c.attributes & Segment::Candidate::TYPING_CORRECTION)) {
       // Replace the literal with top when the cost is close enough or
       // force_literal_on_top is true.
-      if (force_literal_on_top ||
-          (!force_literal_on_top && c.cost - top.cost < max_diff)) {
+      if (force_literal_on_top) {
         segment->move_candidate(i, 0);
       } else if (literal_at_least_second && i >= 2) {
         // Moves the literal to the second position even when
