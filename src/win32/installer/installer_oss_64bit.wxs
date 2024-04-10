@@ -137,15 +137,15 @@
     <CustomAction Id="NewerVersionError" Error="4000" />
 
     <InstallExecuteSequence>
-      <Custom Action="HideCancelButton" After="InitialInstallation" />
       <Custom Action="InitialInstallation" After="InstallInitialize">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
+      <Custom Action="HideCancelButton" After="InitialInstallation" />
       <Custom Action="SaveCustomActionData" Before="StopServices">(NOT (REMOVE="ALL"))</Custom>
-      <SelfUnregModules />
-      <Custom Action="RestoreUserIMEEnvironment" After="SelfUnregModules">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
+      <StopServices />
+      <DeleteServices />
+      <Custom Action="RestoreUserIMEEnvironment" After="DeleteServices">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
       <!-- This action invoked only when removal of the old product failed. -->
       <Custom Action="UnregisterTIPRollback64" After="RestoreUserIMEEnvironment">(REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)</Custom>
       <Custom Action="UnregisterTIP64" After="UnregisterTIPRollback64">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)</Custom>
-      <SelfRegModules />
       <!--
         The InstallValidate action notifies the user
         if mozc_server.exe and mozc_renderer.exe

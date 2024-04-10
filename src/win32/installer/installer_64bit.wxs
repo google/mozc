@@ -159,18 +159,18 @@
     <CustomAction Id="NewerVersionError" Error="4000" />
 
     <InstallExecuteSequence>
-      <Custom Action="HideCancelButton" After="InitialInstallation" />
       <Custom Action="InitialInstallation" After="InstallInitialize">(NOT (REMOVE="ALL")) AND (NOT UPGRADING)</Custom>
+      <Custom Action="HideCancelButton" After="InitialInstallation" />
       <Custom Action="SaveCustomActionData" Before="StopServices">(NOT (REMOVE="ALL"))</Custom>
-      <Custom Action="WriteApValueRollback" Before="WriteApValue">(NOT (REMOVE="ALL"))</Custom>
-      <Custom Action="WriteApValue" Before="SelfUnregModules">(NOT (REMOVE="ALL"))</Custom>
-      <SelfUnregModules />
-      <Custom Action="RestoreUserIMEEnvironment" After="SelfUnregModules">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
+      <StopServices />
+      <DeleteServices />
+      <Custom Action="WriteApValueRollback" After="DeleteServices">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="WriteApValue" After="WriteApValueRollback">(NOT (REMOVE="ALL"))</Custom>
+      <Custom Action="RestoreUserIMEEnvironment" After="WriteApValue">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
       <!-- This action invoked only when removal of the old product failed. -->
       <Custom Action="UnregisterTIPRollback64" After="RestoreUserIMEEnvironment">(REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)</Custom>
       <Custom Action="UnregisterTIP64" After="UnregisterTIPRollback64">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)</Custom>
       <Custom Action="OpenUninstallSurveyPage" After="UnregisterTIP64">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)</Custom>
-      <SelfRegModules />
       <!--
         The InstallValidate action notifies the user
         if GoogleIMEJaConverter.exe and GoogleIMEJaRenderer.exe
