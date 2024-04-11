@@ -202,47 +202,9 @@ bazel build package --config oss_android
 
 -----
 
-## Build Mozc for Linux Desktop with GYP (maintenance mode):
+## Build Mozc for Linux Desktop with GYP (deprecated):
 
-⚠️ The GYP build no longer support the Ibus client and the GTK candidate window.
-* https://github.com/google/mozc/issues/567
+⚠️ The GYP build is deprecated and no longer supported.
 
-To keep using the GYP build without the Ibus client and the GTK candidate window
-at this moment, please add the `--no_ibus_build` and `--no_gtk_build` flags
-to build_mozc.py.
-
-```
-python3 build_mozc.py gyp
-python3 build_mozc.py build -c Release package --no_ibus_build --no_gtk_build
-```
-
-`package` is an alias to build:
-* //server:mozc_server
-* //gui/tool:mozc_tool
-
-
-You can also run unittests as follows.
-
-```
-python3 build_mozc.py runtests -c Debug
-```
-
-### Differences between Bazel build and GYP build
-
-GYP build is under maintenance mode. New features might be supported by
-Bazel only, and some features might be dropped as a trade-off to accept PRs.
-
-Targets only for Bazel:
-* Ibus client (//unix/ibus)
-* AUX dictionary (//data/dictionary_oss:aux_dictionary)
-* Filtered dictionary (//data/dictionary_oss:filtered_dictionary)
-* SVS character input instead of CJK compatibility ideographs (//rewriter:single_kanji_rewriter)
-* Zip code conversion (//server:mozc_server)
-* Qt-based candidate window (//renderer:mozc_renderer)
-* Build rules for icons (//unix/icons)
-
-
-## GYP Build configurations
-
-For the build configurations, please check the previous version.
-https://github.com/google/mozc/blob/2.28.4880.102/docs/build_mozc_in_docker.md#gyp-build-configurations
+Please check the previous version for more information.
+https://github.com/google/mozc/blob/2.29.5374.102/docs/build_mozc_in_docker.md#build-mozc-for-linux-desktop-with-gyp-maintenance-mode
