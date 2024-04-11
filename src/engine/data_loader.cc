@@ -37,7 +37,6 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/thread.h"
@@ -75,9 +74,8 @@ uint64_t DataLoader::GetRequestId(const EngineReloadRequest &request) const {
 uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
   const uint64_t id = GetRequestId(request);
 
-  absl::WriterMutexLock lock(&mutex_);
-
   // Already requesting the top priority request.
+  // No need to register the same ID again.
   if (top_request_id_ == id) {
     DCHECK(!requests_.empty() && requests_.front().id == id);
     return top_request_id_;
@@ -94,10 +92,10 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
   auto it = std::find_if(requests_.begin(), requests_.end(),
                          [id](const RequestData &v) { return v.id == id; });
   if (it != requests_.end()) {
-    it->sequence_id = sequence_id_.load();
+    it->sequence_id = sequence_id_;
   } else {
     requests_.emplace_back(
-        RequestData{id, request.priority(), sequence_id_.load(), request});
+        RequestData{id, request.priority(), sequence_id_, request});
   }
 
   // Sorts the requests so requests[0] stores the request with
@@ -114,8 +112,6 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
 }
 
 uint64_t DataLoader::ReportLoadFailure(uint64_t id) {
-  absl::WriterMutexLock lock(&mutex_);
-
   const auto it =
       std::remove_if(requests_.begin(), requests_.end(),
                      [id](const RequestData &v) { return v.id == id; });
@@ -183,24 +179,20 @@ DataLoader::Response BuildResponse(uint64_t id, EngineReloadRequest request) {
 }  // namespace
 
 DataLoader::ResponseFuture DataLoader::Build(uint64_t id) const {
-  EngineReloadRequest request;
   // Finds the request associated with `id`.
-  {
-    absl::ReaderMutexLock lock(&mutex_);
-    const auto it =
-        std::find_if(requests_.begin(), requests_.end(),
-                     [id](const RequestData &v) { return v.id == id; });
-    if (it == requests_.end()) {
-      return DataLoader::ResponseFuture([id]() {
-        Response response;
-        response.id = id;
-        response.response.set_status(EngineReloadResponse::DATA_MISSING);
-        return response;
-      });
-    }
-    request = it->request;
+  const auto it =
+      std::find_if(requests_.begin(), requests_.end(),
+                   [id](const RequestData &v) { return v.id == id; });
+  if (it == requests_.end()) {
+    return DataLoader::ResponseFuture([id]() {
+      Response response;
+      response.id = id;
+      response.response.set_status(EngineReloadResponse::DATA_MISSING);
+      return response;
+    });
   }
 
+  EngineReloadRequest request = it->request;
   return DataLoader::ResponseFuture([id, request = std::move(request)]() {
     return BuildResponse(id, request);
   });
@@ -243,7 +235,6 @@ DataLoader::MaybeMoveDataLoaderResponse() {
 }
 
 void DataLoader::Clear() {
-  absl::WriterMutexLock lock(&mutex_);
   requests_.clear();
   sequence_id_ = 0;
 }
