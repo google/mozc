@@ -290,7 +290,7 @@ class DictionaryPredictor : public PredictorInterface {
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
   // Populates typing corrected results to `results`.
-  TypingCorrectionMixingParams MaybePopualteTypingCorrectedResults(
+  TypingCorrectionMixingParams MaybePopulateTypingCorrectedResults(
       const ConversionRequest &request, const Segments &segments,
       std::vector<Result> *results) const;
 

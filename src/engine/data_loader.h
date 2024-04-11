@@ -30,21 +30,24 @@
 #ifndef MOZC_ENGINE_DATA_LOADER_H_
 #define MOZC_ENGINE_DATA_LOADER_H_
 
-#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
 
-#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/synchronization/mutex.h"
 #include "base/thread.h"
 #include "engine/modules.h"
 #include "protocol/engine_builder.pb.h"
 
 namespace mozc {
 
+// DataLoader receives requests for loading language model data and loads the
+// data from the top priority request. The language model data is asynchronously
+// loaded in a sub-thread.
+// DataLoader is designed to be thread-compatible, similar to other components
+// like std::vector and most of other Mozc classes.
+// https://blog.reverberate.org/2021/12/18/thread-safety-cpp-rust.html
 class DataLoader {
  public:
   DataLoader() = default;
@@ -115,19 +118,18 @@ class DataLoader {
   };
 
   // Sequential counter assigned to RequestData.
-  mutable std::atomic<uint32_t> sequence_id_ = 0;
+  uint32_t sequence_id_ = 0;
 
-  mutable absl::Mutex mutex_;
-  absl::flat_hash_set<uint64_t> unregistered_ ABSL_GUARDED_BY(mutex_);
-  std::vector<RequestData> requests_ ABSL_GUARDED_BY(mutex_);
+  absl::flat_hash_set<uint64_t> unregistered_;
+  std::vector<RequestData> requests_;
 
   // Id of the highest priority request in the registered requests.
   // 0 means that no request have been registered or valid yet.
-  std::atomic<uint64_t> top_request_id_ = 0;
+  uint64_t top_request_id_ = 0;
 
   // Id of the request for the current data.
   // 0 means that no data has been updated yet.
-  std::atomic<uint64_t> current_request_id_ = 0;
+  uint64_t current_request_id_ = 0;
 
   std::optional<DataLoader::ResponseFuture> loader_response_future_;
   // used only in unittest to perform blocking behavior.

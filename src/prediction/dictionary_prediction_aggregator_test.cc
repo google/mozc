@@ -2098,10 +2098,11 @@ TEST_F(DictionaryPredictionAggregatorTest,
   EXPECT_EQ(results.size(), 5);
   for (int i = 0; i < results.size(); ++i) {
     EXPECT_EQ(results[i].key, expected[i].correction);
-    if (i == 0 || i == 3) {
-      EXPECT_TRUE(results[i].types & TYPING_CORRECTION);
-    } else {
+    if (i == 2) {
+      // "よろさくです" is COMPLETION only.
       EXPECT_FALSE(results[i].types & TYPING_CORRECTION);
+    } else {
+      EXPECT_TRUE(results[i].types & TYPING_CORRECTION);
     }
   }
 }
