@@ -73,7 +73,6 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
-        "//request:request_util",
         "//session/internal:candidate_list",
         "//session/internal:session_output",
         "//transliteration",

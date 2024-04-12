@@ -2395,46 +2395,6 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
   }
 }
 
-TEST_F(SessionConverterTest, AppendCandidateListWithCategory) {
-  MockConverter mock_converter;
-  request_test_util::FillMobileRequest(request_.get());
-  request_->mutable_decoder_experiment_params()
-      ->set_enable_findability_oriented_order(true);
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-  converter.set_use_cascading_window(false);
-  SetState(SessionConverterInterface::PREDICTION, &converter);
-  Segments segments;
-
-  {
-    SetAiueo(&segments);
-    composer_->InsertCharacterPreedit("あいうえお");
-    FillT13Ns(&segments, composer_.get());
-
-    Segment *segment = segments.mutable_conversion_segment(0);
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->key = "あいうえお";
-    candidate->content_key = candidate->key;
-    candidate->value = "あいうえお";
-    candidate->content_value = candidate->value;
-    candidate->category = Segment::Candidate::OTHER;
-
-    candidate = segment->add_candidate();
-    candidate->key = "あいうえお";
-    candidate->content_key = candidate->key;
-    candidate->value = "あいうえお";
-    candidate->content_value = candidate->value;
-
-    SetSegments(segments, &converter);
-    AppendCandidateList(ConversionRequest::SUGGESTION, &converter);
-    const CandidateList &candidate_list = GetCandidateList(converter);
-
-    // default あいうえお, default アイウエオ, other あいうえお, default
-    // ｱｲｳｴｵ(T13n)
-    EXPECT_EQ(candidate_list.size(), 4);
-    EXPECT_FALSE(candidate_list.focused());
-  }
-}
-
 TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
   MockConverter mock_converter;
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
@@ -2470,46 +2430,6 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
     SetSegments(segments, &converter);
     AppendCandidateList(ConversionRequest::PARTIAL_PREDICTION, &converter);
     const CandidateList &candidate_list = GetCandidateList(converter);
-    EXPECT_FALSE(candidate_list.focused());
-  }
-}
-
-TEST_F(SessionConverterTest, AppendCandidateListHandwriting) {
-  // b/326155138
-  MockConverter mock_converter;
-  request_test_util::FillMobileRequestForHandwriting(request_.get());
-  request_->mutable_decoder_experiment_params()
-      ->set_enable_findability_oriented_order(true);
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-  converter.set_use_cascading_window(false);
-  SetState(SessionConverterInterface::PREDICTION, &converter);
-  Segments segments;
-
-  {
-    SetAiueo(&segments);
-    composer_->InsertCharacterPreedit("あいうえお");
-    FillT13Ns(&segments, composer_.get());
-
-    Segment *segment = segments.mutable_conversion_segment(0);
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->key = "あいうえお";
-    candidate->content_key = candidate->key;
-    candidate->value = "アイウエオ";
-    candidate->content_value = candidate->value;
-
-    candidate = segment->add_candidate();
-    candidate->key = "アイウエオ";
-    candidate->content_key = candidate->key;
-    candidate->value = "アイウエオ";
-    candidate->content_value = candidate->value;
-
-    SetSegments(segments, &converter);
-    AppendCandidateList(ConversionRequest::SUGGESTION, &converter);
-    const CandidateList &candidate_list = GetCandidateList(converter);
-
-    // Deduped using value
-    // あいうえお, アイウエオ, ｱｲｳｴｵ（from T13N)
-    EXPECT_EQ(candidate_list.size(), 3);
     EXPECT_FALSE(candidate_list.focused());
   }
 }
