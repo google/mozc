@@ -42,6 +42,7 @@ Building Mozc on Windows requires the following software.
   * Python 3.9 or later with the following pip modules.
     * `six`
     * `requests`
+  * `.NET 6` or later (for `dotnet` command).
 
 ### Install pip modules
 
@@ -68,7 +69,7 @@ In this step, additional build dependencies will be downloaded.
 
   * [Ninja 1.11.0](https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-win.zip)
   * [Qt 6.7.0](https://download.qt.io/archive/qt/6.7/6.7.0/submodules/qtbase-everywhere-src-6.7.0.tar.xz)
-  * [WiX 3.14](https://github.com/wixtoolset/wix3/releases/download/wix314rtm/wix314-binaries.zip)
+  * [.NET tools](../dotnet-tools.json)
   * [git submodules](../.gitmodules)
 
 You can skip this step if you would like to manually download these libraries.
