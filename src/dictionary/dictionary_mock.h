@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
 
@@ -120,6 +121,24 @@ class MockUserDictionary : public UserDictionaryInterface {
 
   MOCK_METHOD(std::vector<std::string>, GetPosList, (), (const, override));
   MOCK_METHOD(bool, Load, (const user_dictionary::UserDictionaryStorage &),
+              (override));
+};
+
+class MockCallback : public DictionaryInterface::Callback {
+ public:
+  MockCallback() = default;
+  ~MockCallback() override = default;
+
+  MOCK_METHOD(ResultType, OnKey, (absl::string_view key), (override));
+
+  MOCK_METHOD(ResultType, OnActualKey,
+              (absl::string_view key, absl::string_view actual_key,
+               int num_expanded),
+              (override));
+
+  MOCK_METHOD(ResultType, OnToken,
+              (absl::string_view key, absl::string_view expanded_key,
+               const Token &token_info),
               (override));
 };
 

@@ -39,8 +39,9 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -49,6 +50,7 @@
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
+#include "converter/segments_matchers.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -1565,6 +1567,39 @@ TEST_F(ConverterTest, UserEntryShouldBePromoted) {
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     ASSERT_LT(1, segments.conversion_segment(0).candidates_size());
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "哀");
+  }
+}
+
+TEST_F(ConverterTest, UserEntryInMobilePrediction) {
+  using user_dictionary::UserDictionary;
+  std::vector<UserDefinedEntry> user_defined_entries;
+  user_defined_entries.push_back(
+      UserDefinedEntry("てすと", "google", UserDictionary::NO_POS));
+
+  commands::Request request;
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  composer::Table table;
+  composer::Composer composer(&table, &request, &config);
+  request_test_util::FillMobileRequest(&request);
+  ConversionRequest conversion_request(
+      &composer, &request, &commands::Context::default_instance(), &config);
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+
+  std::unique_ptr<ConverterAndData> ret =
+      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
+                                                   MOBILE_PREDICTOR);
+
+  ConverterInterface *converter = ret->converter.get();
+  CHECK(converter);
+  {
+    composer.SetPreeditTextForTestOnly("てすとが");
+    Segments segments;
+    EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
+    ASSERT_EQ(segments.segments_size(), 1);
+    EXPECT_THAT(segments.segment(0),
+                ContainsCandidate(
+                    Field(&Segment::Candidate::value, StrEq("googleが"))));
   }
 }
 

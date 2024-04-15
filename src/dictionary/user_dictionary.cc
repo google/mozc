@@ -41,6 +41,8 @@
 
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
@@ -50,7 +52,6 @@
 #include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/hash.h"
-#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/strings/assign.h"
 #include "base/strings/japanese.h"
@@ -389,6 +390,12 @@ void UserDictionary::LookupPredictive(
       default:
         break;
     }
+    // b/333613472: Make sure not to set the additional penalties.
+    if (callback->OnActualKey(user_pos_token.key, user_pos_token.key,
+                              /* num_expanded= */ 0) ==
+        Callback::TRAVERSE_DONE) {
+      return;
+    }
     PopulateTokenFromUserPosToken(user_pos_token, PREDICTIVE, &token);
     if (callback->OnToken(user_pos_token.key, user_pos_token.key, token) ==
         Callback::TRAVERSE_DONE) {
@@ -441,6 +448,11 @@ void UserDictionary::LookupPrefix(absl::string_view key,
       default:
         break;
     }
+    if (callback->OnActualKey(user_pos_token.key, user_pos_token.key,
+                              /* num_expanded= */ 0) ==
+        Callback::TRAVERSE_DONE) {
+      return;
+    }
     PopulateTokenFromUserPosToken(user_pos_token, PREFIX, &token);
     switch (callback->OnToken(user_pos_token.key, user_pos_token.key, token)) {
       case Callback::TRAVERSE_DONE:
@@ -468,6 +480,10 @@ void UserDictionary::LookupExact(absl::string_view key,
     return;
   }
   if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
+    return;
+  }
+  if (callback->OnActualKey(key, key, /* num_expanded= */ 0) !=
+      Callback::TRAVERSE_CONTINUE) {
     return;
   }
 
