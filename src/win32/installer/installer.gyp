@@ -110,12 +110,11 @@
           'type': 'none',
           'variables': {
             'wxs_file': '<(wxs_64bit_file)',
-            'wixobj_file': '<(mozc_64bit_wixobj)',
             'msi_file': '<(mozc_64bit_msi)',
           },
           'actions': [
             {
-              'action_name': 'candle',
+              'action_name': 'generate_msi',
               'conditions': [
                 ['channel_dev==1', {
                   'variables': {
@@ -132,64 +131,46 @@
                 'document_dir': '<(mozc_content_dir)/installer',
               },
               'inputs': [
-                '<(wxs_file)',
-              ],
-              'outputs': [
-                '<(wixobj_file)',
-              ],
-              'action': [
-                '<(wix_dir)/candle.exe',
-                '-nologo',
-                '-dMozcVersion=<(version)',
-                '-dUpgradeCode=<(upgrade_code)',
-                '-dOmahaGuid=<(omaha_guid)',
-                '-dOmahaClientKey=<(omaha_client_key)',
-                '-dOmahaClientStateKey=<(omaha_clientstate_key)',
-                '-dOmahaChannelType=<(omaha_channel_type)',
-                '-dVSConfigurationName=<(CONFIGURATION_NAME)',
-                '-dReleaseRedistCrt32Dir=<(release_redist_32bit_crt_dir)',
-                '-dReleaseRedistCrt64Dir=<(release_redist_64bit_crt_dir)',
-                '-dAddRemoveProgramIconPath=<(icon_path)',
-                '-dMozcTIP32Path=<(mozc_tip32_path)',
-                '-dMozcTIP64Path=<(mozc_tip64_path)',
-                '-dMozcBroker64Path=<(mozc_broker64_path)',
-                '-dMozcServer64Path=<(mozc_server64_path)',
-                '-dMozcCacheService64Path=<(mozc_cache_service64_path)',
-                '-dMozcRenderer64Path=<(mozc_renderer64_path)',
-                '-dMozcToolPath=<(mozc_tool_path)',
-                '-dCustomActions64Path=<(mozc_ca64_path)',
-                '-dDocumentsDir=<(document_dir)',
-                '-dQtDir=<(qt_dir)',
-                '-dQtVer=<(qt_ver)',
-                '-o', '<@(_outputs)',
-                # We do not use '<@(_inputs)' here because it contains some
-                # input files just for peoper rebiuld condition.
-                '<(wxs_file)',
-              ],
-              'message': 'candle is generating <@(_outputs)',
-            },
-            {
-              'action_name': 'generate_msi',
-              'inputs': [
                 # ninja.exe will invoke this action if any file listed here is
                 # newer than files in 'outputs'.
-                '<(wixobj_file)',
+                '<(wxs_file)',
                 '<@(mozc_64bit_installer_inputs)',
               ],
               'outputs': [
                 '<(msi_file)',
               ],
               'action': [
-                '<(wix_dir)/light.exe',
+                'dotnet', 'tool', 'run', 'wix',
+                'build',
                 '-nologo',
-                # Suppress the validation to address the LGHT0217 error.
-                '-sval',
-                '-o', '<@(_outputs)',
+                '-arch', 'x64',
+                '-define', 'MozcVersion=<(version)',
+                '-define', 'UpgradeCode=<(upgrade_code)',
+                '-define', 'OmahaGuid=<(omaha_guid)',
+                '-define', 'OmahaClientKey=<(omaha_client_key)',
+                '-define', 'OmahaClientStateKey=<(omaha_clientstate_key)',
+                '-define', 'OmahaChannelType=<(omaha_channel_type)',
+                '-define', 'VSConfigurationName=<(CONFIGURATION_NAME)',
+                '-define', 'ReleaseRedistCrt32Dir=<(release_redist_32bit_crt_dir)',
+                '-define', 'ReleaseRedistCrt64Dir=<(release_redist_64bit_crt_dir)',
+                '-define', 'AddRemoveProgramIconPath=<(icon_path)',
+                '-define', 'MozcTIP32Path=<(mozc_tip32_path)',
+                '-define', 'MozcTIP64Path=<(mozc_tip64_path)',
+                '-define', 'MozcBroker64Path=<(mozc_broker64_path)',
+                '-define', 'MozcServer64Path=<(mozc_server64_path)',
+                '-define', 'MozcCacheService64Path=<(mozc_cache_service64_path)',
+                '-define', 'MozcRenderer64Path=<(mozc_renderer64_path)',
+                '-define', 'MozcToolPath=<(mozc_tool_path)',
+                '-define', 'CustomActions64Path=<(mozc_ca64_path)',
+                '-define', 'DocumentsDir=<(document_dir)',
+                '-define', 'QtDir=<(qt_dir)',
+                '-define', 'QtVer=<(qt_ver)',
+                '-out', '<@(_outputs)',
                 # We do not use '<@(_inputs)' here because it contains some
                 # input files just for peoper rebiuld condition.
-                '<(wixobj_file)',
+                '-src', '<(wxs_file)',
               ],
-              'message': 'light is generating <@(_outputs)',
+              'message': 'WiX is generating <@(_outputs)',
             },
           ],
         },

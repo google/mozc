@@ -196,15 +196,6 @@ def AddTargetPlatformOption(parser):
                           'should be done.'))
 
 
-def GetDefaultWixPath():
-  """Returns the default Wix directory.."""
-  possible_wix_path = pathlib.Path(ABS_SCRIPT_DIR).joinpath(
-      'third_party', 'wix')
-  if possible_wix_path.exists():
-    return possible_wix_path
-  return ''
-
-
 def GetDefaultQtPath():
   """Returns the default Qt directory.."""
   qtdir_env = os.getenv('QTDIR', None)
@@ -263,9 +254,6 @@ def ParseGypOptions(args):
     parser.add_option('--msvs_version', dest='msvs_version',
                       default='2022',
                       help='Version of the Visual Studio.')
-    parser.add_option('--wix_dir', dest='wix_dir',
-                      default=GetDefaultWixPath(),
-                      help='A path to the binary directory of wix.')
 
   if IsWindows() or IsMac():
     parser.add_option('--qtdir', dest='qtdir',
@@ -499,9 +487,8 @@ def GypMain(options, unused_args):
   gyp_options.extend(['-D', 'qt_dir=' + (qt_dir or '')])
   gyp_options.extend(['-D', 'qt_ver=' + str(qt_ver or '')])
 
-  if target_platform == 'Windows' and options.wix_dir:
+  if target_platform == 'Windows':
     gyp_options.extend(['-D', 'use_wix=YES'])
-    gyp_options.extend(['-D', 'wix_dir="%s"' % options.wix_dir])
   else:
     gyp_options.extend(['-D', 'use_wix=NO'])
 

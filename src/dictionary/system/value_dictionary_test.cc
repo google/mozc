@@ -36,6 +36,8 @@
 
 #include "absl/strings/string_view.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -43,6 +45,7 @@
 #include "request/conversion_request.h"
 #include "storage/louds/louds_trie.h"
 #include "storage/louds/louds_trie_builder.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -51,6 +54,10 @@ namespace {
 
 using ::mozc::storage::louds::LoudsTrie;
 using ::mozc::storage::louds::LoudsTrieBuilder;
+using ::testing::_;
+using ::testing::AtLeast;
+using ::testing::Eq;
+using ::testing::Return;
 
 class ValueDictionaryTest : public ::testing::Test {
  protected:
@@ -91,6 +98,59 @@ class ValueDictionaryTest : public ::testing::Test {
   std::unique_ptr<LoudsTrieBuilder> louds_trie_builder_;
   std::unique_ptr<LoudsTrie> louds_trie_;
 };
+
+TEST_F(ValueDictionaryTest, Callback) {
+  AddValue("star");
+  AddValue("start");
+  AddValue("starting");
+  std::unique_ptr<ValueDictionary> dictionary(BuildValueDictionary());
+
+  {
+    MockCallback mock_callback;
+    EXPECT_CALL(mock_callback, OnKey(_))
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnActualKey(_, _, _))
+        .Times(AtLeast(1))
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnToken(_, _, _))
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    EXPECT_CALL(mock_callback, OnKey(Eq("start")))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnActualKey(Eq("start"), Eq("start"), Eq(0)))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnToken(Eq("start"), Eq("start"), _))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    dictionary->LookupPredictive("start", convreq_, &mock_callback);
+  }
+  {
+    MockCallback mock_callback;
+    EXPECT_CALL(mock_callback, OnKey(Eq("start")))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnActualKey(Eq("start"), Eq("start"), Eq(0)))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnToken(Eq("start"), Eq("start"), _))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    dictionary->LookupExact("start", convreq_, &mock_callback);
+  }
+}
 
 TEST_F(ValueDictionaryTest, HasValue) {
   AddValue("we");

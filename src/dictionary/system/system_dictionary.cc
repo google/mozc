@@ -50,7 +50,6 @@
 #include <cstdint>
 #include <cstring>
 #include <iterator>
-#include <limits>
 #include <map>
 #include <memory>
 #include <queue>
@@ -59,14 +58,16 @@
 #include <vector>
 
 #include "absl/container/btree_set.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/mmap.h"
-#include "base/util.h"
 #include "base/strings/unicode.h"
+#include "base/util.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"
@@ -961,7 +962,10 @@ void SystemDictionary::LookupExact(absl::string_view key,
   if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
     return;
   }
-
+  if (callback->OnActualKey(key, key, /* num_expanded= */ 0) !=
+      Callback::TRAVERSE_CONTINUE) {
+    return;
+  }
   // Callback on each token.
   for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_, key,
                                 GetTokenArrayPtr(token_array_, key_id));

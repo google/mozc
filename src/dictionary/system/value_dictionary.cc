@@ -102,12 +102,14 @@ inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
 
   value->clear();
   codec.DecodeValue(encoded_value, value);
-  const DictionaryInterface::Callback::ResultType result =
-      callback->OnKey(*value);
+  DictionaryInterface::Callback::ResultType result = callback->OnKey(*value);
   if (result != DictionaryInterface::Callback::TRAVERSE_CONTINUE) {
     return result;
   }
-
+  result = callback->OnActualKey(*value, *value, /* num_expanded= */ 0);
+  if (result != DictionaryInterface::Callback::TRAVERSE_CONTINUE) {
+    return result;
+  }
   FillToken(suggestion_only_word_id, *value, token);
   return callback->OnToken(*value, *value, *token);
 }
@@ -178,6 +180,10 @@ void ValueDictionary::LookupExact(absl::string_view key,
     return;
   }
   if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
+    return;
+  }
+  if (callback->OnActualKey(key, key, /* num_expanded= */ 0) !=
+      Callback::TRAVERSE_CONTINUE) {
     return;
   }
   Token token;

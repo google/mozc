@@ -453,7 +453,7 @@ mozc_cc_test(
         ":immutable_converter_interface",
         ":immutable_converter_no_factory",
         ":segments",
-        "//base:logging",
+        ":segments_matchers",
         "//base:util",
         "//composer",
         "//composer:table",
@@ -488,6 +488,8 @@ mozc_cc_test(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )

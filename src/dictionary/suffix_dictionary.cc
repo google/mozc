@@ -30,14 +30,17 @@
 #include "dictionary/suffix_dictionary.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "base/logging.h"
 #include "dictionary/dictionary_token.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {
@@ -105,6 +108,10 @@ void SuffixDictionary::LookupPredictive(
         LOG(FATAL) << "Culling is not supported.";
       default:
         break;
+    }
+    if (callback->OnActualKey(token.key, token.key, /* num_expanded= */ 0) ==
+        Callback::TRAVERSE_DONE) {
+      return;
     }
     const size_t index = range.first - key_array_.begin();
     if (value_array_[index].empty()) {

@@ -46,12 +46,12 @@
 #include "absl/strings/string_view.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/random.h"
 #include "base/singleton.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -72,6 +72,9 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
+using ::mozc::dictionary::DictionaryInterface;
+using ::testing::_;
+using ::testing::AnyNumber;
 using ::testing::AnyOf;
 using ::testing::Each;
 using ::testing::ElementsAre;
@@ -79,6 +82,7 @@ using ::testing::Eq;
 using ::testing::Field;
 using ::testing::IsEmpty;
 using ::testing::Not;
+using ::testing::Return;
 using ::testing::UnorderedElementsAreArray;
 
 constexpr char kUserDictionary0[] =
@@ -176,9 +180,7 @@ class UserPosMock : public UserPosInterface {
   std::vector<std::string> GetPosList() const override {
     return {{kNoun.data(), kNoun.size()}};
   }
-  int GetPosListDefaultIndex() const override {
-    return 0;
-  }
+  int GetPosListDefaultIndex() const override { return 0; }
 
   bool GetPosIds(absl::string_view pos, uint16_t *id) const override {
     return false;
@@ -333,6 +335,97 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
   const testing::MockDataManager mock_data_manager_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
+
+TEST_F(UserDictionaryTest, TestLookupPredictiveCallback) {
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  // Wait for async reload called from the constructor.
+  dic->WaitForReloader();
+
+  {
+    UserDictionaryStorage storage("");
+    UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
+    dic->Load(storage.GetProto());
+  }
+
+  MockCallback mock_callback;
+  EXPECT_CALL(mock_callback, OnKey(_))
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnActualKey(_, _, _))
+      .Times(AnyNumber())
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnToken(_, _, _))
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+  EXPECT_CALL(mock_callback, OnKey(Eq("start")))
+      .Times(1)
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnActualKey(Eq("start"), Eq("start"), Eq(0)))
+      .Times(1)
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnToken(Eq("start"), Eq("start"), _))
+      .Times(1)
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+  dic->LookupPredictive("start", convreq_, &mock_callback);
+}
+
+TEST_F(UserDictionaryTest, TestLookupExactCallback) {
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  // Wait for async reload called from the constructor.
+  dic->WaitForReloader();
+
+  {
+    UserDictionaryStorage storage("");
+    UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
+    dic->Load(storage.GetProto());
+  }
+
+  MockCallback mock_callback;
+  EXPECT_CALL(mock_callback, OnKey(Eq("start")))
+      .Times(1)
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnActualKey(Eq("start"), Eq("start"), Eq(0)))
+      .Times(1)
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnToken(Eq("start"), Eq("start"), _))
+      .Times(1)
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+  dic->LookupExact("start", convreq_, &mock_callback);
+}
+
+TEST_F(UserDictionaryTest, TestLookupPrefixCallback) {
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  // Wait for async reload called from the constructor.
+  dic->WaitForReloader();
+
+  {
+    UserDictionaryStorage storage("");
+    UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
+    dic->Load(storage.GetProto());
+  }
+
+  MockCallback mock_callback;
+  EXPECT_CALL(mock_callback, OnKey(_))
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnActualKey(_, _, _))
+      .Times(AnyNumber())
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnToken(_, _, _))
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+  EXPECT_CALL(mock_callback, OnKey(Eq("start")))
+      .Times(1)
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnActualKey(Eq("start"), Eq("start"), Eq(0)))
+      .Times(1)
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+  EXPECT_CALL(mock_callback, OnToken(Eq("start"), Eq("start"), _))
+      .Times(1)
+      .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+  dic->LookupPrefix("start", convreq_, &mock_callback);
+}
 
 TEST_F(UserDictionaryTest, TestLookupPredictive) {
   std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());

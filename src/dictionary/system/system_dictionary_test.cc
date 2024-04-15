@@ -51,6 +51,7 @@
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -59,6 +60,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -71,6 +73,11 @@ ABSL_DECLARE_FLAG(int32_t, min_key_length_to_use_small_cost_encoding);
 namespace mozc {
 namespace dictionary {
 namespace {
+
+using ::testing::_;
+using ::testing::AtLeast;
+using ::testing::Eq;
+using ::testing::Return;
 
 class SystemDictionaryTest : public testing::TestWithTempUserProfile {
  protected:
@@ -192,6 +199,93 @@ bool SystemDictionaryTest::CompareTokensForLookup(const Token &a,
     return false;
   }
   return true;
+}
+
+TEST_F(SystemDictionaryTest, Callback) {
+  std::vector<Token> tokens = {
+      {"star", "star"}, {"start", "start"}, {"starting", "starting"}};
+
+  std::unique_ptr<SystemDictionary> system_dic =
+      BuildSystemDictionary(MakeTokenPointers(&tokens));
+  ASSERT_TRUE(system_dic.get() != nullptr);
+
+  {
+    MockCallback mock_callback;
+    EXPECT_CALL(mock_callback, OnKey(_))
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnActualKey(_, _, _))
+        .Times(AtLeast(1))
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnToken(_, _, _))
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    EXPECT_CALL(mock_callback, OnKey(Eq("start")))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    EXPECT_CALL(mock_callback, OnActualKey(Eq("start"), Eq("start"), Eq(0)))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    EXPECT_CALL(mock_callback, OnToken(Eq("start"), Eq("start"), _))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    system_dic->LookupPredictive("start", convreq_, &mock_callback);
+  }
+
+  {
+    MockCallback mock_callback;
+    EXPECT_CALL(mock_callback, OnKey(Eq("start")))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnActualKey(Eq("start"), Eq("start"), Eq(0)))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnToken(Eq("start"), Eq("start"), _))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    system_dic->LookupExact("start", convreq_, &mock_callback);
+  }
+
+  {
+    MockCallback mock_callback;
+    EXPECT_CALL(mock_callback, OnKey(_))
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnActualKey(_, _, _))
+        .Times(AtLeast(1))
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnToken(_, _, _))
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    EXPECT_CALL(mock_callback, OnKey(Eq("start")))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnActualKey(Eq("start"), Eq("start"), Eq(0)))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+    EXPECT_CALL(mock_callback, OnToken(Eq("start"), Eq("start"), _))
+        .Times(1)
+        .WillRepeatedly(
+            Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
+
+    system_dic->LookupPrefix("start", convreq_, &mock_callback);
+  }
 }
 
 TEST_F(SystemDictionaryTest, HasValue) {

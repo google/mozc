@@ -54,7 +54,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "request/request_util.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"
 #include "session/session_converter_interface.h"
@@ -1421,10 +1420,9 @@ void SessionConverter::AppendCandidateList() {
   const Segment &segment = segments_.conversion_segment(segment_index_);
 
   auto get_candidate_dedup_key =
-      request_util::IsFindabilityOrientedOrderEnabled(*request_)
-          ? [](const Segment::Candidate
-                   &c) { return absl::StrCat(c.key, c.value, c.category); }
-          : [](const Segment::Candidate &c) { return c.value; };
+      [](const Segment::Candidate &c) -> const std::string & {
+    return c.value;
+  };
 
   for (size_t i = candidate_list_.next_available_id();
        i < segment.candidates_size(); ++i) {
