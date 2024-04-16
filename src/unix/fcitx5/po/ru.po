@@ -4,15 +4,15 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
-# Dmitry <dmitrydmitry761@gmail.com>, 2023
+# Dmitry <dmitrydmitry761@gmail.com>, 2024
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2023-10-31 20:24+0000\n"
+"POT-Creation-Date: 2024-04-16 20:26+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: Dmitry <dmitrydmitry761@gmail.com>, 2023\n"
+"Last-Translator: Dmitry <dmitrydmitry761@gmail.com>, 2024\n"
 "Language-Team: Russian (https://app.transifex.com/fcitx/teams/12005/ru/)\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -75,12 +75,12 @@ msgstr "Полная Катакана"
 
 #: mozc_engine.h:59 mozc_engine.cc:76
 msgid "Half ASCII"
-msgstr "Половинная ASCII"
+msgstr "Полуширинная ASCII"
 
 #. Half width Katakana letter A.
 #: mozc_engine.h:60 mozc_engine.cc:91
 msgid "Half Katakana"
-msgstr "Половинная Катакана"
+msgstr "Полуширинная Катакана"
 
 #. Hiragana letter A in UTF-8.
 #: mozc_engine.h:58 mozc_engine.cc:61
@@ -121,12 +121,12 @@ msgstr "В фокусе"
 
 #. We don't have a good library option for this, just do the simple
 #. replace. absl's runtime parsed format string is too copmlex.
-#: mozc_response_parser.cc:175
+#: mozc_response_parser.cc:176
 #, c-format
 msgid "Press %s to show usages."
 msgstr "Нажмите %s , чтобы показать использование."
 
-#: mozc_state.cc:425
+#: mozc_state.cc:426
 msgid "Press Escape to go back"
 msgstr "Нажмите Escape, чтобы вернуться назад"
 
