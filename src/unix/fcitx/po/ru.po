@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2024-04-16 20:30+0000\n"
+"POT-Creation-Date: 2024-04-17 20:27+0000\n"
 "PO-Revision-Date: 2012-03-06 06:51+0000\n"
 "Last-Translator: Dmitry <dmitrydmitry761@gmail.com>, 2022,2024\n"
 "Language-Team: Russian (http://app.transifex.com/fcitx/fcitx/language/ru/)\n"
@@ -44,11 +44,11 @@ msgstr "Полуширинная ASCII"
 
 #: ../fcitx_mozc.cc:89
 msgid "Full ASCII"
-msgstr "Полный "
+msgstr "Полноширинная ASCII"
 
 #: ../fcitx_mozc.cc:94
 msgid "Half Katakana"
-msgstr "Полуширинная катакана"
+msgstr "Полуширинная Катакана"
 
 #: ../fcitx_mozc.cc:410 ../fcitx_mozc.cc:411 ../fcitx_mozc.cc:473
 msgid "Composition Mode"
