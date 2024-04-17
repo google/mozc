@@ -555,8 +555,8 @@ mozc_cc_library(
     hdrs = ["rescorer_interface.h"],
     deps = [
         ":result",
+        "//converter:segments",
         "//request:conversion_request",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -567,6 +567,9 @@ mozc_cc_library(
     hdrs = ["rescorer_mock.h"],
     deps = [
         ":rescorer_interface",
+        "//converter:segments",
+        "//request:conversion_request",
         "//testing",
+        "@com_google_absl//absl/types:span",
     ],
 )

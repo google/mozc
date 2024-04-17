@@ -1342,7 +1342,7 @@ void DictionaryPredictor::MaybeRescoreResults(
   if (IsDebug(request)) {
     for (Result &r : results) r.cost_before_rescoring = r.cost;
   }
-  rescorer_->RescoreResults(request, segments.history_value(), results);
+  rescorer_->RescoreResults(request, segments, results);
 }
 
 void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {

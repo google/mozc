@@ -30,7 +30,10 @@
 #ifndef MOZC_PREDICTION_RESCORER_MOCK_H_
 #define MOZC_PREDICTION_RESCORER_MOCK_H_
 
+#include "absl/types/span.h"
+#include "converter/segments.h"
 #include "prediction/rescorer_interface.h"
+#include "request/conversion_request.h"
 #include "testing/gmock.h"
 
 namespace mozc::prediction {
@@ -38,7 +41,7 @@ namespace mozc::prediction {
 class MockRescorer : public RescorerInterface {
  public:
   MOCK_METHOD(void, RescoreResults,
-              (const ConversionRequest &request, absl::string_view history,
+              (const ConversionRequest &request, const Segments &segments,
                absl::Span<Result> results),
               (const override));
 };

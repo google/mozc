@@ -30,8 +30,8 @@
 #ifndef MOZC_PREDICTION_RESCORER_INTERFACE_H_
 #define MOZC_PREDICTION_RESCORER_INTERFACE_H_
 
-#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/segments.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 
@@ -42,7 +42,7 @@ class RescorerInterface {
   virtual ~RescorerInterface() = default;
 
   virtual void RescoreResults(const ConversionRequest &request,
-                              absl::string_view history,
+                              const Segments &segments,
                               absl::Span<Result> results) const = 0;
 };
 

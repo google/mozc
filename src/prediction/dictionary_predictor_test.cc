@@ -1860,7 +1860,7 @@ TEST_F(DictionaryPredictorTest, Rescoring) {
   auto rescorer = std::make_unique<prediction::MockRescorer>();
   EXPECT_CALL(*rescorer, RescoreResults(_, _, _))
       .WillRepeatedly(
-          Invoke([](const ConversionRequest &request, absl::string_view history,
+          Invoke([](const ConversionRequest &request, const Segments &segments,
                     absl::Span<Result> results) {
             for (Result &r : results) r.cost = 100;
           }));
