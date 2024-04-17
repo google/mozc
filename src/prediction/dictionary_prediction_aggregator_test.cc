@@ -1668,6 +1668,8 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     EXPECT_EQ(results[0].types, REALTIME);
     EXPECT_EQ(results[0].key, kKey);
     EXPECT_EQ(results[0].inner_segment_boundary.size(), 3);
+    EXPECT_TRUE(results[0].candidate_attributes &
+                Segment::Candidate::NO_VARIANTS_EXPANSION);
   }
 
   // A test case with use_actual_converter_for_realtime_conversion being
@@ -1691,12 +1693,14 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     ASSERT_EQ(2, results.size());
     bool realtime_top_found = false;
     for (size_t i = 0; i < results.size(); ++i) {
-      EXPECT_EQ(results[i].types, REALTIME | REALTIME_TOP);
+      EXPECT_TRUE(results[i].types & REALTIME);
+      EXPECT_TRUE(results[i].candidate_attributes &
+                  Segment::Candidate::NO_VARIANTS_EXPANSION);
       if (results[i].key == kKey &&
           results[i].value == "WatashinoNamaehaNakanodesu" &&
           results[i].inner_segment_boundary.size() == 3) {
+        EXPECT_TRUE(results[i].types & REALTIME_TOP);
         realtime_top_found = true;
-        break;
       }
     }
     EXPECT_TRUE(realtime_top_found);

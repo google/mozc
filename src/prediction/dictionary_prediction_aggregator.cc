@@ -172,10 +172,6 @@ bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
 
-bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
-  return request.config().use_typing_correction();
-}
-
 bool HasHistoryKeyLongerThanOrEqualTo(const Segments &segments,
                                       size_t utf8_len) {
   const size_t history_segments_size = segments.history_segments_size();
@@ -928,6 +924,7 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
     result->rid = candidate.rid;
     result->inner_segment_boundary = candidate.inner_segment_boundary;
     result->SetTypesAndTokenAttributes(REALTIME, Token::NONE);
+    result->candidate_attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     if (candidate.key.size() < segment.key().size()) {
       result->candidate_attributes |=
           Segment::Candidate::PARTIALLY_KEY_CONSUMED;
