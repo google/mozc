@@ -291,5 +291,6 @@ oss_issue885	ごかい	誤解	Conversion Expected 9
 oss_issue885	ごかいする	誤解する	Conversion Expected 2
 oss_issue903	いっきょう		一強	Conversion Expected 9
 oss_issue903	いっきょうたじゃく	一強他弱	Conversion Expected
+oss_issue903	よとういっきょう	与党一強	Conversion Expected
 oss_issue917	もどりち	戻り値	Conversion Expected
 oss_issue918	ほっけ	𩸽	Conversion Expected 9

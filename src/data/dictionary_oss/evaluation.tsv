@@ -291,6 +291,7 @@ FAILED:	ごかい	五回	Conversion Expected 9	誤解	2.30.5432
 OK:	ごかいする	誤解する	Conversion Expected 2	誤解する	2.30.5432
 OK:	いっきょう	一興	Conversion Expected 9	一強	2.30.5432
 OK:	いっきょうたじゃく	一強他弱	Conversion Expected	一強他弱	2.30.5432
+FAILED:	よとういっきょう	与党一興	Conversion Expected	与党一強	2.30.5432
 OK:	もどりち	戻り値	Conversion Expected	戻り値	2.30.5432
 OK:	ほっけ	ホッケ	Conversion Expected 9	𩸽	2.30.5432
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
