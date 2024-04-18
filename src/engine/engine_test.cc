@@ -59,7 +59,7 @@ class SpellcheckerForTesting : public engine::SpellcheckerInterface {
   }
 
   std::optional<std::vector<composer::TypeCorrectedQuery>>
-  CheckCompositionSpelling(absl::string_view, absl::string_view,
+  CheckCompositionSpelling(absl::string_view, absl::string_view, bool,
                            const commands::Request &) const override {
     return std::nullopt;
   }
@@ -98,7 +98,7 @@ class EngineTest : public ::testing::Test {
 
     DataManager mock_data_manager;
     mock_data_manager.InitFromFile(mock_request_.file_path(),
-                              mock_request_.magic_number());
+                                   mock_request_.magic_number());
     mock_version_ = mock_data_manager.GetDataVersion();
 
     DataManager oss_data_manager;

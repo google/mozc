@@ -2053,7 +2053,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
                 (const commands::CheckSpellingRequest &), (const, override));
     MOCK_METHOD(std::optional<std::vector<TypeCorrectedQuery>>,
                 CheckCompositionSpelling,
-                (absl::string_view, absl::string_view,
+                (absl::string_view, absl::string_view, bool,
                  const commands::Request &),
                 (const, override));
     MOCK_METHOD(void, MaybeApplyHomonymCorrection, (Segments *),
@@ -2089,7 +2089,8 @@ TEST_F(DictionaryPredictionAggregatorTest,
                    TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
 
   auto mock = std::make_unique<MockSpellchecker>();
-  EXPECT_CALL(*mock, CheckCompositionSpelling("よろさく", "ほんじつは", _))
+  EXPECT_CALL(*mock,
+              CheckCompositionSpelling("よろさく", "ほんじつは", false, _))
       .WillOnce(Return(expected));
 
   data_and_aggregator->set_spellchecker(mock.get());
