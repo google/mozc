@@ -33,6 +33,7 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
+    "mozc_select_enable_neural_language_model",
     "mozc_select_enable_spellchecker",
 )
 load("//bazel:stubs.bzl", "bzl_library")
@@ -576,7 +577,8 @@ mozc_cc_binary(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ],
+    ] + mozc_select_enable_neural_language_model([
+    ]),
 )
 
 mozc_cc_library(

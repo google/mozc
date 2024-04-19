@@ -53,7 +53,6 @@
 #include "engine/modules.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/predictor_interface.h"
-#include "prediction/rescorer_interface.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"

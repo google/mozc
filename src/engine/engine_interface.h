@@ -43,6 +43,7 @@
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
 #include "engine/user_data_manager_interface.h"
+#include "prediction/rescorer_interface.h"
 #include "protocol/engine_builder.pb.h"
 
 namespace mozc {
@@ -105,6 +106,9 @@ class EngineInterface {
 
   virtual void SetSpellchecker(
       const engine::SpellcheckerInterface *spellchecker) {}
+
+  virtual void SetRescorer(
+      std::unique_ptr<const prediction::RescorerInterface> rescorer) {}
 
   // Maybe reload a new data manager. Returns true if reloaded.
   virtual bool MaybeReloadEngine(EngineReloadResponse *response) {

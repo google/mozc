@@ -296,7 +296,6 @@ DictionaryPredictor::DictionaryPredictor(
       pos_matcher_(*modules.GetPosMatcher()),
       general_symbol_id_(pos_matcher_.GetGeneralSymbolId()),
       predictor_name_(std::move(predictor_name)),
-      rescorer_(modules.GetRescorer()),
       modules_(modules) {}
 
 void DictionaryPredictor::Finish(const ConversionRequest &request,
@@ -528,7 +527,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   MaybeSuppressAggressiveTypingCorrection(
       request, typing_correction_mixing_params, segments);
 
-  if (rescorer_ != nullptr && IsDebug(request)) {
+  if (IsDebug(request) && modules_.GetRescorer() != nullptr) {
     AddRescoringDebugDescription(segments);
   }
 
@@ -1338,11 +1337,12 @@ int DictionaryPredictor::CalculatePrefixPenalty(
 void DictionaryPredictor::MaybeRescoreResults(
     const ConversionRequest &request, const Segments &segments,
     absl::Span<Result> results) const {
-  if (!rescorer_) return;
+  const RescorerInterface *const rescorer = modules_.GetRescorer();
+  if (rescorer == nullptr) return;
   if (IsDebug(request)) {
     for (Result &r : results) r.cost_before_rescoring = r.cost;
   }
-  rescorer_->RescoreResults(request, segments, results);
+  rescorer->RescoreResults(request, segments, results);
 }
 
 void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
