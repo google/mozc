@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 58
+// Next ID: 62
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -700,6 +700,7 @@ message DecoderExperimentParams {
   // - "google"
   // - " google"
   optional int32 english_variation_space_insertion_mode = 55 [default = 0];
+
 }
 
 // Clients' request to the server.
