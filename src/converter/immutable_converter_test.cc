@@ -528,8 +528,7 @@ TEST(ImmutableConverterTest, FirstInnerSegment) {
   conversion_request.set_create_partial_candidates(true);
   conversion_request.set_max_conversion_candidates_size(100);
 
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
 
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -544,6 +543,60 @@ TEST(ImmutableConverterTest, FirstInnerSegment) {
   EXPECT_THAT(*segment, ContainsCandidate(KeyIs("くるまでこうどうした")));
   EXPECT_THAT(*segment, ContainsCandidate(KeyIs("くるまで")));
   EXPECT_THAT(*segment, ContainsCandidate(KeyIs("くる")));
+}
+
+TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
+  commands::Request request;
+  request_test_util::FillMobileRequest(&request);
+  request.mutable_decoder_experiment_params()
+      ->set_enable_realtime_conversion_v2(true);
+  request.mutable_decoder_experiment_params()
+      ->set_enable_realtime_conversion_candidate_checker(true);
+  ConversionRequest conversion_request;
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+  conversion_request.set_request(&request);
+  conversion_request.set_create_partial_candidates(true);
+  conversion_request.set_max_conversion_candidates_size(100);
+
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
+  constexpr auto ValueIs = [](const auto &value) {
+    return Field(&Segment::Candidate::value, StrEq(value));
+  };
+
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("したとき");
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        conversion_request, &segments));
+
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("したとき")));
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("した時")));
+  }
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("かえる");
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        conversion_request, &segments));
+
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("換える")));
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("代える")));
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("買える")));
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("飼える")));
+  }
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("くるまでこうどうした");
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        conversion_request, &segments));
+
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("車で行動した")));
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("車で")));
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("来るまで")));
+    EXPECT_THAT(*segment, ContainsCandidate(ValueIs("くるまで")));
+  }
 }
 
 }  // namespace mozc
