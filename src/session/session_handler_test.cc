@@ -45,17 +45,16 @@
 #include "absl/random/random.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "base/thread.h"
 #include "composer/query.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "engine/data_loader.h"
 #include "engine/engine.h"
+#include "engine/engine_interface.h"
 #include "engine/engine_mock.h"
 #include "engine/minimal_engine.h"
 #include "engine/mock_data_engine_factory.h"
@@ -68,6 +67,7 @@
 #include "session/session_handler_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
 
@@ -81,67 +81,101 @@ namespace {
 
 using ::mozc::session::testing::SessionHandlerTestBase;
 using ::testing::_;
-using ::testing::InSequence;
 using ::testing::Return;
 
-class MockDataLoader : public DataLoader {
- public:
-  MOCK_METHOD(ResponseFuture, Build, (uint64_t), (const override));
-};
-
 EngineReloadResponse::Status SendMockEngineReloadRequest(
-    SessionHandler *handler, const EngineReloadRequest &request) {
+    SessionHandler &handler, const EngineReloadRequest &request) {
   commands::Command command;
   command.mutable_input()->set_type(
       commands::Input::SEND_ENGINE_RELOAD_REQUEST);
   *command.mutable_input()->mutable_engine_reload_request() = request;
-  handler->EvalCommand(&command);
+  handler.EvalCommand(&command);
   return command.output().engine_reload_response().status();
 }
 
-bool CreateSession(SessionHandlerInterface *handler, uint64_t *id) {
+bool CreateSession(SessionHandlerInterface &handler, uint64_t *id) {
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
   command.mutable_input()->mutable_capability()->set_text_deletion(
       commands::Capability::DELETE_PRECEDING_TEXT);
-  handler->EvalCommand(&command);
+  handler.EvalCommand(&command);
   if (id != nullptr) {
     *id = command.has_output() ? command.output().id() : 0;
   }
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
-bool DeleteSession(SessionHandlerInterface *handler, uint64_t id) {
+bool DeleteSession(SessionHandlerInterface &handler, uint64_t id) {
   commands::Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
-  return handler->EvalCommand(&command);
+  return handler.EvalCommand(&command);
 }
 
-bool CleanUp(SessionHandlerInterface *handler, uint64_t id) {
+bool CleanUp(SessionHandlerInterface &handler, uint64_t id) {
   commands::Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEANUP);
-  return handler->EvalCommand(&command);
+  return handler.EvalCommand(&command);
 }
 
-bool IsGoodSession(SessionHandlerInterface *handler, uint64_t id) {
+bool IsGoodSession(SessionHandlerInterface &handler, uint64_t id) {
   commands::Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::SEND_KEY);
   command.mutable_input()->mutable_key()->set_special_key(
       commands::KeyEvent::SPACE);
-  handler->EvalCommand(&command);
+  handler.EvalCommand(&command);
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
+constexpr absl::string_view kMockMagicNumber = "MOCK";
+constexpr absl::string_view kOssMagicNumber = "\xEFMOZC\x0D\x0A";
 }  // namespace
 
 class SessionHandlerTest : public SessionHandlerTestBase {
  protected:
+  SessionHandlerTest() {
+    const std::string mock_path = testing::GetSourcePath(
+        {MOZC_SRC_COMPONENTS("data_manager"), "testing", "mock_mozc.data"});
+    mock_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    mock_request_.set_file_path(mock_path);
+    mock_request_.set_magic_number(kMockMagicNumber);
+
+    const std::string oss_path = testing::GetSourcePath(
+        {MOZC_SRC_COMPONENTS("data_manager"), "oss", "mozc.data"});
+    oss_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    oss_request_.set_file_path(oss_path);
+    oss_request_.set_magic_number(kOssMagicNumber);
+
+    const std::string invalid_path = testing::GetSourcePath(
+        {MOZC_SRC_COMPONENTS("data_manager"), "invalid", "mozc.data"});
+    invalid_path_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    invalid_path_request_.set_file_path(invalid_path);
+    invalid_path_request_.set_magic_number(kOssMagicNumber);
+
+    invalid_data_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    invalid_data_request_.set_file_path(mock_path);
+    invalid_data_request_.set_magic_number(kOssMagicNumber);
+
+    DataManager mock_data_manager;
+    mock_data_manager.InitFromFile(mock_request_.file_path(),
+                                   mock_request_.magic_number());
+    mock_version_ = mock_data_manager.GetDataVersion();
+
+    DataManager oss_data_manager;
+    oss_data_manager.InitFromFile(oss_request_.file_path(),
+                                  oss_request_.magic_number());
+    oss_version_ = oss_data_manager.GetDataVersion();
+  }
+
   void SetUp() override {
     SessionHandlerTestBase::SetUp();
     Clock::SetClockForUnitTest(nullptr);
+
+    std::unique_ptr<Engine> engine = Engine::CreateEngine();
+    engine->SetAlwaysWaitForLoaderResponseFutureForTesting(true);
+    handler_ = std::make_unique<SessionHandler>(std::move(engine));
   }
 
   void TearDown() override {
@@ -152,6 +186,16 @@ class SessionHandlerTest : public SessionHandlerTestBase {
   static std::unique_ptr<Engine> CreateMockDataEngine() {
     return MockDataEngineFactory::Create().value();
   }
+
+  std::unique_ptr<SessionHandler> handler_;
+
+  std::string mock_version_;
+  std::string oss_version_;
+
+  EngineReloadRequest mock_request_;
+  EngineReloadRequest oss_request_;
+  EngineReloadRequest invalid_path_request_;
+  EngineReloadRequest invalid_data_request_;
 };
 
 TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
@@ -171,7 +215,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     std::vector<uint64_t> ids;
     for (size_t i = 0; i <= session_size; ++i) {
       uint64_t id = 0;
-      EXPECT_TRUE(CreateSession(&handler, &id));
+      EXPECT_TRUE(CreateSession(handler, &id));
       ++expected_session_created_num;
       EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
@@ -180,9 +224,9 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 
     for (int i = static_cast<int>(ids.size() - 1); i >= 0; --i) {
       if (i > 0) {  // this id is alive
-        EXPECT_TRUE(IsGoodSession(&handler, ids[i]));
+        EXPECT_TRUE(IsGoodSession(handler, ids[i]));
       } else {  // the first id should be removed
-        EXPECT_FALSE(IsGoodSession(&handler, ids[i]));
+        EXPECT_FALSE(IsGoodSession(handler, ids[i]));
       }
     }
   }
@@ -195,7 +239,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     std::vector<uint64_t> ids;
     for (size_t i = 0; i < session_size; ++i) {
       uint64_t id = 0;
-      EXPECT_TRUE(CreateSession(&handler, &id));
+      EXPECT_TRUE(CreateSession(handler, &id));
       ++expected_session_created_num;
       EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
@@ -206,17 +250,17 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     std::shuffle(ids.begin(), ids.end(), urbg);
     const uint64_t oldest_id = ids[0];
     for (size_t i = 0; i < session_size; ++i) {
-      EXPECT_TRUE(IsGoodSession(&handler, ids[i]));
+      EXPECT_TRUE(IsGoodSession(handler, ids[i]));
     }
 
     // Create new session
     uint64_t id = 0;
-    EXPECT_TRUE(CreateSession(&handler, &id));
+    EXPECT_TRUE(CreateSession(handler, &id));
     ++expected_session_created_num;
     EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
 
     // the oldest id no longer exists
-    EXPECT_FALSE(IsGoodSession(&handler, oldest_id));
+    EXPECT_FALSE(IsGoodSession(handler, oldest_id));
   }
 
   Clock::SetClockForUnitTest(nullptr);
@@ -235,7 +279,7 @@ TEST_F(SessionHandlerTest, CreateSession_ConfigTest) {
 
   // The created session should be using ATOK keymap.
   uint64_t session_id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &session_id));
+  EXPECT_TRUE(CreateSession(handler, &session_id));
   {
     // Move to PRECOMPOSITION mode.
     // On Windows, its initial mode is DIRECT.
@@ -271,14 +315,14 @@ TEST_F(SessionHandlerTest, CreateSessionMinIntervalTest) {
   SessionHandler handler(CreateMockDataEngine());
 
   uint64_t id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &id));
-  EXPECT_FALSE(CreateSession(&handler, &id));
+  EXPECT_TRUE(CreateSession(handler, &id));
+  EXPECT_FALSE(CreateSession(handler, &id));
 
   clock.Advance(kIntervalTime - absl::Seconds(1));
-  EXPECT_FALSE(CreateSession(&handler, &id));
+  EXPECT_FALSE(CreateSession(handler, &id));
 
   clock.Advance(absl::Seconds(1));
-  EXPECT_TRUE(CreateSession(&handler, &id));
+  EXPECT_TRUE(CreateSession(handler, &id));
 
   Clock::SetClockForUnitTest(nullptr);
 }
@@ -291,11 +335,11 @@ TEST_F(SessionHandlerTest, CreateSessionNegativeIntervalTest) {
   SessionHandler handler(CreateMockDataEngine());
 
   uint64_t id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &id));
+  EXPECT_TRUE(CreateSession(handler, &id));
 
   // A user can modify their system clock.
   clock.Advance(-absl::Seconds(1));
-  EXPECT_TRUE(CreateSession(&handler, &id));
+  EXPECT_TRUE(CreateSession(handler, &id));
 
   Clock::SetClockForUnitTest(nullptr);
 }
@@ -310,13 +354,13 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeoutTest) {
   SessionHandler handler(CreateMockDataEngine());
 
   uint64_t id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &id));
+  EXPECT_TRUE(CreateSession(handler, &id));
 
   clock.Advance(kTimeout);
-  EXPECT_TRUE(CleanUp(&handler, id));
+  EXPECT_TRUE(CleanUp(handler, id));
 
   // the session is removed by server
-  EXPECT_FALSE(IsGoodSession(&handler, id));
+  EXPECT_FALSE(IsGoodSession(handler, id));
 
   Clock::SetClockForUnitTest(nullptr);
 }
@@ -330,14 +374,14 @@ TEST_F(SessionHandlerTest, LastCommandTimeoutTest) {
   SessionHandler handler(CreateMockDataEngine());
 
   uint64_t id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &id));
+  EXPECT_TRUE(CreateSession(handler, &id));
 
-  EXPECT_TRUE(CleanUp(&handler, id));
-  EXPECT_TRUE(IsGoodSession(&handler, id));
+  EXPECT_TRUE(CleanUp(handler, id));
+  EXPECT_TRUE(IsGoodSession(handler, id));
 
   clock.Advance(absl::Seconds(timeout));
-  EXPECT_TRUE(CleanUp(&handler, id));
-  EXPECT_FALSE(IsGoodSession(&handler, id));
+  EXPECT_TRUE(CleanUp(handler, id));
+  EXPECT_FALSE(IsGoodSession(handler, id));
 
   Clock::SetClockForUnitTest(nullptr);
 }
@@ -346,7 +390,7 @@ TEST_F(SessionHandlerTest, ShutdownTest) {
   SessionHandler handler(CreateMockDataEngine());
 
   uint64_t session_id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &session_id));
+  EXPECT_TRUE(CreateSession(handler, &session_id));
 
   {
     commands::Command command;
@@ -375,7 +419,7 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
   SessionHandler handler(CreateMockDataEngine());
 
   uint64_t session_id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &session_id));
+  EXPECT_TRUE(CreateSession(handler, &session_id));
 
   {
     commands::Command command;
@@ -418,7 +462,7 @@ TEST_F(SessionHandlerTest, ElapsedTimeTest) {
 
   ClockMock clock(absl::FromUnixSeconds(1000));
   Clock::SetClockForUnitTest(&clock);
-  EXPECT_TRUE(CreateSession(&handler, &id));
+  EXPECT_TRUE(CreateSession(handler, &id));
   EXPECT_TIMING_STATS("ElapsedTimeUSec", 0, 1, 0, 0);
   Clock::SetClockForUnitTest(nullptr);
 }
@@ -442,7 +486,7 @@ TEST_F(SessionHandlerTest, ConfigTest) {
   }
 
   uint64_t session_id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &session_id));
+  EXPECT_TRUE(CreateSession(handler, &session_id));
   {
     // Move to PRECOMPOSITION mode.
     // On Windows, its initial mode is DIRECT.
@@ -506,7 +550,7 @@ TEST_F(SessionHandlerTest, UpdateComposition) {
   SessionHandler handler(CreateMockDataEngine());
 
   uint64_t session_id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &session_id));
+  EXPECT_TRUE(CreateSession(handler, &session_id));
   {
     // Move to PRECOMPOSITION mode.
     // On Windows, its initial mode is DIRECT.
@@ -543,7 +587,7 @@ TEST_F(SessionHandlerTest, KeyMapTest) {
   SessionHandler handler(CreateMockDataEngine());
 
   uint64_t session_id = 0;
-  EXPECT_TRUE(CreateSession(&handler, &session_id));
+  EXPECT_TRUE(CreateSession(handler, &session_id));
 
   {
     commands::Command command;
@@ -603,49 +647,16 @@ TEST_F(SessionHandlerTest, SyncDataTest) {
   handler.EvalCommand(&command);
 }
 
-// TODO(b/326372188): Reduce redundancy with EngineTest.
-// Tests the interaction with DataLoader for successful Engine
-// reload event.
+// Tests the interaction with DataLoader for successful Engine reload event.
 TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
-  auto data_manager = std::make_unique<testing::MockDataManager>();
-  absl::string_view data_version = "EngineReloadSuccessfulScenarioTest";
-  EXPECT_CALL(*data_manager, GetDataVersion())
-      .WillRepeatedly(Return(data_version));
-  auto modules = std::make_unique<engine::Modules>();
-  CHECK_OK(modules->Init(std::move(data_manager)));
-
-  auto data_loader = std::make_unique<MockDataLoader>();
-
-  EngineReloadRequest request;
-  request.set_engine_type(EngineReloadRequest::MOBILE);
-  request.set_file_path("placeholder");  // OK for MockDataLoader
-  const uint64_t data_id = data_loader->GetRequestId(request);
-
-  EXPECT_CALL(*data_loader, Build(data_id))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        // takes 0.1 seconds to make engine.
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = data_id;
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        result.modules = std::move(modules);
-        return result;
-      })));
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
-  EXPECT_OK(engine_status);
-  (*engine_status)->SetDataLoaderForTesting(std::move(data_loader));
-  SessionHandler handler(std::move(*engine_status));
-
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
             EngineReloadResponse::ACCEPTED);
 
   // A new engine should be built on create session event because the session
   // handler currently holds no session.
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
-  handler.EvalCommand(&command);
+  handler_->EvalCommand(&command);
   EXPECT_EQ(command.output().error_code(), commands::Output::SESSION_SUCCESS);
   EXPECT_TRUE(command.output().has_engine_reload_response());
   EXPECT_EQ(command.output().engine_reload_response().status(),
@@ -653,300 +664,126 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   EXPECT_NE(command.output().id(), 0);
 
   // When the engine is created first, we wait until the engine gets ready.
-  EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
+  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
 
   // New session is created, but Build is not called as the id is the same.
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
             EngineReloadResponse::ACCEPTED);
 
   uint64_t id = 0;
-  ASSERT_TRUE(DeleteSession(&handler, id));
-  ASSERT_TRUE(CreateSession(&handler, &id));
-  EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
+  ASSERT_TRUE(DeleteSession(*handler_, id));
+  ASSERT_TRUE(CreateSession(*handler_, &id));
+  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
 }
 
-// TODO(b/326372188): Reduce redundancy with EngineTest.
 // Tests situations to handle multiple new requests.
 TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
-  auto data_loader = std::make_unique<MockDataLoader>();
-  MockDataLoader *data_loader_ptr = data_loader.get();
-
-  auto data_manager1 = std::make_unique<testing::MockDataManager>();
-  absl::string_view data_version1 = "EngineUpdateSuccessfulScenarioTest_1";
-  EXPECT_CALL(*data_manager1, GetDataVersion())
-      .WillRepeatedly(Return(data_version1));
-  auto modules1 = std::make_unique<engine::Modules>();
-  CHECK_OK(modules1->Init(std::move(data_manager1)));
-
-  auto data_manager2 = std::make_unique<testing::MockDataManager>();
-  absl::string_view data_version2 = "EngineUpdateSuccessfulScenarioTest_2";
-  EXPECT_CALL(*data_manager2, GetDataVersion())
-      .WillRepeatedly(Return(data_version2));
-  auto modules2 = std::make_unique<engine::Modules>();
-  CHECK_OK(modules2->Init(std::move(data_manager2)));
-
-  InSequence seq;  // EXPECT_CALL is called sequentially.
-
-  EngineReloadRequest request1;
-  request1.set_engine_type(EngineReloadRequest::MOBILE);
-  request1.set_file_path("placeholder1");  // OK for MockDataLoader
-  const uint64_t data_id1 = data_loader->GetRequestId(request1);
-
-  EngineReloadRequest request2;
-  request2.set_engine_type(EngineReloadRequest::MOBILE);
-  request2.set_file_path("placeholder2");  // OK for MockDataLoader
-  const uint64_t data_id2 = data_loader->GetRequestId(request2);
-
-  EXPECT_CALL(*data_loader, Build(data_id1))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = data_id1;
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        result.modules = std::move(modules1);
-        return result;
-      })));
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
-  EXPECT_OK(engine_status);
-  (*engine_status)->SetDataLoaderForTesting(std::move(data_loader));
-  (*engine_status)->SetAlwaysWaitForLoaderResponseFutureForTesting(true);
-  SessionHandler handler(std::move(*engine_status));
-
   // engine_id = 1
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request1),
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
             EngineReloadResponse::ACCEPTED);
 
   // build request is called one per new engine reload request.
   uint64_t id = 0;
-  ASSERT_TRUE(CreateSession(&handler, &id));
-  EXPECT_EQ(handler.engine().GetDataVersion(), data_version1);
-
-  // Use data_loader_ptr after std::move(engine_build).
-  EXPECT_CALL(*data_loader_ptr, Build(data_id2))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = data_id2;
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        result.modules = std::move(modules2);
-        return result;
-      })));
+  ASSERT_TRUE(CreateSession(*handler_, &id));
+  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
 
   // engine_id = 2
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request2),
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, oss_request_),
             EngineReloadResponse::ACCEPTED);
 
-  ASSERT_TRUE(DeleteSession(&handler, id));
-  ASSERT_TRUE(CreateSession(&handler, &id));
-  EXPECT_EQ(handler.engine().GetDataVersion(), data_version2);
+  ASSERT_TRUE(DeleteSession(*handler_, id));
+  ASSERT_TRUE(CreateSession(*handler_, &id));
+  EXPECT_EQ(handler_->engine().GetDataVersion(), oss_version_);
 }
 
-// TODO(b/326372188): Reduce redundancy with EngineTest.
-// Tests the interaction with DataLoader in the situation where
-// requested data is broken.
+// Tests the interaction with DataLoader in the situation where requested data
+// is broken.
 TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
-  auto data_loader = std::make_unique<MockDataLoader>();
-  MockDataLoader *data_loader_ptr = data_loader.get();
+  const absl::string_view initial_version = handler_->engine().GetDataVersion();
 
-  InSequence seq;  // EXPECT_CALL is called sequentially.
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
-  EXPECT_OK(engine_status);
-  const Engine *old_engine_ptr = engine_status.value().get();
-  (*engine_status)->SetDataLoaderForTesting(std::move(data_loader));
-  SessionHandler handler(std::move(*engine_status));
-
-  EngineReloadRequest request;
-  request.set_engine_type(EngineReloadRequest::MOBILE);
-  request.set_file_path("placeholder");  // OK for MockDataLoader
-  const uint64_t data_id = data_loader_ptr->GetRequestId(request);
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, invalid_path_request_),
             EngineReloadResponse::ACCEPTED);
 
-  EXPECT_CALL(*data_loader_ptr, Build(data_id))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = data_id;
-        result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-        return result;
-      })));
-
   // Build() is called, but it returns invalid data, so new data is not used.
-  EXPECT_EQ(&handler.engine(), old_engine_ptr);
+  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
 
   // CreateSession does not contain engine_reload_response.
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
-  handler.EvalCommand(&command);
+  handler_->EvalCommand(&command);
   EXPECT_EQ(command.output().error_code(), commands::Output::SESSION_SUCCESS);
   EXPECT_FALSE(command.output().has_engine_reload_response());
   EXPECT_NE(command.output().id(), 0);
 
-  EXPECT_EQ(&handler.engine(), old_engine_ptr);
+  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
 
   // Sends the same request again, but the request is already marked as
   // unregistered.
   uint64_t id = 0;
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, invalid_path_request_),
             EngineReloadResponse::ACCEPTED);
-  ASSERT_TRUE(DeleteSession(&handler, id));
-  ASSERT_TRUE(CreateSession(&handler, &id));
-  EXPECT_EQ(&handler.engine(), old_engine_ptr);
+  ASSERT_TRUE(DeleteSession(*handler_, id));
+  ASSERT_TRUE(CreateSession(*handler_, &id));
+  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
 }
 
-// TODO(b/326372188): Reduce redundancy with EngineTest.
 // Tests the rollback scenario
 TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
-  auto data_loader = std::make_unique<MockDataLoader>();
-  MockDataLoader *data_loader_ptr = data_loader.get();
-
-  InSequence seq;  // EXPECT_CALL is called sequentially.
-
-  auto data_manager = std::make_unique<testing::MockDataManager>();
-  testing::MockDataManager *data_manager_ptr = data_manager.get();
-  absl::string_view data_version = "EngineRollbackDataTest";
-  auto modules = std::make_unique<engine::Modules>();
-  CHECK_OK(modules->Init(std::move(data_manager)));
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
-  EXPECT_OK(engine_status);
-  (*engine_status)->SetDataLoaderForTesting(std::move(data_loader));
-  (*engine_status)->SetAlwaysWaitForLoaderResponseFutureForTesting(true);
-  SessionHandler handler(std::move(*engine_status));
-
-  EngineReloadRequest request1_ready;
-  request1_ready.set_engine_type(EngineReloadRequest::MOBILE);
-  request1_ready.set_file_path("placeholder1");  // OK for MockDataLoader
-  const uint64_t data_id1 = data_loader_ptr->GetRequestId(request1_ready);
-
-  EngineReloadRequest request2_broken;
-  request2_broken.set_engine_type(EngineReloadRequest::MOBILE);
-  request2_broken.set_file_path("placeholder2");  // OK for MockDataLoader
-  const uint64_t data_id2 = data_loader_ptr->GetRequestId(request2_broken);
-
-  EngineReloadRequest request3_broken;
-  request3_broken.set_engine_type(EngineReloadRequest::MOBILE);
-  request3_broken.set_file_path("placeholder3");  // OK for MockDataLoader
-  const uint64_t data_id3 = data_loader_ptr->GetRequestId(request3_broken);
-
-  // Sends multiple requests three times. 1 -> 2 -> 3.
-  // 3 is the latest id.
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request1_ready),
+  // Sends multiple requests three times.
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
             EngineReloadResponse::ACCEPTED);
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request2_broken),
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, invalid_path_request_),
             EngineReloadResponse::ACCEPTED);
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request3_broken),
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, invalid_data_request_),
             EngineReloadResponse::ACCEPTED);
 
-  // Rollback as 3 -> 2 -> 1.  1 is only valid engine.
-  EXPECT_CALL(*data_loader_ptr, Build(data_id3))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = data_id3;
-        result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-        return result;
-      })));
-  EXPECT_CALL(*data_loader_ptr, Build(data_id2))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = data_id2;
-        result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-        return result;
-      })));
-  EXPECT_CALL(*data_loader_ptr, Build(data_id1))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = data_id1;
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        result.modules = std::move(modules);
-        return result;
-      })));
-
-  for (int eid = 3; eid >= 1; --eid) {
+  for (int i = 0; i < 3; ++i) {
     // Engine of 3, and 2 are unregistered.
     // The second best id (2, and 1) are used.
     uint64_t id = 0;
-    ASSERT_TRUE(CreateSession(&handler, &id));
-    ASSERT_TRUE(DeleteSession(&handler, id));
+    ASSERT_TRUE(CreateSession(*handler_, &id));
+    ASSERT_TRUE(DeleteSession(*handler_, id));
   }
 
-  EXPECT_CALL(*data_manager_ptr, GetDataVersion())
-      .WillRepeatedly(Return(data_version));
-
-  // Finally rollback to the new engine 1.
-  EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
+  // Finally rollback to the new engine with the first request.
+  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
 }
 
 // Tests the interaction with DataLoader in the situation where
 // sessions exist in create session event.
 TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
-  auto data_manager = std::make_unique<testing::MockDataManager>();
-  absl::string_view data_version = "EngineReloadSessionExistsTest";
-  EXPECT_CALL(*data_manager, GetDataVersion())
-      .WillRepeatedly(Return(data_version));
-  auto modules = std::make_unique<engine::Modules>();
-  CHECK_OK(modules->Init(std::move(data_manager)));
+  const absl::string_view initial_version = handler_->engine().GetDataVersion();
 
-  auto data_loader = std::make_unique<MockDataLoader>();
+  const EngineInterface *old_engine_ptr = &(handler_->engine());
 
-  EngineReloadRequest request;
-  request.set_engine_type(EngineReloadRequest::MOBILE);
-  request.set_file_path("placeholder1");  // OK for MockDataLoader
-  const uint64_t data_id = data_loader->GetRequestId(request);
-
-  EXPECT_CALL(*data_loader, Build(data_id))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = data_id;
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        result.modules = std::move(modules);
-        return result;
-      })));
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
-  EXPECT_OK(engine_status);
-  const Engine *old_engine_ptr = engine_status.value().get();
-  (*engine_status)->SetDataLoaderForTesting(std::move(data_loader));
-  SessionHandler handler(std::move(*engine_status));
-
-  // A session is created before data is loaded.
-  // data_loader->Build() is called, but engine is not reloaded.
+  // As a session is created before data is loaded, engine is not reloaded yet.
   uint64_t id1 = 0;
-  ASSERT_TRUE(CreateSession(&handler, &id1));
-  EXPECT_EQ(&handler.engine(), old_engine_ptr);
-  EXPECT_NE(handler.engine().GetDataVersion(), data_version);
+  ASSERT_TRUE(CreateSession(*handler_, &id1));
+  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
+  EXPECT_EQ(&handler_->engine(), old_engine_ptr);
 
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
+  ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
             EngineReloadResponse::ACCEPTED);
 
   // Another session is created. Since the handler already holds one session
   // (id1), new data manager is not used.
   uint64_t id2 = 0;
-  ASSERT_TRUE(CreateSession(&handler, &id2));
-  EXPECT_EQ(&handler.engine(), old_engine_ptr);
-  EXPECT_NE(handler.engine().GetDataVersion(), data_version);
+  ASSERT_TRUE(CreateSession(*handler_, &id2));
+  EXPECT_EQ(&handler_->engine(), old_engine_ptr);
+  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
+  EXPECT_NE(handler_->engine().GetDataVersion(), mock_version_);
 
   // All the sessions were deleted.
-  ASSERT_TRUE(DeleteSession(&handler, id1));
-  ASSERT_TRUE(DeleteSession(&handler, id2));
+  ASSERT_TRUE(DeleteSession(*handler_, id1));
+  ASSERT_TRUE(DeleteSession(*handler_, id2));
 
   // A new session is created. Since the handler holds no session, engine
   // reloads the new data manager.
   uint64_t id3 = 0;
-  ASSERT_TRUE(CreateSession(&handler, &id3));
+  ASSERT_TRUE(CreateSession(*handler_, &id3));
   // New data is reloaded, but the engine is the same object.
-  EXPECT_EQ(&handler.engine(), old_engine_ptr);
-  EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
+  EXPECT_EQ(&handler_->engine(), old_engine_ptr);
+  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
 }
 
 TEST_F(SessionHandlerTest, GetServerVersionTest) {
@@ -971,37 +808,17 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
   auto modules = std::make_unique<engine::Modules>();
   CHECK_OK(modules->Init(std::move(data_manager)));
 
-  auto data_loader = std::make_unique<MockDataLoader>();
-
-  EngineReloadRequest request;
-  request.set_engine_type(EngineReloadRequest::MOBILE);
-  request.set_file_path("placeholder");  // OK for MockDataLoader
-  const uint64_t data_id = data_loader->GetRequestId(request);
-
-  EXPECT_CALL(*data_loader, Build(data_id))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = data_id;
-        result.response.mutable_request()->set_engine_type(
-            EngineReloadRequest::MOBILE);
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        result.modules = std::move(modules);
-        return result;
-      })));
-  engine->SetDataLoaderForTesting(std::move(data_loader));
-
   SessionHandler handler(std::move(engine));
   EXPECT_EQ(handler.engine().GetPredictorName(), "MinimalPredictor");
 
-  ASSERT_EQ(SendMockEngineReloadRequest(&handler, request),
+  ASSERT_EQ(SendMockEngineReloadRequest(handler, mock_request_),
             EngineReloadResponse::ACCEPTED);
 
   // CreateSession updates the Engine including the Predictor.
   uint64_t id = 0;
-  ASSERT_TRUE(CreateSession(&handler, &id));
+  ASSERT_TRUE(CreateSession(handler, &id));
   EXPECT_EQ(handler.engine().GetPredictorName(), "MobilePredictor");
-  EXPECT_EQ(handler.engine().GetDataVersion(), data_version);
+  EXPECT_EQ(handler.engine().GetDataVersion(), mock_version_);
 }
 
 
