@@ -149,7 +149,7 @@ class Engine : public EngineInterface {
   }
 
   void SetRescorer(
-      std::unique_ptr<const prediction::RescorerInterface> rescorer) {
+      std::unique_ptr<const prediction::RescorerInterface> rescorer) override {
     modules_->SetRescorer(std::move(rescorer));
   }
 
