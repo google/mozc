@@ -30,6 +30,7 @@
 #ifndef MOZC_PREDICTION_DICTIONARY_PREDICTOR_H_
 #define MOZC_PREDICTION_DICTIONARY_PREDICTOR_H_
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -306,10 +307,21 @@ class DictionaryPredictor : public PredictorInterface {
                            absl::Span<Result> results) const;
   static void AddRescoringDebugDescription(Segments *segments);
 
+  // Inserts the previous candidate to `segments` if previous
+  // and current result are consistent. Returns true if
+  // previous candidate is inserted.
+  bool MaybeInsertPreviousTopResult(const Result &current_top_result,
+                                    const ConversionRequest &request,
+                                    Segments *segments) const;
+
   // Test peer to access private methods
   friend class DictionaryPredictorTestPeer;
 
   std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator_;
+
+  // Previous top result and request key length. (not result length)
+  mutable std::shared_ptr<Result> prev_top_result_;
+  mutable std::atomic<int32_t> prev_top_key_length_ = 0;
 
   const ImmutableConverterInterface *immutable_converter_;
   const Connector &connector_;

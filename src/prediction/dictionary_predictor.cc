@@ -30,6 +30,7 @@
 #include "prediction/dictionary_predictor.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -42,6 +43,7 @@
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -506,6 +508,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     const Result &result = *result_ptrs[result_ptrs.size() - i - 1];
     if (added >= max_candidates_size || result.cost >= kInfinity) {
       break;
+    }
+
+    if (i == 0 && MaybeInsertPreviousTopResult(result, request, segments)) {
+      ++added;
     }
 
     std::string log_message;
@@ -1377,6 +1383,48 @@ void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
     const size_t rank = i + 1;
     AppendDescription(*c, orig_rank[c], "→", rank);
   }
+}
+
+bool DictionaryPredictor::MaybeInsertPreviousTopResult(
+    const Result &current_top_result, const ConversionRequest &request,
+    Segments *segments) const {
+  const int32_t max_diff = request.request()
+                             .decoder_experiment_params()
+                             .candidate_consistency_cost_max_diff();
+  if (max_diff == 0 || !segments || segments->conversion_segments_size() <= 0) {
+    return false;
+  }
+
+  auto prev_top_result = std::atomic_load(&prev_top_result_);
+
+  // Updates the key length.
+  const int cur_top_key_length = segments->conversion_segment(0).key().size();
+  const int prev_top_key_length = prev_top_key_length_.exchange(
+      cur_top_key_length);  // returns the old value.
+
+  // Insert condition.
+  // 1. prev key length < current key length (incrementally character is added)
+  // 2. cost diff is less than max_diff.
+  // 3. current key is shorter than previous key.
+  // 4. current key is the prefix of previous key.
+  if (prev_top_result && cur_top_key_length > prev_top_key_length &&
+      std::abs(current_top_result.cost - prev_top_result->cost) < max_diff &&
+      current_top_result.key.size() < prev_top_result->key.size() &&
+      absl::StartsWith(prev_top_result->key, current_top_result.key)) {
+    const KeyValueView history = GetHistoryKeyAndValue(*segments);
+    FillCandidate(
+        request, *prev_top_result,
+        GetCandidateKeyAndValue(*prev_top_result, history), {},
+        segments->mutable_conversion_segment(0)->push_back_candidate());
+    // Do not need to remember the previous key as `prev_top_result` is still
+    // top result.
+    return true;
+  }
+
+  // Remembers the top result.
+  std::atomic_store(&prev_top_result_,
+                    std::make_shared<Result>(current_top_result));
+  return false;
 }
 
 }  // namespace mozc::prediction

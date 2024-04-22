@@ -155,6 +155,13 @@ class DictionaryPredictorTestPeer {
     DictionaryPredictor::AddRescoringDebugDescription(segments);
   }
 
+  bool MaybeInsertPreviousTopResult(const Result &current_top_result,
+                                    const ConversionRequest &request,
+                                    Segments *segments) const {
+    return predictor_.MaybeInsertPreviousTopResult(current_top_result, request,
+                                                   segments);
+  }
+
  private:
   DictionaryPredictor predictor_;
 };
@@ -2017,6 +2024,119 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionMixingParamsTest) {
   EXPECT_TRUE(GetTypingCorrectionMixingParams(*convreq_for_suggestion_,
                                               segments, base, corrected)
                   .literal_at_least_second);
+}
+
+TEST_F(DictionaryPredictorTest, MaybeInsertPreviousTopResultTest) {
+  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+
+  // Result for しがこ (Initialize the prev_top).
+  Result init_top =
+      CreateResult4("しがこ", "志賀湖", prediction::UNIGRAM, Token::NONE);
+
+  // Result for しがこう
+  Result pre_top = CreateResult4("しがこうげん", "志賀高原",
+                                 prediction::UNIGRAM, Token::NONE);
+
+  // Result for しがこうげ. Inconsistent with prev top.
+  Result cur_top =
+      CreateResult4("しがこうげ", "子が原", prediction::UNIGRAM, Token::NONE);
+
+  // Result for しがこうげ, but already consistent with the prev_top.
+  Result cur_already_consintent_top = CreateResult4(
+      "しがこうげんすきー", "志賀高原スキー", prediction::UNIGRAM, Token::NONE);
+
+  pre_top.cost = 1000;
+  cur_top.cost = 500;
+  cur_already_consintent_top.cost = 500;
+
+  Segments segments;
+  auto *params = request_->mutable_decoder_experiment_params();
+
+  // max diff is zero. No insertion happens.
+  {
+    params->set_candidate_consistency_cost_max_diff(0);
+
+    InitSegmentsWithKey("しが", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        init_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しがこう", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しがこうげ", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, &segments));
+  }
+
+  {
+    // max diff is 2000.
+    params->set_candidate_consistency_cost_max_diff(2000);
+
+    InitSegmentsWithKey("しが", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        init_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しがこう", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しがこうげ", &segments);
+    EXPECT_TRUE(predictor.MaybeInsertPreviousTopResult(
+        cur_top, *convreq_for_suggestion_, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "志賀高原");
+  }
+
+  // Already consistent.
+  {
+    InitSegmentsWithKey("しが", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        init_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しがこう", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しがこうげ", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        cur_already_consintent_top, *convreq_for_suggestion_, &segments));
+  }
+
+  // max diff is 200 -> not inserted
+  {
+    params->set_candidate_consistency_cost_max_diff(200);
+
+    InitSegmentsWithKey("しが", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        init_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しがこう", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しがこうげ", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        cur_top, *convreq_for_suggestion_, &segments));
+  }
+
+  // No insertion happens when typing backspaces.
+  {
+    params->set_candidate_consistency_cost_max_diff(2000);
+
+    InitSegmentsWithKey("しがこうげ", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        cur_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しがこう", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, &segments));
+
+    InitSegmentsWithKey("しが", &segments);
+    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
+        init_top, *convreq_for_suggestion_, &segments));
+  }
 }
 
 }  // namespace
