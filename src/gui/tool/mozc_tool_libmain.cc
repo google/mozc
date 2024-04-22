@@ -84,12 +84,12 @@ int RunPrelaunchProcesses(int argc, char *argv[]);
 namespace {
 
 void SetFlagsFromEnv() {
-  const std::string mode = Environ::GetEnv("FLAGS_mode");
+  const std::string mode = mozc::Environ::GetEnv("FLAGS_mode");
   if (!mode.empty()) {
     absl::SetFlag(&FLAGS_mode, mode);
   }
 
-  const std::string error_type = Environ::GetEnv("FLAGS_error_type");
+  const std::string error_type = mozc::Environ::GetEnv("FLAGS_error_type");
   if (!error_type.empty()) {
     absl::SetFlag(&FLAGS_error_type, error_type);
   }
