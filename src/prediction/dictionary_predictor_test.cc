@@ -38,13 +38,13 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/memory/memory.h"
 #include "absl/random/random.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -175,6 +175,7 @@ using ::testing::Field;
 using ::testing::Invoke;
 using ::testing::Return;
 using ::testing::SetArgPointee;
+using ::testing::StrictMock;
 
 constexpr int kInfinity = (2 << 20);
 
@@ -217,15 +218,6 @@ Result CreateResult7(absl::string_view key, absl::string_view value, int wcost,
                      float typing_correction_score) {
   Result result = CreateResult6(key, value, wcost, cost, types, token_attrs);
   result.typing_correction_score = typing_correction_score;
-  return result;
-}
-
-Result CreateResult8(absl::string_view key, absl::string_view value, int wcost,
-                     int cost, int lid, int rid, PredictionTypes types,
-                     Token::AttributesBitfield token_attrs) {
-  Result result = CreateResult6(key, value, wcost, cost, types, token_attrs);
-  result.lid = lid;
-  result.rid = rid;
   return result;
 }
 
@@ -272,30 +264,6 @@ void PrependHistorySegments(absl::string_view key, absl::string_view value,
   c->content_key = c->key;
   c->value.assign(value.data(), value.size());
   c->content_value = c->value;
-}
-
-void GenerateKeyEvents(absl::string_view text,
-                       std::vector<commands::KeyEvent> *keys) {
-  keys->clear();
-  for (const char32_t w : Util::Utf8ToUtf32(text)) {
-    commands::KeyEvent key;
-    if (w <= 0x7F) {  // IsAscii, w is unsigned.
-      key.set_key_code(w);
-    } else {
-      key.set_key_code('?');
-      *key.mutable_key_string() = Util::CodepointToUtf8(w);
-    }
-    keys->push_back(key);
-  }
-}
-
-void InsertInputSequence(absl::string_view text, composer::Composer *composer) {
-  std::vector<commands::KeyEvent> keys;
-  GenerateKeyEvents(text, &keys);
-
-  for (size_t i = 0; i < keys.size(); ++i) {
-    composer->InsertCharacterKeyEvent(keys[i]);
-  }
 }
 
 bool FindCandidateByKeyValue(const Segment &segment, absl::string_view key,
@@ -1169,7 +1137,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigramOnMobile) {
   EXPECT_EQ(exact_count, 30);
 }
 
-TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigrmForHandwriting) {
+TEST_F(DictionaryPredictorTest, DoNotFilterUnigrmsForHandwriting) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
@@ -1192,9 +1160,15 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigrmForHandwriting) {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
     std::vector<Result> results;
-    for (int i = 0; i < 30; ++i) {
+    for (int i = 0; i < 10; ++i) {
       // Exact entries
       results.push_back(CreateResult5("かん字", absl::StrCat(i, "漢字E"),
+                                      5000 + i, prediction::UNIGRAM,
+                                      Token::NONE));
+    }
+    for (int i = 0; i < 10; ++i) {
+      // Keys can be longer than the segment key
+      results.push_back(CreateResult5("かんじよみ", absl::StrCat(i, "漢字E"),
                                       5000 + i, prediction::UNIGRAM,
                                       Token::NONE));
     }
@@ -1214,7 +1188,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigrmForHandwriting) {
       exact_count++;
     }
   }
-  EXPECT_EQ(exact_count, 30);
+  EXPECT_EQ(exact_count, 20);
 }
 
 TEST_F(DictionaryPredictorTest, DoNotFilterZeroQueryCandidatesOnMobile) {
@@ -1925,6 +1899,43 @@ TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
   EXPECT_EQ(cand1->description, "3→1");
   EXPECT_EQ(cand2->description, "2→2");
   EXPECT_EQ(cand3->description, "1→3");
+}
+
+TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
+  // Use StrictMock to make sure that RescoreResults() is not be called
+  auto rescorer = std::make_unique<StrictMock<prediction::MockRescorer>>();
+  auto data_and_predictor =
+      std::make_unique<MockDataAndPredictor>(std::move(rescorer));
+
+  // Fill handwriting request and composer
+  {
+    request_->set_zero_query_suggestion(true);
+    request_->set_mixed_conversion(false);
+    request_->set_kana_modifier_insensitive_conversion(false);
+    request_->set_auto_partial_suggestion(false);
+
+    commands::SessionCommand command;
+    commands::SessionCommand::CompositionEvent *composition_event =
+        command.add_composition_events();
+    composition_event->set_composition_string("かん字");
+    composition_event->set_probability(1.0);
+    composer_->SetCompositionsForHandwriting(command.composition_events());
+  }
+
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("かんじ", "かん字", 0, prediction::UNIGRAM,
+                        Token::NONE),
+          CreateResult5("かんじ", "漢字", 500, prediction::UNIGRAM,
+                        Token::NONE)}));
+
+  Segments segments;
+  InitSegmentsWithKey("かんじ", &segments);
+
+  predictor.PredictForRequest(*convreq_for_prediction_, &segments);
 }
 
 TEST_F(DictionaryPredictorTest, TypingCorrectionMixingParamsTest) {

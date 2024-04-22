@@ -138,6 +138,7 @@ class DictionaryPredictor : public PredictorInterface {
     const bool is_mixed_conversion_;
     const bool auto_partial_suggestion_;
     const bool include_exact_key_;
+    const bool is_handwriting_;
 
     std::string history_key_;
     std::string history_value_;

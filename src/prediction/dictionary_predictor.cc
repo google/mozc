@@ -43,11 +43,12 @@
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
@@ -672,8 +673,8 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
       auto_partial_suggestion_(
           request_util::IsAutoPartialSuggestionEnabled(request)),
-      include_exact_key_(IsMixedConversionEnabled(request.request()) ||
-                         request_util::IsHandwriting(request)) {
+      include_exact_key_(IsMixedConversionEnabled(request.request())),
+      is_handwriting_(request_util::IsHandwriting(request)) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);
   strings::Assign(history_value_, history.value);
@@ -717,6 +718,12 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
       suggestion_filter_.IsBadSuggestion(result.value)) {
     *log_message = "Bad suggestion";
     return true;
+  }
+
+  if (is_handwriting_) {
+    // Only unigram results are appended for handwriting and we do not need to
+    // apply filtering.
+    return false;
   }
 
   // Don't suggest exactly the same candidate as key.
@@ -1345,6 +1352,10 @@ void DictionaryPredictor::MaybeRescoreResults(
     absl::Span<Result> results) const {
   const RescorerInterface *const rescorer = modules_.GetRescorer();
   if (rescorer == nullptr) return;
+  if (request_util::IsHandwriting(request)) {
+    // We want to fix the first candidate for handwriting request.
+    return;
+  }
   if (IsDebug(request)) {
     for (Result &r : results) r.cost_before_rescoring = r.cost;
   }
@@ -1389,8 +1400,8 @@ bool DictionaryPredictor::MaybeInsertPreviousTopResult(
     const Result &current_top_result, const ConversionRequest &request,
     Segments *segments) const {
   const int32_t max_diff = request.request()
-                             .decoder_experiment_params()
-                             .candidate_consistency_cost_max_diff();
+                               .decoder_experiment_params()
+                               .candidate_consistency_cost_max_diff();
   if (max_diff == 0 || !segments || segments->conversion_segments_size() <= 0) {
     return false;
   }
