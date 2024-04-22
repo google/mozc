@@ -215,6 +215,7 @@ mozc_cc_library(
     deps = [
         ":googletest",
         ":gunit",
+        "//base:environ",
         "//base:file_util",
         "//base:system_util",
         "//base/file:temp_dir",

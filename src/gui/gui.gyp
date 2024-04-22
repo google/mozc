@@ -679,6 +679,7 @@
           'dependencies': [
             'gen_mozc_tool_lib_info_plist',
             'prelauncher_lib',
+            '<(mozc_oss_src_dir)/base/base.gyp:base_core',
             '<(mozc_oss_src_dir)/base/base.gyp:breakpad',
           ],
           'link_settings': {

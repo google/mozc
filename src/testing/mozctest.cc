@@ -42,6 +42,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/environ.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/system_util.h"
@@ -50,29 +51,19 @@
 namespace mozc {
 namespace testing {
 
-namespace {
-std::string GetEnv(const char *name) {
-  const char *env = std::getenv(name);
-  if (env == nullptr) {
-    return "";
-  }
-  return env;
-}
-}  // namespace
-
 std::string GetSourcePath(absl::Span<const absl::string_view> components) {
   std::vector<absl::string_view> abs_components;
 
   std::string test_srcdir = absl::GetFlag(FLAGS_test_srcdir);
   if (test_srcdir.empty()) {
-    test_srcdir = GetEnv("TEST_SRCDIR");
+    test_srcdir = Environ::GetEnv("TEST_SRCDIR");
   }
   if (!test_srcdir.empty()) {
     abs_components.push_back(test_srcdir);
   }
 
   // Appends workspace from the env var.
-  const std::string test_workspace = GetEnv("TEST_WORKSPACE");
+  const std::string test_workspace = Environ::GetEnv("TEST_WORKSPACE");
   if (!test_workspace.empty()) {
     abs_components.push_back(test_workspace);
   }
