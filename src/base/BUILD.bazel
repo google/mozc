@@ -469,13 +469,17 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":singleton",
+        "//base/strings:zstring_view",
     ],
 )
 
 mozc_cc_library(
     name = "environ_mock",
     hdrs = ["environ_mock.h"],
-    deps = [":environ"],
+    deps = [
+        ":environ",
+        "//base/strings:zstring_view",
+    ],
 )
 
 mozc_cc_library(
