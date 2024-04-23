@@ -518,10 +518,6 @@
             ['branding=="GoogleJapaneseInput"', {
               'dependencies': [
                 'DevConfirmPane',
-                # Skip the intermediate codesigns since the codesign_DiskImage
-                # target performs the codesign later.
-                # TODO(b/332803337): Remove the rules after the confirmation.
-                # 'codesign_client',
               ],
             }],
           ],
