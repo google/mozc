@@ -2899,6 +2899,8 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwriting) {
   Segments segments;
   // Handwriting request
   request_test_util::FillMobileRequestForHandwriting(request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_max_composition_event_to_process(1);
   {
     commands::SessionCommand command;
     commands::SessionCommand::CompositionEvent *composition_event =
@@ -2972,6 +2974,13 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwriting) {
   EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "漢字辞典"));
   EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "漢字字典"));
   EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "換字字典"));
+
+  for (const Result &result : results) {
+    if (result.value == "かん字じ典") {
+      // Top recognition result
+      EXPECT_EQ(result.wcost, 0);
+    }
+  }
 }
 
 TEST_F(DictionaryPredictionAggregatorTest, HandwritingT13N) {
@@ -2983,6 +2992,8 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingT13N) {
   Segments segments;
   // Handwriting request
   request_test_util::FillMobileRequestForHandwriting(request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_max_composition_event_to_process(1);
   {
     commands::SessionCommand command;
     commands::SessionCommand::CompositionEvent *composition_event =
