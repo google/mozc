@@ -30,8 +30,10 @@
 #include "base/environ.h"
 
 #include <cstdlib>
+#include <string>
 
 #include "base/singleton.h"
+#include "base/strings/zstring_view.h"
 
 namespace mozc {
 
@@ -41,17 +43,17 @@ class EnvironImpl : public EnvironInterface {
   EnvironImpl() = default;
   ~EnvironImpl() override = default;
 
-  const char *GetEnv(const char* env_var) override {
-    return std::getenv(env_var);
+  std::string GetEnv(zstring_view env_var) override {
+    const char* value = std::getenv(env_var.data());
+    return value == nullptr ? "" : value;
   }
 };
 
 using EnvironSingleton = SingletonMockable<EnvironInterface, EnvironImpl>;
 }  // namespace
 
-
-const char *Environ::GetEnv(const char *env_var) {
-  return EnvironSingleton::Get()->GetEnv(env_var);
+std::string Environ::GetEnv(zstring_view env_var) {
+  return EnvironSingleton::Get()->GetEnv(env_var.data());
 }
 
 void Environ::SetMockForUnitTest(EnvironInterface *mock) {

@@ -286,8 +286,8 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
   // 3. Otherwise
   //    use "$HOME/.config/mozc" as the default value of $XDG_CONFIG_HOME
   // https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-  const char *home = Environ::GetEnv("HOME");
-  if (home == nullptr) {
+  const std::string home = Environ::GetEnv("HOME");
+  if (home.empty()) {
     char buf[1024];
     struct passwd pw, *ppw;
     const uid_t uid = geteuid();
@@ -303,8 +303,8 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
     return old_dir;
   }
 
-  const char *xdg_config_home = Environ::GetEnv("XDG_CONFIG_HOME");
-  if (xdg_config_home) {
+  const std::string xdg_config_home = Environ::GetEnv("XDG_CONFIG_HOME");
+  if (!xdg_config_home.empty()) {
     return FileUtil::JoinPath(xdg_config_home, "mozc");
   }
   return FileUtil::JoinPath(home, ".config/mozc");
@@ -662,11 +662,7 @@ std::string GetSessionIdString() {
 
 std::string SystemUtil::GetDesktopNameAsString() {
 #if defined(__linux__) || defined(__wasm__)
-  const char *display = Environ::GetEnv("DISPLAY");
-  if (display == nullptr) {
-    return "";
-  }
-  return display;
+  return Environ::GetEnv("DISPLAY");
 #endif  // __linux__ || __wasm__
 
 #if defined(__APPLE__)

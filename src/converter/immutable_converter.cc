@@ -41,6 +41,8 @@
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -272,6 +274,80 @@ Lattice *GetLattice(Segments *segments, bool is_prediction) {
 
   return lattice;
 }
+
+// Returns the vector of the inner segment's key.
+std::vector<absl::string_view> GetBoundaryInfo(const Segment::Candidate &c) {
+  std::vector<absl::string_view> ret;
+  for (Segment::Candidate::InnerSegmentIterator iter(&c); !iter.Done();
+       iter.Next()) {
+    ret.emplace_back(iter.GetKey());
+  }
+  return ret;
+}
+
+// Input is a list of FIRST_INNER_SEGMENT candidate, which is the first segment
+// of each n-best path.
+// Basic idea is that we can filter a candidate when we already added the
+// candidate with the same key and there is a cost gap
+//
+// Example:
+//   segment key: "わたしのなまえは"
+//   candidates: {{"わたしの", "私の"}, {"わたしの", "渡しの"}, {"わたし",
+//   "渡し"}}
+// Here,"渡しの" will be filtered if there is a cost gap from "私の"
+class FirstInnerSegmentCandidateChecker {
+ public:
+  explicit FirstInnerSegmentCandidateChecker(const Segment &target_segment)
+      : target_segment_(target_segment) {}
+
+  bool IsGoodCandidate(const Segment::Candidate &c) {
+    if (c.key.size() != target_segment_.key().size() &&
+        IsPrefixAdded(c.value)) {
+      // Filter a candidate if its prefix is already added unless it is the
+      // single segment candidate.
+      return false;
+    }
+
+    if (!Util::ContainsScriptType(c.value, Util::KANJI)) {
+      // Do not filter non-kanji candidate.
+      // It may have unusual candidate cost.
+      return true;
+    }
+
+    constexpr int kCostDiff = 3107;  // 500*log(500)
+    if (const auto &f = min_cost_for_key_.find(c.key);
+        f != min_cost_for_key_.end() && c.cost - f->second > kCostDiff) {
+      return false;
+    }
+
+    return true;
+  }
+
+  void AddEntry(const Segment::Candidate &c) {
+    constexpr bool kPlaceholderValue = true;
+    trie_.AddEntry(c.value, kPlaceholderValue);
+
+    if (Util::ContainsScriptType(c.value, Util::KANJI)) {
+      // Do not use non-kanji entry's cost. Sometimes it is too small.
+      auto [it, inserted] = min_cost_for_key_.try_emplace(c.key, c.cost);
+      if (!inserted) {
+        it->second = std::min(it->second, c.cost);
+      }
+    }
+  }
+
+ private:
+  // Returns true if the prefix of value has already added
+  bool IsPrefixAdded(absl::string_view value) const {
+    bool data;
+    size_t key_length;
+    return trie_.LongestMatch(value, &data, &key_length);
+  }
+
+  const Segment &target_segment_;
+  absl::flat_hash_map<std::string, int> min_cost_for_key_;
+  Trie<bool> trie_;
+};
 
 }  // namespace
 
@@ -1273,11 +1349,11 @@ void ImmutableConverter::MakeLatticeNodesForPredictiveNodes(
   // (search words with between 1 and 6 characters)
   {
     constexpr size_t kMaxSuffixLookupKey = 6;
-    const size_t max_sufffix_len =
+    const size_t max_suffix_len =
         std::min(kMaxSuffixLookupKey, conversion_key_chars.size());
     size_t pos = key.size();
 
-    for (size_t suffix_len = 1; suffix_len <= max_sufffix_len; ++suffix_len) {
+    for (size_t suffix_len = 1; suffix_len <= max_suffix_len; ++suffix_len) {
       pos -=
           conversion_key_chars[conversion_key_chars.size() - suffix_len].size();
       DCHECK_GE(key.size(), pos);
@@ -1972,20 +2048,11 @@ void ImmutableConverter::InsertCandidatesForRealtime(
     InsertCandidates(request, &tmp_segments, lattice, group, kMaxSize,
                      SINGLE_SEGMENT);
 
-    auto get_boundary_info = [](const Segment::Candidate &c) {
-      std::vector<absl::string_view> ret;
-      for (Segment::Candidate::InnerSegmentIterator iter(&c); !iter.Done();
-           iter.Next()) {
-        ret.emplace_back(iter.GetKey());
-      }
-      return ret;
-    };
-
     // InsertCandidates for SINGLE_SEGMENT should insert at least one candidate.
     DCHECK_GT(tmp_segments.conversion_segment(0).candidates_size(), 0);
     const auto &top_cand = tmp_segments.conversion_segment(0).candidate(0);
     const std::vector<absl::string_view> top_boundary =
-        get_boundary_info(top_cand);
+        GetBoundaryInfo(top_cand);
     for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
          ++i) {
       const auto &c = tmp_segments.conversion_segment(0).candidate(i);
@@ -1993,7 +2060,7 @@ void ImmutableConverter::InsertCandidatesForRealtime(
       if (c.cost - top_cand.cost > kCostDiff) {
         continue;
       }
-      if (i != 0 && get_boundary_info(c) == top_boundary) {
+      if (i != 0 && GetBoundaryInfo(c) == top_boundary) {
         // Skip to add the similar candidates.
         continue;
       }
@@ -2043,6 +2110,77 @@ void ImmutableConverter::InsertCandidatesForRealtime(
   }
 }
 
+void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
+    const ConversionRequest &request, const Lattice &lattice,
+    absl::Span<const uint16_t> group, Segments *segments) const {
+  Segment *target_segment = segments->mutable_conversion_segment(0);
+  absl::flat_hash_set<std::string> added;
+
+  Segments tmp_segments = *segments;
+  {
+    // Candidates for the whole path
+    constexpr int kMaxSize = 3;
+    InsertCandidates(request, &tmp_segments, lattice, group, kMaxSize,
+                     SINGLE_SEGMENT);
+
+    // InsertCandidates for SINGLE_SEGMENT should insert at least one candidate.
+    DCHECK_GT(tmp_segments.conversion_segment(0).candidates_size(), 0);
+    const auto &top_cand = tmp_segments.conversion_segment(0).candidate(0);
+    const std::vector<absl::string_view> top_boundary =
+        GetBoundaryInfo(top_cand);
+    for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
+         ++i) {
+      const auto &c = tmp_segments.conversion_segment(0).candidate(i);
+      constexpr int kCostDiff = 2302;  // 500*log(100)
+      if (c.cost - top_cand.cost > kCostDiff) {
+        continue;
+      }
+      const std::vector<absl::string_view> boundary = GetBoundaryInfo(c);
+      if (boundary.size() > 2 && i != 0 && boundary == top_boundary) {
+        // Skip to add the similar candidates excepting the case that the
+        // top candidate has the simple structure (i.e., "のXX", etc)
+        continue;
+      }
+      Segment::Candidate *candidate = target_segment->add_candidate();
+      *candidate = c;
+      added.insert(c.value);
+    }
+  }
+  tmp_segments.mutable_conversion_segment(0)->clear_candidates();
+
+  {
+    // Candidates for the first segment of each n-best path.
+    InsertCandidates(request, &tmp_segments, lattice, group,
+                     request.max_conversion_candidates_size() -
+                         target_segment->candidates_size(),
+                     FIRST_INNER_SEGMENT);
+    FirstInnerSegmentCandidateChecker checker(*target_segment);
+    for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
+         ++i) {
+      Segment::Candidate *c =
+          tmp_segments.mutable_conversion_segment(0)->mutable_candidate(i);
+      if (added.contains(c->value)) {
+        continue;
+      }
+      if (c->key.size() != target_segment->key().size()) {
+        // Explicitly add suffix penalty, since the penalty is not added for non
+        // end nodes.
+        const int32_t suffix_penalty = segmenter_->GetSuffixPenalty(c->rid);
+        c->wcost += suffix_penalty;
+        c->cost += suffix_penalty;
+      }
+
+      if (!checker.IsGoodCandidate(*c)) {
+        continue;
+      }
+      Segment::Candidate *candidate = target_segment->add_candidate();
+      *candidate = *c;
+      checker.AddEntry(*c);
+      added.insert(c->value);
+    }
+  }
+}
+
 void ImmutableConverter::InsertCandidatesForPrediction(
     const ConversionRequest &request, const Lattice &lattice,
     absl::Span<const uint16_t> group, Segments *segments) const {
@@ -2059,7 +2197,14 @@ void ImmutableConverter::InsertCandidatesForPrediction(
   if (request.request()
           .decoder_experiment_params()
           .enable_realtime_conversion_v2()) {
-    InsertCandidatesForRealtime(request, lattice, group, segments);
+    if (request.request()
+            .decoder_experiment_params()
+            .enable_realtime_conversion_candidate_checker()) {
+      InsertCandidatesForRealtimeWithCandidateChecker(request, lattice, group,
+                                                      segments);
+    } else {
+      InsertCandidatesForRealtime(request, lattice, group, segments);
+    }
     return;
   }
 

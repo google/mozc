@@ -353,6 +353,10 @@ mozc_cc_test(
         "common.h",
         "session_handler_test.cc",
     ],
+    data = [
+        "//data_manager/oss:mozc.data",
+        "//data_manager/testing:mock_mozc.data",
+    ],
     deps = [
         ":session_handler",
         ":session_handler_interface",
@@ -364,9 +368,11 @@ mozc_cc_test(
         "//composer:query",
         "//config:config_handler",
         "//converter:segments",
+        "//data_manager",
         "//data_manager/testing:mock_data_manager",
         "//engine",
         "//engine:engine_builder",
+        "//engine:engine_interface",
         "//engine:engine_mock",
         "//engine:minimal_engine",
         "//engine:mock_data_engine_factory",

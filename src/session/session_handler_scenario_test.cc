@@ -297,6 +297,14 @@ INSTANTIATE_TEST_SUITE_P(
             []() {
               auto request = GetMobileRequest();
               request.mutable_decoder_experiment_params()
+                  ->set_enable_realtime_conversion_v2(true);
+              request.mutable_decoder_experiment_params()
+                  ->set_enable_realtime_conversion_candidate_checker(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
                   ->set_enable_findability_oriented_order(true);
               return request;
             }(),

@@ -30,6 +30,10 @@
 #ifndef MOZC_BASE_ENVIRON_H_
 #define MOZC_BASE_ENVIRON_H_
 
+#include <string>
+
+#include "base/strings/zstring_view.h"
+
 namespace mozc {
 
 // Interface class to make a mock of Environ.
@@ -37,7 +41,7 @@ class EnvironInterface {
  public:
   virtual ~EnvironInterface() = default;
 
-  virtual const char *GetEnv(const char *env_var) = 0;
+  virtual std::string GetEnv(zstring_view env_var) = 0;
 
  protected:
   EnvironInterface() = default;
@@ -53,9 +57,9 @@ class Environ {
   virtual ~Environ() = default;
 
   // returns the value of the specified environment variable.
-  static const char *GetEnv(const char *env_var);
+  static std::string GetEnv(zstring_view env_var);
 
-  // sets a mock for unittest.
+  // sets a mock for unit test.
   static void SetMockForUnitTest(EnvironInterface *mock);
 };
 

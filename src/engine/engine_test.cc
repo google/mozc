@@ -29,319 +29,178 @@
 
 #include "engine/engine.h"
 
-#include <cstdint>
 #include <memory>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
-#include "base/thread.h"
 #include "composer/query.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "engine/data_loader.h"
 #include "engine/modules.h"
 #include "engine/spellchecker_interface.h"
-#include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace engine {
 
 namespace {
 
-using ::testing::InSequence;
-using ::testing::Return;
-
-class MockSpellchecker : public engine::SpellcheckerInterface {
+class SpellcheckerForTesting : public engine::SpellcheckerInterface {
  public:
-  MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
-              (const commands::CheckSpellingRequest &), (const, override));
-  MOCK_METHOD(std::optional<std::vector<composer::TypeCorrectedQuery>>,
-              CheckCompositionSpelling,
-              (absl::string_view, absl::string_view, const commands::Request &),
-              (const, override));
-  MOCK_METHOD(void, MaybeApplyHomonymCorrection, (Segments *),
-              (const override));
+  commands::CheckSpellingResponse CheckSpelling(
+      const commands::CheckSpellingRequest &) const override {
+    return commands::CheckSpellingResponse();
+  }
+
+  std::optional<std::vector<composer::TypeCorrectedQuery>>
+  CheckCompositionSpelling(absl::string_view, absl::string_view, bool,
+                           const commands::Request &) const override {
+    return std::nullopt;
+  }
+
+  void MaybeApplyHomonymCorrection(Segments *) const override {}
 };
 
-class MockDataLoader : public DataLoader {
- public:
-  MOCK_METHOD(ResponseFuture, Build, (uint64_t), (const override));
-};
+constexpr absl::string_view kMockMagicNumber = "MOCK";
+constexpr absl::string_view kOssMagicNumber = "\xEFMOZC\x0D\x0A";
 }  // namespace
 
-TEST(EngineTest, ReloadModulesTest) {
-  auto data_manager = std::make_unique<testing::MockDataManager>();
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::move(data_manager));
-  CHECK_OK(engine_status);
+class EngineTest : public ::testing::Test {
+ protected:
+  EngineTest() {
+    const std::string mock_path = testing::GetSourcePath(
+        {MOZC_SRC_COMPONENTS("data_manager"), "testing", "mock_mozc.data"});
+    mock_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    mock_request_.set_file_path(mock_path);
+    mock_request_.set_magic_number(kMockMagicNumber);
 
-  std::unique_ptr<Engine> engine = std::move(engine_status.value());
-  MockSpellchecker spellchecker;
-  engine->SetSpellchecker(&spellchecker);
-  EXPECT_EQ(engine->GetModulesForTesting()->GetSpellchecker(), &spellchecker);
+    const std::string oss_path = testing::GetSourcePath(
+        {MOZC_SRC_COMPONENTS("data_manager"), "oss", "mozc.data"});
+    oss_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    oss_request_.set_file_path(oss_path);
+    oss_request_.set_magic_number(kOssMagicNumber);
+
+    const std::string invalid_path = testing::GetSourcePath(
+        {MOZC_SRC_COMPONENTS("data_manager"), "invalid", "mozc.data"});
+    invalid_path_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    invalid_path_request_.set_file_path(invalid_path);
+    invalid_path_request_.set_magic_number(kOssMagicNumber);
+
+    invalid_data_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    invalid_data_request_.set_file_path(mock_path);
+    invalid_data_request_.set_magic_number(kOssMagicNumber);
+
+    DataManager mock_data_manager;
+    mock_data_manager.InitFromFile(mock_request_.file_path(),
+                                   mock_request_.magic_number());
+    mock_version_ = mock_data_manager.GetDataVersion();
+
+    DataManager oss_data_manager;
+    oss_data_manager.InitFromFile(oss_request_.file_path(),
+                                  oss_request_.magic_number());
+    oss_version_ = oss_data_manager.GetDataVersion();
+  }
+
+  void SetUp() override {
+    engine_ = Engine::CreateEngine();
+    engine_->SetAlwaysWaitForLoaderResponseFutureForTesting(true);
+  }
+
+  std::unique_ptr<Engine> engine_;
+
+  std::string mock_version_;
+  std::string oss_version_;
+
+  EngineReloadRequest mock_request_;
+  EngineReloadRequest oss_request_;
+  EngineReloadRequest invalid_path_request_;
+  EngineReloadRequest invalid_data_request_;
+};
+
+TEST_F(EngineTest, ReloadModulesTest) {
+  SpellcheckerForTesting spellchecker;
+  engine_->SetSpellchecker(&spellchecker);
+  EXPECT_EQ(engine_->GetModulesForTesting()->GetSpellchecker(), &spellchecker);
 
   auto modules = std::make_unique<engine::Modules>();
   CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
 
   const bool is_mobile = true;
-  CHECK_OK(engine->ReloadModules(std::move(modules), is_mobile));
+  CHECK_OK(engine_->ReloadModules(std::move(modules), is_mobile));
 
-  EXPECT_EQ(engine->GetModulesForTesting()->GetSpellchecker(), &spellchecker);
+  EXPECT_EQ(engine_->GetModulesForTesting()->GetSpellchecker(), &spellchecker);
 }
 
 // Tests the interaction with DataLoader for successful Engine
 // reload event.
-TEST(EngineTest, DataLoadSuccessfulScenarioTest) {
-  auto data_manager = std::make_unique<testing::MockDataManager>();
-  absl::string_view data_version = "DataLoadSuccessfulScenarioTest";
-  EXPECT_CALL(*data_manager, GetDataVersion())
-      .WillRepeatedly(Return(data_version));
-  auto modules = std::make_unique<engine::Modules>();
-  CHECK_OK(modules->Init(std::move(data_manager)));
-
-  auto data_loader = std::make_unique<MockDataLoader>();
-
-  EngineReloadRequest request;
-  request.set_engine_type(EngineReloadRequest::MOBILE);
-  request.set_file_path("placeholder");  // OK for MockDataLoader
-  const uint64_t id = data_loader->GetRequestId(request);
-
-  EXPECT_CALL(*data_loader, Build(id))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        // takes 0.1 seconds to make engine.
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = id;
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        result.modules = std::move(modules);
-        return result;
-      })));
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
-  EXPECT_OK(engine_status);
-
-  Engine &engine = *engine_status.value();
-  engine.SetDataLoaderForTesting(std::move(data_loader));
-
-  EXPECT_TRUE(engine.SendEngineReloadRequest(request));
-
+TEST_F(EngineTest, DataLoadSuccessfulScenarioTest) {
   EngineReloadResponse response;
-  EXPECT_TRUE(engine.MaybeReloadEngine(&response));
 
-  // When the engine is created first, we wait until the engine gets ready.
-  EXPECT_EQ(engine.GetDataVersion(), data_version);
+  // The engine is not updated yet.
+  EXPECT_NE(engine_->GetDataVersion(), mock_version_);
 
-  // New session is created, but Build is not called as the id is the same.
-  EXPECT_TRUE(engine.SendEngineReloadRequest(request));
-  EXPECT_FALSE(engine.MaybeReloadEngine(&response));
-  EXPECT_EQ(engine.GetDataVersion(), data_version);
+  // The engine is updated with the request.
+  EXPECT_TRUE(engine_->SendEngineReloadRequest(mock_request_));
+  EXPECT_TRUE(engine_->MaybeReloadEngine(&response));
+  EXPECT_EQ(engine_->GetDataVersion(), mock_version_);
+
+  // The engine is not updated with the same request.
+  EXPECT_TRUE(engine_->SendEngineReloadRequest(mock_request_));
+  EXPECT_FALSE(engine_->MaybeReloadEngine(&response));
+  EXPECT_EQ(engine_->GetDataVersion(), mock_version_);
 }
 
 // Tests situations to handle multiple new requests.
-TEST(EngineTest, DataUpdateSuccessfulScenarioTest) {
-  auto data_loader = std::make_unique<MockDataLoader>();
-  MockDataLoader *data_loader_ptr = data_loader.get();
-
-  auto data_manager1 = std::make_unique<testing::MockDataManager>();
-  absl::string_view data_version1 = "EngineUpdateSuccessfulScenarioTest_1";
-  EXPECT_CALL(*data_manager1, GetDataVersion())
-      .WillRepeatedly(Return(data_version1));
-  auto modules1 = std::make_unique<engine::Modules>();
-  CHECK_OK(modules1->Init(std::move(data_manager1)));
-
-  auto data_manager2 = std::make_unique<testing::MockDataManager>();
-  absl::string_view data_version2 = "EngineUpdateSuccessfulScenarioTest_2";
-  EXPECT_CALL(*data_manager2, GetDataVersion())
-      .WillRepeatedly(Return(data_version2));
-  auto modules2 = std::make_unique<engine::Modules>();
-  CHECK_OK(modules2->Init(std::move(data_manager2)));
-
-  InSequence seq;  // EXPECT_CALL is called sequentially.
-
-  EngineReloadRequest request1;
-  request1.set_engine_type(EngineReloadRequest::MOBILE);
-  request1.set_file_path("placeholder1");  // OK for MockDataLoader
-  const uint64_t id1 = data_loader->GetRequestId(request1);
-
-  EngineReloadRequest request2;
-  request2.set_engine_type(EngineReloadRequest::MOBILE);
-  request2.set_file_path("placeholder2");  // OK for MockDataLoader
-  const uint64_t id2 = data_loader->GetRequestId(request2);
-
-  EXPECT_CALL(*data_loader, Build(id1))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = id1;
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        result.modules = std::move(modules1);
-        return result;
-      })));
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
-  EXPECT_OK(engine_status);
-
-  Engine &engine = *engine_status.value();
-  engine.SetDataLoaderForTesting(std::move(data_loader));
-  engine.SetAlwaysWaitForLoaderResponseFutureForTesting(true);
-
-  // Send a request, and get a response with id=1.
-  EXPECT_TRUE(engine.SendEngineReloadRequest(request1));
-
+TEST_F(EngineTest, DataUpdateSuccessfulScenarioTest) {
   EngineReloadResponse response;
-  EXPECT_TRUE(engine.MaybeReloadEngine(&response));
 
-  EXPECT_EQ(engine.GetDataVersion(), data_version1);
+  // Send a request, and update the engine.
+  EXPECT_TRUE(engine_->SendEngineReloadRequest(mock_request_));
+  EXPECT_TRUE(engine_->MaybeReloadEngine(&response));
+  EXPECT_EQ(engine_->GetDataVersion(), mock_version_);
 
-  EXPECT_CALL(*data_loader_ptr, Build(id2))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = id2;
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        result.modules = std::move(modules2);
-        return result;
-      })));
-
-  // Send a request, and get a response with id=2.
-  EXPECT_TRUE(engine.SendEngineReloadRequest(request2));
-  EXPECT_TRUE(engine.MaybeReloadEngine(&response));
-  EXPECT_EQ(engine.GetDataVersion(), data_version2);
+  // Send another request, and update the engine again.
+  EXPECT_TRUE(engine_->SendEngineReloadRequest(oss_request_));
+  EXPECT_TRUE(engine_->MaybeReloadEngine(&response));
+  EXPECT_EQ(engine_->GetDataVersion(), oss_version_);
 }
 
 // Tests the interaction with DataLoader in the situation where
 // requested data is broken.
-TEST(EngineTest, ReloadInvalidDataTest) {
-  auto data_loader = std::make_unique<MockDataLoader>();
-  MockDataLoader *data_loader_ptr = data_loader.get();
+TEST_F(EngineTest, ReloadInvalidDataTest) {
+  EXPECT_TRUE(engine_->SendEngineReloadRequest(invalid_path_request_));
 
-  InSequence seq;  // EXPECT_CALL is called sequentially.
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
-  EXPECT_OK(engine_status);
-
-  Engine &engine = *engine_status.value();
-  engine.SetDataLoaderForTesting(std::move(data_loader));
-
-  EngineReloadRequest request;
-  request.set_engine_type(EngineReloadRequest::MOBILE);
-  request.set_file_path("placeholder");  // OK for MockDataLoader
-  const uint64_t id = data_loader_ptr->GetRequestId(request);
-  EXPECT_TRUE(engine.SendEngineReloadRequest(request));
-
-  EXPECT_CALL(*data_loader_ptr, Build(id))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = id;
-        result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-        return result;
-      })));
-
-  // Build() is called, but it returns invalid data, so new data is not used.
+  // The new request is performed, but it returns invalid data.
   EngineReloadResponse response;
-  EXPECT_FALSE(engine.MaybeReloadEngine(&response));
+  EXPECT_FALSE(engine_->MaybeReloadEngine(&response));
 
   // Sends the same request again, but the request is already marked as
   // unregistered.
-  EXPECT_TRUE(engine.SendEngineReloadRequest(request));
-  EXPECT_FALSE(engine.MaybeReloadEngine(&response));
+  EXPECT_TRUE(engine_->SendEngineReloadRequest(invalid_path_request_));
+  EXPECT_FALSE(engine_->MaybeReloadEngine(&response));
 }
 
 // Tests the rollback scenario
-TEST(EngineTest, RollbackDataTest) {
-  auto data_loader = std::make_unique<MockDataLoader>();
-  MockDataLoader *data_loader_ptr = data_loader.get();
+TEST_F(EngineTest, RollbackDataTest) {
+  // Sends multiple requests three times.
+  EXPECT_TRUE(engine_->SendEngineReloadRequest(mock_request_));
+  EXPECT_TRUE(engine_->SendEngineReloadRequest(invalid_path_request_));
+  EXPECT_TRUE(engine_->SendEngineReloadRequest(invalid_data_request_));
 
-  InSequence seq;  // EXPECT_CALL is called sequentially.
-
-  auto data_manager = std::make_unique<testing::MockDataManager>();
-  testing::MockDataManager *data_manager_ptr = data_manager.get();
-  absl::string_view data_version = "EngineRollbackDataTest";
-  auto modules = std::make_unique<engine::Modules>();
-  CHECK_OK(modules->Init(std::move(data_manager)));
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine_status =
-      Engine::CreateMobileEngine(std::make_unique<testing::MockDataManager>());
-  EXPECT_OK(engine_status);
-  Engine &engine = *engine_status.value();
-
-  engine.SetDataLoaderForTesting(std::move(data_loader));
-  engine.SetAlwaysWaitForLoaderResponseFutureForTesting(true);
-
-  EngineReloadRequest request1_ready;
-  request1_ready.set_engine_type(EngineReloadRequest::MOBILE);
-  request1_ready.set_file_path("placeholder1");  // OK for MockDataLoader
-  const uint64_t id1 = data_loader_ptr->GetRequestId(request1_ready);
-
-  EngineReloadRequest request2_broken;
-  request2_broken.set_engine_type(EngineReloadRequest::MOBILE);
-  request2_broken.set_file_path("placeholder2");  // OK for MockDataLoader
-  const uint64_t id2 = data_loader_ptr->GetRequestId(request2_broken);
-
-  EngineReloadRequest request3_broken;
-  request3_broken.set_engine_type(EngineReloadRequest::MOBILE);
-  request3_broken.set_file_path("placeholder3");  // OK for MockDataLoader
-  const uint64_t id3 = data_loader_ptr->GetRequestId(request3_broken);
-
-  // Sends multiple requests three times. 1 -> 2 -> 3.
-  // 3 is the latest id.
-  ASSERT_TRUE(engine.SendEngineReloadRequest(request1_ready));
-  ASSERT_TRUE(engine.SendEngineReloadRequest(request2_broken));
-  ASSERT_TRUE(engine.SendEngineReloadRequest(request3_broken));
-
-  EXPECT_CALL(*data_loader_ptr, Build(id3))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = id3;
-        result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-        *result.response.mutable_request() = request3_broken;
-        return result;
-      })));
-  EXPECT_CALL(*data_loader_ptr, Build(id2))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = id2;
-        result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-        *result.response.mutable_request() = request2_broken;
-        return result;
-      })));
-  EXPECT_CALL(*data_loader_ptr, Build(id1))
-      .WillOnce(Return(BackgroundFuture<DataLoader::Response>([&]() {
-        absl::SleepFor(absl::Milliseconds(100));
-        DataLoader::Response result;
-        result.id = id1;
-        result.response.set_status(EngineReloadResponse::RELOAD_READY);
-        *result.response.mutable_request() = request1_ready;
-        result.modules = std::move(modules);
-        return result;
-      })));
-
-  // Both request#3 and request#2 are broken. request#1 is immediately used as a
-  // fallback.
+  // The last two requests are invalid. The first request is immediately used as
+  // a fallback.
   EngineReloadResponse response;
-  EXPECT_TRUE(engine.MaybeReloadEngine(&response));
-  EXPECT_EQ(response.request().file_path(), request1_ready.file_path());
-  EXPECT_NE(response.request().file_path(), request2_broken.file_path());
-  EXPECT_NE(response.request().file_path(), request3_broken.file_path());
+  EXPECT_TRUE(engine_->MaybeReloadEngine(&response));
+  EXPECT_EQ(response.request().file_path(), mock_request_.file_path());
 
-  // DataManager built with request#1 is used.
-  EXPECT_CALL(*data_manager_ptr, GetDataVersion())
-      .WillRepeatedly(Return(data_version));
-  EXPECT_EQ(engine.GetDataVersion(), data_version);
+  // DataVersion comes from the first request (i.e. mock_request_).
+  EXPECT_EQ(engine_->GetDataVersion(), mock_version_);
 }
-
 }  // namespace engine
 }  // namespace mozc

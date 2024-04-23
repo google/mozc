@@ -172,10 +172,6 @@ bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
 
-bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
-  return request.config().use_typing_correction();
-}
-
 bool HasHistoryKeyLongerThanOrEqualTo(const Segments &segments,
                                       size_t utf8_len) {
   const size_t history_segments_size = segments.history_segments_size();
@@ -928,6 +924,7 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
     result->rid = candidate.rid;
     result->inner_segment_boundary = candidate.inner_segment_boundary;
     result->SetTypesAndTokenAttributes(REALTIME, Token::NONE);
+    result->candidate_attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     if (candidate.key.size() < segment.key().size()) {
       result->candidate_attributes |=
           Segment::Candidate::PARTIALLY_KEY_CONSUMED;
@@ -1677,9 +1674,25 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     return;
   }
 
+  auto disable_toggle_correction = [](const ConversionRequest &request) {
+    if (request.request().special_romanji_table() !=
+        Request::TOGGLE_FLICK_TO_HIRAGANA) {
+      return false;
+    }
+    const int length = request.composer().GetLength();
+    for (int i = 0; i < length; ++i) {
+      auto raw = request.composer().GetRawSubString(i, 1);
+      absl::string_view s(raw);
+      while (!s.empty() && absl::EndsWith(s, "*")) s.remove_suffix(1);
+      if (s.size() >= 2) return false;
+    }
+    return true;
+  };
+
   const std::string asis = request.composer().GetStringForTypeCorrection();
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
       corrector->CheckCompositionSpelling(asis, segments.history_key(),
+                                          disable_toggle_correction(request),
                                           request.request());
   if (!corrected) {
     return;

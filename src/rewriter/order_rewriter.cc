@@ -31,7 +31,6 @@
 
 #include <cstddef>
 #include <deque>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -52,8 +51,6 @@ namespace {
 class CandidateGroup {
  public:
   CandidateGroup() = default;
-  explicit CandidateGroup(Segment::Candidate::Category category)
-      : category_(category) {}
   ~CandidateGroup() = default;
 
   const std::deque<Segment::Candidate> &candidates() const {
@@ -75,20 +72,21 @@ class CandidateGroup {
             added_.emplace(candidate.key, candidate.value);
         inserted) {
       candidates_.push_back(candidate);
-      if (category_.has_value()) {
-        candidates_.back().category = *category_;
-      }
     }
   }
 
-  void AddHiragnaCandidates() {
+  void AddHiraganaCandidates() {
     // (Key, Base candidate)
     absl::flat_hash_map<std::string, const Segment::Candidate *> keys;
     for (const Segment::Candidate &c : candidates_) {
       keys.insert({c.key, &c});
     }
-    for (const auto &itr : keys) {
-      Segment::Candidate c = *itr.second;
+    for (const auto &[key, candidate] : keys) {
+      if (added_.contains({key, key})) {
+        // Hiragana candidate is already included.
+        continue;
+      }
+      Segment::Candidate c = *candidate;
       c.value = c.key;
       c.content_key = c.key;
       c.content_value = c.key;
@@ -99,7 +97,15 @@ class CandidateGroup {
     }
   }
 
-  void SortCandidates() {
+  void SortWithKeyLength() {
+    const auto cmp = [](const Segment::Candidate &lhs,
+                        const Segment::Candidate &rhs) {
+      return lhs.key.size() > rhs.key.size();
+    };
+    absl::c_stable_sort(candidates_, cmp);
+  }
+
+  void SortWithKeyValueLength() {
     // key length -> value length
     const auto cmp = [](const Segment::Candidate &lhs,
                         const Segment::Candidate &rhs) {
@@ -120,7 +126,6 @@ class CandidateGroup {
   }
 
  private:
-  const std::optional<Segment::Candidate::Category> category_ = std::nullopt;
   std::deque<Segment::Candidate> candidates_;
   absl::flat_hash_set<std::pair<std::string, std::string>> added_;
 };
@@ -144,22 +149,27 @@ bool OrderRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  Segment *segment = segments->mutable_conversion_segment(0);
-
-  // Candidates in the same category will be deduped.
-  CandidateGroup top, normal, partial, t13n;
-  CandidateGroup single_kanji(Segment::Candidate::OTHER),
-      single_kanji_partial(Segment::Candidate::OTHER),
-      symbol(Segment::Candidate::OTHER), other(Segment::Candidate::OTHER);
-
   const int top_candidates_size = request.request()
                                       .decoder_experiment_params()
                                       .findability_oriented_order_top_size();
 
+  Segment *segment = segments->mutable_conversion_segment(0);
+
+  CandidateGroup top;     // Top candidates to keep the current order.
+  CandidateGroup normal;  // Converted words, etc
+  CandidateGroup t13n;
+  CandidateGroup other;  // OTHER category candidates from rewriters.
+  CandidateGroup symbol;
+  CandidateGroup partial;  // For prefix match.
+
+  for (size_t i = 0; i < segment->meta_candidates_size(); ++i) {
+    const Segment::Candidate &c = segment->meta_candidate(i);
+    t13n.AddCandidate(c);
+  }
+
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     const Segment::Candidate &candidate = segment->candidate(i);
-    if (top.size() < top_candidates_size &&
-        candidate.category != Segment::Candidate::OTHER) {
+    if (top.size() < top_candidates_size) {
       top.AddCandidate(candidate);
       continue;
     }
@@ -167,49 +177,27 @@ bool OrderRewriter::Rewrite(const ConversionRequest &request,
       symbol.AddCandidate(candidate);
     } else if (candidate.category == Segment::Candidate::OTHER) {
       other.AddCandidate(candidate);
-    } else if (candidate.category == Segment::Candidate::DEFAULT_CATEGORY) {
-      // TODO(toshiyuki): Use better way to check single kanji entries.
-      // - There are single characters with multiple code points
-      // (e.g. SVS, IVS). Grapheme treats those multiple code points as a single
-      // character, but CharsLen() treats them as multiple characters.
-      // - Or, we may be able to set candidate category when we generate single
-      // kanji candidates.
-      const bool is_single_kanji =
-          Util::CharsLen(candidate.value) == 1 &&
-          Util::IsScriptType(candidate.value, Util::KANJI);
+    } else {
+      // DEFAULT_CATEGORY
       const bool is_partial =
           candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
-      const bool is_t13n = Util::IsScriptType(candidate.key, Util::HIRAGANA) &&
-                           Util::IsScriptType(candidate.value, Util::ALPHABET);
-      if (is_partial && is_single_kanji) {
-        single_kanji_partial.AddCandidate(candidate);
-      } else if (is_partial) {
+      if (is_partial) {
         partial.AddCandidate(candidate);
-      } else if (is_single_kanji) {
-        single_kanji.AddCandidate(candidate);
-      } else if (is_t13n) {
-        t13n.AddCandidate(candidate);
       } else {
         normal.AddCandidate(candidate);
       }
     }
   }
-  for (size_t i = 0; i < segment->meta_candidates_size(); ++i) {
-    const Segment::Candidate &c = segment->meta_candidate(i);
-    t13n.AddCandidate(c);
-  }
 
-  single_kanji.AddHiragnaCandidates();
-  single_kanji_partial.AddHiragnaCandidates();
+  partial.AddHiraganaCandidates();
 
   // The following candidates are originally sorted in LM based order.
   // Reorder these candidates based on the length of key and value so that
   // users can find the expected candidate easily.
-  normal.SortCandidates();
-  partial.SortCandidates();
-  single_kanji.SortCandidates();
-  single_kanji_partial.SortCandidates();
+  normal.SortWithKeyLength();
+  partial.SortWithKeyValueLength();
 
+  // Update segment
   segment->clear_candidates();
   segment->clear_meta_candidates();
 
@@ -217,10 +205,8 @@ bool OrderRewriter::Rewrite(const ConversionRequest &request,
   normal.AppendToSegment(*segment);
   t13n.AppendToSegment(*segment);
   other.AppendToSegment(*segment);
-  single_kanji.AppendToSegment(*segment);
   symbol.AppendToSegment(*segment);
   partial.AppendToSegment(*segment);
-  single_kanji_partial.AppendToSegment(*segment);
 
   return true;
 }

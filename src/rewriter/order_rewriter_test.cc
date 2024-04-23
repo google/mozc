@@ -94,16 +94,20 @@ Segments BuildTestSegments() {
   segments.mutable_conversion_segment(0)->set_key("きょうの");
   add_candidate("きょうの", "今日の", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "きょうの", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "other", Segment::Candidate::OTHER);
+  add_candidate("きょうの", "other1", Segment::Candidate::OTHER);
   add_candidate("きょうの", "教の", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "強の", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "凶の", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "キョウの", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "キョウノ", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "KYOUNO", Segment::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうのてんき", "今日の天気",
+                Segment::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "other2", Segment::Candidate::OTHER);
   add_candidate("きょう", "今日", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょう", "きょう", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょう", "京", Segment::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょ", "許", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょう", "供", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "😀", Segment::Candidate::SYMBOL);
   add_candidate("きょうの", "響野", Segment::Candidate::DEFAULT_CATEGORY);
@@ -135,25 +139,35 @@ TEST_F(OrderRewriterTest, Rewrite) {
   constexpr auto ValueIs = [](const auto &value) {
     return Pointee(Field(&Segment::Candidate::value, value));
   };
-  EXPECT_THAT(segments.conversion_segment(0), CandidatesAreArray({
-                                                  ValueIs("今日の"),
-                                                  ValueIs("きょうの"),
-                                                  ValueIs("教の"),
-                                                  ValueIs("強の"),
-                                                  ValueIs("凶の"),
-                                                  ValueIs("キョウの"),
-                                                  ValueIs("キョウノ"),
-                                                  ValueIs("響野"),
-                                                  ValueIs("KYOUNO"),
-                                                  ValueIs("ｷｮｳﾉ"),
-                                                  ValueIs("other"),
-                                                  ValueIs("😀"),
-                                                  ValueIs("きょう"),
-                                                  ValueIs("今日"),
-                                                  ValueIs("きょう"),
-                                                  ValueIs("京"),
-                                                  ValueIs("供"),
-                                              }));
+  EXPECT_THAT(segments.conversion_segment(0),
+              CandidatesAreArray({
+                  // Top
+                  ValueIs("今日の"),
+                  ValueIs("きょうの"),
+                  ValueIs("other1"),
+                  ValueIs("教の"),
+                  ValueIs("強の"),
+                  // Sorted with key length
+                  ValueIs("今日の天気"),
+                  ValueIs("凶の"),
+                  ValueIs("キョウの"),
+                  ValueIs("キョウノ"),
+                  ValueIs("KYOUNO"),
+                  ValueIs("響野"),
+                  // T13N
+                  ValueIs("ｷｮｳﾉ"),
+                  // Other
+                  ValueIs("other2"),
+                  // Symbol
+                  ValueIs("😀"),
+                  // Sorted with key value length
+                  ValueIs("きょう"),
+                  ValueIs("今日"),
+                  ValueIs("京"),
+                  ValueIs("供"),
+                  ValueIs("きょ"),
+                  ValueIs("許"),
+              }));
 }
 
 }  // namespace

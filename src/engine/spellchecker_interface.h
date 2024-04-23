@@ -57,6 +57,7 @@ class SpellcheckerInterface {
   // enabled/available.
   virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
   CheckCompositionSpelling(absl::string_view query, absl::string_view context,
+                           bool disable_toggle_correction,
                            const commands::Request &request) const = 0;
 
   // Performs homonym spelling correction.

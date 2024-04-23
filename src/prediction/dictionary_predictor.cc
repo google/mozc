@@ -30,6 +30,7 @@
 #include "prediction/dictionary_predictor.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -42,10 +43,12 @@
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
@@ -296,7 +299,6 @@ DictionaryPredictor::DictionaryPredictor(
       pos_matcher_(*modules.GetPosMatcher()),
       general_symbol_id_(pos_matcher_.GetGeneralSymbolId()),
       predictor_name_(std::move(predictor_name)),
-      rescorer_(modules.GetRescorer()),
       modules_(modules) {}
 
 void DictionaryPredictor::Finish(const ConversionRequest &request,
@@ -509,6 +511,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
       break;
     }
 
+    if (i == 0 && MaybeInsertPreviousTopResult(result, request, segments)) {
+      ++added;
+    }
+
     std::string log_message;
     if (filter.ShouldRemove(result, added, &log_message)) {
       MOZC_ADD_DEBUG_CANDIDATE(result, log_message);
@@ -528,7 +534,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   MaybeSuppressAggressiveTypingCorrection(
       request, typing_correction_mixing_params, segments);
 
-  if (rescorer_ != nullptr && IsDebug(request)) {
+  if (IsDebug(request) && modules_.GetRescorer() != nullptr) {
     AddRescoringDebugDescription(segments);
   }
 
@@ -667,8 +673,8 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
       auto_partial_suggestion_(
           request_util::IsAutoPartialSuggestionEnabled(request)),
-      include_exact_key_(IsMixedConversionEnabled(request.request()) ||
-                         request_util::IsHandwriting(request)) {
+      include_exact_key_(IsMixedConversionEnabled(request.request())),
+      is_handwriting_(request_util::IsHandwriting(request)) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);
   strings::Assign(history_value_, history.value);
@@ -712,6 +718,12 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
       suggestion_filter_.IsBadSuggestion(result.value)) {
     *log_message = "Bad suggestion";
     return true;
+  }
+
+  if (is_handwriting_) {
+    // Only unigram results are appended for handwriting and we do not need to
+    // apply filtering.
+    return false;
   }
 
   // Don't suggest exactly the same candidate as key.
@@ -1338,11 +1350,16 @@ int DictionaryPredictor::CalculatePrefixPenalty(
 void DictionaryPredictor::MaybeRescoreResults(
     const ConversionRequest &request, const Segments &segments,
     absl::Span<Result> results) const {
-  if (!rescorer_) return;
+  const RescorerInterface *const rescorer = modules_.GetRescorer();
+  if (rescorer == nullptr) return;
+  if (request_util::IsHandwriting(request)) {
+    // We want to fix the first candidate for handwriting request.
+    return;
+  }
   if (IsDebug(request)) {
     for (Result &r : results) r.cost_before_rescoring = r.cost;
   }
-  rescorer_->RescoreResults(request, segments.history_value(), results);
+  rescorer->RescoreResults(request, segments, results);
 }
 
 void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
@@ -1377,6 +1394,48 @@ void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
     const size_t rank = i + 1;
     AppendDescription(*c, orig_rank[c], "→", rank);
   }
+}
+
+bool DictionaryPredictor::MaybeInsertPreviousTopResult(
+    const Result &current_top_result, const ConversionRequest &request,
+    Segments *segments) const {
+  const int32_t max_diff = request.request()
+                               .decoder_experiment_params()
+                               .candidate_consistency_cost_max_diff();
+  if (max_diff == 0 || !segments || segments->conversion_segments_size() <= 0) {
+    return false;
+  }
+
+  auto prev_top_result = std::atomic_load(&prev_top_result_);
+
+  // Updates the key length.
+  const int cur_top_key_length = segments->conversion_segment(0).key().size();
+  const int prev_top_key_length = prev_top_key_length_.exchange(
+      cur_top_key_length);  // returns the old value.
+
+  // Insert condition.
+  // 1. prev key length < current key length (incrementally character is added)
+  // 2. cost diff is less than max_diff.
+  // 3. current key is shorter than previous key.
+  // 4. current key is the prefix of previous key.
+  if (prev_top_result && cur_top_key_length > prev_top_key_length &&
+      std::abs(current_top_result.cost - prev_top_result->cost) < max_diff &&
+      current_top_result.key.size() < prev_top_result->key.size() &&
+      absl::StartsWith(prev_top_result->key, current_top_result.key)) {
+    const KeyValueView history = GetHistoryKeyAndValue(*segments);
+    FillCandidate(
+        request, *prev_top_result,
+        GetCandidateKeyAndValue(*prev_top_result, history), {},
+        segments->mutable_conversion_segment(0)->push_back_candidate());
+    // Do not need to remember the previous key as `prev_top_result` is still
+    // top result.
+    return true;
+  }
+
+  // Remembers the top result.
+  std::atomic_store(&prev_top_result_,
+                    std::make_shared<Result>(current_top_result));
+  return false;
 }
 
 }  // namespace mozc::prediction

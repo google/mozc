@@ -440,6 +440,12 @@ def mozc_select_enable_usage_rewriter(on = [], off = []):
         "//conditions:default": off,
     })
 
+def mozc_select_enable_neural_language_model(on = [], off = []):
+    return select({
+        "//:enable_neural_language_model": on,
+        "//conditions:default": off,
+    })
+
 # Tags aliases for build filtering.
 MOZC_TAGS = struct(
     ANDROID_ONLY = ["nolinux", "nomac", "nowin"],

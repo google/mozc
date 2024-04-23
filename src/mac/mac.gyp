@@ -518,7 +518,6 @@
             ['branding=="GoogleJapaneseInput"', {
               'dependencies': [
                 'DevConfirmPane',
-                'codesign_client',
               ],
             }],
           ],

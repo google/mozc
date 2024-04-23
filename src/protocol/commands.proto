@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 58
+// Next ID: 64
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -658,6 +658,7 @@ message DecoderExperimentParams {
   optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
   optional bool enable_realtime_conversion_v2 = 37 [default = false];
+  optional bool enable_realtime_conversion_candidate_checker = 62 [default = false];
 
   optional bool enable_findability_oriented_order = 42 [default = false];
   optional int32 findability_oriented_order_top_size = 43 [default = 10];
@@ -700,6 +701,8 @@ message DecoderExperimentParams {
   // - "google"
   // - " google"
   optional int32 english_variation_space_insertion_mode = 55 [default = 0];
+
+  optional int32 candidate_consistency_cost_max_diff = 63 [ default = 0 ];
 }
 
 // Clients' request to the server.

@@ -154,6 +154,10 @@ class ImmutableConverter : public ImmutableConverterInterface {
                                    absl::Span<const uint16_t> group,
                                    Segments *segments) const;
 
+  void InsertCandidatesForRealtimeWithCandidateChecker(
+      const ConversionRequest &request, const Lattice &lattice,
+      absl::Span<const uint16_t> group, Segments *segments) const;
+
   // Helper function for InsertCandidates().
   // Returns true if |node| is valid node for segment end.
   bool IsSegmentEndNode(const ConversionRequest &request,

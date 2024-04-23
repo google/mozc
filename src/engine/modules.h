@@ -118,6 +118,10 @@ class Modules {
   const prediction::RescorerInterface *GetRescorer() const {
     return rescorer_.get();
   }
+  void SetRescorer(
+      std::unique_ptr<const prediction::RescorerInterface> rescorer) {
+    rescorer_ = std::move(rescorer);
+  }
 
 
   const engine::SpellcheckerInterface *GetSpellchecker() const {

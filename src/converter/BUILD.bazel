@@ -33,6 +33,7 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
+    "mozc_select_enable_neural_language_model",
     "mozc_select_enable_spellchecker",
 )
 load("//bazel:stubs.bzl", "bzl_library")
@@ -359,6 +360,8 @@ mozc_cc_library(
         "//testing:friend_test",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
@@ -576,7 +579,8 @@ mozc_cc_binary(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ],
+    ] + mozc_select_enable_neural_language_model([
+    ]),
 )
 
 mozc_cc_library(

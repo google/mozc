@@ -90,6 +90,7 @@ mozc_cc_library(
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
+        "//prediction:rescorer_interface",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -180,6 +181,7 @@ mozc_cc_library(
         "//prediction:dictionary_predictor",
         "//prediction:predictor",
         "//prediction:predictor_interface",
+        "//prediction:rescorer_interface",
         "//prediction:user_history_predictor",
         "//protocol:engine_builder_cc_proto",
         "//rewriter",
@@ -197,20 +199,22 @@ mozc_cc_library(
 mozc_cc_test(
     name = "engine_test",
     srcs = ["engine_test.cc"],
+    data = [
+        "//data_manager/oss:mozc.data",
+        "//data_manager/testing:mock_mozc.data",
+    ],
     deps = [
         ":engine",
-        ":engine_builder",
         ":modules",
         ":spellchecker_interface",
-        "//base:thread",
         "//composer:query",
         "//converter:segments",
+        "//data_manager",
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
+        "//testing:mozctest",
         "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_absl//absl/time",
     ],
 )
 
