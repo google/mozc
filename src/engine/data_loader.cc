@@ -211,10 +211,6 @@ bool DataLoader::StartNewDataBuildTask() {
     return true;
   }
 
-  // Must reset the previous BackgroundFuture, otherwise it causes a runtime
-  // exception.
-  loader_response_future_.reset();
-
   LOG(INFO) << "Building a new module (current ID =" << current_request_id_
             << ", top ID =" << top_request_id_ << ")";
   loader_response_future_ = Build(top_request_id_);
