@@ -279,27 +279,24 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
     return false;
   }
 
-  // Sends a build request to the loader_ and checks if a new data is available.
   // In the while loop, tries to reload the new data. If the new data is broken,
   // tries it again as a next round of this while loop.
   while (true) {
-    loader_->MaybeBuildNewData();
-
-    if (!loader_->IsBuildResponseReady()) {
-      // No need to handle the new request.
+    if (!loader_->StartNewDataBuildTask()) {
+      // No new build process is running or ready.
       return false;
     }
-
-    LOG(INFO) << "New data is ready (install_location="
-              << response->request().install_location() << ")";
 
     std::unique_ptr<DataLoader::Response> loader_response =
         loader_->MaybeMoveDataLoaderResponse();
     if (!loader_response) {
-      LOG(ERROR) << "loader_response is null";
+      // No new data is available. The build process is still running.
       return false;
     }
+
     *response = loader_response->response;
+    LOG(INFO) << "New data is ready (install_location="
+              << response->request().install_location() << ")";
 
     if (!loader_response->modules ||
         response->status() != EngineReloadResponse::RELOAD_READY) {
@@ -342,6 +339,7 @@ bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
     return false;
   }
   loader_->RegisterRequest(request);
+  loader_->StartNewDataBuildTask();
   return true;
 }
 
