@@ -322,7 +322,15 @@ class DictionaryPredictor : public PredictorInterface {
 
   std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator_;
 
-  // Previous top result and request key length. (not result length)
+  // Previous top result and request key length. (not result length).
+  // When the previous and current result are consistent, we still keep showing
+  // the previous result to prevent flickering.
+  //
+  // We can still keep the purely functional decoder design as
+  // result = Decode("ABCD") = Decode(Decode("ABC"), "D") =
+  //          Decode(Decode(Decode("AB"), "C"), "D")) ...
+  // These variables work as a cache of previous results to prevent recursive
+  // and expensive functional calls.
   mutable std::shared_ptr<Result> prev_top_result_;
   mutable std::atomic<int32_t> prev_top_key_length_ = 0;
 
