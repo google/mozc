@@ -300,6 +300,11 @@ class DictionaryPredictor : public PredictorInterface {
       const TypingCorrectionMixingParams &typing_correction_mixing_params,
       Segments *segments);
 
+  static void MaybeSuppressAggressiveTypingCorrection2(
+      const ConversionRequest &request,
+      const TypingCorrectionMixingParams &typing_correction_mixing_params,
+      std::vector<absl::Nonnull<const Result *>> *results);
+
   static void MaybeApplyHomonymCorrection(const engine::Modules &modules,
                                           Segments *segments);
 
@@ -308,12 +313,9 @@ class DictionaryPredictor : public PredictorInterface {
                            absl::Span<Result> results) const;
   static void AddRescoringDebugDescription(Segments *segments);
 
-  // Inserts the previous candidate to `segments` if previous
-  // and current result are consistent. Returns true if
-  // previous candidate is inserted.
-  bool MaybeInsertPreviousTopResult(const Result &current_top_result,
-                                    const ConversionRequest &request,
-                                    Segments *segments) const;
+  std::shared_ptr<Result> MaybeGetPreviousTopResult(
+      const Result &current_top_result, const ConversionRequest &request,
+      const Segments &segments) const;
 
   // Test peer to access private methods
   friend class DictionaryPredictorTestPeer;
