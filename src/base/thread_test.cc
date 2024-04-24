@@ -184,5 +184,16 @@ TEST(BackgroundFutureTest, DestructingMovedOutFutureDoesNotCrash) {
   EXPECT_EQ(f->Get(), 42);
 }
 
+TEST(BackgroundFutureTest, AssigningToPendingFutureDoesNotCrash) {
+  BackgroundFuture<int> f([] {
+    absl::SleepFor(absl::Milliseconds(100));
+    return 42;
+  });
+  f = BackgroundFuture<int>([] { return 2024; });
+
+  BackgroundFuture<void> g([] { absl::SleepFor(absl::Milliseconds(100)); });
+  g = BackgroundFuture<void>([] {});
+}
+
 }  // namespace
 }  // namespace mozc
