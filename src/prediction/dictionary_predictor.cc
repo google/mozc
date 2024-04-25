@@ -641,14 +641,15 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection2(
   }
 
   auto promote_result = [&results](int old_idx, int new_idx) {
-    auto result = results[old_idx];
-    for (int i = old_idx; i >= new_idx + 1; --i) results[i] = results[i - 1];
-    results[new_idx] = result;
+    const Result *result = (*results)[old_idx];
+    for (int i = old_idx; i >= new_idx + 1; --i)
+      (*results)[i] = (*results)[i - 1];
+    (*results)[new_idx] = result;
   };
 
   const int max_size = std::min<int>(10, results->size());
   for (int i = 1; i < max_size; ++i) {
-    const auto &result = (*results)[i];
+    const Result *result = (*results)[i];
     // Finds the first non-typing-corrected candidate.
     if (!(result->types & PredictionType::TYPING_CORRECTION)) {
       // Replace the literal with top when the cost is close enough or

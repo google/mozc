@@ -1846,6 +1846,68 @@ TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrectionTest) {
   EXPECT_EQ(get_second_value(), "value_3");  // second is literal.
 }
 
+TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrection2Test) {
+  std::vector<Result> results(10);
+  std::vector<absl::Nonnull<const Result *>> results_ptrs;
+
+  for (int i = 0; i < results.size(); ++i) {
+    Result &result = results[i];
+    result.types = 0;
+    result.key = absl::StrCat("key_", i);
+    result.value = absl::StrCat("value_", i);
+  }
+
+  for (int i = 1; i <= 2; ++i) {
+    results[i].types |= PredictionType::TYPING_CORRECTION;
+  }
+
+  results[0].cost = 100;
+  results[3].cost = 500;
+
+  auto reset_results_ptrs = [&results, &results_ptrs]() {
+    results_ptrs.clear();
+    for (auto &result : results) results_ptrs.emplace_back(&result);
+  };
+
+  reset_results_ptrs();
+
+  auto get_top_value = [&results_ptrs]() {
+    return results_ptrs.front()->value;
+  };
+
+  auto get_second_value = [&results_ptrs]() { return results_ptrs[1]->value; };
+
+  TypingCorrectionMixingParams params;
+
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+      *convreq_for_suggestion_, params, &results_ptrs);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  results[0].types |= PredictionType::TYPING_CORRECTION;
+  reset_results_ptrs();
+  params.literal_on_top = false;  // literal_on_top is not passed.
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+      *convreq_for_suggestion_, params, &results_ptrs);
+  EXPECT_EQ(get_top_value(), "value_0");
+  EXPECT_EQ(get_second_value(), "value_1");
+
+  params.literal_on_top = true;  // literal_on_top is passed.
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+      *convreq_for_suggestion_, params, &results_ptrs);
+  EXPECT_EQ(get_top_value(), "value_3");
+  EXPECT_EQ(get_second_value(), "value_0");
+
+  // test literal-at-least-second behavior
+  results[0].types |= PredictionType::TYPING_CORRECTION;
+  reset_results_ptrs();
+  params.literal_on_top = false;
+  params.literal_at_least_second = true;
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+      *convreq_for_suggestion_, params, &results_ptrs);
+  EXPECT_EQ(get_top_value(), "value_0");     // top is typing correction.
+  EXPECT_EQ(get_second_value(), "value_3");  // second is literal.
+}
+
 TEST_F(DictionaryPredictorTest, Rescoring) {
   auto rescorer = std::make_unique<prediction::MockRescorer>();
   EXPECT_CALL(*rescorer, RescoreResults(_, _, _))
