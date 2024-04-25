@@ -92,7 +92,7 @@ class DataLoader {
   // Builds the new engine associated with `id`.
   // This method returns the future object immediately.
   // All errors are stored in EngineReloadResponse::response::status.
-  virtual ResponseFuture Build(uint64_t id) const;
+  ResponseFuture Build(uint64_t id) const;
 
   void Clear();
 
