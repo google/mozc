@@ -664,7 +664,7 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   EXPECT_NE(command.output().id(), 0);
 
   // When the engine is created first, we wait until the engine gets ready.
-  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
+  EXPECT_EQ(handler_->GetDataVersion(), mock_version_);
 
   // New session is created, but Build is not called as the id is the same.
   ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
@@ -673,7 +673,7 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   uint64_t id = 0;
   ASSERT_TRUE(DeleteSession(*handler_, id));
   ASSERT_TRUE(CreateSession(*handler_, &id));
-  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
+  EXPECT_EQ(handler_->GetDataVersion(), mock_version_);
 }
 
 // Tests situations to handle multiple new requests.
@@ -685,7 +685,7 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
   // build request is called one per new engine reload request.
   uint64_t id = 0;
   ASSERT_TRUE(CreateSession(*handler_, &id));
-  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
+  EXPECT_EQ(handler_->GetDataVersion(), mock_version_);
 
   // engine_id = 2
   ASSERT_EQ(SendMockEngineReloadRequest(*handler_, oss_request_),
@@ -693,19 +693,19 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
 
   ASSERT_TRUE(DeleteSession(*handler_, id));
   ASSERT_TRUE(CreateSession(*handler_, &id));
-  EXPECT_EQ(handler_->engine().GetDataVersion(), oss_version_);
+  EXPECT_EQ(handler_->GetDataVersion(), oss_version_);
 }
 
 // Tests the interaction with DataLoader in the situation where requested data
 // is broken.
 TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
-  const absl::string_view initial_version = handler_->engine().GetDataVersion();
+  const absl::string_view initial_version = handler_->GetDataVersion();
 
   ASSERT_EQ(SendMockEngineReloadRequest(*handler_, invalid_path_request_),
             EngineReloadResponse::ACCEPTED);
 
   // Build() is called, but it returns invalid data, so new data is not used.
-  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
+  EXPECT_EQ(handler_->GetDataVersion(), initial_version);
 
   // CreateSession does not contain engine_reload_response.
   commands::Command command;
@@ -715,7 +715,7 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
   EXPECT_FALSE(command.output().has_engine_reload_response());
   EXPECT_NE(command.output().id(), 0);
 
-  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
+  EXPECT_EQ(handler_->GetDataVersion(), initial_version);
 
   // Sends the same request again, but the request is already marked as
   // unregistered.
@@ -724,7 +724,7 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
             EngineReloadResponse::ACCEPTED);
   ASSERT_TRUE(DeleteSession(*handler_, id));
   ASSERT_TRUE(CreateSession(*handler_, &id));
-  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
+  EXPECT_EQ(handler_->GetDataVersion(), initial_version);
 }
 
 // Tests the rollback scenario
@@ -746,7 +746,7 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
   }
 
   // Finally rollback to the new engine with the first request.
-  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
+  EXPECT_EQ(handler_->GetDataVersion(), mock_version_);
 }
 
 // Tests the interaction with DataLoader in the situation where
@@ -759,7 +759,7 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
   // As a session is created before data is loaded, engine is not reloaded yet.
   uint64_t id1 = 0;
   ASSERT_TRUE(CreateSession(*handler_, &id1));
-  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
+  EXPECT_EQ(handler_->GetDataVersion(), initial_version);
   EXPECT_EQ(&handler_->engine(), old_engine_ptr);
 
   ASSERT_EQ(SendMockEngineReloadRequest(*handler_, mock_request_),
@@ -770,8 +770,8 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
   uint64_t id2 = 0;
   ASSERT_TRUE(CreateSession(*handler_, &id2));
   EXPECT_EQ(&handler_->engine(), old_engine_ptr);
-  EXPECT_EQ(handler_->engine().GetDataVersion(), initial_version);
-  EXPECT_NE(handler_->engine().GetDataVersion(), mock_version_);
+  EXPECT_EQ(handler_->GetDataVersion(), initial_version);
+  EXPECT_NE(handler_->GetDataVersion(), mock_version_);
 
   // All the sessions were deleted.
   ASSERT_TRUE(DeleteSession(*handler_, id1));
@@ -783,7 +783,7 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
   ASSERT_TRUE(CreateSession(*handler_, &id3));
   // New data is reloaded, but the engine is the same object.
   EXPECT_EQ(&handler_->engine(), old_engine_ptr);
-  EXPECT_EQ(handler_->engine().GetDataVersion(), mock_version_);
+  EXPECT_EQ(handler_->GetDataVersion(), mock_version_);
 }
 
 TEST_F(SessionHandlerTest, GetServerVersionTest) {
@@ -818,7 +818,7 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
   uint64_t id = 0;
   ASSERT_TRUE(CreateSession(handler, &id));
   EXPECT_EQ(handler.engine().GetPredictorName(), "MobilePredictor");
-  EXPECT_EQ(handler.engine().GetDataVersion(), mock_version_);
+  EXPECT_EQ(handler.GetDataVersion(), mock_version_);
 }
 
 
