@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 64
+// Next ID: 68
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -626,9 +626,9 @@ message DecoderExperimentParams {
   //   typing_correction_literal_on_top_length_score_max_diff
   //     * (typing_correction_literal_on_top_length_decay^(input_length-3))
   optional float typing_correction_literal_on_top_correction_score_max_diff = 47
-      [default = 0.5];
+      [default = 0.0];
   optional int32 typing_correction_literal_on_top_conversion_cost_max_diff = 48
-      [default = 2000];
+      [default = 0];
   // Literal candidate is placed at least second position.
   optional bool typing_correction_literal_at_least_second = 49
       [default = false];
@@ -658,7 +658,8 @@ message DecoderExperimentParams {
   optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
   optional bool enable_realtime_conversion_v2 = 37 [default = false];
-  optional bool enable_realtime_conversion_candidate_checker = 62 [default = false];
+  optional bool enable_realtime_conversion_candidate_checker = 62
+      [default = false];
 
   optional bool enable_findability_oriented_order = 42 [default = false];
   optional int32 findability_oriented_order_top_size = 43 [default = 10];
@@ -703,6 +704,20 @@ message DecoderExperimentParams {
   optional int32 english_variation_space_insertion_mode = 55 [default = 0];
 
   optional int32 candidate_consistency_cost_max_diff = 63 [ default = 0 ];
+
+  optional int32 max_composition_event_to_process = 64 [default = 2];
+
+  // Fix the bug on the literal_on_top correction.
+  optional bool fix_literal_on_top = 65 [ default = false ];
+
+  // Adds kana modifier insensitive corrections even when the score is smaller
+  // than identity score. This will increase the coverage. Adds only when
+  // top_score - correction_score < max_diff.
+  optional float kana_modifier_insensitive_corrections_top_score_max_diff =
+      66 [default = 0.0];
+  // Extra penalty added to the corrections.
+  optional float kana_modifier_insensitive_corrections_penalty = 67
+      [default = 0.0];
 }
 
 // Clients' request to the server.

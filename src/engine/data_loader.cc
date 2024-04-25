@@ -198,21 +198,23 @@ DataLoader::ResponseFuture DataLoader::Build(uint64_t id) const {
   });
 }
 
-void DataLoader::MaybeBuildNewData() {
-  // Checks if an existing build process, or already using the top request.
-  if (loader_response_future_.has_value() ||
-      current_request_id_ == top_request_id_ || top_request_id_ == 0) {
-    return;
+bool DataLoader::StartNewDataBuildTask() {
+  // Checks if already using the highest priority data.
+  if (current_request_id_ == top_request_id_ || top_request_id_ == 0) {
+    return false;
+  }
+
+  // Checks if the currently loading process is the highest priority request.
+  // Note, Get() may wait until loader_response_future_ is ready.
+  if (loader_response_future_.has_value() &&
+      loader_response_future_->Get().id == top_request_id_) {
+    return true;
   }
 
   LOG(INFO) << "Building a new module (current ID =" << current_request_id_
             << ", top ID =" << top_request_id_ << ")";
   loader_response_future_ = Build(top_request_id_);
-
-  // Waits the engine if the no new engine is loaded so far.
-  if (current_request_id_ == 0 || always_wait_for_loader_response_future_) {
-    loader_response_future_->Wait();
-  }
+  return true;
 }
 
 bool DataLoader::IsBuildResponseReady() const {
@@ -222,11 +224,21 @@ bool DataLoader::IsBuildResponseReady() const {
 
 std::unique_ptr<DataLoader::Response>
 DataLoader::MaybeMoveDataLoaderResponse() {
-  if (!IsBuildResponseReady()) {
+  // Checks if an existing load process.
+  if (!loader_response_future_) {
     return nullptr;
   }
 
-  // Replaces the engine when the new engine is ready to use.
+  // Waits the loading if the no new data is loaded so far.
+  if (current_request_id_ == 0 || always_wait_for_loader_response_future_) {
+    loader_response_future_->Wait();
+  }
+
+  if (!loader_response_future_->Ready()) {
+    return nullptr;
+  }
+
+  // Returns the new DataLoader::Response that is ready to use.
   mozc::DataLoader::Response loader_response =
       std::move(*loader_response_future_).Get();
   loader_response_future_.reset();

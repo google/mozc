@@ -19,8 +19,7 @@ SEND_KEY	RIGHT
 SEND_KEYS	44444111
 
 # The result should be "鉄道" for now.
-# TODO(taku): change the default param so literal-on-top stops working.
-EXPECT_CANDIDATE	1	鉄道
+EXPECT_CANDIDATE	0	鉄道
 
 # Move the caret to the beginnig, and back to the end.
 SEND_KEY	LEFT
@@ -31,5 +30,4 @@ SEND_KEY	RIGHT
 SEND_KEY	RIGHT
 
 # The candidate is still "鉄道"
-# TODO(taku): change the default param so literal-on-top stops working.
-EXPECT_CANDIDATE	1	鉄道
+EXPECT_CANDIDATE	0	鉄道

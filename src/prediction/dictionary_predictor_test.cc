@@ -38,6 +38,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "absl/log/check.h"
 #include "absl/memory/memory.h"
 #include "absl/random/random.h"
@@ -151,15 +152,23 @@ class DictionaryPredictorTestPeer {
         request, typing_correction_mixing_params, segments);
   }
 
+  static void MaybeSuppressAggressiveTypingCorrection2(
+      const ConversionRequest &request,
+      const TypingCorrectionMixingParams &typing_correction_mixing_params,
+      std::vector<absl::Nonnull<const Result *>> *results) {
+    DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection2(
+        request, typing_correction_mixing_params, results);
+  }
+
   static void AddRescoringDebugDescription(Segments *segments) {
     DictionaryPredictor::AddRescoringDebugDescription(segments);
   }
 
-  bool MaybeInsertPreviousTopResult(const Result &current_top_result,
-                                    const ConversionRequest &request,
-                                    Segments *segments) const {
-    return predictor_.MaybeInsertPreviousTopResult(current_top_result, request,
-                                                   segments);
+  std::shared_ptr<Result> MaybeGetPreviousTopResult(
+      const Result &current_top_result, const ConversionRequest &request,
+      const Segments &segments) const {
+    return predictor_.MaybeGetPreviousTopResult(current_top_result, request,
+                                                segments);
   }
 
  private:
@@ -1837,6 +1846,68 @@ TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrectionTest) {
   EXPECT_EQ(get_second_value(), "value_3");  // second is literal.
 }
 
+TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrection2Test) {
+  std::vector<Result> results(10);
+  std::vector<absl::Nonnull<const Result *>> results_ptrs;
+
+  for (int i = 0; i < results.size(); ++i) {
+    Result &result = results[i];
+    result.types = 0;
+    result.key = absl::StrCat("key_", i);
+    result.value = absl::StrCat("value_", i);
+  }
+
+  for (int i = 1; i <= 2; ++i) {
+    results[i].types |= PredictionType::TYPING_CORRECTION;
+  }
+
+  results[0].cost = 100;
+  results[3].cost = 500;
+
+  auto reset_results_ptrs = [&results, &results_ptrs]() {
+    results_ptrs.clear();
+    for (auto &result : results) results_ptrs.emplace_back(&result);
+  };
+
+  reset_results_ptrs();
+
+  auto get_top_value = [&results_ptrs]() {
+    return results_ptrs.front()->value;
+  };
+
+  auto get_second_value = [&results_ptrs]() { return results_ptrs[1]->value; };
+
+  TypingCorrectionMixingParams params;
+
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+      *convreq_for_suggestion_, params, &results_ptrs);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  results[0].types |= PredictionType::TYPING_CORRECTION;
+  reset_results_ptrs();
+  params.literal_on_top = false;  // literal_on_top is not passed.
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+      *convreq_for_suggestion_, params, &results_ptrs);
+  EXPECT_EQ(get_top_value(), "value_0");
+  EXPECT_EQ(get_second_value(), "value_1");
+
+  params.literal_on_top = true;  // literal_on_top is passed.
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+      *convreq_for_suggestion_, params, &results_ptrs);
+  EXPECT_EQ(get_top_value(), "value_3");
+  EXPECT_EQ(get_second_value(), "value_0");
+
+  // test literal-at-least-second behavior
+  results[0].types |= PredictionType::TYPING_CORRECTION;
+  reset_results_ptrs();
+  params.literal_on_top = false;
+  params.literal_at_least_second = true;
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+      *convreq_for_suggestion_, params, &results_ptrs);
+  EXPECT_EQ(get_top_value(), "value_0");     // top is typing correction.
+  EXPECT_EQ(get_second_value(), "value_3");  // second is literal.
+}
+
 TEST_F(DictionaryPredictorTest, Rescoring) {
   auto rescorer = std::make_unique<prediction::MockRescorer>();
   EXPECT_CALL(*rescorer, RescoreResults(_, _, _))
@@ -2037,7 +2108,7 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionMixingParamsTest) {
                   .literal_at_least_second);
 }
 
-TEST_F(DictionaryPredictorTest, MaybeInsertPreviousTopResultTest) {
+TEST_F(DictionaryPredictorTest, MaybeGetPreviousTopResultTest) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
@@ -2070,49 +2141,50 @@ TEST_F(DictionaryPredictorTest, MaybeInsertPreviousTopResultTest) {
     params->set_candidate_consistency_cost_max_diff(0);
 
     InitSegmentsWithKey("しが", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        init_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        init_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しがこう", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        pre_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しがこうげ", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        pre_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, segments));
   }
 
+  // max diff is 2000.
   {
-    // max diff is 2000.
     params->set_candidate_consistency_cost_max_diff(2000);
 
     InitSegmentsWithKey("しが", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        init_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        init_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しがこう", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        pre_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しがこうげ", &segments);
-    EXPECT_TRUE(predictor.MaybeInsertPreviousTopResult(
-        cur_top, *convreq_for_suggestion_, &segments));
-    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "志賀高原");
+    auto result = predictor.MaybeGetPreviousTopResult(
+        cur_top, *convreq_for_suggestion_, segments);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(result->value, "志賀高原");
   }
 
   // Already consistent.
   {
     InitSegmentsWithKey("しが", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        init_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        init_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しがこう", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        pre_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しがこうげ", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        cur_already_consintent_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        cur_already_consintent_top, *convreq_for_suggestion_, segments));
   }
 
   // max diff is 200 -> not inserted
@@ -2120,16 +2192,16 @@ TEST_F(DictionaryPredictorTest, MaybeInsertPreviousTopResultTest) {
     params->set_candidate_consistency_cost_max_diff(200);
 
     InitSegmentsWithKey("しが", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        init_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        init_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しがこう", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        pre_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しがこうげ", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        cur_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        cur_top, *convreq_for_suggestion_, segments));
   }
 
   // No insertion happens when typing backspaces.
@@ -2137,16 +2209,16 @@ TEST_F(DictionaryPredictorTest, MaybeInsertPreviousTopResultTest) {
     params->set_candidate_consistency_cost_max_diff(2000);
 
     InitSegmentsWithKey("しがこうげ", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        cur_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        cur_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しがこう", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        pre_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, segments));
 
     InitSegmentsWithKey("しが", &segments);
-    EXPECT_FALSE(predictor.MaybeInsertPreviousTopResult(
-        init_top, *convreq_for_suggestion_, &segments));
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        init_top, *convreq_for_suggestion_, segments));
   }
 }
 

@@ -41,6 +41,7 @@
 
 #include "absl/algorithm/container.h"
 #include "absl/base/attributes.h"
+#include "absl/base/nullability.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
@@ -236,6 +237,14 @@ TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
     // do not run literal-on-top.
     if (base_best_result.candidate_attributes &
         Segment::Candidate::SPELLING_CORRECTION) {
+      return false;
+    }
+
+    // TC result may be the same as the non-TC result when
+    // prefix match. In this case, literal-on-top is unintentionally
+    // triggered.
+    if (params.fix_literal_on_top() &&
+        base_best_result.value == tc_best_result.value) {
       return false;
     }
 
@@ -503,42 +512,62 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 #endif  // MOZC_DEBUG
 
-  int added = 0;
+  std::vector<absl::Nonnull<const Result *>> final_results_ptrs;
+  final_results_ptrs.reserve(result_ptrs.size());
+  std::shared_ptr<Result> prev_top_result;
+
   for (size_t i = 0; i < result_ptrs.size(); ++i) {
     std::pop_heap(result_ptrs.begin(), result_ptrs.end() - i, min_heap_cmp);
     const Result &result = *result_ptrs[result_ptrs.size() - i - 1];
-    if (added >= max_candidates_size || result.cost >= kInfinity) {
+
+    if (final_results_ptrs.size() >= max_candidates_size ||
+        result.cost >= kInfinity) {
       break;
     }
 
-    if (i == 0 && MaybeInsertPreviousTopResult(result, request, segments)) {
-      ++added;
+    if (i == 0 && (prev_top_result = MaybeGetPreviousTopResult(
+                       result, request, *segments)) != nullptr) {
+      final_results_ptrs.emplace_back(prev_top_result.get());
     }
 
     std::string log_message;
-    if (filter.ShouldRemove(result, added, &log_message)) {
+    if (filter.ShouldRemove(result, final_results_ptrs.size(), &log_message)) {
       MOZC_ADD_DEBUG_CANDIDATE(result, log_message);
       continue;
     }
 
-    Segment::Candidate *candidate = segment->push_back_candidate();
+    final_results_ptrs.emplace_back(&result);
+  }
 
-    FillCandidate(request, result, GetCandidateKeyAndValue(result, history),
-                  merged_types, candidate);
-    ++added;
+  const bool fix_literal_on_top =
+      request.request().decoder_experiment_params().fix_literal_on_top();
+
+  if (fix_literal_on_top) {
+    // Runs literal on top on `final_results_ptrs` instead of segments.
+    // segments may contain the history candidate.
+    MaybeSuppressAggressiveTypingCorrection2(
+        request, typing_correction_mixing_params, &final_results_ptrs);
+  }
+
+  // Fill segments from final_results_ptrs.
+  for (const Result *result : final_results_ptrs) {
+    FillCandidate(request, *result, GetCandidateKeyAndValue(*result, history),
+                  merged_types, segment->push_back_candidate());
   }
 
   // TODO(b/320221782): Add unit tests for MaybeApplyHomonymCorrection.
   MaybeApplyHomonymCorrection(modules_, segments);
 
-  MaybeSuppressAggressiveTypingCorrection(
-      request, typing_correction_mixing_params, segments);
+  if (!fix_literal_on_top) {
+    MaybeSuppressAggressiveTypingCorrection(
+        request, typing_correction_mixing_params, segments);
+  }
 
   if (IsDebug(request) && modules_.GetRescorer() != nullptr) {
     AddRescoringDebugDescription(segments);
   }
 
-  return added > 0;
+  return !final_results_ptrs.empty();
 #undef MOZC_ADD_DEBUG_CANDIDATE
 }
 
@@ -582,6 +611,55 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
         // Moves the literal to the second position even when
         // literal-on-top condition doesn't match.
         segment->move_candidate(i, 1);
+      }
+      break;
+    }
+  }
+}
+
+// static
+void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection2(
+    const ConversionRequest &request,
+    const TypingCorrectionMixingParams &typing_correction_mixing_params,
+    std::vector<absl::Nonnull<const Result *>> *results) {
+  if (results->empty()) return;
+
+  // Top is already literal.
+  const auto &top_result = results->front();
+
+  if (!(top_result->types & PredictionType::TYPING_CORRECTION)) {
+    return;
+  }
+
+  const bool force_literal_on_top =
+      typing_correction_mixing_params.literal_on_top;
+  const bool literal_at_least_second =
+      typing_correction_mixing_params.literal_at_least_second;
+
+  if (!force_literal_on_top && !literal_at_least_second) {
+    return;
+  }
+
+  auto promote_result = [&results](int old_idx, int new_idx) {
+    const Result *result = (*results)[old_idx];
+    for (int i = old_idx; i >= new_idx + 1; --i)
+      (*results)[i] = (*results)[i - 1];
+    (*results)[new_idx] = result;
+  };
+
+  const int max_size = std::min<int>(10, results->size());
+  for (int i = 1; i < max_size; ++i) {
+    const Result *result = (*results)[i];
+    // Finds the first non-typing-corrected candidate.
+    if (!(result->types & PredictionType::TYPING_CORRECTION)) {
+      // Replace the literal with top when the cost is close enough or
+      // force_literal_on_top is true.
+      if (force_literal_on_top) {
+        promote_result(i, 0);
+      } else if (literal_at_least_second && i >= 2) {
+        // Moves the literal to the second position even when
+        // literal-on-top condition doesn't match.
+        promote_result(i, 1);
       }
       break;
     }
@@ -1396,20 +1474,20 @@ void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
   }
 }
 
-bool DictionaryPredictor::MaybeInsertPreviousTopResult(
+std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
     const Result &current_top_result, const ConversionRequest &request,
-    Segments *segments) const {
+    const Segments &segments) const {
   const int32_t max_diff = request.request()
                                .decoder_experiment_params()
                                .candidate_consistency_cost_max_diff();
-  if (max_diff == 0 || !segments || segments->conversion_segments_size() <= 0) {
-    return false;
+  if (max_diff == 0 || segments.conversion_segments_size() <= 0) {
+    return nullptr;
   }
 
   auto prev_top_result = std::atomic_load(&prev_top_result_);
 
   // Updates the key length.
-  const int cur_top_key_length = segments->conversion_segment(0).key().size();
+  const int cur_top_key_length = segments.conversion_segment(0).key().size();
   const int prev_top_key_length = prev_top_key_length_.exchange(
       cur_top_key_length);  // returns the old value.
 
@@ -1422,20 +1500,16 @@ bool DictionaryPredictor::MaybeInsertPreviousTopResult(
       std::abs(current_top_result.cost - prev_top_result->cost) < max_diff &&
       current_top_result.key.size() < prev_top_result->key.size() &&
       absl::StartsWith(prev_top_result->key, current_top_result.key)) {
-    const KeyValueView history = GetHistoryKeyAndValue(*segments);
-    FillCandidate(
-        request, *prev_top_result,
-        GetCandidateKeyAndValue(*prev_top_result, history), {},
-        segments->mutable_conversion_segment(0)->push_back_candidate());
     // Do not need to remember the previous key as `prev_top_result` is still
     // top result.
-    return true;
+    return prev_top_result;
   }
 
   // Remembers the top result.
   std::atomic_store(&prev_top_result_,
                     std::make_shared<Result>(current_top_result));
-  return false;
+
+  return nullptr;
 }
 
 }  // namespace mozc::prediction

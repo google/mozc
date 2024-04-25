@@ -45,8 +45,11 @@ namespace mozc {
 // DataLoader receives requests for loading language model data and loads the
 // data from the top priority request. The language model data is asynchronously
 // loaded in a sub-thread.
-// DataLoader is designed to be thread-compatible, similar to other components
-// like std::vector and most of other Mozc classes.
+// Since DataLoader uses a single sub-thread, if it receives a number of
+// requests at once, the loading operations are done one-by-one as a synchronous
+// operations.
+//  DataLoader is designed to be thread-compatible, similar to other
+// components like std::vector and most of other Mozc classes.
 // https://blog.reverberate.org/2021/12/18/thread-safety-cpp-rust.html
 class DataLoader {
  public:
@@ -89,16 +92,23 @@ class DataLoader {
   // Builds the new engine associated with `id`.
   // This method returns the future object immediately.
   // All errors are stored in EngineReloadResponse::response::status.
-  virtual ResponseFuture Build(uint64_t id) const;
+  ResponseFuture Build(uint64_t id) const;
 
   void Clear();
 
-  // Maybe build a new data from the top priority request if a reload request
-  // has been already received and no existing build process is running.
-  void MaybeBuildNewData();
+  // Maybe start a new data build task from the top priority request.
+  // If the existing build task is running, this function waits for that task.
+  // Returns true if a new build task started. The new build task
+  // triggered by DataLoader::Build runs in a sub-thread and is non-blocking.
+  bool StartNewDataBuildTask();
 
   // Returns true if a new data loader response is ready.
   bool IsBuildResponseReady() const;
+
+  // Returns true if loading a new data. This should be used only in unit tests.
+  bool IsBuildingForTesting() const {
+    return loader_response_future_.has_value();
+  }
 
   // Maybe move the data loader response to the caller.
   // Otherwise nullptr is returned.

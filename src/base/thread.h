@@ -104,7 +104,7 @@ class BackgroundFuture {
   BackgroundFuture &operator=(const BackgroundFuture &) = delete;
 
   BackgroundFuture(BackgroundFuture &&) = default;
-  BackgroundFuture &operator=(BackgroundFuture &&) = default;
+  BackgroundFuture &operator=(BackgroundFuture &&);
 
   ~BackgroundFuture();
 
@@ -150,7 +150,7 @@ class BackgroundFuture<void> {
   BackgroundFuture &operator=(const BackgroundFuture &) = delete;
 
   BackgroundFuture(BackgroundFuture &&) = default;
-  BackgroundFuture &operator=(BackgroundFuture &&) = default;
+  BackgroundFuture &operator=(BackgroundFuture &&);
 
   ~BackgroundFuture();
 
@@ -181,6 +181,16 @@ BackgroundFuture<R>::BackgroundFuture(F &&f, Args &&...args)
         absl::MutexLock lock(&state.mutex);
         state.value = std::move(r);
       }) {}
+
+template <class R>
+BackgroundFuture<R> &BackgroundFuture<R>::operator=(BackgroundFuture &&other) {
+  if (thread_.Joinable()) {
+    thread_.Join();
+  }
+  state_ = std::move(other.state_);
+  thread_ = std::move(other.thread_);
+  return *this;
+}
 
 template <class R>
 BackgroundFuture<R>::~BackgroundFuture() {
@@ -232,6 +242,16 @@ BackgroundFuture<void>::BackgroundFuture(F &&f, Args &&...args)
         std::invoke(std::move(f));
         done.Notify();
       }) {}
+
+inline BackgroundFuture<void> &BackgroundFuture<void>::operator=(
+    BackgroundFuture &&other) {
+  if (thread_.Joinable()) {
+    thread_.Join();
+  }
+  done_ = std::move(other.done_);
+  thread_ = std::move(other.thread_);
+  return *this;
+}
 
 inline BackgroundFuture<void>::~BackgroundFuture() {
   if (thread_.Joinable()) {

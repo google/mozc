@@ -975,9 +975,13 @@ std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
 DictionaryPredictionAggregator::GenerateQueryForHandwriting(
     const ConversionRequest &request,
     const commands::SessionCommand::CompositionEvent &composition_event) const {
-  if (composition_event.probability() < 0.1) {
+  if (composition_event.probability() < 0.0001) {
     // Skip generating the query info for unconfident composition,
     // since running reverse conversion is slow.
+    return std::nullopt;
+  }
+  if (absl::StrContains(composition_event.composition_string(), " ")) {
+    // Skip providing converted candidates for queries including white space.
     return std::nullopt;
   }
 
@@ -1040,37 +1044,45 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
-
-  for (const commands::SessionCommand::CompositionEvent &elm :
-       request.composer().GetHandwritingCompositions()) {
+  int processed_count = 0;
+  const int size_to_process = request.request()
+                                  .decoder_experiment_params()
+                                  .max_composition_event_to_process();
+  const std::vector<commands::SessionCommand::CompositionEvent>
+      &composition_events = request.composer().GetHandwritingCompositions();
+  for (size_t i = 0; i < composition_events.size(); ++i) {
+    const commands::SessionCommand::CompositionEvent &elm =
+        composition_events[i];
     if (elm.probability() <= 0.0) {
       continue;
     }
     const int recognition_cost = -500.0 * log(elm.probability());
+    constexpr int kCostOffset = 3453;  // 500 * log(1000) = ~3453
+    Result asis_result = {
+        .key = elm.composition_string(),
+        .value = elm.composition_string(),
+        .types = UNIGRAM,
+        // Set small cost for the top recognition result.
+        .wcost = (i == 0) ? 0 : kCostOffset + recognition_cost,
+        .candidate_attributes = (Segment::Candidate::NO_VARIANTS_EXPANSION |
+                                 Segment::Candidate::NO_EXTRA_DESCRIPTION),
+    };
+
     const std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
-        query_info = GenerateQueryForHandwriting(request, elm);
-    absl::string_view key;
+        query_info = processed_count < size_to_process
+                         ? GenerateQueryForHandwriting(request, elm)
+                         : std::nullopt;
     if (query_info.has_value()) {
-      if (!absl::StrContains(query_info->query, " ")) {
-        // Skip providing converted candidates for queries including white
-        // space.
-        HandwritingLookupCallback callback(cutoff_threshold, recognition_cost,
-                                           query_info->constraints, results);
-        dictionary_->LookupExact(query_info->query, request, &callback);
-      }
-      key = query_info->query;
-    } else {
-      key = elm.composition_string();
+      ++processed_count;
+
+      // Populate |results| with the look up result.
+      HandwritingLookupCallback callback(cutoff_threshold, recognition_cost,
+                                         query_info->constraints, results);
+      dictionary_->LookupExact(query_info->query, request, &callback);
+      // Rewrite key with the look-up query.
+      asis_result.key = query_info->query;
     }
-    Result result;
-    result.types = UNIGRAM;
-    result.key = key;
-    result.value = elm.composition_string();
-    result.candidate_attributes |= (Segment::Candidate::NO_VARIANTS_EXPANSION |
-                                    Segment::Candidate::NO_EXTRA_DESCRIPTION);
-    const int kAsIsCost = 2302;  // 500 * log(100) = ~2302
-    result.wcost = kAsIsCost + recognition_cost;
-    results->emplace_back(std::move(result));
+    results->emplace_back(std::move(asis_result));
   }
 
   const size_t unigram_results_size = results->size() - prev_results_size;
