@@ -626,9 +626,9 @@ message DecoderExperimentParams {
   //   typing_correction_literal_on_top_length_score_max_diff
   //     * (typing_correction_literal_on_top_length_decay^(input_length-3))
   optional float typing_correction_literal_on_top_correction_score_max_diff = 47
-      [default = 0.5];
+      [default = 0.0];
   optional int32 typing_correction_literal_on_top_conversion_cost_max_diff = 48
-      [default = 2000];
+      [default = 0];
   // Literal candidate is placed at least second position.
   optional bool typing_correction_literal_at_least_second = 49
       [default = false];
