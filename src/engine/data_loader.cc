@@ -204,11 +204,24 @@ bool DataLoader::StartNewDataBuildTask() {
     return false;
   }
 
-  // Checks if the currently loading process is the highest priority request.
-  // Note, Get() may wait until loader_response_future_ is ready.
-  if (loader_response_future_.has_value() &&
-      loader_response_future_->Get().id == top_request_id_) {
-    return true;
+  if (loader_response_future_.has_value()) {
+    // Checks if the currently loading task is the highest priority request.
+    // Note, Get() may wait until loader_response_future_ is ready.
+    if (loader_response_future_->Get().id == top_request_id_) {
+      return true;
+    }
+
+    // Do not use this result as the new request is already queued.
+    mozc::DataLoader::Response loader_response =
+        (*std::move(loader_response_future_)).Get();
+    loader_response_future_.reset();
+
+    // If the response is invalid, report it as failure not to retry for the
+    // same request in future.
+    if (!loader_response.modules || loader_response.response.status() !=
+                                        EngineReloadResponse::RELOAD_READY) {
+      ReportLoadFailure(loader_response.id);
+    }
   }
 
   LOG(INFO) << "Building a new module (current ID =" << current_request_id_
@@ -240,7 +253,7 @@ DataLoader::MaybeMoveDataLoaderResponse() {
 
   // Returns the new DataLoader::Response that is ready to use.
   mozc::DataLoader::Response loader_response =
-      std::move(*loader_response_future_).Get();
+      (*std::move(loader_response_future_)).Get();
   loader_response_future_.reset();
 
   return std::make_unique<DataLoader::Response>(std::move(loader_response));

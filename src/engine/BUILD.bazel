@@ -61,6 +61,7 @@ mozc_cc_test(
     srcs = ["data_loader_test.cc"],
     data = [
         "data_loader_test.cc",
+        "//data_manager/oss:mozc.data",
         "//data_manager/testing:mock_mozc.data",
     ],
     deps = [
