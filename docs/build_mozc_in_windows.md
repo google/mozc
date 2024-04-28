@@ -27,6 +27,12 @@ out_win\Release\Mozc64.msi
 
 Hint: You can also download `Mozc64.msi` from GitHub Actions. Check [Build with GitHub Actions](#build-with-github-actions) for details.
 
+If you are using PowerShell, please run the following command instead of `vcvarsamd64_x86.bat`.
+
+```pwsh
+& "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1"  -HostArch amd64 -Arch x86 -SkipAutomaticLocation
+```
+
 ## Setup
 
 ### System Requirements
@@ -83,6 +89,12 @@ to execute the setup command like this.
 
 ```
 "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+```
+
+If you are using PowerShell, the setup command is the following instead (the above command has no effect):
+
+```pwsh
+& "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1"  -HostArch amd64 -Arch x86 -SkipAutomaticLocation
 ```
 
 ### Build Qt
