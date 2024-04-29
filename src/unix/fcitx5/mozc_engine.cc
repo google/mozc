@@ -49,21 +49,21 @@ const struct CompositionModeInfo {
 } kPropCompositionModes[] = {
     {
         "mozc-mode-direct",
-        "fcitx-mozc-direct",
+        "fcitx_mozc_direct",
         "A",
         N_("Direct"),
         mozc::commands::DIRECT,
     },
     {
         "mozc-mode-hiragana",
-        "fcitx-mozc-hiragana",
+        "fcitx_mozc_hiragana",
         "\xe3\x81\x82",  // Hiragana letter A in UTF-8.
         N_("Hiragana"),
         mozc::commands::HIRAGANA,
     },
     {
         "mozc-mode-katakana_full",
-        "fcitx-mozc-katakana-full",
+        "fcitx_mozc_katakana_full",
         "\xe3\x82\xa2",  // Katakana letter A.
         N_("Full Katakana"),
         mozc::commands::FULL_KATAKANA,
@@ -71,7 +71,7 @@ const struct CompositionModeInfo {
     {
 
         "mozc-mode-alpha_half",
-        "fcitx-mozc-alpha-half",
+        "fcitx_mozc_alpha_half",
         "A",
         N_("Half ASCII"),
         mozc::commands::HALF_ASCII,
@@ -79,14 +79,14 @@ const struct CompositionModeInfo {
     {
 
         "mozc-mode-alpha_full",
-        "fcitx-mozc-alpha-full",
+        "fcitx_mozc_alpha_full",
         "\xef\xbc\xa1",  // Full width ASCII letter A.
         N_("Full ASCII"),
         mozc::commands::FULL_ASCII,
     },
     {
         "mozc-mode-katakana_half",
-        "fcitx-mozc-katakana-half",
+        "fcitx_mozc_katakana_half",
         "\xef\xbd\xb1",  // Half width Katakana letter A.
         N_("Half Katakana"),
         mozc::commands::HALF_KATAKANA,
@@ -146,7 +146,7 @@ MozcEngine::MozcEngine(Instance *instance)
   instance_->userInterfaceManager().registerAction("mozc-tool", &toolAction_);
   toolAction_.setShortText(_("Mozc Settings"));
   toolAction_.setLongText(_("Mozc Settings"));
-  toolAction_.setIcon("fcitx-mozc-tool");
+  toolAction_.setIcon("fcitx_mozc_tool");
 
   int i = 0;
   for (auto &modeAction : modeActions_) {
@@ -173,7 +173,7 @@ MozcEngine::MozcEngine(Instance *instance)
   instance_->userInterfaceManager().registerAction("mozc-tool-config",
                                                    &configToolAction_);
   configToolAction_.setShortText(_("Configuration Tool"));
-  configToolAction_.setIcon("fcitx-mozc-tool");
+  configToolAction_.setIcon("fcitx_mozc_tool");
   configToolAction_.connect<SimpleAction::Activated>([](InputContext *) {
     mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=config_dialog");
   });
@@ -181,7 +181,7 @@ MozcEngine::MozcEngine(Instance *instance)
   instance_->userInterfaceManager().registerAction("mozc-tool-dict",
                                                    &dictionaryToolAction_);
   dictionaryToolAction_.setShortText(_("Dictionary Tool"));
-  dictionaryToolAction_.setIcon("fcitx-mozc-dictionary");
+  dictionaryToolAction_.setIcon("fcitx_mozc_dictionary");
   dictionaryToolAction_.connect<SimpleAction::Activated>([](InputContext *) {
     mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=dictionary_tool");
   });
