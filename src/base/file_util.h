@@ -92,6 +92,7 @@ class FileUtil {
   ~FileUtil() = delete;
 
   // Creates a directory. Does not create directories in the way to the path.
+  // If the directory already exists, returns OkStatus and does nothing.
   static absl::Status CreateDirectory(const std::string &path);
 
   // Removes an empty directory.
