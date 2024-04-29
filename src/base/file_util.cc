@@ -54,11 +54,11 @@
 #include "base/singleton.h"
 
 #ifdef _WIN32
-#include "base/util.h"
-#include "base/win32/wide_char.h"
-
 #include <wil/resource.h>
 #include <windows.h>
+
+#include "base/util.h"
+#include "base/win32/wide_char.h"
 
 #else  // _WIN32
 #include <sys/stat.h>
