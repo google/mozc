@@ -40,9 +40,9 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/vlog.h"
 #include "base/process.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "protocol/commands.pb.h"
 #include "unix/fcitx5/mozc_engine.h"
 #include "unix/fcitx5/surrounding_text_util.h"

@@ -40,10 +40,10 @@
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/vlog.h"
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "client/client_interface.h"
 #include "unix/fcitx5/fcitx_key_event_handler.h"
 #include "unix/fcitx5/mozc_connection.h"
@@ -72,9 +72,7 @@ MozcState::MozcState(InputContext* ic, MozcEngine* engine)
   }
 }
 
-MozcState::~MozcState() {
-  MOZC_VLOG(1) << "MozcState destroyed.";
-}
+MozcState::~MozcState() { MOZC_VLOG(1) << "MozcState destroyed."; }
 
 void MozcState::UpdatePreeditMethod() {
   mozc::config::Config config;

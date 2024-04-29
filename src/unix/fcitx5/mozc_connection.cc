@@ -33,8 +33,8 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/vlog.h"
 #include "base/util.h"
+#include "base/vlog.h"
 #include "client/client.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
@@ -56,7 +56,9 @@ MozcConnection::MozcConnection()
   MOZC_VLOG(1) << "MozcConnection is created";
 }
 
-MozcConnection::~MozcConnection() { MOZC_VLOG(1) << "MozcConnection is destroyed"; }
+MozcConnection::~MozcConnection() {
+  MOZC_VLOG(1) << "MozcConnection is destroyed";
+}
 
 std::unique_ptr<mozc::client::ClientInterface> MozcConnection::CreateClient() {
   auto client = CreateAndConfigureClient();

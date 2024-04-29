@@ -33,8 +33,8 @@
 #include <map>
 
 #include "base/logging.h"
-#include "base/vlog.h"
 #include "base/singleton.h"
+#include "base/vlog.h"
 
 namespace fcitx {
 
