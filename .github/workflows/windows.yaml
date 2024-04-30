@@ -59,14 +59,12 @@ jobs:
         shell: cmd
         working-directory: .\src
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
           python build_mozc.py gyp
 
       - name: build package
         shell: cmd
         working-directory: .\src
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
           python build_mozc.py build -c Release package
 
       - name: upload Mozc64.msi
@@ -110,14 +108,12 @@ jobs:
         shell: cmd
         working-directory: .\src
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
           python build_mozc.py gyp --noqt --msvs_version=2022
 
       - name: runtests
         shell: cmd
         working-directory: .\src
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
           python build_mozc.py runtests -c Debug
 
   # actions/cache works without this job, but having this would increase the likelihood of cache hit

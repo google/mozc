@@ -62,6 +62,7 @@ from build_tools.util import RemoveDirectoryRecursively
 from build_tools.util import RemoveFile
 from build_tools.util import RunOrDie
 from build_tools.util import RunOrDieError
+from build_tools.vs_util import get_vs_env_vars
 
 SRC_DIR = '.'
 OSS_SRC_DIR = '.'
@@ -252,6 +253,8 @@ def ParseGypOptions(args):
     parser.add_option('--msvs_version', dest='msvs_version',
                       default='2022',
                       help='Version of the Visual Studio.')
+    parser.add_option('--vcvarsall_path', help='Path of vcvarsall.bat',
+                      default=None)
 
   if IsWindows() or IsMac():
     parser.add_option('--qtdir', dest='qtdir',
@@ -373,6 +376,15 @@ def UpdateEnvironmentFilesForWindows(out_dir):
 
 def GypMain(options, unused_args):
   """The main function for the 'gyp' command."""
+  if IsWindows():
+    # GYP captures environment variables while running so setting them up as if
+    # the developer manually executed 'vcvarsall.bat' command. Otherwise we end
+    # up having to explain how to do that for both cmd.exe and PowerShell.
+    # See https://github.com/google/mozc/pull/923
+    env_vars = get_vs_env_vars('x64', options.vcvarsall_path)
+    for (key, value) in env_vars.items():
+      os.environ[key] = value
+
   # Generate a version definition file.
   logging.info('Generating version definition file...')
   template_path = '%s/%s' % (OSS_SRC_DIR, options.version_file)
@@ -862,11 +874,6 @@ def main():
 
   command = sys.argv[1]
   args = sys.argv[2:]
-
-  if IsWindows() and (not os.environ.get('VCToolsRedistDir', '')):
-    print('VCToolsRedistDir is not defined.')
-    print('Please use Developer Command Prompt or run vcvarsamd64_x86.bat')
-    return 1
 
   if command == 'gyp':
     (cmd_opts, cmd_args) = ParseGypOptions(args)
