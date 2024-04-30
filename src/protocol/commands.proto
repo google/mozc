@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 68
+// Next ID: 69
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -703,20 +703,23 @@ message DecoderExperimentParams {
   // - " google"
   optional int32 english_variation_space_insertion_mode = 55 [default = 0];
 
-  optional int32 candidate_consistency_cost_max_diff = 63 [ default = 0 ];
+  optional int32 candidate_consistency_cost_max_diff = 63 [default = 0];
 
   optional int32 max_composition_event_to_process = 64 [default = 2];
 
   // Fix the bug on the literal_on_top correction.
-  optional bool fix_literal_on_top = 65 [ default = false ];
+  optional bool fix_literal_on_top = 65 [default = false];
 
   // Adds kana modifier insensitive corrections even when the score is smaller
   // than identity score. This will increase the coverage. Adds only when
   // top_score - correction_score < max_diff.
-  optional float kana_modifier_insensitive_corrections_top_score_max_diff =
-      66 [default = 0.0];
+  optional float kana_modifier_insensitive_corrections_top_score_max_diff = 66
+      [default = 0.0];
   // Extra penalty added to the corrections.
   optional float kana_modifier_insensitive_corrections_penalty = 67
+      [default = 0.0];
+
+  optional float typing_correction_reranker_max_score_diff_override = 68
       [default = 0.0];
 }
 
