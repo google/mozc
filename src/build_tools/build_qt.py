@@ -51,7 +51,6 @@ import argparse
 from collections.abc import Iterator
 import dataclasses
 import functools
-import json
 import os
 import pathlib
 import shutil
@@ -60,6 +59,7 @@ import sys
 import tarfile
 import time
 from typing import Any, Union
+from vs_util import get_vs_env_vars
 
 
 ABS_SCRIPT_PATH = pathlib.Path(__file__).absolute()
@@ -474,92 +474,6 @@ def build_on_mac(args: argparse.Namespace) -> None:
       shutil.rmtree(qt_dest_dir)
 
   exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
-
-
-def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
-  """Returns the path of 'vcvarsall.bat'.
-
-  Args:
-    path_hint: optional path to vcvarsall.bat
-
-  Returns:
-    The path of 'vcvarsall.bat'.
-
-  Raises:
-    FileNotFoundError: When 'vcvarsall.bat' cannot be found.
-  """
-  if path_hint is not None:
-    path = pathlib.Path(path_hint).resolve()
-    if path.exists():
-      return path
-
-  for program_files in ['Program Files', 'Program Files (x86)']:
-    for edition in ['Community', 'Professional', 'Enterprise', 'BuildTools']:
-      vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
-                               '2022', edition, 'VC', 'Auxiliary', 'Build',
-                               'vcvarsall.bat')
-      if vcvarsall.exists():
-        return vcvarsall
-
-  raise FileNotFoundError(
-      'Could not find vcvarsall.bat. '
-      'Consider using --vcvarsall_path option e.g.\n'
-      'python build_qt.py --release --confirm_license '
-      r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
-  )
-
-
-def get_vs_env_vars(
-    arch: str,
-    vcvarsall_path_hint: Union[str, None] = None,
-) -> dict[str, str]:
-  """Returns environment variables for the specified Visual Studio C++ tool.
-
-  Oftentimes commandline build process for Windows requires to us to set up
-  environment variables (especially 'PATH') first by executing an appropriate
-  Visual C++ batch file ('vcvarsall.bat').  As a result, commands to be passed
-  to methods like subprocess.run() can easily become complicated and difficult
-  to maintain.
-
-  With get_vs_env_vars() you can easily decouple environment variable handling
-  from the actual command execution as follows.
-
-    cwd = ...
-    env = get_vs_env_vars('amd64_x86')
-    subprocess.run(command_fullpath, shell=False, check=True, cwd=cwd, env=env)
-
-  or
-
-    cwd = ...
-    env = get_vs_env_vars('amd64_x86')
-    subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
-
-  For the 'arch' argument, see the following link to find supported values.
-  https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line#vcvarsall-syntax
-
-  Args:
-    arch: The architecture to be used to build Qt, e.g. 'amd64_x86'
-    vcvarsall_path_hint: optional path to vcvarsall.bat
-
-  Returns:
-    A dict of environment variable.
-
-  Raises:
-    ChildProcessError: When 'vcvarsall.bat' cannot be executed.
-    FileNotFoundError: When 'vcvarsall.bat' cannot be found.
-  """
-  vcvarsall = get_vcvarsall(vcvarsall_path_hint)
-
-  pycmd = (r'import json;'
-           r'import os;'
-           r'print(json.dumps(dict(os.environ), ensure_ascii=True))')
-  cmd = f'("{vcvarsall}" {arch}>nul)&&("{sys.executable}" -c "{pycmd}")'
-  process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-  stdout, _ = process.communicate()
-  exitcode = process.wait()
-  if exitcode != 0:
-    raise ChildProcessError(f'Failed to execute {vcvarsall}')
-  return json.loads(stdout.decode('ascii'))
 
 
 def exec_command(command: list[str], cwd: Union[str, pathlib.Path],
