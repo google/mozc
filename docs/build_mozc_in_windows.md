@@ -14,9 +14,6 @@ git clone https://github.com/google/mozc.git
 cd mozc\src
 
 python build_tools/update_deps.py
-
-"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
-
 python build_tools/build_qt.py --release --confirm_license
 python build_mozc.py gyp
 python build_mozc.py build -c Release package
@@ -75,15 +72,6 @@ In this step, additional build dependencies will be downloaded.
 You can skip this step if you would like to manually download these libraries.
 
 ## Build
-
-### Setup Build system
-
-If you have not set up the build system in your command prompt, you might need
-to execute the setup command like this.
-
-```
-"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
-```
 
 ### Build Qt
 

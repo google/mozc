@@ -1180,21 +1180,21 @@ TEST_P(CandidateFilterTestWithParam, FilterNoisyNumberCandidate) {
     n2->value = "年";
     n2->lid = pos_matcher().GetCounterSuffixWordId();
     n2->rid = pos_matcher().GetCounterSuffixWordId();
-    nodes3.push_back(n2);
+    nodes4.push_back(n2);
 
     Node *n3 = NewNode();
     n3->key = "ご";
     n3->value = "後";
-    nodes3.push_back(n3);
+    nodes4.push_back(n3);
   }
 
   Segment::Candidate *c4 = NewCandidate();
-  c3->key = "にねんご";
-  c3->value = "2年後";
-  c3->content_key = "に";
-  c3->content_value = "2";
-  c3->cost = 1000;
-  c3->structure_cost = 50;
+  c4->key = "にねんご";
+  c4->value = "2年後";
+  c4->content_key = "に";
+  c4->content_value = "2";
+  c4->cost = 1000;
+  c4->structure_cost = 50;
 
   EXPECT_EQ(filter->FilterCandidate(*request_, c4->key, c4, nodes4, nodes4),
             CandidateFilter::GOOD_CANDIDATE);
