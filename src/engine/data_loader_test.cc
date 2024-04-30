@@ -50,6 +50,7 @@ namespace mozc {
 namespace {
 
 constexpr absl::string_view kMockMagicNumber = "MOCK";
+constexpr absl::string_view kOssMagicNumber = "\xEFMOZC\x0D\x0A";
 
 struct Param {
   EngineReloadRequest::EngineType type;
@@ -64,6 +65,27 @@ class DataLoaderTest : public testing::TestWithTempUserProfile,
             testing::GetSourcePath({MOZC_SRC_COMPONENTS("data_manager"),
                                     "testing", "mock_mozc.data"})) {
     LOG(INFO) << mock_data_path_;
+
+    const std::string mock_path = testing::GetSourcePath(
+        {MOZC_SRC_COMPONENTS("data_manager"), "testing", "mock_mozc.data"});
+    mock_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    mock_request_.set_file_path(mock_path);
+    mock_request_.set_magic_number(kMockMagicNumber);
+    mock_request_.set_priority(50);
+
+    const std::string oss_path = testing::GetSourcePath(
+        {MOZC_SRC_COMPONENTS("data_manager"), "oss", "mozc.data"});
+    oss_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    oss_request_.set_file_path(oss_path);
+    oss_request_.set_magic_number(kOssMagicNumber);
+    oss_request_.set_priority(50);
+
+    const std::string invalid_path = testing::GetSourcePath(
+        {MOZC_SRC_COMPONENTS("data_manager"), "invalid", "mozc.data"});
+    invalid_path_request_.set_engine_type(EngineReloadRequest::MOBILE);
+    invalid_path_request_.set_file_path(invalid_path);
+    invalid_path_request_.set_magic_number(kOssMagicNumber);
+    invalid_path_request_.set_priority(50);
   }
 
   void Clear() {
@@ -74,6 +96,9 @@ class DataLoaderTest : public testing::TestWithTempUserProfile,
   const std::string mock_data_path_;
   DataLoader loader_;
   EngineReloadRequest request_;
+  EngineReloadRequest mock_request_;
+  EngineReloadRequest oss_request_;
+  EngineReloadRequest invalid_path_request_;
 };
 
 TEST_P(DataLoaderTest, BasicTest) {
@@ -368,6 +393,50 @@ TEST_P(DataLoaderTest, RegisterRequestTest) {
   EXPECT_EQ(id("bar", kPLow), unregister_request("bar", kPHigh));
   EXPECT_EQ(id("buzz", kPLow), unregister_request("bar", kPLow));
   EXPECT_EQ(0, unregister_request("buzz", kPLow));
+}
+
+TEST_P(DataLoaderTest, LowPriorityReuqestTest) {
+  EngineReloadRequest low_priority_request = mock_request_;
+  low_priority_request.set_priority(100);
+  ASSERT_GT(low_priority_request.priority(), oss_request_.priority());
+
+  // Starts a new build of a higher request at first.
+  loader_.RegisterRequest(oss_request_);
+  EXPECT_TRUE(loader_.StartNewDataBuildTask());
+  // It is usually not ready yet, although it depends on the task volume.
+  EXPECT_FALSE(loader_.IsBuildResponseReady());
+
+  // Tries another build of a lower request. It waits for the previous task.
+  // The new task is not started because of the priority.
+  loader_.RegisterRequest(low_priority_request);
+  EXPECT_TRUE(loader_.StartNewDataBuildTask());
+
+  // The task of the first request with higher priority should ready.
+  EXPECT_TRUE(loader_.IsBuildResponseReady());
+
+  // The response is built with the first request.
+  std::unique_ptr<DataLoader::Response> response =
+      loader_.MaybeMoveDataLoaderResponse();
+  EXPECT_EQ(response->response.request().file_path(), oss_request_.file_path());
+}
+
+TEST_P(DataLoaderTest, DuprecatedInvalidReuqestTest) {
+  // Starts a new build, but the request is invalid and it will fail.
+  const uint64_t invalid_request_id =
+      loader_.RegisterRequest(invalid_path_request_);
+  EXPECT_TRUE(loader_.StartNewDataBuildTask());
+  EXPECT_FALSE(loader_.IsBuildResponseReady());
+
+  // Sends another and valid request. It waits for the previous task and
+  // records the previous request as invalid.
+  const uint64_t mock_request_id = loader_.RegisterRequest(mock_request_);
+  EXPECT_TRUE(loader_.StartNewDataBuildTask());
+
+  // Registers the first invalid request again, but it is already excluded.
+  const uint64_t top_request_id =
+      loader_.RegisterRequest(invalid_path_request_);
+  EXPECT_EQ(top_request_id, mock_request_id);
+  EXPECT_NE(top_request_id, invalid_request_id);
 }
 
 INSTANTIATE_TEST_SUITE_P(

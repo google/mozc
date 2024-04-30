@@ -54,11 +54,11 @@
 #include "base/singleton.h"
 
 #ifdef _WIN32
-#include "base/util.h"
-#include "base/win32/wide_char.h"
-
 #include <wil/resource.h>
 #include <windows.h>
+
+#include "base/util.h"
+#include "base/win32/wide_char.h"
 
 #else  // _WIN32
 #include <sys/stat.h>
@@ -198,6 +198,10 @@ absl::Status FileUtil::CreateDirectory(const std::string &path) {
 }
 
 absl::Status FileUtilImpl::CreateDirectory(const std::string &path) const {
+  // If the path already exists, returns OkStatus and does nothing.
+  if (const absl::Status status = DirectoryExists(path); status.ok()) {
+    return absl::OkStatus();
+  }
 #if defined(_WIN32)
   const std::wstring wide = win32::Utf8ToWide(path);
   if (wide.empty()) {

@@ -124,6 +124,12 @@ def TweakQtApps(top_dir: str, oss: bool) -> None:
     if not any(os.scandir(framework_dir)):
       os.rmdir(framework_dir)
 
+    # Codesign again. '-' means psuedo identity.
+    # https://github.com/bazelbuild/rules_apple/blob/3.5.1/apple/internal/codesigning_support.bzl#L42
+    # https://developer.apple.com/documentation/security/seccodesignatureflags/1397793-adhoc
+    codesign = ['/usr/bin/codesign', '--force', '--sign', '-', app_dir]
+    util.RunOrDie(codesign)
+
   main_qt_apps = [
       'ConfigDialog.app',
       'DictionaryTool.app',
