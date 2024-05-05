@@ -53,6 +53,9 @@
 #include "storage/lru_cache.h"
 #include "testing/friend_test.h"
 
+#ifdef MOZC_ENABLE_SPELLCHECKER
+#include "spelling/spellchecker_service_interface.h"
+#endif  // MOZC_ENABLE_SPELLCHECKER
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
@@ -90,6 +93,9 @@ class SessionHandler : public SessionHandlerInterface {
   FRIEND_TEST(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest);
   FRIEND_TEST(SessionHandlerTest, EngineRollbackDataTest);
 
+#ifdef MOZC_ENABLE_SPELLCHECKER
+  FRIEND_TEST(SessionHandlerTest, CheckSpellingTest);
+#endif  // MOZC_ENABLE_SPELLCHECKER
 
   using SessionMap =
       mozc::storage::LruCache<SessionID, std::unique_ptr<session::Session>>;
@@ -158,6 +164,9 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<const config::Config> config_;
   std::unique_ptr<keymap::KeyMapManager> key_map_manager_;
 
+#ifdef MOZC_ENABLE_SPELLCHECKER
+  std::unique_ptr<spelling::SpellCheckerServiceInterface> spellchecker_service_;
+#endif  // MOZC_ENABLE_SPELLCHECKER
 
   absl::BitGen bitgen_;
 };
