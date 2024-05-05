@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   build:
-    # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2204-Readme.md
+    # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md
     runs-on: ubuntu-22.04
     timeout-minutes: 60
 
@@ -47,7 +47,7 @@ jobs:
           if-no-files-found: warn
 
   test:
-    # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2204-Readme.md
+    # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md
     runs-on: ubuntu-22.04
     timeout-minutes: 60
 
