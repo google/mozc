@@ -33,21 +33,13 @@
 #include <atomic>
 
 #include "absl/base/attributes.h"
-#include "absl/flags/flag.h"
-
-// Note that abseil HEAD has ABSL_LTS_RELEASE_VERSION undefined.
-#if !defined(ABSL_LTS_RELEASE_VERSION) || ABSL_LTS_RELEASE_VERSION >= 20240116
 #include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "absl/log/flags.h"  // IWYU pragma: keep
-#endif                                   // ABSL_LTS_RELEASE_VERSION >= 20240116
 
-#if !defined(ABSL_LTS_RELEASE_VERSION) || ABSL_LTS_RELEASE_VERSION >= 20240116
-// Newer version of abseil defines --v flag. We rely on it to avoid symbol
-// name collision (though not recommended).
+// Abseil defines --v flag. We rely on it to avoid symbol name collision (though
+// not recommended).
 ABSL_DECLARE_FLAG(int, v);
-#else   // ABSL_LTS_RELEASE_VERSION >= 20240116
-ABSL_FLAG(int, v, 0, "Show all VLOG(m) messages for m <= this.");
-#endif  // ABSL_LTS_RELEASE_VERSION < 20240116
 
 namespace mozc::internal {
 
