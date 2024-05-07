@@ -34,7 +34,7 @@ load(
     "mozc_cc_test",
     "mozc_py_binary",
     "mozc_select_enable_neural_language_model",
-    "mozc_select_enable_spellchecker",
+    "mozc_select_enable_supplemental_model",
 )
 load("//bazel:stubs.bzl", "bzl_library")
 

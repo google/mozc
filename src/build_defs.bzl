@@ -428,7 +428,7 @@ def mozc_select_enable_session_watchdog(on = [], off = []):
         "//conditions:default": off,
     })
 
-def mozc_select_enable_spellchecker(on = [], off = []):
+def mozc_select_enable_supplemental_model(on = [], off = []):
     return select({
         "//:enable_spellchecker": on,
         "//conditions:default": off,

@@ -54,6 +54,7 @@
 #include "config/config_handler.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -71,9 +72,6 @@
 #include "session/session_watch_dog.h"
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
-#ifdef MOZC_ENABLE_SPELLCHECKER
-#include "spelling/spellchecker_service_interface.h"
-#endif  // MOZC_ENABLE_SPELLCHECKER
 
 // TODO(b/275437228): Convert this to use `absl::Duration`. Note that existing
 // clients assume a negative value means we do not timeout at all.
@@ -174,16 +172,6 @@ SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine)
     return;
   }
 
-#ifdef MOZC_ENABLE_SPELLCHECKER
-  // Create() returns a valid object if the BUILD contains
-  // "//spelling:spellchecker_service_registration".
-  spellchecker_service_ = spelling::SpellCheckerServiceFactory::Create();
-  if (spellchecker_service_) {
-    engine_->SetSpellchecker(spellchecker_service_.get());
-  } else {
-    LOG(WARNING) << "SpellCheckerService is not registered.";
-  }
-#endif  // MOZC_ENABLE_SPELLCHECKER
 
   // everything is OK
   is_available_ = true;
@@ -391,7 +379,7 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       eval_succeeded = CheckSpelling(command);
       break;
     case commands::Input::RELOAD_SPELL_CHECKER:
-      eval_succeeded = ReloadSpellChecker(command);
+      eval_succeeded = ReloadSupplementalModel(command);
       break;
     case commands::Input::GET_SERVER_VERSION:
       eval_succeeded = GetServerVersion(command);
@@ -694,24 +682,20 @@ bool SessionHandler::CheckSpelling(commands::Command *command) {
     return true;
   }
 
-#ifdef MOZC_ENABLE_SPELLCHECKER
-  if (spellchecker_service_) {
+  if (supplemental_model_) {
     *(command->mutable_output()->mutable_check_spelling_response()) =
-        spellchecker_service_->CheckSpelling(
+        supplemental_model_->CheckSpelling(
             command->input().check_spelling_request());
   }
-#endif  // MOZC_ENABLE_SPELLCHECKER
 
   return true;
 }
 
-bool SessionHandler::ReloadSpellChecker(commands::Command *command) {
-#ifdef MOZC_ENABLE_SPELLCHECKER
-  if (spellchecker_service_) {
-    spellchecker_service_->LoadAsync(command->input().engine_reload_request());
+bool SessionHandler::ReloadSupplementalModel(commands::Command *command) {
+  if (supplemental_model_) {
+    supplemental_model_->LoadAsync(command->input().engine_reload_request());
     return false;
   }
-#endif  // MOZC_ENABLE_SPELLCHECKER
   return true;
 }
 

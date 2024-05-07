@@ -49,7 +49,7 @@
 #include "engine/engine_interface.h"
 #include "engine/minimal_engine.h"
 #include "engine/modules.h"
-#include "engine/spellchecker_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/rescorer_interface.h"
@@ -143,9 +143,9 @@ class Engine : public EngineInterface {
                         : minimal_engine_.GetPosList();
   }
 
-  void SetSpellchecker(
-      const engine::SpellcheckerInterface *spellchecker) override {
-    modules_->SetSpellchecker(spellchecker);
+  void SetSupplementalModel(
+      const engine::SupplementalModelInterface *supplemental_model) override {
+    modules_->SetSupplementalModel(supplemental_model);
   }
 
   void SetRescorer(

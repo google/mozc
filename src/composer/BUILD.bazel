@@ -61,7 +61,6 @@ mozc_cc_library(
         "//composer/internal:transliterators",
         "//config:character_form_manager",
         "//config:config_handler",
-        "//engine:spellchecker_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:friend_test",

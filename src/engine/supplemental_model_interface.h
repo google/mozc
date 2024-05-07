@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_ENGINE_SPELLCHECKER_INTERFACE_H_
-#define MOZC_ENGINE_SPELLCHECKER_INTERFACE_H_
+#ifndef MOZC_ENGINE_SUPPLEMENTAL_MODEL_INTERFACE_H_
+#define MOZC_ENGINE_SUPPLEMENTAL_MODEL_INTERFACE_H_
 
 #include <optional>
 #include <vector>
@@ -37,17 +37,30 @@
 #include "composer/query.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
+#include "protocol/engine_builder.pb.h"
 
 namespace mozc::engine {
 
-class SpellcheckerInterface {
+// Abstract interface of supplemental model.
+class SupplementalModelInterface {
  public:
-  virtual ~SpellcheckerInterface() = default;
+  virtual ~SupplementalModelInterface() = default;
+
+  // Loads supplemental model asynchronously defined in the `request`.
+  // Returns false if the LoadAsync is already running.
+  virtual bool LoadAsync(const EngineReloadRequest &request) { return false; }
+
+  // Loads supplemental model defined in the `request`.
+  virtual EngineReloadResponse Load(const EngineReloadRequest &request) {
+    return EngineReloadResponse();
+  }
 
   // Performs spelling correction.
   // `request.text` may contains multiple sentences.
   virtual commands::CheckSpellingResponse CheckSpelling(
-      const commands::CheckSpellingRequest &request) const = 0;
+      const commands::CheckSpellingRequest &request) const {
+    return commands::CheckSpellingResponse();
+  }
 
   // Performs spelling correction for composition (pre-edit) Hiragana sequence.
   // Both `query` and `context` must be Hiragana input sequence.
@@ -58,12 +71,14 @@ class SpellcheckerInterface {
   virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
   CheckCompositionSpelling(absl::string_view query, absl::string_view context,
                            bool disable_toggle_correction,
-                           const commands::Request &request) const = 0;
+                           const commands::Request &request) const {
+    return std::nullopt;
+  }
 
   // Performs homonym spelling correction.
-  virtual void MaybeApplyHomonymCorrection(Segments *segments) const = 0;
+  virtual void MaybeApplyHomonymCorrection(Segments *segments) const { }
 };
 
 }  // namespace mozc::engine
 
-#endif  // MOZC_ENGINE_SPELLCHECKER_INTERFACE_H_
+#endif  // MOZC_ENGINE_SUPPLEMENTAL_MODEL_INTERFACE_H_

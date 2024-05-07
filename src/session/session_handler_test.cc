@@ -59,6 +59,7 @@
 #include "engine/minimal_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
+#include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -70,11 +71,6 @@
 #include "testing/mozctest.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
-#ifdef MOZC_ENABLE_SPELLCHECKER
-#include "spelling/spellchecker_service_interface.h"
-
-using ::testing::EqualsProto;
-#endif  // MOZC_ENABLE_SPELLCHECKER
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
@@ -826,67 +822,5 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
   EXPECT_EQ(handler.GetDataVersion(), mock_version_);
 }
 
-#ifdef MOZC_ENABLE_SPELLCHECKER
-TEST_F(SessionHandlerTest, CheckSpellingTest) {
-  SessionHandler handler(std::make_unique<MinimalEngine>());
-
-  class MockSpellCheckerService
-      : public spelling::SpellCheckerServiceInterface {
-   public:
-    MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
-                (const commands::CheckSpellingRequest &), (const, override));
-
-    MOCK_METHOD(std::optional<std::vector<composer::TypeCorrectedQuery>>,
-                CheckCompositionSpelling,
-                (absl::string_view, absl::string_view, bool,
-                 const commands::Request &),
-                (const, override));
-    MOCK_METHOD(void, MaybeApplyHomonymCorrection, (Segments *),
-                (const override));
-  };
-
-  commands::Command command;
-  command.mutable_input()->set_type(commands::Input::CHECK_SPELLING);
-
-  commands::CheckSpellingRequest request;
-  request.set_text("内臓ハードディスク");
-
-  commands::CheckSpellingResponse response;
-  auto *correction = response.add_corrections();
-  correction->set_surface("内臓");
-  correction->add_suggestions("内蔵");
-  correction->set_begin(0);
-  correction->set_end(6);
-
-  auto mock = std::make_unique<MockSpellCheckerService>();
-  EXPECT_CALL(*mock, CheckSpelling(EqualsProto(request)))
-      .Times(1)
-      .WillOnce(Return(response));
-
-  handler.spellchecker_service_ = std::move(mock);
-
-  // empty request.
-  handler.EvalCommand(&command);
-  EXPECT_FALSE(command.output().has_check_spelling_response());
-
-  // set request
-  *(command.mutable_input()->mutable_check_spelling_request()) =
-      std::move(request);
-
-  handler.EvalCommand(&command);
-  EXPECT_TRUE(command.output().has_check_spelling_response());
-  EXPECT_THAT(command.output().check_spelling_response(),
-              EqualsProto(response));
-}
-
-TEST_F(SessionHandlerTest, SetSpellcheckerTest) {
-  auto engine = std::make_unique<MockEngine>();
-  EXPECT_CALL(*engine, SetSpellchecker(_));
-
-  // SetSpellchecker is called when SessionHandler is initialized with
-  // a valid SpellCheckerService.
-  SessionHandler handler(std::move(engine));
-}
-#endif  // MOZC_ENABLE_SPELLCHECKER
 
 }  // namespace mozc

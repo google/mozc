@@ -41,7 +41,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "engine/data_loader.h"
 #include "engine/modules.h"
-#include "engine/spellchecker_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/rescorer_interface.h"
 #include "protocol/engine_builder.pb.h"
@@ -104,8 +104,8 @@ class EngineInterface {
   // Gets the user POS list.
   virtual std::vector<std::string> GetPosList() const = 0;
 
-  virtual void SetSpellchecker(
-      const engine::SpellcheckerInterface *spellchecker) {}
+  virtual void SetSupplementalModel(
+      const engine::SupplementalModelInterface *supplemental_model) {}
 
   virtual void SetRescorer(
       std::unique_ptr<const prediction::RescorerInterface> rescorer) {}
