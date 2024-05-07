@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   build:
-    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2022-Readme.md
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
     runs-on: windows-2022
     timeout-minutes: 120
 
@@ -75,7 +75,7 @@ jobs:
           if-no-files-found: warn
 
   test:
-    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2022-Readme.md
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
     runs-on: windows-2022
     timeout-minutes: 90
 
@@ -120,7 +120,7 @@ jobs:
   # in other jobs. Another approach would be to use "needs:".
   # https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow
   cache_deps:
-    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2022-Readme.md
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
     runs-on: windows-2022
     timeout-minutes: 15
 
