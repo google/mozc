@@ -59,6 +59,7 @@
 #include "engine/minimal_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
+#include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

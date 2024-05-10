@@ -42,7 +42,7 @@
 #include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/modules.h"
-#include "engine/spellchecker_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -51,7 +51,7 @@ namespace engine {
 
 namespace {
 
-class SpellcheckerForTesting : public engine::SpellcheckerInterface {
+class SupplementalModelForTesting : public engine::SupplementalModelInterface {
  public:
   commands::CheckSpellingResponse CheckSpelling(
       const commands::CheckSpellingRequest &) const override {
@@ -124,9 +124,10 @@ class EngineTest : public ::testing::Test {
 };
 
 TEST_F(EngineTest, ReloadModulesTest) {
-  SpellcheckerForTesting spellchecker;
-  engine_->SetSpellchecker(&spellchecker);
-  EXPECT_EQ(engine_->GetModulesForTesting()->GetSpellchecker(), &spellchecker);
+  SupplementalModelForTesting supplemental_model;
+  engine_->SetSupplementalModel(&supplemental_model);
+  EXPECT_EQ(engine_->GetModulesForTesting()->GetSupplementalModel(),
+            &supplemental_model);
 
   auto modules = std::make_unique<engine::Modules>();
   CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
@@ -134,7 +135,8 @@ TEST_F(EngineTest, ReloadModulesTest) {
   const bool is_mobile = true;
   CHECK_OK(engine_->ReloadModules(std::move(modules), is_mobile));
 
-  EXPECT_EQ(engine_->GetModulesForTesting()->GetSpellchecker(), &spellchecker);
+  EXPECT_EQ(engine_->GetModulesForTesting()->GetSupplementalModel(),
+            &supplemental_model);
 }
 
 // Tests the interaction with DataLoader for successful Engine

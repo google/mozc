@@ -41,7 +41,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "engine/engine_interface.h"
 #include "engine/modules.h"
-#include "engine/spellchecker_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "testing/gmock.h"
 
@@ -64,8 +64,8 @@ class MockEngine : public EngineInterface {
   MOCK_METHOD(const DataManagerInterface *, GetDataManager, (),
               (const, override));
   MOCK_METHOD(std::vector<std::string>, GetPosList, (), (const, override));
-  MOCK_METHOD(void, SetSpellchecker, (const engine::SpellcheckerInterface *),
-              (override));
+  MOCK_METHOD(void, SetSupplementalModel,
+              (const engine::SupplementalModelInterface *), (override));
 };
 
 }  // namespace mozc

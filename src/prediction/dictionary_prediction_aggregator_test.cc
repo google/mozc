@@ -62,7 +62,7 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
-#include "engine/spellchecker_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "prediction/result.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
@@ -423,8 +423,9 @@ class MockDataAndAggregator {
   const DictionaryPredictionAggregatorTestPeer &aggregator() {
     return *aggregator_;
   }
-  void set_spellchecker(const engine::SpellcheckerInterface *spellchecker) {
-    modules_.SetSpellchecker(spellchecker);
+  void set_supplemental_model(
+      const engine::SupplementalModelInterface *supplemental_model) {
+    modules_.SetSupplementalModel(supplemental_model);
   }
 
 #if MOZC_ENABLE_NGRAM_RESCORING
@@ -2047,7 +2048,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_F(DictionaryPredictionAggregatorTest,
        AggregateExtendedTypeCorrectingPrediction) {
-  class MockSpellchecker : public engine::SpellcheckerInterface {
+  class MockSupplementalModel : public engine::SupplementalModelInterface {
    public:
     MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
                 (const commands::CheckSpellingRequest &), (const, override));
@@ -2088,17 +2089,17 @@ TEST_F(DictionaryPredictionAggregatorTest,
                TypeCorrectedQuery::CORRECTION | TypeCorrectedQuery::COMPLETION |
                    TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
 
-  auto mock = std::make_unique<MockSpellchecker>();
+  auto mock = std::make_unique<MockSupplementalModel>();
   EXPECT_CALL(*mock,
               CheckCompositionSpelling("よろさく", "ほんじつは", false, _))
       .WillOnce(Return(expected));
 
-  data_and_aggregator->set_spellchecker(mock.get());
+  data_and_aggregator->set_supplemental_model(mock.get());
 
   std::vector<Result> results;
   aggregator.AggregateTypingCorrectedPrediction(*prediction_convreq_, segments,
                                                 &results);
-  data_and_aggregator->set_spellchecker(nullptr);
+  data_and_aggregator->set_supplemental_model(nullptr);
 
   EXPECT_EQ(results.size(), 5);
   for (int i = 0; i < results.size(); ++i) {

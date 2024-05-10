@@ -86,7 +86,7 @@ mozc_cc_library(
     deps = [
         ":engine_builder",
         ":modules",
-        ":spellchecker_interface",
+        ":supplemental_model_interface",
         ":user_data_manager_interface",
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
@@ -99,13 +99,14 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "spellchecker_interface",
-    hdrs = ["spellchecker_interface.h"],
+    name = "supplemental_model_interface",
+    hdrs = ["supplemental_model_interface.h"],
     deps = [
         "//composer:query",
         "//converter:segments",
         "//data_manager",
         "//protocol:commands_cc_proto",
+        "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -115,7 +116,7 @@ mozc_cc_library(
     srcs = ["modules.cc"],
     hdrs = ["modules.h"],
     deps = [
-        ":spellchecker_interface",
+        ":supplemental_model_interface",
         "//base:logging",
         "//converter:connector",
         "//converter:segmenter",
@@ -170,7 +171,7 @@ mozc_cc_library(
         ":engine_interface",
         ":minimal_engine",
         ":modules",
-        ":spellchecker_interface",
+        ":supplemental_model_interface",
         ":user_data_manager_interface",
         "//base:vlog",
         "//converter",
@@ -207,7 +208,7 @@ mozc_cc_test(
     deps = [
         ":engine",
         ":modules",
-        ":spellchecker_interface",
+        ":supplemental_model_interface",
         "//composer:query",
         "//converter:segments",
         "//data_manager",
@@ -226,7 +227,7 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":modules",
-        ":spellchecker_interface",
+        ":supplemental_model_interface",
         ":user_data_manager_interface",
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",

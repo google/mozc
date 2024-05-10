@@ -36,7 +36,7 @@ load(
     "mozc_select",
     "mozc_select_enable_neural_language_model",
     "mozc_select_enable_session_watchdog",
-    "mozc_select_enable_spellchecker",
+    "mozc_select_enable_supplemental_model",
     "mozc_select_enable_usage_rewriter",
 )
 load("//bazel:stubs.bzl", "bzl_library")
@@ -105,7 +105,7 @@ cc_library(
         ],
     ) + mozc_select_enable_session_watchdog(
         off = ["MOZC_DISABLE_SESSION_WATCHDOG"],
-    ) + mozc_select_enable_spellchecker([
+    ) + mozc_select_enable_supplemental_model([
     ]) + mozc_select_enable_usage_rewriter(
         off = ["NO_USAGE_REWRITER"],
     ) + mozc_select_enable_neural_language_model([

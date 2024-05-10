@@ -54,6 +54,7 @@
 #include "config/config_handler.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -378,7 +379,7 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       eval_succeeded = CheckSpelling(command);
       break;
     case commands::Input::RELOAD_SPELL_CHECKER:
-      eval_succeeded = ReloadSpellChecker(command);
+      eval_succeeded = ReloadSupplementalModel(command);
       break;
     case commands::Input::GET_SERVER_VERSION:
       eval_succeeded = GetServerVersion(command);
@@ -681,11 +682,20 @@ bool SessionHandler::CheckSpelling(commands::Command *command) {
     return true;
   }
 
+  if (supplemental_model_) {
+    *(command->mutable_output()->mutable_check_spelling_response()) =
+        supplemental_model_->CheckSpelling(
+            command->input().check_spelling_request());
+  }
 
   return true;
 }
 
-bool SessionHandler::ReloadSpellChecker(commands::Command *command) {
+bool SessionHandler::ReloadSupplementalModel(commands::Command *command) {
+  if (supplemental_model_) {
+    supplemental_model_->LoadAsync(command->input().engine_reload_request());
+    return false;
+  }
   return true;
 }
 

@@ -63,7 +63,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "engine/modules.h"
-#include "engine/spellchecker_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/rescorer_interface.h"
@@ -669,11 +669,12 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection2(
 // static
 void DictionaryPredictor::MaybeApplyHomonymCorrection(
     const engine::Modules &modules, Segments *segments) {
-  const engine::SpellcheckerInterface *spellchecker = modules.GetSpellchecker();
-  if (spellchecker == nullptr) {
+  const engine::SupplementalModelInterface *supplemental_model =
+      modules.GetSupplementalModel();
+  if (supplemental_model == nullptr) {
     return;
   }
-  spellchecker->MaybeApplyHomonymCorrection(segments);
+  supplemental_model->MaybeApplyHomonymCorrection(segments);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(

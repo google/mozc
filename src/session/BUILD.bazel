@@ -38,7 +38,7 @@ load(
     "mozc_py_binary",
     "mozc_select",
     "mozc_select_enable_session_watchdog",
-    "mozc_select_enable_spellchecker",
+    "mozc_select_enable_supplemental_model",
 )
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
@@ -299,7 +299,7 @@ mozc_cc_library(
         "//dictionary:user_dictionary_session_handler",
         "//engine",
         "//engine:engine_interface",
-        "//engine:spellchecker_interface",
+        "//engine:supplemental_model_interface",
         "//engine:user_data_manager_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
@@ -317,7 +317,8 @@ mozc_cc_library(
     ] + mozc_select_enable_session_watchdog([
         "//base:process",
         ":session_watch_dog",
-    ]) + mozc_select_enable_spellchecker([
+    ]) + mozc_select_enable_supplemental_model([
+        "//supplemental_model:supplemental_model_factory",
     ]),
 )
 
@@ -363,20 +364,18 @@ mozc_cc_test(
         ":session_handler_test_util",
         "//base:clock",
         "//base:clock_mock",
-        "//base:logging",
-        "//base:thread",
         "//composer:query",
         "//config:config_handler",
         "//converter:segments",
         "//data_manager",
         "//data_manager/testing:mock_data_manager",
         "//engine",
-        "//engine:engine_builder",
         "//engine:engine_interface",
         "//engine:engine_mock",
         "//engine:minimal_engine",
         "//engine:mock_data_engine_factory",
         "//engine:modules",
+        "//engine:supplemental_model_interface",
         "//engine:user_data_manager_mock",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
@@ -387,11 +386,12 @@ mozc_cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/random",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
-    ] + mozc_select_enable_spellchecker([
+    ] + mozc_select_enable_supplemental_model([
+        "//supplemental_model:supplemental_model_factory",
+        "//supplemental_model:supplemental_model_registration",
     ]),
 )
 
@@ -766,7 +766,9 @@ mozc_cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ] + mozc_select_enable_spellchecker([
+    ] + mozc_select_enable_supplemental_model([
+        "//supplemental_model:supplemental_model_factory",
+        "//supplemental_model:supplemental_model_registration",
     ]),
 )
 

@@ -37,7 +37,7 @@ jobs:
       - name: bazel build
         working-directory: ./src
         run: |
-          bazel build --config oss_linux package
+          bazel build --config oss_linux package -c opt
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -71,4 +71,4 @@ jobs:
       - name: bazel test
         working-directory: ./src
         run: |
-          bazel test ... --config oss_linux --build_tests_only
+          bazel test ... --config oss_linux --build_tests_only -c dbg

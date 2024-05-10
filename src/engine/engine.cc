@@ -45,7 +45,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "engine/data_loader.h"
 #include "engine/modules.h"
-#include "engine/spellchecker_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
@@ -179,12 +179,12 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
 
   RETURN_IF_NULL(modules);
 
-  // Keeps the previous spellchecker if exists.
-  const engine::SpellcheckerInterface *spellchecker =
-      modules_->GetSpellchecker();
+  // Keeps the previous supplemental_model if exists.
+  const engine::SupplementalModelInterface *supplemental_model =
+      modules_->GetSupplementalModel();
 
   modules_ = std::move(modules);
-  modules_->SetSpellchecker(spellchecker);
+  modules_->SetSupplementalModel(supplemental_model);
 
   immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
   RETURN_IF_NULL(immutable_converter_);

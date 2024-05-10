@@ -60,7 +60,7 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
-#include "engine/spellchecker_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "prediction/number_decoder.h"
 #include "prediction/result.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
@@ -1681,8 +1681,9 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     return;
   }
 
-  const engine::SpellcheckerInterface *corrector = modules_.GetSpellchecker();
-  if (corrector == nullptr) {
+  const engine::SupplementalModelInterface *supplemental_model =
+      modules_.GetSupplementalModel();
+  if (supplemental_model == nullptr) {
     return;
   }
 
@@ -1703,9 +1704,9 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 
   const std::string asis = request.composer().GetStringForTypeCorrection();
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      corrector->CheckCompositionSpelling(asis, segments.history_key(),
-                                          disable_toggle_correction(request),
-                                          request.request());
+      supplemental_model->CheckCompositionSpelling(
+          asis, segments.history_key(), disable_toggle_correction(request),
+          request.request());
   if (!corrected) {
     return;
   }
