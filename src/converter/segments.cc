@@ -42,9 +42,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/vlog.h"
 
