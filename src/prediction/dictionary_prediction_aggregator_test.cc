@@ -2050,14 +2050,10 @@ TEST_F(DictionaryPredictionAggregatorTest,
        AggregateExtendedTypeCorrectingPrediction) {
   class MockSupplementalModel : public engine::SupplementalModelInterface {
    public:
-    MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
-                (const commands::CheckSpellingRequest &), (const, override));
     MOCK_METHOD(std::optional<std::vector<TypeCorrectedQuery>>,
                 CheckCompositionSpelling,
                 (absl::string_view, absl::string_view, bool,
                  const commands::Request &),
-                (const, override));
-    MOCK_METHOD(void, MaybeApplyHomonymCorrection, (Segments *),
                 (const, override));
   };
 

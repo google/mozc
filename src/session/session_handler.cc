@@ -683,9 +683,13 @@ bool SessionHandler::CheckSpelling(commands::Command *command) {
   }
 
   if (supplemental_model_) {
-    *(command->mutable_output()->mutable_check_spelling_response()) =
-        supplemental_model_->CheckSpelling(
-            command->input().check_spelling_request());
+    auto response = supplemental_model_->CheckSpelling(
+        command->input().check_spelling_request());
+    auto *stored =
+        command->mutable_output()->mutable_check_spelling_response();
+    if (response.has_value()) {
+      *stored = std::move(*response);
+    }
   }
 
   return true;
