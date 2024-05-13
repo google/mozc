@@ -223,6 +223,7 @@ mozc_cc_library(
         "//base:number_util",
         "//base:util",
         "//base:vlog",
+        "//base/strings:unicode",
         "//composer",
         "//converter:converter_interface",
         "//converter:segments",

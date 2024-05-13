@@ -1066,6 +1066,31 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
   }
 }
 
+TEST_F(DateRewriterTest, ConsecutiveDigitsWithMinusSign) {
+  commands::Request request;
+  const config::Config config;
+  const composer::Composer composer(nullptr, &request, &config);
+  const ConversionRequest conversion_request(&composer, &request, &config);
+
+  // Init an instance of Segments for this test.
+  Segments segments;
+  InitSegment("-123", "−１２３", &segments);
+
+  Segment *segment = segments.mutable_conversion_segment(0);
+  // Hiragana: ー is prolonged sound mark (U+2212)
+  segment->add_meta_candidate()->value = "ー１２３";
+  // Half Ascii: - is hyphen-minus (U+002D)
+  segment->add_meta_candidate()->value = "-123";
+  // Full Ascii: − is minus (U+30FC)
+  segment->add_meta_candidate()->value = "−１２３";
+  // Half Katakana: ｰ is half prolonged sound mark (U+FF70)
+  segment->add_meta_candidate()->value = "ｰ123";
+
+  // No rewrite is expected.
+  DateRewriter rewriter;
+  EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments));
+}
+
 TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionWithHistory) {
   commands::Request request;
   const config::Config config;

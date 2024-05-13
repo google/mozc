@@ -62,6 +62,7 @@
 #include "base/clock.h"
 #include "base/japanese_util.h"
 #include "base/number_util.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
@@ -1168,8 +1169,15 @@ bool DateRewriter::ResizeSegments(const ConversionRequest &request,
 
 namespace {
 bool IsNDigits(const absl::string_view value, int n) {
-  return Util::CharsLen(value) == n &&
-         Util::GetScriptType(value) == Util::NUMBER;
+  if (Util::CharsLen(value) != n) {
+    return false;
+  }
+  for (absl::string_view c : Utf8AsChars(value)) {
+    if (Util::GetScriptType(c) != Util::NUMBER) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // Gets n digits if possible.
