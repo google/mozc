@@ -38,11 +38,11 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/key_event_util.h"
