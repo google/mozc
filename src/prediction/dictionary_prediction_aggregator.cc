@@ -1704,9 +1704,9 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 
   const std::string asis = request.composer().GetStringForTypeCorrection();
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      supplemental_model->CheckCompositionSpelling(
-          asis, segments.history_key(), disable_toggle_correction(request),
-          request.request());
+      supplemental_model->CorrectComposition(asis, segments.history_key(),
+                                             disable_toggle_correction(request),
+                                             request.request());
   if (!corrected) {
     return;
   }

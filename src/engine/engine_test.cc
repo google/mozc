@@ -52,19 +52,6 @@ namespace engine {
 namespace {
 
 class SupplementalModelForTesting : public engine::SupplementalModelInterface {
- public:
-  commands::CheckSpellingResponse CheckSpelling(
-      const commands::CheckSpellingRequest &) const override {
-    return commands::CheckSpellingResponse();
-  }
-
-  std::optional<std::vector<composer::TypeCorrectedQuery>>
-  CheckCompositionSpelling(absl::string_view, absl::string_view, bool,
-                           const commands::Request &) const override {
-    return std::nullopt;
-  }
-
-  void MaybeApplyHomonymCorrection(Segments *) const override {}
 };
 
 constexpr absl::string_view kMockMagicNumber = "MOCK";

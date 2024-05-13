@@ -1,0 +1,17 @@
+# This file tests ConvertToHalfAscii against a negative number (F10 to -123)
+
+# Enable IME
+SEND_KEY	ON
+RESET_CONTEXT
+SWITCH_INPUT_MODE	HIRAGANA
+
+################################################################################
+# Test for MS-IME keymap
+SET_CONFIG	session_keymap	MSIME
+
+# Verify that input is learned.
+SEND_KEYS	-123
+SEND_KEY	F10
+EXPECT_PREEDIT	-123
+
+RESET_CONTEXT

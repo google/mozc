@@ -85,6 +85,7 @@
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_time',
         '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/base/base.gyp:base_core',
         '<(mozc_oss_src_dir)/base/base.gyp:config_file_stream',
         '<(mozc_oss_src_dir)/base/base.gyp:serialized_string_array',
         '<(mozc_oss_src_dir)/base/base.gyp:version',

@@ -555,8 +555,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
                   merged_types, segment->push_back_candidate());
   }
 
-  // TODO(b/320221782): Add unit tests for MaybeApplyHomonymCorrection.
-  MaybeApplyHomonymCorrection(modules_, segments);
+  // TODO(b/320221782): Add unit tests for MaybeApplyPostCorrection.
+  MaybeApplyPostCorrection(modules_, segments);
 
   if (!fix_literal_on_top) {
     MaybeSuppressAggressiveTypingCorrection(
@@ -667,14 +667,14 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection2(
 }
 
 // static
-void DictionaryPredictor::MaybeApplyHomonymCorrection(
+void DictionaryPredictor::MaybeApplyPostCorrection(
     const engine::Modules &modules, Segments *segments) {
   const engine::SupplementalModelInterface *supplemental_model =
       modules.GetSupplementalModel();
   if (supplemental_model == nullptr) {
     return;
   }
-  supplemental_model->MaybeApplyHomonymCorrection(segments);
+  supplemental_model->PostCorrect(segments);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(

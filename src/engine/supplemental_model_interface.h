@@ -57,9 +57,9 @@ class SupplementalModelInterface {
 
   // Performs spelling correction.
   // `request.text` may contains multiple sentences.
-  virtual commands::CheckSpellingResponse CheckSpelling(
+  virtual std::optional<commands::CheckSpellingResponse> CheckSpelling(
       const commands::CheckSpellingRequest &request) const {
-    return commands::CheckSpellingResponse();
+    return std::nullopt;
   }
 
   // Performs spelling correction for composition (pre-edit) Hiragana sequence.
@@ -69,14 +69,14 @@ class SupplementalModelInterface {
   // Returns std::nullopt when the composition spellchecker is not
   // enabled/available.
   virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
-  CheckCompositionSpelling(absl::string_view query, absl::string_view context,
-                           bool disable_toggle_correction,
-                           const commands::Request &request) const {
+  CorrectComposition(absl::string_view query, absl::string_view context,
+                     bool disable_toggle_correction,
+                     const commands::Request &request) const {
     return std::nullopt;
   }
 
-  // Performs homonym spelling correction.
-  virtual void MaybeApplyHomonymCorrection(Segments *segments) const { }
+  // Performs general post correction on `segments`.
+  virtual void PostCorrect(Segments *segments) const {}
 };
 
 }  // namespace mozc::engine
