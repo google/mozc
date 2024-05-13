@@ -56,6 +56,7 @@ class SupplementalModelForTesting : public engine::SupplementalModelInterface {
 
 constexpr absl::string_view kMockMagicNumber = "MOCK";
 constexpr absl::string_view kOssMagicNumber = "\xEFMOZC\x0D\x0A";
+constexpr int kMiddlePriority = 50;
 }  // namespace
 
 class EngineTest : public ::testing::Test {
@@ -66,22 +67,26 @@ class EngineTest : public ::testing::Test {
     mock_request_.set_engine_type(EngineReloadRequest::MOBILE);
     mock_request_.set_file_path(mock_path);
     mock_request_.set_magic_number(kMockMagicNumber);
+    mock_request_.set_priority(kMiddlePriority);
 
     const std::string oss_path = testing::GetSourcePath(
         {MOZC_SRC_COMPONENTS("data_manager"), "oss", "mozc.data"});
     oss_request_.set_engine_type(EngineReloadRequest::MOBILE);
     oss_request_.set_file_path(oss_path);
     oss_request_.set_magic_number(kOssMagicNumber);
+    oss_request_.set_priority(kMiddlePriority);
 
     const std::string invalid_path = testing::GetSourcePath(
         {MOZC_SRC_COMPONENTS("data_manager"), "invalid", "mozc.data"});
     invalid_path_request_.set_engine_type(EngineReloadRequest::MOBILE);
     invalid_path_request_.set_file_path(invalid_path);
     invalid_path_request_.set_magic_number(kOssMagicNumber);
+    invalid_path_request_.set_priority(kMiddlePriority);
 
     invalid_data_request_.set_engine_type(EngineReloadRequest::MOBILE);
     invalid_data_request_.set_file_path(mock_path);
     invalid_data_request_.set_magic_number(kOssMagicNumber);
+    invalid_data_request_.set_priority(kMiddlePriority);
 
     DataManager mock_data_manager;
     mock_data_manager.InitFromFile(mock_request_.file_path(),
