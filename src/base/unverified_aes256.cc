@@ -34,7 +34,7 @@
 #include <cstring>
 #include <utility>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 
 namespace mozc {
 namespace internal {

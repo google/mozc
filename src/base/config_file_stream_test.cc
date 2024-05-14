@@ -34,6 +34,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "base/file_util.h"
 #include "base/system_util.h"
 #include "testing/gmock.h"

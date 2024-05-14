@@ -29,8 +29,6 @@
 
 #include "base/stopwatch.h"
 
-#include <cstdint>
-
 #include "absl/time/time.h"
 #include "base/clock.h"
 

@@ -29,16 +29,15 @@
 
 #include "base/mmap.h"
 
-#include <climits>
 #include <cstddef>
 #include <optional>
 #include <utility>
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
 #include "base/strings/zstring_view.h"
 
 #ifdef __APPLE__

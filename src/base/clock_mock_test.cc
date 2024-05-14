@@ -32,6 +32,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/civil_time.h"
 #include "absl/time/time.h"
+#include "base/clock.h"
 #include "testing/gunit.h"
 
 namespace mozc {

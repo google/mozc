@@ -29,8 +29,6 @@
 
 #include "base/port.h"
 
-#include "testing/gunit.h"
-
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif  // __APPLE__

@@ -32,8 +32,9 @@
 #include <string>
 
 #include "absl/cleanup/cleanup.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
-#include "base/logging.h"
+#include "base/strings/pfchar.h"
 #include "base/strings/zstring_view.h"
 
 #ifdef _WIN32

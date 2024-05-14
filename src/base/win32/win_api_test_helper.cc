@@ -38,7 +38,8 @@
 #include <type_traits>
 #include <vector>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/util.h"
 
 namespace mozc {

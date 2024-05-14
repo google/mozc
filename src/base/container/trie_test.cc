@@ -30,6 +30,7 @@
 #include "base/container/trie.h"
 
 #include <cstddef>
+#include <cstring>
 #include <iterator>
 #include <string>
 #include <utility>

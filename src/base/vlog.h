@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_VLOG_H_
 #define MOZC_BASE_VLOG_H_
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 
 namespace mozc::internal {
 

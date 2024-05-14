@@ -29,8 +29,6 @@
 
 #include "base/run_level.h"
 
-#include "base/logging.h"
-
 #ifdef __linux__
 #include <sys/types.h>
 #endif  // __linux__

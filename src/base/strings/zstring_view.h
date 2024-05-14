@@ -38,8 +38,8 @@
 #include <type_traits>
 
 #include "absl/base/attributes.h"
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/strings/pfchar.h"
 
 namespace mozc {

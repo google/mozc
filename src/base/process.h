@@ -33,8 +33,6 @@
 #include <cstddef>
 #include <string>
 
-#include "absl/strings/string_view.h"
-
 namespace mozc {
 
 class Process {

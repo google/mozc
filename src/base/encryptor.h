@@ -30,7 +30,6 @@
 #ifndef MOZC_BASE_ENCRYPTOR_H_
 #define MOZC_BASE_ENCRYPTOR_H_
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <string>

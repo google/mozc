@@ -34,8 +34,6 @@
 #include <windows.h>
 #endif  // _WIN32
 
-#include <string>
-
 namespace mozc {
 class CrashReportHandler {
  public:

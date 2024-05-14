@@ -29,11 +29,11 @@
 
 #include "base/process_mutex.h"
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

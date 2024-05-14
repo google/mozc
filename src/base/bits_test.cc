@@ -29,10 +29,13 @@
 
 #include "base/bits.h"
 
+#include <cstdint>
+#include <iterator>
 #include <string>
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "absl/strings/string_view.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 

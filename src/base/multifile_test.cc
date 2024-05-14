@@ -38,7 +38,6 @@
 #include "base/file/temp_dir.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

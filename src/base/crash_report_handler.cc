@@ -39,10 +39,11 @@
 #include <cstdlib>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "third_party/breakpad/src/client/windows/handler/exception_handler.h"
 #include "base/const.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "base/version.h"
 #include "base/win32/wide_char.h"

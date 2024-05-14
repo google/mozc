@@ -51,13 +51,13 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "third_party/darts/v0_32/darts.h"
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/strings/internal/double_array.h"
 
 ABSL_FLAG(std::string, input, "", "input");

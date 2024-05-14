@@ -47,9 +47,9 @@
 #include <string_view>
 
 #include "absl/base/call_once.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 #include "base/win32/wide_char.h"
@@ -421,8 +421,7 @@ bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
       static_cast<uint32_t>(reinterpret_cast<uintptr_t>(::ShellExecuteW(
           0, verb, file, parameters, SystemUtil::GetSystemDir(), SW_SHOW)));
   LOG_IF(ERROR, result <= 32)
-      << "ShellExecute failed."
-      << ", error:" << result
+      << "ShellExecute failed." << ", error:" << result
       << ", verb: " << win32::WideToUtf8(to_wstring_view(verb))
       << ", file: " << win32::WideToUtf8(to_wstring_view(file))
       << ", parameters: " << win32::WideToUtf8(to_wstring_view(parameters));

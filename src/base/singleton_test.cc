@@ -30,7 +30,6 @@
 #include "base/singleton.h"
 
 #include <atomic>
-#include <string>
 
 #include "absl/time/clock.h"
 #include "absl/time/time.h"

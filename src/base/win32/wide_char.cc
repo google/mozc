@@ -37,8 +37,8 @@
 #include <string_view>  // for wstring_view
 
 #include "absl/base/casts.h"
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 
 namespace mozc::win32 {
 namespace wide_char_internal {

@@ -45,6 +45,7 @@
 #ifndef MOZC_BASE_BITS_H_
 #define MOZC_BASE_BITS_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <iterator>

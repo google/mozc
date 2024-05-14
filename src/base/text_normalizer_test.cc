@@ -31,7 +31,6 @@
 
 #include <string>
 
-#include "base/util.h"
 #include "testing/gunit.h"
 
 namespace mozc {

@@ -30,8 +30,6 @@
 #ifndef MOZC_BASE_STOPWATCH_H_
 #define MOZC_BASE_STOPWATCH_H_
 
-#include <cstdint>
-
 #include "absl/time/time.h"
 
 namespace mozc {

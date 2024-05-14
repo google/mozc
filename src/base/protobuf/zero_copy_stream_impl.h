@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_PROTOBUF_ZERO_COPY_STREAM_IMPL_H_
 #define MOZC_BASE_PROTOBUF_ZERO_COPY_STREAM_IMPL_H_
 
-#include "base/protobuf/protobuf.h"
+#include "base/protobuf/protobuf.h"  // IWYU pragma: keep
 
 #include "google/protobuf/io/zero_copy_stream_impl.h"  // IWYU pragma: export
 
