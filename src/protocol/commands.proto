@@ -605,10 +605,10 @@ message DecoderExperimentParams {
   reserved 13;  // Deprecated use_actual_converter_for_realtime_conversion
   reserved 14;  // Deprecated enable_single_kanji_prediction
   reserved 15;  // Deprecated single_kanji_prediction_cost_offset
+  reserved 17;  // Deprecated typing_correction_max_count
+  reserved 18;  // Deprecated typing_correction_max_rank
 
   // Parameters for typing correction candidates
-  optional int32 typing_correction_max_count = 17 [default = 3];
-  optional int32 typing_correction_max_rank = 18 [default = 10];
   optional float typing_correction_identity_score_max_diff = 21 [default = 0.0];
   optional float typing_correction_top_score_max_diff = 22 [default = 1.0];
 

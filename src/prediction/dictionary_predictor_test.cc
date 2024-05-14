@@ -1468,34 +1468,6 @@ TEST_F(DictionaryPredictorTest, Dedup) {
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), kSize);
   }
-  {
-    request_->mutable_decoder_experiment_params()
-        ->set_typing_correction_max_count(5);
-    std::vector<Result> results = {
-        CreateResult6("test", "value0", 0, 0, prediction::TYPING_CORRECTION,
-                      Token::NONE),
-        CreateResult6("test", "value0", 0, 1, prediction::TYPING_CORRECTION,
-                      Token::NONE),
-        CreateResult6("test", "value0", 0, 2, prediction::TYPING_CORRECTION,
-                      Token::NONE),
-        CreateResult6("test", "value0", 0, 3, prediction::TYPING_CORRECTION,
-                      Token::NONE),
-        CreateResult6("test", "value0", 0, 4, prediction::TYPING_CORRECTION,
-                      Token::NONE),
-        CreateResult6("test", "value1", 0, 5, prediction::TYPING_CORRECTION,
-                      Token::NONE),
-        CreateResult6("test", "value2", 0, 6, prediction::TYPING_CORRECTION,
-                      Token::NONE),
-    };
-    Segments segments;
-    InitSegmentsWithKey("test", &segments);
-    predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                        typing_correction_mixing_params_,
-                                        absl::MakeSpan(results));
-
-    ASSERT_EQ(segments.conversion_segments_size(), 1);
-    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
-  }
 }
 
 TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
@@ -1505,8 +1477,6 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
   // turn on mobile mode
   request_test_util::FillMobileRequest(request_.get());
 
-  request_->mutable_decoder_experiment_params()
-      ->set_typing_correction_max_count(5);
   std::vector<Result> results = {
       CreateResult6("tc_key0", "tc_value0", 0, 0, prediction::TYPING_CORRECTION,
                     Token::NONE),
@@ -1534,11 +1504,10 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
                                       absl::MakeSpan(results));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment segment = segments.conversion_segment(0);
-  EXPECT_EQ(segment.candidates_size(), 5);
+  EXPECT_EQ(segment.candidates_size(), 3);
   EXPECT_TRUE(FindCandidateByValue(segment, "tc_value0"));
   EXPECT_TRUE(FindCandidateByValue(segment, "tc_value1"));
-  EXPECT_TRUE(FindCandidateByValue(segment, "tc_value3"));
-  EXPECT_TRUE(FindCandidateByValue(segment, "tc_value4"));
+  EXPECT_TRUE(FindCandidateByValue(segment, "tc_value2"));
 }
 
 TEST_F(DictionaryPredictorTest, SortResult) {

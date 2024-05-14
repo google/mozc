@@ -759,10 +759,6 @@ DictionaryPredictor::ResultFilter::ResultFilter(
   strings::Assign(history_value_, history.value);
   exact_bigram_key_ = absl::StrCat(history.key, input_key_);
 
-  const auto &experiment_params = request.request().decoder_experiment_params();
-  tc_max_count_ = experiment_params.typing_correction_max_count();
-  tc_max_rank_ = experiment_params.typing_correction_max_rank();
-
   suffix_count_ = 0;
   predictive_count_ = 0;
   realtime_count_ = 0;
@@ -868,10 +864,14 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     *log_message = "Added realtime >= 3 || added >= 5";
     return true;
   }
+
+  constexpr int kTcMaxCount = 3;
+  constexpr int kTcMaxRank = 10;
+
   if ((result.types & PredictionType::TYPING_CORRECTION) &&
-      (tc_count_++ >= tc_max_count_ || added_num >= tc_max_rank_)) {
-    *log_message = absl::StrCat("Added typing correction >= ", tc_max_count_,
-                                " || added >= ", tc_max_rank_);
+      (tc_count_++ >= kTcMaxCount || added_num >= kTcMaxRank)) {
+    *log_message = absl::StrCat("Added typing correction >= ", kTcMaxCount,
+                                " || added >= ", kTcMaxRank);
     return true;
   }
   if ((result.types & PredictionType::PREFIX) &&
