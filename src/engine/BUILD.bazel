@@ -104,10 +104,11 @@ mozc_cc_library(
     deps = [
         "//composer:query",
         "//converter:segments",
-        "//data_manager",
+        "//prediction:result",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

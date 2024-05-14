@@ -34,8 +34,10 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "composer/query.h"
 #include "converter/segments.h"
+#include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/engine_builder.pb.h"
 
@@ -73,6 +75,14 @@ class SupplementalModelInterface {
                      bool disable_toggle_correction,
                      const commands::Request &request) const {
     return std::nullopt;
+  }
+
+  // Returns true if the final typing correct result is not confident.
+  virtual bool ShouldRevertTypingCorrection(
+      const commands::Request &request, const Segments &segments,
+      absl::Span<const prediction::Result> literal_results,
+      absl::Span<const prediction::Result> typing_corrected_results) const {
+    return false;
   }
 
   // Performs general post correction on `segments`.
