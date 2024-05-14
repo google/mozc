@@ -1820,6 +1820,14 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     composer_->InsertCharacter("3.14");
     EXPECT_EQ(composer_->GetStringForPreedit(), "３．１４");
   }
+
+  {
+    composer_->Reset();
+    manager->SetDefaultRule();
+    composer_->InsertCharacter("-123");
+    EXPECT_EQ(composer_->GetStringForPreedit(), "−１２３");
+    EXPECT_EQ(composer_->GetRawString(), "-123");
+  }
 }
 
 TEST_F(ComposerTest, ComposingWithcharactertransform) {
@@ -1916,6 +1924,22 @@ TEST_F(ComposerTest, AlphanumericOfSSH) {
   transliteration::Transliterations t13ns;
   composer_->GetTransliterations(&t13ns);
   EXPECT_EQ(t13ns[transliteration::HALF_ASCII], "ssh");
+}
+
+TEST_F(ComposerTest, TransliterationsOfNegativeNumber) {
+  table_->AddRule("-", "ー", "");  // U+30FC (prolonged sound mark)
+  table_->AddRule("1", "１", "");
+  composer_->InsertCharacter("-1");
+  EXPECT_EQ(composer_->GetStringForPreedit(), "−１");  // U+2212 (minus)
+
+  transliteration::Transliterations t13ns;
+  composer_->GetTransliterations(&t13ns);
+  // U+002D (hyphen-minus)
+  EXPECT_EQ(t13ns[transliteration::HALF_ASCII], "-1");
+  // U+2212 (minus)
+  EXPECT_EQ(t13ns[transliteration::FULL_ASCII], "−１");
+  // U+30FC (prolonged sound mark, 長音)
+  EXPECT_EQ(t13ns[transliteration::HIRAGANA], "ー１");
 }
 
 TEST_F(ComposerTest, Issue2190364) {
