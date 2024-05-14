@@ -60,7 +60,7 @@ bool TryTempDirectory(const std::string &dir) {
 }
 
 std::optional<std::string> TryTempEnv(const char *envname) {
-  const std::string env = Environ::GetEnv(envname);
+  std::string env = Environ::GetEnv(envname);
   if (env.empty()) {
     return std::nullopt;
   }
