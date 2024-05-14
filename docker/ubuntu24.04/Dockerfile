@@ -32,8 +32,6 @@
 
 FROM ubuntu:24.04
 
-ENV DEBIAN_FRONTEND noninteractive
-
 # Package installation
 ## https://docs.docker.com/develop/develop-images/instructions/#apt-get
 RUN apt-get update && apt-get install -y \

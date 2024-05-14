@@ -32,7 +32,7 @@
 
 FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Package installation
 ## https://docs.docker.com/develop/develop-images/instructions/#apt-get
