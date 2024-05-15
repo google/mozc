@@ -30,12 +30,14 @@
 #include "dictionary/user_dictionary_importer.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <string>
 #include <vector>
 
 #include "dictionary/user_dictionary_storage.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gunit.h"
 
 namespace mozc {

@@ -29,7 +29,7 @@
 
 #include "dictionary/dictionary_test_util.h"
 
-#include <set>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -38,7 +38,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "base/util.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/gunit.h"
 

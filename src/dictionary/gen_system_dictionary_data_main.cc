@@ -43,13 +43,13 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/system_dictionary_builder.h"

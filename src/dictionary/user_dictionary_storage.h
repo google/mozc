@@ -61,6 +61,7 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>

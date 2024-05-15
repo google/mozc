@@ -36,6 +36,7 @@
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
 

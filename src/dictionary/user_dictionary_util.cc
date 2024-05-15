@@ -37,12 +37,12 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "base/config_file_stream.h"
-#include "base/logging.h"
-#include "base/protobuf/repeated_field.h"
+#include "base/protobuf/repeated_ptr_field.h"
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
 #include "base/vlog.h"

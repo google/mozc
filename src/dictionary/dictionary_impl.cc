@@ -29,18 +29,20 @@
 
 #include "dictionary/dictionary_impl.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {

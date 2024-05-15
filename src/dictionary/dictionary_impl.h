@@ -38,6 +38,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace dictionary {

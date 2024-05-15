@@ -32,9 +32,9 @@
 #include <cstdio>
 #include <string>
 
+#include "absl/log/check.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file_builder.h"
 #include "testing/gmock.h"

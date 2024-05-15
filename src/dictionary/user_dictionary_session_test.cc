@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -38,7 +39,6 @@
 #include "base/system_util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "testing/testing_util.h"

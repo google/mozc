@@ -32,9 +32,10 @@
 #include <cstdint>
 #include <memory>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/random/random.h"
-#include "base/logging.h"
-#include "base/protobuf/repeated_field.h"
+#include "base/protobuf/repeated_ptr_field.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -541,8 +542,7 @@ uint64_t UserDictionarySessionHandler::CreateNewSessionId() const {
   while (true) {
     id = absl::Uniform<uint64_t>(bitgen_);
 
-    if (id != kInvalidSessionId &&
-        (session_ == nullptr || session_id_ != id)) {
+    if (id != kInvalidSessionId && (session_ == nullptr || session_id_ != id)) {
       // New id is generated.
       break;
     }

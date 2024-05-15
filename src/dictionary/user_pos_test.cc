@@ -30,15 +30,15 @@
 #include "dictionary/user_pos.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/user_pos_interface.h"
 #include "testing/gunit.h"

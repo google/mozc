@@ -45,9 +45,10 @@ mozc_cc_library(
     deps = [
         ":codec_interface",
         ":section",
-        "//base:logging",
         "//base:mmap",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -60,8 +61,9 @@ mozc_cc_library(
         ":codec_interface",
         ":section",
         "//base:file_stream",
-        "//base:logging",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -75,10 +77,10 @@ mozc_cc_test(
         ":dictionary_file",
         ":dictionary_file_builder",
         "//base:file_util",
-        "//base:logging",
         "//base/file:temp_dir",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -96,7 +98,7 @@ mozc_cc_library(
     name = "codec_util",
     srcs = ["codec_util.cc"],
     hdrs = ["codec_util.h"],
-    deps = ["//base:logging"],
+    deps = ["@com_google_absl//absl/log:check"],
 )
 
 mozc_cc_library(
@@ -109,8 +111,9 @@ mozc_cc_library(
         ":section",
         "//base:bits",
         "//base:hash",
-        "//base:logging",
         "//base:vlog",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -149,11 +152,12 @@ mozc_cc_test(
         ":section",
         "//base:file_stream",
         "//base:file_util",
-        "//base:logging",
         "//base/file:temp_dir",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -27,52 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// This code manages ar/cpio/tar like file structure that contains
-// multiple sections in a file. Each section has a name and size.
+#ifndef MOZC_BASE_PROTOBUF_CODED_STREAM_H_
+#define MOZC_BASE_PROTOBUF_CODED_STREAM_H_
 
-#ifndef MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
-#define MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
+#include "base/protobuf/protobuf.h"  // IWYU pragma: keep
 
-#include <string>
-#include <vector>
+#include "google/protobuf/io/coded_stream.h"       // IWYU pragma: export
 
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
-#include "base/mmap.h"
-#include "dictionary/file/codec_interface.h"
-
-namespace mozc {
-namespace dictionary {
-
-struct DictionaryFileSection;
-
-class DictionaryFile final {
- public:
-  explicit DictionaryFile(const DictionaryFileCodecInterface *file_codec);
-
-  DictionaryFile(const DictionaryFile &) = delete;
-  DictionaryFile &operator=(const DictionaryFile &) = delete;
-
-  ~DictionaryFile() = default;
-
-  // Opens from a file.
-  absl::Status OpenFromFile(const std::string &file);
-
-  // Opens from a memory block.
-  absl::Status OpenFromImage(const char *image, int len);
-
-  // Gets a pointer to the section having |section_name|. Image size is set to
-  // |len|. Returns nullptr when not found.
-  const char *GetSection(absl::string_view section_name, int *len) const;
-
- private:
-  // DictionaryFile does not take the ownership of |file_codec_|.
-  const DictionaryFileCodecInterface *file_codec_;
-  Mmap mapping_;
-  std::vector<DictionaryFileSection> sections_;
-};
-
-}  // namespace dictionary
-}  // namespace mozc
-
-#endif  // MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
+#endif  // MOZC_BASE_PROTOBUF_CODED_STREAM_H_

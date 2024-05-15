@@ -29,14 +29,14 @@
 
 #include "dictionary/file/dictionary_file.h"
 
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/mmap.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"

@@ -32,7 +32,7 @@
 #include <cstdint>
 #include <ostream>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 
 namespace mozc {
 namespace dictionary {
