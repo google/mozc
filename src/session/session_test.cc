@@ -1591,6 +1591,24 @@ TEST_F(SessionTest, Transliterations) {
   EXPECT_SINGLE_SEGMENT("jishin", command);
 }
 
+TEST_F(SessionTest, TransliterationOfNegativeNumber) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+  commands::Command command;
+  InsertCharacterChars("-255", &session, &command);
+  // "－" (U+FF0D) is used as a minus sign in Windows.
+  EXPECT_TRUE(EnsureSingleSegment("−２５５", command) ||  // "−" is U+2212
+              EnsureSingleSegment("－２５５", command));  // "－" is U+FF0D
+
+  command.Clear();
+  session.TranslateHalfASCII(&command);
+  EXPECT_SINGLE_SEGMENT("-255", command);
+}
+
 TEST_F(SessionTest, ConvertToTransliteration) {
   MockConverter converter;
   MockEngine engine;
@@ -1630,6 +1648,37 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   command.Clear();
   session.ConvertToHalfASCII(&command);
   EXPECT_SINGLE_SEGMENT("jishin", command);
+}
+
+TEST_F(SessionTest, ConvertToTransliterationOfNegativeNumber) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+  commands::Command command;
+  InsertCharacterChars("-789", &session, &command);
+
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  segment->set_key("−７８９");
+  Segment::Candidate *candidate = segment->add_candidate();
+  candidate->value = "−７８９";
+
+  ConversionRequest request;
+  SetComposer(&session, &request);
+  FillT13Ns(request, &segments);
+  EXPECT_CALL(converter, StartConversion(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  command.Clear();
+  session.ConvertToHalfASCII(&command);
+  EXPECT_SINGLE_SEGMENT("-789", command);
+
+  command.Clear();
+  session.ConvertToHalfASCII(&command);
+  EXPECT_SINGLE_SEGMENT("-789", command);
 }
 
 TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
