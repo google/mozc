@@ -727,6 +727,15 @@ TEST(UtilTest, ScriptType) {
   EXPECT_EQ(Util::GetScriptType("モズあク"), Util::UNKNOWN_SCRIPT);
   EXPECT_EQ(Util::GetFirstScriptType("モズあク"), Util::KATAKANA);
 
+  // Numbers with period
+  EXPECT_EQ(Util::GetScriptType("25.4"), Util::NUMBER);
+  EXPECT_EQ(Util::GetScriptType("."), Util::UNKNOWN_SCRIPT);
+  EXPECT_EQ(Util::GetScriptType(".123"), Util::UNKNOWN_SCRIPT);
+  // The following are limitations of the current implementation.
+  // It's nice to be treated as UNKNOWN_SCRIPT.
+  EXPECT_EQ(Util::GetScriptType("1..9"), Util::NUMBER);
+  EXPECT_EQ(Util::GetScriptType("42."), Util::NUMBER);
+
   EXPECT_EQ(Util::GetScriptType("モあズクﾓｽﾞｸ"), Util::UNKNOWN_SCRIPT);
   EXPECT_EQ(Util::GetScriptType("012あ"), Util::UNKNOWN_SCRIPT);
   EXPECT_EQ(Util::GetFirstScriptType("012あ"), Util::NUMBER);
@@ -736,6 +745,11 @@ TEST(UtilTest, ScriptType) {
   EXPECT_EQ(Util::GetScriptType("ＡＢあＣＤ"), Util::UNKNOWN_SCRIPT);
   EXPECT_EQ(Util::GetScriptType("ぐーぐるグ"), Util::UNKNOWN_SCRIPT);
   EXPECT_EQ(Util::GetScriptType("グーグルぐ"), Util::UNKNOWN_SCRIPT);
+  EXPECT_EQ(Util::GetScriptType("@012"), Util::UNKNOWN_SCRIPT);
+  // ・ (U+30FB, KATAKANA MIDDLE DOT) + numbers
+  EXPECT_EQ(Util::GetScriptType("・012"), Util::UNKNOWN_SCRIPT);
+  // ー (U+30FC, KATAKANA-HIRAGANA PROLONGED SOUND MARK) + numbers
+  EXPECT_EQ(Util::GetScriptType("ー012"), Util::UNKNOWN_SCRIPT);
 
   // "龦" U+9FA6
   EXPECT_EQ(Util::GetScriptType("\xE9\xBE\xA6"), Util::KANJI);
