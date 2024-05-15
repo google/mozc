@@ -45,9 +45,9 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
 #include "base/strings/zstring_view.h"
 #include "base/system_util.h"
 #include "base/win32/wide_char.h"

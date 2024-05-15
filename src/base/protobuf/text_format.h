@@ -30,8 +30,8 @@
 #ifndef MOZC_BASE_PROTOBUF_TEXT_FORMAT_H_
 #define MOZC_BASE_PROTOBUF_TEXT_FORMAT_H_
 
-#include "base/protobuf/protobuf.h"
+#include "base/protobuf/protobuf.h"  // IWYU pragma: keep
 
-#include "google/protobuf/text_format.h"  // IWYU pragma: export
+#include "google/protobuf/text_format.h"       // IWYU pragma: export
 
 #endif  // MOZC_BASE_PROTOBUF_TEXT_FORMAT_H_

@@ -32,19 +32,18 @@
 
 FROM ubuntu:24.04
 
-ENV DEBIAN_FRONTEND noninteractive
-
 # Package installation
-RUN apt-get update --fix-missing
-RUN apt-get upgrade -y
-## Common packages for linux build environment
-RUN apt-get install -y python3 pkg-config git curl unzip g++ gcc
-## Packages for linux desktop version
-RUN apt-get install -y libibus-1.0-dev libglib2.0-dev qt6-base-dev libgl-dev
-## Packages for misc tools
-RUN apt-get install -y nano
-## Setting up Android SDK requires OpenJDK.
-RUN apt-get install -y openjdk-17-jdk
+## https://docs.docker.com/develop/develop-images/instructions/#apt-get
+RUN apt-get update && apt-get install -y \
+    ## Common packages for linux build environment
+    python3 pkg-config git curl unzip g++ gcc \
+    ## Packages for linux desktop version
+    libibus-1.0-dev libglib2.0-dev qt6-base-dev libgl-dev \
+    ## Packages for misc tools
+    nano \
+    ## Setting up Android SDK requires OpenJDK.
+    openjdk-17-jdk \
+  && rm -rf /var/lib/apt/lists/*
 
 # Working environemnt
 ENV HOME /home/mozc_builder
@@ -56,9 +55,9 @@ RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
 
 ## Set up Bazel
-RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/7.1.1/bazel-7.1.1-installer-linux-x86_64.sh
-RUN bash bazel-7.1.1-installer-linux-x86_64.sh --user
-RUN rm bazel-7.1.1-installer-linux-x86_64.sh
+RUN curl -LO https://github.com/bazelbuild/bazel/releases/download/7.1.1/bazel-7.1.1-installer-linux-x86_64.sh \
+  && bash bazel-7.1.1-installer-linux-x86_64.sh --user \
+  && rm bazel-7.1.1-installer-linux-x86_64.sh
 
 ## Set up Android SDK and NDK
 ENV ANDROID_HOME /home/mozc_builder/Android/Sdk

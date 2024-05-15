@@ -76,8 +76,9 @@ mozc_cc_library(
     hdrs = ["serialized_string_array.h"],
     deps = [
         "//base:file_util",
-        "//base:logging",
         "@com_google_absl//absl/base:config",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],
@@ -99,9 +100,9 @@ mozc_cc_library(
     hdrs = ["trie.h"],
     visibility = ["//:__subpackages__"],
     deps = [
-        "//base:logging",
         "//base:util",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )

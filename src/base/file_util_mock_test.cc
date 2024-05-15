@@ -29,6 +29,8 @@
 
 #include "base/file_util_mock.h"
 
+#include "absl/status/statusor.h"
+#include "base/file_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 

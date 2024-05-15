@@ -35,14 +35,13 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-#include "base/const.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 
@@ -50,6 +49,7 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include "base/const.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32

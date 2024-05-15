@@ -31,13 +31,15 @@
 
 #include <algorithm>
 #include <climits>  // for CHAR_BIT
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/numeric/bits.h"
+#include "absl/strings/string_view.h"
 #include "base/bits.h"
-#include "base/logging.h"
 
 namespace mozc {
 namespace internal {

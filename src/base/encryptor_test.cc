@@ -29,6 +29,7 @@
 
 #include "base/encryptor.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <string>

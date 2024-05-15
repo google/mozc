@@ -32,7 +32,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 
 #ifdef _WIN32
 #include <windows.h>

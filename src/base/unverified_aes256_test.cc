@@ -29,9 +29,9 @@
 
 #include "base/unverified_aes256.h"
 
+#include <cstddef>
 #include <cstdint>
 
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

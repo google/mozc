@@ -200,6 +200,7 @@ mozc_cc_library(
     srcs = ["result.cc"],
     hdrs = ["result.h"],
     visibility = [
+        "//engine:__subpackages__",
     ],
     deps = [
         ":zero_query_dict",
@@ -532,6 +533,8 @@ mozc_cc_library(
     ],
     deps = [
         "//base/container:trie",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],

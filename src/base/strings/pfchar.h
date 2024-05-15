@@ -30,6 +30,7 @@
 #ifndef MOZC_BASE_STRINGS_PFCHAR_H_
 #define MOZC_BASE_STRINGS_PFCHAR_H_
 
+#include <cstddef>
 #include <string>
 #include <type_traits>
 #include <utility>

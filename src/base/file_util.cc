@@ -40,6 +40,7 @@
 #include <system_error>
 #include <utility>
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -48,7 +49,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/file_stream.h"
-#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -502,9 +502,8 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
   if (!original_attributes.ok()) {
     return absl::Status(
         original_attributes.status().code(),
-        absl::StrFormat(
-            "GetFileAttributes failed: %s",
-            original_attributes.status().message()));
+        absl::StrFormat("GetFileAttributes failed: %s",
+                        original_attributes.status().message()));
   }
   if (absl::Status s = StripWritePreventingAttributesIfExists(to); !s.ok()) {
     return absl::Status(

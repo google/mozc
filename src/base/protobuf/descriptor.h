@@ -30,8 +30,8 @@
 #ifndef MOZC_BASE_PROTOBUF_DESCRIPTOR_H_
 #define MOZC_BASE_PROTOBUF_DESCRIPTOR_H_
 
-#include "base/protobuf/protobuf.h"
+#include "base/protobuf/protobuf.h"  // IWYU pragma: keep
 
-#include "google/protobuf/descriptor.h"  // IWYU pragma: export
+#include "google/protobuf/descriptor.h"       // IWYU pragma: export
 
 #endif  // MOZC_BASE_PROTOBUF_DESCRIPTOR_H_

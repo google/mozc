@@ -36,9 +36,9 @@
 #include <new>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
 
 namespace mozc {
 namespace serialized_string_array_internal {

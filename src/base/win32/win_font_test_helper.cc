@@ -36,7 +36,7 @@
 #include <shlwapi.h>
 #include <windows.h>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "base/mmap.h"
 #include "base/win32/wide_char.h"
 #include "testing/mozctest.h"
@@ -110,9 +110,7 @@ void WinFontTestHelper::Uninitialize() {
 }
 
 // static
-std::string WinFontTestHelper::GetTestFontName() {
-  return "MozcTestFont";
-}
+std::string WinFontTestHelper::GetTestFontName() { return "MozcTestFont"; }
 
 }  // namespace mozc
 

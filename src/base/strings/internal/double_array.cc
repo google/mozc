@@ -29,12 +29,15 @@
 
 #include "base/strings/internal/double_array.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/internal/utf8_internal.h"
 #include "base/strings/unicode.h"
 
 namespace mozc::japanese::internal {

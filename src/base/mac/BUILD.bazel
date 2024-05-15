@@ -47,8 +47,8 @@ mozc_objc_library(
     deps = [
         ":mac_util",
         "//base:const",
-        "//base:logging",
         "//base:util",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -90,8 +90,9 @@ mozc_objc_library(
     ],
     deps = [
         "//base:const",
-        "//base:logging",
         "//base:singleton",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
         # Split iOS code into a separate library.

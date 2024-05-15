@@ -31,10 +31,10 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/process_mutex.h"
 
 ABSL_FLAG(int32_t, sleep_time, 30, "sleep 30 sec");

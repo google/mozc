@@ -48,6 +48,7 @@ mozc_cc_library(
         "//base/strings:__subpackages__",
     ],
     deps = [
+        ":utf8_internal",
         "//base/strings:unicode",
         "@com_google_absl//absl/strings",
     ],
@@ -71,9 +72,9 @@ mozc_cc_binary(
     visibility = ["//visibility:private"],
     deps = [
         ":double_array",
+        "@com_google_absl//absl/log:check",
         "//base:file_stream",
         "//base:init_mozc_buildtool",
-        "//base:logging",
         "@com_google_absl//absl/flags:flag",
         # For OSS, darts is also required.
         # http://chasen.org/~taku/software/darts/

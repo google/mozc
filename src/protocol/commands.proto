@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 69
+// Next ID: 70
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -605,10 +605,10 @@ message DecoderExperimentParams {
   reserved 13;  // Deprecated use_actual_converter_for_realtime_conversion
   reserved 14;  // Deprecated enable_single_kanji_prediction
   reserved 15;  // Deprecated single_kanji_prediction_cost_offset
+  reserved 17;  // Deprecated typing_correction_max_count
+  reserved 18;  // Deprecated typing_correction_max_rank
 
   // Parameters for typing correction candidates
-  optional int32 typing_correction_max_count = 17 [default = 3];
-  optional int32 typing_correction_max_rank = 18 [default = 10];
   optional float typing_correction_identity_score_max_diff = 21 [default = 0.0];
   optional float typing_correction_top_score_max_diff = 22 [default = 1.0];
 
@@ -721,6 +721,11 @@ message DecoderExperimentParams {
 
   optional float typing_correction_reranker_max_score_diff_override = 68
       [default = 0.0];
+  // When the top correction is kana_modifier_insensitive_correction, suppress
+  // other corrections.
+  optional bool
+      typing_correction_promote_kana_modifier_insensitive_only = 69
+      [default = false];
 }
 
 // Clients' request to the server.

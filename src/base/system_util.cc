@@ -33,12 +33,13 @@
 #include <cstring>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "base/const.h"
 #include "base/environ.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/singleton.h"
 
 #ifdef __ANDROID__
@@ -359,8 +360,8 @@ class ProgramFilesX86Cache {
   // Since Mozc uses /EHs option in common.gypi, we must admit potential
   // memory leakes when any non-C++ exception occues in TryProgramFilesPath.
   // See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
-  static HRESULT __declspec(nothrow)
-      SafeTryProgramFilesPath(std::string *path) {
+  static HRESULT __declspec(nothrow) SafeTryProgramFilesPath(
+      std::string *path) {
     __try {
       return TryProgramFilesPath(path);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -795,8 +796,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
       sysctl(mib, std::size(mib), &total_memory, &size, nullptr, 0);
   if (error == -1) {
     const int error = errno;
-    LOG(ERROR) << "sysctl with hw.memsize failed. "
-               << "errno: " << error;
+    LOG(ERROR) << "sysctl with hw.memsize failed. " << "errno: " << error;
     return 0;
   }
   return total_memory;

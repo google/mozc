@@ -34,11 +34,12 @@
 
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/const.h"
-#include "base/logging.h"
 #include "base/mac/scoped_cftyperef.h"
 #include "base/singleton.h"
 

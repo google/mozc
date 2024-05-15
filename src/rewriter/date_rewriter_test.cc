@@ -1066,6 +1066,23 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
   }
 }
 
+TEST_F(DateRewriterTest, ConsecutiveDigitsFromMetaCandidates) {
+  commands::Request request;
+  const config::Config config;
+  const composer::Composer composer(nullptr, &request, &config);
+  const ConversionRequest conversion_request(&composer, &request, &config);
+
+  Segments segments;
+  InitSegment("nisen", "にせん", &segments);
+
+  Segment *segment = segments.mutable_conversion_segment(0);
+  segment->add_meta_candidate()->value = "２０００";
+
+  DateRewriter rewriter;
+  EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+  EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("20:00")));
+}
+
 TEST_F(DateRewriterTest, ConsecutiveDigitsWithMinusSign) {
   commands::Request request;
   const config::Config config;

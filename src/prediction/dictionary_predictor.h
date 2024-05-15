@@ -82,14 +82,6 @@ struct TypingCorrectionMixingParams {
   bool literal_at_least_second = false;
 };
 
-// Computes the typing correction mixing params.
-// from the `base_result` and `typing_corrected_results`.
-// TODO(taku): Introduces more advanced algorithms to make better decision.
-TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
-    const ConversionRequest &request, const Segments &segments,
-    absl::Span<const Result> base_results,
-    absl::Span<const Result> typing_corrected_results);
-
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
  public:
@@ -144,9 +136,6 @@ class DictionaryPredictor : public PredictorInterface {
     std::string history_value_;
     std::string exact_bigram_key_;
 
-    int tc_max_count_;
-    int tc_max_rank_;
-
     int suffix_count_;
     int predictive_count_;
     int realtime_count_;
@@ -177,6 +166,13 @@ class DictionaryPredictor : public PredictorInterface {
       dictionary_predictor_internal::KeyValueView key_value,
       const absl::flat_hash_map<std::string, int32_t> &merged_types,
       Segment::Candidate *candidate) const;
+
+  // Computes the typing correction mixing params.
+  // from the `base_result` and `typing_corrected_results`.
+  TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
+      const ConversionRequest &request, const Segments &segments,
+      absl::Span<const Result> literal_results,
+      absl::Span<const Result> typing_corrected_results) const;
 
   // Returns the position of misspelled character position.
   //

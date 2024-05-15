@@ -32,7 +32,9 @@
 #include <cstdint>
 #include <limits>
 
-#include "base/logging.h"
+#include "absl/base/attributes.h"
+#include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {

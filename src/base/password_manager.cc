@@ -39,12 +39,12 @@
 #include <cstdlib>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
-#include "base/const.h"
-#include "base/encryptor.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/random.h"
 #include "base/singleton.h"
@@ -53,6 +53,10 @@
 #ifdef _WIN32
 #include "base/win32/wide_char.h"
 #endif  // _WIN32
+
+#if (defined(_WIN32) || defined(__APPLE__))
+#include "base/encryptor.h"
+#endif  // _WIN32 | __APPLE__
 
 namespace mozc {
 namespace {
@@ -85,7 +89,7 @@ class ScopedReadWriteFile {
       LOG(ERROR) << "Cannot make writable: " << filename_;
     }
 #else   // _WIN32
-    chmod(filename_.c_str(), 0600);                  // write temporary
+    chmod(filename_.c_str(), 0600);  // write temporary
 #endif  // _WIN32
   }
 
@@ -100,7 +104,7 @@ class ScopedReadWriteFile {
       LOG(ERROR) << "Cannot make readonly: " << filename_;
     }
 #else   // _WIN32
-    chmod(filename_.c_str(), 0400);                  // read only
+    chmod(filename_.c_str(), 0400);  // read only
 #endif  // _WIN32
   }
 

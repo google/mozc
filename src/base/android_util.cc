@@ -32,8 +32,8 @@
 #include <fstream>
 #include <utility>
 
+#include "absl/log/check.h"
 #include "absl/synchronization/mutex.h"
-#include "base/logging.h"
 #include "base/util.h"
 
 namespace {

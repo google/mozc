@@ -43,6 +43,7 @@
 #include <cstdio>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -1168,16 +1169,27 @@ bool DateRewriter::ResizeSegments(const ConversionRequest &request,
 }
 
 namespace {
-bool IsNDigits(const absl::string_view value, int n) {
-  if (Util::CharsLen(value) != n) {
-    return false;
+std::optional<std::string> VaridateNDigits(absl::string_view value, int n) {
+  static_assert(U'9' - U'0' == 9);
+  static_assert(U'９' - U'０' == 9);
+  std::u32string u32value = strings::Utf8ToUtf32(value);
+  if (u32value.size() != n) {
+    return std::nullopt;
   }
-  for (absl::string_view c : Utf8AsChars(value)) {
-    if (Util::GetScriptType(c) != Util::NUMBER) {
-      return false;
+
+  for (int i = 0; i < n; ++i) {
+    const char32_t c = u32value[i];
+    if (U'0' <= c && c <= U'9') {  // Half-width digits
+      continue;
     }
+    if (U'０' <= c && c <= U'９') {  // Full-width digits
+      // Sets `u32value[i]` to the half-width digts of `c`.
+      u32value[i] = (c - U'０' + U'0');
+      continue;
+    }
+    return std::nullopt;
   }
-  return true;
+  return strings::Utf32ToUtf8(u32value);
 }
 
 // Gets n digits if possible.
@@ -1192,24 +1204,22 @@ bool IsNDigits(const absl::string_view value, int n) {
 //      - All the meta candidates are based on "cd" (e.g. "CD", "Cd").
 //      Therefore to get "2223" we should access the raw input.
 // Prerequisite: |segments| has only one conversion segment.
-bool GetNDigits(const composer::Composer &composer, const Segments &segments,
-                int n, std::string *output) {
-  DCHECK(output);
-  DCHECK_EQ(1, segments.conversion_segments_size());
+std::optional<std::string> GetNDigits(const composer::Composer &composer,
+                                      const Segments &segments, int n) {
+  DCHECK_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
+  std::optional<std::string> validated;
 
   // 1. Segment's key
-  if (IsNDigits(segment.key(), n)) {
-    *output = japanese_util::FullWidthAsciiToHalfWidthAscii(segment.key());
-    return true;
+  if (validated = VaridateNDigits(segment.key(), n); validated) {
+    return validated.value();
   }
 
   // 2. Meta candidates
   for (size_t i = 0; i < segment.meta_candidates_size(); ++i) {
-    if (IsNDigits(segment.meta_candidate(i).value, n)) {
-      *output = japanese_util::FullWidthAsciiToHalfWidthAscii(
-          segment.meta_candidate(i).value);
-      return true;
+    if (validated = VaridateNDigits(segment.meta_candidate(i).value, n);
+        validated) {
+      return validated.value();
     }
   }
 
@@ -1219,15 +1229,13 @@ bool GetNDigits(const composer::Composer &composer, const Segments &segments,
   // the whole composition.
   const std::string raw =
       composer.GetRawSubString(0, Util::CharsLen(segment.key()));
-  if (IsNDigits(raw, n)) {
-    *output = japanese_util::FullWidthAsciiToHalfWidthAscii(raw);
-    return true;
+  if (validated = VaridateNDigits(raw, n); validated) {
+    return validated.value();
   }
 
   // No trials succeeded.
-  return false;
+  return std::nullopt;
 }
-
 }  // namespace
 
 bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
@@ -1250,18 +1258,18 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
   }
 
   // Generate candidates.  The results contain <candidate, description> pairs.
-  std::string number_str;
+  std::optional<std::string> number_str;
   std::vector<DateCandidate> results;
-  if (GetNDigits(composer, *segments, 2, &number_str)) {
-    if (!RewriteConsecutiveTwoDigits(number_str, &results)) {
+  if (number_str = GetNDigits(composer, *segments, 2); number_str) {
+    if (!RewriteConsecutiveTwoDigits(number_str.value(), &results)) {
       return false;
     }
-  } else if (GetNDigits(composer, *segments, 3, &number_str)) {
-    if (!RewriteConsecutiveThreeDigits(number_str, &results)) {
+  } else if (number_str = GetNDigits(composer, *segments, 3); number_str) {
+    if (!RewriteConsecutiveThreeDigits(number_str.value(), &results)) {
       return false;
     }
-  } else if (GetNDigits(composer, *segments, 4, &number_str)) {
-    if (!RewriteConsecutiveFourDigits(number_str, &results)) {
+  } else if (number_str = GetNDigits(composer, *segments, 4); number_str) {
+    if (!RewriteConsecutiveFourDigits(number_str.value(), &results)) {
       return false;
     }
   }
@@ -1290,7 +1298,7 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
 
 bool DateRewriter::RewriteConsecutiveTwoDigits(
     absl::string_view str, std::vector<DateCandidate> *results) {
-  DCHECK_EQ(2, str.size());
+  DCHECK_EQ(str.size(), 2);
   const auto orig_size = results->size();
   const uint32_t high = static_cast<uint32_t>(str[0] - '0');
   const uint32_t low = static_cast<uint32_t>(str[1] - '0');
@@ -1311,7 +1319,7 @@ bool DateRewriter::RewriteConsecutiveTwoDigits(
 
 bool DateRewriter::RewriteConsecutiveThreeDigits(
     absl::string_view str, std::vector<DateCandidate> *results) {
-  DCHECK_EQ(3, str.size());
+  DCHECK_EQ(str.size(), 3);
   const auto orig_size = results->size();
 
   const uint32_t n[] = {static_cast<uint32_t>(str[0] - '0'),
@@ -1379,7 +1387,7 @@ bool DateRewriter::RewriteConsecutiveThreeDigits(
 
 bool DateRewriter::RewriteConsecutiveFourDigits(
     absl::string_view str, std::vector<DateCandidate> *results) {
-  DCHECK_EQ(4, str.size());
+  DCHECK_EQ(str.size(), 4);
   const auto orig_size = results->size();
 
   const uint32_t high = (10 * static_cast<uint32_t>(str[0] - '0') +

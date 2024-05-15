@@ -29,15 +29,16 @@
 
 #include "base/process_mutex.h"
 
+#include <cstdio>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"

@@ -30,18 +30,16 @@
 #include "base/file/temp_dir.h"
 
 #include <cerrno>
-#include <climits>
-#include <cstdlib>
 #include <optional>
 #include <string>
 #include <utility>
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "base/environ.h"
 #include "base/file/recursive.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -62,7 +60,7 @@ bool TryTempDirectory(const std::string &dir) {
 }
 
 std::optional<std::string> TryTempEnv(const char *envname) {
-  const std::string env = Environ::GetEnv(envname);
+  std::string env = Environ::GetEnv(envname);
   if (env.empty()) {
     return std::nullopt;
   }
