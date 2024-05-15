@@ -31,6 +31,7 @@
 
 #include "composer/key_parser.h"
 
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -38,10 +39,11 @@
 #include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "protocol/commands.pb.h"

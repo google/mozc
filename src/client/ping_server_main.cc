@@ -27,10 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>  // NOLINT
-
+#include "absl/log/log.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "client/client.h"
 
 // Simple command line tool to ping mozc server

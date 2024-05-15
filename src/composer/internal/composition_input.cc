@@ -32,8 +32,8 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"

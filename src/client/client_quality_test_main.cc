@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "evaluation/scorer.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"

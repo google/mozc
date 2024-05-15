@@ -29,11 +29,9 @@
 
 #include "composer/internal/char_chunk.h"
 
-#include <functional>
-#include <memory>
+#include <cstddef>
 #include <set>
 #include <string>
-#include <tuple>
 #include <utility>
 
 #include "absl/status/statusor.h"

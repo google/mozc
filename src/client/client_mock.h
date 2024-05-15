@@ -36,6 +36,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "client/client_interface.h"
+#include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gmock.h"

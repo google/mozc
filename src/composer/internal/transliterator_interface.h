@@ -30,6 +30,7 @@
 #ifndef MOZC_COMPOSER_INTERNAL_TRANSLITERATOR_INTERFACE_H_
 #define MOZC_COMPOSER_INTERNAL_TRANSLITERATOR_INTERFACE_H_
 
+#include <cstddef>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -48,8 +49,8 @@ class TransliteratorInterface {
   // Expected usage examples:
   // - HalfKatakanaTransliterator("a", "あ") => "ｱ"
   // - FullAsciiTransliterator("a", "あ") => "ａ"
-  virtual std::string Transliterate(
-      absl::string_view raw, absl::string_view converted) const = 0;
+  virtual std::string Transliterate(absl::string_view raw,
+                                    absl::string_view converted) const = 0;
 
   // Split raw and converted strings based on the transliteration
   // rule.  If raw or converted could not be deterministically split,

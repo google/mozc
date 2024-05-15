@@ -43,12 +43,14 @@
 #endif  // _WIN32
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/vlog.h"
 #include "client/client.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "session/random_keyevents_generator.h"

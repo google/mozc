@@ -32,8 +32,6 @@
 
 #include "composer/internal/mode_switching_handler.h"
 
-#include <string>
-
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"

@@ -27,27 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "absl/flags/flag.h"
-#include "absl/log/log.h"
-#include "base/init_mozc.h"
-#include "client/client.h"
+#ifndef MOZC_BASE_PROTOBUF_REPEATED_PTR_FIELD_H_
+#define MOZC_BASE_PROTOBUF_REPEATED_PTR_FIELD_H_
 
-ABSL_FLAG(bool, shutdown, false, "shutdown server if mozc_server is running");
+#include "base/protobuf/protobuf.h"  // IWYU pragma: keep
 
-// simple command line tool to launch mozc server
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
-  mozc::client::Client client;
+#include "google/protobuf/repeated_ptr_field.h"       // IWYU pragma: export
 
-  if (absl::GetFlag(FLAGS_shutdown)) {
-    client.Shutdown();
-  }
-
-  if (client.EnsureConnection()) {
-    LOG(INFO) << "mozc_server starts successfully";
-  } else {
-    LOG(ERROR) << "failed to launch mozc_server";
-  }
-
-  return 0;
-}
+#endif  // MOZC_BASE_PROTOBUF_REPEATED_PTR_FIELD_H_

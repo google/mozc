@@ -30,6 +30,7 @@
 #ifndef MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
 #define MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
 
+#include <cstddef>
 #include <set>
 #include <string>
 #include <tuple>

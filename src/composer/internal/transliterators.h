@@ -30,6 +30,7 @@
 #ifndef MOZC_COMPOSER_INTERNAL_TRANSLITERATORS_H_
 #define MOZC_COMPOSER_INTERNAL_TRANSLITERATORS_H_
 
+#include <cstddef>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -76,9 +77,8 @@ class Transliterators {
                        std::string *converted_rhs);
 
   static bool SplitConverted(size_t position, absl::string_view raw,
-                             absl::string_view converted,
-                             std::string *raw_lhs, std::string *raw_rhs,
-                             std::string *converted_lhs,
+                             absl::string_view converted, std::string *raw_lhs,
+                             std::string *raw_rhs, std::string *converted_lhs,
                              std::string *converted_rhs);
 };
 

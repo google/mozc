@@ -29,11 +29,13 @@
 
 #include "composer/internal/transliterators.h"
 
+#include <cstddef>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/strings/assign.h"
 #include "base/util.h"

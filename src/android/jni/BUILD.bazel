@@ -52,7 +52,6 @@ mozc_cc_library(
     # Scheuklappen: keep
     visibility = ["//visibility:private"],
     deps = [
-        "//base:logging",
         "//base:singleton",
         "//base:system_util",
         "//base:util",
@@ -61,6 +60,8 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//session:session_handler",
         "//session:session_usage_observer",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

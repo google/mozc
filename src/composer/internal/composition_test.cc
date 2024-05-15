@@ -29,6 +29,7 @@
 
 #include "composer/internal/composition.h"
 
+#include <cstddef>
 #include <iterator>
 #include <set>
 #include <string>

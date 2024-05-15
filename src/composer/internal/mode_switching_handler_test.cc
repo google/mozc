@@ -29,8 +29,6 @@
 
 #include "composer/internal/mode_switching_handler.h"
 
-#include <string>
-
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "testing/gmock.h"

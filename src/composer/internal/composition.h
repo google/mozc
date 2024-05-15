@@ -30,6 +30,7 @@
 #ifndef MOZC_COMPOSER_INTERNAL_COMPOSITION_H_
 #define MOZC_COMPOSER_INTERNAL_COMPOSITION_H_
 
+#include <cstddef>
 #include <list>
 #include <set>
 #include <string>
