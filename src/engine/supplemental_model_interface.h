@@ -40,6 +40,7 @@
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/engine_builder.pb.h"
+#include "request/conversion_request.h"
 
 namespace mozc::engine {
 
@@ -87,6 +88,11 @@ class SupplementalModelInterface {
 
   // Performs general post correction on `segments`.
   virtual void PostCorrect(Segments *segments) const {}
+
+  // Performs rescoring for `results` given the context `segments`.
+  virtual void RescoreResults(const ConversionRequest &request,
+                              const Segments &segments,
+                              absl::Span<prediction::Result> results) const {}
 };
 
 }  // namespace mozc::engine

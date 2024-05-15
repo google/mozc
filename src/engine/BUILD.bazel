@@ -107,6 +107,7 @@ mozc_cc_library(
         "//prediction:result",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
+        "//request:conversion_request",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],
