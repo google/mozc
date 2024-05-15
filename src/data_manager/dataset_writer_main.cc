@@ -48,6 +48,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
@@ -56,7 +57,6 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/vlog.h"
 #include "data_manager/dataset_writer.h"

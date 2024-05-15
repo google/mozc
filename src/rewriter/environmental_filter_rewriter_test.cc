@@ -37,6 +37,7 @@
 
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
+#include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"

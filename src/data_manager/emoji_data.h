@@ -35,8 +35,6 @@
 #include <iterator>
 #include <utility>
 
-#include "base/container/serialized_string_array.h"
-
 namespace mozc {
 
 // Emoji Version Data, in Unicode.
