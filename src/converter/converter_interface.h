@@ -30,8 +30,8 @@
 #ifndef MOZC_CONVERTER_CONVERTER_INTERFACE_H_
 #define MOZC_CONVERTER_CONVERTER_INTERFACE_H_
 
+#include <cstddef>
 #include <cstdint>
-#include <string>
 #include <vector>
 
 #include "absl/base/attributes.h"

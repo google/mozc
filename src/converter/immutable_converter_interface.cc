@@ -29,7 +29,7 @@
 
 #include "converter/immutable_converter_interface.h"
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 

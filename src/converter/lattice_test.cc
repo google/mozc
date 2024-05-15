@@ -29,7 +29,7 @@
 
 #include "converter/lattice.h"
 
-#include <set>
+#include <cstddef>
 #include <string>
 
 #include "absl/container/btree_set.h"

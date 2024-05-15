@@ -29,6 +29,7 @@
 
 #include "converter/quality_regression_util.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <sstream>  // NOLINT
@@ -37,6 +38,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
@@ -45,7 +47,6 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/file_stream.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"

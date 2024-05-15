@@ -29,6 +29,7 @@
 
 #include <memory>
 
+#include "absl/log/check.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/converter_interface.h"

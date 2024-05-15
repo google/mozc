@@ -44,9 +44,9 @@
 
 #include "absl/base/config.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/check.h"
 #include "base/container/bitarray.h"
 #include "base/file_stream.h"
-#include "base/logging.h"
 #include "protocol/segmenter_data.pb.h"
 
 namespace mozc {

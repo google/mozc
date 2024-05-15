@@ -207,6 +207,7 @@ mozc_cc_library(
         "//base/strings:unicode",
         "//converter:segments",
         "//dictionary:dictionary_token",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],

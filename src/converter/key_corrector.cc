@@ -34,8 +34,9 @@
 #include <iterator>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "base/vlog.h"
 

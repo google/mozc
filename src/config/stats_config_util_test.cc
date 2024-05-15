@@ -29,12 +29,6 @@
 
 #include "config/stats_config_util.h"
 
-#include <string>
-
-#include "absl/base/casts.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/flags/flag.h"
-#include "base/singleton.h"
 #include "testing/gunit.h"
 
 #ifdef __ANDROID__
@@ -45,6 +39,9 @@
 #endif  // __ANDROID__
 
 #ifdef _WIN32
+#include "absl/base/casts.h"
+#include "absl/container/flat_hash_map.h"
+#include "base/singleton.h"
 #include "base/win32/win_api_test_helper.h"
 #endif  // _WIN32
 

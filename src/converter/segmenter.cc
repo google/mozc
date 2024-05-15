@@ -33,8 +33,8 @@
 #include <cstdint>
 #include <memory>
 
+#include "absl/log/check.h"
 #include "base/container/bitarray.h"
-#include "base/logging.h"
 #include "converter/node.h"
 #include "data_manager/data_manager_interface.h"
 

@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_
 #define MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_
 
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>

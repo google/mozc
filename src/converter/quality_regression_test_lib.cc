@@ -30,17 +30,19 @@
 #include "converter/quality_regression_test_lib.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/container/btree_map.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
-#include "base/logging.h"
 #include "converter/quality_regression_util.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 

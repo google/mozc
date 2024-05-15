@@ -29,6 +29,8 @@
 
 #include "config/stats_config_util.h"
 
+#include "base/singleton.h"
+
 #ifdef _WIN32
 #include <atlbase.h>
 #include <lmcons.h>
@@ -49,19 +51,17 @@
 #include <fstream>
 #include <string>
 
+#include "absl/strings/str_cat.h"
+#include "absl/synchronization/mutex.h"
+#include "base/file_util.h"
 #include "base/mac/mac_util.h"
+#include "base/system_util.h"
 #endif  // __APPLE__
 
 #if defined(__ANDROID__)
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #endif  // __ANDROID__
-
-#include "absl/strings/str_cat.h"
-#include "absl/synchronization/mutex.h"
-#include "base/file_util.h"
-#include "base/singleton.h"
-#include "base/system_util.h"
 
 namespace mozc {
 namespace config {

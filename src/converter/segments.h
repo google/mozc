@@ -41,6 +41,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/container/freelist.h"
 #include "base/number_util.h"

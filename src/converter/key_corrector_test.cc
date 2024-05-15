@@ -29,6 +29,7 @@
 
 #include "converter/key_corrector.h"
 
+#include <cstddef>
 #include <string>
 
 #include "testing/gunit.h"

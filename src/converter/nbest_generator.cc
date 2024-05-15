@@ -36,7 +36,8 @@
 #include <string>
 #include <vector>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/vlog.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
