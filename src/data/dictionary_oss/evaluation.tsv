@@ -326,3 +326,4 @@ OK:	てきしているものは	適しているものは	Conversion Expected	適
 FAILED:	いかなければ	いかなければ	Conversion Expected	行かなければ	2.30.5432
 OK:	すき	好き	Conversion Expected 12	隙	2.28.5050
 FAILED:	おおすにいく	大洲に行く	Conversion Expected	大須に行く	2.28.5085
+FAILED:	たいじんかんけい	大人関係	Conversion Expected	対人関係	2.30.5448
