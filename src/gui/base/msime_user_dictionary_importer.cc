@@ -42,7 +42,7 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "base/vlog.h"
 #include "base/win32/wide_char.h"
 #include "gui/base/encoding_util.h"

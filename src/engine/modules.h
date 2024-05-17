@@ -33,8 +33,8 @@
 #include <memory>
 #include <utility>
 
+#include "absl/log/check.h"
 #include "absl/status/status.h"
-#include "base/logging.h"
 #include "converter/connector.h"
 #include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"

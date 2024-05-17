@@ -29,11 +29,13 @@
 
 #include "engine/minimal_engine.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/strings/assign.h"

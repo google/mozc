@@ -27,6 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("//:build_defs.bzl", "mozc_select")
 load(
     "//bazel:qt.bzl",
     "mozc_cc_qt_binary",
@@ -80,7 +81,6 @@ mozc_cc_qt_library(
     ],
     deps = [
         "//base:const",
-        "//base:logging",
         "//base:system_util",
         "//base:util",
         "//client",
@@ -94,9 +94,15 @@ mozc_cc_qt_library(
         "//gui/base:singleton_window_helper",
         "//protocol:commands_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/time",
-    ],
+    ] + mozc_select(
+        windows = [
+            "//base/win32:wide_char",
+        ],
+    ),
 )
 
 mozc_cc_qt_library(

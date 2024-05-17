@@ -30,8 +30,8 @@
 // Debug Utilities for Qt.
 #include "gui/base/debug_util.h"
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 
 namespace mozc {
 namespace gui {

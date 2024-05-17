@@ -29,7 +29,25 @@
 
 #include "gui/word_register_dialog/word_register_dialog.h"
 
+#include <QMessageBox>
+#include <QtGui>
 #include <cstdint>
+#include <cstdlib>
+#include <string>
+#include <vector>
+
+#include "absl/log/check.h"
+#include "absl/log/log.h"
+#include "absl/status/status.h"
+#include "absl/time/time.h"
+#include "base/const.h"
+#include "client/client.h"
+#include "data_manager/pos_list_provider.h"
+#include "dictionary/user_dictionary_session.h"
+#include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_dictionary_util.h"
+#include "gui/base/util.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 #if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
@@ -40,29 +58,9 @@
 #include <windows.h>
 #include <imm.h>
 // clang-format on
-#endif  // _WIN32
 
-#include <QMessageBox>
-#include <QtGui>
-#include <cstdlib>
-#ifdef _WIN32
-#include <memory>  // for std::unique_ptr
-#endif             // _WIN32
-#include <string>
-#include <vector>
+#include <memory>
 
-#include "absl/time/time.h"
-#include "base/const.h"
-#include "base/logging.h"
-#include "client/client.h"
-#include "data_manager/pos_list_provider.h"
-#include "dictionary/user_dictionary_session.h"
-#include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_dictionary_util.h"
-#include "gui/base/util.h"
-#include "protocol/user_dictionary_storage.pb.h"
-
-#if defined(_WIN32)
 #include "base/win32/wide_char.h"
 #endif  // _WIN32
 
@@ -453,9 +451,8 @@ void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
   }
 
   constexpr DWORD kSendMessageTimeout = 10 * 1000;  // 10sec.
-  const LRESULT send_result =
-      ::SendMessageTimeout(focus_window, WM_COPY, 0, 0, SMTO_NORMAL,
-                           kSendMessageTimeout, nullptr);
+  const LRESULT send_result = ::SendMessageTimeout(
+      focus_window, WM_COPY, 0, 0, SMTO_NORMAL, kSendMessageTimeout, nullptr);
   if (send_result == 0) {
     LOG(ERROR) << "SendMessageTimeout() failed: " << ::GetLastError();
   }

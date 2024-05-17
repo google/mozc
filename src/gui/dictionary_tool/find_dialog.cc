@@ -34,7 +34,8 @@
 #include <QtGui>
 #include <algorithm>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "gui/base/util.h"
 
 namespace mozc {

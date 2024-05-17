@@ -29,6 +29,17 @@
 
 #include "gui/config_dialog/keybinding_editor.h"
 
+#include <QMenu>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QString>
+#include <QTableWidget>
+#include <map>
+#include <memory>
+
+#include "absl/log/check.h"
+#include "gui/base/util.h"
+
 #if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
 #endif  // __ANDROID__ || __wasm__
@@ -40,18 +51,6 @@
 #include <ime.h>
 // clang-format on
 #endif  // _WIN32
-
-#include <QMenu>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QString>
-#include <QTableWidget>
-#include <map>
-#include <memory>
-
-#include "base/logging.h"
-#include "base/util.h"
-#include "gui/base/util.h"
 
 namespace mozc {
 namespace gui {

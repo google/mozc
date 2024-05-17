@@ -34,9 +34,9 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/file_stream.h"
-#include "base/logging.h"
 #include "base/process_mutex.h"
 #include "ipc/window_info.pb.h"
 

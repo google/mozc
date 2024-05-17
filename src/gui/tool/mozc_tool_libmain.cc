@@ -29,21 +29,15 @@
 
 #include "gui/tool/mozc_tool_libmain.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <QtGui>
 #include <string>
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "base/crash_report_handler.h"
-#include "base/file_util.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/run_level.h"
-#include "base/util.h"
 #include "config/stats_config_util.h"
 #include "gui/base/debug_util.h"
 
@@ -52,11 +46,15 @@
 #ifndef IGNORE_INVALID_FLAG
 #include <iostream>
 #endif  // IGNORE_INVALID_FLAG
+
 #include "base/const.h"
 #include "base/environ.h"
+#include "base/file_util.h"
 #endif  // __APPLE__
 
 #ifdef _WIN32
+#include <windows.h>
+
 #include "gui/base/win_util.h"
 #endif  // _WIN32
 

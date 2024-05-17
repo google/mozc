@@ -27,21 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <QGuiApplication>
 #include <QtGui>
 #include <string>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
 #include "gui/base/util.h"
 #include "gui/post_install_dialog/post_install_dialog.h"
 
 #ifdef _WIN32
+#include <windows.h>
+
 #include "base/const.h"
 #include "base/process.h"
 #include "base/win32/scoped_com.h"

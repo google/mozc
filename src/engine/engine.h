@@ -30,8 +30,6 @@
 #ifndef MOZC_ENGINE_ENGINE_H_
 #define MOZC_ENGINE_ENGINE_H_
 
-#include <atomic>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>

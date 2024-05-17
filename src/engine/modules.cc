@@ -36,10 +36,11 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "converter/connector.h"
 #include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"

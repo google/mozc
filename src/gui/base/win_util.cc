@@ -50,7 +50,7 @@
 #include <string>
 #include <string_view>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "base/strings/zstring_view.h"
 #include "base/system_util.h"
 #include "base/win32/com.h"

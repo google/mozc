@@ -29,6 +29,8 @@
 
 #include "gui/base/util.h"
 
+#include "absl/log/check.h"
+
 // Show the build number on the title for debugging when the build
 // configuration is official dev channel.
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
@@ -46,8 +48,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "base/logging.h"
 
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #include "gui/base/window_title_modifier.h"
@@ -125,12 +125,11 @@ void GuiUtil::InstallTranslator(const char *resource_name) {
   }
 }
 
-
 // static
 const QString GuiUtil::ProductName() {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   const QString name = QObject::tr("Google Japanese Input");
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
   const QString name = QObject::tr("Mozc");
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return name;

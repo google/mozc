@@ -33,6 +33,7 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QtGui>
+#include <string>
 
 #include "absl/flags/flag.h"
 #include "gui/base/util.h"
@@ -47,8 +48,8 @@ void OnFatal(const QString &message) {
   // we don't use QMessageBox::critical() here
   // to set WindowStaysOnTopHint
   QMessageBox message_box(
-      QMessageBox::Critical, QObject::tr("[ProductName] Fatal Error"),
-      message, QMessageBox::Ok, nullptr,
+      QMessageBox::Critical, QObject::tr("[ProductName] Fatal Error"), message,
+      QMessageBox::Ok, nullptr,
       Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
   GuiUtil::ReplaceWidgetLabels(&message_box);
   DeleyedMessageDialogHandler handler(&message_box);
@@ -87,11 +88,11 @@ void ErrorMessageDialog::Show() {
         QObject::tr("Conversion engine is not responding. "
                     "Please restart this application."));
   } else if (absl::GetFlag(FLAGS_error_type) == "server_broken_message") {
-    OnFatal(QObject::tr(
-        "Connecting to an incompatible conversion engine. "
-        "Please restart your computer to enable [ProductName]. "
-        "If this problem persists, please uninstall [ProductName] "
-        "and install it again."));
+    OnFatal(
+        QObject::tr("Connecting to an incompatible conversion engine. "
+                    "Please restart your computer to enable [ProductName]. "
+                    "If this problem persists, please uninstall [ProductName] "
+                    "and install it again."));
   } else if (absl::GetFlag(FLAGS_error_type) == "server_version_mismatch") {
     OnFatal(QObject::tr(
         "Conversion engine has been upgraded. "

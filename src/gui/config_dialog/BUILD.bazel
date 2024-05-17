@@ -193,7 +193,6 @@ mozc_cc_qt_library(
         "//base:config_file_stream",
         "//base:file_stream",
         "//base:file_util",
-        "//base:logging",
         "//base:port",
         "//base:process",
         "//base:run_level",
@@ -216,6 +215,8 @@ mozc_cc_qt_library(
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ] + mozc_select(
