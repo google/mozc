@@ -64,6 +64,6 @@ jobs:
         shell: bash
         run: |
           cd mozc/src/
-          PKG_CONFIG_PATH=/opt/fcitx/lib/pkgconfig _BUILD_TARGETS=unix/fcitx5:fcitx5-mozc.so ../scripts/build_fcitx5_bazel --linkopt=-L/opt/fcitx/lib
+          PKG_CONFIG_PATH=/opt/fcitx/lib/pkgconfig _BUILD_TARGETS=unix/fcitx5:fcitx5-mozc.so ../scripts/build_fcitx5_bazel --cxxopt=-Wno-uninitialized --host_cxxopt=-Wno-uninitialized --linkopt=-L/opt/fcitx/lib
       - name: CodeQL Analysis
         uses: github/codeql-action/analyze@v2
