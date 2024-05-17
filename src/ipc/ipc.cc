@@ -33,16 +33,18 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/thread.h"
-#include "base/vlog.h"
 #include "ipc/ipc_path_manager.h"
 
 #ifdef _WIN32
 #include <wil/resource.h>
 #include <windows.h>
+
+#include "base/vlog.h"
 #else  // _WIN32
 #include <errno.h>
 #include <signal.h>

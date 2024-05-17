@@ -31,12 +31,11 @@
 
 #include <utility>
 
+#include "absl/log/log.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
-#include "base/logging.h"
 #include "base/port.h"
 #include "base/thread.h"
-#include "base/vlog.h"
 
 #ifdef _WIN32
 // clang-format off
@@ -44,6 +43,7 @@
 // clang-format on
 #include <wil/resource.h>
 
+#include "base/vlog.h"
 #include "base/win32/hresult.h"
 #else  // _WIN32
 #include <errno.h>

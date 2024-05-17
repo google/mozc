@@ -33,15 +33,15 @@
 
 #import <Carbon/Carbon.h>
 
-#include "base/logging.h"
 #include "protocol/commands.pb.h"
 
 using mozc::commands::KeyEvent;
 
+#include "absl/base/call_once.h"
+#include "absl/log/log.h"
 #include "mac/init_kanamap.h"
 #include "mac/init_specialcharmap.h"
 #include "mac/init_specialkeymap.h"
-#include "absl/base/call_once.h"
 
 static const unichar kYenMark = 0xA5;
 

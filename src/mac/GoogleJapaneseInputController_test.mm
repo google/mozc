@@ -42,9 +42,9 @@
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/log.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-#include "base/logging.h"
 #include "base/mac/mac_util.h"
 #include "client/client_mock.h"
 #include "protocol/candidates.pb.h"

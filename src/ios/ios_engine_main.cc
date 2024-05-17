@@ -41,6 +41,8 @@
 #include "base/strings/unicode.h"
 #include "ios/ios_engine.h"
 #include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 // mozc/data_manager/testing:mozc_dataset_for_testing is one of datafile.
 ABSL_FLAG(std::string, datafile, "", "Path to a data file to be used");

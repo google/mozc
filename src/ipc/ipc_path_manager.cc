@@ -40,14 +40,14 @@
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
-#include "base/const.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/random.h"
@@ -75,6 +75,7 @@
 // clang-format on
 #include <wil/resource.h>
 
+#include "base/const.h"
 #include "base/unverified_sha1.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"

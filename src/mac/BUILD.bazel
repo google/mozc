@@ -104,11 +104,11 @@ mozc_objc_library(
         "//base:const",
         "//base:crash_report_handler",
         "//base:init_mozc",
-        "//base:logging",
         "//base:run_level",
         "//client",
         "//config:stats_config_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
     ],
 )
 
@@ -139,7 +139,6 @@ mozc_objc_library(
         ":imk_server",
         ":keycode_map",
         "//base:const",
-        "//base:logging",
         "//base:process",
         "//base:util",
         "//base/mac:mac_process",
@@ -152,6 +151,7 @@ mozc_objc_library(
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "//renderer:renderer_interface",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -163,13 +163,13 @@ mozc_objc_test(
     deps = [
         ":imk_controller",
         ":keycode_map",
-        "//base:logging",
         "//base/mac:mac_util",
         "//client:client_mock",
         "//protocol:candidates_cc_proto",
         "//renderer:renderer_interface",
         "//testing:gunit_main_objc",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/time",
     ],
 )
@@ -186,9 +186,9 @@ mozc_objc_library(
     deps = [
         ":common",
         "//base:const",
-        "//base:logging",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/base",
+        "@com_google_absl//absl/log",
     ],
 )
 
@@ -219,9 +219,9 @@ mozc_objc_library(
         ":init_specialcharmap",
     ],
     deps = [
-        "//base:logging",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/base",
+        "@com_google_absl//absl/log",
     ],
 )
 

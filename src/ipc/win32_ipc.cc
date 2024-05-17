@@ -41,12 +41,13 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/const.h"
 #include "base/cpu_stats.h"
-#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"

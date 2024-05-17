@@ -31,15 +31,16 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/const.h"
 #include "base/hash.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 
