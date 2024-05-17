@@ -185,7 +185,6 @@ mozc_cc_library(
         "//prediction:dictionary_predictor",
         "//prediction:predictor",
         "//prediction:predictor_interface",
-        "//prediction:rescorer_interface",
         "//prediction:user_history_predictor",
         "//protocol:engine_builder_cc_proto",
         "//rewriter",
