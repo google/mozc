@@ -33,7 +33,6 @@
 #ifndef MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
 #define MOZC_DICTIONARY_FILE_DICTIONARY_FILE_H_
 
-#include <memory>
 #include <string>
 #include <vector>
 

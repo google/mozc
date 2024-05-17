@@ -30,7 +30,7 @@
 #ifndef MOZC_DICTIONARY_DICTIONARY_TEST_UTIL_H_
 #define MOZC_DICTIONARY_DICTIONARY_TEST_UTIL_H_
 
-#include <map>
+#include <cstddef>
 #include <string>
 #include <vector>
 

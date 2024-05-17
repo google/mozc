@@ -71,6 +71,7 @@
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
 #include "rewriter/rewriter.h"

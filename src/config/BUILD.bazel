@@ -89,16 +89,26 @@ mozc_cc_library(
     srcs = ["stats_config_util.cc"],
     hdrs = ["stats_config_util.h"],
     deps = [
-        ":config_handler",
-        "//base:file_util",
         "//base:singleton",
-        "//base:system_util",
-        "//protocol:config_cc_proto",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
     ] + mozc_select(
-        ios = ["//base/mac:mac_util"],
-        macos = ["//base/mac:mac_util"],
+        android = [
+            ":config_handler",
+            "//protocol:config_cc_proto",
+        ],
+        ios = [
+            "//base/mac:mac_util",
+            "//base:system_util",
+            "@com_google_absl//absl/strings",
+            "@com_google_absl//absl/synchronization",
+            "//base:file_util",
+        ],
+        macos = [
+            "//base/mac:mac_util",
+            "//base:system_util",
+            "@com_google_absl//absl/strings",
+            "@com_google_absl//absl/synchronization",
+            "//base:file_util",
+        ],
     ),
 )
 
@@ -107,20 +117,21 @@ mozc_cc_test(
     size = "small",
     srcs = ["stats_config_util_test.cc"],
     deps = [
-        ":config_handler",
         ":stats_config_util",
-        "//base:file_util",
-        "//base:singleton",
-        "//base:system_util",
-        "//base/file:temp_dir",
-        "//protocol:config_cc_proto",
         "//testing:gunit_main",
-        "//testing:mozctest",
-        "@com_google_absl//absl/base",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
-        windows = ["//base/win32:win_api_test_helper"],
+        android = [
+            ":config_handler",
+            "//base/file:temp_dir",
+            "//testing:mozctest",
+            "//protocol:config_cc_proto",
+        ],
+        windows = [
+            "//base/win32:win_api_test_helper",
+            "@com_google_absl//absl/base",
+            "@com_google_absl//absl/container:flat_hash_map",
+            "//base:singleton",
+        ],
     ),
 )
 
@@ -138,7 +149,6 @@ mozc_cc_library(
     deps = [
         ":config_handler",
         "//base:config_file_stream",
-        "//base:logging",
         "//base:number_util",
         "//base:singleton",
         "//base:util",
@@ -149,6 +159,8 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//storage:lru_storage",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -159,6 +171,7 @@ mozc_cc_test(
     srcs = ["character_form_manager_test.cc"],
     deps = [
         ":character_form_manager",
+        "//base:number_util",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",

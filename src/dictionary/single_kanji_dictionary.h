@@ -30,7 +30,6 @@
 #ifndef MOZC_DICTIONARY_SINGLE_KANJI_DICTIONARY_H_
 #define MOZC_DICTIONARY_SINGLE_KANJI_DICTIONARY_H_
 
-#include <iterator>
 #include <memory>
 #include <string>
 #include <utility>

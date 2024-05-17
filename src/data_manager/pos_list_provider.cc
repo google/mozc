@@ -32,9 +32,9 @@
 #include <string>
 #include <vector>
 
-#include "base/container/serialized_string_array.h"
-#include "base/embedded_file.h"
-#include "base/logging.h"
+#include "absl/log/log.h"
+#include "base/container/serialized_string_array.h"  // IWYU pragma: keep, for pos_list.inc below
+#include "base/embedded_file.h"  // IWYU pragma: keep, for pos_list.inc below
 
 #include "absl/strings/string_view.h"
 

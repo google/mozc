@@ -27,27 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/immutable_converter_interface.h"
+#ifndef MOZC_BASE_PROTOBUF_REPEATED_PTR_FIELD_H_
+#define MOZC_BASE_PROTOBUF_REPEATED_PTR_FIELD_H_
 
-#include "absl/log/log.h"
-#include "converter/segments.h"
-#include "request/conversion_request.h"
+#include "base/protobuf/protobuf.h"  // IWYU pragma: keep
 
-namespace mozc {
+#include "google/protobuf/repeated_ptr_field.h"       // IWYU pragma: export
 
-// This method is a proxy to the ConvertForRequest to keep the backward
-// compatibility.
-// TODO(hidehiko): Get rid of this method when we deprecate it.
-bool ImmutableConverterInterface::Convert(Segments *segments) const {
-  const ConversionRequest request;
-  return ConvertForRequest(request, segments);
-}
-
-bool ImmutableConverterInterface::ConvertForRequest(
-    const ConversionRequest &request, Segments *segments) const {
-  // TODO(hidehiko): Get rid of this default implementation.
-  LOG(FATAL) << "Please implement ConvertForRequest method.";
-  return false;
-}
-
-}  // namespace mozc
+#endif  // MOZC_BASE_PROTOBUF_REPEATED_PTR_FIELD_H_

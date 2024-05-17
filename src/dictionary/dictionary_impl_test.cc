@@ -36,7 +36,6 @@
 #include <utility>
 
 #include "absl/strings/string_view.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/node_allocator.h"
@@ -50,7 +49,6 @@
 #include "dictionary/user_dictionary_stub.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

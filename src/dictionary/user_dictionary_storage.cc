@@ -36,6 +36,8 @@
 #include <string>
 
 #include "absl/base/optimization.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -43,8 +45,8 @@
 #include "absl/synchronization/mutex.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/process_mutex.h"
+#include "base/protobuf/coded_stream.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
 #include "base/vlog.h"
 #include "dictionary/user_dictionary_util.h"

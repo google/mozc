@@ -68,8 +68,26 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
+    name = "coded_stream",
+    hdrs = ["coded_stream.h"],
+    deps = [
+        ":protobuf",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+mozc_cc_library(
     name = "repeated_field",
     hdrs = ["repeated_field.h"],
+    deps = [
+        ":protobuf",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+mozc_cc_library(
+    name = "repeated_ptr_field",
+    hdrs = ["repeated_ptr_field.h"],
     deps = [
         ":protobuf",
         "@com_google_protobuf//:protobuf",

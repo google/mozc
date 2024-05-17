@@ -30,12 +30,13 @@
 #ifndef MOZC_CONVERTER_LATTICE_H_
 #define MOZC_CONVERTER_LATTICE_H_
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 

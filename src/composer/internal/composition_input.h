@@ -33,7 +33,7 @@
 #include <string>
 #include <utility>
 
-#include "base/protobuf/repeated_field.h"
+#include "base/protobuf/repeated_ptr_field.h"
 #include "base/strings/assign.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"

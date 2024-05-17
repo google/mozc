@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bitset>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -909,52 +910,53 @@ Util::ScriptType Util::GetFirstScriptType(absl::string_view str,
 }
 
 namespace {
+using ScriptTypeBitSet = std::bitset<Util::SCRIPT_TYPE_SIZE>;
+constexpr ScriptTypeBitSet kNumBs(1 << Util::NUMBER);
+constexpr ScriptTypeBitSet kKanaBs((1 << Util::HIRAGANA) |
+                                   (1 << Util::KATAKANA));
 
 Util::ScriptType GetScriptTypeInternal(absl::string_view str,
                                        bool ignore_symbols) {
-  Util::ScriptType result = Util::SCRIPT_TYPE_SIZE;
+  ScriptTypeBitSet bs(-1);
+  DCHECK(bs.all());
 
   for (const char32_t codepoint : Utf8AsChars32(str)) {
-    Util::ScriptType type = Util::GetScriptType(codepoint);
-    if ((codepoint == 0x30FC || codepoint == 0x30FB ||
-         (codepoint >= 0x3099 && codepoint <= 0x309C)) &&
-        // PROLONGED SOUND MARK|MIDLE_DOT|VOICED_SOUND_MARKS
-        // are HIRAGANA as well
-        (result == Util::SCRIPT_TYPE_SIZE || result == Util::HIRAGANA ||
-         result == Util::KATAKANA)) {
-      type = result;  // restore the previous state
-    }
-
-    // Ignore symbols
-    // Regard UNKNOWN_SCRIPT as symbols here
-    if (ignore_symbols && result != Util::UNKNOWN_SCRIPT &&
-        type == Util::UNKNOWN_SCRIPT) {
-      continue;
-    }
-
-    // Periods are NUMBER as well, if it is not the first character.
-    // 0xFF0E == '．', 0x002E == '.' in UCS4 encoding.
-    if (result == Util::NUMBER &&
-        (codepoint == 0xFF0E || codepoint == 0x002E)) {
-      continue;
-    }
-
-    // Not first character.
-    // Note: GetScriptType doesn't return SCRIPT_TYPE_SIZE, thus if result
-    // is not SCRIPT_TYPE_SIZE, it is not the first character.
-    if (result != Util::SCRIPT_TYPE_SIZE && type != result) {
+    if (bs.count() == 0) {
       return Util::UNKNOWN_SCRIPT;
     }
-    result = type;
+
+    // PROLONGED SOUND MARK|MIDLE_DOT|VOICED_SOUND_MARKS
+    // are HIRAGANA or KATAKANA as well.
+    if (codepoint == U'ー' || codepoint == U'・' ||
+        (codepoint >= 0x3099 && codepoint <= 0x309C)) {
+      bs &= kKanaBs;
+      continue;
+    }
+
+    // Periods ('．' U+FF0E and '.' U+002E) are NUMBER as well, if they are not
+    // the first character.
+    if ((codepoint == U'．' || codepoint == U'.') && bs == kNumBs) {
+      continue;
+    }
+
+    Util::ScriptType type = Util::GetScriptType(codepoint);
+    // Ignore symbols
+    // Regard UNKNOWN_SCRIPT as symbols here
+    if (ignore_symbols && type == Util::UNKNOWN_SCRIPT) {
+      continue;
+    }
+
+    ScriptTypeBitSet type_bs(1 << type);
+    bs &= type_bs;
   }
 
-  if (result == Util::SCRIPT_TYPE_SIZE) {  // everything is "ー"
+  if (bs.count() != 1) {
     return Util::UNKNOWN_SCRIPT;
   }
 
-  return result;
+  const uint32_t onehot = static_cast<uint32_t>(bs.to_ulong());
+  return static_cast<Util::ScriptType>(absl::countr_zero(onehot));
 }
-
 }  // namespace
 
 Util::ScriptType Util::GetScriptType(absl::string_view str) {

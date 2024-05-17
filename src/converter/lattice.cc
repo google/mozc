@@ -30,6 +30,7 @@
 #include "converter/lattice.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <ostream>
@@ -39,9 +40,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/strings/unicode.h"
 #include "converter/node.h"
@@ -404,8 +405,7 @@ std::string Lattice::DebugString() const {
       os << "The path " << GetDebugStringForPath(prev_node)
          << " ( + connection cost + wcost: " << best_path_node->wcost << ")"
          << std::endl
-         << "was defeated"
-         << " by the path " << std::endl
+         << "was defeated" << " by the path " << std::endl
          << GetDebugStringForPath(best_path_node->prev)
          << " connecting to the node "
          << GetDebugStringForNode(best_path_node, best_path_node->prev)

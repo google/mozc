@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_KEY_CORRECTOR_H_
 #define MOZC_CONVERTER_KEY_CORRECTOR_H_
 
+#include <cstddef>
 #include <string>
 #include <vector>
 

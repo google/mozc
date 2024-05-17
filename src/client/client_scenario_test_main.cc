@@ -32,6 +32,7 @@
 // events specified by FLAGS_input file or interactive standard input.  Input
 // file format is same as one of session/session_client_main.
 
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <istream>
@@ -40,6 +41,8 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/time/clock.h"
@@ -47,7 +50,6 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/vlog.h"

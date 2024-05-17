@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_NBEST_GENERATOR_H_
 #define MOZC_CONVERTER_NBEST_GENERATOR_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>

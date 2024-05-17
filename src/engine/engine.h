@@ -52,7 +52,6 @@
 #include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
-#include "prediction/rescorer_interface.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -146,11 +145,6 @@ class Engine : public EngineInterface {
   void SetSupplementalModel(
       const engine::SupplementalModelInterface *supplemental_model) override {
     modules_->SetSupplementalModel(supplemental_model);
-  }
-
-  void SetRescorer(
-      std::unique_ptr<const prediction::RescorerInterface> rescorer) override {
-    modules_->SetRescorer(std::move(rescorer));
   }
 
   // For testing only.

@@ -33,7 +33,6 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
-    "mozc_select_enable_neural_language_model",
     "mozc_select_enable_supplemental_model",
 )
 load("//bazel:stubs.bzl", "bzl_library")
@@ -57,6 +56,7 @@ mozc_cc_library(
         "//base/strings:assign",
         "//testing:friend_test",
         "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -112,8 +112,8 @@ mozc_cc_library(
     visibility = ["//dictionary:__subpackages__"],
     deps = [
         ":node",
-        "//base:logging",
         "//base/container:freelist",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -123,13 +123,10 @@ mozc_cc_library(
     deps = [
         ":node",
         ":node_allocator",
-        "//base:logging",
-        "//base:util",
-        "//base/container:trie",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
         "//protocol:commands_cc_proto",
-        "//request:conversion_request",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -139,7 +136,6 @@ mozc_cc_library(
     srcs = ["connector.cc"],
     hdrs = ["connector.h"],
     deps = [
-        "//base:logging",
         "//data_manager:data_manager_interface",
         "//storage/louds:simple_succinct_bit_vector_index",
         "@com_google_absl//absl/algorithm:container",
@@ -162,13 +158,13 @@ mozc_cc_test(
     ],
     deps = [
         ":connector",
-        "//base:logging",
         "//base:mmap",
         "//base:vlog",
         "//data_manager:connection_file_reader",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -185,13 +181,14 @@ mozc_cc_library(
         ":node",
         ":segmenter",
         ":segments",
-        "//base:logging",
         "//base:vlog",
         "//base/container:freelist",
         "//dictionary:pos_matcher",
         "//dictionary:suppression_dictionary",
         "//prediction:suggestion_filter",
         "//request:conversion_request",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -201,19 +198,17 @@ mozc_cc_test(
         "nbest_generator_test.cc",
     ],
     deps = [
-        ":connector",
         ":immutable_converter_no_factory",
         ":lattice",
         ":nbest_generator",
         ":node",
-        ":segmenter",
         ":segments",
-        "//base:logging",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:user_dictionary_stub",
         "//engine:modules",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -274,9 +269,9 @@ mozc_cc_library(
     hdrs = ["segmenter.h"],
     deps = [
         ":node",
-        "//base:logging",
         "//base/container:bitarray",
         "//data_manager:data_manager_interface",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -290,9 +285,9 @@ mozc_cc_library(
     deps = [
         ":node",
         ":node_allocator",
-        "//base:logging",
         "//base:singleton",
         "//base/strings:unicode",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -318,9 +313,9 @@ mozc_cc_library(
     ],
     deps = [
         ":segments",
-        "//base:logging",
         "//request:conversion_request",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log",
     ],
 )
 
@@ -481,6 +476,7 @@ mozc_cc_test(
         "//prediction:user_history_predictor",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//protocol:user_dictionary_storage_cc_proto",
         "//request:conversion_request",
         "//request:request_test_util",
         "//rewriter",
@@ -512,6 +508,7 @@ mozc_cc_test(
         "//request:conversion_request",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -521,10 +518,10 @@ mozc_cc_library(
     hdrs = ["pos_id_printer.h"],
     deps = [
         "//base:file_stream",
-        "//base:logging",
         "//base:number_util",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -560,7 +557,6 @@ mozc_cc_binary(
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc",
-        "//base:logging",
         "//base:number_util",
         "//base:singleton",
         "//base:system_util",
@@ -571,15 +567,21 @@ mozc_cc_binary(
         "//data_manager",
         "//engine",
         "//engine:engine_interface",
+        "//engine:supplemental_model_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//protocol:engine_builder_cc_proto",
         "//request:conversion_request",
         "//request:request_test_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ] + mozc_select_enable_neural_language_model([
+    ] + mozc_select_enable_supplemental_model([
+        "//supplemental_model:supplemental_model_factory",
+        "//supplemental_model:supplemental_model_registration",
     ]),
 )
 
@@ -593,12 +595,11 @@ mozc_cc_library(
     ],
     deps = [
         "//base:file_stream",
-        "//base:logging",
         "//base/container:bitarray",
         "//protocol:segmenter_data_cc_proto",
         "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -622,9 +623,10 @@ mozc_cc_library(
     srcs = ["key_corrector.cc"],
     hdrs = ["key_corrector.h"],
     deps = [
-        "//base:logging",
         "//base:util",
         "//base:vlog",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -666,7 +668,6 @@ mozc_cc_library(
         ":converter_interface",
         ":segments",
         "//base:file_stream",
-        "//base:logging",
         "//base:number_util",
         "//base:text_normalizer",
         "//base:util",
@@ -676,6 +677,7 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -688,12 +690,13 @@ mozc_cc_binary(
     deps = [
         ":quality_regression_util",
         "//base:init_mozc",
-        "//base:logging",
         "//base:system_util",
         "//base/file:temp_dir",
         "//engine",
         "//engine:eval_engine_factory",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
@@ -712,9 +715,10 @@ mozc_cc_library(
     hdrs = ["quality_regression_test_lib.h"],
     deps = [
         ":quality_regression_util",
-        "//base:logging",
+        "//testing:gunit",
         "//testing:mozctest",
         "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",

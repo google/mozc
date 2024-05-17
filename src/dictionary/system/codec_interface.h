@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_CODEC_INTERFACE_H_
 #define MOZC_DICTIONARY_SYSTEM_CODEC_INTERFACE_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>

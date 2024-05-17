@@ -32,13 +32,14 @@
 #include <istream>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/file_stream.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 
 namespace mozc {
 
-ConnectionFileReader::ConnectionFileReader(const std::string & filename)
+ConnectionFileReader::ConnectionFileReader(const std::string& filename)
     : stream_(filename), done_(false), array_index_(-1), cost_(0) {
   LOG(INFO) << "Loading " << filename;
   std::string header;

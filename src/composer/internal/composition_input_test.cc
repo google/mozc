@@ -31,7 +31,9 @@
 
 #include <utility>
 
+#include "base/protobuf/repeated_ptr_field.h"
 #include "composer/table.h"
+#include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 
 namespace mozc {

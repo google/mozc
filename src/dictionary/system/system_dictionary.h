@@ -30,9 +30,9 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_H_
 #define MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -44,7 +44,6 @@
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/key_expansion_table.h"
-#include "dictionary/system/words_info.h"
 #include "request/conversion_request.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"

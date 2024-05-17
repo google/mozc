@@ -59,13 +59,13 @@ mozc_cc_library(
         ":data_manager_interface",
         ":dataset_reader",
         ":serialized_dictionary",
-        "//base:logging",
         "//base:mmap",
         "//base:version",
         "//base:vlog",
         "//base/container:serialized_string_array",
         "//protocol:segmenter_data_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -85,7 +85,6 @@ mozc_cc_library(
         ":connection_file_reader",
         ":data_manager_interface",
         "//base:file_stream",
-        "//base:logging",
         "//base:util",
         "//base/container:serialized_string_array",
         "//converter:connector",
@@ -95,8 +94,9 @@ mozc_cc_library(
         "//prediction:suggestion_filter",
         "//testing:gunit",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/random",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
@@ -125,8 +125,9 @@ mozc_cc_library(
     hdrs = ["connection_file_reader.h"],
     deps = [
         "//base:file_stream",
-        "//base:logging",
         "//base:number_util",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -185,10 +186,10 @@ mozc_cc_binary(
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc_buildtool",
-        "//base:logging",
         "//base:number_util",
         "//base:vlog",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -248,11 +249,11 @@ mozc_cc_library(
         "//base:bits",
         "//base:file_stream",
         "//base:file_util",
-        "//base:logging",
         "//base:number_util",
         "//base/container:serialized_string_array",
         "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -280,9 +281,9 @@ mozc_cc_library(
     ),
     deps = [
         "//base:embedded_file",
-        "//base:logging",
         "//base/container:serialized_string_array",
         "//dictionary:user_pos_interface",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -297,7 +298,4 @@ bzl_library(
 mozc_cc_library(
     name = "emoji_data",
     hdrs = ["emoji_data.h"],
-    deps = [
-        "//base/container:serialized_string_array",
-    ],
 )

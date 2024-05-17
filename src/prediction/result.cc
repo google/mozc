@@ -31,6 +31,7 @@
 
 #include <tuple>
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/unicode.h"
 #include "converter/segments.h"

@@ -173,8 +173,8 @@ absl::Status Modules::Init(
                                zero_query_number_string_array_data);
 
 
-    initialized_ = true;
-    return absl::Status();
+  initialized_ = true;
+  return absl::Status();
 #undef RETURN_IF_NULL
 }
 

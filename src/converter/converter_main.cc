@@ -39,6 +39,8 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -48,7 +50,6 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/protobuf/text_format.h"
 #include "base/singleton.h"
@@ -63,8 +64,10 @@
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
 #include "engine/engine_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "protocol/engine_builder.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
 

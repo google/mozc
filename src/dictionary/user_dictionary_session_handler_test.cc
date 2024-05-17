@@ -29,6 +29,7 @@
 
 #include "dictionary/user_dictionary_session_handler.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -36,8 +37,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/file_util.h"
-#include "base/protobuf/protobuf.h"
-#include "base/protobuf/repeated_field.h"
+#include "base/protobuf/repeated_ptr_field.h"
 #include "base/system_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"

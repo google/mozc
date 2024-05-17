@@ -29,15 +29,16 @@
 
 #include "dictionary/system/codec.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/random/distributions.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/random.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"

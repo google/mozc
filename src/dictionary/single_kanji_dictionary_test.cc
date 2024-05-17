@@ -35,6 +35,7 @@
 #include <tuple>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

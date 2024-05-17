@@ -110,6 +110,7 @@ class DecodeResult {
 
 // Returns the byte length of a single UTF-8 character based on the leading
 // byte.
+// IWYU pragma: private, include "base/strings/unicode.h"
 constexpr uint_fast8_t OneCharLen(const char c) {
   return utf8_internal::kUtf8LenTbl[static_cast<uint_fast8_t>(c)];
 }

@@ -32,6 +32,7 @@
 #include <optional>
 #include <string>
 
+#include "base/number_util.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

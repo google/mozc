@@ -29,12 +29,14 @@
 
 #include "dictionary/system/codec.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "base/vlog.h"

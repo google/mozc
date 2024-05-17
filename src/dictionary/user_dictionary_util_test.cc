@@ -34,6 +34,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
 

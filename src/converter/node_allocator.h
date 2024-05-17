@@ -30,8 +30,10 @@
 #ifndef MOZC_CONVERTER_NODE_ALLOCATOR_H_
 #define MOZC_CONVERTER_NODE_ALLOCATOR_H_
 
+#include <cstddef>
+
+#include "absl/log/check.h"
 #include "base/container/freelist.h"
-#include "base/logging.h"
 #include "converter/node.h"
 
 namespace mozc {

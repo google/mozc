@@ -30,13 +30,14 @@
 #include "converter/connector.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/random/random.h"
-#include "base/logging.h"
+#include "absl/status/statusor.h"
 #include "base/mmap.h"
 #include "base/vlog.h"
 #include "data_manager/connection_file_reader.h"

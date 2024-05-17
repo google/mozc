@@ -1353,16 +1353,25 @@ int DictionaryPredictor::CalculatePrefixPenalty(
 void DictionaryPredictor::MaybeRescoreResults(
     const ConversionRequest &request, const Segments &segments,
     absl::Span<Result> results) const {
-  const RescorerInterface *const rescorer = modules_.GetRescorer();
-  if (rescorer == nullptr) return;
   if (request_util::IsHandwriting(request)) {
     // We want to fix the first candidate for handwriting request.
     return;
   }
+
   if (IsDebug(request)) {
     for (Result &r : results) r.cost_before_rescoring = r.cost;
   }
-  rescorer->RescoreResults(request, segments, results);
+
+  if (const engine::SupplementalModelInterface *const supplemental_model =
+          modules_.GetSupplementalModel();
+      supplemental_model != nullptr) {
+    supplemental_model->RescoreResults(request, segments, results);
+  } else if (const RescorerInterface *const rescorer = modules_.GetRescorer();
+             rescorer != nullptr) {
+    // TODO(noriyukit): Migrate the rescorer in `modules_` to the supplemental
+    // model.
+    rescorer->RescoreResults(request, segments, results);
+  }
 }
 
 void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {

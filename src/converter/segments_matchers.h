@@ -31,6 +31,7 @@
 #define MOZC_CONVERTER_SEGMENTS_MATCHERS_H_
 
 #include <algorithm>
+#include <cstddef>
 #include <initializer_list>
 #include <string>
 #include <vector>
@@ -38,6 +39,7 @@
 #include "absl/strings/str_format.h"
 #include "converter/segments.h"
 #include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 
