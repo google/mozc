@@ -41,15 +41,12 @@ import sys
 
 def RunOrDie(command):
   """Run the command, or die if it failed."""
-  print("Running: " + command)
   try:
     output = subprocess.check_output(command, shell=True)
     print("==========", file=sys.stderr)
-    print("COMMAND: " + command, file=sys.stderr)
     print(output.decode("utf-8"), file=sys.stderr)
   except subprocess.CalledProcessError as e:
     print("==========", file=sys.stderr)
-    print("ERROR: " + command, file=sys.stderr)
     print(e.output, file=sys.stderr)
     print("==========", file=sys.stderr)
     sys.exit(1)
