@@ -29,20 +29,16 @@
 
 #include "server/mozc_server.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
-#include <cstddef>
 #include <memory>
 #include <string>
 
 #include "absl/base/config.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/crash_report_handler.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
 #include "base/singleton.h"
@@ -50,6 +46,10 @@
 #include "base/vlog.h"
 #include "config/stats_config_util.h"
 #include "session/session_server.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif  // _WIN32
 
 ABSL_DECLARE_FLAG(bool, restricted);  // in SessionHandler
 

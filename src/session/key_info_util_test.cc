@@ -30,6 +30,7 @@
 #include "session/key_info_util.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <vector>
 

@@ -38,12 +38,13 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
 #include "base/clock.h"
 #include "base/cpu_stats.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/vlog.h"

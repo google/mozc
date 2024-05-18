@@ -38,7 +38,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
-#include "base/protobuf/protobuf.h"
+#include "base/protobuf/repeated_field.h"
 #include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

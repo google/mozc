@@ -32,10 +32,10 @@
 #include <cstdint>
 #include <memory>
 
+#include "absl/log/check.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "base/logging.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
 #include "protocol/commands.pb.h"

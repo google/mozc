@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "request/request_test_util.h"

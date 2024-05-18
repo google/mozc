@@ -32,8 +32,9 @@
 #include <cstdint>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "composer/key_event_util.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"

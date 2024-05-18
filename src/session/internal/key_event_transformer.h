@@ -36,7 +36,6 @@
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
-#include "base/singleton.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 

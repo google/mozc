@@ -32,7 +32,7 @@
 
 #include "session/internal/ime_context.h"
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "composer/composer.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
