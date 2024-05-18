@@ -30,6 +30,7 @@
 #ifndef MOZC_PREDICTION_SUGGESTION_FILTER_H_
 #define MOZC_PREDICTION_SUGGESTION_FILTER_H_
 
+#include <cstdint>
 #include <utility>
 
 #include "absl/status/statusor.h"

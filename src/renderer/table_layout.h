@@ -30,7 +30,6 @@
 #ifndef MOZC_RENDERER_TABLE_LAYOUT_H_
 #define MOZC_RENDERER_TABLE_LAYOUT_H_
 
-#include <string>
 #include <vector>
 
 #include "base/coordinates.h"

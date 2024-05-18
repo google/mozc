@@ -38,6 +38,8 @@
 #include <wil/com.h>
 #include <wil/resource.h>
 
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -45,8 +47,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
+#include "base/coordinates.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/win32/win32_font_util.h"

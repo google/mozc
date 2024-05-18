@@ -30,6 +30,7 @@
 #include "prediction/number_decoder.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -41,6 +42,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "base/container/trie.h"
 
 namespace mozc {
 namespace {

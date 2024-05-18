@@ -32,8 +32,8 @@
 
 #import "CandidateView.h"
 
+#include "absl/log/log.h"
 #include "base/coordinates.h"
-#include "base/logging.h"
 #include "protocol/commands.pb.h"
 #include "renderer/mac/CandidateWindow.h"
 
@@ -87,6 +87,6 @@ void CandidateWindow::ResetView() {
   view_ = [[CandidateView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
 }
 
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc

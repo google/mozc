@@ -38,11 +38,12 @@
 #include <string>
 
 #include "absl/flags/flag.h"
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 #include "config/config_handler.h"
 #include "ipc/named_event.h"
+#include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/qt/qt_ipc_thread.h"
 
@@ -71,16 +72,15 @@ std::string GetServiceName() {
 }
 }  // namespace
 
-QtServer::QtServer()
-    : timeout_(0) {
+QtServer::QtServer() : timeout_(0) {
   if (absl::GetFlag(FLAGS_restricted)) {
     absl::SetFlag(&FLAGS_timeout,
                   // set 60 sec with restricted mode
                   std::min(absl::GetFlag(FLAGS_timeout), 60));
   }
 
-  timeout_ = 1000 * std::max(3, std::min(24 * 60 * 60,
-                                         absl::GetFlag(FLAGS_timeout)));
+  timeout_ =
+      1000 * std::max(3, std::min(24 * 60 * 60, absl::GetFlag(FLAGS_timeout)));
   MOZC_VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef MOZC_NO_LOGGING
@@ -124,8 +124,7 @@ int QtServer::StartServer(int argc, char **argv) {
   return app.exec();
 }
 
-bool QtServer::ExecCommandInternal(
-    const commands::RendererCommand &command) {
+bool QtServer::ExecCommandInternal(const commands::RendererCommand &command) {
   MOZC_VLOG(2) << command;
 
   return renderer_.ExecCommand(command);

@@ -68,7 +68,7 @@ mozc_cc_qt_library(
     hdrs = ["qt_ipc_thread.h"],
     deps = [
         ":qt_ipc_server",
-        "//base:logging",
+        "@com_google_absl//absl/log",
     ],
 )
 
@@ -90,15 +90,16 @@ mozc_cc_qt_library(
     deps = [
         ":qt_ipc_thread",
         ":qt_window_manager",
-        "//base:logging",
         "//base:port",
         "//base:system_util",
         "//base:vlog",
         "//client:client_interface",
         "//config:config_handler",
         "//ipc:named_event",
+        "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
     ],
 )
 
@@ -111,10 +112,7 @@ mozc_cc_library(
         "qt_ipc_server.h",
     ],
     deps = [
-        "//base:logging",
-        "//base:port",
         "//base:system_util",
-        "//config:config_handler",
         "//ipc",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
@@ -131,13 +129,14 @@ mozc_cc_qt_library(
     ],
     deps = [
         "//base:coordinates",
-        "//base:logging",
-        "//base:port",
         "//client:client_interface",
         "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_style_handler",
         "//renderer:window_util",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )

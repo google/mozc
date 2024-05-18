@@ -35,12 +35,12 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/hash.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/multifile.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"

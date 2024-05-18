@@ -36,11 +36,12 @@
 #include <windows.h>
 
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "base/const.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "base/win32/wide_char.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"

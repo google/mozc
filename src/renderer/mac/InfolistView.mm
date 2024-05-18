@@ -31,7 +31,7 @@
 
 #import "renderer/mac/InfolistView.h"
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_style.pb.h"
@@ -39,10 +39,7 @@
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
 
-using mozc::client::SendCommandInterface;
 using mozc::commands::Candidates;
-using mozc::commands::Output;
-using mozc::commands::SessionCommand;
 using mozc::commands::Information;
 using mozc::commands::InformationList;
 using mozc::renderer::RendererStyle;

@@ -34,11 +34,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/time/time.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/version.h"
 #include "ipc/ipc.h"

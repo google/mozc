@@ -38,9 +38,9 @@
 
 #include "absl/base/attributes.h"
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/win32/wide_char.h"
 
 ABSL_FLAG(std::string, src, "", "path to the input PNG file");

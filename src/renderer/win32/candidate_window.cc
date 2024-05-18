@@ -38,9 +38,9 @@
 #include <sstream>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/coordinates.h"
-#include "base/logging.h"
-#include "base/util.h"
 #include "base/win32/wide_char.h"
 #include "client/client_interface.h"
 #include "protocol/candidates.pb.h"
@@ -213,7 +213,7 @@ HBITMAP LoadBitmapFromResource(HMODULE module, int resource_id) {
                   LR_CREATEDIBSECTION));
 }
 
-void FillSolidRect(HDC dc, const RECT* rect, COLORREF color) {
+void FillSolidRect(HDC dc, const RECT *rect, COLORREF color) {
   COLORREF old_color = ::SetBkColor(dc, color);
   if (old_color != CLR_INVALID) {
     ::ExtTextOut(dc, 0, 0, ETO_OPAQUE, rect, nullptr, 0, nullptr);
@@ -261,7 +261,7 @@ CandidateWindow::CandidateWindow()
   // If DPI is not default value, re-calculate the size based on the DPI.
   if (footer_logo_.is_valid()) {
     BITMAP bm = {};
-    if (::GetObject(footer_logo_.get(), sizeof(bm), & bm)) {
+    if (::GetObject(footer_logo_.get(), sizeof(bm), &bm)) {
       footer_logo_display_size_ =
           Size(bm.bmWidth * (scale_factor_x / image_scale_factor),
                bm.bmHeight * (scale_factor_y / image_scale_factor));
@@ -767,8 +767,8 @@ void CandidateWindow::DrawFooter(HDC dc) {
 
     // NOTE: AC_SRC_ALPHA requires PBGRA (pre-multiplied alpha) DIB.
     const BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-    ::AlphaBlend(dc,
-        footer_content_rect.Left(), footer_content_rect.Top() + top_offset,
+    ::AlphaBlend(
+        dc, footer_content_rect.Left(), footer_content_rect.Top() + top_offset,
         footer_logo_display_size_.width, footer_logo_display_size_.height,
         src_dc.get(), 0, 0, src_size.cx, src_size.cy, bf);
 

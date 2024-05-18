@@ -33,6 +33,7 @@
 #include "absl/types/span.h"
 #include "converter/segments.h"
 #include "prediction/rescorer_interface.h"
+#include "prediction/result.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
 

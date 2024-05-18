@@ -34,15 +34,18 @@
 
 #include <algorithm>
 #include <bitset>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/base/optimization.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/coordinates.h"
-#include "base/logging.h"
 #include "base/win32/wide_char.h"
 
 namespace mozc {
@@ -419,8 +422,8 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
   LOGFONT logfont = {};
   logfont.lfWeight = FW_NORMAL;
   logfont.lfCharSet = DEFAULT_CHARSET;
-  logfont.lfHeight = GetHeightFromDeciPoint(font_point * 10 * kDivision,
-                                            dc.get());
+  logfont.lfHeight =
+      GetHeightFromDeciPoint(font_point * 10 * kDivision, dc.get());
   logfont.lfQuality = NONANTIALIASED_QUALITY;
   const errno_t error = wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
   if (error != 0) {

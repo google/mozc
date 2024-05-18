@@ -31,12 +31,8 @@
 #define MOZC_RENDERER_QT_QT_WINDOW_MANAGER_H_
 
 #include <QtWidgets>
-#include <functional>
-#include <memory>
-#include <string>
 
 #include "base/coordinates.h"
-#include "base/port.h"
 #include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"
