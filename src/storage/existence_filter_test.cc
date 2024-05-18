@@ -35,10 +35,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "base/hash.h"
-#include "base/logging.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 

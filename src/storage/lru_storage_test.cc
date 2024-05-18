@@ -40,12 +40,12 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
 #include "base/clock_mock.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/random.h"
 #include "storage/lru_cache.h"
 #include "testing/gmock.h"
@@ -119,8 +119,7 @@ std::vector<std::string> GetValuesInStorageOrder(const LruStorage &storage) {
 
 }  // namespace
 
-class LruStorageTest : public ::testing::Test {
-};
+class LruStorageTest : public ::testing::Test {};
 
 TEST_F(LruStorageTest, LruStorageTest) {
   constexpr int kSize[] = {10, 100, 1000, 10000};

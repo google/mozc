@@ -29,6 +29,7 @@
 
 #include "storage/louds/louds_trie.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 

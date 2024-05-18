@@ -33,12 +33,13 @@
 #include <ios>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "base/encryptor.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/password_manager.h"
 #include "base/vlog.h"

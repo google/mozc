@@ -32,8 +32,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "absl/log/check.h"
 #include "base/bits.h"
-#include "base/logging.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 namespace mozc {

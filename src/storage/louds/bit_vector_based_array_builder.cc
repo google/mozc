@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "storage/louds/bit_stream.h"
 
 namespace mozc {

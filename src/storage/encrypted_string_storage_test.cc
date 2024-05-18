@@ -29,6 +29,7 @@
 
 #include "storage/encrypted_string_storage.h"
 
+#include <cstddef>
 #include <ios>
 #include <iostream>
 #include <memory>
@@ -36,7 +37,6 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

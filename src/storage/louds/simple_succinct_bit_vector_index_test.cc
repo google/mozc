@@ -29,6 +29,7 @@
 
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>

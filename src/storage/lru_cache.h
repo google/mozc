@@ -36,7 +36,7 @@
 #include <type_traits>
 
 #include "absl/container/flat_hash_map.h"
-#include "base/logging.h"
+#include "absl/log/check.h"
 
 namespace mozc {
 namespace storage {

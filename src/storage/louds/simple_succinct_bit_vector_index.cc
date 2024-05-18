@@ -35,9 +35,9 @@
 #include <iterator>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/numeric/bits.h"
 #include "base/bits.h"
-#include "base/logging.h"
 
 namespace mozc {
 namespace storage {

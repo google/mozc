@@ -35,6 +35,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
 #include "testing/gunit.h"

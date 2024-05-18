@@ -33,7 +33,6 @@
 #include <cstdint>
 #include <map>
 #include <string>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "usage_stats/usage_stats.pb.h"

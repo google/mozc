@@ -39,13 +39,14 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/numeric/bits.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "base/bits.h"
-#include "base/logging.h"
 #include "base/vlog.h"
 
 namespace mozc {
