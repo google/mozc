@@ -37,7 +37,8 @@
 #include <tuple>
 #include <utility>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 

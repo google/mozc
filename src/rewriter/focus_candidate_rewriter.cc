@@ -30,9 +30,11 @@
 #include "rewriter/focus_candidate_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"

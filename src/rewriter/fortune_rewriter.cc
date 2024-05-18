@@ -30,14 +30,16 @@
 #include "rewriter/fortune_rewriter.h"
 
 #include <algorithm>
-#include <cstdint>
 #include <ctime>
 #include <iterator>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/random/random.h"
+#include "absl/time/civil_time.h"
+#include "absl/time/time.h"
 #include "base/clock.h"
-#include "base/logging.h"
 #include "base/singleton.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"

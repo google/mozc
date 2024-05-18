@@ -34,9 +34,12 @@
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 namespace {

@@ -37,12 +37,13 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/converter_interface.h"

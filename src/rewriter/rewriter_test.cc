@@ -33,11 +33,10 @@
 #include <memory>
 #include <string>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/pos_group.h"
 #include "engine/modules.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"

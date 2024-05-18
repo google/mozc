@@ -28,7 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef NO_USAGE_REWRITER
-
 #include "rewriter/usage_rewriter.h"
 
 #include <memory>
@@ -45,7 +44,9 @@
 #include "dictionary/user_pos.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

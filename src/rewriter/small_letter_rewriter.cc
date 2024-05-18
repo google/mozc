@@ -29,10 +29,12 @@
 
 #include "rewriter/small_letter_rewriter.h"
 
+#include <cstdint>
 #include <string>
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/check.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -41,6 +43,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 namespace {

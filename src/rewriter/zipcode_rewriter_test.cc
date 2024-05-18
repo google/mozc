@@ -32,8 +32,8 @@
 #include <cstddef>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"

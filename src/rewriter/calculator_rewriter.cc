@@ -33,11 +33,12 @@
 #include <cstddef>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
@@ -45,6 +46,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/calculator/calculator_interface.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 

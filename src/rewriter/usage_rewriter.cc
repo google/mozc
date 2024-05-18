@@ -27,18 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstdint>
+#include "rewriter/usage_rewriter.h"
 
-#include "absl/strings/string_view.h"
 #ifndef NO_USAGE_REWRITER
-
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/segments.h"
@@ -47,7 +48,6 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/usage_rewriter.h"
 
 namespace mozc {
 

@@ -37,14 +37,17 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/container/serialized_string_array.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/vlog.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
+#include "data_manager/emoji_data.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"

@@ -73,7 +73,7 @@ mozc_cc_test(
     srcs = ["request_test_util_test.cc"],
     deps = [
         ":request_test_util",
+        "//protocol:commands_cc_proto",
         "//testing:gunit_main",
-        "//testing:mozctest",
     ],
 )

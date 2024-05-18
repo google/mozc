@@ -30,12 +30,14 @@
 #include "rewriter/zipcode_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"

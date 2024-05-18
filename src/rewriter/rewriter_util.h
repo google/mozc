@@ -30,6 +30,8 @@
 #ifndef MOZC_REWRITER_REWRITER_UTIL_H_
 #define MOZC_REWRITER_REWRITER_UTIL_H_
 
+#include <cstddef>
+
 #include "converter/segments.h"
 
 namespace mozc {

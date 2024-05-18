@@ -30,6 +30,8 @@
 #ifndef MOZC_REWRITER_COMMAND_REWRITER_H_
 #define MOZC_REWRITER_COMMAND_REWRITER_H_
 
+#include <cstddef>
+
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"

@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
@@ -47,6 +48,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"

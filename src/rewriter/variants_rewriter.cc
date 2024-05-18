@@ -29,17 +29,19 @@
 
 #include "rewriter/variants_rewriter.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -48,6 +50,7 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 namespace {

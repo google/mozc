@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_VERSION_REWRITER_H_
 #define MOZC_REWRITER_VERSION_REWRITER_H_
 
+#include <cstddef>
 #include <string>
 
 #include "absl/container/flat_hash_map.h"

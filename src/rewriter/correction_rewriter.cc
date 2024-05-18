@@ -35,10 +35,10 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "base/logging.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/config.pb.h"

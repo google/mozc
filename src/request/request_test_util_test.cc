@@ -29,6 +29,7 @@
 
 #include "request/request_test_util.h"
 
+#include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 
 namespace mozc {

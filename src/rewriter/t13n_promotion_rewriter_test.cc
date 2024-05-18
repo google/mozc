@@ -29,6 +29,7 @@
 
 #include "rewriter/t13n_promotion_rewriter.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -40,9 +41,11 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
+#include "rewriter/rewriter_interface.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace {

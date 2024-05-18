@@ -29,12 +29,13 @@
 
 #include "rewriter/calculator_rewriter.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
@@ -46,6 +47,7 @@
 #include "request/conversion_request.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
