@@ -957,10 +957,10 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 
 記号	↔	やじるし ←→ <-> <ー>	矢印	左右	SYMBOL
 記号	↕	やじるし ↑↓ ↓↑	矢印	上下	SYMBOL
-記号	↖	やじるし ← ↑	矢印	左上	SYMBOL
-記号	↗	やじるし → ↑	矢印	右上	SYMBOL
-記号	↘	やじるし → ↓	矢印	右下	SYMBOL
-記号	↙	やじるし ← ↓	矢印	左下	SYMBOL
+記号	↖	やじるし ← ↑ ひだりうえ ひだりうえや	矢印	左上	SYMBOL
+記号	↗	やじるし → ↑ みぎうえ みぎうえや	矢印	右上	SYMBOL
+記号	↘	やじるし → ↓ みぎした みぎしたや	矢印	右下	SYMBOL
+記号	↙	やじるし ← ↓ ひだりした ひだりしたや	矢印	左下	SYMBOL
 記号	↩	やじるし ←	矢印		SYMBOL
 記号	↪	やじるし →	矢印		SYMBOL
 記号	↰	やじるし ←	矢印		SYMBOL
@@ -968,7 +968,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	↲	やじるし ←	矢印		SYMBOL
 記号	↴	やじるし ↓	矢印		SYMBOL
 記号	↳	やじるし →	矢印		SYMBOL
-記号	↵	やじるし ← えんたー りたーん	矢印		SYMBOL
+記号	↵	やじるし ← えんたー りたーん かいぎょう	矢印 改行記号		SYMBOL
 記号	↶	やじるし ↓	矢印		SYMBOL
 記号	↷	やじるし ↓	矢印		SYMBOL
 記号	↺	やじるし → ↑	矢印		SYMBOL
@@ -987,10 +987,10 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	⇑	やじるし うえや うえ ↑	太矢印	上	SYMBOL
 記号	⇓	やじるし したや した ↓	太矢印	下	SYMBOL
 記号	⇕	やじるし ↑↓ ↓↑	太矢印	上下	SYMBOL
-記号	⇖	やじるし ← ↑	太矢印	左上	SYMBOL
-記号	⇗	やじるし → ↑	太矢印	右上	SYMBOL
-記号	⇘	やじるし → ↓	太矢印	右下	SYMBOL
-記号	⇙	やじるし ← ↓	太矢印	左下	SYMBOL
+記号	⇖	やじるし ひだりうえ ひだりうえや ← ↑	太矢印	左上	SYMBOL
+記号	⇗	やじるし みぎうえ みぎうえや → ↑	太矢印	右上	SYMBOL
+記号	⇘	やじるし みぎした みぎしたや → ↓	太矢印	右下	SYMBOL
+記号	⇙	やじるし ひだりした ひだりしたや ← ↓	太矢印	左下	SYMBOL
 記号	⇚	やじるし ひだりや ひだり ←	三重矢印	左	SYMBOL
 記号	⇛	やじるし みぎや みぎ →	三重矢印	右	SYMBOL
 記号	⇠	やじるし ひだりや ひだり <... ←	点線矢印	左	SYMBOL
