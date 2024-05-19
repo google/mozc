@@ -16,16 +16,16 @@
  * License along with this library; see the file COPYING. If not,
  * see <http://www.gnu.org/licenses/>.
  */
-#include <fcitx-utils/i18n.h>
+#include <fcitx-utils/fs.h>
 #include <fcitx-utils/misc.h>
 #include <fcitx-utils/stringutils.h>
 #include <fcitx/addonfactory.h>
-#include <stdlib.h>
-
+#include <fcitx/addoninstance.h>
 #include <string_view>
 
 #include "base/system_util.h"
 #include "mozc_engine.h"
+#include "unix/fcitx5/i18nwrapper.h"
 
 namespace fcitx {
 class MozcEngineFactory : public AddonFactory {

@@ -29,23 +29,31 @@
 
 #include "unix/fcitx5/mozc_state.h"
 
-#include <fcitx-utils/i18n.h>
+#include <fcitx-utils/capabilityflags.h>
+#include <fcitx-utils/key.h>
+#include <fcitx-utils/keysym.h>
 #include <fcitx-utils/log.h>
 #include <fcitx-utils/stringutils.h>
 #include <fcitx/candidatelist.h>
+#include <fcitx/event.h>
 #include <fcitx/inputpanel.h>
+#include <fcitx/text.h>
+#include <fcitx/userinterface.h>
 
+#include <cstdint>
+#include <memory>
 #include <string>
+#include <utility>
 
-#include "base/const.h"
-#include "base/file_util.h"
-#include "base/logging.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/process.h"
-#include "base/system_util.h"
-#include "base/util.h"
 #include "base/vlog.h"
 #include "client/client_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "unix/fcitx5/fcitx_key_event_handler.h"
+#include "unix/fcitx5/i18nwrapper.h"
 #include "unix/fcitx5/mozc_connection.h"
 #include "unix/fcitx5/mozc_engine.h"
 #include "unix/fcitx5/mozc_response_parser.h"
@@ -119,8 +127,9 @@ bool MozcState::TrySendKeyEvent(
 
   mozc::commands::KeyEvent event;
   if (!handler_->GetKeyEvent(sym, keycode, state, preedit_method_, layout_is_jp,
-                             is_key_up, &event))
+                             is_key_up, &event)) {
     return false;
+  }
 
   if ((composition_mode == mozc::commands::DIRECT) &&
       !client->IsDirectModeCommand(event)) {
@@ -136,13 +145,13 @@ bool MozcState::TrySendKeyEvent(
     context.set_following_text(surrounding_text_info.following_text);
   }
 
-  MOZC_VLOG(1) << "TrySendKeyEvent: " << std::endl << event.DebugString();
+  MOZC_VLOG(1) << "TrySendKeyEvent: " << event.DebugString();
   if (!client->SendKeyWithContext(event, context, out)) {
     *out_error = "SendKey failed";
     MOZC_VLOG(1) << "ERROR";
     return false;
   }
-  MOZC_VLOG(1) << "OK: " << std::endl << out->DebugString();
+  MOZC_VLOG(1) << "OK: " << out->DebugString();
   return true;
 }
 
@@ -188,13 +197,13 @@ bool MozcState::TrySendCommand(mozc::commands::SessionCommand::CommandType type,
 bool MozcState::TrySendRawCommand(const mozc::commands::SessionCommand& command,
                                   mozc::commands::Output* out,
                                   std::string* out_error) const {
-  MOZC_VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
+  MOZC_VLOG(1) << "TrySendRawCommand: " << command.DebugString();
   if (!GetClient()->SendCommand(command, out)) {
     *out_error = "SendCommand failed";
     MOZC_VLOG(1) << "ERROR";
     return false;
   }
-  MOZC_VLOG(1) << "OK: " << std::endl << out->DebugString();
+  MOZC_VLOG(1) << "OK: " << out->DebugString();
   return true;
 }
 
@@ -378,10 +387,10 @@ void MozcState::DrawAll() {
     }
   } else {
     Text preedit = preedit_;
-    if (preedit.size()) {
+    if (!preedit.empty()) {
       preedit.append(" ");
       preedit.append(aux);
-      ic_->inputPanel().setPreedit(std::move(preedit));
+      ic_->inputPanel().setPreedit(preedit);
     } else if (!aux_.empty()) {
       ic_->inputPanel().setAuxUp(Text(aux));
     }

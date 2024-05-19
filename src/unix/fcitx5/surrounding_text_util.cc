@@ -30,13 +30,18 @@
 #include "unix/fcitx5/surrounding_text_util.h"
 
 #include <fcitx-module/clipboard/clipboard_public.h>
+#include <fcitx-utils/capabilityflags.h>
 #include <fcitx/inputcontext.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <limits>
 #include <string>
 
-#include "base/logging.h"
-#include "base/port.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/util.h"
 #include "base/vlog.h"
 

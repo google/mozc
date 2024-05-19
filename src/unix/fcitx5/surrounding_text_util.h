@@ -32,18 +32,15 @@
 
 #include <fcitx/inputcontext.h>
 
+#include <cstdint>
 #include <string>
-
-#include "base/port.h"
 
 namespace fcitx {
 
 class AddonInstance;
 
 struct SurroundingTextInfo {
-  SurroundingTextInfo() : relative_selected_length(0) {}
-
-  int32_t relative_selected_length;
+  int32_t relative_selected_length = 0;
   std::string preceding_text;
   std::string selection_text;
   std::string following_text;

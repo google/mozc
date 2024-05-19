@@ -33,10 +33,10 @@
 
 #include <fcitx-utils/key.h>
 
+#include <cstdint>
 #include <memory>
 #include <set>
 
-#include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "unix/fcitx5/fcitx_key_translator.h"

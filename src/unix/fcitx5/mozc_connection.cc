@@ -30,10 +30,8 @@
 
 #include "unix/fcitx5/mozc_connection.h"
 
-#include <string>
+#include <memory>
 
-#include "base/logging.h"
-#include "base/util.h"
 #include "base/vlog.h"
 #include "client/client.h"
 #include "ipc/ipc.h"

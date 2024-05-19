@@ -30,13 +30,23 @@
 
 #include "unix/fcitx5/fcitx_key_translator.h"
 
-#include "base/logging.h"
+#include <fcitx-utils/key.h>
+#include <fcitx-utils/keysym.h>
+
+#include <cstdint>
+#include <map>
+#include <string>
+#include <utility>
+
+#include "absl/log/check.h"
 #include "base/vlog.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace fcitx {
 using namespace mozc;
 namespace {
-static const auto kSpecialKeyMap =
+const auto kSpecialKeyMap =
     new std::map<uint32_t, commands::KeyEvent::SpecialKey>({
         {FcitxKey_space, commands::KeyEvent::SPACE},
         {FcitxKey_Return, commands::KeyEvent::ENTER},
@@ -136,7 +146,7 @@ static const auto kSpecialKeyMap =
         //   - FcitxKey_Kana_Lock? FcitxKey_KEY_Kana_Shift?
     });
 
-static const auto kIbusModifierMaskMap = new std::map<uint32_t, KeyState>({
+const auto kFcitxModifierMaskMap = new std::map<uint32_t, KeyState>({
     {FcitxKey_Shift_L, KeyState::Shift},
     {FcitxKey_Shift_R, KeyState::Shift},
     {FcitxKey_Control_L, KeyState::Ctrl},
@@ -149,8 +159,8 @@ static const auto kIbusModifierMaskMap = new std::map<uint32_t, KeyState>({
 // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
 // 'Hiragana Letter Small U' (with Shift modifier).
 // TODO(team): Add kana_map_dv to support Dvoraklayout.
-typedef std::map<uint32_t, std::pair<const char *, const char *>> KanaMap;
-static const KanaMap *kKanaJpMap = new KanaMap({
+using KanaMap = std::map<uint32_t, std::pair<const char *, const char *>>;
+const KanaMap *kKanaJpMap = new KanaMap({
     {'1', {"ぬ", "ぬ"}},
     {'!', {"ぬ", "ぬ"}},
     {'2', {"ふ", "ふ"}},
@@ -251,7 +261,7 @@ static const KanaMap *kKanaJpMap = new KanaMap({
     {U'¥', {"ー", "ー"}},  // U+00A5
 });
 
-static const KanaMap *kKanaUsMap = new KanaMap({
+const KanaMap *kKanaUsMap = new KanaMap({
     {'`', {"ろ", "ろ"}},  {'~', {"ろ", "ろ"}},  {'1', {"ぬ", "ぬ"}},
     {'!', {"ぬ", "ぬ"}},  {'2', {"ふ", "ふ"}},  {'@', {"ふ", "ふ"}},
     {'3', {"あ", "ぁ"}},  {'#', {"あ", "ぁ"}},  {'4', {"う", "ぅ"}},
@@ -307,7 +317,9 @@ bool KeyTranslator::Translate(KeySym keyval, uint32_t keycode,
   out_event->Clear();
 
   /* this is key we cannot handle, don't process it */
-  if (modifiers & KeyState::Super) return false;
+  if (modifiers & KeyState::Super) {
+    return false;
+  }
 
   // Due to historical reasons, many linux ditributions set Hiragana_Katakana
   // key as Hiragana key (which is Katkana key with shift modifier). So, we
@@ -329,9 +341,9 @@ bool KeyTranslator::Translate(KeySym keyval, uint32_t keycode,
       out_event->add_modifier_keys(mozc::commands::KeyEvent::CAPS);
     }
     out_event->set_key_code(keyval);
-  } else if (auto it = kIbusModifierMaskMap->find(keyval);
-             it != kIbusModifierMaskMap->end()) {
-    // Convert Ibus modifier key to mask (e.g. FcitxKey_Shift_L to
+  } else if (auto it = kFcitxModifierMaskMap->find(keyval);
+             it != kFcitxModifierMaskMap->end()) {
+    // Convert Fcitx modifier key to mask (e.g. FcitxKey_Shift_L to
     // KeyState::Shift)
     modifiers |= it->second;
   } else if (auto it = kSpecialKeyMap->find(keyval);
@@ -359,7 +371,7 @@ bool KeyTranslator::Translate(KeySym keyval, uint32_t keycode,
 }
 
 bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(KeySym keyval,
-                                                   uint32_t keycode,
+                                                   uint32_t /*keycode*/,
                                                    KeyStates modifiers) {
   return ((modifiers & KeyState::Shift) &&
           (keyval == FcitxKey_Hiragana_Katakana));
@@ -407,8 +419,8 @@ bool KeyTranslator::IsPrintable(KeySym keyval, uint32_t keycode,
   return IsAscii(keyval, keycode, modifiers);
 }
 
-bool KeyTranslator::IsAscii(KeySym keyval, uint32_t keycode,
-                            KeyStates modifiers) {
+bool KeyTranslator::IsAscii(KeySym keyval, uint32_t /*keycode*/,
+                            KeyStates /*modifiers*/) {
   return (keyval > FcitxKey_space &&
           // Note: Space key (0x20) is a special key in Mozc.
           keyval <= FcitxKey_asciitilde);  // 0x7e.

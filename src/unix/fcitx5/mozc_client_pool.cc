@@ -30,12 +30,18 @@
 #include "unix/fcitx5/mozc_client_pool.h"
 
 #include <fcitx-utils/charutils.h>
+#include <fcitx-utils/macros.h>
+#include <fcitx-utils/stringutils.h>
+#include <fcitx/inputcontext.h>
+#include <fcitx/inputcontextmanager.h>
+
+#include <cassert>
+#include <memory>
+#include <string>
 
 #include "unix/fcitx5/mozc_connection.h"
 
 namespace fcitx {
-
-MozcClientHolder::MozcClientHolder() {}
 
 MozcClientHolder::~MozcClientHolder() {
   if (pool_) {

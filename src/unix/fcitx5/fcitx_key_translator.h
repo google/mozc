@@ -34,11 +34,9 @@
 #include <fcitx-utils/key.h>
 
 #include <cstdint>
-#include <map>
-#include <set>
 #include <string>
 
-#include "base/port.h"
+#include "protocol/config.pb.h"
 #include "protocol/commands.pb.h"
 
 namespace fcitx {

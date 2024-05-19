@@ -21,18 +21,31 @@
 
 #include <fcitx-config/configuration.h>
 #include <fcitx-config/enum.h>
-#include <fcitx-utils/i18n.h>
+#include <fcitx-config/option.h>
+#include <fcitx-config/rawconfig.h>
+#include <fcitx-utils/handlertable.h>
 #include <fcitx-utils/key.h>
 #include <fcitx-utils/stringutils.h>
 #include <fcitx/action.h>
 #include <fcitx/addonfactory.h>
+#include <fcitx/addoninstance.h>
 #include <fcitx/addonmanager.h>
+#include <fcitx/event.h>
+#include <fcitx/inputcontextmanager.h>
+#include <fcitx/inputcontextproperty.h>
 #include <fcitx/inputmethodengine.h>
 #include <fcitx/instance.h>
 #include <fcitx/menu.h>
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "base/file_util.h"
 #include "base/system_util.h"
+#include "client/client_interface.h"
+#include "protocol/commands.pb.h"
+#include "unix/fcitx5/i18nwrapper.h"
 #include "unix/fcitx5/mozc_client_pool.h"
 #include "unix/fcitx5/mozc_state.h"
 
@@ -97,8 +110,8 @@ FCITX_CONFIGURATION(
 class MozcModeSubAction : public SimpleAction {
  public:
   MozcModeSubAction(MozcEngine *engine, mozc::commands::CompositionMode mode);
-  bool isChecked(fcitx::InputContext *) const override;
-  void activate(fcitx::InputContext *) override;
+  bool isChecked(fcitx::InputContext *ic) const override;
+  void activate(fcitx::InputContext *ic) override;
 
  private:
   MozcEngine *engine_;
@@ -118,8 +131,8 @@ class MozcEngine final : public InputMethodEngineV2 {
   void reloadConfig() override;
   void reset(const InputMethodEntry &entry, InputContextEvent &event) override;
   void save() override;
-  std::string subMode(const fcitx::InputMethodEntry &,
-                      fcitx::InputContext &) override;
+  std::string subMode(const fcitx::InputMethodEntry & /*entry*/,
+                      fcitx::InputContext & ic) override;
   std::string subModeIconImpl(const InputMethodEntry &entry,
                               InputContext &ic) override;
 

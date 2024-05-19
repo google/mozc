@@ -30,8 +30,11 @@
 #ifndef UNIX_FCITX5_MOZC_CLIENT_POOL_H_
 #define UNIX_FCITX5_MOZC_CLIENT_POOL_H_
 
+#include <fcitx/inputcontext.h>
 #include <fcitx/inputcontextmanager.h>
 
+#include <memory>
+#include <string>
 #include <unordered_map>
 
 #include "client/client_interface.h"
@@ -45,7 +48,7 @@ class MozcClientHolder {
   friend class MozcClientPool;
 
  public:
-  MozcClientHolder();
+  MozcClientHolder() = default;
 
   MozcClientHolder(MozcClientHolder &&) = delete;
 

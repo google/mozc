@@ -30,11 +30,19 @@
 
 #include "unix/fcitx5/fcitx_key_event_handler.h"
 
-#include <map>
+#include <fcitx-utils/key.h>
 
-#include "base/logging.h"
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <set>
+
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/singleton.h"
-#include "base/vlog.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "unix/fcitx5/fcitx_key_translator.h"
 
 namespace fcitx {
 
@@ -72,11 +80,9 @@ void AddAdditionalModifiers(
       mozc::Singleton<AdditionalModifiersData>::get()->data();
 
   // Adds MODIFIER if there are (LEFT|RIGHT)_MODIFIER like LEFT_SHIFT.
-  for (std::set<mozc::commands::KeyEvent::ModifierKey>::const_iterator it =
-           modifier_keys_set->begin();
-       it != modifier_keys_set->end(); ++it) {
-    std::map<uint32_t, mozc::commands::KeyEvent::ModifierKey>::const_iterator
-        item = data.find(*it);
+  for (auto it = modifier_keys_set->begin(); it != modifier_keys_set->end();
+       ++it) {
+    auto item = data.find(*it);
     if (item != data.end()) {
       modifier_keys_set->insert(item->second);
     }
@@ -97,7 +103,8 @@ bool IsModifierToBeSentOnKeyUp(const mozc::commands::KeyEvent &key_event) {
 }
 }  // namespace
 
-KeyEventHandler::KeyEventHandler() : key_translator_(new KeyTranslator) {
+KeyEventHandler::KeyEventHandler()
+    : key_translator_(std::make_unique<KeyTranslator>()) {
   Clear();
 }
 
@@ -225,7 +232,7 @@ bool KeyEventHandler::ProcessModifiers(bool is_key_up, uint32_t keyval,
     // implementation does NOT do it.
     if (currently_pressed_modifiers_.empty() ||
         !modifiers_to_be_sent_.empty()) {
-      for (size_t i = 0; i < key_event->modifier_keys_size(); ++i) {
+      for (int i = 0; i < key_event->modifier_keys_size(); ++i) {
         modifiers_to_be_sent_.insert(key_event->modifier_keys(i));
       }
       AddAdditionalModifiers(&modifiers_to_be_sent_);

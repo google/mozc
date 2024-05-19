@@ -32,11 +32,6 @@
 #define MOZC_UNIX_FCITX5_MOZC_CONNECTION_H_
 
 #include <memory>
-#include <string>
-
-#include "base/port.h"
-#include "protocol/commands.pb.h"
-#include "unix/fcitx5/fcitx_key_event_handler.h"
 
 namespace mozc {
 
