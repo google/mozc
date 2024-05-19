@@ -29,6 +29,7 @@
 
 #include "session/internal/session_output.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <string>

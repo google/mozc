@@ -32,7 +32,7 @@
 #import "renderer/mac/CandidateView.h"
 
 #include "absl/base/call_once.h"
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_style.pb.h"
@@ -44,9 +44,9 @@ using mozc::client::SendCommandInterface;
 using mozc::commands::Candidates;
 using mozc::commands::Output;
 using mozc::commands::SessionCommand;
-using mozc::renderer::TableLayout;
 using mozc::renderer::RendererStyle;
 using mozc::renderer::RendererStyleHandler;
+using mozc::renderer::TableLayout;
 using mozc::renderer::mac::MacViewUtil;
 
 // Those constants and most rendering logic is as same as Windows
@@ -91,7 +91,7 @@ void InitializeDefaultStyle() {
   [NSBezierPath setDefaultLineWidth:1.0];
   [NSBezierPath setDefaultLineJoinStyle:NSLineJoinStyleMiter];
 }
-}
+}  // namespace
 
 // Private method declarations.
 @interface CandidateView ()

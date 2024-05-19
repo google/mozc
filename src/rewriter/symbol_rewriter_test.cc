@@ -29,11 +29,12 @@
 
 #include "rewriter/symbol_rewriter.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
@@ -43,6 +44,7 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

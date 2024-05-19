@@ -30,6 +30,7 @@
 #ifndef MOZC_STORAGE_LRU_STORAGE_H_
 #define MOZC_STORAGE_LRU_STORAGE_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <list>
 #include <memory>
@@ -62,8 +63,8 @@ class LruStorage {
   // Looks up elements by key.
   const char *Lookup(absl::string_view key, uint32_t *last_access_time) const;
   const char *Lookup(absl::string_view key) const {
-      uint32_t last_access_time;
-      return Lookup(key, &last_access_time);
+    uint32_t last_access_time;
+    return Lookup(key, &last_access_time);
   }
 
   // A safer lookup for string values (the pointers returned by above Lookup()'s

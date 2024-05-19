@@ -32,7 +32,9 @@
 #include <algorithm>
 #include <numeric>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
+#include "base/coordinates.h"
 
 namespace mozc {
 namespace renderer {

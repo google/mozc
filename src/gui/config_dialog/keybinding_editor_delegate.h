@@ -34,8 +34,6 @@
 #include <QModelIndex>
 #include <QObject>
 
-#include "gui/config_dialog/keybinding_editor.h"
-
 namespace mozc {
 namespace gui {
 

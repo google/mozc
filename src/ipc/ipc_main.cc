@@ -34,10 +34,11 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/thread.h"
 #include "ipc/ipc.h"
 

@@ -30,6 +30,7 @@
 #ifndef MOZC_IPC_IPC_H_
 #define MOZC_IPC_IPC_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>

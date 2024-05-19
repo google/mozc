@@ -29,13 +29,15 @@
 
 #include "rewriter/variants_rewriter.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
+#include "base/number_util.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -43,6 +45,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

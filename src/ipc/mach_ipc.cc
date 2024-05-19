@@ -37,8 +37,8 @@
 #include <cstdint>
 #include <map>
 
+#include "absl/log/log.h"
 #include "absl/time/time.h"
-#include "base/logging.h"
 #include "base/mac/mac_util.h"
 #include "base/singleton.h"
 #include "base/vlog.h"

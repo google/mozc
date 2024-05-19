@@ -33,8 +33,8 @@
 
 #include <cstdint>
 
+#include "absl/log/log.h"
 #include "base/coordinates.h"
-#include "base/logging.h"
 #include "base/mac/mac_util.h"
 #include "protocol/commands.pb.h"
 #include "renderer/mac/RendererBaseWindow.h"
@@ -123,6 +123,6 @@ void RendererBaseWindow::SetWindowLevel(NSInteger window_level) {
   }
 }
 
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc

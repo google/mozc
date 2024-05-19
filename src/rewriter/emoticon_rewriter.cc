@@ -30,18 +30,19 @@
 #include "rewriter/emoticon_rewriter.h"
 
 #include <algorithm>
-#include <cstdint>
 #include <cstring>
 #include <iterator>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/vlog.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

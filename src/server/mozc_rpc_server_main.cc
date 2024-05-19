@@ -27,7 +27,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
+#include "base/init_mozc.h"
+#include "base/singleton.h"
+#include "base/system_util.h"
+#include "engine/engine_factory.h"
+#include "protocol/commands.pb.h"
+#include "session/random_keyevents_generator.h"
+#include "session/session_handler.h"
+#include "session/session_usage_observer.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #include <ws2tcpip.h>
@@ -40,22 +58,6 @@ using ssize_t = SSIZE_T;
 #include <sys/socket.h>
 #include <unistd.h>
 #endif  // _WIN32
-
-#include <cstddef>
-#include <cstring>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "absl/flags/flag.h"
-#include "base/init_mozc.h"
-#include "base/singleton.h"
-#include "base/system_util.h"
-#include "engine/engine_factory.h"
-#include "protocol/commands.pb.h"
-#include "session/random_keyevents_generator.h"
-#include "session/session_handler.h"
-#include "session/session_usage_observer.h"
 
 ABSL_FLAG(std::string, host, "localhost", "server host name");
 ABSL_FLAG(bool, server, true, "server mode");

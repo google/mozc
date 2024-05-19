@@ -31,12 +31,10 @@
 #define MOZC_RENDERER_QT_QT_IPC_SERVER_H_
 
 #include <functional>
-#include <memory>
 #include <string>
 #include <utility>
 
 #include "absl/strings/string_view.h"
-#include "base/port.h"
 #include "ipc/ipc.h"
 
 namespace mozc {
@@ -51,7 +49,7 @@ class QtIpcServer : public IPCServer {
   QtIpcServer& operator=(const QtIpcServer&) = delete;
   ~QtIpcServer() override;
 
-  bool Process(absl::string_view request, std::string *response) override;
+  bool Process(absl::string_view request, std::string* response) override;
 
   void SetCallback(Callback callback) { callback_ = std::move(callback); }
 

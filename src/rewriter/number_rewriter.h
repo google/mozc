@@ -30,7 +30,6 @@
 #ifndef MOZC_REWRITER_NUMBER_REWRITER_H_
 #define MOZC_REWRITER_NUMBER_REWRITER_H_
 
-#include <cstddef>
 #include <vector>
 
 #include "base/container/serialized_string_array.h"

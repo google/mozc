@@ -45,7 +45,6 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
-#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc::prediction {

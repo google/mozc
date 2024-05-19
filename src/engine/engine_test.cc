@@ -30,19 +30,16 @@
 #include "engine/engine.h"
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "composer/query.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
+#include "protocol/engine_builder.pb.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

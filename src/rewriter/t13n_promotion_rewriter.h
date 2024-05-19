@@ -35,6 +35,8 @@
 #ifndef MOZC_REWRITER_T13N_PROMOTION_REWRITER_H_
 #define MOZC_REWRITER_T13N_PROMOTION_REWRITER_H_
 
+#include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

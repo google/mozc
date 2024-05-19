@@ -35,11 +35,10 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-#include "base/const.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
 #include "client/client_interface.h"
@@ -54,6 +53,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
+
+#include "base/const.h"
 #include "base/win32/win_util.h"
 #endif  // _WIN32
 

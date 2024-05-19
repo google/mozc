@@ -30,10 +30,9 @@
 #ifndef MOZC_RENDERER_QT_QT_SERVER_H_
 #define MOZC_RENDERER_QT_QT_SERVER_H_
 
-#include <memory>
+#include <cstdint>
 #include <string>
 
-#include "base/port.h"
 #include "renderer/qt/qt_ipc_thread.h"
 #include "renderer/qt/qt_window_manager.h"
 
@@ -51,7 +50,7 @@ class QtServer : public QObject {
 
   int StartServer(int argc, char** argv);
 
-  void AsyncExecCommand(const std::string &command);
+  void AsyncExecCommand(const std::string& command);
 
  public slots:
   void Update(std::string command);
@@ -62,7 +61,7 @@ class QtServer : public QObject {
  protected:
   // Call ExecCommandInternal() from the implementation
   // of AsyncExecCommand()
-  bool ExecCommandInternal(const commands::RendererCommand &command);
+  bool ExecCommandInternal(const commands::RendererCommand& command);
 
   // return timeout (msec) passed by FLAGS_timeout
   uint32_t timeout() const;

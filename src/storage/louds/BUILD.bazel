@@ -62,7 +62,7 @@ mozc_cc_library(
         ":louds",
         ":simple_succinct_bit_vector_index",
         "//base:bits",
-        "//base:logging",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -74,7 +74,7 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":bit_stream",
-        "//base:logging",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -100,7 +100,7 @@ mozc_cc_library(
     deps = [
         ":simple_succinct_bit_vector_index",
         "//base:bits",
-        "//base:logging",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -113,7 +113,7 @@ mozc_cc_library(
     ],
     deps = [
         ":bit_stream",
-        "//base:logging",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -135,7 +135,7 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//base:bits",
-        "//base:logging",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/numeric:bits",
     ],
 )
@@ -155,8 +155,8 @@ mozc_cc_library(
     srcs = ["bit_stream.cc"],
     hdrs = ["bit_stream.h"],
     deps = [
-        "//base:logging",
         "@com_google_absl//absl/base",
+        "@com_google_absl//absl/log:check",
     ],
 )
 

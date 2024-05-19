@@ -29,15 +29,15 @@
 
 #include "gui/base/setup_util.h"
 
-#ifdef _WIN32
-#include <algorithm>
-#endif  // _WIN32
 #include <cstdint>
 
-#include "base/logging.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
+
 #ifdef _WIN32
+#include <algorithm>
+
+#include "absl/log/log.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"

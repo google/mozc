@@ -37,9 +37,9 @@
 #include <iterator>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "renderer/mac/CandidateController.h"
@@ -55,7 +55,7 @@ OSStatus EventHandler(EventHandlerCallRef handlerCallRef, EventRef carbonEvent, 
   server->RunExecCommand();
   return noErr;
 }
-}
+}  // namespace
 
 MacServer::MacServer(int argc, const char **argv) : argc_(argc), argv_(argv) {
   pthread_cond_init(&event_, nullptr);

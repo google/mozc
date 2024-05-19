@@ -32,7 +32,6 @@
 #include <memory>
 #include <utility>
 
-#include "absl/status/status.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"

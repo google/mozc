@@ -29,6 +29,7 @@
 
 #include "storage/louds/bit_vector_based_array.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <string>

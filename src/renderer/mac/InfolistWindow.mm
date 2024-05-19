@@ -32,8 +32,8 @@
 
 #import "InfolistView.h"
 
+#include "absl/log/log.h"
 #include "base/coordinates.h"
-#include "base/logging.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "renderer/mac/InfolistWindow.h"
@@ -169,6 +169,6 @@ void InfolistWindow::ResetView() {
   view_ = [[InfolistView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
 }
 
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc

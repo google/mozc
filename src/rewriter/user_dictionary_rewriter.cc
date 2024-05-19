@@ -31,7 +31,7 @@
 
 #include <cstddef>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 

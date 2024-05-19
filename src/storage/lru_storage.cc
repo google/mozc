@@ -44,13 +44,17 @@
 
 #include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/bits.h"
 #include "base/clock.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/hash.h"
-#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/vlog.h"
 

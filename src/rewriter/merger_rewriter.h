@@ -30,11 +30,12 @@
 #ifndef MOZC_REWRITER_MERGER_REWRITER_H_
 #define MOZC_REWRITER_MERGER_REWRITER_H_
 
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
 
-#include "config/config_handler.h"
+#include "absl/log/check.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

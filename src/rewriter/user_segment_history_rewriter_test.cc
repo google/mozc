@@ -34,6 +34,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -41,7 +42,6 @@
 #include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/system_util.h"
 #include "config/character_form_manager.h"
@@ -50,6 +50,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"

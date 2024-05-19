@@ -29,6 +29,7 @@
 
 #include "rewriter/command_rewriter.h"
 
+#include <cstddef>
 #include <string>
 
 #include "config/config_handler.h"

@@ -35,9 +35,10 @@
 #include <map>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/vlog.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.pb.h"
@@ -94,7 +95,7 @@ void UsageStats::ClearStats() {
   std::string stats_str;
   Stats stats;
   for (size_t i = 0; i < std::size(kStatsList); ++i) {
-    const std::string key = absl::StrCat(kRegistryPrefix,  kStatsList[i]);
+    const std::string key = absl::StrCat(kRegistryPrefix, kStatsList[i]);
     if (storage::Registry::Lookup(key, &stats_str)) {
       if (!stats.ParseFromString(stats_str)) {
         storage::Registry::Erase(key);

@@ -41,23 +41,18 @@
 #include "rewriter/a11y_description_rewriter.h"
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/collocation_rewriter.h"
-#include "rewriter/command_rewriter.h"
 #include "rewriter/correction_rewriter.h"
-#include "rewriter/date_rewriter.h"
 #include "rewriter/dice_rewriter.h"
 #include "rewriter/emoji_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "rewriter/english_variants_rewriter.h"
 #include "rewriter/environmental_filter_rewriter.h"
 #include "rewriter/focus_candidate_rewriter.h"
-#include "rewriter/fortune_rewriter.h"
 #include "rewriter/ivs_variants_rewriter.h"
 #include "rewriter/language_aware_rewriter.h"
-#include "rewriter/merger_rewriter.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/order_rewriter.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
-#include "rewriter/rewriter_interface.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "rewriter/small_letter_rewriter.h"
 #include "rewriter/symbol_rewriter.h"
@@ -65,7 +60,6 @@
 #include "rewriter/transliteration_rewriter.h"
 #include "rewriter/unicode_rewriter.h"
 #include "rewriter/user_boundary_history_rewriter.h"
-#include "rewriter/user_dictionary_rewriter.h"
 #include "rewriter/user_segment_history_rewriter.h"
 #include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
@@ -75,9 +69,17 @@
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE
 #endif                           // __APPLE__
 
+#include "rewriter/date_rewriter.h"
+#include "rewriter/fortune_rewriter.h"
+#include "rewriter/user_dictionary_rewriter.h"
+
+#if !(defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE))
+#include "rewriter/command_rewriter.h"
+#endif  // !(__ANDROID__ || TARGET_OS_IPHONE)
+
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter.h"
-#endif  // NO_USAGE_REWRITER
+#endif  // !NO_USAGE_REWRITER
 
 ABSL_FLAG(bool, use_history_rewriter, true, "Use history rewriter or not.");
 

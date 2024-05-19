@@ -34,7 +34,11 @@
 #include <memory>
 #include <string>
 
-#include "base/logging.h"
+#include "ipc/ipc.h"
+
+#ifdef __APPLE__
+#include "absl/log/check.h"
+#endif  // __APPLE__
 
 namespace mozc {
 #ifdef __APPLE__

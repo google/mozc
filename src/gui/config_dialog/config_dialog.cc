@@ -30,17 +30,6 @@
 // Qt component of configure dialog for Mozc
 #include "gui/config_dialog/config_dialog.h"
 
-#if defined(__ANDROID__) || defined(__wasm__)
-#error "This platform is not supported."
-#endif  // __ANDROID__ || __wasm__
-
-#ifdef _WIN32
-// clang-format off
-#include <windows.h>
-#include <QGuiApplication>
-// clang-format on
-#endif  // _WIN32
-
 #include <QMessageBox>
 #include <algorithm>
 #include <cstdint>
@@ -50,9 +39,9 @@
 #include <sstream>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/config_file_stream.h"
-#include "base/logging.h"
-#include "base/run_level.h"
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "config/stats_config_util.h"
@@ -62,13 +51,23 @@
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 
+#if defined(__ANDROID__) || defined(__wasm__)
+#error "This platform is not supported."
+#endif  // __ANDROID__ || __wasm__
+
+#ifdef _WIN32
+// clang-format off
+#include <windows.h>
+#include <QGuiApplication>
+// clang-format on
+
+#include "base/run_level.h"
+#include "gui/base/win_util.h"
+#endif  // _WIN32
+
 #ifdef __APPLE__
 #include "base/mac/mac_util.h"
 #endif  // __APPLE__
-
-#ifdef _WIN32
-#include "gui/base/win_util.h"
-#endif  // _WIN32
 
 namespace {
 template <typename T>

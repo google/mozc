@@ -36,10 +36,10 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "base/config_file_stream.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "composer/key_event_util.h"
 #include "composer/key_parser.h"

@@ -33,7 +33,7 @@
 #include <QtGui>
 #include <memory>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "gui/config_dialog/keybinding_editor.h"
 
 namespace mozc {

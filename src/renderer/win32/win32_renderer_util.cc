@@ -31,15 +31,17 @@
 
 #include <atlbase.h>
 #include <atltypes.h>
-#include <commctrl.h> // for CCSIZEOF_STRUCT
+#include <commctrl.h>  // for CCSIZEOF_STRUCT
 #include <windows.h>
 #include <winuser.h>
 
+#include <map>
 #include <memory>
 #include <optional>
 #include <utility>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/win32/win_util.h"
 #include "protocol/renderer_command.pb.h"
 

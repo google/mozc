@@ -33,10 +33,10 @@
 #include <ostream>
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/string_view.h"
-#include "base/file_util.h"
-#include "base/logging.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

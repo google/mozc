@@ -30,8 +30,6 @@
 #ifndef MOZC_ENGINE_ENGINE_H_
 #define MOZC_ENGINE_ENGINE_H_
 
-#include <atomic>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -137,6 +135,10 @@ class Engine : public EngineInterface {
                         : minimal_engine_.GetDataManager();
   }
 
+  // Returns a list of part-of-speech (e.g. "名詞", "動詞一段") to be used for
+  // the user dictionary GUI tool.
+  // Since the POS set may differ per LM, this function returns
+  // available POS items. In practice, the POS items are rarely changed.
   std::vector<std::string> GetPosList() const override {
     return initialized_ ? modules_->GetUserDictionary()->GetPosList()
                         : minimal_engine_.GetPosList();

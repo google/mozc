@@ -36,7 +36,7 @@
 #include <string>
 
 #include "absl/base/casts.h"
-#include "base/logging.h"
+#include "absl/log/check.h"
 
 namespace mozc {
 namespace storage {

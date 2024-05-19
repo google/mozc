@@ -34,10 +34,10 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
 #include "config/character_form_manager.h"

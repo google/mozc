@@ -32,7 +32,7 @@
 #include <QtGui>
 #include <string>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
 #include "gui/base/util.h"

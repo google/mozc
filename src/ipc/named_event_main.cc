@@ -27,13 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/time/time.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "ipc/named_event.h"
 
 ABSL_FLAG(bool, listener, true, "listener mode");

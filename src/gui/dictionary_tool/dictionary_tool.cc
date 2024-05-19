@@ -48,11 +48,12 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/file_stream.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "client/client.h"

@@ -30,13 +30,14 @@
 #include "rewriter/command_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/logging.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"

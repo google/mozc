@@ -29,15 +29,11 @@
 
 #include "renderer/qt/qt_ipc_server.h"
 
-#include <algorithm>
-#include <memory>
 #include <string>
 
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-#include "base/logging.h"
 #include "base/system_util.h"
-#include "config/config_handler.h"
 #include "ipc/ipc.h"
 
 namespace mozc {

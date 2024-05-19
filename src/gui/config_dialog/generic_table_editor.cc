@@ -40,8 +40,8 @@
 #include <string>
 
 #include "absl/container/btree_set.h"
+#include "absl/log/check.h"
 #include "base/file_stream.h"
-#include "base/logging.h"
 #include "base/port.h"
 #include "gui/base/util.h"
 

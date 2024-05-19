@@ -34,8 +34,8 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/check.h"
 #include "base/bits.h"
-#include "base/logging.h"
 #include "storage/storage_interface.h"
 
 namespace mozc {

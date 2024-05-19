@@ -64,7 +64,6 @@ mozc_cc_test(
     srcs = ["encoding_util_test.cc"],
     deps = [
         ":encoding_util",
-        "//base:logging",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings:string_view",
     ] + mozc_select(
@@ -112,11 +111,12 @@ mozc_cc_qt_library(
     ],
     deps = [
         ":encoding_util",
-        "//base:logging",
         "//base:singleton",
         "//base:system_util",
         "//base:util",
         "//base:version",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
         windows = [":win_util"],
@@ -131,12 +131,12 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        "//base:logging",
         "//base:system_util",
         "//base/strings:zstring_view",
         "//base/win32:com",
         "//base/win32:hresult",
         "//base/win32:wide_char",
+        "@com_google_absl//absl/log",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -150,12 +150,15 @@ mozc_cc_qt_library(
         "msime_user_dictionary_importer.h",
     ],
     deps = [
-        ":encoding_util",
-        "//base:logging",
-        "//base:util",
-        "//base:vlog",
         "//dictionary:user_dictionary_importer",
-    ],
+    ] + mozc_select(
+        windows = [
+            ":encoding_util",
+            "@com_google_absl//absl/log",
+            "//base:vlog",
+            "//base/win32:wide_char",
+        ],
+    ),
 )
 
 mozc_cc_library(
@@ -167,15 +170,16 @@ mozc_cc_library(
         "setup_util.h",
     ],
     deps = [
-        ":gui_base",
-        ":msime_user_dictionary_importer",
-        "//base:logging",
-        "//dictionary:user_dictionary",
-        "//dictionary:user_dictionary_importer",
         "//dictionary:user_dictionary_storage",
         "//dictionary:user_dictionary_util",
+    ] + mozc_select(windows = [
         "//usage_stats",
-    ],
+        "//win32/base:imm_util",
+        "@com_google_absl//absl/log",
+        ":msime_user_dictionary_importer",
+        ":win_util",
+        "//dictionary:user_dictionary_importer",
+    ]),
 )
 
 mozc_cc_qt_library(
@@ -189,12 +193,12 @@ mozc_cc_qt_library(
     deps = [
         ":gui_base",
         "//base:file_stream",
-        "//base:logging",
         "//base:process_mutex",
         "//base:util",
         "//base:version",
         "//ipc",
         "//ipc:window_info_cc_proto",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings:string_view",
     ] + mozc_select(
         windows = [

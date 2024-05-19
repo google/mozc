@@ -36,9 +36,9 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-#include "base/logging.h"
 #include "base/vlog.h"
 #include "engine/engine_factory.h"
 #include "ipc/ipc.h"

@@ -30,6 +30,9 @@
 #include "rewriter/rewriter_util.h"
 
 #include <algorithm>
+#include <cstddef>
+
+#include "converter/segments.h"
 
 namespace mozc {
 

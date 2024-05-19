@@ -37,13 +37,14 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_split.h"
 #include "base/config_file_stream.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "gui/base/table_util.h"
 #include "gui/base/util.h"
+#include "gui/config_dialog/generic_table_editor.h"
 
 namespace mozc {
 namespace gui {

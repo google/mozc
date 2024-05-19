@@ -41,10 +41,10 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "base/logging.h"
-#include "base/protobuf/protobuf.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"

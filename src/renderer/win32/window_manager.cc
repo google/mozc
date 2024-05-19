@@ -34,8 +34,9 @@
 #include <algorithm>
 #include <cstdint>
 
+#include "absl/log/check.h"
 #include "base/coordinates.h"
-#include "base/logging.h"
+#include "client/client_interface.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
@@ -118,8 +119,7 @@ void WindowManager::HideAllWindows() {
 // TODO(yukawa): Refactor this method by making a new method in LayoutManager
 //   with unit tests so that LayoutManager can handle both composition windows
 //   and candidate windows.
-void WindowManager::UpdateLayout(
-    const commands::RendererCommand &command) {
+void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
   typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 
   // Hide all UI elements if |command.visible()| is false.
@@ -238,8 +238,8 @@ void WindowManager::UpdateLayout(
   Rect working_area;
   {
     CRect area;
-    if (GetWorkingAreaFromPoint(
-            CPoint(target_point.x, target_point.y), &area)) {
+    if (GetWorkingAreaFromPoint(CPoint(target_point.x, target_point.y),
+                                &area)) {
       working_area = Rect(area.left, area.top, area.Width(), area.Height());
     }
   }

@@ -30,11 +30,12 @@
 #include "rewriter/dice_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_format.h"
-#include "base/logging.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 

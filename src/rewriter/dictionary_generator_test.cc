@@ -29,6 +29,7 @@
 
 #include "rewriter/dictionary_generator.h"
 
+#include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>

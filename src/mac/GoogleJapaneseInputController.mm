@@ -50,9 +50,9 @@
 #import "mac/GoogleJapaneseInputServer.h"
 #import "mac/KeyCodeMap.h"
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/const.h"
-#include "base/logging.h"
 #include "base/mac/mac_process.h"
 #include "base/mac/mac_util.h"
 #include "base/process.h"
@@ -324,8 +324,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 
   std::string window_name, window_owner;
   if (mozc::MacUtil::GetFrontmostWindowNameAndOwner(&window_name, &window_owner)) {
-    DLOG(INFO) << "frontmost window name: \"" << window_name << "\" "
-               << "owner: \"" << window_owner << "\"";
+    DLOG(INFO) << "frontmost window name: \"" << window_name << "\" " << "owner: \"" << window_owner
+               << "\"";
     if (mozc::MacUtil::IsSuppressSuggestionWindow(window_name, window_owner)) {
       suppressSuggestion_ = YES;
     } else {

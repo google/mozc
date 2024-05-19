@@ -29,6 +29,7 @@
 
 #include "storage/louds/louds.h"
 
+#include <cstddef>
 #include <cstdint>
 
 namespace mozc {

@@ -39,13 +39,14 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/hash.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/segments.h"

@@ -45,9 +45,10 @@ mozc_cc_library(
     textual_hdrs = ["parser.c.inc"],
     deps = [
         "//base:japanese_util",
-        "//base:logging",
         "//base:number_util",
         "//base:singleton",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -61,8 +62,8 @@ mozc_cc_library(
     hdrs = ["calculator_mock.h"],
     deps = [
         ":calculator",
-        "//base:logging",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -74,10 +75,10 @@ mozc_cc_test(
     data = ["//data/test/calculator:testset.txt"],
     deps = [
         ":calculator",
-        "//base:file_util",
-        "//base:logging",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )

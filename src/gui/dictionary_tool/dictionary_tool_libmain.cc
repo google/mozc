@@ -31,7 +31,7 @@
 #include <QTranslator>
 #include <string>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "base/system_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/base/util.h"

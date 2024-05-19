@@ -45,12 +45,12 @@ mozc_cc_library(
     deps = [
         ":key_event_transformer",
         ":keymap",
-        "//base:logging",
         "//composer",
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session:session_converter_interface",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/time",
     ],
 )
@@ -62,9 +62,8 @@ mozc_cc_library(
     deps = [
         "//base:config_file_stream",
         "//base:file_stream",
-        "//base:logging",
         "//base:util",
-        "//base/protobuf",
+        "//base/protobuf:repeated_field",
         "//composer:key_event_util",
         "//composer:key_parser",
         "//config:config_handler",
@@ -73,6 +72,8 @@ mozc_cc_library(
         "//testing:friend_test",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -83,13 +84,13 @@ mozc_cc_library(
     hdrs = ["key_event_transformer.h"],
     deps = [
         "//base:japanese_util",
-        "//base:logging",
-        "//base:singleton",
         "//composer:key_event_util",
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -99,8 +100,8 @@ mozc_cc_library(
     hdrs = ["candidate_list.h"],
     deps = [
         "//base:hash",
-        "//base:logging",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],

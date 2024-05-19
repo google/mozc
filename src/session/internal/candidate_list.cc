@@ -32,12 +32,13 @@
 #include "session/internal/candidate_list.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/hash.h"
-#include "base/logging.h"
 
 namespace mozc {
 namespace session {

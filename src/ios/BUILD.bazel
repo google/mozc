@@ -41,7 +41,6 @@ mozc_cc_library(
     visibility = [
     ],
     deps = [
-        "//base:port",
         "//base:util",
         "//config:config_handler",
         "//data_manager",
@@ -71,6 +70,8 @@ mozc_cc_binary(
         "//base:init_mozc_buildtool",
         "//base/strings:unicode",
         "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
@@ -82,7 +83,6 @@ mozc_cc_library(
     srcs = ["ios_engine_stub.cc"],
     hdrs = ["ios_engine.h"],
     deps = [
-        "//base:port",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/base:core_headers",

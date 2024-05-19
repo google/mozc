@@ -45,7 +45,6 @@
 #include "absl/random/random.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
-#include "base/logging.h"
 #include "base/stopwatch.h"
 #include "base/version.h"
 #include "base/vlog.h"
@@ -685,8 +684,7 @@ bool SessionHandler::CheckSpelling(commands::Command *command) {
   if (supplemental_model_) {
     auto response = supplemental_model_->CheckSpelling(
         command->input().check_spelling_request());
-    auto *stored =
-        command->mutable_output()->mutable_check_spelling_response();
+    auto *stored = command->mutable_output()->mutable_check_spelling_response();
     if (response.has_value()) {
       *stored = std::move(*response);
     }

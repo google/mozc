@@ -33,7 +33,6 @@
 
 #include <algorithm>
 #include <istream>
-#include <iterator>
 #include <memory>
 #include <ostream>
 #include <sstream>
@@ -42,10 +41,11 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"

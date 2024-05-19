@@ -32,8 +32,8 @@
 #include <string>
 
 #include "absl/base/call_once.h"
+#include "absl/log/log.h"
 #include "base/const.h"
-#include "base/logging.h"
 #include "protocol/commands.pb.h"
 
 GoogleJapaneseInputServer *g_imkServer = nil;
@@ -54,7 +54,7 @@ void InitializeServer() {
   [g_imkServer registerRendererConnection];
 }
 absl::once_flag gOnceForServer;
-}
+}  // namespace
 
 @implementation GoogleJapaneseInputServer
 - (BOOL)registerRendererConnection {

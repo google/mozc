@@ -34,6 +34,7 @@
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/version.h"

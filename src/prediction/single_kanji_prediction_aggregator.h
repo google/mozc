@@ -30,6 +30,7 @@
 #ifndef MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_
 #define MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

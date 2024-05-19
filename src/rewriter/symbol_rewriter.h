@@ -30,12 +30,13 @@
 #ifndef MOZC_REWRITER_SYMBOL_REWRITER_H_
 #define MOZC_REWRITER_SYMBOL_REWRITER_H_
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "data_manager/serialized_dictionary.h"
 #include "rewriter/rewriter_interface.h"
-#include "absl/strings/string_view.h"
 #include "testing/friend_test.h"
 
 namespace mozc {

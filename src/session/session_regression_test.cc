@@ -30,6 +30,7 @@
 // This is a test with the actual converter.  So the result of the
 // conversion may differ from previous versions.
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -37,7 +38,7 @@
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
 #include "config/config_handler.h"

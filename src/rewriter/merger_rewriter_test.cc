@@ -29,13 +29,16 @@
 
 #include "rewriter/merger_rewriter.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

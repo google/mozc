@@ -29,6 +29,9 @@
 
 #include "renderer/table_layout.h"
 
+#include <cstddef>
+
+#include "base/coordinates.h"
 #include "testing/gunit.h"
 
 namespace mozc {

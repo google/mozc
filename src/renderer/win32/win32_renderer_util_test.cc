@@ -39,7 +39,6 @@
 #include <memory>
 
 #include "absl/base/casts.h"
-#include "base/logging.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "testing/gunit.h"

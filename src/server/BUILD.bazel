@@ -78,7 +78,6 @@ mozc_cc_library(
     deps = [
         "//base:crash_report_handler",
         "//base:init_mozc",
-        "//base:logging",
         "//base:process_mutex",
         "//base:run_level",
         "//base:singleton",
@@ -89,6 +88,8 @@ mozc_cc_library(
         "//session:session_server",
         "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
     ] + mozc_select(
         windows = ["//base/win32:winmain"],
     ),
@@ -107,6 +108,8 @@ mozc_cc_binary(
         "//session:session_handler",
         "//session:session_usage_observer",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
