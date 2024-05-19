@@ -39,7 +39,9 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	〇	ぜろ れい きごう	漢数字ゼロ			IDEOGRAPHIC NUMBER ZERO	U+3007
 記号	ー	- ー － ―	長音		OTHER	長音
 記号	-	- ー － ― はいふん まいなす きごう	ハイフン マイナス		GENERAL	ハイフン マイナス
-記号	―	- ー － ― だっしゅ きごう	ダッシュ		GENERAL	ホリゾンタルバー
+記号	―	- ー － ― だっしゅ きごう	ダッシュ 水平線		GENERAL	ホリゾンタルバー
+記号	–	- ー － ― だっしゅ きごう えんだっしゅ にぶだーし にぶだっしゅ enだっしゅ ENだっしゅ	enダッシュ(二分)		GENERAL
+記号	—	- ー － ― だっしゅ きごう えmだっしゅ えむだっしゅ ぜんかくだっしゅ emだっしゅ EMだっしゅ	emダッシュ(全角)		GENERAL
 記号	‐	- ー － ― はいふん	ハイフン		GENERAL	ハイフン
 記号	／	すらっしゅ しゃせん ・ / きごう ななめ	スラッシュ		GENERAL
 記号	＼	ばっくすらっしゅ ぎゃくしゃせん ・ / ／ \ ＼ ¥ ￥ きごう しゃせん すらっしゅ ななめ	バックスラッシュ		GENERAL
