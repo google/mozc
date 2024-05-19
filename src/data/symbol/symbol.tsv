@@ -383,8 +383,10 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	℡	でんわ tel TEL	電話		OTHER
 記号	☏	でんわ	電話		OTHER
 記号	☎	でんわ	電話		OTHER
-記号	☖	しょうぎ	将棋		SYMBOL
-記号	☗	しょうぎ	将棋		SYMBOL
+記号	☖	しょうぎ ごて	将棋		SYMBOL
+記号	☗	しょうぎ せんて	将棋		SYMBOL
+記号	⛉	しょうぎ	将棋		SYMBOL
+記号	⛊	しょうぎ	将棋		SYMBOL
 記号	♤	すぺーど	スペード		SYMBOL
 記号	♠	すぺーど	スペード		SYMBOL
 記号	♡	はーと	ハート		SYMBOL
