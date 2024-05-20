@@ -144,7 +144,6 @@ class DictionaryPredictionAggregatorTestPeer {
     aggregator_.AggregateZeroQuerySuffixPrediction(request, segments, results);
   }
 
-
   void AggregateEnglishPrediction(const ConversionRequest &request,
                                   const Segments &segments,
                                   std::vector<Result> *results) const {
@@ -427,12 +426,6 @@ class MockDataAndAggregator {
       const engine::SupplementalModelInterface *supplemental_model) {
     modules_.SetSupplementalModel(supplemental_model);
   }
-
-#if MOZC_ENABLE_NGRAM_RESCORING
-  void set_ngram_model(const ngram::NgramModelInterface *ngram_model) {
-    aggregator_->SetNgramModel(ngram_model);
-  }
-#endif  // MOZC_ENABLE_NGRAM_RESCORING
 
  private:
   MockConverter converter_;
@@ -1960,7 +1953,6 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQuerySuffixPrediction) {
     EXPECT_EQ(results.size(), 1);
   }
 }
-
 
 struct EnglishPredictionTestEntry {
   std::string name;

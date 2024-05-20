@@ -70,10 +70,8 @@ enum PredictionType {
   // entries from single kanji dictionary.
   SINGLE_KANJI = 256,
 
-#if MOZC_ENABLE_NGRAM_RESCORING
-  // entries from N-gram model.
-  NGRAM = 512,
-#endif  // MOZC_ENABLE_NGRAM_RESCORING
+  // entries from a supplemental model.
+  SUPPLEMENTAL_MODEL = 512,
 
   // Suggests from |converter_|. The difference from REALTIME is that it uses
   // the full converter with rewriter, history, etc.

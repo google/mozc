@@ -917,6 +917,9 @@ std::string DictionaryPredictor::GetPredictionTypeDebugString(
   if (types & PredictionType::TYPING_CORRECTION) {
     debug_desc.append("T");
   }
+  if (types & PredictionType::SUPPLEMENTAL_MODEL) {
+    debug_desc.append(1, 'X');
+  }
   return debug_desc;
 }
 
