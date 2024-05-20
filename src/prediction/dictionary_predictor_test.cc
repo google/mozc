@@ -1703,39 +1703,6 @@ TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
     EXPECT_EQ(results.size(), 4);
   }
 
-  {
-    request_->mutable_decoder_experiment_params()
-        ->set_typing_correction_literal_on_top_correction_score_max_diff(0.5);
-    request_->mutable_decoder_experiment_params()
-        ->set_typing_correction_literal_on_top_conversion_cost_max_diff(500);
-    auto results = base_results;
-    predictor.MaybePopulateTypingCorrectedResults(*convreq_for_prediction_,
-                                                  segments, &results);
-    EXPECT_EQ(results.size(), 4);
-  }
-
-  {
-    request_->mutable_decoder_experiment_params()
-        ->set_typing_correction_literal_on_top_correction_score_max_diff(1.0);
-    request_->mutable_decoder_experiment_params()
-        ->set_typing_correction_literal_on_top_conversion_cost_max_diff(500);
-    auto results = base_results;
-    predictor.MaybePopulateTypingCorrectedResults(*convreq_for_prediction_,
-                                                  segments, &results);
-    EXPECT_EQ(results.size(), 4);
-  }
-
-  {
-    request_->mutable_decoder_experiment_params()
-        ->set_typing_correction_literal_on_top_correction_score_max_diff(0.5);
-    request_->mutable_decoder_experiment_params()
-        ->set_typing_correction_literal_on_top_conversion_cost_max_diff(1000);
-    auto results = base_results;
-    predictor.MaybePopulateTypingCorrectedResults(*convreq_for_prediction_,
-                                                  segments, &results);
-    EXPECT_EQ(results.size(), 4);
-  }
-
   // disable typing correction.
   {
     config_->set_use_typing_correction(false);

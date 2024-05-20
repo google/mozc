@@ -614,21 +614,13 @@ message DecoderExperimentParams {
 
   reserved 38;  // Deprecated typing_correction_conversion_cost_max_diff
   reserved 46;  // Deprecated enable_typing_correction_mixer_v2
+  reserved 47;  // Deprecated typing_correction_literal_on_top_correction_score_max_diff
+  reserved 48;  // Deprecated typing_correction_literal_on_top_conversion_cost_max_diff
 
   // Trigger literal on top if
   // correction_score <=
-  //          typing_correction_literal_on_top_correction_score_max_diff
-  //  OR
-  // conversion_cost_diff <=
-  //          typing_correction_literal_on_top_spatial_score_max_diff
-  //  OR
-  // correction_score <=
   //   typing_correction_literal_on_top_length_score_max_diff
   //     * (typing_correction_literal_on_top_length_decay^(input_length-3))
-  optional float typing_correction_literal_on_top_correction_score_max_diff = 47
-      [default = 0.0];
-  optional int32 typing_correction_literal_on_top_conversion_cost_max_diff = 48
-      [default = 0];
   // Literal candidate is placed at least second position.
   optional bool typing_correction_literal_at_least_second = 49
       [default = false];
