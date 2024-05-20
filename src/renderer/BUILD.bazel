@@ -291,6 +291,7 @@ mozc_objc_library(
     sdk_frameworks = [
         "Carbon",
         "Cocoa",
+        "ObjectiveC",
     ],
     deps = [
         ":renderer_interface",
@@ -307,7 +308,6 @@ mozc_objc_library(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
-        "//third_party/apple_frameworks:ObjectiveC",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
