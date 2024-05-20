@@ -717,6 +717,12 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForZeroQuery(
     selected_types |= BIGRAM;
   }
   if (segments.history_segments_size() > 0) {
+    const engine::SupplementalModelInterface *supplemental_model =
+        modules_.GetSupplementalModel();
+    if (supplemental_model != nullptr &&
+        supplemental_model->Predict(request, segments, *results)) {
+      selected_types |= SUPPLEMENTAL_MODEL;
+    }
     AggregateZeroQuerySuffixPrediction(request, segments, results);
     selected_types |= SUFFIX;
   }

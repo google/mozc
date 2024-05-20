@@ -93,6 +93,14 @@ class SupplementalModelInterface {
   virtual void RescoreResults(const ConversionRequest &request,
                               const Segments &segments,
                               absl::Span<prediction::Result> results) const {}
+
+  // Performs next word/phrase prediction given the context `segments`. Results
+  // are appended to `results`. Returns true if prediction was performed.
+  virtual bool Predict(const ConversionRequest &request,
+                       const Segments &segments,
+                       std::vector<prediction::Result> &results) const {
+    return false;
+  }
 };
 
 }  // namespace mozc::engine
