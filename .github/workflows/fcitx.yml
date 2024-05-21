@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches:
@@ -7,10 +6,21 @@ on:
   pull_request:
     branches:
       - fcitx
-
 jobs:
+  clang-format:
+    name: Check clang-format
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm git clang diffutils
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+      - uses: actions/checkout@v4
+      - uses: fcitx/github-actions@clang-format
   check:
     name: Build and test
+    needs: clang-format
     runs-on: ubuntu-latest
     container: archlinux:latest
     strategy:
@@ -37,20 +47,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: 'fcitx5/**/*.tar.*'
-          key: ${{ runner.os }}-${{ hashFiles('fcitx5/src/modules/spell/CMakeLists.txt') }}
+          key: ${{ runner.os }}-${{ hashFiles('fcitx5/src/modules/spell/CMakeLists.txt')
+            }}
       - name: Build and Install fcitx5
         uses: fcitx/github-actions@cmake
         with:
           path: fcitx5
           cmake-option: >-
-            -DENABLE_KEYBOARD=Off
-            -DENABLE_X11=Off
-            -DENABLE_WAYLAND=Off
-            -DENABLE_ENCHANT=Off
-            -DENABLE_DBUS=Off
-            -DENABLE_SERVER=Off
-            -DENABLE_EMOJI=Off
-            -DUSE_SYSTEMD=Off
+            -DENABLE_KEYBOARD=Off -DENABLE_X11=Off -DENABLE_WAYLAND=Off -DENABLE_ENCHANT=Off
+            -DENABLE_DBUS=Off -DENABLE_SERVER=Off -DENABLE_EMOJI=Off -DUSE_SYSTEMD=Off
       - uses: actions/checkout@v4
         with:
           path: mozc
