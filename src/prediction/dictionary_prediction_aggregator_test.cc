@@ -2044,8 +2044,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
    public:
     MOCK_METHOD(std::optional<std::vector<TypeCorrectedQuery>>,
                 CorrectComposition,
-                (absl::string_view, absl::string_view, bool,
-                 const commands::Request &),
+                (const ConversionRequest &, absl::string_view),
                 (const, override));
     MOCK_METHOD(void, PostCorrect, (Segments *), (const, override));
   };
@@ -2079,7 +2078,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
                    TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
 
   auto mock = std::make_unique<MockSupplementalModel>();
-  EXPECT_CALL(*mock, CorrectComposition("よろさく", "ほんじつは", false, _))
+  EXPECT_CALL(*mock, CorrectComposition(_, "ほんじつは"))
       .WillOnce(Return(expected));
 
   data_and_aggregator->set_supplemental_model(mock.get());

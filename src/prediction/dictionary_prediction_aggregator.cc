@@ -1686,26 +1686,8 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     return;
   }
 
-  auto disable_toggle_correction = [](const ConversionRequest &request) {
-    if (request.request().special_romanji_table() !=
-        Request::TOGGLE_FLICK_TO_HIRAGANA) {
-      return false;
-    }
-    const int length = request.composer().GetLength();
-    for (int i = 0; i < length; ++i) {
-      auto raw = request.composer().GetRawSubString(i, 1);
-      absl::string_view s(raw);
-      while (!s.empty() && absl::EndsWith(s, "*")) s.remove_suffix(1);
-      if (s.size() >= 2) return false;
-    }
-    return true;
-  };
-
-  const std::string asis = request.composer().GetStringForTypeCorrection();
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      supplemental_model->CorrectComposition(asis, segments.history_key(),
-                                             disable_toggle_correction(request),
-                                             request.request());
+      supplemental_model->CorrectComposition(request, segments.history_key());
   if (!corrected) {
     return;
   }

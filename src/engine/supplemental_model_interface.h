@@ -72,9 +72,8 @@ class SupplementalModelInterface {
   // Returns std::nullopt when the composition spellchecker is not
   // enabled/available.
   virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
-  CorrectComposition(absl::string_view query, absl::string_view context,
-                     bool disable_toggle_correction,
-                     const commands::Request &request) const {
+  CorrectComposition(const ConversionRequest &request,
+                     absl::string_view context) const {
     return std::nullopt;
   }
 
