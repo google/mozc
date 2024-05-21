@@ -130,12 +130,6 @@ bool IsLanguageAwareInputEnabled(const ConversionRequest &request) {
   return lang_aware == Request::LANGUAGE_AWARE_SUGGESTION;
 }
 
-#if MOZC_ENABLE_NGRAM_RESCORING
-bool IsNgramNextWordPredictionEnabled(const ConversionRequest &request) {
-  return request.request().decoder_experiment_params().ngram_enable_nwp();
-}
-#endif  // MOZC_ENABLE_NGRAM_RESCORING
-
 bool IsZeroQuerySuffixPredictionDisabled(const ConversionRequest &request) {
   return request.request()
       .decoder_experiment_params()
@@ -723,6 +717,12 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForZeroQuery(
     selected_types |= BIGRAM;
   }
   if (segments.history_segments_size() > 0) {
+    const engine::SupplementalModelInterface *supplemental_model =
+        modules_.GetSupplementalModel();
+    if (supplemental_model != nullptr &&
+        supplemental_model->Predict(request, segments, *results)) {
+      selected_types |= SUPPLEMENTAL_MODEL;
+    }
     AggregateZeroQuerySuffixPrediction(request, segments, results);
     selected_types |= SUFFIX;
   }
@@ -1623,7 +1623,6 @@ void DictionaryPredictionAggregator::AggregateZeroQuerySuffixPrediction(
   }
 }
 
-
 void DictionaryPredictionAggregator::AggregateEnglishPrediction(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
@@ -1687,26 +1686,8 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     return;
   }
 
-  auto disable_toggle_correction = [](const ConversionRequest &request) {
-    if (request.request().special_romanji_table() !=
-        Request::TOGGLE_FLICK_TO_HIRAGANA) {
-      return false;
-    }
-    const int length = request.composer().GetLength();
-    for (int i = 0; i < length; ++i) {
-      auto raw = request.composer().GetRawSubString(i, 1);
-      absl::string_view s(raw);
-      while (!s.empty() && absl::EndsWith(s, "*")) s.remove_suffix(1);
-      if (s.size() >= 2) return false;
-    }
-    return true;
-  };
-
-  const std::string asis = request.composer().GetStringForTypeCorrection();
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      supplemental_model->CorrectComposition(asis, segments.history_key(),
-                                             disable_toggle_correction(request),
-                                             request.request());
+      supplemental_model->CorrectComposition(request, segments.history_key());
   if (!corrected) {
     return;
   }

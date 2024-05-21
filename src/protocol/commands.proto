@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 70
+// Next ID: 74
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -614,21 +614,13 @@ message DecoderExperimentParams {
 
   reserved 38;  // Deprecated typing_correction_conversion_cost_max_diff
   reserved 46;  // Deprecated enable_typing_correction_mixer_v2
+  reserved 47;  // Deprecated typing_correction_literal_on_top_correction_score_max_diff
+  reserved 48;  // Deprecated typing_correction_literal_on_top_conversion_cost_max_diff
 
   // Trigger literal on top if
   // correction_score <=
-  //          typing_correction_literal_on_top_correction_score_max_diff
-  //  OR
-  // conversion_cost_diff <=
-  //          typing_correction_literal_on_top_spatial_score_max_diff
-  //  OR
-  // correction_score <=
   //   typing_correction_literal_on_top_length_score_max_diff
   //     * (typing_correction_literal_on_top_length_decay^(input_length-3))
-  optional float typing_correction_literal_on_top_correction_score_max_diff = 47
-      [default = 0.0];
-  optional int32 typing_correction_literal_on_top_conversion_cost_max_diff = 48
-      [default = 0];
   // Literal candidate is placed at least second position.
   optional bool typing_correction_literal_at_least_second = 49
       [default = false];
@@ -723,9 +715,24 @@ message DecoderExperimentParams {
       [default = 0.0];
   // When the top correction is kana_modifier_insensitive_correction, suppress
   // other corrections.
-  optional bool
-      typing_correction_promote_kana_modifier_insensitive_only = 69
+  optional bool typing_correction_promote_kana_modifier_insensitive_only = 69
       [default = false];
+
+  // Penalty for the first character mismatch.
+  optional float typing_correction_first_char_mismatch_penalty = 70
+      [default = 0.0];
+
+  // Penalties for the modifier corrections when intended modifiers exist.
+  // `local` is for the same modifier type, global ignores the modifier type.
+  optional float typing_correction_intended_modifier_local_penalty = 71
+      [default = 0.0];
+  optional float typing_correction_intended_modifier_global_penalty = 72
+      [default = 0.0];
+  // exponential decay factor to assign larger penalty when
+  // intended and added modifiers are closely located.
+  // The actual penalty is computed as
+  // (global|local)_penalty * decay^(distance - 1);
+  optional float typing_correction_intended_modifier_decay = 73 [default = 0.0];
 }
 
 // Clients' request to the server.

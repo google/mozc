@@ -144,7 +144,6 @@ class DictionaryPredictionAggregatorTestPeer {
     aggregator_.AggregateZeroQuerySuffixPrediction(request, segments, results);
   }
 
-
   void AggregateEnglishPrediction(const ConversionRequest &request,
                                   const Segments &segments,
                                   std::vector<Result> *results) const {
@@ -427,12 +426,6 @@ class MockDataAndAggregator {
       const engine::SupplementalModelInterface *supplemental_model) {
     modules_.SetSupplementalModel(supplemental_model);
   }
-
-#if MOZC_ENABLE_NGRAM_RESCORING
-  void set_ngram_model(const ngram::NgramModelInterface *ngram_model) {
-    aggregator_->SetNgramModel(ngram_model);
-  }
-#endif  // MOZC_ENABLE_NGRAM_RESCORING
 
  private:
   MockConverter converter_;
@@ -1961,7 +1954,6 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQuerySuffixPrediction) {
   }
 }
 
-
 struct EnglishPredictionTestEntry {
   std::string name;
   transliteration::TransliterationType input_mode;
@@ -2052,8 +2044,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
    public:
     MOCK_METHOD(std::optional<std::vector<TypeCorrectedQuery>>,
                 CorrectComposition,
-                (absl::string_view, absl::string_view, bool,
-                 const commands::Request &),
+                (const ConversionRequest &, absl::string_view),
                 (const, override));
     MOCK_METHOD(void, PostCorrect, (Segments *), (const, override));
   };
@@ -2087,7 +2078,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
                    TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
 
   auto mock = std::make_unique<MockSupplementalModel>();
-  EXPECT_CALL(*mock, CorrectComposition("よろさく", "ほんじつは", false, _))
+  EXPECT_CALL(*mock, CorrectComposition(_, "ほんじつは"))
       .WillOnce(Return(expected));
 
   data_and_aggregator->set_supplemental_model(mock.get());

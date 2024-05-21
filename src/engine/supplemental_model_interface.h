@@ -72,9 +72,8 @@ class SupplementalModelInterface {
   // Returns std::nullopt when the composition spellchecker is not
   // enabled/available.
   virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
-  CorrectComposition(absl::string_view query, absl::string_view context,
-                     bool disable_toggle_correction,
-                     const commands::Request &request) const {
+  CorrectComposition(const ConversionRequest &request,
+                     absl::string_view context) const {
     return std::nullopt;
   }
 
@@ -93,6 +92,14 @@ class SupplementalModelInterface {
   virtual void RescoreResults(const ConversionRequest &request,
                               const Segments &segments,
                               absl::Span<prediction::Result> results) const {}
+
+  // Performs next word/phrase prediction given the context `segments`. Results
+  // are appended to `results`. Returns true if prediction was performed.
+  virtual bool Predict(const ConversionRequest &request,
+                       const Segments &segments,
+                       std::vector<prediction::Result> &results) const {
+    return false;
+  }
 };
 
 }  // namespace mozc::engine
