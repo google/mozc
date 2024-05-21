@@ -32,7 +32,7 @@
                 <textField verticalHuggingPriority="750" id="24">
                     <rect key="frame" x="51" y="147" width="350" height="51"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Help make Google Japanese Input better by automatically sending usage statistics and crash reports to Google." id="25">
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Help make Mozc better by automatically sending usage statistics and crash reports to Google." id="25">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -81,7 +81,7 @@
                 <textField verticalHuggingPriority="750" id="5">
                     <rect key="frame" x="17" y="276" width="384" height="34"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Do you want to enable Google Japanese Input?" id="6">
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Do you want to enable Mozc?" id="6">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
