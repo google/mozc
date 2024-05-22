@@ -91,7 +91,6 @@ mozc_cc_library(
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
-        "//prediction:rescorer_interface",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

@@ -313,8 +313,6 @@ mozc_cc_test(
     deps = [
         ":dictionary_predictor",
         ":prediction_aggregator_interface",
-        ":rescorer_interface",
-        ":rescorer_mock",
         ":result",
         "//base:util",
         "//base/strings:assign",
@@ -547,30 +545,5 @@ mozc_cc_test(
         "//testing:mozctest",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_library(
-    name = "rescorer_interface",
-    hdrs = ["rescorer_interface.h"],
-    deps = [
-        ":result",
-        "//converter:segments",
-        "//request:conversion_request",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
-mozc_cc_library(
-    name = "rescorer_mock",
-    testonly = 1,
-    hdrs = ["rescorer_mock.h"],
-    deps = [
-        ":rescorer_interface",
-        ":result",
-        "//converter:segments",
-        "//request:conversion_request",
-        "//testing",
-        "@com_google_absl//absl/types:span",
     ],
 )

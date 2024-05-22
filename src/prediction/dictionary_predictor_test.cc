@@ -63,8 +63,6 @@
 #include "engine/supplemental_model_interface.h"
 #include "engine/supplemental_model_mock.h"
 #include "prediction/prediction_aggregator_interface.h"
-#include "prediction/rescorer_interface.h"
-#include "prediction/rescorer_mock.h"
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
