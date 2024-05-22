@@ -65,7 +65,6 @@
 #include "engine/supplemental_model_interface.h"
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/prediction_aggregator_interface.h"
-#include "prediction/rescorer_interface.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
@@ -486,7 +485,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
         request, typing_correction_mixing_params, segments);
   }
 
-  if (IsDebug(request) && modules_.GetRescorer() != nullptr) {
+  if (IsDebug(request) && modules_.GetSupplementalModel()) {
     AddRescoringDebugDescription(segments);
   }
 
@@ -1368,11 +1367,6 @@ void DictionaryPredictor::MaybeRescoreResults(
           modules_.GetSupplementalModel();
       supplemental_model != nullptr) {
     supplemental_model->RescoreResults(request, segments, results);
-  } else if (const RescorerInterface *const rescorer = modules_.GetRescorer();
-             rescorer != nullptr) {
-    // TODO(noriyukit): Migrate the rescorer in `modules_` to the supplemental
-    // model.
-    rescorer->RescoreResults(request, segments, results);
   }
 }
 

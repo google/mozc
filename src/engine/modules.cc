@@ -54,7 +54,6 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
-#include "prediction/rescorer_interface.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/suggestion_filter.h"
 
@@ -173,7 +172,6 @@ absl::Status Modules::Init(
   zero_query_number_dict_.Init(zero_query_number_token_array_data,
                                zero_query_number_string_array_data);
 
-
   initialized_ = true;
   return absl::Status();
 #undef RETURN_IF_NULL
@@ -215,12 +213,6 @@ void Modules::PresetSingleKanjiPredictionAggregator(
   DCHECK(!initialized_) << "Module is already initialized";
   single_kanji_prediction_aggregator_ =
       std::move(single_kanji_prediction_aggregator);
-}
-
-void Modules::PresetRescorer(
-    std::unique_ptr<prediction::RescorerInterface> rescorer) {
-  DCHECK(!initialized_) << "Module is already initialized";
-  rescorer_ = std::move(rescorer);
 }
 
 }  // namespace engine

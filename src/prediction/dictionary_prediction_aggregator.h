@@ -51,7 +51,6 @@
 #include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
 
-
 namespace mozc {
 namespace prediction {
 
@@ -293,7 +292,6 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   NumberDecoder number_decoder_;
   std::unique_ptr<PredictionAggregatorInterface>
       single_kanji_prediction_aggregator_;
-
 };
 
 }  // namespace prediction
