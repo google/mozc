@@ -27,26 +27,56 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_PREDICTION_RESCORER_MOCK_H_
-#define MOZC_PREDICTION_RESCORER_MOCK_H_
+#ifndef MOZC_ENGINE_SUPPLEMENTAL_MODEL_MOCK_H_
+#define MOZC_ENGINE_SUPPLEMENTAL_MODEL_MOCK_H_
 
+#include <optional>
+#include <vector>
+
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "composer/query.h"
 #include "converter/segments.h"
-#include "prediction/rescorer_interface.h"
+#include "engine/supplemental_model_interface.h"
 #include "prediction/result.h"
+#include "protocol/commands.pb.h"
+#include "protocol/engine_builder.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
 
-namespace mozc::prediction {
+namespace mozc::engine {
 
-class MockRescorer : public RescorerInterface {
+class MockSupplementalModel : public SupplementalModelInterface {
  public:
+  MOCK_METHOD(bool, LoadAsync, (const EngineReloadRequest &request),
+              (override));
+  MOCK_METHOD(EngineReloadResponse, Load, (const EngineReloadRequest &request),
+              (override));
+  MOCK_METHOD(std::optional<commands::CheckSpellingResponse>, CheckSpelling,
+              (const commands::CheckSpellingRequest &request),
+              (const, override));
+  MOCK_METHOD(std::optional<std::vector<composer::TypeCorrectedQuery>>,
+              CorrectComposition,
+              (const ConversionRequest &request, absl::string_view context),
+              (const, override));
+  MOCK_METHOD(bool, ShouldRevertTypingCorrection,
+              (const commands::Request &request, const Segments &segments,
+               absl::Span<const prediction::Result> literal_results,
+               absl::Span<const prediction::Result> typing_corrected_results),
+              (const, override));
+  MOCK_METHOD(void, PostCorrect,
+              (const ConversionRequest &, Segments *segments),
+              (const, override));
   MOCK_METHOD(void, RescoreResults,
               (const ConversionRequest &request, const Segments &segments,
-               absl::Span<Result> results),
-              (const override));
+               absl::Span<prediction::Result> results),
+              (const, override));
+  MOCK_METHOD(bool, Predict,
+              (const ConversionRequest &request, const Segments &segments,
+               std::vector<prediction::Result> &results),
+              (const, override));
 };
 
-}  // namespace mozc::prediction
+}  // namespace mozc::engine
 
-#endif  // MOZC_PREDICTION_RESCORER_MOCK_H_
+#endif  // MOZC_ENGINE_SUPPLEMENTAL_MODEL_MOCK_H_

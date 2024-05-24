@@ -653,6 +653,7 @@ bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
     if (entry != nullptr && !entry->removed()) {
       entry->set_suggestion_freq(0);
       entry->set_conversion_freq(0);
+      entry->set_shown_freq(0);
       entry->set_removed(true);
       // We don't clear entry->next_entries() so that we can generate prediction
       // by chaining.
@@ -1662,6 +1663,40 @@ void UserHistoryPredictor::MaybeRecordUsageStats(
   }
 }
 
+void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
+    const Segments &segments, float min_ratio) {
+  const Segment &segment = segments.conversion_segment(0);
+  if (segment.candidates_size() < 1 ||
+      segment.segment_type() != Segment::FIXED_VALUE) {
+    return;
+  }
+
+  static constexpr size_t kMaxHistorySize = 5;
+  for (size_t i = 0; i < std::min(segment.candidates_size(), kMaxHistorySize);
+       ++i) {
+    const Segment::Candidate &candidate = segment.candidate(i);
+    Entry *entry = dic_->MutableLookupWithoutInsert(
+        Fingerprint(candidate.key, candidate.value));
+    if (entry == nullptr) {
+      continue;
+    }
+    // Note(b/339742825): For now shown freq is only used here and it's OK to
+    // increment the value here.
+    entry->set_shown_freq(entry->shown_freq() + 1);
+
+    const float selected_ratio =
+        1.0 * std::max(entry->suggestion_freq(), entry->conversion_freq()) /
+        entry->shown_freq();
+    if (selected_ratio < min_ratio) {
+      entry->set_suggestion_freq(0);
+      entry->set_conversion_freq(0);
+      entry->set_shown_freq(0);
+      entry->set_removed(true);
+      continue;
+    }
+  }
+}
+
 void UserHistoryPredictor::Finish(const ConversionRequest &request,
                                   Segments *segments) {
   if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
@@ -1759,6 +1794,13 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   }
 
   InsertHistory(request_type, is_suggestion, last_access_time, segments);
+
+  const float min_ratio = request.request()
+                              .decoder_experiment_params()
+                              .user_history_prediction_min_selected_ratio();
+  if (0.0 < min_ratio && min_ratio <= 1.0) {
+    MaybeRemoveUnselectedHistory(*segments, min_ratio);
+  }
 }
 
 void UserHistoryPredictor::MakeLearningSegments(

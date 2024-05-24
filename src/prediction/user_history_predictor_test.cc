@@ -34,6 +34,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -390,15 +391,15 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     AddCandidateWithDescription(0, value, desc, segments);
   }
 
-  bool FindCandidateByValue(const absl::string_view value,
-                            const Segments &segments) {
+  std::optional<int> FindCandidateByValue(const absl::string_view value,
+                                          const Segments &segments) {
     for (size_t i = 0; i < segments.conversion_segment(0).candidates_size();
          ++i) {
       if (segments.conversion_segment(0).candidate(i).value == value) {
-        return true;
+        return i;
       }
     }
-    return false;
+    return std::nullopt;
   }
 
   std::unique_ptr<composer::Composer> composer_;
@@ -604,6 +605,94 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
+  request_test_util::FillMobileRequest(request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_user_history_prediction_min_selected_ratio(0.1);
+
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  WaitForSyncer(predictor);
+
+  auto insert_target = [&]() {
+    Segments segments;
+    SetUpInputForPrediction("わたしの", composer_.get(), &segments);
+    AddCandidate("私の", &segments);
+    predictor->Finish(*convreq_, &segments);
+  };
+
+  auto find_target = [&]() {
+    Segments segments;
+    SetUpInputForPrediction("わたしの", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    return FindCandidateByValue("私の", segments);
+  };
+
+  // Returns true if the target is found.
+  auto select_target = [&]() {
+    Segments segments;
+    SetUpInputForPrediction("わたしの", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_TRUE(FindCandidateByValue("私の", segments));
+    predictor->Finish(*convreq_, &segments);
+  };
+
+  auto select_other = [&]() {
+    Segments segments;
+    SetUpInputForPrediction("わたしの", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_TRUE(FindCandidateByValue("私の", segments));
+    auto find = FindCandidateByValue("わたしの", segments);
+    if (!find) {
+      AddCandidate("わたしの", &segments);
+      segments.mutable_segment(0)->move_candidate(1, 0);
+    } else {
+      segments.mutable_segment(0)->move_candidate(find.value(), 0);
+    }
+    predictor->Finish(*convreq_, &segments);  // Select "わたしの"
+  };
+
+  auto input_other_key = [&]() {
+    Segments segments;
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    predictor->PredictForRequest(*convreq_, &segments);
+    predictor->Finish(*convreq_, &segments);
+  };
+
+  {
+    insert_target();
+    for (int i = 0; i < 10; ++i) {
+      EXPECT_TRUE(find_target());
+      select_other();
+    }
+    // select: 1, shown: 1+10, ratio: 1/11 < 0.1
+    EXPECT_FALSE(find_target());
+  }
+
+  {
+    insert_target();
+    for (int i = 0; i < 9; ++i) {
+      EXPECT_TRUE(find_target());
+      select_other();
+    }
+    // select: 1, shown 1+9, ratio: 1/10 >= 0.1
+    EXPECT_TRUE(find_target());
+
+    // other key does not matter
+    for (int i = 0; i < 10; ++i) {
+      input_other_key();
+    }
+    EXPECT_TRUE(find_target());
+
+    select_target();  // select: 2, shown 1+9+1, ratio: 2/11 >= 0.1
+    for (int i = 0; i < 10; ++i) {
+      EXPECT_TRUE(find_target());
+      select_other();
+    }
+    // select: 2, shown: 1+9+1+10, ratio: 2/21 < 0.1
+    EXPECT_FALSE(find_target());
   }
 }
 

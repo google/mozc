@@ -91,7 +91,6 @@ mozc_cc_library(
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
-        "//prediction:rescorer_interface",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -109,6 +108,24 @@ mozc_cc_library(
         "//protocol:engine_builder_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_library(
+    name = "supplemental_model_mock",
+    testonly = 1,
+    hdrs = ["supplemental_model_mock.h"],
+    deps = [
+        ":supplemental_model_interface",
+        "//composer:query",
+        "//converter:segments",
+        "//prediction:result",
+        "//protocol:commands_cc_proto",
+        "//protocol:engine_builder_cc_proto",
+        "//request:conversion_request",
+        "//testing:gunit",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -132,7 +149,6 @@ mozc_cc_library(
         "//dictionary:user_pos",
         "//dictionary/system:system_dictionary",
         "//dictionary/system:value_dictionary",
-        "//prediction:rescorer_interface",
         "//prediction:single_kanji_prediction_aggregator",
         "//prediction:suggestion_filter",
         "//prediction:zero_query_dict",
@@ -155,8 +171,6 @@ mozc_cc_test(
         "//dictionary:pos_matcher",
         "//dictionary:suppression_dictionary",
         "//dictionary:user_dictionary_stub",
-        "//prediction:rescorer_interface",
-        "//prediction:rescorer_mock",
         "//testing:gunit_main",
     ],
 )

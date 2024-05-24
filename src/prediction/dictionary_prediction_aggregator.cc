@@ -70,7 +70,6 @@
 #include "request/request_util.h"
 #include "transliteration/transliteration.h"
 
-
 #ifndef NDEBUG
 #define MOZC_DEBUG
 #define MOZC_WORD_LOG_MESSAGE(message) \
@@ -532,8 +531,7 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       number_id_(modules.GetPosMatcher()->GetNumberId()),
       unknown_id_(modules.GetPosMatcher()->GetUnknownId()),
       zero_query_dict_(modules.GetZeroQueryDict()),
-      zero_query_number_dict_(modules.GetZeroQueryNumberDict()) {
-}
+      zero_query_number_dict_(modules.GetZeroQueryNumberDict()) {}
 
 std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
     const ConversionRequest &request, const Segments &segments) const {

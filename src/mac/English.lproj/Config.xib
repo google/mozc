@@ -12,7 +12,7 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application"/>
-        <menu title="Google Japanese Input" id="6" userLabel="Menu (Google Japanese Input)">
+        <menu title="Mozc" id="6" userLabel="Menu (Mozc)">
             <items>
                 <menuItem title="Reconversion" keyEquivalent="R" id="30">
                     <modifierMask key="keyEquivalentModifierMask" control="YES"/>
@@ -36,7 +36,7 @@
                         <action selector="dictionaryToolClicked:" target="-2" id="20"/>
                     </connections>
                 </menuItem>
-                <menuItem title="About Google Japanese Input" id="28">
+                <menuItem title="About Mozc" id="28">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="aboutDialogClicked:" target="-2" id="29"/>

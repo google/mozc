@@ -65,7 +65,6 @@
 #include "engine/supplemental_model_interface.h"
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/prediction_aggregator_interface.h"
-#include "prediction/rescorer_interface.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
@@ -479,14 +478,14 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   }
 
   // TODO(b/320221782): Add unit tests for MaybeApplyPostCorrection.
-  MaybeApplyPostCorrection(modules_, segments);
+  MaybeApplyPostCorrection(request, modules_, segments);
 
   if (!fix_literal_on_top) {
     MaybeSuppressAggressiveTypingCorrection(
         request, typing_correction_mixing_params, segments);
   }
 
-  if (IsDebug(request) && modules_.GetRescorer() != nullptr) {
+  if (IsDebug(request) && modules_.GetSupplementalModel()) {
     AddRescoringDebugDescription(segments);
   }
 
@@ -591,13 +590,14 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection2(
 
 // static
 void DictionaryPredictor::MaybeApplyPostCorrection(
-    const engine::Modules &modules, Segments *segments) {
+    const ConversionRequest &request, const engine::Modules &modules,
+    Segments *segments) {
   const engine::SupplementalModelInterface *supplemental_model =
       modules.GetSupplementalModel();
   if (supplemental_model == nullptr) {
     return;
   }
-  supplemental_model->PostCorrect(segments);
+  supplemental_model->PostCorrect(request, segments);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(
@@ -1368,11 +1368,6 @@ void DictionaryPredictor::MaybeRescoreResults(
           modules_.GetSupplementalModel();
       supplemental_model != nullptr) {
     supplemental_model->RescoreResults(request, segments, results);
-  } else if (const RescorerInterface *const rescorer = modules_.GetRescorer();
-             rescorer != nullptr) {
-    // TODO(noriyukit): Migrate the rescorer in `modules_` to the supplemental
-    // model.
-    rescorer->RescoreResults(request, segments, results);
   }
 }
 

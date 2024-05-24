@@ -54,7 +54,6 @@
 #include "engine/modules.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/predictor_interface.h"
-#include "prediction/rescorer_interface.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
@@ -302,7 +301,8 @@ class DictionaryPredictor : public PredictorInterface {
       const TypingCorrectionMixingParams &typing_correction_mixing_params,
       std::vector<absl::Nonnull<const Result *>> *results);
 
-  static void MaybeApplyPostCorrection(const engine::Modules &modules,
+  static void MaybeApplyPostCorrection(const ConversionRequest &request,
+                                       const engine::Modules &modules,
                                        Segments *segments);
 
   void MaybeRescoreResults(const ConversionRequest &request,
@@ -340,7 +340,6 @@ class DictionaryPredictor : public PredictorInterface {
   const dictionary::PosMatcher pos_matcher_;
   const uint16_t general_symbol_id_;
   const std::string predictor_name_;
-  const prediction::RescorerInterface *rescorer_ = nullptr;
   const engine::Modules &modules_;
 };
 

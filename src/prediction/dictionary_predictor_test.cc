@@ -60,9 +60,9 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
+#include "engine/supplemental_model_interface.h"
+#include "engine/supplemental_model_mock.h"
 #include "prediction/prediction_aggregator_interface.h"
-#include "prediction/rescorer_interface.h"
-#include "prediction/rescorer_mock.h"
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -320,10 +320,10 @@ class MockDataAndPredictor {
   MockDataAndPredictor() : MockDataAndPredictor(nullptr) {}
 
   explicit MockDataAndPredictor(
-      std::unique_ptr<prediction::RescorerInterface> rescorer)
+      engine::SupplementalModelInterface *supplemental_model)
       : mock_immutable_converter_(), mock_aggregator_(new MockAggregator()) {
-    modules_.PresetRescorer(std::move(rescorer));
     CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
+    modules_.SetSupplementalModel(supplemental_model);
 
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
         modules_, absl::WrapUnique(mock_aggregator_),
@@ -1845,8 +1845,8 @@ TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrection2Test) {
 }
 
 TEST_F(DictionaryPredictorTest, Rescoring) {
-  auto rescorer = std::make_unique<prediction::MockRescorer>();
-  EXPECT_CALL(*rescorer, RescoreResults(_, _, _))
+  engine::MockSupplementalModel supplemental_model;
+  EXPECT_CALL(supplemental_model, RescoreResults(_, _, _))
       .WillRepeatedly(
           Invoke([](const ConversionRequest &request, const Segments &segments,
                     absl::Span<Result> results) {
@@ -1854,7 +1854,7 @@ TEST_F(DictionaryPredictorTest, Rescoring) {
           }));
 
   auto data_and_predictor =
-      std::make_unique<MockDataAndPredictor>(std::move(rescorer));
+      std::make_unique<MockDataAndPredictor>(&supplemental_model);
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
@@ -1910,9 +1910,10 @@ TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
 
 TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
   // Use StrictMock to make sure that RescoreResults() is not be called
-  auto rescorer = std::make_unique<StrictMock<prediction::MockRescorer>>();
+  StrictMock<engine::MockSupplementalModel> supplemental_model;
+  EXPECT_CALL(supplemental_model, PostCorrect(_, _));
   auto data_and_predictor =
-      std::make_unique<MockDataAndPredictor>(std::move(rescorer));
+      std::make_unique<MockDataAndPredictor>(&supplemental_model);
 
   // Fill handwriting request and composer
   {
