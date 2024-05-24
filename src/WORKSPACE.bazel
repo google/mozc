@@ -35,7 +35,7 @@ load(
     "http_archive",
     "http_file",
 )
-load("@//:config.bzl", "MACOS_QT_PATH")
+load("@//:config.bzl", "MACOS_QT_PATH", "SHA256_ZIP_CODE_KEN_ALL", "SHA256_ZIP_CODE_JIGYOSYO")
 load("@//bazel:pkg_config_repository.bzl", "pkg_config_repository")
 
 
@@ -264,11 +264,13 @@ http_file(
 http_archive(
     name = "zip_code_ken_all",
     build_file_content = "exports_files([\"KEN_ALL.CSV\"])",
+    sha256 = SHA256_ZIP_CODE_KEN_ALL,
     url = "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip",
 )
 
 http_archive(
     name = "zip_code_jigyosyo",
     build_file_content = "exports_files([\"JIGYOSYO.CSV\"])",
+    sha256 = SHA256_ZIP_CODE_JIGYOSYO,
     url = "https://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip",
 )
