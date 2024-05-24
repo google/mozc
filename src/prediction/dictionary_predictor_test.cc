@@ -1911,7 +1911,7 @@ TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
 TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
   // Use StrictMock to make sure that RescoreResults() is not be called
   StrictMock<engine::MockSupplementalModel> supplemental_model;
-  EXPECT_CALL(supplemental_model, PostCorrect(_));
+  EXPECT_CALL(supplemental_model, PostCorrect(_, _));
   auto data_and_predictor =
       std::make_unique<MockDataAndPredictor>(&supplemental_model);
 

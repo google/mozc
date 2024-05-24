@@ -478,7 +478,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   }
 
   // TODO(b/320221782): Add unit tests for MaybeApplyPostCorrection.
-  MaybeApplyPostCorrection(modules_, segments);
+  MaybeApplyPostCorrection(request, modules_, segments);
 
   if (!fix_literal_on_top) {
     MaybeSuppressAggressiveTypingCorrection(
@@ -590,13 +590,14 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection2(
 
 // static
 void DictionaryPredictor::MaybeApplyPostCorrection(
-    const engine::Modules &modules, Segments *segments) {
+    const ConversionRequest &request, const engine::Modules &modules,
+    Segments *segments) {
   const engine::SupplementalModelInterface *supplemental_model =
       modules.GetSupplementalModel();
   if (supplemental_model == nullptr) {
     return;
   }
-  supplemental_model->PostCorrect(segments);
+  supplemental_model->PostCorrect(request, segments);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(

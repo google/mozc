@@ -301,7 +301,8 @@ class DictionaryPredictor : public PredictorInterface {
       const TypingCorrectionMixingParams &typing_correction_mixing_params,
       std::vector<absl::Nonnull<const Result *>> *results);
 
-  static void MaybeApplyPostCorrection(const engine::Modules &modules,
+  static void MaybeApplyPostCorrection(const ConversionRequest &request,
+                                       const engine::Modules &modules,
                                        Segments *segments);
 
   void MaybeRescoreResults(const ConversionRequest &request,

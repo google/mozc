@@ -63,6 +63,7 @@
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
+#include "engine/supplemental_model_mock.h"
 #include "prediction/result.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
@@ -2040,15 +2041,6 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_F(DictionaryPredictionAggregatorTest,
        AggregateExtendedTypeCorrectingPrediction) {
-  class MockSupplementalModel : public engine::SupplementalModelInterface {
-   public:
-    MOCK_METHOD(std::optional<std::vector<TypeCorrectedQuery>>,
-                CorrectComposition,
-                (const ConversionRequest &, absl::string_view),
-                (const, override));
-    MOCK_METHOD(void, PostCorrect, (Segments *), (const, override));
-  };
-
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
       CreateAggregatorWithMockData();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
@@ -2077,7 +2069,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
                TypeCorrectedQuery::CORRECTION | TypeCorrectedQuery::COMPLETION |
                    TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
 
-  auto mock = std::make_unique<MockSupplementalModel>();
+  auto mock = std::make_unique<engine::MockSupplementalModel>();
   EXPECT_CALL(*mock, CorrectComposition(_, "ほんじつは"))
       .WillOnce(Return(expected));
 

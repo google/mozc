@@ -64,7 +64,9 @@ class MockSupplementalModel : public SupplementalModelInterface {
                absl::Span<const prediction::Result> literal_results,
                absl::Span<const prediction::Result> typing_corrected_results),
               (const, override));
-  MOCK_METHOD(void, PostCorrect, (Segments * segments), (const, override));
+  MOCK_METHOD(void, PostCorrect,
+              (const ConversionRequest &, Segments *segments),
+              (const, override));
   MOCK_METHOD(void, RescoreResults,
               (const ConversionRequest &request, const Segments &segments,
                absl::Span<prediction::Result> results),
