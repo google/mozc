@@ -34,7 +34,6 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load(
     "//:build_defs.bzl",
     "mozc_select",
-    "mozc_select_enable_neural_language_model",
     "mozc_select_enable_session_watchdog",
     "mozc_select_enable_supplemental_model",
     "mozc_select_enable_usage_rewriter",
@@ -108,8 +107,7 @@ cc_library(
     ) + mozc_select_enable_supplemental_model([
     ]) + mozc_select_enable_usage_rewriter(
         off = ["NO_USAGE_REWRITER"],
-    ) + mozc_select_enable_neural_language_model([
-    ]),
+    ),
 )
 
 bzl_library(
@@ -179,12 +177,5 @@ selects.config_setting_group(
         "//bazel/cc_target_os:windows",
         "//bazel/cc_target_os:oss_windows",
         "//bazel/cc_target_os:prod_windows",
-    ],
-)
-
-selects.config_setting_group(
-    name = "enable_neural_language_model",
-    match_any = [
-        "@platforms//:incompatible",  # placeholder to avoid empty match.
     ],
 )

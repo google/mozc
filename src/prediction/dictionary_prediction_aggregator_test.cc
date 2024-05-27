@@ -76,11 +76,6 @@
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
 
-#ifdef MOZC_ENABLE_NGRAM_RESCORING
-#include "ngram/ngram_model_interface.h"
-#include "ngram/ngram_model_mock.h"
-#endif  // MOZC_ENABLE_NGRAM_RESCORING
-
 namespace mozc {
 namespace prediction {
 
@@ -203,14 +198,6 @@ using ::testing::SetArgPointee;
 using ::testing::StrEq;
 using ::testing::Truly;
 using ::testing::WithParamInterface;
-
-#ifdef MOZC_ENABLE_NGRAM_RESCORING
-using ::testing::AllOf;
-using ::testing::Field;
-using ::testing::IsEmpty;
-using ::testing::StrEq;
-using ::testing::Unused;
-#endif  // MOZC_ENABLE_NGRAM_RESCORING
 
 // Action to call the third argument of LookupPrefix/LookupPredictive with the
 // token <key, value>.
