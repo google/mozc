@@ -33,8 +33,6 @@
 #include <map>
 #include <string>
 
-#include "base/port.h"
-
 namespace mozc {
 namespace ibus {
 

@@ -29,7 +29,7 @@
 
 #include "unix/ibus/engine_registrar.h"
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "base/vlog.h"
 #include "unix/ibus/engine_interface.h"
 

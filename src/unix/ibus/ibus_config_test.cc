@@ -32,6 +32,7 @@
 #include <string>
 
 #include "testing/gunit.h"
+#include "unix/ibus/ibus_config.pb.h"
 
 namespace mozc {
 namespace ibus {

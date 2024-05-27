@@ -36,7 +36,6 @@
 
 #include "absl/strings/string_view.h"
 #include "base/protobuf/message.h"
-#include "base/protobuf/protobuf.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {

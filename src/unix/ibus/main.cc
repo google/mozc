@@ -35,8 +35,8 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
 #include "base/init_mozc.h"
-#include "base/logging.h"
 #include "base/version.h"
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/ibus_config.h"

@@ -31,9 +31,10 @@
 
 #include <string>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/const.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "client/client.h"  // For client interface
 #include "protocol/commands.pb.h"
@@ -232,9 +233,8 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
       icon_path_for_panel = GetIconPath(entry.icon);
       mode_symbol = entry.label_for_panel;
     }
-    IbusPropertyWrapper item(
-        entry.key, PROP_TYPE_RADIO, label, "" /* icon */, state,
-        nullptr /* sub props */);
+    IbusPropertyWrapper item(entry.key, PROP_TYPE_RADIO, label, "" /* icon */,
+                             state, nullptr /* sub props */);
     item.SetData(kMozcEnginePropertyKey, entry);
     // |sub_prop_list| owns |item|.
     sub_prop_list.Append(&item);
@@ -300,9 +300,8 @@ void PropertyHandler::AppendToolPropertyToPanel() {
   for (const MozcEngineToolProperty &entry : kMozcEngineToolProperties) {
     const std::string label = translator_->MaybeTranslate(entry.label);
     // TODO(yusukes): It would be better to use entry.icon here?
-    IbusPropertyWrapper item(
-        entry.mode, PROP_TYPE_NORMAL, label, "" /* icon */,
-        PROP_STATE_UNCHECKED, nullptr);
+    IbusPropertyWrapper item(entry.mode, PROP_TYPE_NORMAL, label, "" /* icon */,
+                             PROP_STATE_UNCHECKED, nullptr);
     item.SetData(kMozcEnginePropertyKey, entry);
     sub_prop_list.Append(&item);
   }

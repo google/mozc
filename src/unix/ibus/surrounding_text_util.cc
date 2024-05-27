@@ -34,8 +34,8 @@
 #include <limits>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
 

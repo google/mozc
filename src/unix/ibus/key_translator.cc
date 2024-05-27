@@ -33,7 +33,7 @@
 #include <set>
 #include <string>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "base/vlog.h"
 
 namespace mozc {
@@ -151,7 +151,7 @@ static const auto kIbusModifierMaskMap = new std::map<uint, uint>({
 // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
 // 'Hiragana Letter Small U' (with Shift modifier).
 // TODO(team): Add kana_map_dv to support Dvoraklayout.
-typedef std::map<uint, std::pair<const char*, const char*>> KanaMap;
+typedef std::map<uint, std::pair<const char *, const char *>> KanaMap;
 static const KanaMap *kKanaJpMap = new KanaMap({
     {'1', {"ぬ", "ぬ"}},
     {'!', {"ぬ", "ぬ"}},
@@ -361,9 +361,8 @@ bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(uint keyval, uint keycode,
   return ((modifiers & IBUS_SHIFT_MASK) && (keyval == IBUS_Hiragana_Katakana));
 }
 
-bool KeyTranslator::IsKanaAvailable(uint keyval, uint keycode,
-                                    uint modifiers, bool layout_is_jp,
-                                    std::string *out) const {
+bool KeyTranslator::IsKanaAvailable(uint keyval, uint keycode, uint modifiers,
+                                    bool layout_is_jp, std::string *out) const {
   if ((modifiers & IBUS_CONTROL_MASK) || (modifiers & IBUS_MOD1_MASK)) {
     return false;
   }
@@ -378,7 +377,7 @@ bool KeyTranslator::IsKanaAvailable(uint keyval, uint keycode,
   }
 
   const bool is_shift = (modifiers & IBUS_SHIFT_MASK);
-  const char* kana = GetKanaValue(kana_map, keyval, is_shift);
+  const char *kana = GetKanaValue(kana_map, keyval, is_shift);
 
   if (kana == nullptr) {
     return false;

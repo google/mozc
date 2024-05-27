@@ -120,11 +120,12 @@ mozc_cc_library(
         ":ibus_wrapper",
         "//base:const",
         "//base:file_util",
-        "//base:logging",
         "//base:port",
         "//base:system_util",
         "//client",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
         linux = ["//third_party/ibus"],
@@ -146,9 +147,8 @@ mozc_cc_library(
         "MOZC_IBUS_INSTALL_DIR=\\\"" + IBUS_MOZC_INSTALL_DIR + "\\\"",
     ],
     deps = [
-        "//base:logging",
-        "//base:port",
         "//base:util",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -205,7 +205,6 @@ mozc_cc_library(
         "//base:clock",
         "//base:const",
         "//base:file_util",
-        "//base:logging",
         "//base:port",
         "//base:singleton",
         "//base:system_util",
@@ -220,6 +219,7 @@ mozc_cc_library(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
@@ -249,10 +249,11 @@ mozc_cc_library(
     deps = [
         ":ibus_config_cc_proto",
         "//base:file_util",
-        "//base:logging",
         "//base:system_util",
         "//base/protobuf:text_format",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -263,6 +264,7 @@ mozc_cc_test(
     srcs = ["ibus_config_test.cc"],
     deps = [
         ":ibus_config",
+        ":ibus_config_cc_proto",
         "//testing:gunit_main",
     ],
 )
@@ -294,9 +296,9 @@ mozc_cc_binary(
         ":ibus_mozc_lib",
         ":ibus_utils",
         "//base:init_mozc",
-        "//base:logging",
         "//base:version",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -344,13 +346,14 @@ mozc_cc_library(
     deps = [
         ":ibus_header",
         "//base:coordinates",
-        "//base:logging",
         "//base:port",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "//renderer:renderer_interface",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
         linux = [

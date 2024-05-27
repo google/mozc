@@ -31,7 +31,7 @@
 
 #include <string>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "protocol/commands.pb.h"
 #include "unix/ibus/ibus_wrapper.h"
 

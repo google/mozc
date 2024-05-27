@@ -29,15 +29,15 @@
 
 #include "unix/ibus/message_translator.h"
 
+#include <cstddef>
 #include <iterator>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_split.h"
-#include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 
 namespace {

@@ -29,7 +29,8 @@
 
 #include "unix/ibus/key_event_handler.h"
 
-#include "base/logging.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "base/port.h"
 #include "base/singleton.h"
 
