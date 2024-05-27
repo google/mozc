@@ -31,6 +31,7 @@
 
 #include <safeint.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
@@ -41,7 +42,7 @@
 
 #include "absl/algorithm/container.h"
 #include "absl/base/casts.h"
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "base/util.h"
 
 namespace mozc {

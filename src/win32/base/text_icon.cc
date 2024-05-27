@@ -30,15 +30,17 @@
 #include "win32/base/text_icon.h"
 
 #include <safeint.h>
-#include <windows.h>
 #include <wil/resource.h>
+#include <windows.h>
 
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
-#include "base/logging.h"
 #include "base/win32/wide_char.h"
 
 namespace mozc {
@@ -110,8 +112,7 @@ HICON CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
       logfont.lfHeight = bitmap_height;
       logfont.lfQuality = NONANTIALIASED_QUALITY;
       const std::wstring wide_fontname = win32::Utf8ToWide(fontname);
-      const errno_t error =
-          wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
+      const errno_t error = wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
       if (error != 0) {
         return nullptr;
       }
@@ -234,8 +235,8 @@ HICON TextIcon::CreateMonochromeIcon(size_t width, size_t height,
   int safe_num_pixels = 0;
   if (!SafeCast(width, safe_width) || !SafeCast(height, safe_height) ||
       !SafeMultiply(safe_width, safe_height, safe_num_pixels)) {
-    LOG(ERROR) << "Requested size is too large."
-               << " width: " << width << " height: " << height;
+    LOG(ERROR) << "Requested size is too large." << " width: " << width
+               << " height: " << height;
     return nullptr;
   }
 

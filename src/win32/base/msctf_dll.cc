@@ -32,7 +32,7 @@
 
 #include <windows.h>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 
 class ITfCategoryMgr;
 class ITfLangBarItemMgr;

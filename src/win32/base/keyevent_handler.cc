@@ -36,12 +36,11 @@
 #include <set>
 #include <string>
 
+#include "absl/log/check.h"
 #include "base/japanese_util.h"
-#include "base/logging.h"
 #include "base/util.h"
 #include "base/win32/wide_char.h"
 #include "client/client_interface.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "session/key_info_util.h"
 #include "win32/base/conversion_mode_util.h"

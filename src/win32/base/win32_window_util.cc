@@ -31,9 +31,9 @@
 
 #include <windows.h>
 
+#include <cstddef>
 #include <string>
 
-#include "base/logging.h"
 #include "base/vlog.h"
 
 namespace mozc {

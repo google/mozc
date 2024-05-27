@@ -38,7 +38,7 @@
 #include <iterator>
 #include <utility>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "base/win32/com.h"
 #include "base/win32/hresultor.h"
 #include "protocol/commands.pb.h"

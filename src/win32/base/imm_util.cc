@@ -39,7 +39,7 @@
 #include <string>
 #include <vector>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "base/win32/wide_char.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/tsf_profile.h"

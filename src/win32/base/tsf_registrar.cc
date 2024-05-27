@@ -37,8 +37,8 @@
 
 #include <string>
 
+#include "absl/log/log.h"
 #include "base/const.h"
-#include "base/logging.h"
 #include "base/win32/com.h"
 #include "base/win32/wide_char.h"
 #include "win32/base/display_name_resource.h"

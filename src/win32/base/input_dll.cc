@@ -32,7 +32,7 @@
 
 #include <windows.h>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 
 struct LAYOUTORTIPPROFILE;
 struct LAYOUTORTIP;

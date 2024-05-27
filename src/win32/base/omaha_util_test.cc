@@ -34,9 +34,12 @@
 #include <strsafe.h>
 // clang-format on
 
-#include "base/logging.h"
+#include <cstddef>
+#include <string>
+#include <vector>
+
+#include "absl/log/check.h"
 #include "base/singleton.h"
-#include "base/system_util.h"
 #include "base/win32/win_api_test_helper.h"
 #include "base/win32/win_util.h"
 #include "testing/gunit.h"
@@ -503,7 +506,7 @@ TEST(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
   EXPECT_EQ(test.property()->installer_result_ui_string(), L"");
 }
 
-#else   // !GOOGLE_JAPANESE_INPUT_BUILD
+#else  // !GOOGLE_JAPANESE_INPUT_BUILD
 
 TEST(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
   RegistryEmulator<__COUNTER__> test;

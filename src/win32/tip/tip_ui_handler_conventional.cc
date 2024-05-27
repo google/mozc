@@ -36,7 +36,7 @@
 #include <cstddef>
 #include <utility>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "base/win32/com.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
@@ -277,8 +277,8 @@ bool FillCharPosition(TipPrivateContext *private_context, ITfContext *context,
   composition_target->set_position(0);
 
   bool vertical_writing = false;
-  if (SUCCEEDED(TipRangeUtil::IsVerticalWriting(
-          target_range.get(), read_cookie, &vertical_writing))) {
+  if (SUCCEEDED(TipRangeUtil::IsVerticalWriting(target_range.get(), read_cookie,
+                                                &vertical_writing))) {
     composition_target->set_vertical_writing(vertical_writing);
   }
 

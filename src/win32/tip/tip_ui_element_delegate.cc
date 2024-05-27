@@ -41,8 +41,8 @@
 #include <string_view>
 #include <utility>
 
+#include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "base/logging.h"
 #include "base/win32/com.h"
 #include "base/win32/wide_char.h"
 #include "protocol/candidates.pb.h"

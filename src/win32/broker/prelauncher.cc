@@ -31,7 +31,6 @@
 
 #include <memory>
 
-#include "base/logging.h"
 #include "base/run_level.h"
 #include "base/win32/win_util.h"
 #include "client/client.h"

@@ -38,7 +38,7 @@
 #include <memory>
 #include <vector>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 
 namespace mozc {
 namespace win32 {

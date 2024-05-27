@@ -33,7 +33,7 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
+#include "absl/log/log.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"

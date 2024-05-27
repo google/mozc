@@ -77,11 +77,11 @@ mozc_cc_library(
         ":win32_service_state_cc_proto",
         "//base:const",
         "//base:file_util",
-        "//base:logging",
         "//base:system_util",
-        "//base/protobuf",
+        "//base/protobuf:message",
         "//base/win32:wide_char",
         "//bazel/win32:crypt32",
+        "@com_google_absl//absl/log",
     ],
 )
 

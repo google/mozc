@@ -40,7 +40,7 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "base/win32/com.h"
 #include "base/win32/wide_char.h"
 #include "client/client_interface.h"
@@ -49,7 +49,6 @@
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"
 #include "win32/base/input_state.h"
-#include "win32/tip/tip_composition_util.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session_impl.h"
 #include "win32/tip/tip_input_mode_manager.h"

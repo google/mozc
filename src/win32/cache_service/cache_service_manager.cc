@@ -44,10 +44,10 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "base/const.h"
 #include "base/file_util.h"
-#include "base/logging.h"
-#include "base/protobuf/protobuf.h"
+#include "base/protobuf/message.h"
 #include "base/system_util.h"
 #include "base/win32/wide_char.h"
 #include "win32/cache_service/win32_service_state.pb.h"

@@ -40,10 +40,9 @@
 #include <utility>
 #include <vector>
 
-#include "base/logging.h"
+#include "absl/log/check.h"
 #include "base/util.h"
 #include "base/win32/com.h"
-#include "base/win32/hresultor.h"
 #include "base/win32/wide_char.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
