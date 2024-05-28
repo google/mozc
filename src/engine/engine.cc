@@ -253,6 +253,7 @@ bool Engine::Reload() {
 }
 
 bool Engine::Sync() {
+  GetUserDataManager()->Sync();
   if (!modules_->GetUserDictionary()) {
     return true;
   }
