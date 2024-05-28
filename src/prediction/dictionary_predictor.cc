@@ -1427,9 +1427,11 @@ std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
   // 2. cost diff is less than max_diff.
   // 3. current key is shorter than previous key.
   // 4. current key is the prefix of previous key.
+  // 5. current result is not a partial suggestion.
   if (prev_top_result && cur_top_key_length > prev_top_key_length &&
       std::abs(current_top_result.cost - prev_top_result->cost) < max_diff &&
       current_top_result.key.size() < prev_top_result->key.size() &&
+      !(current_top_result.types & PREFIX) &&
       absl::StartsWith(prev_top_result->key, current_top_result.key)) {
     // Do not need to remember the previous key as `prev_top_result` is still
     // top result.

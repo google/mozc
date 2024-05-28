@@ -2010,6 +2010,23 @@ TEST_F(DictionaryPredictorTest, MaybeGetPreviousTopResultTest) {
     EXPECT_EQ(result->value, "志賀高原");
   }
 
+  // top is partial
+  {
+    InitSegmentsWithKey("しが", &segments);
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        init_top, *convreq_for_suggestion_, segments));
+
+    InitSegmentsWithKey("しがこう", &segments);
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        pre_top, *convreq_for_suggestion_, segments));
+
+    InitSegmentsWithKey("しがこうげ", &segments);
+    auto cur_top_prefix = cur_top;
+    cur_top_prefix.types |= PREFIX;
+    EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(
+        cur_top_prefix, *convreq_for_suggestion_, segments));
+  }
+
   // Already consistent.
   {
     InitSegmentsWithKey("しが", &segments);
