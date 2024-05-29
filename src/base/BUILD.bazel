@@ -125,15 +125,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "logging",
-    hdrs = ["logging.h"],
-    deps = [
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-    ],
-)
-
-mozc_cc_library(
     name = "log_file",
     srcs = ["log_file.cc"],
     hdrs = ["log_file.h"],
