@@ -259,7 +259,7 @@ class UserDictionary::UserDictionaryReloader {
   UserDictionaryReloader(const UserDictionaryReloader &) = delete;
   UserDictionaryReloader &operator=(const UserDictionaryReloader &) = delete;
 
-  ~UserDictionaryReloader() = default;
+  ~UserDictionaryReloader() { Wait(); }
 
   // When the user dictionary exists AND the modification time has been updated,
   // reloads the dictionary.  Returns true when reloader thread is started.
@@ -342,7 +342,7 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
   Reload();
 }
 
-UserDictionary::~UserDictionary() = default;
+UserDictionary::~UserDictionary() { WaitForReloader(); }
 
 bool UserDictionary::HasKey(absl::string_view key) const {
   // TODO(noriyukit): Currently, we don't support HasKey() for user dictionary
@@ -568,7 +568,7 @@ void UserDictionary::WaitForReloader() { reloader_->Wait(); }
 void UserDictionary::Swap(std::unique_ptr<TokensIndex> new_tokens) {
   DCHECK(new_tokens);
   absl::WriterMutexLock l(&mutex_);
-  tokens_.swap(new_tokens);
+  tokens_ = std::move(new_tokens);
 }
 
 bool UserDictionary::Load(

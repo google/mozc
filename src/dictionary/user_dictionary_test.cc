@@ -805,6 +805,13 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     }
     dic->WaitForReloader();
   }
+
+  // Fix b//341758719. Waits the reload inside the destructor.
+  {
+    std::unique_ptr<UserDictionary> dic(CreateDictionary());
+    dic->SetUserDictionaryName(filename);
+    dic->Reload();
+  }
 }
 
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
