@@ -103,6 +103,12 @@ struct Result {
   // Context "insensitive" candidate cost.
   int wcost = 0;
   // Context "sensitive" candidate cost.
+  // TODO(noriyukit): The cost is basically calculated by the underlying LM, but
+  // currently it is updated by other modules and heuristics at many locations;
+  // e.g., see SetPredictionCostForMixedConversion() in
+  // dictionary_predictgor.cc. Ideally, such cost adjustments should be kept
+  // separately from the original LM cost to perform rescoring in a rigorous
+  // manner.
   int cost = 0;
   int lid = 0;
   int rid = 0;
@@ -127,23 +133,28 @@ struct Result {
   int cost_before_rescoring = 0;
   // If removed is true, this result is not used for a candidate.
   bool removed = false;
-  // confidence score of typing correction. Larger is more confident.
+  // Confidence score of typing correction. Larger is more confident.
   float typing_correction_score = 0.0;
+  // Adjustment for `wcost` made by the typing correction. This value can be
+  // zero, positive (penalty) or negative (bonus), and it is added to `wcost`.
+  int typing_correction_adjustment = 0;
 #ifndef NDEBUG
   std::string log;
 #endif  // NDEBUG
 
   template <typename S>
   friend void AbslStringify(S &sink, const Result &r) {
-    absl::Format(&sink,
-                 "key: %s, value: %s, types: %d, wcost: %d, cost: %d, lid: %d, "
-                 "rid: %d, attrs: %d, bdd: %s, srcinfo: %d, origkey: %s, "
-                 "consumed_key_size: %d, penalty: %d, removed: %v",
-                 r.key, r.value, r.types, r.wcost, r.cost, r.lid, r.rid,
-                 r.candidate_attributes,
-                 absl::StrJoin(r.inner_segment_boundary, ","), r.source_info,
-                 r.non_expanded_original_key, r.consumed_key_size, r.penalty,
-                 r.removed);
+    absl::Format(
+        &sink,
+        "key: %s, value: %s, types: %d, wcost: %d, cost: %d, cost_before: %d, "
+        "lid: %d, "
+        "rid: %d, attrs: %d, bdd: %s, srcinfo: %d, origkey: %s, "
+        "consumed_key_size: %d, penalty: %d, tc_adjustment: %d, removed: %v",
+        r.key, r.value, r.types, r.wcost, r.cost, r.cost_before_rescoring,
+        r.lid, r.rid, r.candidate_attributes,
+        absl::StrJoin(r.inner_segment_boundary, ","), r.source_info,
+        r.non_expanded_original_key, r.consumed_key_size, r.penalty,
+        r.typing_correction_adjustment, r.removed);
 #ifndef NDEBUG
     sink.Append(", log:\n");
     for (absl::string_view line : absl::StrSplit(r.log, '\n')) {

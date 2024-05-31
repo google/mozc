@@ -311,6 +311,8 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   const TypingCorrectionMixingParams typing_correction_mixing_params =
       MaybePopulateTypingCorrectedResults(request, *segments, &results);
 
+  MaybeRescoreResults(request, *segments, absl::MakeSpan(results));
+
   return AddPredictionToCandidates(request, segments,
                                    typing_correction_mixing_params,
                                    absl::MakeSpan(results));
@@ -333,8 +335,6 @@ void DictionaryPredictor::RewriteResultsForPrediction(
   } else {
     SetPredictionCost(request.request_type(), segments, results);
   }
-
-  MaybeRescoreResults(request, segments, absl::MakeSpan(*results));
 
   if (!is_mixed_conversion) {
     const size_t input_key_len =

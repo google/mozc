@@ -1761,7 +1761,9 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
       // bias = hyp_score - base_score, so larger is better.
       // bias is computed in log10 domain, so we need to use the different
       // scale factor. 500 * log(10) = ~1150.
-      result.wcost -= 1150 * query.bias;
+      const int adjustment = -1150 * query.bias;
+      result.typing_correction_adjustment = adjustment;
+      result.wcost += adjustment;
       results->emplace_back(std::move(result));
     }
   }
