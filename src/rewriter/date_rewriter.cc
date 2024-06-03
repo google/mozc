@@ -991,8 +991,8 @@ bool DateRewriter::RewriteDate(Segment *segment,
 
   // Date candidates are too many, therefore highest candidate show at most 3rd.
   // TODO(nona): learn date candidate even if the date is changed.
-  constexpr size_t kMinIdx = 3;
-  size_t insert_idx = std::min(std::max(kMinIdx, cand_idx + 1), end_idx);
+  const size_t min_idx = std::min<size_t>(3, end_idx);
+  const size_t insert_idx = std::clamp(cand_idx + 1, min_idx, end_idx);
   segment->insert_candidates(insert_idx, std::move(candidates));
   return true;
 }

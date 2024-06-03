@@ -1926,8 +1926,7 @@ void ImmutableConverter::InsertCandidates(const ConversionRequest &request,
     prev = node;
   }
 
-  const size_t expand_size =
-      std::max<size_t>(1, std::min<size_t>(512, max_candidates_size));
+  const size_t expand_size = std::clamp<size_t>(max_candidates_size, 1, 512);
 
   const bool is_single_segment =
       (type == SINGLE_SEGMENT || type == FIRST_INNER_SEGMENT);

@@ -651,8 +651,7 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
     const int offset_y_;
   };
 
-  const double normalized_blur_alpha =
-      std::min(std::max(info.blur_alpha, 0.0), 1.0);
+  const double normalized_blur_alpha = std::clamp(info.blur_alpha, 0.0, 1.0);
   Accessor accessor(frame_buffer, -info.blur_offset_x, -info.blur_offset_y);
   for (int y = begin_y; y < begin_y + bmp_height; ++y) {
     for (int x = begin_x; x < begin_x + bmp_width; ++x) {

@@ -101,7 +101,7 @@ void FindDialog::FindBackward() {
 void FindDialog::Find(FindDialog::Direction direction) {
   const QString &query = QuerylineEdit->text();
   const int start_row = std::max(0, table_->currentRow());
-  int start_column = std::min(1, std::max(0, table_->currentColumn()));
+  int start_column = std::clamp(table_->currentColumn(), 0, 1);
   int matched_column = -1;
   int matched_row = -1;
 

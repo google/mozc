@@ -164,8 +164,7 @@ RendererServer::RendererServer()
                   std::min(absl::GetFlag(FLAGS_timeout), 60));
   }
 
-  timeout_ =
-      1000 * std::max(3, std::min(24 * 60 * 60, absl::GetFlag(FLAGS_timeout)));
+  timeout_ = 1000 * std::clamp(absl::GetFlag(FLAGS_timeout), 3, 24 * 60 * 60);
   MOZC_VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef MOZC_NO_LOGGING

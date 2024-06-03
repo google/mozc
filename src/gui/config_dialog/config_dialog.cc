@@ -551,7 +551,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   SET_CHECKBOX(realtimeConversionCheckBox, use_realtime_conversion);
 
   suggestionsSizeSpinBox->setValue(
-      std::max(1, std::min<int>(9, config.suggestions_size())));
+      std::clamp<int>(config.suggestions_size(), 1, 9));
 
   // tab5
   SetSendStatsCheckBox();

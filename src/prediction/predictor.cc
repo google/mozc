@@ -233,7 +233,7 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
 
   int size = kPredictionSize;
   if (request.request_type() == ConversionRequest::SUGGESTION) {
-    size = std::min(9, std::max<int>(1, request.config().suggestions_size()));
+    size = std::clamp<int>(request.config().suggestions_size(), 1, 9);
   }
 
   bool result = false;
