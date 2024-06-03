@@ -273,9 +273,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // special cases
   if (top_content_len == 1) {
-    const char32_t wchar = Util::Utf8ToCodepoint(top_content);
-
-    switch (wchar) {
+    const char32_t codepoint = Util::Utf8ToCodepoint(top_content);
+    switch (codepoint) {
       case 0x304a:  // "お"
       case 0x5fa1:  // "御"
       case 0x3054:  // "ご"

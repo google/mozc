@@ -77,14 +77,14 @@ void CollocationUtil::RemoveExtraCharacters(const absl::string_view input,
                                             bool remove_number,
                                             std::string *output) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    const char32_t w = iter.Get();
-    if (((Util::GetScriptType(w) != Util::UNKNOWN_SCRIPT) &&
-         (!remove_number || !IsNumber(w))) ||
-        w == 0x3005 ||                 // "々"
-        w == 0x0025 || w == 0xFF05 ||  // "%", "％"
-        w == 0x3006 ||                 // "〆"
-        w == 0x301C || w == 0xFF5E) {  // "〜", "～"
-      Util::CodepointToUtf8Append(w, output);
+    const char32_t codepoint = iter.Get();
+    if (((Util::GetScriptType(codepoint) != Util::UNKNOWN_SCRIPT) &&
+         (!remove_number || !IsNumber(codepoint))) ||
+        codepoint == 0x3005 ||                         // "々"
+        codepoint == 0x0025 || codepoint == 0xFF05 ||  // "%", "％"
+        codepoint == 0x3006 ||                         // "〆"
+        codepoint == 0x301C || codepoint == 0xFF5E) {  // "〜", "～"
+      Util::CodepointToUtf8Append(codepoint, output);
     }
   }
 }

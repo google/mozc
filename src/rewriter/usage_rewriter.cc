@@ -110,19 +110,19 @@ std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
   bool has_kanji = false;
   bool has_hiragana = false;
   for (ConstChar32Iterator iter(word); !iter.Done(); iter.Next()) {
-    const char32_t w = iter.Get();
-    const Util::ScriptType s = Util::GetScriptType(w);
+    const char32_t codepoint = iter.Get();
+    const Util::ScriptType s = Util::GetScriptType(codepoint);
     if (pos == 0 && s != Util::KANJI) {
       return "";
     } else if (pos >= 0 && pos <= 1 && s == Util::KANJI) {
       // length of kanji <= 2.
       has_kanji = true;
       ++pos;
-      Util::CodepointToUtf8Append(w, &result);
+      Util::CodepointToUtf8Append(codepoint, &result);
       continue;
     } else if (pos > 0 && s == Util::HIRAGANA) {
       has_hiragana = true;
-      Util::CodepointToUtf8Append(w, &result);
+      Util::CodepointToUtf8Append(codepoint, &result);
       break;
     } else {
       return "";

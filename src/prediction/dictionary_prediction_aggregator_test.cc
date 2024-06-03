@@ -291,13 +291,13 @@ void SetUpInputForSuggestionWithHistory(absl::string_view key,
 void GenerateKeyEvents(absl::string_view text,
                        std::vector<commands::KeyEvent> *keys) {
   keys->clear();
-  for (const char32_t w : Util::Utf8ToUtf32(text)) {
+  for (const char32_t codepoint : Util::Utf8ToUtf32(text)) {
     commands::KeyEvent key;
-    if (w <= 0x7F) {  // IsAscii, w is unsigned.
-      key.set_key_code(w);
+    if (codepoint <= 0x7F) {  // IsAscii, w is unsigned.
+      key.set_key_code(codepoint);
     } else {
       key.set_key_code('?');
-      *key.mutable_key_string() = Util::CodepointToUtf8(w);
+      *key.mutable_key_string() = Util::CodepointToUtf8(codepoint);
     }
     keys->push_back(key);
   }

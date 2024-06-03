@@ -2821,9 +2821,9 @@ void InitSegmentsFromInputSequence(const absl::string_view text,
   DCHECK(segments);
   for (const UnicodeChar ch : Utf8AsUnicodeChar(text)) {
     commands::KeyEvent key;
-    const char32_t w = ch.char32();
-    if (w <= 0x7F) {  // IsAscii, w is unsigned.
-      key.set_key_code(w);
+    const char32_t codepoint = ch.char32();
+    if (codepoint <= 0x7F) {  // IsAscii, w is unsigned.
+      key.set_key_code(codepoint);
     } else {
       key.set_key_code('?');
       key.set_key_string(ch.utf8());

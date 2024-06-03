@@ -791,27 +791,29 @@ bool Util::IsEnglishTransliteration(absl::string_view value) {
 // script type
 // TODO(yukawa, team): Make a mechanism to keep this classifier up-to-date
 //   based on the original data from Unicode.org.
-Util::ScriptType Util::GetScriptType(char32_t w) {
-  if (INRANGE(w, 0x0030, 0x0039) ||  // ascii number
-      INRANGE(w, 0xFF10, 0xFF19)) {  // full width number
+Util::ScriptType Util::GetScriptType(char32_t codepoint) {
+  if (INRANGE(codepoint, 0x0030, 0x0039) ||  // ascii number
+      INRANGE(codepoint, 0xFF10, 0xFF19)) {  // full width number
     return NUMBER;
-  } else if (INRANGE(w, 0x0041, 0x005A) ||  // ascii upper
-             INRANGE(w, 0x0061, 0x007A) ||  // ascii lower
-             INRANGE(w, 0xFF21, 0xFF3A) ||  // fullwidth ascii upper
-             INRANGE(w, 0xFF41, 0xFF5A)) {  // fullwidth ascii lower
+  } else if (INRANGE(codepoint, 0x0041, 0x005A) ||  // ascii upper
+             INRANGE(codepoint, 0x0061, 0x007A) ||  // ascii lower
+             INRANGE(codepoint, 0xFF21, 0xFF3A) ||  // fullwidth ascii upper
+             INRANGE(codepoint, 0xFF41, 0xFF5A)) {  // fullwidth ascii lower
     return ALPHABET;
-  } else if (w == 0x3005 ||  // IDEOGRAPHIC ITERATION MARK "々"
-             INRANGE(w, 0x3400,
+  } else if (codepoint == 0x3005 ||  // IDEOGRAPHIC ITERATION MARK "々"
+             INRANGE(codepoint, 0x3400,
                      0x4DBF) ||  // CJK Unified Ideographs Extension A
-             INRANGE(w, 0x4E00, 0x9FFF) ||  // CJK Unified Ideographs
-             INRANGE(w, 0xF900, 0xFAFF) ||  // CJK Compatibility Ideographs
-             INRANGE(w, 0x20000,
+             INRANGE(codepoint, 0x4E00, 0x9FFF) ||  // CJK Unified Ideographs
+             INRANGE(codepoint, 0xF900,
+                     0xFAFF) ||  // CJK Compatibility Ideographs
+             INRANGE(codepoint, 0x20000,
                      0x2A6DF) ||  // CJK Unified Ideographs Extension B
-             INRANGE(w, 0x2A700,
+             INRANGE(codepoint, 0x2A700,
                      0x2B73F) ||  // CJK Unified Ideographs Extension C
-             INRANGE(w, 0x2B740,
+             INRANGE(codepoint, 0x2B740,
                      0x2B81F) ||  // CJK Unified Ideographs Extension D
-             INRANGE(w, 0x2F800, 0x2FA1F)) {  // CJK Compatibility Ideographs
+             INRANGE(codepoint, 0x2F800,
+                     0x2FA1F)) {  // CJK Compatibility Ideographs
     // As of Unicode 6.0.2, each block has the following characters assigned.
     // [U+3400, U+4DB5]:   CJK Unified Ideographs Extension A
     // [U+4E00, U+9FCB]:   CJK Unified Ideographs
@@ -821,51 +823,53 @@ Util::ScriptType Util::GetScriptType(char32_t w) {
     // [U+2B740, U+2B81D]: CJK Unified Ideographs Extension D
     // [U+2F800, U+2FA1D]: CJK Compatibility Ideographs
     return KANJI;
-  } else if (INRANGE(w, 0x3041, 0x309F) ||  // hiragana
-             w == 0x1B001) {                // HIRAGANA LETTER ARCHAIC YE
+  } else if (INRANGE(codepoint, 0x3041, 0x309F) ||  // hiragana
+             codepoint == 0x1B001) {  // HIRAGANA LETTER ARCHAIC YE
     return HIRAGANA;
-  } else if (INRANGE(w, 0x30A1, 0x30FF) ||  // full width katakana
-             INRANGE(w, 0x31F0,
+  } else if (INRANGE(codepoint, 0x30A1, 0x30FF) ||  // full width katakana
+             INRANGE(codepoint, 0x31F0,
                      0x31FF) ||  // Katakana Phonetic Extensions for Ainu
-             INRANGE(w, 0xFF65, 0xFF9F) ||  // half width katakana
-             w == 0x1B000) {                // KATAKANA LETTER ARCHAIC E
+             INRANGE(codepoint, 0xFF65, 0xFF9F) ||  // half width katakana
+             codepoint == 0x1B000) {                // KATAKANA LETTER ARCHAIC E
     return KATAKANA;
-  } else if (INRANGE(w, 0x02300, 0x023F3) ||  // Miscellaneous Technical
-             INRANGE(w, 0x02700, 0x027BF) ||  // Dingbats
-             INRANGE(w, 0x1F000, 0x1F02F) ||  // Mahjong tiles
-             INRANGE(w, 0x1F030, 0x1F09F) ||  // Domino tiles
-             INRANGE(w, 0x1F0A0, 0x1F0FF) ||  // Playing cards
-             INRANGE(w, 0x1F100,
+  } else if (INRANGE(codepoint, 0x02300, 0x023F3) ||  // Miscellaneous Technical
+             INRANGE(codepoint, 0x02700, 0x027BF) ||  // Dingbats
+             INRANGE(codepoint, 0x1F000, 0x1F02F) ||  // Mahjong tiles
+             INRANGE(codepoint, 0x1F030, 0x1F09F) ||  // Domino tiles
+             INRANGE(codepoint, 0x1F0A0, 0x1F0FF) ||  // Playing cards
+             INRANGE(codepoint, 0x1F100,
                      0x1F2FF) ||  // Enclosed Alphanumeric Supplement
-             INRANGE(w, 0x1F200, 0x1F2FF) ||  // Enclosed Ideographic Supplement
-             INRANGE(w, 0x1F300,
+             INRANGE(codepoint, 0x1F200,
+                     0x1F2FF) ||  // Enclosed Ideographic Supplement
+             INRANGE(codepoint, 0x1F300,
                      0x1F5FF) ||  // Miscellaneous Symbols And Pictographs
-             INRANGE(w, 0x1F600, 0x1F64F) ||  // Emoticons
-             INRANGE(w, 0x1F680, 0x1F6FF) ||  // Transport And Map Symbols
-             INRANGE(w, 0x1F700, 0x1F77F) ||  // Alchemical Symbols
-             w == 0x26CE) {                   // Ophiuchus
+             INRANGE(codepoint, 0x1F600, 0x1F64F) ||  // Emoticons
+             INRANGE(codepoint, 0x1F680,
+                     0x1F6FF) ||  // Transport And Map Symbols
+             INRANGE(codepoint, 0x1F700, 0x1F77F) ||  // Alchemical Symbols
+             codepoint == 0x26CE) {                   // Ophiuchus
     return EMOJI;
   }
 
   return UNKNOWN_SCRIPT;
 }
 
-Util::FormType Util::GetFormType(char32_t w) {
+Util::FormType Util::GetFormType(char32_t codepoint) {
   // 'Unicode Standard Annex #11: EAST ASIAN WIDTH'
   // http://www.unicode.org/reports/tr11/
 
   // Characters marked as 'Na' in
   // http://www.unicode.org/Public/UNIDATA/EastAsianWidth.txt
-  if (INRANGE(w, 0x0020, 0x007F) ||  // ascii
-      INRANGE(w, 0x27E6, 0x27ED) ||  // narrow mathematical symbols
-      INRANGE(w, 0x2985, 0x2986)) {  // narrow white parentheses
+  if (INRANGE(codepoint, 0x0020, 0x007F) ||  // ascii
+      INRANGE(codepoint, 0x27E6, 0x27ED) ||  // narrow mathematical symbols
+      INRANGE(codepoint, 0x2985, 0x2986)) {  // narrow white parentheses
     return HALF_WIDTH;
   }
 
   // Other characters marked as 'Na' in
   // http://www.unicode.org/Public/UNIDATA/EastAsianWidth.txt
-  if (INRANGE(w, 0x00A2, 0x00AF)) {
-    switch (w) {
+  if (INRANGE(codepoint, 0x00A2, 0x00AF)) {
+    switch (codepoint) {
       case 0x00A2:  // CENT SIGN
       case 0x00A3:  // POUND SIGN
       case 0x00A5:  // YEN SIGN
@@ -878,13 +882,13 @@ Util::FormType Util::GetFormType(char32_t w) {
 
   // Characters marked as 'H' in
   // http://www.unicode.org/Public/UNIDATA/EastAsianWidth.txt
-  if (w == 0x20A9 ||                 // WON SIGN
-      INRANGE(w, 0xFF61, 0xFF9F) ||  // half-width katakana
-      INRANGE(w, 0xFFA0, 0xFFBE) ||  // half-width hangul
-      INRANGE(w, 0xFFC2, 0xFFCF) ||  // half-width hangul
-      INRANGE(w, 0xFFD2, 0xFFD7) ||  // half-width hangul
-      INRANGE(w, 0xFFDA, 0xFFDC) ||  // half-width hangul
-      INRANGE(w, 0xFFE8, 0xFFEE)) {  // half-width symbols
+  if (codepoint == 0x20A9 ||                 // WON SIGN
+      INRANGE(codepoint, 0xFF61, 0xFF9F) ||  // half-width katakana
+      INRANGE(codepoint, 0xFFA0, 0xFFBE) ||  // half-width hangul
+      INRANGE(codepoint, 0xFFC2, 0xFFCF) ||  // half-width hangul
+      INRANGE(codepoint, 0xFFD2, 0xFFD7) ||  // half-width hangul
+      INRANGE(codepoint, 0xFFDA, 0xFFDC) ||  // half-width hangul
+      INRANGE(codepoint, 0xFFE8, 0xFFEE)) {  // half-width symbols
     return HALF_WIDTH;
   }
 
@@ -970,9 +974,10 @@ Util::ScriptType Util::GetScriptTypeWithoutSymbols(absl::string_view str) {
 // return true if all script_type in str is "type"
 bool Util::IsScriptType(absl::string_view str, Util::ScriptType type) {
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    const char32_t w = iter.Get();
+    const char32_t codepoint = iter.Get();
     // Exception: 30FC (PROLONGEDSOUND MARK is categorized as HIRAGANA as well)
-    if (type != GetScriptType(w) && (w != 0x30FC || type != HIRAGANA)) {
+    if (type != GetScriptType(codepoint) &&
+        (codepoint != 0x30FC || type != HIRAGANA)) {
       return false;
     }
   }

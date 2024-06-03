@@ -188,8 +188,8 @@ class Util {
     SCRIPT_TYPE_SIZE,
   };
 
-  // return script type of w
-  static ScriptType GetScriptType(char32_t w);
+  // Returns the script type of `codepoint`.
+  static ScriptType GetScriptType(char32_t codepoint);
 
   // Returns the script type of the first character in `str`.
   // This function finds the first UTF-8 chars and returns its script type.
@@ -198,7 +198,7 @@ class Util {
   static ScriptType GetFirstScriptType(absl::string_view str,
                                        size_t *mblen = nullptr);
 
-  // return script type of string. all chars in str must be
+  // Returns the script type of a string. All chars in str must be
   // KATAKANA/HIRAGANA/KANJI/NUMBER or ALPHABET.
   // If str has mixed scripts, this function returns UNKNOWN_SCRIPT
   static ScriptType GetScriptType(absl::string_view str);
@@ -207,10 +207,10 @@ class Util {
   // in the |str|.
   static ScriptType GetScriptTypeWithoutSymbols(absl::string_view str);
 
-  // return true if all script_type in str is "type"
+  // Returns true if all script_type in str is "type"
   static bool IsScriptType(absl::string_view str, ScriptType type);
 
-  // return true if the string contains script_type char
+  // Returns true if the string contains script_type char
   static bool ContainsScriptType(absl::string_view str, ScriptType type);
 
   // See 'Unicode Standard Annex #11: EAST ASIAN WIDTH'
@@ -223,12 +223,12 @@ class Util {
     FORM_TYPE_SIZE,
   };
 
-  // return Form type of single character.
+  // Returns Form type of single character.
   // This function never returns UNKNOWN_FORM.
-  static FormType GetFormType(char32_t w);
+  static FormType GetFormType(char32_t codepoint);
 
-  // return FormType of string.
-  // return UNKNOWN_FORM if |str| contains both HALF_WIDTH and FULL_WIDTH.
+  // Returns FormType of string.
+  // Returns UNKNOWN_FORM if |str| contains both HALF_WIDTH and FULL_WIDTH.
   static FormType GetFormType(absl::string_view str);
 
   // Returns true if all characters of `str` are ASCII (U+00 - U+7F).

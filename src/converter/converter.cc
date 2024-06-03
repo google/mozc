@@ -177,11 +177,12 @@ bool ExtractLastTokenWithScriptType(const absl::string_view text,
   std::vector<char32_t> reverse_last_token;
   Util::ScriptType last_script_type_found = Util::GetScriptType(iter.Get());
   for (; !iter.Done(); iter.Next()) {
-    const char32_t w = iter.Get();
-    if ((w == ' ') || (Util::GetScriptType(w) != last_script_type_found)) {
+    const char32_t codepoint = iter.Get();
+    if ((codepoint == ' ') ||
+        (Util::GetScriptType(codepoint) != last_script_type_found)) {
       break;
     }
-    reverse_last_token.push_back(w);
+    reverse_last_token.push_back(codepoint);
   }
 
   *last_script_type = last_script_type_found;
