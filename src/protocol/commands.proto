@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 79
+// Next ID: 80
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -750,8 +750,12 @@ message DecoderExperimentParams {
   // Maximum number of unique corrections. When zero, default setting is used.
   optional int32 post_correction_max_correction_size = 76 [default = 0];
 
+  // Maximum number of corrections per query. When zero, default setting is
+  // used.
+  optional int32 post_correction_nbest_size = 79 [default = 0];
+
   // Uses the surrounding context information fed from the client.
-  optional bool post_correction_use_surrounding_context = 77 [ default = false];
+  optional bool post_correction_use_surrounding_context = 77 [default = false];
 
   // Remove user history prediction entry when its selected ratio is lower
   // than the value.
