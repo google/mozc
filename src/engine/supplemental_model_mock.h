@@ -33,6 +33,7 @@
 #include <optional>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/query.h"
@@ -65,7 +66,7 @@ class MockSupplementalModel : public SupplementalModelInterface {
                absl::Span<const prediction::Result> typing_corrected_results),
               (const, override));
   MOCK_METHOD(void, PostCorrect,
-              (const ConversionRequest &, Segments *segments),
+              (const ConversionRequest &, absl::Nonnull<Segments *> segments),
               (const, override));
   MOCK_METHOD(void, RescoreResults,
               (const ConversionRequest &request, const Segments &segments,

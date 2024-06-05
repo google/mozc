@@ -33,6 +33,7 @@
 #include <optional>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/query.h"
@@ -87,7 +88,7 @@ class SupplementalModelInterface {
 
   // Performs general post correction on `segments`.
   virtual void PostCorrect(const ConversionRequest &request,
-                           Segments *segments) const {}
+                           absl::Nonnull<Segments *> segments) const {}
 
   // Performs rescoring for `results` given the context `segments`.
   virtual void RescoreResults(const ConversionRequest &request,
