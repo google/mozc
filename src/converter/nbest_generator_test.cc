@@ -41,10 +41,12 @@
 #include "converter/lattice.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "engine/modules.h"
 #include "request/conversion_request.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -285,6 +287,51 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   EXPECT_EQ(values[2], "行きたい");
   EXPECT_EQ(content_keys[2], "いきたい");
   EXPECT_EQ(content_values[2], "行きたい");
+}
+
+TEST_F(NBestGeneratorTest, NoPartialCandidateBetweenAlphabets) {
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
+  ImmutableConverter *converter = data_and_converter->GetConverter();
+
+  Segments segments;
+  const std::string kInput = "AAA";
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::FREE);
+    segment->set_key(kInput);
+  }
+
+  Lattice lattice;
+  lattice.SetKey(kInput);
+  ConversionRequest request;
+  request.set_request_type(ConversionRequest::PREDICTION);
+  converter->MakeLattice(request, &segments, &lattice);
+
+  std::vector<uint16_t> group;
+  converter->MakeGroup(segments, &group);
+  converter->Viterbi(segments, &lattice);
+
+  std::unique_ptr<NBestGenerator> nbest_generator =
+      data_and_converter->CreateNBestGenerator(&lattice);
+
+  constexpr bool kSingleSegment = true;  // For real time conversion
+  const Node *begin_node = lattice.bos_nodes();
+  const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
+                                    group, kSingleSegment);
+
+  // Since the test dictionary contains "A", partial candidates "A" and "AA" can
+  // be generated but they should be suppressed because they are split between
+  // alphabets.
+  const NBestGenerator::Options options = {
+      .boundary_mode = NBestGenerator::ONLY_EDGE,
+      .candidate_mode = NBestGenerator::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT |
+                        NBestGenerator::FILL_INNER_SEGMENT_INFO,
+  };
+  nbest_generator->Reset(begin_node, end_node, options);
+  Segment result_segment;
+  nbest_generator->SetCandidates(request, "", 10, &result_segment);
+  EXPECT_THAT(result_segment, HasSingleCandidate(::testing::Field(
+                                  "value", &Segment::Candidate::value, "AAA")));
 }
 
 }  // namespace mozc

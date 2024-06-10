@@ -38,6 +38,7 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
 #include "base/vlog.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
@@ -59,6 +60,13 @@ using ::mozc::dictionary::SuppressionDictionary;
 
 constexpr int kFreeListSize = 512;
 constexpr int kCostDiff = 3453;  // log prob of 1/1000
+
+bool IsBetweenAlphabets(const Node &left, const Node &right) {
+  DCHECK(!left.value.empty());
+  DCHECK(!right.value.empty());
+  return absl::ascii_isalpha(left.value.back()) &&
+         absl::ascii_isalpha(right.value.front());
+}
 
 }  // namespace
 
@@ -274,6 +282,10 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
     const QueueElement *elm = element->next;
     for (; elm->next != nullptr; elm = elm->next) {
       nodes.push_back(elm->node);
+      if (elm->next != nullptr &&
+          IsBetweenAlphabets(*elm->node, *elm->next->node)) {
+        continue;
+      }
       if (segmenter_->IsBoundary(*elm->node, *elm->next->node, false)) {
         break;
       }

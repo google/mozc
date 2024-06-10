@@ -189,6 +189,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -203,6 +204,7 @@ mozc_cc_test(
         ":nbest_generator",
         ":node",
         ":segments",
+        ":segments_matchers",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:user_dictionary_stub",
         "//engine:modules",
