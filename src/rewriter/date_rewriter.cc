@@ -554,27 +554,37 @@ bool AdToEraForCourt(const YearData *data, int size, int year,
 constexpr absl::string_view kNenKey = "ねん";
 constexpr absl::string_view kNenValue = "年";
 
+std::string GetDescription(absl::string_view era, absl::string_view year,
+                           bool should_add_suffix) {
+  return should_add_suffix ? absl::StrCat(era, year, kNenValue)
+                           : absl::StrCat(era, year);
+}
+
 bool ExtractYearFromKey(const YearData &year_data, const absl::string_view key,
-                        int *year, std::string *description) {
+                        int *year, bool *has_suffix_out,
+                        std::string *description) {
   constexpr absl::string_view kGanKey = "がん";
   constexpr absl::string_view kGanValue = "元";
 
-  // absl::EndsWith(key, kNenKey) is expected to always return true
-  DCHECK(absl::EndsWith(key, kNenKey));
   if (!absl::StartsWith(key, year_data.key)) {
     return false;
   }
+
+  // Append the `kNenValue` if the `key` has the `kNenKey` suffix.
+  const bool has_suffix = absl::EndsWith(key, kNenKey);
+  *has_suffix_out = has_suffix;
+
   // key="しょうわ59ねん" -> era_year_str="59"
   // key="へいせいがんねん" -> era_year_str="がん"
   const size_t year_start = Util::CharsLen(year_data.key);
-  const size_t year_length =
-      Util::CharsLen(key) - year_start - Util::CharsLen(kNenKey);
+  const size_t year_length = Util::CharsLen(key) - year_start -
+                             (has_suffix ? Util::CharsLen(kNenKey) : 0);
   const absl::string_view era_year_str =
       Util::Utf8SubString(key, year_start, year_length);
 
   if (era_year_str == kGanKey) {
     *year = 1;
-    *description = absl::StrCat(year_data.era, kGanValue, kNenValue);
+    *description = GetDescription(year_data.era, kGanValue, has_suffix);
     return true;
   }
 
@@ -585,7 +595,7 @@ bool ExtractYearFromKey(const YearData &year_data, const absl::string_view key,
   if (*year <= 0) {
     return false;
   }
-  *description = absl::StrCat(year_data.era, era_year_str, kNenValue);
+  *description = GetDescription(year_data.era, era_year_str, has_suffix);
 
   return true;
 }
@@ -594,10 +604,6 @@ void EraToAdForCourt(const YearData *data, size_t size,
                      const absl::string_view key,
                      std::vector<std::pair<std::string, std::string>>
                          &results_and_descriptions) {
-  if (!absl::EndsWith(key, kNenKey)) {
-    return;
-  }
-
   for (size_t i = 0; i < size; ++i) {
     const YearData &year_data = data[i];
     if (!absl::StartsWith(key, year_data.key)) {
@@ -607,8 +613,10 @@ void EraToAdForCourt(const YearData *data, size_t size,
     // key="しょうわ59ねん" -> era_year=59, description="昭和59年"
     // key="へいせいがんねん" -> era_year=1, description="平成元年"
     int era_year = 0;
+    bool has_suffix = false;
     std::string description;
-    if (!ExtractYearFromKey(year_data, key, &era_year, &description)) {
+    if (!ExtractYearFromKey(year_data, key, &era_year, &has_suffix,
+                            &description)) {
       continue;
     }
     const int ad_year = era_year + year_data.ad - 1;
@@ -624,7 +632,10 @@ void EraToAdForCourt(const YearData *data, size_t size,
 
     for (size_t j = 0; j < output.size(); ++j) {
       // "元徳", "建武" and "明徳" require dedupe
-      std::string value = absl::StrCat(output[j].value, kNenValue);
+      std::string value = output[j].value;
+      if (has_suffix) {
+        value.append(kNenValue);
+      }
       if (absl::c_find_if(results_and_descriptions,
                           [&value](const std::pair<std::string, std::string>
                                        &result_and_description) {
@@ -1056,10 +1067,18 @@ size_t DateRewriter::RewriteEra(Segments::range segments_range) {
   return 2;  // Consumed 2 segments.
 }
 
-bool DateRewriter::RewriteAd(Segment *segment) {
+bool DateRewriter::RewriteAd(Segments::range segments_range) {
+  // Rewrite:
+  // * If the first segment ends with the `kNenKey`, or
+  // * If the second segment starts with the `kNenKey`.
+  Segment *segment = &segments_range.front();
   const std::string &key = segment->key();
-  if (!absl::EndsWith(key, kNenKey)) {
-    return false;
+  const bool has_suffix = absl::EndsWith(key, kNenKey);
+  if (!has_suffix) {
+    if (segments_range.size() < 2 ||
+        !absl::StartsWith(segments_range[1].key(), kNenKey)) {
+      return false;
+    }
   }
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "No candidates are found";
@@ -1119,6 +1138,11 @@ bool DateRewriter::ResizeSegmentsForRewriteAd(
   for (const Segment &segment : segments_range) {
     const absl::string_view key{segment.key()};
     if (auto pos = key.find(kNenKey); pos != absl::string_view::npos) {
+      if (pos == 0 && keys.size() == 1) {
+        // If the second key starts with the `kNenKey`, `RewriteAd()` can handle
+        // it without resizing.
+        return false;
+      }
       pos += kNenKey.size();
       if (pos == key.size()) {
         keys.push_back(key);
@@ -1505,7 +1529,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
       return true;
     }
 
-    if (RewriteAd(seg) || RewriteDate(seg, extra_format)) {
+    if (RewriteAd(rest_segments) || RewriteDate(seg, extra_format)) {
       modified = true;
       num_done = 1;
       continue;
