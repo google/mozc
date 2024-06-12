@@ -101,6 +101,8 @@ bool IsSessionIndependentCommand(commands::Input::CommandType type) {
     case commands::Input::SYNC_DATA:
     case commands::Input::CHECK_SPELLING:
     case commands::Input::SET_REQUEST:
+    case commands::Input::SEND_ENGINE_RELOAD_REQUEST:
+    case commands::Input::RELOAD_SPELL_CHECKER:
       // LINT.ThenChange()
       return true;
     default:
