@@ -580,13 +580,6 @@ message DecoderExperimentParams {
 
   optional int32 mobile_history_prediction_size = 2;
 
-  reserved 3;  // Deprecated enable_strict_candidate_filter
-
-  reserved 4;  // Deprecated enable_new_spatial_scoring
-  reserved 5;  // Deprecated spatial_cost_penalty
-  reserved 6;  // Deprecated spatial_cost_penalty_min_char_length
-  reserved 7;  // Deprecated enrich_partial_candidates
-
   enum VariationCharacterType {
     NO_VARIATION = 0;
     // Standardized variation sequences for Japanese.
@@ -598,56 +591,6 @@ message DecoderExperimentParams {
   // Bitmap of enabled variation character types.
   optional uint32 variation_character_types = 8 [default = 0];
 
-  reserved 9;   // Deprecated enable_number_decoder
-  reserved 10;  // Deprecated cancel_segment_model_penalty_for_prediction
-  reserved 11;  // Deprecated enable_environmental_filter_rewriter
-  reserved 12;  // Deprecated undo_partial_commit
-  reserved 13;  // Deprecated use_actual_converter_for_realtime_conversion
-  reserved 14;  // Deprecated enable_single_kanji_prediction
-  reserved 15;  // Deprecated single_kanji_prediction_cost_offset
-  reserved 17;  // Deprecated typing_correction_max_count
-  reserved 18;  // Deprecated typing_correction_max_rank
-
-  // Parameters for typing correction candidates
-  optional float typing_correction_identity_score_max_diff = 21 [default = 0.0];
-  optional float typing_correction_top_score_max_diff = 22 [default = 1.0];
-
-  reserved 38;  // Deprecated typing_correction_conversion_cost_max_diff
-  reserved 46;  // Deprecated enable_typing_correction_mixer_v2
-  reserved 47;  // Deprecated
-                // typing_correction_literal_on_top_correction_score_max_diff
-  reserved 48;  // Deprecated
-                // typing_correction_literal_on_top_conversion_cost_max_diff
-
-  // Trigger literal on top if
-  // correction_score <=
-  //   typing_correction_literal_on_top_length_score_max_diff
-  //     * (typing_correction_literal_on_top_length_decay^(input_length-3))
-  // Literal candidate is placed at least second position.
-  optional bool typing_correction_literal_at_least_second = 49
-      [default = false];
-  // Character-length based triggering.
-  optional float typing_correction_literal_on_top_length_score_max_diff = 56
-      [default = 0.0];
-  optional float typing_correction_literal_on_top_length_decay = 57
-      [default = 0.0];
-
-  // Parameters for completion
-  // The diff against the identity score.
-  optional float typing_completion_identity_score_max_diff = 39
-      [default = -1.0];
-  // The maximum number of characters to complete. If zero, completion is
-  // disabled.
-  optional int32 typing_completion_max_length = 40 [default = 0];
-  // Starts the completion when |query| >= start_length.
-  optional int32 typing_completion_start_length = 41 [default = 4];
-
-  reserved 16;  // Deprecated use_typing_correction_diff_cost
-  reserved 19;  // Deprecated typing_correction_cost_offset
-  reserved 20;  // Deprecated cancel_content_word_suffix_penalty
-  reserved 23;  // Deprecated typing_correction_score_offset
-  reserved 24;  // Deprecated typing_correction_move_literal_candidate_to_top
-  reserved 30;  // Deprecated enable_number_style_learning
 
   optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
@@ -701,45 +644,8 @@ message DecoderExperimentParams {
 
   optional int32 max_composition_event_to_process = 64 [default = 2];
 
-  // Fix the bug on the literal_on_top correction.
+      // Fix the bug on the literal_on_top correction.
   optional bool fix_literal_on_top = 65 [default = false];
-
-  // Adds kana modifier insensitive corrections even when the score is smaller
-  // than identity score. This will increase the coverage. Adds only when
-  // top_score - correction_score < max_diff.
-  optional float kana_modifier_insensitive_corrections_top_score_max_diff = 66
-      [default = 0.0];
-  // Extra penalty added to the corrections.
-  optional float kana_modifier_insensitive_corrections_penalty = 67
-      [default = 0.0];
-
-  optional float typing_correction_reranker_max_score_diff_override = 68
-      [default = 0.0];
-  // When the top correction is kana_modifier_insensitive_correction, suppress
-  // other corrections.
-  optional bool typing_correction_promote_kana_modifier_insensitive_only = 69
-      [default = false];
-
-  // Penalty for the first character mismatch.
-  optional float typing_correction_first_char_mismatch_penalty = 70
-      [default = 0.0];
-
-  // Penalties for the modifier corrections when intended modifiers exist.
-  // `local` is for the same modifier type, global ignores the modifier type.
-  optional float typing_correction_intended_modifier_local_penalty = 71
-      [default = 0.0];
-  optional float typing_correction_intended_modifier_global_penalty = 72
-      [default = 0.0];
-  // exponential decay factor to assign larger penalty when
-  // intended and added modifiers are closely located.
-  // The actual penalty is computed as
-  // (global|local)_penalty * decay^(distance - 1);
-  optional float typing_correction_intended_modifier_decay = 73 [default = 0.0];
-
-  // New triggering model uses zero threshold and dynamic penalty to define the
-  // triggering condition. This flag is used to define all legacy thresholds as
-  // penalty values.
-  optional bool typing_correction_threshold_as_penalty = 74 [default = false];
 
   // Post correction parameters.
   // Maximum context length. Note this is not a character length, but the
