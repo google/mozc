@@ -1464,12 +1464,6 @@ DictionaryPredictor::GetTypingCorrectionMixingParams(
             typing_corrected_results);
   }
 
-  // Literal-at-least-second parameter is now defined as flag.
-  typing_correction_mixing_params.literal_at_least_second =
-      request.request()
-          .decoder_experiment_params()
-          .typing_correction_literal_at_least_second();
-
   return typing_correction_mixing_params;
 }
 
