@@ -2105,19 +2105,6 @@ bool UserHistoryPredictor::IsValidSuggestionForMixedConversion(
     return false;
   }
 
-  const auto &params = request.request().decoder_experiment_params();
-
-  if (params.enable_history_prediction_triggering_v2()) {
-    const uint32_t freq =
-        std::max(entry.suggestion_freq(), entry.conversion_freq());
-    const int remaining_len =
-        std::max<int>(0, Util::CharsLen(entry.key()) - prefix_len);
-    return freq - params.history_prediction_min_freq() -
-               params.history_prediction_remaining_char_length_weight() *
-                   remaining_len >=
-           0.0f;
-  }
-
   return true;
 }
 
