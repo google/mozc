@@ -168,7 +168,7 @@ class NBestGenerator {
                       const std::string &original_key,
                       Segment::Candidate *candidate);
 
-  void MakeCandidateFromBestPath(Segment::Candidate *candidate);
+  bool MakeCandidateFromBestPath(Segment::Candidate *candidate);
   void MakePrefixCandidateFromBestPath(Segment::Candidate *candidate);
 
   void MakeCandidate(Segment::Candidate *candidate, int32_t cost,

@@ -282,9 +282,8 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
     const QueueElement *elm = element->next;
     for (; elm->next != nullptr; elm = elm->next) {
       nodes.push_back(elm->node);
-      if (elm->next != nullptr &&
-          IsBetweenAlphabets(*elm->node, *elm->next->node)) {
-        continue;
+      if (IsBetweenAlphabets(*elm->node, *elm->next->node)) {
+        return CandidateFilter::BAD_CANDIDATE;
       }
       if (segmenter_->IsBoundary(*elm->node, *elm->next->node, false)) {
         break;
@@ -563,6 +562,15 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::BoundaryCheck(
     return VALID;
   }
 
+  // We don't want to connect alphabet words. Note: The BOS and EOS have "BOS"
+  // and "EOS" in their values, respectively. So the emptiness of `key` is
+  // checked.
+  if (!lnode->key.empty() && !rnode->key.empty() &&
+      absl::ascii_isalpha(lnode->value.back()) &&
+      absl::ascii_isalpha(rnode->value.front())) {
+    return INVALID;
+  }
+
   switch (options_.boundary_mode) {
     case STRICT:
       return NBestGenerator::CheckStrict(lnode, rnode, is_edge);
@@ -627,15 +635,18 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
   }
 }
 
-void NBestGenerator::MakeCandidateFromBestPath(Segment::Candidate *candidate) {
+bool NBestGenerator::MakeCandidateFromBestPath(Segment::Candidate *candidate) {
   top_nodes_.clear();
   int total_wcost = 0;
   for (const Node *node = begin_node_->next; node != end_node_;
        node = node->next) {
-    top_nodes_.push_back(node);
     if (node != begin_node_->next) {
+      if (IsBetweenAlphabets(*top_nodes_.back(), *node)) {
+        return false;
+      }
       total_wcost += node->wcost;
     }
+    top_nodes_.push_back(node);
   }
   DCHECK(!top_nodes_.empty());
 
@@ -649,6 +660,7 @@ void NBestGenerator::MakeCandidateFromBestPath(Segment::Candidate *candidate) {
                     begin_node_->next->wcost;
 
   MakeCandidate(candidate, cost, structure_cost, wcost, top_nodes_);
+  return true;
 }
 
 void NBestGenerator::MakePrefixCandidateFromBestPath(
@@ -691,7 +703,9 @@ int NBestGenerator::InsertTopResult(const ConversionRequest &request,
       CandidateMode::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT) {
     MakePrefixCandidateFromBestPath(candidate);
   } else {
-    MakeCandidateFromBestPath(candidate);
+    if (!MakeCandidateFromBestPath(candidate)) {
+      return CandidateFilter::STOP_ENUMERATION;
+    }
   }
   if (request.request_type() == ConversionRequest::SUGGESTION) {
     candidate->attributes |= Segment::Candidate::REALTIME_CONVERSION;

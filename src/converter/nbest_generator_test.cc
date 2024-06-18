@@ -29,6 +29,7 @@
 
 #include "converter/nbest_generator.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -332,6 +333,93 @@ TEST_F(NBestGeneratorTest, NoPartialCandidateBetweenAlphabets) {
   nbest_generator->SetCandidates(request, "", 10, &result_segment);
   EXPECT_THAT(result_segment, HasSingleCandidate(::testing::Field(
                                   "value", &Segment::Candidate::value, "AAA")));
+}
+
+TEST_F(NBestGeneratorTest, NoAlphabetsConnection2Nodes) {
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
+  ImmutableConverter *converter = data_and_converter->GetConverter();
+
+  Segments segments;
+  std::string kText = "eupho";
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::FREE);
+    segment->set_key(kText);
+  }
+
+  Lattice lattice;
+  lattice.SetKey(kText);
+  ConversionRequest request;
+  request.set_request_type(ConversionRequest::CONVERSION);
+  converter->MakeLattice(request, &segments, &lattice);
+
+  std::vector<uint16_t> group;
+  converter->MakeGroup(segments, &group);
+  converter->Viterbi(segments, &lattice);
+
+  std::unique_ptr<NBestGenerator> nbest_generator =
+      data_and_converter->CreateNBestGenerator(&lattice);
+
+  constexpr bool kSingleSegment = true;  // For real time conversion
+  const Node *begin_node = lattice.bos_nodes();
+  const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
+                                    group, kSingleSegment);
+  nbest_generator->Reset(
+      begin_node, end_node,
+      {NBestGenerator::ONLY_EDGE, NBestGenerator::FILL_INNER_SEGMENT_INFO});
+  Segment result_segment;
+  nbest_generator->SetCandidates(request, "", 10, &result_segment);
+  // The test dictionary contains key value pairs (eu, EU) and (pho, pho), but
+  // "EUpho" should not be generated as it is a concatenation of two alphabet
+  // words. The only expected candidate is (eupho, eupho).
+  EXPECT_THAT(result_segment,
+              HasSingleCandidate(::testing::Field(
+                  "value", &Segment::Candidate::value, "eupho")));
+}
+
+TEST_F(NBestGeneratorTest, NoAlphabetsConnection3Nodes) {
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
+  ImmutableConverter *converter = data_and_converter->GetConverter();
+
+  Segments segments;
+  std::string kText = "euphoとうきょう";
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::FREE);
+    segment->set_key(kText);
+  }
+
+  Lattice lattice;
+  lattice.SetKey(kText);
+  ConversionRequest request;
+  request.set_request_type(ConversionRequest::CONVERSION);
+  converter->MakeLattice(request, &segments, &lattice);
+
+  std::vector<uint16_t> group;
+  converter->MakeGroup(segments, &group);
+  converter->Viterbi(segments, &lattice);
+
+  std::unique_ptr<NBestGenerator> nbest_generator =
+      data_and_converter->CreateNBestGenerator(&lattice);
+
+  constexpr bool kSingleSegment = true;  // For real time conversion
+  const Node *begin_node = lattice.bos_nodes();
+  const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
+                                    group, kSingleSegment);
+  nbest_generator->Reset(
+      begin_node, end_node,
+      {NBestGenerator::ONLY_EDGE, NBestGenerator::FILL_INNER_SEGMENT_INFO});
+  Segment result_segment;
+  nbest_generator->SetCandidates(request, "", 10, &result_segment);
+  // Tne top candidate consists of two elements, "eupho" and "東京". Such
+  // connection from English word to a noraml word is possible.
+  ASSERT_GE(result_segment.candidates_size(), 1);
+  EXPECT_EQ(result_segment.candidate(0).value, "eupho東京");
+  EXPECT_EQ(result_segment.candidate(0).inner_segment_boundary.size(), 2);
+  // However, we should not concatenate "EU", "pho", and "東京".
+  for (size_t i = 0; i < result_segment.candidates_size(); ++i) {
+    EXPECT_NE(result_segment.candidate(i).value, "EUpho東京");
+  }
 }
 
 }  // namespace mozc
