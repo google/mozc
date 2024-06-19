@@ -1134,10 +1134,21 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
 
   const bool is_zero_query =
       ((request_type == ZERO_QUERY_SUGGESTION) && (input_key_len == 0));
-  const size_t max_prediction_size =
-      is_zero_query
-          ? request.max_user_history_prediction_candidates_size_for_zero_query()
-          : request.max_user_history_prediction_candidates_size();
+  size_t max_prediction_size =
+      request.max_user_history_prediction_candidates_size();
+  size_t max_prediction_char_coverage =
+      request.request()
+          .decoder_experiment_params()
+          .user_history_prediction_max_char_coverage();
+
+  if (is_zero_query) {
+    max_prediction_size =
+        request.max_user_history_prediction_candidates_size_for_zero_query();
+  } else if (max_prediction_char_coverage > 0) {
+    // When char coverage feature is enabled,
+    // set a fixed value so that we can enumerate enough candidates.
+    max_prediction_size = 3;
+  }
 
   EntryPriorityQueue results;
   GetResultsFromHistoryDictionary(request_type, request, *segments, prev_entry,
@@ -1147,8 +1158,8 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  return InsertCandidates(request_type, request, max_prediction_size, segments,
-                          &results);
+  return InsertCandidates(request_type, request, max_prediction_size,
+                          max_prediction_char_coverage, segments, &results);
 }
 
 bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
@@ -1386,6 +1397,7 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
 bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
                                             const ConversionRequest &request,
                                             size_t max_prediction_size,
+                                            size_t max_prediction_char_coverage,
                                             Segments *segments,
                                             EntryPriorityQueue *results) const {
   DCHECK(results);
@@ -1402,6 +1414,8 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
   const uint32_t input_key_len = Util::CharsLen(segment->key());
 
   size_t inserted_num = 0;
+  size_t inserted_char_coverage = 0;
+
   while (inserted_num < max_prediction_size) {
     // |results| is a priority queue where the element
     // in the queue is sorted by the score defined in GetScore().
@@ -1418,6 +1432,14 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       return false;
     } else if (result == BAD_RESULT) {
       continue;
+    }
+
+    // Break when the accumulated character length exceeds the
+    // `max_prediction_char_coverage`. Allows to add at least one candidate.
+    const size_t value_len = Util::CharsLen(result_entry->value());
+    if (max_prediction_char_coverage > 0 && inserted_num > 0 &&
+        inserted_char_coverage + value_len > max_prediction_char_coverage) {
+      break;
     }
 
     Segment::Candidate *candidate = segment->push_back_candidate();
@@ -1448,6 +1470,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
     }
 #endif  // DEBUG
     ++inserted_num;
+    inserted_char_coverage += value_len;
   }
 
   return inserted_num > 0;
@@ -1803,14 +1826,14 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   }
 }
 
-void UserHistoryPredictor::MakeLearningSegments(
-    const Segments &segments, SegmentsForLearning *learning_segments) const {
-  DCHECK(learning_segments);
+UserHistoryPredictor::SegmentsForLearning
+UserHistoryPredictor::MakeLearningSegments(const Segments &segments) const {
+  SegmentsForLearning learning_segments;
 
   for (const Segment &segment : segments.history_segments()) {
     DCHECK_LE(1, segment.candidates_size());
     auto &candidate = segment.candidate(0);
-    learning_segments->history_segments.push_back(
+    learning_segments.history_segments.push_back(
         {candidate.key, candidate.value, candidate.content_key,
          candidate.content_value, GetDescription(candidate)});
   }
@@ -1821,29 +1844,32 @@ void UserHistoryPredictor::MakeLearningSegments(
     absl::StrAppend(&all_key, candidate.key);
     absl::StrAppend(&all_value, candidate.value);
     if (candidate.inner_segment_boundary.empty()) {
-      learning_segments->conversion_segments.push_back(
+      learning_segments.conversion_segments.push_back(
           {candidate.key, candidate.value, candidate.content_key,
            candidate.content_value, GetDescription(candidate)});
     } else {
       for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
            !iter.Done(); iter.Next()) {
-        learning_segments->conversion_segments.push_back(
+        learning_segments.conversion_segments.push_back(
             {std::string(iter.GetKey()), std::string(iter.GetValue()),
              std::string(iter.GetContentKey()),
              std::string(iter.GetContentValue()), ""});
       }
     }
   }
-  learning_segments->conversion_segments_key = std::move(all_key);
-  learning_segments->conversion_segments_value = std::move(all_value);
+
+  learning_segments.conversion_segments_key = std::move(all_key);
+  learning_segments.conversion_segments_value = std::move(all_value);
+
+  return learning_segments;
 }
 
 void UserHistoryPredictor::InsertHistory(RequestType request_type,
                                          bool is_suggestion_selected,
                                          uint64_t last_access_time,
                                          Segments *segments) {
-  SegmentsForLearning learning_segments;
-  MakeLearningSegments(*segments, &learning_segments);
+  const SegmentsForLearning learning_segments = MakeLearningSegments(*segments);
+
   InsertHistoryForConversionSegments(request_type, is_suggestion_selected,
                                      last_access_time, learning_segments,
                                      segments);

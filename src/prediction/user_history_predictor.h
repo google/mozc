@@ -396,11 +396,11 @@ class UserHistoryPredictor : public PredictorInterface {
 
   bool InsertCandidates(RequestType request_type,
                         const ConversionRequest &request,
-                        size_t max_prediction_size, Segments *segments,
+                        size_t max_prediction_size,
+                        size_t max_prediction_char_coverage, Segments *segments,
                         EntryPriorityQueue *results) const;
 
-  void MakeLearningSegments(const Segments &segments,
-                            SegmentsForLearning *learning_segments) const;
+  SegmentsForLearning MakeLearningSegments(const Segments &segments) const;
 
   // Returns true if |prefix| is a fuzzy-prefix of |str|.
   // 'Fuzzy' means that

@@ -37,6 +37,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
@@ -4355,5 +4356,41 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
   }
 }
+
+TEST_F(UserHistoryPredictorTest, MaxCharCoverage) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  Segments segments;
+
+  {
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    AddCandidate(0, "てすと", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+  {
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    AddCandidate(0, "テスト", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+  {
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    AddCandidate(0, "Test", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+
+  // [max_char_coverage, expected_candidate_size]
+  const std::vector<std::pair<int, int>> kTestCases = {
+      {1, 1}, {2, 1}, {3, 1}, {4, 1},  {5, 1}, {6, 2},
+      {7, 2}, {8, 2}, {9, 2}, {10, 3}, {11, 3}};
+
+  for (const auto &[coverage, candidates_size] : kTestCases) {
+    request_->mutable_decoder_experiment_params()
+        ->set_user_history_prediction_max_char_coverage(coverage);
+    MakeSegmentsForSuggestion("てすと", &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_EQ(segments.segment(0).candidates_size(), candidates_size);
+  }
+
+}  // namespace mozc::prediction
 
 }  // namespace mozc::prediction
