@@ -73,8 +73,12 @@ UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
   const uint32_t *conjugation_suffix_data_index =
       reinterpret_cast<const uint32_t *>(conjugation_suffix_index_data.data());
 
-  DCHECK(SerializedStringArray::VerifyData(string_array_data));
-  string_array_.Set(string_array_data);
+  if (SerializedStringArray::VerifyData(string_array_data)) {
+    string_array_.Set(string_array_data);
+  } else {
+    // \0\0\0\0 is the header value of the data size.
+    string_array_.Set({"\0\0\0\0", 4});
+  }
 
   UsageDictItemIterator begin(usage_items_data.data());
   UsageDictItemIterator end(usage_items_data.data() + usage_items_data.size());

@@ -115,6 +115,9 @@ class UsageRewriter : public RewriterInterface {
   const dictionary::DictionaryInterface *dictionary_;
   const uint32_t *base_conjugation_suffix_;
   SerializedStringArray string_array_;
+
+ private:
+  friend class UsageRewriterPeer;
 };
 
 }  // namespace mozc

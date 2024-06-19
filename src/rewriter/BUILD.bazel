@@ -1333,6 +1333,7 @@ mozc_cc_test(
     deps = [
         ":rewriter_interface",
         ":usage_rewriter",
+        "//base/container:serialized_string_array",
         "//config:config_handler",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",

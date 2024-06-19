@@ -32,8 +32,10 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/strings/string_view.h"
+#include "base/container/serialized_string_array.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -47,6 +49,7 @@
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -56,6 +59,8 @@ namespace {
 using dictionary::SuppressionDictionary;
 using dictionary::UserDictionary;
 using dictionary::UserPos;
+using ::testing::_;
+using ::testing::SetArgPointee;
 
 void AddCandidate(const absl::string_view key, const absl::string_view value,
                   const absl::string_view content_key,
@@ -69,6 +74,29 @@ void AddCandidate(const absl::string_view key, const absl::string_view value,
 
 }  // namespace
 
+class UsageRewriterPeer {
+ public:
+  UsageRewriterPeer(std::unique_ptr<UsageRewriter> rewriter) {
+    rewriter_ = std::move(rewriter);
+  }
+
+  SerializedStringArray get_string_array() { return rewriter_->string_array_; }
+
+ private:
+  std::unique_ptr<UsageRewriter> rewriter_;
+};
+
+class TestDataManager : public testing::MockDataManager {
+ public:
+  MOCK_METHOD(void, GetUsageRewriterData,
+              (absl::string_view * base_conjugation_suffix_data,
+               absl::string_view *conjugation_suffix_data,
+               absl::string_view *conjugation_index_data,
+               absl::string_view *usage_items_data,
+               absl::string_view *string_array_data),
+              (const, override));
+};
+
 class UsageRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   UsageRewriterTest() {
@@ -80,6 +108,7 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
     config::ConfigHandler::GetDefaultConfig(&config_);
 
     data_manager_ = std::make_unique<testing::MockDataManager>();
+    test_data_manager_ = std::make_unique<TestDataManager>();
     pos_matcher_.Set(data_manager_->GetPosMatcherData());
     suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
     user_dictionary_ = std::make_unique<UserDictionary>(
@@ -96,6 +125,10 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
     return new UsageRewriter(data_manager_.get(), user_dictionary_.get());
   }
 
+  UsageRewriter *CreateUsageRewriterWithTestDataManager() const {
+    return new UsageRewriter(test_data_manager_.get(), user_dictionary_.get());
+  }
+
   ConversionRequest convreq_;
   commands::Request request_;
   config::Config config_;
@@ -103,8 +136,26 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<UserDictionary> user_dictionary_;
   std::unique_ptr<testing::MockDataManager> data_manager_;
+  std::unique_ptr<TestDataManager> test_data_manager_;
   dictionary::PosMatcher pos_matcher_;
 };
+
+TEST_F(UsageRewriterTest, ConstructorTest) {
+  EXPECT_CALL(*test_data_manager_, GetUsageRewriterData(_, _, _, _, _))
+      .WillOnce(SetArgPointee<4>(""));
+  pos_matcher_.Set(test_data_manager_->GetPosMatcherData());
+  user_dictionary_ = std::make_unique<UserDictionary>(
+      UserPos::CreateFromDataManager(*test_data_manager_), pos_matcher_,
+      suppression_dictionary_.get());
+
+  std::unique_ptr<UsageRewriter> rewriter(
+      CreateUsageRewriterWithTestDataManager());
+
+  UsageRewriterPeer rewriter_peer(std::move(rewriter));
+  EXPECT_TRUE(rewriter_peer.get_string_array().empty());
+  EXPECT_TRUE(SerializedStringArray::VerifyData(
+      rewriter_peer.get_string_array().data()));
+}
 
 TEST_F(UsageRewriterTest, CapabilityTest) {
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
