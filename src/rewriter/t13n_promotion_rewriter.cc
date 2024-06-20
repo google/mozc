@@ -53,7 +53,6 @@ namespace {
 // keys) and katakana T13n candidates (Katakana variants for other keys) will
 // be promoted.
 constexpr size_t kLatinT13nOffset = 3;
-constexpr size_t kKatakanaT13nOffset = 5;
 
 bool IsLatinInputMode(const ConversionRequest &request) {
   return (request.has_composer() &&
@@ -100,10 +99,18 @@ bool MaybeInsertLatinT13n(Segment *segment) {
   return pos != insert_pos;
 }
 
-bool MaybePromoteKatakana(Segment *segment) {
+bool MaybePromoteKatakana(const ConversionRequest &request, Segment *segment) {
   if (segment->meta_candidates_size() <= transliteration::FULL_KATAKANA) {
     return false;
   }
+  if (request.request()
+          .decoder_experiment_params()
+          .katakana_promotion_offset() < 0) {
+    return false;
+  }
+
+  const size_t katakana_t13n_offset =
+      request.request().decoder_experiment_params().katakana_promotion_offset();
 
   const Segment::Candidate &katakana_candidate =
       segment->meta_candidate(transliteration::FULL_KATAKANA);
@@ -113,7 +120,7 @@ bool MaybePromoteKatakana(Segment *segment) {
   }
 
   for (size_t i = 0;
-       i < std::min(segment->candidates_size(), kKatakanaT13nOffset); ++i) {
+       i < std::min(segment->candidates_size(), katakana_t13n_offset); ++i) {
     if (segment->candidate(i).value == katakana_value) {
       // No need to promote or insert.
       return false;
@@ -121,7 +128,7 @@ bool MaybePromoteKatakana(Segment *segment) {
   }
 
   Segment::Candidate insert_candidate = katakana_candidate;
-  size_t index = kKatakanaT13nOffset;
+  size_t index = katakana_t13n_offset;
   for (; index < segment->candidates_size(); ++index) {
     if (segment->candidate(index).value == katakana_value) {
       break;
@@ -129,7 +136,7 @@ bool MaybePromoteKatakana(Segment *segment) {
   }
 
   const size_t insert_pos =
-      RewriterUtil::CalculateInsertPosition(*segment, kKatakanaT13nOffset);
+      RewriterUtil::CalculateInsertPosition(*segment, katakana_t13n_offset);
   if (index < segment->candidates_size()) {
     const Segment::Candidate insert_candidate = segment->candidate(index);
     *(segment->insert_candidate(insert_pos)) = insert_candidate;
@@ -144,7 +151,7 @@ bool MaybePromoteT13n(const ConversionRequest &request, Segment *segment) {
   if (IsLatinInputMode(request) || Util::IsAscii(segment->key())) {
     return MaybeInsertLatinT13n(segment);
   }
-  return MaybePromoteKatakana(segment);
+  return MaybePromoteKatakana(request, segment);
 }
 
 }  // namespace

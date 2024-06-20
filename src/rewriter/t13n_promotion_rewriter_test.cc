@@ -189,6 +189,57 @@ TEST_F(T13nPromotionRewriterTest, PromoteKatakana) {
   EXPECT_EQ(segment->candidate(promoted_index).rid, 1);
 }
 
+TEST_F(T13nPromotionRewriterTest, PromoteKatakanaOffset) {
+  T13nPromotionRewriter rewriter;
+
+  Segments segments;
+  composer_.SetInputMode(transliteration::HIRAGANA);
+  composer_.SetPreeditTextForTestOnly("きょう");
+  Segment *segment = segments.push_back_segment();
+  segment->set_key("きょう");
+  AddCandidateWithValue("今日", segment);
+  AddCandidateWithValue("きょう", segment);
+  AddCandidateWithValue("強", segment);
+  AddCandidateWithValue("教", segment);
+  AddCandidateWithValue("凶", segment);
+  AddCandidateWithValue("卿", segment);
+  AddCandidateWithValue("京", segment);
+  AddCandidateWithValue("キョウ", segment);
+
+  const int katakana_index = GetCandidateIndexByValue("キョウ", *segment);
+  EXPECT_EQ(katakana_index, 7);
+
+  EXPECT_TRUE(t13n_rewriter_->Rewrite(mobile_conv_request_, &segments));
+
+  {
+    mobile_request_.mutable_decoder_experiment_params()
+        ->set_katakana_promotion_offset(-1);
+    // Not promoted
+    EXPECT_FALSE(rewriter.Rewrite(mobile_conv_request_, &segments));
+  }
+  {
+    mobile_request_.mutable_decoder_experiment_params()
+        ->set_katakana_promotion_offset(6);
+    EXPECT_TRUE(rewriter.Rewrite(mobile_conv_request_, &segments));
+    const int promoted_index = GetCandidateIndexByValue("キョウ", *segment);
+    EXPECT_EQ(promoted_index, 6);
+  }
+  {
+    mobile_request_.mutable_decoder_experiment_params()
+        ->set_katakana_promotion_offset(1);
+    EXPECT_TRUE(rewriter.Rewrite(mobile_conv_request_, &segments));
+    const int promoted_index = GetCandidateIndexByValue("キョウ", *segment);
+    EXPECT_EQ(promoted_index, 1);
+  }
+  {
+    mobile_request_.mutable_decoder_experiment_params()
+        ->set_katakana_promotion_offset(0);
+    EXPECT_TRUE(rewriter.Rewrite(mobile_conv_request_, &segments));
+    const int promoted_index = GetCandidateIndexByValue("キョウ", *segment);
+    EXPECT_EQ(promoted_index, 0);
+  }
+}
+
 TEST_F(T13nPromotionRewriterTest, KatakanaIsAlreadyRankedHigh) {
   T13nPromotionRewriter rewriter;
 
