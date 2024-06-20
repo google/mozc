@@ -40,7 +40,6 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "request/request_util.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/rewriter_util.h"
 #include "transliteration/transliteration.h"
@@ -144,9 +143,6 @@ bool MaybePromoteKatakana(Segment *segment) {
 bool MaybePromoteT13n(const ConversionRequest &request, Segment *segment) {
   if (IsLatinInputMode(request) || Util::IsAscii(segment->key())) {
     return MaybeInsertLatinT13n(segment);
-  }
-  if (request_util::IsFindabilityOrientedOrderEnabled(request)) {
-    return false;
   }
   return MaybePromoteKatakana(segment);
 }
