@@ -608,10 +608,8 @@ message DecoderExperimentParams {
   optional bool user_segment_history_rewriter_use_inner_segments = 54
       [default = false];
 
-  optional bool filter_noisy_number_candidate = 45 [default = false];
-
   // Changes the size of history with character coverage.
-  optional int32 user_history_prediction_max_char_coverage = 82 [ default = 0];
+  optional int32 user_history_prediction_max_char_coverage = 82 [default = 0];
 
   // Parameter for space-insertion for English compounds
   // value 0: no insertion. Candidates will be like this.
@@ -632,7 +630,7 @@ message DecoderExperimentParams {
 
   optional int32 max_composition_event_to_process = 64 [default = 2];
 
-      // Fix the bug on the literal_on_top correction.
+  // Fix the bug on the literal_on_top correction.
   optional bool fix_literal_on_top = 65 [default = false];
 
   // Remove user history prediction entry when its selected ratio is lower

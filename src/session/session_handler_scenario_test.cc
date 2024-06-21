@@ -319,12 +319,6 @@ INSTANTIATE_TEST_SUITE_P(
             []() {
               auto request = GetMobileRequest();
               request.mutable_decoder_experiment_params()
-                  ->set_filter_noisy_number_candidate(true);
-              return request;
-            }(),
-            []() {
-              auto request = GetMobileRequest();
-              request.mutable_decoder_experiment_params()
                   ->set_user_segment_history_rewriter_new_replaceable(true);
               return request;
             }(),

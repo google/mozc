@@ -1078,11 +1078,7 @@ TEST_P(CandidateFilterTestWithParam, FilterNoisyNumberCandidate) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> nodes1;
   request_->set_request_type(type);
-  commands::Request req = commands::Request::default_instance();
-  req.mutable_decoder_experiment_params()->set_filter_noisy_number_candidate(
-      true);
-  request_->set_request(&req);
-
+  request_->set_create_partial_candidates(true);
   {
     Node *n1 = NewNode();
     n1->key = "さん";
