@@ -48,6 +48,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "absl/types/span.h"
 #include "base/clock_mock.h"
 #include "base/container/trie.h"
 #include "base/file/temp_dir.h"
@@ -4390,7 +4391,102 @@ TEST_F(UserHistoryPredictorTest, MaxCharCoverage) {
     EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(segments.segment(0).candidates_size(), candidates_size);
   }
+}
 
-}  // namespace mozc::prediction
+TEST_F(UserHistoryPredictorTest, RemoveRedundantCandidates) {
+  // pass the input candidates and expected (filtered) candidates.
+  auto run_test = [this](int filter_mode,
+                         absl::Span<const absl::string_view> candidates,
+                         absl::Span<const absl::string_view> expected) {
+    ScopedClockMock clock(absl::FromUnixSeconds(1));
+    UserHistoryPredictor *predictor =
+        GetUserHistoryPredictorWithClearedHistory();
+    Segments segments;
+    // Insert in reverse order to emulate LRU.
+    for (auto it = candidates.rbegin(); it != candidates.rend(); ++it) {
+      clock->Advance(absl::Hours(1));
+      SetUpInputForPrediction("とうき", composer_.get(), &segments);
+      AddCandidate(0, *it, &segments);
+      predictor->Finish(*convreq_, &segments);
+    }
+    convreq_->set_max_user_history_prediction_candidates_size(10);
+    request_->mutable_decoder_experiment_params()
+        ->set_user_history_prediction_filter_redundant_candidates_mode(
+            filter_mode);
+    MakeSegmentsForSuggestion("とうき", &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(segments.segments_size(), 1);
+    ASSERT_EQ(expected.size(), segments.segment(0).candidates_size());
+    for (int i = 0; i < expected.size(); ++i) {
+      EXPECT_EQ(expected[i], segments.segment(0).candidate(i).value);
+    }
+  };
+
+  // filter long entries.
+  run_test(1, {"東京", "東京は"}, {"東京"});
+  run_test(1, {"東京", "東京は", "東京で"}, {"東京"});
+  run_test(1, {"東京は", "東京で", "東京"}, {"東京は", "東京で", "東京"});
+
+  // filter short entries.
+  run_test(2, {"東京", "東京は"}, {"東京", "東京は"});
+  run_test(2, {"東京", "東京は", "東京で"}, {"東京", "東京は", "東京で"});
+  run_test(2, {"東京は", "東京で", "東京"}, {"東京は", "東京で"});
+
+  // replace short entries.
+  run_test(4, {"東京", "東京は"}, {"東京", "東京は"});
+  run_test(4, {"東京は", "東京"}, {"東京"});
+  // only replace the first entry.
+  run_test(4, {"東京は", "東京で", "東京"}, {"東京", "東京で"});
+
+  // filter long and short entries.
+  run_test(1 + 2, {"東京は", "東京", "大阪", "大阪は"}, {"東京は", "大阪"});
+  run_test(1 + 2, {"東京", "東京は", "大阪は", "大阪"}, {"東京", "大阪は"});
+
+  // filter long and replace short entries.
+  run_test(1 + 4, {"東京は", "東京", "大阪", "大阪は"}, {"東京", "大阪"});
+  run_test(1 + 4, {"東京", "東京は", "大阪は", "大阪"}, {"東京", "大阪"});
+
+  // Suffix is non hiragana
+  // Default setting doesn't allow non-hiragana suffix.
+  run_test(1 + 2, {"東京駅", "東京", "大阪", "大阪駅"},
+           {"東京駅", "東京", "大阪", "大阪駅"});
+  run_test(1 + 2, {"東京", "東京駅", "大阪駅", "大阪"},
+           {"東京", "東京駅", "大阪駅", "大阪"});
+
+  // filter long and replace short entries.
+  run_test(1 + 4, {"東京駅", "東京", "大阪", "大阪駅"},
+           {"東京駅", "東京", "大阪", "大阪駅"});
+  run_test(1 + 4, {"東京", "東京駅", "大阪駅", "大阪"},
+           {"東京", "東京駅", "大阪駅", "大阪"});
+
+  // filter long and short entries.
+  run_test(1 + 2, {"東京は", "東京", "大阪", "大阪駅"},
+           {"東京は", "大阪", "大阪駅"});
+  run_test(1 + 2, {"東京", "東京は", "大阪駅", "大阪"},
+           {"東京", "大阪駅", "大阪"});
+
+  // filter long and replace short entries.
+  run_test(1 + 4, {"東京は", "東京", "大阪", "大阪駅"},
+           {"東京", "大阪", "大阪駅"});
+  run_test(1 + 4, {"東京", "東京は", "大阪駅", "大阪"},
+           {"東京", "大阪駅", "大阪"});
+
+  // Allows non-hiragana suffix.
+  // filter long and short entries.
+  run_test(1 + 2 + 8, {"東京駅", "東京", "大阪", "大阪駅"}, {"東京駅", "大阪"});
+  run_test(1 + 2 + 8, {"東京", "東京駅", "大阪駅", "大阪"}, {"東京", "大阪駅"});
+
+  // filter long and replace short entries.
+  run_test(1 + 4 + 8, {"東京駅", "東京", "大阪", "大阪駅"}, {"東京", "大阪"});
+  run_test(1 + 4 + 8, {"東京", "東京駅", "大阪駅", "大阪"}, {"東京", "大阪"});
+
+  // filter long and short entries.
+  run_test(1 + 2 + 8, {"東京は", "東京", "大阪", "大阪駅"}, {"東京は", "大阪"});
+  run_test(1 + 2 + 8, {"東京", "東京は", "大阪駅", "大阪"}, {"東京", "大阪駅"});
+
+  // filter long and replace short entries.
+  run_test(1 + 4 + 8, {"東京は", "東京", "大阪", "大阪駅"}, {"東京", "大阪"});
+  run_test(1 + 4 + 8, {"東京", "東京は", "大阪駅", "大阪"}, {"東京", "大阪"});
+}
 
 }  // namespace mozc::prediction

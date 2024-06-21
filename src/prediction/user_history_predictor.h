@@ -143,9 +143,9 @@ class UserHistoryPredictor : public PredictorInterface {
   }
 
   // From user_history_predictor.proto
-  typedef user_history_predictor::UserHistory::Entry Entry;
-  typedef user_history_predictor::UserHistory::NextEntry NextEntry;
-  typedef user_history_predictor::UserHistory::Entry::EntryType EntryType;
+  using Entry = user_history_predictor::UserHistory::Entry;
+  using NextEntry = user_history_predictor::UserHistory::NextEntry;
+  using EntryType = user_history_predictor::UserHistory::Entry::EntryType;
 
   // Returns fingerprints from various object.
   static uint32_t Fingerprint(absl::string_view key, absl::string_view value);
@@ -328,8 +328,8 @@ class UserHistoryPredictor : public PredictorInterface {
     Entry *NewEntry();
 
    private:
-    typedef std::pair<uint32_t, Entry *> QueueElement;
-    typedef std::priority_queue<QueueElement> Agenda;
+    using QueueElement = std::pair<uint32_t, Entry *>;
+    using Agenda = std::priority_queue<QueueElement>;
 
     friend class UserHistoryPredictor;
 
@@ -340,8 +340,8 @@ class UserHistoryPredictor : public PredictorInterface {
     absl::flat_hash_set<size_t> seen_;
   };
 
-  typedef mozc::storage::LruCache<uint32_t, Entry> DicCache;
-  typedef DicCache::Element DicElement;
+  using DicCache = mozc::storage::LruCache<uint32_t, Entry>;
+  using DicElement = DicCache::Element;
 
   bool CheckSyncerAndDelete() const;
 

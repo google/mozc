@@ -43,6 +43,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
@@ -1413,8 +1414,79 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
   }
   const uint32_t input_key_len = Util::CharsLen(segment->key());
 
+  const int filter_mode =
+      request.request()
+          .decoder_experiment_params()
+          .user_history_prediction_filter_redundant_candidates_mode();
+
   size_t inserted_num = 0;
   size_t inserted_char_coverage = 0;
+
+  std::vector<const UserHistoryPredictor::Entry *> entries;
+  entries.reserve(results->size());
+
+  // Bit fields to specify the filtering mode.
+  enum FilterMode {
+    // Current LRU-based candidates = ["東京"]
+    //  target="東京は" -> Remove.   (target is longer)
+    //  target="東"     -> Keep.     (target is shorter)
+    FILTER_LONG_ENTRY = 1,
+
+    // Current LRU-based candidates = ["東京は"]
+    //  target="東京"     -> Remove. (target is shorter)
+    //  target="東京はが" -> Keep.   (target is longer)
+    FILTER_SHORT_ENTRY = 2,
+
+    // Current LRU-based candidates = ["東京は"]
+    //   target="東京" -> Replace "東京は" and "東京"
+    // FILTER_SHORT_ENTRY and REPLACE_SHORT_ENTRY are exclusive.
+    REPLACE_SHORT_ENTRY = 4,
+
+    // - Non-shared suffix can be any script type.
+    //   Note that this flag is for prefix match.
+    //  Current LRU-based candidates = ["東京"]
+    //   target="東京タワー" -> Remove. (suffix can be any type)
+    SUFFIX_IS_ALL_CHAR_TYPE = 8,
+  };
+
+  auto starts_with = [&filter_mode](absl::string_view text,
+                                    absl::string_view prefix) {
+    if (filter_mode & SUFFIX_IS_ALL_CHAR_TYPE) {
+      return absl::StartsWith(text, prefix);
+    }
+    return absl::StartsWith(text, prefix) &&
+           Util::IsScriptType(text.substr(prefix.size()), Util::HIRAGANA);
+  };
+
+  auto is_redandant = [&](absl::string_view target,
+                          absl::string_view inserted) {
+    return ((filter_mode & FILTER_LONG_ENTRY) &&
+            starts_with(target, inserted)) ||
+           ((filter_mode & FILTER_SHORT_ENTRY) &&
+            starts_with(inserted, target));
+  };
+
+  auto is_redandant_entry = [&](const Entry &entry) {
+    return absl::c_find_if(entries, [&](const Entry *inserted_entry) {
+             return is_redandant(entry.value(), inserted_entry->value());
+           }) != entries.end();
+  };
+
+  // Replace `entry` with the one entry in `entries`.
+  auto maybe_replace_entry = [&](const Entry *entry) {
+    if (!(filter_mode & REPLACE_SHORT_ENTRY)) return false;
+
+    auto it = absl::c_find_if(entries, [&](const Entry *inserted_entry) {
+      return starts_with(inserted_entry->value(), entry->value());
+    });
+    if (it == entries.end()) return false;
+
+    inserted_char_coverage -= Util::CharsLen((*it)->value());
+    inserted_char_coverage += Util::CharsLen(entry->value());
+    *it = entry;
+
+    return true;
+  };
 
   while (inserted_num < max_prediction_size) {
     // |results| is a priority queue where the element
@@ -1429,8 +1501,14 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
         GetResultType(request, request_type, segment->candidates_size() == 0,
                       input_key_len, *result_entry);
     if (result == STOP_ENUMERATION) {
-      return false;
+      break;
     } else if (result == BAD_RESULT) {
+      continue;
+    }
+
+    // Check candidate redundancy.
+    if (filter_mode > 0 && (is_redandant_entry(*result_entry) ||
+                            maybe_replace_entry(result_entry))) {
       continue;
     }
 
@@ -1442,6 +1520,13 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       break;
     }
 
+    entries.emplace_back(result_entry);
+
+    ++inserted_num;
+    inserted_char_coverage += value_len;
+  }
+
+  for (const auto *result_entry : entries) {
     Segment::Candidate *candidate = segment->push_back_candidate();
     DCHECK(candidate);
     candidate->key = result_entry->key();
@@ -1469,11 +1554,9 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       candidate->description += " History";
     }
 #endif  // DEBUG
-    ++inserted_num;
-    inserted_char_coverage += value_len;
   }
 
-  return inserted_num > 0;
+  return !entries.empty();
 }
 
 void UserHistoryPredictor::InsertNextEntry(const NextEntry &next_entry,
