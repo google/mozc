@@ -1,0 +1,43 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "debug_build",
+    values = {
+        "compilation_mode": "dbg",
+    },
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "qt_win",
+    srcs = select({
+        ":debug_build": [
+            "lib/Qt6Cored.lib",
+            "lib/Qt6Guid.lib",
+            "lib/Qt6Widgetsd.lib",
+        ],
+        "//conditions:default": [
+            "lib/Qt6Core.lib",
+            "lib/Qt6Gui.lib",
+            "lib/Qt6Widgets.lib",
+        ],
+    }),
+    hdrs = glob([
+        "include"
+    ]),
+    includes = [
+        "include",
+        "include/QtCore",
+        "include/QtGui",
+        "include/QtWidgets",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+exports_files([
+    "bin/moc.exe",
+    "bin/uic.exe",
+    "bin/rcc.exe",
+])

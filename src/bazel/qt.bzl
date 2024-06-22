@@ -50,6 +50,7 @@ def mozc_cc_qt_library(name, deps = [], **kwargs):
             default = ["//third_party/qt:qt_native"],
             oss_linux = ["@qt_linux//:qt_linux"],
             oss_macos = ["@qt_mac//:qt_mac"],
+            oss_windows = ["@qt_win//:qt_win"],
         ),
         **kwargs
     )
@@ -66,6 +67,7 @@ def mozc_cc_qt_binary(name, deps = [], **kwargs):
             default = ["//third_party/qt:qt_native"],
             oss_linux = ["@qt_linux//:qt_linux"],
             oss_macos = ["@qt_mac//:qt_mac"],
+            oss_windows = ["@qt_win//:qt_win"],
         ),
         **kwargs
     )
@@ -84,11 +86,13 @@ def mozc_qt_moc(name, srcs, outs):
             default = "$(location //third_party/qt:moc) -p $$(dirname $<) -o $@ $(SRCS)",
             oss_linux = "$(location @qt_linux//:libexec/moc) -p $$(dirname $<) -o $@ $(SRCS)",
             oss_macos = "$(location @qt_mac//:libexec/moc) -p $$(dirname $<) -o $@ $(SRCS)",
+            oss_windows = "$(location @qt_win//:bin/moc.exe) -p $$(dirname $<) -o $@ $(SRCS)",
         ),
         tools = mozc_select(
             default = ["//third_party/qt:moc"],
             oss_linux = ["@qt_linux//:libexec/moc"],
             oss_macos = ["@qt_mac//:libexec/moc"],
+            oss_windows = ["@qt_win//:bin/moc.exe"],
         ),
     )
 
@@ -101,11 +105,13 @@ def mozc_qt_uic(name, srcs, outs):
             default = "$(location //third_party/qt:uic) -o $@ $(SRCS)",
             oss_linux = "$(location @qt_linux//:libexec/uic) -o $@ $(SRCS)",
             oss_macos = "$(location @qt_mac//:libexec/uic) -o $@ $(SRCS)",
+            oss_windows = "$(location @qt_win//:bin/uic.exe) -o $@ $(SRCS)",
         ),
         tools = mozc_select(
             default = ["//third_party/qt:uic"],
             oss_linux = ["@qt_linux//:libexec/uic"],
             oss_macos = ["@qt_mac//:libexec/uic"],
+            oss_windows = ["@qt_win//:bin/uic.exe"],
         ),
     )
 
@@ -118,11 +124,13 @@ def mozc_qt_rcc(name, qrc_name, qrc_file, srcs, outs):
             default = "$(location //third_party/qt:rcc) -o $@ -name " + qrc_name + " " + qrc_file,
             oss_linux = "$(location @qt_linux//:libexec/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
             oss_macos = "$(location @qt_mac//:libexec/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
+            oss_windows = "$(location @qt_win//:bin/rcc.exe) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
         ),
         tools = mozc_select(
             default = ["//third_party/qt:rcc"],
             oss_linux = ["@qt_linux//:libexec/rcc"],
             oss_macos = ["@qt_mac//:libexec/rcc"],
+            oss_windows = ["@qt_win//:bin/rcc.exe"],
         ),
     )
 
