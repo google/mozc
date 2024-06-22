@@ -47,6 +47,14 @@ load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library", "register_extension_info")
 
+# Tags aliases for build filtering.
+MOZC_TAGS = struct(
+    ANDROID_ONLY = ["nolinux", "nomac", "nowin"],
+    LINUX_ONLY = ["noandroid", "nomac", "nowin"],
+    MAC_ONLY = ["noandroid", "nolinux", "nowin"],
+    WIN_ONLY = ["noandroid", "nolinux", "nomac"],
+)
+
 def _copts_unsigned_char():
     return select({
         "//:compiler_msvc_like": ["/J"],
@@ -114,6 +122,83 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
 
 register_extension_info(
     extension = mozc_cc_test,
+    label_regex_for_dep = "{extension_name}",
+)
+
+def mozc_cc_win32_library(
+        name,
+        srcs = [],
+        deps = [],
+        hdrs = [],
+        win_def_file = None,
+        tags = MOZC_TAGS.WIN_ONLY,
+        target_compatible_with = ["@platforms//os:windows"],
+        visibility = None,
+        **kwargs):
+    """A rule to build an DLL import library for Win32 system DLLs.
+
+    Args:
+      name: name for cc_library.
+      srcs: stub .cc files to define exported APIs.
+      deps: deps to build stub .cc files.
+      hdrs: header files to define exported APIs.
+      win_def_file: win32 def file to define exported APIs.
+      tags: optional tags.
+      target_compatible_with: optional target_compatible_with.
+      visibility: optional visibility.
+      **kwargs: other args for cc_library.
+    """
+
+    # A DLL name, which actually will not be used in production.
+    # e.g. "input_dll_fake.dll" vs "C:\Windows\System32\input.dll"
+    # The actual DLL name should be specified in the LIBRARY section of
+    # win_def_file.
+    # https://learn.microsoft.com/en-us/cpp/build/reference/library
+    cc_binary_target_name = name + "_fake.dll"
+    filegroup_target_name = name + "_lib"
+    cc_import_taget_name = name + "_import"
+
+    mozc_cc_binary(
+        name = cc_binary_target_name,
+        srcs = srcs,
+        deps = deps,
+        win_def_file = win_def_file,
+        linkshared = 1,
+        tags = tags,
+        target_compatible_with = target_compatible_with,
+        visibility = ["//visibility:private"],
+        **kwargs
+    )
+
+    native.filegroup(
+        name = filegroup_target_name,
+        srcs = [":" + cc_binary_target_name],
+        output_group = "interface_library",
+        tags = tags,
+        target_compatible_with = target_compatible_with,
+        visibility = ["//visibility:private"],
+    )
+
+    native.cc_import(
+        name = cc_import_taget_name,
+        interface_library = ":" + filegroup_target_name,
+        shared_library = ":" + cc_binary_target_name,
+        tags = tags,
+        target_compatible_with = target_compatible_with,
+        visibility = ["//visibility:private"],
+    )
+
+    mozc_cc_library(
+        name = name,
+        hdrs = hdrs,
+        deps = [":" + cc_import_taget_name],
+        tags = tags,
+        target_compatible_with = target_compatible_with,
+        visibility = visibility,
+    )
+
+register_extension_info(
+    extension = mozc_cc_win32_library,
     label_regex_for_dep = "{extension_name}",
 )
 
@@ -445,11 +530,3 @@ def mozc_select_enable_usage_rewriter(on = [], off = []):
         "//:enable_usage_rewriter": on,
         "//conditions:default": off,
     })
-
-# Tags aliases for build filtering.
-MOZC_TAGS = struct(
-    ANDROID_ONLY = ["nolinux", "nomac", "nowin"],
-    LINUX_ONLY = ["noandroid", "nomac", "nowin"],
-    MAC_ONLY = ["noandroid", "nolinux", "nowin"],
-    WIN_ONLY = ["noandroid", "nolinux", "nomac"],
-)

@@ -34,8 +34,9 @@ load(
     "MOZC_TAGS",
     "mozc_cc_library",
     "mozc_cc_test",
+    "mozc_cc_win32_library",
 )
-load("//bazel:stubs.bzl", "lexan")
+load("//bazel:stubs.bzl", "lexan")  # @unused
 load(
     "//bazel/win32:build_defs.bzl",
     "features_gdi",
@@ -362,7 +363,7 @@ mozc_cc_test(
     ],
 )
 
-lexan.cc_windows_dll(
+mozc_cc_win32_library(
     name = "input_dll",
     srcs = [
         "input_dll.cc",
@@ -389,7 +390,7 @@ mozc_cc_test(
     ],
 )
 
-lexan.cc_windows_dll(
+mozc_cc_win32_library(
     name = "msctf_dll",
     srcs = [
         "msctf_dll.cc",
