@@ -1,15 +1,27 @@
-# Common options
-build --cxxopt "-std=c++20"
-build --copt "-funsigned-char"
-build --copt "-Wno-sign-compare"
-build --copt "-Wno-char-subscripts"
-build --host_cxxopt "-std=c++20"
-build --host_copt "-funsigned-char"
-build --host_copt "-Wno-sign-compare"
-build --host_copt "-Wno-char-subscripts"
-build --objccopt "-fsigned-char"
 # enable_bzlmod causes the build failure. Suppress it util the fix.
-build --noenable_bzlmod
+common --noenable_bzlmod
+
+common:linux --config=compiler_gcc_like
+common:oss_linux --config=compiler_gcc_like
+common:prod_linux --config=compiler_gcc_like
+common:android --config=compiler_gcc_like
+common:oss_android --config=compiler_gcc_like
+common:prod_android --config=compiler_gcc_like
+common:macos --config=compiler_gcc_like
+common:oss_macos --config=compiler_gcc_like
+common:prod_macos --config=compiler_gcc_like
+
+# Make sure we set -std=c++20 that may affect ABI across all the compilation targets.
+# https://github.com/abseil/abseil-cpp/blob/master/FAQ.md#what-is-abi-and-why-dont-you-recommend-using-a-pre-compiled-version-of-abseil
+build:compiler_gcc_like --cxxopt "-std=c++20" --host_cxxopt "-std=c++20"
+build:compiler_gcc_like --copt "-funsigned-char" --host_copt "-funsigned-char"
+build:compiler_gcc_like --copt "-Wno-sign-compare" --host_copt "-Wno-sign-compare"
+build:compiler_gcc_like --copt "-Wno-char-subscripts" --host_copt "-Wno-char-subscripts"
+build:compiler_msvc_like --cxxopt "/std:c++20" --host_cxxopt "/std:c++20"
+build:compiler_msvc_like --copt "/J" --host_copt "/J"
+build:compiler_msvc_like --copt "/utf-8" --host_copt "/utf-8"
+build:compiler_msvc_like --cxxopt "/J" --host_cxxopt "/J"
+build:compiler_msvc_like --cxxopt "/utf-8" --host_cxxopt "/utf-8"
 
 # Linux
 build:linux --define TARGET=oss_linux --copt "-fPIC"
@@ -25,9 +37,9 @@ build:prod_linux --build_tag_filters=-nolinux
 # macOS
 build:macos --define TARGET=oss_macos --build_tag_filters=-nomac
 test:macos --define TARGET=oss_macos --test_tag_filters=-nomac
-build:oss_macos --define TARGET=oss_macos --build_tag_filters=-nomac
+build:oss_macos --define TARGET=oss_macos --build_tag_filters=-nomac --objccopt "-fsigned-char"
 test:oss_macos --define TARGET=oss_macos --test_tag_filters=-nomac
-build:prod_macos --define TARGET=prod_macos --build_tag_filters=-nomac
+build:prod_macos --define TARGET=prod_macos --build_tag_filters=-nomac --objccopt "-fsigned-char"
 
 # Windows
 build:windows --define TARGET=oss_windows --build_tag_filters=-nowin
