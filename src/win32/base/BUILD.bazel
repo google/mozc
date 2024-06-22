@@ -162,8 +162,12 @@ mozc_cc_library(
     hdrs = ["imm_util.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    visibility = [
+        "//gui:__subpackages__",
+    ],
     deps = [
         ":input_dll",
+        ":msctf_dll",
         ":tsf_profile",
         "//base/win32:wide_char",
         "@com_google_absl//absl/log",

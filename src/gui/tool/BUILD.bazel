@@ -97,7 +97,11 @@ mozc_cc_qt_library(
         ":mozc_tool_lib",
         "//base:init_mozc",
         "//gui/base:gui_base",
-    ],
+    ] + mozc_select(
+        windows = [
+            "//win32:winmain",
+        ],
+    ),
 )
 
 mozc_cc_qt_binary(
