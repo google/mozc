@@ -69,7 +69,6 @@ mozc_cc_test(
         "mock_data_manager_test.cc",
         ":mozc_dataset_for_testing@segmenter_inl_header",
     ],
-    copts = ["-Wno-parentheses"],
     data = [
         "//data/test/dictionary:connection_single_column.txt",
         "//data/test/dictionary:dictionary_data",
