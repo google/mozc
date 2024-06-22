@@ -50,8 +50,8 @@ mozc_cc_library(
         ":mozc_dataset_for_testing@header",
     ],
     hdrs = ["mock_data_manager.h"],
-    copts = [
-        "-DMOZC_DATASET_MAGIC_NUMBER='\"" + MOZC_DATASET_MAGIC_NUMBER + "\"'",
+    local_defines = [
+        "MOZC_DATASET_MAGIC_NUMBER='\"" + MOZC_DATASET_MAGIC_NUMBER + "\"'",
     ],
     deps = [
         "//base:embedded_file",

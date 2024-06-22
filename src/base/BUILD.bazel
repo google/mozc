@@ -50,7 +50,7 @@ mozc_cc_library(
     name = "init_mozc_buildtool",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
-    copts = ["-DMOZC_BUILDTOOL_BUILD"],
+    local_defines = ["MOZC_BUILDTOOL_BUILD"],
     visibility = ["//:__subpackages__"],
     deps = [
         ":log_file",
