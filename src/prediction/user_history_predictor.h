@@ -45,6 +45,7 @@
 #include "base/container/freelist.h"
 #include "base/container/trie.h"
 #include "base/thread.h"
+#include "composer/query.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -417,6 +418,10 @@ class UserHistoryPredictor : public PredictorInterface {
   static std::string GetRomanMisspelledKey(const ConversionRequest &request,
                                            const Segments &segments);
 
+  // Returns the typing corrected queries.
+  std::vector<::mozc::composer::TypeCorrectedQuery> GetTypingCorrectedQueries(
+      const ConversionRequest &request, const Segments &segments) const;
+
   // Returns true if |key| may contain miss spelling.
   // Currently, this function returns true if
   // 1) key contains only one alphabet.
@@ -496,6 +501,7 @@ class UserHistoryPredictor : public PredictorInterface {
   mutable std::atomic<bool> updated_;
   std::unique_ptr<DicCache> dic_;
   mutable std::optional<BackgroundFuture<void>> sync_;
+  const engine::Modules &modules_;
 };
 
 }  // namespace mozc::prediction

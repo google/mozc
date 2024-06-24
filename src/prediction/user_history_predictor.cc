@@ -81,6 +81,7 @@
 namespace mozc::prediction {
 namespace {
 
+using ::mozc::composer::TypeCorrectedQuery;
 using ::mozc::usage_stats::UsageStats;
 
 // Finds suggestion candidates from the most recent 3000 history in LRU.
@@ -347,7 +348,8 @@ UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules,
       predictor_name_("UserHistoryPredictor"),
       content_word_learning_enabled_(enable_content_word_learning),
       updated_(false),
-      dic_(new DicCache(UserHistoryPredictor::cache_size())) {
+      dic_(new DicCache(UserHistoryPredictor::cache_size())),
+      modules_(modules) {
   AsyncLoad();  // non-blocking
   // Load()  blocking version can be used if any
 }
@@ -714,6 +716,27 @@ std::string UserHistoryPredictor::GetRomanMisspelledKey(
   }
 
   return "";
+}
+
+std::vector<TypeCorrectedQuery> UserHistoryPredictor::GetTypingCorrectedQueries(
+    const ConversionRequest &request, const Segments &segments) const {
+  const int size = request.request()
+                       .decoder_experiment_params()
+                       .typing_correction_apply_user_history_size();
+  if (size == 0) return {};
+
+  const engine::SupplementalModelInterface *supplemental_model =
+      modules_.GetSupplementalModel();
+  if (supplemental_model == nullptr) return {};
+
+  const std::optional<std::vector<TypeCorrectedQuery>> corrected =
+      supplemental_model->CorrectComposition(request, segments.history_key());
+  if (!corrected) return {};
+
+  std::vector<TypeCorrectedQuery> result = std::move(corrected.value());
+  if (size < result.size()) result.resize(size);
+
+  return result;
 }
 
 // static
@@ -1279,8 +1302,8 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
   // Gets romanized input key if the given preedit looks misspelled.
   const std::string roman_input_key = GetRomanMisspelledKey(request, segments);
 
-  // TODO(team): make GetKanaMisspelledKey(segments);
-  // const string kana_input_key = GetKanaMisspelledKey(segments);
+  const std::vector<TypeCorrectedQuery> corrected =
+      GetTypingCorrectedQueries(request, segments);
 
   // If we have ambiguity for the input, get expanded key.
   // Example1 roman input: for "あk", we will get |base|, "あ" and |expanded|,
@@ -1307,6 +1330,11 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
   const absl::Time now = Clock::GetAbslTime();
   int trial = 0;
   for (const DicElement &elm : *dic_) {
+    // already found enough results.
+    if (results->size() >= max_results_size) {
+      break;
+    }
+
     if (!IsValidEntryIgnoringRemovedField(elm.value)) {
       continue;
     }
@@ -1322,16 +1350,20 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
 
     // Lookup key from elm_value and prev_entry.
     // If a new entry is found, the entry is pushed to the results.
-    // TODO(team): make KanaFuzzyLookupEntry().
-    if (!LookupEntry(request_type, input_key, base_key, expanded.get(),
-                     &(elm.value), prev_entry, results) &&
-        !RomanFuzzyLookupEntry(roman_input_key, &(elm.value), results)) {
+    if (LookupEntry(request_type, input_key, base_key, expanded.get(),
+                    &(elm.value), prev_entry, results) ||
+        RomanFuzzyLookupEntry(roman_input_key, &(elm.value), results)) {
       continue;
     }
 
-    // already found enough results.
-    if (results->size() >= max_results_size) {
-      break;
+    // Lookup typing corrected keys when the original `input_key` doesn't match.
+    // Since dic_ is sorted in LRU, typing corrected queries are ranked lower
+    // than the original key.
+    for (const auto &c : corrected) {
+      if (LookupEntry(request_type, c.correction, c.correction, nullptr,
+                      &(elm.value), prev_entry, results)) {
+        break;
+      }
     }
   }
 }

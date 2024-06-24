@@ -65,6 +65,8 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/suppression_dictionary.h"
 #include "engine/modules.h"
+#include "engine/supplemental_model_interface.h"
+#include "engine/supplemental_model_mock.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -82,9 +84,12 @@ namespace mozc::prediction {
 namespace {
 
 using ::mozc::commands::Request;
+using ::mozc::composer::TypeCorrectedQuery;
 using ::mozc::config::Config;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::SuppressionDictionary;
+using ::testing::_;
+using ::testing::Return;
 
 }  // namespace
 
@@ -402,6 +407,11 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
       }
     }
     return std::nullopt;
+  }
+
+  void SetSupplementalModel(
+      const engine::SupplementalModelInterface *supplemental_model) {
+    data_and_predictor_->modules.SetSupplementalModel(supplemental_model);
   }
 
   std::unique_ptr<composer::Composer> composer_;
@@ -4356,6 +4366,87 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
   }
+}
+
+TEST_F(UserHistoryPredictorTest, TypingCorrection) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
+
+  Segments segments;
+  {
+    clock->Advance(absl::Hours(1));
+    SetUpInputForPrediction("がっこう", composer_.get(), &segments);
+    AddCandidate(0, "学校", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+
+  {
+    clock->Advance(absl::Hours(1));
+    SetUpInputForPrediction("がっこう", composer_.get(), &segments);
+    AddCandidate(0, "ガッコウ", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+
+  {
+    clock->Advance(absl::Hours(1));
+    SetUpInputForPrediction("かっこう", composer_.get(), &segments);
+    AddCandidate(0, "格好", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_apply_user_history_size(1);
+
+  SetUpInputForSuggestion("がっこ", composer_.get(), &segments);
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+
+  // No typing correction.
+  SetUpInputForSuggestion("かつこ", composer_.get(), &segments);
+  EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
+
+  std::vector<TypeCorrectedQuery> expected;
+  auto add_expected = [&](const std::string &key) {
+    expected.emplace_back(
+        TypeCorrectedQuery{key, TypeCorrectedQuery::CORRECTION});
+  };
+
+  // かつこ -> がっこ and かっこ
+  add_expected("がっこ");
+  add_expected("かっこ");
+  engine::MockSupplementalModel mock;
+  EXPECT_CALL(mock, CorrectComposition(_, "")).WillRepeatedly(Return(expected));
+  SetSupplementalModel(&mock);
+
+  // set_typing_correction_apply_user_history_size=0
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_apply_user_history_size(0);
+  SetUpInputForSuggestion("かつこ", composer_.get(), &segments);
+  EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
+
+  // set_typing_correction_apply_user_history_size=1
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_apply_user_history_size(1);
+  SetUpInputForSuggestion("かつこ", composer_.get(), &segments);
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+  ASSERT_EQ(segments.segments_size(), 1);
+  ASSERT_EQ(segments.segment(0).candidates_size(), 2);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "ガッコウ");
+  EXPECT_EQ(segments.segment(0).candidate(1).value, "学校");
+
+  // set_typing_correction_apply_user_history_size=2
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_apply_user_history_size(2);
+  SetUpInputForSuggestion("かつこ", composer_.get(), &segments);
+  EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+  ASSERT_EQ(segments.segments_size(), 1);
+  ASSERT_EQ(segments.segment(0).candidates_size(), 3);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "格好");
+  EXPECT_EQ(segments.segment(0).candidate(1).value, "ガッコウ");
+  EXPECT_EQ(segments.segment(0).candidate(2).value, "学校");
+
+  SetSupplementalModel(nullptr);
+  SetUpInputForSuggestion("かつこ", composer_.get(), &segments);
+  EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
 TEST_F(UserHistoryPredictorTest, MaxCharCoverage) {

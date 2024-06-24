@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 85
+// Next ID: 86
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -591,6 +591,10 @@ message DecoderExperimentParams {
   // Bitmap of enabled variation character types.
   optional uint32 variation_character_types = 8 [default = 0];
 
+  // Uses the typing correction in user history predictor. The size specifies
+  // the maximum number of typing corrections used for query lookup.
+  // When zero, typing_correction is not used.
+  optional int32 typing_correction_apply_user_history_size = 85 [default = 0];
 
   optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
