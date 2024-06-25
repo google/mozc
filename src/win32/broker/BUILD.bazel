@@ -46,6 +46,7 @@ mozc_cc_binary(
     srcs = ["mozc_broker_main.cc"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//win32/installer:__subpackages__"],
     deps = [
         ":prelauncher",
         "//base:crash_report_handler",

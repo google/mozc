@@ -479,6 +479,13 @@ def _mozc_win_build_rule_impl(ctx):
         executable = output,
     )]
 
+# The follwoing CPU values are mentioned in https://bazel.build/configure/windows#build_cpp
+CPU = struct(
+    ARM64 = "arm64_windows",  # aarch64 (64-bit) environment
+    X64 = "x64_windows",  # x86-64 (64-bit) environment
+    X86 = "x64_x86_windows",  # x86 (32-bit) environment
+)
+
 # A custom rule to reference the given build target with the given build configurations.
 #
 # For instance, the following rule creates a target "my_target" with setting "cpu" as "x64_windows"
@@ -486,7 +493,7 @@ def _mozc_win_build_rule_impl(ctx):
 #
 #   mozc_win_build_rule(
 #       name = "my_target",
-#       cpu = "x64_windows",
+#       cpu = CPU.X64,
 #       static_crt = True,
 #       target = "//bath/to/target:my_target",
 #   )

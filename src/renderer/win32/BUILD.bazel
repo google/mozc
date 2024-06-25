@@ -49,6 +49,7 @@ mozc_cc_binary(
     srcs = ["win32_renderer_main.cc"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//win32/installer:__subpackages__"],
     deps = [
         ":win32_renderer_main_resources",
         ":win32_server",

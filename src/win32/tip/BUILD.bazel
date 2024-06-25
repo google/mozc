@@ -48,6 +48,7 @@ mozc_cc_binary(
     linkshared = True,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//win32/installer:__subpackages__"],
     win_def_file = "mozc_tip.def",
     deps = [
         ":mozc_tip_resource",
