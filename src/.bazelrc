@@ -10,6 +10,9 @@ common:prod_android --config=compiler_gcc_like
 common:macos --config=compiler_gcc_like
 common:oss_macos --config=compiler_gcc_like
 common:prod_macos --config=compiler_gcc_like
+common:windows --config=compiler_msvc_like
+common:oss_windows --config=compiler_msvc_like
+common:prod_windows --config=compiler_msvc_like
 
 # Make sure we set -std=c++20 that may affect ABI across all the compilation targets.
 # https://github.com/abseil/abseil-cpp/blob/master/FAQ.md#what-is-abi-and-why-dont-you-recommend-using-a-pre-compiled-version-of-abseil
@@ -18,6 +21,7 @@ build:compiler_gcc_like --copt "-funsigned-char" --host_copt "-funsigned-char"
 build:compiler_gcc_like --copt "-Wno-sign-compare" --host_copt "-Wno-sign-compare"
 build:compiler_gcc_like --copt "-Wno-char-subscripts" --host_copt "-Wno-char-subscripts"
 build:compiler_msvc_like --cxxopt "/std:c++20" --host_cxxopt "/std:c++20"
+build:compiler_msvc_like --cxxopt "/Zc:__cplusplus" --host_cxxopt "/Zc:__cplusplus"
 build:compiler_msvc_like --copt "/J" --host_copt "/J"
 build:compiler_msvc_like --copt "/utf-8" --host_copt "/utf-8"
 build:compiler_msvc_like --cxxopt "/J" --host_cxxopt "/J"
