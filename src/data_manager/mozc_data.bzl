@@ -440,7 +440,6 @@ def mozc_dataset(
             [
                 ":" + name + "@segmenter_inl_header",
             ],
-        copts = ["-Wno-parentheses"],
         visibility = ["//tools:__subpackages__"],
         deps = [
             "//base:init_mozc_buildtool",
