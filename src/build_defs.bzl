@@ -43,7 +43,13 @@ See also: https://bazel.build/rules/bzl-style#rules
 """
 
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle", "macos_unit_test")
-load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
+load(
+    "//:config.bzl",
+    "BAZEL_TOOLS_PREFIX",
+    "BRANDING",
+    "MACOS_BUNDLE_ID_PREFIX",
+    "MACOS_MIN_OS_VER",
+)
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library", "register_extension_info")
 
@@ -433,6 +439,80 @@ def mozc_macos_bundle(name, bundle_name, infoplists, strings = [], bundle_id = N
         tags = tags + MOZC_TAGS.MAC_ONLY,
         **kwargs
     )
+
+def _win_executable_transition_impl(
+        settings,  # @unused
+        attr):
+    features = []
+    if attr.static_crt:
+        features = ["static_link_msvcrt"]
+    return {
+        "//command_line_option:features": features,
+        "//command_line_option:cpu": attr.cpu,
+    }
+
+_win_executable_transition = transition(
+    implementation = _win_executable_transition_impl,
+    inputs = [],
+    outputs = [
+        "//command_line_option:features",
+        "//command_line_option:cpu",
+    ],
+)
+
+def _mozc_win_build_rule_impl(ctx):
+    input_file = ctx.file.target
+    output = ctx.actions.declare_file(
+        ctx.label.name + "." + input_file.extension,
+    )
+    if input_file.path == output.path:
+        fail("input=%d and output=%d are the same." % (input_file.path, output.path))
+
+    # Create a symlink as we do not need to create an actual copy.
+    ctx.actions.symlink(
+        output = output,
+        target_file = input_file,
+        is_executable = True,
+    )
+    return [DefaultInfo(
+        files = depset([output]),
+        executable = output,
+    )]
+
+# A custom rule to reference the given build target with the given build configurations.
+#
+# For instance, the following rule creates a target "my_target" with setting "cpu" as "x64_windows"
+# and setting "static_link_msvcrt" feature.
+#
+#   mozc_win_build_rule(
+#       name = "my_target",
+#       cpu = "x64_windows",
+#       static_crt = True,
+#       target = "//bath/to/target:my_target",
+#   )
+#
+# See the following page for the details on transition.
+# https://bazel.build/rules/lib/builtins/transition
+mozc_win_build_rule = rule(
+    implementation = _mozc_win_build_rule_impl,
+    cfg = _win_executable_transition,
+    attrs = {
+        "_allowlist_function_transition": attr.label(
+            default = BAZEL_TOOLS_PREFIX + "//tools/allowlists/function_transition_allowlist",
+        ),
+        "target": attr.label(
+            allow_single_file = [".dll", ".exe"],
+            doc = "the actual Bazel target to be built.",
+            mandatory = True,
+        ),
+        "static_crt": attr.bool(
+            default = False,
+        ),
+        "cpu": attr.string(
+            default = "x64_windows",
+        ),
+    },
+)
 
 def _get_value(args):
     for arg in args:
