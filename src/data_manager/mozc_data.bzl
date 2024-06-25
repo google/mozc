@@ -226,7 +226,7 @@ def mozc_dataset(
         outs = [outs[0]],
         cmd = (
             "$(location //data_manager:dataset_writer_main) " +
-            "--magic='" + magic + "' --output=$@ " + arguments
+            "--magic='" + _byte_array_to_cstring(magic.value) + "' --output=$@ " + arguments
         ),
         tools = ["//data_manager:dataset_writer_main"],
     )
@@ -710,3 +710,19 @@ def mozc_dataset(
             ),
             tools = ["//rewriter:gen_usage_rewriter_dictionary_main"],
         )
+
+def _byte_array_to_cstring(byte_array):
+    result = ""
+    for byte in byte_array:
+        if byte < 0 or byte > 255:
+            fail("Invalid byte: " + byte)
+        high = byte // 16
+        low = byte % 16
+        result += ("\\x%X%X" % (high, low))
+    return result
+
+def magic_number(byte_array):
+    return struct(
+        value = byte_array,
+        length = len(byte_array),
+    )

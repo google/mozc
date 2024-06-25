@@ -34,13 +34,19 @@ load(
 )
 load(
     "//data_manager:mozc_data.bzl",
+    "magic_number",
     "mozc_dataset",
 )
 
 package(default_visibility = ["//visibility:public"])
 
 # MOCK
-MOZC_DATASET_MAGIC_NUMBER = "\\x4D\\x4F\\x43\\x4B"
+MOZC_DATASET_MAGIC_NUMBER = magic_number([
+    0x4D,  # M
+    0x4F,  # O
+    0x43,  # C
+    0x4B,  # K
+])
 
 mozc_cc_library(
     name = "mock_data_manager",
@@ -51,7 +57,7 @@ mozc_cc_library(
     ],
     hdrs = ["mock_data_manager.h"],
     local_defines = [
-        "MOZC_DATASET_MAGIC_NUMBER='\"" + MOZC_DATASET_MAGIC_NUMBER + "\"'",
+        "MOZC_DATASET_MAGIC_NUMBER_LENGTH=%d" % MOZC_DATASET_MAGIC_NUMBER.length,
     ],
     deps = [
         "//base:embedded_file",

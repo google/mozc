@@ -46,6 +46,7 @@
       '<(mozc_oss_src_dir)/data/dictionary_manual/domain.txt',
     ],
     'magic_number': '\\x4D\\x4F\\x43\\x4B',  # MOCK
+    'magic_number_length': '4',
     'mozc_data_varname': 'kMockMozcDataSet',
     'out_mozc_data': 'mock_mozc.data',
     'out_mozc_data_header': 'mock_mozc_data.inc',

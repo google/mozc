@@ -67,8 +67,12 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
     return false;
   }
 
+  return Init(memblock, magic.size());
+}
+
+bool DataSetReader::Init(absl::string_view memblock, size_t magic_length) {
   // Check minimum required data size.
-  if (memblock.size() < magic.size() + kFooterSize) {
+  if (memblock.size() < magic_length + kFooterSize) {
     LOG(ERROR) << "Broken: data is too small";
     return false;
   }
@@ -99,7 +103,7 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
 
   // Note: This subtraction doesn't cause underflow by the above check.
   const uint64_t content_and_metadata_size =
-      memblock.size() - magic.size() - kFooterSize;
+      memblock.size() - magic_length - kFooterSize;
   if (metadata_size == 0 || content_and_metadata_size < metadata_size) {
     LOG(ERROR) << "Broken: metadata size is broken or metadata is broken";
     return false;
@@ -119,7 +123,7 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   }
 
   // Construct a mapping from name to data chunk.
-  uint64_t prev_chunk_end = magic.size();
+  uint64_t prev_chunk_end = magic_length;
   for (int i = 0; i < metadata.entries_size(); ++i) {
     const auto& e = metadata.entries(i);
     if (e.offset() < prev_chunk_end || e.offset() >= metadata_offset) {

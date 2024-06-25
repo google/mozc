@@ -58,6 +58,7 @@
     ],
     # Hex-escaped string of "\xEFMOZC\r\n"
     'magic_number': "\\xEF\\x4D\\x4F\\x5A\\x43\\x0D\\x0A",
+    'magic_number_length': '7',
     'mozc_data_varname': 'kOssMozcDataSet',
     'out_mozc_data': 'mozc.data',
     'out_mozc_data_header': 'mozc_data.inc',

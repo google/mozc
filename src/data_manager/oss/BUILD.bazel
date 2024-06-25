@@ -34,13 +34,22 @@ load(
 )
 load(
     "//data_manager:mozc_data.bzl",
+    "magic_number",
     "mozc_dataset",
 )
 
 package(default_visibility = ["//visibility:public"])
 
 # "\xEFMOZC\r\n"
-MOZC_DATASET_MAGIC_NUMBER = "\\xEF\\x4D\\x4F\\x5A\\x43\\x0D\\x0A"
+MOZC_DATASET_MAGIC_NUMBER = magic_number([
+    0xEF,  # \xEF
+    0x4D,  # M
+    0x4F,  # O
+    0x5A,  # Z
+    0x43,  # C
+    0x0D,  # <CR>
+    0x0A,  # <LF>
+])
 
 mozc_dataset(
     name = "mozc_dataset_for_oss",
@@ -116,7 +125,7 @@ mozc_cc_library(
     ],
     hdrs = ["oss_data_manager.h"],
     local_defines = [
-        "MOZC_DATASET_MAGIC_NUMBER='\"" + MOZC_DATASET_MAGIC_NUMBER + "\"'",
+        "MOZC_DATASET_MAGIC_NUMBER_LENGTH=%d" % MOZC_DATASET_MAGIC_NUMBER.length,
     ],
     deps = [
         "//base:embedded_file",

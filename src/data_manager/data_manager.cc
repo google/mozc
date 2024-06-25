@@ -167,6 +167,16 @@ DataManager::Status DataManager::InitFromArray(absl::string_view array,
   return InitFromReader(reader);
 }
 
+DataManager::Status DataManager::InitFromArray(absl::string_view array,
+                                               size_t magic_length) {
+  DataSetReader reader;
+  if (!reader.Init(array, magic_length)) {
+    LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
+    return DataManager::Status::DATA_BROKEN;
+  }
+  return InitFromReader(reader);
+}
+
 DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
   const Status status = InitUserPosManagerDataFromReader(
       reader, &pos_matcher_data_, &user_pos_token_array_data_,

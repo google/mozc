@@ -48,6 +48,9 @@ class DataSetReader {
   // method doesn't verify checksum for performance.  One can separately call
   // VerifyChecksum().
   bool Init(absl::string_view memblock, absl::string_view magic);
+  // A variant of Init() that takes the length of the magic number rather than
+  // the magic number itself.
+  bool Init(absl::string_view memblock, size_t magic_length);
 
   // Gets the byte data corresponding to |name|.  If the data for |name| doesn't
   // exist, returns false.

@@ -68,7 +68,7 @@
         '<@(additional_dendencies)',
       ],
       'defines': [
-        'MOZC_DATASET_MAGIC_NUMBER="<(magic_number)"',
+        'MOZC_DATASET_MAGIC_NUMBER_LENGTH=<(magic_number_length)',
       ],
     },
     {

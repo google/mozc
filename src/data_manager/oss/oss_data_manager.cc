@@ -29,7 +29,7 @@
 
 #include "data_manager/oss/oss_data_manager.h"
 
-#include <iterator>
+#include <cstddef>
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
@@ -42,17 +42,17 @@ namespace {
 // kOssMozcDataSet is embedded.
 #include "data_manager/oss/mozc_data.inc"
 
-#ifndef MOZC_DATASET_MAGIC_NUMBER
-#error "MOZC_DATASET_MAGIC_NUMBER is not defined by build system"
-#endif  // MOZC_DATASET_MAGIC_NUMBER
+#ifndef MOZC_DATASET_MAGIC_NUMBER_LENGTH
+#error "MOZC_DATASET_MAGIC_NUMBER_LENGTH is not defined by build system"
+#endif  // MOZC_DATASET_MAGIC_NUMBER_LENGTH
 
-constexpr char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
+constexpr size_t kMagicNumberLength = MOZC_DATASET_MAGIC_NUMBER_LENGTH;
 
 }  // namespace
 
 OssDataManager::OssDataManager() {
-  const absl::string_view magic(kMagicNumber, std::size(kMagicNumber) - 1);
-  CHECK_EQ(Status::OK, InitFromArray(LoadEmbeddedFile(kOssMozcDataSet), magic))
+  CHECK_EQ(Status::OK, InitFromArray(LoadEmbeddedFile(kOssMozcDataSet),
+                                     kMagicNumberLength))
       << "Embedded mozc_imy.h for OSS is broken";
 }
 
