@@ -1871,6 +1871,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
       engine->GetDataManager()->GetPosMatcherData());
   ConversionRequest conversion_request(&composer, &request, &config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
+  conversion_request.set_create_partial_candidates(true);
 
   Segments segments;
   // History segment.

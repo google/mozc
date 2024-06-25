@@ -191,9 +191,7 @@ size_t GetMaxSizeForRealtimeCandidates(const ConversionRequest &request,
   const auto &segment = segments.conversion_segment(0);
   const size_t size = (request.max_dictionary_prediction_candidates_size() -
                        segment.candidates_size());
-  if (request.request()
-          .decoder_experiment_params()
-          .enable_realtime_conversion_v2()) {
+  if (request.create_partial_candidates()) {
     return std::min<size_t>(size, 20);
   }
   return is_long_key ? std::min<size_t>(size, 8) : size;

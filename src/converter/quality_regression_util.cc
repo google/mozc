@@ -264,6 +264,9 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     composer::Composer composer(&table, &request_, &config_);
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest conv_req(&composer, &request_, &config_);
+    if (request_.mixed_conversion()) {
+      conv_req.set_create_partial_candidates(true);
+    }
     if (!converter_->StartPrediction(conv_req, &segments_)) {
       return absl::UnknownError(absl::StrCat(
           "StartPredictionForRequest failed: ", item.OutputAsTSV()));

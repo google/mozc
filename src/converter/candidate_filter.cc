@@ -216,13 +216,6 @@ bool IsSameNodeStructure(const absl::Span<const Node *const> lnodes,
   return true;
 }
 
-bool IsStrictModeEnabled(const ConversionRequest &request) {
-  return request.request().mixed_conversion() &&
-         !request.request()
-              .decoder_experiment_params()
-              .enable_realtime_conversion_v2();
-}
-
 // Returns true if there is a number node that does not follow the
 bool IsNoisyNumberCandidate(const dictionary::PosMatcher &pos_matcher,
                             const absl::Span<const Node *const> nodes) {
@@ -341,8 +334,6 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       result != GOOD_CANDIDATE) {
     return result;
   }
-
-  const bool is_strict_mode = IsStrictModeEnabled(request);
 
   // In general, the cost of constrained node tends to be overestimated.
   // If the top candidate has constrained node, we skip the main body
@@ -516,12 +507,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       top_non_content_value == non_content_value) {
     MOZC_VLOG(1) << "don't filter if non-content value are the same: "
                  << candidate->value;
-    if (!is_strict_mode || top_nodes.size() == nodes.size()) {
-      // In strict mode, also checks the nodes size.
-      // i.e. do not allow the candidate, "め+移転+も" for the top candidate,
-      // "名店も"
-      return CandidateFilter::GOOD_CANDIDATE;
-    }
+    return CandidateFilter::GOOD_CANDIDATE;
   }
 
   // Check Katakana transliterations
@@ -651,18 +637,6 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       return CandidateFilter::BAD_CANDIDATE;
     }
   }
-
-  if (is_strict_mode) {
-    // Filter candidates:
-    // 1) which have the different Pos structure with the top candidate, and
-    // 2) which have atypical Pos structure
-    if (!IsSameNodeStructure(top_nodes, nodes) &&
-        !IsTypicalNodeStructure(*pos_matcher_, nodes)) {
-      MOZC_CANDIDATE_LOG(candidate, "is_strict_mode");
-      return CandidateFilter::BAD_CANDIDATE;
-    }
-  }
-
   return CandidateFilter::GOOD_CANDIDATE;
 }
 

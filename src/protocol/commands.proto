@@ -598,7 +598,6 @@ message DecoderExperimentParams {
 
   optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
-  optional bool enable_realtime_conversion_v2 = 37 [default = false];
   optional bool enable_realtime_conversion_candidate_checker = 62
       [default = false];
 

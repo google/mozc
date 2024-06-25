@@ -2195,62 +2195,11 @@ void ImmutableConverter::InsertCandidatesForPrediction(
   // Mobile
   if (request.request()
           .decoder_experiment_params()
-          .enable_realtime_conversion_v2()) {
-    if (request.request()
-            .decoder_experiment_params()
-            .enable_realtime_conversion_candidate_checker()) {
-      InsertCandidatesForRealtimeWithCandidateChecker(request, lattice, group,
-                                                      segments);
-    } else {
-      InsertCandidatesForRealtime(request, lattice, group, segments);
-    }
-    return;
-  }
-
-  // TODO(toshiyuki): It may be better to change this value
-  // according to the key length.
-  static constexpr size_t kOnlyFirstSegmentCandidateSize = 3;
-  const size_t single_segment_candidates_size =
-      ((max_candidates_size > kOnlyFirstSegmentCandidateSize)
-           ? max_candidates_size - kOnlyFirstSegmentCandidateSize
-           : 1);
-  InsertCandidates(request, segments, lattice, group,
-                   single_segment_candidates_size, SINGLE_SEGMENT);
-
-  // Even if single_segment_candidates_size + kOnlyFirstSegmentCandidateSize
-  // is greater than max_candidates_size, we cannot skip
-  // InsertFirstSegmentToCandidates().
-  // For example:
-  //   the sum: 11
-  //   max_candidates_size: 10
-  //   current candidate size: 8
-  // In this case, the sum > |max_candidates_size|, but we should not
-  // skip calling InsertFirstSegmentToCandidates, as we want to add
-  // two candidates.
-  const size_t only_first_segment_candidates_size =
-      std::min(max_candidates_size,
-               single_segment_candidates_size + kOnlyFirstSegmentCandidateSize);
-  InsertFirstSegmentToCandidates(request, segments, lattice, group,
-                                 only_first_segment_candidates_size,
-                                 false /* allow_exact */);
-
-  const bool is_prediction =
-      request.request_type() == ConversionRequest::PREDICTION ||
-      request.request_type() == ConversionRequest::PARTIAL_PREDICTION;
-  // TODO(taku): We do not want to refer `is_prediction` here.
-  // This is a temporal workaround to fill all personal names appeared
-  // as exact partial candidates. Expand candidates as many as possible
-  //
-  // Note: This check is for just in case.
-  // For now,
-  // 1. `create_partial_candidates` can be true only for Mobile
-  //    (Request::mixed_conversion == true)
-  // 2. For mobile, the session does not issue SUGGESTION command
-  // So we do not check `is_prediction` here.
-  if (is_prediction) {
-    InsertFirstSegmentToCandidates(request, segments, lattice, group,
-                                   request.max_conversion_candidates_size(),
-                                   true /* allow exact */);
+          .enable_realtime_conversion_candidate_checker()) {
+    InsertCandidatesForRealtimeWithCandidateChecker(request, lattice, group,
+                                                    segments);
+  } else {
+    InsertCandidatesForRealtime(request, lattice, group, segments);
   }
 }
 

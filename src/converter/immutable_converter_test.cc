@@ -482,46 +482,9 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionDefault) {
   EXPECT_FALSE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 
-TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
-  const commands::Request request;
-  ConversionRequest conversion_request;
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
-  conversion_request.set_request(&request);
-  conversion_request.set_create_partial_candidates(true);
-  conversion_request.set_max_conversion_candidates_size(10);
-
-  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
-      new MockDataAndImmutableConverter);
-  const std::string kRequestKeys[] = {
-      "たかまち",
-      "なのは",
-      "まほうしょうじょ",
-  };
-  for (size_t testcase = 0; testcase < std::size(kRequestKeys); ++testcase) {
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    segment->set_key(kRequestKeys[testcase]);
-    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
-        conversion_request, &segments));
-    EXPECT_EQ(segments.conversion_segments_size(), 1);
-    EXPECT_LT(0, segments.segment(0).candidates_size());
-    const std::string &segment_key = segments.segment(0).key();
-    for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-      const Segment::Candidate &cand = segments.segment(0).candidate(i);
-      if (cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-        EXPECT_LT(cand.key.size(), segment_key.size()) << cand;
-      } else {
-        EXPECT_GE(cand.key.size(), segment_key.size()) << cand;
-      }
-    }
-  }
-}
-
 TEST(ImmutableConverterTest, FirstInnerSegment) {
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
-  request.mutable_decoder_experiment_params()
-      ->set_enable_realtime_conversion_v2(true);
   ConversionRequest conversion_request;
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
   conversion_request.set_request(&request);
@@ -548,8 +511,6 @@ TEST(ImmutableConverterTest, FirstInnerSegment) {
 TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
-  request.mutable_decoder_experiment_params()
-      ->set_enable_realtime_conversion_v2(true);
   request.mutable_decoder_experiment_params()
       ->set_enable_realtime_conversion_candidate_checker(true);
   ConversionRequest conversion_request;
