@@ -123,7 +123,7 @@ jobs:
         env:
           ANDROID_NDK_HOME: ""
         run: |
-          bazel --bazelrc=windows.bazelrc build //win32/installer:artifacts --config oss_windows --verbose_failures --cpu=x64_windows
+          bazel --bazelrc=windows.bazelrc build //server:mozc_server --config oss_windows --verbose_failures --cpu=x64_windows
 
   test:
     # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
