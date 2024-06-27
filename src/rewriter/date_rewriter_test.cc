@@ -981,33 +981,6 @@ TEST_F(DateRewriterTest, MobileEnvironmentTest) {
   }
 }
 
-TEST_F(DateRewriterTest, RewriteYearTest) {
-  DateRewriter rewriter;
-  Segments segments;
-  const ConversionRequest request;
-  InitSegment("2010", "2010", &segments);
-  AppendSegment("nenn", "年", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  ASSERT_EQ(segments.segments_size(), 2);
-  EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("平成22")));
-  EXPECT_THAT(segments.segment(1), HasSingleCandidate(ValueIs("年")));
-}
-
-// This test treats the situation that if UserHistoryRewriter or other like
-// Rewriter moves up a candidate which is actually a number but can not be
-// converted integer easily.
-TEST_F(DateRewriterTest, RelationWithUserHistoryRewriterTest) {
-  DateRewriter rewriter;
-  Segments segments;
-  const ConversionRequest request;
-  InitSegment("2011", "二千十一", &segments);
-  AppendSegment("nenn", "年", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  ASSERT_EQ(segments.segments_size(), 2);
-  EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("平成23")));
-  EXPECT_THAT(segments.segment(1), HasSingleCandidate(ValueIs("年")));
-}
-
 TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
   commands::Request request;
   const config::Config config;
@@ -1218,9 +1191,11 @@ INSTANTIATE_TEST_SUITE_P(
     Values(
         // One segment, the most basic case.
         RewriteAdData{{{"へいせい23ねん", "平成23年"}}, 0, "2011年"},
+        RewriteAdData{{{"2011ねん", "2011年"}}, 0, "平成23年"},
         // The `value` should be ignored when rewriting.
         RewriteAdData{{{"へいせい23ねん", "兵勢23年"}}, 0, "2011年"},
         RewriteAdData{{{"へいせい23ねん", "兵勢23念"}}, 0, "2011年"},
+        RewriteAdData{{{"2011ねん", "2011念"}}, 0, "平成23年"},
         // Invalid era name.
         RewriteAdData{{{"ああ23ねん", "ああ23年"}}, 0, ""},
         // One segment, with preceding and following segments.
@@ -1229,15 +1204,27 @@ INSTANTIATE_TEST_SUITE_P(
                        {"です", "です"}},
                       1,
                       "2011年"},
+        RewriteAdData{
+            {{"きょうは", "今日は"}, {"2011ねん", "2011年"}, {"です", "です"}},
+            1,
+            "平成23年"},
         // The "年" suffix in the following segment. They don't need resizing,
         // and the result shouldn't contain the "年" suffix.
         RewriteAdData{{{"へいせい23", "平成23"}, {"ねん", "年"}}, 0, "2011"},
+        RewriteAdData{{{"2011", "2011"}, {"ねん", "年"}}, 0, "平成23"},
+        RewriteAdData{{{"2011", "二千十一"}, {"ねん", "年"}}, 0, "平成23"},
         RewriteAdData{{{"きょうは", "今日は"},
                        {"へいせい23", "平成23"},
                        {"ねん", "年"},
                        {"です", "です"}},
                       1,
                       "2011"},
+        RewriteAdData{{{"きょうは", "今日は"},
+                       {"2011", "2011"},
+                       {"ねん", "年"},
+                       {"です", "です"}},
+                      1,
+                      "平成23"},
         // Multiple segments.
         RewriteAdData{{{"へいせい", "平成"}, {"23ねん", "23年"}},
                       0,

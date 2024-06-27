@@ -1009,36 +1009,30 @@ bool DateRewriter::RewriteDate(Segment *segment,
 }
 
 size_t DateRewriter::RewriteEra(Segments::range segments_range) {
-  if (segments_range.size() < 2) {
-    return 0;
-  }
-  Segment &current_segment = segments_range.front();
-  const Segment &next_segment = segments_range[1];
-  if (current_segment.candidates_size() <= 0 ||
-      next_segment.candidates_size() <= 0) {
-    LOG(ERROR) << "Candidate size is 0";
-    return 0;
-  }
-
-  const std::string &current_key = current_segment.key();
-  const std::string &next_value = next_segment.candidate(0).value;
-
-  if (next_value != "年") {
+  // Rewrite:
+  // * If the first segment ends with the `kNenKey`, or
+  // * If the second segment starts with the `kNenKey`.
+  Segment &segment = segments_range.front();
+  absl::string_view key = segment.key();
+  const bool has_suffix = absl::EndsWith(key, kNenKey);
+  if (has_suffix) {
+    key.remove_suffix(kNenKey.size());
+  } else if (segments_range.size() < 2 ||
+             !absl::StartsWith(segments_range[1].key(), kNenKey)) {
     return 0;
   }
 
-  if (Util::GetScriptType(current_key) != Util::NUMBER) {
+  if (Util::GetScriptType(key) != Util::NUMBER) {
     return 0;
   }
 
-  const size_t len = Util::CharsLen(current_key);
+  const size_t len = Util::CharsLen(key);
   if (len < 3 || len > 4) {
     LOG(WARNING) << "Too long year";
     return 0;
   }
 
-  std::string year_str =
-      japanese_util::FullWidthAsciiToHalfWidthAscii(current_key);
+  std::string year_str = japanese_util::FullWidthAsciiToHalfWidthAscii(key);
 
   uint32_t year = 0;
   if (!absl::SimpleAtoi(year_str, &year)) {
@@ -1051,10 +1045,13 @@ size_t DateRewriter::RewriteEra(Segments::range segments_range) {
   }
 
   constexpr absl::string_view kDescription = "和暦";
-  const Segment::Candidate &base_cand = current_segment.candidate(0);
+  const Segment::Candidate &base_cand = segment.candidate(0);
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(results.size());
   for (std::string &value : results) {
+    if (has_suffix) {
+      value.append(kNenValue);
+    }
     std::unique_ptr<Segment::Candidate> candidate =
         CreateCandidate(base_cand, std::move(value), std::string(kDescription));
     candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -1062,9 +1059,9 @@ size_t DateRewriter::RewriteEra(Segments::range segments_range) {
   }
 
   constexpr int kInsertPosition = 2;
-  current_segment.insert_candidates(kInsertPosition, std::move(candidates));
+  segment.insert_candidates(kInsertPosition, std::move(candidates));
 
-  return 2;  // Consumed 2 segments.
+  return has_suffix ? 1 : 2;
 }
 
 bool DateRewriter::RewriteAd(Segments::range segments_range) {
