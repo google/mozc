@@ -37,6 +37,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -4580,4 +4581,71 @@ TEST_F(UserHistoryPredictorTest, RemoveRedundantCandidates) {
   run_test(1 + 4 + 8, {"東京", "東京は", "大阪駅", "大阪"}, {"東京", "大阪"});
 }
 
+TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  request_->mutable_decoder_experiment_params()
+      ->set_user_history_prediction_aggressive_bigram(true);
+
+  // Remember 私の名前は中野です
+  Segments segments;
+  {
+    constexpr absl::string_view kKey = "わたしのなまえはなかのです";
+    constexpr absl::string_view kValue = "私の名前は中野です";
+    SetUpInputForPrediction(kKey, composer_.get(), &segments);
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->add_candidate();
+    CHECK(candidate);
+    candidate->value = kValue;
+    candidate->content_value = kValue;
+    candidate->key = kKey;
+    candidate->content_key = kKey;
+    // "わたしの, 私の", "わたし, 私"
+    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    // "なまえは, 名前は", "なまえ, 名前"
+    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    // "なかのです, 中野です", "なかの, 中野"
+    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
+    predictor->Finish(*convreq_, &segments);
+  }
+
+  // Zero query from content values. suffix is suggested.
+  const std::vector<
+      std::tuple<absl::string_view, absl::string_view, absl::string_view>>
+      kZeroQueryTest = {{"わたし", "私", "の"},
+                        {"なまえ", "名前", "は"},
+                        {"なかの", "中野", "です"},
+                        {"わたしの", "私の", "名前"},
+                        {"なまえは", "名前は", "中野"}};
+  for (const auto &[hist_key, hist_value, suggestion] : kZeroQueryTest) {
+    segments.Clear();
+    SetUpInputForConversion(hist_key, composer_.get(), &segments);
+    AddCandidate(0, hist_value, &segments);
+    predictor->Finish(*convreq_, &segments);
+    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    SetUpInputForSuggestionWithHistory("", hist_key, hist_value,
+                                       composer_.get(), &segments);
+    request_->set_zero_query_suggestion(true);
+    ASSERT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+  }
+
+  // Bigram History.
+  {
+    segments.Clear();
+    SetUpInputForSuggestion("", composer_.get(), &segments);
+    PrependHistorySegments("の", "の", &segments);
+    PrependHistorySegments("わたし", "私", &segments);
+    request_->set_zero_query_suggestion(true);
+    ASSERT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "名前");
+
+    segments.Clear();
+    SetUpInputForSuggestion("", composer_.get(), &segments);
+    PrependHistorySegments("は", "は", &segments);
+    PrependHistorySegments("なまえ", "名前", &segments);
+    request_->set_zero_query_suggestion(true);
+    ASSERT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "中野");
+  }
+}
 }  // namespace mozc::prediction

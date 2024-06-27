@@ -159,7 +159,7 @@ class UserHistoryPredictor : public PredictorInterface {
   static uint32_t cache_size();
 
   // Returns the size of next entries.
-  static uint32_t max_next_entries_size();
+  uint32_t max_next_entries_size() const;
 
  private:
   struct SegmentForLearning {
@@ -169,7 +169,13 @@ class UserHistoryPredictor : public PredictorInterface {
     std::string content_value;
     std::string description;
   };
+
+  // Fingerprint of key/value.
   static uint32_t LearningSegmentFingerprint(const SegmentForLearning &segment);
+
+  // Fingerprints of key/value and content_key/content_value.
+  std::vector<uint32_t> LearningSegmentFingerprints(
+      const SegmentForLearning &segment) const;
 
   struct SegmentsForLearning {
     std::string conversion_segments_key;
@@ -436,6 +442,13 @@ class UserHistoryPredictor : public PredictorInterface {
                              const Entry *entry,
                              EntryPriorityQueue *results) const;
 
+  // if `prev_entry` is the prefix of `entry`, add the suffix part as
+  // zero-query suggestion.
+  bool ZeroQueryLookupEntry(RequestType request_type,
+                            absl::string_view input_key, const Entry *entry,
+                            const Entry *prev_entry,
+                            EntryPriorityQueue *results) const;
+
   void InsertHistory(RequestType request_type, bool is_suggestion_selected,
                      uint64_t last_access_time, Segments *segments);
 
@@ -446,10 +459,10 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Inserts |key,value,description| to the internal dictionary database.
   // |is_suggestion_selected|: key/value is suggestion or conversion.
-  // |next_fp|: fingerprint of the next segment.
+  // |next_fp|: fingerprints of the next segment.
   // |last_access_time|: the time when this entry was created
   void Insert(std::string key, std::string value, std::string description,
-              bool is_suggestion_selected, uint32_t next_fp,
+              bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
               uint64_t last_access_time, Segments *segments);
 
   // Called by TryInsert to check the Entry to insert.
@@ -461,8 +474,9 @@ class UserHistoryPredictor : public PredictorInterface {
   // Entry's contents and request_type will be checked before insertion.
   void TryInsert(RequestType request_type, absl::string_view key,
                  absl::string_view value, absl::string_view description,
-                 bool is_suggestion_selected, uint32_t next_fp,
-                 uint64_t last_access_time, Segments *segments);
+                 bool is_suggestion_selected,
+                 absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
+                 Segments *segments);
 
   // Inserts event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
   void InsertEvent(EntryType type);
@@ -502,6 +516,8 @@ class UserHistoryPredictor : public PredictorInterface {
   std::unique_ptr<DicCache> dic_;
   mutable std::optional<BackgroundFuture<void>> sync_;
   const engine::Modules &modules_;
+
+  mutable std::atomic<bool> aggressive_bigram_enabled_ = false;
 };
 
 }  // namespace mozc::prediction

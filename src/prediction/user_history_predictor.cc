@@ -54,6 +54,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "absl/types/span.h"
 #include "base/bits.h"
 #include "base/clock.h"
 #include "base/config_file_stream.h"
@@ -817,6 +818,47 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
   return false;
 }
 
+bool UserHistoryPredictor::ZeroQueryLookupEntry(
+    RequestType request_type, absl::string_view input_key, const Entry *entry,
+    const Entry *prev_entry, EntryPriorityQueue *results) const {
+  DCHECK(entry);
+  DCHECK(results);
+
+  // - input_key is empty,
+  // - prev_entry(history) = 東京
+  // - entry in LRU = 東京で
+  //   Then we suggest で as zero query suggestion.
+
+  // when `perv_entry` is not null, it is guaranteed that
+  // the history segment is in the LRU cache.
+  if (prev_entry && aggressive_bigram_enabled_ &&
+      request_type == ZERO_QUERY_SUGGESTION && input_key.empty() &&
+      entry->key().size() > prev_entry->key().size() &&
+      entry->value().size() > prev_entry->value().size() &&
+      absl::StartsWith(entry->key(), prev_entry->key()) &&
+      absl::StartsWith(entry->value(), prev_entry->value())) {
+    // suffix must starts with Japanese characters.
+    std::string key = entry->key().substr(prev_entry->key().size());
+    std::string value = entry->value().substr(prev_entry->value().size());
+    const auto type = Util::GetFirstScriptType(value);
+    if (type != Util::KANJI && type != Util::HIRAGANA &&
+        type != Util::KATAKANA) {
+      return false;
+    }
+    Entry *result = results->NewEntry();
+    DCHECK(result);
+    // Copy timestamp from `entry`
+    *result = *entry;
+    result->set_key(std::move(key));
+    result->set_value(std::move(value));
+    result->set_bigram_boost(true);
+    results->Push(result);
+    return true;
+  }
+
+  return false;
+}
+
 bool UserHistoryPredictor::RomanFuzzyLookupEntry(
     const absl::string_view roman_input_key, const Entry *entry,
     EntryPriorityQueue *results) const {
@@ -1156,14 +1198,14 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
+  const auto &params = request.request().decoder_experiment_params();
+
   const bool is_zero_query =
       ((request_type == ZERO_QUERY_SUGGESTION) && (input_key_len == 0));
   size_t max_prediction_size =
       request.max_user_history_prediction_candidates_size();
   size_t max_prediction_char_coverage =
-      request.request()
-          .decoder_experiment_params()
-          .user_history_prediction_max_char_coverage();
+      params.user_history_prediction_max_char_coverage();
 
   if (is_zero_query) {
     max_prediction_size =
@@ -1173,6 +1215,9 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     // set a fixed value so that we can enumerate enough candidates.
     max_prediction_size = 3;
   }
+
+  aggressive_bigram_enabled_ =
+      params.user_history_prediction_aggressive_bigram();
 
   EntryPriorityQueue results;
   GetResultsFromHistoryDictionary(request_type, request, *segments, prev_entry,
@@ -1253,8 +1298,37 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
 
   const Segment &history_segment = history_segments.back();
 
-  // Simply lookup the history_segment.
-  prev_entry = dic_->LookupWithoutInsert(SegmentFingerprint(history_segment));
+  if (aggressive_bigram_enabled_) {
+    // Finds the prev_entry from the longest context.
+    // Even when the original value is split into content_value and suffix,
+    // longest context information is used.
+    Segments::const_range tmp_history_segments = segments.history_segments();
+    std::string all_history_key, all_history_value;
+    for (const auto &segment : tmp_history_segments) {
+      if (segment.candidates_size() == 0) {
+        all_history_value.clear();
+        all_history_key.clear();
+        break;
+      }
+      absl::StrAppend(&all_history_value, segment.candidate(0).value);
+      absl::StrAppend(&all_history_key, segment.candidate(0).key);
+    }
+    absl::string_view suffix_key = all_history_key;
+    absl::string_view suffix_value = all_history_value;
+    while (!suffix_key.empty() && !suffix_value.empty() &&
+           !tmp_history_segments.empty()) {
+      prev_entry =
+          dic_->LookupWithoutInsert(Fingerprint(suffix_key, suffix_value));
+      if (prev_entry) break;
+      suffix_value.remove_prefix(
+          tmp_history_segments.front().candidate(0).value.size());
+      suffix_key.remove_prefix(
+          tmp_history_segments.front().candidate(0).key.size());
+      tmp_history_segments.drop(1);  // remove first.
+    }
+  } else {
+    prev_entry = dic_->LookupWithoutInsert(SegmentFingerprint(history_segment));
+  }
 
   // Check the timestamp of prev_entry.
   const absl::Time now = Clock::GetAbslTime();
@@ -1352,7 +1426,9 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
     // If a new entry is found, the entry is pushed to the results.
     if (LookupEntry(request_type, input_key, base_key, expanded.get(),
                     &(elm.value), prev_entry, results) ||
-        RomanFuzzyLookupEntry(roman_input_key, &(elm.value), results)) {
+        RomanFuzzyLookupEntry(roman_input_key, &(elm.value), results) ||
+        ZeroQueryLookupEntry(request_type, input_key, &(elm.value), prev_entry,
+                             results)) {
       continue;
     }
 
@@ -1704,19 +1780,21 @@ bool UserHistoryPredictor::ShouldInsert(
 void UserHistoryPredictor::TryInsert(
     RequestType request_type, absl::string_view key, absl::string_view value,
     absl::string_view description, bool is_suggestion_selected,
-    uint32_t next_fp, uint64_t last_access_time, Segments *segments) {
+    absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
+    Segments *segments) {
   // b/279560433: Preprocess key value
   key = absl::StripTrailingAsciiWhitespace(key);
   value = absl::StripTrailingAsciiWhitespace(value);
   if (ShouldInsert(request_type, key, value, description)) {
     Insert(std::string(key), std::string(value), std::string(description),
-           is_suggestion_selected, next_fp, last_access_time, segments);
+           is_suggestion_selected, next_fps, last_access_time, segments);
   }
 }
 
 void UserHistoryPredictor::Insert(std::string key, std::string value,
                                   std::string description,
-                                  bool is_suggestion_selected, uint32_t next_fp,
+                                  bool is_suggestion_selected,
+                                  absl::Span<const uint32_t> next_fps,
                                   uint64_t last_access_time,
                                   Segments *segments) {
   const uint32_t dic_key = Fingerprint(key, value);
@@ -1763,7 +1841,7 @@ void UserHistoryPredictor::Insert(std::string key, std::string value,
   }
 
   // Inserts next_fp to the entry
-  if (next_fp != 0) {
+  for (const auto next_fp : next_fps) {
     NextEntry next_entry;
     next_entry.set_entry_fp(next_fp);
     InsertNextEntry(next_entry, entry);
@@ -1859,6 +1937,10 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     return;
   }
 
+  aggressive_bigram_enabled_ = request.request()
+                                   .decoder_experiment_params()
+                                   .user_history_prediction_aggressive_bigram();
+
   if (!CheckSyncerAndDelete()) {
     LOG(WARNING) << "Syncer is running";
     return;
@@ -1905,7 +1987,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
       TryInsert(
           std::move(request_type), absl::StrCat(entry->key(), candidate.key),
           absl::StrCat(entry->value(), candidate.value), entry->description(),
-          is_suggestion, 0, entry->last_access_time(), segments);
+          is_suggestion, {}, entry->last_access_time(), segments);
     }
   }
 
@@ -1997,7 +2079,7 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
   if (request_type != ZERO_QUERY_SUGGESTION &&
       learning_segments.conversion_segments.size() > 1 && !all_key.empty() &&
       !all_value.empty()) {
-    TryInsert(request_type, all_key, all_value, "", is_suggestion_selected, 0,
+    TryInsert(request_type, all_key, all_value, "", is_suggestion_selected, {},
               last_access_time, segments);
   }
 
@@ -2037,8 +2119,11 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
     if (history_entry) {
       NextEntry next_entry;
       if (!is_suggestion_selected) {
-        next_entry.set_entry_fp(LearningSegmentFingerprint(conversion_segment));
-        InsertNextEntry(next_entry, history_entry);
+        for (const auto next_fp :
+             LearningSegmentFingerprints(conversion_segment)) {
+          next_entry.set_entry_fp(next_fp);
+          InsertNextEntry(next_entry, history_entry);
+        }
       }
 
       // Entire user input or SUGGESTION
@@ -2055,43 +2140,43 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     RequestType request_type, bool is_suggestion_selected,
     uint64_t last_access_time, const SegmentsForLearning &learning_segments,
     Segments *segments) {
-  absl::flat_hash_set<uint32_t> seen;
+  absl::flat_hash_set<std::vector<uint32_t>> seen;
   bool this_was_seen = false;
 
   for (size_t i = 0; i < learning_segments.conversion_segments.size(); ++i) {
     const SegmentForLearning &segment =
         learning_segments.conversion_segments[i];
-    uint32_t next_fp = (i == learning_segments.conversion_segments.size() - 1)
-                           ? 0
-                           : LearningSegmentFingerprint(
-                                 learning_segments.conversion_segments[i + 1]);
-
+    std::vector<uint32_t> next_fps;
+    if (i < learning_segments.conversion_segments.size() - 1) {
+      next_fps = LearningSegmentFingerprints(
+          learning_segments.conversion_segments[i + 1]);
+    }
     // remember the first segment
     if (i == 0) {
-      seen.insert(LearningSegmentFingerprint(segment));
+      seen.insert(LearningSegmentFingerprints(segment));
     }
-    uint32_t next_fp_to_set = next_fp;
+    std::vector<uint32_t> next_fps_to_set = next_fps;
     // If two duplicate segments exist, kills the link
     // TO/FROM the second one to prevent loops.
     // Only killing "TO" link caused bug #2982886:
     // after converting "らいおん（もうじゅう）とぞうりむし（びせいぶつ）"
     // and typing "ぞうりむし", "ゾウリムシ（猛獣" was suggested.
     if (this_was_seen) {
-      next_fp_to_set = 0;
+      next_fps_to_set.clear();
     }
-    if (!seen.insert(next_fp).second) {
-      next_fp_to_set = 0;
+    if (!seen.insert(next_fps).second) {
+      next_fps_to_set.clear();
       this_was_seen = true;
     } else {
       this_was_seen = false;
     }
     TryInsert(request_type, segment.key, segment.value, segment.description,
-              is_suggestion_selected, next_fp_to_set, last_access_time,
+              is_suggestion_selected, next_fps_to_set, last_access_time,
               segments);
     if (content_word_learning_enabled_ && segment.content_key != segment.key &&
         segment.content_value != segment.value) {
       TryInsert(request_type, segment.content_key, segment.content_value,
-                segment.description, is_suggestion_selected, 0,
+                segment.description, is_suggestion_selected, {},
                 last_access_time, segments);
     }
   }
@@ -2232,6 +2317,17 @@ uint32_t UserHistoryPredictor::LearningSegmentFingerprint(
   return Fingerprint(segment.key, segment.value);
 }
 
+std::vector<uint32_t> UserHistoryPredictor::LearningSegmentFingerprints(
+    const SegmentForLearning &segment) const {
+  std::vector<uint32_t> fps;
+  fps.reserve(2);
+  fps.push_back(Fingerprint(segment.key, segment.value));
+  if (aggressive_bigram_enabled_ && segment.key != segment.content_key) {
+    fps.push_back(Fingerprint(segment.content_key, segment.content_value));
+  }
+  return fps;
+}
+
 // static
 std::string UserHistoryPredictor::Uint32ToString(uint32_t fp) {
   std::string buf(reinterpret_cast<const char *>(&fp), sizeof(fp));
@@ -2289,9 +2385,8 @@ uint32_t UserHistoryPredictor::GetScore(const Entry &entry) {
 uint32_t UserHistoryPredictor::cache_size() { return kLruCacheSize; }
 
 // Returns the size of next entries.
-// static
-uint32_t UserHistoryPredictor::max_next_entries_size() {
-  return kMaxNextEntriesSize;
+uint32_t UserHistoryPredictor::max_next_entries_size() const {
+  return aggressive_bigram_enabled_ ? 6 : kMaxNextEntriesSize;
 }
 
 }  // namespace mozc::prediction
