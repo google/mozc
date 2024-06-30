@@ -30,3 +30,11 @@ You can get the version string by converting "Version" or "ばーじょん".
 
 ## Additional context
 Add any other context about the problem here.
+
+> [!NOTE]
+>
+> Typing issues will be closed when the entries are added to test cases and
+> evaluations.
+>
+> https://github.com/google/mozc/blob/master/src/data/test/quality_regression_test/oss.tsv
+> https://github.com/google/mozc/blob/master/src/data/dictionary_oss/evaluation.tsv
