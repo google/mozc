@@ -65,7 +65,7 @@ python build_tools/update_deps.py
 In this step, additional build dependencies will be downloaded.
 
   * [Ninja 1.11.0](https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-win.zip)
-  * [Qt 6.7.1](https://download.qt.io/archive/qt/6.7/6.7.1/submodules/qtbase-everywhere-src-6.7.1.tar.xz)
+  * [Qt 6.7.2](https://download.qt.io/archive/qt/6.7/6.7.2/submodules/qtbase-everywhere-src-6.7.2.tar.xz)
   * [.NET tools](../dotnet-tools.json)
   * [git submodules](../.gitmodules)
 
