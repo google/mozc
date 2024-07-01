@@ -1302,9 +1302,8 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
     // Finds the prev_entry from the longest context.
     // Even when the original value is split into content_value and suffix,
     // longest context information is used.
-    Segments::const_range tmp_history_segments = segments.history_segments();
     std::string all_history_key, all_history_value;
-    for (const auto &segment : tmp_history_segments) {
+    for (const auto &segment : history_segments) {
       if (segment.candidates_size() == 0) {
         all_history_value.clear();
         all_history_key.clear();
@@ -1315,16 +1314,13 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
     }
     absl::string_view suffix_key = all_history_key;
     absl::string_view suffix_value = all_history_value;
-    while (!suffix_key.empty() && !suffix_value.empty() &&
-           !tmp_history_segments.empty()) {
+    for (const auto &segment : history_segments) {
+      if (suffix_key.empty() || suffix_value.empty()) break;
       prev_entry =
           dic_->LookupWithoutInsert(Fingerprint(suffix_key, suffix_value));
       if (prev_entry) break;
-      suffix_value.remove_prefix(
-          tmp_history_segments.front().candidate(0).value.size());
-      suffix_key.remove_prefix(
-          tmp_history_segments.front().candidate(0).key.size());
-      tmp_history_segments.drop(1);  // remove first.
+      suffix_value.remove_prefix(segment.candidate(0).value.size());
+      suffix_key.remove_prefix(segment.candidate(0).key.size());
     }
   } else {
     prev_entry = dic_->LookupWithoutInsert(SegmentFingerprint(history_segment));
@@ -2147,7 +2143,7 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     const SegmentForLearning &segment =
         learning_segments.conversion_segments[i];
     std::vector<uint32_t> next_fps;
-    if (i < learning_segments.conversion_segments.size() - 1) {
+    if (i + 1 < learning_segments.conversion_segments.size()) {
       next_fps = LearningSegmentFingerprints(
           learning_segments.conversion_segments[i + 1]);
     }
