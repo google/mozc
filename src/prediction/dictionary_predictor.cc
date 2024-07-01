@@ -461,15 +461,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     final_results_ptrs.emplace_back(&result);
   }
 
-  const bool fix_literal_on_top =
-      request.request().decoder_experiment_params().fix_literal_on_top();
-
-  if (fix_literal_on_top) {
-    // Runs literal on top on `final_results_ptrs` instead of segments.
-    // segments may contain the history candidate.
-    MaybeSuppressAggressiveTypingCorrection2(
-        request, typing_correction_mixing_params, &final_results_ptrs);
-  }
+  // Runs literal on top on `final_results_ptrs` instead of segments.
+  // segments may contain the history candidate.
+  MaybeSuppressAggressiveTypingCorrection(
+      request, typing_correction_mixing_params, &final_results_ptrs);
 
   // Fill segments from final_results_ptrs.
   for (const Result *result : final_results_ptrs) {
@@ -479,11 +474,6 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
   // TODO(b/320221782): Add unit tests for MaybeApplyPostCorrection.
   MaybeApplyPostCorrection(request, modules_, segments);
-
-  if (!fix_literal_on_top) {
-    MaybeSuppressAggressiveTypingCorrection(
-        request, typing_correction_mixing_params, segments);
-  }
 
   if (IsDebug(request) && modules_.GetSupplementalModel()) {
     AddRescoringDebugDescription(segments);
@@ -495,52 +485,6 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 // static
 void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
-    const ConversionRequest &request,
-    const TypingCorrectionMixingParams &typing_correction_mixing_params,
-    Segments *segments) {
-  if (segments->conversion_segments_size() == 0 ||
-      segments->conversion_segment(0).candidates_size() <= 1) {
-    return;
-  }
-
-  Segment *segment = segments->mutable_conversion_segment(0);
-
-  // Top is already literal.
-  if (!(segment->candidate(0).attributes &
-        Segment::Candidate::TYPING_CORRECTION)) {
-    return;
-  }
-
-  const bool force_literal_on_top =
-      typing_correction_mixing_params.literal_on_top;
-  const bool literal_at_least_second =
-      typing_correction_mixing_params.literal_at_least_second;
-
-  if (!force_literal_on_top && !literal_at_least_second) {
-    return;
-  }
-
-  const int max_size = std::min<int>(10, segment->candidates_size());
-  for (int i = 1; i < max_size; ++i) {
-    const auto &c = segment->candidate(i);
-    // Finds the first non-typing-corrected candidate.
-    if (!(c.attributes & Segment::Candidate::TYPING_CORRECTION)) {
-      // Replace the literal with top when the cost is close enough or
-      // force_literal_on_top is true.
-      if (force_literal_on_top) {
-        segment->move_candidate(i, 0);
-      } else if (literal_at_least_second && i >= 2) {
-        // Moves the literal to the second position even when
-        // literal-on-top condition doesn't match.
-        segment->move_candidate(i, 1);
-      }
-      break;
-    }
-  }
-}
-
-// static
-void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection2(
     const ConversionRequest &request,
     const TypingCorrectionMixingParams &typing_correction_mixing_params,
     std::vector<absl::Nonnull<const Result *>> *results) {

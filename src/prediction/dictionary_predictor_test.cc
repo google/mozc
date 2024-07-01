@@ -147,16 +147,8 @@ class DictionaryPredictorTestPeer {
   static void MaybeSuppressAggressiveTypingCorrection(
       const ConversionRequest &request,
       const TypingCorrectionMixingParams &typing_correction_mixing_params,
-      Segments *segments) {
-    DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
-        request, typing_correction_mixing_params, segments);
-  }
-
-  static void MaybeSuppressAggressiveTypingCorrection2(
-      const ConversionRequest &request,
-      const TypingCorrectionMixingParams &typing_correction_mixing_params,
       std::vector<absl::Nonnull<const Result *>> *results) {
-    DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection2(
+    DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
         request, typing_correction_mixing_params, results);
   }
 
@@ -1714,75 +1706,6 @@ TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
 }
 
 TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrectionTest) {
-  Segments segments;
-  InitSegmentsWithKey("key", &segments);
-
-  Segment *segment = segments.mutable_conversion_segment(0);
-  for (int i = 0; i < 10; ++i) {
-    segment->add_candidate();
-  }
-
-  auto get_top_value = [&segments]() {
-    return segments.conversion_segment(0).candidate(0).value;
-  };
-
-  auto get_second_value = [&segments]() {
-    return segments.conversion_segment(0).candidate(1).value;
-  };
-
-  auto reset_segments = [&]() {
-    for (int i = 0; i < segment->candidates_size(); ++i) {
-      auto *candidate = segment->mutable_candidate(i);
-      candidate->attributes = 0;
-      candidate->key = absl::StrCat("key_", i);
-      candidate->value = absl::StrCat("value_", i);
-    }
-
-    for (int i = 1; i <= 2; ++i) {
-      segment->mutable_candidate(i)->attributes |=
-          Segment::Candidate::TYPING_CORRECTION;
-    }
-
-    segment->mutable_candidate(0)->cost = 100;
-    segment->mutable_candidate(3)->cost = 500;
-  };
-
-  reset_segments();
-
-  TypingCorrectionMixingParams params;
-
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      *convreq_for_suggestion_, params, &segments);
-  EXPECT_EQ(get_top_value(), "value_0");
-
-  reset_segments();
-  params.literal_on_top = false;  // literal_on_top is not passed.
-  segment->mutable_candidate(0)->attributes |=
-      Segment::Candidate::TYPING_CORRECTION;
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      *convreq_for_suggestion_, params, &segments);
-  EXPECT_EQ(get_top_value(), "value_0");
-  EXPECT_EQ(get_second_value(), "value_1");
-
-  params.literal_on_top = true;  // literal_on_top is passed.
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      *convreq_for_suggestion_, params, &segments);
-  EXPECT_EQ(get_top_value(), "value_3");
-  EXPECT_EQ(get_second_value(), "value_0");
-
-  // test literal-at-least-second behavior
-  reset_segments();
-  params.literal_on_top = false;
-  params.literal_at_least_second = true;
-  segment->mutable_candidate(0)->attributes |=
-      Segment::Candidate::TYPING_CORRECTION;
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      *convreq_for_suggestion_, params, &segments);
-  EXPECT_EQ(get_top_value(), "value_0");     // top is typing correction.
-  EXPECT_EQ(get_second_value(), "value_3");  // second is literal.
-}
-
-TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrection2Test) {
   std::vector<Result> results(10);
   std::vector<absl::Nonnull<const Result *>> results_ptrs;
 
@@ -1815,20 +1738,20 @@ TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrection2Test) {
 
   TypingCorrectionMixingParams params;
 
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
       *convreq_for_suggestion_, params, &results_ptrs);
   EXPECT_EQ(get_top_value(), "value_0");
 
   results[0].types |= PredictionType::TYPING_CORRECTION;
   reset_results_ptrs();
   params.literal_on_top = false;  // literal_on_top is not passed.
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
       *convreq_for_suggestion_, params, &results_ptrs);
   EXPECT_EQ(get_top_value(), "value_0");
   EXPECT_EQ(get_second_value(), "value_1");
 
   params.literal_on_top = true;  // literal_on_top is passed.
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
       *convreq_for_suggestion_, params, &results_ptrs);
   EXPECT_EQ(get_top_value(), "value_3");
   EXPECT_EQ(get_second_value(), "value_0");
@@ -1838,7 +1761,7 @@ TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrection2Test) {
   reset_results_ptrs();
   params.literal_on_top = false;
   params.literal_at_least_second = true;
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection2(
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
       *convreq_for_suggestion_, params, &results_ptrs);
   EXPECT_EQ(get_top_value(), "value_0");     // top is typing correction.
   EXPECT_EQ(get_second_value(), "value_3");  // second is literal.

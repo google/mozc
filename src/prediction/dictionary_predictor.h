@@ -294,11 +294,6 @@ class DictionaryPredictor : public PredictorInterface {
   static void MaybeSuppressAggressiveTypingCorrection(
       const ConversionRequest &request,
       const TypingCorrectionMixingParams &typing_correction_mixing_params,
-      Segments *segments);
-
-  static void MaybeSuppressAggressiveTypingCorrection2(
-      const ConversionRequest &request,
-      const TypingCorrectionMixingParams &typing_correction_mixing_params,
       std::vector<absl::Nonnull<const Result *>> *results);
 
   static void MaybeApplyPostCorrection(const ConversionRequest &request,

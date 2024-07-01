@@ -641,9 +641,6 @@ message DecoderExperimentParams {
 
   optional int32 max_composition_event_to_process = 64 [default = 2];
 
-  // Fix the bug on the literal_on_top correction.
-  optional bool fix_literal_on_top = 65 [default = false];
-
   // Remove user history prediction entry when its selected ratio is lower
   // than the value.
   optional float user_history_prediction_min_selected_ratio = 78
