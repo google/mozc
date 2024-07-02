@@ -246,6 +246,7 @@ OK:	ばうんしゃ	馬運車	Conversion Expected	馬運車	2.28.5000
 OK:	しんしょかいふうざい	信書開封罪	Conversion Expected	信書開封罪	2.28.5000
 OK:	あいしんかくら	愛新覚羅	Conversion Expected	愛新覚羅	2.28.5000
 OK:	らのべ	ラノベ	Conversion Expected	ラノベ	2.28.5000
+FAILED:	なごやとばし	名古屋鳥羽市	Conversion Expected	名古屋飛ばし	2.30.5490
 OK:	こんせ	今世	Conversion Expected 9	今世	2.28.5000
 OK:	こんぜ	今世	Conversion Expected 9	今世	2.28.5000
 OK:	こんせい	今世	Conversion Expected 9	今世	2.28.5000
@@ -293,7 +294,23 @@ OK:	いっきょう	一興	Conversion Expected 9	一強	2.30.5432
 OK:	いっきょうたじゃく	一強他弱	Conversion Expected	一強他弱	2.30.5432
 FAILED:	よとういっきょう	与党一興	Conversion Expected	与党一強	2.30.5432
 OK:	もどりち	戻り値	Conversion Expected	戻り値	2.30.5432
-OK:	ほっけ	ホッケ	Conversion Expected 9	𩸽	2.30.5432
+FAILED:	こころここにあらず	ココロココにあらず	Conversion Expected	心ここにあらず	2.30.5490
+OK:	ほっけ	ホッケ	Conversion Expected 9	𩸽	2.30.5490
+FAILED:	じょうきょうをちゅうしする	状況を中止する	Conversion Expected	状況を注視する	2.30.5490
+OK:	かんじょうば	感情場	Conversion Expected 9	勘定場	2.30.5490
+FAILED:	かくしゃ	各社	Conversion Expected 9	覚者	2.30.5490
+FAILED:	こうせき	功績	Conversion Expected 99	効績	2.30.5490
+FAILED:	こうせき	功績	Conversion Expected 99	效績	2.30.5490
+FAILED:	くうぐんしょうこう	空軍商工	Conversion Expected	空軍将校	2.30.5490
+FAILED:	へんきんまち	返金街	Conversion Expected	返金待ち	2.30.5490
+FAILED:	いちじんしゃ	１人車	Conversion Expected 9	一迅社	2.30.5490
+FAILED:	とうよ	投与	Conversion Expected 99	党与	2.30.5490
+FAILED:	けいゆう	軽有	Conversion Expected 99	経由	2.30.5490
+FAILED:	おっぱ	オッパ	Conversion Expected 9	越波	2.30.5490
+FAILED:	じっぽん	十本	Conversion Expected 99	日本	2.30.5490
+FAILED:	いりなか	いりなか	Conversion Expected 9	杁中	2.30.5490
+FAILED:	けんし	剣士	Conversion Expected 999	玄師	2.30.5490
+OK:	よねずけんし	米津玄師	Conversion Expected	米津玄師	2.30.5490
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
