@@ -57,7 +57,10 @@ mozc_cc_library(
     name = "freelist",
     hdrs = ["freelist.h"],
     visibility = ["//:__subpackages__"],
-    deps = ["//testing:friend_test"],
+    deps = [
+        "//testing:friend_test",
+        "@com_google_absl//absl/base:nullability",
+    ],
 )
 
 mozc_cc_test(
