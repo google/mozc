@@ -99,13 +99,13 @@ filegroup(
 genrule(
     name = "aux_dictionary",
     srcs = [
+        ":aux_dictionary.tsv",
         ":base_dictionary_data",
-        "//data/oss:aux_dictionary.tsv",
     ],
     outs = ["aux_dictionary.txt"],
     cmd = ("$(location //dictionary:gen_aux_dictionary) " +
            "--strict --output $@ " +
-           "--aux_tsv $(location //data/oss:aux_dictionary.tsv) " +
+           "--aux_tsv $(location :aux_dictionary.tsv) " +
            "--dictionary_txts $(locations :base_dictionary_data)"),
     tools = ["//dictionary:gen_aux_dictionary"],
 )
@@ -114,11 +114,11 @@ genrule(
     name = "filtered_dictionary",
     srcs = [
         ":base_dictionary_data",
-        "//data/oss:dictionary_filter.tsv",
+        ":dictionary_filter.tsv",
     ],
     outs = ["dictionary.txt"],
     cmd = ("$(location //dictionary:gen_filtered_dictionary) --output $@ " +
-           "--filter_tsv $(location //data/oss:dictionary_filter.tsv) " +
+           "--filter_tsv $(location :dictionary_filter.tsv) " +
            "--dictionary_txts $(locations :base_dictionary_data)"),
     tools = ["//dictionary:gen_filtered_dictionary"],
 )

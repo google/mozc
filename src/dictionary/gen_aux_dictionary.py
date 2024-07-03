@@ -37,7 +37,7 @@
   is -1, the new entry is ranked higher than the base entry.
 
 gen_aux_dictionary.py --output aux_dictionary.txt
---aux_tsv data/oss/aux_dictionary.tsv
+--aux_tsv data/dictionary_oss/aux_dictionary.tsv
 --dictionary_txts data/dictionary_oss/dictionary0*.txt
 """
 

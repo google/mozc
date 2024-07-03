@@ -31,7 +31,7 @@
 r"""A tool to remove specified words from dictionary files.
 
 gen_filtered_dictionary.py --output filtered_dictionary.txt
---filter_tsv data/oss/dictionary_filter.tsv
+--filter_tsv data/dictionary_oss/dictionary_filter.tsv
 --dictionary_txts data/dictionary_oss/dictionary0*.txt
 
 ### Format of dictionary_filter.tsv

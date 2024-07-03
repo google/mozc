@@ -1,4 +1,4 @@
-# data/oss
+# data/dictionary_oss
 
 ## aux_dictionary.tsv
 
