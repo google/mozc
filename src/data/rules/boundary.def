@@ -69,6 +69,8 @@ PREFIX 助詞,(格助詞|連体化)          3000
 # Suppress し|なし
 PREFIX 動詞,自立,*,*,サ変・スル,連用形 3000
 PREFIX 動詞,自立,*,*,サ変・スル,*    1000
+# Suppress あるXX pattern  (ラ変動詞)
+PREFIX 動詞,自立,*,*,ラ変,           5000
 
 # general noun might be buried in personal names
 # especially we have a lot of first name variants
