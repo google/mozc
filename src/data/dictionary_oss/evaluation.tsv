@@ -185,7 +185,7 @@ FAILED:	あらいながらもこんごにきたい	洗いながらも今後に�
 OK:	かうかちがあるとおもうなら	買う価値があると思うなら	Conversion Expected	買う価値があると思うなら	2.26.4596
 OK:	みにおぼえのない	身に覚えのない	Conversion Expected	身に覚えのない	2.26.4596
 OK:	まめまめしい	まめまめしい	Conversion Expected 2	忠実忠実しい	2.26.4596
-FAILED:	さかもとりゅういち	坂本竜一	Conversion Expected	坂本龍一	2.30.5432
+OK:	さかもとりゅういち	坂本龍一	Conversion Expected	坂本龍一	2.30.5490
 OK:	あさごはん	朝ごはん	Conversion Expected 2	朝ごはん	2.26.4610
 OK:	ひるごはん	昼ご飯	Conversion Expected 2	昼ごはん	2.30.5432
 OK:	とっけつ	突厥	Conversion Expected	突厥	2.26.4596
@@ -202,7 +202,7 @@ OK:	しんせん	新鮮	Conversion Expected 9	深圳	2.28.4702
 OK:	ふたつ	２つ	Conversion Expected 9	不達	2.28.4730
 OK:	からだき	空焚き	Conversion Expected 2	空焚き	2.28.4730
 OK:	ししゅう	刺繍	Conversion Expected 9	歯周	2.28.4750
-OK:	そうけつ	倉頡	Conversion Expected 9	倉頡	2.30.5432
+OK:	そうけつ	総穴	Conversion Expected 9	倉頡	2.30.5490
 OK:	あかつきにふねをいだす	暁に船を出だす	Conversion Expected	暁に船を出だす	2.28.4770
 OK:	さいのうをみいだす	才能を見出す	Conversion Expected 2	才能を見出だす	2.30.5432
 FAILED:	いっぴょう	一瓢	Conversion Expected 2	一票	2.28.4880
@@ -249,7 +249,7 @@ OK:	らのべ	ラノベ	Conversion Expected	ラノベ	2.28.5000
 FAILED:	なごやとばし	名古屋鳥羽市	Conversion Expected	名古屋飛ばし	2.30.5490
 OK:	こんせ	今世	Conversion Expected 9	今世	2.28.5000
 OK:	こんぜ	今世	Conversion Expected 9	今世	2.28.5000
-OK:	こんせい	今世	Conversion Expected 9	今世	2.28.5000
+OK:	こんせい	混成	Conversion Expected 9	今世	2.30.5490
 OK:	ふくじょし	副助詞	Conversion Expected 2	副助詞	2.28.5050
 FAILED:	らっぷ	ラップ	Conversion Expected 9	乱舞	2.28.4990
 OK:	こきゅう	呼吸	Conversion Expected 9	枯朽	2.28.5000
