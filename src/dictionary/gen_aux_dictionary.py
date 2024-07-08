@@ -214,7 +214,7 @@ class AuxDictionary():
 
 
 class WordsDictionary():
-  """Class for aux_dictionary.tsv."""
+  """Class for words.tsv."""
 
   def __init__(self, dictionary, aux):
     self.dictionary = dictionary
