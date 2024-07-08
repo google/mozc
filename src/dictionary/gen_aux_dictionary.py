@@ -258,7 +258,7 @@ class WordsDictionary():
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('--aux_tsv')
-  parser.add_argument('--words_tsv')
+  parser.add_argument('--words_tsv', nargs='*')
   parser.add_argument('--dictionary_txts', nargs='+')
   parser.add_argument('--id_def')
   parser.add_argument('--output')
@@ -273,9 +273,10 @@ def main():
   aux.WriteFile(args.output)
 
   if args.words_tsv and args.id_def:
-    words = WordsDictionary(dictionary, aux)
-    words.Parse(args.words_tsv, args.id_def)
-    words.WriteFile(args.output)
+    for words_tsv in args.words_tsv:
+      words = WordsDictionary(dictionary, aux)
+      words.Parse(words_tsv, args.id_def)
+      words.WriteFile(args.output)
 
 if __name__ == '__main__':
   main()

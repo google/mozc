@@ -102,14 +102,14 @@ genrule(
         ":aux_dictionary.tsv",
         ":base_dictionary_data",
         ":id.def",
-        "//data/dictionary_manual:words.tsv",
+        "//data/dictionary_manual",
     ],
     outs = ["aux_dictionary.txt"],
     cmd = ("$(location //dictionary:gen_aux_dictionary) " +
            "--strict --output $@ " +
            "--aux_tsv $(location :aux_dictionary.tsv) " +
            "--id_def $(location :id.def) " +
-           "--words_tsv $(location //data/dictionary_manual:words.tsv) " +
+           "--words_tsv $(locations //data/dictionary_manual) " +
            "--dictionary_txts $(locations :base_dictionary_data)"),
     tools = ["//dictionary:gen_aux_dictionary"],
 )
