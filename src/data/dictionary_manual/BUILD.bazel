@@ -29,6 +29,5 @@
 
 exports_files([
     "domain.txt",
-    "era.txt",
     "words.tsv",
 ])

@@ -74,7 +74,6 @@ mozc_dataset(
         "//data/dictionary_oss:dictionary_data",
         "//data/dictionary_oss:reading_correction.tsv",
         "//data/dictionary_manual:domain.txt",
-        "//data/dictionary_manual:era.txt",
     ],
     emoji_src = "//data/emoji:emoji_data.tsv",
     emoticon_categorized_src = (
