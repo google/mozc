@@ -1432,7 +1432,10 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
     // Since dic_ is sorted in LRU, typing corrected queries are ranked lower
     // than the original key.
     for (const auto &c : corrected) {
-      if (LookupEntry(request_type, c.correction, c.correction, nullptr,
+      // Only apply when score > 0. When score < 0, we trigger literal-on-top
+      // in dictionary predictor.
+      if (c.score > 0.0 &&
+          LookupEntry(request_type, c.correction, c.correction, nullptr,
                       &(elm.value), prev_entry, results)) {
         break;
       }

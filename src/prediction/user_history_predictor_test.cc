@@ -4408,7 +4408,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   std::vector<TypeCorrectedQuery> expected;
   auto add_expected = [&](const std::string &key) {
     expected.emplace_back(
-        TypeCorrectedQuery{key, TypeCorrectedQuery::CORRECTION});
+        TypeCorrectedQuery{key, TypeCorrectedQuery::CORRECTION, 1.0});
   };
 
   // かつこ -> がっこ and かっこ
