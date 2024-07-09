@@ -2,10 +2,15 @@
 
 ## aux_dictionary.tsv
 
-AUX dictionary is a mechanism to add word entries to `data/dictionary_oss/dictionary0x.txt`
-without running the internal training pipeline.
+AUX dictionary is a mechanism to add word entries to
+`data/dictionary_oss/dictionary0x.txt` without running the internal training
+pipeline.
 
-Pull requests under this directory are acceptable.
+> [!NOTE]
+>
+> We recommend to update TSV files in
+> [data/dictionary_manual](https://github.com/google/mozc/blob/master/src/data/dictionary_manual/) as an
+> easier way. Please consider using `data/dictionary_manual/` at first.
 
 ### Format of aux_dictionary.tsv
 
