@@ -42,7 +42,7 @@ load(
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
 )
-load("//bazel:stubs.bzl", "lexan")
+load("//bazel:stubs.bzl", "windows")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -55,7 +55,7 @@ mozc_cc_binary(
     ),
 )
 
-lexan.resource_files(
+windows.resource_files(
     name = "mozc_server_resources",
     manifests = [
         "mozc_server.exe.manifest",

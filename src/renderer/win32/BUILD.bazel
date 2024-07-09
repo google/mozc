@@ -36,7 +36,7 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
 )
-load("//bazel:stubs.bzl", "lexan")
+load("//bazel:stubs.bzl", "windows")
 
 package(
     default_visibility = ["//renderer:__pkg__"],
@@ -59,7 +59,7 @@ mozc_cc_binary(
     ],
 )
 
-lexan.resource_files(
+windows.resource_files(
     name = "win32_renderer_main_resources",
     manifests = [
         "mozc_renderer.exe.manifest",

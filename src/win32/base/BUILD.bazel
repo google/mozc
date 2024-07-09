@@ -36,7 +36,7 @@ load(
     "mozc_cc_test",
     "mozc_cc_win32_library",
 )
-load("//bazel:stubs.bzl", "lexan")  # @unused
+load("//bazel:stubs.bzl", "windows")  # @unused
 load(
     "//bazel/win32:build_defs.bzl",
     "features_gdi",
@@ -116,7 +116,7 @@ mozc_cc_test(
 )
 
 filegroup(
-    # TODO(yuryu): lexan.resource_files doesn't seem to accept cc_library.
+    # TODO(yuryu): windows.resource_files doesn't seem to accept cc_library.
     # This is a workaround for now.
     name = "display_name_resource_h_for_rc",
     srcs = ["display_name_resource.h"],

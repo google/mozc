@@ -35,7 +35,7 @@ load(
     "mozc_cc_binary",
     "mozc_cc_library",
 )
-load("//bazel:stubs.bzl", "lexan")
+load("//bazel:stubs.bzl", "windows")
 
 package(
     default_visibility = ["//visibility:private"],
@@ -58,7 +58,7 @@ mozc_cc_binary(
     ],
 )
 
-lexan.resource_files(
+windows.resource_files(
     name = "mozc_broker_resource",
     manifests = [
         "mozc_broker.exe.manifest",

@@ -32,7 +32,7 @@ load(
     "MOZC_TAGS",
     "mozc_cc_binary",
 )
-load("//bazel:stubs.bzl", "lexan")
+load("//bazel:stubs.bzl", "windows")
 
 mozc_cc_binary(
     name = "custom_action",
@@ -71,7 +71,7 @@ mozc_cc_binary(
     ],
 )
 
-lexan.resource_files(
+windows.resource_files(
     name = "custom_action_resource",
     rc_files = ["custom_action.rc"],
     resources = ["resource.h"],
