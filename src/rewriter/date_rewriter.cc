@@ -963,7 +963,8 @@ std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
 }  // namespace
 
 bool DateRewriter::RewriteDate(Segment *segment,
-                               const absl::string_view extra_format) {
+                               const absl::string_view extra_format,
+                               size_t &num_done_out) {
   const std::string &key = segment->key();
   auto rit = std::find_if(std::begin(kDateData), std::end(kDateData),
                           [&key](auto data) { return key == data.key; });
@@ -1005,10 +1006,12 @@ bool DateRewriter::RewriteDate(Segment *segment,
   const size_t min_idx = std::min<size_t>(3, end_idx);
   const size_t insert_idx = std::clamp(cand_idx + 1, min_idx, end_idx);
   segment->insert_candidates(insert_idx, std::move(candidates));
+  num_done_out = 1;
   return true;
 }
 
-size_t DateRewriter::RewriteEra(Segments::range segments_range) {
+bool DateRewriter::RewriteEra(Segments::range segments_range,
+                              size_t &num_done_out) {
   // Rewrite:
   // * If the first segment ends with the `kNenKey`, or
   // * If the second segment starts with the `kNenKey`.
@@ -1019,29 +1022,29 @@ size_t DateRewriter::RewriteEra(Segments::range segments_range) {
     key.remove_suffix(kNenKey.size());
   } else if (segments_range.size() < 2 ||
              !absl::StartsWith(segments_range[1].key(), kNenKey)) {
-    return 0;
+    return false;
   }
 
   if (Util::GetScriptType(key) != Util::NUMBER) {
-    return 0;
+    return false;
   }
 
   const size_t len = Util::CharsLen(key);
   if (len < 3 || len > 4) {
     LOG(WARNING) << "Too long year";
-    return 0;
+    return false;
   }
 
   std::string year_str = japanese_util::FullWidthAsciiToHalfWidthAscii(key);
 
   uint32_t year = 0;
   if (!absl::SimpleAtoi(year_str, &year)) {
-    return 0;
+    return false;
   }
 
   std::vector<std::string> results;
   if (!AdToEra(year, 0, /* unknown month */ &results)) {
-    return 0;
+    return false;
   }
 
   constexpr absl::string_view kDescription = "和暦";
@@ -1061,10 +1064,12 @@ size_t DateRewriter::RewriteEra(Segments::range segments_range) {
   constexpr int kInsertPosition = 2;
   segment.insert_candidates(kInsertPosition, std::move(candidates));
 
-  return has_suffix ? 1 : 2;
+  num_done_out = has_suffix ? 1 : 2;
+  return true;
 }
 
-bool DateRewriter::RewriteAd(Segments::range segments_range) {
+bool DateRewriter::RewriteAd(Segments::range segments_range,
+                             size_t &num_done_out) {
   // Rewrite:
   // * If the first segment ends with the `kNenKey`, or
   // * If the second segment starts with the `kNenKey`.
@@ -1100,6 +1105,7 @@ bool DateRewriter::RewriteAd(Segments::range segments_range) {
   // Insert position is the last of candidates
   const int position = static_cast<int>(segment->candidates_size());
   segment->insert_candidates(position, std::move(candidates));
+  num_done_out = has_suffix ? 1 : 2;
   return true;
 }
 
@@ -1526,14 +1532,9 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
       return true;
     }
 
-    if (RewriteAd(rest_segments) || RewriteDate(seg, extra_format)) {
-      modified = true;
-      num_done = 1;
-      continue;
-    }
-
-    num_done = RewriteEra(rest_segments);
-    if (num_done) {
+    if (RewriteAd(rest_segments, num_done) ||
+        RewriteDate(seg, extra_format, num_done) ||
+        RewriteEra(rest_segments, num_done)) {
       modified = true;
       continue;
     }

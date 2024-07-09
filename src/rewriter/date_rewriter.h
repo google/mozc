@@ -150,10 +150,13 @@ class DateRewriter : public RewriterInterface {
   static constexpr char kExtraFormatKey[] = "DATE_FORMAT";
 
  private:
-  static bool RewriteDate(Segment *segment, absl::string_view extra_format);
-  // Returns the number of segments processed.
-  static size_t RewriteEra(Segments::range segments_range);
-  static bool RewriteAd(Segments::range segments_range);
+  // If the rewrite is done, returns `true` and sets the `num_done_out` to the
+  // number of segments processed. The `num_done_out` is not modified if the
+  // rewrite is not done.
+  static bool RewriteDate(Segment *segment, absl::string_view extra_format,
+                          size_t &num_done_out);
+  static bool RewriteEra(Segments::range segments_range, size_t &num_done_out);
+  static bool RewriteAd(Segments::range segments_range, size_t &num_done_out);
   bool ResizeSegmentsForRewriteAd(const ConversionRequest &request,
                                   Segments::const_range segments_range,
                                   Segments *segments) const;
