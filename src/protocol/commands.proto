@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 87
+// Next ID: 88
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -649,6 +649,7 @@ message DecoderExperimentParams {
   // Offset to promote Katakana candidates in rewriter.
   // The promotion will be disabled if the value is negative.
   optional int32 katakana_promotion_offset = 83 [default = 5];
+
 }
 
 // Clients' request to the server.
