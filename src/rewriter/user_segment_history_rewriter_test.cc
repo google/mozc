@@ -1017,56 +1017,6 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
   }
 }
 
-TEST_F(UserSegmentHistoryRewriterTest, ReplaceableSingleKanji) {
-  request_->mutable_decoder_experiment_params()
-      ->set_user_segment_history_rewriter_new_replaceable(true);
-  Segments segments;
-  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
-      CreateUserSegmentHistoryRewriter());
-
-  rewriter->Clear();
-  {
-    auto set_up_segments = [&]() {
-      InitSegments(&segments, 2);
-
-      {
-        Segment::Candidate *c =
-            segments.mutable_segment(0)->mutable_candidate(0);
-        c->value = "隆史";
-        c->content_value = "隆史";
-        c->lid = 10;
-        c->rid = 10;
-      }
-      {
-        // Single kanji may have arbitrary lid/rid based on the other reference
-        // candidate.
-        Segment::Candidate *c =
-            segments.mutable_segment(0)->mutable_candidate(2);
-        c->value = "崇";
-        c->content_value = "崇";
-        c->lid = 20;
-        c->rid = 20;
-      }
-    };
-
-    set_up_segments();
-    segments.mutable_segment(0)->move_candidate(2, 0);
-    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
-        Segment::Candidate::RERANKED;
-    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-
-    rewriter->Finish(*convreq_, &segments);
-
-    set_up_segments();
-    segments.mutable_segment(1)->mutable_candidate(0)->value =
-        "not_same_as_before";
-
-    rewriter->Rewrite(*convreq_, &segments);
-
-    EXPECT_EQ(segments.segment(0).candidate(0).value, "崇");
-  }
-}
-
 TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
   Segments segments;
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(

@@ -606,8 +606,6 @@ message DecoderExperimentParams {
 
   optional bool apply_user_segment_history_rewriter_for_prediction = 44
       [default = false];
-  optional bool user_segment_history_rewriter_new_replaceable = 53
-      [default = false];
   optional bool user_segment_history_rewriter_use_inner_segments = 54
       [default = false];
 
