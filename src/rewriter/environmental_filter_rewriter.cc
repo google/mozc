@@ -44,6 +44,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
@@ -203,7 +204,7 @@ EmojiDataIterator end(const absl::string_view token_array_data) {
 
 absl::flat_hash_map<EmojiVersion, std::vector<std::u32string>>
 ExtractTargetEmojis(
-    const std::vector<EmojiVersion> &target_versions,
+    absl::Span<const EmojiVersion> target_versions,
     const std::pair<EmojiDataIterator, EmojiDataIterator> &range,
     const SerializedStringArray &string_array) {
   absl::flat_hash_map<EmojiVersion, std::vector<std::u32string>> results;
@@ -237,7 +238,7 @@ std::u32string SortAndUnique(std::u32string_view codepoints) {
 }  // namespace
 
 void CharacterGroupFinder::Initialize(
-    const std::vector<std::u32string> &target_codepoints) {
+    absl::Span<const std::u32string> target_codepoints) {
   std::u32string single_codepoints;
   for (const auto &codepoints : target_codepoints) {
     const size_t size = codepoints.size();

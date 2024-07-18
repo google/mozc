@@ -39,6 +39,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/japanese_util.h"
 #include "base/number_util.h"
 #include "base/text_normalizer.h"
@@ -183,12 +184,12 @@ void ModifyT13nsForGodan(const absl::string_view key,
   (*t13ns)[transliteration::FULL_ASCII_CAPITALIZED] = full_ascii_capitalized;
 }
 
-bool IsTransliterated(const std::vector<std::string> &t13ns) {
+bool IsTransliterated(absl::Span<const std::string> t13ns) {
   if (t13ns.empty() || t13ns[0].empty()) {
     return false;
   }
 
-  const std::string &base_candidate = t13ns[0];
+  absl::string_view base_candidate = t13ns[0];
   for (size_t i = 1; i < t13ns.size(); ++i) {
     if (t13ns[i] != base_candidate) {
       return true;
@@ -433,7 +434,7 @@ void TransliterationRewriter::InitT13nCandidate(
 }
 
 bool TransliterationRewriter::SetTransliterations(
-    const std::vector<std::string> &t13ns, const absl::string_view key,
+    absl::Span<const std::string> t13ns, const absl::string_view key,
     Segment *segment) const {
   if (t13ns.size() != transliteration::NUM_T13N_TYPES ||
       !IsTransliterated(t13ns)) {

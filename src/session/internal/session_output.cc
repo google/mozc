@@ -43,6 +43,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/strings/assign.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
@@ -248,7 +249,7 @@ void SessionOutput::FillAllCandidateWords(
 void SessionOutput::FillRemovedCandidates(
     const Segment &segment, commands::CandidateList *candidate_list_proto) {
   int index = 1000;
-  const std::vector<Segment::Candidate> &candidates =
+  absl::Span<const Segment::Candidate> candidates =
       segment.removed_candidates_for_debug_;
   for (const Segment::Candidate &candidate : candidates) {
     commands::CandidateWord *candidate_word_proto =

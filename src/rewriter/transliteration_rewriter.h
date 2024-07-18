@@ -32,9 +32,9 @@
 
 #include <cstdint>
 #include <string>
-#include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
@@ -62,7 +62,7 @@ class TransliterationRewriter : public RewriterInterface {
                          Segment::Candidate *cand) const;
   // Sets transliteration values into segment.  If t13ns is invalid,
   // false is returned.
-  bool SetTransliterations(const std::vector<std::string> &t13ns,
+  bool SetTransliterations(absl::Span<const std::string> t13ns,
                            absl::string_view key, Segment *segment) const;
   bool FillT13nsFromComposer(const ConversionRequest &request,
                              Segments *segments) const;

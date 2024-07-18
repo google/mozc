@@ -94,6 +94,7 @@ mozc_cc_test(
         ":segments",
         ":segments_matchers",
         "//testing:gunit_main",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

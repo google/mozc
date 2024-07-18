@@ -30,8 +30,8 @@
 #include "converter/segments_matchers.h"
 
 #include <string>
-#include <vector>
 
+#include "absl/types/span.h"
 #include "converter/segments.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -55,7 +55,7 @@ Segment::Candidate MakeCandidate(const std::string &key,
 }
 
 Segment MakeSegment(const std::string &key,
-                    const std::vector<std::string> &values) {
+                    absl::Span<const std::string> values) {
   Segment seg;
   seg.set_key(key);
   for (const std::string &val : values) {

@@ -336,6 +336,7 @@ mozc_cc_test(
         "//testing:mozctest",
         "//testing:testing_util",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

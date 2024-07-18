@@ -34,9 +34,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -103,7 +103,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   void InsertTriggerKey(const Segment &segment);
   bool IsPunctuation(const Segment &seg,
                      const Segment::Candidate &candidate) const;
-  bool SortCandidates(const std::vector<ScoreCandidate> &sorted_scores,
+  bool SortCandidates(absl::Span<const ScoreCandidate> sorted_scores,
                       Segment *segment) const;
   Score Fetch(absl::string_view key, uint32_t weight) const;
   void Insert(absl::string_view key, bool force);

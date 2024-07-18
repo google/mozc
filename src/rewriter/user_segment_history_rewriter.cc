@@ -46,6 +46,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
 #include "base/number_util.h"
@@ -403,7 +404,7 @@ bool IsT13NCandidate(const Segment::Candidate &cand) {
 }  // namespace
 
 bool UserSegmentHistoryRewriter::SortCandidates(
-    const std::vector<ScoreCandidate> &sorted_scores, Segment *segment) const {
+    absl::Span<const ScoreCandidate> sorted_scores, Segment *segment) const {
   const uint32_t top_score = sorted_scores[0].score;
   const size_t size = std::min(sorted_scores.size(), kMaxRerankSize);
   constexpr uint32_t kScoreGap = 20;  // TODO(taku): no justification

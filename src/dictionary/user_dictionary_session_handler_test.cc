@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/file_util.h"
 #include "base/protobuf/repeated_ptr_field.h"
 #include "base/system_util.h"
@@ -154,7 +155,7 @@ class UserDictionarySessionHandlerTest
 
   RepeatedPtrField<UserDictionary::Entry> GetUserDictionaryEntries(
       uint64_t session_id, uint64_t dictionary_id,
-      const std::vector<int> &indices) {
+      absl::Span<const int> indices) {
     Clear();
     command_->set_type(UserDictionaryCommand::GET_ENTRIES);
     command_->set_session_id(session_id);

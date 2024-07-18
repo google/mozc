@@ -37,6 +37,7 @@
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/hash.h"
@@ -91,19 +92,19 @@ void ReadSafeWords(const absl::string_view safe_list_files,
 constexpr size_t kMinimumFilterBytes = 100 * 1000;
 
 ExistenceFilterBuilder GetFilter(const size_t num_bytes,
-                                 const std::vector<uint64_t> &hash_list) {
+                                 absl::Span<const uint64_t> hash_list) {
   LOG(INFO) << "num_bytes: " << num_bytes;
 
   ExistenceFilterBuilder filter(
       ExistenceFilterBuilder::CreateOptimal(num_bytes, hash_list.size()));
-  for (size_t i = 0; i < hash_list.size(); ++i) {
-    filter.Insert(hash_list[i]);
+  for (uint64_t hash : hash_list) {
+    filter.Insert(hash);
   }
   return filter;
 }
 
 bool TestFilter(const ExistenceFilterBuilder &builder,
-                const std::vector<std::string> &safe_word_list) {
+                absl::Span<const std::string> safe_word_list) {
   ExistenceFilter filter = builder.Build();
   for (const std::string &word : safe_word_list) {
     if (filter.Exists(mozc::Fingerprint(word))) {
@@ -116,8 +117,8 @@ bool TestFilter(const ExistenceFilterBuilder &builder,
 }
 
 ExistenceFilterBuilder SetupFilter(
-    const size_t num_bytes, const std::vector<uint64_t> &hash_list,
-    const std::vector<std::string> &safe_word_list) {
+    const size_t num_bytes, absl::Span<const uint64_t> hash_list,
+    absl::Span<const std::string> safe_word_list) {
   constexpr int kNumRetryMax = 10;
   constexpr int kSizeOffset = 8;
   // Prevent filtering of common words by false positive.

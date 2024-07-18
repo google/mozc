@@ -37,6 +37,7 @@
 
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
@@ -65,7 +66,7 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
 }
 
 void AddSegment(const absl::string_view key,
-                const std::vector<std::string> &values, Segments *segments) {
+                absl::Span<const std::string> values, Segments *segments) {
   Segment *seg = segments->add_segment();
   seg->set_key(key);
   for (const std::string &value : values) {

@@ -111,6 +111,7 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
@@ -326,7 +327,7 @@ void Convert() {
                              std::ios_base::out | std::ios_base::binary);
     int out_count = 0;
     for (size_t i = 0; i < conjugation_list.size(); ++i) {
-      const std::vector<ConjugationType> &conjugations =
+      absl::Span<const ConjugationType> conjugations =
           inflection_map[conjugation_list[i]];
       conjugation_index[i] = out_count;
       if (conjugations.empty()) {
