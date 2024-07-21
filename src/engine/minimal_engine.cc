@@ -192,9 +192,8 @@ class MinimalConverter : public ConverterInterface {
     return true;
   }
 
-  bool CommitSegments(
-      Segments *segments,
-      const std::vector<size_t> &candidate_index) const override {
+  bool CommitSegments(Segments *segments,
+                      absl::Span<const size_t> candidate_index) const override {
     return true;
   }
 

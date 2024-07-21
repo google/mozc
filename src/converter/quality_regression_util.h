@@ -36,6 +36,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/types/span.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -80,7 +81,7 @@ class QualityRegressionUtil {
   // Pase |filename| and save the all test items into |outputs|.
   static absl::Status ParseFile(const std::string &filename,
                                 std::vector<TestItem> *outputs);
-  static absl::Status ParseFiles(const std::vector<std::string> &filename,
+  static absl::Status ParseFiles(absl::Span<const std::string> filenames,
                                  std::vector<TestItem> *outputs);
 
   absl::StatusOr<bool> ConvertAndTest(const TestItem &item,

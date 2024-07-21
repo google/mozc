@@ -46,6 +46,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/file_stream.h"
 #include "base/number_util.h"
 #include "base/text_normalizer.h"
@@ -220,7 +221,7 @@ absl::Status QualityRegressionUtil::ParseFile(const std::string &filename,
 
 // static
 absl::Status QualityRegressionUtil::ParseFiles(
-    const std::vector<std::string> &filenames, std::vector<TestItem> *outputs) {
+    absl::Span<const std::string> filenames, std::vector<TestItem> *outputs) {
   outputs->clear();
   for (const std::string &filename : filenames) {
     const absl::Status result = ParseFileInternal(filename, outputs);

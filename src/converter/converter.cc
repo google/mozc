@@ -661,8 +661,8 @@ bool Converter::FocusSegmentValue(Segments *segments, size_t segment_index,
   return rewriter_->Focus(segments, segment_index, candidate_index);
 }
 
-bool Converter::CommitSegments(
-    Segments *segments, const std::vector<size_t> &candidate_index) const {
+bool Converter::CommitSegments(Segments *segments,
+                               absl::Span<const size_t> candidate_index) const {
   const size_t conversion_segment_index = segments->history_segments_size();
   for (size_t i = 0; i < candidate_index.size(); ++i) {
     // 2nd argument must always be 0 because on each iteration

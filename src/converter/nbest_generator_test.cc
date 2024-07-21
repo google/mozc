@@ -38,6 +38,7 @@
 #include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "converter/immutable_converter.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
@@ -87,7 +88,7 @@ class NBestGeneratorTest : public ::testing::Test {
   const Node *GetEndNode(const ConversionRequest &request,
                          const ImmutableConverter &converter,
                          const Segments &segments, const Node &begin_node,
-                         const std::vector<uint16_t> &group,
+                         absl::Span<const uint16_t> group,
                          bool is_single_segment) {
     const Node *end_node = nullptr;
     for (Node *node = begin_node.next; node->next != nullptr;

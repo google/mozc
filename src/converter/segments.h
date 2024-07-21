@@ -43,6 +43,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/container/freelist.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
@@ -378,7 +379,7 @@ class Segment final {
   // TODO(toshiyuki): Integrate meta candidates to candidate and delete these
   size_t meta_candidates_size() const { return meta_candidates_.size(); }
   void clear_meta_candidates() { meta_candidates_.clear(); }
-  const std::vector<Candidate> &meta_candidates() const {
+  absl::Span<const Candidate> meta_candidates() const {
     return meta_candidates_;
   }
   std::vector<Candidate> *mutable_meta_candidates() {

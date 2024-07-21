@@ -45,6 +45,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -375,8 +376,8 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
 
   static ::testing::AssertionResult ExpectSelectedCandidateIndices(
       const char *, const char *, const SessionConverter &converter,
-      const std::vector<int> &expected) {
-    const std::vector<int> &actual = converter.selected_candidate_indices_;
+      absl::Span<const int> expected) {
+    absl::Span<const int> actual = converter.selected_candidate_indices_;
 
     if (expected.size() != actual.size()) {
       return ::testing::AssertionFailure()

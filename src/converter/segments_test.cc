@@ -38,6 +38,7 @@
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/number_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -49,7 +50,7 @@ using ::testing::ElementsAre;
 template <typename T>
 static std::vector<std::string> ToKeys(const T &segments) {
   std::vector<std::string> keys;
-  for (const Segment& segment : segments) {
+  for (const Segment &segment : segments) {
     keys.push_back(segment.key());
   }
   return keys;
@@ -606,7 +607,7 @@ TEST(SegmentTest, MetaCandidateTest) {
 
   // meta_candidates
   {
-    const std::vector<Segment::Candidate> &meta_candidates =
+    absl::Span<const Segment::Candidate> meta_candidates =
         segment.meta_candidates();
     EXPECT_EQ(meta_candidates.size(), kCandidatesSize + 1);
     for (size_t i = 0; i < kCandidatesSize; ++i) {

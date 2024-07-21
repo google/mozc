@@ -187,8 +187,8 @@ template <typename T>
   return CandidatesAreArrayMatcherImpl(matchers);
 }
 
-template <typename T>
-::testing::Matcher<Segment> CandidatesAreArray(const std::vector<T> &matchers) {
+template <typename Container>
+::testing::Matcher<Segment> CandidatesAreArray(const Container &matchers) {
   return CandidatesAreArrayMatcherImpl(matchers);
 }
 

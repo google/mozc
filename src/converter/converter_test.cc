@@ -42,6 +42,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -285,7 +286,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 
   std::unique_ptr<ConverterAndData>
   CreateConverterAndDataWithUserDefinedEntries(
-      const std::vector<UserDefinedEntry> &user_defined_entries,
+      absl::Span<const UserDefinedEntry> user_defined_entries,
       PredictorType predictor_type) {
     auto converter_and_data = std::make_unique<ConverterAndData>();
     auto data_manager = std::make_unique<testing::MockDataManager>();

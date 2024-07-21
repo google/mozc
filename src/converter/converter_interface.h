@@ -32,7 +32,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
@@ -167,7 +166,7 @@ class ConverterInterface {
   // 1st segment.
   ABSL_MUST_USE_RESULT
   virtual bool CommitSegments(
-      Segments *segments, const std::vector<size_t> &candidate_index) const = 0;
+      Segments *segments, absl::Span<const size_t> candidate_index) const = 0;
 
   // Resize segment_index-th segment by offset_length.
   // offset_length can be negative.

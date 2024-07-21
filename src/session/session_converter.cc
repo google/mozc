@@ -428,7 +428,9 @@ void PrependCandidates(const Segment &previous_segment, std::string preedit,
     Segment::Candidate *candidate = segment->push_front_candidate();
     *candidate = previous_segment.candidate(cands_size - i - 1);
   }
-  *(segment->mutable_meta_candidates()) = previous_segment.meta_candidates();
+  segment->mutable_meta_candidates()->assign(
+      previous_segment.meta_candidates().begin(),
+      previous_segment.meta_candidates().end());
 }
 }  // namespace
 
