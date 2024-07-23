@@ -46,6 +46,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "config/config_handler.h"
@@ -117,11 +118,11 @@ class SystemDictionaryTest : public testing::TestWithTempUserProfile {
     config::ConfigHandler::SetConfig(config);
   }
 
-  void BuildAndWriteSystemDictionary(const std::vector<Token *> &source,
+  void BuildAndWriteSystemDictionary(absl::Span<Token *const> source,
                                      size_t num_tokens,
                                      const std::string &filename);
   std::unique_ptr<SystemDictionary> BuildSystemDictionary(
-      const std::vector<Token *> &source,
+      absl::Span<Token *const> source,
       size_t num_tokens = std::numeric_limits<size_t>::max());
   bool CompareTokensForLookup(const Token &a, const Token &b,
                               bool reverse) const;
@@ -156,7 +157,7 @@ std::vector<Token *> MakeTokenPointers(C *token_container) {
 }
 
 void SystemDictionaryTest::BuildAndWriteSystemDictionary(
-    const std::vector<Token *> &source, size_t num_tokens,
+    absl::Span<Token *const> source, size_t num_tokens,
     const std::string &filename) {
   SystemDictionaryBuilder builder;
   std::vector<Token *> tokens;
@@ -171,7 +172,7 @@ void SystemDictionaryTest::BuildAndWriteSystemDictionary(
 }
 
 std::unique_ptr<SystemDictionary> SystemDictionaryTest::BuildSystemDictionary(
-    const std::vector<Token *> &source, size_t num_tokens) {
+    absl::Span<Token *const> source, size_t num_tokens) {
   BuildAndWriteSystemDictionary(source, num_tokens, dic_fn_);
   return SystemDictionary::Builder(dic_fn_).Build().value();
 }
@@ -379,8 +380,7 @@ TEST_F(SystemDictionaryTest, SameWord) {
 }
 
 TEST_F(SystemDictionaryTest, LookupAllWords) {
-  const std::vector<std::unique_ptr<Token>> &source_tokens =
-      text_dict_.tokens();
+  absl::Span<const std::unique_ptr<Token>> source_tokens = text_dict_.tokens();
   std::unique_ptr<SystemDictionary> system_dic =
       BuildSystemDictionary(MakeTokenPointers(&source_tokens),
                             absl::GetFlag(FLAGS_dictionary_test_size));
@@ -721,8 +721,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
 }
 
 TEST_F(SystemDictionaryTest, LookupReverseIndex) {
-  const std::vector<std::unique_ptr<Token>> &source_tokens =
-      text_dict_.tokens();
+  absl::Span<const std::unique_ptr<Token>> source_tokens = text_dict_.tokens();
   BuildAndWriteSystemDictionary(MakeTokenPointers(&source_tokens),
                                 absl::GetFlag(FLAGS_dictionary_test_size),
                                 dic_fn_);
@@ -750,8 +749,8 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
     system_dic_without_index->LookupReverse(t.value, convreq_, &callback1);
     system_dic_with_index->LookupReverse(t.value, convreq_, &callback2);
 
-    const std::vector<Token> &tokens1 = callback1.tokens();
-    const std::vector<Token> &tokens2 = callback2.tokens();
+    absl::Span<const Token> tokens1 = callback1.tokens();
+    absl::Span<const Token> tokens2 = callback2.tokens();
     ASSERT_EQ(tokens1.size(), tokens2.size());
     for (size_t i = 0; i < tokens1.size(); ++i) {
       EXPECT_TOKEN_EQ(tokens1[i], tokens2[i]);

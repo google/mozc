@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "dictionary/system/codec_interface.h"
 
 namespace mozc {
@@ -74,7 +75,7 @@ class SystemDictionaryCodec : public SystemDictionaryCodecInterface {
   void DecodeValue(absl::string_view src, std::string *dst) const override;
 
   // Compress tokens
-  void EncodeTokens(const std::vector<TokenInfo> &tokens,
+  void EncodeTokens(absl::Span<const TokenInfo> tokens,
                     std::string *output) const override;
 
   // Decompress tokens
@@ -95,7 +96,7 @@ class SystemDictionaryCodec : public SystemDictionaryCodecInterface {
   uint8_t GetTokensTerminationFlag() const override;
 
  private:
-  void EncodeToken(const std::vector<TokenInfo> &tokens, int index,
+  void EncodeToken(absl::Span<const TokenInfo> tokens, int index,
                    std::string *output) const;
 };
 

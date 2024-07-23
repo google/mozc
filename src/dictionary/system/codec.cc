@@ -37,6 +37,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "base/vlog.h"
@@ -50,7 +51,7 @@ namespace {
 void EncodeDecodeKeyImpl(absl::string_view src, std::string *dst);
 size_t GetEncodedDecodedKeyLengthImpl(absl::string_view src);
 
-uint8_t GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index);
+uint8_t GetFlagsForToken(absl::Span<const TokenInfo> tokens, int index);
 
 uint8_t GetFlagForPos(const TokenInfo &token_info, const Token *token);
 
@@ -360,7 +361,7 @@ uint8_t SystemDictionaryCodec::GetTokensTerminationFlag() const {
   return kTokenTerminationFlag;
 }
 
-void SystemDictionaryCodec::EncodeTokens(const std::vector<TokenInfo> &tokens,
+void SystemDictionaryCodec::EncodeTokens(absl::Span<const TokenInfo> tokens,
                                          std::string *output) const {
   DCHECK(output);
   output->clear();
@@ -385,7 +386,7 @@ void SystemDictionaryCodec::EncodeTokens(const std::vector<TokenInfo> &tokens,
 // Index: (less than 2^22)
 //  When kCrammedIDFlag is set, 2 bytes
 //  Othewise, 3 bytes
-void SystemDictionaryCodec::EncodeToken(const std::vector<TokenInfo> &tokens,
+void SystemDictionaryCodec::EncodeToken(absl::Span<const TokenInfo> tokens,
                                         int index, std::string *output) const {
   CHECK_LT(index, tokens.size());
 
@@ -537,7 +538,7 @@ size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src) {
 }
 
 // Return flags for token
-uint8_t GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index) {
+uint8_t GetFlagsForToken(absl::Span<const TokenInfo> tokens, int index) {
   // Determines the flags for this token.
   uint8_t flags = 0;
   if (index == tokens.size() - 1) {

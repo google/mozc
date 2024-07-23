@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/friend_test.h"
 
@@ -77,7 +78,7 @@ class TextDictionaryLoader {
     tokens_.push_back(std::move(token));
   }
 
-  const std::vector<std::unique_ptr<Token>> &tokens() const { return tokens_; }
+  absl::Span<const std::unique_ptr<Token>> tokens() const { return tokens_; }
 
   // Appends the tokens owned by this instance to |res|.  Note that the appended
   // tokens are still owned by this instance and deleted on destruction of this

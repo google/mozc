@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
@@ -71,10 +72,10 @@ class SystemDictionaryBuilder final {
   SystemDictionaryBuilder(const SystemDictionaryBuilder &) = delete;
   SystemDictionaryBuilder &operator=(const SystemDictionaryBuilder &) = delete;
 
-  void BuildFromTokens(const std::vector<Token *> &tokens) {
-    BuildFromTokensInternal(tokens);
+  void BuildFromTokens(absl::Span<Token *const> tokens) {
+    BuildFromTokensInternal(std::vector<Token *>(tokens.begin(), tokens.end()));
   }
-  void BuildFromTokens(const std::vector<std::unique_ptr<Token>> &tokens);
+  void BuildFromTokens(absl::Span<const std::unique_ptr<Token>> token);
 
   void WriteToFile(const std::string &output_file) const;
   void WriteToStream(absl::string_view intermediate_output_file_base_path,
