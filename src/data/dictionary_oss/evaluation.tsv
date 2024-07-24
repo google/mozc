@@ -311,6 +311,43 @@ FAILED:	じっぽん	十本	Conversion Expected 99	日本	2.30.5490
 OK:	いりなか	杁中	Conversion Expected 9	杁中	2.30.5490
 FAILED:	けんし	剣士	Conversion Expected 999	玄師	2.30.5490
 OK:	よねずけんし	米津玄師	Conversion Expected	米津玄師	2.30.5490
+FAILED:	そきゃく	粗客	Conversion Expected 99	阻却	2.30.5520
+FAILED:	そきゃく	粗客	Conversion Expected 999	阻卻	2.30.5520
+FAILED:	いほうせいがそきゃくされる	違法性画素客される	Conversion Expected	違法性が阻却される	2.30.5520
+FAILED:	かいほう	開放	Conversion Expected 99	開封	2.30.5520
+FAILED:	いんきゃ	インキャ	Conversion Expected 9	陰キャ	2.30.5520
+FAILED:	あおぞらぎんこう	青空銀行	Conversion Expected	あおぞら銀行	2.30.5520
+FAILED:	ゆうちょぎんこう	郵貯銀行	Conversion Expected	ゆうちょ銀行	2.30.5520
+FAILED:	えんけい	円形	Conversion Expected 99	燕京	2.30.5520
+FAILED:	きったん	切ったん	Conversion Expected 99	契丹	2.30.5520
+FAILED:	はきいん	は起因	Conversion Expected 99	破毀院	2.30.5520
+OK:	わいろざい	賄賂剤	Conversion Expected 9	賄賂罪	2.30.5520
+FAILED:	いけいざい	異経済	Conversion Expected 9	違警罪	2.30.5520
+FAILED:	こうこう	高校	Conversion Expected 99	礦坑	2.30.5520
+FAILED:	こうこう	高校	Conversion Expected 99	砿坑	2.30.5520
+FAILED:	べんり	便利	Conversion Expected 99	辨理	2.30.5520
+FAILED:	ごうべん	合弁	Conversion Expected 99	合辦	2.30.5520
+FAILED:	とうししんたくこうざをかいせつ	投資信託口座を解説	Conversion Expected	投資信託口座を開設	2.30.5520
+FAILED:	でーたをせっしゅする	データを接種する	Conversion Expected	データを窃取する	2.30.5520
+OK:	きゅうせいこうこう	急性高校	Conversion Expected 9	旧制高校	2.30.5520
+OK:	ぶんがくし	文学し	Conversion Expected 2	文学士	2.30.5520
+FAILED:	せつぞく	接続	Conversion Expected 999	接續	2.30.5520
+FAILED:	かんじ	感じ	Conversion Expected 99	巻次	2.30.5520
+FAILED:	はんき	半期	Conversion Expected 9	搬器	2.30.5520
+FAILED:	げんしきょうさんしゅぎ	原子共産主義	Conversion Expected	原始共産主義	2.30.5520
+OK:	こうはんいんさつ	後半印刷	Conversion Expected 9	孔版印刷	2.30.5520
+OK:	しゃしんしょくじ	写真食事	Conversion Expected 9	写真植字	2.30.5520
+OK:	けいらんし	鶏卵氏	Conversion Expected 9	鶏卵紙	2.30.5520
+FAILED:	とどがさき	トドが先	Conversion Expected 9	魹ヶ崎	2.30.5520
+FAILED:	くぬぎ	クヌギ	Conversion Expected 99	桾	2.30.5520
+FAILED:	ねぶたに	ねぶたに	Conversion Expected 9	掖谷	2.30.5520
+FAILED:	ねぶたに	ねぶたに	Conversion Expected 999	棭谷	2.30.5520
+FAILED:	ねぶ	ねぶ	Conversion Expected 999	掖	2.30.5520
+FAILED:	ねぶ	ねぶ	Conversion Expected 999	棭	2.30.5520
+FAILED:	みぬめ	見ぬ目	Conversion Expected 9	敏馬	2.30.5520
+FAILED:	みぬめじんじゃ	みヌメ神社	Conversion Expected 9	敏馬神社	2.30.5520
+FAILED:	みるめ	見る目	Conversion Expected 9	敏馬	2.30.5520
+FAILED:	みるめじんじゃ	見る目神社	Conversion Expected 9	敏馬神社	2.30.5520
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695

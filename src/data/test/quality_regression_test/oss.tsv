@@ -311,3 +311,40 @@ oss_issue960	じっぽん	日本	Conversion Expected 99
 oss_issue961	いりなか	杁中	Conversion Expected 9
 oss_issue962	けんし	玄師	Conversion Expected 999
 oss_issue962	よねずけんし	米津玄師	Conversion Expected
+oss_issue965	そきゃく	阻却	Conversion Expected 99
+oss_issue965	そきゃく	阻卻	Conversion Expected 999
+oss_issue966	いほうせいがそきゃくされる	違法性が阻却される	Conversion Expected
+oss_issue967	かいほう	開封	Conversion Expected 99
+oss_issue968	いんきゃ	陰キャ	Conversion Expected 9
+oss_issue969	あおぞらぎんこう	あおぞら銀行	Conversion Expected
+oss_issue970	ゆうちょぎんこう	ゆうちょ銀行	Conversion Expected
+oss_issue971	えんけい	燕京	Conversion Expected 99
+oss_issue972	きったん	契丹	Conversion Expected 99
+oss_issue974	はきいん	破毀院	Conversion Expected 99
+oss_issue975	わいろざい	賄賂罪	Conversion Expected 9
+oss_issue976	いけいざい	違警罪	Conversion Expected 9
+oss_issue977	こうこう	礦坑	Conversion Expected 99
+oss_issue977	こうこう	砿坑	Conversion Expected 99
+oss_issue978	べんり	辨理	Conversion Expected 99
+oss_issue979	ごうべん	合辦	Conversion Expected 99
+oss_issue981	とうししんたくこうざをかいせつ	投資信託口座を開設	Conversion Expected
+oss_issue982	でーたをせっしゅする	データを窃取する	Conversion Expected
+oss_issue983	きゅうせいこうこう	旧制高校	Conversion Expected 9
+oss_issue984	ぶんがくし	文学士	Conversion Expected 2
+oss_issue985	せつぞく	接續	Conversion Expected 999
+oss_issue986	かんじ	巻次	Conversion Expected 99
+oss_issue987	はんき	搬器	Conversion Expected 9
+oss_issue988	げんしきょうさんしゅぎ	原始共産主義	Conversion Expected
+oss_issue989	こうはんいんさつ	孔版印刷	Conversion Expected 9
+oss_issue990	しゃしんしょくじ	写真植字	Conversion Expected 9
+oss_issue991	けいらんし	鶏卵紙	Conversion Expected 9
+oss_issue992	とどがさき	魹ヶ崎	Conversion Expected 9
+oss_issue993	くぬぎ	桾	Conversion Expected 99
+oss_issue994	ねぶたに	掖谷	Conversion Expected 9
+oss_issue994	ねぶたに	棭谷	Conversion Expected 999
+oss_issue995	ねぶ	掖	Conversion Expected 999
+oss_issue995	ねぶ	棭	Conversion Expected 999
+oss_issue996	みぬめ	敏馬	Conversion Expected 9
+oss_issue996	みぬめじんじゃ	敏馬神社	Conversion Expected 9
+oss_issue996	みるめ	敏馬	Conversion Expected 9
+oss_issue996	みるめじんじゃ	敏馬神社	Conversion Expected 9
