@@ -339,7 +339,7 @@ OK:	こうはんいんさつ	孔版印刷	Conversion Expected 9	孔版印刷	2.3
 OK:	しゃしんしょくじ	写真食事	Conversion Expected 9	写真植字	2.30.5520
 OK:	けいらんし	鶏卵紙	Conversion Expected 9	鶏卵紙	2.30.5520
 OK:	とどがさき	魹ヶ崎	Conversion Expected 9	魹ヶ崎	2.30.5520
-FAILED:	くぬぎ	クヌギ	Conversion Expected 99	桾	2.30.5520
+OK:	くぬぎ	クヌギ	Conversion Expected 99	桾	2.30.5520
 OK:	ねぶたに	ねぶたに	Conversion Expected 9	掖谷	2.30.5520
 FAILED:	ねぶたに	ねぶたに	Conversion Expected 999	棭谷	2.30.5520
 FAILED:	ねぶ	ねぶ	Conversion Expected 999	掖	2.30.5520
