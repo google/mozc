@@ -2,13 +2,13 @@
 OK:	これはうれしいごさんです	これは嬉しい誤算です	Conversion Match	誤算	2.26.4423
 OK:	これはだめだというし	これはだめだと言うし	Conversion Not Match	シ	2.26.4423
 OK:	これはだめだとおもうから	これはだめだと思うから	Conversion Match	思うから	2.26.4423
-OK:	きごころのしれたなかなので	気心のしれたなかなので	Conversion Not Match	田中	2.30.5432
+OK:	きごころのしれたなかなので	気心のしれた中なので	Conversion Not Match	田中	2.30.5520
 OK:	かいごはほんとうにたいへんです	介護は本当に大変です	Conversion Not Match	改悟	2.26.4423
 OK:	かいごはほんとうにたいへんです	介護は本当に大変です	Conversion Not Match	タイ	2.26.4423
 OK:	でこめをおくったら	デコメを送ったら	Conversion Not Match	凸	2.26.4423
 OK:	さとるくんにたのみましょう	悟くんに頼みましょう	Conversion Not Match	読	2.28.5050
 OK:	そのことからもわかるように	そのことからもわかるように	Conversion Not Match	その子と	2.26.4423
-OK:	にほんちーむのえんぎはこのあとすぐです	日本チームの演技はこのあとすぐです	Conversion Not Match	演技派	2.30.5432
+OK:	にほんちーむのえんぎはこのあとすぐです	日本チームの演技はこのあと直ぐです	Conversion Not Match	演技派	2.30.5520
 FAILED:	ぼーりんぐじょうのちかくです	ボーリング上の近くです	Conversion Match	ボーリング場	2.29.5268
 OK:	しょっぱいあじがした	しょっぱい味がした	Conversion Not Match	下	2.26.4423
 OK:	とんでもないやつがあらわれた	とんでもないやつが現れた	Conversion Not Match	洗われた	2.26.4423
@@ -139,7 +139,7 @@ OK:	ちょうれいのあとはかいぎだ	朝礼のあとは会議だ	Conversi
 OK:	さんねんはんの	３年半の	Conversion Match	年半の	2.29.5268
 OK:	ごねんはんの	５年半の	Conversion Match	年半の	2.29.5268
 OK:	かってにぐちって	勝手に愚痴って	Conversion Not Match	支ってに	2.26.4520
-OK:	さりぎわがかっこいい	去り際がかっこいい	Conversion Match	去り際が	2.29.5268
+FAILED:	さりぎわがかっこいい	さり際がかっこいい	Conversion Match	去り際が	2.30.5520
 OK:	しはいよくがおおきいひとだ	支配欲が大きい人だ	Conversion Expected	支配欲が大きい人だ	2.26.4520
 OK:	よくよくかんがえたら	よくよく考えたら	Conversion Expected	よくよく考えたら	2.26.4520
 OK:	ごきぶりをたいじした	ゴキブリを退治した	Conversion Expected	ゴキブリを退治した	2.26.4520
@@ -210,7 +210,7 @@ OK:	きそう	競う	Conversion Expected 9	寄贈	2.28.4880
 OK:	なぞめいてて	謎めいてて	Conversion Expected	謎めいてて	2.29.5268
 FAILED:	しょくじをしたにもかかわらず	食事を下にもかかわらず	Conversion Match	食事をした	2.28.5050
 FAILED:	さんぜんえん	産前円	Conversion Expected 2	三千円	2.28.5050
-OK:	はっせんえん	ハッ千円	Conversion Expected 2	八千円	2.30.5432
+FAILED:	はっせんえん	ハッ千円	Conversion Expected 2	八千円	2.30.5520
 FAILED:	きゅうせんえん	旧千円	Conversion Expected 2	九千円	2.28.4880
 OK:	ひらぶんでおくる	平文で送る	Conversion Expected	平文で送る	2.28.4880
 FAILED:	ごかんそう	ご乾燥	Conversion Expected	ご感想	2.28.4830
@@ -278,7 +278,7 @@ OK:	せいどがひくい	精度が低い	Conversion Expected	精度が低い	2.
 FAILED:	きほんかのように	基本化のように	Conversion Expected	基本かのように	2.30.5432
 OK:	おもしろいねえ	面白いねえ	Conversion Expected	面白いねえ	2.28.5085
 FAILED:	てきかみかたか	的か味方か	Conversion Expected	敵か味方か	2.28.5085
-FAILED:	かれはみかたなのか	彼は味方７日	Conversion Expected	彼は味方なのか	2.28.5085
+OK:	かれはみかたなのか	彼は味方なのか	Conversion Expected	彼は味方なのか	2.30.5520
 OK:	しっちゃく	失着	Conversion Expected 2	失着	2.28.5085
 OK:	さいひんち	最頻値	Conversion Expected 2	最頻値	2.29.5111
 OK:	くうしゅうごう	空集合	Conversion Expected	空集合	2.29.5111
@@ -287,14 +287,14 @@ OK:	かいていこう	書いていこう	Conversion Expected 2	改訂稿	2.30.5
 OK:	けっていこう	決定稿	Conversion Expected	決定稿	2.29.5135
 FAILED:	さいしゅうこう	最終行	Conversion Expected	最終稿	2.30.5432
 FAILED:	しゅうせいこう	週成功	Conversion Expected	修正稿	2.30.5432
-FAILED:	とりそこなって	取り残って	Conversion Expected	取り損なって	2.29.5346
+OK:	とりそこなって	取り損なって	Conversion Expected	取り損なって	2.30.5520
 FAILED:	ごかい	五回	Conversion Expected 9	誤解	2.30.5432
 OK:	ごかいする	誤解する	Conversion Expected 2	誤解する	2.30.5432
 OK:	いっきょう	一興	Conversion Expected 9	一強	2.30.5432
 OK:	いっきょうたじゃく	一強他弱	Conversion Expected	一強他弱	2.30.5432
 FAILED:	よとういっきょう	与党一興	Conversion Expected	与党一強	2.30.5432
 OK:	もどりち	戻り値	Conversion Expected	戻り値	2.30.5432
-FAILED:	こころここにあらず	ココロココにあらず	Conversion Expected	心ここにあらず	2.30.5490
+OK:	こころここにあらず	心ここにあらず	Conversion Expected	心ここにあらず	2.30.5520
 OK:	ほっけ	ホッケ	Conversion Expected 9	𩸽	2.30.5490
 FAILED:	じょうきょうをちゅうしする	状況を中止する	Conversion Expected	状況を注視する	2.30.5490
 OK:	かんじょうば	勘定場	Conversion Expected 9	勘定場	2.30.5490
@@ -305,10 +305,10 @@ FAILED:	くうぐんしょうこう	空軍商工	Conversion Expected	空軍将�
 FAILED:	へんきんまち	返金街	Conversion Expected	返金待ち	2.30.5490
 FAILED:	いちじんしゃ	１人車	Conversion Expected 9	一迅社	2.30.5490
 OK:	とうよ	投与	Conversion Expected 99	党与	2.30.5490
-FAILED:	けいゆう	軽有	Conversion Expected 99	経由	2.30.5490
+FAILED:	けいゆう	経由う	Conversion Expected 99	経由	2.30.5520
 FAILED:	おっぱ	オッパ	Conversion Expected 9	越波	2.30.5490
 FAILED:	じっぽん	十本	Conversion Expected 99	日本	2.30.5490
-OK:	いりなか	杁中	Conversion Expected 9	杁中	2.30.5490
+FAILED:	いりなか	いりなか	Conversion Expected 9	杁中	2.30.5520
 FAILED:	けんし	剣士	Conversion Expected 999	玄師	2.30.5490
 OK:	よねずけんし	米津玄師	Conversion Expected	米津玄師	2.30.5490
 OK:	そきゃく	阻却	Conversion Expected 99	阻却	2.30.5520
@@ -380,5 +380,5 @@ OK:	てきしているものは	適しているものは	Conversion Expected	適
 FAILED:	いかなければ	いかなければ	Conversion Expected	行かなければ	2.30.5432
 OK:	すき	好き	Conversion Expected 12	隙	2.28.5050
 FAILED:	おおすにいく	大洲に行く	Conversion Expected	大須に行く	2.28.5085
-FAILED:	たいじんかんけい	大人関係	Conversion Expected	対人関係	2.30.5448
-FAILED:	たいじんすきる	大人スキル	Conversion Expected	対人スキル	2.30.5448
+OK:	たいじんかんけい	対人関係	Conversion Expected	対人関係	2.30.5520
+OK:	たいじんすきる	対人スキル	Conversion Expected	対人スキル	2.30.5520
