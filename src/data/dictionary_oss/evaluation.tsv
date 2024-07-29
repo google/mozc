@@ -320,6 +320,7 @@ OK:	あおぞらぎんこう	あおぞら銀行	Conversion Expected	あおぞら
 FAILED:	ゆうちょぎんこう	郵貯銀行	Conversion Expected	ゆうちょ銀行	2.30.5520
 OK:	えんけい	円形	Conversion Expected 99	燕京	2.30.5520
 OK:	きったん	切ったん	Conversion Expected 99	契丹	2.30.5520
+FAILED:	たいしんいん	耐震員	Conversion Expected 99	大審院	2.30.5520
 OK:	はきいん	破毀院	Conversion Expected 99	破毀院	2.30.5520
 OK:	わいろざい	賄賂罪	Conversion Expected 9	賄賂罪	2.30.5520
 OK:	いけいざい	違警罪	Conversion Expected 9	違警罪	2.30.5520
@@ -348,6 +349,8 @@ OK:	みぬめ	敏馬	Conversion Expected 9	敏馬	2.30.5520
 OK:	みぬめじんじゃ	敏馬神社	Conversion Expected 9	敏馬神社	2.30.5520
 FAILED:	みるめ	見る目	Conversion Expected 9	敏馬	2.30.5520
 OK:	みるめじんじゃ	敏馬神社	Conversion Expected 9	敏馬神社	2.30.5520
+FAILED:	けつりょう	穴料	Conversion Expected 9	結了	2.30.5520
+FAILED:	にかんじ	二感じ	Conversion Expected 99	二簡字	2.30.5520
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
