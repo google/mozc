@@ -231,6 +231,12 @@ OK:	にだんかいうせつ	二段階右折	Conversion Expected	二段階右折
 OK:	にだんかいにんしょう	二段階認証	Conversion Expected	二段階認証	2.28.4830
 OK:	ひともうけ	一儲け	Conversion Expected	一儲け	2.28.4880
 OK:	ひゃっきん	百均	Conversion Expected	百均	2.28.4880
+OK:	あわのくに	安房国	Conversion Expected 2	阿波国	2.30.5520
+OK:	うぜん	羽前	Conversion Expected 9	羽前	2.30.5520
+OK:	おきのくに	隠岐国	Conversion Expected	隠岐国	2.30.5520
+OK:	ごきはちどう	五畿八道	Conversion Expected	五畿八道	2.30.5520
+OK:	びんごのくに	備後国	Conversion Expected	備後国	2.30.5520
+FAILED:	りくおう	リク王	Conversion Expected 9	陸奥	2.30.5520
 OK:	すげかえれば	すげ替えれば	Conversion Expected 2	挿げ替えれば	2.29.5268
 OK:	こうじょ	控除	Conversion Expected 19	扣除	2.28.5000
 OK:	りゅうこうごたいしょう	流行語大賞	Conversion Expected	流行語大賞	2.28.5000
