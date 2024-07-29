@@ -349,7 +349,7 @@ OK:	みぬめ	敏馬	Conversion Expected 9	敏馬	2.30.5520
 OK:	みぬめじんじゃ	敏馬神社	Conversion Expected 9	敏馬神社	2.30.5520
 FAILED:	みるめ	見る目	Conversion Expected 9	敏馬	2.30.5520
 OK:	みるめじんじゃ	敏馬神社	Conversion Expected 9	敏馬神社	2.30.5520
-FAILED:	けつりょう	穴料	Conversion Expected 9	結了	2.30.5520
+OK:	けつりょう	結了	Conversion Expected 9	結了	2.30.5520
 FAILED:	にかんじ	二感じ	Conversion Expected 99	二簡字	2.30.5520
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
