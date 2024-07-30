@@ -64,7 +64,6 @@ using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::Token;
 using ::testing::_;
-using ::testing::Each;
 using ::testing::ElementsAre;
 using ::testing::Field;
 using ::testing::Matcher;
@@ -115,14 +114,18 @@ Matcher<const Segment::Candidate *> ValueAndDescAre(absl::string_view value,
 
 // An action that invokes a DictionaryInterface::Callback with the token whose
 // value is set to the given one.
-ACTION_P(InvokeCallbackWithUserDictionaryToken, value) {
-  const absl::string_view key = arg0;
-  DictionaryInterface::Callback *const callback = arg2;
-  const Token token(key, value, MockDictionary::kDefaultCost,
-                    MockDictionary::kDefaultPosId,
-                    MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
-  callback->OnToken(key, key, token);
-}
+struct InvokeCallbackWithUserDictionaryToken {
+  template <class T>
+  void operator()(absl::string_view key, T,
+                  DictionaryInterface::Callback *callback) {
+    const Token token(key, value, MockDictionary::kDefaultCost,
+                      MockDictionary::kDefaultPosId,
+                      MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
+    callback->OnToken(key, key, token);
+  }
+
+  std::string value;
+};
 
 }  // namespace
 
@@ -1113,7 +1116,7 @@ TEST_F(DateRewriterTest, ExtraFormatTest) {
   MockDictionary dictionary;
   EXPECT_CALL(dictionary,
               LookupExact(StrEq(DateRewriter::kExtraFormatKey), _, _))
-      .WillOnce(InvokeCallbackWithUserDictionaryToken("{YEAR}{MONTH}{DATE}"));
+      .WillOnce(InvokeCallbackWithUserDictionaryToken{"{YEAR}{MONTH}{DATE}"});
 
   MockConverter converter;
   DateRewriter rewriter(&converter, &dictionary);
@@ -1148,7 +1151,7 @@ TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
     MockDictionary dictionary;
     EXPECT_CALL(dictionary,
                 LookupExact(StrEq(DateRewriter::kExtraFormatKey), _, _))
-        .WillOnce(InvokeCallbackWithUserDictionaryToken(input));
+        .WillOnce(InvokeCallbackWithUserDictionaryToken{std::string(input)});
     MockConverter converter;
     DateRewriter rewriter(&converter, &dictionary);
     Segments segments;
