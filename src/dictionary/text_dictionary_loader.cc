@@ -50,6 +50,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/japanese_util.h"
 #include "base/multifile.h"
 #include "base/util.h"
@@ -208,7 +209,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
 std::vector<std::unique_ptr<Token>>
 TextDictionaryLoader::LoadReadingCorrectionTokens(
     const absl::string_view reading_correction_filename,
-    const std::vector<std::unique_ptr<Token>> &ref_sorted_tokens, int *limit) {
+    absl::Span<const std::unique_ptr<Token>> ref_sorted_tokens, int *limit) {
   // Load reading correction entries.
   std::vector<std::unique_ptr<Token>> tokens;
   int reading_correction_size = 0;
@@ -297,7 +298,7 @@ std::unique_ptr<Token> TextDictionaryLoader::ParseTSVLine(
 }
 
 std::unique_ptr<Token> TextDictionaryLoader::ParseTSV(
-    const std::vector<absl::string_view> &columns) const {
+    absl::Span<const absl::string_view> columns) const {
   CHECK_LE(5, columns.size()) << "Lack of columns: " << columns.size();
 
   auto token = std::make_unique<Token>();

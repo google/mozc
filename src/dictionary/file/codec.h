@@ -40,6 +40,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 
@@ -52,7 +53,7 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
   DictionaryFileCodec(const DictionaryFileCodec &) = delete;
   DictionaryFileCodec &operator=(const DictionaryFileCodec &) = delete;
 
-  void WriteSections(const std::vector<DictionaryFileSection> &sections,
+  void WriteSections(absl::Span<const DictionaryFileSection> sections,
                      std::ostream *ofs) const override;
   absl::Status ReadSections(
       const char *image, int length,

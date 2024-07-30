@@ -43,6 +43,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/config_file_stream.h"
 #include "base/number_util.h"
 #include "base/singleton.h"
@@ -408,7 +409,7 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
     storage_->Insert(key, reinterpret_cast<const char *>(&iform));
   } else {
     // Update values in the same group.
-    const std::vector<char16_t> &group = iter->second;
+    absl::Span<const char16_t> group = iter->second;
     for (size_t i = 0; i < group.size(); ++i) {
       const char16_t group_ucs2 = group[i];
       const absl::string_view group_key(

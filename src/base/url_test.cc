@@ -38,6 +38,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -47,7 +48,7 @@ namespace {
 constexpr char kSurveyBaseUrl[] =
     "http://www.google.com/support/ime/japanese/bin/request.py";
 
-bool FindEncodedParam(const std::vector<std::string> &params,
+bool FindEncodedParam(absl::Span<const std::string> params,
                       const absl::string_view key,
                       const absl::string_view value) {
   const std::string param = absl::StrCat(key, "=", mozc::url::EncodeUrl(value));

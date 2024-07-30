@@ -36,6 +36,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/gunit.h"
@@ -46,7 +47,7 @@ namespace dictionary {
 // Used to collect all the tokens looked up.
 class CollectTokenCallback : public DictionaryInterface::Callback {
  public:
-  const std::vector<Token> &tokens() const { return tokens_; }
+  absl::Span<const Token> tokens() const { return tokens_; }
   void Clear() { tokens_.clear(); }
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
@@ -72,8 +73,7 @@ class CheckTokenExistenceCallback : public DictionaryInterface::Callback {
 
 class CheckMultiTokensExistenceCallback : public DictionaryInterface::Callback {
  public:
-  explicit CheckMultiTokensExistenceCallback(
-      const std::vector<Token *> &tokens);
+  explicit CheckMultiTokensExistenceCallback(absl::Span<Token *const> tokens);
   bool IsFound(const Token *token) const;
   bool AreAllFound() const;
 
@@ -87,8 +87,8 @@ class CheckMultiTokensExistenceCallback : public DictionaryInterface::Callback {
 
 // Generates a human redable string of token(s).
 std::string PrintToken(const Token &token);
-std::string PrintTokens(const std::vector<Token> &tokens);
-std::string PrintTokens(const std::vector<Token *> &token_ptrs);
+std::string PrintTokens(absl::Span<const Token> tokens);
+std::string PrintTokens(absl::Span<Token *const> token_ptrs);
 
 // Tests if two tokens are equal to each other.
 #define EXPECT_TOKEN_EQ(expected, actual)                                   \
@@ -109,7 +109,7 @@ namespace internal {
 
 ::testing::AssertionResult AreTokensEqualUnordered(
     const char *expected_expr, const char *actual_expr,
-    const std::vector<Token *> &expected, const std::vector<Token> &actual);
+    absl::Span<Token *const> expected, absl::Span<const Token> actual);
 
 }  // namespace internal
 }  // namespace dictionary

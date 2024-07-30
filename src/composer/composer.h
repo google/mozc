@@ -172,7 +172,7 @@ class Composer final {
   void SetCompositionsForHandwriting(
       absl::Span<const commands::SessionCommand::CompositionEvent *const>
           compositions);
-  const std::vector<commands::SessionCommand::CompositionEvent> &
+  absl::Span<const commands::SessionCommand::CompositionEvent>
   GetHandwritingCompositions() const;
 
   bool InsertCharacterKeyAndPreedit(absl::string_view key,

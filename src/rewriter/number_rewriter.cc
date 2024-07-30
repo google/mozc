@@ -42,6 +42,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/japanese_util.h"
 #include "base/number_util.h"
@@ -245,7 +246,7 @@ bool IsNumberCandidate(const Segment::Candidate &candidate,
 }
 
 void SetNumberInfoToExistingCandidates(
-    const std::vector<NumberUtil::NumberString> &numbers,
+    absl::Span<const NumberUtil::NumberString> numbers,
     const PosMatcher &pos_matcher, Segment *segment) {
   absl::flat_hash_map<std::string, NumberUtil::NumberString> number_map;
   // Different number style can have the same surface
@@ -285,7 +286,7 @@ class CheckValueOperator {
 // If we have the candidates to be inserted before the base candidate,
 // delete them.
 void EraseExistingCandidates(
-    const std::vector<Segment::Candidate> &results, int base_candidate_pos,
+    absl::Span<const Segment::Candidate> results, int base_candidate_pos,
     RewriteType type, Segment *seg,
     std::vector<RewriteCandidateInfo> *rewrite_candidate_info_list) {
   DCHECK(seg);
@@ -297,7 +298,7 @@ void EraseExistingCandidates(
       continue;
     }
     // Simple liner search. |results| size is small. (at most 10 or so)
-    const std::vector<Segment::Candidate>::const_iterator iter =
+    const auto iter =
         std::find_if(results.begin(), results.end(),
                      CheckValueOperator(seg->candidate(pos).value));
     if (iter == results.end()) {
@@ -370,7 +371,7 @@ void UpdateCandidate(Segment *segment, int32_t update_position,
   MergeCandidateInfoInternal(base_cand, result_cand, c);
 }
 
-void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
+void InsertConvertedCandidates(absl::Span<const Segment::Candidate> results,
                                const Segment::Candidate &base_cand,
                                int base_candidate_pos, int insert_pos,
                                Segment *seg) {
@@ -391,8 +392,8 @@ void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
   {
     const absl::string_view base_value =
         seg->candidate(base_candidate_pos).value;
-    std::vector<Segment::Candidate>::const_iterator itr = std::find_if(
-        results.begin(), results.end(), CheckValueOperator(base_value));
+    const auto itr = std::find_if(results.begin(), results.end(),
+                                  CheckValueOperator(base_value));
     if (itr != results.end() &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI_ARABIC) {
@@ -525,12 +526,12 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
                  << arabic_content_value;
       break;
     }
-    const std::vector<NumberUtil::NumberString> &output =
+    const std::vector<NumberUtil::NumberString> output =
         GetNumbersInDefaultOrder(info.type, exec_radix_conversion,
                                  arabic_content_value);
     SetNumberInfoToExistingCandidates(output, pos_matcher_, seg);
 
-    const std::vector<Segment::Candidate> &number_candidates =
+    const std::vector<Segment::Candidate> number_candidates =
         GenerateCandidatesToInsert(info.candidate, output, should_rarank);
 
     // Caution!!!: This invocation will update the data inside of the
@@ -549,7 +550,7 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
 
 std::vector<Segment::Candidate> NumberRewriter::GenerateCandidatesToInsert(
     const Segment::Candidate &arabic_candidate,
-    const std::vector<NumberUtil::NumberString> &numbers,
+    absl::Span<const NumberUtil::NumberString> numbers,
     bool should_rerank) const {
   std::vector<Segment::Candidate> converted_numbers;
   for (const auto &number_string : numbers) {

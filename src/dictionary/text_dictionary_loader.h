@@ -88,7 +88,7 @@ class TextDictionaryLoader {
  private:
   static std::vector<std::unique_ptr<Token>> LoadReadingCorrectionTokens(
       absl::string_view reading_correction_filename,
-      const std::vector<std::unique_ptr<Token>> &ref_sorted_tokens, int *limit);
+      absl::Span<const std::unique_ptr<Token>> ref_sorted_tokens, int *limit);
 
   // Encodes special information into |token| with the |label|.
   // Currently, label must be:
@@ -101,7 +101,7 @@ class TextDictionaryLoader {
 
   std::unique_ptr<Token> ParseTSVLine(absl::string_view line) const;
   std::unique_ptr<Token> ParseTSV(
-      const std::vector<absl::string_view> &columns) const;
+      absl::Span<const absl::string_view> columns) const;
 
   const uint16_t zipcode_id_;
   const uint16_t isolated_word_id_;

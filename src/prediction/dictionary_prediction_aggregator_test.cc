@@ -34,7 +34,6 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
-#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -46,6 +45,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/util.h"
 #include "composer/query.h"
@@ -228,28 +228,34 @@ ACTION_P(InvokeCallbackWithTokens, token_list) {
   }
 }
 
-ACTION_P2(InvokeCallbackWithKeyValuesImpl, key_value_list, token_attribute) {
-  using Callback = DictionaryInterface::Callback;
-  Callback *callback = arg2;
-  for (const auto &[key, value] : key_value_list) {
-    if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE ||
-        callback->OnActualKey(key, key, false) != Callback::TRAVERSE_CONTINUE) {
-      return;
-    }
-    const Token token(key, value, MockDictionary::kDefaultCost,
-                      MockDictionary::kDefaultPosId,
-                      MockDictionary::kDefaultPosId, token_attribute);
-    if (callback->OnToken(key, key, token) != Callback::TRAVERSE_CONTINUE) {
-      return;
+struct InvokeCallbackWithKeyValuesFunctor {
+  template <class T, class U>
+  void operator()(T, U, DictionaryInterface::Callback *callback) {
+    using Callback = DictionaryInterface::Callback;
+
+    for (const auto &[key, value] : kv_list) {
+      if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE ||
+          callback->OnActualKey(key, key, false) !=
+              Callback::TRAVERSE_CONTINUE) {
+        return;
+      }
+      const Token token(key, value, MockDictionary::kDefaultCost,
+                        MockDictionary::kDefaultPosId,
+                        MockDictionary::kDefaultPosId, token_attribute);
+      if (callback->OnToken(key, key, token) != Callback::TRAVERSE_CONTINUE) {
+        return;
+      }
     }
   }
-}
 
-auto InvokeCallbackWithKeyValues(
-    const std::vector<std::pair<std::string, std::string>> &key_value_list,
-    Token::Attribute attribute = Token::NONE)
-    -> decltype(InvokeCallbackWithKeyValuesImpl(key_value_list, attribute)) {
-  return InvokeCallbackWithKeyValuesImpl(key_value_list, attribute);
+  std::vector<std::pair<std::string, std::string>> kv_list;
+  Token::Attribute token_attribute;
+};
+
+InvokeCallbackWithKeyValuesFunctor InvokeCallbackWithKeyValues(
+    std::vector<std::pair<std::string, std::string>> kv_list,
+    Token::Attribute token_attribute = Token::NONE) {
+  return {.kv_list = std::move(kv_list), .token_attribute = token_attribute};
 }
 
 void InitSegmentsWithKey(absl::string_view key, Segments *segments) {
@@ -320,7 +326,7 @@ PredictionTypes AddDefaultPredictionTypes(PredictionTypes types,
   return types | REALTIME | PREFIX;
 }
 
-bool FindResultByValue(const std::vector<Result> &results,
+bool FindResultByValue(absl::Span<const Result> results,
                        const absl::string_view value) {
   for (const auto &result : results) {
     if (result.value == value && !result.removed) {
@@ -330,7 +336,7 @@ bool FindResultByValue(const std::vector<Result> &results,
   return false;
 }
 
-bool FindResultByKeyValue(const std::vector<Result> &results,
+bool FindResultByKeyValue(absl::Span<const Result> results,
                           const absl::string_view key,
                           const absl::string_view value) {
   for (const auto &result : results) {

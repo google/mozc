@@ -529,7 +529,7 @@ void Composer::SetCompositionsForHandwriting(
   }
 }
 
-const std::vector<commands::SessionCommand::CompositionEvent> &
+absl::Span<const commands::SessionCommand::CompositionEvent>
 Composer::GetHandwritingCompositions() const {
   return compositions_for_handwriting_;
 }

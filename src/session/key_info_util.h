@@ -32,6 +32,7 @@
 
 #include <vector>
 
+#include "absl/types/span.h"
 #include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -50,7 +51,7 @@ class KeyInfoUtil {
 
   // Returns true if |sorted_keys| contains |key_event|. |sorted_keys| must be
   // sorted.
-  static bool ContainsKey(const std::vector<KeyInformation> &sorted_keys,
+  static bool ContainsKey(absl::Span<const KeyInformation> sorted_keys,
                           const commands::KeyEvent &key_event);
 };
 

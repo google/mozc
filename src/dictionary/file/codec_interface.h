@@ -37,6 +37,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {
@@ -45,7 +46,7 @@ namespace dictionary {
 class DictionaryFileCodecInterface {
  public:
   // Writes sections to an output file stream.
-  virtual void WriteSections(const std::vector<DictionaryFileSection> &sections,
+  virtual void WriteSections(absl::Span<const DictionaryFileSection> sections,
                              std::ostream *ofs) const = 0;
 
   // Reads sections from memory image.

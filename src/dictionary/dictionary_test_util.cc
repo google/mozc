@@ -38,6 +38,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/gunit.h"
@@ -78,7 +79,7 @@ DictionaryInterface::Callback::ResultType CheckTokenExistenceCallback::OnToken(
 }
 
 CheckMultiTokensExistenceCallback::CheckMultiTokensExistenceCallback(
-    const std::vector<Token *> &tokens)
+    absl::Span<Token *const> tokens)
     : found_count_(0) {
   for (size_t i = 0; i < tokens.size(); ++i) {
     result_[tokens[i]] = false;
@@ -122,7 +123,7 @@ std::string PrintToken(const Token &token) {
                          token.lid, token.rid, token.attributes);
 }
 
-std::string PrintTokens(const std::vector<Token> &tokens) {
+std::string PrintTokens(absl::Span<const Token> tokens) {
   std::string s = "[";
   for (size_t i = 0; i < tokens.size(); ++i) {
     absl::StrAppend(&s, PrintToken(tokens[i]), ", ");
@@ -131,7 +132,7 @@ std::string PrintTokens(const std::vector<Token> &tokens) {
   return s;
 }
 
-std::string PrintTokens(const std::vector<Token *> &token_ptrs) {
+std::string PrintTokens(absl::Span<Token *const> token_ptrs) {
   std::string s = "[";
   for (size_t i = 0; i < token_ptrs.size(); ++i) {
     absl::StrAppend(&s, PrintToken(*token_ptrs[i]), ", ");
@@ -158,7 +159,7 @@ namespace internal {
 ::testing::AssertionResult AreTokensEqualUnordered(
     const char *,  // expected_expr
     const char *,  // actual_expr
-    const std::vector<Token *> &expected, const std::vector<Token> &actual) {
+    absl::Span<Token *const> expected, absl::Span<const Token> actual) {
   if (expected.size() != actual.size()) {
     return ::testing::AssertionFailure()
            << "Size are different\n"

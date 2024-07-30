@@ -478,11 +478,11 @@ class DictionaryPredictionAggregator::HandwritingLookupCallback
     : public DictionaryInterface::Callback {
  public:
   HandwritingLookupCallback(size_t limit, int penalty,
-                            const std::vector<std::string> &constraints,
+                            std::vector<std::string> constraints,
                             std::vector<Result> *results)
       : limit_(limit),
         penalty_(penalty),
-        constraints_(constraints),
+        constraints_(std::move(constraints)),
         results_(results) {}
 
   HandwritingLookupCallback(const HandwritingLookupCallback &) = delete;
@@ -1044,8 +1044,8 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
   const int size_to_process = request.request()
                                   .decoder_experiment_params()
                                   .max_composition_event_to_process();
-  const std::vector<commands::SessionCommand::CompositionEvent>
-      &composition_events = request.composer().GetHandwritingCompositions();
+  absl::Span<const commands::SessionCommand::CompositionEvent>
+      composition_events = request.composer().GetHandwritingCompositions();
   for (size_t i = 0; i < composition_events.size(); ++i) {
     const commands::SessionCommand::CompositionEvent &elm =
         composition_events[i];
@@ -1501,7 +1501,7 @@ bool DictionaryPredictionAggregator::GetZeroQueryCandidatesForKey(
 
 // static
 void DictionaryPredictionAggregator::AppendZeroQueryToResults(
-    const std::vector<ZeroQueryResult> &candidates, uint16_t lid, uint16_t rid,
+    absl::Span<const ZeroQueryResult> candidates, uint16_t lid, uint16_t rid,
     std::vector<Result> *results) {
   int cost = 0;
 

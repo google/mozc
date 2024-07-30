@@ -74,7 +74,7 @@ struct Result {
 
 class TestSentenceGenerator {
  public:
-  const std::vector<std::vector<commands::KeyEvent>> &GetTestKeys() const {
+  absl::Span<const std::vector<commands::KeyEvent>> GetTestKeys() const {
     return keys_;
   }
 
@@ -159,7 +159,7 @@ class TestScenarioInterface {
   commands::Output output_;
 };
 
-std::string GetBasicStats(const std::vector<absl::Duration> &times) {
+std::string GetBasicStats(absl::Span<const absl::Duration> times) {
   std::vector<uint64_t> temp;
   temp.resize(times.size());
   absl::c_transform(times, temp.begin(), absl::ToInt64Microseconds);
@@ -191,7 +191,7 @@ std::string GetBasicStats(const std::vector<absl::Duration> &times) {
 class PreeditCommon : public TestScenarioInterface {
  protected:
   virtual void RunTest(Result *result) {
-    const std::vector<std::vector<commands::KeyEvent>> &keys =
+    absl::Span<const std::vector<commands::KeyEvent>> keys =
         Singleton<TestSentenceGenerator>::get()->GetTestKeys();
     for (size_t i = 0; i < keys.size(); ++i) {
       for (int j = 0; j < keys[i].size(); ++j) {
@@ -340,7 +340,7 @@ class Conversion : public TestScenarioInterface {
     DisableSuggestion();
     IMEOn();
 
-    const std::vector<std::vector<commands::KeyEvent>> &keys =
+    absl::Span<const std::vector<commands::KeyEvent>> keys =
         Singleton<TestSentenceGenerator>::get()->GetTestKeys();
     for (size_t i = 0; i < keys.size(); ++i) {
       for (int j = 0; j < keys[i].size(); ++j) {

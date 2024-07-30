@@ -42,6 +42,7 @@
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/bits.h"
 #include "base/hash.h"
 #include "base/vlog.h"
@@ -52,8 +53,7 @@ namespace mozc {
 namespace dictionary {
 
 void DictionaryFileCodec::WriteSections(
-    const std::vector<DictionaryFileSection> &sections,
-    std::ostream *ofs) const {
+    absl::Span<const DictionaryFileSection> sections, std::ostream *ofs) const {
   DCHECK(ofs);
   WriteHeader(ofs);
 

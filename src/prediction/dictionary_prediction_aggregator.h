@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -118,8 +119,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const ZeroQueryDict &dict, std::vector<ZeroQueryResult> *results);
 
   static void AppendZeroQueryToResults(
-      const std::vector<ZeroQueryResult> &candidates, uint16_t lid,
-      uint16_t rid, std::vector<Result> *results);
+      absl::Span<const ZeroQueryResult> candidates, uint16_t lid, uint16_t rid,
+      std::vector<Result> *results);
 
   PredictionTypes AggregatePredictionForZeroQuery(
       const ConversionRequest &request, const Segments &segments,

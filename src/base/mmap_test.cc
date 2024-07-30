@@ -154,7 +154,7 @@ class MmapEntireFileTest : public ::testing::TestWithParam<size_t> {};
 TEST_P(MmapEntireFileTest, Read) {
   // Create a file with random contents.
   const size_t filesize = GetParam();
-  const std::vector<char> &data = GetRandomContents(filesize);
+  const std::vector<char> data = GetRandomContents(filesize);
   const absl::StatusOr<TempFile> temp_file =
       TempDirectory::Default().CreateTempFile();
   ASSERT_OK(temp_file);
@@ -178,7 +178,7 @@ TEST_P(MmapEntireFileTest, Write) {
       FileUtil::SetContents(temp_file->path(), std::string(filesize, 'a')));
 
   // Mmap the file and writes random contents.
-  const std::vector<char> &data = GetRandomContents(filesize);
+  const std::vector<char> data = GetRandomContents(filesize);
   {
     absl::StatusOr<Mmap> mmap = Mmap::Map(temp_file->path(), Mmap::READ_WRITE);
     ASSERT_OK(mmap);
@@ -204,7 +204,7 @@ class MmapPartialFileTest : public ::testing::TestWithParam<Params> {};
 TEST_P(MmapPartialFileTest, Read) {
   const auto [filesize, offset, size] = GetParam();
 
-  const std::vector<char> &data = GetRandomContents(filesize);
+  const std::vector<char> data = GetRandomContents(filesize);
   const absl::StatusOr<TempFile> temp_file =
       TempDirectory::Default().CreateTempFile();
   ASSERT_OK(temp_file);
@@ -238,7 +238,7 @@ TEST_P(MmapPartialFileTest, Write) {
   ASSERT_OK(
       FileUtil::SetContents(temp_file->path(), std::string(filesize, 'a')));
 
-  const std::vector<char> &data = GetRandomContents(map_size);
+  const std::vector<char> data = GetRandomContents(map_size);
   {
     absl::StatusOr<Mmap> mmap =
         Mmap::Map(temp_file->path(), offset, map_size, Mmap::READ_WRITE);

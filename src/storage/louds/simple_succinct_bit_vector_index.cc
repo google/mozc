@@ -37,6 +37,7 @@
 
 #include "absl/log/check.h"
 #include "absl/numeric/bits.h"
+#include "absl/types/span.h"
 #include "base/bits.h"
 
 namespace mozc {
@@ -53,7 +54,7 @@ class ZeroBitIndexIterator {
   using reference = const int &;
   using iterator_category = std::forward_iterator_tag;
 
-  ZeroBitIndexIterator(const std::vector<int> &index, int chunk_size,
+  ZeroBitIndexIterator(absl::Span<const int> index, int chunk_size,
                        const int *ptr)
       : data_{index.data()}, chunk_size_{chunk_size}, ptr_{ptr} {}
 
@@ -122,7 +123,7 @@ void InitIndex(const uint8_t *data, int length, int chunk_size,
   CHECK_EQ(chunk_length + 1, index->size());
 }
 
-void InitLowerBound0Cache(const std::vector<int> &index, int chunk_size,
+void InitLowerBound0Cache(absl::Span<const int> index, int chunk_size,
                           size_t increment, size_t size,
                           std::vector<const int *> *cache) {
   DCHECK_GT(increment, 0);
@@ -142,7 +143,7 @@ void InitLowerBound0Cache(const std::vector<int> &index, int chunk_size,
   cache->push_back(index.data() + index.size());
 }
 
-void InitLowerBound1Cache(const std::vector<int> &index, int chunk_size,
+void InitLowerBound1Cache(absl::Span<const int> index, int chunk_size,
                           size_t increment, size_t size,
                           std::vector<const int *> *cache) {
   DCHECK_GT(increment, 0);
