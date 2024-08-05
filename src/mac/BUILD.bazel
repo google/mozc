@@ -520,6 +520,23 @@ genrule(
     ],
 )
 
+# .keystone_install stored in the installer .dmg file.
+genrule(
+    name = "keystone_install",
+    srcs = ["installer/.keystone_install_template"],
+    outs = [".keystone_install"],
+    cmd = " ".join([
+        "$(location //build_tools:tweak_macinstaller_script)",
+        "--output $@",
+        "--input $(SRCS)",
+        "--build_type dev",  # or stable
+    ]),
+    tags = ["manual"],
+    tools = [
+        "//build_tools:tweak_macinstaller_script",
+    ],
+)
+
 # Binary for default tools (i.e. pkgbuild and productbuild commands)
 mozc_py_binary(
     name = "build_package",
