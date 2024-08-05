@@ -44,6 +44,8 @@ test:macos --define TARGET=oss_macos --test_tag_filters=-nomac
 build:oss_macos --define TARGET=oss_macos --build_tag_filters=-nomac --objccopt "-fsigned-char"
 test:oss_macos --define TARGET=oss_macos --test_tag_filters=-nomac
 build:prod_macos --define TARGET=prod_macos --build_tag_filters=-nomac --objccopt "-fsigned-char"
+# Workaround for the issue that hdiutil fails in a sandbox.
+build:prod_macos --strategy_regexp=//mac:diskimage=local
 
 # Windows
 build:windows --define TARGET=oss_windows --build_tag_filters=-nowin

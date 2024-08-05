@@ -166,6 +166,11 @@ mozc_py_binary(
     deps = [":mozc_version_lib"],
 )
 
+mozc_py_binary(
+    name = "build_diskimage_mac",
+    srcs = ["build_diskimage_mac.py"],
+)
+
 bzl_library(
     name = "embed_file_bzl",
     srcs = ["embed_file.bzl"],
