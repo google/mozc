@@ -30,30 +30,27 @@
 
 """Fix @@@...@@@ format of variables in the installer script templates for Mac.
 
-  % python tweak_macinstaller_script.py --output=out.txt --input=in.txt
-    --version_file=version.txt [--build_type=dev]
+% python tweak_macinstaller_script.py --output=out.txt --input=in.txt
+  [--version_file=version.txt] [--build_type=dev]
 """
 
-__author__ = "mukai"
-
-import logging
-import optparse
+import argparse
 
 from build_tools import mozc_version
 
 
-def _ReplaceVariables(data, environment):
+def _ReplaceVariables(data, rules):
   """Replace all occurrence of the variable in data by the value.
 
   Args:
     data: the original data string
-    environment: an iterable of (variable name, its value) pairs
+    rules: an iterable of (variable name, its value) pairs
 
   Returns:
     the data string which replaces the variables by the value.
   """
   result = data
-  for (k, v) in environment:
+  for k, v in rules:
     result = result.replace(k, v)
   return result
 
@@ -64,45 +61,50 @@ def ParseOptions():
   Returns:
     An options data.
   """
-  parser = optparse.OptionParser()
-  parser.add_option('--version_file', dest='version_file')
-  parser.add_option('--output', dest='output')
-  parser.add_option('--input', dest='input')
-  parser.add_option('--build_type', dest='build_type')
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--version_file', dest='version_file')
+  parser.add_argument('--output', dest='output', required=True)
+  parser.add_argument('--input', dest='input', required=True)
+  parser.add_argument('--build_type', dest='build_type', default='stable')
 
-  (options, unused_args) = parser.parse_args()
-  return options
+  return parser.parse_args()
 
 
 def main():
   """The main function."""
   options = ParseOptions()
-  required_flags = ['version_file', 'output', 'input']
-  for flag in required_flags:
-    if getattr(options, flag) is None:
-      logging.error('--%s is not specified.', flag)
-      exit(-1)
 
-  version = mozc_version.MozcVersion(options.version_file)
+  version_placeholder = '@@@MOZC_VERSION@@@'
+  if options.version_file:
+    version = mozc_version.MozcVersion(options.version_file).GetVersionString()
+  else:
+    version = version_placeholder
 
   if options.build_type == 'dev':
     omaha_tag = 'external-dev'
   else:
     omaha_tag = 'external-stable'
 
-  # This definition is copied from tools/scons/script.py
   variables = [
-      ('@@@MOZC_VERSION@@@', version.GetVersionString()),
-      ('@@@MOZC_PRODUCT_ID@@@', 'com.google.JapaneseIME'),
+      (
+          '@@@MOZC_APPLICATIONS_DIR@@@',
+          '/Applications/GoogleJapaneseInput.localized',
+      ),
       ('@@@MOZC_APP_PATH@@@', '/Library/Input Methods/GoogleJapaneseInput.app'),
-      ('@@@MOZC_APPLICATIONS_DIR@@@',
-       '/Applications/GoogleJapaneseInput.localized'),
       ('@@@MOZC_OMAHA_TAG@@@', omaha_tag),
       ('@@@MOZC_PACKAGE_NAME@@@', 'GoogleJapaneseInput.pkg'),
+      ('@@@MOZC_PRODUCT_ID@@@', 'com.google.JapaneseIME'),
+      ('@@@MOZC_VERSION@@@', version),
   ]
 
-  open(options.output,
-       'w').write(_ReplaceVariables(open(options.input).read(), variables))
+  replaced = _ReplaceVariables(open(options.input).read(), variables)
+  if version_placeholder in replaced:
+    raise ValueError(
+        f'Version placeholder {version_placeholder} is not replaced'
+    )
+
+  with open(options.output, 'w') as f:
+    f.write(_ReplaceVariables(open(options.input).read(), variables))
 
 
 if __name__ == '__main__':

@@ -376,15 +376,13 @@ genrule(
         oss = ["installer/preflight_template.sh"],
     ),
     outs = ["preflight.sh"],
-    cmd = ("$(location //build_tools:tweak_macinstaller_script)" +
-           " --output $@" +
-           " --input $<" +
-           " --version_file $(location //base:mozc_version_txt)" +
-           " --build_type dev"),  # or stable.
-    tools = [
-        "//base:mozc_version_txt",
-        "//build_tools:tweak_macinstaller_script",
-    ],
+    cmd = " ".join([
+        "$(location //build_tools:tweak_macinstaller_script)",
+        " --output $@",
+        " --input $<",
+        " --build_type dev",  # or stable.
+    ]),
+    tools = ["//build_tools:tweak_macinstaller_script"],
 )
 
 genrule(
@@ -394,11 +392,13 @@ genrule(
         oss = ["installer/postflight_template.sh"],
     ),
     outs = ["postflight.sh"],
-    cmd = ("$(location //build_tools:tweak_macinstaller_script)" +
-           " --output $@" +
-           " --input $<" +
-           " --version_file $(location //base:mozc_version_txt)" +
-           " --build_type dev"),  # or stable.
+    cmd = " ".join([
+        "$(location //build_tools:tweak_macinstaller_script)",
+        " --output $@",
+        " --input $<",
+        " --version_file $(location //base:mozc_version_txt)",
+        " --build_type dev",  # or stable.
+    ]),
     tools = [
         "//base:mozc_version_txt",
         "//build_tools:tweak_macinstaller_script",
