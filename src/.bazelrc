@@ -1,20 +1,33 @@
 # enable_bzlmod causes the build failure. Suppress it util the fix.
 common --noenable_bzlmod
 
-common:linux --config=compiler_gcc_like
-common:oss_linux --config=compiler_gcc_like
-common:prod_linux --config=compiler_gcc_like
-common:android --config=compiler_gcc_like
-common:oss_android --config=compiler_gcc_like
-common:prod_android --config=compiler_gcc_like
-common:macos --config=compiler_gcc_like
-common:oss_macos --config=compiler_gcc_like
-common:prod_macos --config=compiler_gcc_like
+## Target platforms
+common:linux      --config=linux_env --define TARGET=oss_linux
+common:oss_linux  --config=linux_env --define TARGET=oss_linux
+common:prod_linux --config=linux_env --define TARGET=prod_linux
+
+common:macos      --config=macos_env --define TARGET=oss_macos
+common:oss_macos  --config=macos_env --define TARGET=oss_macos
+common:prod_macos --config=macos_env --define TARGET=prod_macos
 common:prod_macos_dev --config=prod_macos --config=dev_channel
-common:windows --config=compiler_msvc_like
-common:oss_windows --config=compiler_msvc_like
-common:prod_windows --config=compiler_msvc_like
+
+common:windows      --config=windows_env --define TARGET=oss_windows
+common:oss_windows  --config=windows_env --define TARGET=oss_windows
+common:prod_windows --config=windows_env --define TARGET=prod_windows
 common:prod_windows_dev --config=prod_windows --config=dev_channel
+
+common:android      --config=android_env --define TARGET=oss_android
+common:oss_android  --config=android_env --define TARGET=oss_android
+common:prod_android --config=android_env --define TARGET=prod_android
+
+## Dev channel
+build:dev_channel --define CHANNEL=dev
+
+## Compiler options
+common:linux_env   --config=compiler_gcc_like
+common:android_env --config=compiler_gcc_like
+common:macos_env   --config=compiler_gcc_like
+common:windows_env --config=compiler_msvc_like
 
 # Make sure we set -std=c++20 that may affect ABI across all the compilation targets.
 # https://github.com/abseil/abseil-cpp/blob/master/FAQ.md#what-is-abi-and-why-dont-you-recommend-using-a-pre-compiled-version-of-abseil
@@ -29,56 +42,32 @@ build:compiler_msvc_like --copt "/utf-8" --host_copt "/utf-8"
 build:compiler_msvc_like --cxxopt "/J" --host_cxxopt "/J"
 build:compiler_msvc_like --cxxopt "/utf-8" --host_cxxopt "/utf-8"
 
-# Dev channel
-build:dev_channel --define CHANNEL=dev
+## Linux specific options
+build:linux_env --build_tag_filters=-nolinux --copt "-fPIC"
+test:linux_env   --test_tag_filters=-nolinux
 
-# Linux
-build:linux --define TARGET=oss_linux --copt "-fPIC"
-build:linux --build_tag_filters=-nolinux
-test:linux --test_tag_filters=-nolinux
-build:oss_linux --define TARGET=oss_linux --copt "-fPIC"
-build:oss_linux --build_tag_filters=-nolinux
-test:oss_linux --test_tag_filters=-nolinux
-
-build:prod_linux --define TARGET=prod_linux --copt "-fPIC"
-build:prod_linux --build_tag_filters=-nolinux
-
-# macOS
-build:macos --define TARGET=oss_macos --build_tag_filters=-nomac
-test:macos --define TARGET=oss_macos --test_tag_filters=-nomac
-build:oss_macos --define TARGET=oss_macos --build_tag_filters=-nomac --objccopt "-fsigned-char"
-test:oss_macos --define TARGET=oss_macos --test_tag_filters=-nomac
-build:prod_macos --define TARGET=prod_macos --build_tag_filters=-nomac --objccopt "-fsigned-char"
+## macOS specific options
+build:macos_env --build_tag_filters=-nomac --objccopt "-fsigned-char"
+test:macos_env   --test_tag_filters=-nomac
 # Workaround for the issue that hdiutil fails in a sandbox.
-build:prod_macos --strategy_regexp=//mac:diskimage=local
+build:macos_env --strategy_regexp=//mac:diskimage=local
 
-# Windows
-build:windows --define TARGET=oss_windows --build_tag_filters=-nowin
-build:oss_windows --define TARGET=oss_windows --build_tag_filters=-nowin
-build:prod_windows --define TARGET=prod_windows --build_tag_filters=-nowin
+## Windows specific options
+build:windows_env --build_tag_filters=-nowin
+test:windows_env   --test_tag_filters=-nowin
 
 # A temporary workaround to make "mozc_win_build_rule" work.
 # Note that "incompatible_enable_cc_toolchain_resolution" is now enabled by
 # default. See https://github.com/bazelbuild/bazel/issues/7260
 # TODO: Re-enable "incompatible_enable_cc_toolchain_resolution"
-build:windows --noincompatible_enable_cc_toolchain_resolution
-build:oss_windows --noincompatible_enable_cc_toolchain_resolution
-build:prod_windows --noincompatible_enable_cc_toolchain_resolution
+build:windows_env --noincompatible_enable_cc_toolchain_resolution
 
-# Android / OSS Android (same configurations)
-build:android --define TARGET=oss_android --copt "-DOS_ANDROID"
-build:android --android_crosstool_top=@androidndk//:toolchain
+## Android specific options
+build:android_env --copt "-DOS_ANDROID"
+build:android_env --android_crosstool_top=@androidndk//:toolchain
 # --fat_apk_cpu should be replaced with --android_platforms
 # https://github.com/bazelbuild/bazel/commit/05bea52ed3159aa5d15d967f5f56fc084a2b6c73
-build:android --fat_apk_cpu=armeabi-v7a,arm64-v8a,x86,x86_64 --incompatible_enable_android_toolchain_resolution=false
-build:android --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
-build:android --build_tag_filters=-noandroid
-test:android --test_tag_filters=-noandroid
-build:oss_android --define TARGET=oss_android --copt "-DOS_ANDROID"
-build:oss_android --android_crosstool_top=@androidndk//:toolchain
-# --fat_apk_cpu should be replaced with --android_platforms
-# https://github.com/bazelbuild/bazel/commit/05bea52ed3159aa5d15d967f5f56fc084a2b6c73
-build:oss_android --fat_apk_cpu=armeabi-v7a,arm64-v8a,x86,x86_64 --incompatible_enable_android_toolchain_resolution=false
-build:oss_android --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
-build:oss_android --build_tag_filters=-noandroid
-test:oss_android --test_tag_filters=-noandroid
+build:android_env --fat_apk_cpu=armeabi-v7a,arm64-v8a,x86,x86_64 --incompatible_enable_android_toolchain_resolution=false
+build:android_env --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+build:android_env --build_tag_filters=-noandroid
+test:android_env   --test_tag_filters=-noandroid
