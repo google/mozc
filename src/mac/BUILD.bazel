@@ -444,6 +444,7 @@ genrule(
         prod_macos = [
             "//gui/config_dialog:config_dialog_macos",
             "//gui/dictionary_tool:dictionary_tool_macos",
+            "//google_updater:GoogleUpdater.pkg",
             "installer/distribution.xml",
             "installer/InstallerSections.plist",
             "installer/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
