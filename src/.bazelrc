@@ -10,9 +10,11 @@ common:prod_android --config=compiler_gcc_like
 common:macos --config=compiler_gcc_like
 common:oss_macos --config=compiler_gcc_like
 common:prod_macos --config=compiler_gcc_like
+common:prod_macos_dev --config=prod_macos --config=dev_channel
 common:windows --config=compiler_msvc_like
 common:oss_windows --config=compiler_msvc_like
 common:prod_windows --config=compiler_msvc_like
+common:prod_windows_dev --config=prod_windows --config=dev_channel
 
 # Make sure we set -std=c++20 that may affect ABI across all the compilation targets.
 # https://github.com/abseil/abseil-cpp/blob/master/FAQ.md#what-is-abi-and-why-dont-you-recommend-using-a-pre-compiled-version-of-abseil
@@ -26,6 +28,9 @@ build:compiler_msvc_like --copt "/J" --host_copt "/J"
 build:compiler_msvc_like --copt "/utf-8" --host_copt "/utf-8"
 build:compiler_msvc_like --cxxopt "/J" --host_cxxopt "/J"
 build:compiler_msvc_like --cxxopt "/utf-8" --host_cxxopt "/utf-8"
+
+# Dev channel
+build:dev_channel --define CHANNEL=dev
 
 # Linux
 build:linux --define TARGET=oss_linux --copt "-fPIC"

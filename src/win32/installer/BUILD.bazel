@@ -28,3 +28,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Build rules for the Windows installer.
+
+# Note, omaha_channel_type can be controlled by //:dev_channel
+# See BUILD_TYPE_SELECT in mac/BUILD as an example.

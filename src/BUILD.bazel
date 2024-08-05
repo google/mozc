@@ -56,6 +56,13 @@ config_setting(
     visibility = ["//visibility:private"],
 )
 
+config_setting(
+    name = "dev_channel",
+    values = {
+        "define": "CHANNEL=dev",
+    },
+)
+
 alias(
     name = "compiler",
     actual = BAZEL_TOOLS_PREFIX + "//tools/cpp:compiler",
@@ -157,7 +164,10 @@ cc_library(
     ) + mozc_select_enable_supplemental_model([
     ]) + mozc_select_enable_usage_rewriter(
         off = ["NO_USAGE_REWRITER"],
-    ),
+    ) + select({
+        ":dev_channel": ["CHANNEL_DEV=1"],
+        "//conditions:default": [],
+    }),
 )
 
 bzl_library(
