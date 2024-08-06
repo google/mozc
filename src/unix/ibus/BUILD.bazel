@@ -282,14 +282,6 @@ mozc_cc_binary(
         ":gen_mozc_xml",
         "//unix:icons",
     ],
-    defines = mozc_select(
-        linux = [
-            # TODO(komatsu): Define MOZC_NO_LOGGING properly in bazel build.
-            "MOZC_NO_LOGGING",
-            "ABSL_MIN_LOG_LEVEL=100",
-        ],
-        oss_linux = [],
-    ),
     deps = [
         ":ibus_config",
         ":ibus_header",
