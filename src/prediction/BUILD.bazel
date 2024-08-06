@@ -246,6 +246,7 @@ mozc_cc_library(
         "//base:vlog",
         "//base/strings:unicode",
         "//composer:query",
+        "//config:character_form_manager",
         "//converter:converter_interface",
         "//converter:immutable_converter_interface",
         "//converter:node_list_builder",

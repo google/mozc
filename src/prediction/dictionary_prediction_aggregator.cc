@@ -52,6 +52,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/query.h"
+#include "config/character_form_manager.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -1748,6 +1749,9 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
       }
     }
 
+    const auto *manager =
+        config::CharacterFormManager::GetCharacterFormManager();
+
     // Appends the result with TYPING_CORRECTION attribute.
     for (Result &result : corrected_results) {
       // If the correction is a pure kana modifier insensitive correction,
@@ -1762,6 +1766,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
       const int adjustment = -1150 * query.bias;
       result.typing_correction_adjustment = adjustment;
       result.wcost += adjustment;
+      result.value = manager->ConvertConversionString(result.value);
       results->emplace_back(std::move(result));
     }
   }

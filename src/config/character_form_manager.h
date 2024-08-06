@@ -69,6 +69,17 @@ class CharacterFormManager {
   void ConvertConversionString(absl::string_view input,
                                std::string *output) const;
 
+  std::string ConvertPreeditString(absl::string_view input) const {
+    std::string output;
+    ConvertPreeditString(input, &output);
+    return output;
+  }
+  std::string ConvertConversionString(absl::string_view input) const {
+    std::string output;
+    ConvertConversionString(input, &output);
+    return output;
+  }
+
   // Converts string according to the config rules.
   // if alternate output, which should be shown next to
   // the output, is defined, it is stored into alternative_output.

@@ -2094,6 +2094,39 @@ TEST_F(DictionaryPredictionAggregatorTest,
   }
 }
 
+TEST_F(DictionaryPredictionAggregatorTest,
+       AggregateExtendedTypeCorrectingPredictionWithCharacterForm) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+
+  config_->set_use_typing_correction(true);
+
+  Segments segments;
+  SetUpInputForSuggestionWithHistory("よろさく!", "", "", composer_.get(),
+                                     &segments);
+
+  std::vector<TypeCorrectedQuery> expected;
+  expected.emplace_back(
+      TypeCorrectedQuery{"よろしく!", TypeCorrectedQuery::CORRECTION});
+
+  auto mock = std::make_unique<engine::MockSupplementalModel>();
+  EXPECT_CALL(*mock, CorrectComposition(_, _)).WillOnce(Return(expected));
+
+  data_and_aggregator->set_supplemental_model(mock.get());
+
+  std::vector<Result> results;
+  aggregator.AggregateTypingCorrectedPrediction(*prediction_convreq_, segments,
+                                                &results);
+  data_and_aggregator->set_supplemental_model(nullptr);
+
+  EXPECT_EQ(results.size(), 1);
+
+  EXPECT_EQ(results[0].key, expected[0].correction);
+  EXPECT_EQ(results[0].value, "よろしく！");  // default is full width.
+}
+
 TEST_F(DictionaryPredictionAggregatorTest, ZeroQuerySuggestionAfterNumbers) {
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
       CreateAggregatorWithMockData();
