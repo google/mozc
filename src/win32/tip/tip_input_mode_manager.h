@@ -36,6 +36,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "absl/types/span.h"
 #include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/keyboard.h"
 
@@ -65,7 +66,7 @@ class TipInputModeManagerImpl {
 
  protected:
   static StatePair GetOverriddenState(
-      const StatePair &base_state, const std::vector<InputScope> &input_scopes);
+      const StatePair &base_state, absl::Span<const InputScope> input_scopes);
 };
 
 // In TSF, IME open/close mode and conversion mode are managed per thread not
@@ -114,10 +115,10 @@ class TipInputModeManager : public TipInputModeManagerImpl {
                                    DWORD mozc_logical_mode,
                                    DWORD mozc_visible_mode);
   Action OnSetFocus(bool system_open_close_mode, DWORD system_conversion_mode,
-                    const std::vector<InputScope> &input_scopes);
+                    absl::Span<const InputScope> input_scopes);
   Action OnChangeOpenClose(bool new_open_close_mode);
   Action OnChangeConversionMode(DWORD new_conversion_mode);
-  Action OnChangeInputScope(const std::vector<InputScope> &input_scopes);
+  Action OnChangeInputScope(absl::Span<const InputScope> input_scopes);
 
   // Returns an IME open/close state that is visible from the Mozc session.
   bool GetEffectiveOpenClose() const;

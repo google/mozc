@@ -82,6 +82,7 @@ mozc_cc_library(
         "//base/win32:wide_char",
         "//bazel/win32:crypt32",
         "@com_google_absl//absl/log",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

@@ -32,14 +32,17 @@
 #include <windows.h>
 #include <winnt.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <string>
 #include <type_traits>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/types/span.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -98,7 +101,7 @@ class ThunkRewriter {
 class HookTargetInfo {
  public:
   explicit HookTargetInfo(
-      const std::vector<WinAPITestHelper::HookRequest> &requests) {
+      absl::Span<const WinAPITestHelper::HookRequest> requests) {
     for (size_t i = 0; i < requests.size(); ++i) {
       const auto &request = requests[i];
       HMODULE module_handle = nullptr;
@@ -123,14 +126,14 @@ class HookTargetInfo {
     }
   }
 
-  const bool IsTargetModule(const std::string &module_name) const {
+  bool IsTargetModule(const std::string &module_name) const {
     std::string lower_module_name(module_name);
     Util::LowerString(&lower_module_name);
     return info_.find(lower_module_name) != info_.end();
   }
 
-  const FunctionPointer GetNewProc(const std::string &module_name,
-                                   FunctionPointer original_proc) const {
+  FunctionPointer GetNewProc(const std::string &module_name,
+                             FunctionPointer original_proc) const {
     std::string lower_module_name(module_name);
     Util::LowerString(&lower_module_name);
     const auto module_iterator = info_.find(lower_module_name);
@@ -285,8 +288,7 @@ WinAPITestHelper::HookRequest::HookRequest(const std::string &src_module,
 
 // static
 WinAPITestHelper::RestoreInfoHandle WinAPITestHelper::DoHook(
-    HMODULE target_module,
-    const std::vector<WinAPITestHelper::HookRequest> &requests) {
+    HMODULE target_module, absl::Span<const HookRequest> requests) {
   const HookTargetInfo target_info(requests);
 
   // Following code skips some data validations as this code is only used in

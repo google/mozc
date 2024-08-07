@@ -35,6 +35,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/types/span.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/indicator_visibility_tracker.h"
@@ -57,7 +58,7 @@ void Dedup(std::vector<T> *container) {
 }  // namespace
 
 TipInputModeManagerImpl::StatePair TipInputModeManagerImpl::GetOverriddenState(
-    const StatePair &base_state, const std::vector<InputScope> &input_scopes) {
+    const StatePair &base_state, absl::Span<const InputScope> input_scopes) {
   if (input_scopes.empty()) {
     return base_state;
   }
@@ -201,12 +202,13 @@ void TipInputModeManager::OnInitialize(bool system_open_close_mode,
 
 TipInputModeManager::Action TipInputModeManager::OnSetFocus(
     bool system_open_close_mode, DWORD system_conversion_mode,
-    const std::vector<InputScope> &input_scopes) {
+    absl::Span<const InputScope> input_scopes) {
   const StatePair prev_effective = mozc_state_;
 
   indicator_visibility_tracker_.OnMoveFocusedWindow();
 
-  std::vector<InputScope> new_input_scopes = input_scopes;
+  std::vector<InputScope> new_input_scopes(input_scopes.begin(),
+                                           input_scopes.end());
   Dedup(&new_input_scopes);
 
   tsf_state_.open_close = system_open_close_mode;
@@ -263,10 +265,11 @@ TipInputModeManager::Action TipInputModeManager::OnChangeConversionMode(
 }
 
 TipInputModeManager::Action TipInputModeManager::OnChangeInputScope(
-    const std::vector<InputScope> &input_scopes) {
+    absl::Span<const InputScope> input_scopes) {
   const StatePair prev_effective = mozc_state_;
 
-  std::vector<InputScope> new_input_scopes = input_scopes;
+  std::vector<InputScope> new_input_scopes(input_scopes.begin(),
+                                           input_scopes.end());
   Dedup(&new_input_scopes);
   if (new_input_scopes == input_scope_) {
     // The same input scope is specified. Use the previous mode.

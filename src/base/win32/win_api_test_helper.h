@@ -35,8 +35,8 @@
 #include <windows.h>
 
 #include <string>
-#include <vector>
 
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -102,12 +102,12 @@ class WinAPITestHelper {
   //   Since this code is designed to be used in unit test, this method
   //   causes critical failure and stops execution when something fails.
   static RestoreInfoHandle DoHook(HMODULE target_module,
-                                  const std::vector<HookRequest> &requests);
+                                  absl::Span<const HookRequest> requests);
 
-  // Restores the API hooks. |backup_info| cannot be used after this method
+  // Restores the API hooks. |restore_info| cannot be used after this method
   // is called.
   // Note: This method is not thread-safe.
-  static void RestoreHook(RestoreInfoHandle backup_info);
+  static void RestoreHook(RestoreInfoHandle restore_info);
 };
 
 #define DEFINE_HOOK(module_name, original_proc, new_proc)             \

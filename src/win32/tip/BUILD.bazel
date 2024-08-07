@@ -640,6 +640,7 @@ mozc_cc_library(
         "//win32/base:conversion_mode_util",
         "//win32/base:indicator_visibility_tracker",
         "//win32/base:keyboard",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

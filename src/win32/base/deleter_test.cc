@@ -33,6 +33,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/types/span.h"
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 #include "win32/base/input_state.h"
@@ -97,7 +98,7 @@ class KeyboardMock : public Win32KeyboardInterface {
     async_key_state_ = async_key_state;
   }
 
-  const std::vector<INPUT> &last_send_input_data() const {
+  absl::Span<const INPUT> last_send_input_data() const {
     return last_send_input_data_;
   }
 
@@ -174,7 +175,7 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
   // Expect three pairs of VK_BACK [down/up] for deleting proceeding characters
   // and one pair of VK_BACK [down/up] as a sentinel key event where pending
   // output and ime state wiil be applied.
-  const std::vector<INPUT> inputs = keyboard_mock->last_send_input_data();
+  absl::Span<const INPUT> inputs = keyboard_mock->last_send_input_data();
   EXPECT_EQ(inputs.size(), 8);
   EXPECT_EQ(inputs[0].ki.wVk, VK_BACK);
   EXPECT_EQ(inputs[1].ki.wVk, VK_BACK);

@@ -112,6 +112,7 @@ mozc_cc_test(
         ":keyboard",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
