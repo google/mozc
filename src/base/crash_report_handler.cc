@@ -87,13 +87,11 @@ google_breakpad::ExceptionHandler *g_handler = nullptr;
 
 // Returns the name of the build mode.
 std::wstring GetBuildMode() {
-#if defined(MOZC_NO_LOGGING)
+#if defined(NDEBUG)
   return L"rel";
-#elif defined(DEBUG)
+#else  // NDEBUG
   return L"dbg";
-#else   // Other than MOZC_NO_LOGGING or DEBUG
-  return L"opt";
-#endif  // MOZC_NO_LOGGING, DEBUG
+#endif  // NDEBUG
 }
 
 // Reduces the size of the string |str| to a max of 64 chars (Extra 1 char is
@@ -231,11 +229,11 @@ bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
                    MDRawAssertionInfo *assertion) {
   if (exinfo == nullptr) {
     // We do not catch CRT error in release build.
-#ifdef MOZC_NO_LOGGING
+#ifdef NDEBUG
     return false;
-#else   // MOZC_NO_LOGGING
+#else   // NDEBUG
     return true;
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
   }
 
   // Make sure it's our module which cause the crash.

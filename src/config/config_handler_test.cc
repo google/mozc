@@ -83,9 +83,9 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 
   ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(true);
-#ifndef MOZC_NO_LOGGING
+#ifndef NDEBUG
   input.set_verbose_level(2);
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
   ConfigHandler::SetMetaData(&input);
   ConfigHandler::SetConfig(input);
   output.Clear();
@@ -99,9 +99,9 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 
   ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(false);
-#ifndef MOZC_NO_LOGGING
+#ifndef NDEBUG
   input.set_verbose_level(0);
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
   ConfigHandler::SetMetaData(&input);
   ConfigHandler::SetConfig(input);
   output.Clear();
@@ -172,9 +172,9 @@ TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
 
   ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(true);
-#ifndef MOZC_NO_LOGGING
+#ifndef NDEBUG
   input.set_verbose_level(2);
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
 
   ClockMock clock1(absl::FromUnixSeconds(1000));
 

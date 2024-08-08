@@ -99,7 +99,7 @@ int WinMainToMain(int argc, char *argv[]);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow) {
-#ifndef MOZC_NO_LOGGING
+#ifndef NDEBUG
   {
     // Load debug_sleep_time from registry.
     // With this parameter, developer can inject a debugger
@@ -119,7 +119,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       ::RegCloseKey(hKey);
     }
   }
-#endif  // !MOZC_NO_LOGGING
+#endif  // !NDEBUG
 
   mozc::WinCommandLine cmd;
   int argc = cmd.argc();

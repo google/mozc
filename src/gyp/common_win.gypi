@@ -247,7 +247,6 @@
         'defines': [
           'NDEBUG',
           'QT_NO_DEBUG',
-          'MOZC_NO_LOGGING',
           'ABSL_MIN_LOG_LEVEL=100',
           'IGNORE_HELP_FLAG',
           'IGNORE_INVALID_FLAG'

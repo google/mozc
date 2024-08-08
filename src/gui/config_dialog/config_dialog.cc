@@ -110,7 +110,7 @@ ConfigDialog::ConfigDialog()
   miscStartupWidget->setVisible(false);
 #endif  // __linux__
 
-#ifdef MOZC_NO_LOGGING
+#ifdef NDEBUG
   // disable logging options
   miscLoggingWidget->setVisible(false);
 
@@ -119,7 +119,7 @@ ConfigDialog::ConfigDialog()
   constexpr int kMiscTabIndex = 6;
   configDialogTabWidget->removeTab(kMiscTabIndex);
 #endif  // __linux__
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
 
   suggestionsSizeSpinBox->setRange(1, 9);
 

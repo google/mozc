@@ -82,11 +82,11 @@ QtServer::QtServer() : timeout_(0) {
   timeout_ = 1000 * std::clamp(absl::GetFlag(FLAGS_timeout), 3, 24 * 60 * 60);
   MOZC_VLOG(2) << "timeout is set to be : " << timeout_;
 
-#ifndef MOZC_NO_LOGGING
+#ifndef NDEBUG
   config::Config config;
   config::ConfigHandler::GetConfig(&config);
   mozc::internal::SetConfigVLogLevel(config.verbose_level());
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
 }
 
 QtServer::~QtServer() = default;

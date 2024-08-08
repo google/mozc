@@ -64,10 +64,10 @@ class LogFileSink : public absl::LogSink {
 }  // namespace
 
 void RegisterLogFileSink(const std::string &path) {
-#if !defined(MOZC_NO_LOGGING) && !defined(__ANDROID__)
+#if !defined(NDEBUG) && !defined(__ANDROID__)
   absl::InitializeLog();
   absl::AddLogSink(new LogFileSink(path));
-#endif  // !MOZC_NO_LOGGING && !__ANDROID__
+#endif  // !NDEBUG && !__ANDROID__
 }
 
 }  // namespace mozc

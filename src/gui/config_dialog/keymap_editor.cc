@@ -171,11 +171,11 @@ class KeyMapValidator {
       return false;
     }
 
-#ifdef MOZC_NO_LOGGING
+#ifdef NDEBUG
     if (fields[2] == kReportBugCommand) {
       return false;
     }
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
     return true;
   }
 

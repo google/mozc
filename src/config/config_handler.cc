@@ -133,14 +133,14 @@ const Config &ConfigHandlerImpl::DefaultConfig() const {
 void ConfigHandlerImpl::SetConfigInternal(Config config) {
   config_ = std::move(config);
 
-#ifdef MOZC_NO_LOGGING
+#ifdef NDEBUG
   // Delete the optional field from the config.
   config_.clear_verbose_level();
   // Fall back if the default value is not the expected value.
   if (config_.verbose_level() != 0) {
     config_.set_verbose_level(0);
   }
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
 
   mozc::internal::SetConfigVLogLevel(config_.verbose_level());
 

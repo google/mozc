@@ -29,10 +29,10 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#if !defined(MOZC_NO_LOGGING)
+#if !defined(NDEBUG)
 #include <atlbase.h>
 #include <atlstr.h>  // for CString
-#endif               // !MOZC_NO_LOGGING
+#endif               // !NDEBUG
 #include <psapi.h>
 #include <wil/resource.h>
 
@@ -49,9 +49,9 @@ namespace mozc::win32 {
 namespace {
 HANDLE g_stop_event = nullptr;
 
-#if defined(MOZC_NO_LOGGING)
+#if defined(NDEBUG)
 #define LOG_WIN32_ERROR(message)
-#else  // MOZC_NO_LOGGING
+#else  // NDEBUG
 template <size_t num_elements>
 void LogMessageImpl(const wchar_t (&file)[num_elements], int line,
                     const wchar_t *message, int error_no) {
@@ -61,7 +61,7 @@ void LogMessageImpl(const wchar_t (&file)[num_elements], int line,
 }
 #define LOG_WIN32_ERROR(message) \
   LogMessageImpl(_T(__FILE__), __LINE__, message, ::GetLastError())
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
 
 std::wstring GetMappedFileNameByAddress(LPVOID address) {
   wchar_t path[MAX_PATH];

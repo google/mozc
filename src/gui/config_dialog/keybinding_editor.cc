@@ -239,11 +239,11 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
   }
 
   // in release binary, unknown_key_ is hidden
-#ifndef MOZC_NO_LOGGING
+#ifndef NDEBUG
   if (!unknown_key_.isEmpty()) {
     results << unknown_key_;
   }
-#endif  // MOZC_NO_LOGGING
+#endif  // NDEBUG
 
   KeyBindingFilter::KeyState result_state = KeyBindingFilter::ACCEPT_KEY;
 

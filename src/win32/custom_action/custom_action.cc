@@ -66,9 +66,9 @@
 #include "win32/cache_service/cache_service_manager.h"
 #include "win32/custom_action/resource.h"
 
-#if !defined(MOZC_NO_LOGGING)
+#if !defined(NDEBUG)
 #include <atlstr.h>
-#endif  // !MOZC_NO_LOGGING
+#endif  // !NDEBUG
 
 #ifdef _DEBUG
 #define DEBUG_BREAK_FOR_DEBUGGER()                                      \
@@ -170,12 +170,12 @@ bool WriteOmahaErrorById(int resource_id) {
 
 template <size_t num_elements>
 bool WriteOmahaError(const wchar_t (&function)[num_elements], int line) {
-#if !defined(MOZC_NO_LOGGING)
+#if !defined(NDEBUG)
   ATL::CStringW log;
   log.Format(L"%s: %s; %s(%d)", L"WriteOmahaError: ",
              mozc::Version::GetMozcVersionW().c_str(), function, line);
   ::OutputDebugStringW(log);
-#endif  // !defined(MOZC_NO_LOGGING)
+#endif  // !defined(NDEBUG)
   const std::wstring &message =
       FormatMessageByResourceId(IDS_FORMAT_FUNCTION_AND_LINE, function, line);
   return OmahaUtil::WriteOmahaError(message, GetVersionHeader());
