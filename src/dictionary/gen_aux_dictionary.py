@@ -45,7 +45,7 @@ import argparse
 import sys
 
 
-class Entry():
+class Entry:
   """Class for an entry in the dictionary."""
 
   def __init__(self, key: str, value: str, lid: str, rid: str, cost: int):
@@ -64,7 +64,7 @@ class Entry():
     return Entry(key, value, lid, rid, int(cost))
 
 
-class EntryList():
+class EntryList:
   """Class for a list of entries."""
 
   def __init__(self):
@@ -88,7 +88,7 @@ class EntryList():
     return self.entries[index]
 
 
-class PosIds():
+class PosIds:
   """Class for pos ids."""
 
   def __init__(self):
@@ -128,7 +128,7 @@ class PosIds():
     return self.ids.get(pos_name, '')
 
 
-class Dictionary():
+class Dictionary:
   """Class for dictionary0*.txt."""
 
   def __init__(self):
@@ -171,7 +171,7 @@ class Dictionary():
     return self.pos_entry_map[pos_key].AtRatio(ratio).cost
 
 
-class AuxDictionary():
+class AuxDictionary:
   """Class for aux_dictionary.tsv."""
 
   def __init__(self, dictionary):
@@ -213,7 +213,7 @@ class AuxDictionary():
         file.write('\t'.join(aux_entry) + '\n')
 
 
-class WordsDictionary():
+class WordsDictionary:
   """Class for words.tsv."""
 
   def __init__(self, dictionary, aux):
@@ -277,6 +277,7 @@ def main():
       words = WordsDictionary(dictionary, aux)
       words.Parse(words_tsv, args.id_def)
       words.WriteFile(args.output)
+
 
 if __name__ == '__main__':
   main()
