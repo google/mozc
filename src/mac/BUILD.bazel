@@ -440,16 +440,12 @@ genrule(
             "installer/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
         ],
         oss_macos = [
-            "//gui/config_dialog:config_dialog_macos",
-            "//gui/dictionary_tool:dictionary_tool_macos",
             "installer/distribution.xml",
             "installer/InstallerSections.plist",
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
         ],
         prod_macos = [
-            "//gui/config_dialog:config_dialog_macos",
-            "//gui/dictionary_tool:dictionary_tool_macos",
             "//google_updater:GoogleUpdater.pkg",
             "installer/distribution.xml",
             "installer/InstallerSections.plist",

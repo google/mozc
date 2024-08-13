@@ -115,8 +115,6 @@ def TweakQtApps(top_dir: str, oss: bool) -> None:
   ]
   for app in sub_qt_apps:
     app_dir = os.path.join(top_dir, f'{name}.app/Contents/Resources/{app}.app')
-    # Remove _CodeSignature to be invalidated.
-    shutil.rmtree(os.path.join(app_dir, 'Contents/_CodeSignature'))
     RemoveQtFrameworks(app_dir, app)
 
     # Remove the Frameworks directory, if it's empty.
@@ -124,20 +122,8 @@ def TweakQtApps(top_dir: str, oss: bool) -> None:
     if not any(os.scandir(framework_dir)):
       os.rmdir(framework_dir)
 
-    # Codesign again. '-' means psuedo identity.
-    # https://github.com/bazelbuild/rules_apple/blob/3.5.1/apple/internal/codesigning_support.bzl#L42
-    # https://developer.apple.com/documentation/security/seccodesignatureflags/1397793-adhoc
-    codesign = ['/usr/bin/codesign', '--force', '--sign', '-', app_dir]
-    util.RunOrDie(codesign)
-
-  main_qt_apps = [
-      'ConfigDialog.app',
-      'DictionaryTool.app',
-      f'{name}.app/Contents/Resources/ConfigDialog.app',
-  ]
-  for app in main_qt_apps:
-    app_dir = os.path.join(top_dir, app)
-    SymlinkQtFrameworks(app_dir)
+  qt_app = f'{top_dir}/{name}.app/Contents/Resources/ConfigDialog.app'
+  SymlinkQtFrameworks(qt_app)
 
 
 def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
@@ -196,6 +182,38 @@ def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
   os.chdir(orig_dir)
 
 
+def Codesign(top_dir: str, oss: bool) -> None:
+  """Codesign the installer files."""
+
+  # '-' means psuedo identity.
+  # https://github.com/bazelbuild/rules_apple/blob/3.5.1/apple/internal/codesigning_support.bzl#L42
+  # https://developer.apple.com/documentation/security/seccodesignatureflags/1397793-adhoc
+  identity = '-' if oss else '-'
+
+  # remove existing _CodeSignature before overwriting the codesigns.
+  dir_name = '_CodeSignature'
+  for cur_dir, dirs, _ in os.walk(top_dir):  # symbolic links are not followed.
+    if dir_name in dirs:
+      shutil.rmtree(os.path.join(cur_dir, dir_name))
+      dirs.remove(dir_name)  # skip walking the removed directory.
+
+  # codesign libqcocoa.dylib
+  file_name = 'libqcocoa.dylib'
+  for cur_dir, _, files in os.walk(top_dir):  # symbolic links are not followed.
+    if file_name in files:
+      path = os.path.join(cur_dir, file_name)
+      codesign = ['/usr/bin/codesign', '--force', '--sign', identity, path]
+      util.RunOrDie(codesign)
+
+  # codesign apps
+  for cur_dir, dirs, _ in os.walk(top_dir):  # symbolic links are not followed.
+    for dir_name in dirs:
+      path = os.path.join(cur_dir, dir_name)
+      if dir_name.endswith('.app') and not os.path.islink(path):
+        codesign = ['/usr/bin/codesign', '--force', '--sign', identity, path]
+        util.RunOrDie(codesign)
+
+
 def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
   """Tweak the zip file of installer files to optimize the structure."""
   # Remove top_dir if it already exists.
@@ -213,6 +231,7 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
 
   if args.productbuild:
     TweakForProductbuild(top_dir, tweak_qt, args.oss)
+    Codesign(top_dir, args.oss)
 
   # Create a zip file with the zip command.
   # It's not easy to contain symlinks with shutil.make_archive.
