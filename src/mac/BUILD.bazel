@@ -572,9 +572,6 @@ genrule(
     tools = [":build_package"],
 )
 
-# This rule may fail in a sandbox environment because it uses `hdiutil` that accesses to /Volumes/.
-# To workaround use `--strategy_regexp=//mac:diskimage=local` or `--spawn_strategy=local`.
-# .bazelrc already has the --strategy_regexp option.
 genrule(
     name = "diskimage",
     srcs = [
@@ -589,6 +586,8 @@ genrule(
         "--keystone_install_file $(location :keystone_install)",
     ]),
     exec_compatible_with = ["@platforms//os:macos"],
+    # Use local execution instead of sandbox because it uses `hdiutil` that accesses to /Volumes/.
+    local = True,
     tags = ["manual"],
     tools = ["//build_tools:build_diskimage_mac"],
 )

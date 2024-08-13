@@ -49,8 +49,6 @@ test:linux_env   --test_tag_filters=-nolinux
 ## macOS specific options
 build:macos_env --build_tag_filters=-nomac --objccopt "-fsigned-char"
 test:macos_env   --test_tag_filters=-nomac
-# Workaround for the issue that hdiutil fails in a sandbox.
-build:macos_env --strategy_regexp=//mac:diskimage=local
 
 ## Windows specific options
 build:windows_env --build_tag_filters=-nowin
