@@ -40,6 +40,7 @@ load(
     "//:config.bzl",
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
+    "MACOS_CODESIGN_IDENTITY",
 )
 
 package(default_visibility = ["//:__subpackages__"])
@@ -476,7 +477,9 @@ genrule(
         default = " --noqt",
         oss_macos = " --oss",
         prod_macos = "",
-    ),
+    ) + " --codesign_identity \"" + MACOS_CODESIGN_IDENTITY + "\"",
+    # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
+    local = True,
     tags = ["manual"],
     tools = [":tweak_installer_files"],
 )
@@ -599,9 +602,12 @@ genrule(
         "chmod u+w $@ &&",
         "/usr/bin/codesign",
         "--timestamp --options=runtime",  # For notarization
-        "--sign -",  # Sign with the default identity.
+        "--sign \"" + MACOS_CODESIGN_IDENTITY + "\"",
+        "--keychain login.keychain",
         "$@",
     ]),
     exec_compatible_with = ["@platforms//os:macos"],
+    # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
+    local = True,
     tags = ["manual"],
 )

@@ -51,6 +51,15 @@ EMACS_MOZC_HELPER_DIR = "/usr/bin"
 MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
 MACOS_MIN_OS_VER = "11.0"
 
+# identity for codesign. The value passed to the --sign option of the codesign command.
+#
+# pseudo identity for local development
+# '-' means pseudo identity.
+# https://github.com/bazelbuild/rules_apple/blob/3.5.1/apple/internal/codesigning_support.bzl#L42
+# https://developer.apple.com/documentation/security/seccodesignatureflags/1397793-adhoc
+MACOS_CODESIGN_IDENTITY_PSEUDO = "-"
+MACOS_CODESIGN_IDENTITY = MACOS_CODESIGN_IDENTITY_PSEUDO
+
 ## Qt path for macOS
 # The paths are the default paths of Qt 6.5.2 installed by "make install".
 #

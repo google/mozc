@@ -50,6 +50,10 @@ def ParseArguments() -> argparse.Namespace:
   parser.add_argument('--noqt', action='store_true')
   parser.add_argument('--oss', action='store_true')
   parser.add_argument('--work_dir')
+  # '-' means pseudo identity.
+  # https://github.com/bazelbuild/rules_apple/blob/3.5.1/apple/internal/codesigning_support.bzl#L42
+  # https://developer.apple.com/documentation/security/seccodesignatureflags/1397793-adhoc
+  parser.add_argument('--codesign_identity', default='-')
   return parser.parse_args()
 
 
@@ -182,14 +186,8 @@ def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
   os.chdir(orig_dir)
 
 
-def Codesign(top_dir: str, oss: bool) -> None:
+def Codesign(top_dir: str, identity: str) -> None:
   """Codesign the installer files."""
-
-  # '-' means psuedo identity.
-  # https://github.com/bazelbuild/rules_apple/blob/3.5.1/apple/internal/codesigning_support.bzl#L42
-  # https://developer.apple.com/documentation/security/seccodesignatureflags/1397793-adhoc
-  identity = '-' if oss else '-'
-
   # remove existing _CodeSignature before overwriting the codesigns.
   dir_name = '_CodeSignature'
   for cur_dir, dirs, _ in os.walk(top_dir):  # symbolic links are not followed.
@@ -197,12 +195,14 @@ def Codesign(top_dir: str, oss: bool) -> None:
       shutil.rmtree(os.path.join(cur_dir, dir_name))
       dirs.remove(dir_name)  # skip walking the removed directory.
 
+  args = ['--force', '--sign', identity, '--keychain', 'login.keychain']
+
   # codesign libqcocoa.dylib
   file_name = 'libqcocoa.dylib'
   for cur_dir, _, files in os.walk(top_dir):  # symbolic links are not followed.
     if file_name in files:
       path = os.path.join(cur_dir, file_name)
-      codesign = ['/usr/bin/codesign', '--force', '--sign', identity, path]
+      codesign = ['/usr/bin/codesign', *args, path]
       util.RunOrDie(codesign)
 
   # codesign apps
@@ -210,7 +210,7 @@ def Codesign(top_dir: str, oss: bool) -> None:
     for dir_name in dirs:
       path = os.path.join(cur_dir, dir_name)
       if dir_name.endswith('.app') and not os.path.islink(path):
-        codesign = ['/usr/bin/codesign', '--force', '--sign', identity, path]
+        codesign = ['/usr/bin/codesign', *args, path]
         util.RunOrDie(codesign)
 
 
@@ -231,7 +231,7 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
 
   if args.productbuild:
     TweakForProductbuild(top_dir, tweak_qt, args.oss)
-    Codesign(top_dir, args.oss)
+    Codesign(top_dir, args.codesign_identity)
 
   # Create a zip file with the zip command.
   # It's not easy to contain symlinks with shutil.make_archive.
