@@ -467,15 +467,7 @@ mozc_py_binary(
     deps = ["//build_tools:util"],
 )
 
-genrule(
-    name = "tweaked_installer_files",
-    srcs = [":zipped_installer_files"],
-    outs = ["tweaked_installer.zip"],
-    cmd = "$(location :tweak_installer_files) --input $(SRCS) --output $@",
-    tags = ["manual"],
-    tools = [":tweak_installer_files"],
-)
-
+# Create a zip file for productbuild. The files in the zip file are codesigned.
 genrule(
     name = "productbuild_files",
     srcs = [":zipped_installer_files"],
@@ -485,6 +477,17 @@ genrule(
         oss_macos = " --oss",
         prod_macos = "",
     ),
+    tags = ["manual"],
+    tools = [":tweak_installer_files"],
+)
+
+# TODO(b/357456172): The rules from tweaked_installer_files till installer_oss_macos are deprecated.
+# Those rules will be removed after the migration to the new build system.
+genrule(
+    name = "tweaked_installer_files",
+    srcs = [":zipped_installer_files"],
+    outs = ["tweaked_installer.zip"],
+    cmd = "$(location :tweak_installer_files) --input $(SRCS) --output $@",
     tags = ["manual"],
     tools = [":tweak_installer_files"],
 )
@@ -585,4 +588,20 @@ genrule(
     exec_compatible_with = ["@platforms//os:macos"],
     tags = ["manual"],
     tools = ["//build_tools:build_diskimage_mac"],
+)
+
+genrule(
+    name = "diskimage_signed",
+    srcs = [":diskimage"],
+    outs = ["Mozc_signed.dmg"],
+    cmd = " ".join([
+        "cp $(location :diskimage) $@ &&",
+        "chmod u+w $@ &&",
+        "/usr/bin/codesign",
+        "--timestamp --options=runtime",  # For notarization
+        "--sign -",  # Sign with the default identity.
+        "$@",
+    ]),
+    exec_compatible_with = ["@platforms//os:macos"],
+    tags = ["manual"],
 )
