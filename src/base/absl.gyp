@@ -178,6 +178,10 @@
         '<!@(<(glob_absl) status "*.cc")',
         '<!@(<(glob_absl) status/internal "*.cc")',
       ],
+      'include_dirs': [
+        '<(third_party_dir)/gtest/googlemock/include',
+        '<(third_party_dir)/gtest/googletest/include',
+      ],
       'dependencies': [
         'absl_base',
         'absl_strings',
