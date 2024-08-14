@@ -80,6 +80,11 @@ exports_files(glob(["libexec/*"]))
 
 def _exec_pkg_config(repo_ctx, flag):
     binary = repo_ctx.which("pkg-config")
+    if not binary:
+        # Using print is not recommended, but this will be a clue to debug build errors in
+        # the case of pkg-config is not found.
+        print("pkg-config is not found")  # buildifier: disable=print
+        return []
     result = repo_ctx.execute([binary, flag] + repo_ctx.attr.packages)
     items = result.stdout.strip().split(" ")
     uniq_items = sorted({key: None for key in items}.keys())
