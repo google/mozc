@@ -27,6 +27,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# WORKSPACE.bazel is a legacy dependency configuration system but the default system for Mozc yet.
+# To use the new system (Bzlmod), specify --enable_bzlmod to the Bazel command or modify .bazelrc.
+
 # An identifier for this repository.
 workspace(name = "mozc")
 

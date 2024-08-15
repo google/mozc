@@ -1,0 +1,213 @@
+# MODULE.bazel is the new dependency configuration system (Bzlmod), but not used yet by default.
+# To use Bzlmod, you need to specify --enable_bzlmod to the Bazel command or modify .bazelrc.
+
+bazel_dep(
+    name = "abseil-cpp",
+    repo_name = "com_google_absl",
+)
+
+local_path_override(
+    module_name = "abseil-cpp",
+    path = "third_party/abseil-cpp",
+)
+
+bazel_dep(
+    name = "protobuf",
+    repo_name = "com_google_protobuf",
+)
+
+local_path_override(
+    module_name = "protobuf",
+    path = "third_party/protobuf",
+)
+
+bazel_dep(
+    name = "googletest",
+    repo_name = "com_google_googletest",
+)
+
+local_path_override(
+    module_name = "googletest",
+    path = "third_party/gtest",
+)
+
+
+# bazel_skylib: 1.7.1 2024-06-03
+# https://github.com/bazelbuild/bazel-skylib/
+bazel_dep(
+    name = "bazel_skylib",
+    version = "1.7.1",
+)
+
+# rules_python: 0.34.0 2024-07-01
+# https://github.com/bazelbuild/rules_python/
+bazel_dep(
+    name = "rules_python",
+    version = "0.34.0",
+)
+
+# Bazel macOS build (3.8.0 2024-08-09)
+# https://github.com/bazelbuild/rules_apple
+bazel_dep(
+    name = "rules_apple",
+    version = "3.8.0",
+    repo_name = "build_bazel_rules_apple",
+)
+
+# Apple Support for Bazel (1.16.0 2024-07-10)
+bazel_dep(
+    name = "apple_support",
+    version = "1.16.0",
+    repo_name = "build_bazel_apple_support",
+)
+
+# Note, rules_android does not work yet with the following configurations.
+
+# Java rules (7.9.0 2024-08-13)
+# bazel_dep(name = "rules_java", version = "7.9.0")
+
+# Android SDK rules (0.5.1 2024-08-06)
+# bazel_dep(name = "rules_android", version = "0.5.1")
+
+
+new_local_repository = use_repo_rule(
+    "@bazel_tools//tools/build_defs/repo:local.bzl",
+    "new_local_repository",
+)
+
+# Japanese Usage Dictionary
+new_local_repository(
+    name = "ja_usage_dict",
+    build_file = "@//bazel:BUILD.ja_usage_dict.bazel",
+    path = "third_party/japanese_usage_dictionary",
+)
+
+# Windows Implementation Library (WIL)
+# https://github.com/microsoft/wil/
+new_local_repository(
+    name = "com_microsoft_wil",
+    build_file = "@//bazel:BUILD.wil.bazel",
+    path = "third_party/wil",
+)
+
+pkg_config_repository = use_repo_rule(
+    "@//bazel:pkg_config_repository.bzl",
+    "pkg_config_repository"
+)
+
+# iBus
+pkg_config_repository(
+    name = "ibus",
+    packages = ["glib-2.0", "gobject-2.0", "ibus-1.0"],
+)
+
+# Qt for Linux
+pkg_config_repository(
+    name = "qt_linux",
+    packages = ["Qt6Core", "Qt6Gui", "Qt6Widgets"],
+)
+
+# Qt for macOS
+qt_mac_repository = use_repo_rule("@//bazel:qt_mac_repository.bzl", "qt_mac_repository")
+MACOS_QT_PATH = "/usr/local/Qt-6.5.2"
+qt_mac_repository(
+    name = "qt_mac",
+    default_path = MACOS_QT_PATH,  # can be replaced with MOZC_QT_PATH envvar.
+)
+
+# Qt for Windows
+new_local_repository(
+    name = "qt_win",
+    build_file = "@//bazel:BUILD.qt_win.bazel",
+    path = "third_party/qt",
+)
+
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+# Material icons
+http_file(
+    name = "material_icon_dictionary_png",
+    downloaded_file_path = "dictionary.png",
+    sha256 = "6d2ac7befa038d4f32e07136293acaf5d8645a4daecb6d063f34be2ffea59b55",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/png/action/chrome_reader_mode/materialiconsoutlined/48dp/1x/outline_chrome_reader_mode_black_48dp.png",
+    ],
+)
+
+http_file(
+    name = "material_icon_dictionary_svg",
+    downloaded_file_path = "dictionary.svg",
+    sha256 = "a4c7b9bfb442a7497b72d74358c31034c4fef1ab2a50659834784580751ac04d",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/src/action/chrome_reader_mode/materialiconsoutlined/24px.svg",
+    ],
+)
+
+http_file(
+    name = "material_icon_properties_png",
+    downloaded_file_path = "properties.png",
+    sha256 = "c4ae8bb7992f43157be9d026f76a7039af6e0e3de0f220842208dfda8c38714a",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/png/action/settings/materialiconsround/48dp/1x/round_settings_black_48dp.png",
+    ],
+)
+
+http_file(
+    name = "material_icon_properties_svg",
+    downloaded_file_path = "properties.svg",
+    sha256 = "9b01b133be1caffc680f132d385d0e594262d6cfd29759a63c428050b83fe628",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/src/action/settings/materialiconsround/24px.svg",
+    ],
+)
+
+http_file(
+    name = "material_icon_tool_png",
+    downloaded_file_path = "tool.png",
+    sha256 = "269433bf6d6948a93ab6a57a73ceb5930870223046052cfffe01eeca37327d3e",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/png/action/build/materialicons/48dp/1x/baseline_build_black_48dp.png",
+    ],
+)
+
+http_file(
+    name = "material_icon_tool_svg",
+    downloaded_file_path = "tool.svg",
+    sha256 = "df34fba3d09778db69503a23b688761051dbf65b5bccb0d7b729c69ff61c3804",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/src/action/build/materialicons/24px.svg",
+    ],
+)
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Google Toolbox for Mac
+# https://github.com/google/google-toolbox-for-mac
+# We just need UnitTesting, so strip to the directory and skip dependencies.
+GTM_GIT_SHA="8fbaae947b87c1e66c0934493168fc6d583ed889"
+http_archive(
+    name = "google_toolbox_for_mac",
+    urls = [
+        "https://github.com/google/google-toolbox-for-mac/archive/%s.zip" % GTM_GIT_SHA
+    ],
+    strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
+    build_file = "@//bazel:BUILD.google_toolbox_for_mac.bazel",
+    patches = ["@//:google_toolbox_for_mac.patch"],
+    patch_args = ["-p2"],
+)
+
+# Zip code
+SHA256_ZIP_CODE_KEN_ALL = None
+http_archive(
+    name = "zip_code_ken_all",
+    build_file_content = "exports_files([\"KEN_ALL.CSV\"])",
+    sha256 = SHA256_ZIP_CODE_KEN_ALL,
+    url = "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip",
+)
+
+SHA256_ZIP_CODE_JIGYOSYO = None
+http_archive(
+    name = "zip_code_jigyosyo",
+    build_file_content = "exports_files([\"JIGYOSYO.CSV\"])",
+    sha256 = SHA256_ZIP_CODE_JIGYOSYO,
+    url = "https://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip",
+)
