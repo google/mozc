@@ -1703,6 +1703,16 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
   corrected_request.set_composer(nullptr);
   corrected_request.set_kana_modifier_insensitive_conversion(false);
 
+  // Populates number when number candidate is not added.
+  bool number_added = base_selected_types & NUMBER;
+  if (!request.request()
+           .decoder_experiment_params()
+           .typing_correction_enable_number_decoder()) {
+    // disables number decoder by assuming that number candidate
+    // is already added.
+    number_added = true;
+  }
+
   for (const auto &query : queries) {
     absl::string_view key = query.correction;
     const size_t key_len = Util::CharsLen(key);
@@ -1747,6 +1757,12 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
                                   Segment::Candidate::SOURCE_INFO_NONE,
                                   &corrected_results);
       }
+    }
+
+    // Added only if number is not added.
+    if (!number_added) {
+      number_added |=
+          AggregateNumberCandidates(query.correction, &corrected_results);
     }
 
     const auto *manager =
@@ -1804,6 +1820,11 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
     input_key = segments.conversion_segment(0).key();
   }
 
+  return AggregateNumberCandidates(input_key, results);
+}
+
+bool DictionaryPredictionAggregator::AggregateNumberCandidates(
+    absl::string_view input_key, std::vector<Result> *results) const {
   // NumberDecoder decoder;
   std::vector<NumberDecoder::Result> decode_results =
       number_decoder_.Decode(input_key);

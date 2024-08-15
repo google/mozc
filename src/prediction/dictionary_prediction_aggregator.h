@@ -235,6 +235,9 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
                                  const Segments &segments,
                                  std::vector<Result> *results) const;
 
+  bool AggregateNumberCandidates(absl::string_view input_key,
+                                 std::vector<Result> *results) const;
+
   // Note that this look up is done with raw input string rather than query
   // string from composer.  This is helpful to implement language aware input.
   void AggregateEnglishPredictionUsingRawInput(
