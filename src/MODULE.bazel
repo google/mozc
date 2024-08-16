@@ -32,6 +32,13 @@ local_path_override(
 )
 
 
+# platforms: 0.0.10 2024-04-26
+# https://github.com/bazelbuild/platforms/
+bazel_dep(
+    name = "platforms",
+    version = "0.0.10",
+)
+
 # bazel_skylib: 1.7.1 2024-06-03
 # https://github.com/bazelbuild/bazel-skylib/
 bazel_dep(
