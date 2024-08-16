@@ -104,7 +104,8 @@ def _pkg_config_repository_impl(repo_ctx):
     includes = [item[len("-I/"):] for item in includes]
     _symlinks(repo_ctx, includes)
     data = {
-        "name": repo_ctx.attr.name,
+        # In bzlmod, repo_ctx.attr.name has a prefix like "_main~_repo_rules~ibus".
+        "name": repo_ctx.attr.name.split("~")[-1],
         "hdrs": _make_strlist([item + "/**" for item in includes]),
         "copts": _make_strlist(_exec_pkg_config(repo_ctx, "--cflags-only-other")),
         "includes": _make_strlist(includes),
