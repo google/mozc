@@ -237,8 +237,9 @@ http_archive(
     ],
     strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
     build_file = "@//bazel:BUILD.google_toolbox_for_mac.bazel",
-    patches = ["@//:google_toolbox_for_mac.patch"],
+    patches = ["@//bazel:google_toolbox_for_mac.patch"],
     patch_args = ["-p2"],
+    sha256 = "424bca6571778496efa5328ffcca26edf083e282da7074d30b3e980516cea2a4",
 )
 
 # Zip code
