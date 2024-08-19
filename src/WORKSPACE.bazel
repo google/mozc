@@ -131,7 +131,6 @@ http_archive(
     strip_prefix = "rules_android_ndk-0.1.2",
     url = "https://github.com/bazelbuild/rules_android_ndk/releases/download/v0.1.2/rules_android_ndk-v0.1.2.tar.gz",
 )
-
 # Check the ANDROID_NDK_HOME envvar, if it is specified set up NDK as follows
 #   load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
 #   android_ndk_repository(name="androidndk")
@@ -142,17 +141,36 @@ load("@android_repository//:setup.bzl", "android_ndk_setup")
 android_ndk_setup()
 
 
+# Placeholder of rules_android for the compatibility with Bzlmod.
+new_local_repository(
+    name = "rules_android",
+    path = "bazel",
+    build_file_content = "",
+)
+
+
+# Android SDK rules (0.1.1 2018-06-15)
 http_archive(
     name = "build_bazel_rules_android",
     sha256 = "cd06d15dd8bb59926e4d65f9003bfc20f9da4b2519985c27e190cddc8b7a7806",
     strip_prefix = "rules_android-0.1.1",
     urls = ["https://github.com/bazelbuild/rules_android/archive/v0.1.1.zip"],
 )
-
 load("@build_bazel_rules_android//android:rules.bzl", "android_sdk_repository")
-
 android_sdk_repository(
     name = "androidsdk",
+)
+
+
+# platforms (0.0.10 2024-04-26)
+# https://github.com/bazelbuild/platforms/
+http_archive(
+    name = "platforms",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/platforms/releases/download/0.0.10/platforms-0.0.10.tar.gz",
+        "https://github.com/bazelbuild/platforms/releases/download/0.0.10/platforms-0.0.10.tar.gz",
+    ],
+    sha256 = "218efe8ee736d26a3572663b374a253c012b716d8af0c07e842e82f238a0a7ee",
 )
 
 

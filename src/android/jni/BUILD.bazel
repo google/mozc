@@ -34,6 +34,7 @@
 # Usage:
 # % blaze --blazerc android/blazerc build --config=android_arm android/jni:libmozc.so
 
+load("@rules_android//android:rules.bzl", "android_binary")
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
