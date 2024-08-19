@@ -459,8 +459,8 @@ class Segments final {
       UPDATE_ENTRY,
     };
     uint16_t revert_entry_type = 0;
-    // UserHitoryPredictor uses '1' for now.
-    // Do not use duplicate keys.
+    // UserHitoryPredictor uses '1', UserSegmentHistoryRewriter uses '2' for
+    // now. Do not use duplicate keys.
     uint16_t id = 0;
     uint32_t timestamp = 0;
     std::string key;

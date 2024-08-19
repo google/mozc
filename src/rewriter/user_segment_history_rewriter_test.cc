@@ -1727,5 +1727,41 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
   }
 }
 
+TEST_F(UserSegmentHistoryRewriterTest, Revert) {
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+
+  {
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("abc");
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+    candidate->value = "ａｂｃ";
+    candidate->content_value = "ａｂｃ";
+    candidate->content_key = "abc";
+    segments.mutable_segment(0)->move_candidate(1, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(*convreq_, &segments);
+  }
+
+  rewriter->Revert(&segments);
+
+  {
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("abc");
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+    candidate->value = "ａｂｃ";
+    candidate->content_value = "ａｂｃ";
+    candidate->content_key = "abc";
+    candidate->content_key = "abc";
+    EXPECT_FALSE(rewriter->Rewrite(*convreq_, &segments));
+  }
+}
+
 }  // namespace
 }  // namespace mozc

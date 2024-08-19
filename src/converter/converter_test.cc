@@ -41,6 +41,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/util.h"
@@ -163,6 +164,27 @@ class InsertPlaceholderWordsRewriter : public RewriterInterface {
 };
 
 }  // namespace
+
+class MockPredictor : public mozc::prediction::PredictorInterface {
+ public:
+  MockPredictor() = default;
+  ~MockPredictor() override = default;
+
+  MOCK_METHOD(bool, PredictForRequest, (const ConversionRequest &, Segments *),
+              (const override));
+  MOCK_METHOD(void, Revert, (Segments *), (override));
+  MOCK_METHOD(const std::string &, GetPredictorName, (), (const override));
+};
+
+class MockRewriter : public RewriterInterface {
+ public:
+  MockRewriter() = default;
+  ~MockRewriter() override = default;
+
+  MOCK_METHOD(bool, Rewrite, (const ConversionRequest &, Segments *),
+              (const override));
+  MOCK_METHOD(void, Revert, (Segments *), (override));
+};
 
 class ConverterTest : public testing::TestWithTempUserProfile {
  protected:
@@ -1896,6 +1918,33 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
 
   EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
   EXPECT_FALSE(FindCandidateByValue("て廃", segments.conversion_segment(0)));
+}
+
+TEST_F(ConverterTest, RevertConversion) {
+  auto mock_predictor = absl::make_unique<MockPredictor>();
+  auto mock_rewriter = absl::make_unique<MockRewriter>();
+  auto converter_and_data = std::make_unique<ConverterAndData>();
+
+  EXPECT_CALL(*mock_predictor, Revert(_)).Times(1);
+  EXPECT_CALL(*mock_rewriter, Revert(_)).Times(1);
+
+  engine::Modules &modules = converter_and_data->modules;
+  modules.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
+  CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
+
+  converter_and_data->immutable_converter =
+      std::make_unique<ImmutableConverter>(modules);
+  converter_and_data->converter = std::make_unique<Converter>();
+
+  converter_and_data->converter->Init(
+      modules, std::move(mock_predictor), std::move(mock_rewriter),
+      converter_and_data->immutable_converter.get());
+
+  ConverterInterface *converter = converter_and_data->converter.get();
+  Segments segments;
+  segments.push_back_revert_entry();
+
+  converter->RevertConversion(&segments);
 }
 
 }  // namespace mozc

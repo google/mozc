@@ -558,6 +558,7 @@ void Converter::RevertConversion(Segments *segments) const {
   if (segments->revert_entries_size() == 0) {
     return;
   }
+  rewriter_->Revert(segments);
   predictor_->Revert(segments);
   segments->clear_revert_entries();
 }

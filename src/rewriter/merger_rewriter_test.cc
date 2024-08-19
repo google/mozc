@@ -85,6 +85,10 @@ class TestRewriter : public RewriterInterface {
     buffer_->append(name_ + ".Finish();");
   }
 
+  void Revert(Segments *segments) override {
+    buffer_->append(name_ + ".Revert();");
+  }
+
   bool Sync() override {
     buffer_->append(name_ + ".Sync();");
     return return_value_;
@@ -284,6 +288,20 @@ TEST_F(MergerRewriterTest, Finish) {
             "a.Finish();"
             "b.Finish();"
             "c.Finish();");
+}
+
+TEST_F(MergerRewriterTest, Revert) {
+  std::string call_result;
+  const ConversionRequest request;
+  MergerRewriter merger;
+  merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "a", false));
+  merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
+  merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
+  merger.Revert(nullptr);
+  EXPECT_EQ(call_result,
+            "a.Revert();"
+            "b.Revert();"
+            "c.Revert();");
 }
 
 TEST_F(MergerRewriterTest, Sync) {

@@ -129,6 +129,12 @@ class MergerRewriter : public RewriterInterface {
     }
   }
 
+  void Revert(Segments *segments) override {
+    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+      rewriter->Revert(segments);
+    }
+  }
+
   // Syncs internal data to local file system.
   bool Sync() override {
     bool result = false;

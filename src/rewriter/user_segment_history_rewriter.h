@@ -34,6 +34,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -58,6 +59,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool Sync() override;
   bool Reload() override;
   void Clear() override;
+  void Revert(Segments *segments) override;
 
  private:
   friend class UserSegmentHistoryRewriterTestPeer;
@@ -88,6 +90,9 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   static Segments MakeLearningSegmentsFromInnerSegments(
       const Segments &segments);
 
+  // Returns id for RevertEntry
+  static uint16_t revert_id();
+
   bool IsAvailable(const ConversionRequest &request,
                    const Segments &segments) const;
   Score GetScore(const ConversionRequest &request, const Segments &segments,
@@ -95,9 +100,14 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool Replaceable(const ConversionRequest &request,
                    const Segment::Candidate &lhs,
                    const Segment::Candidate &rhs) const;
-  void RememberFirstCandidate(const ConversionRequest &request,
-                              const Segments &segments, size_t segment_index);
-  void RememberNumberPreference(const Segment &segment);
+  // |revert_entries| will be stored to Segments and used to revert last
+  // Finish() operation in Revert().
+  void RememberFirstCandidate(
+      const ConversionRequest &request, const Segments &segments,
+      size_t segment_index, std::vector<Segments::RevertEntry> &revert_entries);
+  void RememberNumberPreference(
+      const Segment &segment,
+      std::vector<Segments::RevertEntry> &revert_entries);
   bool RewriteNumber(Segment *segment) const;
   bool ShouldRewrite(const Segment &segment, size_t *max_candidates_size) const;
   void InsertTriggerKey(const Segment &segment);
@@ -106,7 +116,11 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool SortCandidates(absl::Span<const ScoreCandidate> sorted_scores,
                       Segment *segment) const;
   Score Fetch(absl::string_view key, uint32_t weight) const;
-  void Insert(absl::string_view key, bool force);
+  void Insert(absl::string_view key, bool force,
+              std::vector<Segments::RevertEntry> &revert_entries);
+  void MaybeInsertRevertEntry(
+      absl::string_view key,
+      std::vector<Segments::RevertEntry> &revert_entries);
 
   std::unique_ptr<storage::LruStorage> storage_;
   const dictionary::PosMatcher *pos_matcher_;

@@ -72,6 +72,9 @@ class RewriterInterface {
   // Hook(s) for all mutable operations
   virtual void Finish(const ConversionRequest &request, Segments *segments) {}
 
+  // Reverts the last Finish operation.
+  virtual void Revert(Segments *segments) {}
+
   // Synchronizes internal data to local file system.  This method is called
   // when the server received SYNC_DATA command from the client.  Currently,
   // this event happens, e.g., when user moves to another text area.
