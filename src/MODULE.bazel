@@ -243,6 +243,11 @@ http_archive(
 )
 
 # Zip code
+# Since the URL is shared among multiple versions, we cannot specify the SHA256.
+# For offline build (with the --repository_cache flag), SHA256 should be specified.
+#
+# SHA256 as of 2024-08-14
+# SHA256_ZIP_CODE_KEN_ALL = "d2d177ef64b9459a618d8aaa96b6c5f081cb3f37f6e9c00ba912001e66b81f3e"
 SHA256_ZIP_CODE_KEN_ALL = None
 http_archive(
     name = "zip_code_ken_all",
@@ -250,7 +255,8 @@ http_archive(
     sha256 = SHA256_ZIP_CODE_KEN_ALL,
     url = "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip",
 )
-
+# SHA256 as of 2024-08-14
+# SHA256_ZIP_CODE_JIGYOSYO="ab6fd92df35e63c4566d29f70456da1603d8178ce3fec073f7c27b28d0af2e10"
 SHA256_ZIP_CODE_JIGYOSYO = None
 http_archive(
     name = "zip_code_jigyosyo",
