@@ -65,8 +65,6 @@
           'GTEST_LANG_CXX11=1',
           'GTEST_HAS_TR1_TUPLE=0',  # disable tr1 tuple in favor of C++11 tuple.
         ],
-        'gtest_dir': '<(third_party_dir)/gtest/googletest',
-        'gmock_dir': '<(third_party_dir)/gtest/googlemock',
       },
       'sources': [
         '<(gmock_dir)/src/gmock-cardinalities.cc',
