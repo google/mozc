@@ -78,10 +78,14 @@ build:android_env_bzlmod --experimental_enable_android_migration_apis
 build:android_env_bzlmod --experimental_google_legacy_api
 build:android_env_bzlmod --enable_bzlmod
 build:android_env_bzlmod --android_sdk=@androidsdk//:sdk
-### arm64 build
-build:android_env_bzlmod --android_platforms=//bazel/android:arm64 --cpu=arm64
-### x86_64build
+### arm64-v8a build (Arm 64bit)
+build:android_env_bzlmod --android_platforms=//bazel/android:arm64-v8a --cpu=arm64
+### x86_64 build (x86 64bit)
 # build:android_env_bzlmod --android_platforms=//bazel/android:x86_64 --cpu=x86_64
+### armeabi-v7a build (Arm 32bit)
+# build:android_env_bzlmod --android_platforms=//bazel/android:armeabi-v7a --cpu=armv7
+### x86 build (x86 32bit)
+# build:android_env_bzlmod --android_platforms=//bazel/android:x86 --cpu=x86_32
 
 # Note, although --android_platforms supports multiple platforms,
 # Abseil doesn't support it yet, and requires the --cpu option.
