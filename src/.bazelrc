@@ -16,9 +16,10 @@ common:oss_windows  --config=windows_env --define TARGET=oss_windows
 common:prod_windows --config=windows_env --define TARGET=prod_windows
 common:prod_windows_dev --config=prod_windows --config=dev_channel
 
-common:android      --config=android_env --define TARGET=oss_android
-common:oss_android  --config=android_env --define TARGET=oss_android
-common:prod_android --config=android_env --define TARGET=prod_android
+common:android      --config=android_env --config=android_env_workspace --define TARGET=oss_android
+common:oss_android  --config=android_env --config=android_env_workspace --define TARGET=oss_android
+common:prod_android --config=android_env --config=android_env_workspace --define TARGET=prod_android
+common:oss_android_bzlmod --config=android_env --config=android_env_bzlmod --define TARGET=oss_android
 
 ## Dev channel
 build:dev_channel --define CHANNEL=dev
@@ -60,12 +61,28 @@ test:windows_env   --test_tag_filters=-nowin
 # TODO: Re-enable "incompatible_enable_cc_toolchain_resolution"
 build:windows_env --noincompatible_enable_cc_toolchain_resolution
 
-## Android specific options
+# Android specific options
 build:android_env --copt "-DOS_ANDROID"
-build:android_env --android_crosstool_top=@androidndk//:toolchain
-# --fat_apk_cpu should be replaced with --android_platforms
-# https://github.com/bazelbuild/bazel/commit/05bea52ed3159aa5d15d967f5f56fc084a2b6c73
-build:android_env --fat_apk_cpu=armeabi-v7a,arm64-v8a,x86,x86_64 --incompatible_enable_android_toolchain_resolution=false
-build:android_env --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
 build:android_env --build_tag_filters=-noandroid
 test:android_env   --test_tag_filters=-noandroid
+
+## Android workspace specific options
+build:android_env_workspace --android_crosstool_top=@androidndk//:toolchain
+# --fat_apk_cpu should be replaced with --android_platforms
+# https://github.com/bazelbuild/bazel/commit/05bea52ed3159aa5d15d967f5f56fc084a2b6c73
+build:android_env_workspace --fat_apk_cpu=armeabi-v7a,arm64-v8a,x86,x86_64 --incompatible_enable_android_toolchain_resolution=false
+build:android_env_workspace --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+
+## Android Blzmod specific options
+build:android_env_bzlmod --experimental_enable_android_migration_apis
+build:android_env_bzlmod --experimental_google_legacy_api
+build:android_env_bzlmod --enable_bzlmod
+build:android_env_bzlmod --android_sdk=@androidsdk//:sdk
+### arm64 build
+build:android_env_bzlmod --android_platforms=//bazel/android:arm64 --cpu=arm64
+### x86_64build
+# build:android_env_bzlmod --android_platforms=//bazel/android:x86_64 --cpu=x86_64
+
+# Note, although --android_platforms supports multiple platforms,
+# Abseil doesn't support it yet, and requires the --cpu option.
+# As the result, it is not possible to build both cpus with a single command.
