@@ -1,6 +1,3 @@
-# enable_bzlmod causes the build failure. Suppress it util the fix.
-common --noenable_bzlmod
-
 ## Target platforms
 common:linux      --config=linux_env --define TARGET=oss_linux
 common:oss_linux  --config=linux_env --define TARGET=oss_linux
@@ -20,6 +17,16 @@ common:android      --config=android_env --config=android_env_workspace --define
 common:oss_android  --config=android_env --config=android_env_workspace --define TARGET=oss_android
 common:prod_android --config=android_env --config=android_env_workspace --define TARGET=prod_android
 common:oss_android_bzlmod --config=android_env --config=android_env_bzlmod --define TARGET=oss_android
+
+## Bzlmod options: Bzlmod is the default except for Android.
+common:linux_env   --config=bzlmod
+common:macos_env   --config=bzlmod
+common:windows_env --config=bzlmod
+common:android_env_bzlmod --config=bzlmod
+common:android_env_workspace --config=workspace
+
+common:bzlmod --enable_bzlmod
+common:workspace --noenable_bzlmod
 
 ## Dev channel
 build:dev_channel --define CHANNEL=dev
@@ -74,9 +81,10 @@ build:android_env_workspace --fat_apk_cpu=armeabi-v7a,arm64-v8a,x86,x86_64 --inc
 build:android_env_workspace --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
 
 ## Android Blzmod specific options
+### --experimental_google_legacy_api is required for all platforms.
+build:bzlmod --experimental_google_legacy_api
+
 build:android_env_bzlmod --experimental_enable_android_migration_apis
-build:android_env_bzlmod --experimental_google_legacy_api
-build:android_env_bzlmod --enable_bzlmod
 build:android_env_bzlmod --android_sdk=@androidsdk//:sdk
 ### arm64-v8a build (Arm 64bit)
 build:android_env_bzlmod --android_platforms=//bazel/android:arm64-v8a --cpu=arm64
