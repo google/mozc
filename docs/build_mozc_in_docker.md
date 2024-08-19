@@ -200,6 +200,8 @@ bazel build package --config oss_android
 
 `package` is an alias to build `android/jni:native_libs`.
 
+We have tested Android NDK r27. The former versions may not work.
+
 -----
 
 ## Build Mozc for Linux Desktop with GYP (deprecated):
