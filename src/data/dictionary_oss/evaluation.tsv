@@ -357,6 +357,13 @@ FAILED:	みるめ	見る目	Conversion Expected 9	敏馬	2.30.5520
 OK:	みるめじんじゃ	敏馬神社	Conversion Expected 9	敏馬神社	2.30.5520
 OK:	けつりょう	結了	Conversion Expected 9	結了	2.30.5520
 FAILED:	にかんじ	二感じ	Conversion Expected 99	二簡字	2.30.5520
+FAILED:	ころんびあ	コロンビア	Conversion Expected 5	Colombia	2.30.5544
+FAILED:	はくしかてい	博士家庭	Conversion Expected	博士課程	2.30.5544
+FAILED:	いねこき	稲核	Conversion Expected 9	稲㧡	2.30.5544
+FAILED:	かぜをひく	風を引く	Conversion Match	風邪	2.30.5544
+FAILED:	さいじょうひでき	西条秀樹	Conversion Expected	西城秀樹	2.30.5544
+FAILED:	ざんち	残置	Conversion Expected 999	殘置	2.30.5544
+FAILED:	もくさじんじゃ	目さ神社	Conversion Expected	儛草神社	2.30.5544
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
