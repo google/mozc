@@ -99,52 +99,140 @@ bool MaybeInsertLatinT13n(Segment *segment) {
   return pos != insert_pos;
 }
 
-bool MaybePromoteKatakana(const ConversionRequest &request, Segment *segment) {
-  if (segment->meta_candidates_size() <= transliteration::FULL_KATAKANA) {
-    return false;
-  }
-  if (request.request()
-          .decoder_experiment_params()
-          .katakana_promotion_offset() < 0) {
-    return false;
-  }
-
-  const size_t katakana_t13n_offset =
-      request.request().decoder_experiment_params().katakana_promotion_offset();
-
-  const Segment::Candidate &katakana_candidate =
-      segment->meta_candidate(transliteration::FULL_KATAKANA);
-  const std::string &katakana_value = katakana_candidate.value;
-  if (!Util::IsScriptType(katakana_value, Util::KATAKANA)) {
-    return false;
-  }
-
-  for (size_t i = 0;
-       i < std::min(segment->candidates_size(), katakana_t13n_offset); ++i) {
-    if (segment->candidate(i).value == katakana_value) {
-      // No need to promote or insert.
-      return false;
+// Inserts or promote Katakana candidate at `insert_pos`.
+// promotes Katakana candidate if `segment` already contains Katakana.
+// Katakana candidate is searched from `start_offset`.
+// When no Katakana is found, `katakana_candidate` is inserted.
+void InsertKatakana(int start_offset, int insert_pos,
+                    const Segment::Candidate &katakana_candidate,
+                    Segment *segment) {
+  int katakana_index = -1;
+  for (int i = start_offset; i < segment->candidates_size(); ++i) {
+    if (segment->candidate(i).value == katakana_candidate.value) {
+      katakana_index = i;
+      break;
     }
   }
 
-  Segment::Candidate insert_candidate = katakana_candidate;
-  size_t index = katakana_t13n_offset;
-  for (; index < segment->candidates_size(); ++index) {
-    if (segment->candidate(index).value == katakana_value) {
-      break;
+  if (katakana_index >= 0) {
+    segment->move_candidate(katakana_index, insert_pos);
+  } else {
+    *(segment->insert_candidate(insert_pos)) = katakana_candidate;
+  }
+}
+
+bool MaybePromoteKatakanaWithStaticOffset(
+    const commands::DecoderExperimentParams &params,
+    const Segment::Candidate &katakana_candidate, Segment *segment) {
+  if (params.katakana_promotion_offset() < 0) {
+    return false;
+  }
+
+  const int katakana_t13n_offset = params.katakana_promotion_offset();
+
+  // Katakana candidate already appears at lower than katakana_t13n_offset.
+  for (size_t i = 0;
+       i < std::min<int>(segment->candidates_size(), katakana_t13n_offset);
+       ++i) {
+    // No need to promote or insert.
+    if (segment->candidate(i).value == katakana_candidate.value) {
+      return false;
     }
   }
 
   const size_t insert_pos =
       RewriterUtil::CalculateInsertPosition(*segment, katakana_t13n_offset);
-  if (index < segment->candidates_size()) {
-    const Segment::Candidate insert_candidate = segment->candidate(index);
-    *(segment->insert_candidate(insert_pos)) = insert_candidate;
-  } else {
-    *(segment->insert_candidate(insert_pos)) = katakana_candidate;
-  }
+
+  InsertKatakana(katakana_t13n_offset, insert_pos, katakana_candidate, segment);
 
   return true;
+}
+
+bool MaybePromoteKatakanaWithMinPerCharCost(
+    const commands::DecoderExperimentParams &params,
+    const Segment::Candidate &katakana_candidate, Segment *segment) {
+  if (params.katakana_promotion_min_per_char_cost() <= 0) {
+    return false;
+  }
+
+  static constexpr int kMaxCandidatesSize = 16;
+
+  // Too short candidate.
+  const int key_len = Util::CharsLen(segment->key());
+  if (key_len <= 3) return false;
+
+  // Finds the best literal candidate.
+  int literal_index = -1;
+  for (int i = 0;
+       i < std::min<int>(kMaxCandidatesSize, segment->candidates_size()); ++i) {
+    const auto &c = segment->candidate(i);
+    // No need to promote or insert.
+    if (c.value == katakana_candidate.value) {
+      return false;
+    }
+    // Skip non-literal candidate
+    if (c.attributes & Segment::Candidate::SPELLING_CORRECTION ||
+        c.attributes & Segment::Candidate::COMMAND_CANDIDATE ||
+        c.attributes & Segment::Candidate::SUFFIX_DICTIONARY ||
+        c.attributes & Segment::Candidate::USER_HISTORY_PREDICTION ||
+        c.attributes & Segment::Candidate::TYPING_CORRECTION) {
+      continue;
+    }
+    literal_index = i;
+    break;
+  }
+
+  if (literal_index == -1) {
+    return false;
+  }
+
+  const Segment::Candidate &literal_candidate =
+      segment->candidate(literal_index);
+  if (literal_candidate.value.empty() || segment->key().empty()) {
+    return false;
+  }
+
+  // When the `literal_candidate` is partial candidate,
+  // Use segment->key() to avoid over-triggering.
+  const int len = literal_candidate.consumed_key_size > 0
+                      ? Util::CharsLen(segment->key())
+                      : Util::CharsLen(literal_candidate.value);
+
+  const int per_char_cost = literal_candidate.cost / len;
+
+  // literal candidate is confident enough.
+  if (per_char_cost < params.katakana_promotion_min_per_char_cost()) {
+    return false;
+  }
+
+  // When (params.katakana_override_min_per_char_cost() is defined, and
+  // the cost is larger than katakana_override_min_per_char_cost,
+  // inserts the Katakana candidate at the literal position.
+  const int insert_pos =
+      (params.katakana_override_min_per_char_cost() >=
+           params.katakana_promotion_min_per_char_cost() &&
+       per_char_cost >= params.katakana_override_min_per_char_cost())
+          ? literal_index
+          : literal_index + 1;
+
+  InsertKatakana(literal_index, insert_pos, katakana_candidate, segment);
+
+  return true;
+}
+
+bool MaybePromoteKatakana(const ConversionRequest &request, Segment *segment) {
+  if (segment->meta_candidates_size() <= transliteration::FULL_KATAKANA) {
+    return false;
+  }
+
+  const auto &params = request.request().decoder_experiment_params();
+  const Segment::Candidate &katakana_candidate =
+      segment->meta_candidate(transliteration::FULL_KATAKANA);
+
+  return MaybePromoteKatakanaWithMinPerCharCost(params, katakana_candidate,
+                                                segment) ||
+         MaybePromoteKatakanaWithStaticOffset(params, katakana_candidate,
+                                              segment);
 }
 
 bool MaybePromoteT13n(const ConversionRequest &request, Segment *segment) {

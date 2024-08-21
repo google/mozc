@@ -493,7 +493,16 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
   // Top is already literal.
   const auto &top_result = results->front();
 
-  if (!(top_result->types & PredictionType::TYPING_CORRECTION)) {
+  const auto &params = request.request().decoder_experiment_params();
+
+  auto is_typing_correction = [&](const Result &result) {
+    return (result.types & PredictionType::TYPING_CORRECTION ||
+            (params.fix_legacy_typing_correction_behavior() &&
+             (result.candidate_attributes &
+              Segment::Candidate::TYPING_CORRECTION)));
+  };
+
+  if (!is_typing_correction(*top_result)) {
     return;
   }
 
@@ -517,18 +526,19 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
   for (int i = 1; i < max_size; ++i) {
     const Result *result = (*results)[i];
     // Finds the first non-typing-corrected candidate.
-    if (!(result->types & PredictionType::TYPING_CORRECTION)) {
-      // Replace the literal with top when the cost is close enough or
-      // force_literal_on_top is true.
-      if (force_literal_on_top) {
-        promote_result(i, 0);
-      } else if (literal_at_least_second && i >= 2) {
-        // Moves the literal to the second position even when
-        // literal-on-top condition doesn't match.
-        promote_result(i, 1);
-      }
-      break;
+    if (is_typing_correction(*result)) {
+      continue;
     }
+    // Replace the literal with top when the cost is close enough or
+    // force_literal_on_top is true.
+    if (force_literal_on_top) {
+      promote_result(i, 0);
+    } else if (literal_at_least_second && i >= 2) {
+      // Moves the literal to the second position even when
+      // literal-on-top condition doesn't match.
+      promote_result(i, 1);
+    }
+    break;
   }
 }
 

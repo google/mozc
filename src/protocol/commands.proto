@@ -571,7 +571,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 90
+// Next ID: 93
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -651,6 +651,19 @@ message DecoderExperimentParams {
   // The promotion will be disabled if the value is negative.
   optional int32 katakana_promotion_offset = 83 [default = 5];
 
+  // Modestly promote Katakana next to the literal-best candidate
+  // if literal candidate is not confident, i.e., per-character-cost
+  // is larger than `katakana_promotion_min_per_char_cost`.
+  optional int32 katakana_promotion_min_per_char_cost = 90 [default = 0];
+
+  // Aggressively promote Katakana to the literal-best candidate position.
+  // This mode is valid when katakana_promotion_min_per_char_cost
+  // <= katakana_override_min_per_char_cost
+  optional int32 katakana_override_min_per_char_cost = 91 [default = 0];
+
+  // Treats the legacy typing correction candidate as
+  // literal-on-top or literal-at-least-second.
+  optional bool fix_legacy_typing_correction_behavior = 92 [default = false];
 }
 
 // Clients' request to the server.
