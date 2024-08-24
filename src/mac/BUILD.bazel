@@ -447,7 +447,6 @@ genrule(
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
         ],
         prod_macos = [
-            "//google_updater:GoogleUpdater.pkg",
             "installer/distribution.xml",
             "installer/InstallerSections.plist",
             "installer/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
