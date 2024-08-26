@@ -25,7 +25,7 @@ OK:	こんなときこそおちつかないと	こんなときこそ落ち着か
 OK:	そういうわけだったのか	そういうわけだったのか	Conversion Not Match	そう言う	2.30.5432
 OK:	じろっとにらみつけた	ジロっと睨みつけた	Conversion Not Match	ジロット	2.26.4423
 OK:	このひぼくらはきんじょにいった	この日僕らは近所に行った	Conversion Not Match	被	2.30.5432
-FAILED:	こっちにこい	こっちに濃い	Conversion Not Match	濃い	2.26.4423
+OK:	こっちにこい	こっちに来い	Conversion Not Match	濃い	2.30.5544
 OK:	かみわざとしかいいようがない	神業としか言いようがない	Conversion Not Match	歯科	2.26.4423
 OK:	しかってほしいときもある	叱ってほしいときもある	Conversion Not Match	歯科	2.26.4423
 OK:	しかられてないている	叱られて泣いている	Conversion Not Match	テイル	2.30.5432
@@ -144,7 +144,7 @@ OK:	しはいよくがおおきいひとだ	支配欲が大きい人だ	Conversi
 OK:	よくよくかんがえたら	よくよく考えたら	Conversion Expected	よくよく考えたら	2.26.4520
 OK:	ごきぶりをたいじした	ゴキブリを退治した	Conversion Expected	ゴキブリを退治した	2.26.4520
 FAILED:	にほんいちのやまはふじさんです	日本一のヤマハ富士山です	Conversion Expected	日本一の山は富士山です	2.26.4520
-FAILED:	としをとるとびょういんのはなしばかりになる	都市を取ると病院の話ばかりになる	Conversion Expected	歳をとると病院の話ばかりになる	2.26.4520
+OK:	としをとるとびょういんのはなしばかりになる	歳をとると病院の話ばかりになる	Conversion Expected	歳をとると病院の話ばかりになる	2.30.5544
 FAILED:	くんくんにおっているので	クンクンに追っているので	Conversion Match	臭っているので	2.29.5268
 FAILED:	じしんにみちあふれている	自身に満ち溢れている	Conversion Match	自信に満ち	2.26.4520
 OK:	おやのありがたみがみにしみた	親のありがたみが身にしみた	Conversion Match	親のありがたみが身に	2.26.4520
@@ -153,8 +153,8 @@ OK:	このみによるとしかいいようがない	好みによるとしか言
 OK:	みにゅうりょくのもじを	未入力の文字を	Conversion Expected	未入力の文字を	2.26.4520
 FAILED:	このしょうひんをかいたい	この商品を解体	Conversion Expected	この商品を買いたい	2.30.5432
 OK:	ひとのひょうかをきにするな	人の評価を気にするな	Conversion Expected	人の評価を気にするな	2.26.4520
-FAILED:	よくえいぎょうびはっそうに	よく営業日発送に	Conversion Expected	翌営業日発送に	2.26.4520
-FAILED:	おおもとのじしょでは	大本の辞書では	Conversion Expected	大元の辞書では	2.26.4520
+OK:	よくえいぎょうびはっそうに	翌営業日発送に	Conversion Expected	翌営業日発送に	2.30.5544
+OK:	おおもとのじしょでは	大本の辞書では	Conversion Expected	大本の辞書では	2.30.5544
 OK:	さいりようしてください	再利用してください	Conversion Expected	再利用してください	2.26.4520
 OK:	さいちぇっくしてください	再チェックしてください	Conversion Expected	再チェックしてください	2.26.4520
 OK:	さいあくせすしてください	再アクセスしてください	Conversion Expected	再アクセスしてください	2.26.4520
@@ -360,7 +360,7 @@ FAILED:	にかんじ	二感じ	Conversion Expected 99	二簡字	2.30.5520
 FAILED:	ころんびあ	コロンビア	Conversion Expected 5	Colombia	2.30.5544
 OK:	はくしかてい	博士課程	Conversion Expected	博士課程	2.30.5544
 OK:	いねこき	稲核	Conversion Expected 9	稲㧡	2.30.5544
-FAILED:	かぜをひく	風を引く	Conversion Match	風邪	2.30.5544
+OK:	かぜをひく	風邪をひく	Conversion Match	風邪	2.30.5544
 OK:	さいじょうひでき	西城秀樹	Conversion Expected	西城秀樹	2.30.5544
 FAILED:	ざんち	残置	Conversion Expected 999	殘置	2.30.5544
 OK:	もくさじんじゃ	儛草神社	Conversion Expected	儛草神社	2.30.5544
