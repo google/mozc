@@ -83,6 +83,7 @@ message KeyEvent {
     HENKAN = 13;
     MUHENKAN = 14;
     // VK_DBE_HIRAGANA(Win), kVK_JIS_Kana(Mac)
+    // The "Katakana Hiragana Romaji" key (w/o modifiers) returns this key code.
     KANA = 15;  // GUI label is "Hiragana".
     HOME = 16;
     END = 17;
@@ -135,6 +136,7 @@ message KeyEvent {
     TEXT_INPUT = 64;  // Meta key event representing any text input.
     HANKAKU = 65;     // GUI label is "Hankaku/Zenkaku".
     KANJI = 66;
+    // The "Katakana Hiragana Romaji" key with Shift returns this key code.
     KATAKANA = 67;  // VK_DBE_KATAKANA(Win)
     CAPS_LOCK = 68;
     // Unsupported keys (e.g. PrtSc, Pause) fall back to UNDEFINED_KEY.
