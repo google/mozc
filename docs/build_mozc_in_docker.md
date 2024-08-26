@@ -14,7 +14,7 @@ docker build --rm --tag mozc_ubuntu22.04 .
 docker create --interactive --tty --name mozc_build mozc_ubuntu22.04
 
 docker start mozc_build
-docker exec mozc_build bazel build package --config oss_linux -c opt
+docker exec mozc_build bazel build package --config oss_linux --config release_build
 docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
 ```
 
@@ -48,7 +48,7 @@ Notes
 
 ```
 docker start mozc_build
-docker exec mozc_build bazel build package --config oss_linux -c opt
+docker exec mozc_build bazel build package --config oss_linux --config release_build
 docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
 ```
 
@@ -63,7 +63,7 @@ Notes
 ## Build Mozc for Linux Desktop
 
 ```
-bazel build package --config oss_linux -c opt
+bazel build package --config oss_linux --config release_build
 ```
 
 Note: You might want to execute `docker start --interactive mozc_build`

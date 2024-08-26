@@ -30,7 +30,7 @@ jobs:
       - name: build
         working-directory: ./src
         run: |
-          bazel build --config oss_android package -c opt
+          bazel build --config oss_android package --config release_build
 
       - name: upload artifacts
         uses: actions/upload-artifact@v4
