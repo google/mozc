@@ -80,7 +80,7 @@ class SupplementalModelInterface {
 
   // Returns true if the final typing correct result is not confident.
   virtual bool ShouldRevertTypingCorrection(
-      const commands::Request &request, const Segments &segments,
+      const ConversionRequest &request, const Segments &segments,
       absl::Span<const prediction::Result> literal_results,
       absl::Span<const prediction::Result> typing_corrected_results) const {
     return false;

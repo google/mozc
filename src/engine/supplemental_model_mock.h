@@ -61,7 +61,7 @@ class MockSupplementalModel : public SupplementalModelInterface {
               (const ConversionRequest &request, absl::string_view context),
               (const, override));
   MOCK_METHOD(bool, ShouldRevertTypingCorrection,
-              (const commands::Request &request, const Segments &segments,
+              (const ConversionRequest &request, const Segments &segments,
                absl::Span<const prediction::Result> literal_results,
                absl::Span<const prediction::Result> typing_corrected_results),
               (const, override));

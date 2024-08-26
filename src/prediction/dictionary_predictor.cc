@@ -1414,8 +1414,7 @@ DictionaryPredictor::GetTypingCorrectionMixingParams(
   if (supplemental_model) {
     typing_correction_mixing_params.literal_on_top =
         supplemental_model->ShouldRevertTypingCorrection(
-            request.request(), segments, literal_results,
-            typing_corrected_results);
+            request, segments, literal_results, typing_corrected_results);
   }
 
   return typing_correction_mixing_params;
