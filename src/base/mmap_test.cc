@@ -48,13 +48,12 @@
 
 namespace mozc {
 namespace {
-using SharedBitGen = absl::random_internal::PoolURBG<uint32_t, 8>;
 
 std::vector<char> GetRandomContents(size_t size) {
   std::vector<char> data(size);
-  absl::c_generate(data, []() -> char {
-    return absl::Uniform<unsigned char>(SharedBitGen());
-  });
+  absl::BitGen gen;
+  absl::c_generate(
+      data, [&gen]() -> char { return absl::Uniform<unsigned char>(gen); });
   return data;
 }
 
