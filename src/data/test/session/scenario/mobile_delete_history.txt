@@ -1,0 +1,31 @@
+# History should be removed
+#   1. A user inputs 京 for きょう
+#   2. 京 appears in candidates list
+#   3. 京 is deleted from the history.
+#   4. After deletion, 京 shouldn't be the top candidate
+
+SEND_KEY	ON
+UPDATE_MOBILE_KEYBOARD	FLICK_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
+SWITCH_INPUT_MODE	HIRAGANA
+
+SEND_KEYS	a^*;
+EXPECT_PREEDIT	きょう
+
+EXPECT_CANDIDATE	0	今日
+EXPECT_IN_ALL_CANDIDATE_WORDS	京
+
+SUBMIT_CANDIDATE_BY_VALUE	京
+EXPECT_RESULT	京
+
+SEND_KEYS	a^*;
+EXPECT_PREEDIT	きょう
+EXPECT_CANDIDATE	0	京
+
+# Emulate DELETE_SELECTED_CANDIDATE command
+# Delete 京 from the input history.
+DELETE_CANDIDATE_FROM_HISTORY	0
+EXPECT_CANDIDATE	0	今日
+
+# Make sure that 京 is not the top for CONVERSION
+SEND_KEY	SPACE
+EXPECT_CANDIDATE	0	今日

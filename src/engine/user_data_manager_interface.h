@@ -57,10 +57,6 @@ class UserDataManagerInterface {
   // Clears unused user prediction data.
   virtual bool ClearUnusedUserPrediction() = 0;
 
-  // Clears a specific user prediction history.
-  virtual bool ClearUserPredictionEntry(absl::string_view key,
-                                        absl::string_view value) = 0;
-
   // Waits for syncer thread to complete.
   virtual bool Wait() = 0;
 };

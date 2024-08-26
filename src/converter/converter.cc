@@ -563,6 +563,21 @@ void Converter::RevertConversion(Segments *segments) const {
   segments->clear_revert_entries();
 }
 
+bool Converter::DeleteCandidateFromHistory(const Segments &segments,
+                                           size_t segment_index,
+                                           int candidate_index) const {
+  DCHECK_LT(segment_index, segments.segments_size());
+  const Segment &segment = segments.segment(segment_index);
+  DCHECK(segment.is_valid_index(candidate_index));
+  const Segment::Candidate &candidate = segment.candidate(candidate_index);
+  bool result = false;
+  result |=
+      rewriter_->ClearHistoryEntry(segments, segment_index, candidate_index);
+  result |= predictor_->ClearHistoryEntry(candidate.key, candidate.value);
+
+  return result;
+}
+
 bool Converter::ReconstructHistory(
     Segments *segments, const absl::string_view preceding_text) const {
   segments->Clear();

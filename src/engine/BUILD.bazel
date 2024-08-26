@@ -372,7 +372,6 @@ mozc_cc_library(
     deps = [
         ":user_data_manager_interface",
         "//testing:gunit",
-        "@com_google_absl//absl/strings",
     ],
 )
 

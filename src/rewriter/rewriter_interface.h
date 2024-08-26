@@ -75,6 +75,16 @@ class RewriterInterface {
   // Reverts the last Finish operation.
   virtual void Revert(Segments *segments) {}
 
+  // Delete the user history based entry corresponding to the specified
+  // candidate.
+  // Returns true when at least one deletion operation succeeded
+  // |segment_index| is the index for all segments, not the index of
+  // conversion_segments.
+  virtual bool ClearHistoryEntry(const Segments &segments, size_t segment_index,
+                                 int candidate_index) {
+    return false;
+  }
+
   // Synchronizes internal data to local file system.  This method is called
   // when the server received SYNC_DATA command from the client.  Currently,
   // this event happens, e.g., when user moves to another text area.

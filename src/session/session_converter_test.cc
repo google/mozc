@@ -39,6 +39,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -3158,6 +3159,34 @@ TEST(SessionConverterRevertTest, Revert) {
   SessionConverter converter(&mock_converter, &request, &config);
   EXPECT_CALL(mock_converter, RevertConversion(_));
   converter.Revert();
+}
+
+TEST_F(SessionConverterTest, DeleteCandidateFromHistory) {
+  MockConverter mock_converter;
+  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+
+  EXPECT_CALL(mock_converter, DeleteCandidateFromHistory(_, _, _))
+      .WillRepeatedly(Return(true));
+
+  // No valid segments / focused candidate list
+  EXPECT_FALSE(converter.DeleteCandidateFromHistory(std::nullopt));
+  EXPECT_FALSE(converter.DeleteCandidateFromHistory(1));
+
+  {
+    // Set segments
+    Segments segments;
+    SetAiueo(&segments);
+    composer_->InsertCharacterPreedit(kChars_Aiueo);
+    FillT13Ns(&segments, composer_.get());
+    EXPECT_CALL(mock_converter, StartConversion(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+    converter.Convert(*composer_);
+  }
+  EXPECT_TRUE(converter.DeleteCandidateFromHistory(std::nullopt));
+  EXPECT_TRUE(converter.DeleteCandidateFromHistory(1));
+  // Invalid candidate id
+  EXPECT_FALSE(converter.DeleteCandidateFromHistory(-100));
 }
 
 TEST_F(SessionConverterTest, CommitHead) {

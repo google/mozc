@@ -30,7 +30,6 @@
 #ifndef MOZC_ENGINE_USER_DATA_MANAGER_MOCK_H_
 #define MOZC_ENGINE_USER_DATA_MANAGER_MOCK_H_
 
-#include "absl/strings/string_view.h"
 #include "engine/user_data_manager_interface.h"
 #include "testing/gmock.h"
 
@@ -46,8 +45,6 @@ class MockUserDataManager : public UserDataManagerInterface {
   MOCK_METHOD(bool, ClearUserHistory, (), (override));
   MOCK_METHOD(bool, ClearUserPrediction, (), (override));
   MOCK_METHOD(bool, ClearUnusedUserPrediction, (), (override));
-  MOCK_METHOD(bool, ClearUserPredictionEntry,
-              (absl::string_view key, absl::string_view value), (override));
   MOCK_METHOD(bool, Wait, (), (override));
 };
 

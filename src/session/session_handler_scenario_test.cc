@@ -269,6 +269,7 @@ class SessionHandlerScenarioTestForRequest
 
 const char *kScenariosForExperimentParams[] = {
 #define DATA_DIR "test/session/scenario/"
+    DATA_DIR "mobile_delete_history.txt",
     DATA_DIR "mobile_zero_query.txt",
     DATA_DIR "mobile_preedit.txt",
     DATA_DIR "mobile_apply_user_segment_history_rewriter.txt",

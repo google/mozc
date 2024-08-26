@@ -123,6 +123,15 @@ class ConverterInterface {
   // Revert last Finish operation
   virtual void RevertConversion(Segments *segments) const = 0;
 
+  // Delete candidate from user input history.
+  // Returns false if the candidate was not found or deletion failed.
+  // Note: |segment_index| is the index for all segments, not the index of
+  // conversion_segments.
+  ABSL_MUST_USE_RESULT
+  virtual bool DeleteCandidateFromHistory(const Segments &segments,
+                                          size_t segment_index,
+                                          int candidate_index) const = 0;
+
   // Reconstruct history segments from given preceding text.
   ABSL_MUST_USE_RESULT
   virtual bool ReconstructHistory(Segments *segments,

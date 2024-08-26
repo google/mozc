@@ -80,6 +80,8 @@ class StrictMockConverter : public ConverterInterface {
   MOCK_METHOD(void, CancelConversion, (Segments * segments), (const, override));
   MOCK_METHOD(void, ResetConversion, (Segments * segments), (const, override));
   MOCK_METHOD(void, RevertConversion, (Segments * segments), (const, override));
+  MOCK_METHOD(bool, DeleteCandidateFromHistory, (const Segments &, size_t, int),
+              (const));
   MOCK_METHOD(bool, ReconstructHistory,
               (Segments * segments, absl::string_view preceding_text),
               (const, override));

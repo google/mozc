@@ -33,6 +33,7 @@
 #define MOZC_SESSION_SESSION_CONVERTER_INTERFACE_H_
 
 #include <cstddef>
+#include <optional>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -185,6 +186,11 @@ class SessionConverterInterface {
 
   // Revert the last "Commit" operation
   virtual void Revert() = 0;
+
+  // Delete candidate from user input history.
+  // Try to delete the current selected candidate if |id| is not specified.
+  // Returns false if the candidate was not found or deletion failed.
+  virtual bool DeleteCandidateFromHistory(std::optional<int> id) = 0;
 
   // Move the focus of segments.
   virtual void SegmentFocusRight() = 0;

@@ -34,6 +34,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -2332,22 +2333,11 @@ bool Session::ToggleAlphanumericMode(commands::Command *command) {
 }
 
 bool Session::DeleteCandidateFromHistory(commands::Command *command) {
-  const Segment::Candidate *cand = nullptr;
+  std::optional<int> id = std::nullopt;
   if (command->input().has_command() && command->input().command().has_id()) {
-    cand =
-        context_->converter().GetCandidateById(command->input().command().id());
-  } else {
-    cand = context_->converter().GetSelectedCandidateOfFocusedSegment();
+    id = command->input().command().id();
   }
-
-  if (!cand) {
-    LOG(WARNING) << "No candidate is selected.";
-    return DoNothing(command);
-  }
-  UserDataManagerInterface *manager = engine_->GetUserDataManager();
-  if (!manager->ClearUserPredictionEntry(cand->key, cand->value)) {
-    DLOG(WARNING) << "Cannot delete non-history candidate or deletion failed: "
-                  << cand->DebugString();
+  if (!context_->mutable_converter()->DeleteCandidateFromHistory(id)) {
     return DoNothing(command);
   }
   return ConvertCancel(command);

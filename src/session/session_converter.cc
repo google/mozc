@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -875,6 +876,27 @@ void SessionConverter::CommitHead(size_t count,
 }
 
 void SessionConverter::Revert() { converter_->RevertConversion(&segments_); }
+
+bool SessionConverter::DeleteCandidateFromHistory(std::optional<int> id) {
+  if (id == std::nullopt) {
+    if (!candidate_list_.focused()) {
+      return false;
+    }
+    const Candidate &cand = candidate_list_.focused_candidate();
+    id = cand.id();
+  } else {
+    if (segment_index_ >= segments_.conversion_segments_size()) {
+      return false;
+    }
+    const Segment &segment = segments_.conversion_segment(segment_index_);
+    if (!segment.is_valid_index(*id)) {
+      return false;
+    }
+  }
+  DCHECK(id.has_value());
+  return converter_->DeleteCandidateFromHistory(
+      segments_, segments_.history_segments_size() + segment_index_, *id);
+}
 
 void SessionConverter::SegmentFocusInternal(size_t index) {
   DCHECK(CheckState(PREDICTION | CONVERSION));

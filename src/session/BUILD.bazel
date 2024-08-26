@@ -198,7 +198,6 @@ mozc_cc_test(
         "//engine",
         "//engine:engine_mock",
         "//engine:mock_data_engine_factory",
-        "//engine:user_data_manager_mock",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",

@@ -60,6 +60,8 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool Reload() override;
   void Clear() override;
   void Revert(Segments *segments) override;
+  bool ClearHistoryEntry(const Segments &segments, size_t segment_index,
+                         int candidate_index) override;
 
  private:
   friend class UserSegmentHistoryRewriterTestPeer;
@@ -121,6 +123,8 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   void MaybeInsertRevertEntry(
       absl::string_view key,
       std::vector<Segments::RevertEntry> &revert_entries);
+  // Returns true if deletion succeeded.
+  bool DeleteEntry(absl::string_view key);
 
   std::unique_ptr<storage::LruStorage> storage_;
   const dictionary::PosMatcher *pos_matcher_;

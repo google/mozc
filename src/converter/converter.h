@@ -103,6 +103,11 @@ class Converter final : public ConverterInterface {
   void RevertConversion(Segments *segments) const override;
 
   ABSL_MUST_USE_RESULT
+  bool DeleteCandidateFromHistory(const Segments &segments,
+                                  size_t segment_index,
+                                  int candidate_index) const override;
+
+  ABSL_MUST_USE_RESULT
   bool ReconstructHistory(Segments *segments,
                           absl::string_view preceding_text) const override;
 

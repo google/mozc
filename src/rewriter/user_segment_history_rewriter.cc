@@ -256,7 +256,7 @@ std::string FeatureKey::Current(absl::string_view base_key,
 // Feature "Single"
 std::string FeatureKey::Single(absl::string_view base_key,
                                absl::string_view base_value) const {
-  if (segments_.segments_size() - segments_.history_segments_size() != 1) {
+  if (segments_.conversion_segments_size() != 1) {
     return "";
   }
   return StrJoinWithTabs("S", base_key, base_value);
@@ -1034,6 +1034,30 @@ void UserSegmentHistoryRewriter::Revert(Segments *segments) {
   }
 }
 
+bool UserSegmentHistoryRewriter::ClearHistoryEntry(const Segments &segments,
+                                                   size_t segment_index,
+                                                   int candidate_index) {
+  DCHECK_LT(segment_index, segments.segments_size());
+  const Segment &segment = segments.segment(segment_index);
+  DCHECK(segment.is_valid_index(candidate_index));
+  const Segment::Candidate &candidate = segment.candidate(0);
+  const std::string &key = candidate.key;
+  const std::string &value = candidate.value;
+
+  FeatureKey fkey(segments, *pos_matcher_, segment_index);
+  bool result = false;
+  result |= DeleteEntry(fkey.LeftRight(key, value));
+  result |= DeleteEntry(fkey.LeftLeft(key, value));
+  result |= DeleteEntry(fkey.RightRight(key, value));
+  result |= DeleteEntry(fkey.Left(key, value));
+  result |= DeleteEntry(fkey.Right(key, value));
+  result |= DeleteEntry(fkey.LeftNumber(key, value));
+  result |= DeleteEntry(fkey.RightNumber(key, value));
+  result |= DeleteEntry(fkey.Single(key, value));
+  result |= DeleteEntry(fkey.Current(key, value));
+  return result;
+}
+
 bool UserSegmentHistoryRewriter::IsPunctuation(
     const Segment &seg, const Segment::Candidate &candidate) const {
   return (pos_matcher_->IsJapanesePunctuations(candidate.lid) &&
@@ -1083,6 +1107,15 @@ void UserSegmentHistoryRewriter::MaybeInsertRevertEntry(
   entry->revert_entry_type = Segments::RevertEntry::CREATE_ENTRY;
   entry->key = key;
   entry->id = revert_id();
+}
+
+bool UserSegmentHistoryRewriter::DeleteEntry(absl::string_view key) {
+  if (storage_->Lookup(key) == nullptr) {
+    return false;
+  }
+  MOZC_VLOG(2) << "Erasing the key: " << key;
+  storage_->Delete(key);
+  return true;
 }
 
 }  // namespace mozc

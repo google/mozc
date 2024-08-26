@@ -135,6 +135,16 @@ class MergerRewriter : public RewriterInterface {
     }
   }
 
+  bool ClearHistoryEntry(const Segments &segments, size_t segment_index,
+                         int candidate_index) override {
+    bool result = false;
+    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+      result |=
+          rewriter->ClearHistoryEntry(segments, segment_index, candidate_index);
+    }
+    return result;
+  }
+
   // Syncs internal data to local file system.
   bool Sync() override {
     bool result = false;

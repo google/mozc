@@ -73,8 +73,6 @@ class UserDataManager final : public UserDataManagerInterface {
   bool ClearUserHistory() override;
   bool ClearUserPrediction() override;
   bool ClearUnusedUserPrediction() override;
-  bool ClearUserPredictionEntry(absl::string_view key,
-                                absl::string_view value) override;
   bool Wait() override;
 
  private:
@@ -107,11 +105,6 @@ bool UserDataManager::ClearUserPrediction() {
 bool UserDataManager::ClearUnusedUserPrediction() {
   predictor_->ClearUnusedHistory();
   return true;
-}
-
-bool UserDataManager::ClearUserPredictionEntry(const absl::string_view key,
-                                               const absl::string_view value) {
-  return predictor_->ClearHistoryEntry(key, value);
 }
 
 bool UserDataManager::Wait() { return predictor_->Wait(); }

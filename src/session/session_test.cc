@@ -56,7 +56,6 @@
 #include "engine/engine.h"
 #include "engine/engine_mock.h"
 #include "engine/mock_data_engine_factory.h"
-#include "engine/user_data_manager_mock.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -9956,12 +9955,7 @@ TEST_F(SessionTest, DeleteHistory) {
 
   // Do DeleteHistory command. After that, the session should be back in
   // composition state and preedit gets back to "でｌ" again.
-  MockUserDataManager user_data_manager;
-  EXPECT_CALL(engine, GetUserDataManager())
-      .WillOnce(Return(&user_data_manager));
-  EXPECT_CALL(user_data_manager,
-              ClearUserPredictionEntry(absl::string_view(),
-                                       absl::string_view("DeleteHistory")))
+  EXPECT_CALL(converter, DeleteCandidateFromHistory(_, 0, 0))
       .WillOnce(Return(true));
   EXPECT_TRUE(SendKey("Ctrl Delete", &session, &command));
   EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
@@ -10220,11 +10214,8 @@ TEST_F(SessionTest, MakeSureIMEOffWithCommitComposition) {
 
 TEST_F(SessionTest, DeleteCandidateFromHistory) {
   MockConverter converter;
-  MockUserDataManager user_data_manager;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
-  EXPECT_CALL(engine, GetUserDataManager())
-      .WillRepeatedly(Return(&user_data_manager));
 
   // InitSessionToConversionWithAiueo initializes candidates as follows:
   // 0:あいうえお, 1:アイウエオ, -3:aiueo, -4:AIUEO, ...
@@ -10233,24 +10224,20 @@ TEST_F(SessionTest, DeleteCandidateFromHistory) {
     Session session(&engine);
     InitSessionToConversionWithAiueo(&session, &converter);
 
-    EXPECT_CALL(user_data_manager,
-                ClearUserPredictionEntry(absl::string_view("あいうえお"),
-                                         absl::string_view("あいうえお")))
+    EXPECT_CALL(converter, DeleteCandidateFromHistory(_, 0, 0))
         .WillOnce(Return(true));
 
     commands::Command command;
     session.DeleteCandidateFromHistory(&command);
 
-    Mock::VerifyAndClearExpectations(&user_data_manager);
+    Mock::VerifyAndClearExpectations(&converter);
   }
   {
     // A test case to delete candidate by ID.
     Session session(&engine);
     InitSessionToConversionWithAiueo(&session, &converter);
 
-    EXPECT_CALL(user_data_manager,
-                ClearUserPredictionEntry(absl::string_view("あいうえお"),
-                                         absl::string_view("アイウエオ")))
+    EXPECT_CALL(converter, DeleteCandidateFromHistory(_, 0, 1))
         .WillOnce(Return(true));
 
     commands::Command command;
@@ -10259,7 +10246,7 @@ TEST_F(SessionTest, DeleteCandidateFromHistory) {
     command.mutable_input()->mutable_command()->set_id(1);
     session.DeleteCandidateFromHistory(&command);
 
-    Mock::VerifyAndClearExpectations(&user_data_manager);
+    Mock::VerifyAndClearExpectations(&converter);
   }
 }
 
