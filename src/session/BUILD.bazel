@@ -722,6 +722,7 @@ mozc_cc_binary(
         "//base/protobuf:message",
         "//data_manager:data_manager_interface",
         "//data_manager/oss:oss_data_manager",
+        "//data_manager/testing:mock_data_manager",
         "//engine",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",

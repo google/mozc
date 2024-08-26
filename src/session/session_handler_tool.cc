@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -210,6 +211,18 @@ bool SessionHandlerTool::UndoOrRewind(commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_COMMAND);
   input.mutable_command()->set_type(commands::SessionCommand::UNDO_OR_REWIND);
+  return EvalCommand(&input, output);
+}
+
+bool SessionHandlerTool::DeleteCandidateFromHistory(std::optional<int> id,
+                                                    commands::Output *output) {
+  commands::Input input;
+  input.set_type(commands::Input::SEND_COMMAND);
+  input.mutable_command()->set_type(
+      commands::SessionCommand::DELETE_CANDIDATE_FROM_HISTORY);
+  if (id.has_value()) {
+    input.mutable_command()->set_id(*id);
+  }
   return EvalCommand(&input, output);
 }
 
@@ -662,6 +675,14 @@ absl::Status SessionHandlerInterpreter::Eval(
     MOZC_ASSERT_TRUE(client_->SubmitCandidate(id, last_output_.get()));
   } else if (command == "UNDO_OR_REWIND") {
     MOZC_ASSERT_TRUE(client_->UndoOrRewind(last_output_.get()));
+  } else if (command == "DELETE_CANDIDATE_FROM_HISTORY") {
+    MOZC_ASSERT_TRUE(args.size() == 1 || args.size() == 2);
+    std::optional<int> id = std::nullopt;
+    if (args.size() == 2) {
+      id = NumberUtil::SimpleAtoi(args[1]);
+    }
+    MOZC_ASSERT_TRUE(
+        client_->DeleteCandidateFromHistory(id, last_output_.get()));
   } else if (command == "SWITCH_INPUT_MODE") {
     MOZC_ASSERT_EQ(2, args.size());
     CompositionMode composition_mode;

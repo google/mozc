@@ -69,6 +69,7 @@ SHOW_LOG_BY_VALUE       ございました
 #include "absl/status/statusor.h"
 #include "absl/strings/numbers.h"
 #include "data_manager/oss/oss_data_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -77,8 +78,7 @@ SHOW_LOG_BY_VALUE       ございました
 ABSL_FLAG(std::string, input, "", "Input file");
 ABSL_FLAG(std::string, profile, "", "User profile directory");
 ABSL_FLAG(std::string, engine, "", "Conversion engine: 'mobile' or 'desktop'");
-ABSL_FLAG(std::string, dictionary, "",
-          "Dictionary: 'google', 'android' or 'oss'");
+ABSL_FLAG(std::string, dictionary, "", "Dictionary: 'oss' or 'test'");
 
 namespace mozc {
 void Show(const commands::Output &output) {
@@ -124,21 +124,24 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   if (command == "SHOW_OUTPUT") {
     commands::Output output = handler.LastOutput();
     output.mutable_removed_candidate_words_for_debug()->Clear();
-    std::cout << absl::StrCat(output) << std::endl;
+    std::cout << absl::StrCat(output.Utf8DebugString()) << std::endl;
     return;
   }
   if (command == "SHOW_RESULT") {
-    const commands::Output& output = handler.LastOutput();
-    std::cout << absl::StrCat(output.result()) << std::endl;
+    const commands::Output &output = handler.LastOutput();
+    std::cout << absl::StrCat(output.result().Utf8DebugString()) << std::endl;
     return;
   }
   if (command == "SHOW_CANDIDATES") {
-    std::cout << absl::StrCat(handler.LastOutput().candidates()) << std::endl;
+    std::cout << absl::StrCat(
+                     handler.LastOutput().candidates().Utf8DebugString())
+              << std::endl;
     return;
   }
   if (command == "SHOW_REMOVED_CANDIDATES") {
-    std::cout << absl::StrCat(
-                     handler.LastOutput().removed_candidate_words_for_debug())
+    std::cout << absl::StrCat(handler.LastOutput()
+                                  .removed_candidate_words_for_debug()
+                                  .Utf8DebugString())
               << std::endl;
     return;
   }
@@ -180,6 +183,9 @@ std::unique_ptr<const DataManagerInterface> CreateDataManager(
     const std::string &dictionary) {
   if (dictionary == "oss") {
     return std::make_unique<const oss::OssDataManager>();
+  }
+  if (dictionary == "mock") {
+    return std::make_unique<const testing::MockDataManager>();
   }
   if (!dictionary.empty()) {
     std::cout << "ERROR: Unknown dictionary name: " << dictionary << std::endl;

@@ -249,6 +249,7 @@ TEST_P(SessionHandlerScenarioTest, TestImplBase) {
   const absl::StatusOr<std::string> scenario_path =
       mozc::testing::GetSourceFile({MOZC_DICT_DIR_COMPONENTS, GetParam()});
   ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
+  handler_->ClearAll();
   LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);
   InputFileStream input_stream(*scenario_path);
 
@@ -321,7 +322,7 @@ TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
       mozc::testing::GetSourceFile(
           {MOZC_DICT_DIR_COMPONENTS, std::get<0>(GetParam())});
   ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
-
+  handler_->ClearAll();
   handler_->SetRequest(std::get<1>(GetParam()));
 
   LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);

@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -81,6 +82,11 @@ class SessionHandlerTool {
   bool Reload();
   bool ResetContext();
   bool UndoOrRewind(commands::Output *output);
+  // Try to delete the candidate from the history.
+  // The target candidate is specified with the |id|. If |id| is not specified,
+  // the current focused candidate will be specified.
+  bool DeleteCandidateFromHistory(std::optional<int> id,
+                                  commands::Output *output);
   bool SwitchInputMode(commands::CompositionMode composition_mode);
   bool SetRequest(const commands::Request &request, commands::Output *output);
   bool SetConfig(const config::Config &config, commands::Output *output);
