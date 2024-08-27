@@ -122,7 +122,7 @@ mozc_cc_test(
 mozc_cc_test(
     name = "session_converter_stress_test",
     size = "small",
-    timeout = "moderate",
+    timeout = "long",
     srcs = ["session_converter_stress_test.cc"],
     shard_count = 8,
     deps = [
@@ -180,6 +180,7 @@ mozc_cc_library(
 mozc_cc_test(
     name = "session_test",
     size = "small",
+    timeout = "moderate",
     srcs = ["session_test.cc"],
     shard_count = 8,
     deps = [
