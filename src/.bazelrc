@@ -33,7 +33,8 @@ build:dev_channel --define CHANNEL=dev
 
 ## Release build
 build:release_build --compilation_mode=opt
-build:release_build --copt=-DABSL_MIN_LOG_LEVEL=100
+# Temporarily disable this definition to work around the build failure on Linux.
+# build:release_build --copt=-DABSL_MIN_LOG_LEVEL=100
 
 ## Compiler options
 common:linux_env   --config=compiler_gcc_like
