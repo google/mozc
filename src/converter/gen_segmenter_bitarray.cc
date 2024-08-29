@@ -114,7 +114,7 @@ class StateTable {
 }  // namespace
 
 void SegmenterBitarrayGenerator::GenerateBitarray(
-    int lsize, int rsize, const IsBoundaryFunc is_boundary,
+    int lsize, int rsize, IsBoundaryFunc is_boundary,
     const std::string &output_size_info, const std::string &output_ltable,
     const std::string &output_rtable, const std::string &output_bitarray) {
   // Load the original matrix into an array

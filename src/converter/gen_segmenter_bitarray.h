@@ -31,15 +31,15 @@
 #define MOZC_CONVERTER_GEN_SEGMENTER_BITARRAY_H_
 
 #include <cstdint>
-#include <functional>
 #include <string>
+
+#include "absl/functional/any_invocable.h"
 
 namespace mozc {
 
 class SegmenterBitarrayGenerator {
  public:
-  // TODO(yuryu): change to absl::AnyInvocable when we drop VC++2017 support.
-  using IsBoundaryFunc = std::function<bool(uint16_t, uint16_t)>;
+  using IsBoundaryFunc = absl::AnyInvocable<bool(uint16_t, uint16_t)>;
 
   SegmenterBitarrayGenerator(const SegmenterBitarrayGenerator &) = delete;
   SegmenterBitarrayGenerator &operator=(const SegmenterBitarrayGenerator &) =

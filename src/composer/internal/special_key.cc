@@ -31,10 +31,11 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <functional>
 #include <optional>
 #include <string>
+#include <utility>
 
+#include "absl/functional/any_invocable.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -80,9 +81,9 @@ std::optional<Block> FindBlock(const absl::string_view input,
   return Block{open_pos, close_pos};
 }
 
-using OnKeyFound = std::function<std::string(const absl::string_view)>;
+using OnKeyFound = absl::AnyInvocable<std::string(const absl::string_view)>;
 
-std::string ParseBlock(absl::string_view input, const OnKeyFound callback) {
+std::string ParseBlock(absl::string_view input, OnKeyFound callback) {
   std::string output;
   while (!input.empty()) {
     std::optional<Block> block = FindBlock(input, "{", "}");
@@ -125,7 +126,7 @@ std::string SpecialKeyMap::Register(const absl::string_view input) {
     map_.emplace(key, special_key);
     return special_key;
   };
-  return ParseBlock(input, callback);
+  return ParseBlock(input, std::move(callback));
 }
 
 std::string SpecialKeyMap::Parse(const absl::string_view input) const {
@@ -137,7 +138,7 @@ std::string SpecialKeyMap::Parse(const absl::string_view input) const {
     LOG(WARNING) << "Unregistered special key: " << key;
     return absl::StrCat(kSpecialKeyOpen, key, kSpecialKeyClose);
   };
-  return ParseBlock(input, callback);
+  return ParseBlock(input, std::move(callback));
 }
 
 absl::string_view TrimLeadingSpecialKey(absl::string_view input) {

@@ -30,10 +30,10 @@
 #ifndef MOZC_RENDERER_QT_QT_IPC_SERVER_H_
 #define MOZC_RENDERER_QT_QT_IPC_SERVER_H_
 
-#include <functional>
 #include <string>
 #include <utility>
 
+#include "absl/functional/any_invocable.h"
 #include "absl/strings/string_view.h"
 #include "ipc/ipc.h"
 
@@ -42,8 +42,6 @@ namespace renderer {
 
 class QtIpcServer : public IPCServer {
  public:
-  using Callback = std::function<void(std::string)>;
-
   QtIpcServer();
   QtIpcServer(const QtIpcServer&) = delete;
   QtIpcServer& operator=(const QtIpcServer&) = delete;
@@ -51,10 +49,12 @@ class QtIpcServer : public IPCServer {
 
   bool Process(absl::string_view request, std::string* response) override;
 
-  void SetCallback(Callback callback) { callback_ = std::move(callback); }
+  void SetCallback(absl::AnyInvocable<void(std::string)> callback) {
+    callback_ = std::move(callback);
+  }
 
  private:
-  Callback callback_;
+  absl::AnyInvocable<void(std::string)> callback_;
 };
 
 }  // namespace renderer

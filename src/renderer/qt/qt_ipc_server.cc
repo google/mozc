@@ -64,8 +64,7 @@ bool QtIpcServer::Process(absl::string_view request, std::string *response) {
   response->clear();
 
   if (callback_) {
-    // callback_ takes a std::string value.
-    callback_({request.data(), request.size()});
+    callback_(std::string(request.begin(), request.end()));
   }
   return true;
 }
