@@ -137,6 +137,13 @@ bool SessionHandlerTool::ClearUserPrediction() {
   return handler_->EvalCommand(&command);
 }
 
+bool SessionHandlerTool::ClearUserHistory() {
+  Command command;
+  command.mutable_input()->set_id(id_);
+  command.mutable_input()->set_type(commands::Input::CLEAR_USER_HISTORY);
+  return handler_->EvalCommand(&command);
+}
+
 bool SessionHandlerTool::SendKeyWithOption(const commands::KeyEvent &key,
                                            const commands::Input &option,
                                            commands::Output *output) {
@@ -252,7 +259,9 @@ bool SessionHandlerTool::SetConfig(const config::Config &config,
   return EvalCommand(&input, output);
 }
 
-bool SessionHandlerTool::SyncData() { return data_manager_->Wait(); }
+bool SessionHandlerTool::SyncData() {
+  return data_manager_->Sync() && data_manager_->Wait();
+}
 
 void SessionHandlerTool::SetCallbackText(const absl::string_view text) {
   strings::Assign(callback_text_, text);
@@ -357,6 +366,7 @@ void SessionHandlerInterpreter::SyncDataToStorage() {
 
 void SessionHandlerInterpreter::ClearUserPrediction() {
   CHECK(client_->ClearUserPrediction());
+  CHECK(client_->ClearUserHistory());
   SyncDataToStorage();
 }
 

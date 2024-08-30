@@ -61,6 +61,7 @@ class SessionHandlerTool {
   bool DeleteSession();
   bool CleanUp();
   bool ClearUserPrediction();
+  bool ClearUserHistory();
   bool SendKey(const commands::KeyEvent &key, commands::Output *output) {
     return SendKeyWithOption(key, commands::Input::default_instance(), output);
   }
