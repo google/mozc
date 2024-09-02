@@ -364,3 +364,64 @@ oss_issue1005	かぜをひく	風邪	Conversion Match
 oss_issue1006	さいじょうひでき	西城秀樹	Conversion Expected
 oss_issue1007	ざんち	殘置	Conversion Expected	999
 oss_issue1008	もくさじんじゃ	儛草神社	Conversion Expected
+oss_issue1009	もとにもどして	元に戻して	Conversion Expected
+oss_issue1011	ひんてぃんぐ	ヒンティング	Conversion Expected
+oss_issue1012	こめだこーひーてん	コメダ珈琲店	Conversion Expected
+oss_issue1018	はなよりだんご	花より団子	Conversion Expected
+oss_issue1019	しょく	耺	Conversion Expected 999
+oss_issue1019	しき	耺	Conversion Expected 999
+oss_issue1019	そく	耺	Conversion Expected 999
+oss_issue1020	しょく	聀	Conversion Expected 999
+oss_issue1020	しき	聀	Conversion Expected 999
+oss_issue1020	そく	聀	Conversion Expected 999
+oss_issue1021	しょく	𫟉	Conversion Expected 999
+oss_issue1021	しき	𫟉	Conversion Expected 999
+oss_issue1021	そく	𫟉	Conversion Expected 999
+oss_issue1024	いちおく	一億	Conversion Expected
+oss_issue1025	もがく	踠く	Conversion Expected
+oss_issue1025	もがいて	踠いて	Conversion Expected
+oss_issue1026	むしょう	無床	Conversion Expected 9
+oss_issue1026	むしょうしんりょうじょ	無床診療所	Conversion Expected 9
+oss_issue1027	ゆうしょう	有床	Conversion Expected 9
+oss_issue1027	ゆうしょうしんりょうじょ	有床診療所	Conversion Expected 9
+oss_issue1028	ないぶ	內部	Conversion Expected 999
+oss_issue1029	よさん	豫算	Conversion Expected 999
+oss_issue1029	よそく	豫測	Conversion Expected 999
+oss_issue1029	よてい	豫定	Conversion Expected 999
+oss_issue1029	よび	豫備	Conversion Expected 999
+oss_issue1029	よやく	豫約	Conversion Expected 999
+oss_issue1030	じんじょうしょう	尋常小	Conversion Expected
+oss_issue1031	ふうしが	諷刺画	Conversion Expected 999
+oss_issue1031	ふうしがか	諷刺画家	Conversion Expected 999
+oss_issue1032	ちょうせんかいきょう	朝鮮海峡	Conversion Expected
+oss_issue1033	かじょうわん	渦状腕	Conversion Expected
+oss_issue1034	ぽるてぃちのおしむすめ	ポルティチの唖娘	Conversion Expected
+oss_issue1035	えつご	粤語	Conversion Expected 9
+oss_issue1036	かんち	漢地	Conversion Expected 9
+oss_issue1037	しなごは	シナ語派	Conversion Expected 9
+oss_issue1038	しゅかい	珠海	Conversion Expected 99
+oss_issue1039	きご	徽語	Conversion Expected 99
+oss_issue1040	びんご	閩語	Conversion Expected 99
+oss_issue1041	ほせんご	莆仙語	Conversion Expected 99
+oss_issue1042	ぴんいん	拼音	Conversion Expected 9
+oss_issue1043	ごうしかいしゃ	合資会社	Conversion Expected
+oss_issue1044	きかんせっけい	機関設計	Conversion Expected
+oss_issue1045	れいたくだいがく	麗澤大学	Conversion Expected
+oss_issue1046	しゅうこう	州侯	Conversion Expected 9
+oss_issue1047	ちゅうごくこうていいん	中国工程院	Conversion Expected
+oss_issue1048	きたにっぽんしんぶんはい	北日本新聞杯	Conversion Expected
+oss_issue1049	こうぶんかいせきき	構文解析器	Conversion Expected
+oss_issue1050	とかさくせん	渡河作戦	Conversion Expected
+oss_issue1051	すみけし	墨消し	Conversion Expected
+oss_issue1053	いりなかえき	いりなか駅	Conversion Expected
+oss_issue1054	ごかんかんじ	互換漢字	Conversion Expected
+oss_issue1054	CJKごかんかんじ	CJK互換漢字	Conversion Expected
+oss_issue1054	とうごうかんじ	統合漢字	Conversion Expected
+oss_issue1054	CJKとうごうかんじ	CJK統合漢字	Conversion Expected
+oss_issue1054	CJKごかんようもじ	CJK互換用文字	Conversion Expected
+oss_issue1054	こうきぶしゅ	康煕部首	Conversion Expected
+oss_issue1054	ちゅうおんじぼ	注音字母	Conversion Expected
+oss_issue1054	ちゅうおん	注音	Conversion Expected 9
+oss_issue1054	いもじ	イ文字	Conversion Expected 9
+oss_issue1054	いもじ	彝文字	Conversion Expected 9
+oss_issue1054	かんじこうせいきじゅつもじ	漢字構成記述文字	Conversion Expected
