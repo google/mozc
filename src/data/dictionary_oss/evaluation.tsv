@@ -366,7 +366,7 @@ FAILED:	ざんち	残置	Conversion Expected 999	殘置	2.30.5544
 OK:	もくさじんじゃ	儛草神社	Conversion Expected	儛草神社	2.30.5544
 FAILED:	もとにもどして	下に戻して	Conversion Expected	元に戻して	2.30.5544
 FAILED:	ひんてぃんぐ	品ティング	Conversion Expected	ヒンティング	2.30.5544
-FAILED:	こめだこーひーてん	コメダコーヒー店	Conversion Expected	コメダ珈琲店	2.30.5544
+OK:	こめだこーひーてん	コメダ珈琲店	Conversion Expected	コメダ珈琲店	2.30.5544
 FAILED:	はなよりだんご	花より男子	Conversion Expected	花より団子	2.30.5544
 FAILED:	しょく	色	Conversion Expected 999	耺	2.30.5544
 FAILED:	しき	四季	Conversion Expected 999	耺	2.30.5544
@@ -380,51 +380,51 @@ FAILED:	そく	足	Conversion Expected 999	𫟉	2.30.5544
 FAILED:	いちおく	一尾区	Conversion Expected	一億	2.30.5544
 FAILED:	もがく	もがく	Conversion Expected	踠く	2.30.5544
 FAILED:	もがいて	もがいて	Conversion Expected	踠いて	2.30.5544
-FAILED:	むしょう	無償	Conversion Expected 9	無床	2.30.5544
-FAILED:	むしょうしんりょうじょ	無償診療所	Conversion Expected 9	無床診療所	2.30.5544
-FAILED:	ゆうしょう	優勝	Conversion Expected 9	有床	2.30.5544
-FAILED:	ゆうしょうしんりょうじょ	優勝診療所	Conversion Expected 9	有床診療所	2.30.5544
+OK:	むしょう	無償	Conversion Expected 9	無床	2.30.5544
+OK:	むしょうしんりょうじょ	無床診療所	Conversion Expected 9	無床診療所	2.30.5544
+OK:	ゆうしょう	優勝	Conversion Expected 9	有床	2.30.5544
+OK:	ゆうしょうしんりょうじょ	有床診療所	Conversion Expected 9	有床診療所	2.30.5544
 FAILED:	ないぶ	内部	Conversion Expected 999	內部	2.30.5544
 FAILED:	よさん	予算	Conversion Expected 999	豫算	2.30.5544
 FAILED:	よそく	予測	Conversion Expected 999	豫測	2.30.5544
 FAILED:	よてい	予定	Conversion Expected 999	豫定	2.30.5544
 FAILED:	よび	予備	Conversion Expected 999	豫備	2.30.5544
 FAILED:	よやく	予約	Conversion Expected 999	豫約	2.30.5544
-FAILED:	じんじょうしょう	尋常性	Conversion Expected	尋常小	2.30.5544
+OK:	じんじょうしょう	尋常小	Conversion Expected	尋常小	2.30.5544
 FAILED:	ふうしが	風刺画	Conversion Expected 999	諷刺画	2.30.5544
 FAILED:	ふうしがか	風刺画か	Conversion Expected 999	諷刺画家	2.30.5544
-FAILED:	ちょうせんかいきょう	挑戦海峡	Conversion Expected	朝鮮海峡	2.30.5544
-FAILED:	かじょうわん	過剰ワン	Conversion Expected	渦状腕	2.30.5544
-FAILED:	ぽるてぃちのおしむすめ	ポルテぃ地の押し娘	Conversion Expected	ポルティチの唖娘	2.30.5544
-FAILED:	えつご	越語	Conversion Expected 9	粤語	2.30.5544
-FAILED:	かんち	感知	Conversion Expected 9	漢地	2.30.5544
-FAILED:	しなごは	品後は	Conversion Expected 9	シナ語派	2.30.5544
-FAILED:	しゅかい	首魁	Conversion Expected 99	珠海	2.30.5544
-FAILED:	きご	季語	Conversion Expected 99	徽語	2.30.5544
-FAILED:	びんご	ビンゴ	Conversion Expected 99	閩語	2.30.5544
-FAILED:	ほせんご	保線後	Conversion Expected 99	莆仙語	2.30.5544
-FAILED:	ぴんいん	ピンイン	Conversion Expected 9	拼音	2.30.5544
-FAILED:	ごうしかいしゃ	合祀会社	Conversion Expected	合資会社	2.30.5544
+OK:	ちょうせんかいきょう	朝鮮海峡	Conversion Expected	朝鮮海峡	2.30.5544
+OK:	かじょうわん	渦状腕	Conversion Expected	渦状腕	2.30.5544
+OK:	ぽるてぃちのおしむすめ	ポルティチの唖娘	Conversion Expected	ポルティチの唖娘	2.30.5544
+OK:	えつご	粤語	Conversion Expected 9	粤語	2.30.5544
+OK:	かんち	感知	Conversion Expected 9	漢地	2.30.5544
+OK:	しなごは	シナ語派	Conversion Expected 9	シナ語派	2.30.5544
+OK:	しゅかい	首魁	Conversion Expected 99	珠海	2.30.5544
+OK:	きご	季語	Conversion Expected 99	徽語	2.30.5544
+OK:	びんご	ビンゴ	Conversion Expected 99	閩語	2.30.5544
+OK:	ほせんご	莆仙語	Conversion Expected 99	莆仙語	2.30.5544
+OK:	ぴんいん	ピンイン	Conversion Expected 9	拼音	2.30.5544
+OK:	ごうしかいしゃ	合資会社	Conversion Expected	合資会社	2.30.5544
 FAILED:	きかんせっけい	期間設計	Conversion Expected	機関設計	2.30.5544
-FAILED:	れいたくだいがく	麗沢大学	Conversion Expected	麗澤大学	2.30.5544
-FAILED:	しゅうこう	就航	Conversion Expected 9	州侯	2.30.5544
-FAILED:	ちゅうごくこうていいん	中国皇帝員	Conversion Expected	中国工程院	2.30.5544
-FAILED:	きたにっぽんしんぶんはい	北日本新聞はい	Conversion Expected	北日本新聞杯	2.30.5544
-FAILED:	こうぶんかいせきき	構文解析機	Conversion Expected	構文解析器	2.30.5544
-FAILED:	とかさくせん	とか作戦	Conversion Expected	渡河作戦	2.30.5544
-FAILED:	すみけし	住み消し	Conversion Expected	墨消し	2.30.5544
-FAILED:	いりなかえき	杁中駅	Conversion Expected	いりなか駅	2.30.5544
-FAILED:	ごかんかんじ	五感感じ	Conversion Expected	互換漢字	2.30.5544
-FAILED:	CJKごかんかんじ	CJK五感感じ	Conversion Expected	CJK互換漢字	2.30.5544
-FAILED:	とうごうかんじ	統合感じ	Conversion Expected	統合漢字	2.30.5544
-FAILED:	CJKとうごうかんじ	CJK統合感じ	Conversion Expected	CJK統合漢字	2.30.5544
-FAILED:	CJKごかんようもじ	CJKご寛容文字	Conversion Expected	CJK互換用文字	2.30.5544
-FAILED:	こうきぶしゅ	後期部首	Conversion Expected	康煕部首	2.30.5544
-FAILED:	ちゅうおんじぼ	中音慈母	Conversion Expected	注音字母	2.30.5544
-FAILED:	ちゅうおん	中音	Conversion Expected 9	注音	2.30.5544
-FAILED:	いもじ	鋳物師	Conversion Expected 9	イ文字	2.30.5544
-FAILED:	いもじ	鋳物師	Conversion Expected 9	彝文字	2.30.5544
-FAILED:	かんじこうせいきじゅつもじ	感じ構成記述文字	Conversion Expected	漢字構成記述文字	2.30.5544
+OK:	れいたくだいがく	麗澤大学	Conversion Expected	麗澤大学	2.30.5544
+OK:	しゅうこう	就航	Conversion Expected 9	州侯	2.30.5544
+OK:	ちゅうごくこうていいん	中国工程院	Conversion Expected	中国工程院	2.30.5544
+OK:	きたにっぽんしんぶんはい	北日本新聞杯	Conversion Expected	北日本新聞杯	2.30.5544
+OK:	こうぶんかいせきき	構文解析器	Conversion Expected	構文解析器	2.30.5544
+OK:	とかさくせん	渡河作戦	Conversion Expected	渡河作戦	2.30.5544
+OK:	すみけし	墨消し	Conversion Expected	墨消し	2.30.5544
+OK:	いりなかえき	いりなか駅	Conversion Expected	いりなか駅	2.30.5544
+OK:	ごかんかんじ	互換漢字	Conversion Expected	互換漢字	2.30.5544
+FAILED:	CJKごかんかんじ	ＣＪＫ互換漢字	Conversion Expected	CJK互換漢字	2.30.5544
+OK:	とうごうかんじ	統合漢字	Conversion Expected	統合漢字	2.30.5544
+FAILED:	CJKとうごうかんじ	ＣＪＫ統合漢字	Conversion Expected	CJK統合漢字	2.30.5544
+FAILED:	CJKごかんようもじ	ＣＪＫ互換用文字	Conversion Expected	CJK互換用文字	2.30.5544
+OK:	こうきぶしゅ	康煕部首	Conversion Expected	康煕部首	2.30.5544
+OK:	ちゅうおんじぼ	注音字母	Conversion Expected	注音字母	2.30.5544
+OK:	ちゅうおん	中音	Conversion Expected 9	注音	2.30.5544
+OK:	いもじ	イ文字	Conversion Expected 9	イ文字	2.30.5544
+OK:	いもじ	イ文字	Conversion Expected 9	彝文字	2.30.5544
+OK:	かんじこうせいきじゅつもじ	漢字構成記述文字	Conversion Expected	漢字構成記述文字	2.30.5544
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
