@@ -459,3 +459,8 @@ OK:	すき	好き	Conversion Expected 12	隙	2.28.5050
 FAILED:	おおすにいく	大洲に行く	Conversion Expected	大須に行く	2.28.5085
 OK:	たいじんかんけい	対人関係	Conversion Expected	対人関係	2.30.5520
 OK:	たいじんすきる	対人スキル	Conversion Expected	対人スキル	2.30.5520
+FAILED:	ねおちつうわ	値落ち通話	Conversion Expected	寝落ち通話	2.30.5544
+FAILED:	おきてねがおみてた	起きて音がお見てた	Conversion Expected	起きて寝顔見てた	2.30.5544
+FAILED:	ほかのようじもできた	他の幼児もできた	Conversion Expected	他の用事もできた	2.30.5544
+FAILED:	きょうきゅうりょうび！	供給量日！	Conversion Expected	今日給料日！	2.30.5544
+OK:	みたことないとりいる	見たことない鳥いる	Conversion Expected	見たことない鳥いる	2.30.5544

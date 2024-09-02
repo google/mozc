@@ -33,3 +33,8 @@ regression	すき	隙	Conversion Expected 12
 regression	おおすにいく	大須に行く	Conversion Expected
 regression	たいじんかんけい	対人関係	Conversion Expected
 regression	たいじんすきる	対人スキル	Conversion Expected
+regression	ねおちつうわ	寝落ち通話	Conversion Expected
+regression	おきてねがおみてた	起きて寝顔見てた	Conversion Expected
+regression	ほかのようじもできた	他の用事もできた	Conversion Expected
+regression	きょうきゅうりょうび！	今日給料日！	Conversion Expected
+regression	みたことないとりいる	見たことない鳥いる	Conversion Expected
