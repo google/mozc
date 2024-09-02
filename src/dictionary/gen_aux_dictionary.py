@@ -230,7 +230,11 @@ class WordsDictionary:
       if line.startswith('#') or not line.rstrip():
         continue
 
-      key, value, pos = line.rstrip().split('\t')
+      items = line.rstrip().split('\t')
+      if len(items) != 3:
+        print(f'Error: invalid format: "{line}"', file=sys.stderr)
+        sys.exit(1)
+      key, value, pos = items
       pos_id = pos_ids.GetId(pos)
       if not pos_id:
         print('Error: ' + pos + ' is an invalid pos', file=sys.stderr)
