@@ -1272,8 +1272,6 @@ TEST_F(DictionaryPredictorTest, FixSRealtimeTopCandidatesCostOnMobile) {
       data_and_predictor->predictor();
   // turn on mobile mode
   request_test_util::FillMobileRequest(request_.get());
-  request_->mutable_decoder_experiment_params()
-      ->set_apply_user_segment_history_rewriter_for_prediction(true);
 
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();

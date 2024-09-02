@@ -92,9 +92,7 @@ bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
 }
 
 bool UseInnerSegments(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .user_segment_history_rewriter_use_inner_segments();
+  return request.request().mixed_conversion();
 }
 
 class FeatureValue {

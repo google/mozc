@@ -1134,11 +1134,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     MOZC_WORD_LOG(result, absl::StrCat("SetPredictionCost: ", result.cost));
   }
 
-  if (request.request()
-          .decoder_experiment_params()
-          .apply_user_segment_history_rewriter_for_prediction()) {
-    MaybeFixRealtimeTopCost(input_key, *results);
-  }
+  MaybeFixRealtimeTopCost(input_key, *results);
 }
 
 // static

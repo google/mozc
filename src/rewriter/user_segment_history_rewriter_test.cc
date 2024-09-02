@@ -1629,8 +1629,7 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
-  request_->mutable_decoder_experiment_params()
-      ->set_user_segment_history_rewriter_use_inner_segments(true);
+  request_test_util::FillMobileRequest(request_.get());
   Segments segments;
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());

@@ -609,11 +609,6 @@ message DecoderExperimentParams {
   optional bool enable_findability_oriented_order = 42 [default = false];
   optional int32 findability_oriented_order_top_size = 43 [default = 10];
 
-  optional bool apply_user_segment_history_rewriter_for_prediction = 44
-      [default = false];
-  optional bool user_segment_history_rewriter_use_inner_segments = 54
-      [default = false];
-
   // Changes the size of history with character coverage.
   optional int32 user_history_prediction_max_char_coverage = 82 [default = 0];
 
