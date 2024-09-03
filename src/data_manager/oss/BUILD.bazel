@@ -142,8 +142,8 @@ mozc_cc_test(
         ":mozc_dataset_for_oss@segmenter_inl_header",
     ],
     data = [
-        "//data/dictionary_oss:base_dictionary_data",
         "//data/dictionary_oss:connection_single_column.txt",
+        "//data/dictionary_oss:dictionary_data",
         "//data/dictionary_oss:suggestion_filter.txt",
     ],
     deps = [
