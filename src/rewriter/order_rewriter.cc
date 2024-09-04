@@ -148,6 +148,10 @@ bool OrderRewriter::Rewrite(const ConversionRequest &request,
   if (segments->conversion_segments_size() != 1) {
     return false;
   }
+  // Do not change the order for zero query prediction.
+  if (segments->conversion_segment(0).key().empty()) {
+    return false;
+  }
 
   const int top_candidates_size = request.request()
                                       .decoder_experiment_params()
