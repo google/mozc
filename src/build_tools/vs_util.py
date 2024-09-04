@@ -33,8 +33,23 @@ import json
 import pathlib
 import subprocess
 import sys
-from typing import Union
+from typing import Union, Optional
 
+def find_vswhere() -> Optional[pathlib.Path]:
+  path = pathlib.Path(r'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe')
+  return path if path.exists() else None
+
+def get_vcvarsall_from_vswhere(vswhere_path: pathlib.Path) -> Optional[pathlib.Path]:
+  result = subprocess.run([str(vswhere_path), '-find', 'VC/Auxiliary/Build/vcvarsall.bat', '-utf8'], stdout=subprocess.PIPE)
+  first = result.stdout.splitlines()[0].decode()
+  if first == '':
+    return None
+  return pathlib.Path(first)
+
+def get_display_name_from_vswhere(vswhere_path: pathlib.Path) -> Optional[str]:
+  result = subprocess.run([str(vswhere_path), '-property', 'displayName', '-utf8'], stdout=subprocess.PIPE)
+  first = result.stdout.splitlines()[0].decode()
+  return None if first == '' else first
 
 def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
   """Returns the path of 'vcvarsall.bat'.
@@ -52,14 +67,24 @@ def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
     path = pathlib.Path(path_hint).resolve()
     if path.exists():
       return path
-
-  for program_files in ['Program Files', 'Program Files (x86)']:
-    for edition in ['Community', 'Professional', 'Enterprise', 'BuildTools']:
-      vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
-                               '2022', edition, 'VC', 'Auxiliary', 'Build',
-                               'vcvarsall.bat')
-      if vcvarsall.exists():
-        return vcvarsall
+  
+  if (vswhere_path := find_vswhere()) is not None:
+    if (vcvarsall_from_vswhere := get_vcvarsall_from_vswhere(vswhere_path)) is not None:
+      return vcvarsall_from_vswhere
+    
+    raise FileNotFoundError(
+        'Could not find vcvarsall.bat. '
+        'Install "Desktop development with C++" Workload on' + (get_display_name_from_vswhere(vswhere_path) or 'Visual Studio')
+        + ' in Visual Studio Installer first.'
+    )
+  else:
+    for program_files in ['Program Files', 'Program Files (x86)']:
+      for edition in ['Community', 'Professional', 'Enterprise', 'BuildTools']:
+        vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
+                                '2022', edition, 'VC', 'Auxiliary', 'Build',
+                                'vcvarsall.bat')
+        if vcvarsall.exists():
+          return vcvarsall
 
   raise FileNotFoundError(
       'Could not find vcvarsall.bat. '
