@@ -344,8 +344,8 @@ void SystemDictionaryBuilder::SetIdForValue(KeyInfoList *key_info_list) const {
 
 void SystemDictionaryBuilder::SortTokenInfo(KeyInfoList *key_info_list) const {
   for (KeyInfo &key_info : *key_info_list) {
-    std::sort(key_info.tokens.begin(), key_info.tokens.end(),
-              TokenGreaterThan());
+    std::stable_sort(key_info.tokens.begin(), key_info.tokens.end(),
+                     TokenGreaterThan());
   }
 }
 

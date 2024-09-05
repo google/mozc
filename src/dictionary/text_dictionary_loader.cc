@@ -193,7 +193,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
   //   2. Accessing all the tokens that have the same value: Since tokens are
   //      also sorted in order of value, this can be done by finding a range of
   //      tokens that have the same value.
-  std::sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
+  std::stable_sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
 
   std::vector<std::unique_ptr<Token>> reading_correction_tokens =
       LoadReadingCorrectionTokens(reading_correction_filename, tokens_, &limit);
