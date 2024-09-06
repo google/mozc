@@ -1852,14 +1852,15 @@ TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
 }
 
 TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
-  // Use StrictMock to make sure that RescoreResults() is not be called
+  // Use StrictMock to make sure that RescoreResults(), PostCorrect() are not be
+  // called
   StrictMock<engine::MockSupplementalModel> supplemental_model;
-  EXPECT_CALL(supplemental_model, PostCorrect(_, _));
   auto data_and_predictor =
       std::make_unique<MockDataAndPredictor>(&supplemental_model);
 
-  // Fill handwriting request and composer
+  // Fill handwriting config, request and composer
   {
+    config_->set_use_typing_correction(false);
     request_->set_zero_query_suggestion(true);
     request_->set_mixed_conversion(false);
     request_->set_kana_modifier_insensitive_conversion(false);
@@ -1872,6 +1873,30 @@ TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
     composition_event->set_probability(1.0);
     composer_->SetCompositionsForHandwriting(command.composition_events());
   }
+
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("かんじ", "かん字", 0, prediction::UNIGRAM,
+                        Token::NONE),
+          CreateResult5("かんじ", "漢字", 500, prediction::UNIGRAM,
+                        Token::NONE)}));
+
+  Segments segments;
+  InitSegmentsWithKey("かんじ", &segments);
+
+  predictor.PredictForRequest(*convreq_for_prediction_, &segments);
+}
+
+TEST_F(DictionaryPredictorTest, DoNotApplyPostCorrection) {
+  // Use StrictMock to make sure that PostCorrect() is not be called
+  engine::MockSupplementalModel supplemental_model;
+  auto data_and_predictor =
+      std::make_unique<MockDataAndPredictor>(&supplemental_model);
+
+  config_->set_use_typing_correction(false);
 
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();

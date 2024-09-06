@@ -546,6 +546,13 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
 void DictionaryPredictor::MaybeApplyPostCorrection(
     const ConversionRequest &request, const engine::Modules &modules,
     Segments *segments) {
+  // b/363902660:
+  // Stop applying post correction when typing correction is disabled.
+  // We may want to use other conditions if we want to enable post correction
+  // separately.
+  if (!IsTypingCorrectionEnabled(request)) {
+    return;
+  }
   const engine::SupplementalModelInterface *supplemental_model =
       modules.GetSupplementalModel();
   if (supplemental_model == nullptr) {
