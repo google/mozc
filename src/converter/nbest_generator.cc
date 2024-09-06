@@ -74,7 +74,7 @@ bool IsBetweenAlphabets(const Node &left, const Node &right) {
 
 absl::Nonnull<const NBestGenerator::QueueElement *>
 NBestGenerator::CreateNewElement(absl::Nonnull<const Node *> node,
-                                 absl::Nonnull<const QueueElement *> next,
+                                 absl::Nullable<const QueueElement *> next,
                                  int32_t fx, int32_t gx, int32_t structure_gx,
                                  int32_t w_gx) {
   absl::Nonnull<QueueElement *> elm = freelist_.Alloc();

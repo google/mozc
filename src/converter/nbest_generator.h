@@ -207,7 +207,7 @@ class NBestGenerator {
   // Create queue element from freelist
   absl::Nonnull<const QueueElement *> CreateNewElement(
       absl::Nonnull<const Node *> node,
-      absl::Nonnull<const QueueElement *> next, int32_t fx, int32_t gx,
+      absl::Nullable<const QueueElement *> next, int32_t fx, int32_t gx,
       int32_t structure_gx, int32_t w_gx);
 
   // References to relevant modules.
