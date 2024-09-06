@@ -1770,10 +1770,11 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 
     // Appends the result with TYPING_CORRECTION attribute.
     for (Result &result : corrected_results) {
-      // If the correction is a pure kana modifier insensitive correction,
-      // typing correction annotation is not necessary.
       if (query.type & TypeCorrectedQuery::CORRECTION) {
         result.types |= TYPING_CORRECTION;
+      }
+      if (query.type & TypeCorrectedQuery::COMPLETION) {
+        result.types |= TYPING_COMPLETION;
       }
       result.typing_correction_score = query.score;
       // bias = hyp_score - base_score, so larger is better.

@@ -573,7 +573,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 95
+// Next ID: 96
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -595,6 +595,10 @@ message DecoderExperimentParams {
 
   // Applies the number decoder to the output of typing corrector
   optional bool typing_correction_enable_number_decoder = 89 [default = false];
+
+  // Enables final results reranking against literal results.
+  // If zero, the previous implementation is used.
+  optional int32 typing_correction_result_reranker_mode = 95 [default = 0];
 
   // Uses the typing correction in user history predictor. The size specifies
   // the maximum number of typing corrections used for query lookup.

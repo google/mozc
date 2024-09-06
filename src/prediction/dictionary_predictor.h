@@ -291,6 +291,10 @@ class DictionaryPredictor : public PredictorInterface {
       const ConversionRequest &request, const Segments &segments,
       std::vector<Result> *results) const;
 
+  void MaybeRerankAggressiveTypingCorrection(
+      const ConversionRequest &request, const Segments &segments,
+      std::vector<absl::Nonnull<const Result *>> *results) const;
+
   static void MaybeSuppressAggressiveTypingCorrection(
       const ConversionRequest &request,
       const TypingCorrectionMixingParams &typing_correction_mixing_params,
