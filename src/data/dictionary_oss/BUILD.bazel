@@ -56,16 +56,16 @@ exports_files([
 filegroup(
     name = "base_dictionary_data",
     srcs = [
-        ":dictionary00.txt",
-        ":dictionary01.txt",
-        ":dictionary02.txt",
-        ":dictionary03.txt",
-        ":dictionary04.txt",
-        ":dictionary05.txt",
-        ":dictionary06.txt",
-        ":dictionary07.txt",
-        ":dictionary08.txt",
-        ":dictionary09.txt",
+        "dictionary00.txt",
+        "dictionary01.txt",
+        "dictionary02.txt",
+        "dictionary03.txt",
+        "dictionary04.txt",
+        "dictionary05.txt",
+        "dictionary06.txt",
+        "dictionary07.txt",
+        "dictionary08.txt",
+        "dictionary09.txt",
         "//dictionary:zip_code_data",
     ],
     visibility = ["//visibility:private"],
@@ -82,9 +82,9 @@ filegroup(
 genrule(
     name = "aux_dictionary",
     srcs = [
-        ":aux_dictionary.tsv",
+        "aux_dictionary.tsv",
+        "id.def",
         ":base_dictionary_data",
-        ":id.def",
         "//data/dictionary_manual",
     ],
     outs = ["aux_dictionary.txt"],
@@ -102,8 +102,8 @@ genrule(
 genrule(
     name = "filtered_dictionary",
     srcs = [
+        "dictionary_filter.tsv",
         ":base_dictionary_data",
-        ":dictionary_filter.tsv",
     ],
     outs = ["dictionary.txt"],
     cmd = """
