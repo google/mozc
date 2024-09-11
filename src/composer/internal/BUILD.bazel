@@ -34,9 +34,7 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//composer:__subpackages__"])
 
 mozc_cc_library(
     name = "transliterator_interface",
@@ -203,6 +201,7 @@ mozc_cc_library(
     name = "converter",
     srcs = ["converter.cc"],
     hdrs = ["converter.h"],
+    visibility = [],  # for mozc_transliterator
     deps = [
         "//composer:table",
         "@com_google_absl//absl/strings",
