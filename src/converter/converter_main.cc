@@ -441,6 +441,33 @@ bool IsConsistentEngineNameAndType(const std::string &engine_name,
          kConsistentPairs->end();
 }
 
+void RunLoop(std::unique_ptr<EngineInterface> engine,
+             commands::Request &&request, config::Config &&config) {
+  ConverterInterface *converter = engine->GetConverter();
+  CHECK(converter);
+
+  commands::Context context = commands::Context::default_instance();
+  ConversionRequest conversion_request =
+      ConversionRequest(nullptr, &request, &context, &config);
+  conversion_request.set_max_conversion_candidates_size(
+      absl::GetFlag(FLAGS_max_conversion_candidates_size));
+  conversion_request.set_create_partial_candidates(
+      request.auto_partial_suggestion());
+
+  Segments segments;
+  std::string line;
+  while (!std::getline(std::cin, line).fail()) {
+    if (ExecCommand(*converter, line, request, &config, &conversion_request,
+                    &segments)) {
+      if (absl::GetFlag(FLAGS_output_debug_string)) {
+        PrintSegments(segments, &std::cout);
+      }
+    } else {
+      std::cout << "ExecCommand() return false" << std::endl;
+    }
+  }
+}
+
 }  // namespace
 }  // namespace mozc
 
@@ -510,33 +537,11 @@ int main(int argc, char **argv) {
               << request.decoder_experiment_params();
   }
 
-  mozc::ConverterInterface *converter = engine->GetConverter();
-  CHECK(converter);
-
   if (!mozc::IsConsistentEngineNameAndType(absl::GetFlag(FLAGS_engine_name),
                                            absl::GetFlag(FLAGS_engine_type))) {
     LOG(WARNING) << "Engine name and type do not match.";
   }
 
-  mozc::Segments segments;
-  std::string line;
-
-  mozc::ConversionRequest conversion_request =
-      mozc::ConversionRequest(nullptr, &request, &config);
-  conversion_request.set_max_conversion_candidates_size(
-      absl::GetFlag(FLAGS_max_conversion_candidates_size));
-  conversion_request.set_create_partial_candidates(
-      request.auto_partial_suggestion());
-
-  while (!std::getline(std::cin, line).fail()) {
-    if (mozc::ExecCommand(*converter, line, request, &config,
-                          &conversion_request, &segments)) {
-      if (absl::GetFlag(FLAGS_output_debug_string)) {
-        mozc::PrintSegments(segments, &std::cout);
-      }
-    } else {
-      std::cout << "ExecCommand() return false" << std::endl;
-    }
-  }
+  mozc::RunLoop(std::move(engine), std::move(request), std::move(config));
   return 0;
 }
