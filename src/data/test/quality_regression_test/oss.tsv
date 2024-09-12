@@ -425,3 +425,6 @@ oss_issue1054	ちゅうおん	注音	Conversion Expected 9
 oss_issue1054	いもじ	イ文字	Conversion Expected 9
 oss_issue1054	いもじ	彝文字	Conversion Expected 9
 oss_issue1054	かんじこうせいきじゅつもじ	漢字構成記述文字	Conversion Expected
+oss_issue	かわきもの	乾き物	Conversion Expected
+oss_issue	そけんのらんよう	訴権の濫用	Conversion Expected
+oss_issue	こうそけんのらんよう	公訴権の濫用	Conversion Expected
