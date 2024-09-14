@@ -850,6 +850,9 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
     result->value.append(candidate.value);
     result->key.append(candidate.key);
     result->wcost += candidate.wcost;
+    result->candidate_attributes |=
+        (candidate.attributes &
+         Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
 
     uint32_t encoded_lengths;
     if (inner_segment_boundary_success &&

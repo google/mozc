@@ -1006,7 +1006,7 @@ void DictionaryPredictor::SetPredictionCost(
     // have the same reading (key), they should have the same cost bonus
     // from the length part. This implies that the result is reranked by
     // the language model probability as long as the key part is the same.
-    // This behavior is baisically the same as the converter.
+    // This behavior is basically the same as the converter.
     //
     // TODO(team): want find the best parameter instead of kCostFactor.
     constexpr int kCostFactor = 500;

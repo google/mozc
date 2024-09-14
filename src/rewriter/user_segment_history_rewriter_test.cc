@@ -355,11 +355,17 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     rewriter->Rewrite(*convreq_, &segments);
 
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
+    EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
+                Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
     EXPECT_EQ(segments.segment(1).candidate(0).value, "candidate0");
+    EXPECT_FALSE(segments.segment(1).candidate(0).attributes &
+                 Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
 
     InitSegments(&segments, 1);
     rewriter->Rewrite(*convreq_, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
+    EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
+                Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
     segments.mutable_segment(0)->move_candidate(1, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
@@ -370,11 +376,17 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     rewriter->Rewrite(*convreq_, &segments);
 
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
+    EXPECT_FALSE(segments.segment(0).candidate(0).attributes &
+                 Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
 
     InitSegments(&segments, 2);
     rewriter->Rewrite(*convreq_, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
+    EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
+                Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
     EXPECT_EQ(segments.segment(1).candidate(0).value, "candidate0");
+    EXPECT_FALSE(segments.segment(1).candidate(0).attributes &
+                 Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
     segments.mutable_segment(1)->move_candidate(3, 0);
     segments.mutable_segment(1)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
@@ -384,7 +396,11 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     InitSegments(&segments, 2);
     rewriter->Rewrite(*convreq_, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
+    EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
+                Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
     EXPECT_EQ(segments.segment(1).candidate(0).value, "candidate3");
+    EXPECT_TRUE(segments.segment(1).candidate(0).attributes &
+                Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
   }
 
   rewriter->Clear();
@@ -400,11 +416,17 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     rewriter->Rewrite(*convreq_, &segments);
 
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
+    EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
+                Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
     EXPECT_EQ(segments.segment(1).candidate(0).value, "candidate0");
+    EXPECT_FALSE(segments.segment(1).candidate(0).attributes &
+                 Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
 
     InitSegments(&segments, 1);
     rewriter->Rewrite(*convreq_, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
+    EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
+                Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
 
     // back to the original
     segments.mutable_segment(0)->move_candidate(1, 0);
@@ -416,6 +438,8 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     InitSegments(&segments, 1);
     rewriter->Rewrite(*convreq_, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
+    EXPECT_FALSE(segments.segment(0).candidate(0).attributes &
+                 Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
   }
 }
 
