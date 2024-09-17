@@ -167,11 +167,10 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   mozcClient_ = std::move(newMozcClient);
 }
 - (mozc::renderer::RendererInterface *)renderer {
-  return candidateController_;
+  return candidateController_.get();
 }
-- (void)setRenderer:(mozc::renderer::RendererInterface *)newRenderer {
-  delete candidateController_;
-  candidateController_ = newRenderer;
+- (void)setRenderer:(std::unique_ptr<mozc::renderer::RendererInterface>)newRenderer {
+  candidateController_ = std::move(newRenderer);
 }
 
 #pragma mark object init/dealloc
@@ -192,7 +191,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   checkInputMode_ = YES;
   suppressSuggestion_ = NO;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
-  candidateController_ = new (std::nothrow) mozc::renderer::RendererClient;
+  candidateController_ = std::make_unique<mozc::renderer::RendererClient>();
   rendererCommand_ = new (std::nothrow) RendererCommand;
   mozcClient_ = mozc::client::ClientFactory::NewClient();
   imkServer_ = reinterpret_cast<id<ServerCallback>>(server);
@@ -210,8 +209,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
         stringWithFormat:@"initWithServer: %@ %@ %@", server, delegate, inputClient] UTF8String];
     if (!candidateController_->Activate()) {
       LOG(ERROR) << "Cannot activate renderer";
-      delete candidateController_;
-      candidateController_ = nullptr;
+      candidateController_.reset();
     }
     [self setupClientBundle:inputClient];
     [self setupCapability];
@@ -232,7 +230,6 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   originalString_ = nil;
   composedString_ = nil;
   imkClientForTest_ = nil;
-  delete candidateController_;
   delete rendererCommand_;
   DLOG(INFO) << "dealloc server";
 }

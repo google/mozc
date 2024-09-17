@@ -93,7 +93,7 @@
   uint16_t lastKeyCode_;
 
   /** |candidateController_| controls the candidate windows. */
-  mozc::renderer::RendererInterface *candidateController_;
+  std::unique_ptr<mozc::renderer::RendererInterface> candidateController_;
 
   /** |rendererCommand_| stores the command sent to |candidateController_| */
   mozc::commands::RendererCommand *rendererCommand_;
@@ -136,6 +136,9 @@
 
 /** Sets the ClientInterface to use in the controller. */
 - (void)setMozcClient:(std::unique_ptr<mozc::client::ClientInterface>)newMozcClient;
+
+/** Sets the RendererInterface to use in the controller. */
+- (void)setRenderer:(std::unique_ptr<mozc::renderer::RendererInterface>)newRenderer;
 
 /** create instances for global objects which will be referred from the controller instances. */
 + (void)initializeConstants;

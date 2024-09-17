@@ -261,8 +261,9 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
     auto mock_mozc_client = std::make_unique<mozc::client::ClientMock>();
     mock_mozc_client_ = mock_mozc_client.get();
     [controller_ setMozcClient:std::move(mock_mozc_client)];
-    mock_renderer_ = new MockRenderer;
-    controller_.renderer = mock_renderer_;
+    auto mock_renderer = std::make_unique<MockRenderer>();
+    mock_renderer_ = mock_renderer.get();
+    [controller_ setRenderer:std::move(mock_renderer)];
   }
 
   void ResetClientBundleIdentifier(NSString *new_bundle_id) {
@@ -273,7 +274,7 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
 
   client::ClientMock *mock_mozc_client_;
   MockClient *mock_client_;
-  MockRenderer *mock_renderer_;
+  const MockRenderer *mock_renderer_;
 
   GoogleJapaneseInputController *controller_;
 
@@ -450,6 +451,7 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   EXPECT_EQ([mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"], 1);
   const commands::RendererCommand *rendererCommand = controller_.rendererCommand;
   EXPECT_EQ(mock_renderer_->counter_ExecCommand(), 2);
+  ASSERT_NE(rendererCommand, nullptr);
   EXPECT_TRUE(rendererCommand->visible());
   const commands::RendererCommand::Rectangle &preedit_rectangle =
       rendererCommand->preedit_rectangle();
