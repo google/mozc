@@ -184,7 +184,6 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     return self;
   }
   keyCodeMap_ = [[KeyCodeMap alloc] init];
-  clientBundle_ = new (std::nothrow) std::string;
   replacementRange_ = NSMakeRange(NSNotFound, 0);
   originalString_ = [[NSMutableString alloc] init];
   composedString_ = [[NSMutableAttributedString alloc] init];
@@ -204,7 +203,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   // We don't check the return value of NSBundle because it fails during tests.
   [NSBundle loadNibNamed:@"Config" owner:self];
   if (!originalString_ || !composedString_ || !candidateController_ || !rendererCommand_ ||
-      !mozcClient_ || !clientBundle_) {
+      !mozcClient_) {
     self = nil;
   } else {
     DLOG(INFO) << [[NSString
@@ -233,7 +232,6 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   originalString_ = nil;
   composedString_ = nil;
   imkClientForTest_ = nil;
-  delete clientBundle_;
   delete candidateController_;
   delete rendererCommand_;
   DLOG(INFO) << "dealloc server";
@@ -334,7 +332,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   }
 
   DLOG(INFO) << kProductNameInEnglish << " client (" << self << "): activated for " << sender;
-  DLOG(INFO) << "sender bundleID: " << *clientBundle_;
+  DLOG(INFO) << "sender bundleID: " << clientBundle_;
 }
 
 - (void)deactivateServer:(id)sender {
@@ -346,7 +344,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     candidateController_->ExecCommand(clearCommand);
   }
   DLOG(INFO) << kProductNameInEnglish << " client (" << self << "): deactivated";
-  DLOG(INFO) << "sender bundleID: " << *clientBundle_;
+  DLOG(INFO) << "sender bundleID: " << clientBundle_;
   [super deactivateServer:sender];
 }
 
@@ -397,14 +395,14 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 - (void)setupClientBundle:(id)sender {
   NSString *bundleIdentifier = [sender bundleIdentifier];
   if (bundleIdentifier != nil && [bundleIdentifier length] > 0) {
-    clientBundle_->assign([bundleIdentifier UTF8String]);
+    clientBundle_.assign([bundleIdentifier UTF8String]);
   }
 }
 
 - (void)setupCapability {
   Capability capability;
 
-  if (IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     capability.set_text_deletion(Capability::NO_TEXT_DELETION_CAPABILITY);
   } else {
     capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
@@ -469,7 +467,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     LOG(ERROR) << "gModeIdMap is not initialized correctly.";
     return;
   }
-  if (IsBannedApplication(gNoDisplayModeSwitchApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoDisplayModeSwitchApps, clientBundle_)) {
     return;
   }
 
@@ -493,7 +491,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 
 - (void)launchWordRegisterTool:(id)client {
   ::setenv(mozc::kWordRegisterEnvironmentName, "", 1);
-  if (!IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (!IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     NSRange selectedRange = [client selectedRange];
     if (selectedRange.location != NSNotFound && selectedRange.length != NSNotFound &&
         selectedRange.length > 0) {
@@ -507,7 +505,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (void)invokeReconvert:(const SessionCommand *)command client:(id)sender {
-  if (IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     return;
   }
 
@@ -544,7 +542,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (void)invokeUndo:(id)sender {
-  if (IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     return;
   }
 
@@ -586,7 +584,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 
   // Handles deletion range.  We do not even handle it for some
   // applications to prevent application crashes.
-  if (output->has_deletion_range() && !IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (output->has_deletion_range() && !IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     if ([composedString_ length] == 0 && replacementRange_.location == NSNotFound) {
       NSRange selectedRange = [sender selectedRange];
       const mozc::commands::DeletionRange &deletion_range = output->deletion_range();
@@ -801,7 +799,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     rect->set_bottom(baseline.y);
 
   } @catch (NSException *exception) {
-    LOG(ERROR) << "Exception from [" << *clientBundle_ << "] " << [[exception name] UTF8String]
+    LOG(ERROR) << "Exception from [" << clientBundle_ << "] " << [[exception name] UTF8String]
                << "," << [[exception reason] UTF8String];
   }
 
@@ -829,7 +827,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   // On some application like login window of screensaver, opening
   // link behavior should not happen because it can cause some
   // security issues.
-  if (!clientBundle_ || IsBannedApplication(gNoOpenLinkApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoOpenLinkApps, clientBundle_)) {
     return;
   }
   [[NSWorkspace sharedWorkspace] openURL:url];
@@ -954,8 +952,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   }
   keyEvent.set_mode(mode_);
 
-  if ([composedString_ length] == 0 && !IsBannedApplication(gNoSelectedRangeApps, *clientBundle_) &&
-      !IsBannedApplication(gNoSurroundingTextApps, *clientBundle_)) {
+  if ([composedString_ length] == 0 && !IsBannedApplication(gNoSelectedRangeApps, clientBundle_) &&
+      !IsBannedApplication(gNoSurroundingTextApps, clientBundle_)) {
     [self fillSurroundingContext:&context client:sender];
   }
   if (!mozcClient_->SendKeyWithContext(keyEvent, context, &output)) {

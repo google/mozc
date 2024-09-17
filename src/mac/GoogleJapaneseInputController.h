@@ -84,7 +84,7 @@
 
   /** |clientBundle_| is the Bundle ID of the client application which the controller communicates
    * with. */
-  std::string *clientBundle_;
+  std::string clientBundle_;
 
   NSRange replacementRange_;
 
