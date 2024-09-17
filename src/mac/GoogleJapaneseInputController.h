@@ -71,13 +71,8 @@
    * separated from |keyCodeMap_| because it is for DIRECT mode. */
   mozc::config::Config::YenSignCharacter yenSignCharacter_;
 
-  /** Check the kana/ascii input mode at the key event if true. Because it requires GetConfig which
-   * asks Converter server, we want to delay the checking to the key event timing but we don't want
-   * to call this every key events. */
-  BOOL checkInputMode_;
-
   /** |suppressSuggestion_| indicates whether to suppress the suggestion. */
-  BOOL suppressSuggestion_;
+  bool suppressSuggestion_;
 
   /** |keyCodeMap_| manages the mapping between Mac key code and mozc key events. */
   KeyCodeMap *keyCodeMap_;

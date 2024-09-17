@@ -188,8 +188,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   composedString_ = [[NSMutableAttributedString alloc] init];
   cursorPosition_ = -1;
   mode_ = mozc::commands::DIRECT;
-  checkInputMode_ = YES;
-  suppressSuggestion_ = NO;
+  suppressSuggestion_ = false;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
   candidateController_ = std::make_unique<mozc::renderer::RendererClient>();
   mozcClient_ = mozc::client::ClientFactory::NewClient();
@@ -307,7 +306,6 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 - (void)activateServer:(id)sender {
   [super activateServer:sender];
   [self setupClientBundle:sender];
-  checkInputMode_ = YES;
   if (rendererCommand_.visible() && candidateController_) {
     candidateController_->ExecCommand(rendererCommand_);
   }
@@ -318,11 +316,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   if (mozc::MacUtil::GetFrontmostWindowNameAndOwner(&window_name, &window_owner)) {
     DLOG(INFO) << "frontmost window name: \"" << window_name << "\" " << "owner: \"" << window_owner
                << "\"";
-    if (mozc::MacUtil::IsSuppressSuggestionWindow(window_name, window_owner)) {
-      suppressSuggestion_ = YES;
-    } else {
-      suppressSuggestion_ = NO;
-    }
+    suppressSuggestion_ = mozc::MacUtil::IsSuppressSuggestionWindow(window_name, window_owner);
   }
 
   DLOG(INFO) << kProductNameInEnglish << " client (" << self << "): activated for " << sender;
