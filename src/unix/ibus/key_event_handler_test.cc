@@ -180,6 +180,13 @@ TEST_F(KeyEventHandlerTest, GetKeyEvent) {
     EXPECT_NO_MODIFIERS_PRESSED();
   }
 
+  { // Ignore Super (Mod4)
+    key.Clear();
+    EXPECT_FALSE(handler_->GetKeyEvent(IBUS_space, kDummyKeycode,
+                                       IBUS_MOD4_MASK, config::Config::ROMAN,
+                                       true, &key));
+  }
+
   // This test fails in current implementation.
   // TODO(hsumita): Enables it.
   /*
