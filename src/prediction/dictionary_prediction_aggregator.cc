@@ -316,12 +316,13 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
       return TRAVERSE_CONTINUE;
     }
 
-    results_->push_back(Result());
-    results_->back().InitializeByTokenAndTypes(token, types_);
-    results_->back().wcost += penalty_;
-    results_->back().source_info |= source_info_;
-    results_->back().non_expanded_original_key =
-        std::string(non_expanded_original_key_);
+    Result result;
+    result.InitializeByTokenAndTypes(token, types_);
+    result.wcost += penalty_;
+    result.source_info |= source_info_;
+    result.non_expanded_original_key = std::string(non_expanded_original_key_);
+    if (penalty_ > 0) result.types |= KANA_MODIFIER_EXPANDED;
+    results_->emplace_back(std::move(result));
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
   }
 
@@ -690,6 +691,8 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
       selected_types |= SINGLE_KANJI;
     }
   }
+
+  MaybePopulateTypingCorrectionPenalty(request, segments, results);
 
   return selected_types;
 }
@@ -1773,19 +1776,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 
     // Appends the result with TYPING_CORRECTION attribute.
     for (Result &result : corrected_results) {
-      if (query.type & TypeCorrectedQuery::CORRECTION) {
-        result.types |= TYPING_CORRECTION;
-      }
-      if (query.type & TypeCorrectedQuery::COMPLETION) {
-        result.types |= TYPING_COMPLETION;
-      }
-      result.typing_correction_score = query.score;
-      // bias = hyp_score - base_score, so larger is better.
-      // bias is computed in log10 domain, so we need to use the different
-      // scale factor. 500 * log(10) = ~1150.
-      const int adjustment = -1150 * query.bias;
-      result.typing_correction_adjustment = adjustment;
-      result.wcost += adjustment;
+      PopulateTypeCorrectedQuery(query, &result);
       result.value = manager->ConvertConversionString(result.value);
       results->emplace_back(std::move(result));
     }
@@ -1933,6 +1924,17 @@ bool DictionaryPredictionAggregator::IsZipCodeRequest(
   }
   return true;
 }
+
+void DictionaryPredictionAggregator::MaybePopulateTypingCorrectionPenalty(
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<Result> *results) const {
+  const engine::SupplementalModelInterface *supplemental_model =
+      modules_.GetSupplementalModel();
+  if (!supplemental_model) return;
+
+  supplemental_model->PopulateTypeCorrectedQuery(request, segments, results);
+}
+
 }  // namespace prediction
 }  // namespace mozc
 

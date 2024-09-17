@@ -60,6 +60,10 @@ class MockSupplementalModel : public SupplementalModelInterface {
               CorrectComposition,
               (const ConversionRequest &request, absl::string_view context),
               (const, override));
+  MOCK_METHOD(void, PopulateTypeCorrectedQuery,
+              (const ConversionRequest &request, const Segments &segments,
+               std::vector<prediction::Result> *results),
+              (const, override));
   MOCK_METHOD(void, RerankTypingCorrection,
               (const ConversionRequest &request, const Segments &segments,
                std::vector<absl::Nonnull<const prediction::Result *>> *results),

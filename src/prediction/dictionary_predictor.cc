@@ -893,10 +893,16 @@ std::string DictionaryPredictor::GetPredictionTypeDebugString(
     debug_desc.append(1, 'E');
   }
   if (types & PredictionType::TYPING_CORRECTION) {
-    debug_desc.append("T");
+    debug_desc.append(1, 'T');
+  }
+  if (types & PredictionType::TYPING_COMPLETION) {
+    debug_desc.append(1, 'C');
   }
   if (types & PredictionType::SUPPLEMENTAL_MODEL) {
     debug_desc.append(1, 'X');
+  }
+  if (types & PredictionType::KANA_MODIFIER_EXPANDED) {
+    debug_desc.append(1, 'K');
   }
   return debug_desc;
 }

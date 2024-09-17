@@ -36,10 +36,12 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "composer/query.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
@@ -80,6 +82,10 @@ enum PredictionType {
   // TODO(noriyukit): This label should be integrated with REALTIME. This is
   // why 65536 is used to indicate that it is a temporary assignment.
   REALTIME_TOP = 65536,
+
+  // Kana modifier is expanded inside the dictionary lookup.
+  // TODO(taku): This label should be migrated to TYPING_CORRECTION.
+  KANA_MODIFIER_EXPANDED = 32768,
 };
 // Bitfield to store a set of PredictionType.
 using PredictionTypes = int32_t;
@@ -199,6 +205,12 @@ struct ResultCostLess {
     return lhs.cost < rhs.cost;
   }
 };
+
+// Populates the typing correction result in `query` to prediction::Result
+// TODO(taku): rename `query` as it is not a query.
+void PopulateTypeCorrectedQuery(
+    const composer::TypeCorrectedQuery &typing_corrected_result,
+    absl::Nonnull<Result *> result);
 
 #ifndef NDEBUG
 #define MOZC_WORD_LOG_MESSAGE(message) \

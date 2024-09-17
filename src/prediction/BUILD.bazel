@@ -208,8 +208,10 @@ mozc_cc_library(
     deps = [
         ":zero_query_dict",
         "//base/strings:unicode",
+        "//composer:query",
         "//converter:segments",
         "//dictionary:dictionary_token",
+        "@com_google_absl//absl/base:nullability",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
