@@ -192,7 +192,6 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   suppressSuggestion_ = NO;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
   candidateController_ = std::make_unique<mozc::renderer::RendererClient>();
-  rendererCommand_ = new (std::nothrow) RendererCommand;
   mozcClient_ = mozc::client::ClientFactory::NewClient();
   imkServer_ = reinterpret_cast<id<ServerCallback>>(server);
   imkClientForTest_ = nil;
@@ -201,8 +200,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 
   // We don't check the return value of NSBundle because it fails during tests.
   [NSBundle loadNibNamed:@"Config" owner:self];
-  if (!originalString_ || !composedString_ || !candidateController_ || !rendererCommand_ ||
-      !mozcClient_) {
+  if (!originalString_ || !composedString_ || !candidateController_ || !mozcClient_) {
     self = nil;
   } else {
     DLOG(INFO) << [[NSString
@@ -214,7 +212,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     [self setupClientBundle:inputClient];
     [self setupCapability];
     RendererCommand::ApplicationInfo *applicationInfo =
-        rendererCommand_->mutable_application_info();
+        rendererCommand_.mutable_application_info();
     applicationInfo->set_process_id(::getpid());
     // thread_id and receiver_handle are not used currently in Mac but
     // set some values to prevent warning.
@@ -230,7 +228,6 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   originalString_ = nil;
   composedString_ = nil;
   imkClientForTest_ = nil;
-  delete rendererCommand_;
   DLOG(INFO) << "dealloc server";
 }
 
@@ -311,8 +308,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   [super activateServer:sender];
   [self setupClientBundle:sender];
   checkInputMode_ = YES;
-  if (rendererCommand_->visible() && candidateController_) {
-    candidateController_->ExecCommand(*rendererCommand_);
+  if (rendererCommand_.visible() && candidateController_) {
+    candidateController_->ExecCommand(rendererCommand_);
   }
   [self handleConfig];
   [imkServer_ setCurrentController:self];
@@ -727,11 +724,11 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (void)clearCandidates {
-  rendererCommand_->set_type(RendererCommand::UPDATE);
-  rendererCommand_->set_visible(false);
-  rendererCommand_->clear_output();
+  rendererCommand_.set_type(RendererCommand::UPDATE);
+  rendererCommand_.set_visible(false);
+  rendererCommand_.clear_output();
   if (candidateController_) {
-    candidateController_->ExecCommand(*rendererCommand_);
+    candidateController_->ExecCommand(rendererCommand_);
   }
 }
 
@@ -749,9 +746,9 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   }
 
   // If there is no candidate, the candidate window is closed.
-  if (rendererCommand_->output().candidates().candidate_size() == 0) {
-    rendererCommand_->set_visible(false);
-    candidateController_->ExecCommand(*rendererCommand_);
+  if (rendererCommand_.output().candidates().candidate_size() == 0) {
+    rendererCommand_.set_visible(false);
+    candidateController_->ExecCommand(rendererCommand_);
     return;
   }
 
@@ -763,16 +760,16 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   //    cursor position correctly.  The candidate window moves
   //    frequently with those application, which irritates users.
   //  - Kotoeri does this too.
-  if (rendererCommand_->visible()) {
+  if (rendererCommand_.visible()) {
     // Call ExecCommand anyway to update other information like candidate words.
-    candidateController_->ExecCommand(*rendererCommand_);
+    candidateController_->ExecCommand(rendererCommand_);
     return;
   }
 
-  rendererCommand_->set_visible(true);
+  rendererCommand_.set_visible(true);
 
   NSRect preeditRect = NSZeroRect;
-  const int32_t position = rendererCommand_->output().candidates().position();
+  const int32_t position = rendererCommand_.output().candidates().position();
   // Some applications throws error when we call attributesForCharacterIndex.
   DLOG(INFO) << "attributesForCharacterIndex: " << position;
   @try {
@@ -789,7 +786,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     const int right_offset = preeditRect.size.width;
     const int top_offset = -preeditRect.size.height;
 
-    RendererCommand::Rectangle *rect = rendererCommand_->mutable_preedit_rectangle();
+    RendererCommand::Rectangle *rect = rendererCommand_.mutable_preedit_rectangle();
     rect->set_left(baseline.x);
     rect->set_right(baseline.x + right_offset);
     rect->set_top(baseline.y + top_offset);
@@ -800,7 +797,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
                << "," << [[exception reason] UTF8String];
   }
 
-  candidateController_->ExecCommand(*rendererCommand_);
+  candidateController_->ExecCommand(rendererCommand_);
 }
 
 - (void)updateCandidates:(const Output *)output {
@@ -809,8 +806,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     return;
   }
 
-  rendererCommand_->set_type(RendererCommand::UPDATE);
-  *rendererCommand_->mutable_output() = *output;
+  rendererCommand_.set_type(RendererCommand::UPDATE);
+  *rendererCommand_.mutable_output() = *output;
 
   // Runs delayedUpdateCandidates in the next event loop.
   // This is because some applications like Google Docs with Chrome returns

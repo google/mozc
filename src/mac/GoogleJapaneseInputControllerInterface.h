@@ -96,7 +96,7 @@
 @property(readonly) mozc::renderer::RendererInterface *renderer;
 @property(readonly) mozc::config::Config::YenSignCharacter yenSignCharacter;
 @property(readwrite, assign) mozc::commands::CompositionMode mode;
-@property(readonly) mozc::commands::RendererCommand *rendererCommand;
+@property(readonly) const mozc::commands::RendererCommand &rendererCommand;
 @property(readwrite, assign) NSRange replacementRange;
 @property(readwrite, retain) id imkClientForTest;
 @end

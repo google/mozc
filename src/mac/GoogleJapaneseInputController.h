@@ -96,7 +96,7 @@
   std::unique_ptr<mozc::renderer::RendererInterface> candidateController_;
 
   /** |rendererCommand_| stores the command sent to |candidateController_| */
-  mozc::commands::RendererCommand *rendererCommand_;
+  mozc::commands::RendererCommand rendererCommand_;
 
   /** |mozcClient_| manages connection to the mozc server. */
   std::unique_ptr<mozc::client::ClientInterface> mozcClient_;
