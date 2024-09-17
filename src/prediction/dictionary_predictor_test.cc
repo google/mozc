@@ -293,17 +293,17 @@ class MockImmutableConverter : public ImmutableConverterInterface {
  public:
   MOCK_METHOD(bool, ConvertForRequest,
               (const ConversionRequest &request, Segments *segments),
-              (const override));
+              (const, override));
 };
 
 class MockAggregator : public prediction::PredictionAggregatorInterface {
  public:
   MOCK_METHOD(std::vector<prediction::Result>, AggregateResults,
               (const ConversionRequest &request, const Segments &segments),
-              (const override));
+              (const, override));
   MOCK_METHOD(std::vector<prediction::Result>, AggregateTypingCorrectedResults,
               (const ConversionRequest &request, const Segments &segments),
-              (const override));
+              (const, override));
 };
 
 // Helper class to hold predictor objects.

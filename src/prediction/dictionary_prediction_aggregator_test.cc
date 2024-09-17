@@ -353,7 +353,7 @@ class MockImmutableConverter : public ImmutableConverterInterface {
 
   MOCK_METHOD(bool, ConvertForRequest,
               (const ConversionRequest &request, Segments *segments),
-              (const override));
+              (const, override));
 
   static bool ConvertForRequestImpl(const ConversionRequest &request,
                                     Segments *segments) {
@@ -379,7 +379,7 @@ class MockSingleKanjiPredictionAggregator
   ~MockSingleKanjiPredictionAggregator() override = default;
   MOCK_METHOD(std::vector<Result>, AggregateResults,
               (const ConversionRequest &request, const Segments &Segments),
-              (const override));
+              (const, override));
 };
 
 // Helper class to hold dictionary data and aggregator object.
