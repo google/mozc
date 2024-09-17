@@ -310,7 +310,12 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     candidateController_->ExecCommand(rendererCommand_);
   }
   [self handleConfig];
-  [imkServer_ setCurrentController:self];
+
+  // This is a workaroud due to the crash issue on macOS 15.
+  NSOperatingSystemVersion versionInfo = [[NSProcessInfo processInfo] operatingSystemVersion];
+  if (versionInfo.majorVersion < 15) {
+    [imkServer_ setCurrentController:self];
+  }
 
   std::string window_name, window_owner;
   if (mozc::MacUtil::GetFrontmostWindowNameAndOwner(&window_name, &window_owner)) {

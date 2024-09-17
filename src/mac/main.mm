@@ -68,7 +68,12 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   DLOG(INFO) << mozc::kProductNameInEnglish << " initialized";
-  [imkServer registerRendererConnection];
+
+  // This is a workaroud due to the crash issue on macOS 15.
+  NSOperatingSystemVersion versionInfo = [[NSProcessInfo processInfo] operatingSystemVersion];
+  if (versionInfo.majorVersion < 15) {
+    [imkServer registerRendererConnection];
+  }
 
   [GoogleJapaneseInputController initializeConstants];
 
