@@ -199,7 +199,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   lastKeyCode_ = 0;
 
   // We don't check the return value of NSBundle because it fails during tests.
-  [NSBundle loadNibNamed:@"Config" owner:self];
+  [[NSBundle mainBundle] loadNibNamed:@"Config" owner:self topLevelObjects:nil];
   if (!originalString_ || !composedString_ || !candidateController_ || !mozcClient_) {
     self = nil;
   } else {
@@ -684,7 +684,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
                                                      atRange:NSMakeRange(NSNotFound, 0)];
       NSDictionary *underlineAttributes = [self markForStyle:kTSMHiliteConvertedText
                                                      atRange:NSMakeRange(NSNotFound, 0)];
-      const Preedit::Segment &seg = preedit->segment(i);
+      const Preedit::Segment &seg = preedit->segment(static_cast<int32_t>(i));
       NSDictionary *attr = (seg.annotation() == Preedit::Segment::HIGHLIGHT) ? highlightAttributes
                                                                              : underlineAttributes;
       NSString *seg_string = [NSString stringWithUTF8String:seg.value().c_str()];
