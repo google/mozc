@@ -1009,6 +1009,11 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
     std::stable_sort(scores.begin(), scores.end(),
                      std::greater<ScoreCandidate>());
     modified |= SortCandidates(scores, segment);
+    if (!(segment->candidate(0).attributes &
+          Segment::Candidate::BEST_CANDIDATE)) {
+      segment->mutable_candidate(0)->attributes |=
+          Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER;
+    }
   }
   return modified;
 }

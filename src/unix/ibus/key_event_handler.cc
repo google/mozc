@@ -62,6 +62,18 @@ bool KeyEventHandler::GetKeyEvent(uint keyval, uint keycode, uint modifiers,
   DCHECK(key);
   key->Clear();
 
+  // Ignore key events with modifiers, except for the below;
+  // - Alt (Mod1) - Mozc uses Alt for shortcuts
+  // - NumLock (Mod2) - NumLock shouldn't impact shortcuts
+  // This is needed for handling shortcuts such as Super (Mod4) + Space,
+  // IBus's default for switching input methods.
+  // https://github.com/google/mozc/issues/853
+  constexpr uint kExtraModMask =
+      IBUS_MOD3_MASK | IBUS_MOD4_MASK | IBUS_MOD5_MASK;
+  if (modifiers & kExtraModMask) {
+    return false;
+  }
+
   if (!key_translator_->Translate(keyval, keycode, modifiers, preedit_method,
                                   layout_is_jp, key)) {
     LOG(ERROR) << "Translate failed";

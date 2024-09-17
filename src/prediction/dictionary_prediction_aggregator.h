@@ -278,6 +278,10 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const ConversionRequest &request, const Segments &segments,
       int zip_code_id, int unknown_id, std::vector<Result> *results);
 
+  void MaybePopulateTypingCorrectionPenalty(const ConversionRequest &request,
+                                            const Segments &segments,
+                                            std::vector<Result> *results) const;
+
   // Test peer to access private methods
   friend class DictionaryPredictionAggregatorTestPeer;
 

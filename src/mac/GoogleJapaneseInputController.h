@@ -71,20 +71,15 @@
    * separated from |keyCodeMap_| because it is for DIRECT mode. */
   mozc::config::Config::YenSignCharacter yenSignCharacter_;
 
-  /** Check the kana/ascii input mode at the key event if true. Because it requires GetConfig which
-   * asks Converter server, we want to delay the checking to the key event timing but we don't want
-   * to call this every key events. */
-  BOOL checkInputMode_;
-
   /** |suppressSuggestion_| indicates whether to suppress the suggestion. */
-  BOOL suppressSuggestion_;
+  bool suppressSuggestion_;
 
   /** |keyCodeMap_| manages the mapping between Mac key code and mozc key events. */
   KeyCodeMap *keyCodeMap_;
 
   /** |clientBundle_| is the Bundle ID of the client application which the controller communicates
    * with. */
-  std::string *clientBundle_;
+  std::string clientBundle_;
 
   NSRange replacementRange_;
 
@@ -93,10 +88,10 @@
   uint16_t lastKeyCode_;
 
   /** |candidateController_| controls the candidate windows. */
-  mozc::renderer::RendererInterface *candidateController_;
+  std::unique_ptr<mozc::renderer::RendererInterface> candidateController_;
 
   /** |rendererCommand_| stores the command sent to |candidateController_| */
-  mozc::commands::RendererCommand *rendererCommand_;
+  mozc::commands::RendererCommand rendererCommand_;
 
   /** |mozcClient_| manages connection to the mozc server. */
   std::unique_ptr<mozc::client::ClientInterface> mozcClient_;
@@ -136,6 +131,9 @@
 
 /** Sets the ClientInterface to use in the controller. */
 - (void)setMozcClient:(std::unique_ptr<mozc::client::ClientInterface>)newMozcClient;
+
+/** Sets the RendererInterface to use in the controller. */
+- (void)setRenderer:(std::unique_ptr<mozc::renderer::RendererInterface>)newRenderer;
 
 /** create instances for global objects which will be referred from the controller instances. */
 + (void)initializeConstants;

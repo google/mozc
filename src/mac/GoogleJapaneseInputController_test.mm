@@ -261,8 +261,9 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
     auto mock_mozc_client = std::make_unique<mozc::client::ClientMock>();
     mock_mozc_client_ = mock_mozc_client.get();
     [controller_ setMozcClient:std::move(mock_mozc_client)];
-    mock_renderer_ = new MockRenderer;
-    controller_.renderer = mock_renderer_;
+    auto mock_renderer = std::make_unique<MockRenderer>();
+    mock_renderer_ = mock_renderer.get();
+    [controller_ setRenderer:std::move(mock_renderer)];
   }
 
   void ResetClientBundleIdentifier(NSString *new_bundle_id) {
@@ -273,7 +274,7 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
 
   client::ClientMock *mock_mozc_client_;
   MockClient *mock_client_;
-  MockRenderer *mock_renderer_;
+  const MockRenderer *mock_renderer_;
 
   GoogleJapaneseInputController *controller_;
 
@@ -448,11 +449,11 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // Run the runloop so "delayedUpdateCandidates" can be called
   [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   EXPECT_EQ([mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"], 1);
-  const commands::RendererCommand *rendererCommand = controller_.rendererCommand;
+  const commands::RendererCommand &rendererCommand = controller_.rendererCommand;
   EXPECT_EQ(mock_renderer_->counter_ExecCommand(), 2);
-  EXPECT_TRUE(rendererCommand->visible());
+  EXPECT_TRUE(rendererCommand.visible());
   const commands::RendererCommand::Rectangle &preedit_rectangle =
-      rendererCommand->preedit_rectangle();
+      rendererCommand.preedit_rectangle();
   EXPECT_EQ(preedit_rectangle.left(), 50);
   EXPECT_EQ(preedit_rectangle.top(), 708);
   EXPECT_EQ(preedit_rectangle.right(), 51);
@@ -465,11 +466,10 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   // Does not change: not call again
   EXPECT_EQ([mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"], 1);
-  rendererCommand = controller_.rendererCommand;
   EXPECT_EQ(mock_renderer_->counter_ExecCommand(), 3);
-  EXPECT_TRUE(rendererCommand->visible());
+  EXPECT_TRUE(rendererCommand.visible());
   // Does not change the position
-  EXPECT_EQ(rendererCommand->preedit_rectangle().DebugString(), preedit_rectangle.DebugString());
+  EXPECT_EQ(rendererCommand.preedit_rectangle().DebugString(), preedit_rectangle.DebugString());
 
   // Then update without candidate entries -- goes invisible.
   output.Clear();
@@ -479,7 +479,7 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // Does not change: not call again
   EXPECT_EQ([mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"], 1);
   EXPECT_EQ(mock_renderer_->counter_ExecCommand(), 4);
-  EXPECT_FALSE(rendererCommand->visible());
+  EXPECT_FALSE(rendererCommand.visible());
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, OpenLink) {
@@ -517,7 +517,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeToDirect) {
   EXPECT_EQ([mock_client_ getCounter:"insertText:replacementRange:"], 1);
   EXPECT_TRUE([@"foo" isEqualToString:mock_client_.insertedText]);
   EXPECT_EQ([[controller_ composedString:nil] length], 0);
-  EXPECT_FALSE(controller_.rendererCommand->visible());
+  EXPECT_FALSE(controller_.rendererCommand.visible());
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, SwitchModeInternal) {

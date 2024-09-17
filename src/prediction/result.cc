@@ -31,9 +31,11 @@
 
 #include <tuple>
 
+#include "absl/base/nullability.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/unicode.h"
+#include "composer/query.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
@@ -136,6 +138,24 @@ void Result::SetSourceInfoForZeroQuery(ZeroQueryType type) {
       LOG(ERROR) << "Should not come here";
       return;
   }
+}
+
+void PopulateTypeCorrectedQuery(
+    const composer::TypeCorrectedQuery &typing_corrected_result,
+    absl::Nonnull<Result *> result) {
+  if (typing_corrected_result.type & composer::TypeCorrectedQuery::CORRECTION) {
+    result->types |= TYPING_CORRECTION;
+  }
+  if (typing_corrected_result.type & composer::TypeCorrectedQuery::COMPLETION) {
+    result->types |= TYPING_COMPLETION;
+  }
+  result->typing_correction_score = typing_corrected_result.score;
+  // bias = hyp_score - base_score, so larger is better.
+  // bias is computed in log10 domain, so we need to use the different
+  // scale factor. 500 * log(10) = ~1150.
+  const int adjustment = -1150 * typing_corrected_result.bias;
+  result->typing_correction_adjustment = adjustment;
+  result->wcost += adjustment;
 }
 
 }  // namespace prediction

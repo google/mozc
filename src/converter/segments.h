@@ -129,6 +129,8 @@ class Segment final {
       SUFFIX_DICTIONARY = 1 << 15,
       // Disables modification and removal in rewriters.
       NO_MODIFICATION = 1 << 16,
+      // Candidate which is reranked by user segment history rewriter.
+      USER_SEGMENT_HISTORY_REWRITER = 1 << 17,
     };
     // LINT.ThenChange(//converter/converter_main.cc)
 
@@ -467,7 +469,7 @@ class Segments final {
   };
 
   // This class wraps an iterator as is, except that `operator*` dereferences
-  // twice. For example, if `InnnerIterator` is the iterator of
+  // twice. For example, if `InnerIterator` is the iterator of
   // `std::deque<Segment *>`, `operator*` dereferences to `Segment&`.
   using inner_iterator = std::deque<Segment *>::iterator;
   using inner_const_iterator = std::deque<Segment *>::const_iterator;

@@ -41,9 +41,6 @@
   NSConnection *renderer_conection_;
 }
 
-// Get the singleton server instance.
-+ (GoogleJapaneseInputServer *)getServer;
-
 // Register the NSConnection for the renderer process
 - (BOOL)registerRendererConnection;
 @end

@@ -51,7 +51,7 @@ class ClientMock : public client::ClientInterface {
   MOCK_METHOD(void, SetServerLauncher,
               (std::unique_ptr<ServerLauncherInterface> server_launcher),
               (override));
-  MOCK_METHOD(bool, IsValidRunLevel, (), (const override));
+  MOCK_METHOD(bool, IsValidRunLevel, (), (const, override));
   MOCK_METHOD(bool, EnsureConnection, (), (override));
   MOCK_METHOD(bool, EnsureSession, (), (override));
   MOCK_METHOD(bool, CheckVersionOrRestartServer, (), (override));
@@ -69,7 +69,7 @@ class ClientMock : public client::ClientInterface {
               (override));
 
   MOCK_METHOD(bool, IsDirectModeCommand, (const commands::KeyEvent &key),
-              (const override));
+              (const, override));
   MOCK_METHOD(bool, GetConfig, (config::Config * config), (override));
   MOCK_METHOD(bool, SetConfig, (const config::Config &config), (override));
   MOCK_METHOD(bool, ClearUserHistory, (), (override));
@@ -80,7 +80,7 @@ class ClientMock : public client::ClientInterface {
   MOCK_METHOD(bool, Reload, (), (override));
   MOCK_METHOD(bool, Cleanup, (), (override));
   MOCK_METHOD(void, Reset, (), (override));
-  MOCK_METHOD(bool, PingServer, (), (const override));
+  MOCK_METHOD(bool, PingServer, (), (const, override));
   MOCK_METHOD(bool, NoOperation, (), (override));
   MOCK_METHOD(void, EnableCascadingWindow, (bool enable), (override));
   MOCK_METHOD(void, set_timeout, (absl::Duration timeout), (override));

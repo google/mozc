@@ -78,6 +78,11 @@ class SupplementalModelInterface {
     return std::nullopt;
   }
 
+  // Populates the typing correction penalty and attribute to `results`.
+  virtual void PopulateTypeCorrectedQuery(
+      const ConversionRequest &request, const Segments &segments,
+      std::vector<prediction::Result> *results) const {}
+
   // Reranks (boost or promote) the typing corrected candidates at `results`.
   virtual void RerankTypingCorrection(
       const ConversionRequest &request, const Segments &segments,

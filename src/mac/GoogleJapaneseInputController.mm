@@ -167,11 +167,10 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   mozcClient_ = std::move(newMozcClient);
 }
 - (mozc::renderer::RendererInterface *)renderer {
-  return candidateController_;
+  return candidateController_.get();
 }
-- (void)setRenderer:(mozc::renderer::RendererInterface *)newRenderer {
-  delete candidateController_;
-  candidateController_ = newRenderer;
+- (void)setRenderer:(std::unique_ptr<mozc::renderer::RendererInterface>)newRenderer {
+  candidateController_ = std::move(newRenderer);
 }
 
 #pragma mark object init/dealloc
@@ -184,17 +183,14 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     return self;
   }
   keyCodeMap_ = [[KeyCodeMap alloc] init];
-  clientBundle_ = new (std::nothrow) std::string;
   replacementRange_ = NSMakeRange(NSNotFound, 0);
   originalString_ = [[NSMutableString alloc] init];
   composedString_ = [[NSMutableAttributedString alloc] init];
   cursorPosition_ = -1;
   mode_ = mozc::commands::DIRECT;
-  checkInputMode_ = YES;
-  suppressSuggestion_ = NO;
+  suppressSuggestion_ = false;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
-  candidateController_ = new (std::nothrow) mozc::renderer::RendererClient;
-  rendererCommand_ = new (std::nothrow) RendererCommand;
+  candidateController_ = std::make_unique<mozc::renderer::RendererClient>();
   mozcClient_ = mozc::client::ClientFactory::NewClient();
   imkServer_ = reinterpret_cast<id<ServerCallback>>(server);
   imkClientForTest_ = nil;
@@ -202,22 +198,20 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   lastKeyCode_ = 0;
 
   // We don't check the return value of NSBundle because it fails during tests.
-  [NSBundle loadNibNamed:@"Config" owner:self];
-  if (!originalString_ || !composedString_ || !candidateController_ || !rendererCommand_ ||
-      !mozcClient_ || !clientBundle_) {
+  [[NSBundle mainBundle] loadNibNamed:@"Config" owner:self topLevelObjects:nil];
+  if (!originalString_ || !composedString_ || !candidateController_ || !mozcClient_) {
     self = nil;
   } else {
     DLOG(INFO) << [[NSString
         stringWithFormat:@"initWithServer: %@ %@ %@", server, delegate, inputClient] UTF8String];
     if (!candidateController_->Activate()) {
       LOG(ERROR) << "Cannot activate renderer";
-      delete candidateController_;
-      candidateController_ = nullptr;
+      candidateController_.reset();
     }
     [self setupClientBundle:inputClient];
     [self setupCapability];
     RendererCommand::ApplicationInfo *applicationInfo =
-        rendererCommand_->mutable_application_info();
+        rendererCommand_.mutable_application_info();
     applicationInfo->set_process_id(::getpid());
     // thread_id and receiver_handle are not used currently in Mac but
     // set some values to prevent warning.
@@ -233,9 +227,6 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   originalString_ = nil;
   composedString_ = nil;
   imkClientForTest_ = nil;
-  delete clientBundle_;
-  delete candidateController_;
-  delete rendererCommand_;
   DLOG(INFO) << "dealloc server";
 }
 
@@ -315,26 +306,26 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 - (void)activateServer:(id)sender {
   [super activateServer:sender];
   [self setupClientBundle:sender];
-  checkInputMode_ = YES;
-  if (rendererCommand_->visible() && candidateController_) {
-    candidateController_->ExecCommand(*rendererCommand_);
+  if (rendererCommand_.visible() && candidateController_) {
+    candidateController_->ExecCommand(rendererCommand_);
   }
   [self handleConfig];
-  [imkServer_ setCurrentController:self];
+
+  // This is a workaroud due to the crash issue on macOS 15.
+  NSOperatingSystemVersion versionInfo = [[NSProcessInfo processInfo] operatingSystemVersion];
+  if (versionInfo.majorVersion < 15) {
+    [imkServer_ setCurrentController:self];
+  }
 
   std::string window_name, window_owner;
   if (mozc::MacUtil::GetFrontmostWindowNameAndOwner(&window_name, &window_owner)) {
     DLOG(INFO) << "frontmost window name: \"" << window_name << "\" " << "owner: \"" << window_owner
                << "\"";
-    if (mozc::MacUtil::IsSuppressSuggestionWindow(window_name, window_owner)) {
-      suppressSuggestion_ = YES;
-    } else {
-      suppressSuggestion_ = NO;
-    }
+    suppressSuggestion_ = mozc::MacUtil::IsSuppressSuggestionWindow(window_name, window_owner);
   }
 
   DLOG(INFO) << kProductNameInEnglish << " client (" << self << "): activated for " << sender;
-  DLOG(INFO) << "sender bundleID: " << *clientBundle_;
+  DLOG(INFO) << "sender bundleID: " << clientBundle_;
 }
 
 - (void)deactivateServer:(id)sender {
@@ -346,7 +337,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     candidateController_->ExecCommand(clearCommand);
   }
   DLOG(INFO) << kProductNameInEnglish << " client (" << self << "): deactivated";
-  DLOG(INFO) << "sender bundleID: " << *clientBundle_;
+  DLOG(INFO) << "sender bundleID: " << clientBundle_;
   [super deactivateServer:sender];
 }
 
@@ -397,14 +388,14 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 - (void)setupClientBundle:(id)sender {
   NSString *bundleIdentifier = [sender bundleIdentifier];
   if (bundleIdentifier != nil && [bundleIdentifier length] > 0) {
-    clientBundle_->assign([bundleIdentifier UTF8String]);
+    clientBundle_.assign([bundleIdentifier UTF8String]);
   }
 }
 
 - (void)setupCapability {
   Capability capability;
 
-  if (IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     capability.set_text_deletion(Capability::NO_TEXT_DELETION_CAPABILITY);
   } else {
     capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
@@ -469,7 +460,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     LOG(ERROR) << "gModeIdMap is not initialized correctly.";
     return;
   }
-  if (IsBannedApplication(gNoDisplayModeSwitchApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoDisplayModeSwitchApps, clientBundle_)) {
     return;
   }
 
@@ -493,7 +484,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 
 - (void)launchWordRegisterTool:(id)client {
   ::setenv(mozc::kWordRegisterEnvironmentName, "", 1);
-  if (!IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (!IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     NSRange selectedRange = [client selectedRange];
     if (selectedRange.location != NSNotFound && selectedRange.length != NSNotFound &&
         selectedRange.length > 0) {
@@ -507,7 +498,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (void)invokeReconvert:(const SessionCommand *)command client:(id)sender {
-  if (IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     return;
   }
 
@@ -544,7 +535,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (void)invokeUndo:(id)sender {
-  if (IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     return;
   }
 
@@ -586,7 +577,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 
   // Handles deletion range.  We do not even handle it for some
   // applications to prevent application crashes.
-  if (output->has_deletion_range() && !IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if (output->has_deletion_range() && !IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
     if ([composedString_ length] == 0 && replacementRange_.location == NSNotFound) {
       NSRange selectedRange = [sender selectedRange];
       const mozc::commands::DeletionRange &deletion_range = output->deletion_range();
@@ -692,7 +683,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
                                                      atRange:NSMakeRange(NSNotFound, 0)];
       NSDictionary *underlineAttributes = [self markForStyle:kTSMHiliteConvertedText
                                                      atRange:NSMakeRange(NSNotFound, 0)];
-      const Preedit::Segment &seg = preedit->segment(i);
+      const Preedit::Segment &seg = preedit->segment(static_cast<int32_t>(i));
       NSDictionary *attr = (seg.annotation() == Preedit::Segment::HIGHLIGHT) ? highlightAttributes
                                                                              : underlineAttributes;
       NSString *seg_string = [NSString stringWithUTF8String:seg.value().c_str()];
@@ -732,11 +723,11 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (void)clearCandidates {
-  rendererCommand_->set_type(RendererCommand::UPDATE);
-  rendererCommand_->set_visible(false);
-  rendererCommand_->clear_output();
+  rendererCommand_.set_type(RendererCommand::UPDATE);
+  rendererCommand_.set_visible(false);
+  rendererCommand_.clear_output();
   if (candidateController_) {
-    candidateController_->ExecCommand(*rendererCommand_);
+    candidateController_->ExecCommand(rendererCommand_);
   }
 }
 
@@ -754,9 +745,9 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   }
 
   // If there is no candidate, the candidate window is closed.
-  if (rendererCommand_->output().candidates().candidate_size() == 0) {
-    rendererCommand_->set_visible(false);
-    candidateController_->ExecCommand(*rendererCommand_);
+  if (rendererCommand_.output().candidates().candidate_size() == 0) {
+    rendererCommand_.set_visible(false);
+    candidateController_->ExecCommand(rendererCommand_);
     return;
   }
 
@@ -768,16 +759,16 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   //    cursor position correctly.  The candidate window moves
   //    frequently with those application, which irritates users.
   //  - Kotoeri does this too.
-  if (rendererCommand_->visible()) {
+  if (rendererCommand_.visible()) {
     // Call ExecCommand anyway to update other information like candidate words.
-    candidateController_->ExecCommand(*rendererCommand_);
+    candidateController_->ExecCommand(rendererCommand_);
     return;
   }
 
-  rendererCommand_->set_visible(true);
+  rendererCommand_.set_visible(true);
 
   NSRect preeditRect = NSZeroRect;
-  const int32_t position = rendererCommand_->output().candidates().position();
+  const int32_t position = rendererCommand_.output().candidates().position();
   // Some applications throws error when we call attributesForCharacterIndex.
   DLOG(INFO) << "attributesForCharacterIndex: " << position;
   @try {
@@ -794,18 +785,18 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     const int right_offset = preeditRect.size.width;
     const int top_offset = -preeditRect.size.height;
 
-    RendererCommand::Rectangle *rect = rendererCommand_->mutable_preedit_rectangle();
+    RendererCommand::Rectangle *rect = rendererCommand_.mutable_preedit_rectangle();
     rect->set_left(baseline.x);
     rect->set_right(baseline.x + right_offset);
     rect->set_top(baseline.y + top_offset);
     rect->set_bottom(baseline.y);
 
   } @catch (NSException *exception) {
-    LOG(ERROR) << "Exception from [" << *clientBundle_ << "] " << [[exception name] UTF8String]
+    LOG(ERROR) << "Exception from [" << clientBundle_ << "] " << [[exception name] UTF8String]
                << "," << [[exception reason] UTF8String];
   }
 
-  candidateController_->ExecCommand(*rendererCommand_);
+  candidateController_->ExecCommand(rendererCommand_);
 }
 
 - (void)updateCandidates:(const Output *)output {
@@ -814,8 +805,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     return;
   }
 
-  rendererCommand_->set_type(RendererCommand::UPDATE);
-  *rendererCommand_->mutable_output() = *output;
+  rendererCommand_.set_type(RendererCommand::UPDATE);
+  *rendererCommand_.mutable_output() = *output;
 
   // Runs delayedUpdateCandidates in the next event loop.
   // This is because some applications like Google Docs with Chrome returns
@@ -829,7 +820,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   // On some application like login window of screensaver, opening
   // link behavior should not happen because it can cause some
   // security issues.
-  if (!clientBundle_ || IsBannedApplication(gNoOpenLinkApps, *clientBundle_)) {
+  if (IsBannedApplication(gNoOpenLinkApps, clientBundle_)) {
     return;
   }
   [[NSWorkspace sharedWorkspace] openURL:url];
@@ -954,8 +945,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   }
   keyEvent.set_mode(mode_);
 
-  if ([composedString_ length] == 0 && !IsBannedApplication(gNoSelectedRangeApps, *clientBundle_) &&
-      !IsBannedApplication(gNoSurroundingTextApps, *clientBundle_)) {
+  if ([composedString_ length] == 0 && !IsBannedApplication(gNoSelectedRangeApps, clientBundle_) &&
+      !IsBannedApplication(gNoSurroundingTextApps, clientBundle_)) {
     [self fillSurroundingContext:&context client:sender];
   }
   if (!mozcClient_->SendKeyWithContext(keyEvent, context, &output)) {

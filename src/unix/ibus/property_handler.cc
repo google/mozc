@@ -452,7 +452,7 @@ void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper *engine,
 
       const MozcEngineProperty *entry =
           prop.GetData<MozcEngineProperty>(kMozcEnginePropertyKey);
-      if (!entry || !entry->composition_mode) {
+      if (!entry) {
         continue;
       }
       SetCompositionMode(entry->composition_mode);

@@ -27,9 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
-#import <InputMethodKit/IMKServer.h>
 
 #include <memory>
 
@@ -57,12 +55,25 @@ int main(int argc, char *argv[]) {
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  IMKServer *imkServer = [GoogleJapaneseInputServer getServer];
+  // Initialize imkServer
+  NSBundle *bundle = [NSBundle mainBundle];
+  NSDictionary *infoDictionary = [bundle infoDictionary];
+  NSString *connectionName = [infoDictionary objectForKey:@"InputMethodConnectionName"];
+  GoogleJapaneseInputServer *imkServer =
+    [[GoogleJapaneseInputServer alloc] initWithName:connectionName
+                                   bundleIdentifier:[bundle bundleIdentifier]];
+
   if (!imkServer) {
     LOG(FATAL) << mozc::kProductNameInEnglish << " failed to initialize";
     return -1;
   }
   DLOG(INFO) << mozc::kProductNameInEnglish << " initialized";
+
+  // This is a workaroud due to the crash issue on macOS 15.
+  NSOperatingSystemVersion versionInfo = [[NSProcessInfo processInfo] operatingSystemVersion];
+  if (versionInfo.majorVersion < 15) {
+    [imkServer registerRendererConnection];
+  }
 
   [GoogleJapaneseInputController initializeConstants];
 

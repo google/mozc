@@ -171,9 +171,9 @@ class MockPredictor : public mozc::prediction::PredictorInterface {
   ~MockPredictor() override = default;
 
   MOCK_METHOD(bool, PredictForRequest, (const ConversionRequest &, Segments *),
-              (const override));
+              (const, override));
   MOCK_METHOD(void, Revert, (Segments *), (override));
-  MOCK_METHOD(const std::string &, GetPredictorName, (), (const override));
+  MOCK_METHOD(const std::string &, GetPredictorName, (), (const, override));
 };
 
 class MockRewriter : public RewriterInterface {
@@ -182,7 +182,7 @@ class MockRewriter : public RewriterInterface {
   ~MockRewriter() override = default;
 
   MOCK_METHOD(bool, Rewrite, (const ConversionRequest &, Segments *),
-              (const override));
+              (const, override));
   MOCK_METHOD(void, Revert, (Segments *), (override));
 };
 

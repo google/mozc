@@ -169,6 +169,7 @@ std::string CandidateAttributesToString(uint32_t attrs) {
   ADD_STR(AUTO_PARTIAL_SUGGESTION);
   ADD_STR(USER_HISTORY_PREDICTION);
   ADD_STR(NO_MODIFICATION);
+  ADD_STR(USER_SEGMENT_HISTORY_REWRITER);
 
 #undef ADD_STR
   return absl::StrJoin(v, " | ");

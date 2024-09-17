@@ -353,7 +353,7 @@ class MockImmutableConverter : public ImmutableConverterInterface {
 
   MOCK_METHOD(bool, ConvertForRequest,
               (const ConversionRequest &request, Segments *segments),
-              (const override));
+              (const, override));
 
   static bool ConvertForRequestImpl(const ConversionRequest &request,
                                     Segments *segments) {
@@ -379,7 +379,7 @@ class MockSingleKanjiPredictionAggregator
   ~MockSingleKanjiPredictionAggregator() override = default;
   MOCK_METHOD(std::vector<Result>, AggregateResults,
               (const ConversionRequest &request, const Segments &Segments),
-              (const override));
+              (const, override));
 };
 
 // Helper class to hold dictionary data and aggregator object.
@@ -1701,6 +1701,70 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
       }
     }
     EXPECT_TRUE(realtime_top_found);
+  }
+}
+
+TEST_F(DictionaryPredictionAggregatorTest, PropagateUserHistoryAttribute) {
+  auto data_and_aggregator = std::make_unique<MockDataAndAggregator>();
+  data_and_aggregator->Init();
+
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+
+  constexpr char kKey[] = "わたしのなまえはなかのです";
+
+  // Set up mock converter
+  {
+    // Make segments like:
+    // "わたしの"    | "なまえは" | "なかのです"
+    // "Watashino" | "Namaeha" | "Nakanodesu"
+    Segments segments;
+
+    auto add_segment = [&segments](absl::string_view key,
+                                   absl::string_view value) {
+      Segment *segment = segments.add_segment();
+      segment->set_key(key);
+      Segment::Candidate *candidate = segment->add_candidate();
+      candidate->key = std::string(key);
+      candidate->value = std::string(value);
+    };
+
+    add_segment("わたしの", "Watashino");
+    add_segment("なまえは", "Namaeha");
+    add_segment("なかのです", "Nakanodesu");
+    segments.mutable_segment(1)->mutable_candidate(0)->attributes =
+        Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER;
+
+    EXPECT_CALL(*data_and_aggregator->mutable_converter(),
+                StartConversion(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+  // Set up mock immutable converter
+  {
+    Segments segments;
+    EXPECT_CALL(*data_and_aggregator->mutable_immutable_converter(),
+                ConvertForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+
+  {
+    Segments segments;
+    InitSegmentsWithKey(kKey, &segments);
+
+    std::vector<Result> results;
+    aggregator.AggregateRealtimeConversion(*suggestion_convreq_, 10, true,
+                                           segments, &results);
+
+    ASSERT_EQ(1, results.size());
+    EXPECT_TRUE(results[0].types & REALTIME);
+    EXPECT_TRUE(results[0].types & REALTIME_TOP);
+    EXPECT_TRUE(results[0].candidate_attributes &
+                Segment::Candidate::NO_VARIANTS_EXPANSION);
+    EXPECT_TRUE(results[0].candidate_attributes &
+                Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
+    EXPECT_EQ(results[0].key, kKey);
+    EXPECT_EQ(results[0].value, "WatashinoNamaehaNakanodesu");
+    EXPECT_EQ(results[0].inner_segment_boundary.size(), 3);
   }
 }
 

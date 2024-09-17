@@ -893,10 +893,16 @@ std::string DictionaryPredictor::GetPredictionTypeDebugString(
     debug_desc.append(1, 'E');
   }
   if (types & PredictionType::TYPING_CORRECTION) {
-    debug_desc.append("T");
+    debug_desc.append(1, 'T');
+  }
+  if (types & PredictionType::TYPING_COMPLETION) {
+    debug_desc.append(1, 'C');
   }
   if (types & PredictionType::SUPPLEMENTAL_MODEL) {
     debug_desc.append(1, 'X');
+  }
+  if (types & PredictionType::KANA_MODIFIER_EXPANDED) {
+    debug_desc.append(1, 'K');
   }
   return debug_desc;
 }
@@ -1006,7 +1012,7 @@ void DictionaryPredictor::SetPredictionCost(
     // have the same reading (key), they should have the same cost bonus
     // from the length part. This implies that the result is reranked by
     // the language model probability as long as the key part is the same.
-    // This behavior is baisically the same as the converter.
+    // This behavior is basically the same as the converter.
     //
     // TODO(team): want find the best parameter instead of kCostFactor.
     constexpr int kCostFactor = 500;
