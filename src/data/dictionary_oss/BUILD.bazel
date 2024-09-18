@@ -32,26 +32,31 @@ load("//converter:evaluation.bzl", "evaluation")
 
 package(default_visibility = ["//:__subpackages__"])
 
-exports_files([
-    "collocation.txt",
-    "collocation_suppression.txt",
-    "connection_single_column.txt",
-    "dictionary00.txt",
-    "dictionary01.txt",
-    "dictionary02.txt",
-    "dictionary03.txt",
-    "dictionary04.txt",
-    "dictionary05.txt",
-    "dictionary06.txt",
-    "dictionary07.txt",
-    "dictionary08.txt",
-    "dictionary09.txt",
-    "id.def",
-    "reading_correction.tsv",
-    "regression_test_result.tsv",
-    "suffix.txt",
-    "suggestion_filter.txt",
-])
+exports_files(
+    srcs = ["id.def"],
+    visibility = [
+        "//converter:__pkg__",  # for :converter_main
+        "//data_manager:__subpackages__",
+    ],
+)
+
+exports_files(
+    srcs = [
+        "collocation.txt",
+        "collocation_suppression.txt",
+        "connection_single_column.txt",
+        "reading_correction.tsv",
+        "suffix.txt",
+        "suggestion_filter.txt",
+    ],
+    visibility = ["//data_manager:__subpackages__"],
+)
+
+exports_files(
+    # dictionary00.txt is used in system_dictionary_test.cc.
+    srcs = ["dictionary00.txt"],
+    visibility = ["//dictionary/system:__pkg__"],
+)
 
 filegroup(
     name = "base_dictionary_data",
