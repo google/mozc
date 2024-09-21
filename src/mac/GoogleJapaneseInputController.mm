@@ -227,6 +227,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   originalString_ = nil;
   composedString_ = nil;
   imkClientForTest_ = nil;
+  candidateController_.reset();
+  mozcClient_.reset();
   DLOG(INFO) << "dealloc server";
 }
 
