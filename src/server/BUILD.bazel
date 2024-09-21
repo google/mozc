@@ -34,13 +34,11 @@ load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
     "mozc_cc_library",
-    "mozc_macos_application",
     "mozc_select",
 )
 load(
     "//:config.bzl",
     "BRANDING",
-    "MACOS_BUNDLE_ID_PREFIX",
 )
 load("//bazel:stubs.bzl", "windows")
 
@@ -113,15 +111,6 @@ mozc_cc_binary(
     ],
 )
 
-mozc_macos_application(
-    name = "mozc_server_macos",
-    app_icons = ["//data/images/mac:product_icon.icns"],
-    bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Converter",
-    bundle_name = BRANDING + "Converter",
-    infoplists = ["Info.plist"],
-    deps = [":mozc_server_lib"],
-    # When we support Breakpad, uncomment the following block.
-    # additional_contents = {
-    #     "[Breakpad]" : "Frameworks",
-    # },
-)
+_qt_impl = select({
+    "@platforms//os:macos": "qt_macos.bzl",
+})

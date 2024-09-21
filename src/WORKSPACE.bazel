@@ -38,7 +38,7 @@ load(
     "http_archive",
     "http_file",
 )
-load("@//:config.bzl", "MACOS_QT_PATH", "SHA256_ZIP_CODE_KEN_ALL", "SHA256_ZIP_CODE_JIGYOSYO")
+load("@//:config.bzl", "SHA256_ZIP_CODE_KEN_ALL", "SHA256_ZIP_CODE_JIGYOSYO")
 load("@//bazel:pkg_config_repository.bzl", "pkg_config_repository")
 
 
@@ -55,7 +55,6 @@ http_archive(
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
 
-
 # Bazel Python rules (0.34.0 2024-07-04)
 http_archive(
     name = "rules_python",
@@ -67,13 +66,20 @@ load("@rules_python//python:repositories.bzl", "py_repositories")
 py_repositories()
 
 
-# Java rules (7.9.0 2024-08-13)
-# https://github.com/bazelbuild/rules_java
-http_archive(
-    name = "rules_java",
-    sha256 = "41131de4417de70b9597e6ebd515168ed0ba843a325dc54a81b92d7af9a7b3ea",
-    urls = ["https://github.com/bazelbuild/rules_java/releases/download/7.9.0/rules_java-7.9.0.tar.gz"],
-)
+# oss_macos or oss_android
+load("//:build_defs.bzl", "macos_deps", "android_deps")
+_impl = select({
+    "//bazel/cc_target_os:oss_macos": [ macos_deps(), ],
+    "//bazel/cc_target_os:oss_android": [ android_deps(), ],
+    "//conditions:default": [],
+})
+
+
+load("@bazel_features//:deps.bzl", "bazel_features_deps")
+select({
+    "//bazel/cc_target_os:oss_macos": [ bazel_features_deps() ],
+    "//conditions:default": [],
+})
 
 
 # Abseil
@@ -98,78 +104,6 @@ protobuf_deps()
 local_repository(
     name = "com_google_googletest",
     path = "third_party/gtest",
-)
-
-
-# Bazel macOS build (3.5.1 2024-04-09)
-# Note, versions after 3.5.1 result a build failure of universal binary.
-# https://github.com/bazelbuild/rules_apple
-http_archive(
-    name = "build_bazel_rules_apple",
-    sha256 = "b4df908ec14868369021182ab191dbd1f40830c9b300650d5dc389e0b9266c8d",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/3.5.1/rules_apple.3.5.1.tar.gz",
-)
-load(
-    "@build_bazel_rules_apple//apple:repositories.bzl",
-    "apple_rules_dependencies",
-)
-apple_rules_dependencies()
-
-load(
-    "@build_bazel_rules_swift//swift:repositories.bzl",
-    "swift_rules_dependencies",
-)
-swift_rules_dependencies()
-
-load(
-    "@build_bazel_rules_swift//swift:extras.bzl",
-    "swift_rules_extra_dependencies",
-)
-swift_rules_extra_dependencies()
-
-load(
-    "@build_bazel_apple_support//lib:repositories.bzl",
-    "apple_support_dependencies",
-)
-apple_support_dependencies()
-
-
-# Android NDK setup (0.1.2 2024-07-23)
-http_archive(
-    name = "rules_android_ndk",
-    sha256 = "65aedff0cd728bee394f6fb8e65ba39c4c5efb11b29b766356922d4a74c623f5",
-    strip_prefix = "rules_android_ndk-0.1.2",
-    url = "https://github.com/bazelbuild/rules_android_ndk/releases/download/v0.1.2/rules_android_ndk-v0.1.2.tar.gz",
-)
-# Check the ANDROID_NDK_HOME envvar, if it is specified set up NDK as follows
-#   load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
-#   android_ndk_repository(name="androidndk")
-# If it is empty, do nothing.
-load("@//bazel:android_repository.bzl", "android_repository")
-android_repository(name = "android_repository")
-load("@android_repository//:setup.bzl", "android_ndk_setup")
-android_ndk_setup()
-
-
-# Android SDK rules (0.5.1 2024-08-06)
-# https://github.com/bazelbuild/rules_android
-http_archive(
-    name = "build_bazel_rules_android",
-    sha256 = "b1599e4604c1594a1b0754184c5e50f895a68f444d1a5a82b688b2370d990ba0",
-    strip_prefix = "rules_android-0.5.1",
-    urls = ["https://github.com/bazelbuild/rules_android/archive/v0.5.1.tar.gz"],
-)
-load("@build_bazel_rules_android//android:rules.bzl", "android_sdk_repository")
-android_sdk_repository(
-    name = "androidsdk",
-)
-
-
-# Placeholder of rules_android for the compatibility with Bzlmod.
-new_local_repository(
-    name = "rules_android",
-    path = "bazel",
-    build_file_content = "",
 )
 
 
@@ -213,33 +147,11 @@ pkg_config_repository(
   packages = ["Qt6Core", "Qt6Gui", "Qt6Widgets"],
 )
 
-# Qt for macOS
-load("@//bazel:qt_mac_repository.bzl", "qt_mac_repository")
-qt_mac_repository(
-  name = "qt_mac",
-  default_path = MACOS_QT_PATH,  # can be replaced with MOZC_QT_PATH envvar.
-)
-
 # Qt for Windows
 new_local_repository(
     name = "qt_win",
     build_file = "@//bazel:BUILD.qt_win.bazel",
     path = "third_party/qt",
-)
-
-# Google Toolbox for Mac
-# https://github.com/google/google-toolbox-for-mac
-# We just need UnitTesting, so strip to the directory and skip dependencies.
-GTM_GIT_SHA="8fbaae947b87c1e66c0934493168fc6d583ed889"
-http_archive(
-    name = "google_toolbox_for_mac",
-    urls = [
-        "https://github.com/google/google-toolbox-for-mac/archive/%s.zip" % GTM_GIT_SHA
-    ],
-    strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
-    build_file = "@//bazel:BUILD.google_toolbox_for_mac.bazel",
-    patches = ["@//:google_toolbox_for_mac.patch"],
-    patch_args = ["-p2"],
 )
 
 # Material icons
@@ -311,3 +223,10 @@ http_archive(
     sha256 = SHA256_ZIP_CODE_JIGYOSYO,
     url = "https://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip",
 )
+
+
+load("//:macos.bzl", "apple_dependencies")
+select({
+    "//bazel/cc_target_os:oss_macos": [apple_dependencies()],
+    "//conditions:default": [],
+})

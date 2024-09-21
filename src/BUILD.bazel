@@ -172,7 +172,12 @@ cc_library(
 
 bzl_library(
     name = "build_defs_bzl",
-    srcs = ["build_defs.bzl"],
+    srcs = [
+        "build_defs.bzl",
+    ] + select({
+        "//bazel/cc_target_os:oss_macos": [ "macos.bzl", ],
+        "//bazel/cc_target_os:oss_android": [ "android.bzl", ],
+    }),
     test_size = "small",
     visibility = ["//:__subpackages__"],
     deps = [
@@ -180,8 +185,10 @@ bzl_library(
         "//bazel:run_build_tool_bzl",
         "//bazel:stubs.bzl",
         "//devtools/build_cleaner/skylark:build_defs_lib",
-        "@build_bazel_rules_apple//apple:macos",
-    ],
+    ] + select({
+        "//bazel/cc_target_os:oss_macos": [ "@build_bazel_rules_apple//apple:macos", ],
+        "//conditions:default": [],
+    }),
 )
 
 bzl_library(

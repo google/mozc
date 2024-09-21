@@ -31,10 +31,12 @@ load(
     "//bazel:qt.bzl",
     "mozc_cc_qt_binary",
     "mozc_cc_qt_library",
-    "mozc_macos_qt_application",
     "mozc_qt_moc",
     "mozc_qt_rcc",
 )
+_qt_impl = select({
+    "@platforms//os:macos": "qt_macos.bzl",
+})
 
 package(
     default_visibility = ["//gui:__subpackages__"],
@@ -97,11 +99,5 @@ mozc_cc_qt_library(
 
 mozc_cc_qt_binary(
     name = "error_message_dialog_main",
-    deps = [":error_message_dialog_main_lib"],
-)
-
-mozc_macos_qt_application(
-    name = "error_message_dialog_macos",
-    bundle_name = "ErrorMessageDialog",
     deps = [":error_message_dialog_main_lib"],
 )

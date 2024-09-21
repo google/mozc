@@ -33,8 +33,11 @@ load(
     "//bazel:qt.bzl",
     "mozc_cc_qt_binary",
     "mozc_cc_qt_library",
-    "mozc_macos_qt_application",
 )
+
+_qt_impl = select({
+    "@platforms//os:macos": "qt_macos.bzl",
+})
 
 mozc_cc_library(
     name = "prelauncher_lib",
@@ -110,14 +113,3 @@ mozc_cc_qt_binary(
     deps = [":mozc_tool_main_lib"],
 )
 
-mozc_macos_qt_application(
-    name = "mozc_tool_macos",
-    bundle_name = "MozcTool",
-    deps = [":mozc_tool_main_lib"],
-)
-
-mozc_macos_qt_application(
-    name = "mozc_prelauncher_macos",
-    bundle_name = BRANDING + "Prelauncher",
-    deps = [":mozc_tool_main_lib"],
-)

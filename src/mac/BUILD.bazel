@@ -29,8 +29,6 @@
 
 load(
     "//:build_defs.bzl",
-    "mozc_macos_application",
-    "mozc_macos_bundle",
     "mozc_objc_library",
     "mozc_objc_test",
     "mozc_py_binary",
@@ -42,7 +40,11 @@ load(
     "MACOS_BUNDLE_ID_PREFIX",
     "MACOS_CODESIGN_IDENTITY",
 )
-
+load(
+    "//:macos.bzl",
+    "mozc_macos_application",
+    "mozc_macos_bundle",
+)
 package(default_visibility = ["//:__subpackages__"])
 
 # BUILD_TYPE_SELECT is treated as a function, but not a string. This cannot be a value of join().

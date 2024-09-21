@@ -35,23 +35,29 @@ depending on it.
 Macro naming guideline: Use mozc_ as a prefix, e.g.:
   - mozc_cc_library
   - mozc_objc_test
-  - mozc_macos_application
   - mozc_select
 
 See also: https://bazel.build/rules/bzl-style#rules
 
 """
 
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle", "macos_unit_test")
+load(
+    "@bazel_tools//tools/build_defs/repo:http.bzl",
+    "http_archive",
+    "http_file",
+)
 load(
     "//:config.bzl",
     "BAZEL_TOOLS_PREFIX",
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
     "MACOS_MIN_OS_VER",
+    "MACOS_QT_PATH",
 )
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library", "register_extension_info")
+# Qt for macos
+load("@//bazel:qt_mac_repository.bzl", "qt_mac_repository")
 
 # Tags aliases for build filtering.
 MOZC_TAGS = struct(
@@ -278,6 +284,34 @@ def mozc_infoplist_strings(name, srcs = [], outs = []):
         tool = "//build_tools:tweak_info_plist_strings",
     )
 
+def mozc_objc_test(
+        name,
+        bundle_id = None,
+        size = None,
+        visibility = None,
+        tags = [],
+        **kwargs):
+    """A wrapper for objc_library and macos_unit_test.
+
+    This macro internally creates two targets: mozc_objc_library and macos_unit_test because the
+    macos_unit_test rule doesn't take source files directly.
+
+    Args:
+      name: name for the macos_unit_test target
+      bundle_id: optional. Test bundle id for macos_unit_test. The default value is
+          MACOS_BUNDLE_ID_PREFIX.package.name.CamelCasedName.
+      size: optional. passed to macos_unit_test.
+      visibility: optional. Visibility for the unit test target.
+      tags: optional. Tags for both the library and unit test targets.
+      **kwargs: other arguments passed to mozc_objc_library.
+    """
+    lib_name = name + "_lib"
+    default_bundle_id = ".".join([
+        MACOS_BUNDLE_ID_PREFIX,
+        _snake_case_camel_case(native.package_name().replace("/", ".")),
+        _snake_case_camel_case(name),
+    ])
+
 def mozc_objc_library(
         name,
         srcs = [],
@@ -308,64 +342,6 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def _snake_case_camel_case(id):
-    # Don't capitalize if it's just one word.
-    if id.find("_") < 0:
-        return id
-    components = id.split("_")
-    return "".join([s.capitalize() for s in components])
-
-def mozc_objc_test(
-        name,
-        bundle_id = None,
-        size = None,
-        visibility = None,
-        tags = [],
-        **kwargs):
-    """A wrapper for objc_library and macos_unit_test.
-
-    This macro internally creates two targets: mozc_objc_library and macos_unit_test because the
-    macos_unit_test rule doesn't take source files directly.
-
-    Args:
-      name: name for the macos_unit_test target
-      bundle_id: optional. Test bundle id for macos_unit_test. The default value is
-          MACOS_BUNDLE_ID_PREFIX.package.name.CamelCasedName.
-      size: optional. passed to macos_unit_test.
-      visibility: optional. Visibility for the unit test target.
-      tags: optional. Tags for both the library and unit test targets.
-      **kwargs: other arguments passed to mozc_objc_library.
-    """
-    lib_name = name + "_lib"
-    default_bundle_id = ".".join([
-        MACOS_BUNDLE_ID_PREFIX,
-        _snake_case_camel_case(native.package_name().replace("/", ".")),
-        _snake_case_camel_case(name),
-    ])
-    mozc_objc_library(
-        name = lib_name,
-        testonly = True,
-        alwayslink = True,
-        visibility = ["//visibility:private"],
-        tags = ["manual"] + tags,
-        **kwargs
-    )
-    macos_unit_test(
-        name = name,
-        minimum_os_version = MACOS_MIN_OS_VER,
-        bundle_id = bundle_id or default_bundle_id,
-        deps = [lib_name],
-        size = size,
-        visibility = visibility,
-        target_compatible_with = ["@platforms//os:macos"],
-        tags = MOZC_TAGS.MAC_ONLY + tags,
-    )
-
-register_extension_info(
-    extension = mozc_objc_test,
-    label_regex_for_dep = "{extension_name}",
-)
-
 def _tweak_infoplists(name, infoplists):
     tweaked_infoplists = []
     for i, plist in enumerate(infoplists):
@@ -390,55 +366,12 @@ def _tweak_strings(name, strings):
         tweaked_strings.append(string_name)
     return tweaked_strings
 
-def mozc_macos_application(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
-    """Rule to create .app for macOS.
-
-    Args:
-      name: name for macos_application.
-      bundle_name: bundle_name for macos_application.
-      infoplists: infoplists are tweaked and applied to macos_application.
-      strings: strings are tweaked and applied to macos_application.
-      bundle_id: bundle_id for macos_application.
-      tags: tags for macos_application.
-      **kwargs: other arguments for macos_application.
-    """
-    macos_application(
-        name = name,
-        bundle_id = bundle_id or (MACOS_BUNDLE_ID_PREFIX + "." + bundle_name),
-        bundle_name = bundle_name,
-        infoplists = _tweak_infoplists(name, infoplists),
-        strings = _tweak_strings(name, strings),
-        minimum_os_version = MACOS_MIN_OS_VER,
-        version = "//data/version:version_macos",
-        target_compatible_with = ["@platforms//os:macos"],
-        tags = tags + MOZC_TAGS.MAC_ONLY,
-        **kwargs
-    )
-
-def mozc_macos_bundle(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
-    """Rule to create .bundle for macOS.
-
-    Args:
-      name: name for macos_bundle.
-      bundle_name: bundle_name for macos_bundle.
-      infoplists: infoplists are tweaked and applied to macos_bundle.
-      strings: strings are tweaked and applied to macos_bundle.
-      bundle_id: bundle_id for macos_bundle.
-      tags: tags for macos_bundle.
-      **kwargs: other arguments for macos_bundle.
-    """
-    macos_bundle(
-        name = name,
-        bundle_id = bundle_id or (MACOS_BUNDLE_ID_PREFIX + "." + bundle_name),
-        bundle_name = bundle_name,
-        infoplists = _tweak_infoplists(name, infoplists),
-        strings = _tweak_strings(name, strings),
-        minimum_os_version = MACOS_MIN_OS_VER,
-        version = "//data/version:version_macos",
-        target_compatible_with = ["@platforms//os:macos"],
-        tags = tags + MOZC_TAGS.MAC_ONLY,
-        **kwargs
-    )
+def _snake_case_camel_case(id):
+    # Don't capitalize if it's just one word.
+    if id.find("_") < 0:
+        return id
+    components = id.split("_")
+    return "".join([s.capitalize() for s in components])
 
 def _win_executable_transition_impl(
         settings,  # @unused
@@ -616,4 +549,88 @@ def mozc_select_enable_usage_rewriter(on = [], off = []):
     return select({
         "//:enable_usage_rewriter": on,
         "//conditions:default": off,
+    })
+
+def macos_deps():
+    http_archive(
+        name = "bazel_features",
+        sha256 = "5d7e4eb0bb17aee392143cd667b67d9044c270a9345776a5e5a3cccbc44aa4b3",
+        strip_prefix = "bazel_features-1.13.0",
+        url = "https://github.com/bazel-contrib/bazel_features/releases/download/v1.13.0/bazel_features-v1.13.0.tar.gz",
+    )
+    http_archive(
+        name = "rules_proto",
+        sha256 = "303e86e722a520f6f326a50b41cfc16b98fe6d1955ce46642a5b7a67c11c0f5d",
+        strip_prefix = "rules_proto-6.0.0",
+        url = "https://github.com/bazelbuild/rules_proto/releases/download/6.0.0/rules_proto-6.0.0.tar.gz",
+    )
+
+    # Bazel macOS build (3.5.1 2024-04-09)
+    # Note, versions after 3.5.1 result a build failure of universal binary.
+    # https://github.com/bazelbuild/rules_apple
+    http_archive(
+        name = "build_bazel_rules_apple",
+        sha256 = "b4df908ec14868369021182ab191dbd1f40830c9b300650d5dc389e0b9266c8d",
+        url = "https://github.com/bazelbuild/rules_apple/releases/download/3.5.1/rules_apple.3.5.1.tar.gz",
+    )
+    
+    http_archive(
+        name = "build_bazel_rules_swift",
+        url = "https://github.com/bazelbuild/rules_swift/releases/download/1.18.0/rules_swift.1.18.0.tar.gz",
+        sha256 = "bb01097c7c7a1407f8ad49a1a0b1960655cf823c26ad2782d0b7d15b323838e2",
+    	patches = ["@//bazel:swift_extras.patch"],
+    )
+
+    # Google Toolbox for Mac
+    # https://github.com/google/google-toolbox-for-mac
+    # We just need UnitTesting, so strip to the directory and skip dependencies.
+    GTM_GIT_SHA="8fbaae947b87c1e66c0934493168fc6d583ed889"
+    http_archive(
+        name = "google_toolbox_for_mac",
+        urls = [
+            "https://github.com/google/google-toolbox-for-mac/archive/%s.zip" % GTM_GIT_SHA
+        ],
+        strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
+        build_file = "@//bazel:BUILD.google_toolbox_for_mac.bazel",
+        patches = ["@//:google_toolbox_for_mac.patch"],
+        patch_args = ["-p2"],
+    )
+
+    # Qt for macOS
+    qt_mac_repository(
+        name = "qt_mac",
+        default_path = MACOS_QT_PATH,  # can be replaced with MOZC_QT_PATH envvar.
+    )
+
+def android_deps():
+    # Java rules (7.9.0 2024-08-13)
+    # https://github.com/bazelbuild/rules_java
+    http_archive(
+        name = "rules_java",
+        sha256 = "41131de4417de70b9597e6ebd515168ed0ba843a325dc54a81b92d7af9a7b3ea",
+        urls = ["https://github.com/bazelbuild/rules_java/releases/download/7.9.0/rules_java-7.9.0.tar.gz"],
+    )
+
+    # Android NDK setup (0.1.2 2024-07-23)
+    http_archive(
+        name = "rules_android_ndk",
+        sha256 = "65aedff0cd728bee394f6fb8e65ba39c4c5efb11b29b766356922d4a74c623f5",
+        strip_prefix = "rules_android_ndk-0.1.2",
+        url = "https://github.com/bazelbuild/rules_android_ndk/releases/download/v0.1.2/rules_android_ndk-v0.1.2.tar.gz",
+        patches = ["bazel/rules_android_ndk.patch"],
+    )
+
+    # Android SDK rules (0.5.1 2024-08-06)
+    # https://github.com/bazelbuild/rules_android
+    http_archive(
+        name = "rules_android",
+        url = "https://github.com/bazelbuild/rules_android/releases/download/v0.5.1/rules_android-v0.5.1.tar.gz",
+        strip_prefix = "rules_android-0.5.1",
+        sha256 = "b1599e4604c1594a1b0754184c5e50f895a68f444d1a5a82b688b2370d990ba0",
+    )
+
+def load_platform_specific_deps():
+    _impl = select({
+        "//bazel/cc_target_os:oss_macos": macos_deps(),
+        "//bazel/cc_target_os:oss_android": android_deps(),
     })
