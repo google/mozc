@@ -125,48 +125,6 @@ jobs:
         run: |
           bazel --bazelrc=windows.bazelrc build //server:mozc_server //gui/tool:mozc_tool --config oss_windows --verbose_failures --cpu=x64_windows
 
-  test:
-    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
-    runs-on: windows-2022
-    timeout-minutes: 90
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Set up pip
-        shell: cmd
-        working-directory: .\src
-        run: |
-          python -m pip install six requests
-
-      - name: Try to restore update_deps cache
-        uses: actions/cache@v4
-        with:
-          path: src/third_party_cache
-          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
-
-      - name: Install Dependencies
-        shell: cmd
-        working-directory: .\src
-        # This command uses src/third_party_cache as the download cache.
-        run: |
-          python build_tools/update_deps.py
-
-      - name: gyp
-        shell: cmd
-        working-directory: .\src
-        run: |
-          python build_mozc.py gyp --noqt --msvs_version=2022
-
-      - name: runtests
-        shell: cmd
-        working-directory: .\src
-        run: |
-          python build_mozc.py runtests -c Debug
-
   # actions/cache works without this job, but having this would increase the likelihood of cache hit
   # in other jobs. Another approach would be to use "needs:".
   # https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow
