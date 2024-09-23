@@ -729,6 +729,7 @@ mozc_py_binary(
         "gen_zip_code_seed.py",
         "zip_code_util.py",
     ],
+    imports = ["."],
     visibility = ["//train/zip_code:__subpackages__"],
 )
 

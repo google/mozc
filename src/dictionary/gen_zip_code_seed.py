@@ -35,7 +35,6 @@ r"""Zip code dictionary generator.
  Output lines will be printed as utf-8.
 
  usage:
-   PYTHONPATH="${PYTHONPATH}:<Mozc's src root dir>"  \
      python ./gen_zip_code_seed.py  \
      --zip_code=zip_code.csv --jigyosyo=jigyosyo.csv  \
      > zip_code_seed.tsv
@@ -57,7 +56,7 @@ import re
 import sys
 import unicodedata
 
-from dictionary import zip_code_util
+import zip_code_util
 
 
 ZIP_CODE_LABEL = 'ZIP_CODE'
