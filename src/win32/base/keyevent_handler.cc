@@ -692,7 +692,7 @@ KeyEventHandlerResult KeyEventHandler::HandleKey(
     // For historical reasons, pass the visible conversion mode to the
     // converter.
     const DWORD repotring_mode = ime_state.visible_conversion_mode;
-    commands::CompositionMode mozc_mode = commands::DIRECT;
+    commands::CompositionMode mozc_mode = commands::HIRAGANA;
     if (!ConversionModeUtil::GetMozcModeFromNativeMode(repotring_mode,
                                                        &mozc_mode)) {
       result.succeeded = false;

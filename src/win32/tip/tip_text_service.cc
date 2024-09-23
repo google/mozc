@@ -194,7 +194,7 @@ HRESULT SpawnTool(const std::string &command) {
 commands::CompositionMode GetMozcMode(TipLangBarCallback::ItemId menu_id) {
   switch (menu_id) {
     case TipLangBarCallback::kDirect:
-      return commands::DIRECT;
+      return commands::HIRAGANA;
     case TipLangBarCallback::kHiragana:
       return commands::HIRAGANA;
     case TipLangBarCallback::kFullKatakana:

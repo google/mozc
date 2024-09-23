@@ -287,7 +287,7 @@ commands::CompositionMode ConvertCompositionMode(
     ibus::Engine::CompositionMode mode) {
   switch (mode) {
     case ibus::Engine::DIRECT:
-      return commands::DIRECT;
+      return commands::HIRAGANA;
     case ibus::Engine::HIRAGANA:
       return commands::HIRAGANA;
     case ibus::Engine::FULL_KATAKANA:
