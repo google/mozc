@@ -1,0 +1,107 @@
+name: Build error
+description: Issues for building Mozc
+title: 'Build error: '
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for your reporting.
+
+        Checking the current CI status and build instructions may address your problem.
+
+        | Linux | Windows | macOS | Android lib |
+        |:-----:|:-------:|:-----:|:-----------:|
+        | [![Linux](https://github.com/google/mozc/actions/workflows/linux.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/linux.yaml) | [![Windows](https://github.com/google/mozc/actions/workflows/windows.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/windows.yaml) | [![macOS](https://github.com/google/mozc/actions/workflows/macos.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/macos.yaml) | [![Android lib](https://github.com/google/mozc/actions/workflows/android.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/android.yaml) |
+
+        Build instructions:
+        * [Linux / Android-lib](https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md)
+        * [macOS](https://github.com/google/mozc/blob/master/docs/build_mozc_in_osx.md)
+        * [Windows](https://github.com/google/mozc/blob/master/docs/build_mozc_in_windows.md)
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the issue is.
+    validations:
+      required: true
+
+  - type: input
+    id: commit_id
+    attributes:
+      label: Commit ID
+      description: If this is not the latest commit, please try the latest commit before reporting.
+      placeholder: d50a8b9ae28c4fba265f734b38bc5ae392fe4d25
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target
+    attributes:
+      label: Build target
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Android-lib
+        - Others (no guarantee)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: build_status
+    attributes:
+      label: CI build status
+      description: Status of https://github.com/google/mozc#build-status
+      options:
+        - passing
+        - failure
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS version
+      placeholder: Ubuntu 24.04, macOS 15.1, etc
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Build environment
+      value: |
+        - Python version (optional): [e.g. 3.11, etc. 3.9+ is required]
+        - Qt6 version (optional): [e.g. 6.7.2, etc.]
+        - Compiler version (optional): [e.g. MSVC 2019, Xcode 14.1, etc.]
+    validations:
+      required: false
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Build commands
+      description: Steps of command lines to reproduce your error.
+      value: |
+        1. git ...
+        2. cd ...
+        3. bazel ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error logs
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
+    validations:
+      required: false

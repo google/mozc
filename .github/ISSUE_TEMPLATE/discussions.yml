@@ -1,0 +1,19 @@
+name: Discussions (Q&A, ideas)
+description: please use Discussions rather than Issues for those topics.
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > Please use Discussions rather than Issues for those topics.
+        >
+        > https://github.com/google/mozc/discussions
+
+  - type: input
+    id: na
+    attributes:
+      label: 'N/A'
+      placeholder: Do not use this field.
+    validations:
+      required: true
