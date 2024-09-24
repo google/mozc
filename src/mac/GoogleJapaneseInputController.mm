@@ -73,16 +73,18 @@ using mozc::commands::Preedit;
 using mozc::commands::RendererCommand;
 using mozc::commands::SessionCommand;
 using mozc::config::Config;
+// less<> is necessary to compare between std::string and absl::string_view.
+using SetOfString = std::set<std::string, std::less<>>;
 
 namespace {
 // set of bundle IDs of applications on which Mozc should not open urls.
-const std::set<std::string, std::less<>> *gNoOpenLinkApps = nullptr;
+const SetOfString *gNoOpenLinkApps = nullptr;
 // The mapping from the CompositionMode enum to the actual id string
 // of composition modes.
 const std::map<CompositionMode, NSString *> *gModeIdMap = nullptr;
-const std::set<std::string, std::less<>> *gNoSelectedRangeApps = nullptr;
-const std::set<std::string, std::less<>> *gNoDisplayModeSwitchApps = nullptr;
-const std::set<std::string, std::less<>> *gNoSurroundingTextApps = nullptr;
+const SetOfString *gNoSelectedRangeApps = nullptr;
+const SetOfString *gNoDisplayModeSwitchApps = nullptr;
+const SetOfString *gNoSurroundingTextApps = nullptr;
 
 // TODO(horo): This value should be get from system configuration.
 //  DoubleClickInterval can be get from NSEvent (MacOSX ver >= 10.6)
@@ -98,46 +100,30 @@ NSString *GetLabelForSuffix(const absl::string_view suffix) {
   return [NSString stringWithUTF8String:label.c_str()];
 }
 
-CompositionMode GetCompositionMode(NSString *modeID) {
-  if (modeID == nullptr) {
-    LOG(ERROR) << "modeID could not be initialized.";
+CompositionMode GetCompositionMode(absl::string_view mode_id) {
+  if (mode_id.empty()) {
+    LOG(ERROR) << "mode_id is initialized.";
     return mozc::commands::DIRECT;
   }
+  DLOG(INFO) << mode_id;
 
-  // The name of direct input mode.  This name is determined at
-  // Info.plist.  We don't use com.google... instead of
-  // com.apple... because of a hack for Java Swing applications like
-  // JEdit.  If we use our own IDs for those modes, such applications
-  // work incorrectly for some reasons.
-  //
-  // The document for ID names is available at:
-  // http://developer.apple.com/legacy/mac/library/documentation/Carbon/
-  // Reference/Text_Services_Manager/Reference/reference.html
-  if ([modeID isEqual:@"com.apple.inputmethod.Roman"]) {
-    // TODO(komatsu): This should be mozc::commands::HALF_ASCII, when
-    // we can handle the difference between the direct mode and the
-    // half ascii mode.
-    DLOG(INFO) << "com.apple.inputmethod.Roman";
+  // The information for ID names was available at
+  // /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/
+  // Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Headers/TextServices.h
+  // These IDs are also defined in Info.plist.
+  if (mode_id == "com.apple.inputmethod.Roman") {
     return mozc::commands::HALF_ASCII;
   }
-
-  if ([modeID isEqual:@"com.apple.inputmethod.Japanese.Katakana"]) {
-    DLOG(INFO) << "com.apple.inputmethod.Japanese.Katakana";
+  if (mode_id == "com.apple.inputmethod.Japanese.Katakana") {
     return mozc::commands::FULL_KATAKANA;
   }
-
-  if ([modeID isEqual:@"com.apple.inputmethod.Japanese.HalfWidthKana"]) {
-    DLOG(INFO) << "com.apple.inputmethod.Japanese.HalfWidthKana";
+  if (mode_id == "com.apple.inputmethod.Japanese.HalfWidthKana") {
     return mozc::commands::HALF_KATAKANA;
   }
-
-  if ([modeID isEqual:@"com.apple.inputmethod.Japanese.FullWidthRoman"]) {
-    DLOG(INFO) << "com.apple.inputmethod.Japanese.FullWidthRoman";
+  if (mode_id == "com.apple.inputmethod.Japanese.FullWidthRoman") {
     return mozc::commands::FULL_ASCII;
   }
-
-  if ([modeID isEqual:@"com.apple.inputmethod.Japanese"]) {
-    DLOG(INFO) << "com.apple.inputmethod.Japanese";
+  if (mode_id == "com.apple.inputmethod.Japanese") {
     return mozc::commands::HIRAGANA;
   }
 
@@ -145,10 +131,8 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   return mozc::commands::DIRECT;
 }
 
-bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
-                         const absl::string_view bundleId) {
-  return bundleIdSet == nullptr || bundleId.empty() ||
-         bundleIdSet->find(bundleId) != bundleIdSet->end();
+bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view bundleId) {
+  return bundleIdSet == nullptr || bundleIdSet->find(bundleId) != bundleIdSet->end();
 }
 }  // namespace
 
@@ -244,8 +228,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 + (void)initializeConstants {
-  std::set<std::string, std::less<>> *noOpenlinkApps =
-      new (std::nothrow) std::set<std::string, std::less<>>;
+  SetOfString *noOpenlinkApps = new (std::nothrow) SetOfString;
   if (noOpenlinkApps) {
     // should not open links during screensaver.
     noOpenlinkApps->insert("com.apple.securityagent");
@@ -264,8 +247,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
     gModeIdMap = newMap;
   }
 
-  std::set<std::string, std::less<>> *noSelectedRangeApps =
-      new (std::nothrow) std::set<std::string, std::less<>>;
+  SetOfString *noSelectedRangeApps = new (std::nothrow) SetOfString;
   if (noSelectedRangeApps) {
     // Do not call selectedRange: method for the following
     // applications because it could lead to application crash.
@@ -282,15 +264,13 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   // mode.  When the first composition character is alphanumeric (such
   // like pressing Shift-A at first), that character is directly
   // inserted into application instead of composition starting "A".
-  std::set<std::string, std::less<>> *noDisplayModeSwitchApps =
-      new (std::nothrow) std::set<std::string, std::less<>>;
+  SetOfString *noDisplayModeSwitchApps = new (std::nothrow) SetOfString;
   if (noDisplayModeSwitchApps) {
     noDisplayModeSwitchApps->insert("com.microsoft.Word");
     gNoDisplayModeSwitchApps = noDisplayModeSwitchApps;
   }
 
-  std::set<std::string, std::less<>> *noSurroundingTextApps =
-      new (std::nothrow) std::set<std::string, std::less<>>;
+  SetOfString *noSurroundingTextApps = new (std::nothrow) SetOfString;
   if (noSurroundingTextApps) {
     // Disables the surrounding text feature for the following application
     // because calling attributedSubstringFromRange to it is very heavy.
@@ -351,8 +331,9 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 
 // This method is called when a user changes the input mode.
 - (void)setValue:(id)value forTag:(long)tag client:(id)sender {
-  CompositionMode new_mode = GetCompositionMode(value);
-
+  CompositionMode new_mode = [value isKindOfClass:[NSString class]]
+                                 ? GetCompositionMode([value UTF8String])
+                                 : mozc::commands::DIRECT;
   if (new_mode == mozc::commands::HALF_ASCII && [composedString_ length] == 0) {
     new_mode = mozc::commands::DIRECT;
   }
