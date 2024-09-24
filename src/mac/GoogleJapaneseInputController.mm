@@ -79,9 +79,6 @@ using SetOfString = std::set<std::string, std::less<>>;
 namespace {
 // set of bundle IDs of applications on which Mozc should not open urls.
 const SetOfString *gNoOpenLinkApps = nullptr;
-// The mapping from the CompositionMode enum to the actual id string
-// of composition modes.
-const std::map<CompositionMode, NSString *> *gModeIdMap = nullptr;
 const SetOfString *gNoSelectedRangeApps = nullptr;
 const SetOfString *gNoDisplayModeSwitchApps = nullptr;
 const SetOfString *gNoSurroundingTextApps = nullptr;
@@ -95,10 +92,11 @@ const int kMaxSurroundingLength = 20;
 // surrounding text takes too much time. So we set this limitation.
 const int kGetSurroundingTextClientLengthLimit = 1000;
 
-NSString *GetLabelForSuffix(const absl::string_view suffix) {
-  std::string label = mozc::MacUtil::GetLabelForSuffix(suffix);
-  return [NSString stringWithUTF8String:label.c_str()];
-}
+constexpr absl::string_view kRomanModeId = "com.apple.inputmethod.Roman";
+constexpr absl::string_view kKatakanaModeId = "com.apple.inputmethod.Japanese.Katakana";
+constexpr absl::string_view kHalfWidthKanaModeId = "com.apple.inputmethod.Japanese.HalfWidthKana";
+constexpr absl::string_view kFullWidthRomanModeId = "com.apple.inputmethod.Japanese.FullWidthRoman";
+constexpr absl::string_view kHiraganaModeId = "com.apple.inputmethod.Japanese";
 
 CompositionMode GetCompositionMode(absl::string_view mode_id) {
   if (mode_id.empty()) {
@@ -111,24 +109,43 @@ CompositionMode GetCompositionMode(absl::string_view mode_id) {
   // /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/
   // Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Headers/TextServices.h
   // These IDs are also defined in Info.plist.
-  if (mode_id == "com.apple.inputmethod.Roman") {
+  if (mode_id == kRomanModeId) {
     return mozc::commands::HALF_ASCII;
   }
-  if (mode_id == "com.apple.inputmethod.Japanese.Katakana") {
+  if (mode_id == kKatakanaModeId) {
     return mozc::commands::FULL_KATAKANA;
   }
-  if (mode_id == "com.apple.inputmethod.Japanese.HalfWidthKana") {
+  if (mode_id == kHalfWidthKanaModeId) {
     return mozc::commands::HALF_KATAKANA;
   }
-  if (mode_id == "com.apple.inputmethod.Japanese.FullWidthRoman") {
+  if (mode_id == kFullWidthRomanModeId) {
     return mozc::commands::FULL_ASCII;
   }
-  if (mode_id == "com.apple.inputmethod.Japanese") {
+  if (mode_id == kHiraganaModeId) {
     return mozc::commands::HIRAGANA;
   }
 
   LOG(ERROR) << "The code should not reach here.";
   return mozc::commands::DIRECT;
+}
+
+absl::string_view GetModeId(CompositionMode mode) {
+  switch (mode) {
+    case mozc::commands::DIRECT:
+    case mozc::commands::HALF_ASCII:
+      return kRomanModeId;
+    case mozc::commands::FULL_KATAKANA:
+      return kKatakanaModeId;
+    case mozc::commands::HALF_KATAKANA:
+      return kHalfWidthKanaModeId;
+    case mozc::commands::FULL_ASCII:
+      return kFullWidthRomanModeId;
+    case mozc::commands::HIRAGANA:
+      return kHiraganaModeId;
+    default:
+      LOG(ERROR) << "The code should not reach here.";
+      return kRomanModeId;
+  }
 }
 
 bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view bundleId) {
@@ -233,18 +250,6 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
     // should not open links during screensaver.
     noOpenlinkApps->insert("com.apple.securityagent");
     gNoOpenLinkApps = noOpenlinkApps;
-  }
-
-  std::map<CompositionMode, NSString *> *newMap =
-      new (std::nothrow) std::map<CompositionMode, NSString *>;
-  if (newMap) {
-    (*newMap)[mozc::commands::DIRECT] = GetLabelForSuffix("Roman");
-    (*newMap)[mozc::commands::HIRAGANA] = GetLabelForSuffix("base");
-    (*newMap)[mozc::commands::FULL_KATAKANA] = GetLabelForSuffix("Katakana");
-    (*newMap)[mozc::commands::HALF_ASCII] = GetLabelForSuffix("Roman");
-    (*newMap)[mozc::commands::FULL_ASCII] = GetLabelForSuffix("FullWidthRoman");
-    (*newMap)[mozc::commands::HALF_KATAKANA] = GetLabelForSuffix("FullWidthRoman");
-    gModeIdMap = newMap;
   }
 
   SetOfString *noSelectedRangeApps = new (std::nothrow) SetOfString;
@@ -439,21 +444,12 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
 }
 
 - (void)switchDisplayMode {
-  if (gModeIdMap == nullptr) {
-    LOG(ERROR) << "gModeIdMap is not initialized correctly.";
-    return;
-  }
   if (IsBannedApplication(gNoDisplayModeSwitchApps, clientBundle_)) {
     return;
   }
 
-  std::map<CompositionMode, NSString *>::const_iterator it = gModeIdMap->find(mode_);
-  if (it == gModeIdMap->end()) {
-    LOG(ERROR) << "mode: " << mode_ << " is invalid";
-    return;
-  }
-
-  [[self client] selectInputMode:it->second];
+  absl::string_view mode_id = GetModeId(mode_);
+  [[self client] selectInputMode:[NSString stringWithUTF8String:mode_id.data()]];
 }
 
 - (void)commitText:(const char *)text client:(id)sender {
