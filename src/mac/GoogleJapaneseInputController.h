@@ -87,10 +87,10 @@
   NSTimeInterval lastKeyDownTime_;
   uint16_t lastKeyCode_;
 
-  /** |candidateController_| controls the candidate windows. */
-  std::unique_ptr<mozc::renderer::RendererInterface> candidateController_;
+  /** |mozcRenderer_| controls the candidate windows. */
+  std::unique_ptr<mozc::renderer::RendererInterface> mozcRenderer_;
 
-  /** |rendererCommand_| stores the command sent to |candidateController_| */
+  /** |rendererCommand_| stores the command sent to |mozcRenderer_| */
   mozc::commands::RendererCommand rendererCommand_;
 
   /** |mozcClient_| manages connection to the mozc server. */

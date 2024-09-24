@@ -167,10 +167,10 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   mozcClient_ = std::move(newMozcClient);
 }
 - (mozc::renderer::RendererInterface *)renderer {
-  return candidateController_.get();
+  return mozcRenderer_.get();
 }
 - (void)setRenderer:(std::unique_ptr<mozc::renderer::RendererInterface>)newRenderer {
-  candidateController_ = std::move(newRenderer);
+  mozcRenderer_ = std::move(newRenderer);
 }
 
 #pragma mark object init/dealloc
@@ -190,7 +190,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   mode_ = mozc::commands::DIRECT;
   suppressSuggestion_ = false;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
-  candidateController_ = std::make_unique<mozc::renderer::RendererClient>();
+  mozcRenderer_ = std::make_unique<mozc::renderer::RendererClient>();
   mozcClient_ = mozc::client::ClientFactory::NewClient();
   imkServer_ = reinterpret_cast<id<ServerCallback>>(server);
   imkClientForTest_ = nil;
@@ -199,14 +199,14 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 
   // We don't check the return value of NSBundle because it fails during tests.
   [[NSBundle mainBundle] loadNibNamed:@"Config" owner:self topLevelObjects:nil];
-  if (!originalString_ || !composedString_ || !candidateController_ || !mozcClient_) {
+  if (!originalString_ || !composedString_ || !mozcRenderer_ || !mozcClient_) {
     self = nil;
   } else {
     DLOG(INFO) << [[NSString
         stringWithFormat:@"initWithServer: %@ %@ %@", server, delegate, inputClient] UTF8String];
-    if (!candidateController_->Activate()) {
+    if (!mozcRenderer_->Activate()) {
       LOG(ERROR) << "Cannot activate renderer";
-      candidateController_.reset();
+      mozcRenderer_.reset();
     }
     [self setupClientBundle:inputClient];
     [self setupCapability];
@@ -227,7 +227,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   originalString_ = nil;
   composedString_ = nil;
   imkClientForTest_ = nil;
-  candidateController_.reset();
+  mozcRenderer_.reset();
   mozcClient_.reset();
   DLOG(INFO) << "dealloc server";
 }
@@ -308,8 +308,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 - (void)activateServer:(id)sender {
   [super activateServer:sender];
   [self setupClientBundle:sender];
-  if (rendererCommand_.visible() && candidateController_) {
-    candidateController_->ExecCommand(rendererCommand_);
+  if (rendererCommand_.visible() && mozcRenderer_) {
+    mozcRenderer_->ExecCommand(rendererCommand_);
   }
   [self handleConfig];
 
@@ -335,8 +335,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   clearCommand.set_type(RendererCommand::UPDATE);
   clearCommand.set_visible(false);
   clearCommand.clear_output();
-  if (candidateController_) {
-    candidateController_->ExecCommand(clearCommand);
+  if (mozcRenderer_) {
+    mozcRenderer_->ExecCommand(clearCommand);
   }
   DLOG(INFO) << kProductNameInEnglish << " client (" << self << "): deactivated";
   DLOG(INFO) << "sender bundleID: " << clientBundle_;
@@ -728,8 +728,8 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   rendererCommand_.set_type(RendererCommand::UPDATE);
   rendererCommand_.set_visible(false);
   rendererCommand_.clear_output();
-  if (candidateController_) {
-    candidateController_->ExecCommand(rendererCommand_);
+  if (mozcRenderer_) {
+    mozcRenderer_->ExecCommand(rendererCommand_);
   }
 }
 
@@ -742,14 +742,14 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (void)delayedUpdateCandidates {
-  if (!candidateController_) {
+  if (!mozcRenderer_) {
     return;
   }
 
   // If there is no candidate, the candidate window is closed.
   if (rendererCommand_.output().candidates().candidate_size() == 0) {
     rendererCommand_.set_visible(false);
-    candidateController_->ExecCommand(rendererCommand_);
+    mozcRenderer_->ExecCommand(rendererCommand_);
     return;
   }
 
@@ -763,7 +763,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   //  - Kotoeri does this too.
   if (rendererCommand_.visible()) {
     // Call ExecCommand anyway to update other information like candidate words.
-    candidateController_->ExecCommand(rendererCommand_);
+    mozcRenderer_->ExecCommand(rendererCommand_);
     return;
   }
 
@@ -798,7 +798,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
                << "," << [[exception reason] UTF8String];
   }
 
-  candidateController_->ExecCommand(rendererCommand_);
+  mozcRenderer_->ExecCommand(rendererCommand_);
 }
 
 - (void)updateCandidates:(const Output *)output {
