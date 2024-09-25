@@ -112,6 +112,22 @@ TEST(UnicodeTest, Utf32ToUtf8) {
   EXPECT_EQ(Utf32ToUtf8(kU32Str), kExpected);
 }
 
+TEST(UnicodeTest, StrAppendChar32) {
+  std::string result;
+  StrAppendChar32(&result, 'A');
+  EXPECT_EQ(result, "A");
+  StrAppendChar32(&result, U'あ');
+  EXPECT_EQ(result, "Aあ");
+  StrAppendChar32(&result, 0x110000);
+  EXPECT_EQ(result, "Aあ\uFFFD");
+}
+
+TEST(UnicodeTest, Char32ToUtf8) {
+  EXPECT_EQ(Char32ToUtf8('A'), "A");
+  EXPECT_EQ(Char32ToUtf8(U'あ'), "あ");
+  EXPECT_EQ(Char32ToUtf8(0x110000), "\uFFFD");
+}
+
 TEST(UnicodeTest, IsValidUtf8) {
   EXPECT_TRUE(IsValidUtf8(""));
   EXPECT_TRUE(IsValidUtf8("abc"));
