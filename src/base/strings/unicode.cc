@@ -61,29 +61,30 @@ std::u32string Utf8ToUtf32(const absl::string_view sv) {
 std::string Utf32ToUtf8(const std::u32string_view sv) {
   std::string result;
   // Same, most strings are fairly short, so it's faster to just append.
-  for (auto it = sv.begin(); it != sv.end(); ++it) {
-    StrAppendChar32(&result, *it);
+  for (const char32_t c : sv) {
+    StrAppendChar32(&result, c);
   }
   return result;
 }
 
 absl::string_view Utf8Substring(absl::string_view sv, size_t pos) {
-  while (pos > 0) {
-    sv.remove_prefix(OneCharLen(sv.front()));
-    --pos;
+  const Utf8AsChars usv(sv);
+  auto first = usv.begin();
+  while (pos-- > 0) {
+    ++first;
   }
-  return sv;
+  return usv.Substring(first);
 }
 
 absl::string_view Utf8Substring(absl::string_view sv, const size_t pos,
                                 size_t count) {
   sv = Utf8Substring(sv, pos);
-  size_t i = 0;
-  while (i < sv.size() && count > 0) {
-    i += OneCharLen(sv[i]);
-    --count;
+  const Utf8AsChars usv(sv);
+  auto last = usv.begin();
+  while (last != usv.end() && count-- > 0) {
+    ++last;
   }
-  return sv.substr(0, i);
+  return usv.Substring(usv.begin(), last);
 }
 
 }  // namespace strings

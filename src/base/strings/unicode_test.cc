@@ -157,6 +157,9 @@ TEST(UnicodeTest, Utf8Substring) {
   EXPECT_EQ(Utf8Substring("五十音ABC", 2, 2), "音A");
   EXPECT_EQ(Utf8Substring("Mozc は便利", 6, 100), "便利");
   EXPECT_EQ(Utf8Substring("日本語", 2, 0), "");
+
+  // Invalid sequence.
+  EXPECT_EQ(Utf8Substring("\xF0\x80\x80\xAF", 1, 2), "\x80\x80");
 }
 
 struct Utf8AsCharsTestParam {

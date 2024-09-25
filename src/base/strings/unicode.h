@@ -132,14 +132,14 @@ inline void StrAppendChar32(std::string* dest, const char32_t cp) {
 
 // Returns a substring of the UTF-8 string sv [pos, pos + count), or [pos,
 // sv.end()) if count is not provided, by the number of Unicode characters. The
-// result is clipped if pos + count > CharsLen().
+// result is clipped if pos + count > [number of Unicode characters in sv].
 //
 // Note that this function is linear and slower than Utf8AsChars::Substring as
 // it needs to traverse through each character. Use Utf8AsChars::Substring if
 // you already have the character iterators.
 //
-// REQUIRES: The UTF-8 string is valid. pos <= CharsLen(sv).
-// Complexity: linear to pos + count or pos if count it not provided.
+// REQUIRES: pos <= [number of Unicode characters in sv].
+// Complexity: linear to pos + count, or pos if count it not provided.
 absl::string_view Utf8Substring(absl::string_view sv, size_t pos);
 absl::string_view Utf8Substring(absl::string_view sv, size_t pos, size_t count);
 
@@ -154,6 +154,9 @@ class UnicodeChar {
   UnicodeChar(const char* utf8, const uint_fast8_t bytes_seen,
               char32_t codepoint)
       : mozc::UnicodeChar(utf8, /*ok=*/true, bytes_seen, codepoint) {}
+
+  UnicodeChar(const UnicodeChar&) = default;
+  UnicodeChar& operator=(const UnicodeChar&) = default;
 
   char32_t char32() const { return dr_.code_point(); }
   absl::string_view utf8() const {
@@ -212,16 +215,7 @@ class Utf8CharIterator {
   Utf8CharIterator& operator=(const Utf8CharIterator&) = default;
 
   // Returns the current character.
-  reference operator*() const {
-    DCHECK(!dr_.IsSentinel());
-    if constexpr (std::is_same_v<ValueType, char32_t>) {
-      return char32();
-    } else if constexpr (std::is_same_v<ValueType, absl::string_view>) {
-      return view();
-    } else if constexpr (std::is_same_v<ValueType, UnicodeChar>) {
-      return ValueType{ptr_, dr_.ok(), dr_.bytes_seen(), dr_.code_point()};
-    }
-  }
+  reference operator*() const;
 
   // Moves the iterator to the next Unicode character.
   Utf8CharIterator& operator++() {
@@ -524,6 +518,19 @@ constexpr std::pair<absl::string_view, absl::string_view> FrontChar(
 }
 
 }  // namespace strings
+
+template <typename ValueType>
+typename Utf8CharIterator<ValueType>::reference
+Utf8CharIterator<ValueType>::operator*() const {
+  DCHECK(!dr_.IsSentinel());
+  if constexpr (std::is_same_v<ValueType, char32_t>) {
+    return char32();
+  } else if constexpr (std::is_same_v<ValueType, absl::string_view>) {
+    return view();
+  } else if constexpr (std::is_same_v<ValueType, UnicodeChar>) {
+    return ValueType{ptr_, dr_.ok(), dr_.bytes_seen(), dr_.code_point()};
+  }
+}
 
 template <typename ValueType>
 typename Utf8AsCharsBase<ValueType>::value_type
