@@ -329,23 +329,6 @@ size_t Util::CharsLen(absl::string_view str) {
   return length;
 }
 
-std::u32string Util::Utf8ToUtf32(absl::string_view str) {
-  std::u32string codepoints;
-  char32_t codepoint;
-  while (Util::SplitFirstChar32(str, &codepoint, &str)) {
-    codepoints.push_back(codepoint);
-  }
-  return codepoints;
-}
-
-std::string Util::Utf32ToUtf8(const std::u32string_view str) {
-  std::string output;
-  for (const char32_t codepoint : str) {
-    CodepointToUtf8Append(codepoint, &output);
-  }
-  return output;
-}
-
 char32_t Util::Utf8ToCodepoint(const char *begin, const char *end,
                                size_t *mblen) {
   absl::string_view s(begin, end - begin);
@@ -485,82 +468,6 @@ bool Util::SplitLastChar32(absl::string_view s, absl::string_view *rest,
   *rest = s;
   rest->remove_suffix(len);
   return true;
-}
-
-bool Util::IsValidUtf8(absl::string_view s) {
-  char32_t first;
-  absl::string_view rest;
-  while (!s.empty()) {
-    if (!SplitFirstChar32(s, &first, &rest)) {
-      return false;
-    }
-    s = rest;
-  }
-  return true;
-}
-
-std::string Util::CodepointToUtf8(char32_t c) {
-  std::string output;
-  CodepointToUtf8Append(c, &output);
-  return output;
-}
-
-void Util::CodepointToUtf8Append(char32_t c, std::string *output) {
-  char buf[7];
-  output->append(buf, CodepointToUtf8(c, buf));
-}
-
-size_t Util::CodepointToUtf8(char32_t c, char *output) {
-  if (c == 0) {
-    // Do nothing if |c| is `\0`. Previous implementation of
-    // CodepointToUtf8Append worked like this.
-    output[0] = '\0';
-    return 0;
-  }
-  if (c < 0x00080) {
-    output[0] = static_cast<char>(c & 0xFF);
-    output[1] = '\0';
-    return 1;
-  }
-  if (c < 0x00800) {
-    output[0] = static_cast<char>(0xC0 + ((c >> 6) & 0x1F));
-    output[1] = static_cast<char>(0x80 + (c & 0x3F));
-    output[2] = '\0';
-    return 2;
-  }
-  if (c < 0x10000) {
-    output[0] = static_cast<char>(0xE0 + ((c >> 12) & 0x0F));
-    output[1] = static_cast<char>(0x80 + ((c >> 6) & 0x3F));
-    output[2] = static_cast<char>(0x80 + (c & 0x3F));
-    output[3] = '\0';
-    return 3;
-  }
-  if (c < 0x200000) {
-    output[0] = static_cast<char>(0xF0 + ((c >> 18) & 0x07));
-    output[1] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
-    output[2] = static_cast<char>(0x80 + ((c >> 6) & 0x3F));
-    output[3] = static_cast<char>(0x80 + (c & 0x3F));
-    output[4] = '\0';
-    return 4;
-  }
-  // below is not in UCS4 but in 32bit int.
-  if (c < 0x8000000) {
-    output[0] = static_cast<char>(0xF8 + ((c >> 24) & 0x03));
-    output[1] = static_cast<char>(0x80 + ((c >> 18) & 0x3F));
-    output[2] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
-    output[3] = static_cast<char>(0x80 + ((c >> 6) & 0x3F));
-    output[4] = static_cast<char>(0x80 + (c & 0x3F));
-    output[5] = '\0';
-    return 5;
-  }
-  output[0] = static_cast<char>(0xFC + ((c >> 30) & 0x01));
-  output[1] = static_cast<char>(0x80 + ((c >> 24) & 0x3F));
-  output[2] = static_cast<char>(0x80 + ((c >> 18) & 0x3F));
-  output[3] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
-  output[4] = static_cast<char>(0x80 + ((c >> 6) & 0x3F));
-  output[5] = static_cast<char>(0x80 + (c & 0x3F));
-  output[6] = '\0';
-  return 6;
 }
 
 absl::string_view Util::Utf8SubString(absl::string_view src, size_t start) {
