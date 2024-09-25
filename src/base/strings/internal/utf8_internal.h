@@ -67,11 +67,22 @@ class EncodeResult {
  public:
   using Buffer = std::array<char, kMaxByteSize>;
 
+  // Returns an EncodeResult for a single ASCII code point cp.
+  static EncodeResult Ascii(char32_t cp);
+
+  // Encodes a Unicode character cp in UTF-8 according to the count and offset
+  // parameters as in https://encoding.spec.whatwg.org/#utf-8-encoder.
+  static EncodeResult EncodeSequence(char32_t cp, uint_fast8_t count,
+                                     char offset);
+
+  EncodeResult(const EncodeResult&) = default;
+  EncodeResult& operator=(const EncodeResult&) = default;
+
   constexpr const char* data() const { return bytes_.data(); }
   constexpr uint_fast8_t size() const { return count_; }
 
  private:
-  friend EncodeResult Encode(char32_t);
+  EncodeResult() = default;
 
   uint_fast8_t count_;
   Buffer bytes_;
@@ -81,18 +92,21 @@ class DecodeResult {
  public:
   DecodeResult() = default;
 
+  DecodeResult(const DecodeResult&) = default;
+  DecodeResult& operator=(const DecodeResult&) = default;
+
   static constexpr DecodeResult Continue(const char32_t cp,
                                          const uint_fast8_t bytes_seen) {
     return DecodeResult{cp, true, bytes_seen};
   }
 
-  static inline DecodeResult Error(const uint_fast8_t bytes_seen) {
+  static constexpr DecodeResult Error(const uint_fast8_t bytes_seen) {
     return DecodeResult{kReplacementCharacter, false, bytes_seen};
   }
 
   // Indicates that the decoded position is the `end` sentinel.
-  static inline DecodeResult Sentinel() { return DecodeResult{0, false, 0}; }
-  bool IsSentinel() const { return bytes_seen_ == 0; }
+  static constexpr DecodeResult Sentinel() { return DecodeResult{0, false, 0}; }
+  constexpr bool IsSentinel() const { return bytes_seen_ == 0; }
 
   constexpr char32_t code_point() const { return code_point_; }
   constexpr bool ok() const { return ok_; }
@@ -123,8 +137,6 @@ EncodeResult Encode(char32_t cp);
 // Returns `DecodeResult::Sentinel()` if the given range is empty.
 // REQUIRES: [it, last) to be a valid range.
 DecodeResult Decode(const char* ptr, const char* last);
-
-// Implementations
 
 }  // namespace mozc::utf8_internal
 

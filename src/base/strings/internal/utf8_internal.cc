@@ -30,6 +30,7 @@
 #include "base/strings/internal/utf8_internal.h"
 
 #include <array>
+#include <cstdint>
 #include <iterator>
 #include <type_traits>
 
@@ -99,18 +100,6 @@ constexpr bool IsValidSecondByte<2>(const char leading_byte,
   return IsTrailingByte(second_byte);
 }
 
-template <int Count>
-inline void EncodeSequence(char32_t cp, const char offset,
-                           EncodeResult::Buffer::iterator it) {
-  int count = Count;
-  *it++ = static_cast<char>((cp >> (kShift * count)) + offset);
-  while (count > 0) {
-    const char temp = static_cast<char>(cp >> (kShift * (count - 1)));
-    *it++ = 0x80 | (temp & 0x3f);
-    --count;
-  }
-}
-
 DecodeResult HandleBufferTooShort(const char* ptr, const char* last,
                                   const int needed) {
   // If the buffer is not long enough, stop processing and return error.
@@ -131,7 +120,7 @@ DecodeResult HandleBufferTooShort(const char* ptr, const char* last,
   return DecodeResult::Error(seen);
 }
 
-constexpr char32_t AppendTrailingByte(char32_t base, char byte) {
+inline char32_t AppendTrailingByte(char32_t base, char byte) {
   return (base << kShift) + (byte & kTrailingMask);
 }
 
@@ -139,7 +128,7 @@ template <int Needed>
 DecodeResult DecodeSequence(const char* ptr, const char mask) {
   // By using a template parameter, we force the compiler to check the value for
   // Needed and optimize each case at compile time.
-  static_assert(Needed <= kMaxByteSize);
+  static_assert(1 < Needed && Needed <= kMaxByteSize);
 
   const char leading_byte = *ptr++;
   // Handle the leading byte.
@@ -161,22 +150,38 @@ DecodeResult DecodeSequence(const char* ptr, const char mask) {
 
 }  // namespace
 
+EncodeResult EncodeResult::Ascii(const char32_t cp) {
+  EncodeResult result;
+  result.count_ = 1;
+  result.bytes_[0] = static_cast<char>(cp);
+  return result;
+}
+
+EncodeResult EncodeResult::EncodeSequence(char32_t cp, uint_fast8_t count,
+                                          char offset) {
+  EncodeResult result;
+  result.count_ = count + 1;  // count_ in the result is the byte length.
+  auto it = result.bytes_.begin();
+  *it++ = static_cast<char>((cp >> (kShift * count)) + offset);
+  while (count > 0) {
+    const char temp = static_cast<char>(cp >> (kShift * (count - 1)));
+    *it++ = 0x80 | (temp & 0x3f);
+    --count;
+  }
+  return result;
+}
+
 EncodeResult Encode(const char32_t cp) {
   // This is a naive UTF-8 encoder based on the WHATWG Encoding standard.
   // https://encoding.spec.whatwg.org/#utf-8-encoder
-  EncodeResult result;
   if (cp <= 0x7f) {
-    result.bytes_[0] = static_cast<char>(cp);
-    result.count_ = 1;
+    return EncodeResult::Ascii(cp);
   } else if (cp <= 0x7ff) {
-    EncodeSequence<1>(cp, 0xc0, result.bytes_.begin());
-    result.count_ = 2;
+    return EncodeResult::EncodeSequence(cp, 1, 0xc0);
   } else if (cp <= 0xffff) {
-    EncodeSequence<2>(cp, 0xe0, result.bytes_.begin());
-    result.count_ = 3;
+    return EncodeResult::EncodeSequence(cp, 2, 0xe0);
   } else if (cp <= 0x10ffff) {
-    EncodeSequence<3>(cp, 0xf0, result.bytes_.begin());
-    result.count_ = 4;
+    return EncodeResult::EncodeSequence(cp, 3, 0xf0);
   } else {
     // Unicode 15.0 §3.4 Characters and Encoding D9
     // "Unicode codespace: A range of integers from 0 to 0x10FFFF."
@@ -184,7 +189,6 @@ EncodeResult Encode(const char32_t cp) {
     // "Any UTF-32 code unit greater than 0010FFFF16 is ill-formed."
     return Encode(kReplacementCharacter);
   }
-  return result;
 }
 
 DecodeResult Decode(const char* ptr, const char* last) {
