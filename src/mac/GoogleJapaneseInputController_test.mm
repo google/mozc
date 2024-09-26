@@ -248,7 +248,6 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
     method_setImplementation(method, reinterpret_cast<IMP>(openURL_test));
     gOpenURLCount = 0;
 
-    [GoogleJapaneseInputController initializeConstants];
     SetUpController();
   }
 

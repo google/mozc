@@ -77,20 +77,14 @@ using mozc::config::Config;
 using SetOfString = std::set<std::string, std::less<>>;
 
 namespace {
-// set of bundle IDs of applications on which Mozc should not open urls.
-const SetOfString *gNoOpenLinkApps = nullptr;
-const SetOfString *gNoSelectedRangeApps = nullptr;
-const SetOfString *gNoDisplayModeSwitchApps = nullptr;
-const SetOfString *gNoSurroundingTextApps = nullptr;
-
 // TODO(horo): This value should be get from system configuration.
 //  DoubleClickInterval can be get from NSEvent (MacOSX ver >= 10.6)
-const NSTimeInterval kDoubleTapInterval = 0.5;
+constexpr NSTimeInterval kDoubleTapInterval = 0.5;
 
-const int kMaxSurroundingLength = 20;
+constexpr int kMaxSurroundingLength = 20;
 // In some apllications when the client's text length is large, getting the
 // surrounding text takes too much time. So we set this limitation.
-const int kGetSurroundingTextClientLengthLimit = 1000;
+constexpr int kGetSurroundingTextClientLengthLimit = 1000;
 
 constexpr absl::string_view kRomanModeId = "com.apple.inputmethod.Roman";
 constexpr absl::string_view kKatakanaModeId = "com.apple.inputmethod.Japanese.Katakana";
@@ -148,8 +142,36 @@ absl::string_view GetModeId(CompositionMode mode) {
   }
 }
 
-bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view bundleId) {
-  return bundleIdSet == nullptr || bundleIdSet->find(bundleId) != bundleIdSet->end();
+bool CanOpenLink(absl::string_view bundle_id) {
+  // Should not open links during screensaver.
+  return bundle_id != "com.apple.securityagent";
+}
+
+bool CanSelectedRange(absl::string_view bundle_id) {
+  // Do not call selectedRange: method for the following
+  // applications because it could lead to application crash.
+  const bool is_supported =
+      bundle_id != "com.microsoft.Excel" &&
+      bundle_id != "com.microsoft.Powerpoint" &&
+      bundle_id != "com.microsoft.Word";
+  return is_supported;
+}
+
+bool CanDisplayModeSwitch(absl::string_view bundle_id) {
+  // Do not call selectInputMode: method for the following
+  // applications because it could cause some unexpected behavior.
+  // MS-Word: When the display mode goes to ASCII but there is no
+  // compositions, it goes to direct input mode instead of Half-ASCII
+  // mode.  When the first composition character is alphanumeric (such
+  // like pressing Shift-A at first), that character is directly
+  // inserted into application instead of composition starting "A".
+  return bundle_id != "com.microsoft.Word";
+}
+
+bool CanSurroundingText(absl::string_view bundle_id) {
+  // Disables the surrounding text feature for the following application
+  // because calling attributedSubstringFromRange to it is very heavy.
+  return bundle_id != "com.evernote.Evernote";
 }
 }  // namespace
 
@@ -242,46 +264,6 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
 
 - (NSMenu *)menu {
   return menu_;
-}
-
-+ (void)initializeConstants {
-  SetOfString *noOpenlinkApps = new (std::nothrow) SetOfString;
-  if (noOpenlinkApps) {
-    // should not open links during screensaver.
-    noOpenlinkApps->insert("com.apple.securityagent");
-    gNoOpenLinkApps = noOpenlinkApps;
-  }
-
-  SetOfString *noSelectedRangeApps = new (std::nothrow) SetOfString;
-  if (noSelectedRangeApps) {
-    // Do not call selectedRange: method for the following
-    // applications because it could lead to application crash.
-    noSelectedRangeApps->insert("com.microsoft.Excel");
-    noSelectedRangeApps->insert("com.microsoft.Powerpoint");
-    noSelectedRangeApps->insert("com.microsoft.Word");
-    gNoSelectedRangeApps = noSelectedRangeApps;
-  }
-
-  // Do not call selectInputMode: method for the following
-  // applications because it could cause some unexpected behavior.
-  // MS-Word: When the display mode goes to ASCII but there is no
-  // compositions, it goes to direct input mode instead of Half-ASCII
-  // mode.  When the first composition character is alphanumeric (such
-  // like pressing Shift-A at first), that character is directly
-  // inserted into application instead of composition starting "A".
-  SetOfString *noDisplayModeSwitchApps = new (std::nothrow) SetOfString;
-  if (noDisplayModeSwitchApps) {
-    noDisplayModeSwitchApps->insert("com.microsoft.Word");
-    gNoDisplayModeSwitchApps = noDisplayModeSwitchApps;
-  }
-
-  SetOfString *noSurroundingTextApps = new (std::nothrow) SetOfString;
-  if (noSurroundingTextApps) {
-    // Disables the surrounding text feature for the following application
-    // because calling attributedSubstringFromRange to it is very heavy.
-    noSurroundingTextApps->insert("com.evernote.Evernote");
-    gNoSurroundingTextApps = noSurroundingTextApps;
-  }
 }
 
 #pragma mark IMKStateSetting Protocol
@@ -383,10 +365,10 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
 - (void)setupCapability {
   Capability capability;
 
-  if (IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
-    capability.set_text_deletion(Capability::NO_TEXT_DELETION_CAPABILITY);
-  } else {
+  if (CanSelectedRange(clientBundle_)) {
     capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
+  } else {
+    capability.set_text_deletion(Capability::NO_TEXT_DELETION_CAPABILITY);
   }
 
   mozcClient_->set_client_capability(capability);
@@ -444,7 +426,7 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
 }
 
 - (void)switchDisplayMode {
-  if (IsBannedApplication(gNoDisplayModeSwitchApps, clientBundle_)) {
+  if (!CanDisplayModeSwitch(clientBundle_)) {
     return;
   }
 
@@ -463,7 +445,7 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
 
 - (void)launchWordRegisterTool:(id)client {
   ::setenv(mozc::kWordRegisterEnvironmentName, "", 1);
-  if (!IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
+  if (CanSelectedRange(clientBundle_)) {
     NSRange selectedRange = [client selectedRange];
     if (selectedRange.location != NSNotFound && selectedRange.length != NSNotFound &&
         selectedRange.length > 0) {
@@ -477,7 +459,7 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
 }
 
 - (void)invokeReconvert:(const SessionCommand *)command client:(id)sender {
-  if (IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
+  if (!CanSelectedRange(clientBundle_)) {
     return;
   }
 
@@ -514,7 +496,7 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
 }
 
 - (void)invokeUndo:(id)sender {
-  if (IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
+  if (!CanSelectedRange(clientBundle_)) {
     return;
   }
 
@@ -556,7 +538,7 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
 
   // Handles deletion range.  We do not even handle it for some
   // applications to prevent application crashes.
-  if (output->has_deletion_range() && !IsBannedApplication(gNoSelectedRangeApps, clientBundle_)) {
+  if (output->has_deletion_range() && CanSelectedRange(clientBundle_)) {
     if ([composedString_ length] == 0 && replacementRange_.location == NSNotFound) {
       NSRange selectedRange = [sender selectedRange];
       const mozc::commands::DeletionRange &deletion_range = output->deletion_range();
@@ -799,10 +781,9 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
   // On some application like login window of screensaver, opening
   // link behavior should not happen because it can cause some
   // security issues.
-  if (IsBannedApplication(gNoOpenLinkApps, clientBundle_)) {
-    return;
+  if (CanOpenLink(clientBundle_)) {
+    [[NSWorkspace sharedWorkspace] openURL:url];
   }
-  [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
 - (BOOL)fillSurroundingContext:(mozc::commands::Context *)context client:(id<IMKTextInput>)client {
@@ -924,8 +905,8 @@ bool IsBannedApplication(const SetOfString *bundleIdSet, const absl::string_view
   }
   keyEvent.set_mode(mode_);
 
-  if ([composedString_ length] == 0 && !IsBannedApplication(gNoSelectedRangeApps, clientBundle_) &&
-      !IsBannedApplication(gNoSurroundingTextApps, clientBundle_)) {
+  if ([composedString_ length] == 0 && CanSelectedRange(clientBundle_) &&
+      CanSurroundingText(clientBundle_)) {
     [self fillSurroundingContext:&context client:sender];
   }
   if (!mozcClient_->SendKeyWithContext(keyEvent, context, &output)) {

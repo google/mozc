@@ -134,7 +134,4 @@
 
 /** Sets the RendererInterface to use in the controller. */
 - (void)setRenderer:(std::unique_ptr<mozc::renderer::RendererInterface>)newRenderer;
-
-/** create instances for global objects which will be referred from the controller instances. */
-+ (void)initializeConstants;
 @end
