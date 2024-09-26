@@ -37,7 +37,6 @@ gen_single_kanji_rewriter_data.py
   --output=single_kanji_data.h
 """
 
-__author__ = "hidehiko"
 
 import codecs
 import optparse

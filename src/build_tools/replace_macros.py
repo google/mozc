@@ -47,7 +47,6 @@ part of variable name.
       are escaped with backslash.  The value is surrounded by double quotes.
 """
 
-__author__ = "yukishiino"
 
 
 import optparse

@@ -36,7 +36,6 @@ Typical usage:
       --target=/path/to/target.app/Contents/MacOS/target
 """
 
-__author__ = "horo"
 
 import optparse
 import os

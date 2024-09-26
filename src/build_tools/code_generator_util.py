@@ -30,7 +30,6 @@
 
 """Utilities to generate source codes."""
 
-__author__ = "hidehiko"
 
 
 def ToCppStringLiteral(s):

@@ -38,7 +38,6 @@ Usage:
     --output_correction_array=correction_array.data
 """
 
-__author__ = "komatsu"
 
 import codecs
 import optparse

@@ -46,7 +46,6 @@ r"""Creates versioned files and information files of the files.
     "/PATH/TO/file2-Debug-1.2.3.4.info"
 """
 
-__author__ = "horo"
 
 import base64
 import hashlib

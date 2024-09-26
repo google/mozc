@@ -36,7 +36,6 @@
 See mozc_version.py for the detailed information for version.txt.
 """
 
-__author__ = "yukawa"
 
 import logging
 import mozc_version

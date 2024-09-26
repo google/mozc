@@ -36,7 +36,6 @@ Typical usage:
       --target=/path/to/target.app/Contents/Frameworks/
 """
 
-__author__ = "horo"
 
 import argparse
 import dataclasses

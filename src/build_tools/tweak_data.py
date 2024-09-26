@@ -31,7 +31,6 @@
 """Library replacing targets formmated ${like_this} with specified variables.
 """
 
-__author__ = "komatsu"
 
 import re
 

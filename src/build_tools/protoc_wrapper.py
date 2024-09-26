@@ -39,7 +39,6 @@ r"""Script to invoke protoc with considering project root directory.
       --project_root=../
 """
 
-__author__ = "yukawa"
 
 import optparse
 import os

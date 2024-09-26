@@ -36,7 +36,6 @@ Typical usage:
       --signpkg=/path/to/prj.pkg
 """
 
-__author__ = "horo"
 
 import logging
 import optparse

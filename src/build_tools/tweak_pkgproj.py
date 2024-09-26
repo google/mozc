@@ -37,7 +37,6 @@
 See mozc_version.py for the detailed information for version.txt.
 """
 
-__author__ = "mukai"
 
 import datetime
 import logging

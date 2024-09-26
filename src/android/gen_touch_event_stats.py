@@ -43,7 +43,6 @@ import os
 import struct
 import urllib.parse
 
-__author__ = "matsuzakit"
 
 
 def ReadCollectedKeyboards(stream):

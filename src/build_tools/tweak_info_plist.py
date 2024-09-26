@@ -36,7 +36,6 @@ r"""Fix all version info in the input Info.plist file.
 See mozc_version.py for the detailed information for version.txt.
 """
 
-__author__ = "mukai"
 
 import codecs
 import datetime

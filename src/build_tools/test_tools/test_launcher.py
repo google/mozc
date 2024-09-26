@@ -45,7 +45,6 @@ The usage example is as follows.
 TODO(nona): Adds unit test(hard to inject mock code due to multiprocessing)
 """
 
-__author__ = "nona"
 
 import errno
 import logging
