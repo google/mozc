@@ -38,10 +38,11 @@ See mozc_version.py for the detailed information for version.txt.
 
 
 import logging
-import mozc_version
 import optparse
 import os
 import sys
+
+from build_tools import mozc_version
 
 
 def ParseOptions():

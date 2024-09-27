@@ -179,3 +179,13 @@ bzl_library(
         "//bazel:run_build_tool_bzl",
     ],
 )
+
+exports_files([
+    "mozc_win32_resource_template.rc",
+])
+
+mozc_py_binary(
+    name = "gen_win32_resource_header",
+    srcs = ["gen_win32_resource_header.py"],
+    deps = [":mozc_version_lib"],
+)
