@@ -56,6 +56,7 @@ def ParseOptions():
   parser.add_option('--output', dest='output')
   parser.add_option('--main', dest='main')
   parser.add_option('--template', dest='template')
+  parser.add_option('--utf8', action='store_true', dest='utf8', default=False)
 
   (options, unused_args) = parser.parse_args()
   return options
@@ -108,16 +109,17 @@ def main():
 
   version_definition = version.GetVersionInFormat(bootstrapper_template)
 
+  out_encoding = 'utf-8' if options.utf8 else 'utf-16le'
   old_content = ''
   if os.path.exists(options.output):
     # if the target file already exists, need to check the necessity of update.
     try:
-      old_content = open(options.output, encoding='utf-16le').read()
+      old_content = open(options.output, encoding=out_encoding).read()
     except UnicodeError:
       old_content = ''
 
   if version_definition != old_content:
-    open(options.output, 'w', encoding='utf-16le').write(version_definition)
+    open(options.output, 'w', encoding=out_encoding).write(version_definition)
 
 if __name__ == '__main__':
   main()
