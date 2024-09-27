@@ -37,10 +37,7 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/base/attributes.h"
-#include "absl/base/macros.h"
 #include "absl/strings/string_view.h"
-#include "base/strings/unicode.h"
 
 namespace mozc {
 
@@ -83,19 +80,12 @@ class Util {
   static bool IsCapitalizedAscii(absl::string_view s);
 
   // Returns the lengths of [src, src+size] encoded in UTF8.
-  ABSL_DEPRECATED("Use strings::CharsLen or AtLeastCharsLen.")
   static size_t CharsLen(absl::string_view str);
 
   // Converts a UTF-8 string to UTF-32.
-  ABSL_DEPRECATE_AND_INLINE()
-  static std::u32string Utf8ToUtf32(absl::string_view str) {
-    return strings::Utf8ToUtf32(str);
-  }
+  static std::u32string Utf8ToUtf32(absl::string_view str);
   // Converts a UTF-32 string to UTF-8.
-  ABSL_DEPRECATE_AND_INLINE()
-  static std::string Utf32ToUtf8(std::u32string_view str) {
-    return strings::Utf32ToUtf8(str);
-  }
+  static std::string Utf32ToUtf8(std::u32string_view str);
 
   // Converts the first character of UTF8 string starting at |begin| to UCS4.
   // The read byte length is stored to |mblen|.
@@ -107,16 +97,16 @@ class Util {
   }
 
   // Converts a UCS4 code point to UTF8 string.
-  ABSL_DEPRECATE_AND_INLINE() static std::string CodepointToUtf8(char32_t c) {
-    return strings::Char32ToUtf8(c);
-  }
+  static std::string CodepointToUtf8(char32_t c);
 
   // Converts a UCS4 code point to UTF8 string and appends it to |output|, i.e.,
   // |output| is not cleared.
-  ABSL_DEPRECATE_AND_INLINE()
-  static void CodepointToUtf8Append(char32_t c, std::string *output) {
-    return strings::StrAppendChar32(output, c);
-  }
+  static void CodepointToUtf8Append(char32_t c, std::string *output);
+
+  // Converts a UCS4 code point to UTF8 and stores it to char array.  The result
+  // is terminated by '\0'.  Returns the byte length of converted UTF8 string.
+  // REQUIRES: The output buffer must be longer than 7 bytes.
+  static size_t CodepointToUtf8(char32_t c, char *output);
 
   // Returns true if |s| is split into |first_char32| + |rest|.
   // You can pass nullptr to |first_char32| and/or |rest| to ignore the matched
@@ -135,23 +125,18 @@ class Util {
                               char32_t *last_char32);
 
   // Returns true if |s| is a valid UTF8.
-  ABSL_DEPRECATE_AND_INLINE() static bool IsValidUtf8(absl::string_view s) {
-    return strings::IsValidUtf8(s);
-  }
+  static bool IsValidUtf8(absl::string_view s);
 
   // Extracts a substring range, where both start and length are in terms of
   // UTF8 size. Note that the returned string view refers to the same memory
   // block as the input.
-  ABSL_DEPRECATED("Use strings::Utf8AsChars or strings::Utf8Substring instead.")
   static absl::string_view Utf8SubString(absl::string_view src, size_t start,
                                          size_t length);
   // This version extracts the substring to the end.
-  ABSL_DEPRECATED("Use strings::Utf8AsChars or strings::Utf8Substring instead.")
   static absl::string_view Utf8SubString(absl::string_view src, size_t start);
 
   // Extracts a substring of length |length| starting at |start|.
   // Note: |start| is the start position in UTF8, not byte position.
-  ABSL_DEPRECATED("Use strings::Utf8AsChars or strings::Utf8Substring instead.")
   static void Utf8SubString(absl::string_view src, size_t start, size_t length,
                             std::string *result);
 
@@ -274,7 +259,7 @@ class Util {
 //     char32_t c = iter.Get();
 //     ...
 //   }
-class ABSL_DEPRECATED("Use strings::Utf8AsChars instead.") ConstChar32Iterator {
+class ConstChar32Iterator {
  public:
   explicit ConstChar32Iterator(absl::string_view utf8_string);
   ConstChar32Iterator(const ConstChar32Iterator &) = delete;

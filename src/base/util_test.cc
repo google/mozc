@@ -326,8 +326,10 @@ TEST(UtilTest, Utf8ToCodepoint) {
 }
 
 TEST(UtilTest, CodepointToUtf8) {
+  // Do nothing if |c| is NUL. Previous implementation of CodepointToUtf8 worked
+  // like this even though the reason is unclear.
   std::string output = Util::CodepointToUtf8(0);
-  EXPECT_EQ(output, absl::string_view("\0", 1));
+  EXPECT_TRUE(output.empty());
 
   output = Util::CodepointToUtf8(0x7F);
   EXPECT_EQ(output, "\x7F");
@@ -342,7 +344,34 @@ TEST(UtilTest, CodepointToUtf8) {
   output = Util::CodepointToUtf8(0x10000);
   EXPECT_EQ(output, "\xF0\x90\x80\x80");
   output = Util::CodepointToUtf8(0x1FFFFF);
-  EXPECT_EQ(output, "\uFFFD");
+  EXPECT_EQ(output, "\xF7\xBF\xBF\xBF");
+
+  // Buffer version.
+  char buf[7];
+
+  EXPECT_EQ(Util::CodepointToUtf8(0, buf), 0);
+  EXPECT_EQ(strcmp(buf, ""), 0);
+
+  EXPECT_EQ(Util::CodepointToUtf8(0x7F, buf), 1);
+  EXPECT_EQ(strcmp("\x7F", buf), 0);
+
+  EXPECT_EQ(Util::CodepointToUtf8(0x80, buf), 2);
+  EXPECT_EQ(strcmp("\xC2\x80", buf), 0);
+
+  EXPECT_EQ(Util::CodepointToUtf8(0x7FF, buf), 2);
+  EXPECT_EQ(strcmp("\xDF\xBF", buf), 0);
+
+  EXPECT_EQ(Util::CodepointToUtf8(0x800, buf), 3);
+  EXPECT_EQ(strcmp("\xE0\xA0\x80", buf), 0);
+
+  EXPECT_EQ(Util::CodepointToUtf8(0xFFFF, buf), 3);
+  EXPECT_EQ(strcmp("\xEF\xBF\xBF", buf), 0);
+
+  EXPECT_EQ(Util::CodepointToUtf8(0x10000, buf), 4);
+  EXPECT_EQ(strcmp("\xF0\x90\x80\x80", buf), 0);
+
+  EXPECT_EQ(Util::CodepointToUtf8(0x1FFFFF, buf), 4);
+  EXPECT_EQ(strcmp("\xF7\xBF\xBF\xBF", buf), 0);
 }
 
 TEST(UtilTest, CharsLen) {
