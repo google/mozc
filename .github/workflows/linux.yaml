@@ -13,8 +13,8 @@ concurrency:
 
 jobs:
   build:
-    # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md
-    runs-on: ubuntu-22.04
+    # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
 
     steps:
@@ -30,9 +30,6 @@ jobs:
           #
           # Unset the Android NDK setting to skip the unnecessary configuration.
           echo "ANDROID_NDK_HOME=" >> $GITHUB_ENV
-          #
-          # Work around https://bugreports.qt.io/browse/QTBUG-86080 for Ubuntu 22.04
-          echo "PKG_CONFIG_PATH=${PWD}/docker/ubuntu22.04/qt6-core-pkgconfig:${PKG_CONFIG_PATH}" >> $GITHUB_ENV
 
       - name: bazel build
         working-directory: ./src
@@ -47,8 +44,8 @@ jobs:
           if-no-files-found: warn
 
   test:
-    # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md
-    runs-on: ubuntu-22.04
+    # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
 
     steps:
@@ -64,9 +61,6 @@ jobs:
           #
           # Unset the Android NDK setting to skip the unnecessary configuration.
           echo "ANDROID_NDK_HOME=" >> $GITHUB_ENV
-          #
-          # Work around https://bugreports.qt.io/browse/QTBUG-86080 for Ubuntu 22.04
-          echo "PKG_CONFIG_PATH=${PWD}/docker/ubuntu22.04/qt6-core-pkgconfig:${PKG_CONFIG_PATH}" >> $GITHUB_ENV
 
       - name: bazel test
         working-directory: ./src

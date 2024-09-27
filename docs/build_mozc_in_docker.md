@@ -9,9 +9,9 @@ If you are not sure what the following commands do, please check the description
 and make sure the operations before running them.
 
 ```
-curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu22.04/Dockerfile
-docker build --rm --tag mozc_ubuntu22.04 .
-docker create --interactive --tty --name mozc_build mozc_ubuntu22.04
+curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu24.04/Dockerfile
+docker build --rm --tag mozc_ubuntu24.04 .
+docker create --interactive --tty --name mozc_build mozc_ubuntu24.04
 
 docker start mozc_build
 docker exec mozc_build bazel build package --config oss_linux --config release_build
@@ -22,24 +22,24 @@ docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
 Docker containers are available to build Mozc binaries for Android JNI library and Linux desktop.
 
 ## System Requirements
-Currently, only Ubuntu 22.04 is tested to host the Docker container to build Mozc.
+Currently, only Ubuntu 24.04 is tested to host the Docker container to build Mozc.
 
-* [Dockerfile](https://github.com/google/mozc/blob/master/docker/ubuntu22.04/Dockerfile) for Ubuntu 22.04
+* [Dockerfile](https://github.com/google/mozc/blob/master/docker/ubuntu24.04/Dockerfile) for Ubuntu 24.04
 
 ## Build in Docker
 
-### Set up Ubuntu 22.04 Docker container
+### Set up Ubuntu 24.04 Docker container
 
 ```
-curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu22.04/Dockerfile
-docker build --rm --tag mozc_ubuntu22.04 .
-docker create --interactive --tty --name mozc_build mozc_ubuntu22.04
+curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu24.04/Dockerfile
+docker build --rm --tag mozc_ubuntu24.04 .
+docker create --interactive --tty --name mozc_build mozc_ubuntu24.04
 ```
 
 You may need to execute `docker` with `sudo` (e.g. `sudo docker build ...`).
 
 Notes
-* `mozc_ubuntu22.04` is a Docker image name (customizable).
+* `mozc_ubuntu24.04` is a Docker image name (customizable).
 * `mozc_build` is a Docker container name (customizable).
 * Don't forget to rebuild Docker container when Dockerfile is updated.
 
@@ -148,7 +148,7 @@ Note: This section is not about our officially supported build process.
 
 You may also need other libraries.
 See the configurations of
-[Dockerfile](https://github.com/google/mozc/blob/master/docker/ubuntu22.04/Dockerfile)
+[Dockerfile](https://github.com/google/mozc/blob/master/docker/ubuntu24.04/Dockerfile)
 and
 [GitHub Actions](https://github.com/google/mozc/blob/master/.github/workflows/linux.yaml).
 
