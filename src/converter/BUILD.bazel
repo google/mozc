@@ -512,6 +512,7 @@ mozc_cc_test(
         ":segments",
         "//composer",
         "//composer:table",
+        "//config:config_handler",
         "//engine:engine_factory",
         "//engine:engine_interface",
         "//protocol:commands_cc_proto",

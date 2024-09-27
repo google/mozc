@@ -1168,6 +1168,7 @@ mozc_cc_test(
         ":t13n_promotion_rewriter",
         ":transliteration_rewriter",
         "//composer",
+        "//config:config_handler",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher",

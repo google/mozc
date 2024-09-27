@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
+#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -75,12 +76,15 @@ class T13nPromotionRewriterTest : public testing::TestWithTempUserProfile {
     t13n_rewriter_ = std::make_unique<TransliterationRewriter>(
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
 
-    mobile_conv_request_ = ConversionRequest();
     composer_ = composer::Composer();
     mobile_request_ = commands::Request();
 
     request_test_util::FillMobileRequest(&mobile_request_);
     composer_.SetRequest(&mobile_request_);
+
+    mobile_conv_request_ =
+        ConversionRequest(&composer_, &mobile_request_, &context_,
+                          &config::ConfigHandler::DefaultConfig());
     mobile_conv_request_.set_request(&mobile_request_);
     mobile_conv_request_.set_composer(&composer_);
   }
@@ -88,6 +92,7 @@ class T13nPromotionRewriterTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter_;
   ConversionRequest mobile_conv_request_;
   composer::Composer composer_;
+  commands::Context context_;
   commands::Request mobile_request_;
 
  private:

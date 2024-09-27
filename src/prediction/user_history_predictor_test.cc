@@ -2788,7 +2788,7 @@ void InitSegmentsFromInputSequence(const absl::string_view text,
     composer->InsertCharacterKeyEvent(key);
   }
 
-  request->set_composer(composer);
+  ASSERT_EQ(&request->composer(), composer);
 
   request->set_request_type(ConversionRequest::PREDICTION);
   Segment *segment = segments->add_segment();

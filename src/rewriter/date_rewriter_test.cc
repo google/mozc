@@ -918,10 +918,10 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
   table.AddRule("222", "c", "");
   table.AddRule("3", "d", "");
   const commands::Request request;
+  const commands::Context context;
   const config::Config config;
   composer::Composer composer(&table, &request, &config);
-  ConversionRequest conversion_request;
-  conversion_request.set_composer(&composer);
+  ConversionRequest conversion_request(&composer, &request, &context, &config);
 
   // Key sequence : 2223
   // Preedit : cd

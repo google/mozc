@@ -32,6 +32,7 @@
 #include "absl/log/check.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "engine/engine_factory.h"
@@ -68,12 +69,13 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
   }
   {
     Segments segments;
-    ConversionRequest conv_request;
     // Create an empty composer.
     const Table table;
     const commands::Request request;
-    composer::Composer composer(&table, &request, nullptr);
-    conv_request.set_composer(&composer);
+    const commands::Context context;
+    const config::Config config = config::ConfigHandler::DefaultConfig();
+    composer::Composer composer(&table, &request, &config);
+    ConversionRequest conv_request(&composer, &request, &context, &config);
     // Converter returns false, but not crash.
     EXPECT_FALSE(converter->StartConversion(conv_request, &segments));
   }
