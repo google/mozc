@@ -43,6 +43,7 @@ See also: https://bazel.build/rules/bzl-style#rules
 """
 
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle", "macos_unit_test")
+load("@windows_sdk//:windows_sdk_rules.bzl", "windows_resource")
 load(
     "//:config.bzl",
     "BAZEL_TOOLS_PREFIX",
@@ -51,7 +52,7 @@ load(
     "MACOS_MIN_OS_VER",
 )
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
-load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library", "register_extension_info", "windows")
+load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library", "register_extension_info")
 
 # Tags aliases for build filtering.
 MOZC_TAGS = struct(
@@ -185,7 +186,9 @@ def mozc_win32_resource_from_template(
     }.get(BRANDING, [])
 
     # Create main resource
-    windows.resource_files(
+    win32_resource_files_main = windows_resource
+
+    win32_resource_files_main(
         name = name,
         rc_files = [":" + generated_rc_file],
         manifests = manifests,

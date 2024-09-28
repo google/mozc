@@ -216,6 +216,12 @@ new_local_repository(
     path = "third_party/qt",
 )
 
+# Windows SDK
+load("@//bazel:windows_sdk_repository.bzl", "windows_sdk_repository")
+windows_sdk_repository(
+    name = "windows_sdk"
+)
+
 # Google Toolbox for Mac
 # https://github.com/google/google-toolbox-for-mac
 # We just need UnitTesting, so strip to the directory and skip dependencies.

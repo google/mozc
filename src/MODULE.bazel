@@ -169,6 +169,16 @@ new_local_repository(
     path = "third_party/qt",
 )
 
+# Windows SDK
+windows_sdk_repository = use_repo_rule(
+    "@//bazel:windows_sdk_repository.bzl",
+    "windows_sdk_repository"
+)
+
+windows_sdk_repository(
+    name = "windows_sdk",
+)
+
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 # Material icons
 http_file(
