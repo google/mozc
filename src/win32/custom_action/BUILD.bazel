@@ -31,8 +31,8 @@ load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
     "mozc_cc_binary",
+    "mozc_win32_resource_from_template",
 )
-load("//bazel:stubs.bzl", "windows")
 
 mozc_cc_binary(
     name = "custom_action",
@@ -71,9 +71,9 @@ mozc_cc_binary(
     ],
 )
 
-windows.resource_files(
+mozc_win32_resource_from_template(
     name = "custom_action_resource",
-    rc_files = ["custom_action.rc"],
+    src = "custom_action.rc",
     resources = ["resource.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],

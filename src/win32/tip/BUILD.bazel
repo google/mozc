@@ -35,8 +35,8 @@ load(
     "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
+    "mozc_win32_resource_from_template",
 )
-load("//bazel:stubs.bzl", "windows")
 load(
     "//bazel/win32:build_defs.bzl",
     "features_gdi",
@@ -69,11 +69,9 @@ mozc_cc_binary(
     ],
 )
 
-windows.resource_files(
+mozc_win32_resource_from_template(
     name = "mozc_tip_resource",
-    rc_files = [
-        "tip_resource.rc",
-    ],
+    src = "tip_resource.rc",
     resources = [
         "tip_resource.h",
         "//data/images/win:icons",

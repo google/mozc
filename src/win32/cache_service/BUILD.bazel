@@ -35,8 +35,8 @@ load(
     "MOZC_TAGS",
     "mozc_cc_binary",
     "mozc_cc_library",
+    "mozc_win32_resource_from_template",
 )
-load("//bazel:stubs.bzl", "windows")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -54,13 +54,11 @@ mozc_cc_binary(
     ],
 )
 
-windows.resource_files(
+mozc_win32_resource_from_template(
     name = "mozc_cache_service_resources",
+    src = "mozc_cache_service.rc",
     manifests = [
         "mozc_cache_service.exe.manifest",
-    ],
-    rc_files = [
-        "mozc_cache_service.rc",
     ],
     resources = [
         "mozc_cache_service_resource.h",

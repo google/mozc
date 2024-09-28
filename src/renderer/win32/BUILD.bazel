@@ -35,8 +35,8 @@ load(
     "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
+    "mozc_win32_resource_from_template",
 )
-load("//bazel:stubs.bzl", "windows")
 
 package(
     default_visibility = ["//renderer:__pkg__"],
@@ -59,13 +59,11 @@ mozc_cc_binary(
     ],
 )
 
-windows.resource_files(
+mozc_win32_resource_from_template(
     name = "win32_renderer_main_resources",
+    src = "mozc_renderer.rc",
     manifests = [
         "mozc_renderer.exe.manifest",
-    ],
-    rc_files = [
-        "mozc_renderer.rc",
     ],
     resources = [
         "resource.h",

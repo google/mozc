@@ -36,13 +36,13 @@ load(
     "mozc_cc_library",
     "mozc_macos_application",
     "mozc_select",
+    "mozc_win32_resource_from_template",
 )
 load(
     "//:config.bzl",
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
 )
-load("//bazel:stubs.bzl", "windows")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -51,17 +51,15 @@ mozc_cc_binary(
     deps = [
         ":mozc_server_lib",
     ] + mozc_select(
-        windows = ["mozc_server_resources"],
+        windows = [":mozc_server_resources"],
     ),
 )
 
-windows.resource_files(
+mozc_win32_resource_from_template(
     name = "mozc_server_resources",
+    src = "mozc_server.rc",
     manifests = [
         "mozc_server.exe.manifest",
-    ],
-    rc_files = [
-        "mozc_server.rc",
     ],
 )
 
