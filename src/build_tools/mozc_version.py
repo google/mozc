@@ -141,7 +141,9 @@ def _ParseVersionTemplateFile(template_path, target_platform, version_override):
   if version_override:
     nums = version_override.split('.')
     if len(nums) == 1:
-      template_dict['BUILD'] = nums[0]
+      # On Windows, BUILD number must be within 16-bit range.
+      if target_platform != 'Windows' or int(nums[0]) <= 0xffff:
+        template_dict['BUILD'] = nums[0]
     if len(nums) == 4:
       template_dict['MAJOR'] = nums[0]
       template_dict['MINOR'] = nums[1]
