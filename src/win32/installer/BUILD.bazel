@@ -29,5 +29,78 @@
 
 # Build rules for the Windows installer.
 
-# Note, omaha_channel_type can be controlled by //:dev_channel
-# See BUILD_TYPE_SELECT in mac/BUILD as an example.
+load("//:build_defs.bzl", "MOZC_TAGS")
+load(":transition.bzl", "mozc_win_build_target")
+
+package(default_visibility = ["//visibility:private"])
+
+_TARGET_COMPATIBLE_WITH = [
+    "@platforms//os:windows",
+]
+
+mozc_win_build_target(
+    name = "mozc_tool",
+    cpu = "x64_windows",
+    tags = MOZC_TAGS.WIN_ONLY,
+    target = "//gui/tool:mozc_tool",
+    target_compatible_with = _TARGET_COMPATIBLE_WITH,
+)
+
+mozc_win_build_target(
+    name = "mozc_renderer",
+    cpu = "x64_windows",
+    tags = MOZC_TAGS.WIN_ONLY,
+    target = "//renderer/win32:win32_renderer_main",
+    target_compatible_with = _TARGET_COMPATIBLE_WITH,
+)
+
+mozc_win_build_target(
+    name = "mozc_server",
+    cpu = "x64_windows",
+    tags = MOZC_TAGS.WIN_ONLY,
+    target = "//server:mozc_server",
+    target_compatible_with = _TARGET_COMPATIBLE_WITH,
+)
+
+mozc_win_build_target(
+    name = "mozc_broker",
+    cpu = "x64_windows",
+    tags = MOZC_TAGS.WIN_ONLY,
+    target = "//win32/broker:mozc_broker_main",
+    target_compatible_with = _TARGET_COMPATIBLE_WITH,
+)
+
+mozc_win_build_target(
+    name = "mozc_cache_service",
+    cpu = "x64_windows",
+    tags = MOZC_TAGS.WIN_ONLY,
+    target = "//win32/cache_service:mozc_cache_service",
+    target_compatible_with = _TARGET_COMPATIBLE_WITH,
+)
+
+mozc_win_build_target(
+    name = "mozc_tip32",
+    cpu = "x64_x86_windows",
+    static_crt = True,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target = "//win32/tip:mozc_tip",
+    target_compatible_with = _TARGET_COMPATIBLE_WITH,
+)
+
+mozc_win_build_target(
+    name = "mozc_tip64",
+    cpu = "x64_windows",
+    static_crt = True,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target = "//win32/tip:mozc_tip",
+    target_compatible_with = _TARGET_COMPATIBLE_WITH,
+)
+
+mozc_win_build_target(
+    name = "custom_action",
+    cpu = "x64_windows",
+    static_crt = True,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target = "//win32/custom_action",
+    target_compatible_with = _TARGET_COMPATIBLE_WITH,
+)
