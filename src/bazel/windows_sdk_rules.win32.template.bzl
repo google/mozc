@@ -164,8 +164,8 @@ def windows_resource(name, **kwargs):
     _win32_res_rule(
         name = name,
         arch_defines = select({
-            "@platforms//cpu:arm64": ["_ARM64_"],
-            "@platforms//cpu:x86_64": ["_AMD64_"],
+            "@platforms//cpu:arm64": ["_ARM64_", "_WIN64"],
+            "@platforms//cpu:x86_64": ["_AMD64_", "_WIN64"],
             "@platforms//cpu:x86_32": ["_X86_"],
             "//conditions:default": [""],
         }),
