@@ -48,6 +48,7 @@ mozc_cc_binary(
     target_compatible_with = ["@platforms//os:windows"],
     visibility = ["//win32/installer:__subpackages__"],
     deps = [
+        ":mozc_broker_resource",
         ":prelauncher",
         "//base:crash_report_handler",
         "//base:init_mozc",
