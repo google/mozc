@@ -179,6 +179,17 @@ windows_sdk_repository(
     name = "windows_sdk",
 )
 
+# dotnet tool repository (to load "wix")
+dotnet_tool_repository = use_repo_rule(
+    "@//bazel:dotnet_tool_repository.bzl",
+    "dotnet_tool_repository"
+)
+
+dotnet_tool_repository(
+    name = "wix",
+    version = "4.0.5",
+)
+
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 # Material icons
 http_file(

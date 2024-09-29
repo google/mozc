@@ -222,6 +222,13 @@ windows_sdk_repository(
     name = "windows_sdk"
 )
 
+# dotnet tool repository (to load "wix")
+load("@//bazel:dotnet_tool_repository.bzl", "dotnet_tool_repository")
+dotnet_tool_repository(
+    name = "wix",
+    version = "4.0.5",
+)
+
 # Google Toolbox for Mac
 # https://github.com/google/google-toolbox-for-mac
 # We just need UnitTesting, so strip to the directory and skip dependencies.
