@@ -36,7 +36,6 @@ load(
     "mozc_cc_test",
     "mozc_cc_win32_library",
 )
-load("//bazel:stubs.bzl", "windows")  # @unused
 load(
     "//bazel/win32:build_defs.bzl",
     "features_gdi",
