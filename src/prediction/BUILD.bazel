@@ -127,6 +127,7 @@ mozc_cc_test(
         "//base/file:temp_dir",
         "//base/strings:unicode",
         "//composer",
+        "//composer:query",
         "//composer:table",
         "//config:config_handler",
         "//converter:segments",

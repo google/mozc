@@ -59,6 +59,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "composer/query.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -100,6 +101,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     request_ = std::make_unique<Request>();
     config_ = std::make_unique<Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
+    config_->set_use_typing_correction(true);
     table_ = std::make_unique<composer::Table>();
     composer_ = std::make_unique<composer::Composer>(
         table_.get(), request_.get(), config_.get());

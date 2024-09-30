@@ -724,7 +724,7 @@ std::vector<TypeCorrectedQuery> UserHistoryPredictor::GetTypingCorrectedQueries(
   const int size = request.request()
                        .decoder_experiment_params()
                        .typing_correction_apply_user_history_size();
-  if (size == 0) return {};
+  if (size == 0 || !request.config().use_typing_correction()) return {};
 
   const engine::SupplementalModelInterface *supplemental_model =
       modules_.GetSupplementalModel();
