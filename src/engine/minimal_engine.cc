@@ -167,7 +167,7 @@ class MinimalConverter : public ConverterInterface {
 
   bool DeleteCandidateFromHistory(const Segments &segments,
                                   size_t segment_index,
-                                  int candidate_index) const {
+                                  int candidate_index) const override {
     return true;
   }
 
