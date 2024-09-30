@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
@@ -27,64 +28,42 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# platforms for --android_platforms option.
-# In .bazelrc, the values are specified as --android_platforms=//bazel/android:arm64-v8a
-# Reference: https://blog.bazel.build/2023/11/15/android-platforms.html
+"""Script to make a zip file of libmozc.so files for muchtiple archs."""
 
-load("//bazel:stubs.bzl", "bzl_library")
+import argparse
+import pathlib
+import shutil
+import tempfile
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
 
-# Platform names are used for the directory names of the JNI library.
-platform(
-    name = "armeabi-v7a",
-    constraint_values =
-        [
-            "@platforms//cpu:armv7",
-            "@platforms//os:android",
-        ],
-)
+def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--arm64', type=str)
+  parser.add_argument('--arm32', type=str)
+  parser.add_argument('--x86_32', type=str)
+  parser.add_argument('--x86_64', type=str)
+  parser.add_argument('--output', help='A path to output ZIP file', type=str)
+  args = parser.parse_args()
 
-platform(
-    name = "arm64-v8a",
-    constraint_values =
-        [
-            "@platforms//cpu:arm64",
-            "@platforms//os:android",
-        ],
-)
+  mappings = {
+      'arm64-v8a': pathlib.Path(args.arm64),
+      'armeabi-v7a': pathlib.Path(args.arm32),
+      'x86': pathlib.Path(args.x86_32),
+      'x86_64': pathlib.Path(args.x86_64),
+  }
 
-platform(
-    name = "riscv64",
-    constraint_values =
-        [
-            "@platforms//cpu:riscv64",
-            "@platforms//os:android",
-        ],
-)
+  output = pathlib.Path(args.output)
 
-platform(
-    name = "x86",
-    constraint_values =
-        [
-            "@platforms//cpu:x86_32",
-            "@platforms//os:android",
-        ],
-)
+  with tempfile.TemporaryDirectory() as tmp_dir:
+    root = pathlib.Path(tmp_dir)
+    for arch, src in mappings.items():
+      dest_dir = root.joinpath('libs').joinpath(arch)
+      dest_dir.mkdir(parents=True, exist_ok=True)
+      shutil.copy(src, dest_dir.joinpath('libmozc.so'))
+    shutil.make_archive(
+        str(output.with_suffix('.zip')), format='zip', root_dir=tmp_dir
+    )
 
-platform(
-    name = "x86_64",
-    constraint_values = [
-        "@platforms//cpu:x86_64",
-        "@platforms//os:android",
-    ],
-)
 
-bzl_library(
-    name = "rules_bzl",
-    srcs = ["rules.bzl"],
-    parse_tests = False,
-    visibility = ["//visibility:private"],
-)
+if __name__ == '__main__':
+  main()

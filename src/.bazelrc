@@ -13,17 +13,15 @@ common:oss_windows  --config=windows_env --define TARGET=oss_windows
 common:prod_windows --config=windows_env --define TARGET=prod_windows
 common:prod_windows_dev --config=prod_windows --config=dev_channel
 
-common:android      --config=android_env --config=android_env_workspace --define TARGET=oss_android
-common:oss_android  --config=android_env --config=android_env_workspace --define TARGET=oss_android
-common:prod_android --config=android_env --config=android_env_workspace --define TARGET=prod_android
-common:oss_android_bzlmod --config=android_env --config=android_env_bzlmod --define TARGET=oss_android
+common:android      --config=android_env --define TARGET=oss_android
+common:oss_android  --config=android_env --define TARGET=oss_android
+common:prod_android --config=android_env --define TARGET=prod_android
 
 ## Bzlmod options: Bzlmod is the default except for Android.
 common:linux_env   --config=bzlmod
 common:macos_env   --config=bzlmod
 common:windows_env --config=bzlmod
-common:android_env_bzlmod --config=bzlmod
-common:android_env_workspace --config=workspace
+common:android_env --config=bzlmod
 
 common:bzlmod --enable_bzlmod
 common:workspace --noenable_bzlmod
@@ -78,28 +76,7 @@ build:android_env --copt "-DOS_ANDROID"
 build:android_env --build_tag_filters=-noandroid
 test:android_env   --test_tag_filters=-noandroid
 
-## Android workspace specific options
-build:android_env_workspace --android_crosstool_top=@androidndk//:toolchain
-# --fat_apk_cpu should be replaced with --android_platforms
-# https://github.com/bazelbuild/bazel/commit/05bea52ed3159aa5d15d967f5f56fc084a2b6c73
-build:android_env_workspace --fat_apk_cpu=armeabi-v7a,arm64-v8a,x86,x86_64 --incompatible_enable_android_toolchain_resolution=false
-build:android_env_workspace --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
-
 ## Android Blzmod specific options
 ### --experimental_google_legacy_api is required for all platforms.
 build:bzlmod --experimental_google_legacy_api
-
-build:android_env_bzlmod --experimental_enable_android_migration_apis
-build:android_env_bzlmod --android_sdk=@androidsdk//:sdk
-### arm64-v8a build (Arm 64bit)
-build:android_env_bzlmod --android_platforms=//bazel/android:arm64-v8a --cpu=arm64
-### x86_64 build (x86 64bit)
-# build:android_env_bzlmod --android_platforms=//bazel/android:x86_64 --cpu=x86_64
-### armeabi-v7a build (Arm 32bit)
-# build:android_env_bzlmod --android_platforms=//bazel/android:armeabi-v7a --cpu=armv7
-### x86 build (x86 32bit)
-# build:android_env_bzlmod --android_platforms=//bazel/android:x86 --cpu=x86_32
-
-# Note, although --android_platforms supports multiple platforms,
-# Abseil doesn't support it yet, and requires the --cpu option.
-# As the result, it is not possible to build both cpus with a single command.
+build:android_env --experimental_enable_android_migration_apis

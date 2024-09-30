@@ -94,29 +94,6 @@ android_ndk_repository_extension = use_extension(
 use_repo(android_ndk_repository_extension, "androidndk")
 register_toolchains("@androidndk//:all")
 
-# Android SDK rules (0.5.1 2024-08-06)
-# https://github.com/bazelbuild/rules_android
-bazel_dep(
-    name = "rules_android",
-    version = "0.5.1",
-)
-remote_android_extensions = use_extension(
-    "@rules_android//bzlmod_extensions:android_extensions.bzl",
-    "remote_android_tools_extensions",
-)
-use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
-register_toolchains(
-    "@rules_android//toolchains/android:android_default_toolchain",
-    "@rules_android//toolchains/android_sdk:android_sdk_tools",
-)
-android_sdk_repository_extension = use_extension(
-    "@rules_android//rules/android_sdk_repository:rule.bzl",
-    "android_sdk_repository_extension",
-)
-use_repo(android_sdk_repository_extension, "androidsdk")
-register_toolchains("@androidsdk//:sdk-toolchain", "@androidsdk//:all")
-
-
 new_local_repository = use_repo_rule(
     "@bazel_tools//tools/build_defs/repo:local.bzl",
     "new_local_repository",
