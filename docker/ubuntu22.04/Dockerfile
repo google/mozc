@@ -49,20 +49,21 @@ RUN apt-get update && apt-get install -y \
     curl gnupg libncurses5 \
   && rm -rf /var/lib/apt/lists/*
 
-## For Bazel
-## https://bazel.build/install/ubuntu#install-on-ubuntu
-RUN curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor > /usr/share/keyrings/bazel-archive-keyring.gpg
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
-RUN apt-get update && apt-get install -y bazel && rm -rf /var/lib/apt/lists/*
-
 # Working environemnt
 ENV HOME /home/mozc_builder
 RUN useradd --create-home --shell /bin/bash --base-dir /home mozc_builder
 USER mozc_builder
+RUN mkdir -p /home/mozc_builder/bin
+ENV PATH "${PATH}:/home/mozc_builder/bin"
 RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
 ## Work around https://bugreports.qt.io/browse/QTBUG-86080 for Ubuntu 22.04
 ENV PKG_CONFIG_PATH="/home/mozc_builder/work/mozc/docker/ubuntu22.04/qt6-core-pkgconfig:${PKG_CONFIG_PATH}"
+
+## Set up bazelisk as bazel
+RUN curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.22.0/bazelisk-linux-amd64 \
+  && mv bazelisk-linux-amd64 /home/mozc_builder/bin/bazel \
+  && chmod u+x /home/mozc_builder/bin/bazel
 
 ## Set up Android SDK and NDK
 ENV ANDROID_HOME /home/mozc_builder/Android/Sdk
