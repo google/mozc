@@ -29,7 +29,8 @@
 
 # Build rules for the Windows installer.
 
-load("//:build_defs.bzl", "MOZC_TAGS")
+load("//:build_defs.bzl", "MOZC_TAGS", "mozc_py_binary")
+load("//:config.bzl", "BRANDING")
 load(":transition.bzl", "mozc_win_build_target")
 
 package(default_visibility = ["//visibility:private"])
@@ -103,4 +104,78 @@ mozc_win_build_target(
     tags = MOZC_TAGS.WIN_ONLY,
     target = "//win32/custom_action",
     target_compatible_with = _TARGET_COMPATIBLE_WITH,
+)
+
+mozc_py_binary(
+    name = "build_installer",
+    srcs = ["build_installer.py"],
+    test_lib = False,
+    deps = [
+        "//build_tools:mozc_version_lib",
+        "//build_tools:vs_util",
+    ],
+)
+
+exports_files([
+    "installer_64bit.wxs",
+    "installer_oss_64bit.wxs",
+])
+
+config_setting(
+    name = "debug_build",
+    values = {
+        "compilation_mode": "dbg",
+    },
+    visibility = ["//visibility:private"],
+)
+
+_WXS_FILE = ":installer_oss_64bit.wxs" if BRANDING == "Mozc" else ":installer_64bit.wxs"
+
+_MSI_FILE = "Mozc.msi" if BRANDING == "Mozc" else "GoogleJapaneseInput.msi"
+
+genrule(
+    name = "installer",
+    srcs = [
+        ":mozc_tool",
+        ":mozc_renderer",
+        ":mozc_server",
+        ":mozc_broker",
+        ":mozc_cache_service",
+        ":mozc_tip32",
+        ":mozc_tip64",
+        ":custom_action",
+        _WXS_FILE,
+        "//base:mozc_version_txt",
+        "//data/images/win:product_icon.ico",
+        "//data/installer:credits_en.html",
+        "@qt_win//:bin/Qt6Core.dll",
+        "@wix//:wix.exe",
+    ],
+    outs = [_MSI_FILE],
+    cmd = " ".join([
+        "$(location :build_installer)",
+        "--output=$@",
+        "--version_file=$(location //base:mozc_version_txt)",
+        "--mozc_tool=$(location :mozc_tool)",
+        "--mozc_renderer=$(location :mozc_renderer)",
+        "--mozc_server=$(location :mozc_server)",
+        "--mozc_broker=$(location :mozc_broker)",
+        "--mozc_cache_service=$(location :mozc_cache_service)",
+        "--mozc_tip32=$(location :mozc_tip32)",
+        "--mozc_tip64=$(location :mozc_tip64)",
+        "--custom_action=$(location :custom_action)",
+        "--icon_path=$(location //data/images/win:product_icon.ico)",
+        "--credit_file=$(location //data/installer:credits_en.html)",
+        "--qt_core_dll=$(location @qt_win//:bin/Qt6Core.dll)",
+        "--wxs_path=$(location " + _WXS_FILE + ")",
+        "--wix_path=$(location @wix//:wix.exe)",
+        "--branding=" + BRANDING,
+    ]) + select({
+        ":debug_build": " --debug_build",
+        "//conditions:default": "",
+    }),
+    target_compatible_with = _TARGET_COMPATIBLE_WITH,
+    tools = [
+        ":build_installer",
+    ],
 )

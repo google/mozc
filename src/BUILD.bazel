@@ -198,6 +198,7 @@ filegroup(
         default = [],
         linux = ["//unix:package"],
         macos = ["//mac:package"],
+        windows = ["//win32/installer"],
     ),
 )
 

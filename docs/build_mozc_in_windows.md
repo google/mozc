@@ -158,6 +158,16 @@ Note that you can specify `--qtdir=` option instead of `--noqt` in GYP phase sin
 
 ---
 
+## Build with Bazel (experimental)
+
+```
+bazel --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
+```
+
+You have release build binaries in `bazel-bin\win32\installer\Mozc.msi`.
+
+---
+
 ## Build with GitHub Actions
 
 GitHub Actions are already set up in [windows.yaml](../.github/workflows/windows.yaml). With that, you can build and install Mozc with your own commit as follows.

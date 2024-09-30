@@ -37,3 +37,7 @@ exports_files([
     "hiragana.svg",
     "icon.svg",
 ])
+
+exports_files([
+    "product_icon.ico",
+])
