@@ -38,7 +38,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ## https://docs.docker.com/develop/develop-images/instructions/#apt-get
 RUN apt-get update && apt-get install -y \
     ## Common packages for linux build environment
-    python3 pkg-config git curl bzip2 unzip make ninja-build \
+    python3 pkg-config git curl bzip2 unzip make g++ gcc \
     ## Packages for linux desktop version
     libibus-1.0-dev libglib2.0-dev qt6-base-dev libgl-dev \
     ## Packages for misc tools
