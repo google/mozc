@@ -88,7 +88,3 @@ def cc_stub(name, tags = None, target_compatible_with = None, **kwargs):
         tags = tags,
         target_compatible_with = target_compatible_with,
     )
-
-windows = struct(
-    resource_files = cc_stub,
-)
