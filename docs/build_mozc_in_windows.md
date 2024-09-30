@@ -164,7 +164,7 @@ Note that you can specify `--qtdir=` option instead of `--noqt` in GYP phase sin
 bazel --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
 ```
 
-You have release build binaries in `bazel-bin\win32\installer\Mozc.msi`.
+You have release build binaries in `bazel-bin\win32\installer\Mozc64.msi`.
 
 ---
 
