@@ -155,7 +155,7 @@ def mozc_win_build_target(
         target = target,
         cpu = cpu,
         static_crt = static_crt,
-        target_compatible_with = mandatory_target_compatible_with,
+        target_compatible_with = target_compatible_with,
         tags = tags,
         **kwargs
     )
