@@ -178,4 +178,5 @@ genrule(
     tools = [
         ":build_installer",
     ],
+    visibility = ["//:__subpackages__"],
 )

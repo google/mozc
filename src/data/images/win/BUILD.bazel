@@ -42,3 +42,8 @@ filegroup(
     srcs = glob(["*.ico"]),
     visibility = ["//win32/tip:__subpackages__"],
 )
+
+exports_files(
+    srcs = ["product_icon.ico"],
+    visibility = ["//:__subpackages__"],
+)
