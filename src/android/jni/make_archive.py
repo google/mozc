@@ -61,7 +61,7 @@ def main():
       dest_dir.mkdir(parents=True, exist_ok=True)
       shutil.copy(src, dest_dir.joinpath('libmozc.so'))
     shutil.make_archive(
-        str(output.with_suffix('.zip')), format='zip', root_dir=tmp_dir
+        str(output.with_suffix('')), format='zip', root_dir=tmp_dir
     )
 
 
