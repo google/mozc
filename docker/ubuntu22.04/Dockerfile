@@ -68,8 +68,8 @@ ENV PKG_CONFIG_PATH="/home/mozc_builder/work/mozc/docker/ubuntu22.04/qt6-core-pk
 ENV ANDROID_HOME /home/mozc_builder/Android/Sdk
 RUN mkdir -p ${ANDROID_HOME}
 RUN curl -LO https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip && unzip commandlinetools-linux-10406996_latest.zip -d ${ANDROID_HOME} && rm commandlinetools-linux-10406996_latest.zip
-RUN yes | ${ANDROID_HOME}/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_HOME} "cmdline-tools;latest" "platforms;android-33" "build-tools;33.0.2" "platform-tools" "ndk;25.2.9519653"
-ENV ANDROID_NDK_HOME ${ANDROID_HOME}/ndk/25.2.9519653
+RUN yes | ${ANDROID_HOME}/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_HOME} "cmdline-tools;latest" "platforms;android-33" "build-tools;33.0.2" "platform-tools" "ndk;27.1.12297006"
+ENV ANDROID_NDK_HOME ${ANDROID_HOME}/ndk/27.1.12297006
 
 # check out Mozc source with submodules
 RUN mkdir /home/mozc_builder/work/mozc
