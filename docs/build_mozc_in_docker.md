@@ -159,7 +159,7 @@ environment, you might need to modify the following files.
 
 * src/config.bzl - configuration of install paths, etc.
 * src/.bazelrc - compiler flags, etc.
-* src/WORKSPACE.bazel - build dependencies.
+* src/MODULE.bazel - build dependencies.
 
 Tips: the following command makes the specified file untracked by Git.
 ```
