@@ -2200,9 +2200,6 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
   config_->set_use_typing_correction(true);
 
-  request_->mutable_decoder_experiment_params()
-      ->set_typing_correction_enable_number_decoder(true);
-
   Segments segments;
   SetUpInputForSuggestionWithHistory("にしゆうこ", "", "", composer_.get(),
                                      &segments);
@@ -2216,23 +2213,12 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
   data_and_aggregator->set_supplemental_model(mock.get());
 
-  request_->mutable_decoder_experiment_params()
-      ->set_typing_correction_enable_number_decoder(false);
   std::vector<Result> results;
-  aggregator.AggregateTypingCorrectedPrediction(*prediction_convreq_, segments,
-                                                &results);
-  EXPECT_EQ(results.size(), 1);
-
-  request_->mutable_decoder_experiment_params()
-      ->set_typing_correction_enable_number_decoder(true);
-  results.clear();
   aggregator.AggregateTypingCorrectedPrediction(*prediction_convreq_, segments,
                                                 &results);
   EXPECT_EQ(results.size(), 2);
   EXPECT_EQ(results[1].value, "２５");  // default is full width.
 
-  request_->mutable_decoder_experiment_params()
-      ->set_typing_correction_enable_number_decoder(false);
   data_and_aggregator->set_supplemental_model(nullptr);
 }
 

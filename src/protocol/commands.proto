@@ -593,9 +593,6 @@ message DecoderExperimentParams {
   // Bitmap of enabled variation character types.
   optional uint32 variation_character_types = 8 [default = 0];
 
-  // Applies the number decoder to the output of typing corrector
-  optional bool typing_correction_enable_number_decoder = 89 [default = false];
-
   // Enables final results reranking against literal results.
   // If zero, the previous implementation is used.
   optional int32 typing_correction_result_reranker_mode = 95 [default = 0];

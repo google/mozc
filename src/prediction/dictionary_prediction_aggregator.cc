@@ -1713,13 +1713,6 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 
   // Populates number when number candidate is not added.
   bool number_added = base_selected_types & NUMBER;
-  if (!request.request()
-           .decoder_experiment_params()
-           .typing_correction_enable_number_decoder()) {
-    // disables number decoder by assuming that number candidate
-    // is already added.
-    number_added = true;
-  }
 
   for (const auto &query : queries) {
     absl::string_view key = query.correction;
