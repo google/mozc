@@ -108,9 +108,7 @@ mozc_cc_library(
         "japanese.cc",
     ],
     hdrs = ["japanese.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         "//base/strings/internal:double_array",
         "//base/strings/internal:japanese_rules",
