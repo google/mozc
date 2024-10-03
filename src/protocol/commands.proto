@@ -659,9 +659,6 @@ message DecoderExperimentParams {
   // <= katakana_override_min_per_char_cost
   optional int32 katakana_override_min_per_char_cost = 91 [default = 0];
 
-  // Treats the legacy typing correction candidate as
-  // literal-on-top or literal-at-least-second.
-  optional bool fix_legacy_typing_correction_behavior = 92 [default = false];
 }
 
 // Clients' request to the server.

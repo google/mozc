@@ -510,13 +510,10 @@ void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
   // Top is already literal.
   const auto &top_result = results->front();
 
-  const auto &params = request.request().decoder_experiment_params();
-
   auto is_typing_correction = [&](const Result &result) {
-    return (result.types & PredictionType::TYPING_CORRECTION ||
-            (params.fix_legacy_typing_correction_behavior() &&
-             (result.candidate_attributes &
-              Segment::Candidate::TYPING_CORRECTION)));
+    return (
+        result.types & PredictionType::TYPING_CORRECTION ||
+        (result.candidate_attributes & Segment::Candidate::TYPING_CORRECTION));
   };
 
   if (!is_typing_correction(*top_result)) {

@@ -1764,14 +1764,11 @@ TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrectionTest) {
   EXPECT_EQ(get_top_value(), "value_0");     // top is typing correction.
   EXPECT_EQ(get_second_value(), "value_3");  // second is literal.
 
-  // Tests fix_legacy_typing_correction_behavior
   reset_results_ptrs();
   params.literal_on_top = true;
   params.literal_at_least_second = false;
   results[3].candidate_attributes = Segment::Candidate::TYPING_CORRECTION;
 
-  request_->mutable_decoder_experiment_params()
-      ->set_fix_legacy_typing_correction_behavior(true);
   DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
       *convreq_for_suggestion_, params, &results_ptrs);
   EXPECT_EQ(get_top_value(), "value_4");
