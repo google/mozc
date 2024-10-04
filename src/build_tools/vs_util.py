@@ -30,6 +30,7 @@
 
 """A helper script to use Visual Studio."""
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -47,25 +48,68 @@ def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
 
   Raises:
     FileNotFoundError: When 'vcvarsall.bat' cannot be found.
+    ChildProcessError: When 'vcvarsall.bat' cannot be executed.
   """
   if path_hint is not None:
     path = pathlib.Path(path_hint).resolve()
     if path.exists():
       return path
+    raise FileNotFoundError(
+        f'Could not find vcvarsall.bat. path_hint={path_hint}'
+    )
 
-  for program_files in ['Program Files', 'Program Files (x86)']:
-    for edition in ['Community', 'Professional', 'Enterprise', 'BuildTools']:
-      vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
-                               '2022', edition, 'VC', 'Auxiliary', 'Build',
-                               'vcvarsall.bat')
-      if vcvarsall.exists():
-        return vcvarsall
+  program_files_x86 = os.environ.get('ProgramFiles(x86)')
+  if not program_files_x86:
+    program_files_x86 = r'C:\Program Files (x86)'
 
-  raise FileNotFoundError(
-      'Could not find vcvarsall.bat. '
-      'Consider using --vcvarsall_path option e.g.\n'
-      r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
-  )
+  vswhere_path = pathlib.Path(program_files_x86).joinpath(
+      'Microsoft Visual Studio', 'Installer', 'vswhere.exe')
+  if not vswhere_path.exists():
+    raise FileNotFoundError(
+        'Could not find vswhere.exe.'
+        'Consider using --vcvarsall_path option e.g.\n'
+        r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
+    )
+
+  cmd = [
+      str(vswhere_path),
+      '-products',
+      'Microsoft.VisualStudio.Product.Enterprise',
+      'Microsoft.VisualStudio.Product.Professional',
+      'Microsoft.VisualStudio.Product.Community',
+      'Microsoft.VisualStudio.Product.BuildTools',
+      '-requires',
+      'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
+      '-find',
+      'VC/Auxiliary/Build/vcvarsall.bat',
+      '-utf8',
+  ]
+  process = subprocess.Popen(
+      cmd,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+      shell=False,
+      text=True,
+      encoding='utf-8')
+  stdout, stderr = process.communicate()
+  exitcode = process.wait()
+  if exitcode != 0:
+    msgs = ['Failed to execute vswhere.exe']
+    if stdout:
+      msgs += ['-----stdout-----', stdout]
+    if stderr:
+      msgs += ['-----stderr-----', stderr]
+    raise ChildProcessError('\n'.join(msgs))
+
+  vcvarsall = pathlib.Path(stdout.splitlines()[0])
+  if not vcvarsall.exists():
+    raise FileNotFoundError(
+        'Could not find vcvarsall.bat.'
+        'Consider using --vcvarsall_path option e.g.\n'
+        r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
+    )
+
+  return vcvarsall
 
 
 def get_vs_env_vars(
