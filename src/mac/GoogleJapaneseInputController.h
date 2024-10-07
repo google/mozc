@@ -32,6 +32,7 @@
 
 #import "mac/KeyCodeMap.h"
 #import "mac/common.h"
+#import "mac/renderer_receiver.h"
 
 #include <cstdint>
 #include <memory>
@@ -106,6 +107,12 @@
   IBOutlet NSMenu *menu_;
 }
 
+/** Sets the RendererReceiver used by all instances of the controller.
+ * the RendererReceiver is a singleton object used as a proxy to receive messages from
+ * the renderer process and propage it to the active controller instance.
+ */
++ (void)setGlobalRendererReceiver:(RendererReceiver *)rendererReceiver;
+
 /** sendCommand: is called to send SessionCommand to the server from the renderer, when the user
  * clicks a candidate item in candidate windows or when the renderer sends the usage stats event
  * information. */
@@ -134,4 +141,5 @@
 
 /** Sets the RendererInterface to use in the controller. */
 - (void)setRenderer:(std::unique_ptr<mozc::renderer::RendererInterface>)newRenderer;
+
 @end

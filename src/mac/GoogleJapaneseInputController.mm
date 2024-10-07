@@ -49,6 +49,7 @@
 #import "mac/GoogleJapaneseInputControllerInterface.h"
 #import "mac/GoogleJapaneseInputServer.h"
 #import "mac/KeyCodeMap.h"
+#import "mac/renderer_receiver.h"
 
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
@@ -77,6 +78,10 @@ using mozc::config::Config;
 using SetOfString = std::set<std::string, std::less<>>;
 
 namespace {
+// Global object used as a singleton used as a proxy to receive messages from
+// the renderer process.
+RendererReceiver *gRendererReceiver = nil;
+
 // TODO(horo): This value should be get from system configuration.
 //  DoubleClickInterval can be get from NSEvent (MacOSX ver >= 10.6)
 constexpr NSTimeInterval kDoubleTapInterval = 0.5;
@@ -280,11 +285,8 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   }
   [self handleConfig];
 
-  // This is a workaroud due to the crash issue on macOS 15.
-  NSOperatingSystemVersion versionInfo = [[NSProcessInfo processInfo] operatingSystemVersion];
-  if (versionInfo.majorVersion < 15) {
-    [imkServer_ setCurrentController:self];
-  }
+  // Sets this controller as the active controller to receive messages from the renderer process.
+  [gRendererReceiver setCurrentController:self];
 
   std::string window_name, window_owner;
   if (mozc::MacUtil::GetFrontmostWindowNameAndOwner(&window_name, &window_owner)) {
@@ -954,5 +956,9 @@ bool CanSurroundingText(absl::string_view bundle_id) {
     return;
   }
   [self commitText:output->result().value().c_str() client:[self client]];
+}
+
++ (void)setGlobalRendererReceiver:(RendererReceiver *)rendererReceiver {
+  gRendererReceiver = rendererReceiver;
 }
 @end

@@ -273,6 +273,7 @@
             'GoogleJapaneseInputServer.mm',
             'KeyCodeMap.mm',
             'main.mm',
+            'renderer_receiver.mm',
           ],
           'product_name': '<(branding)',
           'dependencies': [

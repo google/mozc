@@ -28,11 +28,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #import <Cocoa/Cocoa.h>
-
-#include <memory>
+#import <Foundation/Foundation.h>
 
 #import "mac/GoogleJapaneseInputController.h"
 #import "mac/GoogleJapaneseInputServer.h"
+#import "mac/renderer_receiver.h"
+
+#include <memory>
 
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
@@ -69,11 +71,10 @@ int main(int argc, char *argv[]) {
   }
   DLOG(INFO) << mozc::kProductNameInEnglish << " initialized";
 
-  // This is a workaroud due to the crash issue on macOS 15.
-  NSOperatingSystemVersion versionInfo = [[NSProcessInfo processInfo] operatingSystemVersion];
-  if (versionInfo.majorVersion < 15) {
-    [imkServer registerRendererConnection];
-  }
+  NSString *rendererConnectionName = @kProductPrefix "_Renderer_Connection";
+  RendererReceiver *rendererReceiver =
+      [[RendererReceiver alloc] initWithName:rendererConnectionName];
+  [GoogleJapaneseInputController setGlobalRendererReceiver:rendererReceiver];
 
   // Start the converter server at this time explicitly to prevent the
   // slow-down of the response for initial key event.
