@@ -182,6 +182,28 @@ mozc_objc_test(
 )
 
 mozc_objc_library(
+    name = "renderer_receiver",
+    srcs = ["renderer_receiver.mm"],
+    hdrs = ["renderer_receiver.h"],
+    sdk_frameworks = ["Foundation"],
+    deps = [
+        ":common",
+        "//protocol:commands_cc_proto",
+    ],
+)
+
+mozc_objc_test(
+    name = "renderer_receiver_test",
+    size = "small",
+    srcs = ["renderer_receiver_test.mm"],
+    deps = [
+        ":renderer_receiver",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main_objc",
+    ],
+)
+
+mozc_objc_library(
     name = "imk_server",
     srcs = ["GoogleJapaneseInputServer.mm"],
     hdrs = ["GoogleJapaneseInputServer.h"],

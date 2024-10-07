@@ -63,6 +63,8 @@
             'GoogleJapaneseInputServer_test.mm',
             'KeyCodeMap.mm',
             'KeyCodeMap_test.mm',
+            'renderer_receiver.mm',
+            'renderer_receiver_test.mm',
           ],
           'link_settings': {
             'libraries': [
