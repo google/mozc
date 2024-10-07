@@ -107,7 +107,6 @@ mozc_objc_library(
     tags = ["manual"],
     deps = [
         ":imk_controller",
-        ":imk_server",
         ":renderer_receiver",
         "//base:const",
         "//base:crash_report_handler",
@@ -144,7 +143,6 @@ mozc_objc_library(
     ],
     deps = [
         ":common",
-        ":imk_server",
         ":keycode_map",
         ":renderer_receiver",
         "//base:const",
@@ -200,36 +198,6 @@ mozc_objc_test(
     srcs = ["renderer_receiver_test.mm"],
     deps = [
         ":renderer_receiver",
-        "//protocol:commands_cc_proto",
-        "//testing:gunit_main_objc",
-    ],
-)
-
-mozc_objc_library(
-    name = "imk_server",
-    srcs = ["GoogleJapaneseInputServer.mm"],
-    hdrs = ["GoogleJapaneseInputServer.h"],
-    sdk_frameworks = [
-        "Foundation",
-        "InputMethodKit",
-    ],
-    tags = ["manual"],
-    deps = [
-        ":common",
-        "//base:const",
-        "//protocol:commands_cc_proto",
-        "@com_google_absl//absl/base",
-        "@com_google_absl//absl/log",
-    ],
-)
-
-mozc_objc_test(
-    name = "imk_server_test",
-    size = "small",
-    srcs = ["GoogleJapaneseInputServer_test.mm"],
-    sdk_frameworks = ["InputMethodKit"],
-    deps = [
-        ":imk_server",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main_objc",
     ],

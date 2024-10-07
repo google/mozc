@@ -59,8 +59,6 @@
           'sources': [
             'GoogleJapaneseInputController.mm',
             'GoogleJapaneseInputController_test.mm',
-            'GoogleJapaneseInputServer.mm',
-            'GoogleJapaneseInputServer_test.mm',
             'KeyCodeMap.mm',
             'KeyCodeMap_test.mm',
             'renderer_receiver.mm',
@@ -270,7 +268,6 @@
           'mac_bundle': 1,
           'sources': [
             'GoogleJapaneseInputController.mm',
-            'GoogleJapaneseInputServer.mm',
             'KeyCodeMap.mm',
             'main.mm',
             'renderer_receiver.mm',

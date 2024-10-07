@@ -23,10 +23,7 @@ convert the NSEvent to Mozc's key event and send to the converter. Also, this
 class handles the OS status change such like mode change by mouse clicks.
 
 IMKInputServer handles all of the connection between applications, and invokes
-IMKInputController. Normally we don't need to inherit IMKInputServer but use the
-standard server class directly, but we do inherit this as
-GoogleJapaneseInputServer for some reasons. See *Communication with renderer*
-section for the details.
+IMKInputController.
 
 The IMKit.framework configurations are in Info.plist of the client application.
 You'll see the GoogleJapaneseInputController class name in mac/Info.plist.
@@ -95,10 +92,8 @@ the client. That's tricky because renderer is an IPC server and client does not
 run Mozc's IPC server system -- it already has a standard NSRunloop event
 handling due to IMKit.framework.
 
-This is why we inherit IMKInputServer, as I described above. The
-GoogleJapaneseInputServer registers a new event handling for a new connection
-actually. When a click happens, the renderer packs the protobuf data into a
-binary string, pack it into NSData, and send this to the client's connection by
+When a click happens, the renderer packs the protobuf data into a
+binary string, pack it into NSData, and sends this to the client's connection by
 a standard Cocoa's IPC using NSConnection.
 
 You may notice "wait, does NSConnection cause memory leaks?" This is absolutely

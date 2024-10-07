@@ -47,7 +47,6 @@
 #include <utility>
 
 #import "mac/GoogleJapaneseInputControllerInterface.h"
-#import "mac/GoogleJapaneseInputServer.h"
 #import "mac/KeyCodeMap.h"
 #import "mac/renderer_receiver.h"
 
@@ -220,7 +219,6 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
   mozcRenderer_ = std::make_unique<mozc::renderer::RendererClient>();
   mozcClient_ = mozc::client::ClientFactory::NewClient();
-  imkServer_ = reinterpret_cast<id<ServerCallback>>(server);
   imkClientForTest_ = nil;
   lastKeyDownTime_ = 0;
   lastKeyCode_ = 0;

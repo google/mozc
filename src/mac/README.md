@@ -6,8 +6,7 @@ It contains
 
 *   Installer
 *   Uninstaller
-*   Interface classes for macOS IMF (i.e. subclasses of `IMKController` and
-    `IMKServer`).
+*   Interface classes for macOS IMF (i.e. the subclass of `IMKInputController`).
 
 ## ActivatePane / DevConfirmPane
 

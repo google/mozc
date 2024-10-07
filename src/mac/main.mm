@@ -29,9 +29,9 @@
 
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
+#import <InputMethodKit/InputMethodKit.h>
 
 #import "mac/GoogleJapaneseInputController.h"
-#import "mac/GoogleJapaneseInputServer.h"
 #import "mac/renderer_receiver.h"
 
 #include <memory>
@@ -61,10 +61,8 @@ int main(int argc, char *argv[]) {
   NSBundle *bundle = [NSBundle mainBundle];
   NSDictionary *infoDictionary = [bundle infoDictionary];
   NSString *connectionName = [infoDictionary objectForKey:@"InputMethodConnectionName"];
-  GoogleJapaneseInputServer *imkServer =
-    [[GoogleJapaneseInputServer alloc] initWithName:connectionName
-                                   bundleIdentifier:[bundle bundleIdentifier]];
-
+  IMKServer *imkServer = [[IMKServer alloc] initWithName:connectionName
+                                        bundleIdentifier:[bundle bundleIdentifier]];
   if (!imkServer) {
     LOG(FATAL) << mozc::kProductNameInEnglish << " failed to initialize";
     return -1;

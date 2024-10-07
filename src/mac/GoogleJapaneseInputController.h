@@ -97,9 +97,6 @@
   /** |mozcClient_| manages connection to the mozc server. */
   std::unique_ptr<mozc::client::ClientInterface> mozcClient_;
 
-  /** |imkServer_| holds the reference to GoogleJapaneseInputServer. */
-  id<ServerCallback> imkServer_;
-
   /** |imkClientForTest_| holds the reference to the client object for unit test. */
   id imkClientForTest_;
 
