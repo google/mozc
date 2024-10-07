@@ -104,39 +104,167 @@
   IBOutlet NSMenu *menu_;
 }
 
+/** These are externally accessible to achieve tests. */
+@property(readonly) mozc::client::ClientInterface *mozcClient;
+@property(readwrite, retain, nonatomic) KeyCodeMap *keyCodeMap;
+@property(readonly) mozc::renderer::RendererInterface *renderer;
+@property(readonly) mozc::config::Config::YenSignCharacter yenSignCharacter;
+@property(readwrite, assign) mozc::commands::CompositionMode mode;
+@property(readonly) const mozc::commands::RendererCommand &rendererCommand;
+@property(readwrite, assign) NSRange replacementRange;
+@property(readwrite, retain) id imkClientForTest;
+
 /** Sets the RendererReceiver used by all instances of the controller.
  * the RendererReceiver is a singleton object used as a proxy to receive messages from
  * the renderer process and propage it to the active controller instance.
+ *
+ * @param rendererReceiver The RendererReceiver object referred by all instances of the controller.
  */
 + (void)setGlobalRendererReceiver:(RendererReceiver *)rendererReceiver;
 
 /** sendCommand: is called to send SessionCommand to the server from the renderer, when the user
  * clicks a candidate item in candidate windows or when the renderer sends the usage stats event
- * information. */
+ * information.
+ *
+ * @param command The protobuf of command sent to the server.
+ */
 - (void)sendCommand:(const mozc::commands::SessionCommand &)command;
 
-/** reconversionClicked: is called when the user clicks "Reconversion" menu item. */
+/** reconversionClicked: is called when the user clicks "Reconversion" menu item.
+ *
+ * @param sender The sender of this request (unused).
+ */
 - (IBAction)reconversionClicked:(id)sender;
 
-/** configClicked: is called when the user clicks "Configure Mozc..." menu item. */
+/** configClicked: is called when the user clicks "Configure Mozc..." menu item.
+ *
+ * @param sender The sender of this request (unused).
+ */
 - (IBAction)configClicked:(id)sender;
 
-/** dictionaryToolClicked: is called when the user clicks "Dictionary Tool..."  menu item. */
+/** dictionaryToolClicked: is called when the user clicks "Dictionary Tool..."  menu item.
+ *
+ * @param sender The sender of this request (unused).
+ */
 - (IBAction)dictionaryToolClicked:(id)sender;
 
-/** registerWordClicked: is called when the user clicks "Add a word..." menu item. */
+/** registerWordClicked: is called when the user clicks "Add a word..." menu item.
+ *
+ * @param sender The sender of this request (unused).
+ */
 - (IBAction)registerWordClicked:(id)sender;
 
-/** aboutDialogClicked: is called when the user clicks "About Mozc..." menu item. */
+/** aboutDialogClicked: is called when the user clicks "About Mozc..." menu item.
+ *
+ * @param sender The sender of this request (unused).
+ */
 - (IBAction)aboutDialogClicked:(id)sender;
 
-/** outputResult: put result text in the specified |output| into the client application. */
+/** outputResult: put result text in the specified |output| into the client application.
+ *
+ * @param output The protobuf of the output data.
+ */
 - (void)outputResult:(mozc::commands::Output *)output;
 
-/** Sets the ClientInterface to use in the controller. */
+/** Sets the ClientInterface to use in the controller.
+ *
+ * @param newMozcClient The client object to communicate with the Mozc server process.
+ */
 - (void)setMozcClient:(std::unique_ptr<mozc::client::ClientInterface>)newMozcClient;
 
-/** Sets the RendererInterface to use in the controller. */
+/** Sets the RendererInterface to use in the controller.
+ *
+ * @param newRenderer The client object to communicate with the candidate renderer process.
+ */
 - (void)setRenderer:(std::unique_ptr<mozc::renderer::RendererInterface>)newRenderer;
+
+/** Updates |composedString_| from the result of a key event and puts the updated composed string to
+ * the client application.
+ *
+ * @param preedit The protobuf data representing the composed string.
+ */
+- (void)updateComposedString:(const mozc::commands::Preedit *)preedit;
+
+/** Updates |candidates_| from the result of a key event.
+ *
+ * @param output The protobuf data that contains the data of candidate words.
+ */
+- (void)updateCandidates:(const mozc::commands::Output *)output;
+
+/** Clears all candidate data in |candidates_|. */
+- (void)clearCandidates;
+
+/** Opens a link specified by the URL.
+ *
+ * @param url The URL information.
+ */
+- (void)openLink:(NSURL *)url;
+
+/** Switches to a new mode and sync the current mode with the converter.
+ *
+ * @param new_mode The protobuf enum of the new input mode.
+ * @param sender The sender of this request.
+ */
+- (void)switchMode:(mozc::commands::CompositionMode)new_mode client:(id)sender;
+
+/** Switches the mode icon in the task bar according to |mode_|. */
+- (void)switchDisplayMode;
+
+/** Commits the specified text to the current client.
+ *
+ * @param text The text to be committed.
+ * @param sender The sender of this request.
+ */
+- (void)commitText:(const char *)text client:(id)sender;
+
+/** Conducts the reconvert event.  It could have several tricks such like invoking UNDO instead if
+ * nothing is selected.  |sender| has to be the proxy object to the client application, which might
+ * not be same as the sender of the click event itself when the user clicks the menu item.
+ *
+ * @param command The protobuf data to send to the Mozc server process.
+ * @param sender The sender of this request.
+ */
+- (void)invokeReconvert:(const mozc::commands::SessionCommand *)command client:(id)sender;
+
+/** Conducts the undo command.
+ *
+ * @param sender The sender of this request.
+ */
+- (void)invokeUndo:(id)sender;
+
+/** Processes output fields such as preedit, output text, candidates, and modes and calls methods
+ * above.
+ *
+ * @param output The protobuf of the output data.
+ * @param sender The sender of this request.
+ */
+- (void)processOutput:(const mozc::commands::Output *)output client:(id)sender;
+
+/** Obtains the current configuration from the server and update client-specific configurations. */
+- (void)handleConfig;
+
+/** Sets up the client capability */
+- (void)setupCapability;
+
+/** Sets up the client bundle for the sender.
+ *
+ * @param sender The sender of this request.
+ */
+- (void)setupClientBundle:(id)sender;
+
+/** Launches the word register tool with the current selection range.
+ *
+ * @param client The host application. The selection data in this client is used as an input.
+ */
+- (void)launchWordRegisterTool:(id)client;
+
+/** Fills the surrounding context (preceding_text and following_text). Returns false if fails to get
+ * the surrounding context from the client.
+ *
+ * @param context The protobuf data used to be fill with the context information.
+ * @param client The host application as the source of surrounding context.
+ * @return YES if context was filled; NO otherwise.
+ */
+- (BOOL)fillSurroundingContext:(mozc::commands::Context *)context client:(id<IMKTextInput>)client;
 
 @end

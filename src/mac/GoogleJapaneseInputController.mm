@@ -46,7 +46,6 @@
 #include <string>
 #include <utility>
 
-#import "mac/GoogleJapaneseInputControllerInterface.h"
 #import "mac/KeyCodeMap.h"
 #import "mac/renderer_receiver.h"
 
@@ -391,10 +390,31 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   }
 }
 
-// change the mode to the new mode and turn-on the IME if necessary.
-- (void)switchModeInternal:(CompositionMode)new_mode {
+- (void)switchMode:(CompositionMode)new_mode client:(id)sender {
+  if (mode_ == new_mode) {
+    return;
+  }
+
+  if (new_mode == mozc::commands::DIRECT) {
+    // Turn off the IME and commit the composing text.
+    DLOG(INFO) << "Mode switch: HIRAGANA, KATAKANA, etc. -> DIRECT";
+    KeyEvent keyEvent;
+    Output output;
+    keyEvent.set_special_key(mozc::commands::KeyEvent::OFF);
+    mozcClient_->SendKey(keyEvent, &output);
+    if (output.has_result()) {
+      [self commitText:output.result().value().c_str() client:sender];
+    }
+    if ([composedString_ length] > 0) {
+      [self updateComposedString:nullptr];
+      [self clearCandidates];
+    }
+    mode_ = mozc::commands::DIRECT;
+    return;
+  }
+
   if (mode_ == mozc::commands::DIRECT) {
-    // Input mode changes from direct to an active mode.
+    // Turn on the IME as the input mode is changed from DIRECT to an active mode.
     DLOG(INFO) << "Mode switch: DIRECT -> HIRAGANA, KATAKANA, etc.";
     KeyEvent keyEvent;
     Output output;
@@ -402,27 +422,14 @@ bool CanSurroundingText(absl::string_view bundle_id) {
     mozcClient_->SendKey(keyEvent, &output);
   }
 
-  if (mode_ != new_mode) {
-    // Switch input mode.
-    DLOG(INFO) << "Switch input mode.";
-    SessionCommand command;
-    command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
-    command.set_composition_mode(new_mode);
-    Output output;
-    mozcClient_->SendCommand(command, &output);
-    mode_ = new_mode;
-  }
-}
-
-- (void)switchMode:(CompositionMode)new_mode client:(id)sender {
-  if (mode_ == new_mode) {
-    return;
-  }
-  if (mode_ != mozc::commands::DIRECT && new_mode == mozc::commands::DIRECT) {
-    [self switchModeToDirect:sender];
-  } else if (new_mode != mozc::commands::DIRECT) {
-    [self switchModeInternal:new_mode];
-  }
+  // Switch input mode.
+  DLOG(INFO) << "Switch input mode.";
+  SessionCommand command;
+  command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
+  command.set_composition_mode(new_mode);
+  Output output;
+  mozcClient_->SendCommand(command, &output);
+  mode_ = new_mode;
 }
 
 - (void)switchDisplayMode {

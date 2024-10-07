@@ -32,7 +32,6 @@
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
 
-#import "mac/GoogleJapaneseInputControllerInterface.h"
 #import "mac/KeyCodeMap.h"
 
 #include <objc/objc-class.h>
@@ -521,7 +520,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeToDirect) {
               SendKeyWithContext(HasSpecialKey(commands::KeyEvent::OFF), _, NotNull()))
       .WillOnce(DoAll(SetArgPointee<2>(output), Return(true)));
 
-  [controller_ switchModeToDirect:mock_client_];
+  [controller_ switchMode:commands::DIRECT client:mock_client_];
   EXPECT_EQ(controller_.mode, commands::DIRECT);
   EXPECT_EQ([mock_client_ getCounter:"insertText:replacementRange:"], 1);
   EXPECT_TRUE([@"foo" isEqualToString:mock_client_.insertedText]);
@@ -529,7 +528,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeToDirect) {
   EXPECT_FALSE(controller_.rendererCommand.visible());
 }
 
-TEST_F(GoogleJapaneseInputControllerTest, SwitchModeInternal) {
+TEST_F(GoogleJapaneseInputControllerTest, SwitchMode) {
   // When a mode changes from DIRECT, it should invoke "ON" command beforehand.
   EXPECT_CALL(*mock_mozc_client_,
               SendKeyWithContext(HasSpecialKey(commands::KeyEvent::ON), _, NotNull()))
@@ -540,21 +539,21 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeInternal) {
       .WillRepeatedly(DoAll(SaveArg<0>(&actual_command), Return(true)));
 
   controller_.mode = commands::DIRECT;
-  [controller_ switchModeInternal:commands::HIRAGANA];
+  [controller_ switchMode:commands::HIRAGANA client:mock_client_];
   EXPECT_EQ(controller_.mode, commands::HIRAGANA);
   EXPECT_THAT(actual_command, Type(commands::SessionCommand::SWITCH_INPUT_MODE));
   EXPECT_THAT(actual_command, CompositionMode(commands::HIRAGANA));
 
   // Switch from HIRAGANA to KATAKANA.  Just sending mode switching command.
   controller_.mode = commands::HIRAGANA;
-  [controller_ switchModeInternal:commands::HALF_KATAKANA];
+  [controller_ switchMode:commands::HALF_KATAKANA client:mock_client_];
   EXPECT_EQ(controller_.mode, commands::HALF_KATAKANA);
   EXPECT_THAT(actual_command, Type(commands::SessionCommand::SWITCH_INPUT_MODE));
   EXPECT_THAT(actual_command, CompositionMode(commands::HALF_KATAKANA));
   Mock::VerifyAndClearExpectations(&mock_mozc_client_);
 
   // going to same mode does not cause sendcommand
-  [controller_ switchModeInternal:commands::HALF_KATAKANA];
+  [controller_ switchMode:commands::HALF_KATAKANA client:mock_client_];
   EXPECT_EQ(controller_.mode, commands::HALF_KATAKANA);
 }
 

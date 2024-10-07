@@ -138,9 +138,6 @@ mozc_objc_library(
         "InputMethodKit",
     ],
     tags = ["manual"],
-    textual_hdrs = [
-        "GoogleJapaneseInputControllerInterface.h",
-    ],
     deps = [
         ":common",
         ":keycode_map",
