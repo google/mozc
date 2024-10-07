@@ -172,7 +172,7 @@ dotnet_tool_repository = use_repo_rule(
 
 dotnet_tool_repository(
     name = "wix",
-    version = "4.0.5",
+    version = "5.0.2",
 )
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")

@@ -242,7 +242,7 @@ load("@//bazel:dotnet_tool_repository.bzl", "dotnet_tool_repository")
 
 dotnet_tool_repository(
     name = "wix",
-    version = "4.0.5",
+    version = "5.0.2",
 )
 
 # Google Toolbox for Mac
