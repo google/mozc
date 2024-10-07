@@ -45,13 +45,13 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 
-/** GoogleJapaneseInputController is a subclass of |IMKInputController|, which holds a connection
+/** MozcImkInputController is a subclass of |IMKInputController|, which holds a connection
  * from a client application to the mozc server (Japanese IME server) on the machine.
  *
  * For the detail of IMKInputController itself, see the ADC document
  * http://developer.apple.com/documentation/Cocoa/Reference/IMKInputController_Class/
  */
-@interface GoogleJapaneseInputController : IMKInputController <ControllerCallback> {
+@interface MozcImkInputController : IMKInputController <ControllerCallback> {
  @private
   /** Instance variables are all strong references. */
 
@@ -267,4 +267,11 @@
  */
 - (BOOL)fillSurroundingContext:(mozc::commands::Context *)context client:(id<IMKTextInput>)client;
 
+@end
+
+/** GoogleJapaneseInputController is an alias of MozcImkInputController for backward compatibility.
+ * This will be removed in the future when all clients are migrated to the new name and performed
+ * relogin at least once.
+ */
+@interface GoogleJapaneseInputController : MozcImkInputController {}
 @end

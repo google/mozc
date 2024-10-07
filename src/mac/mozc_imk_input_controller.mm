@@ -178,7 +178,7 @@ bool CanSurroundingText(absl::string_view bundle_id) {
 }
 }  // namespace
 
-@implementation GoogleJapaneseInputController
+@implementation MozcImkInputController
 #pragma mark accessors for testing
 @synthesize keyCodeMap = keyCodeMap_;
 @synthesize yenSignCharacter = yenSignCharacter_;
@@ -621,10 +621,10 @@ bool CanSurroundingText(absl::string_view bundle_id) {
 #pragma mark Mozc Server methods
 
 #pragma mark IMKServerInput Protocol
-// Currently GoogleJapaneseInputController uses handleEvent:client:
+// Currently MozcImkInputController uses handleEvent:client:
 // method to handle key events.  It does not support inputText:client:
 // nor inputText:key:modifiers:client:.
-// Because GoogleJapaneseInputController does not use IMKCandidates,
+// Because MozcImkInputController does not use IMKCandidates,
 // the following methods are not needed to implement:
 //   candidates
 //
@@ -966,4 +966,8 @@ bool CanSurroundingText(absl::string_view bundle_id) {
 + (void)setGlobalRendererReceiver:(RendererReceiver *)rendererReceiver {
   gRendererReceiver = rendererReceiver;
 }
+@end
+
+// An alias of MozcImkInputController for backward compatibility.
+@implementation GoogleJapaneseInputController
 @end

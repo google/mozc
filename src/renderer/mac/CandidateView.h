@@ -73,7 +73,7 @@ enum COLUMN_TYPE {
 // setCandidates: sets the candidates to be rendered.
 - (void)setCandidates:(const mozc::commands::Candidates *)candidates;
 
-// setController: sets the reference of GoogleJapaneseInputController.
+// setController: sets the reference of MozcImkInputController.
 // It will be used when mouse clicks.  It doesn't take ownerships of
 // |controller|.
 - (void)setSendCommandInterface:(mozc::client::SendCommandInterface *)command_sender;

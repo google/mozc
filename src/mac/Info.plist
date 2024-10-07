@@ -180,11 +180,11 @@
 	<key>InputMethodConnectionName</key>
 	<string>${PRODUCT_NAME}_1_Connection</string>
 	<key>InputMethodServerControllerClass</key>
-	<string>GoogleJapaneseInputController</string>
+	<string>MozcImkInputController</string>
 	<key>InputMethodServerDelegateClass</key>
-	<string>GoogleJapaneseInputController</string>
+	<string>MozcImkInputController</string>
 	<key>InputMethodServerDataSourceClass</key>
-	<string>GoogleJapaneseInputController</string>
+	<string>MozcImkInputController</string>
 	<key>LSBackgroundOnly</key>
 	<string>1</string>
 	<key>LSUIElement</key>

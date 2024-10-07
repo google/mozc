@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
   NSString *rendererConnectionName = @kProductPrefix "_Renderer_Connection";
   RendererReceiver *rendererReceiver =
       [[RendererReceiver alloc] initWithName:rendererConnectionName];
-  [GoogleJapaneseInputController setGlobalRendererReceiver:rendererReceiver];
+  [MozcImkInputController setGlobalRendererReceiver:rendererReceiver];
 
   // Start the converter server at this time explicitly to prevent the
   // slow-down of the response for initial key event.

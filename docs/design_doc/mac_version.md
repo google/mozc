@@ -26,7 +26,7 @@ IMKInputServer handles all of the connection between applications, and invokes
 IMKInputController.
 
 The IMKit.framework configurations are in Info.plist of the client application.
-You'll see the GoogleJapaneseInputController class name in mac/Info.plist.
+You'll see the MozcImkInputController class name in mac/Info.plist.
 
 ## Communication with converter
 

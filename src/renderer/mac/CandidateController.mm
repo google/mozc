@@ -202,7 +202,7 @@ void CandidateController::AlignWindows() {
       command_.preedit_rectangle().right() - command_.preedit_rectangle().left(),
       command_.preedit_rectangle().bottom() - command_.preedit_rectangle().top());
   // The origin point of command_.preedit_rectangle() is the left-top of the
-  // base screen which is set in GoogleJapaneseInputController. It is
+  // base screen which is set in MozcImkInputController. It is
   // unnecessary calculation but to support older version of GoogleJapaneseInput
   // process we should not change it. So we minus the height of the screen here.
   mozc::Rect preedit_rect(mozc::Point(command_.preedit_rectangle().left(),
@@ -211,7 +211,7 @@ void CandidateController::AlignWindows() {
 
   // This is a hacky way to check vertical writing.
   // TODO(komatsu): We should use the return value of attributesForCharacterIndex
-  // in GoogleJapaneseInputController.mm as a proper way.
+  // in MozcImkInputController as a proper way.
   const bool is_vertical = (preedit_size.height < preedit_size.width);
 
   // Expand the rect size to make a margin to the candidate window.
