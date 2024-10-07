@@ -31,7 +31,7 @@
 #import <Foundation/Foundation.h>
 #import <InputMethodKit/InputMethodKit.h>
 
-#import "mac/GoogleJapaneseInputController.h"
+#import "mac/mozc_imk_input_controller.h"
 #import "mac/renderer_receiver.h"
 
 #include <memory>

@@ -106,7 +106,7 @@ mozc_objc_library(
     ],
     tags = ["manual"],
     deps = [
-        ":imk_controller",
+        ":mozc_imk_input_controller",
         ":renderer_receiver",
         "//base:const",
         "//base:crash_report_handler",
@@ -120,13 +120,9 @@ mozc_objc_library(
 )
 
 mozc_objc_library(
-    name = "imk_controller",
-    srcs = [
-        "GoogleJapaneseInputController.mm",
-    ],
-    hdrs = [
-        "GoogleJapaneseInputController.h",
-    ],
+    name = "mozc_imk_input_controller",
+    srcs = ["mozc_imk_input_controller.mm"],
+    hdrs = ["mozc_imk_input_controller.h"],
     data = [
         "English.lproj/Config.xib",
         "Japanese.lproj/Config.xib",
@@ -161,12 +157,12 @@ mozc_objc_library(
 )
 
 mozc_objc_test(
-    name = "imk_controller_test",
+    name = "mozc_imk_input_controller_test",
     size = "small",
-    srcs = ["GoogleJapaneseInputController_test.mm"],
+    srcs = ["mozc_imk_input_controller_test.mm"],
     deps = [
-        ":imk_controller",
         ":keycode_map",
+        ":mozc_imk_input_controller",
         "//base/mac:mac_util",
         "//client:client_mock",
         "//protocol:candidates_cc_proto",

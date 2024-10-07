@@ -57,10 +57,10 @@
       'conditions': [
         ['OS=="mac"', {
           'sources': [
-            'GoogleJapaneseInputController.mm',
-            'GoogleJapaneseInputController_test.mm',
             'KeyCodeMap.mm',
             'KeyCodeMap_test.mm',
+            'mozc_imk_input_controller.mm',
+            'mozc_imk_input_controller_test.mm',
             'renderer_receiver.mm',
             'renderer_receiver_test.mm',
           ],
@@ -267,9 +267,9 @@
           'type': 'executable',
           'mac_bundle': 1,
           'sources': [
-            'GoogleJapaneseInputController.mm',
             'KeyCodeMap.mm',
             'main.mm',
+            'mozc_imk_input_controller.mm',
             'renderer_receiver.mm',
           ],
           'product_name': '<(branding)',
