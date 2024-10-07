@@ -5,7 +5,6 @@ bazel_dep(
     name = "abseil-cpp",
     repo_name = "com_google_absl",
 )
-
 local_path_override(
     module_name = "abseil-cpp",
     path = "third_party/abseil-cpp",
@@ -15,7 +14,6 @@ bazel_dep(
     name = "protobuf",
     repo_name = "com_google_protobuf",
 )
-
 local_path_override(
     module_name = "protobuf",
     path = "third_party/protobuf",
@@ -25,12 +23,10 @@ bazel_dep(
     name = "googletest",
     repo_name = "com_google_googletest",
 )
-
 local_path_override(
     module_name = "googletest",
     path = "third_party/gtest",
 )
-
 
 # platforms: 0.0.10 2024-04-26
 # https://github.com/bazelbuild/platforms/
@@ -84,14 +80,16 @@ bazel_dep(
 )
 single_version_override(
     module_name = "rules_android_ndk",
-    version = "0.1.2",
     patches = ["bazel/rules_android_ndk.patch"],
+    version = "0.1.2",
 )
+
 android_ndk_repository_extension = use_extension(
     "@rules_android_ndk//:extension.bzl",
     "android_ndk_repository_extension",
 )
 use_repo(android_ndk_repository_extension, "androidndk")
+
 register_toolchains("@androidndk//:all")
 
 new_local_repository = use_repo_rule(
@@ -116,24 +114,34 @@ new_local_repository(
 
 pkg_config_repository = use_repo_rule(
     "@//bazel:pkg_config_repository.bzl",
-    "pkg_config_repository"
+    "pkg_config_repository",
 )
 
 # iBus
 pkg_config_repository(
     name = "ibus",
-    packages = ["glib-2.0", "gobject-2.0", "ibus-1.0"],
+    packages = [
+        "glib-2.0",
+        "gobject-2.0",
+        "ibus-1.0",
+    ],
 )
 
 # Qt for Linux
 pkg_config_repository(
     name = "qt_linux",
-    packages = ["Qt6Core", "Qt6Gui", "Qt6Widgets"],
+    packages = [
+        "Qt6Core",
+        "Qt6Gui",
+        "Qt6Widgets",
+    ],
 )
 
 # Qt for macOS
 qt_mac_repository = use_repo_rule("@//bazel:qt_mac_repository.bzl", "qt_mac_repository")
+
 MACOS_QT_PATH = "/usr/local/Qt-6.5.2"
+
 qt_mac_repository(
     name = "qt_mac",
     default_path = MACOS_QT_PATH,  # can be replaced with MOZC_QT_PATH envvar.
@@ -149,7 +157,7 @@ new_local_repository(
 # Windows SDK
 windows_sdk_repository = use_repo_rule(
     "@//bazel:windows_sdk_repository.bzl",
-    "windows_sdk_repository"
+    "windows_sdk_repository",
 )
 
 windows_sdk_repository(
@@ -159,7 +167,7 @@ windows_sdk_repository(
 # dotnet tool repository (to load "wix")
 dotnet_tool_repository = use_repo_rule(
     "@//bazel:dotnet_tool_repository.bzl",
-    "dotnet_tool_repository"
+    "dotnet_tool_repository",
 )
 
 dotnet_tool_repository(
@@ -168,6 +176,7 @@ dotnet_tool_repository(
 )
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
 # Material icons
 http_file(
     name = "material_icon_dictionary_png",
@@ -228,17 +237,18 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 # Google Toolbox for Mac
 # https://github.com/google/google-toolbox-for-mac
 # We just need UnitTesting, so strip to the directory and skip dependencies.
-GTM_GIT_SHA="8fbaae947b87c1e66c0934493168fc6d583ed889"
+GTM_GIT_SHA = "8fbaae947b87c1e66c0934493168fc6d583ed889"
+
 http_archive(
     name = "google_toolbox_for_mac",
-    urls = [
-        "https://github.com/google/google-toolbox-for-mac/archive/%s.zip" % GTM_GIT_SHA
-    ],
-    strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
     build_file = "@//bazel:BUILD.google_toolbox_for_mac.bazel",
-    patches = ["@//bazel:google_toolbox_for_mac.patch"],
     patch_args = ["-p2"],
+    patches = ["@//bazel:google_toolbox_for_mac.patch"],
     sha256 = "424bca6571778496efa5328ffcca26edf083e282da7074d30b3e980516cea2a4",
+    strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
+    urls = [
+        "https://github.com/google/google-toolbox-for-mac/archive/%s.zip" % GTM_GIT_SHA,
+    ],
 )
 
 # Zip code
@@ -248,15 +258,18 @@ http_archive(
 # SHA256 as of 2024-08-14
 # SHA256_ZIP_CODE_KEN_ALL = "d2d177ef64b9459a618d8aaa96b6c5f081cb3f37f6e9c00ba912001e66b81f3e"
 SHA256_ZIP_CODE_KEN_ALL = None
+
 http_archive(
     name = "zip_code_ken_all",
     build_file_content = "exports_files([\"KEN_ALL.CSV\"])",
     sha256 = SHA256_ZIP_CODE_KEN_ALL,
     url = "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip",
 )
+
 # SHA256 as of 2024-08-14
 # SHA256_ZIP_CODE_JIGYOSYO="ab6fd92df35e63c4566d29f70456da1603d8178ce3fec073f7c27b28d0af2e10"
 SHA256_ZIP_CODE_JIGYOSYO = None
+
 http_archive(
     name = "zip_code_jigyosyo",
     build_file_content = "exports_files([\"JIGYOSYO.CSV\"])",
