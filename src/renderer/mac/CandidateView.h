@@ -54,21 +54,7 @@ enum COLUMN_TYPE {
 
 // CandidateView is an NSView subclass to draw the candidate window
 // according to the current candidates.
-@interface CandidateView : NSView {
- @private
-  mozc::commands::Candidates candidates_;
-  mozc::renderer::TableLayout *tableLayout_;
-  const mozc::renderer::RendererStyle *style_;
-
-  // The row which has focused background.
-  int focusedRow_;
-
-  // Cache of attributed strings which is allocated at updateLayout.
-  NSArray *candidateStringsCache_;
-
-  // |command_sender_| holds a callback for mouse clicks.
-  mozc::client::SendCommandInterface *command_sender_;
-}
+@interface CandidateView : NSView
 
 // setCandidates: sets the candidates to be rendered.
 - (void)setCandidates:(const mozc::commands::Candidates *)candidates;
