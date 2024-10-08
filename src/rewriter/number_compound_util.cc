@@ -31,7 +31,10 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <utility>
 
+#include "absl/base/no_destructor.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "base/util.h"
@@ -112,7 +115,7 @@ bool IsNumber(const SerializedStringArray &suffix_array,
   // check the opportunities of rewriting such number nouns.
   // TODO(toshiyuki, team): It may be better to set number POS to such number
   // noun entries at dictionary build time.  correct POS.  Then, we can omit the
-  // following runtime strcture check.
+  // following runtime structure check.
   if (!pos_matcher.IsGeneralNoun(cand.lid)) {
     return false;
   }
@@ -124,6 +127,25 @@ bool IsNumber(const SerializedStringArray &suffix_array,
   uint32_t script_type = 0;
   if (!number_compound_util::SplitStringIntoNumberAndCounterSuffix(
           suffix_array, cand.content_value, &number, &suffix, &script_type)) {
+    return false;
+  }
+  // Some number including general noun should be excluded from IsNumber().
+  static const absl::NoDestructor<
+      absl::flat_hash_set<std::pair<absl::string_view, absl::string_view>>>
+      kExceptions({
+          {"いっこう", "一行"},
+          {"さんしゃ", "三者"},
+          {"さんきゃく", "三脚"},
+          {"しきゅう", "四球"},
+          {"しき", "四季"},
+          {"ろっぽう", "六法"},
+          {"ろっぽう", "六方"},
+          {"ろっかい", "六界"},
+          {"ろくどう", "六道"},
+          {"しちりん", "七輪"},
+          {"やえ", "八重"},
+      });
+  if (kExceptions->contains(std::make_pair(cand.key, cand.value))) {
     return false;
   }
   return !number.empty();

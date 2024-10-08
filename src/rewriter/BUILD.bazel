@@ -1584,6 +1584,8 @@ mozc_cc_library(
         "//base/container:serialized_string_array",
         "//converter:segments",
         "//dictionary:pos_matcher",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
     ],
 )
