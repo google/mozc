@@ -31,10 +31,11 @@
 
 #import <Foundation/Foundation.h>
 
+#include <algorithm>
 #include <set>
 
-#include "absl/base/call_once.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_format.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_style.pb.h"
@@ -46,7 +47,6 @@ using mozc::client::SendCommandInterface;
 using mozc::commands::Candidates;
 using mozc::commands::Output;
 using mozc::commands::SessionCommand;
-using mozc::renderer::RendererStyle;
 using mozc::renderer::RendererStyleHandler;
 using mozc::renderer::TableLayout;
 using mozc::renderer::mac::MacViewUtil;
@@ -55,43 +55,10 @@ using mozc::renderer::mac::MacViewUtil;
 // native candidate window.
 // TODO(mukai): integrate and share the code among Win and Mac.
 
-namespace {
-const NSImage *g_LogoImage = nullptr;
-int g_column_minimum_width = 0;
-absl::once_flag g_OnceForInitializeStyle;
-
-void InitializeDefaultStyle() {
-  RendererStyle style;
-  RendererStyleHandler::GetRendererStyle(&style);
-
-  std::string logo_file_name = style.logo_file_name();
-  g_LogoImage = [NSImage imageNamed:[NSString stringWithUTF8String:logo_file_name.c_str()]];
-  if (g_LogoImage) {
-    // Fix the image size.  Sometimes the size can be smaller than the
-    // actual size because of blank margin.
-    NSArray *logoReps = [g_LogoImage representations];
-    if (logoReps && [logoReps count] > 0) {
-      NSImageRep *representation = [logoReps objectAtIndex:0];
-      [g_LogoImage setSize:NSMakeSize([representation pixelsWide], [representation pixelsHigh])];
-    }
-  }
-
-  NSString *nsstr = [NSString stringWithUTF8String:style.column_minimum_width_string().c_str()];
-  NSDictionary *attr = [NSDictionary dictionaryWithObject:[NSFont messageFontOfSize:14]
-                                                   forKey:NSFontAttributeName];
-  NSAttributedString *defaultMessage = [[NSAttributedString alloc] initWithString:nsstr
-                                                                       attributes:attr];
-  g_column_minimum_width = [defaultMessage size].width;
-
-  // default line width is specified as 1.0 *pt*, but we want to draw
-  // it as 1.0 px.
-  [NSBezierPath setDefaultLineWidth:1.0];
-  [NSBezierPath setDefaultLineJoinStyle:NSLineJoinStyleMiter];
-}
-}  // namespace
-
 // Private method declarations.
 @interface CandidateView ()
+- (void)initializeDefaultStyle;
+
 // Draw the |row|-th row.
 - (void)drawRow:(int)row;
 
@@ -103,6 +70,9 @@ void InitializeDefaultStyle() {
 @end
 
 @implementation CandidateView {
+  const NSImage *logoImage_;
+  int columnMinimumWidth_;
+
   mozc::commands::Candidates candidates_;
   mozc::renderer::TableLayout tableLayout_;
   mozc::renderer::RendererStyle style_;
@@ -120,17 +90,44 @@ void InitializeDefaultStyle() {
 #pragma mark initialization
 
 - (id)initWithFrame:(NSRect)frame {
-  absl::call_once(g_OnceForInitializeStyle, &InitializeDefaultStyle);
   self = [super initWithFrame:frame];
   if (self) {
-    RendererStyleHandler::GetRendererStyle(&style_);
+    [self initializeDefaultStyle];
     focusedRow_ = -1;
   }
   return self;
 }
 
+- (void)initializeDefaultStyle {
+  RendererStyleHandler::GetRendererStyle(&style_);
+
+  const std::string &logo_file_name = style_.logo_file_name();
+  logoImage_ = [NSImage imageNamed:[NSString stringWithUTF8String:logo_file_name.c_str()]];
+  if (logoImage_) {
+    // Fix the image size.  Sometimes the size can be smaller than the
+    // actual size because of blank margin.
+    const NSArray *logoReps = [logoImage_ representations];
+    if (logoReps && [logoReps count] > 0) {
+      const NSImageRep *representation = [logoReps objectAtIndex:0];
+      [logoImage_ setSize:NSMakeSize([representation pixelsWide], [representation pixelsHigh])];
+    }
+  }
+
+  NSString *nsstr = [NSString stringWithUTF8String:style_.column_minimum_width_string().c_str()];
+  NSDictionary *attr = [NSDictionary dictionaryWithObject:[NSFont messageFontOfSize:14]
+                                                   forKey:NSFontAttributeName];
+  const NSAttributedString *defaultMessage = [[NSAttributedString alloc] initWithString:nsstr
+                                                                             attributes:attr];
+  columnMinimumWidth_ = [defaultMessage size].width;
+
+  // default line width is specified as 1.0 *pt*, but we want to draw
+  // it as 1.0 px.
+  [NSBezierPath setDefaultLineWidth:1.0];
+  [NSBezierPath setDefaultLineJoinStyle:NSLineJoinStyleMiter];
+}
+
 - (void)setCandidates:(const Candidates *)candidates {
-  candidates_.CopyFrom(*candidates);
+  candidates_ = *candidates;
 }
 
 - (void)setSendCommandInterface:(SendCommandInterface *)command_sender {
@@ -152,7 +149,6 @@ void InitializeDefaultStyle() {
 
 #pragma mark drawing
 
-#define max(x, y) (((x) > (y)) ? (x) : (y))
 - (NSSize)updateLayout {
   candidateStringsCache_ = nil;
   tableLayout_.Initialize(candidates_.candidate_size(), NUMBER_OF_COLUMNS);
@@ -178,7 +174,7 @@ void InitializeDefaultStyle() {
       const NSSize footerLabelSize =
           MacViewUtil::applyTheme([footerLabel size], style_.footer_style());
       footerSize.width += footerLabelSize.width;
-      footerSize.height = max(footerSize.height, footerLabelSize.height);
+      footerSize.height = std::max(footerSize.height, footerLabelSize.height);
     }
 
     if (footer.has_sub_label()) {
@@ -187,13 +183,13 @@ void InitializeDefaultStyle() {
       const NSSize footerSubLabelSize =
           MacViewUtil::applyTheme([footerSubLabel size], style_.footer_sub_label_style());
       footerSize.width += footerSubLabelSize.width;
-      footerSize.height = max(footerSize.height, footerSubLabelSize.height);
+      footerSize.height = std::max(footerSize.height, footerSubLabelSize.height);
     }
 
-    if (footer.logo_visible() && g_LogoImage) {
-      const NSSize logoSize = [g_LogoImage size];
+    if (footer.logo_visible() && logoImage_) {
+      const NSSize logoSize = [logoImage_ size];
       footerSize.width += logoSize.width;
-      footerSize.height = max(footerSize.height, logoSize.height);
+      footerSize.height = std::max(footerSize.height, logoSize.height);
     }
 
     if (footer.index_visible()) {
@@ -206,7 +202,7 @@ void InitializeDefaultStyle() {
       const NSSize footerIndexSize =
           MacViewUtil::applyTheme([footerAttributedIndex size], style_.footer_style());
       footerSize.width += footerIndexSize.width;
-      footerSize.height = max(footerSize.height, footerIndexSize.height);
+      footerSize.height = std::max(footerSize.height, footerIndexSize.height);
     }
 
     footerSize.height += style_.footer_border_colors_size();
@@ -262,7 +258,7 @@ void InitializeDefaultStyle() {
         addObject:[NSArray arrayWithObjects:shortcut, gap1, candidateValue, description, nil]];
   }
 
-  tableLayout_.EnsureColumnsWidth(COLUMN_CANDIDATE, COLUMN_DESCRIPTION, g_column_minimum_width);
+  tableLayout_.EnsureColumnsWidth(COLUMN_CANDIDATE, COLUMN_DESCRIPTION, columnMinimumWidth_);
 
   candidateStringsCache_ = newCache;
   tableLayout_.FreezeLayout();
@@ -365,11 +361,11 @@ void InitializeDefaultStyle() {
   [footerBackground drawInRect:footerRect angle:90.0];
 
   // Draw logo
-  if (footer.logo_visible() && g_LogoImage) {
+  if (footer.logo_visible() && logoImage_) {
     const NSPoint logoPoint = footerRect.origin;
-    const NSSize logoSize = g_LogoImage.size;
+    const NSSize logoSize = logoImage_.size;
     const NSRect logoRect = NSMakeRect(logoPoint.x, logoPoint.y, logoSize.width, logoSize.height);
-    [g_LogoImage drawInRect:logoRect
+    [logoImage_ drawInRect:logoRect
                     fromRect:NSZeroRect   // Draw the entire image
                   operation:NSCompositingOperationSourceOver
                     fraction:1.0  // Opacity
@@ -403,11 +399,12 @@ void InitializeDefaultStyle() {
 
   // Draw footer index (e.g. "10/120")
   if (footer.index_visible()) {
-    const int focusedIndex = candidates_.focused_index() + 1;  // +1 to 1-origin from 0-origin.
-    const int totalItems = candidates_.size();
-    const NSString *footerIndex = [NSString stringWithFormat:@"%d/%d", focusedIndex, totalItems];
+    const std::string footerIndex =
+        absl::StrFormat("%d/%d",
+                        candidates_.focused_index() + 1,  // +1 to 1-origin from 0-origin.
+                        candidates_.size());
     const NSAttributedString *footerAttributedIndex =
-        MacViewUtil::ToNSAttributedString([footerIndex UTF8String], style_.footer_style());
+        MacViewUtil::ToNSAttributedString(footerIndex, style_.footer_style());
     const NSSize footerSize = [footerAttributedIndex size];
     NSPoint footerPosition = footerRect.origin;
     footerPosition.x = footerPosition.x + footerRect.size.width - footerSize.width -
@@ -436,8 +433,6 @@ void InitializeDefaultStyle() {
 }
 
 #pragma mark event handling callbacks
-
-const char *Inspect(id obj) { return [[NSString stringWithFormat:@"%@", obj] UTF8String]; }
 
 - (void)mouseDown:(NSEvent *)event {
   const mozc::Point localPos = MacViewUtil::ToPoint([self convertPoint:[event locationInWindow]
