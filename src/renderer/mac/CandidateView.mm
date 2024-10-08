@@ -27,9 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <set>
-
 #import "renderer/mac/CandidateView.h"
+
+#import <Foundation/Foundation.h>
+
+#include <set>
 
 #include "absl/base/call_once.h"
 #include "absl/log/log.h"
@@ -65,11 +67,6 @@ void InitializeDefaultStyle() {
   std::string logo_file_name = style.logo_file_name();
   g_LogoImage = [NSImage imageNamed:[NSString stringWithUTF8String:logo_file_name.c_str()]];
   if (g_LogoImage) {
-    // setFlipped is deprecated at Snow Leopard, but we use this because
-    // it works well with Snow Leopard and new method to deal with
-    // flipped view doesn't work with Leopard.
-    [g_LogoImage setFlipped:YES];
-
     // Fix the image size.  Sometimes the size can be smaller than the
     // actual size because of blank margin.
     NSArray *logoReps = [g_LogoImage representations];
@@ -361,11 +358,15 @@ void InitializeDefaultStyle() {
 
     // Draw logo
     if (footer.logo_visible() && g_LogoImage) {
-      [g_LogoImage drawAtPoint:footerRect.origin
-                      fromRect:NSZeroRect /* means draw entire image */
-                     operation:NSCompositingOperationSourceOver
-                      fraction:1.0 /* opacity */];
-      NSSize logoSize = [g_LogoImage size];
+      const NSPoint logoPoint = footerRect.origin;
+      const NSSize logoSize = g_LogoImage.size;
+      const NSRect logoRect = NSMakeRect(logoPoint.x, logoPoint.y, logoSize.width, logoSize.height);
+      [g_LogoImage drawInRect:logoRect
+                     fromRect:NSZeroRect   // Draw the entire image
+                    operation:NSCompositingOperationSourceOver
+                     fraction:1.0  // Opacity
+               respectFlipped:YES
+                        hints:nil];
       footerRect.origin.x += logoSize.width;
       footerRect.size.width -= logoSize.width;
     }
