@@ -96,16 +96,36 @@ void ConstChar32ReverseIterator::Next() {
 
 bool ConstChar32ReverseIterator::Done() const { return done_; }
 
-void Util::SplitStringToUtf8Chars(absl::string_view str,
-                                  std::vector<std::string> *output) {
+namespace {
+
+template <typename T>
+void AppendUtf8CharsImpl(absl::string_view str, std::vector<T> &output) {
   const char *begin = str.data();
   const char *const end = str.data() + str.size();
   while (begin < end) {
     const size_t mblen = strings::OneCharLen(begin);
-    output->emplace_back(begin, mblen);
+    output.emplace_back(begin, mblen);
     begin += mblen;
   }
   DCHECK_EQ(begin, end);
+}
+
+}  // namespace
+
+std::vector<std::string> Util::SplitStringToUtf8Chars(absl::string_view str) {
+  std::vector<std::string> output;
+  AppendUtf8Chars(str, output);
+  return output;
+}
+
+void Util::AppendUtf8Chars(absl::string_view str,
+                           std::vector<std::string> &output) {
+  AppendUtf8CharsImpl(str, output);
+}
+
+void Util::AppendUtf8Chars(absl::string_view str,
+                           std::vector<absl::string_view> &output) {
+  AppendUtf8CharsImpl(str, output);
 }
 
 // Grapheme is user-perceived character. It may contain multiple codepoints
@@ -115,7 +135,7 @@ void Util::SplitStringToUtf8Chars(absl::string_view str,
 // * https://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries
 void Util::SplitStringToUtf8Graphemes(absl::string_view str,
                                       std::vector<std::string> *graphemes) {
-  Util::SplitStringToUtf8Chars(str, graphemes);
+  *graphemes = SplitStringToUtf8Chars(str);
   if (graphemes->size() <= 1) {
     return;
   }
@@ -908,7 +928,7 @@ Util::ScriptType Util::GetFirstScriptType(absl::string_view str,
   }
   const Utf8AsChars32 utf8_as_char32(str);
   if (mblen) {
-    *mblen = utf8_as_char32.begin().ok()? utf8_as_char32.begin().size() : 0;
+    *mblen = utf8_as_char32.begin().ok() ? utf8_as_char32.begin().size() : 0;
   }
   return GetScriptType(utf8_as_char32.front());
 }

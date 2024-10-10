@@ -51,34 +51,52 @@
 namespace mozc {
 namespace {
 
+using ::testing::ElementsAre;
 using ::testing::ElementsAreArray;
+
+template <typename T>
+class TypedUtilTest : public ::testing::Test {};
+
+using StrTypes = ::testing::Types<std::string, absl::string_view>;
+TYPED_TEST_SUITE(TypedUtilTest, StrTypes);
+
+TYPED_TEST(TypedUtilTest, AppendUtf8Chars) {
+  using StrType = TypeParam;
+  {
+    std::vector<StrType> output;
+    Util::AppendUtf8Chars("", output);
+    EXPECT_EQ(output.size(), 0);
+  }
+  {
+    constexpr absl::string_view kInputs[] = {
+        "a", "あ", "亜", "\n", "a",
+    };
+    const std::string joined_string = absl::StrJoin(kInputs, "");
+
+    std::vector<StrType> output = {"x", "y", "z"};
+    Util::AppendUtf8Chars(joined_string, output);
+    EXPECT_THAT(output, ElementsAre("x", "y", "z", "a", "あ", "亜", "\n", "a"));
+  }
+}
 
 TEST(UtilTest, SplitStringToUtf8Chars) {
   {
-    std::vector<std::string> output;
-    Util::SplitStringToUtf8Chars("", &output);
+    const std::vector<std::string> output = Util::SplitStringToUtf8Chars("");
     EXPECT_EQ(output.size(), 0);
   }
-
   {
     const std::string kInputs[] = {
         "a", "あ", "亜", "\n", "a",
     };
     const std::string joined_string = absl::StrJoin(kInputs, "");
 
-    std::vector<std::string> output;
-    Util::SplitStringToUtf8Chars(joined_string, &output);
+    const std::vector<std::string> output =
+        Util::SplitStringToUtf8Chars(joined_string);
     EXPECT_THAT(output, ElementsAreArray(kInputs));
   }
 }
 
 TEST(UtilTest, SplitStringToUtf8Graphemes) {
-  {
-    std::vector<std::string> output;
-    Util::SplitStringToUtf8Chars("", &output);
-    EXPECT_EQ(output.size(), 0);
-  }
-
   {  // Single codepoint characters.
     const std::string kInputs[] = {
         "a", "あ", "亜", "\n", "a",

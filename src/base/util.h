@@ -46,9 +46,19 @@ class Util {
   Util() = delete;
   ~Util() = delete;
 
-  // String utils
-  static void SplitStringToUtf8Chars(absl::string_view str,
-                                     std::vector<std::string> *output);
+  // Splits a string into UTF8 chars.
+  static std::vector<std::string> SplitStringToUtf8Chars(absl::string_view str);
+
+  // Splits a string into UTF8 chars and appends them to `output`. For example:
+  //
+  // std::string str = "あa1";
+  // std::vector<std::string> output = {"漢"};
+  // Util::AppendUtf8Chars(str, output);
+  // EXPECT_THAT(output, ElementsAre("漢", "あ", "a", "1"));
+  static void AppendUtf8Chars(absl::string_view str,
+                              std::vector<std::string> &output);
+  static void AppendUtf8Chars(absl::string_view str,
+                              std::vector<absl::string_view> &output);
 
   // Split `str` to graphemes.
   // A grapheme may contain multiple characters such as modifiers and variation
