@@ -2549,10 +2549,8 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
   {
     std::string base;
     std::set<std::string> expanded;
-    std::vector<std::string> chars;
-    Util::SplitStringToUtf8Chars(kTestStr, &chars);
-    for (size_t i = 0; i < chars.size(); ++i) {
-      composer_->InsertCharacterPreedit(chars[i]);
+    for (const std::string &c : Util::SplitStringToUtf8Chars(kTestStr)) {
+      composer_->InsertCharacterPreedit(c);
     }
     std::string preedit = composer_->GetStringForPreedit();
     std::string conversion_query = composer_->GetQueryForConversion();

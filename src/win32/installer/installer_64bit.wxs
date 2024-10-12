@@ -327,7 +327,7 @@
     </StandardDirectory>
 
     <!-- Write registry keys to make the installer compatible with Omaha. -->
-    <Component Id="OmahaRegister" Directory="TARGETDIR">
+    <Component Id="OmahaRegister" Directory="TARGETDIR" Bitness="always32">
       <RegistryValue Id="OmahaClientRegPv" Root="HKLM" Key="$(var.OmahaClientKey)" Name="pv" Value="$(var.MozcVersion)" Action="write" Type="string" />
       <RegistryValue Id="OmahaClientRegName" Root="HKLM" Key="$(var.OmahaClientKey)" Name="name" Value="Google 日本語入力" Action="write" Type="string" />
       <RegistryValue Id="OmahaClientRegLang" Root="HKLM" Key="$(var.OmahaClientKey)" Name="lang" Value="ja" Action="write" Type="string" />
@@ -348,7 +348,7 @@
       <RegistryValue Id="SysProcsGIMEJaRenderer" Root="HKLM" Key="SYSTEM\CurrentControlSet\Control\Terminal Server\SysProcs" Name="GoogleIMEJaRenderer.exe" Value="0" Action="write" Type="integer" />
     </Component>
 
-    <Component Id="OmahaRegLaunchCmdLine" Permanent="no" Directory="TARGETDIR" Condition="(NOT UPGRADING)">
+    <Component Id="OmahaRegLaunchCmdLine" Permanent="no" Directory="TARGETDIR" Condition="(NOT UPGRADING)" Bitness="always32">
       <RegistryValue Id="OmahaLaunchCmdLineValue" Root="HKLM" Key="$(var.OmahaClientStateKey)" Name="InstallerSuccessLaunchCmdLine" Action="write" Type="string" Value="&quot;[GIMEJaDir]GoogleIMEJaTool.exe&quot; --mode=post_install_dialog" />
     </Component>
 

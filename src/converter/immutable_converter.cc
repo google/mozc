@@ -1333,8 +1333,8 @@ void ImmutableConverter::MakeLatticeNodesForPredictiveNodes(
     conversion_key += segment.key();
   }
   DCHECK_NE(std::string::npos, key.find(conversion_key));
-  std::vector<std::string> conversion_key_chars;
-  Util::SplitStringToUtf8Chars(conversion_key, &conversion_key_chars);
+  const std::vector<std::string> conversion_key_chars =
+      Util::SplitStringToUtf8Chars(conversion_key);
 
   // *** Current behaviors ***
   // - Starts suggestion from 6 characters, which is conservative.
