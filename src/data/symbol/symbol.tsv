@@ -214,11 +214,14 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	⌒	すうがく こ けいさん きごう	弧		SYMBOL
 記号	∂	すうがく けいさん きごう へんびぶん らうんど でる	偏微分		SYMBOL
 記号	∇	すうがく なぶら けいさん きごう	ナブラ		SYMBOL
+記号	∆	でるた ぞうぶん らぷらしあん	増分 ラプラシアン		SYMBOL
 記号	≡	すうがく ごうどう けいさん = きごう	合同		SYMBOL
 記号	≒	すうがく やく きんじ いこーる = けいさん きごう とうごう	ほとんど等しい		SYMBOL
 記号	≪	ふとうごう しょうなり すうがく けいさん << きごう	非常に小さい		SYMBOL
 記号	≫	ふとうごう だいなり すうがく けいさん >> きごう	非常に大きい		SYMBOL
-記号	√	るーと へいほうこん すうがく けいさん きごう こんごう	根号		SYMBOL
+記号	√	るーと へいほうこん すうがく けいさん きごう こんごう sqrt	根号		SYMBOL
+記号	∛	さんじょうこん こんごう cbrt	三乗根号		SYMBOL
+記号	∜	よんじょうこん こんごう qdrt	四乗根号		SYMBOL
 記号	∽	すうがく そうじ けいさん きごう	相似		SYMBOL
 記号	∝	すうがく ひれい けいさん きごう	比例		SYMBOL
 記号	∵	すうがく なぜならば けいさん きごう さんかく てん	なぜならば		SYMBOL
