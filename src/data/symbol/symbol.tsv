@@ -1036,6 +1036,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	㍕	れむ たんい たんい	単位		OTHER		U+3355
 記号	㍖	れんとげん たんい	単位		OTHER		U+3356
 記号	㍗	わっと たんい	単位		OTHER		U+3357
+記号	🈀	ほか			OTHER		U+1F200
 
 記号	↔	やじるし ←→ <-> <ー>	矢印	左右	SYMBOL
 記号	↕	やじるし ↑↓ ↓↑	矢印	上下	SYMBOL
