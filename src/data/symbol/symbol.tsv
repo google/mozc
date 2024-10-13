@@ -915,6 +915,41 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 アルファベット	ʒ	はつおんきごう えじゅ えっじゅ zh ZH	発音記号
 アルファベット	ʧ	はつおんきごう tsh TSH	発音記号
 アルファベット	ʤ	はつおんきごう dzh DZH	発音記号
+記号	␀	NUL ぬる なる ぬるもじ なるもじ	制御記号	NUL	OTHER
+記号	␁	SOH	制御記号	SOH	OTHER
+記号	␂	STX	制御記号	STX	OTHER
+記号	␃	ETX	制御記号	ETX	OTHER
+記号	␄	EOT	制御記号	EOT	OTHER
+記号	␅	ENQ	制御記号	ENQ	OTHER
+記号	␆	ACK	制御記号	ACK	OTHER
+記号	␇	BEL	制御記号	BEL	OTHER
+記号	␈	BS	制御記号	BS	OTHER
+記号	␉	HT たぶ	制御記号	HT	OTHER
+記号	␊	LF かいぎょう	制御記号	LF	OTHER
+記号	␋	VT	制御記号	VT	OTHER
+記号	␌	FF	制御記号	FF	OTHER
+記号	␍	CR	制御記号	CR	OTHER
+記号	␎	SO	制御記号	SO	OTHER
+記号	␏	SI	制御記号	SI	OTHER
+記号	␐	DLE	制御記号	DLE	OTHER
+記号	␑	DC1	制御記号	DC1	OTHER
+記号	␒	DC2	制御記号	DC2	OTHER
+記号	␓	DC3	制御記号	DC3	OTHER
+記号	␔	DC4	制御記号	DC4	OTHER
+記号	␕	NAK	制御記号	NAK	OTHER
+記号	␖	SYN	制御記号	SYN	OTHER
+記号	␗	ETB	制御記号	ETB	OTHER
+記号	␘	CAN	制御記号	CAN	OTHER
+記号	␙	EM	制御記号	EM	OTHER
+記号	␚	SUB	制御記号	SUB	OTHER
+記号	␛	ESC	制御記号	ESC	OTHER
+記号	␜	FS	制御記号	FS	OTHER
+記号	␝	GS	制御記号	GS	OTHER
+記号	␞	RS	制御記号	RS	OTHER
+記号	␟	US	制御記号	US	OTHER
+記号	␠	SP すぺーす	制御記号	SP	OTHER
+記号	␡	DEL	制御記号	DEL	OTHER
+記号	␤	NL かいぎょう	制御記号	NL	OTHER
 記号	ː	はつおんきごう ちょうぼいん ： :	発音記号
 記号	ʬ	ww ばいらびあるぱーかっしぶ			OTHER		U+02AC
 記号	¤	つうか たんい こくさいつうかきごう	通貨記号	国際通貨記号	OTHER		U+00A4
