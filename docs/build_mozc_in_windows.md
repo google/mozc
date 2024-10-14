@@ -15,18 +15,16 @@ cd mozc\src
 
 python build_tools/update_deps.py
 python build_tools/build_qt.py --release --confirm_license
-# Choose one of the following:
-# 1. Build with GYP
 python build_mozc.py gyp
 python build_mozc.py build -c Release package
-# 2. Build with Bazel
-bazel --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
 
 # Install Mozc
 out_win\Release\Mozc64.msi
 ```
 
 Hint: You can also download `Mozc64.msi` from GitHub Actions. Check [Build with GitHub Actions](#build-with-github-actions) for details.
+
+Hint: You can use Bazel to build Mozc (experimental). For details, please see below.
 
 ## Setup
 
@@ -44,8 +42,8 @@ Building Mozc on Windows requires the following software.
     * `six`
     * `requests`
   * `.NET 6` or later (for `dotnet` command).
-  * [Bazel](https://bazel.build/) (If you are building Mozc with Bazel. However, you do not need to install a new JDK just for Mozc)
-  * [MSYS2](https://github.com/msys2/msys2) (if you use Bazel)
+
+For additional requirements for building Mozc with Bazel, please see below.
 
 ### Install pip modules
 
@@ -166,17 +164,25 @@ Note that you can specify `--qtdir=` option instead of `--noqt` in GYP phase sin
 
 ## Build with Bazel (experimental)
 
-If you installed Bazel via [Scoop](https://scoop.sh), it is recommended to install MSYS2 via Scoop, too.
+Additional requirements:
 
-https://bazel.build/install/windows?hl=ja#install-compilers
+* [Bazel](https://bazel.build/)
+* [MSYS2](https://github.com/msys2/msys2)
 
-After running `build_tools/update_deps.py` and `build_tools/build_qt.py`, run the following command:
+After running `build_tools/update_deps.py` and `build_tools/build_qt.py`, run the following command instead of `build_mozc.py`:
 
 ```
 bazel --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
 ```
 
 You have release build binaries in `bazel-bin\win32\installer\Mozc64.msi`.
+
+### Tips for Bazel setup
+
+* You do not need to install a new JDK just for Mozc.
+* If you installed Bazel via [Scoop](https://scoop.sh), it is recommended to install MSYS2 via Scoop, too.
+
+https://bazel.build/install/windows?hl=ja#install-compilers
 
 ---
 
