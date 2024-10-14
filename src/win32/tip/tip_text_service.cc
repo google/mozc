@@ -150,7 +150,6 @@ constexpr GUID kTipFunctionProvider = {
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 constexpr char kHelpUrl[] = "https://github.com/google/mozc";
-constexpr char kLogFileName[] = "Mozc_tsf_ui.log";
 constexpr wchar_t kTaskWindowClassName[] =
     L"Mozc Immersive Task Message Window";
 
@@ -511,8 +510,6 @@ class TipTextServiceImpl
     StorePointerForCurrentThread(this);
 
     HRESULT result = E_UNEXPECTED;
-    RegisterLogFileSink(
-        FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), kLogFileName));
 
     EnsureKanaLockUnlocked();
 
