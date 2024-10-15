@@ -31,8 +31,6 @@
 
 #include <algorithm>
 
-#include "base/win32/win_util.h"
-#include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 
@@ -40,7 +38,6 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-using ::mozc::client::ClientInterface;
 using ::mozc::config::Config;
 
 constexpr size_t kMaxDirectModeKeys = 128;
@@ -53,25 +50,7 @@ struct StaticConfigSnapshot {
   KeyInformation direct_mode_keys[kMaxDirectModeKeys];
 };
 
-bool GetConfigSnapshotForSandboxedProcess(ClientInterface *client,
-                                          Config *config) {
-  if (client == nullptr) {
-    return false;
-  }
-  // config1.db is likely to be inaccessible from sandboxed processes.
-  // So retrieve the config data from the server process.
-  // CAVEATS: ConfigHandler::GetConfig always returns true even when it fails
-  // to load the config file due to the sandbox. b/10449414
-  if (!client->CheckVersionOrRestartServer()) {
-    return false;
-  }
-  if (!client->GetConfig(config)) {
-    return false;
-  }
-  return true;
-}
-
-StaticConfigSnapshot GetConfigSnapshotForNonSandboxedProcess() {
+StaticConfigSnapshot GetConfigSnapshotImpl() {
   Config config;
   // config1.db should be readable in this case.
   config::ConfigHandler::GetConfig(&config);
@@ -102,26 +81,9 @@ ConfigSnapshot::Info::Info()
       use_mode_indicator(false) {}
 
 // static
-bool ConfigSnapshot::Get(client::ClientInterface *client, Info *info) {
-  // A temporary workaround for b/24793812. Always reload config if the
-  // process is sandboxed.
-  // TODO(yukawa): Cache the result once it succeeds.
-  if (WinUtil::IsProcessSandboxed()) {
-    Config config;
-    if (!GetConfigSnapshotForSandboxedProcess(client, &config)) {
-      return false;
-    }
-    info->use_kana_input = (config.preedit_method() == Config::KANA);
-    info->use_keyboard_to_change_preedit_method =
-        config.use_keyboard_to_change_preedit_method();
-    info->use_mode_indicator = config.use_mode_indicator();
-    info->direct_mode_keys = KeyInfoUtil::ExtractSortedDirectModeKeys(config);
-    return true;
-  }
-
+bool ConfigSnapshot::Get(Info *info) {
   // Note: Thread-safety is not required.
-  static const StaticConfigSnapshot cached_snapshot =
-      GetConfigSnapshotForNonSandboxedProcess();
+  static const StaticConfigSnapshot cached_snapshot = GetConfigSnapshotImpl();
   info->use_kana_input = cached_snapshot.use_kana_input;
   info->use_keyboard_to_change_preedit_method =
       cached_snapshot.use_keyboard_to_change_preedit_method;

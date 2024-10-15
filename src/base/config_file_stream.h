@@ -107,6 +107,10 @@ class ConfigFileStream {
   // Clear all memory:// files.  This is a utility method for testing.
   static void ClearOnMemoryFiles();
 
+#ifdef _WIN32
+  static void FixupFilePermission(absl::string_view filename);
+#endif  // _WIN32
+
  private:
   // This function is deprecated. Use OpenReadText or OpenReadBinary instead.
   // TODO(yukawa): Move this function to anonymous namespace in

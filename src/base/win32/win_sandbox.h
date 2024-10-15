@@ -185,15 +185,15 @@ class WinSandbox {
       HANDLE effective_token, TokenLevel security_level,
       IntegrityLevel integrity_level);
 
+  enum class AppContainerVisibilityType {
+    kProgramFiles = 0,
+    kConfigFile = 1,
+  };
+
   // Returns true |file_name| already has or is updated to have an ACE
-  // (Access Control Entry) for "All Application Packages" group to have the
-  // following access masks:
-  //   - FILE_READ_DATA
-  //   - FILE_READ_EA
-  //   - FILE_EXECUTE
-  //   - READ_CONTROL
-  //   - SYNCHRONIZE
-  static bool EnsureAllApplicationPackagesPermisssion(zwstring_view file_name);
+  // (Access Control Entry) for "All Application Packages" group.
+  static bool EnsureAllApplicationPackagesPermisssion(
+      zwstring_view file_name, AppContainerVisibilityType type);
 
  protected:
   // Returns SDDL for given |shareble_object_type|.

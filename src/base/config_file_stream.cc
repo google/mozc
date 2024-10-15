@@ -38,6 +38,10 @@
 #include <string>
 #include <utility>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif  // _WIN32
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -52,7 +56,7 @@
 #include "base/system_util.h"
 
 #ifdef _WIN32
-#include <windows.h>
+#include "base/win32/win_sandbox.h"
 #endif  // _WIN32
 
 namespace mozc {
@@ -218,4 +222,22 @@ std::string ConfigFileStream::GetFileName(const absl::string_view filename) {
 void ConfigFileStream::ClearOnMemoryFiles() {
   Singleton<OnMemoryFileMap>::get()->clear();
 }
+
+#ifdef _WIN32
+// Check the file permission of "config1.db" if exists to ensure that
+// "ALL APPLICATION PACKAGES" have read access to it.
+void ConfigFileStream::FixupFilePermission(absl::string_view filename) {
+    const std::string path = ConfigFileStream::GetFileName(filename);
+    if (path.empty()) {
+      return;
+    }
+    const absl::Status status = FileUtil::FileExists(path);
+    if (status.ok()) {
+      WinSandbox::EnsureAllApplicationPackagesPermisssion(
+          win32::Utf8ToWide(path),
+          WinSandbox::AppContainerVisibilityType::kConfigFile);
+    }
+}
+#endif  // _WIN32
+
 }  // namespace mozc

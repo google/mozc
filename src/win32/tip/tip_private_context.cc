@@ -88,7 +88,7 @@ void TipPrivateContext::EnsureInitialized() {
 
   // Try to reflect the current config to the IME behavior.
   ConfigSnapshot::Info snapshot;
-  if (ConfigSnapshot::Get(state_->client_.get(), &snapshot)) {
+  if (ConfigSnapshot::Get(&snapshot)) {
     auto *behavior = &state_->input_behavior_;
     behavior->prefer_kana_input = snapshot.use_kana_input;
     behavior->use_romaji_key_to_toggle_input_style =

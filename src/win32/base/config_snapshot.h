@@ -35,10 +35,6 @@
 #include "session/key_info_util.h"
 
 namespace mozc {
-namespace client {
-class ClientInterface;
-}  // namespace client
-
 namespace win32 {
 
 class ConfigSnapshot {
@@ -55,7 +51,7 @@ class ConfigSnapshot {
   ConfigSnapshot(const ConfigSnapshot &) = delete;
   ConfigSnapshot &operator=(const ConfigSnapshot &) = delete;
 
-  static bool Get(client::ClientInterface *client, Info *info);
+  static bool Get(Info *info);
 };
 
 }  // namespace win32

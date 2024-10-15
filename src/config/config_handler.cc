@@ -53,6 +53,11 @@
 #include "base/vlog.h"
 #include "protocol/config.pb.h"
 
+#ifdef _WIN32
+#include "base/win32/wide_char.h"
+#include "base/win32/win_sandbox.h"
+#endif  // _WIN32
+
 namespace mozc {
 namespace config {
 namespace {
@@ -179,6 +184,9 @@ void ConfigHandlerImpl::SetConfig(const Config &config) {
 
   MOZC_VLOG(1) << "Setting new config: " << filename_;
   ConfigFileStream::AtomicUpdate(filename_, output_config.SerializeAsString());
+#ifdef _WIN32
+  ConfigFileStream::FixupFilePermission(filename_);
+#endif  // _WIN32
 
 #ifdef DEBUG
   std::string debug_content = absl::StrCat(
@@ -308,6 +316,13 @@ Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
     return config::Config::MSIME;
   }
 }
+
+#ifdef _WIN32
+// static
+void ConfigHandler::FixupFilePermission() {
+  ConfigFileStream::FixupFilePermission(GetConfigFileName());
+}
+#endif  // _WIN32
 
 }  // namespace config
 }  // namespace mozc

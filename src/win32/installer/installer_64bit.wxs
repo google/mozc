@@ -145,6 +145,7 @@
     <CustomAction Id="InitialInstallation" DllEntry="InitialInstallation" Execute="deferred" Impersonate="no" BinaryRef="GoogleIMEJaInstallerHelper.dll" />
     <CustomAction Id="InitialInstallationCommit" DllEntry="InitialInstallationCommit" Execute="commit" Impersonate="no" BinaryRef="GoogleIMEJaInstallerHelper.dll" />
     <CustomAction Id="EnableTipProfile" DllEntry="EnableTipProfile" Execute="commit" Impersonate="yes" BinaryRef="GoogleIMEJaInstallerHelper.dll" />
+    <CustomAction Id="FixupConfigFilePermission" DllEntry="FixupConfigFilePermission" Execute="commit" Impersonate="yes" BinaryRef="GoogleIMEJaInstallerHelper.dll" />
     <CustomAction Id="HideCancelButton" DllEntry="HideCancelButton" Return="ignore" BinaryRef="GoogleIMEJaInstallerHelper.dll" />
     <CustomAction Id="SaveCustomActionData" DllEntry="SaveCustomActionData" BinaryRef="GoogleIMEJaInstallerHelper.dll" />
     <CustomAction Id="RestoreServiceState" DllEntry="RestoreServiceState" Impersonate="no" Execute="deferred" Return="ignore" BinaryRef="GoogleIMEJaInstallerHelper.dll" />
@@ -196,7 +197,8 @@
       <Custom Action="RegisterTIPRollback64" Before="RegisterTIP64" Condition="(NOT (REMOVE=&quot;ALL&quot;)) AND (VersionNT64) AND (NOT UPGRADING)" />
       <Custom Action="RegisterTIP64" Before="EnsureAllApplicationPackagesPermisssions" Condition="(NOT (REMOVE=&quot;ALL&quot;)) AND (VersionNT64)" />
       <Custom Action="EnsureAllApplicationPackagesPermisssions" Before="InitialInstallationCommit" Condition="(NOT (REMOVE=&quot;ALL&quot;))" />
-      <Custom Action="InitialInstallationCommit" Before="EnableTipProfile" Condition="(NOT (REMOVE=&quot;ALL&quot;)) AND (NOT UPGRADING)" />
+      <Custom Action="InitialInstallationCommit" Before="FixupConfigFilePermission" Condition="(NOT (REMOVE=&quot;ALL&quot;)) AND (NOT UPGRADING)" />
+      <Custom Action="FixupConfigFilePermission" Before="EnableTipProfile" Condition="NOT (REMOVE=&quot;ALL&quot;)" />
       <Custom Action="EnableTipProfile" Before="InstallFinalize" Condition="(NOT (REMOVE=&quot;ALL&quot;)) AND (NOT UPGRADING)" />
       <!-- show reboot dialog to execute pending file opartions -->
       <?if ($(var.VSConfigurationName) = "Release") ?>

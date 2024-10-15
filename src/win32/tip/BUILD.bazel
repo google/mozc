@@ -436,6 +436,7 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        "//client:client_interface",
         "//protocol:commands_cc_proto",
         "//win32/base:config_snapshot",
         "//win32/base:deleter",

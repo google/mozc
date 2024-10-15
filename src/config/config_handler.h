@@ -86,6 +86,10 @@ class ConfigHandler {
 
   // Get default keymap for each platform.
   static Config::SessionKeymap GetDefaultKeyMap();
+
+#ifdef _WIN32
+  static void FixupFilePermission();
+#endif  // _WIN32
 };
 
 }  // namespace config

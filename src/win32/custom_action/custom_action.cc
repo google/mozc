@@ -57,6 +57,7 @@
 #include "base/win32/win_util.h"
 #include "client/client.h"
 #include "client/client_interface.h"
+#include "config/config_handler.h"
 #include "renderer/renderer_client.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/omaha_util.h"
@@ -209,19 +210,23 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD ul_reason_for_call,
 UINT __stdcall EnsureAllApplicationPackagesPermisssions(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
   if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
-          GetMozcComponentPath(mozc::kMozcServerName))) {
+          GetMozcComponentPath(mozc::kMozcServerName),
+          mozc::WinSandbox::AppContainerVisibilityType::kProgramFiles)) {
     return ERROR_INSTALL_FAILURE;
   }
   if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
-          GetMozcComponentPath(mozc::kMozcRenderer))) {
+          GetMozcComponentPath(mozc::kMozcRenderer),
+          mozc::WinSandbox::AppContainerVisibilityType::kProgramFiles)) {
     return ERROR_INSTALL_FAILURE;
   }
   if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
-          GetMozcComponentPath(mozc::kMozcTIP32))) {
+          GetMozcComponentPath(mozc::kMozcTIP32),
+          mozc::WinSandbox::AppContainerVisibilityType::kProgramFiles)) {
     return ERROR_INSTALL_FAILURE;
   }
   if (!mozc::WinSandbox::EnsureAllApplicationPackagesPermisssion(
-          GetMozcComponentPath(mozc::kMozcTIP64))) {
+          GetMozcComponentPath(mozc::kMozcTIP64),
+          mozc::WinSandbox::AppContainerVisibilityType::kProgramFiles)) {
     return ERROR_INSTALL_FAILURE;
   }
   return ERROR_SUCCESS;
@@ -325,6 +330,24 @@ UINT __stdcall EnableTipProfile(MSIHANDLE msi_handle) {
 
   // Do not care about errors.
   ::InstallLayoutOrTip(desc.c_str(), 0);
+  return ERROR_SUCCESS;
+}
+
+UINT __stdcall FixupConfigFilePermission(MSIHANDLE msi_handle) {
+  bool is_service = false;
+  if (::mozc::WinUtil::IsServiceAccount(&is_service) && is_service) {
+    // Do nothing if this is a service account.
+    return ERROR_SUCCESS;
+  }
+
+  // Check the file permission of "config1.db" if exists to ensure that
+  // "ALL APPLICATION PACKAGES" have read access to it.
+  // See https://github.com/google/mozc/issues/1076 for details.
+  ::mozc::config::ConfigHandler::FixupFilePermission();
+
+  // Return always ERROR_SUCCESS regardless of the result, as not being able
+  // to fixup the permission is not problematic enough to block installation
+  // and upgrading.
   return ERROR_SUCCESS;
 }
 
