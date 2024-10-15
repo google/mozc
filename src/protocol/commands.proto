@@ -573,7 +573,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 100
+// Next ID: 102
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -596,6 +596,15 @@ message DecoderExperimentParams {
   // Enables final results reranking against literal results.
   // If zero, the previous implementation is used.
   optional int32 typing_correction_result_reranker_mode = 95 [default = 0];
+
+  // Promote TC/Literal if w * tc_reranker_score + (1.0 - w) lm_diff > 0.0.
+  optional float typing_correction_result_reranker_interpolation_weight = 100
+      [default = 0.0];
+
+  // Runs Literal-at-least second when original_tc_score + w * tc_reranker_score
+  // > 0.0. otherwise, runs literal-on-top.
+  optional float typing_correction_result_reranker_literal_on_top_weight = 101
+      [default = 0.0];
 
   // Uses the typing correction in user history predictor. The size specifies
   // the maximum number of typing corrections used for query lookup.
