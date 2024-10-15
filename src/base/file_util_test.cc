@@ -74,8 +74,14 @@ TEST(FileUtilTest, CreateDirectory) {
   EXPECT_OK(FileUtil::CreateDirectory(dirpath));
   EXPECT_OK(FileUtil::DirectoryExists(dirpath));
 
+#if !defined(_WIN32)
+  // On Windows, CreateDirectory does not return OK if the directory already
+  // exists. See the implementation of CreateDirectory in file_util.cc.
+  // https://github.com/google/mozc/issues/1076
+  //
   // Create the same directory again.
   EXPECT_OK(FileUtil::CreateDirectory(dirpath));
+#endif  // !_WIN32
 
   // Delete the directory.
   ASSERT_OK(FileUtil::RemoveDirectory(dirpath));
