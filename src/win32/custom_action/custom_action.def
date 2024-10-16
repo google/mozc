@@ -14,5 +14,6 @@ EXPORTS
     InitialInstallation
     InitialInstallationCommit
     EnableTipProfile
+    FixupConfigFilePermission
     WriteApValue
     WriteApValueRollback
