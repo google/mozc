@@ -50,7 +50,9 @@ def _dotnet_tool_repo_impl(repo_ctx):
     tool_name = repo_ctx.attr.tool_name
     if not tool_name:
         # In bzlmod, repo_ctx.attr.name has a prefix like "_main~_repo_rules~wix".
-        tool_name = repo_ctx.attr.name.split("~")[-1]
+        # Note also that Bazel 8.0+ uses "+" instead of "~".
+        # https://github.com/bazelbuild/bazel/issues/23127
+        tool_name = repo_ctx.attr.name.replace("~", "+").split("+")[-1]
     version = repo_ctx.attr.version
 
     repo_ctx.execute([
