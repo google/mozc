@@ -45,6 +45,11 @@ load(
 mozc_cc_binary(
     name = "mozc_tip",
     srcs = ["mozc_tip_main.cc"],
+    features = ["generate_pdb_file"],
+    linkopts = [
+        "/DEBUG:FULL",
+        "/PDBALTPATH:%_PDB%",
+    ],
     linkshared = True,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
