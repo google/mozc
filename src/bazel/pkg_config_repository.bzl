@@ -105,7 +105,9 @@ def _pkg_config_repository_impl(repo_ctx):
     _symlinks(repo_ctx, includes)
     data = {
         # In bzlmod, repo_ctx.attr.name has a prefix like "_main~_repo_rules~ibus".
-        "name": repo_ctx.attr.name.split("~")[-1],
+        # Note also that Bazel 8.0+ uses "+" instead of "~".
+        # https://github.com/bazelbuild/bazel/issues/23127
+        "name": repo_ctx.attr.name.replace("~", "+").split("+")[-1],
         "hdrs": _make_strlist([item + "/**" for item in includes]),
         "copts": _make_strlist(_exec_pkg_config(repo_ctx, "--cflags-only-other")),
         "includes": _make_strlist(includes),
