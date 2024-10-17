@@ -483,9 +483,8 @@ class SessionTest : public testing::TestWithTempUserProfile {
 
     commands::Command command;
     InsertCharacterChars("aiueo", session, &command);
-    ConversionRequest request;
+    const ConversionRequest request = CreateConversionRequest(*session);
     Segments segments;
-    SetComposer(session, &request);
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
     EXPECT_CALL(*converter, StartConversion(_, _))
@@ -557,9 +556,11 @@ class SessionTest : public testing::TestWithTempUserProfile {
     t13n_rewriter_->Rewrite(request, segments);
   }
 
-  void SetComposer(Session *session, ConversionRequest *request) {
-    DCHECK(request);
-    request->set_composer(&session->context().composer());
+  ConversionRequest CreateConversionRequest(const Session &session) {
+    const ImeContext &context = session.context();
+    const ConversionRequest request(&context.composer(), &context.GetRequest(),
+                              &context.client_context(), &context.GetConfig());
+    return request;
   }
 
   void SetupMockForReverseConversion(const absl::string_view kanji,
@@ -933,9 +934,8 @@ TEST_F(SessionTest, RevertComposition) {
   commands::Command command;
 
   InsertCharacterChars("aiueo", &session, &command);
-  ConversionRequest request;
+  const ConversionRequest request = CreateConversionRequest(session);
   Segments segments;
-  SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
@@ -989,9 +989,8 @@ TEST_F(SessionTest, SelectCandidate) {
 
   commands::Command command;
   InsertCharacterChars("aiueo", &session, &command);
-  ConversionRequest request;
+  const ConversionRequest request = CreateConversionRequest(session);
   Segments segments;
-  SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
@@ -1023,9 +1022,8 @@ TEST_F(SessionTest, HighlightCandidate) {
 
   commands::Command command;
   InsertCharacterChars("aiueo", &session, &command);
-  ConversionRequest request;
+  const ConversionRequest request = CreateConversionRequest(session);
   Segments segments;
-  SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
@@ -1059,9 +1057,8 @@ TEST_F(SessionTest, Conversion) {
 
   commands::Command command;
   InsertCharacterChars("aiueo", &session, &command);
-  ConversionRequest request;
+  const ConversionRequest request = CreateConversionRequest(session);
   Segments segments;
-  SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
@@ -1094,9 +1091,8 @@ TEST_F(SessionTest, SegmentWidthShrink) {
 
   commands::Command command;
   InsertCharacterChars("aiueo", &session, &command);
-  ConversionRequest request;
+  const ConversionRequest request = CreateConversionRequest(session);
   Segments segments;
-  SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
@@ -1122,9 +1118,8 @@ TEST_F(SessionTest, ConvertPrev) {
 
   commands::Command command;
   InsertCharacterChars("aiueo", &session, &command);
-  ConversionRequest request;
+  const ConversionRequest request = CreateConversionRequest(session);
   Segments segments;
-  SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
@@ -1144,7 +1139,6 @@ TEST_F(SessionTest, ConvertPrev) {
 }
 
 TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
-  ConversionRequest request;
 
   MockConverter converter;
   MockEngine engine;
@@ -1180,7 +1174,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   candidate->value = "中野です";
   candidate = segment->add_candidate();
   candidate->value = "なかのです";
-  SetComposer(&session, &request);
+  ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1232,7 +1226,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   candidate = segment->add_candidate();
   candidate->value = "亜";
 
-  SetComposer(&session, &request);
+  request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1267,8 +1261,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate->value = "愛";
   candidate = segment->add_candidate();
   candidate->value = "相";
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1323,7 +1316,6 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate->value = "愛";
   candidate = segment->add_candidate();
   candidate->value = "相";
-  SetComposer(&session, &request);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1369,8 +1361,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   candidate = segment->add_candidate();
   candidate->value = "行った";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1448,8 +1439,7 @@ TEST_F(SessionTest, CommitSegment) {
   candidate = segment->add_candidate();
   candidate->value = "名前";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1504,8 +1494,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   candidate = segment->add_candidate();
   candidate->value = "母";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1561,8 +1550,7 @@ TEST_F(SessionTest, Transliterations) {
   candidate = segment->add_candidate();
   candidate->value = "自身";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1626,8 +1614,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   candidate = segment->add_candidate();
   candidate->value = "自身";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1665,8 +1652,7 @@ TEST_F(SessionTest, ConvertToTransliterationOfNegativeNumber) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "−７８９";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1693,8 +1679,7 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
 
   Segments segments;
   SetLike(&segments);
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1745,8 +1730,7 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
     segment->set_key("あｂｃ");
     segment->add_candidate()->value = "あべし";
   }
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1782,8 +1766,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   candidate = segment->add_candidate();
   candidate->value = "dvd";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1828,8 +1811,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   candidate = segment->add_candidate();
   candidate->value = "dvd";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1870,8 +1852,7 @@ TEST_F(SessionTest, SwitchKanaType) {
       segment->add_candidate()->value = "あべし";
     }
 
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -1908,8 +1889,7 @@ TEST_F(SessionTest, SwitchKanaType) {
       segment->add_candidate()->value = "漢字";
     }
 
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2060,8 +2040,7 @@ TEST_F(SessionTest, UpdatePreferences) {
   Segments segments;
   SetAiueo(&segments);
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2141,8 +2120,7 @@ TEST_F(SessionTest, RomajiInput) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "パン";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2196,8 +2174,7 @@ TEST_F(SessionTest, KanaInput) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "もずく！";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2230,8 +2207,7 @@ TEST_F(SessionTest, ExceededComposition) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = long_a;
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2262,8 +2238,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   SetAiueo(&segments);
   InsertCharacterChars("aiueo", &session, &command);
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2350,8 +2325,6 @@ TEST_F(SessionTest, UndoForComposition) {
     EXPECT_CALL(converter, StartSuggestion(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
     InsertCharacterChars("ai", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
     EXPECT_EQ(GetComposition(command), "あい");
 
     command.Clear();
@@ -2425,8 +2398,6 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 
   {  // Create segments
     InsertCharacterChars("aiueo", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
     SetAiueo(&segments);
     // Don't use FillT13Ns(). It makes platform dependent segments.
     // TODO(hsumita): Makes FillT13Ns() independent from platforms.
@@ -2598,8 +2569,6 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
 
   {  // Create segments
     InsertCharacterChars("key1key2key3", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
 
     Segment::Candidate *candidate;
     Segment *segment;
@@ -2770,8 +2739,6 @@ TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
 
   {  // Create segments
     InsertCharacterChars("あかっこ", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
 
     Segment::Candidate *candidate;
     Segment *segment;
@@ -2845,8 +2812,6 @@ TEST_F(SessionTest, MultipleUndo) {
 
   {  // Create segments
     InsertCharacterChars("key1key2key3", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
 
     Segment::Candidate *candidate;
     Segment *segment;
@@ -2950,8 +2915,6 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
     Segments segments;
     {  // Create segments
       InsertCharacterChars("aiueo", &session, &command);
-      ConversionRequest request;
-      SetComposer(&session, &request);
       SetAiueo(&segments);
       Segment::Candidate *candidate;
       candidate = segments.mutable_segment(0)->add_candidate();
@@ -3003,8 +2966,6 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
     commands::Command command;
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
     SetAiueo(&segments);
     Segment::Candidate *candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
@@ -3121,8 +3082,7 @@ TEST_F(SessionTest, CommitRawText) {
       segment->add_candidate()->value = "あべし";
     }
 
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -3308,8 +3268,7 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
   {  // Conversion -> Send Shift -> Undo
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
 
@@ -3343,8 +3302,7 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
   {  // Type "aiueo" -> Convert -> Type "a" -> Escape -> Undo
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
 
@@ -3395,8 +3353,7 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   // Cleate segments
   Segments segments;
   InsertCharacterChars("aiueo", &session, &command);
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
 
@@ -3542,8 +3499,7 @@ TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
 
   Segments segments;
   SetAiueo(&segments);
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
 
   {  // ConvertToHalfASCII
@@ -3716,8 +3672,7 @@ TEST_F(SessionTest, Issue1805239) {
   candidate = segment->add_candidate();
   candidate->value = "ナマエ";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -3771,8 +3726,7 @@ TEST_F(SessionTest, Issue1816861) {
   candidate = segment->add_candidate();
   candidate->value = "印房";
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -3835,8 +3789,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     candidate->value = "陰謀";
     candidate = segment->add_candidate();
     candidate->value = "印房";
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -3864,8 +3817,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     candidate = segment->add_candidate();
     candidate->value = "卯";
 
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, ResizeSegment(_, _, _, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
@@ -3912,7 +3864,7 @@ TEST_F(SessionTest, Shortcut) {
     Segments segments;
     SetAiueo(&segments);
     const ImeContext &context = session.context();
-    ConversionRequest request(&context.composer(), &context.GetRequest(),
+    const ConversionRequest request(&context.composer(), &context.GetRequest(),
                               &context.GetConfig());
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
@@ -3951,8 +3903,7 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
 
   Segments segments;
   SetAiueo(&segments);
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -3997,8 +3948,7 @@ TEST_F(SessionTest, ShortcutFromVK) {
 
   Segments segments;
   SetAiueo(&segments);
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -4231,8 +4181,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     Segment *segment = segments.add_segment();
     segment->set_key("NFL");
     segment->add_candidate()->value = "NFL";
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -4303,8 +4252,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     Segment *segment = segments.add_segment();
     segment->set_key("NFL");
     segment->add_candidate()->value = "NFL";
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -4542,8 +4490,7 @@ TEST_F(SessionTest, Suggest) {
     segment->add_candidate()->value = "M";
     segment->add_candidate()->value = "m";
   }
-  ConversionRequest request_m_conv;
-  SetComposer(&session, &request_m_conv);
+  const ConversionRequest request_m_conv = CreateConversionRequest(session);
   FillT13Ns(request_m_conv, &segments_m_conv);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_m_conv), Return(true)));
@@ -4790,8 +4737,7 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
 
     Segments segments;
     SetAiueo(&segments);
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -4922,8 +4868,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
   {  // Convert "あ " with dummy conversions.
     Segments segments;
     segments.add_segment()->add_candidate()->value = "亜 ";
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -4967,8 +4912,7 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
   {  // Convert "あ　" (full-width space) with dummy conversions.
     Segments segments;
     segments.add_segment()->add_candidate()->value = "亜　";
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -5812,8 +5756,7 @@ TEST_F(SessionTest, Issue1951385) {
   InsertCharacterChars(exceeded_preedit, &session, &command);
 
   Segments segments;
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
@@ -5851,8 +5794,7 @@ TEST_F(SessionTest, Issue1978201) {
   EXPECT_TRUE(session.SegmentWidthShrink(&command));
 
   command.Clear();
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -5957,8 +5899,7 @@ TEST_F(SessionTest, Issue2034943) {
     Segment::Candidate *candidate;
     candidate = segment->add_candidate();
     candidate->value = "MOZU";
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -5991,8 +5932,7 @@ TEST_F(SessionTest, Issue2026354) {
   // Trigger suggest by pressing "a".
   Segments segments;
   SetAiueo(&segments);
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -6286,8 +6226,7 @@ TEST_F(SessionTest, Issue2223755) {
       Segment::Candidate *candidate;
       candidate = segment->add_candidate();
       candidate->value = "あ い";
-      ConversionRequest request;
-      SetComposer(&session, &request);
+      const ConversionRequest request = CreateConversionRequest(session);
       FillT13Ns(request, &segments);
       EXPECT_CALL(converter, StartConversion(_, _))
           .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -6436,9 +6375,7 @@ TEST_F(SessionTest, Issue2379374) {
     segment->set_key("あ");
     candidate = segment->add_candidate();
     candidate->value = "亜";
-    ConversionRequest request;
-    request.set_config(&config);
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -6850,8 +6787,7 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
 
   Segments segments;
   SetAiueo(&segments);
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -6934,8 +6870,7 @@ TEST_F(SessionTest, PerformedCommand) {
     // SetStartConversion for changing state to Convert.
     Segments segments;
     SetAiueo(&segments);
-    ConversionRequest request;
-    SetComposer(&session, &request);
+    const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -6997,8 +6932,6 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
 
   {  // Create segments
     InsertCharacterChars("aiueo", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
     SetAiueo(&segments);
     // Don't use FillT13Ns(). It makes platform dependent segments.
     // TODO(hsumita): Makes FillT13Ns() independent from platforms.
@@ -7090,8 +7023,7 @@ TEST_F(SessionTest, Issue3428520) {
   EXPECT_CALL(converter, StartSuggestion(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
   InsertCharacterChars("aiueo", &session, &command);
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
 
   EXPECT_CALL(converter, StartConversion(_, _)).WillOnce(Return(true));
@@ -7399,8 +7331,7 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
 
     segment->add_candidate()->value = "[SSH]";
   }
-  ConversionRequest request;
-  SetComposer(&session, &request);
+  const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
   EXPECT_CALL(converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -7758,8 +7689,6 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
   Session session(&engine);
   InitSessionToPrecomposition(&session);
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
 
   commands::Command command;
   InsertCharacterChars("nekonoshippowonuita", &session, &command);
@@ -7826,8 +7755,6 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
   Session session(&engine);
   InitSessionToPrecomposition(&session);
 
-  ConversionRequest request;
-  SetComposer(&session, &request);
 
   commands::Command command;
   InsertCharacterChars("nekonoshippowonuita", &session, &command);
@@ -8811,8 +8738,6 @@ TEST_F(SessionTest, UndoKeyAction) {
 
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
     SetAiueo(&segments);
     Segment::Candidate *candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
@@ -9941,8 +9866,6 @@ TEST_F(SessionTest, DeleteHistory) {
   Segment *segment = segments.add_segment();
   segment->set_key("delete");
   segment->add_candidate()->value = "DeleteHistory";
-  ConversionRequest request;
-  SetComposer(&session, &request);
   EXPECT_CALL(converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
@@ -10200,8 +10123,6 @@ TEST_F(SessionTest, MakeSureIMEOffWithCommitComposition) {
   {
     commands::Command command;
     InsertCharacterChars("aiueo", &session, &command);
-    ConversionRequest request;
-    SetComposer(&session, &request);
   }
 
   // Send SessionCommand::TURN_OFF_IME to commit composition.
