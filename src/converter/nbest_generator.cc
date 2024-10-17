@@ -197,6 +197,9 @@ void NBestGenerator::MakeCandidate(
     if (node->attributes & Node::SUFFIX_DICTIONARY) {
       candidate.attributes |= Segment::Candidate::SUFFIX_DICTIONARY;
     }
+    if (node->attributes & Node::KEY_EXPANDED) {
+      candidate.attributes |= Segment::Candidate::KEY_EXPANDED_IN_DICTIONARY;
+    }
   }
 
   if (candidate.content_key.empty() || candidate.content_value.empty()) {

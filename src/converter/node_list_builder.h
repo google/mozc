@@ -47,8 +47,30 @@ namespace mozc {
 // the legacy dictionary-based variant handler. We currently add large cost so
 // the variant expansion happen only when the counter examples don't exist.
 inline int32_t GetLegacySpatialCostPenalty() {
-  static constexpr int32_t gKanaModifierInsensitivePenalty = 20000;
-  return gKanaModifierInsensitivePenalty;
+  static constexpr int32_t kLegacySpatialCostPenalty = 20000;
+  return kLegacySpatialCostPenalty;
+}
+
+// Spatial cost penalty per modification. We are going to
+// use the moderate penalty to increase the coverage, and re-calculate
+// the actual penalty with new typing correction module.
+// Per-modification penalty allows to recompute the added penalty
+// from the actual output of key by counting different characters.
+inline int32_t GetPerExpansionSpatialCostPenalty() {
+  static constexpr int32_t kPerExpansionSpatialCostPenalty = 2000;
+  return kPerExpansionSpatialCostPenalty;
+}
+
+// Setting/Getting experimental flags to legacy typing correction handling.
+void SetTypingCorrectionLegacyExpansionMode(int32_t mode);
+
+int32_t GetTypingCorrectionLegacyExpansionMode();
+
+inline int32_t GetSpatialCostPenalty(int num_expanded) {
+  if (num_expanded == 0) return 0;
+  return GetTypingCorrectionLegacyExpansionMode() >= 3
+             ? num_expanded * GetPerExpansionSpatialCostPenalty()
+             : GetLegacySpatialCostPenalty();
 }
 
 // Provides basic functionality for building a list of nodes.
@@ -67,7 +89,7 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
   // Determines a penalty for tokens of this (key, actual_key) pair.
   ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
                          int num_expanded) override {
-    penalty_ = num_expanded > 0 ? GetLegacySpatialCostPenalty() : 0;
+    penalty_ = GetSpatialCostPenalty(num_expanded);
     return TRAVERSE_CONTINUE;
   }
 
@@ -88,6 +110,7 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
     Node *new_node = allocator_->NewNode();
     new_node->InitFromToken(token);
     new_node->wcost += penalty_;
+    if (penalty_ > 0) new_node->attributes |= Node::KEY_EXPANDED;
     return new_node;
   }
 

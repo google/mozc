@@ -80,7 +80,8 @@
 
 #else  // NDEBUG
 #define MOZC_WORD_LOG(result, message) \
-  {}
+  {                                    \
+  }
 
 #endif  // NDEBUG
 
@@ -291,7 +292,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
 
   ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
                          int num_expanded) override {
-    penalty_ = num_expanded > 0 ? GetLegacySpatialCostPenalty() : 0;
+    penalty_ = GetSpatialCostPenalty(num_expanded);
     return TRAVERSE_CONTINUE;
   }
 
@@ -321,7 +322,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
     result.wcost += penalty_;
     result.source_info |= source_info_;
     result.non_expanded_original_key = std::string(non_expanded_original_key_);
-    if (penalty_ > 0) result.types |= KANA_MODIFIER_EXPANDED;
+    if (penalty_ > 0) result.types |= KEY_EXPANDED_IN_DICTIONARY;
     results_->emplace_back(std::move(result));
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
   }
@@ -932,6 +933,10 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
       result->candidate_attributes |=
           Segment::Candidate::PARTIALLY_KEY_CONSUMED;
       result->consumed_key_size = Util::CharsLen(candidate.key);
+    }
+    // Kana expansion happens inside the decoder.
+    if (candidate.attributes & Segment::Candidate::KEY_EXPANDED_IN_DICTIONARY) {
+      result->types |= prediction::KEY_EXPANDED_IN_DICTIONARY;
     }
     result->candidate_attributes |= candidate.attributes;
   }

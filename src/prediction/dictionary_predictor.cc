@@ -430,7 +430,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 #else  // MOZC_DEBUG
 #define MOZC_ADD_DEBUG_CANDIDATE(result, log) \
-  {}
+  {                                           \
+  }
 
 #endif  // MOZC_DEBUG
 
@@ -898,7 +899,7 @@ std::string DictionaryPredictor::GetPredictionTypeDebugString(
   if (types & PredictionType::SUPPLEMENTAL_MODEL) {
     debug_desc.append(1, 'X');
   }
-  if (types & PredictionType::KANA_MODIFIER_EXPANDED) {
+  if (types & PredictionType::KEY_EXPANDED_IN_DICTIONARY) {
     debug_desc.append(1, 'K');
   }
   return debug_desc;

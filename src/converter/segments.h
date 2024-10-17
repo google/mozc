@@ -57,7 +57,8 @@
 
 #else  // NDEBUG
 #define MOZC_CANDIDATE_LOG(result, message) \
-  {}
+  {                                         \
+  }
 
 #endif  // NDEBUG
 
@@ -131,6 +132,9 @@ class Segment final {
       NO_MODIFICATION = 1 << 16,
       // Candidate which is reranked by user segment history rewriter.
       USER_SEGMENT_HISTORY_REWRITER = 1 << 17,
+      // Keys are expanded in the dictionary lookup. Usually
+      // Kana-modifiers are expanded.
+      KEY_EXPANDED_IN_DICTIONARY = 1 << 18,
     };
     // LINT.ThenChange(//converter/converter_main.cc)
 

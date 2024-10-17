@@ -78,6 +78,7 @@
         '<(gen_out_mozc_dir)/dictionary/pos_matcher_impl.inc',
         'candidate_filter.cc',
         'nbest_generator.cc',
+        'node_list_builder.cc',
         'segments.cc',
       ],
       'dependencies': [

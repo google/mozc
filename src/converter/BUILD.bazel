@@ -122,6 +122,7 @@ mozc_cc_library(
 
 mozc_cc_library(
     name = "node_list_builder",
+    srcs = ["node_list_builder.cc"],
     hdrs = ["node_list_builder.h"],
     deps = [
         ":node",

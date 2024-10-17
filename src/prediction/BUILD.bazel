@@ -176,6 +176,7 @@ mozc_cc_library(
         "//converter:connector",
         "//converter:converter_interface",
         "//converter:immutable_converter_interface",
+        "//converter:node_list_builder",
         "//converter:segmenter",
         "//converter:segments",
         "//dictionary:pos_matcher",

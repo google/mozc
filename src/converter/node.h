@@ -68,6 +68,7 @@ struct Node {
     // Node should have the same information as Candidate.
     PARTIALLY_KEY_CONSUMED = 1 << 7,
     SUFFIX_DICTIONARY = 1 << 8,  // Suffix dictionary
+    KEY_EXPANDED = 1 << 9,       // Keys are expanded.
   };
 
   // prev and next are linking pointers to connect minimum cost path
