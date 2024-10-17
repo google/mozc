@@ -86,7 +86,7 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
   void OnTimer(UINT_PTR nIDEvent);
 
-  void UpdateLayout(const commands::Candidates &candidates);
+  void UpdateLayout(const commands::CandidateWindow &candidates);
   void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
 
@@ -144,7 +144,7 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   }
 
   client::SendCommandInterface *send_command_interface_;
-  std::unique_ptr<commands::Candidates> candidates_;
+  std::unique_ptr<commands::CandidateWindow> candidate_window_;
   std::unique_ptr<TextRenderer> text_renderer_;
   std::unique_ptr<renderer::RendererStyle> style_;
   bool metrics_changed_;

@@ -101,7 +101,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
 
   void set_mouse_moving(bool moving);
 
-  void UpdateLayout(const commands::Candidates &candidates);
+  void UpdateLayout(const commands::CandidateWindow &candidate_window);
   void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
 
@@ -193,7 +193,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
     return 0;
   }
 
-  std::unique_ptr<commands::Candidates> candidates_;
+  std::unique_ptr<commands::CandidateWindow> candidate_window_;
   wil::unique_hbitmap footer_logo_;
   Size footer_logo_display_size_;
   client::SendCommandInterface *send_command_interface_;

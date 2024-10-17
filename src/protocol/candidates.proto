@@ -27,8 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Protocol messages of candidates to be used for mozc client/server
+// Protocol messages of candidate window to be used for mozc client/server
 // communication and client/renderer communication.
+// TODO(b/372854886): Rename file to candidate_window.proto.
 
 syntax = "proto2";
 
@@ -96,7 +97,7 @@ enum CandidateAttribute {
   USER_DICTIONARY = 1;
   USER_HISTORY = 2;
   SPELLING_CORRECTION = 3;  // "ふいんき"→"雰囲気"
-  TYPING_CORRECTION = 4;  // "やんしょん"(with 12-key)→"マンション"
+  TYPING_CORRECTION = 4;    // "やんしょん"(with 12-key)→"マンション"
 }
 
 message InformationList {
@@ -163,8 +164,7 @@ message CandidateList {
   optional Category category = 3 [default = CONVERSION];
 }
 
-// TODO(komatsu) rename it to CandidateWindow.
-message Candidates {
+message CandidateWindow {
   // TODO(komatsu): Use CandidateList.
   // When has_focused_index() is true, this message contains predicted and
   // normally converted candidates. Otherwise, when the field is not set,
@@ -195,7 +195,8 @@ message Candidates {
   required uint32 position = 6;
 
   // Nested candidates aka cascading window.
-  optional Candidates subcandidates = 8;
+  // TODO(b/372854886): Follow up renaming to sub_candidate_window.
+  optional CandidateWindow subcandidates = 8;
 
   // Usages of candidates.
   optional InformationList usages = 10;

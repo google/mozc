@@ -3928,9 +3928,12 @@ TEST_F(SessionTest, Shortcut) {
     // Convert next
     SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
     ASSERT_TRUE(command.output().has_candidates());
-    const commands::Candidates &candidates = command.output().candidates();
-    EXPECT_EQ(candidates.candidate(0).annotation().shortcut(), expected[0]);
-    EXPECT_EQ(candidates.candidate(1).annotation().shortcut(), expected[1]);
+    const commands::CandidateWindow &candidate_window =
+        command.output().candidates();
+    EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(),
+              expected[0]);
+    EXPECT_EQ(candidate_window.candidate(1).annotation().shortcut(),
+              expected[1]);
   }
 }
 
@@ -3965,9 +3968,10 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
 
-  const commands::Candidates &candidates = command.output().candidates();
-  EXPECT_EQ(candidates.candidate(0).annotation().shortcut(), "a");
-  EXPECT_EQ(candidates.candidate(1).annotation().shortcut(), "s");
+  const commands::CandidateWindow &candidate_window =
+      command.output().candidates();
+  EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(), "a");
+  EXPECT_EQ(candidate_window.candidate(1).annotation().shortcut(), "s");
 
   // Select the second candidate by 's' key when the CapsLock is enabled.
   // Note that "CAPS S" means that 's' key is pressed w/o shift key.
@@ -4010,9 +4014,10 @@ TEST_F(SessionTest, ShortcutFromVK) {
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
 
-  const commands::Candidates &candidates = command.output().candidates();
-  EXPECT_EQ(candidates.candidate(0).annotation().shortcut(), "1");
-  EXPECT_EQ(candidates.candidate(1).annotation().shortcut(), "2");
+  const commands::CandidateWindow &candidate_window =
+      command.output().candidates();
+  EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(), "1");
+  EXPECT_EQ(candidate_window.candidate(1).annotation().shortcut(), "2");
 
   // Because the request has a special romaji table (== the event is from VK),
   // "1" must be treated not as shortcut selection but as character insertion.
@@ -7909,11 +7914,12 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   EXPECT_EQ(command.output().preedit().cursor(), 0);
 }
 
-bool FindCandidateID(const commands::Candidates &candidates,
+bool FindCandidateID(const commands::CandidateWindow &candidate_window,
                      const absl::string_view value, int *id) {
   CHECK(id);
-  for (size_t i = 0; i < candidates.candidate_size(); ++i) {
-    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
+  for (size_t i = 0; i < candidate_window.candidate_size(); ++i) {
+    const commands::CandidateWindow::Candidate &candidate =
+        candidate_window.candidate(i);
     if (candidate.value() == value) {
       *id = candidate.id();
       return true;
@@ -7922,12 +7928,13 @@ bool FindCandidateID(const commands::Candidates &candidates,
   return false;
 }
 
-void FindCandidateIDs(const commands::Candidates &candidates,
+void FindCandidateIDs(const commands::CandidateWindow &candidate_window,
                       const absl::string_view value, std::vector<int> *ids) {
   CHECK(ids);
   ids->clear();
-  for (size_t i = 0; i < candidates.candidate_size(); ++i) {
-    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
+  for (size_t i = 0; i < candidate_window.candidate_size(); ++i) {
+    const commands::CandidateWindow::Candidate &candidate =
+        candidate_window.candidate(i);
     LOG(INFO) << candidate.value();
     if (candidate.value() == value) {
       ids->push_back(candidate.id());

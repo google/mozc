@@ -91,7 +91,7 @@ void FillSolidRect(HDC dc, const RECT *rect, COLORREF color) {
 
 InfolistWindow::InfolistWindow()
     : send_command_interface_(nullptr),
-      candidates_(new commands::Candidates),
+      candidate_window_(new commands::CandidateWindow),
       text_renderer_(TextRenderer::Create()),
       style_(new RendererStyle),
       metrics_changed_(false),
@@ -154,7 +154,7 @@ Size InfolistWindow::DoPaint(HDC dc) {
     ::SetBkMode(dc, TRANSPARENT);
   }
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
-  const InformationList &usages = candidates_->usages();
+  const InformationList &usages = candidate_window_->usages();
 
   int ypos = infostyle.window_border();
 
@@ -207,7 +207,7 @@ Size InfolistWindow::DoPaint(HDC dc) {
 
 Size InfolistWindow::DoPaintRow(HDC dc, int row, int ypos) {
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
-  const InformationList &usages = candidates_->usages();
+  const InformationList &usages = candidate_window_->usages();
   const RendererStyle::TextStyle &title_style = infostyle.title_style();
   const RendererStyle::TextStyle &desc_style = infostyle.description_style();
   const int title_width =
@@ -358,8 +358,9 @@ void InfolistWindow::DelayHide(UINT mseconds) {
   }
 }
 
-void InfolistWindow::UpdateLayout(const commands::Candidates &candidates) {
-  *candidates_ = candidates;
+void InfolistWindow::UpdateLayout(
+    const commands::CandidateWindow &candidate_window) {
+  *candidate_window_ = candidate_window;
 
   // If we detect any change of font parameters, update text renderer
   if (metrics_changed_) {

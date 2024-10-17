@@ -287,8 +287,8 @@ TEST_F(MozcEmacsHelperLibTest, RemoveUsageDataTest) {
   {
     SCOPED_TRACE("Removes usage data from output");
     commands::Output output;
-    commands::Candidates *candidates = output.mutable_candidates();
-    candidates->mutable_usages();
+    commands::CandidateWindow *candidate_window = output.mutable_candidates();
+    candidate_window->mutable_usages();
     EXPECT_TRUE(RemoveUsageData(&output));
     EXPECT_TRUE(output.has_candidates());
     EXPECT_TRUE(output.candidates().has_usages());

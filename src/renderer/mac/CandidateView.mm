@@ -44,7 +44,7 @@
 #include "renderer/table_layout.h"
 
 using mozc::client::SendCommandInterface;
-using mozc::commands::Candidates;
+using mozc::commands::CandidateWindow;
 using mozc::commands::Output;
 using mozc::commands::SessionCommand;
 using mozc::renderer::RendererStyleHandler;
@@ -73,7 +73,7 @@ using mozc::renderer::mac::MacViewUtil;
   const NSImage *logoImage_;
   int columnMinimumWidth_;
 
-  mozc::commands::Candidates candidates_;
+  mozc::commands::CandidateWindow candidate_window_;
   mozc::renderer::TableLayout tableLayout_;
   mozc::renderer::RendererStyle style_;
 
@@ -126,8 +126,8 @@ using mozc::renderer::mac::MacViewUtil;
   [NSBezierPath setDefaultLineJoinStyle:NSLineJoinStyleMiter];
 }
 
-- (void)setCandidates:(const Candidates *)candidates {
-  candidates_ = *candidates;
+- (void)setCandidateWindow:(const CandidateWindow *)candidate_window {
+  candidate_window_ = *candidate_window;
 }
 
 - (void)setSendCommandInterface:(SendCommandInterface *)command_sender {
@@ -151,22 +151,22 @@ using mozc::renderer::mac::MacViewUtil;
 
 - (NSSize)updateLayout {
   candidateStringsCache_ = nil;
-  tableLayout_.Initialize(candidates_.candidate_size(), NUMBER_OF_COLUMNS);
+  tableLayout_.Initialize(candidate_window_.candidate_size(), NUMBER_OF_COLUMNS);
   tableLayout_.SetWindowBorder(style_.window_border());
 
   // calculating focusedRow_
-  if (candidates_.has_focused_index() && candidates_.candidate_size() > 0) {
-    const int focusedIndex = candidates_.focused_index();
-    focusedRow_ = focusedIndex - candidates_.candidate(0).index();
+  if (candidate_window_.has_focused_index() && candidate_window_.candidate_size() > 0) {
+    const int focusedIndex = candidate_window_.focused_index();
+    focusedRow_ = focusedIndex - candidate_window_.candidate(0).index();
   } else {
     focusedRow_ = -1;
   }
 
   // Reserve footer space.
-  if (candidates_.has_footer()) {
+  if (candidate_window_.has_footer()) {
     NSSize footerSize = NSZeroSize;
 
-    const mozc::commands::Footer &footer = candidates_.footer();
+    const mozc::commands::Footer &footer = candidate_window_.footer();
 
     if (footer.has_label()) {
       const NSAttributedString *footerLabel =
@@ -193,8 +193,8 @@ using mozc::renderer::mac::MacViewUtil;
     }
 
     if (footer.index_visible()) {
-      const int focusedIndex = candidates_.focused_index();
-      const int totalItems = candidates_.size();
+      const int focusedIndex = candidate_window_.focused_index();
+      const int totalItems = candidate_window_.size();
       const NSString *footerIndex =
           [NSString stringWithFormat:@"%d/%d", focusedIndex + 1, totalItems];
       const NSAttributedString *footerAttributedIndex =
@@ -210,7 +210,7 @@ using mozc::renderer::mac::MacViewUtil;
   }
 
   tableLayout_.SetRowRectPadding(style_.row_rect_padding());
-  if (candidates_.candidate_size() < candidates_.size()) {
+  if (candidate_window_.candidate_size() < candidate_window_.size()) {
     tableLayout_.SetVScrollBar(style_.scrollbar_width());
   }
 
@@ -219,8 +219,8 @@ using mozc::renderer::mac::MacViewUtil;
   tableLayout_.EnsureCellSize(COLUMN_GAP1, MacViewUtil::ToSize([gap1 size]));
 
   NSMutableArray *newCache = [[NSMutableArray array] init];
-  for (size_t i = 0; i < candidates_.candidate_size(); ++i) {
-    const Candidates::Candidate &candidate = candidates_.candidate(i);
+  for (size_t i = 0; i < candidate_window_.candidate_size(); ++i) {
+    const CandidateWindow::Candidate &candidate = candidate_window_.candidate(i);
     const NSAttributedString *shortcut = MacViewUtil::ToNSAttributedString(
         candidate.annotation().shortcut(), style_.text_styles(COLUMN_SHORTCUT));
     std::string value = candidate.value();
@@ -266,16 +266,16 @@ using mozc::renderer::mac::MacViewUtil;
 }
 
 - (void)drawRect:(NSRect)rect {
-  if (!Category_IsValid(candidates_.category())) {
-    LOG(WARNING) << "Unknown candidates category: " << candidates_.category();
+  if (!Category_IsValid(candidate_window_.category())) {
+    LOG(WARNING) << "Unknown candidates category: " << candidate_window_.category();
     return;
   }
 
-  for (int i = 0; i < candidates_.candidate_size(); ++i) {
+  for (int i = 0; i < candidate_window_.candidate_size(); ++i) {
     [self drawRow:i];
   }
 
-  if (candidates_.candidate_size() < candidates_.size()) {
+  if (candidate_window_.candidate_size() < candidate_window_.size()) {
     [self drawVScrollBar];
   }
   [self drawFooter];
@@ -326,7 +326,7 @@ using mozc::renderer::mac::MacViewUtil;
     [text drawAtPoint:candidatePosition];
   }
 
-  if (candidates_.candidate(row).has_information_id()) {
+  if (candidate_window_.candidate(row).has_information_id()) {
     NSRect rect = MacViewUtil::ToNSRect(tableLayout_.GetRowRect(row));
     [MacViewUtil::ToNSColor(style_.focused_border_color()) set];
     rect.origin.x += rect.size.width - 6.0;
@@ -338,10 +338,10 @@ using mozc::renderer::mac::MacViewUtil;
 }
 
 - (void)drawFooter {
-  if (!candidates_.has_footer()) {
+  if (!candidate_window_.has_footer()) {
     return;
   }
-  const mozc::commands::Footer &footer = candidates_.footer();
+  const mozc::commands::Footer &footer = candidate_window_.footer();
   NSRect footerRect = MacViewUtil::ToNSRect(tableLayout_.GetFooterRect());
 
   // Draw footer border
@@ -401,8 +401,8 @@ using mozc::renderer::mac::MacViewUtil;
   if (footer.index_visible()) {
     const std::string footerIndex =
         absl::StrFormat("%d/%d",
-                        candidates_.focused_index() + 1,  // +1 to 1-origin from 0-origin.
-                        candidates_.size());
+                        candidate_window_.focused_index() + 1,  // +1 to 1-origin from 0-origin.
+                        candidate_window_.size());
     const NSAttributedString *footerAttributedIndex =
         MacViewUtil::ToNSAttributedString(footerIndex, style_.footer_style());
     const NSSize footerSize = [footerAttributedIndex size];
@@ -415,13 +415,13 @@ using mozc::renderer::mac::MacViewUtil;
 
 - (void)drawVScrollBar {
   const mozc::Rect vscrollRect = tableLayout_.GetVScrollBarRect();
-  if (vscrollRect.IsRectEmpty() || candidates_.candidate_size() <= 0) {
+  if (vscrollRect.IsRectEmpty() || candidate_window_.candidate_size() <= 0) {
     return;
   }
 
-  const int beginIndex = candidates_.candidate(0).index();
-  const int candidatesTotal = candidates_.size();
-  const int endIndex = candidates_.candidate(candidates_.candidate_size() - 1).index();
+  const int beginIndex = candidate_window_.candidate(0).index();
+  const int candidatesTotal = candidate_window_.size();
+  const int endIndex = candidate_window_.candidate(candidate_window_.candidate_size() - 1).index();
 
   [MacViewUtil::ToNSColor(style_.scrollbar_background_color()) set];
   [NSBezierPath fillRect:MacViewUtil::ToNSRect(vscrollRect)];
@@ -458,7 +458,7 @@ using mozc::renderer::mac::MacViewUtil;
   if (command_sender_ == nullptr) {
     return;
   }
-  if (candidates_.candidate_size() < tableLayout_.number_of_rows()) {
+  if (candidate_window_.candidate_size() < tableLayout_.number_of_rows()) {
     return;
   }
   for (int i = 0; i < tableLayout_.number_of_rows(); ++i) {
@@ -466,7 +466,7 @@ using mozc::renderer::mac::MacViewUtil;
     if (rowRect.PtrInRect(localPos)) {
       SessionCommand command;
       command.set_type(SessionCommand::SELECT_CANDIDATE);
-      command.set_id(candidates_.candidate(i).id());
+      command.set_id(candidate_window_.candidate(i).id());
       Output dummy_output;
       command_sender_->SendCommand(command, &dummy_output);
       break;

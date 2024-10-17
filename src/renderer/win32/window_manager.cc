@@ -203,8 +203,8 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
     return;
   }
 
-  const commands::Candidates &candidates = output.candidates();
-  if (candidates.candidate_size() == 0) {
+  const commands::CandidateWindow &candidate_window = output.candidates();
+  if (candidate_window.candidate_size() == 0) {
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
     infolist_window_->DelayHide(0);
@@ -226,8 +226,9 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
   // Currently, we do not use finger print.
   bool candidate_changed = true;
 
-  if (candidate_changed && (candidates.display_type() == commands::MAIN)) {
-    main_window_->UpdateLayout(candidates);
+  if (candidate_changed &&
+      (candidate_window.display_type() == commands::MAIN)) {
+    main_window_->UpdateLayout(candidate_window);
   }
   const Size main_window_size = main_window_->GetLayoutSize();
 
@@ -283,9 +284,9 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
 
   bool cascading_visible = false;
 
-  if (candidates.has_subcandidates() &&
-      candidates.subcandidates().display_type() == commands::CASCADE) {
-    (void)candidates.subcandidates();
+  if (candidate_window.has_subcandidates() &&
+      candidate_window.subcandidates().display_type() == commands::CASCADE) {
+    (void)candidate_window.subcandidates();
     cascading_visible = true;
   }
 
@@ -298,7 +299,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
 
   if (infolist_visible && !cascading_visible) {
     if (candidate_changed) {
-      infolist_window_->UpdateLayout(candidates);
+      infolist_window_->UpdateLayout(candidate_window);
       infolist_window_->Invalidate();
     }
 
@@ -312,11 +313,12 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
         HWND_TOPMOST, 0, 0, 0, 0,
         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-    if (candidates.has_focused_index() && candidates.candidate_size() > 0) {
-      const int focused_row =
-          candidates.focused_index() - candidates.candidate(0).index();
-      if (candidates.candidate_size() >= focused_row &&
-          candidates.candidate(focused_row).has_information_id()) {
+    if (candidate_window.has_focused_index() &&
+        candidate_window.candidate_size() > 0) {
+      const int focused_row = candidate_window.focused_index() -
+                              candidate_window.candidate(0).index();
+      if (candidate_window.candidate_size() >= focused_row &&
+          candidate_window.candidate(focused_row).has_information_id()) {
         const uint32_t delay =
             std::max(static_cast<uint32_t>(0),
                      command.output().candidates().usages().delay());
@@ -333,7 +335,8 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
   }
 
   if (cascading_visible) {
-    const commands::Candidates &subcandidates = candidates.subcandidates();
+    const commands::CandidateWindow &subcandidates =
+        candidate_window.subcandidates();
 
     if (candidate_changed) {
       cascading_window_->UpdateLayout(subcandidates);

@@ -145,8 +145,8 @@ bool QtWindowManager::ShouldShowCandidateWindow(
     return false;
   }
 
-  const commands::Candidates &candidates = output.candidates();
-  if (candidates.candidate_size() == 0) {
+  const commands::CandidateWindow &candidate_window = output.candidates();
+  if (candidate_window.candidate_size() == 0) {
     return false;
   }
 
@@ -155,7 +155,7 @@ bool QtWindowManager::ShouldShowCandidateWindow(
 
 namespace {
 // Copied from unix/candidate_window.cc
-void GetDisplayString(const commands::Candidates::Candidate &candidate,
+void GetDisplayString(const commands::CandidateWindow::Candidate &candidate,
                       std::string &shortcut, std::string &value,
                       std::string &description) {
   shortcut.clear();
@@ -203,8 +203,10 @@ Rect GetRect(const commands::RendererCommand::Rectangle &prect) {
 
 bool IsUpdated(const commands::RendererCommand &prev_command,
                const commands::RendererCommand &new_command) {
-  const commands::Candidates &prev_cands = prev_command.output().candidates();
-  const commands::Candidates &new_cands = new_command.output().candidates();
+  const commands::CandidateWindow &prev_cands =
+      prev_command.output().candidates();
+  const commands::CandidateWindow &new_cands =
+      new_command.output().candidates();
   if (prev_cands.candidate_size() != new_cands.candidate_size()) {
     return true;
   }
@@ -227,34 +229,37 @@ int GetItemHeight(const QTableWidgetItem &item) {
   return metrics.height() + kMarginHeight;
 }
 
-std::string GetIndexGuideString(const commands::Candidates &candidates) {
-  if (!candidates.has_footer() || !candidates.footer().index_visible()) {
+std::string GetIndexGuideString(
+    const commands::CandidateWindow &candidate_window) {
+  if (!candidate_window.has_footer() ||
+      !candidate_window.footer().index_visible()) {
     return "";
   }
 
-  const int focused_index = candidates.focused_index();
-  const int total_items = candidates.size();
+  const int focused_index = candidate_window.focused_index();
+  const int total_items = candidate_window.size();
 
   return absl::StrCat(focused_index + 1, "/", total_items);
 }
 
-int GetFocusedRow(const commands::Candidates &candidates) {
-  if (candidates.has_focused_index()) {
-    return candidates.focused_index() - candidates.candidate(0).index();
+int GetFocusedRow(const commands::CandidateWindow &candidate_window) {
+  if (candidate_window.has_focused_index()) {
+    return candidate_window.focused_index() -
+           candidate_window.candidate(0).index();
   }
   return -1;  // No focused row
 }
 
-void FillCandidateHighlight(const commands::Candidates &candidates,
+void FillCandidateHighlight(const commands::CandidateWindow &candidate_window,
                             const int row, QTableWidget *table) {
   if (row < 0) {
     return;
   }
 
-  const bool has_info = candidates.candidate(row).has_information_id();
+  const bool has_info = candidate_window.candidate(row).has_information_id();
   const QBrush indicator = QBrush(QColor(kIndicatorColor));
 
-  if (row == GetFocusedRow(candidates)) {
+  if (row == GetFocusedRow(candidate_window)) {
     const QBrush highlight = QBrush(QColor(kHighlightColor));
     table->item(row, 0)->setBackground(highlight);
     table->item(row, 1)->setBackground(highlight);
@@ -264,7 +269,7 @@ void FillCandidateHighlight(const commands::Candidates &candidates,
   }
 
   const QBrush background = QBrush(QColor(kBackgroundColor));
-  if (candidates.candidate(row).annotation().shortcut().empty()) {
+  if (candidate_window.candidate(row).annotation().shortcut().empty()) {
     table->item(row, 0)->setBackground(background);
   } else {
     const QBrush shortcut_background = QBrush(QColor(kShortcutBackgroundColor));
@@ -275,9 +280,9 @@ void FillCandidateHighlight(const commands::Candidates &candidates,
   table->item(row, 3)->setBackground(has_info ? indicator : background);
 }
 
-void FillCandidates(const commands::Candidates &candidates,
+void FillCandidates(const commands::CandidateWindow &candidate_window,
                     QTableWidget *table) {
-  const size_t cands_size = candidates.candidate_size();
+  const size_t cands_size = candidate_window.candidate_size();
   table->clear();
   table->setRowCount(cands_size + 1);  // +1 is for footer.
   table->setColumnCount(4);
@@ -295,7 +300,8 @@ void FillCandidates(const commands::Candidates &candidates,
   // Fill the candidates
   std::string shortcut, value, description;
   for (size_t i = 0; i < cands_size; ++i) {
-    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
+    const commands::CandidateWindow::Candidate &candidate =
+        candidate_window.candidate(i);
     GetDisplayString(candidate, shortcut, value, description);
 
     // shortcut
@@ -316,7 +322,7 @@ void FillCandidates(const commands::Candidates &candidates,
     // indicator
     auto item3 = new QTableWidgetItem();
     table->setItem(i, 3, item3);
-    FillCandidateHighlight(candidates, i, table);
+    FillCandidateHighlight(candidate_window, i, table);
 
     max_width1 = std::max(max_width1, GetItemWidth(*item1));
     max_width2 = std::max(max_width2, GetItemWidth(*item2));
@@ -332,7 +338,7 @@ void FillCandidates(const commands::Candidates &candidates,
     table->setItem(cands_size, i, footer_item);
   }
   QTableWidgetItem *footer2 = table->item(cands_size, 2);
-  footer2->setText(QStr(GetIndexGuideString(candidates)));
+  footer2->setText(QStr(GetIndexGuideString(candidate_window)));
   footer2->setTextAlignment(Qt::AlignRight);
   max_width2 = std::max(max_width2, GetItemWidth(*footer2));
   const int footer_height = GetItemHeight(*footer2);
@@ -419,25 +425,27 @@ Point QtWindowManager::GetWindowPosition(
 
 Rect QtWindowManager::UpdateCandidateWindow(
     const commands::RendererCommand &command) {
-  const commands::Candidates &candidates = command.output().candidates();
+  const commands::CandidateWindow &candidate_window =
+      command.output().candidates();
 
   if (IsUpdated(prev_command_, command)) {
-    FillCandidates(candidates, candidates_);
+    FillCandidates(candidate_window, candidates_);
     const Size win_size(candidates_->width(), candidates_->height());
     const Point win_pos = GetWindowPosition(command, win_size);
     candidates_->move(win_pos.x, win_pos.y);
   } else {
     // Reset the previous focused highlight
     const int prev_focused = GetFocusedRow(prev_command_.output().candidates());
-    FillCandidateHighlight(candidates, prev_focused, candidates_);
+    FillCandidateHighlight(candidate_window, prev_focused, candidates_);
   }
 
   // Set the focused highlight
-  FillCandidateHighlight(candidates, GetFocusedRow(candidates), candidates_);
+  FillCandidateHighlight(candidate_window, GetFocusedRow(candidate_window),
+                         candidates_);
 
   // Footer index
   candidates_->item(candidates_->rowCount() - 1, 2)
-      ->setText(QStr(GetIndexGuideString(candidates)));
+      ->setText(QStr(GetIndexGuideString(candidate_window)));
 
   candidates_->show();
   prev_command_ = command;
@@ -450,27 +458,28 @@ bool QtWindowManager::ShouldShowInfolistWindow(
     return false;
   }
 
-  const commands::Candidates &candidates = command.output().candidates();
-  if (candidates.candidate_size() <= 0) {
+  const commands::CandidateWindow &candidate_window =
+      command.output().candidates();
+  if (candidate_window.candidate_size() <= 0) {
     return false;
   }
 
-  if (!candidates.has_usages() || !candidates.has_focused_index()) {
+  if (!candidate_window.has_usages() || !candidate_window.has_focused_index()) {
     return false;
   }
 
-  if (candidates.usages().information_size() <= 0) {
+  if (candidate_window.usages().information_size() <= 0) {
     return false;
   }
 
   // Converts candidate's index to column row index.
   const int focused_row =
-      candidates.focused_index() - candidates.candidate(0).index();
-  if (candidates.candidate_size() < focused_row) {
+      candidate_window.focused_index() - candidate_window.candidate(0).index();
+  if (candidate_window.candidate_size() < focused_row) {
     return false;
   }
 
-  if (!candidates.candidate(focused_row).has_information_id()) {
+  if (!candidate_window.candidate(focused_row).has_information_id()) {
     return false;
   }
 

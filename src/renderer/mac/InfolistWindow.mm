@@ -38,7 +38,7 @@
 #include "protocol/commands.pb.h"
 #include "renderer/mac/InfolistWindow.h"
 
-using mozc::commands::Candidates;
+using mozc::commands::CandidateWindow;
 using mozc::commands::Output;
 using mozc::commands::SessionCommand;
 
@@ -93,8 +93,8 @@ void InfolistWindow::SetSendCommandInterface(client::SendCommandInterface* send_
   command_sender_ = send_command_interface;
 }
 
-void InfolistWindow::SetCandidates(const Candidates& candidates) {
-  if (candidates.candidate_size() == 0) {
+void InfolistWindow::SetCandidateWindow(const CandidateWindow& candidate_window) {
+  if (candidate_window.candidate_size() == 0) {
     return;
   }
 
@@ -102,7 +102,7 @@ void InfolistWindow::SetCandidates(const Candidates& candidates) {
     InitWindow();
   }
   InfolistView* infolist_view = (InfolistView*)view_;
-  [infolist_view setCandidates:&candidates];
+  [infolist_view setCandidateWindow:&candidate_window];
   [infolist_view setNeedsDisplay:YES];
   NSSize size = [infolist_view updateLayout];
   ResizeWindow(size.width, size.height);

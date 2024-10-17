@@ -40,7 +40,7 @@ namespace client {
 class SendCommandInterface;
 }  // namespace mozc::client
 namespace commands {
-class Candidates;
+class CandidateWindow;
 }  // namespace mozc::commands
 namespace renderer {
 namespace mac {
@@ -51,7 +51,7 @@ class InfolistWindow : public RendererBaseWindow {
   InfolistWindow &operator=(const InfolistWindow &) = delete;
   virtual ~InfolistWindow();
   void SetSendCommandInterface(client::SendCommandInterface *send_command_interface);
-  void SetCandidates(const commands::Candidates &candidates);
+  void SetCandidateWindow(const commands::CandidateWindow &candidate_window);
   void DelayHide(int delay);  // set duration in msecs.
   void DelayShow(int delay);
   virtual void Hide();

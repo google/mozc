@@ -345,7 +345,7 @@ class SessionConverter : public SessionConverterInterface {
 
   void FillConversion(commands::Preedit *preedit) const;
   void FillResult(commands::Result *result) const;
-  void FillCandidates(commands::Candidates *candidates) const;
+  void FillCandidates(commands::CandidateWindow *candidate_window) const;
 
   // Fills protocol buffers with all flatten candidate words.
   void FillAllCandidateWords(commands::CandidateList *candidates) const;
@@ -417,7 +417,7 @@ class SessionConverter : public SessionConverterInterface {
 
   bool candidate_list_visible_;
 
-  // Mutable values of |config_|.  These values may be changed temporaliry per
+  // Mutable values of |config_|.  These values may be changed temporarily per
   // session.
   bool use_cascading_window_;
 };

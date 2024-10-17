@@ -167,7 +167,7 @@ void FillAllCandidateWordsInternal(
 // static
 void SessionOutput::FillCandidate(
     const Segment &segment, const Candidate &candidate,
-    commands::Candidates_Candidate *candidate_proto) {
+    commands::CandidateWindow_Candidate *candidate_proto) {
   DCHECK(segment.is_valid_index(candidate.id()));
 
   if (candidate.HasSubcandidateList()) {
@@ -192,16 +192,15 @@ void SessionOutput::FillCandidate(
 }
 
 // static
-void SessionOutput::FillCandidates(const Segment &segment,
-                                   const CandidateList &candidate_list,
-                                   const size_t position,
-                                   commands::Candidates *candidates_proto) {
+void SessionOutput::FillCandidates(
+    const Segment &segment, const CandidateList &candidate_list,
+    const size_t position, commands::CandidateWindow *candidate_window_proto) {
   if (candidate_list.focused()) {
-    candidates_proto->set_focused_index(candidate_list.focused_index());
+    candidate_window_proto->set_focused_index(candidate_list.focused_index());
   }
-  candidates_proto->set_size(candidate_list.size());
-  candidates_proto->set_page_size(candidate_list.page_size());
-  candidates_proto->set_position(position);
+  candidate_window_proto->set_size(candidate_list.size());
+  candidate_window_proto->set_page_size(candidate_list.page_size());
+  candidate_window_proto->set_position(position);
 
   auto [c_begin, c_end] =
       candidate_list.GetPageRange(candidate_list.focused_index());
@@ -216,8 +215,8 @@ void SessionOutput::FillCandidates(const Segment &segment,
                  << ", actual candidates size: " << segment.candidates_size();
       return;
     }
-    commands::Candidates_Candidate *candidate_proto =
-        candidates_proto->add_candidate();
+    commands::CandidateWindow_Candidate *candidate_proto =
+        candidate_window_proto->add_candidate();
     candidate_proto->set_index(i);
     FillCandidate(segment, candidate, candidate_proto);
   }
@@ -227,11 +226,11 @@ void SessionOutput::FillCandidates(const Segment &segment,
     FillCandidates(segment,
                    candidate_list.focused_candidate().subcandidate_list(),
                    candidate_list.focused_index(),
-                   candidates_proto->mutable_subcandidates());
+                   candidate_window_proto->mutable_subcandidates());
   }
 
   // Store usages.
-  FillUsages(segment, candidate_list, candidates_proto);
+  FillUsages(segment, candidate_list, candidate_window_proto);
 }
 
 // static
@@ -275,14 +274,14 @@ bool SessionOutput::ShouldShowUsages(const Segment &segment,
 }
 
 // static
-void SessionOutput::FillUsages(const Segment &segment,
-                               const CandidateList &cand_list,
-                               commands::Candidates *candidates_proto) {
+void SessionOutput::FillUsages(
+    const Segment &segment, const CandidateList &cand_list,
+    commands::CandidateWindow *candidate_window_proto) {
   if (!ShouldShowUsages(segment, cand_list)) {
     return;
   }
 
-  commands::InformationList *usages = candidates_proto->mutable_usages();
+  commands::InformationList *usages = candidate_window_proto->mutable_usages();
 
   using IndexInfoPair = std::pair<int32_t, commands::Information *>;
   absl::flat_hash_map<int32_t, IndexInfoPair> usageid_information_map;
@@ -321,13 +320,15 @@ void SessionOutput::FillUsages(const Segment &segment,
 }
 
 // static
-void SessionOutput::FillShortcuts(absl::string_view shortcuts,
-                                  commands::Candidates *candidates_proto) {
-  const size_t num_loop =
-      std::min<size_t>(candidates_proto->candidate_size(), shortcuts.size());
+void SessionOutput::FillShortcuts(
+    absl::string_view shortcuts,
+    commands::CandidateWindow *candidate_window_proto) {
+  const size_t num_loop = std::min<size_t>(
+      candidate_window_proto->candidate_size(), shortcuts.size());
   for (size_t i = 0; i < num_loop; ++i) {
-    candidates_proto->mutable_candidate(i)->mutable_annotation()->set_shortcut(
-        shortcuts.substr(i, 1));
+    candidate_window_proto->mutable_candidate(i)
+        ->mutable_annotation()
+        ->set_shortcut(shortcuts.substr(i, 1));
   }
 }
 
@@ -352,14 +353,14 @@ void SessionOutput::FillSubLabel(commands::Footer *footer) {
 
 // static
 bool SessionOutput::FillFooter(const commands::Category category,
-                               commands::Candidates *candidates) {
+                               commands::CandidateWindow *candidate_window) {
   if (category != commands::SUGGESTION && category != commands::PREDICTION &&
       category != commands::CONVERSION) {
     return false;
   }
 
   bool show_build_number = true;
-  commands::Footer *footer = candidates->mutable_footer();
+  commands::Footer *footer = candidate_window->mutable_footer();
   if (category == commands::SUGGESTION) {
     // TODO(komatsu): Enable to localized the message.
     constexpr absl::string_view kLabel = "Tabキーで選択";
@@ -372,10 +373,11 @@ bool SessionOutput::FillFooter(const commands::Category category,
 
     // If the selected candidate is a user prediction history, tell the user
     // that it can be removed by Ctrl-Delete.
-    if (candidates->has_focused_index()) {
-      for (size_t i = 0; i < candidates->candidate_size(); ++i) {
-        const commands::Candidates::Candidate &cand = candidates->candidate(i);
-        if (cand.index() != candidates->focused_index()) {
+    if (candidate_window->has_focused_index()) {
+      for (size_t i = 0; i < candidate_window->candidate_size(); ++i) {
+        const commands::CandidateWindow::Candidate &cand =
+            candidate_window->candidate(i);
+        if (cand.index() != candidate_window->focused_index()) {
           continue;
         }
         if (cand.has_annotation() && cand.annotation().deletable()) {

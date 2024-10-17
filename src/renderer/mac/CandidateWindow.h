@@ -39,7 +39,7 @@ namespace client {
 class SendCommandInterface;
 }  // namespace client
 namespace commands {
-class Candidates;
+class CandidateWindow;
 }  // namespace commands
 namespace renderer {
 class TableLayout;
@@ -55,7 +55,7 @@ class CandidateWindow : public RendererBaseWindow {
   virtual ~CandidateWindow();
   void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
-  void SetCandidates(const commands::Candidates &candidates);
+  void SetCandidateWindow(const commands::CandidateWindow &candidate_window);
   const renderer::TableLayout *GetTableLayout() const;
 
  private:

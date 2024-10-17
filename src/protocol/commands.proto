@@ -1339,7 +1339,8 @@ message Output {
   optional bool consumed = 3;
   optional Result result = 4;
   optional Preedit preedit = 5;
-  optional Candidates candidates = 6;
+  // TODO(b/372854886): Follow up renaming to candidate_window.
+  optional CandidateWindow candidates = 6;
   optional KeyEvent key = 7;
 
   // when URL is non empty, UI can open the page with a browser,

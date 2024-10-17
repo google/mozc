@@ -442,10 +442,10 @@ TEST_F(MozcImkInputControllerTest, UpdateCandidates) {
   // create an output
   commands::Output output;
   // a candidate has to have at least a candidate
-  commands::Candidates *candidates = output.mutable_candidates();
-  candidates->set_focused_index(0);
-  candidates->set_size(1);
-  commands::Candidates::Candidate *candidate = candidates->add_candidate();
+  commands::CandidateWindow *candidate_window = output.mutable_candidates();
+  candidate_window->set_focused_index(0);
+  candidate_window->set_size(1);
+  commands::CandidateWindow::Candidate *candidate = candidate_window->add_candidate();
   candidate->set_index(0);
   candidate->set_value("abc");
 

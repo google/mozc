@@ -187,8 +187,8 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
 
   // Candidates
   if (!state->has_candidates() && output.has_candidates()) {
-    const commands::Candidates &cands = output.candidates();
-    switch (cands.category()) {
+    const commands::CandidateWindow &candidate_window = output.candidates();
+    switch (candidate_window.category()) {
       case commands::CONVERSION:
         state->set_start_conversion_window_time(GetTimeInMilliSecond());
         break;

@@ -56,8 +56,8 @@ enum COLUMN_TYPE {
 // according to the current candidates.
 @interface CandidateView : NSView
 
-// setCandidates: sets the candidates to be rendered.
-- (void)setCandidates:(const mozc::commands::Candidates *)candidates;
+// setCandidateWindow: sets the candidate window to be rendered.
+- (void)setCandidateWindow:(const mozc::commands::CandidateWindow *)candidate_window;
 
 // setController: sets the reference of MozcImkInputController.
 // It will be used when mouse clicks.  It doesn't take ownerships of

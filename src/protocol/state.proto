@@ -59,7 +59,8 @@ message SessionState {
   optional mozc.commands.Preedit preedit = 20;
 
   // last candidates state
-  optional mozc.commands.Candidates candidates = 21;
+  // TODO(b/372854886): Follow up renaming to candidate_window.
+  optional mozc.commands.CandidateWindow candidates = 21;
 
   reserved 22;
   reserved "all_candidate_words";

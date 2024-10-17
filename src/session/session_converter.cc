@@ -1551,7 +1551,8 @@ void SessionConverter::FillResult(commands::Result *result) const {
   *result = result_;
 }
 
-void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
+void SessionConverter::FillCandidates(
+    commands::CandidateWindow *candidate_window) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
   if (!candidate_list_visible_) {
     return;
@@ -1576,61 +1577,63 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
   }
 
   const Segment &segment = segments_.conversion_segment(segment_index_);
-  SessionOutput::FillCandidates(segment, candidate_list_, position, candidates);
+  SessionOutput::FillCandidates(segment, candidate_list_, position,
+                                candidate_window);
 
   // Shortcut keys
   if (CheckState(PREDICTION | CONVERSION)) {
     SessionOutput::FillShortcuts(GetCandidateShortcuts(selection_shortcut_),
-                                 candidates);
+                                 candidate_window);
   }
 
   // Store category
   switch (request_type_) {
     case ConversionRequest::CONVERSION:
-      candidates->set_category(commands::CONVERSION);
+      candidate_window->set_category(commands::CONVERSION);
       break;
     case ConversionRequest::PREDICTION:
-      candidates->set_category(commands::PREDICTION);
+      candidate_window->set_category(commands::PREDICTION);
       break;
     case ConversionRequest::SUGGESTION:
-      candidates->set_category(commands::SUGGESTION);
+      candidate_window->set_category(commands::SUGGESTION);
       break;
     case ConversionRequest::PARTIAL_PREDICTION:
       // Not PREDICTION because we do not want to get focused candidate.
-      candidates->set_category(commands::SUGGESTION);
+      candidate_window->set_category(commands::SUGGESTION);
       break;
     case ConversionRequest::PARTIAL_SUGGESTION:
-      candidates->set_category(commands::SUGGESTION);
+      candidate_window->set_category(commands::SUGGESTION);
       break;
     default:
       LOG(WARNING) << "Unknown request type: " << request_type_;
-      candidates->set_category(commands::CONVERSION);
+      candidate_window->set_category(commands::CONVERSION);
       break;
   }
 
-  if (candidates->has_usages()) {
-    candidates->mutable_usages()->set_category(commands::USAGE);
+  if (candidate_window->has_usages()) {
+    candidate_window->mutable_usages()->set_category(commands::USAGE);
   }
-  if (candidates->has_subcandidates()) {
+  if (candidate_window->has_subcandidates()) {
     // TODO(komatsu): Subcandidate is not always for transliterations.
     // The category of the subcandidates should be checked.
-    candidates->mutable_subcandidates()->set_category(
+    candidate_window->mutable_subcandidates()->set_category(
         commands::TRANSLITERATION);
   }
 
   // Store display type
-  candidates->set_display_type(commands::MAIN);
-  if (candidates->has_usages()) {
-    candidates->mutable_usages()->set_display_type(commands::CASCADE);
+  candidate_window->set_display_type(commands::MAIN);
+  if (candidate_window->has_usages()) {
+    candidate_window->mutable_usages()->set_display_type(commands::CASCADE);
   }
-  if (candidates->has_subcandidates()) {
+  if (candidate_window->has_subcandidates()) {
     // TODO(komatsu): Subcandidate is not always for transliterations.
     // The category of the subcandidates should be checked.
-    candidates->mutable_subcandidates()->set_display_type(commands::CASCADE);
+    candidate_window->mutable_subcandidates()->set_display_type(
+        commands::CASCADE);
   }
 
   // Store footer.
-  SessionOutput::FillFooter(candidates->category(), candidates);
+  SessionOutput::FillFooter(candidate_window->category(), candidate_window);
 }
 
 void SessionConverter::FillAllCandidateWords(

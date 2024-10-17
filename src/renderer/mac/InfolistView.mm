@@ -39,7 +39,7 @@
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
 
-using mozc::commands::Candidates;
+using mozc::commands::CandidateWindow;
 using mozc::commands::Information;
 using mozc::commands::InformationList;
 using mozc::renderer::RendererStyle;
@@ -76,8 +76,8 @@ using mozc::renderer::mac::MacViewUtil;
   return self;
 }
 
-- (void)setCandidates:(const Candidates *)candidates {
-  candidates_.CopyFrom(*candidates);
+- (void)setCandidateWindow:(const CandidateWindow *)candidate_window {
+  candidate_window_.CopyFrom(*candidate_window);
 }
 
 - (BOOL)isFlipped {
@@ -87,7 +87,7 @@ using mozc::renderer::mac::MacViewUtil;
 #pragma mark drawing
 - (CGFloat)drawRow:(int)row ypos:(CGFloat)ypos draw_flag:(bool)draw_flag {
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
-  const InformationList &usages = candidates_.usages();
+  const InformationList &usages = candidate_window_.usages();
   const RendererStyle::TextStyle &title_style = infostyle.title_style();
   const RendererStyle::TextStyle &desc_style = infostyle.description_style();
   const int title_width = infostyle.window_width() - title_style.left_padding() -
@@ -158,12 +158,12 @@ using mozc::renderer::mac::MacViewUtil;
 }
 
 - (NSSize)drawView:(bool)draw_flag {
-  if (!candidates_.has_usages()) {
+  if (!candidate_window_.has_usages()) {
     return NSMakeSize(0, 0);
   }
 
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
-  const InformationList &usages = candidates_.usages();
+  const InformationList &usages = candidate_window_.usages();
 
   int ypos = infostyle.window_border();
 
