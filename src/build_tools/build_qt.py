@@ -106,8 +106,11 @@ class ProgressPrinter:
           del msg  # Unused
           return
 
-      self.cleaner = None
-      return NoOpImpl()
+        def cleanup(self) -> None:
+          pass
+
+      self.impl = NoOpImpl()
+      return self
 
     class Impl:
       """A real implementation in case stdout is attached to concole."""
@@ -129,18 +132,19 @@ class ProgressPrinter:
         sys.stdout.flush()
         self.last_output_time_ns = now
 
-    class Cleaner:
       def cleanup(self) -> None:
         colmuns = os.get_terminal_size().columns
         sys.stdout.write(' ' * colmuns + '\r')
         sys.stdout.flush()
 
-    self.cleaner = Cleaner()
-    return Impl()
+    self.impl = Impl()
+    return self
+
+  def print_line(self, msg: str) -> None:
+    self.impl.print_line(msg)
 
   def __exit__(self, *exc):
-    if self.cleaner:
-      self.cleaner.cleanup()
+    self.impl.cleanup()
 
 
 def qt_extract_filter(
@@ -178,6 +182,45 @@ def qt_extract_filter(
         printer.print_line('extracting ' + new_path)
         info.name = new_path
         yield info
+
+
+class StatefulQtExtractionFilter:
+  """A stateful extraction filter for PEP 706.
+
+  See https://peps.python.org/pep-0706/ for details.
+  """
+
+  def __enter__(self):
+    self.printer = ProgressPrinter().__enter__()
+    return self
+
+  def __exit__(self, *exc):
+    self.printer.__exit__(exc)
+
+  def __call__(
+      self,
+      member: tarfile.TarInfo,
+      dest_path: Union[str, pathlib.Path],
+  ) -> Union[tarfile.TarInfo, None]:
+    data = tarfile.data_filter(member, dest_path)
+    if data is None:
+      return data
+
+    paths = member.name.split('/')
+    if len(paths) < 1:
+      return None
+    paths = paths[1:]
+    new_path = '/'.join(paths)
+    skipping = False
+    if len(paths) >= 1 and paths[0] == 'examples':
+      skipping = True
+    elif len(paths) >= 1 and paths[0] == 'tests':
+      skipping = True
+    if skipping:
+      self.printer.print_line('skipping   ' + new_path)
+      return None
+    self.printer.print_line('extracting ' + new_path)
+    return member.replace(name=new_path, deep=False)
 
 
 @dataclasses.dataclass
@@ -568,7 +611,13 @@ def extract_qt_src(args: argparse.Namespace) -> None:
   else:
     qt_src_dir.mkdir(parents=True)
     with tarfile.open(args.qt_archive_path, mode='r|xz') as f:
-      f.extractall(path=qt_src_dir, members=qt_extract_filter(f))
+      # tarfile.data_filter is available in Python 3.12+.
+      # See https://peps.python.org/pep-0706/ for details.
+      if getattr(tarfile, 'data_filter', None):
+        with StatefulQtExtractionFilter() as filter:
+          f.extractall(path=qt_src_dir, filter=filter)
+      else:
+        f.extractall(path=qt_src_dir, members=qt_extract_filter(f))
 
 
 def main():
