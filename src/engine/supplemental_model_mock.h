@@ -58,7 +58,7 @@ class MockSupplementalModel : public SupplementalModelInterface {
               (const, override));
   MOCK_METHOD(std::optional<std::vector<composer::TypeCorrectedQuery>>,
               CorrectComposition,
-              (const ConversionRequest &request, absl::string_view context),
+              (const ConversionRequest &request, const Segments &segments),
               (const, override));
   MOCK_METHOD(void, PopulateTypeCorrectedQuery,
               (const ConversionRequest &request, const Segments &segments,

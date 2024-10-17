@@ -4497,7 +4497,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   add_expected("がっこ");
   add_expected("かっこ");
   engine::MockSupplementalModel mock;
-  EXPECT_CALL(mock, CorrectComposition(_, "")).WillRepeatedly(Return(expected));
+  EXPECT_CALL(mock, CorrectComposition(_, _)).WillRepeatedly(Return(expected));
   SetSupplementalModel(&mock);
 
   // set_typing_correction_apply_user_history_size=0

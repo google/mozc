@@ -2136,8 +2136,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
                    TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
 
   auto mock = std::make_unique<engine::MockSupplementalModel>();
-  EXPECT_CALL(*mock, CorrectComposition(_, "ほんじつは"))
-      .WillOnce(Return(expected));
+  EXPECT_CALL(*mock, CorrectComposition(_, _)).WillOnce(Return(expected));
 
   data_and_aggregator->set_supplemental_model(mock.get());
 

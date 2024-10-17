@@ -731,7 +731,7 @@ std::vector<TypeCorrectedQuery> UserHistoryPredictor::GetTypingCorrectedQueries(
   if (supplemental_model == nullptr) return {};
 
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      supplemental_model->CorrectComposition(request, segments.history_key());
+      supplemental_model->CorrectComposition(request, segments);
   if (!corrected) return {};
 
   std::vector<TypeCorrectedQuery> result = std::move(corrected.value());

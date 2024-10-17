@@ -67,14 +67,12 @@ class SupplementalModelInterface {
   }
 
   // Performs spelling correction for composition (pre-edit) Hiragana sequence.
-  // Both `query` and `context` must be Hiragana input sequence.
-  // `request` is passed to determine the keyboard layout.
   // Returns empty result when no correction is required.
   // Returns std::nullopt when the composition spellchecker is not
   // enabled/available.
   virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
   CorrectComposition(const ConversionRequest &request,
-                     absl::string_view context) const {
+                     const Segments &segments) const {
     return std::nullopt;
   }
 

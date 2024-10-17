@@ -1695,7 +1695,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
   }
 
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      supplemental_model->CorrectComposition(request, segments.history_key());
+      supplemental_model->CorrectComposition(request, segments);
   if (!corrected) {
     return;
   }
