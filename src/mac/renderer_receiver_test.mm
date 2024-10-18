@@ -57,13 +57,13 @@ class RendererReceiverTest : public testing::Test {
 
 @implementation MockController
 
-- (void)sendCommand:(mozc::commands::SessionCommand &)data {
-  _receivedSessionCommand = data;
+- (void)sendCommand:(const mozc::commands::SessionCommand &)command {
+  _receivedSessionCommand = command;
   ++_numSendCommand;
 }
 
-- (void)outputResult:(mozc::commands::Output *)data {
-  _receivedOutput = *data;
+- (void)outputResult:(const mozc::commands::Output &)output {
+  _receivedOutput = output;
   ++_numOutputResult;
 }
 @end

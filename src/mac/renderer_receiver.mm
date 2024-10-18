@@ -61,7 +61,7 @@
   }
 
   mozc::commands::SessionCommand command;
-  int32_t length = static_cast<int32_t>([data length]);
+  const int32_t length = static_cast<int32_t>([data length]);
   if (!command.ParseFromArray([data bytes], length)) {
     return;
   }
@@ -69,14 +69,14 @@
 }
 
 // outputResult is a method of the ServerCallback protocol.
-- (void)outputResult:(NSData *)data {
+- (void)outputResult:(NSData *)result {
   mozc::commands::Output output;
-  int32_t length = static_cast<int32_t>([data length]);
-  if (!output.ParseFromArray([data bytes], length)) {
+  const int32_t length = static_cast<int32_t>([result length]);
+  if (!output.ParseFromArray([result bytes], length)) {
     return;
   }
 
-  [_currentController outputResult:&output];
+  [_currentController outputResult:output];
 }
 
 // setCurrentController is a method of the ServerCallback protocol.

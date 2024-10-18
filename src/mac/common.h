@@ -29,40 +29,55 @@
 
 #import <Foundation/Foundation.h>
 
-namespace mozc {
-namespace commands {
-class Output;
-class SessionCommand;
-}  // namespace mozc::commands
-}  // namespace mozc
+#include "protocol/commands.pb.h"
 
-// ControllerCallback is the collection of methods which will be
-// called from GoogleJapaneseInputServer.  Each Controller should
-// implement these methods (although there is only one method right
-// now).
+/** ControllerCallback is the collection of methods to send events from RendererReceiver to
+ * MozcImkInputController.
+ *
+ * This protocol is designed to be used in the following way:
+ * 1. MozcImkInputController implements this protocol and registers itself to RendererReceiver.
+ * 2. RendererReceiver sends a SessionCommand to MozcImkInputController via this protocol.
+ *
+ * Note, MozcImkInputController is instanced per host application, and RendererReceiver is a
+ * singleton.
+ */
 @protocol ControllerCallback
-- (void)sendCommand:(mozc::commands::SessionCommand &)data;
 
-// In the future, some utility tools will send the result text via
-// this method.
-- (void)outputResult:(mozc::commands::Output *)data;
+/** Sends a SessionCommand to the controller.
+ *
+ * @param command a SessionCommand protobuf message.
+ */
+- (void)sendCommand:(const mozc::commands::SessionCommand &)command;
+
+/** Sends a result output to the controller.
+ * This method could be called from some utility tools (e.g. handwriting, voice input)
+ *
+ * @param data an Output protobuf message.
+ */
+- (void)outputResult:(const mozc::commands::Output &)output;
 @end
 
-// RendererCallback is a protocol to send the clicked information and
-// usage stats event information back to the UI client.
-// We don't use normal ipc mechanism for this because our UI client
-// process is not a server.  Rather we free-ride the existing connection
-// of normal IMKit.
+/** ServerCallback is a protocol to send the events (e.g. mouse click of a candidate word)
+ * from the renderer process to the IMKController process via IPC (i.e. NSConnection).
+ */
 @protocol ServerCallback
-// This method is called when a user clicks an item in a candidate
-// window or when the renderer sends the usage stats event information.
-// The |data| contains a serialized protobuf message.
+
+/** Is called when a user clicks an item in a candidate window or when the renderer sends the usage
+ * stats event information.
+ *
+ * @param data A serialized mozc::commands::SessionCommand protobuf message.
+ */
 - (void)sendData:(NSData *)data;
 
-// Register the current controller.
+/** Registers the current controller.
+ *
+ * @param controller The current controller.
+ */
 - (void)setCurrentController:(id<ControllerCallback>)controller;
 
-// outputResult is a method which calls outputResult: of the current
-// controller.
-- (void)outputResult:(NSData *)data;
+/** Is called to output the result to the host application via the IMKController.
+ *
+ * @param result A serialized mozc::commands::Output protobuf message.
+ */
+- (void)outputResult:(NSData *)result;
 @end

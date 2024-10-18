@@ -94,6 +94,7 @@ mozc_objc_library(
     name = "common",
     hdrs = ["common.h"],
     sdk_frameworks = ["Foundation"],
+    deps = ["//protocol:commands_cc_proto"],
 )
 
 mozc_objc_library(

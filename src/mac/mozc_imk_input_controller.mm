@@ -924,7 +924,7 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   return output.consumed();
 }
 
-#pragma mark callbacks
+#pragma mark ControllerCallback
 - (void)sendCommand:(const SessionCommand &)command {
   Output output;
   if (!mozcClient_->SendCommand(command, &output)) {
@@ -934,6 +934,14 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   [self processOutput:&output client:[self client]];
 }
 
+- (void)outputResult:(const mozc::commands::Output &)output {
+  if (!output.has_result()) {
+    return;
+  }
+  [self commitText:output.result().value().c_str() client:[self client]];
+}
+
+#pragma mark callbacks
 - (IBAction)reconversionClicked:(id)sender {
   SessionCommand command;
   command.set_type(SessionCommand::CONVERT_REVERSE);
@@ -954,13 +962,6 @@ bool CanSurroundingText(absl::string_view bundle_id) {
 
 - (IBAction)aboutDialogClicked:(id)sender {
   MacProcess::LaunchMozcTool("about_dialog");
-}
-
-- (void)outputResult:(mozc::commands::Output *)output {
-  if (output == nullptr || !output->has_result()) {
-    return;
-  }
-  [self commitText:output->result().value().c_str() client:[self client]];
 }
 
 + (void)setGlobalRendererReceiver:(RendererReceiver *)rendererReceiver {

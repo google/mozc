@@ -122,14 +122,6 @@
  */
 + (void)setGlobalRendererReceiver:(RendererReceiver *)rendererReceiver;
 
-/** sendCommand: is called to send SessionCommand to the server from the renderer, when the user
- * clicks a candidate item in candidate windows or when the renderer sends the usage stats event
- * information.
- *
- * @param command The protobuf of command sent to the server.
- */
-- (void)sendCommand:(const mozc::commands::SessionCommand &)command;
-
 /** reconversionClicked: is called when the user clicks "Reconversion" menu item.
  *
  * @param sender The sender of this request (unused).
@@ -159,12 +151,6 @@
  * @param sender The sender of this request (unused).
  */
 - (IBAction)aboutDialogClicked:(id)sender;
-
-/** outputResult: put result text in the specified |output| into the client application.
- *
- * @param output The protobuf of the output data.
- */
-- (void)outputResult:(mozc::commands::Output *)output;
 
 /** Sets the ClientInterface to use in the controller.
  *
