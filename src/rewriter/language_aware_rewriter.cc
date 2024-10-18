@@ -34,6 +34,7 @@
 #include <utility>
 
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -253,7 +254,7 @@ bool LanguageAwareRewriter::Rewrite(const ConversionRequest &request,
 }
 
 namespace {
-bool IsLanguageAwareInputCandidate(const composer::Composer &composer,
+bool IsLanguageAwareInputCandidate(absl::string_view raw_string,
                                    const Segment::Candidate &candidate) {
   // Check candidate.prefix to filter if the candidate is probably generated
   // from LanguangeAwareInput or not.
@@ -261,7 +262,6 @@ bool IsLanguageAwareInputCandidate(const composer::Composer &composer,
     return false;
   }
 
-  const std::string raw_string = composer.GetRawString();
   if (raw_string != candidate.value) {
     return false;
   }
@@ -287,7 +287,8 @@ void LanguageAwareRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (IsLanguageAwareInputCandidate(request.composer(), segment.candidate(0))) {
+  if (IsLanguageAwareInputCandidate(request.composer().GetRawString(),
+                                    segment.candidate(0))) {
     usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionCommitted");
   }
 }

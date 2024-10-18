@@ -445,6 +445,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "//usage_stats",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
