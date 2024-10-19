@@ -1,5 +1,8 @@
-load("@build_bazel_rules_apple//apple:apple.bzl",
-     "apple_dynamic_framework_import")
+load(
+    "@build_bazel_rules_apple//apple:apple.bzl",
+    "apple_dynamic_framework_import",
+)
+
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -11,42 +14,42 @@ package(
 cc_library(
     name = "qt_mac_core",
     hdrs = glob(["lib/QtCore.framework/Headers/*"]),
-    includes = [
-      "lib/QtCore.framework/Headers",
-      "lib/QtCore.framework/Headers/QtCore",
-    ],
     include_prefix = "QtCore",
+    includes = [
+        "lib/QtCore.framework/Headers",
+        "lib/QtCore.framework/Headers/QtCore",
+    ],
     strip_include_prefix = "lib/QtCore.framework/Headers",
 )
 
 cc_library(
     name = "qt_mac_gui",
     hdrs = glob(["lib/QtGui.framework/Headers/*"]),
-    includes = [
-      "lib/QtGui.framework/Headers",
-      "lib/QtGui.framework/Headers/QtGui",
-    ],
     include_prefix = "QtGui",
+    includes = [
+        "lib/QtGui.framework/Headers",
+        "lib/QtGui.framework/Headers/QtGui",
+    ],
     strip_include_prefix = "lib/QtGui.framework/Headers",
 )
 
 cc_library(
     name = "qt_mac_widgets",
     hdrs = glob(["lib/QtWidgets.framework/Headers/*"]),
-    includes = [
-      "lib/QtWidgets.framework/Headers",
-      "lib/QtWidgets.framework/Headers/QtWidgets",
-    ],
     include_prefix = "QtWidgets",
+    includes = [
+        "lib/QtWidgets.framework/Headers",
+        "lib/QtWidgets.framework/Headers/QtWidgets",
+    ],
     strip_include_prefix = "lib/QtWidgets.framework/Headers",
 )
 
 cc_library(
     name = "qt_mac",
     deps = [
-      ":qt_mac_core",
-      ":qt_mac_gui",
-      ":qt_mac_widgets",
+        ":qt_mac_core",
+        ":qt_mac_gui",
+        ":qt_mac_widgets",
     ],
 )
 
