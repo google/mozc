@@ -250,8 +250,8 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
         "If there is at least one candidate, "
         "visibility expects true");
     Output output;
-    CandidateWindow *candidates = output.mutable_candidates();
-    Candidate *candidate = candidates->add_candidate();
+    CandidateWindow *candidate_window = output.mutable_candidate_window();
+    Candidate *candidate = candidate_window->add_candidate();
     candidate->set_index(sample_idx1);
     candidate->set_value(sample_candidate1);
     RendererMock *renderer_mock = new RendererMock();
@@ -264,10 +264,10 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
     SCOPED_TRACE("Update last updated output protobuf object.");
     Output output1;
     Output output2;
-    CandidateWindow *candidates1 = output1.mutable_candidates();
-    CandidateWindow *candidates2 = output2.mutable_candidates();
-    Candidate *candidate1 = candidates1->add_candidate();
-    Candidate *candidate2 = candidates2->add_candidate();
+    CandidateWindow *candidate_window1 = output1.mutable_candidate_window();
+    CandidateWindow *candidate_window2 = output2.mutable_candidate_window();
+    Candidate *candidate1 = candidate_window1->add_candidate();
+    Candidate *candidate2 = candidate_window2->add_candidate();
     candidate1->set_index(sample_idx1);
     candidate1->set_index(sample_idx2);
     candidate2->set_value(sample_candidate1);

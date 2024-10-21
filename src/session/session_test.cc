@@ -814,7 +814,7 @@ TEST_F(SessionTest, SendCommand) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_result());
   EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   // SUBMIT
   InsertCharacterChars("k", &session, &command);
@@ -822,7 +822,7 @@ TEST_F(SessionTest, SendCommand) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_RESULT("ｋ", command);
   EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   // SWITCH_INPUT_MODE
   SendKey("a", &session, &command);
@@ -845,7 +845,7 @@ TEST_F(SessionTest, SendCommand) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_result());
   EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
   // test of resetting the history segements
   {
     MockEngine engine;
@@ -949,7 +949,7 @@ TEST_F(SessionTest, RevertComposition) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_result());
   EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   SendKey("a", &session, &command);
   EXPECT_SINGLE_SEGMENT("あ", command);
@@ -1009,7 +1009,7 @@ TEST_F(SessionTest, SelectCandidate) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_result());
   EXPECT_PREEDIT("ｱｲｳｴｵ", command);
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 }
 
 TEST_F(SessionTest, HighlightCandidate) {
@@ -1044,7 +1044,7 @@ TEST_F(SessionTest, HighlightCandidate) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_result());
   EXPECT_SINGLE_SEGMENT("ｱｲｳｴｵ", command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 }
 
 TEST_F(SessionTest, Conversion) {
@@ -1197,14 +1197,14 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
 
   command.Clear();
   session.ConvertNext(&command);
-  EXPECT_EQ(command.output().candidates().focused_index(), 1);
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 1);
   EXPECT_TRUE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_result());
   // "私の名前は[中のです]"
 
   command.Clear();
   session.ConvertNext(&command);
-  EXPECT_EQ(command.output().candidates().focused_index(), 2);
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 2);
   EXPECT_TRUE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_result());
   // "私の名前は[なかのです]"
@@ -1446,18 +1446,18 @@ TEST_F(SessionTest, CommitSegment) {
 
   command.Clear();
   session.Convert(&command);
-  EXPECT_EQ(command.output().candidates().focused_index(), 0);
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
   // "[私の]名前"
 
   command.Clear();
   session.ConvertNext(&command);
-  EXPECT_EQ(command.output().candidates().focused_index(), 1);
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 1);
   // "[わたしの]名前"
 
   command.Clear();
   session.ConvertNext(&command);
   // "[渡しの]名前" showing a candidate window
-  EXPECT_EQ(command.output().candidates().focused_index(), 2);
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 2);
 
   segment = segments.mutable_segment(0);
   segment->set_segment_type(Segment::FIXED_VALUE);
@@ -1469,7 +1469,7 @@ TEST_F(SessionTest, CommitSegment) {
   command.Clear();
   session.CommitSegment(&command);
   // "渡しの" + "[名前]"
-  EXPECT_EQ(command.output().candidates().focused_index(), 0);
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
 }
 
 TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
@@ -1691,7 +1691,7 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
     const commands::Output &output = command.output();
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
-    EXPECT_FALSE(output.has_candidates());
+    EXPECT_FALSE(output.has_candidate_window());
 
     const commands::Preedit &conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 2);
@@ -1706,7 +1706,7 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
     const commands::Output &output = command.output();
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
-    EXPECT_FALSE(output.has_candidates());
+    EXPECT_FALSE(output.has_candidate_window());
 
     const commands::Preedit &conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 2);
@@ -2052,7 +2052,7 @@ TEST_F(SessionTest, UpdatePreferences) {
   session.SendKey(&command);
 
   const size_t no_cascading_cand_size =
-      command.output().candidates().candidate_size();
+      command.output().candidate_window().candidate_size();
 
   command.Clear();
   session.ConvertCancel(&command);
@@ -2064,7 +2064,7 @@ TEST_F(SessionTest, UpdatePreferences) {
   session.SendKey(&command);
 
   const size_t cascading_cand_size =
-      command.output().candidates().candidate_size();
+      command.output().candidate_window().candidate_size();
 
 #if defined(__linux__) || defined(__wasm__)
   EXPECT_EQ(cascading_cand_size, no_cascading_cand_size);
@@ -2214,7 +2214,7 @@ TEST_F(SessionTest, ExceededComposition) {
 
   command.Clear();
   session.Convert(&command);
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   // The status should remain the preedit status, although the
   // previous command was convert.  The next command makes sure that
@@ -2342,7 +2342,7 @@ TEST_F(SessionTest, UndoForComposition) {
     EXPECT_EQ(command.output().deletion_range().offset(), -5);
     EXPECT_EQ(command.output().deletion_range().length(), 5);
     EXPECT_SINGLE_SEGMENT("あい", command);
-    EXPECT_EQ(command.output().candidates().size(), 2);
+    EXPECT_EQ(command.output().candidate_window().size(), 2);
     EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
   }
 }
@@ -3680,25 +3680,25 @@ TEST_F(SessionTest, Issue1805239) {
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
   SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 
   SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 }
 
 TEST_F(SessionTest, Issue1816861) {
@@ -3879,9 +3879,9 @@ TEST_F(SessionTest, Shortcut) {
     command.Clear();
     // Convert next
     SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-    ASSERT_TRUE(command.output().has_candidates());
+    ASSERT_TRUE(command.output().has_candidate_window());
     const commands::CandidateWindow &candidate_window =
-        command.output().candidates();
+        command.output().candidate_window();
     EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(),
               expected[0]);
     EXPECT_EQ(candidate_window.candidate(1).annotation().shortcut(),
@@ -3917,10 +3917,10 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   command.Clear();
   // Convert next
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
+  ASSERT_TRUE(command.output().has_candidate_window());
 
   const commands::CandidateWindow &candidate_window =
-      command.output().candidates();
+      command.output().candidate_window();
   EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(), "a");
   EXPECT_EQ(candidate_window.candidate(1).annotation().shortcut(), "s");
 
@@ -3962,10 +3962,10 @@ TEST_F(SessionTest, ShortcutFromVK) {
   command.Clear();
   // Convert next
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
+  ASSERT_TRUE(command.output().has_candidate_window());
 
   const commands::CandidateWindow &candidate_window =
-      command.output().candidates();
+      command.output().candidate_window();
   EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(), "1");
   EXPECT_EQ(candidate_window.candidate(1).annotation().shortcut(), "2");
 
@@ -4187,16 +4187,16 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     EXPECT_TRUE(session.Convert(&command));
-    EXPECT_FALSE(command.output().has_candidates());
-    EXPECT_FALSE(command.output().candidates().has_focused_index());
-    EXPECT_EQ(command.output().candidates().focused_index(), 0);
+    EXPECT_FALSE(command.output().has_candidate_window());
+    EXPECT_FALSE(command.output().candidate_window().has_focused_index());
+    EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
     EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
     EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("a", &session, &command));
-    EXPECT_FALSE(command.output().has_candidates());
+    EXPECT_FALSE(command.output().has_candidate_window());
     EXPECT_RESULT("NFL", command);
     EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
     EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
@@ -4221,16 +4221,16 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     EXPECT_TRUE(session.PredictAndConvert(&command));
-    ASSERT_TRUE(command.output().has_candidates());
-    EXPECT_TRUE(command.output().candidates().has_focused_index());
-    EXPECT_EQ(command.output().candidates().focused_index(), 0);
+    ASSERT_TRUE(command.output().has_candidate_window());
+    EXPECT_TRUE(command.output().candidate_window().has_focused_index());
+    EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
     EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
     EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("a", &session, &command));
-    EXPECT_FALSE(command.output().has_candidates());
+    EXPECT_FALSE(command.output().has_candidate_window());
     EXPECT_RESULT("NFL", command);
 
     EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
@@ -4258,16 +4258,16 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     EXPECT_TRUE(session.ConvertToHalfASCII(&command));
-    EXPECT_FALSE(command.output().has_candidates());
-    EXPECT_FALSE(command.output().candidates().has_focused_index());
-    EXPECT_EQ(command.output().candidates().focused_index(), 0);
+    EXPECT_FALSE(command.output().has_candidate_window());
+    EXPECT_FALSE(command.output().candidate_window().has_focused_index());
+    EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
     EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
     EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("a", &session, &command));
-    EXPECT_FALSE(command.output().has_candidates());
+    EXPECT_FALSE(command.output().has_candidate_window());
     EXPECT_RESULT("NFL", command);
     EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
     EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
@@ -4417,70 +4417,70 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_CALL(converter, StartSuggestion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("O", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // moz|
   EXPECT_CALL(converter, StartSuggestion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_moz), Return(true)));
   SendKey("Z", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 1);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOZUKU");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 1);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOZUKU");
 
   // mo|
   EXPECT_CALL(converter, StartSuggestion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("Backspace", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // m|o
   EXPECT_CALL(converter, StartSuggestion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorLeft(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // mo|
   EXPECT_CALL(converter, StartSuggestion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorToEnd(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // |mo
   EXPECT_CALL(converter, StartSuggestion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorToBeginning(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // m|o
   EXPECT_CALL(converter, StartSuggestion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorRight(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // m|
   EXPECT_CALL(converter, StartSuggestion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_m), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.Delete(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   Segments segments_m_conv;
   {
@@ -4501,9 +4501,9 @@ TEST_F(SessionTest, Suggest) {
       .WillOnce(DoAll(SetArgPointee<1>(segments_m), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.ConvertCancel(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 }
 
 TEST_F(SessionTest, CommitCandidateTypingCorrection) {
@@ -4534,11 +4534,11 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments_jueri), Return(true)));
   InsertCharacterChars("jueri", &session, &command);
 
-  ASSERT_TRUE(command.output().has_candidates());
+  ASSERT_TRUE(command.output().has_candidate_window());
   EXPECT_EQ(command.output().preedit().segment_size(), 1);
   EXPECT_EQ(command.output().preedit().segment(0).key(), kJueri);
-  EXPECT_EQ(command.output().candidates().candidate_size(), 1);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "クエリ");
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 1);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "クエリ");
 
   // commit partial prediction
   EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
@@ -4618,9 +4618,9 @@ TEST_F(SessionTest, MobilePartialPrediction) {
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(segments_watashino), Return(true)));
   InsertCharacterChars("watashino", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "私の");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "私の");
 
   // partial suggestion for "わた|しの"
   EXPECT_CALL(converter, StartPartialPrediction(_, _))
@@ -4630,9 +4630,9 @@ TEST_F(SessionTest, MobilePartialPrediction) {
   command.Clear();
   EXPECT_TRUE(session.MoveCursorLeft(&command));
   // partial suggestion candidates
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "綿");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "綿");
 
   // commit partial prediction
   EXPECT_CALL(converter, CommitPartialSuggestionSegmentValue(_, _, _, _, _))
@@ -4650,8 +4650,8 @@ TEST_F(SessionTest, MobilePartialPrediction) {
   EXPECT_SINGLE_SEGMENT("しの", command);
 
   // Suggestion for new text fills the candidates.
-  EXPECT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "四ノ宮");
+  EXPECT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "四ノ宮");
 }
 
 TEST_F(SessionTest, ToggleAlphanumericMode) {
@@ -5763,7 +5763,7 @@ TEST_F(SessionTest, Issue1951385) {
 
   command.Clear();
   session.ConvertToFullASCII(&command);
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   // The status should remain the preedit status, although the
   // previous command was convert.  The next command makes sure that
@@ -5836,9 +5836,9 @@ TEST_F(SessionTest, Issue1975771) {
   // SessionStatus::CONVERSION.
 
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
   // The second candidate should be selected.
-  EXPECT_EQ(command.output().candidates().focused_index(), 1);
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 1);
 }
 
 TEST_F(SessionTest, Issue2029466) {
@@ -5875,7 +5875,7 @@ TEST_F(SessionTest, Issue2029466) {
 
   InsertCharacterChars("a", &session, &command);
   EXPECT_SINGLE_SEGMENT("あ", command);
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 }
 
 TEST_F(SessionTest, Issue2034943) {
@@ -5943,8 +5943,8 @@ TEST_F(SessionTest, Issue2026354) {
   //  EXPECT_TRUE(session.ConvertNext(&command));
   TestSendKey("Space", &session, &command);
   EXPECT_PREEDIT("あいうえお", command);
-  command.mutable_output()->clear_candidates();
-  EXPECT_FALSE(command.output().has_candidates());
+  command.mutable_output()->clear_candidate_window();
+  EXPECT_FALSE(command.output().has_candidate_window());
 }
 
 TEST_F(SessionTest, Issue2066906) {
@@ -6798,42 +6798,42 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   command.Clear();
   session.Convert(&command);
   session.ConvertNext(&command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
   EXPECT_TRUE(session.InputModeHiragana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HIRAGANA);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
   EXPECT_TRUE(session.InputModeFullKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::FULL_KATAKANA);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
   EXPECT_TRUE(session.InputModeHalfKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_KATAKANA);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
   EXPECT_TRUE(session.InputModeFullASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::FULL_ASCII);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_TRUE(command.output().has_preedit());
 }
 
@@ -7822,9 +7822,9 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   EXPECT_CALL(converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("O", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments_mo), Return(true)));
@@ -7837,7 +7837,7 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   EXPECT_RESULT_AND_KEY("MOZUKU", "MOZUKU", command);
   EXPECT_FALSE(command.output().has_preedit());
   // Zero query suggestion fills the candidates.
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_EQ(command.output().preedit().cursor(), 0);
 }
 
@@ -7893,13 +7893,14 @@ TEST_F(SessionTest, CommitCandidateT13N) {
 
   commands::Command command;
   SendKey("k", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
+  ASSERT_TRUE(command.output().has_candidate_window());
   int id = 0;
 #if defined(_WIN32) || defined(__APPLE__)
   // meta candidates are in cascading window
-  EXPECT_FALSE(FindCandidateID(command.output().candidates(), "TOK", &id));
+  EXPECT_FALSE(
+      FindCandidateID(command.output().candidate_window(), "TOK", &id));
 #else   // _WIN32, __APPLE__
-  EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
+  EXPECT_TRUE(FindCandidateID(command.output().candidate_window(), "TOK", &id));
   EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
   EXPECT_CALL(converter, FinishConversion(_, _))
@@ -7946,7 +7947,7 @@ TEST_F(SessionTest, ConvertReverseFails) {
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 }
 
 TEST_F(SessionTest, ConvertReverse) {
@@ -7966,8 +7967,8 @@ TEST_F(SessionTest, ConvertReverse) {
   EXPECT_EQ(command.output().preedit().segment(0).value(), kKanjiAiueo);
   EXPECT_EQ(command.output().all_candidate_words().candidates(0).value(),
             kKanjiAiueo);
-  EXPECT_TRUE(command.output().has_candidates());
-  EXPECT_GT(command.output().candidates().candidate_size(), 0);
+  EXPECT_TRUE(command.output().has_candidate_window());
+  EXPECT_GT(command.output().candidate_window().candidate_size(), 0);
 }
 
 TEST_F(SessionTest, EscapeFromConvertReverse) {
@@ -8156,8 +8157,8 @@ TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
   EXPECT_EQ(command.output().preedit().segment(0).value(), "あいうえお");
   EXPECT_EQ(command.output().all_candidate_words().candidates(0).value(),
             "あいうえお");
-  EXPECT_TRUE(command.output().has_candidates());
-  EXPECT_GT(command.output().candidates().candidate_size(), 0);
+  EXPECT_TRUE(command.output().has_candidate_window());
+  EXPECT_GT(command.output().candidate_window().candidate_size(), 0);
 
   SendKey("ESC", &session, &command);
   SendKey("a", &session, &command);
@@ -8229,7 +8230,7 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
   session.Commit(&command);
   EXPECT_EQ(command.output().result().value(), "google");
   EXPECT_EQ(GetComposition(command), "");
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   const ImeContext &context = session.context();
   EXPECT_EQ(context.state(), ImeContext::PRECOMPOSITION);
@@ -8248,10 +8249,12 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     session.Commit(&command);
     EXPECT_EQ(command.output().result().value(), "GOOGLE");
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-    EXPECT_EQ(command.output().candidates().candidate(0).value(), "search");
-    EXPECT_EQ(command.output().candidates().candidate(1).value(), "input");
+    EXPECT_TRUE(command.output().has_candidate_window());
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidate_window().candidate(0).value(),
+              "search");
+    EXPECT_EQ(command.output().candidate_window().candidate(1).value(),
+              "input");
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
     Mock::VerifyAndClearExpectations(&converter);
   }
@@ -8265,10 +8268,12 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     session.CommitSegment(&command);
     EXPECT_EQ(command.output().result().value(), "GOOGLE");
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-    EXPECT_EQ(command.output().candidates().candidate(0).value(), "search");
-    EXPECT_EQ(command.output().candidates().candidate(1).value(), "input");
+    EXPECT_TRUE(command.output().has_candidate_window());
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidate_window().candidate(0).value(),
+              "search");
+    EXPECT_EQ(command.output().candidate_window().candidate(1).value(),
+              "input");
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
     Mock::VerifyAndClearExpectations(&converter);
   }
@@ -8285,10 +8290,12 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
 
     EXPECT_EQ(command.output().result().value(), "GOOGLE");
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-    EXPECT_EQ(command.output().candidates().candidate(0).value(), "search");
-    EXPECT_EQ(command.output().candidates().candidate(1).value(), "input");
+    EXPECT_TRUE(command.output().has_candidate_window());
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidate_window().candidate(0).value(),
+              "search");
+    EXPECT_EQ(command.output().candidate_window().candidate(1).value(),
+              "input");
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
     Mock::VerifyAndClearExpectations(&converter);
   }
@@ -8336,10 +8343,12 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     session.CommitFirstSuggestion(&command);
     EXPECT_EQ(command.output().result().value(), "google");
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-    EXPECT_EQ(command.output().candidates().candidate(0).value(), "search");
-    EXPECT_EQ(command.output().candidates().candidate(1).value(), "input");
+    EXPECT_TRUE(command.output().has_candidate_window());
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidate_window().candidate(0).value(),
+              "search");
+    EXPECT_EQ(command.output().candidate_window().candidate(1).value(),
+              "input");
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   }
 }
@@ -8462,7 +8471,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
 
     // Send SELECT_CANDIDATE command.
-    const int first_id = command.output().candidates().candidate(0).id();
+    const int first_id = command.output().candidate_window().candidate(0).id();
     SetSendCommandCommand(commands::SessionCommand::SELECT_CANDIDATE, &command);
     command.mutable_input()->mutable_command()->set_id(first_id);
     EXPECT_TRUE(session.SendCommand(&command));
@@ -8855,17 +8864,17 @@ TEST_F(SessionTest, DedupAfterUndo) {
     EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
     EXPECT_EQ(GetComposition(command), "！");
 
-    ASSERT_TRUE(command.output().has_candidates());
+    ASSERT_TRUE(command.output().has_candidate_window());
 
     std::vector<int> ids;
-    FindCandidateIDs(command.output().candidates(), "！", &ids);
+    FindCandidateIDs(command.output().candidate_window(), "！", &ids);
     EXPECT_GE(1, ids.size());
 
-    FindCandidateIDs(command.output().candidates(), "!", &ids);
+    FindCandidateIDs(command.output().candidate_window(), "!", &ids);
     EXPECT_GE(1, ids.size());
 
     const int candidate_size_before_undo =
-        command.output().candidates().candidate_size();
+        command.output().candidate_window().candidate_size();
 
     command.Clear();
     session.CommitFirstSuggestion(&command);
@@ -8876,16 +8885,16 @@ TEST_F(SessionTest, DedupAfterUndo) {
     session.Undo(&command);
     EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
     EXPECT_TRUE(command.output().has_deletion_range());
-    ASSERT_TRUE(command.output().has_candidates());
+    ASSERT_TRUE(command.output().has_candidate_window());
 
-    FindCandidateIDs(command.output().candidates(), "！", &ids);
+    FindCandidateIDs(command.output().candidate_window(), "！", &ids);
     EXPECT_GE(1, ids.size());
 
-    FindCandidateIDs(command.output().candidates(), "!", &ids);
+    FindCandidateIDs(command.output().candidate_window(), "!", &ids);
     EXPECT_GE(1, ids.size());
 
     EXPECT_EQ(candidate_size_before_undo,
-              command.output().candidates().candidate_size());
+              command.output().candidate_window().candidate_size());
   }
 }
 
@@ -9019,8 +9028,8 @@ TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
   EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
   EXPECT_EQ(command.output().result().value(), "GOOGLE");
   EXPECT_EQ(command.output().result().cursor_offset(), 0);
-  EXPECT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_TRUE(command.output().has_candidate_window());
+  EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
 }
 
 TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
@@ -9052,7 +9061,7 @@ TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
   EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
   EXPECT_EQ(command.output().result().value(), "GOOGLE");
   EXPECT_EQ(command.output().result().cursor_offset(), -6);
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 }
 
 TEST_F(SessionTest, CommitHead) {
@@ -9288,14 +9297,15 @@ TEST_F(SessionTest, EditCancel) {
     EXPECT_CALL(converter, StartSuggestion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     SendKey("O", &session, &command);
-    ASSERT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-    EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+    ASSERT_TRUE(command.output().has_candidate_window());
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidate_window().candidate(0).value(),
+              "MOCHA");
 
     command.Clear();
     session.EditCancel(&command);
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
   }
 
@@ -9312,14 +9322,15 @@ TEST_F(SessionTest, EditCancel) {
     EXPECT_CALL(converter, StartSuggestion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     session.ConvertCancel(&command);
-    ASSERT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-    EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+    ASSERT_TRUE(command.output().has_candidate_window());
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidate_window().candidate(0).value(),
+              "MOCHA");
 
     command.Clear();
     session.EditCancel(&command);
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     // test case against b/5566728
     EXPECT_RESULT("[MO]", command);
   }
@@ -9377,7 +9388,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9399,7 +9410,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9418,9 +9429,10 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     EXPECT_CALL(converter, StartSuggestion(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     SendKey("O", &session, &command);
-    ASSERT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-    EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+    ASSERT_TRUE(command.output().has_candidate_window());
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidate_window().candidate(0).value(),
+              "MOCHA");
 
     EXPECT_TRUE(TestSendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
@@ -9428,7 +9440,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9448,7 +9460,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9473,9 +9485,10 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     EXPECT_CALL(converter, StartSuggestion(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     session.ConvertCancel(&command);
-    ASSERT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
-    EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
+    ASSERT_TRUE(command.output().has_candidate_window());
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidate_window().candidate(0).value(),
+              "MOCHA");
 
     EXPECT_TRUE(TestSendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
@@ -9483,7 +9496,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     EXPECT_RESULT("[MO]", command);
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9657,7 +9670,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     EXPECT_FALSE(command.output().consumed())
         << "Congrats! b/5955618 seems to be fixed";
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     // Current behavior seems to be a bug.
     // This command should deactivate the IME.
@@ -9686,7 +9699,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     EXPECT_FALSE(command.output().consumed())
         << "Congrats! b/5955618 seems to be fixed";
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     // Following behavior seems to be a bug.
     // This command should deactivate the IME.
@@ -9714,7 +9727,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     EXPECT_FALSE(command.output().consumed())
         << "Congrats! b/5955618 seems to be fixed";
     EXPECT_EQ(GetComposition(command), "");
-    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
+    EXPECT_EQ(command.output().candidate_window().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     // Following behavior seems to be a bug.
     // This command should deactivate the IME.
@@ -9777,10 +9790,10 @@ TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
 
   commands::Command command;
   SendKey("M", &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 
   SendKey("Ctrl", &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 }
 
 TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
@@ -9828,21 +9841,21 @@ TEST_F(SessionTest, SuppressSuggestion) {
 
   commands::Command command;
   SendKey("a", &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 
   command.Clear();
   session.EditCancel(&command);
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   // Default behavior.
   SendKey("d", &session, &command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 
   // Suppress suggestion context
   SetSendKeyCommand("e", &command);
   command.mutable_input()->mutable_context()->set_suppress_suggestion(true);
   session.SendKey(&command);
-  EXPECT_FALSE(command.output().has_candidates());
+  EXPECT_FALSE(command.output().has_candidate_window());
 
   // With an invalid identifier.  It should be the same with the
   // default behavior.
@@ -9850,7 +9863,7 @@ TEST_F(SessionTest, SuppressSuggestion) {
   command.mutable_input()->mutable_context()->add_experimental_features(
       "invalid_identifier");
   session.SendKey(&command);
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
 
 }
 
@@ -9879,7 +9892,7 @@ TEST_F(SessionTest, DeleteHistory) {
   // Start prediction. Preedit = "DeleteHistory".
   command.Clear();
   EXPECT_TRUE(session.PredictAndConvert(&command));
-  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_candidate_window());
   EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
   EXPECT_PREEDIT("DeleteHistory", command);
 

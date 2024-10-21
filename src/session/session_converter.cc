@@ -1170,7 +1170,7 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
   // Candidate list
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION) &&
       candidate_list_visible_) {
-    FillCandidates(output->mutable_candidates());
+    FillCandidates(output->mutable_candidate_window());
   }
 
   // All candidate words

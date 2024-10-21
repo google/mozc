@@ -147,18 +147,20 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
     return true;
   }
 
-  candidate_window_->SetCandidateWindow(command_.output().candidates());
+  candidate_window_->SetCandidateWindow(command_.output().candidate_window());
 
   bool cascading_visible = false;
-  if (command_.output().has_candidates() && command_.output().candidates().has_subcandidates()) {
-    cascading_window_->SetCandidateWindow(command_.output().candidates().subcandidates());
+  if (command_.output().has_candidate_window() &&
+      command_.output().candidate_window().has_subcandidates()) {
+    cascading_window_->SetCandidateWindow(command_.output().candidate_window().subcandidates());
     cascading_visible = true;
   }
 
   bool infolist_visible = false;
-  if (command_.output().has_candidates() && command_.output().candidates().has_usages() &&
-      command_.output().candidates().usages().information_size() > 0) {
-    infolist_window_->SetCandidateWindow(command_.output().candidates());
+  if (command_.output().has_candidate_window() &&
+      command_.output().candidate_window().has_usages() &&
+      command_.output().candidate_window().usages().information_size() > 0) {
+    infolist_window_->SetCandidateWindow(command_.output().candidate_window());
     infolist_visible = true;
   }
 
@@ -171,7 +173,7 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
   }
 
   if (infolist_visible && !cascading_visible) {
-    const commands::CandidateWindow &candidate_window = command_.output().candidates();
+    const commands::CandidateWindow &candidate_window = command_.output().candidate_window();
     if (candidate_window.has_focused_index() && candidate_window.candidate_size() > 0) {
       const int focused_row =
           candidate_window.focused_index() - candidate_window.candidate(0).index();
@@ -247,15 +249,15 @@ void CandidateController::AlignWindows() {
 
   // If there is no need to show cascading window, we just finish the
   // function here.
-  if (!command_.output().has_candidates() ||
-      !(command_.output().candidates().candidate_size() > 0) ||
-      !command_.output().candidates().has_subcandidates()) {
+  if (!command_.output().has_candidate_window() ||
+      !(command_.output().candidate_window().candidate_size() > 0) ||
+      !command_.output().candidate_window().has_subcandidates()) {
     return;
   }
 
   // Fix cascading window position
   // 1. starting position is at the focused row
-  const commands::CandidateWindow &candidate_window = command_.output().candidates();
+  const commands::CandidateWindow &candidate_window = command_.output().candidate_window();
   const int focused_row = candidate_window.focused_index() - candidate_window.candidate(0).index();
   mozc::Rect focused_rect = candidate_layout->GetRowRect(focused_row);
   // move the focused_rect to the monitor's coordinates

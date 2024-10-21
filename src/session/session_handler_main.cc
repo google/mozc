@@ -86,7 +86,7 @@ void Show(const commands::Output &output) {
     std::cout << segment.value() << " ";
   }
   std::cout << "(" << output.preedit().cursor() << ")" << std::endl;
-  for (const auto &candidate : output.candidates().candidate()) {
+  for (const auto &candidate : output.candidate_window().candidate()) {
     std::cout << candidate.id() << ": " << candidate.value() << std::endl;
   }
 }
@@ -134,7 +134,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   }
   if (command == "SHOW_CANDIDATES") {
     std::cout << absl::StrCat(
-                     handler.LastOutput().candidates().Utf8DebugString())
+                     handler.LastOutput().candidate_window().Utf8DebugString())
               << std::endl;
     return;
   }

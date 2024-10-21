@@ -159,7 +159,7 @@ int Loop(std::istream *input) {
 
       if (renderer_client != nullptr) {
         renderer_command.set_type(commands::RendererCommand::UPDATE);
-        renderer_command.set_visible(output.has_candidates());
+        renderer_command.set_visible(output.has_candidate_window());
         *renderer_command.mutable_output() = output;
         MOZC_VLOG(2) << "Sending to Renderer: " << renderer_command;
         renderer_client->ExecCommand(renderer_command);

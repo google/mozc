@@ -378,13 +378,13 @@ void ErrorExit(absl::string_view error, absl::string_view message) {
 }
 
 bool RemoveUsageData(commands::Output *output) {
-  if (!output->has_candidates()) {
+  if (!output->has_candidate_window()) {
     return false;
   }
-  if (!output->candidates().has_usages()) {
+  if (!output->candidate_window().has_usages()) {
     return false;
   }
-  output->mutable_candidates()->mutable_usages()->Clear();
+  output->mutable_candidate_window()->mutable_usages()->Clear();
   return true;
 }
 

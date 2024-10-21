@@ -114,8 +114,9 @@ HRESULT TipUiElementManager::OnUpdate(TipTextService *text_service,
   const Output &output = private_context->last_output();
 
   uint32_t existence_bits = kNoneWindow;
-  if (output.has_candidates() && output.candidates().has_category()) {
-    switch (output.candidates().category()) {
+  if (output.has_candidate_window() &&
+      output.candidate_window().has_category()) {
+    switch (output.candidate_window().category()) {
       case commands::SUGGESTION:
         existence_bits |= kSuggestWindow;
         break;

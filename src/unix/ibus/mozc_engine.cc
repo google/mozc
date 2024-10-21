@@ -490,15 +490,16 @@ bool MozcEngine::UpdateResult(IbusEngineWrapper *engine,
 }
 
 bool MozcEngine::UpdateCandidateIDMapping(const commands::Output &output) {
-  if (!output.has_candidates() || output.candidates().candidate_size() == 0) {
+  if (!output.has_candidate_window() ||
+      output.candidate_window().candidate_size() == 0) {
     return true;
   }
 
   unique_candidate_ids_.clear();
-  const commands::CandidateWindow &candidates = output.candidates();
-  for (int i = 0; i < candidates.candidate_size(); ++i) {
-    if (candidates.candidate(i).has_id()) {
-      const int32_t id = candidates.candidate(i).id();
+  const commands::CandidateWindow &candidate_window = output.candidate_window();
+  for (int i = 0; i < candidate_window.candidate_size(); ++i) {
+    if (candidate_window.candidate(i).has_id()) {
+      const int32_t id = candidate_window.candidate(i).id();
       unique_candidate_ids_.push_back(id);
     } else {
       // The parent node of the cascading window does not have an id since the
@@ -544,7 +545,7 @@ bool MozcEngine::LaunchTool(const commands::Output &output) const {
 
 void MozcEngine::RevertSession(IbusEngineWrapper *engine) {
   // TODO(team): We should skip following actions when there is no on-going
-  // omposition.
+  // composition.
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::REVERT);
   commands::Output output;

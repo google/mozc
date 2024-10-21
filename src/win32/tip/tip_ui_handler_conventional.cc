@@ -69,10 +69,11 @@ using RendererCommand = ::mozc::commands::RendererCommand;
 using ApplicationInfo = ::mozc::commands::RendererCommand::ApplicationInfo;
 
 size_t GetTargetPos(const commands::Output &output) {
-  if (!output.has_candidates() || !output.candidates().has_category()) {
+  if (!output.has_candidate_window() ||
+      !output.candidate_window().has_category()) {
     return 0;
   }
-  switch (output.candidates().category()) {
+  switch (output.candidate_window().category()) {
     case commands::PREDICTION:
     case commands::SUGGESTION:
       return 0;
@@ -116,8 +117,9 @@ bool FillVisibility(ITfUIElementMgr *ui_element_manager,
   bool candidate_window_visible = false;
 
   // Check if suggest window and candidate window are actually visible.
-  if (output.has_candidates() && output.candidates().has_category()) {
-    switch (output.candidates().category()) {
+  if (output.has_candidate_window() &&
+      output.candidate_window().has_category()) {
+    switch (output.candidate_window().category()) {
       case commands::SUGGESTION:
         suggest_window_visible = show_suggest_window;
         break;

@@ -48,12 +48,12 @@ namespace {
 constexpr size_t kPageSize = 9;
 
 // Returns a text for the candidate footer.
-std::string GetFooterText(const commands::CandidateWindow &candidates) {
-  if (!candidates.has_footer()) {
+std::string GetFooterText(const commands::CandidateWindow &candidate_window) {
+  if (!candidate_window.has_footer()) {
     return "";
   }
 
-  const commands::Footer &footer = candidates.footer();
+  const commands::Footer &footer = candidate_window.footer();
   std::string text;
   if (footer.has_label()) {
     // TODO(yusukes,mozc-team): label() is not localized. Currently, it's always
@@ -66,10 +66,10 @@ std::string GetFooterText(const commands::CandidateWindow &candidates) {
   }
 
   if (footer.has_index_visible() && footer.index_visible() &&
-      candidates.has_focused_index()) {
+      candidate_window.has_focused_index()) {
     text += (text.empty() ? "" : " ") +
-            absl::StrFormat("%d/%d", candidates.focused_index() + 1,
-                            candidates.size());
+            absl::StrFormat("%d/%d", candidate_window.focused_index() + 1,
+                            candidate_window.size());
   }
   return text;
 }
@@ -99,38 +99,40 @@ void IBusCandidateWindowHandler::Show(IbusEngineWrapper *engine) {
 // TODO(hsumita): Writes test for this method.
 bool IBusCandidateWindowHandler::UpdateCandidateWindow(
     IbusEngineWrapper *engine, const commands::Output &output) {
-  if (!output.has_candidates() || output.candidates().candidate_size() == 0) {
+  if (!output.has_candidate_window() ||
+      output.candidate_window().candidate_size() == 0) {
     engine->HideLookupTable();
     return true;
   }
 
-  const commands::CandidateWindow &candidates = output.candidates();
-  const bool cursor_visible = candidates.has_focused_index();
+  const commands::CandidateWindow &candidate_window = output.candidate_window();
+  const bool cursor_visible = candidate_window.has_focused_index();
   int cursor_pos = 0;
-  if (candidates.has_focused_index()) {
-    for (int i = 0; i < candidates.candidate_size(); ++i) {
-      if (candidates.focused_index() == candidates.candidate(i).index()) {
+  if (candidate_window.has_focused_index()) {
+    for (int i = 0; i < candidate_window.candidate_size(); ++i) {
+      if (candidate_window.focused_index() ==
+          candidate_window.candidate(i).index()) {
         cursor_pos = i;
       }
     }
   }
 
   size_t page_size = kPageSize;
-  if (candidates.has_category() &&
-      candidates.category() == commands::SUGGESTION &&
-      page_size > candidates.candidate_size()) {
-    page_size = candidates.candidate_size();
+  if (candidate_window.has_category() &&
+      candidate_window.category() == commands::SUGGESTION &&
+      page_size > candidate_window.candidate_size()) {
+    page_size = candidate_window.candidate_size();
   }
   IbusLookupTableWrapper table(page_size, cursor_pos, cursor_visible);
-  if (candidates.direction() == commands::CandidateWindow::VERTICAL) {
+  if (candidate_window.direction() == commands::CandidateWindow::VERTICAL) {
     table.SetOrientation(IBUS_ORIENTATION_VERTICAL);
   } else {
     table.SetOrientation(IBUS_ORIENTATION_HORIZONTAL);
   }
 
-  for (int i = 0; i < candidates.candidate_size(); ++i) {
+  for (int i = 0; i < candidate_window.candidate_size(); ++i) {
     const commands::CandidateWindow::Candidate &candidate =
-        candidates.candidate(i);
+        candidate_window.candidate(i);
     table.AppendCandidate(candidate.value());
 
     const bool has_label =
@@ -148,12 +150,12 @@ bool IBusCandidateWindowHandler::UpdateCandidateWindow(
 // TODO(hsumita): Writes test for this method.
 bool IBusCandidateWindowHandler::UpdateAuxiliaryText(
     IbusEngineWrapper *engine, const commands::Output &output) {
-  if (!output.has_candidates()) {
+  if (!output.has_candidate_window()) {
     engine->HideAuxiliaryText();
     return true;
   }
 
-  const std::string footer_text = GetFooterText(output.candidates());
+  const std::string footer_text = GetFooterText(output.candidate_window());
   if (footer_text.empty()) {
     engine->HideAuxiliaryText();
   } else {

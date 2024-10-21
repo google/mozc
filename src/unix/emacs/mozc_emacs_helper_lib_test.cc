@@ -280,18 +280,19 @@ TEST_F(MozcEmacsHelperLibTest, RemoveUsageDataTest) {
   {
     SCOPED_TRACE("If there are no usage data, do nothing.");
     commands::Output output;
-    output.mutable_candidates();
+    output.mutable_candidate_window();
     EXPECT_FALSE(RemoveUsageData(&output));
-    EXPECT_TRUE(output.has_candidates());
+    EXPECT_TRUE(output.has_candidate_window());
   }
   {
     SCOPED_TRACE("Removes usage data from output");
     commands::Output output;
-    commands::CandidateWindow *candidate_window = output.mutable_candidates();
+    commands::CandidateWindow *candidate_window =
+        output.mutable_candidate_window();
     candidate_window->mutable_usages();
     EXPECT_TRUE(RemoveUsageData(&output));
-    EXPECT_TRUE(output.has_candidates());
-    EXPECT_TRUE(output.candidates().has_usages());
+    EXPECT_TRUE(output.has_candidate_window());
+    EXPECT_TRUE(output.candidate_window().has_usages());
   }
 }
 

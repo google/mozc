@@ -186,7 +186,7 @@ TEST_F(SessionRegressionTest, ConvertToTransliterationWithMultipleSegments) {
     const commands::Output &output = command.output();
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
-    EXPECT_FALSE(output.has_candidates());
+    EXPECT_FALSE(output.has_candidate_window());
 
     const commands::Preedit &conversion = output.preedit();
     ASSERT_LE(2, conversion.segment_size());
@@ -200,7 +200,7 @@ TEST_F(SessionRegressionTest, ConvertToTransliterationWithMultipleSegments) {
     const commands::Output &output = command.output();
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
-    EXPECT_FALSE(output.has_candidates());
+    EXPECT_FALSE(output.has_candidate_window());
 
     const commands::Preedit &conversion = output.preedit();
     ASSERT_EQ(conversion.segment_size(), 2);
@@ -219,7 +219,7 @@ TEST_F(SessionRegressionTest,
     EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
 
     EXPECT_TRUE(SendKey("F10", &command));
-    ASSERT_FALSE(command.output().has_candidates());
+    ASSERT_FALSE(command.output().has_candidate_window());
     EXPECT_FALSE(command.output().has_result());
 
     EXPECT_TRUE(SendKey("a", &command));
@@ -564,7 +564,7 @@ TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
   // 1. Type "aiu" and check 2nd candidate, which is our deleteation target.
   InsertCharacterChars("aiu", &command);
   const std::string target_word =
-      command.output().candidates().candidate(1).value();
+      command.output().candidate_window().candidate(1).value();
 
   // 2. Submit the 2nd candidate to be deleted from history.
   SendCommandWithId(commands::SessionCommand::SUBMIT_CANDIDATE, target_id,
@@ -573,12 +573,12 @@ TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
 
   InsertCharacterChars("aiu", &command);
   {
-    auto candidate = command.output().candidates().candidate(0);
+    auto candidate = command.output().candidate_window().candidate(0);
     EXPECT_EQ(candidate.id(), target_id);
     EXPECT_EQ(candidate.value(), target_word);
   }
   {
-    auto candidate = command.output().candidates().candidate(1);
+    auto candidate = command.output().candidate_window().candidate(1);
     EXPECT_NE(candidate.id(), target_id);
     EXPECT_NE(candidate.value(), target_word);
   }
@@ -589,15 +589,15 @@ TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
   target_id =
       1;  // ID of the deletion target is reverted after history deletion.
 
-  EXPECT_TRUE(command.output().has_candidates());
-  EXPECT_GT(command.output().candidates().candidate_size(), 0);
+  EXPECT_TRUE(command.output().has_candidate_window());
+  EXPECT_GT(command.output().candidate_window().candidate_size(), 0);
   {
-    auto candidate = command.output().candidates().candidate(0);
+    auto candidate = command.output().candidate_window().candidate(0);
     EXPECT_NE(candidate.id(), target_id);
     EXPECT_NE(candidate.value(), target_word);
   }
   {
-    auto candidate = command.output().candidates().candidate(1);
+    auto candidate = command.output().candidate_window().candidate(1);
     EXPECT_EQ(candidate.id(), target_id);
     EXPECT_EQ(candidate.value(), target_word);
   }

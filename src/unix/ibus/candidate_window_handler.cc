@@ -165,8 +165,8 @@ void CandidateWindowHandler::Update(IbusEngineWrapper *engine,
 
 void CandidateWindowHandler::UpdateCursorRect(IbusEngineWrapper *engine) {
   const bool has_candidates =
-      last_update_output_->has_candidates() &&
-      last_update_output_->candidates().candidate_size() > 0;
+      last_update_output_->has_candidate_window() &&
+      last_update_output_->candidate_window().candidate_size() > 0;
   SendUpdateCommand(engine, *last_update_output_, has_candidates);
 }
 

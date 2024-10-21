@@ -57,7 +57,7 @@
 
 // TODO(taku)
 // 1. multi-thread testing
-// 2. change/config the senario
+// 2. change/config the scenario
 
 ABSL_FLAG(int32_t, max_keyevents, 100000,
           "test at most |max_keyevents| key sequences");
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 
       if (renderer_client != nullptr) {
         renderer_command.set_type(mozc::commands::RendererCommand::UPDATE);
-        renderer_command.set_visible(output.has_candidates());
+        renderer_command.set_visible(output.has_candidate_window());
         *renderer_command.mutable_output() = output;
         MOZC_VLOG(2) << "Sending to Renderer: " << renderer_command;
         renderer_client->ExecCommand(renderer_command);

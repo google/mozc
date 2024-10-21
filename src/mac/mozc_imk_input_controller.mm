@@ -713,7 +713,7 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   }
 
   // If there is no candidate, the candidate window is closed.
-  if (rendererCommand_.output().candidates().candidate_size() == 0) {
+  if (rendererCommand_.output().candidate_window().candidate_size() == 0) {
     rendererCommand_.set_visible(false);
     mozcRenderer_->ExecCommand(rendererCommand_);
     return;
@@ -736,7 +736,7 @@ bool CanSurroundingText(absl::string_view bundle_id) {
   rendererCommand_.set_visible(true);
 
   NSRect preeditRect = NSZeroRect;
-  const int32_t position = rendererCommand_.output().candidates().position();
+  const int32_t position = rendererCommand_.output().candidate_window().position();
   // Some applications throws error when we call attributesForCharacterIndex.
   DLOG(INFO) << "attributesForCharacterIndex: " << position;
   @try {

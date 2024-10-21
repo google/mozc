@@ -793,13 +793,14 @@ absl::Status SessionHandlerInterpreter::Eval(
     uint32_t candidate_id = 0;
     const bool has_result = GetCandidateIdByValue(args[2], &candidate_id);
     MOZC_EXPECT_TRUE_MSG(
-        has_result, absl::StrCat(args[2], " is not found\n",
-                                 ToTextFormat(last_output_->candidates())));
+        has_result,
+        absl::StrCat(args[2], " is not found\n",
+                     ToTextFormat(last_output_->candidate_window())));
     if (has_result) {
       MOZC_EXPECT_EQ_MSG(
           candidate_id, NumberUtil::SimpleAtoi(args[1]),
           absl::StrCat(args[1], " is not found\n",
-                       ToTextFormat(last_output_->candidates())));
+                       ToTextFormat(last_output_->candidate_window())));
     }
   } else if (command == "EXPECT_CANDIDATE_DESCRIPTION") {
     MOZC_ASSERT_EQ(args.size(), 3);
@@ -807,7 +808,7 @@ absl::Status SessionHandlerInterpreter::Eval(
     const bool has_cand = !cand.value().empty();
     MOZC_EXPECT_TRUE_MSG(
         has_cand, absl::StrCat(args[1], " is not found\n",
-                               ToTextFormat(last_output_->candidates())));
+                               ToTextFormat(last_output_->candidate_window())));
     MOZC_EXPECT_TRUE(has_cand);
     MOZC_EXPECT_EQ_MSG(cand.annotation().description(), args[2],
                        ToTextFormat(cand));
@@ -836,15 +837,15 @@ absl::Status SessionHandlerInterpreter::Eval(
         absl::StrCat(args[1], " is found.\n", ToTextFormat(*last_output_)));
   } else if (command == "EXPECT_HAS_CANDIDATES") {
     if (args.size() == 2 && !args[1].empty()) {
-      MOZC_ASSERT_TRUE(last_output_->has_candidates());
-      MOZC_ASSERT_TRUE_MSG(
-          last_output_->candidates().size() > NumberUtil::SimpleAtoi(args[1]),
-          ToTextFormat(*last_output_));
+      MOZC_ASSERT_TRUE(last_output_->has_candidate_window());
+      MOZC_ASSERT_TRUE_MSG(last_output_->candidate_window().size() >
+                               NumberUtil::SimpleAtoi(args[1]),
+                           ToTextFormat(*last_output_));
     } else {
-      MOZC_ASSERT_TRUE(last_output_->has_candidates());
+      MOZC_ASSERT_TRUE(last_output_->has_candidate_window());
     }
   } else if (command == "EXPECT_NO_CANDIDATES") {
-    MOZC_ASSERT_TRUE(!last_output_->has_candidates());
+    MOZC_ASSERT_TRUE(!last_output_->has_candidate_window());
   } else if (command == "EXPECT_SEGMENTS_SIZE") {
     MOZC_ASSERT_EQ(args.size(), 2);
     MOZC_ASSERT_EQ(last_output_->preedit().segment_size(),

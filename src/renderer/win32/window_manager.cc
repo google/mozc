@@ -155,8 +155,9 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
 
   bool is_suggest = false;
   bool is_convert_or_predict = false;
-  if (output.has_candidates() && output.candidates().has_category()) {
-    switch (output.candidates().category()) {
+  if (output.has_candidate_window() &&
+      output.candidate_window().has_category()) {
+    switch (output.candidate_window().category()) {
       case commands::SUGGESTION:
         is_suggest = true;
         break;
@@ -178,7 +179,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
     indicator_window_->OnUpdate(command, layout_manager_.get());
   }
 
-  if (!output.has_candidates()) {
+  if (!output.has_candidate_window()) {
     // Hide candidate windows because there is no candidate to be displayed.
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
@@ -203,7 +204,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
     return;
   }
 
-  const commands::CandidateWindow &candidate_window = output.candidates();
+  const commands::CandidateWindow &candidate_window = output.candidate_window();
   if (candidate_window.candidate_size() == 0) {
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
@@ -291,9 +292,9 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
   }
 
   bool infolist_visible = false;
-  if (command.output().has_candidates() &&
-      command.output().candidates().has_usages() &&
-      command.output().candidates().usages().information_size() > 0) {
+  if (command.output().has_candidate_window() &&
+      command.output().candidate_window().has_usages() &&
+      command.output().candidate_window().usages().information_size() > 0) {
     infolist_visible = true;
   }
 
@@ -321,7 +322,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
           candidate_window.candidate(focused_row).has_information_id()) {
         const uint32_t delay =
             std::max(static_cast<uint32_t>(0),
-                     command.output().candidates().usages().delay());
+                     command.output().candidate_window().usages().delay());
         infolist_window_->DelayShow(delay);
       } else {
         infolist_window_->DelayHide(kHideWindowDelay);

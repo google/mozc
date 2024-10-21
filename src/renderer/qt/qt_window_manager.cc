@@ -80,10 +80,12 @@ void QtWindowManager::OnClicked(int row, int column) {
   if (send_command_interface_ == nullptr) {
     return;
   }
-  if (row < 0 || row >= prev_command_.output().candidates().candidate_size()) {
+  if (row < 0 ||
+      row >= prev_command_.output().candidate_window().candidate_size()) {
     return;
   }
-  const int cand_id = prev_command_.output().candidates().candidate(row).id();
+  const int cand_id =
+      prev_command_.output().candidate_window().candidate(row).id();
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::SELECT_CANDIDATE);
   command.set_id(cand_id);
@@ -141,11 +143,11 @@ bool QtWindowManager::ShouldShowCandidateWindow(
   DCHECK(command.has_output());
   const commands::Output &output = command.output();
 
-  if (!output.has_candidates()) {
+  if (!output.has_candidate_window()) {
     return false;
   }
 
-  const commands::CandidateWindow &candidate_window = output.candidates();
+  const commands::CandidateWindow &candidate_window = output.candidate_window();
   if (candidate_window.candidate_size() == 0) {
     return false;
   }
@@ -204,9 +206,9 @@ Rect GetRect(const commands::RendererCommand::Rectangle &prect) {
 bool IsUpdated(const commands::RendererCommand &prev_command,
                const commands::RendererCommand &new_command) {
   const commands::CandidateWindow &prev_cands =
-      prev_command.output().candidates();
+      prev_command.output().candidate_window();
   const commands::CandidateWindow &new_cands =
-      new_command.output().candidates();
+      new_command.output().candidate_window();
   if (prev_cands.candidate_size() != new_cands.candidate_size()) {
     return true;
   }
@@ -426,7 +428,7 @@ Point QtWindowManager::GetWindowPosition(
 Rect QtWindowManager::UpdateCandidateWindow(
     const commands::RendererCommand &command) {
   const commands::CandidateWindow &candidate_window =
-      command.output().candidates();
+      command.output().candidate_window();
 
   if (IsUpdated(prev_command_, command)) {
     FillCandidates(candidate_window, candidates_);
@@ -435,7 +437,8 @@ Rect QtWindowManager::UpdateCandidateWindow(
     candidates_->move(win_pos.x, win_pos.y);
   } else {
     // Reset the previous focused highlight
-    const int prev_focused = GetFocusedRow(prev_command_.output().candidates());
+    const int prev_focused =
+        GetFocusedRow(prev_command_.output().candidate_window());
     FillCandidateHighlight(candidate_window, prev_focused, candidates_);
   }
 
@@ -454,12 +457,12 @@ Rect QtWindowManager::UpdateCandidateWindow(
 
 bool QtWindowManager::ShouldShowInfolistWindow(
     const commands::RendererCommand &command) {
-  if (!command.output().has_candidates()) {
+  if (!command.output().has_candidate_window()) {
     return false;
   }
 
   const commands::CandidateWindow &candidate_window =
-      command.output().candidates();
+      command.output().candidate_window();
   if (candidate_window.candidate_size() <= 0) {
     return false;
   }
@@ -510,7 +513,7 @@ void QtWindowManager::UpdateInfolistWindow(
   infolist_->clear();
 
   const commands::InformationList &info =
-      command.output().candidates().usages();
+      command.output().candidate_window().usages();
   const size_t size = info.information_size();
 
   infolist_->setColumnCount(1);
