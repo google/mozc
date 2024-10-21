@@ -58,8 +58,8 @@ class IBusCandidateWindowHandler : public CandidateWindowHandlerInterface {
  private:
   bool UpdateAuxiliaryText(IbusEngineWrapper *engine,
                            const commands::Output &output);
-  bool UpdateCandidates(IbusEngineWrapper *engine,
-                        const commands::Output &output);
+  bool UpdateCandidateWindow(IbusEngineWrapper *engine,
+                             const commands::Output &output);
 };
 
 }  // namespace ibus

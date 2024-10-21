@@ -48,7 +48,7 @@ namespace {
 constexpr size_t kPageSize = 9;
 
 // Returns a text for the candidate footer.
-std::string GetFooterText(const commands::Candidates &candidates) {
+std::string GetFooterText(const commands::CandidateWindow &candidates) {
   if (!candidates.has_footer()) {
     return "";
   }
@@ -77,7 +77,7 @@ std::string GetFooterText(const commands::Candidates &candidates) {
 
 void IBusCandidateWindowHandler::Update(IbusEngineWrapper *engine,
                                         const commands::Output &output) {
-  UpdateCandidates(engine, output);
+  UpdateCandidateWindow(engine, output);
   UpdateAuxiliaryText(engine, output);
 }
 
@@ -97,14 +97,14 @@ void IBusCandidateWindowHandler::Show(IbusEngineWrapper *engine) {
 }
 
 // TODO(hsumita): Writes test for this method.
-bool IBusCandidateWindowHandler::UpdateCandidates(
+bool IBusCandidateWindowHandler::UpdateCandidateWindow(
     IbusEngineWrapper *engine, const commands::Output &output) {
   if (!output.has_candidates() || output.candidates().candidate_size() == 0) {
     engine->HideLookupTable();
     return true;
   }
 
-  const commands::Candidates &candidates = output.candidates();
+  const commands::CandidateWindow &candidates = output.candidates();
   const bool cursor_visible = candidates.has_focused_index();
   int cursor_pos = 0;
   if (candidates.has_focused_index()) {
@@ -122,14 +122,15 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
     page_size = candidates.candidate_size();
   }
   IbusLookupTableWrapper table(page_size, cursor_pos, cursor_visible);
-  if (candidates.direction() == commands::Candidates::VERTICAL) {
+  if (candidates.direction() == commands::CandidateWindow::VERTICAL) {
     table.SetOrientation(IBUS_ORIENTATION_VERTICAL);
   } else {
     table.SetOrientation(IBUS_ORIENTATION_HORIZONTAL);
   }
 
   for (int i = 0; i < candidates.candidate_size(); ++i) {
-    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
+    const commands::CandidateWindow::Candidate &candidate =
+        candidates.candidate(i);
     table.AppendCandidate(candidate.value());
 
     const bool has_label =

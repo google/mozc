@@ -40,7 +40,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
-using mozc::commands::Candidates;
+using mozc::commands::CandidateWindow;
 using mozc::commands::Command;
 using mozc::commands::Output;
 using mozc::commands::RendererCommand;
@@ -49,7 +49,7 @@ using mozc::renderer::RendererMock;
 using ::testing::AllOf;
 using ::testing::Property;
 using ::testing::Return;
-typedef mozc::commands::Candidates_Candidate Candidate;
+typedef mozc::commands::CandidateWindow_Candidate Candidate;
 typedef mozc::commands::RendererCommand_ApplicationInfo ApplicationInfo;
 
 namespace mozc {
@@ -250,7 +250,7 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
         "If there is at least one candidate, "
         "visibility expects true");
     Output output;
-    Candidates *candidates = output.mutable_candidates();
+    CandidateWindow *candidates = output.mutable_candidates();
     Candidate *candidate = candidates->add_candidate();
     candidate->set_index(sample_idx1);
     candidate->set_value(sample_candidate1);
@@ -264,8 +264,8 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
     SCOPED_TRACE("Update last updated output protobuf object.");
     Output output1;
     Output output2;
-    Candidates *candidates1 = output1.mutable_candidates();
-    Candidates *candidates2 = output2.mutable_candidates();
+    CandidateWindow *candidates1 = output1.mutable_candidates();
+    CandidateWindow *candidates2 = output2.mutable_candidates();
     Candidate *candidate1 = candidates1->add_candidate();
     Candidate *candidate2 = candidates2->add_candidate();
     candidate1->set_index(sample_idx1);

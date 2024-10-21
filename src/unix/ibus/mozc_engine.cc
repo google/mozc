@@ -495,7 +495,7 @@ bool MozcEngine::UpdateCandidateIDMapping(const commands::Output &output) {
   }
 
   unique_candidate_ids_.clear();
-  const commands::Candidates &candidates = output.candidates();
+  const commands::CandidateWindow &candidates = output.candidates();
   for (int i = 0; i < candidates.candidate_size(); ++i) {
     if (candidates.candidate(i).has_id()) {
       const int32_t id = candidates.candidate(i).id();
