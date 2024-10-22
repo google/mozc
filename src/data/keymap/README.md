@@ -21,6 +21,11 @@ Shortcut keys are configurable from the preferences dialog GUI.
 *   overlay_kenkan_muhenkan_to_ime_on_off.tsv
     +   Subset of keymap for special purpose.
 
+## Commands
+
+Commands are defined in
+[session/internal/keymap.cc](../../session/internal/keymap.cc)
+
 ## Input modes
 
 *   Direct
