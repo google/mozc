@@ -186,7 +186,7 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
   }
 
   // Candidates
-  if (!state->has_candidates() && output.has_candidate_window()) {
+  if (!state->has_candidate_window() && output.has_candidate_window()) {
     const commands::CandidateWindow &candidate_window =
         output.candidate_window();
     switch (candidate_window.category()) {
@@ -203,8 +203,8 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
         LOG(WARNING) << "candidate window has invalid category";
         break;
     }
-  } else if (state->has_candidates() &&
-             state->candidates().category() == commands::SUGGESTION) {
+  } else if (state->has_candidate_window() &&
+             state->candidate_window().category() == commands::SUGGESTION) {
     if (!output.has_candidate_window() ||
         output.candidate_window().category() != commands::SUGGESTION) {
       const uint32_t suggestion_duration =
@@ -228,8 +228,8 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
           break;
       }
     }
-  } else if (state->has_candidates() &&
-             state->candidates().category() == commands::PREDICTION) {
+  } else if (state->has_candidate_window() &&
+             state->candidate_window().category() == commands::PREDICTION) {
     if (!output.has_candidate_window() ||
         output.candidate_window().category() != commands::PREDICTION) {
       const uint64_t predict_duration =
@@ -238,8 +238,8 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
                                predict_duration);
     }
     // no transition
-  } else if (state->has_candidates() &&
-             state->candidates().category() == commands::CONVERSION) {
+  } else if (state->has_candidate_window() &&
+             state->candidate_window().category() == commands::CONVERSION) {
     if (!output.has_candidate_window() ||
         output.candidate_window().category() != commands::CONVERSION) {
       const uint32_t conversion_duration =
@@ -251,9 +251,9 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
   }
 
   // Cascading window
-  if ((!state->has_candidates() ||
-       (state->has_candidates() &&
-        !state->candidates().has_sub_candidate_window())) &&
+  if ((!state->has_candidate_window() ||
+       (state->has_candidate_window() &&
+        !state->candidate_window().has_sub_candidate_window())) &&
       output.has_candidate_window() &&
       output.candidate_window().has_sub_candidate_window()) {
     UsageStats::IncrementCount("ShowCascadingWindow");
@@ -268,9 +268,9 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
 
   // Update Candidates
   if (output.has_candidate_window()) {
-    *state->mutable_candidates() = output.candidate_window();
+    *state->mutable_candidate_window() = output.candidate_window();
   } else {
-    state->clear_candidates();
+    state->clear_candidate_window();
   }
 
   if ((!state->has_result() ||
