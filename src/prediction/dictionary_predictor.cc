@@ -1441,6 +1441,8 @@ DictionaryPredictor::GetTypingCorrectionMixingParams(
             request, segments, literal_results, typing_corrected_results);
   }
 
+  typing_correction_mixing_params.literal_at_least_second = true;
+
   return typing_correction_mixing_params;
 }
 
