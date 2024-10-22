@@ -916,7 +916,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 アルファベット	ʧ	はつおんきごう tsh TSH	発音記号
 アルファベット	ʤ	はつおんきごう dzh DZH	発音記号
 記号	ː	はつおんきごう ちょうぼいん ： :	発音記号
-記号	␀	NUL ぬる なる ぬるもじ なるもじ	制御記号	NUL	OTHER
+記号	␀	NUL	制御記号	NUL	OTHER
 記号	␁	SOH	制御記号	SOH	OTHER
 記号	␂	STX	制御記号	STX	OTHER
 記号	␃	ETX	制御記号	ETX	OTHER
@@ -925,8 +925,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	␆	ACK	制御記号	ACK	OTHER
 記号	␇	BEL	制御記号	BEL	OTHER
 記号	␈	BS	制御記号	BS	OTHER
-記号	␉	HT たぶ	制御記号	HT	OTHER
-記号	␊	LF かいぎょう	制御記号	LF	OTHER
+記号	␉	HT	制御記号	HT	OTHER
+記号	␊	LF	制御記号	LF	OTHER
 記号	␋	VT	制御記号	VT	OTHER
 記号	␌	FF	制御記号	FF	OTHER
 記号	␍	CR	制御記号	CR	OTHER
@@ -948,9 +948,9 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	␝	GS	制御記号	GS	OTHER
 記号	␞	RS	制御記号	RS	OTHER
 記号	␟	US	制御記号	US	OTHER
-記号	␠	SP すぺーす	制御記号	SP	OTHER
+記号	␠	SP	制御記号	SP	OTHER
 記号	␡	DEL	制御記号	DEL	OTHER
-記号	␤	NL かいぎょう	制御記号	NL	OTHER
+記号	␤	NL	制御記号	NL	OTHER
 記号	ʬ	ww ばいらびあるぱーかっしぶ			OTHER		U+02AC
 記号	¤	つうか たんい こくさいつうかきごう	通貨記号	国際通貨記号	OTHER		U+00A4
 記号	₠	つうか たんい おうしゅうつうかたんい えきゅー　きゅうゆーろ　えきゅーきごう　きゅうゆーろきごう	通貨記号	エキュー	OTHER		U+20A0
