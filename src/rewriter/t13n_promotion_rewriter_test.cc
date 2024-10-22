@@ -394,55 +394,5 @@ TEST_F(T13nPromotionRewriterTest, PromoteNumberT13n) {
             4);
 }
 
-TEST_F(T13nPromotionRewriterTest, PromoteKatakanaWithMinPerCost) {
-  T13nPromotionRewriter rewriter;
-
-  for (int min_per_char_cost = 0; min_per_char_cost <= 2000;
-       min_per_char_cost += 500) {
-    for (int override_min_per_char_cost : {0, min_per_char_cost + 500}) {
-      for (int cost = 1000; cost <= 8000; cost += 1000) {
-        Segments segments;
-
-        composer_.SetInputMode(transliteration::HIRAGANA);
-        composer_.SetPreeditTextForTestOnly("けるでぃよろわ");
-        Segment *segment = segments.push_back_segment();
-        segment->set_key("けるでぃよろわ");
-        AddCandidateWithValue("ケルデヨロワ", segment);    // TYPING CORRECTION
-        AddCandidateWithValue("いろは", segment);          // USER_HISTORY
-        AddCandidateWithValue("毛ルディ寄ろわ", segment);  // Best literal
-        AddCandidateWithValue("いろは", segment);
-        ConversionRequest conv_request = CreateMobileConversionRequest();
-        EXPECT_TRUE(t13n_rewriter_->Rewrite(conv_request, &segments));
-
-        mobile_request_.mutable_decoder_experiment_params()
-            ->set_katakana_promotion_min_per_char_cost(min_per_char_cost);
-        mobile_request_.mutable_decoder_experiment_params()
-            ->set_katakana_override_min_per_char_cost(
-                override_min_per_char_cost);
-
-        segment->mutable_candidate(0)->attributes |=
-            Segment::Candidate::TYPING_CORRECTION;
-        segment->mutable_candidate(1)->attributes |=
-            Segment::Candidate::USER_HISTORY_PREDICTION;
-        segment->mutable_candidate(2)->cost = cost;
-
-        conv_request = CreateMobileConversionRequest();
-        EXPECT_TRUE(rewriter.Rewrite(conv_request, &segments));
-
-        int expected = 4;  // not triggered.
-        const int per_char_cost = cost / 7;
-        if (min_per_char_cost > 0 && per_char_cost >= min_per_char_cost) {
-          expected = (override_min_per_char_cost > min_per_char_cost &&
-                      per_char_cost >= override_min_per_char_cost)
-                         ? 2   // at literal
-                         : 3;  // next to literal
-        }
-        EXPECT_EQ(GetCandidateIndexByValue("ケルディヨロワ", *segment),
-                  expected);
-      }
-    }
-  }
-}
-
 }  // namespace
 }  // namespace mozc

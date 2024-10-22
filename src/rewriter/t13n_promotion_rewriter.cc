@@ -148,78 +148,6 @@ bool MaybePromoteKatakanaWithStaticOffset(
   return true;
 }
 
-bool MaybePromoteKatakanaWithMinPerCharCost(
-    const commands::DecoderExperimentParams &params,
-    const Segment::Candidate &katakana_candidate, Segment *segment) {
-  if (params.katakana_promotion_min_per_char_cost() <= 0) {
-    return false;
-  }
-
-  static constexpr int kMaxCandidatesSize = 16;
-
-  // Too short candidate.
-  const int key_len = Util::CharsLen(segment->key());
-  if (key_len <= 3) return false;
-
-  // Finds the best literal candidate.
-  int literal_index = -1;
-  for (int i = 0;
-       i < std::min<int>(kMaxCandidatesSize, segment->candidates_size()); ++i) {
-    const auto &c = segment->candidate(i);
-    // No need to promote or insert.
-    if (c.value == katakana_candidate.value) {
-      return false;
-    }
-    // Skip non-literal candidate
-    if (c.attributes & Segment::Candidate::SPELLING_CORRECTION ||
-        c.attributes & Segment::Candidate::COMMAND_CANDIDATE ||
-        c.attributes & Segment::Candidate::SUFFIX_DICTIONARY ||
-        c.attributes & Segment::Candidate::USER_HISTORY_PREDICTION ||
-        c.attributes & Segment::Candidate::TYPING_CORRECTION) {
-      continue;
-    }
-    literal_index = i;
-    break;
-  }
-
-  if (literal_index == -1) {
-    return false;
-  }
-
-  const Segment::Candidate &literal_candidate =
-      segment->candidate(literal_index);
-  if (literal_candidate.value.empty() || segment->key().empty()) {
-    return false;
-  }
-
-  // When the `literal_candidate` is partial candidate,
-  // Use segment->key() to avoid over-triggering.
-  const int len = literal_candidate.consumed_key_size > 0
-                      ? Util::CharsLen(segment->key())
-                      : Util::CharsLen(literal_candidate.value);
-
-  const int per_char_cost = literal_candidate.cost / len;
-
-  // literal candidate is confident enough.
-  if (per_char_cost < params.katakana_promotion_min_per_char_cost()) {
-    return false;
-  }
-
-  // When (params.katakana_override_min_per_char_cost() is defined, and
-  // the cost is larger than katakana_override_min_per_char_cost,
-  // inserts the Katakana candidate at the literal position.
-  const int insert_pos =
-      (params.katakana_override_min_per_char_cost() >=
-           params.katakana_promotion_min_per_char_cost() &&
-       per_char_cost >= params.katakana_override_min_per_char_cost())
-          ? literal_index
-          : literal_index + 1;
-
-  InsertKatakana(literal_index, insert_pos, katakana_candidate, segment);
-
-  return true;
-}
-
 bool MaybePromoteKatakana(const ConversionRequest &request, Segment *segment) {
   if (segment->meta_candidates_size() <= transliteration::FULL_KATAKANA) {
     return false;
@@ -229,9 +157,7 @@ bool MaybePromoteKatakana(const ConversionRequest &request, Segment *segment) {
   const Segment::Candidate &katakana_candidate =
       segment->meta_candidate(transliteration::FULL_KATAKANA);
 
-  return MaybePromoteKatakanaWithMinPerCharCost(params, katakana_candidate,
-                                                segment) ||
-         MaybePromoteKatakanaWithStaticOffset(params, katakana_candidate,
+  return MaybePromoteKatakanaWithStaticOffset(params, katakana_candidate,
                                               segment);
 }
 
