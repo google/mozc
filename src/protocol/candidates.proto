@@ -195,8 +195,7 @@ message CandidateWindow {
   required uint32 position = 6;
 
   // Nested candidates aka cascading window.
-  // TODO(b/372854886): Follow up renaming to sub_candidate_window.
-  optional CandidateWindow subcandidates = 8;
+  optional CandidateWindow sub_candidate_window = 8;
 
   // Usages of candidates.
   optional InformationList usages = 10;

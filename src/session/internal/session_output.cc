@@ -221,12 +221,12 @@ void SessionOutput::FillCandidates(
     FillCandidate(segment, candidate, candidate_proto);
   }
 
-  // Store subcandidates.
+  // Store sub_candidate_window.
   if (candidate_list.focused_candidate().HasSubcandidateList()) {
     FillCandidates(segment,
                    candidate_list.focused_candidate().subcandidate_list(),
                    candidate_list.focused_index(),
-                   candidate_window_proto->mutable_subcandidates());
+                   candidate_window_proto->mutable_sub_candidate_window());
   }
 
   // Store usages.

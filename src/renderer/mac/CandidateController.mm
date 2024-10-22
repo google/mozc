@@ -151,8 +151,8 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
 
   bool cascading_visible = false;
   if (command_.output().has_candidate_window() &&
-      command_.output().candidate_window().has_subcandidates()) {
-    cascading_window_->SetCandidateWindow(command_.output().candidate_window().subcandidates());
+      command_.output().candidate_window().has_sub_candidate_window()) {
+    cascading_window_->SetCandidateWindow(command_.output().candidate_window().sub_candidate_window());
     cascading_visible = true;
   }
 
@@ -251,7 +251,7 @@ void CandidateController::AlignWindows() {
   // function here.
   if (!command_.output().has_candidate_window() ||
       !(command_.output().candidate_window().candidate_size() > 0) ||
-      !command_.output().candidate_window().has_subcandidates()) {
+      !command_.output().candidate_window().has_sub_candidate_window()) {
     return;
   }
 

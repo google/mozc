@@ -252,9 +252,10 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
 
   // Cascading window
   if ((!state->has_candidates() ||
-       (state->has_candidates() && !state->candidates().has_subcandidates())) &&
+       (state->has_candidates() &&
+        !state->candidates().has_sub_candidate_window())) &&
       output.has_candidate_window() &&
-      output.candidate_window().has_subcandidates()) {
+      output.candidate_window().has_sub_candidate_window()) {
     UsageStats::IncrementCount("ShowCascadingWindow");
   }
 

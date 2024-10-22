@@ -156,7 +156,7 @@ TEST(SessionOutputTest, FillCandidates) {
   EXPECT_EQ(candidate_window_proto.candidate(0).value(), kValues[0]);
   EXPECT_EQ(candidate_window_proto.candidate(1).value(), kValues[1]);
   EXPECT_EQ(candidate_window_proto.candidate(2).value(), kSubcandidateList);
-  EXPECT_FALSE(candidate_window_proto.has_subcandidates());
+  EXPECT_FALSE(candidate_window_proto.has_sub_candidate_window());
 
   // Focused index = 2 with a subcandidate list. page_size = 5.
   candidate_window_proto.Clear();
@@ -177,16 +177,17 @@ TEST(SessionOutputTest, FillCandidates) {
   EXPECT_EQ(candidate_window_proto.candidate(2).index(), 2);
 
   // Check the values of the subcandidate list.
-  EXPECT_TRUE(candidate_window_proto.has_subcandidates());
-  EXPECT_EQ(candidate_window_proto.subcandidates().candidate_size(), 3);
-  EXPECT_EQ(candidate_window_proto.subcandidates().position(), 2);
-  EXPECT_TRUE(candidate_window_proto.subcandidates().has_focused_index());
-  EXPECT_EQ(candidate_window_proto.subcandidates().focused_index(), 1);
-  EXPECT_EQ(candidate_window_proto.subcandidates().candidate(0).value(),
+  EXPECT_TRUE(candidate_window_proto.has_sub_candidate_window());
+  EXPECT_EQ(candidate_window_proto.sub_candidate_window().candidate_size(), 3);
+  EXPECT_EQ(candidate_window_proto.sub_candidate_window().position(), 2);
+  EXPECT_TRUE(
+      candidate_window_proto.sub_candidate_window().has_focused_index());
+  EXPECT_EQ(candidate_window_proto.sub_candidate_window().focused_index(), 1);
+  EXPECT_EQ(candidate_window_proto.sub_candidate_window().candidate(0).value(),
             kValues[2]);
-  EXPECT_EQ(candidate_window_proto.subcandidates().candidate(1).value(),
+  EXPECT_EQ(candidate_window_proto.sub_candidate_window().candidate(1).value(),
             kValues[3]);
-  EXPECT_EQ(candidate_window_proto.subcandidates().candidate(2).value(),
+  EXPECT_EQ(candidate_window_proto.sub_candidate_window().candidate(2).value(),
             kValues[4]);
 
   // Check focused_index.
@@ -196,7 +197,8 @@ TEST(SessionOutputTest, FillCandidates) {
   SessionOutput::FillCandidates(segment, candidate_list, 0,
                                 &candidate_window_proto);
   EXPECT_FALSE(candidate_window_proto.has_focused_index());
-  EXPECT_TRUE(candidate_window_proto.subcandidates().has_focused_index());
+  EXPECT_TRUE(
+      candidate_window_proto.sub_candidate_window().has_focused_index());
 
   candidate_window_proto.Clear();
   candidate_list.set_focused(false);
@@ -204,7 +206,8 @@ TEST(SessionOutputTest, FillCandidates) {
   SessionOutput::FillCandidates(segment, candidate_list, 0,
                                 &candidate_window_proto);
   EXPECT_FALSE(candidate_window_proto.has_focused_index());
-  EXPECT_FALSE(candidate_window_proto.subcandidates().has_focused_index());
+  EXPECT_FALSE(
+      candidate_window_proto.sub_candidate_window().has_focused_index());
 
   candidate_window_proto.Clear();
   candidate_list.set_focused(true);
@@ -212,7 +215,8 @@ TEST(SessionOutputTest, FillCandidates) {
   SessionOutput::FillCandidates(segment, candidate_list, 0,
                                 &candidate_window_proto);
   EXPECT_TRUE(candidate_window_proto.has_focused_index());
-  EXPECT_FALSE(candidate_window_proto.subcandidates().has_focused_index());
+  EXPECT_FALSE(
+      candidate_window_proto.sub_candidate_window().has_focused_index());
 }
 
 TEST(SessionOutputTest, FillAllCandidateWords) {

@@ -285,9 +285,10 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
 
   bool cascading_visible = false;
 
-  if (candidate_window.has_subcandidates() &&
-      candidate_window.subcandidates().display_type() == commands::CASCADE) {
-    (void)candidate_window.subcandidates();
+  if (candidate_window.has_sub_candidate_window() &&
+      candidate_window.sub_candidate_window().display_type() ==
+          commands::CASCADE) {
+    (void)candidate_window.sub_candidate_window();
     cascading_visible = true;
   }
 
@@ -336,11 +337,11 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
   }
 
   if (cascading_visible) {
-    const commands::CandidateWindow &subcandidates =
-        candidate_window.subcandidates();
+    const commands::CandidateWindow &sub_candidate_window =
+        candidate_window.sub_candidate_window();
 
     if (candidate_changed) {
-      cascading_window_->UpdateLayout(subcandidates);
+      cascading_window_->UpdateLayout(sub_candidate_window);
     }
 
     // Put the cascading window right to the selected row of this candidate

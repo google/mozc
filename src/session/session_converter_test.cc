@@ -1014,13 +1014,14 @@ TEST_F(SessionConverterTest, Transliterations) {
   std::vector<std::string> t13ns;
   composer_->GetTransliterations(&t13ns);
 
-  EXPECT_TRUE(candidate_window.has_subcandidates());
-  EXPECT_EQ(candidate_window.subcandidates().size(), t13ns.size());
-  EXPECT_EQ(candidate_window.subcandidates().candidate_size(), 9);
+  EXPECT_TRUE(candidate_window.has_sub_candidate_window());
+  EXPECT_EQ(candidate_window.sub_candidate_window().size(), t13ns.size());
+  EXPECT_EQ(candidate_window.sub_candidate_window().candidate_size(), 9);
 
-  for (size_t i = 0; i < candidate_window.subcandidates().candidate_size();
-       ++i) {
-    EXPECT_EQ(candidate_window.subcandidates().candidate(i).value(), t13ns[i]);
+  for (size_t i = 0;
+       i < candidate_window.sub_candidate_window().candidate_size(); ++i) {
+    EXPECT_EQ(candidate_window.sub_candidate_window().candidate(i).value(),
+              t13ns[i]);
   }
 }
 
