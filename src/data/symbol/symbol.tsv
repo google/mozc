@@ -220,7 +220,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	≪	ふとうごう しょうなり すうがく けいさん << きごう	非常に小さい		SYMBOL
 記号	≫	ふとうごう だいなり すうがく けいさん >> きごう	非常に大きい		SYMBOL
 記号	√	るーと へいほうこん すうがく けいさん きごう こんごう sqrt	根号		SYMBOL
-記号	∛	さんじょうこん こんごう cbrt	三乗根号		SYMBOL
+記号	∛	さんじょうこん りっぽうこん こんごう cbrt	三乗根号		SYMBOL
 記号	∜	よんじょうこん こんごう qdrt	四乗根号		SYMBOL
 記号	∽	すうがく そうじ けいさん きごう	相似		SYMBOL
 記号	∝	すうがく ひれい けいさん きごう	比例		SYMBOL
