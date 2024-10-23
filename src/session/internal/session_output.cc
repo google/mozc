@@ -192,7 +192,7 @@ void SessionOutput::FillCandidate(
 }
 
 // static
-void SessionOutput::FillCandidates(
+void SessionOutput::FillCandidateWindow(
     const Segment &segment, const CandidateList &candidate_list,
     const size_t position, commands::CandidateWindow *candidate_window_proto) {
   if (candidate_list.focused()) {
@@ -223,10 +223,10 @@ void SessionOutput::FillCandidates(
 
   // Store sub_candidate_window.
   if (candidate_list.focused_candidate().HasSubcandidateList()) {
-    FillCandidates(segment,
-                   candidate_list.focused_candidate().subcandidate_list(),
-                   candidate_list.focused_index(),
-                   candidate_window_proto->mutable_sub_candidate_window());
+    FillCandidateWindow(segment,
+                        candidate_list.focused_candidate().subcandidate_list(),
+                        candidate_list.focused_index(),
+                        candidate_window_proto->mutable_sub_candidate_window());
   }
 
   // Store usages.

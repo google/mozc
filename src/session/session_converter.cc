@@ -1170,7 +1170,7 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
   // Candidate list
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION) &&
       candidate_list_visible_) {
-    FillCandidates(output->mutable_candidate_window());
+    FillCandidateWindow(output->mutable_candidate_window());
   }
 
   // All candidate words
@@ -1551,7 +1551,7 @@ void SessionConverter::FillResult(commands::Result *result) const {
   *result = result_;
 }
 
-void SessionConverter::FillCandidates(
+void SessionConverter::FillCandidateWindow(
     commands::CandidateWindow *candidate_window) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
   if (!candidate_list_visible_) {
@@ -1577,8 +1577,8 @@ void SessionConverter::FillCandidates(
   }
 
   const Segment &segment = segments_.conversion_segment(segment_index_);
-  SessionOutput::FillCandidates(segment, candidate_list_, position,
-                                candidate_window);
+  SessionOutput::FillCandidateWindow(segment, candidate_list_, position,
+                                     candidate_window);
 
   // Shortcut keys
   if (CheckState(PREDICTION | CONVERSION)) {

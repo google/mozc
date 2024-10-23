@@ -282,8 +282,8 @@ void FillCandidateHighlight(const commands::CandidateWindow &candidate_window,
   table->item(row, 3)->setBackground(has_info ? indicator : background);
 }
 
-void FillCandidates(const commands::CandidateWindow &candidate_window,
-                    QTableWidget *table) {
+void FillCandidateWindow(const commands::CandidateWindow &candidate_window,
+                         QTableWidget *table) {
   const size_t cands_size = candidate_window.candidate_size();
   table->clear();
   table->setRowCount(cands_size + 1);  // +1 is for footer.
@@ -431,7 +431,7 @@ Rect QtWindowManager::UpdateCandidateWindow(
       command.output().candidate_window();
 
   if (IsUpdated(prev_command_, command)) {
-    FillCandidates(candidate_window, candidates_);
+    FillCandidateWindow(candidate_window, candidates_);
     const Size win_size(candidates_->width(), candidates_->height());
     const Point win_pos = GetWindowPosition(command, win_size);
     candidates_->move(win_pos.x, win_pos.y);

@@ -345,7 +345,7 @@ class SessionConverter : public SessionConverterInterface {
 
   void FillConversion(commands::Preedit *preedit) const;
   void FillResult(commands::Result *result) const;
-  void FillCandidates(commands::CandidateWindow *candidate_window) const;
+  void FillCandidateWindow(commands::CandidateWindow *candidate_window) const;
 
   // Fills protocol buffers with all flatten candidate words.
   void FillAllCandidateWords(commands::CandidateList *candidates) const;
