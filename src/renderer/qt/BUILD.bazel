@@ -131,7 +131,7 @@ mozc_cc_qt_library(
     deps = [
         "//base:coordinates",
         "//client:client_interface",
-        "//protocol:candidates_cc_proto",
+        "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_style_handler",

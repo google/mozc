@@ -47,7 +47,7 @@
 #include "base/protobuf/descriptor.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {

@@ -283,7 +283,7 @@
         '<(mozc_oss_src_dir)/data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '<(mozc_oss_src_dir)/data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
-        '<(mozc_oss_src_dir)/protocol/protocol.gyp:candidates_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:candidate_window_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',

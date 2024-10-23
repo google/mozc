@@ -37,7 +37,7 @@ syntax = "proto2";
 
 package mozc.commands;
 
-import "protocol/candidates.proto";
+import "protocol/candidate_window.proto";
 import "protocol/config.proto";
 import "protocol/engine_builder.proto";
 import "protocol/user_dictionary_storage.proto";

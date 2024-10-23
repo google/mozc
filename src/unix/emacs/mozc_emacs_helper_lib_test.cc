@@ -37,7 +37,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "base/protobuf/message.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"

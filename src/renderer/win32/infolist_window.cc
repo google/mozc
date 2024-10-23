@@ -41,7 +41,7 @@
 #include "base/vlog.h"
 #include "base/win32/wide_char.h"
 #include "client/client_interface.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"

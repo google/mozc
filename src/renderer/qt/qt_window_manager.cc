@@ -39,7 +39,7 @@
 #include "absl/strings/str_cat.h"
 #include "base/coordinates.h"
 #include "client/client_interface.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/window_util.h"

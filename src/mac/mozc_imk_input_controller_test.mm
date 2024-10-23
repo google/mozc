@@ -46,7 +46,7 @@
 #include "absl/time/time.h"
 #include "base/mac/mac_util.h"
 #include "client/client_mock.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "renderer/renderer_interface.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"

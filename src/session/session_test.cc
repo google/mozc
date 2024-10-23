@@ -56,7 +56,7 @@
 #include "engine/engine.h"
 #include "engine/engine_mock.h"
 #include "engine/mock_data_engine_factory.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"

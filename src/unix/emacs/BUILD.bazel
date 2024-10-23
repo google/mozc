@@ -74,7 +74,7 @@ mozc_cc_library(
         "//base/protobuf:message",
         "//client",
         "//composer:key_parser",
-        "//protocol:candidates_cc_proto",
+        "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",
         "//storage:lru_cache",
         "@com_google_absl//absl/base:core_headers",
@@ -91,7 +91,7 @@ mozc_cc_test(
     deps = [
         ":mozc_emacs_helper_lib",
         "//base/protobuf:message",
-        "//protocol:candidates_cc_proto",
+        "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
         "//testing:testing_util",

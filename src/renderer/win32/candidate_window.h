@@ -41,7 +41,7 @@
 #include "base/const.h"
 #include "base/coordinates.h"
 #include "client/client_interface.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "renderer/table_layout.h"
 #include "renderer/win32/text_renderer.h"

@@ -166,7 +166,7 @@ mozc_objc_test(
         ":mozc_imk_input_controller",
         "//base/mac:mac_util",
         "//client:client_mock",
-        "//protocol:candidates_cc_proto",
+        "//protocol:candidate_window_cc_proto",
         "//renderer:renderer_interface",
         "//testing:gunit_main_objc",
         "@com_google_absl//absl/container:flat_hash_map",

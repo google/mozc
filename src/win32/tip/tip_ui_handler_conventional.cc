@@ -40,7 +40,7 @@
 #include "base/win32/com.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_renderer_client.h"

@@ -39,7 +39,7 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/candidate_list.h"
 
@@ -51,11 +51,13 @@ class SessionOutput {
   SessionOutput(const SessionOutput &) = delete;
   SessionOutput &operator=(const SessionOutput &) = delete;
 
+  // TODO(b/372854886): Revise the comment.
   // Fill the Candidates_Candidate protobuf with the contents of candidate.
   static void FillCandidate(
       const Segment &segment, const Candidate &candidate,
       commands::CandidateWindow_Candidate *candidate_proto);
 
+  // TODO(b/372854886): Rename the function to FillCandidateWindow.
   // Fill the Candidates protobuf with the contents of candidate_list.
   static void FillCandidates(const Segment &segment,
                              const CandidateList &candidate_list,

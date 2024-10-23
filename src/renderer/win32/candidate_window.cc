@@ -43,7 +43,7 @@
 #include "base/coordinates.h"
 #include "base/win32/wide_char.h"
 #include "client/client_interface.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"

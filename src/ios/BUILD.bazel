@@ -69,7 +69,7 @@ mozc_cc_binary(
         ":ios_engine",
         "//base:init_mozc_buildtool",
         "//base/strings:unicode",
-        "//protocol:candidates_cc_proto",
+        "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/flags:flag",

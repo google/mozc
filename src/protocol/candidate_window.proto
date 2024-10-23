@@ -29,7 +29,6 @@
 
 // Protocol messages of candidate window to be used for mozc client/server
 // communication and client/renderer communication.
-// TODO(b/372854886): Rename file to candidate_window.proto.
 
 syntax = "proto2";
 

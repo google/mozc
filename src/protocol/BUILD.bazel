@@ -37,7 +37,7 @@ proto_library(
         "commands.proto",
     ],
     deps = [
-        ":candidates_proto",
+        ":candidate_window_proto",
         ":config_proto",
         ":engine_builder_proto",
         ":user_dictionary_storage_proto",
@@ -55,8 +55,8 @@ jspb_proto_library(
 )
 
 java_lite_proto_library(
-    name = "candidates_java_proto_lite",
-    deps = [":candidates_proto"],
+    name = "candidate_window_java_proto_lite",
+    deps = [":candidate_window_proto"],
 )
 
 java_lite_proto_library(
@@ -109,25 +109,25 @@ cc_proto_library(
 )
 
 proto_library(
-    name = "candidates_proto",
-    srcs = ["candidates.proto"],
+    name = "candidate_window_proto",
+    srcs = ["candidate_window.proto"],
 )
 
 cc_proto_library(
-    name = "candidates_cc_proto",
-    deps = [":candidates_proto"],
+    name = "candidate_window_cc_proto",
+    deps = [":candidate_window_proto"],
 )
 
 jspb_proto_library(
-    name = "candidates_jspb_proto",
-    deps = [":candidates_proto"],
+    name = "candidate_window_jspb_proto",
+    deps = [":candidate_window_proto"],
 )
 
 proto_library(
     name = "state_proto",
     srcs = ["state.proto"],
     deps = [
-        ":candidates_proto",
+        ":candidate_window_proto",
         ":commands_proto",
     ],
 )

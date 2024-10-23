@@ -46,7 +46,7 @@
 #include "base/clock.h"
 #include "base/vlog.h"
 #include "config/stats_config_util.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
 #include "usage_stats/usage_stats.h"

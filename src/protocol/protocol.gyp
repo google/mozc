@@ -34,11 +34,11 @@
   },
   'targets': [
     {
-      'target_name': 'genproto_candidates_proto',
+      'target_name': 'genproto_candidate_window_proto',
       'type': 'none',
       'toolsets': ['host'],
       'sources': [
-        'candidates.proto',
+        'candidate_window.proto',
       ],
       'includes': [
         '../protobuf/genproto.gypi',
@@ -48,18 +48,18 @@
       ],
     },
     {
-      'target_name': 'candidates_proto',
+      'target_name': 'candidate_window_proto',
       'type': 'static_library',
       'hard_dependency': 1,
       'sources': [
-        '<(proto_out_dir)/<(relative_dir)/candidates.pb.cc',
+        '<(proto_out_dir)/<(relative_dir)/candidate_window.pb.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
-        'genproto_candidates_proto#host',
+        'genproto_candidate_window_proto#host',
       ],
       'export_dependent_settings': [
-        'genproto_candidates_proto#host',
+        'genproto_candidate_window_proto#host',
       ],
     },
     {
@@ -86,7 +86,7 @@
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
-        'candidates_proto',
+        'candidate_window_proto',
         'config_proto',
         'engine_builder_proto',
         'genproto_commands_proto#host',
@@ -163,7 +163,7 @@
         '../protobuf/genproto.gypi',
       ],
       'dependencies': [
-        'genproto_candidates_proto',
+        'genproto_candidate_window_proto',
         'genproto_commands_proto',
       ],
     },
@@ -176,7 +176,7 @@
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/protobuf/protobuf.gyp:protobuf',
-        'candidates_proto',
+        'candidate_window_proto',
         'commands_proto',
         'genproto_state_proto#host',
       ],
