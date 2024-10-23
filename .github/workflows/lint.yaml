@@ -1,0 +1,31 @@
+name: CI for Lint checks
+# https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
+
+# Run on push.
+on: push
+
+permissions: read-all
+
+# Prevent previous workflows from running.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  buildifier:
+    # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      # Checkout without submodules to exclude third_party code from lint check
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'false'
+
+      - name: Run
+        working-directory: ./src
+        run: |
+          go install github.com/bazelbuild/buildtools/buildifier@latest
+          $(go env GOPATH)/bin/buildifier --mode=diff -r .
