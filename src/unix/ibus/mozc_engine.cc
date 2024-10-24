@@ -51,7 +51,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "client/client.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "renderer/renderer_client.h"

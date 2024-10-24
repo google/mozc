@@ -33,7 +33,7 @@
 
 #include "base/coordinates.h"
 #include "base/protobuf/text_format.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_mock.h"

@@ -34,7 +34,7 @@
 #include <string>
 
 #include "absl/strings/str_format.h"
-#include "protocol/candidates.pb.h"
+#include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "unix/ibus/ibus_wrapper.h"
