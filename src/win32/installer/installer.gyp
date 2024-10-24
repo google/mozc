@@ -172,7 +172,7 @@
                 '-define', 'QtVer=<(qt_ver)',
                 '-out', '<@(_outputs)',
                 # We do not use '<@(_inputs)' here because it contains some
-                # input files just for peoper rebiuld condition.
+                # input files just for peoper rebuild condition.
                 '-src', '<(wxs_file)',
               ],
               'message': 'WiX is generating <@(_outputs)',
