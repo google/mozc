@@ -150,7 +150,7 @@
         are currenly running. So the ShutdownServer action
         needs to be callled before the InstallValidate action.
       -->
-      <Custom Action="ShutdownServer" Before="InstallValidate" Condition="(REMOVE=&quot;ALL&quot;) AND (NOT UPGRADINGPRODUCTCODE)" />
+      <Custom Action="ShutdownServer" Before="InstallValidate" />
       <Custom Action="NewerVersionError" After="FindRelatedProducts" Condition="NEWERVERSIONDETECTED" />
       <!--
         RemoveExistingProducts needs to be scheduled between InstallExecute and

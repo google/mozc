@@ -244,21 +244,19 @@ UINT __stdcall ShutdownServer(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
   std::unique_ptr<mozc::client::ClientInterface> server_client(
       mozc::client::ClientFactory::NewClient());
-  bool server_result = true;
   if (server_client->PingServer()) {
-    server_result = server_client->Shutdown();
+    if (!server_client->Shutdown()) {
+      // This is not fatal as Windows Installer can replace executables even
+      // when they still are running. Just log error then go ahead.
+      LOG_ERROR_FOR_OMAHA();
+    }
   }
   mozc::renderer::RendererClient renderer_client;
-  const bool renderer_result = renderer_client.Shutdown(true);
-  if (!server_result) {
+  if (!renderer_client.Shutdown(true)) {
+    // This is not fatal as Windows Installer can replace executables even when
+    // they are still running. Just log error then go ahead.
     LOG_ERROR_FOR_OMAHA();
-    return ERROR_INSTALL_FAILURE;
   }
-  if (!renderer_result) {
-    LOG_ERROR_FOR_OMAHA();
-    return ERROR_INSTALL_FAILURE;
-  }
-
   return ERROR_SUCCESS;
 }
 
