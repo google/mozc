@@ -110,7 +110,7 @@ class ConversionRequest {
     DCHECK(composer_);
     return *composer_;
   }
-  void set_composer(const composer::Composer *c) { composer_ = c; }
+  void reset_composer() { composer_ = nullptr; }
 
   bool use_actual_converter_for_realtime_conversion() const {
     return use_actual_converter_for_realtime_conversion_;

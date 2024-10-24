@@ -1711,9 +1711,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
   // insensitive dictionary lookup is also disabled as composition
   // spellchecker has already fixed them.
   ConversionRequest corrected_request = request;
-  // TODO(b/365909808): corrected_request.composer() returns nullptr. We should
-  // add an empty composer instead.
-  corrected_request.set_composer(nullptr);
+  corrected_request.reset_composer();
   corrected_request.set_kana_modifier_insensitive_conversion(false);
 
   // Populates number when number candidate is not added.
