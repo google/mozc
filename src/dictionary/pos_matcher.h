@@ -100,7 +100,7 @@ class PosMatcher {
   PosMatcher(const PosMatcher &) = default;
   PosMatcher &operator=(const PosMatcher &) = default;
 
-  void Set(const uint16_t *data ABSL_ATTRIBUTE_LIFETIME_BOUND) { data_ = data; }
+  void Set(const uint16_t *data) { data_ = data; }
 
  private:
   // Used in pos_matcher_impl.inc.
