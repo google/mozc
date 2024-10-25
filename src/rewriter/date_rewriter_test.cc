@@ -921,7 +921,6 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
   const commands::Context context;
   const config::Config config;
   composer::Composer composer(&table, &request, &config);
-  ConversionRequest conversion_request(&composer, &request, &context, &config);
 
   // Key sequence : 2223
   // Preedit : cd
@@ -930,7 +929,8 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
     InitSegment("cd", "cd", &segments);
     composer.Reset();
     composer.InsertCharacter("2223");
-    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+    ConversionRequest conv_request(&composer, &request, &context, &config);
+    EXPECT_TRUE(rewriter.Rewrite(conv_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("22:23")));
   }
@@ -943,7 +943,8 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
     InitSegment("1111", "1111", &segments);
     composer.Reset();
     composer.InsertCharacter("2223");
-    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+    ConversionRequest conv_request(&composer, &request, &context, &config);
+    EXPECT_TRUE(rewriter.Rewrite(conv_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("11:11")));
     EXPECT_THAT(segments.segment(0), Not(ContainsCandidate(ValueIs("22:23"))));
@@ -960,7 +961,8 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
     meta_candidate->value = "1111";
     composer.InsertCharacter("2223");
     composer.Reset();
-    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+    ConversionRequest conv_request(&composer, &request, &context, &config);
+    EXPECT_TRUE(rewriter.Rewrite(conv_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("11:11")));
     EXPECT_THAT(segments.segment(0), Not(ContainsCandidate(ValueIs("22:23"))));
