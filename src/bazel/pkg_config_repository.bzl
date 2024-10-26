@@ -86,6 +86,13 @@ def _exec_pkg_config(repo_ctx, flag):
         print("pkg-config is not found")  # buildifier: disable=print
         return []
     result = repo_ctx.execute([binary, flag] + repo_ctx.attr.packages)
+
+    # If result.stdout.strip() is empty, pkg-config will be re-executed with
+    # the --keep-system-cflags option added. Typically, -I/usr/include is
+    # returned, enabling bazel to recognize packages as valid even when
+    # pkg-config does not output cflags with standard options.
+    if result.stdout.strip() == "":
+        result = repo_ctx.execute([binary, flag] + ["--keep-system-cflags"] + repo_ctx.attr.packages)
     items = result.stdout.strip().split(" ")
     uniq_items = sorted({key: None for key in items}.keys())
     return uniq_items
