@@ -129,27 +129,17 @@ class DictionaryPredictorTestPeer {
                                                           results);
   }
 
-  bool AddPredictionToCandidates(
-      const ConversionRequest &request, Segments *segments,
-      const TypingCorrectionMixingParams &typing_correction_mixing_params,
-      absl::Span<Result> results) const {
-    return predictor_.AddPredictionToCandidates(
-        request, segments, typing_correction_mixing_params, results);
+  bool AddPredictionToCandidates(const ConversionRequest &request,
+                                 Segments *segments,
+                                 absl::Span<Result> results) const {
+    return predictor_.AddPredictionToCandidates(request, segments, results);
   }
 
-  TypingCorrectionMixingParams MaybePopulateTypingCorrectedResults(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const {
+  void MaybePopulateTypingCorrectedResults(const ConversionRequest &request,
+                                           const Segments &segments,
+                                           std::vector<Result> *results) const {
     return predictor_.MaybePopulateTypingCorrectedResults(request, segments,
                                                           results);
-  }
-
-  static void MaybeSuppressAggressiveTypingCorrection(
-      const ConversionRequest &request,
-      const TypingCorrectionMixingParams &typing_correction_mixing_params,
-      std::vector<absl::Nonnull<const Result *>> *results) {
-    DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
-        request, typing_correction_mixing_params, results);
   }
 
   static void AddRescoringDebugDescription(Segments *segments) {
@@ -371,7 +361,6 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
   commands::Context context_;
-  TypingCorrectionMixingParams typing_correction_mixing_params_;
 
  private:
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
@@ -927,7 +916,6 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   predictor.AddPredictionToCandidates(convreq, &segments,
-                                      typing_correction_mixing_params_,
                                       absl::MakeSpan(results));
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
@@ -955,7 +943,6 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
   predictor.AddPredictionToCandidates(convreq, &segments,
-                                      typing_correction_mixing_params_,
                                       absl::MakeSpan(results));
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
@@ -996,7 +983,6 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
   convreq.set_max_dictionary_prediction_candidates_size(kTestSize);
 
   predictor.AddPredictionToCandidates(convreq, &segments,
-                                      typing_correction_mixing_params_,
                                       absl::MakeSpan(results));
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
@@ -1038,7 +1024,6 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
                                                         1);
 
   predictor.AddPredictionToCandidates(convreq, &segments,
-                                      typing_correction_mixing_params_,
                                       absl::MakeSpan(results));
 
   ASSERT_EQ(1, segments.conversion_segments_size());
@@ -1495,7 +1480,6 @@ TEST_F(DictionaryPredictorTest, Dedup) {
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::PREDICTION);
     predictor.AddPredictionToCandidates(convreq, &segments,
-                                        typing_correction_mixing_params_,
                                         absl::MakeSpan(results));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1535,7 +1519,6 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
   predictor.AddPredictionToCandidates(convreq, &segments,
-                                      typing_correction_mixing_params_,
                                       absl::MakeSpan(results));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment segment = segments.conversion_segment(0);
@@ -1571,7 +1554,6 @@ TEST_F(DictionaryPredictorTest, SortResult) {
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
   predictor.AddPredictionToCandidates(convreq, &segments,
-                                      typing_correction_mixing_params_,
                                       absl::MakeSpan(results));
 
   ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1755,89 +1737,6 @@ TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
     predictor.MaybePopulateTypingCorrectedResults(convreq, segments, &results);
     EXPECT_EQ(results.size(), 2);
   }
-}
-
-TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrectionTest) {
-  std::vector<Result> results(10);
-  std::vector<absl::Nonnull<const Result *>> results_ptrs;
-
-  for (int i = 0; i < results.size(); ++i) {
-    Result &result = results[i];
-    result.types = 0;
-    result.key = absl::StrCat("key_", i);
-    result.value = absl::StrCat("value_", i);
-  }
-
-  for (int i = 1; i <= 2; ++i) {
-    results[i].types |= PredictionType::TYPING_CORRECTION;
-  }
-
-  results[0].cost = 100;
-  results[3].cost = 500;
-
-  auto reset_results_ptrs = [&results, &results_ptrs]() {
-    results_ptrs.clear();
-    for (auto &result : results) results_ptrs.emplace_back(&result);
-  };
-
-  reset_results_ptrs();
-
-  auto get_top_value = [&results_ptrs]() {
-    return results_ptrs.front()->value;
-  };
-
-  auto get_second_value = [&results_ptrs]() { return results_ptrs[1]->value; };
-
-  TypingCorrectionMixingParams params;
-
-  const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::SUGGESTION);
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      convreq, params, &results_ptrs);
-  EXPECT_EQ(get_top_value(), "value_0");
-
-  results[0].types |= PredictionType::TYPING_CORRECTION;
-  reset_results_ptrs();
-  params.literal_on_top = false;  // literal_on_top is not passed.
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      convreq, params, &results_ptrs);
-  EXPECT_EQ(get_top_value(), "value_0");
-  EXPECT_EQ(get_second_value(), "value_1");
-
-  params.literal_on_top = true;  // literal_on_top is passed.
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      convreq, params, &results_ptrs);
-  EXPECT_EQ(get_top_value(), "value_3");
-  EXPECT_EQ(get_second_value(), "value_0");
-
-  // test literal-at-least-second behavior
-  reset_results_ptrs();
-  results[0].types |= PredictionType::TYPING_CORRECTION;
-  params.literal_on_top = false;
-  params.literal_at_least_second = true;
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      convreq, params, &results_ptrs);
-  EXPECT_EQ(get_top_value(), "value_0");     // top is typing correction.
-  EXPECT_EQ(get_second_value(), "value_3");  // second is literal.
-
-  reset_results_ptrs();
-  params.literal_on_top = true;
-  params.literal_at_least_second = false;
-  results[3].candidate_attributes = Segment::Candidate::TYPING_CORRECTION;
-
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      convreq, params, &results_ptrs);
-  EXPECT_EQ(get_top_value(), "value_4");
-  EXPECT_EQ(get_second_value(), "value_0");
-
-  reset_results_ptrs();
-  params.literal_on_top = false;
-  params.literal_at_least_second = true;
-  results[3].candidate_attributes = Segment::Candidate::TYPING_CORRECTION;
-  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
-      convreq, params, &results_ptrs);
-  EXPECT_EQ(get_top_value(), "value_0");     // top is typing correction.
-  EXPECT_EQ(get_second_value(), "value_4");  // second is literal.
 }
 
 TEST_F(DictionaryPredictorTest, Rescoring) {

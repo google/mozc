@@ -308,14 +308,11 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   RewriteResultsForPrediction(request, *segments, &results);
 
   // Explicitly populate the typing corrected results.
-  const TypingCorrectionMixingParams typing_correction_mixing_params =
-      MaybePopulateTypingCorrectedResults(request, *segments, &results);
+  MaybePopulateTypingCorrectedResults(request, *segments, &results);
 
   MaybeRescoreResults(request, *segments, absl::MakeSpan(results));
 
-  return AddPredictionToCandidates(request, segments,
-                                   typing_correction_mixing_params,
-                                   absl::MakeSpan(results));
+  return AddPredictionToCandidates(request, segments, absl::MakeSpan(results));
 }
 
 void DictionaryPredictor::RewriteResultsForPrediction(
@@ -343,42 +340,30 @@ void DictionaryPredictor::RewriteResultsForPrediction(
   }
 }
 
-TypingCorrectionMixingParams
-DictionaryPredictor::MaybePopulateTypingCorrectedResults(
+void DictionaryPredictor::MaybePopulateTypingCorrectedResults(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
-  if (!IsTypingCorrectionEnabled(request)) {
-    return {};
-  }
-
-  if (results->empty()) {
-    return {};
+  if (!IsTypingCorrectionEnabled(request) || results->empty()) {
+    return;
   }
 
   const size_t key_len = Util::CharsLen(segments.conversion_segment(0).key());
   constexpr int kMinTypingCorrectionKeyLen = 3;
   if (key_len < kMinTypingCorrectionKeyLen) {
-    return {};
+    return;
   }
 
   std::vector<Result> typing_corrected_results =
       aggregator_->AggregateTypingCorrectedResults(request, segments);
   RewriteResultsForPrediction(request, segments, &typing_corrected_results);
 
-  const TypingCorrectionMixingParams typing_correction_mixing_params =
-      GetTypingCorrectionMixingParams(request, segments, *results,
-                                      typing_corrected_results);
-
   for (auto &result : typing_corrected_results) {
     results->emplace_back(std::move(result));
   }
-
-  return typing_correction_mixing_params;
 }
 
 bool DictionaryPredictor::AddPredictionToCandidates(
     const ConversionRequest &request, Segments *segments,
-    const TypingCorrectionMixingParams &typing_correction_mixing_params,
     absl::Span<Result> results) const {
   DCHECK(segments);
 
@@ -462,14 +447,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     final_results_ptrs.emplace_back(&result);
   }
 
-  const auto &params = request.request().decoder_experiment_params();
-  if (params.typing_correction_result_reranker_mode() > 0) {
-    MaybeRerankAggressiveTypingCorrection(request, *segments,
-                                          &final_results_ptrs);
-  } else {
-    MaybeSuppressAggressiveTypingCorrection(
-        request, typing_correction_mixing_params, &final_results_ptrs);
-  }
+  MaybeRerankAggressiveTypingCorrection(request, *segments,
+                                        &final_results_ptrs);
 
   // Fill segments from final_results_ptrs.
   for (const Result *result : final_results_ptrs) {
@@ -491,70 +470,13 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 void DictionaryPredictor::MaybeRerankAggressiveTypingCorrection(
     const ConversionRequest &request, const Segments &segments,
     std::vector<absl::Nonnull<const Result *>> *results) const {
-  const auto &params = request.request().decoder_experiment_params();
-  if (params.typing_correction_result_reranker_mode() == 0) return;
-
+  if (!IsTypingCorrectionEnabled(request) || results->empty()) {
+    return;
+  }
   const engine::SupplementalModelInterface *supplemental_model =
       modules_.GetSupplementalModel();
   if (supplemental_model == nullptr) return;
-
   supplemental_model->RerankTypingCorrection(request, segments, results);
-}
-
-// static
-void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
-    const ConversionRequest &request,
-    const TypingCorrectionMixingParams &typing_correction_mixing_params,
-    std::vector<absl::Nonnull<const Result *>> *results) {
-  if (results->empty()) return;
-
-  // Top is already literal.
-  const auto &top_result = results->front();
-
-  auto is_typing_correction = [&](const Result &result) {
-    return (
-        result.types & PredictionType::TYPING_CORRECTION ||
-        (result.candidate_attributes & Segment::Candidate::TYPING_CORRECTION));
-  };
-
-  if (!is_typing_correction(*top_result)) {
-    return;
-  }
-
-  const bool force_literal_on_top =
-      typing_correction_mixing_params.literal_on_top;
-  const bool literal_at_least_second =
-      typing_correction_mixing_params.literal_at_least_second;
-
-  if (!force_literal_on_top && !literal_at_least_second) {
-    return;
-  }
-
-  auto promote_result = [&results](int old_idx, int new_idx) {
-    const Result *result = (*results)[old_idx];
-    for (int i = old_idx; i >= new_idx + 1; --i)
-      (*results)[i] = (*results)[i - 1];
-    (*results)[new_idx] = result;
-  };
-
-  const int max_size = std::min<int>(10, results->size());
-  for (int i = 1; i < max_size; ++i) {
-    const Result *result = (*results)[i];
-    // Finds the first non-typing-corrected candidate.
-    if (is_typing_correction(*result)) {
-      continue;
-    }
-    // Replace the literal with top when the cost is close enough or
-    // force_literal_on_top is true.
-    if (force_literal_on_top) {
-      promote_result(i, 0);
-    } else if (literal_at_least_second && i >= 2) {
-      // Moves the literal to the second position even when
-      // literal-on-top condition doesn't match.
-      promote_result(i, 1);
-    }
-    break;
-  }
 }
 
 // static
@@ -1421,29 +1343,6 @@ std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
                     std::make_shared<Result>(current_top_result));
 
   return nullptr;
-}
-
-// Computes the typing correction mixing params.
-// from the `literal_result` and `typing_corrected_results`
-TypingCorrectionMixingParams
-DictionaryPredictor::GetTypingCorrectionMixingParams(
-    const ConversionRequest &request, const Segments &segments,
-    absl::Span<const Result> literal_results,
-    absl::Span<const Result> typing_corrected_results) const {
-  TypingCorrectionMixingParams typing_correction_mixing_params;
-
-  const engine::SupplementalModelInterface *supplemental_model =
-      modules_.GetSupplementalModel();
-
-  if (supplemental_model) {
-    typing_correction_mixing_params.literal_on_top =
-        supplemental_model->ShouldRevertTypingCorrection(
-            request, segments, literal_results, typing_corrected_results);
-  }
-
-  typing_correction_mixing_params.literal_at_least_second = true;
-
-  return typing_correction_mixing_params;
 }
 
 }  // namespace mozc::prediction

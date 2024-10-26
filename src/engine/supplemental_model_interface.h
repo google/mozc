@@ -86,16 +86,6 @@ class SupplementalModelInterface {
       const ConversionRequest &request, const Segments &segments,
       std::vector<absl::Nonnull<const prediction::Result *>> *results) const {}
 
-  // Returns true if the final typing correct result is not confident.
-  // TODO(taku): Remove this function after finishing the migration of
-  // the more general SuppressTypingCorrection method.
-  virtual bool ShouldRevertTypingCorrection(
-      const ConversionRequest &request, const Segments &segments,
-      absl::Span<const prediction::Result> literal_results,
-      absl::Span<const prediction::Result> typing_corrected_results) const {
-    return false;
-  }
-
   // Performs general post correction on `segments`.
   virtual void PostCorrect(const ConversionRequest &request,
                            absl::Nonnull<Segments *> segments) const {}
