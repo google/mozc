@@ -1610,9 +1610,6 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
   composer::Table table;
   composer::Composer composer(&table, &request, &config);
   request_test_util::FillMobileRequest(&request);
-  ConversionRequest conversion_request(
-      &composer, &request, &commands::Context::default_instance(), &config);
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
 
   std::unique_ptr<ConverterAndData> ret =
       CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
@@ -1622,6 +1619,10 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
   CHECK(converter);
   {
     composer.SetPreeditTextForTestOnly("てすとが");
+    commands::Context context;
+    ConversionRequest conversion_request(&composer, &request, &context,
+                                         &config);
+    conversion_request.set_request_type(ConversionRequest::PREDICTION);
     Segments segments;
     EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
@@ -1809,17 +1810,19 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   std::unique_ptr<EngineInterface> engine = CreateEngineWithMobilePredictor();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
-  commands::Request request;
+
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
+  commands::Request request;
+  request_test_util::FillMobileRequest(&request);
   composer::Table table;
   composer::Composer composer(&table, &request, &config);
-  request_test_util::FillMobileRequest(&request);
-  ConversionRequest conversion_request(&composer, &request, &config);
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
-
-  Segments segments;
   composer.SetPreeditTextForTestOnly("あい");
+  commands::Context context;
+
+  ConversionRequest conversion_request(&composer, &request, &context, &config);
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+  Segments segments;
 
   // Remember user history 3 times after getting the top candidate
   std::string top_candidate;
@@ -1863,17 +1866,19 @@ TEST_F(ConverterTest,
   std::unique_ptr<EngineInterface> engine = CreateEngineWithMobilePredictor();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
+
   commands::Request request;
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   composer::Table table;
   composer::Composer composer(&table, &request, &config);
   request_test_util::FillMobileRequest(&request);
-  ConversionRequest conversion_request(&composer, &request, &config);
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
-
-  Segments segments;
   composer.SetPreeditTextForTestOnly("おつかれ");
+  commands::Context context;
+
+  ConversionRequest conversion_request(&composer, &request, &context, &config);
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+  Segments segments;
 
   EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
 

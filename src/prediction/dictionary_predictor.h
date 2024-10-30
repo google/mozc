@@ -68,20 +68,6 @@ struct KeyValueView {
 
 }  // namespace dictionary_predictor_internal
 
-// Parameters to mix the literal and typing corrected results.
-// These parameters define the position of literal and typing corrected
-// results, and determined dynamically using various quality signals.
-struct TypingCorrectionMixingParams {
-  // Moves the literal candidate to the top position even when
-  // the typing corrected result is placed at top.
-  // Set this flag when the typing correction is less confident.
-  bool literal_on_top = false;
-
-  // Moves the literal candidate to the at least second position.
-  // When the literal candidate is already at the top, do nothing.
-  bool literal_at_least_second = false;
-};
-
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
  public:
@@ -156,23 +142,15 @@ class DictionaryPredictor : public PredictorInterface {
           aggregator,
       const ImmutableConverterInterface *immutable_converter);
 
-  bool AddPredictionToCandidates(
-      const ConversionRequest &request, Segments *segments,
-      const TypingCorrectionMixingParams &typing_correction_mixing_params,
-      absl::Span<Result> results) const;
+  bool AddPredictionToCandidates(const ConversionRequest &request,
+                                 Segments *segments,
+                                 absl::Span<Result> results) const;
 
   void FillCandidate(
       const ConversionRequest &request, const Result &result,
       dictionary_predictor_internal::KeyValueView key_value,
       const absl::flat_hash_map<std::string, int32_t> &merged_types,
       Segment::Candidate *candidate) const;
-
-  // Computes the typing correction mixing params.
-  // from the `base_result` and `typing_corrected_results`.
-  TypingCorrectionMixingParams GetTypingCorrectionMixingParams(
-      const ConversionRequest &request, const Segments &segments,
-      absl::Span<const Result> literal_results,
-      absl::Span<const Result> typing_corrected_results) const;
 
   // Returns the position of misspelled character position.
   //
@@ -287,18 +265,13 @@ class DictionaryPredictor : public PredictorInterface {
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
   // Populates typing corrected results to `results`.
-  TypingCorrectionMixingParams MaybePopulateTypingCorrectedResults(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const;
+  void MaybePopulateTypingCorrectedResults(const ConversionRequest &request,
+                                           const Segments &segments,
+                                           std::vector<Result> *results) const;
 
   void MaybeRerankAggressiveTypingCorrection(
       const ConversionRequest &request, const Segments &segments,
       std::vector<absl::Nonnull<const Result *>> *results) const;
-
-  static void MaybeSuppressAggressiveTypingCorrection(
-      const ConversionRequest &request,
-      const TypingCorrectionMixingParams &typing_correction_mixing_params,
-      std::vector<absl::Nonnull<const Result *>> *results);
 
   static void MaybeApplyPostCorrection(const ConversionRequest &request,
                                        const engine::Modules &modules,
