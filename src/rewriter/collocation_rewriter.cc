@@ -167,12 +167,6 @@ bool ParseCompound(const absl::string_view value,
   return true;
 }
 
-// A helper function to push back a string view to a vector.
-inline void PushBackStringView(const absl::string_view s,
-                               std::vector<std::string> *v) {
-  v->emplace_back(s.data(), s.size());
-}
-
 // Handles compound such as "本を読む"(one segment)
 // we want to rewrite using it as if it was "<本|を><読む>"
 // so that we can use collocation data like "厚い本"
@@ -224,10 +218,13 @@ void ResolveCompoundSegment(const absl::string_view top_value,
   }
 }
 
-bool IsNaturalContent(const Segment::Candidate &cand,
-                      const Segment::Candidate &top_cand,
-                      SegmentLookupType type,
-                      std::vector<std::string> *output) {
+// Generates strings for looking up collocation target for |cand|.
+// Returns true if |cand| is valid for collocation look up.
+// strings in |output| will be normalized for look up method.
+bool GenerateLookupTokens(const Segment::Candidate &cand,
+                          const Segment::Candidate &top_cand,
+                          SegmentLookupType type,
+                          std::vector<std::string> *output) {
   const std::string &content = cand.content_value;
   const std::string &value = cand.value;
   const std::string &top_content = top_cand.content_value;
@@ -235,6 +232,13 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   const size_t top_content_len = Util::CharsLen(top_content);
   const size_t content_len = Util::CharsLen(content);
+  const bool should_remove_number = (type == LEFT);
+
+  auto push_back_normalized_string = [&](absl::string_view str) {
+    output->resize(output->size() + 1);
+    CollocationUtil::GetNormalizedScript(str, should_remove_number,
+                                         &output->back());
+  };
 
   if (type == RIGHT && value != top_value && top_content_len >= 2 &&
       content_len == 1) {
@@ -242,15 +246,15 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   }
 
   if (type == LEFT) {
-    output->push_back(value);
+    push_back_normalized_string(value);
   } else {
     output->push_back(content);
     // "舞って" workaround
     // V+"て" is often treated as one compound.
     static constexpr char kPat[] = "て";
     if (absl::EndsWith(content, absl::string_view(kPat, std::size(kPat) - 1))) {
-      PushBackStringView(Util::Utf8SubString(content, 0, content_len - 1),
-                         output);
+      push_back_normalized_string(
+          Util::Utf8SubString(content, 0, content_len - 1));
     }
   }
 
@@ -287,19 +291,21 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   const absl::string_view aux_value =
       Util::Utf8SubString(value, content_len, std::string::npos);
 
-  // Remove number in normalization for the left segment.
-  std::string aux_normalized, top_aux_normalized;
-  CollocationUtil::GetNormalizedScript(aux_value, (type == LEFT),
-                                       &aux_normalized);
-  CollocationUtil::GetNormalizedScript(top_aux_value, (type == LEFT),
-                                       &top_aux_normalized);
-  if (!aux_normalized.empty() &&
-      !Util::IsScriptType(aux_normalized, Util::HIRAGANA)) {
-    if (type == RIGHT) {
-      return false;
-    }
-    if (aux_normalized != top_aux_normalized) {
-      return false;
+  {
+    // Remove number in normalization for the left segment.
+    std::string aux_normalized, top_aux_normalized;
+    CollocationUtil::GetNormalizedScript(aux_value, should_remove_number,
+                                         &aux_normalized);
+    CollocationUtil::GetNormalizedScript(top_aux_value, should_remove_number,
+                                         &top_aux_normalized);
+    if (!aux_normalized.empty() &&
+        !Util::IsScriptType(aux_normalized, Util::HIRAGANA)) {
+      if (type == RIGHT) {
+        return false;
+      }
+      if (aux_normalized != top_aux_normalized) {
+        return false;
+      }
     }
   }
 
@@ -317,7 +323,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
         absl::EndsWith(aux_value, kSuffix)) {
       if (type == RIGHT) {
         // "YYいる" in addition to "YY"
-        output->push_back(value);
+        push_back_normalized_string(value);
       }
       return true;
     }
@@ -326,8 +332,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
         absl::EndsWith(top_aux_value, kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYいる"
-        PushBackStringView(Util::Utf8SubString(value, 0, value_len - 2),
-                           output);
+        push_back_normalized_string(
+            Util::Utf8SubString(value, 0, value_len - 2));
       }
       return true;
     }
@@ -342,7 +348,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
         absl::EndsWith(aux_value, kSuffix)) {
       if (type == RIGHT) {
         // "YYせる" in addition to "YY"
-        output->push_back(value);
+        push_back_normalized_string(value);
       }
       return true;
     }
@@ -351,8 +357,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
         absl::EndsWith(top_aux_value, kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYせる"
-        PushBackStringView(Util::Utf8SubString(value, 0, value_len - 2),
-                           output);
+        push_back_normalized_string(
+            Util::Utf8SubString(value, 0, value_len - 2));
       }
       return true;
     }
@@ -374,8 +380,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
       }
       if (type == RIGHT) {
         // "YYす" in addition to "YY"
-        PushBackStringView(Util::Utf8SubString(value, 0, value_len - 1),
-                           output);
+        push_back_normalized_string(
+            Util::Utf8SubString(value, 0, value_len - 1));
       }
       return true;
     }
@@ -389,8 +395,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     if (aux_value_len == 0 && absl::EndsWith(value, kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYる"
-        PushBackStringView(Util::Utf8SubString(value, 0, value_len - 1),
-                           output);
+        push_back_normalized_string(
+            Util::Utf8SubString(value, 0, value_len - 1));
       }
       return true;
     }
@@ -406,7 +412,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
       if (type == RIGHT) {
         constexpr char kRu[] = "る";
         // "YYする" in addition to "YY"
-        output->push_back(
+        push_back_normalized_string(
             absl::StrCat(value, absl::string_view(kRu, std::size(kRu) - 1)));
       }
       return true;
@@ -424,7 +430,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
             Util::Utf8SubString(content, 0, content_len - 1);
         // XX must be KANJI
         if (Util::IsScriptType(val, Util::KANJI)) {
-          PushBackStringView(val, output);
+          push_back_normalized_string(val);
         }
       }
       return true;
@@ -472,7 +478,7 @@ bool VerifyNaturalContent(const Segment::Candidate &cand,
                           const Segment::Candidate &top_cand,
                           SegmentLookupType type) {
   std::vector<std::string> nexts;
-  return IsNaturalContent(cand, top_cand, RIGHT, &nexts);
+  return GenerateLookupTokens(cand, top_cand, RIGHT, &nexts);
 }
 
 inline bool IsKeyUnknown(const Segment &seg) {
@@ -594,9 +600,8 @@ bool CollocationRewriter::RewriteFromPrevSegment(
 
   const size_t i_max = std::min(seg->candidates_size(), kCandidateSize);
 
-  // Reuse |curs| and |cur| in the loop as this method is performance critical.
+  // Reuse |curs| in the loop as this method is performance critical.
   std::vector<std::string> curs;
-  std::string cur;
   for (size_t i = 0; i < i_max; ++i) {
     if (seg->candidate(i).cost > seg->candidate(0).cost + kMaxCostDiff) {
       continue;
@@ -608,13 +613,12 @@ bool CollocationRewriter::RewriteFromPrevSegment(
       continue;
     }
     curs.clear();
-    if (!IsNaturalContent(seg->candidate(i), seg->candidate(0), RIGHT, &curs)) {
+    if (!GenerateLookupTokens(seg->candidate(i), seg->candidate(0), RIGHT,
+                              &curs)) {
       continue;
     }
 
-    for (int j = 0; j < curs.size(); ++j) {
-      cur.clear();
-      CollocationUtil::GetNormalizedScript(curs[j], false, &cur);
+    for (const std::string &cur : curs) {
       if (collocation_filter_.Exists(prev, cur)) {
         if (i != 0) {
           MOZC_VLOG(3) << prev << cur << " " << seg->candidate(0).value << "->"
@@ -637,10 +641,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
 
   // Cache the results for the next segment
   std::vector<int> next_seg_ok(j_max);  // Avoiding std::vector<bool>
-  std::vector<std::vector<std::string>> normalized_string(j_max);
-
-  // Reuse |nexts| in the loop as this method is performance critical.
-  std::vector<std::string> nexts;
+  std::vector<std::vector<std::string>> nexts(j_max);
   for (size_t j = 0; j < j_max; ++j) {
     next_seg_ok[j] = 0;
 
@@ -650,24 +651,16 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
     if (suppression_filter_.Exists(next_seg->candidate(j))) {
       continue;
     }
-    nexts.clear();
-    if (!IsNaturalContent(next_seg->candidate(j), next_seg->candidate(0), RIGHT,
-                          &nexts)) {
+    if (!GenerateLookupTokens(next_seg->candidate(j), next_seg->candidate(0),
+                              RIGHT, &nexts[j])) {
       continue;
     }
 
     next_seg_ok[j] = 1;
-    for (std::vector<std::string>::const_iterator it = nexts.begin();
-         it != nexts.end(); ++it) {
-      normalized_string[j].push_back(std::string());
-      CollocationUtil::GetNormalizedScript(*it, false,
-                                           &normalized_string[j].back());
-    }
   }
 
-  // Reuse |curs| and |cur| in the loop as this method is performance critical.
+  // Reuse |curs| in the loop as this method is performance critical.
   std::vector<std::string> curs;
-  std::string cur;
   for (size_t i = 0; i < i_max; ++i) {
     if (seg->candidate(i).cost > seg->candidate(0).cost + kMaxCostDiff) {
       continue;
@@ -679,13 +672,12 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
       continue;
     }
     curs.clear();
-    if (!IsNaturalContent(seg->candidate(i), seg->candidate(0), LEFT, &curs)) {
+    if (!GenerateLookupTokens(seg->candidate(i), seg->candidate(0), LEFT,
+                              &curs)) {
       continue;
     }
 
-    for (int k = 0; k < curs.size(); ++k) {
-      cur.clear();
-      CollocationUtil::GetNormalizedScript(curs[k], true, &cur);
+    for (const std::string &cur : curs) {
       for (size_t j = 0; j < j_max; ++j) {
         if (next_seg->candidate(j).cost >
             next_seg->candidate(0).cost + kMaxCostDiff) {
@@ -695,8 +687,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
           continue;
         }
 
-        for (int l = 0; l < normalized_string[j].size(); ++l) {
-          const std::string &next = normalized_string[j][l];
+        for (const std::string &next : nexts[j]) {
           if (collocation_filter_.Exists(cur, next)) {
             DCHECK(VerifyNaturalContent(next_seg->candidate(j),
                                         next_seg->candidate(0), RIGHT))

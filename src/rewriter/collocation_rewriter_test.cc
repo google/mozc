@@ -47,6 +47,8 @@ namespace {
 
 using ::mozc::dictionary::PosMatcher;
 
+// TODO(team): Introduce dependency injection for checking collocation entries
+// instead of using actual bloom filter, which have false positives.
 class CollocationRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   // Helper data structures to define test cases.
@@ -76,8 +78,7 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
 
   CollocationRewriterTest()
       : pos_matcher_(data_manager_.GetPosMatcherData()),
-        collocation_rewriter_(CollocationRewriter::Create(data_manager_)) {
-  }
+        collocation_rewriter_(CollocationRewriter::Create(data_manager_)) {}
 
   // Makes a segment from SegmentData.
   static void MakeSegment(const SegmentData &data, Segment *segment) {
@@ -352,6 +353,64 @@ TEST_F(CollocationRewriterTest, ImmuneToInvalidSegments) {
     // If there's a segment with no candidates, rewrite fails.
     segments.mutable_segment(0)->clear_candidates();
     EXPECT_FALSE(Rewrite(&segments));
+  }
+}
+
+TEST_F(CollocationRewriterTest, RemoveNumber) {
+  // Rule: "周回っ", "周回って"
+
+  {
+    // "いっしゅう" | "まわって"
+    // --------------------
+    // "一週" | "回って"
+    // "一周" |
+    const uint16_t id = pos_matcher_.GetUnknownId();
+    const CandidateData kLeftCands[] = {
+        {"いっしゅう", "いっしゅう", "一週", "一週", 0, id, id},
+        {"いっしゅう", "いっしゅう", "一周", "一周", 0, id, id},
+    };
+    const CandidateData kRightCands[] = {
+        {"まわって", "まわっ", "回って", "回っ", 0, id, id},
+    };
+    const SegmentData kSegmentData[] = {
+        {"いっしゅう", kLeftCands, std::size(kLeftCands)},
+        {"まわって", kRightCands, std::size(kRightCands)},
+    };
+    const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+
+    Segments segments;
+    MakeSegments(kSegments, &segments);
+
+    // "一周回って" should be promoted.
+    EXPECT_TRUE(Rewrite(&segments));
+    EXPECT_EQ(GetTopValue(segments), "一周回って") << segments.DebugString();
+  }
+
+  {
+    // "しゅう" | "いっかいって"
+    // --------------------
+    // "週" | "一回って"
+    // "周" |
+    const uint16_t id = pos_matcher_.GetUnknownId();
+    const CandidateData kLeftCands[] = {
+        {"しゅう", "しゅう", "週", "週", 0, id, id},
+        {"しゅう", "しゅう", "周", "周", 0, id, id},
+    };
+    const CandidateData kRightCands[] = {
+        {"いっかいって", "いっかい", "一回って", "一回", 0, id, id},
+    };
+    const SegmentData kSegmentData[] = {
+        {"しゅう", kLeftCands, std::size(kLeftCands)},
+        {"いっかいって", kRightCands, std::size(kRightCands)},
+    };
+    const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+
+    Segments segments;
+    MakeSegments(kSegments, &segments);
+
+    // "周一回って" should NOT be promoted.
+    EXPECT_FALSE(Rewrite(&segments));
+    EXPECT_EQ(GetTopValue(segments), "週一回って") << segments.DebugString();
   }
 }
 

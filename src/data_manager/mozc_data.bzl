@@ -316,13 +316,16 @@ def mozc_dataset(
         tools = ["//dictionary:gen_pos_matcher_code"],
     )
 
+    def _get_collocation_error_rate(data_tag):
+        return 0.00001 if data_tag != "mock" else 0.000001
+
     native.genrule(
         name = name + "@collocation",
         srcs = [collocation_src],
         outs = ["collocation.data"],
         cmd = (
             "$(location //rewriter:gen_collocation_data_main) " +
-            "--collocation_data=$< --output=$@ --binary_mode"
+            "--collocation_data=$< --output=$@ --binary_mode --error_rate=%f" % _get_collocation_error_rate(tag)
         ),
         tools = ["//rewriter:gen_collocation_data_main"],
     )
