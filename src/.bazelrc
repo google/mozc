@@ -65,6 +65,12 @@ test:macos_env   --test_tag_filters=-nomac
 build:windows_env --build_tag_filters=-nowin
 test:windows_env   --test_tag_filters=-nowin
 
+# A temporary workaround to make "mozc_win_build_rule" work.
+# Note that "incompatible_enable_cc_toolchain_resolution" is now enabled by
+# default. See https://github.com/bazelbuild/bazel/issues/7260
+# TODO: Re-enable "incompatible_enable_cc_toolchain_resolution"
+build:windows_env --noincompatible_enable_cc_toolchain_resolution
+
 # Android specific options
 build:android_env --copt "-DOS_ANDROID"
 build:android_env --build_tag_filters=-noandroid
