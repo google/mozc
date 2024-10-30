@@ -501,10 +501,10 @@ class UserHistoryPredictor : public PredictorInterface {
 
   void MaybeRecordUsageStats(const Segments &segments) const;
 
-  // Removes history entries when the selected ratio is under |min_ratio|.
+  // Removes history entries when the selected ratio is under the threshold.
   // Selected ratio:
   //  (# of candidate committed) / (# of candidate shown on commit event)
-  void MaybeRemoveUnselectedHistory(const Segments &segments, float min_ratio);
+  void MaybeRemoveUnselectedHistory(const Segments &segments);
 
   const dictionary::DictionaryInterface *dictionary_;
   const dictionary::PosMatcher *pos_matcher_;

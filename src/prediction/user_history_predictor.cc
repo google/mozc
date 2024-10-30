@@ -1879,7 +1879,7 @@ void UserHistoryPredictor::MaybeRecordUsageStats(
 }
 
 void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
-    const Segments &segments, float min_ratio) {
+    const Segments &segments) {
   const Segment &segment = segments.conversion_segment(0);
   if (segment.candidates_size() < 1 ||
       segment.segment_type() != Segment::FIXED_VALUE) {
@@ -1887,6 +1887,7 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
   }
 
   static constexpr size_t kMaxHistorySize = 5;
+  static constexpr float kMinSelectedRatio = 0.05;
   for (size_t i = 0; i < std::min(segment.candidates_size(), kMaxHistorySize);
        ++i) {
     const Segment::Candidate &candidate = segment.candidate(i);
@@ -1902,7 +1903,7 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
     const float selected_ratio =
         1.0 * std::max(entry->suggestion_freq(), entry->conversion_freq()) /
         entry->shown_freq();
-    if (selected_ratio < min_ratio) {
+    if (selected_ratio < kMinSelectedRatio) {
       entry->set_suggestion_freq(0);
       entry->set_conversion_freq(0);
       entry->set_shown_freq(0);
@@ -2014,12 +2015,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
 
   InsertHistory(request_type, is_suggestion, last_access_time, segments);
 
-  const float min_ratio = request.request()
-                              .decoder_experiment_params()
-                              .user_history_prediction_min_selected_ratio();
-  if (0.0 < min_ratio && min_ratio <= 1.0) {
-    MaybeRemoveUnselectedHistory(*segments, min_ratio);
-  }
+  MaybeRemoveUnselectedHistory(*segments);
 }
 
 UserHistoryPredictor::SegmentsForLearning

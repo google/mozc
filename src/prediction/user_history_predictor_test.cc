@@ -617,8 +617,6 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
 TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
   request_test_util::FillMobileRequest(&request_);
-  request_.mutable_decoder_experiment_params()
-      ->set_user_history_prediction_min_selected_ratio(0.1);
 
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   WaitForSyncer(predictor);
@@ -673,37 +671,39 @@ TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
     predictor->Finish(convreq, &segments);
   };
 
+  // min selected ratio threshold is 0.05
+
   {
     insert_target();
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 20; ++i) {
       EXPECT_TRUE(find_target());
       select_other();
     }
-    // select: 1, shown: 1+10, ratio: 1/11 < 0.1
+    // select: 1, shown: 1+20, ratio: 1/21 < 0.05
     EXPECT_FALSE(find_target());
   }
 
   {
     insert_target();
-    for (int i = 0; i < 9; ++i) {
+    for (int i = 0; i < 19; ++i) {
       EXPECT_TRUE(find_target());
       select_other();
     }
-    // select: 1, shown 1+9, ratio: 1/10 >= 0.1
+    // select: 1, shown 1+19, ratio: 1/20 >= 0.05
     EXPECT_TRUE(find_target());
 
     // other key does not matter
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 20; ++i) {
       input_other_key();
     }
     EXPECT_TRUE(find_target());
 
-    select_target();  // select: 2, shown 1+9+1, ratio: 2/11 >= 0.1
-    for (int i = 0; i < 10; ++i) {
+    select_target();  // select: 2, shown 1+19+1, ratio: 2/21 >= 0.05
+    for (int i = 0; i < 20; ++i) {
       EXPECT_TRUE(find_target());
       select_other();
     }
-    // select: 2, shown: 1+9+1+10, ratio: 2/21 < 0.1
+    // select: 2, shown: 1+19+1+20, ratio: 2/41 < 0.05
     EXPECT_FALSE(find_target());
   }
 }

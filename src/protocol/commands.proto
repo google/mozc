@@ -649,11 +649,6 @@ message DecoderExperimentParams {
 
   optional int32 max_composition_event_to_process = 64 [default = 2];
 
-  // Remove user history prediction entry when its selected ratio is lower
-  // than the value.
-  optional float user_history_prediction_min_selected_ratio = 78
-      [default = 0.0];
-
   // Offset to promote Katakana candidates in rewriter.
   // The promotion will be disabled if the value is negative.
   optional int32 katakana_promotion_offset = 83 [default = 5];
