@@ -22,7 +22,7 @@ Any category is OK so far.
 | {YEAR}  | 4 digits year (2021) |
 | {MONTH} | 2 digits month (10)  |
 | {DATE}  | 2 digits date (01)   |
-| {{}     | sinle { character    |
+| {{}     | single { character   |
 
 ## Keymap (shortcut keys)
 
@@ -209,12 +209,12 @@ active_on_launch: False
 ### Fixed composition mode per engine
 
 `composition_mode` specifies the composition mode every time the engine is
-enabled. This is useful to switch the composition mode by using Ibus hot keys.
+enabled. This is useful to switch the composition mode by using IBus hot keys.
 
 The available values are `DIRECT`, `HIRAGANA`, `FULL_KATAKANA`, `HALF_ASCII`, `FULL_ASCII`, `HALF_KATAKANA`, and `NONE`.
 `NONE` does not change the composition mode.
 
-`symbol` is a label to represent the engine used by Ibus.
+`symbol` is a label to represent the engine used by IBus.
 
 `composition_mode` and `symbol` are available in 2.28.4950 and later versions.
 
