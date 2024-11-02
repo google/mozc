@@ -1,6 +1,0 @@
-# WORKSPACE.bzlmod is used with Bzlmod (i.e. MODULE.bazel).
-# To use Bzlmod, you need to specify --enable_bzlmod to the Bazel command or
-# modify .bazelrc.
-
-# This empty file prevents fetching any dependencies from the old WORKSPACE
-# system when Bzlmod is enabled.
