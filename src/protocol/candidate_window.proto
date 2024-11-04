@@ -34,7 +34,7 @@ syntax = "proto2";
 
 package mozc.commands;
 
-option java_outer_classname = "ProtoCandidates";
+option java_outer_classname = "ProtoCandidateWindow";
 option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
 
 // Annotation against a candidate.
