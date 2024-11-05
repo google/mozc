@@ -573,7 +573,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 102
+// Next ID: 103
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -666,6 +666,11 @@ message DecoderExperimentParams {
   // default_value: 500*log(500)
   optional int32 realtime_conversion_candidate_checker_cost_max_diff = 99
       [default = 3107];
+
+  // Cost offset for handwriting conversion candidate.
+  // default_value: 10*log(500)
+  optional int32 handwriting_conversion_candidate_cost_offset = 102
+      [default = 1151];
 }
 
 // Clients' request to the server.

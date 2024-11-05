@@ -3074,11 +3074,14 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwriting) {
   MockDictionary *mock_dict = data_and_aggregator->mutable_dictionary();
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
+  constexpr int kCostOffset = 3000;
   Segments segments;
   // Handwriting request
   request_test_util::FillMobileRequestForHandwriting(request_.get());
   request_->mutable_decoder_experiment_params()
       ->set_max_composition_event_to_process(1);
+  request_->mutable_decoder_experiment_params()
+      ->set_handwriting_conversion_candidate_cost_offset(kCostOffset);
   {
     commands::SessionCommand command;
     commands::SessionCommand::CompositionEvent *composition_event =
@@ -3158,6 +3161,8 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwriting) {
     if (result.value == "かん字じ典") {
       // Top recognition result
       EXPECT_EQ(result.wcost, 0);
+    } else if (result.key == "かんじじてん") {
+      EXPECT_GE(result.wcost, kCostOffset);
     }
   }
 }

@@ -1048,14 +1048,16 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
   DCHECK(request.has_composer());
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION);
+  const commands::DecoderExperimentParams &param =
+      request.request().decoder_experiment_params();
 
+  const int handwriting_cost_offset =
+      param.handwriting_conversion_candidate_cost_offset();
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
   int processed_count = 0;
-  const int size_to_process = request.request()
-                                  .decoder_experiment_params()
-                                  .max_composition_event_to_process();
+  const int size_to_process = param.max_composition_event_to_process();
   absl::Span<const commands::SessionCommand::CompositionEvent>
       composition_events = request.composer().GetHandwritingCompositions();
   for (size_t i = 0; i < composition_events.size(); ++i) {
@@ -1065,13 +1067,13 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
       continue;
     }
     const int recognition_cost = -500.0 * log(elm.probability());
-    constexpr int kCostOffset = 3453;  // 500 * log(1000) = ~3453
+    constexpr int kAsisCostOffset = 3453;  // 500 * log(1000) = ~3453
     Result asis_result = {
         .key = elm.composition_string(),
         .value = elm.composition_string(),
         .types = UNIGRAM,
         // Set small cost for the top recognition result.
-        .wcost = (i == 0) ? 0 : kCostOffset + recognition_cost,
+        .wcost = (i == 0) ? 0 : kAsisCostOffset + recognition_cost,
         .candidate_attributes = (Segment::Candidate::NO_VARIANTS_EXPANSION |
                                  Segment::Candidate::NO_EXTRA_DESCRIPTION |
                                  Segment::Candidate::NO_MODIFICATION),
@@ -1085,8 +1087,9 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
       ++processed_count;
 
       // Populate |results| with the look up result.
-      HandwritingLookupCallback callback(cutoff_threshold, recognition_cost,
-                                         query_info->constraints, results);
+      HandwritingLookupCallback callback(
+          cutoff_threshold, handwriting_cost_offset + recognition_cost,
+          query_info->constraints, results);
       dictionary_->LookupExact(query_info->query, request, &callback);
       // Rewrite key with the look-up query.
       asis_result.key = query_info->query;
