@@ -1250,4 +1250,29 @@ TEST_P(NumberStyleLearningTest, NumberRewriterTest) {
   }
 }
 
+TEST_F(NumberRewriterTest, NoModification) {
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  Segments segments;
+  Segment *seg = segments.push_back_segment();
+  for (int i = 0; i < 3; ++i) {
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->lid = pos_matcher_.GetGeneralNounId();
+    candidate->rid = pos_matcher_.GetGeneralNounId();
+    candidate->key = "さん";
+    candidate->content_key = candidate->key;
+    candidate->value = "3";
+    candidate->content_value = candidate->value;
+    candidate->cost = 5925;
+    candidate->wcost = 5000;
+    if (i == 0) {
+      candidate->attributes = Segment::Candidate::NO_MODIFICATION;
+    }
+  }
+
+  EXPECT_EQ(seg->candidates_size(), 3);
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
+  EXPECT_EQ(seg->candidate(0).value, "3");
+  EXPECT_GT(seg->candidates_size(), 3);
+}
+
 }  // namespace mozc

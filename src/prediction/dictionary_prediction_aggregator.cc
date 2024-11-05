@@ -1073,7 +1073,8 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
         // Set small cost for the top recognition result.
         .wcost = (i == 0) ? 0 : kCostOffset + recognition_cost,
         .candidate_attributes = (Segment::Candidate::NO_VARIANTS_EXPANSION |
-                                 Segment::Candidate::NO_EXTRA_DESCRIPTION),
+                                 Segment::Candidate::NO_EXTRA_DESCRIPTION |
+                                 Segment::Candidate::NO_MODIFICATION),
     };
 
     const std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
