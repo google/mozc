@@ -39,6 +39,7 @@
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 #include "base/file_stream.h"
@@ -228,7 +229,8 @@ const char *kFailedScenarioFileList[] = {
 };
 INSTANTIATE_TEST_SUITE_P(DISABLED_SessionHandlerScenarioParameters,
                          SessionHandlerScenarioTest,
-                         ::testing::ValuesIn(kFailedScenarioFileList));
+                         ::testing::ValuesIn(kFailedScenarioFileList),
+                         SessionHandlerScenarioTest::GetTestName);
 
 void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
   std::vector<std::string> args = handler.Parse(line);
@@ -264,7 +266,18 @@ TEST_P(SessionHandlerScenarioTest, TestImplBase) {
 
 class SessionHandlerScenarioTestForRequest
     : public SessionHandlerScenarioTestBase,
-      public WithParamInterface<std::tuple<const char *, commands::Request>> {};
+      public WithParamInterface<std::tuple<const char *, commands::Request>> {
+ public:
+  static std::string GetTestName(
+      const ::testing::TestParamInfo<ParamType> &info) {
+    return absl::StrCat(
+        info.index, "_",
+        absl::StrReplaceAll(
+            FileUtil::Basename(
+                FileUtil::NormalizeDirectorySeparator(std::get<0>(info.param))),
+            {{".", "_"}}));
+  }
+};
 
 const char *kScenariosForExperimentParams[] = {
 #define DATA_DIR "test/session/scenario/"
@@ -273,6 +286,7 @@ const char *kScenariosForExperimentParams[] = {
     DATA_DIR "mobile_preedit.txt",
     DATA_DIR "mobile_qwerty_transliteration_scenario.txt",
     DATA_DIR "mobile_revert_user_history_learning.txt",
+    DATA_DIR "mobile_switch_input_mode.txt",
     DATA_DIR "mobile_t13n_candidates.txt",
     DATA_DIR "mobile_zero_query.txt",
 #undef DATA_DIR
@@ -302,7 +316,8 @@ INSTANTIATE_TEST_SUITE_P(
               request.mutable_decoder_experiment_params()
                   ->set_enable_findability_oriented_order(true);
               return request;
-            }())));
+            }())),
+    SessionHandlerScenarioTestForRequest::GetTestName);
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
   // Open the scenario file.

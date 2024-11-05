@@ -49,9 +49,7 @@
 #include "composer/composer.h"
 #include "composer/key_event_util.h"
 #include "composer/table.h"
-#include "converter/segments.h"
 #include "engine/engine_interface.h"
-#include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/ime_context.h"
@@ -2722,19 +2720,11 @@ bool Session::PredictAndConvert(commands::Command *command) {
 }
 
 void Session::OutputFromState(commands::Command *command) {
-  if (context_->state() == ImeContext::PRECOMPOSITION) {
+  if (context_->state() == ImeContext::DIRECT) {
     OutputMode(command);
     return;
   }
-  if (context_->state() == ImeContext::COMPOSITION) {
-    OutputComposition(command);
-    return;
-  }
-  if (context_->state() == ImeContext::CONVERSION) {
-    Output(command);
-    return;
-  }
-  OutputMode(command);
+  Output(command);
 }
 
 void Session::Output(commands::Command *command) {

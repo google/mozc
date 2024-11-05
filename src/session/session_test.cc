@@ -380,11 +380,16 @@ void SwitchInputFieldType(commands::Context::InputFieldType type,
   EXPECT_EQ(session->context().composer().GetInputFieldType(), type);
 }
 
+bool SwitchInputModeCommand(commands::CompositionMode mode, Session *session,
+                            commands::Command *command) {
+  SetSendCommandCommand(commands::SessionCommand::SWITCH_INPUT_MODE, command);
+  command->mutable_input()->mutable_command()->set_composition_mode(mode);
+  return session->SendCommand(command);
+}
+
 void SwitchInputMode(commands::CompositionMode mode, Session *session) {
   commands::Command command;
-  SetSendCommandCommand(commands::SessionCommand::SWITCH_INPUT_MODE, &command);
-  command.mutable_input()->mutable_command()->set_composition_mode(mode);
-  EXPECT_TRUE(session->SendCommand(&command));
+  EXPECT_TRUE(SwitchInputModeCommand(mode, session, &command));
 }
 
 }  // namespace
@@ -559,7 +564,8 @@ class SessionTest : public testing::TestWithTempUserProfile {
   ConversionRequest CreateConversionRequest(const Session &session) {
     const ImeContext &context = session.context();
     const ConversionRequest request(&context.composer(), &context.GetRequest(),
-                              &context.client_context(), &context.GetConfig());
+                                    &context.client_context(),
+                                    &context.GetConfig());
     return request;
   }
 
@@ -923,6 +929,71 @@ TEST_F(SessionTest, SwitchInputMode) {
   }
 }
 
+TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  {
+    Session session(&engine);
+    InitSessionToPrecomposition(&session);
+
+    // Enable zero query suggest.
+    commands::Request request;
+    SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
+
+    commands::Command command;
+    session.Commit(&command);
+    EXPECT_EQ(command.output().result().value(), "GOOGLE");
+    EXPECT_EQ(GetComposition(command), "");
+
+    EXPECT_TRUE(command.output().has_all_candidate_words());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
+
+    // SWITCH_INPUT_MODE
+    command.Clear();
+    EXPECT_TRUE(
+        SwitchInputModeCommand(commands::FULL_ASCII, &session, &command));
+
+    // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
+    EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
+    EXPECT_TRUE(command.output().has_all_candidate_words());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
+  }
+
+  {
+    Session session(&engine);
+    InitSessionToPrecomposition(&session);
+
+    {
+      // Set up a mock conversion result.
+      Segments segments;
+      Segment *segment;
+      segment = segments.add_segment();
+      segment->set_key("");
+      segment->add_candidate()->value = "google";
+      EXPECT_CALL(converter, StartSuggestion(_, _))
+          .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+    }
+    // Type "g".
+    commands::Command command;
+    InsertCharacterChars("g", &session, &command);
+
+    EXPECT_TRUE(command.output().has_all_candidate_words());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
+
+    // SWITCH_INPUT_MODE
+    command.Clear();
+    EXPECT_TRUE(
+        SwitchInputModeCommand(commands::FULL_ASCII, &session, &command));
+
+    // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
+    EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
+    EXPECT_TRUE(command.output().has_all_candidate_words());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
+  }
+}
+
 TEST_F(SessionTest, RevertComposition) {
   MockConverter converter;
   MockEngine engine;
@@ -1139,7 +1210,6 @@ TEST_F(SessionTest, ConvertPrev) {
 }
 
 TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
-
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -3865,7 +3935,7 @@ TEST_F(SessionTest, Shortcut) {
     SetAiueo(&segments);
     const ImeContext &context = session.context();
     const ConversionRequest request(&context.composer(), &context.GetRequest(),
-                              &context.GetConfig());
+                                    &context.GetConfig());
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -7689,7 +7759,6 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
   Session session(&engine);
   InitSessionToPrecomposition(&session);
 
-
   commands::Command command;
   InsertCharacterChars("nekonoshippowonuita", &session, &command);
 
@@ -7754,7 +7823,6 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
-
 
   commands::Command command;
   InsertCharacterChars("nekonoshippowonuita", &session, &command);
