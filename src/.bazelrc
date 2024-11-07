@@ -17,15 +17,6 @@ common:android      --config=android_env --define TARGET=oss_android
 common:oss_android  --config=android_env --define TARGET=oss_android
 common:prod_android --config=android_env --define TARGET=prod_android
 
-## Bzlmod options: Bzlmod is the default except for Android.
-common:linux_env   --config=bzlmod
-common:macos_env   --config=bzlmod
-common:windows_env --config=bzlmod
-common:android_env --config=bzlmod
-
-common:bzlmod --enable_bzlmod
-common:workspace --noenable_bzlmod
-
 ## Dev channel
 build:dev_channel --define CHANNEL=dev
 
@@ -74,9 +65,6 @@ build:windows_env --noincompatible_enable_cc_toolchain_resolution
 # Android specific options
 build:android_env --copt "-DOS_ANDROID"
 build:android_env --build_tag_filters=-noandroid
-test:android_env   --test_tag_filters=-noandroid
-
-## Android Blzmod specific options
-### --experimental_google_legacy_api is required for all platforms.
-build:bzlmod --experimental_google_legacy_api
 build:android_env --experimental_enable_android_migration_apis
+build:android_env --experimental_google_legacy_api
+test:android_env  --test_tag_filters=-noandroid
