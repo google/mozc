@@ -1788,6 +1788,50 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
   }
 
   {
+    // Inner segment boundary with size 1 may have better information.
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    constexpr absl::string_view kKey = "わたしの";
+    constexpr absl::string_view kValue = "私の";
+    segments.mutable_segment(0)->set_key(kKey);
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+
+    candidate->value = kValue;
+    candidate->content_value = kValue;
+    candidate->key = kKey;
+    candidate->content_key = kKey;
+    // "わたしの, 私の", "わたし, 私"
+    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    candidate->lid = 10;
+    candidate->rid = 10;
+
+    segments.mutable_segment(0)->move_candidate(1, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+
+    {
+      const Segments learning_segments = UserSegmentHistoryRewriterTestPeer::
+          MakeLearningSegmentsFromInnerSegments(segments);
+      EXPECT_EQ(learning_segments.segments_size(), 1);
+      EXPECT_EQ(learning_segments.segment(0).key(), "わたしの");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).key, "わたしの");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).value, "私の");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).content_key,
+                "わたし");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).content_value, "私");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).lid, 10);
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).rid, 10);
+      EXPECT_EQ(learning_segments.segment(0).segment_type(),
+                Segment::FIXED_VALUE);
+    }
+
+    ConversionRequest convreq = CreateConversionRequest();
+    rewriter->Finish(convreq, &segments);
+  }
+
+  {
     segments.Clear();
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("なかの");

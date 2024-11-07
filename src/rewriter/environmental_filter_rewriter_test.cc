@@ -113,6 +113,11 @@ constexpr EmojiData kTestEmojiList[] = {
     {"🪬", EmojiVersion::E14_0},  // 1FAAC
     {"🫃", EmojiVersion::E14_0},  // 1FAC3
     {"🫠", EmojiVersion::E14_0},  // 1FAE0
+
+    // Emoji 16.0 Example
+    {"🪏", EmojiVersion::E16_0},  // 1FA8F
+    {"🫆", EmojiVersion::E16_0},  // 1FAC6
+    {"🫟", EmojiVersion::E16_0},  // 1FADF
 };
 
 // This data manager overrides GetEmojiRewriterData() to return the above test
@@ -286,6 +291,36 @@ TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterTest) {
 
     segments.Clear();
     AddSegment("a", {"🛻", "🤵‍♀", "🥸"}, &segments);
+
+    EXPECT_FALSE(rewriter_->Rewrite(conversion_request, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
+  }
+}
+
+TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterE160Test) {
+  // Emoji 16.0 characters are filtered by default.
+  {
+    Segments segments;
+    const ConversionRequest request;
+
+    segments.Clear();
+    AddSegment("えもじ", {"🪏", "🫆", "🫟"}, &segments);
+
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
+  }
+
+  // Emoji 16.0 characters are added when they are renderable.
+  {
+    commands::Request request;
+    request.add_additional_renderable_character_groups(
+        commands::Request::EMOJI_16_0);
+    ConversionRequest conversion_request;
+    Segments segments;
+    conversion_request.set_request(&request);
+
+    segments.Clear();
+    AddSegment("えもじ", {"🪏", "🫆", "🫟"}, &segments);
 
     EXPECT_FALSE(rewriter_->Rewrite(conversion_request, &segments));
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);

@@ -724,7 +724,7 @@ Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
   Segments ret;
   for (const Segment &segment : segments) {
     const Segment::Candidate &candidate = segment.candidate(0);
-    if (candidate.inner_segment_boundary.size() <= 1) {
+    if (candidate.inner_segment_boundary.empty()) {
       // No inner segment info
       Segment *seg = ret.add_segment();
       *seg = segment;

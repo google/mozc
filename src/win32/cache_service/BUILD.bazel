@@ -30,6 +30,7 @@
 # Visibility:  please choose a more appropriate default for the package,
 # and update any rules that should be different.
 
+load("@com_google_protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",

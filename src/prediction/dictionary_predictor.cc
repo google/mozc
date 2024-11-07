@@ -1328,7 +1328,7 @@ std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
   // 3. current key is shorter than previous key.
   // 4. current key is the prefix of previous key.
   // 5. current result is not a partial suggestion.
-  if (prev_top_result && cur_top_key_length > prev_top_key_length &&
+  if (prev_top_result && cur_top_key_length >= prev_top_key_length &&
       std::abs(current_top_result.cost - prev_top_result->cost) < max_diff &&
       current_top_result.key.size() < prev_top_result->key.size() &&
       !(current_top_result.types & PREFIX) &&
