@@ -65,6 +65,4 @@ build:windows_env --noincompatible_enable_cc_toolchain_resolution
 # Android specific options
 build:android_env --copt "-DOS_ANDROID"
 build:android_env --build_tag_filters=-noandroid
-build:android_env --experimental_enable_android_migration_apis
-build:android_env --experimental_google_legacy_api
 test:android_env  --test_tag_filters=-noandroid
