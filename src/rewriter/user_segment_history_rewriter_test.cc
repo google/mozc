@@ -160,6 +160,7 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   const PosMatcher &pos_matcher() const { return pos_matcher_; }
+  const PosGroup &pos_group() const { return *pos_group_; }
 
   NumberRewriter *CreateNumberRewriter() const {
     return new NumberRewriter(&mock_data_manager_);
@@ -190,7 +191,6 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
     return convreq;
   }
 
-  std::unique_ptr<ConversionRequest> convreq_;
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
 
@@ -1832,6 +1832,50 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
   }
 
   {
+    // Inner segment boundary with size 1 may have better information.
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    constexpr absl::string_view kKey = "わたしの";
+    constexpr absl::string_view kValue = "私の";
+    segments.mutable_segment(0)->set_key(kKey);
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+
+    candidate->value = kValue;
+    candidate->content_value = kValue;
+    candidate->key = kKey;
+    candidate->content_key = kKey;
+    // "わたしの, 私の", "わたし, 私"
+    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    candidate->lid = 10;
+    candidate->rid = 10;
+
+    segments.mutable_segment(0)->move_candidate(1, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+
+    {
+      const Segments learning_segments = UserSegmentHistoryRewriterTestPeer::
+          MakeLearningSegmentsFromInnerSegments(segments);
+      EXPECT_EQ(learning_segments.segments_size(), 1);
+      EXPECT_EQ(learning_segments.segment(0).key(), "わたしの");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).key, "わたしの");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).value, "私の");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).content_key,
+                "わたし");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).content_value, "私");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).lid, 10);
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).rid, 10);
+      EXPECT_EQ(learning_segments.segment(0).segment_type(),
+                Segment::FIXED_VALUE);
+    }
+
+    ConversionRequest convreq = CreateConversionRequest();
+    rewriter->Finish(convreq, &segments);
+  }
+
+  {
     segments.Clear();
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("なかの");
@@ -1851,6 +1895,97 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
     ConversionRequest convreq = CreateConversionRequest();
     EXPECT_TRUE(rewriter->Rewrite(convreq, &segments));
     EXPECT_EQ(segments.segment(0).candidate(0).value, "中野");
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, ReplaceableSingleKanji) {
+  request_->mutable_decoder_experiment_params()
+      ->set_user_segment_history_rewriter_replace_proper_noun(true);
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  const ConversionRequest convreq = CreateConversionRequest();
+
+  rewriter->Clear();
+  {
+    InitSegments(&segments, 1);
+    Segment *segment = segments.mutable_segment(0);
+    segment->set_key("たかしの");
+    {
+      Segment::Candidate *c = segment->mutable_candidate(0);
+      c->key = "たかしの";
+      c->content_key = "たかし";
+      c->value = "高しの";
+      c->content_value = "高し";
+      c->lid = pos_matcher().GetFunctionalId();
+      c->rid = pos_matcher().GetFunctionalId();
+    }
+    {
+      // 名詞,固有名詞,人名,名
+      Segment::Candidate *c = segment->mutable_candidate(1);
+      c->key = "たかしの";
+      c->content_key = "たかし";
+      c->value = "隆史の";
+      c->content_value = "隆史";
+      c->lid = pos_matcher().GetFirstNameId();
+      c->rid = pos_matcher().GetFunctionalId();
+    }
+    {
+      // Single kanji may have arbitrary lid/rid based on the other reference
+      // candidate.
+      Segment::Candidate *c = segment->mutable_candidate(2);
+      c->key = "たかしの";
+      c->content_key = "たかし";
+      c->value = "崇の";
+      c->content_value = "崇";
+      c->lid = pos_matcher().GetGeneralNounId();
+      c->rid = pos_matcher().GetFunctionalId();
+    }
+
+    EXPECT_NE(pos_group().GetPosGroup(segment->candidate(0).lid),
+              pos_group().GetPosGroup(segment->candidate(2).lid));
+    segment->move_candidate(2, 0);
+    segment->mutable_candidate(0)->attributes |= Segment::Candidate::RERANKED;
+    segment->set_segment_type(Segment::FIXED_VALUE);
+
+    rewriter->Finish(convreq, &segments);
+  }
+  {
+    InitSegments(&segments, 1);
+    Segment *segment = segments.mutable_segment(0);
+    segment->set_key("たかしが");
+    {
+      // 名詞,固有名詞,人名,名
+      Segment::Candidate *c = segment->mutable_candidate(0);
+      c->key = "たかしが";
+      c->content_key = "たかし";
+      c->value = "剛が";
+      c->content_value = "剛";
+      c->lid = pos_matcher().GetFirstNameId();
+      c->rid = pos_matcher().GetFunctionalId();
+    }
+    {
+      // 名詞,固有名詞
+      Segment::Candidate *c = segment->mutable_candidate(1);
+      c->key = "たかしが";
+      c->content_key = "たかし";
+      c->value = "高師が";
+      c->content_value = "高師";
+      c->lid = pos_matcher().GetUniqueNounId();
+      c->rid = pos_matcher().GetFunctionalId();
+    }
+    {
+      Segment::Candidate *c = segment->mutable_candidate(2);
+      c->key = "たかしが";
+      c->content_key = "たかし";
+      c->value = "崇が";
+      c->content_value = "崇";
+      c->lid = pos_matcher().GetGeneralNounId();
+      c->rid = pos_matcher().GetFunctionalId();
+    }
+
+    EXPECT_TRUE(rewriter->Rewrite(convreq, &segments));
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "崇が");
   }
 }
 

@@ -316,6 +316,12 @@ INSTANTIATE_TEST_SUITE_P(
               request.mutable_decoder_experiment_params()
                   ->set_enable_findability_oriented_order(true);
               return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_user_segment_history_rewriter_replace_proper_noun(true);
+              return request;
             }())),
     SessionHandlerScenarioTestForRequest::GetTestName);
 
