@@ -35,12 +35,10 @@ build for OSS Mozc.
 """
 
 import argparse
-from collections.abc import Iterator
 import dataclasses
 import hashlib
 import os
 import pathlib
-import shutil
 import stat
 import subprocess
 import sys
@@ -280,11 +278,12 @@ def update_submodules(dryrun: bool = False) -> None:
     subprocess.run(command, shell=True, check=True)
 
 
-def exec_command(args: list[str], cwd: os.PathLike) -> None:
+def exec_command(args: list[str], cwd: os.PathLike[str]) -> None:
   """Runs the given command then returns the output.
 
   Args:
     args: The command to be executed.
+    cwd: The working directory to execute the command.
 
   Raises:
     ChildProcessError: When the given command cannot be executed.
