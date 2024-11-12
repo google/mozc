@@ -429,7 +429,7 @@ OK:	かわきもの	乾き物	Conversion Expected	乾き物	2.30.5544
 OK:	そけんのらんよう	訴権の濫用	Conversion Expected	訴権の濫用	2.30.5544
 OK:	こうそけんのらんよう	公訴権の濫用	Conversion Expected	公訴権の濫用	2.30.5544
 FAILED:	だいじょうぶか	大丈夫化	Conversion Expected	大丈夫か	2.30.5618
-FAILED:	じみんとうそうさいせん	自民党総裁線	Conversion Expected	自民党総裁選	2.30.5618
+OK:	じみんとうそうさいせん	自民党総裁選	Conversion Expected	自民党総裁選	2.30.5618
 FAILED:	せっていかえるか	設定蛙化	Conversion Expected	設定変えるか	2.30.5618
 FAILED:	じょうきょうをちゅうしする	状況を中止する	Conversion Expected	状況を注視する	2.30.5490
 FAILED:	とくにはございません	得にはございません	Conversion Expected	特にはございません	2.30.5618
@@ -437,7 +437,7 @@ FAILED:	とくにはありません	得にはありません	Conversion Expected
 FAILED:	めのまえ	眼の前	Conversion Expected	目の前	2.30.5618
 FAILED:	ひとこない	人庫内	Conversion Expected	人来ない	2.30.5618
 FAILED:	いいごえん	良い五円	Conversion Expected	いいご縁	2.30.5618
-FAILED:	まいとしこうれい	毎年高齢	Conversion Expected	毎年恒例	2.30.5618
+OK:	まいとしこうれい	毎年恒例	Conversion Expected	毎年恒例	2.30.5618
 FAILED:	まんがよんだり	マンが読んだり	Conversion Expected	漫画読んだり	2.30.5618
 FAILED:	じんこうにかいしゃする	人口に会社する	Conversion Expected	人口に膾炙する	2.30.5618
 FAILED:	いいごえんがあれば	いい御縁があれば	Conversion Expected	いいご縁があれば	2.30.5618
@@ -445,8 +445,8 @@ FAILED:	にせんえんさつ	にせん円札	Conversion Expected	二千円札	2
 FAILED:	ごせんえんさつ	互選円札	Conversion Expected	五千円札	2.30.5618
 FAILED:	いちまんえんさつ	糸満円札	Conversion Expected	一万円札	2.30.5618
 FAILED:	いちまん	糸満	Conversion Expected	一万	2.30.5618
-FAILED:	ていせいぶん	低成分	Conversion Expected 9	訂正分	2.30.5618
-FAILED:	ていせいぶん	低成分	Conversion Expected 9	訂正文	2.30.5618
+OK:	ていせいぶん	訂正分	Conversion Expected 9	訂正分	2.30.5618
+OK:	ていせいぶん	訂正分	Conversion Expected 9	訂正文	2.30.5618
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
