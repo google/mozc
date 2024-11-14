@@ -52,6 +52,7 @@ from collections.abc import Iterator
 import dataclasses
 import functools
 import os
+import platform
 import pathlib
 import shutil
 import subprocess
@@ -67,10 +68,73 @@ ABS_SCRIPT_PATH = pathlib.Path(__file__).absolute()
 ABS_MOZC_SRC_DIR = ABS_SCRIPT_PATH.parents[1]
 ABS_QT_SRC_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_src')
 ABS_QT_DEST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
+ABS_QT_HOST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_host')
 # The archive filename should be consistent with update_deps.py.
 ABS_QT6_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
     'third_party_cache', 'qtbase-everywhere-src-6.8.0.tar.xz')
 ABS_DEFAULT_NINJA_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'ninja')
+QT_CONFIGURE_COMMON = [
+  '-opensource',
+  '-c++std', 'c++20',
+  '-silent',
+  '-no-cups',
+  '-no-dbus',
+  '-no-feature-androiddeployqt',
+  '-no-feature-animation',
+  '-no-feature-calendarwidget',
+  '-no-feature-completer',
+  '-no-feature-concatenatetablesproxymodel',
+  '-no-feature-concurrent',
+  '-no-feature-dial',
+  '-no-feature-effects',
+  '-no-feature-fontcombobox',
+  '-no-feature-fontdialog',
+  '-no-feature-identityproxymodel',
+  '-no-feature-image_heuristic_mask',
+  '-no-feature-imageformatplugin',
+  '-no-feature-islamiccivilcalendar',
+  '-no-feature-itemmodeltester',
+  '-no-feature-jalalicalendar',
+  '-no-feature-macdeployqt',
+  '-no-feature-mdiarea',
+  '-no-feature-mimetype',
+  '-no-feature-movie',
+  '-no-feature-network',
+  '-no-feature-poll-exit-on-error',
+  '-no-feature-qmake',
+  '-no-feature-sha3-fast',
+  '-no-feature-sharedmemory',
+  '-no-feature-socks5',
+  '-no-feature-splashscreen',
+  '-no-feature-sql',
+  '-no-feature-sqlmodel',
+  '-no-feature-sspi',
+  '-no-feature-stringlistmodel',
+  '-no-feature-tabletevent',
+  '-no-feature-testlib',
+  '-no-feature-textbrowser',
+  '-no-feature-textmarkdownreader',
+  '-no-feature-textmarkdownwriter',
+  '-no-feature-textodfwriter',
+  '-no-feature-timezone',
+  '-no-feature-topleveldomain',
+  '-no-feature-undoview',
+  '-no-feature-whatsthis',
+  '-no-feature-windeployqt',
+  '-no-feature-wizard',
+  '-no-feature-xml',
+  '-no-icu',
+  '-no-opengl',
+  '-no-sql-db2',
+  '-no-sql-ibase',
+  '-no-sql-mysql',
+  '-no-sql-oci',
+  '-no-sql-odbc',
+  '-no-sql-psql',
+  '-no-sql-sqlite',
+  '-nomake', 'examples',
+  '-nomake', 'tests',
+]
 
 
 def is_windows() -> bool:
@@ -285,6 +349,59 @@ def get_qt_version(args: argparse.Namespace) -> QtVersion:
   )
 
 
+def make_host_configure_options(args: argparse.Namespace) -> list[str]:
+  """Makes necessary configure options to build Qt host tools based on args.
+
+  Args:
+    args: build options to be used to customize configure options of Qt.
+
+  Returns:
+    A list of configure options to be passed to configure of Qt.
+  Raises:
+    ValueError: When Qt major version is not 6.
+  """
+
+  qt_version = get_qt_version(args)
+
+  if qt_version.major != 6:
+    raise ValueError(f'Only Qt6 is supported but specified {qt_version}.')
+
+  qt_configure_options = QT_CONFIGURE_COMMON + [
+    '-no-accessibility',
+    '-no-gui',
+    '-no-widgets',
+    '-make', 'tools',
+    # Always build Qt tools (e.g. "uic") as release build.
+    '-release',
+    # Qt tools (e.g. "uic") are not directly or indirectly linked to Mozc's
+    # artifacts. Thus it's OK to build them with statically linking to Qt
+    # libraries without worrying about license.
+    '-static',
+  ]
+
+  if is_mac():
+    qt_configure_options += [
+        '-platform', 'macx-clang',
+        '-qt-libpng',
+        '-qt-pcre',
+    ]
+  elif is_windows():
+    qt_configure_options += [
+        '-no-freetype',
+        '-no-harfbuzz',
+        '-platform', 'win32-msvc',
+    ]
+  if args.confirm_license:
+    qt_configure_options += ['-confirm-license']
+
+  qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
+  qt_host_dir = pathlib.Path(args.qt_host_dir).resolve()
+  if qt_src_dir != qt_host_dir:
+    qt_configure_options += ['-prefix', str(qt_host_dir)]
+
+  return qt_configure_options
+
+
 def make_configure_options(args: argparse.Namespace) -> list[str]:
   """Makes necessary configure options based on args.
 
@@ -303,67 +420,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   if qt_version.major != 6:
     raise ValueError(f'Only Qt6 is supported but specified {qt_version}.')
 
-  qt_configure_options = ['-opensource',
-                          '-c++std', 'c++20',
-                          '-silent',
-                          '-no-cups',
-                          '-no-dbus',
-                          '-no-feature-androiddeployqt',
-                          '-no-feature-animation',
-                          '-no-feature-calendarwidget',
-                          '-no-feature-completer',
-                          '-no-feature-concatenatetablesproxymodel',
-                          '-no-feature-concurrent',
-                          '-no-feature-dial',
-                          '-no-feature-effects',
-                          '-no-feature-fontcombobox',
-                          '-no-feature-fontdialog',
-                          '-no-feature-identityproxymodel',
-                          '-no-feature-image_heuristic_mask',
-                          '-no-feature-imageformatplugin',
-                          '-no-feature-islamiccivilcalendar',
-                          '-no-feature-itemmodeltester',
-                          '-no-feature-jalalicalendar',
-                          '-no-feature-macdeployqt',
-                          '-no-feature-mdiarea',
-                          '-no-feature-mimetype',
-                          '-no-feature-movie',
-                          '-no-feature-network',
-                          '-no-feature-poll-exit-on-error',
-                          '-no-feature-qmake',
-                          '-no-feature-sha3-fast',
-                          '-no-feature-sharedmemory',
-                          '-no-feature-socks5',
-                          '-no-feature-splashscreen',
-                          '-no-feature-sql',
-                          '-no-feature-sqlmodel',
-                          '-no-feature-sspi',
-                          '-no-feature-stringlistmodel',
-                          '-no-feature-tabletevent',
-                          '-no-feature-testlib',
-                          '-no-feature-textbrowser',
-                          '-no-feature-textmarkdownreader',
-                          '-no-feature-textmarkdownwriter',
-                          '-no-feature-textodfwriter',
-                          '-no-feature-timezone',
-                          '-no-feature-topleveldomain',
-                          '-no-feature-undoview',
-                          '-no-feature-whatsthis',
-                          '-no-feature-windeployqt',
-                          '-no-feature-wizard',
-                          '-no-feature-xml',
-                          '-no-icu',
-                          '-no-opengl',
-                          '-no-sql-db2',
-                          '-no-sql-ibase',
-                          '-no-sql-mysql',
-                          '-no-sql-oci',
-                          '-no-sql-odbc',
-                          '-no-sql-psql',
-                          '-no-sql-sqlite',
-                          '-nomake', 'examples',
-                          '-nomake', 'tests',
-                         ]
+  qt_configure_options = QT_CONFIGURE_COMMON
   cmake_options = []
 
   if is_mac():
@@ -394,11 +451,13 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
 
   elif is_windows():
     qt_configure_options += ['-force-debug-info',
-                             '-intelcet',
                              '-ltcg',  # Note: ignored in debug build
                              '-no-freetype',
                              '-no-harfbuzz',
                              '-platform', 'win32-msvc']
+    if args.target_arch in ['x64', 'amd64']:
+      qt_configure_options += ['-intelcet']
+
   if args.confirm_license:
     qt_configure_options += ['-confirm-license']
 
@@ -436,6 +495,8 @@ def parse_args() -> argparse.Namespace:
                       default=str(ABS_QT6_ARCHIVE_PATH))
   parser.add_argument('--qt_dest_dir', help='qt dest directory', type=str,
                       default=str(ABS_QT_DEST_DIR))
+  parser.add_argument('--qt_host_dir', help='qt host tools directory', type=str,
+                      default=str(ABS_QT_HOST_DIR))
   parser.add_argument('--confirm_license',
                       help='set to accept Qt OSS license',
                       action='store_true', default=False)
@@ -443,6 +504,8 @@ def parse_args() -> argparse.Namespace:
   parser.add_argument('--ninja_dir', help='Directory of ninja executable',
                       type=str, default=None)
   if is_windows():
+    parser.add_argument('--target_arch',
+                        help='"x64" or "arm64"', type=str, default="x64")
     parser.add_argument('--vcvarsall_path', help='Path of vcvarsall.bat',
                         type=str, default=None)
   elif is_mac():
@@ -476,6 +539,50 @@ def get_ninja_dir(args: argparse.Namespace) -> Union[pathlib.Path, None]:
   return None
 
 
+def build_host_on_mac(args: argparse.Namespace) -> None:
+  """Build Qt host tools from the source code on mac.
+
+  Args:
+    args: build options to be used to customize configure options of Qt.
+  Raises:
+    FileNotFoundError: when any required file is not found.
+  """
+  extract_qt_src(args)
+
+  qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
+  qt_host_dir = pathlib.Path(args.qt_host_dir).resolve()
+
+  if not (args.dryrun or qt_src_dir.exists()):
+    raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
+
+  env = dict(os.environ)
+
+  # Use locally checked out ninja.exe if exists.
+  ninja_dir = get_ninja_dir(args)
+  if ninja_dir:
+    env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
+
+  configure_cmds = ['./configure'] + make_host_configure_options(args)
+  cmake = str(shutil.which('cmake', path=env['PATH']))
+  build_cmds = [cmake, '--build', '.', '--parallel']
+  install_cmds = [cmake, '--install', '.']
+
+  exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+  exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+  if qt_src_dir == qt_host_dir:
+    # No need to run 'install' command.
+    return
+
+  if qt_host_dir.exists():
+    if args.dryrun:
+      print(f'dryrun: delete {qt_host_dir}')
+    else:
+      shutil.rmtree(qt_host_dir)
+
+  exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+
 def build_on_mac(args: argparse.Namespace) -> None:
   """Build Qt from the source code on Mac.
 
@@ -485,10 +592,13 @@ def build_on_mac(args: argparse.Namespace) -> None:
   Raises:
     FileNotFoundError: when any required file is not found.
   """
+  extract_qt_src(args)
+
   qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
   qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()
+  qt_host_dir = pathlib.Path(args.qt_host_dir).resolve()
 
-  if not qt_src_dir.exists():
+  if not (args.dryrun or qt_src_dir.exists()):
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
   env = dict(os.environ)
@@ -497,6 +607,8 @@ def build_on_mac(args: argparse.Namespace) -> None:
   ninja_dir = get_ninja_dir(args)
   if ninja_dir:
     env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
+
+  env['QT_HOST_PATH'] = str(qt_host_dir)
 
   configure_cmds = ['./configure'] + make_configure_options(args)
   cmake = str(shutil.which('cmake', path=env['PATH']))
@@ -518,6 +630,19 @@ def build_on_mac(args: argparse.Namespace) -> None:
 
   exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
+  for tool in ['moc', 'rcc', 'uic']:
+    src = qt_host_dir.joinpath('libexec').joinpath(tool)
+    dest = qt_dest_dir.joinpath('libexec').joinpath(tool)
+    if args.dryrun:
+      print(f'dryrun: copy {src} => {dest}')
+    else:
+      shutil.copy2(src=src, dst=dest)
+
+  if args.dryrun:
+    print(f'dryrun: shutil.rmtree({qt_host_dir})')
+  else:
+    shutil.rmtree(qt_host_dir)
+
 
 def exec_command(command: list[str], cwd: Union[str, pathlib.Path],
                  env: dict[str, str], dryrun: bool = False) -> None:
@@ -538,8 +663,8 @@ def exec_command(command: list[str], cwd: Union[str, pathlib.Path],
     subprocess.run(command, shell=False, check=True, cwd=cwd, env=env)
 
 
-def build_on_windows(args: argparse.Namespace) -> None:
-  """Build Qt from the source code on Windows.
+def build_host_on_windows(args: argparse.Namespace) -> None:
+  """Build Qt host tools from the source code on Windows.
 
   Args:
     args: build options to be used to customize configure options of Qt.
@@ -547,13 +672,16 @@ def build_on_windows(args: argparse.Namespace) -> None:
   Raises:
     FileNotFoundError: when any required file is not found.
   """
-  qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
-  qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()
+  extract_qt_src(args)
 
-  if not qt_src_dir.exists():
+  qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
+  qt_host_dir = pathlib.Path(args.qt_host_dir).resolve()
+
+  if not (args.dryrun or qt_src_dir.exists()):
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
-  env = get_vs_env_vars('x64', args.vcvarsall_path)
+  arch = platform.uname().machine.lower()
+  env = get_vs_env_vars(arch, args.vcvarsall_path)
 
   # Use locally checked out ninja.exe if exists.
   ninja_dir = get_ninja_dir(args)
@@ -565,7 +693,82 @@ def build_on_windows(args: argparse.Namespace) -> None:
   env['PATH'] = str(qt_src_dir) + os.pathsep + env['PATH']
 
   cmd = str(shutil.which('cmd.exe', path=env['PATH']))
+
+  configure_cmds = [cmd, '/C', 'configure.bat'] + make_host_configure_options(args)
+  exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+  cmake = str(shutil.which('cmake.exe', path=env['PATH']))
+  build_cmds = [cmake, '--build', '.', '--parallel']
+  install_cmds = [cmake, '--install', '.']
+
+  exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+  if qt_src_dir == qt_host_dir:
+    # No need to run 'install' command.
+    return
+
+  if qt_host_dir.exists():
+    if args.dryrun:
+      print(f'dryrun: shutil.rmtree({qt_host_dir})')
+    else:
+      shutil.rmtree(qt_host_dir)
+
+  exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+
+def normalize_win_arch(arch: str) -> str:
+  """Normalize the architecture name for Windows build environment.
+
+  Args:
+    arch: a string representation of a CPU architecture to be normalized.
+
+  Returns:
+    String representation of a CPU architecture (e.g. 'x64' and 'arm64')
+  """
+  normalized = arch.lower()
+  if normalized == 'amd64':
+    return 'x64'
+  return normalized
+
+
+def build_on_windows(args: argparse.Namespace) -> None:
+  """Build Qt from the source code on Windows.
+
+  Args:
+    args: build options to be used to customize configure options of Qt.
+
+  Raises:
+    FileNotFoundError: when any required file is not found.
+  """
+  extract_qt_src(args)
+
+  qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
+  qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()
+  qt_host_dir = pathlib.Path(args.qt_host_dir).resolve()
+
+  if not (args.dryrun or qt_src_dir.exists()):
+    raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
+
+  host_arch = normalize_win_arch(platform.uname().machine)
+  target_arch = normalize_win_arch(args.target_arch)
+  arch = host_arch if host_arch == target_arch else f"{host_arch}_{target_arch}"
+  env = get_vs_env_vars(arch, args.vcvarsall_path)
+
+  # Use locally checked out ninja.exe if exists.
+  ninja_dir = get_ninja_dir(args)
+  if ninja_dir:
+    env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
+
+  # Add qt_src_dir to 'PATH'.
+  # https://doc.qt.io/qt-6/windows-building.html#step-3-set-the-environment-variables
+  env['PATH'] = str(qt_src_dir) + os.pathsep + env['PATH']
+
+  cmd = str(shutil.which('cmd.exe', path=env['PATH']))
+
+  env['QT_HOST_PATH'] = str(qt_host_dir)
+
   configure_cmds = [cmd, '/C', 'configure.bat'] + make_configure_options(args)
+
   exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
   cmake = str(shutil.which('cmake.exe', path=env['PATH']))
@@ -591,6 +794,19 @@ def build_on_windows(args: argparse.Namespace) -> None:
   if args.debug and args.release:
     install_cmds += ['--config', 'debug']
     exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+  for bool in ['moc.exe', 'rcc.exe', 'uic.exe']:
+    src = qt_host_dir.joinpath('bin').joinpath(bool)
+    dest = qt_dest_dir.joinpath('bin').joinpath(bool)
+    if args.dryrun:
+      print(f'dryrun: copy {src} => {dest}')
+    else:
+      shutil.copy2(src=src, dst=dest)
+
+  if args.dryrun:
+    print(f'dryrun: shutil.rmtree({qt_host_dir})')
+  else:
+    shutil.rmtree(qt_host_dir)
 
 
 def extract_qt_src(args: argparse.Namespace) -> None:
@@ -631,11 +847,11 @@ def main():
     print('neither --release nor --debug is specified.')
     sys.exit(1)
 
-  extract_qt_src(args)
-
   if is_mac():
+    build_host_on_mac(args)
     build_on_mac(args)
   elif is_windows():
+    build_host_on_windows(args)
     build_on_windows(args)
 
 
