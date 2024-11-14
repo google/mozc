@@ -228,11 +228,6 @@ class Session : public SessionInterface {
   // Stops key toggling in the composer.
   bool StopKeyToggling(mozc::commands::Command *command);
 
-  // Send a command to the composer to append a special string.
-  bool SendComposerCommand(
-      mozc::composer::Composer::InternalCommand composer_command,
-      mozc::commands::Command *command);
-
   bool ReportBug(mozc::commands::Command *command);
 
   void SetConfig(const mozc::config::Config *config) override;

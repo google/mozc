@@ -3095,21 +3095,28 @@ TEST_F(SessionTest, StopKeyToggling) {
   {
     Segment *segment;
     segment = segments.add_segment();
-    AddCandidate("dummy", "Dummy", segment);
+    AddCandidate("placeholder", "PLACEHOLDER", segment);
   }
-  EXPECT_CALL(converter, StartSuggestion(_, _))
+
+  // StartPrediction() is called twice in InsertChararcterChars(),
+  // but it is not called in StopKeyToggling().
+  EXPECT_CALL(converter, StartPrediction(_, _))
+      .Times(2)
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
   InsertCharacterChars("1", &session, &command);
   EXPECT_PREEDIT("あ", command);
+  EXPECT_EQ(command.output().all_candidate_words().candidates_size(), 1);
 
   command.Clear();
   session.StopKeyToggling(&command);
+  EXPECT_EQ(command.output().all_candidate_words().candidates_size(), 1);
 
   command.Clear();
   InsertCharacterChars("1", &session, &command);
   EXPECT_PREEDIT("ああ", command);
+  EXPECT_EQ(command.output().all_candidate_words().candidates_size(), 1);
 }
 
 TEST_F(SessionTest, CommitRawText) {
