@@ -19,6 +19,7 @@ MODULE.bazel.lock
 # third_party dirs and cache dir checked out by update_deps.py
 /src/third_party/ninja/
 /src/third_party/qt/
+/src/third_party/qt_host/
 /src/third_party/qt_src/
 /src/third_party/wix/
 /src/third_party_cache/
