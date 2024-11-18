@@ -112,8 +112,9 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  ConversionRequest CreateConversionRequest() const {
-    ConversionRequest convreq(&composer_, &request_, &context_, &config_);
+  ConversionRequest CreateConversionRequest(
+      const composer::Composer &composer) const {
+    ConversionRequest convreq(&composer, &request_, &context_, &config_);
     convreq.set_max_user_history_prediction_candidates_size(10);
     convreq.set_max_user_history_prediction_candidates_size_for_zero_query(10);
     return convreq;
@@ -278,7 +279,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     composer->Reset();
     composer->SetPreeditTextForTestOnly(key);
     MakeSegments(key, segments);
-    ConversionRequest convreq = CreateConversionRequest();
+    ConversionRequest convreq = CreateConversionRequest(*composer);
     convreq.set_request_type(ConversionRequest::SUGGESTION);
     return convreq;
   }
@@ -312,7 +313,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     composer->Reset();
     composer->SetPreeditTextForTestOnly(key);
     MakeSegments(key, segments);
-    ConversionRequest convreq = CreateConversionRequest();
+    ConversionRequest convreq = CreateConversionRequest(*composer);
     convreq.set_request_type(ConversionRequest::PREDICTION);
     return convreq;
   }
@@ -333,7 +334,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     composer->Reset();
     composer->SetPreeditTextForTestOnly(key);
     MakeSegments(key, segments);
-    ConversionRequest convreq = CreateConversionRequest();
+    ConversionRequest convreq = CreateConversionRequest(*composer);
     convreq.set_request_type(ConversionRequest::CONVERSION);
     return convreq;
   }
@@ -345,6 +346,32 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     ConversionRequest convreq =
         SetUpInputForConversion(key, composer, segments);
     PrependHistorySegments(hist_key, hist_value, segments);
+    return convreq;
+  }
+
+  ConversionRequest InitSegmentsFromInputSequence(const absl::string_view text,
+                                                  composer::Composer *composer,
+                                                  Segments *segments) const {
+    DCHECK(composer);
+    DCHECK(segments);
+    for (const UnicodeChar ch : Utf8AsUnicodeChar(text)) {
+      commands::KeyEvent key;
+      const char32_t codepoint = ch.char32();
+      if (codepoint <= 0x7F) {  // IsAscii, w is unsigned.
+        key.set_key_code(codepoint);
+      } else {
+        key.set_key_code('?');
+        key.set_key_string(ch.utf8());
+      }
+      composer->InsertCharacterKeyEvent(key);
+    }
+
+    ConversionRequest convreq = CreateConversionRequest(*composer);
+    convreq.set_request_type(ConversionRequest::PREDICTION);
+    Segment *segment = segments->add_segment();
+    CHECK(segment);
+    std::string query = composer->GetQueryForPrediction();
+    segment->set_key(query);
     return convreq;
   }
 
@@ -2539,7 +2566,7 @@ TEST_F(UserHistoryPredictorTest, GetRomanMisspelledKey) {
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->value = "test";
 
-  ConversionRequest convreq = CreateConversionRequest();
+  ConversionRequest convreq = CreateConversionRequest(composer_);
 
   config_.set_preedit_method(config::Config::ROMAN);
   seg->set_key("");
@@ -2807,43 +2834,13 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   }
 }
 
-namespace {
-void InitSegmentsFromInputSequence(const absl::string_view text,
-                                   composer::Composer *composer,
-                                   ConversionRequest *request,
-                                   Segments *segments) {
-  DCHECK(composer);
-  DCHECK(request);
-  DCHECK(segments);
-  for (const UnicodeChar ch : Utf8AsUnicodeChar(text)) {
-    commands::KeyEvent key;
-    const char32_t codepoint = ch.char32();
-    if (codepoint <= 0x7F) {  // IsAscii, w is unsigned.
-      key.set_key_code(codepoint);
-    } else {
-      key.set_key_code('?');
-      key.set_key_string(ch.utf8());
-    }
-    composer->InsertCharacterKeyEvent(key);
-  }
-
-  ASSERT_EQ(&request->composer(), composer);
-
-  request->set_request_type(ConversionRequest::PREDICTION);
-  Segment *segment = segments->add_segment();
-  CHECK(segment);
-  std::string query = composer->GetQueryForPrediction();
-  segment->set_key(query);
-}
-}  // namespace
-
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
   composer_.SetTable(table_.get());
   Segments segments;
 
-  ConversionRequest convreq = CreateConversionRequest();
-  InitSegmentsFromInputSequence("gu-g", &composer_, &convreq, &segments);
+  const ConversionRequest convreq =
+      InitSegmentsFromInputSequence("gu-g", &composer_, &segments);
   std::string input_key;
   std::string base;
   std::unique_ptr<Trie<std::string>> expanded;
@@ -2868,8 +2865,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
   for (size_t i = 0; i < 1000; ++i) {
     composer_.Reset();
     const std::string input = random.Utf8StringRandomLen(4, ' ', '~');
-    ConversionRequest convreq = CreateConversionRequest();
-    InitSegmentsFromInputSequence(input, &composer_, &convreq, &segments);
+    const ConversionRequest convreq =
+        InitSegmentsFromInputSequence(input, &composer_, &segments);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -2886,8 +2883,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
   Segments segments;
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
-    InitSegmentsFromInputSequence("8,+", &composer_, &convreq, &segments);
+    const ConversionRequest convreq =
+        InitSegmentsFromInputSequence("8,+", &composer_, &segments);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -2902,8 +2899,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   Segments segments;
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
-    InitSegmentsFromInputSequence("n", &composer_, &convreq, &segments);
+    const ConversionRequest convreq =
+        InitSegmentsFromInputSequence("n", &composer_, &segments);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -2923,8 +2920,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   composer_.Reset();
   segments.Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
-    InitSegmentsFromInputSequence("nn", &composer_, &convreq, &segments);
+    const ConversionRequest convreq =
+        InitSegmentsFromInputSequence("nn", &composer_, &segments);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -2938,8 +2935,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   composer_.Reset();
   segments.Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
-    InitSegmentsFromInputSequence("n'", &composer_, &convreq, &segments);
+    const ConversionRequest convreq =
+        InitSegmentsFromInputSequence("n'", &composer_, &segments);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -2953,8 +2950,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   composer_.Reset();
   segments.Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
-    InitSegmentsFromInputSequence("n'n", &composer_, &convreq, &segments);
+    const ConversionRequest convreq =
+        InitSegmentsFromInputSequence("n'n", &composer_, &segments);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -2978,8 +2975,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
   Segments segments;
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
-    InitSegmentsFromInputSequence("/", &composer_, &convreq, &segments);
+    const ConversionRequest convreq =
+        InitSegmentsFromInputSequence("/", &composer_, &segments);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3003,8 +3000,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
   Segments segments;
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
-    InitSegmentsFromInputSequence("わ00", &composer_, &convreq, &segments);
+    const ConversionRequest convreq =
+        InitSegmentsFromInputSequence("わ00", &composer_, &segments);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3027,8 +3024,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
   composer_.SetTable(table_.get());
   Segments segments;
 
-  ConversionRequest convreq = CreateConversionRequest();
-  InitSegmentsFromInputSequence("あか", &composer_, &convreq, &segments);
+  const ConversionRequest convreq =
+      InitSegmentsFromInputSequence("あか", &composer_, &segments);
 
   {
     std::string input_key;
@@ -3764,7 +3761,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
   // Set up history. Convert "きょうもいいてんき！" to "今日もいい天気!" 3 times
   // so that the predictor learns the sentence. We assume that this sentence
   // consists of three segments: "今日も|いい天気|!".
-  ConversionRequest convreq = CreateConversionRequest();
+  ConversionRequest convreq = CreateConversionRequest(composer_);
   for (int i = 0; i < 3; ++i) {
     Segments segments;
 
@@ -4330,7 +4327,7 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
     predictor->Finish(convreq, &segments);
   }
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    ConversionRequest convreq = CreateConversionRequest(composer_);
     convreq.set_max_user_history_prediction_candidates_size(2);
     convreq.set_request_type(ConversionRequest::SUGGESTION);
     MakeSegments("てすと", &segments);
@@ -4564,7 +4561,7 @@ TEST_F(UserHistoryPredictorTest, MaxCharCoverage) {
     request_.mutable_decoder_experiment_params()
         ->set_user_history_prediction_max_char_coverage(coverage);
     MakeSegments("てすと", &segments);
-    ConversionRequest convreq = CreateConversionRequest();
+    ConversionRequest convreq = CreateConversionRequest(composer_);
     convreq.set_request_type(ConversionRequest::SUGGESTION);
 
     EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
@@ -4594,7 +4591,7 @@ TEST_F(UserHistoryPredictorTest, RemoveRedundantCandidates) {
         ->set_user_history_prediction_filter_redundant_candidates_mode(
             filter_mode);
     MakeSegments("とうき", &segments);
-    ConversionRequest convreq = CreateConversionRequest();
+    ConversionRequest convreq = CreateConversionRequest(composer_);
     convreq.set_request_type(ConversionRequest::SUGGESTION);
     convreq.set_max_user_history_prediction_candidates_size(10);
     EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
