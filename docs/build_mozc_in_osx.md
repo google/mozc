@@ -50,6 +50,7 @@ Building on Mac requires the following software.
   * Xcode 13 (macOS 13 SDK) or later
   * ⚠️Xcode Command Line Tools aren't sufficient.
 * [Bazel](https://docs.bazel.build/versions/master/install-os-x.html) for Bazel build
+  * ⚠️ Bazel 8.x is not yet supported ([#1118](https://github.com/google/mozc/issues/1118))
 * Python 3.9 or later with the following pip module.
   * `requests`
 * CMake 3.18.4 or later (to build Qt6)

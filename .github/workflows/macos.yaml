@@ -54,6 +54,8 @@ jobs:
 
       - name: bazel build
         working-directory: ./src
+        env:
+          USE_BAZEL_VERSION: "7.4.1"
         run: |
           bazel build --config oss_macos package --macos_cpus=arm64 --config release_build
 
@@ -103,6 +105,8 @@ jobs:
 
       - name: bazel build
         working-directory: ./src
+        env:
+          USE_BAZEL_VERSION: "7.4.1"
         run: |
           bazel build --config oss_macos package --macos_cpus=x86_64 --config release_build
 
@@ -152,6 +156,8 @@ jobs:
 
       - name: bazel build
         working-directory: ./src
+        env:
+          USE_BAZEL_VERSION: "7.4.1"
         run: |
           bazel build --config oss_macos package --macos_cpus=x86_64,arm64 --config release_build
 
@@ -201,6 +207,8 @@ jobs:
 
       - name: bazel test
         working-directory: ./src
+        env:
+          USE_BAZEL_VERSION: "7.4.1"
         run: |
           bazel test ... --config oss_macos --build_tests_only -c dbg
 
