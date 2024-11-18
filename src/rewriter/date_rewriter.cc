@@ -1231,7 +1231,7 @@ std::optional<std::string> VaridateNDigits(absl::string_view value, int n) {
 //      - All the meta candidates are based on "cd" (e.g. "CD", "Cd").
 //      Therefore to get "2223" we should access the raw input.
 // Prerequisite: |segments| has only one conversion segment.
-std::optional<std::string> GetNDigits(const composer::Composer &composer,
+std::optional<std::string> GetNDigits(const composer::ComposerData &composer,
                                       const Segments &segments, int n) {
   DCHECK_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
@@ -1265,9 +1265,9 @@ std::optional<std::string> GetNDigits(const composer::Composer &composer,
 }
 }  // namespace
 
-bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
-                                            int insert_position,
-                                            Segments *segments) {
+bool DateRewriter::RewriteConsecutiveDigits(
+    const composer::ComposerData &composer, int insert_position,
+    Segments *segments) {
   if (segments->conversion_segments_size() != 1) {
     // This method rewrites a segment only when the segments has only
     // one conversion segment.

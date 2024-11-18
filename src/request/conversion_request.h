@@ -81,12 +81,12 @@ class ConversionRequest {
                           &config::ConfigHandler::DefaultConfig()) {}
   // TODO: b/329532981 - Replace with the another constructor and remove this.
   ABSL_DEPRECATED("Use the constructor with Context")
-  ConversionRequest(const composer::Composer *c,
+  ConversionRequest(const composer::ComposerData *c,
                     const commands::Request *request,
                     const config::Config *config)
       : ConversionRequest(c, request, &commands::Context::default_instance(),
                           config) {}
-  ConversionRequest(const composer::Composer *c,
+  ConversionRequest(const composer::ComposerData *c,
                     const commands::Request *request,
                     const commands::Context *context,
                     const config::Config *config)
@@ -106,7 +106,7 @@ class ConversionRequest {
   }
 
   bool has_composer() const { return composer_ != nullptr; }
-  const composer::Composer &composer() const {
+  const composer::ComposerData &composer() const {
     DCHECK(composer_);
     return *composer_;
   }
@@ -212,7 +212,7 @@ class ConversionRequest {
 
   // Required fields
   // Input composer to generate a key for conversion, suggestion, etc.
-  const composer::Composer *composer_;
+  const composer::ComposerData *composer_;
 
   // Input request.
   const commands::Request *request_;

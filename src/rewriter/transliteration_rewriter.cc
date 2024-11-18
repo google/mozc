@@ -362,7 +362,7 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
   if (!request.has_composer()) {
     return false;
   }
-  const composer::Composer &composer = request.composer();
+  const composer::ComposerData &composer = request.composer();
   Segment *segment = segments->mutable_conversion_segment(0);
   // Get the half_ascii T13n text (nearly equal Raw input).
   // Note that only one segment is in the Segments, but sometimes like

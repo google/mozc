@@ -101,7 +101,7 @@ int LanguageAwareRewriter::capability(const ConversionRequest &request) const {
 }
 
 namespace {
-bool IsRawQuery(const composer::Composer &composer,
+bool IsRawQuery(const composer::ComposerData &composer,
                 const DictionaryInterface *dictionary, int *rank) {
   const std::string raw_text = composer.GetRawString();
 

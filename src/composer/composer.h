@@ -52,7 +52,66 @@
 namespace mozc {
 namespace composer {
 
-class Composer final {
+// ComposerData will be updated to store const values instead of the base class
+// of Composer object in the future. So that ComposerData will become an
+// immutable object.
+class ComposerData {
+ public:
+  ComposerData() = default;
+  virtual ~ComposerData() = default;
+
+  // Copyable and movable.
+  ComposerData(const ComposerData &) = default;
+  ComposerData &operator=(const ComposerData &) = default;
+  ComposerData(ComposerData &&) = default;
+  ComposerData &operator=(ComposerData &&) = default;
+
+  virtual transliteration::TransliterationType GetInputMode() const = 0;
+
+  // Returns a preedit string with user's preferences.
+  virtual std::string GetStringForPreedit() const = 0;
+
+  // Returns a conversion query normalized ascii characters in half width
+  virtual std::string GetQueryForConversion() const = 0;
+
+  // Returns a prediction query trimmed the tail alphabet characters.
+  virtual std::string GetQueryForPrediction() const = 0;
+
+  // Returns a expanded prediction query.
+  virtual void GetQueriesForPrediction(
+      std::string *base, std::set<std::string> *expanded) const = 0;
+
+  // Returns a string to be used for type correction.
+  virtual std::string GetStringForTypeCorrection() const = 0;
+
+  virtual size_t GetLength() const = 0;
+  virtual size_t GetCursor() const = 0;
+
+  virtual absl::Span<const commands::SessionCommand::CompositionEvent>
+  GetHandwritingCompositions() const = 0;
+
+  // Returns raw input from a user.
+  // The main purpose is Transliteration.
+  virtual std::string GetRawString() const = 0;
+
+  // Returns substring of raw input.  The position and size is based on the
+  // composed string.  For example, when [さ|sa][し|shi][み|mi] is the
+  // composition, GetRawSubString(0, 2) returns "sashi".
+  virtual std::string GetRawSubString(size_t position, size_t size) const = 0;
+
+  // Generate transliterations.
+  virtual void GetTransliterations(
+      transliteration::Transliterations *t13ns) const = 0;
+
+  // Generate substrings of transliterations.
+  virtual void GetSubTransliterations(
+      size_t position, size_t size,
+      transliteration::Transliterations *transliterations) const = 0;
+
+  virtual const std::string &source_text() const = 0;
+};
+
+class Composer final : public ComposerData {
  public:
   // Pseudo commands in composer.
   enum InternalCommand {
@@ -101,7 +160,7 @@ class Composer final {
   // do not call this method (e.g. CursorToEnd, CursorToBeginning).
   void UpdateInputMode();
 
-  transliteration::TransliterationType GetInputMode() const;
+  transliteration::TransliterationType GetInputMode() const override;
   transliteration::TransliterationType GetComebackInputMode() const;
   void ToggleInputMode();
 
@@ -113,27 +172,27 @@ class Composer final {
                   std::string *right) const;
 
   // Returns a preedit string with user's preferences.
-  std::string GetStringForPreedit() const;
+  std::string GetStringForPreedit() const override;
 
   // Returns a submit string with user's preferences.  The difference
   // from the preedit string is the handling of the last 'n'.
   std::string GetStringForSubmission() const;
 
   // Returns a conversion query normalized ascii characters in half width
-  std::string GetQueryForConversion() const;
+  std::string GetQueryForConversion() const override;
 
   // Returns a prediction query trimmed the tail alphabet characters.
-  std::string GetQueryForPrediction() const;
+  std::string GetQueryForPrediction() const override;
 
   // Returns a expanded prediction query.
   void GetQueriesForPrediction(std::string *base,
-                               std::set<std::string> *expanded) const;
+                               std::set<std::string> *expanded) const override;
 
   // Returns a string to be used for type correction.
-  std::string GetStringForTypeCorrection() const;
+  std::string GetStringForTypeCorrection() const override;
 
-  size_t GetLength() const;
-  size_t GetCursor() const;
+  size_t GetLength() const override;
+  size_t GetCursor() const override;
   void EditErase();
 
   // Deletes a character at specified position.
@@ -173,7 +232,7 @@ class Composer final {
       absl::Span<const commands::SessionCommand::CompositionEvent *const>
           compositions);
   absl::Span<const commands::SessionCommand::CompositionEvent>
-  GetHandwritingCompositions() const;
+  GetHandwritingCompositions() const override;
 
   bool InsertCharacterKeyAndPreedit(absl::string_view key,
                                     absl::string_view preedit);
@@ -191,15 +250,16 @@ class Composer final {
 
   // Returns raw input from a user.
   // The main purpose is Transliteration.
-  std::string GetRawString() const;
+  std::string GetRawString() const override;
 
   // Returns substring of raw input.  The position and size is based on the
   // composed string.  For example, when [さ|sa][し|shi][み|mi] is the
   // composition, GetRawSubString(0, 2) returns "sashi".
-  std::string GetRawSubString(size_t position, size_t size) const;
+  std::string GetRawSubString(size_t position, size_t size) const override;
 
   // Generate transliterations.
-  void GetTransliterations(transliteration::Transliterations *t13ns) const;
+  void GetTransliterations(
+      transliteration::Transliterations *t13ns) const override;
 
   // Generate substrings of specified transliteration.
   std::string GetSubTransliteration(transliteration::TransliterationType type,
@@ -208,7 +268,7 @@ class Composer final {
   // Generate substrings of transliterations.
   void GetSubTransliterations(
       size_t position, size_t size,
-      transliteration::Transliterations *transliterations) const;
+      transliteration::Transliterations *transliterations) const override;
 
   // Check if the preedit is can be modified.
   bool EnableInsert() const;
@@ -244,7 +304,7 @@ class Composer final {
 
   bool is_new_input() const;
   size_t shifted_sequence_count() const;
-  const std::string &source_text() const;
+  const std::string &source_text() const override;
   std::string *mutable_source_text();
   void set_source_text(absl::string_view source_text);
   size_t max_length() const;
