@@ -1399,25 +1399,8 @@ bool Composer::IsToggleable() const {
   return !is_new_input_ && composition_.IsToggleable(position_);
 }
 
-bool Composer::is_new_input() const { return is_new_input_; }
-
-size_t Composer::shifted_sequence_count() const {
-  return shifted_sequence_count_;
-}
-
-const std::string &Composer::source_text() const { return source_text_; }
-std::string *Composer::mutable_source_text() { return &source_text_; }
 void Composer::set_source_text(const absl::string_view source_text) {
   strings::Assign(source_text_, source_text);
-}
-
-size_t Composer::max_length() const { return max_length_; }
-void Composer::set_max_length(size_t length) { max_length_ = length; }
-
-int Composer::timeout_threshold_msec() const { return timeout_threshold_msec_; }
-
-void Composer::set_timeout_threshold_msec(int threshold_msec) {
-  timeout_threshold_msec_ = threshold_msec;
 }
 
 void Composer::SetInputFieldType(commands::Context::InputFieldType type) {

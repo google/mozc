@@ -117,7 +117,7 @@ class ComposerData {
   void GetSubTransliterations(size_t position, size_t size,
                               transliteration::Transliterations *t13ns) const;
 
-  const std::string &source_text() const {return source_text_; }
+  absl::string_view source_text() const {return source_text_; }
 
  private:
   // Composition copied from the Composer as a snapshot.
@@ -339,16 +339,18 @@ class Composer final {
   // Returns true when the current character at cursor position is toggleable.
   bool IsToggleable() const;
 
-  bool is_new_input() const;
-  size_t shifted_sequence_count() const;
-  const std::string &source_text() const;
-  std::string *mutable_source_text();
+  bool is_new_input() const { return is_new_input_; }
+  size_t shifted_sequence_count() const { return shifted_sequence_count_; }
+  absl::string_view source_text() const { return source_text_; }
+  std::string *mutable_source_text() { return &source_text_; }
   void set_source_text(absl::string_view source_text);
-  size_t max_length() const;
-  void set_max_length(size_t length);
+  size_t max_length() const { return max_length_; }
+  void set_max_length(size_t length) { max_length_ = length; }
 
-  int timeout_threshold_msec() const;
-  void set_timeout_threshold_msec(int threshold_msec);
+  int timeout_threshold_msec() const { return timeout_threshold_msec_; }
+  void set_timeout_threshold_msec(int threshold_msec) {
+    timeout_threshold_msec_ = threshold_msec;
+  }
 
  private:
   FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);

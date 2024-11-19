@@ -1933,7 +1933,7 @@ void Session::CommitCompositionDirectly(commands::Command *command) {
 void Session::CommitSourceTextDirectly(commands::Command *command) {
   // We cannot use a reference since composer will be cleared on
   // CommitStringDirectly.
-  const std::string copied_source_text = context_->composer().source_text();
+  absl::string_view copied_source_text = context_->composer().source_text();
   CommitStringDirectly(copied_source_text, copied_source_text, command);
 }
 
@@ -1942,8 +1942,8 @@ void Session::CommitRawTextDirectly(commands::Command *command) {
   CommitStringDirectly(raw_text, raw_text, command);
 }
 
-void Session::CommitStringDirectly(const std::string &key,
-                                   const std::string &preedit,
+void Session::CommitStringDirectly(absl::string_view key,
+                                   absl::string_view preedit,
                                    commands::Command *command) {
   if (key.empty() || preedit.empty()) {
     return;
