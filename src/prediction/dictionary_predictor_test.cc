@@ -350,7 +350,7 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
 
   ConversionRequest CreateConversionRequest(
       ConversionRequest::RequestType request_type) const {
-    ConversionRequest convreq(composer_.get(), request_.get(), &context_,
+    ConversionRequest convreq(*composer_, request_.get(), &context_,
                               config_.get());
     convreq.set_request_type(request_type);
     return convreq;

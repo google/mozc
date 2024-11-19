@@ -165,7 +165,7 @@ class MobilePredictorTest : public ::testing::Test {
   }
 
   ConversionRequest CreateConversionRequest() const {
-    return ConversionRequest(composer_.get(), request_.get(), &context_,
+    return ConversionRequest(*composer_, request_.get(), &context_,
                              config_.get());
   }
 
@@ -274,7 +274,7 @@ class PredictorTest : public ::testing::Test {
   }
 
   ConversionRequest CreateConversionRequest() const {
-    return ConversionRequest(composer_.get(), request_.get(), &context_,
+    return ConversionRequest(*composer_, request_.get(), &context_,
                              config_.get());
   }
 

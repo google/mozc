@@ -555,7 +555,9 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
   const commands::Request request;
   const config::Config config;
   const composer::Composer composer(nullptr, &request, &config);
-  const ConversionRequest conversion_request(&composer, &request, &config);
+  const commands::Context context;
+  const ConversionRequest conversion_request(composer, &request, &context,
+                                             &config);
 
   // Not targets of rewrite.
   const char *kNonTargetCases[] = {
@@ -929,7 +931,7 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
     InitSegment("cd", "cd", &segments);
     composer.Reset();
     composer.InsertCharacter("2223");
-    ConversionRequest conv_request(&composer, &request, &context, &config);
+    const ConversionRequest conv_request(composer, &request, &context, &config);
     EXPECT_TRUE(rewriter.Rewrite(conv_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("22:23")));
@@ -943,7 +945,7 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
     InitSegment("1111", "1111", &segments);
     composer.Reset();
     composer.InsertCharacter("2223");
-    ConversionRequest conv_request(&composer, &request, &context, &config);
+    const ConversionRequest conv_request(composer, &request, &context, &config);
     EXPECT_TRUE(rewriter.Rewrite(conv_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("11:11")));
@@ -961,7 +963,7 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
     meta_candidate->value = "1111";
     composer.InsertCharacter("2223");
     composer.Reset();
-    ConversionRequest conv_request(&composer, &request, &context, &config);
+    const ConversionRequest conv_request(composer, &request, &context, &config);
     EXPECT_TRUE(rewriter.Rewrite(conv_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0), ContainsCandidate(ValueIs("11:11")));
@@ -990,7 +992,9 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
   commands::Request request;
   const config::Config config;
   const composer::Composer composer(nullptr, &request, &config);
-  const ConversionRequest conversion_request(&composer, &request, &config);
+  const commands::Context context;
+  const ConversionRequest conversion_request(composer, &request, &context,
+                                             &config);
 
   // Init an instance of Segments for this test.
   Segments test_segments;
@@ -1040,7 +1044,9 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsFromMetaCandidates) {
   commands::Request request;
   const config::Config config;
   const composer::Composer composer(nullptr, &request, &config);
-  const ConversionRequest conversion_request(&composer, &request, &config);
+  const commands::Context context;
+  const ConversionRequest conversion_request(composer, &request, &context,
+                                             &config);
 
   Segments segments;
   InitSegment("nisen", "にせん", &segments);
@@ -1057,7 +1063,9 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsWithMinusSign) {
   commands::Request request;
   const config::Config config;
   const composer::Composer composer(nullptr, &request, &config);
-  const ConversionRequest conversion_request(&composer, &request, &config);
+  const commands::Context context;
+  const ConversionRequest conversion_request(composer, &request, &context,
+                                             &config);
 
   // Init an instance of Segments for this test.
   Segments segments;
@@ -1082,7 +1090,9 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionWithHistory) {
   commands::Request request;
   const config::Config config;
   const composer::Composer composer(nullptr, &request, &config);
-  const ConversionRequest conversion_request(&composer, &request, &config);
+  const commands::Context context;
+  const ConversionRequest conversion_request(composer, &request, &context,
+                                             &config);
 
   Segments segments;
 

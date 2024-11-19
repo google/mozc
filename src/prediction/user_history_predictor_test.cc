@@ -114,7 +114,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   ConversionRequest CreateConversionRequest(
       const composer::Composer &composer) const {
-    ConversionRequest convreq(&composer, &request_, &context_, &config_);
+    ConversionRequest convreq(composer, &request_, &context_, &config_);
     convreq.set_max_user_history_prediction_candidates_size(10);
     convreq.set_max_user_history_prediction_candidates_size_for_zero_query(10);
     return convreq;
@@ -1278,8 +1278,9 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
 
   commands::Request non_zero_query_request;
   non_zero_query_request.set_zero_query_suggestion(false);
+  commands::Context context;
   ConversionRequest non_zero_query_conversion_request(
-      &composer_, &non_zero_query_request, &config_);
+      composer_, &non_zero_query_request, &context, &config_);
 
   Segments segments;
 

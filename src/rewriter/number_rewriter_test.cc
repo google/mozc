@@ -40,6 +40,7 @@
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
+#include "composer/composer.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -1160,10 +1161,7 @@ void LearnNumberStyle(const ConversionRequest &request,
 
 TEST_F(NumberRewriterTest, NumberStyleLearningNotEnabled) {
   std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
-  commands::Request request;
-  ConversionRequest convreq(nullptr, &request,
-                            &config::ConfigHandler::DefaultConfig());
-
+  const ConversionRequest convreq;
   LearnNumberStyle(convreq, pos_matcher_, *rewriter);
 
   {
@@ -1197,7 +1195,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NumberStyleLearningTest, NumberRewriterTest) {
   std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
   const commands::Request request = GetParam();
-  ConversionRequest convreq(nullptr, &request,
+  const composer::Composer composer;
+  const commands::Context context;
+  ConversionRequest convreq(composer, &request, &context,
                             &config::ConfigHandler::DefaultConfig());
 
   LearnNumberStyle(convreq, pos_matcher_, *rewriter);

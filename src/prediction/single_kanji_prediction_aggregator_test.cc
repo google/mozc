@@ -91,7 +91,7 @@ class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
   }
 
   ConversionRequest CreateConversionRequest() const {
-    ConversionRequest convreq(composer_.get(), request_.get(), &context_,
+    ConversionRequest convreq(*composer_, request_.get(), &context_,
                               config_.get());
     convreq.set_request_type(ConversionRequest::PREDICTION);
     return convreq;

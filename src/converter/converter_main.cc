@@ -296,7 +296,7 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
                               config);
   commands::Context context;
   ConversionRequest conversion_request =
-      ConversionRequest(&composer, &request, &context, config);
+      ConversionRequest(composer, &request, &context, config);
   conversion_request.set_max_conversion_candidates_size(
       absl::GetFlag(FLAGS_max_conversion_candidates_size));
   conversion_request.set_create_partial_candidates(

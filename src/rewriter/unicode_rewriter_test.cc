@@ -85,10 +85,12 @@ class UnicodeRewriterTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<EngineInterface> engine_;
   const commands::Request &default_request() const { return default_request_; }
   const config::Config &default_config() const { return default_config_; }
+  const commands::Context &default_context() const { return default_context_; }
 
  private:
   const commands::Request default_request_;
   const config::Config default_config_;
+  const commands::Context default_context_;
 };
 
 TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
@@ -235,7 +237,8 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   {  // Typical case
     composer::Composer composer(nullptr, &default_request(), &default_config());
     composer.set_source_text("A");
-    ConversionRequest request(&composer, &default_request(), &default_config());
+    ConversionRequest request(composer, &default_request(), &default_context(),
+                              &default_config());
 
     Segments segments;
     AddSegment("A", "A", &segments);
@@ -246,7 +249,8 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
 
   {  // If source_text is not set, this rewrite is not triggered.
     composer::Composer composer(nullptr, &default_request(), &default_config());
-    ConversionRequest request(&composer, &default_request(), &default_config());
+    ConversionRequest request(composer, &default_request(), &default_context(),
+                              &default_config());
 
     Segments segments;
     AddSegment("A", "A", &segments);
@@ -259,7 +263,8 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
      // triggered.
     composer::Composer composer(nullptr, &default_request(), &default_config());
     composer.set_source_text("AB");
-    ConversionRequest request(&composer, &default_request(), &default_config());
+    ConversionRequest request(composer, &default_request(), &default_context(),
+                              &default_config());
 
     Segments segments;
     AddSegment("AB", "AB", &segments);
@@ -270,7 +275,8 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   {  // Multibyte character is also supported.
     composer::Composer composer(nullptr, &default_request(), &default_config());
     composer.set_source_text("愛");
-    ConversionRequest request(&composer, &default_request(), &default_config());
+    ConversionRequest request(composer, &default_request(), &default_context(),
+                              &default_config());
 
     Segments segments;
     AddSegment("あい", "愛", &segments);

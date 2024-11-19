@@ -989,9 +989,11 @@ TEST_F(ConverterTest, StartSuggestion) {
 
     composer.InsertCharacter("shi");
 
-    Segments segments;
-    ConversionRequest request(&composer, &client_request, &config);
+    commands::Context context;
+    ConversionRequest request(composer, &client_request, &context, &config);
     request.set_request_type(ConversionRequest::SUGGESTION);
+
+    Segments segments;
     EXPECT_TRUE(converter->StartSuggestion(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
@@ -1006,9 +1008,11 @@ TEST_F(ConverterTest, StartSuggestion) {
 
     composer.InsertCharacter("si");
 
-    Segments segments;
-    ConversionRequest request(&composer, &client_request, &config);
+    commands::Context context;
+    ConversionRequest request(composer, &client_request, &context, &config);
     request.set_request_type(ConversionRequest::SUGGESTION);
+
+    Segments segments;
     EXPECT_TRUE(converter->StartSuggestion(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
@@ -1238,7 +1242,9 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     Segments segments;
     composer::Composer composer(&table, &default_request(), &config);
     composer.InsertCharacterPreedit("わたしh");
-    ConversionRequest request(&composer, &default_request(), &config);
+
+    commands::Context context;
+    ConversionRequest request(composer, &default_request(), &context, &config);
     request.set_composer_key_selection(ConversionRequest::CONVERSION_KEY);
     ASSERT_TRUE(converter->StartConversion(request, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 2);
@@ -1249,7 +1255,9 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     Segments segments;
     composer::Composer composer(&table, &default_request(), &config);
     composer.InsertCharacterPreedit("わたしh");
-    ConversionRequest request(&composer, &default_request(), &config);
+
+    commands::Context context;
+    ConversionRequest request(composer, &default_request(), &context, &config);
     request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);
     ASSERT_TRUE(converter->StartConversion(request, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
@@ -1273,7 +1281,9 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   config::Config config;
   composer::Composer composer(&table, &default_request(), &config);
   composer.InsertCharacter("placeholder");
-  const ConversionRequest request(&composer, &default_request(), &config);
+  commands::Context context;
+  const ConversionRequest request(composer, &default_request(), &context,
+                                  &config);
   Segments segments;
   EXPECT_TRUE(ret->converter->StartConversion(request, &segments));
 
@@ -1544,7 +1554,8 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   mozc::commands::Request request_proto;
   mozc::composer::Composer composer(&table, &request_proto, &config);
   composer.InsertCharacterPreedit("あ");
-  ConversionRequest request(&composer, &request_proto, &config);
+  commands::Context context;
+  ConversionRequest request(composer, &request_proto, &context, &config);
 
   Segments segments;
   ASSERT_TRUE(converter->StartConversion(request, &segments));
@@ -1620,7 +1631,7 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
   {
     composer.SetPreeditTextForTestOnly("てすとが");
     commands::Context context;
-    ConversionRequest conversion_request(&composer, &request, &context,
+    ConversionRequest conversion_request(composer, &request, &context,
                                          &config);
     conversion_request.set_request_type(ConversionRequest::PREDICTION);
     Segments segments;
@@ -1820,7 +1831,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   composer.SetPreeditTextForTestOnly("あい");
   commands::Context context;
 
-  ConversionRequest conversion_request(&composer, &request, &context, &config);
+  ConversionRequest conversion_request(composer, &request, &context, &config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
   Segments segments;
 
@@ -1876,7 +1887,7 @@ TEST_F(ConverterTest,
   composer.SetPreeditTextForTestOnly("おつかれ");
   commands::Context context;
 
-  ConversionRequest conversion_request(&composer, &request, &context, &config);
+  ConversionRequest conversion_request(composer, &request, &context, &config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
   Segments segments;
 
@@ -1901,7 +1912,8 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   request_test_util::FillMobileRequest(&request);
   const dictionary::PosMatcher pos_matcher(
       engine->GetDataManager()->GetPosMatcherData());
-  ConversionRequest conversion_request(&composer, &request, &config);
+  commands::Context context;
+  ConversionRequest conversion_request(composer, &request, &context, &config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
   conversion_request.set_create_partial_candidates(true);
 

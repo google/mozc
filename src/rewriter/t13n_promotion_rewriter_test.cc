@@ -84,7 +84,7 @@ class T13nPromotionRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   ConversionRequest CreateMobileConversionRequest() const {
-    return ConversionRequest(&composer_, &mobile_request_, &context_,
+    return ConversionRequest(composer_, &mobile_request_, &context_,
                              &config::ConfigHandler::DefaultConfig());
   }
 

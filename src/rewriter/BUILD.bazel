@@ -317,6 +317,7 @@ mozc_cc_test(
         ":rewriter_interface",
         "//base:number_util",
         "//base/strings:assign",
+        "//composer",
         "//config:character_form_manager",
         "//config:config_handler",
         "//converter:segments",

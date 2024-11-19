@@ -32,7 +32,6 @@
 
 #include <cstddef>
 
-#include "absl/base/attributes.h"
 #include "absl/log/check.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
@@ -75,30 +74,19 @@ class ConversionRequest {
   };
 
   ConversionRequest()
-      : ConversionRequest(nullptr, &commands::Request::default_instance(),
-                          &commands::Context::default_instance(),
-                          &config::ConfigHandler::DefaultConfig()) {}
-  // TODO: b/329532981 - Replace with the another constructor and remove this.
-  ABSL_DEPRECATED("Use the constructor with Context")
-  ConversionRequest(const composer::Composer *composer,
-                    const commands::Request *request,
-                    const config::Config *config)
-      : ConversionRequest(composer, request,
-                          &commands::Context::default_instance(), config) {}
-  ConversionRequest(const composer::Composer *composer,
+      : request_(&commands::Request::default_instance()),
+        context_(&commands::Context::default_instance()),
+        config_(&config::ConfigHandler::DefaultConfig()) {}
+
+  ConversionRequest(const composer::Composer &composer,
                     const commands::Request *request,
                     const commands::Context *context,
                     const config::Config *config)
-      : request_type_(ConversionRequest::CONVERSION),
+      : has_composer_(true),
+        composer_(composer.CreateComposerData()),
         request_(request),
         context_(context),
-        config_(config) {
-    if (composer != nullptr) {
-      has_composer_ = true;
-      // The return value of CreateComposerData is implicitly moved.
-      composer_ = composer->CreateComposerData();
-    }
-  }
+        config_(config) {}
 
   // Copyable and movable.
   ConversionRequest(const ConversionRequest &) = default;

@@ -182,7 +182,8 @@ bool SessionConverter::ConvertWithPreferences(
     const ConversionPreferences &preferences) {
   DCHECK(CheckState(COMPOSITION | SUGGESTION | CONVERSION));
 
-  ConversionRequest conversion_request(&composer, request_, config_);
+  const commands::Context context;
+  ConversionRequest conversion_request(composer, request_, &context, config_);
   SetConversionPreferences(preferences, &segments_, &conversion_request);
   SetRequestType(ConversionRequest::CONVERSION, &conversion_request);
 
@@ -373,7 +374,9 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
     if (segments_.conversion_segments_size() != 1) {
       std::string composition;
       GetPreedit(0, segments_.conversion_segments_size(), &composition);
-      const ConversionRequest conversion_request(&composer, request_, config_);
+      const commands::Context context;
+      const ConversionRequest conversion_request(composer, request_, &context,
+                                                 config_);
       if (!converter_->ResizeSegment(&segments_, conversion_request, 0,
                                      Util::CharsLen(composition))) {
         LOG(WARNING) << "ResizeSegment failed for segments.";
@@ -455,7 +458,7 @@ bool SessionConverter::SuggestWithPreferences(
     return false;
   }
 
-  ConversionRequest conversion_request(&composer, request_, &context, config_);
+  ConversionRequest conversion_request(composer, request_, &context, config_);
   // Initialize the conversion request and segments for suggestion.
   SetConversionPreferences(preferences, &segments_, &conversion_request);
 
@@ -568,7 +571,8 @@ bool SessionConverter::PredictWithPreferences(
   ResetResult();
 
   // Initialize the segments and conversion_request for prediction
-  ConversionRequest conversion_request(&composer, request_, config_);
+  const commands::Context context;
+  ConversionRequest conversion_request(composer, request_, &context, config_);
   SetConversionPreferences(preferences, &segments_, &conversion_request);
   SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
   SetUseActualConverterForRealtimeConversion(*request_, &conversion_request);
@@ -677,7 +681,7 @@ void SessionConverter::Commit(const composer::Composer &composer,
     }
   }
   CommitUsageStats(state_, context);
-  ConversionRequest conversion_request(&composer, request_, &context, config_);
+  ConversionRequest conversion_request(composer, request_, &context, config_);
   converter_->FinishConversion(conversion_request, &segments_);
   ResetState();
 }
@@ -726,8 +730,7 @@ bool SessionConverter::CommitSuggestionInternal(
       return false;
     }
     CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
-    ConversionRequest conversion_request(&composer, request_, &context,
-                                         config_);
+    ConversionRequest conversion_request(composer, request_, &context, config_);
     converter_->FinishConversion(conversion_request, &segments_);
     DCHECK_EQ(0, segments_.conversion_segments_size());
     ResetState();
@@ -850,7 +853,7 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
   InitSegmentsFromString(std::move(key), std::move(normalized_preedit),
                          &segments_);
   CommitUsageStats(SessionConverterInterface::COMPOSITION, context);
-  ConversionRequest conversion_request(&composer, request_, &context, config_);
+  ConversionRequest conversion_request(composer, request_, &context, config_);
   // the request mode is CONVERSION, as the user experience
   // is similar to conversion. UserHistoryPredictor distinguishes
   // CONVERSION from SUGGESTION now.
@@ -951,7 +954,9 @@ void SessionConverter::ResizeSegmentWidth(const composer::Composer &composer,
   }
   ResetResult();
 
-  const ConversionRequest conversion_request(&composer, request_, config_);
+  const commands::Context context;
+  const ConversionRequest conversion_request(composer, request_, &context,
+                                             config_);
   if (!converter_->ResizeSegment(&segments_, conversion_request, segment_index_,
                                  delta)) {
     return;
