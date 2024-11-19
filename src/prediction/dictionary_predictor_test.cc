@@ -1061,9 +1061,9 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
   // prediction.
   InitSegmentsWithKey("ふぃるたーたいしょう", &segments);
 
-  ConversionRequest convreq =
+  const ConversionRequest convreq1 =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
+  EXPECT_TRUE(predictor.PredictForRequest(convreq1, &segments));
   EXPECT_TRUE(
       FindCandidateByValue(segments.conversion_segment(0), "フィルター対象"));
   EXPECT_TRUE(
@@ -1075,8 +1075,9 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
 
   // Should not be there for non-exact suggestion.
   InitSegmentsWithKey("ふぃるたーたいし", &segments);
-  convreq = CreateConversionRequest(ConversionRequest::SUGGESTION);
-  EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
+  const ConversionRequest convreq2 =
+      CreateConversionRequest(ConversionRequest::SUGGESTION);
+  EXPECT_TRUE(predictor.PredictForRequest(convreq2, &segments));
   EXPECT_FALSE(
       FindCandidateByValue(segments.conversion_segment(0), "フィルター対象"));
 }

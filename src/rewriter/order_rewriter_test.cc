@@ -52,25 +52,27 @@ class OrderRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
     rewriter_ = std::make_unique<OrderRewriter>();
+  }
 
-    convreq_ = ConversionRequest();
-    request_ = commands::Request();
-
-    convreq_.set_request(&request_);
+  ConversionRequest CreateConversionRequest(const commands::Request &request) {
+    ConversionRequest convreq;
+    convreq.set_request(&request);
+    return convreq;
   }
 
   std::unique_ptr<OrderRewriter> rewriter_;
-  ConversionRequest convreq_;
-  commands::Request request_;
 };
 
 TEST_F(OrderRewriterTest, Capability) {
   // Desktop
-  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::NOT_AVAILABLE);
+  const ConversionRequest convreq1;
+  EXPECT_EQ(rewriter_->capability(convreq1), RewriterInterface::NOT_AVAILABLE);
 
   // Mobile
-  request_test_util::FillMobileRequest(&request_);
-  EXPECT_EQ(rewriter_->capability(convreq_),
+  commands::Request request;
+  request_test_util::FillMobileRequest(&request);
+  const ConversionRequest convreq2 = CreateConversionRequest(request);
+  EXPECT_EQ(rewriter_->capability(convreq2),
             RewriterInterface::PREDICTION | RewriterInterface::SUGGESTION);
 }
 
@@ -125,28 +127,33 @@ Segments BuildTestSegments() {
 
 TEST_F(OrderRewriterTest, NotAvailable) {
   Segments segments = BuildTestSegments();
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
+  const ConversionRequest convreq;
+  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
 }
 
 TEST_F(OrderRewriterTest, DoNotRewriteNwp) {
   Segments segments = BuildTestSegments();
   segments.mutable_conversion_segment(0)->set_key("");
-  request_test_util::FillMobileRequest(&request_);
-  request_.mutable_decoder_experiment_params()
+  commands::Request request;
+  request_test_util::FillMobileRequest(&request);
+  request.mutable_decoder_experiment_params()
       ->set_enable_findability_oriented_order(true);
-  request_.mutable_decoder_experiment_params()
+  request.mutable_decoder_experiment_params()
       ->set_findability_oriented_order_top_size(5);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
+  const ConversionRequest convreq = CreateConversionRequest(request);
+  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
 }
 
 TEST_F(OrderRewriterTest, Rewrite) {
   Segments segments = BuildTestSegments();
-  request_test_util::FillMobileRequest(&request_);
-  request_.mutable_decoder_experiment_params()
+  commands::Request request;
+  request_test_util::FillMobileRequest(&request);
+  request.mutable_decoder_experiment_params()
       ->set_enable_findability_oriented_order(true);
-  request_.mutable_decoder_experiment_params()
+  request.mutable_decoder_experiment_params()
       ->set_findability_oriented_order_top_size(5);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  const ConversionRequest convreq = CreateConversionRequest(request);
+  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
 
   constexpr auto ValueIs = [](const auto &value) {
     return Pointee(Field(&Segment::Candidate::value, value));
