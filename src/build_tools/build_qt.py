@@ -52,8 +52,8 @@ from collections.abc import Iterator
 import dataclasses
 import functools
 import os
-import platform
 import pathlib
+import platform
 import shutil
 import subprocess
 import sys
@@ -71,69 +71,73 @@ ABS_QT_DEST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
 ABS_QT_HOST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_host')
 # The archive filename should be consistent with update_deps.py.
 ABS_QT6_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
-    'third_party_cache', 'qtbase-everywhere-src-6.8.0.tar.xz')
+    'third_party_cache', 'qtbase-everywhere-src-6.8.0.tar.xz'
+)
 ABS_DEFAULT_NINJA_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'ninja')
 QT_CONFIGURE_COMMON = [
-  '-opensource',
-  '-c++std', 'c++20',
-  '-silent',
-  '-no-cups',
-  '-no-dbus',
-  '-no-feature-androiddeployqt',
-  '-no-feature-animation',
-  '-no-feature-calendarwidget',
-  '-no-feature-completer',
-  '-no-feature-concatenatetablesproxymodel',
-  '-no-feature-concurrent',
-  '-no-feature-dial',
-  '-no-feature-effects',
-  '-no-feature-fontcombobox',
-  '-no-feature-fontdialog',
-  '-no-feature-identityproxymodel',
-  '-no-feature-image_heuristic_mask',
-  '-no-feature-imageformatplugin',
-  '-no-feature-islamiccivilcalendar',
-  '-no-feature-itemmodeltester',
-  '-no-feature-jalalicalendar',
-  '-no-feature-macdeployqt',
-  '-no-feature-mdiarea',
-  '-no-feature-mimetype',
-  '-no-feature-movie',
-  '-no-feature-network',
-  '-no-feature-poll-exit-on-error',
-  '-no-feature-qmake',
-  '-no-feature-sha3-fast',
-  '-no-feature-sharedmemory',
-  '-no-feature-socks5',
-  '-no-feature-splashscreen',
-  '-no-feature-sql',
-  '-no-feature-sqlmodel',
-  '-no-feature-sspi',
-  '-no-feature-stringlistmodel',
-  '-no-feature-tabletevent',
-  '-no-feature-testlib',
-  '-no-feature-textbrowser',
-  '-no-feature-textmarkdownreader',
-  '-no-feature-textmarkdownwriter',
-  '-no-feature-textodfwriter',
-  '-no-feature-timezone',
-  '-no-feature-topleveldomain',
-  '-no-feature-undoview',
-  '-no-feature-whatsthis',
-  '-no-feature-windeployqt',
-  '-no-feature-wizard',
-  '-no-feature-xml',
-  '-no-icu',
-  '-no-opengl',
-  '-no-sql-db2',
-  '-no-sql-ibase',
-  '-no-sql-mysql',
-  '-no-sql-oci',
-  '-no-sql-odbc',
-  '-no-sql-psql',
-  '-no-sql-sqlite',
-  '-nomake', 'examples',
-  '-nomake', 'tests',
+    '-opensource',
+    '-c++std',
+    'c++20',
+    '-silent',
+    '-no-cups',
+    '-no-dbus',
+    '-no-feature-androiddeployqt',
+    '-no-feature-animation',
+    '-no-feature-calendarwidget',
+    '-no-feature-completer',
+    '-no-feature-concatenatetablesproxymodel',
+    '-no-feature-concurrent',
+    '-no-feature-dial',
+    '-no-feature-effects',
+    '-no-feature-fontcombobox',
+    '-no-feature-fontdialog',
+    '-no-feature-identityproxymodel',
+    '-no-feature-image_heuristic_mask',
+    '-no-feature-imageformatplugin',
+    '-no-feature-islamiccivilcalendar',
+    '-no-feature-itemmodeltester',
+    '-no-feature-jalalicalendar',
+    '-no-feature-macdeployqt',
+    '-no-feature-mdiarea',
+    '-no-feature-mimetype',
+    '-no-feature-movie',
+    '-no-feature-network',
+    '-no-feature-poll-exit-on-error',
+    '-no-feature-qmake',
+    '-no-feature-sha3-fast',
+    '-no-feature-sharedmemory',
+    '-no-feature-socks5',
+    '-no-feature-splashscreen',
+    '-no-feature-sql',
+    '-no-feature-sqlmodel',
+    '-no-feature-sspi',
+    '-no-feature-stringlistmodel',
+    '-no-feature-tabletevent',
+    '-no-feature-testlib',
+    '-no-feature-textbrowser',
+    '-no-feature-textmarkdownreader',
+    '-no-feature-textmarkdownwriter',
+    '-no-feature-textodfwriter',
+    '-no-feature-timezone',
+    '-no-feature-topleveldomain',
+    '-no-feature-undoview',
+    '-no-feature-whatsthis',
+    '-no-feature-windeployqt',
+    '-no-feature-wizard',
+    '-no-feature-xml',
+    '-no-icu',
+    '-no-opengl',
+    '-no-sql-db2',
+    '-no-sql-ibase',
+    '-no-sql-mysql',
+    '-no-sql-oci',
+    '-no-sql-odbc',
+    '-no-sql-psql',
+    '-no-sql-sqlite',
+    '-nomake',
+    'examples',
+    '-nomake',
+    'tests',
 ]
 
 
@@ -178,6 +182,7 @@ class ProgressPrinter:
 
     class Impl:
       """A real implementation in case stdout is attached to concole."""
+
       last_output_time_ns = time.time_ns()
 
       def print_line(self, msg: str) -> None:
@@ -191,7 +196,7 @@ class ProgressPrinter:
         if (now - self.last_output_time_ns) < 25000000:
           return
         msg = msg + ' ' * max(colmuns - len(msg), 0)
-        msg = msg[0 : (colmuns)] + '\r'
+        msg = msg[0:(colmuns)] + '\r'
         sys.stdout.write(msg)
         sys.stdout.flush()
         self.last_output_time_ns = now
@@ -297,12 +302,13 @@ class QtVersion:
     minor: Minor version.
     patch: Patch level.
   """
+
   major: int
   minor: int
   patch: int
 
   def __hash__(self) -> int:
-    return hash(self.major, self.minor, self.patch)
+    return hash((self.major, self.minor, self.patch))
 
   def __eq__(self, other: Any) -> bool:
     if not isinstance(other, QtVersion):
@@ -334,8 +340,7 @@ def get_qt_version(args: argparse.Namespace) -> QtVersion:
   """
   archive_name = pathlib.Path(args.qt_archive_path).resolve().name
   ver_string_tuple = (
-      archive_name
-      .removeprefix('qtbase-everywhere-opensource-src-')
+      archive_name.removeprefix('qtbase-everywhere-opensource-src-')
       .removeprefix('qtbase-everywhere-src-')
       .removesuffix('.tar.xz')
       .split('.')
@@ -367,21 +372,23 @@ def make_host_configure_options(args: argparse.Namespace) -> list[str]:
     raise ValueError(f'Only Qt6 is supported but specified {qt_version}.')
 
   qt_configure_options = QT_CONFIGURE_COMMON + [
-    '-no-accessibility',
-    '-no-gui',
-    '-no-widgets',
-    '-make', 'tools',
-    # Always build Qt tools (e.g. "uic") as release build.
-    '-release',
-    # Qt tools (e.g. "uic") are not directly or indirectly linked to Mozc's
-    # artifacts. Thus it's OK to build them with statically linking to Qt
-    # libraries without worrying about license.
-    '-static',
+      '-no-accessibility',
+      '-no-gui',
+      '-no-widgets',
+      '-make',
+      'tools',
+      # Always build Qt tools (e.g. "uic") as release build.
+      '-release',
+      # Qt tools (e.g. "uic") are not directly or indirectly linked to Mozc's
+      # artifacts. Thus it's OK to build them with statically linking to Qt
+      # libraries without worrying about license.
+      '-static',
   ]
 
   if is_mac():
     qt_configure_options += [
-        '-platform', 'macx-clang',
+        '-platform',
+        'macx-clang',
         '-qt-libpng',
         '-qt-pcre',
     ]
@@ -389,7 +396,8 @@ def make_host_configure_options(args: argparse.Namespace) -> list[str]:
     qt_configure_options += [
         '-no-freetype',
         '-no-harfbuzz',
-        '-platform', 'win32-msvc',
+        '-platform',
+        'win32-msvc',
     ]
   if args.confirm_license:
     qt_configure_options += ['-confirm-license']
@@ -425,7 +433,8 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
 
   if is_mac():
     qt_configure_options += [
-        '-platform', 'macx-clang',
+        '-platform',
+        'macx-clang',
         '-qt-libpng',
         '-qt-pcre',
     ]
@@ -450,11 +459,14 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
     ]
 
   elif is_windows():
-    qt_configure_options += ['-force-debug-info',
-                             '-ltcg',  # Note: ignored in debug build
-                             '-no-freetype',
-                             '-no-harfbuzz',
-                             '-platform', 'win32-msvc']
+    qt_configure_options += [
+        '-force-debug-info',
+        '-ltcg',  # Note: ignored in debug build
+        '-no-freetype',
+        '-no-harfbuzz',
+        '-platform',
+        'win32-msvc',
+    ]
     if args.target_arch in ['x64', 'amd64']:
       qt_configure_options += ['-intelcet']
 
@@ -476,44 +488,83 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   if qt_src_dir != qt_dest_dir:
     qt_configure_options += ['-prefix', str(qt_dest_dir)]
 
-  return qt_configure_options + ((['--'] + cmake_options) if cmake_options
-                                 else [])
+  return qt_configure_options + (
+      (['--'] + cmake_options) if cmake_options else []
+  )
 
 
 def parse_args() -> argparse.Namespace:
   """Parse command line options."""
   parser = argparse.ArgumentParser()
-  parser.add_argument('--debug', dest='debug', default=False,
-                      action='store_true',
-                      help='make debug build')
-  parser.add_argument('--release', dest='release', default=False,
-                      action='store_true',
-                      help='make release build')
-  parser.add_argument('--qt_src_dir', help='qt src directory', type=str,
-                      default=str(ABS_QT_SRC_DIR))
-  parser.add_argument('--qt_archive_path', help='qtbase archive path', type=str,
-                      default=str(ABS_QT6_ARCHIVE_PATH))
-  parser.add_argument('--qt_dest_dir', help='qt dest directory', type=str,
-                      default=str(ABS_QT_DEST_DIR))
-  parser.add_argument('--qt_host_dir', help='qt host tools directory', type=str,
-                      default=str(ABS_QT_HOST_DIR))
-  parser.add_argument('--confirm_license',
-                      help='set to accept Qt OSS license',
-                      action='store_true', default=False)
+  parser.add_argument(
+      '--debug',
+      dest='debug',
+      default=False,
+      action='store_true',
+      help='make debug build',
+  )
+  parser.add_argument(
+      '--release',
+      dest='release',
+      default=False,
+      action='store_true',
+      help='make release build',
+  )
+  parser.add_argument(
+      '--qt_src_dir',
+      help='qt src directory',
+      type=str,
+      default=str(ABS_QT_SRC_DIR),
+  )
+  parser.add_argument(
+      '--qt_archive_path',
+      help='qtbase archive path',
+      type=str,
+      default=str(ABS_QT6_ARCHIVE_PATH),
+  )
+  parser.add_argument(
+      '--qt_dest_dir',
+      help='qt dest directory',
+      type=str,
+      default=str(ABS_QT_DEST_DIR),
+  )
+  parser.add_argument(
+      '--qt_host_dir',
+      help='qt host tools directory',
+      type=str,
+      default=str(ABS_QT_HOST_DIR),
+  )
+  parser.add_argument(
+      '--confirm_license',
+      help='set to accept Qt OSS license',
+      action='store_true',
+      default=False,
+  )
   parser.add_argument('--dryrun', action='store_true', default=False)
-  parser.add_argument('--ninja_dir', help='Directory of ninja executable',
-                      type=str, default=None)
+  parser.add_argument(
+      '--ninja_dir',
+      help='Directory of ninja executable',
+      type=str,
+      default=None,
+  )
   if is_windows():
-    parser.add_argument('--target_arch',
-                        help='"x64" or "arm64"', type=str, default="x64")
-    parser.add_argument('--vcvarsall_path', help='Path of vcvarsall.bat',
-                        type=str, default=None)
+    parser.add_argument(
+        '--target_arch', help='"x64" or "arm64"', type=str, default='x64'
+    )
+    parser.add_argument(
+        '--vcvarsall_path', help='Path of vcvarsall.bat', type=str, default=None
+    )
   elif is_mac():
-    parser.add_argument('--macos_cpus',
-                        help=('comma-separated CPU archs for mac Build (e.g. '
-                              '"arm64", "x86_64,arm64"). Corresponds to the '
-                              'same option in Bazel.'),
-                        type=str, default=None)
+    parser.add_argument(
+        '--macos_cpus',
+        help=(
+            'comma-separated CPU archs for mac Build (e.g. '
+            '"arm64", "x86_64,arm64"). Corresponds to the '
+            'same option in Bazel.'
+        ),
+        type=str,
+        default=None,
+    )
   return parser.parse_args()
 
 
@@ -522,6 +573,7 @@ def get_ninja_dir(args: argparse.Namespace) -> Union[pathlib.Path, None]:
 
   Args:
     args: build options to be used to customize configure options of Qt.
+
   Returns:
     The directory of ninja executable if ninja should be used. None otherwise.
   """
@@ -544,6 +596,7 @@ def build_host_on_mac(args: argparse.Namespace) -> None:
 
   Args:
     args: build options to be used to customize configure options of Qt.
+
   Raises:
     FileNotFoundError: when any required file is not found.
   """
@@ -586,9 +639,9 @@ def build_host_on_mac(args: argparse.Namespace) -> None:
 def build_on_mac(args: argparse.Namespace) -> None:
   """Build Qt from the source code on Mac.
 
-
   Args:
     args: build options to be used to customize configure options of Qt.
+
   Raises:
     FileNotFoundError: when any required file is not found.
   """
@@ -644,8 +697,12 @@ def build_on_mac(args: argparse.Namespace) -> None:
     shutil.rmtree(qt_host_dir)
 
 
-def exec_command(command: list[str], cwd: Union[str, pathlib.Path],
-                 env: dict[str, str], dryrun: bool = False) -> None:
+def exec_command(
+    command: list[str],
+    cwd: Union[str, pathlib.Path],
+    env: dict[str, str],
+    dryrun: bool = False,
+) -> None:
   """Run the specified command.
 
   Args:
@@ -653,12 +710,15 @@ def exec_command(command: list[str], cwd: Union[str, pathlib.Path],
     cwd: Directory to execute the command.
     env: Environment variables.
     dryrun: True to execute the specified command as a dry run.
+
   Raises:
     CalledProcessError: When the process failed.
   """
   if dryrun:
-    print(f"dryrun: subprocess.run('{command}', shell=False, check=True,"
-          f' cwd={cwd}, env={env})')
+    print(
+        f"dryrun: subprocess.run('{command}', shell=False, check=True,"
+        f' cwd={cwd}, env={env})'
+    )
   else:
     subprocess.run(command, shell=False, check=True, cwd=cwd, env=env)
 
@@ -694,7 +754,9 @@ def build_host_on_windows(args: argparse.Namespace) -> None:
 
   cmd = str(shutil.which('cmd.exe', path=env['PATH']))
 
-  configure_cmds = [cmd, '/C', 'configure.bat'] + make_host_configure_options(args)
+  configure_cmds = [cmd, '/C', 'configure.bat'] + make_host_configure_options(
+      args
+  )
   exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
   cmake = str(shutil.which('cmake.exe', path=env['PATH']))
@@ -751,7 +813,7 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   host_arch = normalize_win_arch(platform.uname().machine)
   target_arch = normalize_win_arch(args.target_arch)
-  arch = host_arch if host_arch == target_arch else f"{host_arch}_{target_arch}"
+  arch = host_arch if host_arch == target_arch else f'{host_arch}_{target_arch}'
   env = get_vs_env_vars(arch, args.vcvarsall_path)
 
   # Use locally checked out ninja.exe if exists.
