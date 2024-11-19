@@ -31,7 +31,6 @@
 
 #include <cstddef>
 #include <iterator>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -579,9 +578,8 @@ TEST_F(CompositionTest, GetExpandedStrings) {
   InitComposition(composition_);
 
   // a ky ki tta tty
-  std::string base;
-  std::set<std::string> expanded;
-  composition_.GetExpandedStrings(&base, &expanded);
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [base, expanded] = composition_.GetExpandedStrings();
   EXPECT_EQ(base, "あkyきったっ");
   EXPECT_EQ(expanded.size(), 2);
   // You cannot use EXPECT_NE here because it causes compile error in gtest

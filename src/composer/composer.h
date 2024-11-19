@@ -34,11 +34,12 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/base/attributes.h"
+#include "absl/container/btree_set.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/internal/composition.h"
@@ -88,8 +89,8 @@ class ComposerData {
   std::string GetQueryForPrediction() const;
 
   // Returns a expanded prediction query.
-  void GetQueriesForPrediction(
-      std::string *base, std::set<std::string> *expanded) const;
+  std::pair<std::string, absl::btree_set<std::string>>
+  GetQueriesForPrediction() const;
 
   // Returns a string to be used for type correction.
   std::string GetStringForTypeCorrection() const;
@@ -223,8 +224,8 @@ class Composer final {
   std::string GetQueryForPrediction() const;
 
   // Returns a expanded prediction query.
-  void GetQueriesForPrediction(std::string *base,
-                               std::set<std::string> *expanded) const;
+  std::pair<std::string, absl::btree_set<std::string>>
+  GetQueriesForPrediction() const;
 
   // Returns a string to be used for type correction.
   std::string GetStringForTypeCorrection() const;

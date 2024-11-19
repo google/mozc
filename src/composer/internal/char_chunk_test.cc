@@ -30,10 +30,10 @@
 #include "composer/internal/char_chunk.h"
 
 #include <cstddef>
-#include <set>
 #include <string>
 #include <utility>
 
+#include "absl/container/btree_set.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "composer/internal/composition_input.h"
@@ -1693,7 +1693,8 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
 }
 
 namespace {
-bool HasResult(const std::set<std::string> &results, const std::string &value) {
+bool HasResult(const absl::btree_set<std::string> &results,
+               const std::string &value) {
   return (results.find(value) != results.end());
 }
 }  // namespace
@@ -1720,8 +1721,7 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "か");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 0);  // no ambiguity
   }
   {
@@ -1732,8 +1732,7 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 12);
     EXPECT_TRUE(HasResult(results, "k"));
     EXPECT_TRUE(HasResult(results, "か"));    // ka
@@ -1756,8 +1755,7 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 6);
     EXPECT_TRUE(HasResult(results, "ky"));
     EXPECT_TRUE(HasResult(results, "きゃ"));
@@ -1774,8 +1772,7 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "っ");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 11);
     EXPECT_TRUE(HasResult(results, "か"));    // ka
     EXPECT_TRUE(HasResult(results, "き"));    // ki
@@ -1805,8 +1802,7 @@ TEST(CharChunkTest, KanaGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 2);
     EXPECT_TRUE(HasResult(results, "か"));
     EXPECT_TRUE(HasResult(results, "が"));
@@ -1819,8 +1815,7 @@ TEST(CharChunkTest, KanaGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 3);
     EXPECT_TRUE(HasResult(results, "は"));
     EXPECT_TRUE(HasResult(results, "ば"));
@@ -1842,8 +1837,7 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 2);
     EXPECT_TRUE(HasResult(results, "あ"));
     EXPECT_TRUE(HasResult(results, "ぁ"));
@@ -1856,8 +1850,7 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 2);
     EXPECT_TRUE(HasResult(results, "や"));
     EXPECT_TRUE(HasResult(results, "ゃ"));
@@ -1870,8 +1863,7 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 2);
     EXPECT_TRUE(HasResult(results, "ゆ"));
     EXPECT_TRUE(HasResult(results, "ゅ"));
@@ -1884,8 +1876,7 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 3);
     EXPECT_TRUE(HasResult(results, "は"));
     EXPECT_TRUE(HasResult(results, "ば"));
@@ -1907,8 +1898,7 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 2);
     EXPECT_TRUE(HasResult(results, "あ"));
     EXPECT_TRUE(HasResult(results, "ぁ"));
@@ -1921,8 +1911,7 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 2);
     EXPECT_TRUE(HasResult(results, "や"));
     EXPECT_TRUE(HasResult(results, "ゃ"));
@@ -1935,8 +1924,7 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 2);
     EXPECT_TRUE(HasResult(results, "ゆ"));
     EXPECT_TRUE(HasResult(results, "ゅ"));
@@ -1949,8 +1937,7 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ(base, "");
 
-    std::set<std::string> results;
-    chunk.GetExpandedResults(&results);
+    const absl::btree_set<std::string> results = chunk.GetExpandedResults();
     EXPECT_EQ(results.size(), 3);
     EXPECT_TRUE(HasResult(results, "は"));
     EXPECT_TRUE(HasResult(results, "ば"));

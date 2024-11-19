@@ -38,7 +38,6 @@
 #include <limits>
 #include <memory>
 #include <optional>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -62,7 +61,6 @@
 #include "base/container/trie.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
-#include "base/thread.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
@@ -1458,14 +1456,15 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
   }
 
   *input_key = request.composer().GetStringForPreedit();
-  std::set<std::string> expanded_set;
-  request.composer().GetQueriesForPrediction(base, &expanded_set);
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [query_base, expanded_set] =
+      request.composer().GetQueriesForPrediction();
+  *base = std::move(query_base);
   if (!expanded_set.empty()) {
     *expanded = std::make_unique<Trie<std::string>>();
-    for (std::set<std::string>::const_iterator itr = expanded_set.begin();
-         itr != expanded_set.end(); ++itr) {
+    for (const std::string &expanded_key : expanded_set) {
       // For getting matched key, insert values
-      (*expanded)->AddEntry(*itr, *itr);
+      (*expanded)->AddEntry(expanded_key, expanded_key);
     }
   }
 }

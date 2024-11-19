@@ -33,11 +33,11 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/container/btree_set.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
@@ -482,11 +482,10 @@ TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
   table_->AddRule("so", "そ", "");
 
   {
-    std::string base;
-    std::set<std::string> expanded;
     composer_->EditErase();
     composer_->InsertCharacter("us");
-    composer_->GetQueriesForPrediction(&base, &expanded);
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [base, expanded] = composer_->GetQueriesForPrediction();
     composer_->GetStringForPreedit();
     EXPECT_EQ(base, "う");
     EXPECT_EQ(expanded.size(), 7);
@@ -514,11 +513,10 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
   table_->AddRule("づ*", "", "つ");
 
   {
-    std::string base;
-    std::set<std::string> expanded;
     composer_->EditErase();
     composer_->InsertCharacter("_$");
-    composer_->GetQueriesForPrediction(&base, &expanded);
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [base, expanded] = composer_->GetQueriesForPrediction();
     composer_->GetStringForPreedit();
     EXPECT_EQ(base, "い");
     EXPECT_EQ(expanded.size(), 2);
@@ -526,22 +524,20 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     EXPECT_TRUE(expanded.end() != expanded.find("ど"));
   }
   {
-    std::string base;
-    std::set<std::string> expanded;
     composer_->EditErase();
     composer_->InsertCharacter("_$*");
-    composer_->GetQueriesForPrediction(&base, &expanded);
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [base, expanded] = composer_->GetQueriesForPrediction();
     composer_->GetStringForPreedit();
     EXPECT_EQ(base, "い");
     EXPECT_EQ(expanded.size(), 1);
     EXPECT_TRUE(expanded.end() != expanded.find("ど"));
   }
   {
-    std::string base;
-    std::set<std::string> expanded;
     composer_->EditErase();
     composer_->InsertCharacter("_x*");
-    composer_->GetQueriesForPrediction(&base, &expanded);
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [base, expanded] = composer_->GetQueriesForPrediction();
     composer_->GetStringForPreedit();
     EXPECT_EQ(base, "い");
     EXPECT_EQ(expanded.size(), 1);
@@ -560,15 +556,14 @@ TEST_F(ComposerTest, Issue277163340) {
   // bug in composer/internal/char_chunk.cc and it
   // caused the process to crash.
   table_->AddRuleWithAttributes("[", "", "", NO_TRANSLITERATION);
-  std::string base, asis, preedit;
-  std::set<std::string> expanded;
   commands::KeyEvent key;
   key.set_key_string("[]");
   key.set_input_style(commands::KeyEvent::AS_IS);
   composer_->InsertCharacterKeyEvent(key);
   composer_->InsertCharacterKeyEvent(key);
   composer_->InsertCommandCharacter(composer::Composer::STOP_KEY_TOGGLING);
-  composer_->GetQueriesForPrediction(&base, &expanded);
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [base, expanded] = composer_->GetQueriesForPrediction();
 
   // Never reached here due to the crash before the fix for b/277163340.
   EXPECT_EQ(base, "[][]");
@@ -2534,13 +2529,12 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
   constexpr char kTestStr[] = "ああaｋka。";
 
   {
-    std::string base;
-    std::set<std::string> expanded;
     composer_->InsertCharacterPreedit(kTestStr);
-    std::string preedit = composer_->GetStringForPreedit();
-    std::string conversion_query = composer_->GetQueryForConversion();
-    std::string prediction_query = composer_->GetQueryForPrediction();
-    composer_->GetQueriesForPrediction(&base, &expanded);
+    const std::string preedit = composer_->GetStringForPreedit();
+    const std::string conversion_query = composer_->GetQueryForConversion();
+    const std::string prediction_query = composer_->GetQueryForPrediction();
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [base, expanded] = composer_->GetQueriesForPrediction();
     EXPECT_FALSE(preedit.empty());
     EXPECT_FALSE(conversion_query.empty());
     EXPECT_FALSE(prediction_query.empty());
@@ -2548,15 +2542,14 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
   }
   composer_->Reset();
   {
-    std::string base;
-    std::set<std::string> expanded;
     for (const std::string &c : Util::SplitStringToUtf8Chars(kTestStr)) {
       composer_->InsertCharacterPreedit(c);
     }
-    std::string preedit = composer_->GetStringForPreedit();
-    std::string conversion_query = composer_->GetQueryForConversion();
-    std::string prediction_query = composer_->GetQueryForPrediction();
-    composer_->GetQueriesForPrediction(&base, &expanded);
+    const std::string preedit = composer_->GetStringForPreedit();
+    const std::string conversion_query = composer_->GetQueryForConversion();
+    const std::string prediction_query = composer_->GetQueryForPrediction();
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [base, expanded] = composer_->GetQueriesForPrediction();
     EXPECT_FALSE(preedit.empty());
     EXPECT_FALSE(conversion_query.empty());
     EXPECT_FALSE(prediction_query.empty());
@@ -2586,9 +2579,6 @@ TEST_F(ComposerTest, GetRawString) {
 }
 
 TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
-  std::string output;
-  std::set<std::string> expanded;
-
   composer_->SetPreeditTextForTestOnly("も");
 
   EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
@@ -2597,9 +2587,10 @@ TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
   EXPECT_EQ(composer_->GetQueryForConversion(), "も");
   EXPECT_EQ(composer_->GetQueryForPrediction(), "も");
 
-  composer_->GetQueriesForPrediction(&output, &expanded);
-  EXPECT_EQ(output, "も");
-  EXPECT_TRUE(expanded.empty());
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [output1, expanded1] = composer_->GetQueriesForPrediction();
+  EXPECT_EQ(output1, "も");
+  EXPECT_TRUE(expanded1.empty());
 
   composer_->Reset();
 
@@ -2611,10 +2602,11 @@ TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
   EXPECT_EQ(composer_->GetQueryForConversion(), "mo");
   EXPECT_EQ(composer_->GetQueryForPrediction(), "mo");
 
-  composer_->GetQueriesForPrediction(&output, &expanded);
-  EXPECT_EQ(output, "mo");
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [output2, expanded2] = composer_->GetQueriesForPrediction();
+  EXPECT_EQ(output2, "mo");
 
-  EXPECT_TRUE(expanded.empty());
+  EXPECT_TRUE(expanded2.empty());
 
   composer_->Reset();
 
@@ -2626,10 +2618,11 @@ TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
   EXPECT_EQ(composer_->GetQueryForConversion(), "m");
   EXPECT_EQ(composer_->GetQueryForPrediction(), "m");
 
-  composer_->GetQueriesForPrediction(&output, &expanded);
-  EXPECT_EQ(output, "m");
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [output3, expanded3] = composer_->GetQueriesForPrediction();
+  EXPECT_EQ(output3, "m");
 
-  EXPECT_TRUE(expanded.empty());
+  EXPECT_TRUE(expanded3.empty());
 
   composer_->Reset();
 
@@ -2642,10 +2635,11 @@ TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
   EXPECT_EQ(composer_->GetQueryForConversion(), "もz");
   EXPECT_EQ(composer_->GetQueryForPrediction(), "もz");
 
-  composer_->GetQueriesForPrediction(&output, &expanded);
-  EXPECT_EQ(output, "もz");
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [output4, expanded4] = composer_->GetQueriesForPrediction();
+  EXPECT_EQ(output4, "もz");
 
-  EXPECT_TRUE(expanded.empty());
+  EXPECT_TRUE(expanded4.empty());
 }
 
 TEST_F(ComposerTest, IsToggleable) {
@@ -2951,9 +2945,8 @@ TEST_F(ComposerTest, NBforeN_WithFullWidth) {
   EXPECT_EQ(focused, "ｎ");
   EXPECT_EQ(right, "");
 
-  std::string queries_base;
-  std::set<std::string> queries_expanded;
-  composer_->GetQueriesForPrediction(&queries_base, &queries_expanded);
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [queries_base, queries_expanded] = composer_->GetQueriesForPrediction();
   EXPECT_EQ(queries_base, "あn");
 
   EXPECT_EQ(composer_->GetQueryForPrediction(), "あnn");
@@ -2998,9 +2991,9 @@ TEST_F(ComposerTest, NBforeN_WithHalfWidth) {
   EXPECT_EQ(focused, "n");
   EXPECT_EQ(right, "");
 
-  std::string queries_base;
-  std::set<std::string> queries_expanded;
-  composer_->GetQueriesForPrediction(&queries_base, &queries_expanded);
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [queries_base, queries_expanded] =
+      composer_->GetQueriesForPrediction();
   EXPECT_EQ(queries_base, "あn");
 
   EXPECT_EQ(composer_->GetQueryForPrediction(), "あnn");
@@ -3082,19 +3075,18 @@ TEST_F(ComposerTest, CreateComposerData) {
   EXPECT_EQ(composer_->GetHandwritingCompositions().size(), 0);
 
   {  // Queries for prediction
-    std::string data_base;
-    std::set<std::string> data_expanded;
-    data.GetQueriesForPrediction(&data_base, &data_expanded);
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [data_base, data_expanded] = data.GetQueriesForPrediction();
     EXPECT_EQ(data_base, "あア");
     EXPECT_EQ(data_expanded.size(), 3);
 
-    std::string composer_base;
-    std::set<std::string> composer_expanded;
-    composer_->GetQueriesForPrediction(&composer_base, &composer_expanded);
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [composer_base, composer_expanded] =
+        data.GetQueriesForPrediction();
     EXPECT_EQ(data_base, composer_base);
     EXPECT_EQ(data_expanded.size(), composer_expanded.size());
 
-    const std::set<std::string> expected_expanded = {"k", "か", "き"};
+    const absl::btree_set<std::string> expected_expanded = {"k", "か", "き"};
     EXPECT_EQ(data_expanded, composer_expanded);
     EXPECT_EQ(data_expanded, expected_expanded);
   }
@@ -3168,15 +3160,15 @@ TEST_F(ComposerTest, CreateComposerDataForHandwriting) {
   }
 
   {  // Queries for prediction
-    std::string data_base;
-    std::set<std::string> data_expanded;
-    data.GetQueriesForPrediction(&data_base, &data_expanded);
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [data_base, data_expanded] = data.GetQueriesForPrediction();
+
     EXPECT_EQ(data_base, "ねこ");
     EXPECT_EQ(data_expanded.size(), 0);
 
-    std::string composer_base;
-    std::set<std::string> composer_expanded;
-    composer_->GetQueriesForPrediction(&composer_base, &composer_expanded);
+    // auto = std::pair<std::string, absl::btree_set<std::string>>
+    const auto [composer_base, composer_expanded] =
+        data.GetQueriesForPrediction();
     EXPECT_EQ(data_base, composer_base);
     EXPECT_EQ(data_expanded.size(), composer_expanded.size());
     EXPECT_EQ(data_expanded, composer_expanded);  // Empty

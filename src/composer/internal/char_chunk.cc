@@ -30,7 +30,6 @@
 #include "composer/internal/char_chunk.h"
 
 #include <cstddef>
-#include <set>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -224,21 +223,20 @@ void CharChunk::AppendFixedResult(Transliterators::Transliterator t12r,
 //
 // What we want to append here is the 'looped rule' in |kMaxRecursion| lookup.
 // Here, '{*}ぁ' -> '{*}あ' -> '{*}ぁ' is the loop.
-void CharChunk::GetExpandedResults(std::set<std::string> *results) const {
-  DCHECK(results);
-
+absl::btree_set<std::string> CharChunk::GetExpandedResults() const {
+  absl::btree_set<std::string> results;
   if (pending_.empty()) {
-    return;
+    return results;
   }
   // Append current pending string
   if (conversion_.empty()) {
-    results->insert(DeleteSpecialKeys(pending_));
+    results.insert(DeleteSpecialKeys(pending_));
   }
   std::vector<const Entry *> entries;
   table_->LookUpPredictiveAll(pending_, &entries);
   for (const Entry *entry : entries) {
     if (!entry->result().empty()) {
-      results->insert(DeleteSpecialKeys(entry->result()));
+      results.insert(DeleteSpecialKeys(entry->result()));
     }
     if (entry->pending().empty()) {
       continue;
@@ -249,9 +247,10 @@ void CharChunk::GetExpandedResults(std::set<std::string> *results) const {
       continue;
     }
     for (const std::string &result : loop_result) {
-      results->insert(DeleteSpecialKeys(result));
+      results.insert(DeleteSpecialKeys(result));
     }
   }
+  return results;
 }
 
 bool CharChunk::IsFixed() const { return pending_.empty(); }

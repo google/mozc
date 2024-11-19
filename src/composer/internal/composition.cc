@@ -31,11 +31,12 @@
 
 #include <cstddef>
 #include <iterator>
-#include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "absl/algorithm/container.h"
+#include "absl/container/btree_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
@@ -268,31 +269,25 @@ std::string Composition::GetStringWithModes(
   return composition;
 }
 
-void Composition::GetExpandedStrings(std::string *base,
-                                     std::set<std::string> *expanded) const {
-  GetExpandedStringsWithTransliterator(Transliterators::LOCAL, base, expanded);
-}
-
-void Composition::GetExpandedStringsWithTransliterator(
-    Transliterators::Transliterator transliterator, std::string *base,
-    std::set<std::string> *expanded) const {
-  DCHECK(base);
-  DCHECK(expanded);
-  base->clear();
-  expanded->clear();
+std::pair<std::string, absl::btree_set<std::string>>
+Composition::GetExpandedStrings() const {
+  Transliterators::Transliterator transliterator = Transliterators::LOCAL;
   if (chunks_.empty()) {
     MOZC_VLOG(1) << "The composition size is zero.";
-    return;
+    return std::make_tuple(std::string(), absl::btree_set<std::string>());
   }
 
+  std::string base;
   CharChunkList::const_iterator it;
   for (it = chunks_.begin(); it != std::prev(chunks_.end()); ++it) {
-    it->AppendResult(transliterator, base);
+    it->AppendResult(transliterator, &base);
   }
 
-  chunks_.back().AppendTrimedResult(transliterator, base);
+  chunks_.back().AppendTrimedResult(transliterator, &base);
   // Get expanded from the last chunk
-  chunks_.back().GetExpandedResults(expanded);
+  const absl::btree_set<std::string> expanded =
+      chunks_.back().GetExpandedResults();
+  return std::make_tuple(base, expanded);
 }
 
 std::string Composition::GetString() const {

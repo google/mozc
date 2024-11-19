@@ -31,11 +31,11 @@
 #define MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
 
 #include <cstddef>
-#include <set>
 #include <string>
 #include <tuple>
 #include <utility>
 
+#include "absl/container/btree_set.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -78,7 +78,7 @@ class CharChunk final {
                          std::string *result) const;
 
   // Get possible results from current chunk
-  void GetExpandedResults(std::set<std::string> *results) const;
+  absl::btree_set<std::string> GetExpandedResults() const;
   bool IsFixed() const;
 
   // True if IsAppendable() is true and this object is fixed (|pending_|=="")

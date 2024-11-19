@@ -32,10 +32,10 @@
 
 #include <cstddef>
 #include <list>
-#include <set>
 #include <string>
-#include <tuple>
+#include <utility>
 
+#include "absl/container/btree_set.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "composer/internal/char_chunk.h"
@@ -129,17 +129,14 @@ class Composition final {
       Transliterators::Transliterator transliterator) const;
   std::string GetStringWithTrimMode(TrimMode trim_mode) const;
   // Get string with consideration for ambiguity from pending input
-  void GetExpandedStrings(std::string *base,
-                          std::set<std::string> *expanded) const;
-  void GetExpandedStringsWithTransliterator(
-      Transliterators::Transliterator transliterator, std::string *base,
-      std::set<std::string> *expanded) const;
+  std::pair<std::string, absl::btree_set<std::string>> GetExpandedStrings()
+      const;
   void GetPreedit(size_t position, std::string *left, std::string *focused,
                   std::string *right) const;
 
   void SetInputMode(Transliterators::Transliterator transliterator);
 
-  // Return true if the composition is adviced to be committed immediately.
+  // Return true if the composition is advised to be committed immediately.
   bool ShouldCommit() const;
 
   void SetTable(const Table *table);

@@ -33,12 +33,13 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <set>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "absl/container/btree_set.h"
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -230,7 +231,7 @@ const ModifierRemovalMap *GetModifierRemovalMap() {
 
 void RemoveExpandedCharsForModifier(absl::string_view asis,
                                     absl::string_view base,
-                                    std::set<std::string> *expanded) {
+                                    absl::btree_set<std::string> *expanded) {
   if (!absl::StartsWith(asis, base)) {
     LOG(DFATAL) << "base is not a prefix of asis.";
     return;
@@ -367,34 +368,33 @@ std::string GetQueryForPrediction(
   return japanese_util::FullWidthAsciiToHalfWidthAscii(*base_query);
 }
 
-void GetQueriesForPrediction(
+std::pair<std::string, absl::btree_set<std::string>> GetQueriesForPrediction(
     const Composition &composition,
-    const transliteration::TransliterationType input_mode, std::string *base,
-    std::set<std::string> *expanded) {
-  DCHECK(base);
-  DCHECK(expanded);
+    const transliteration::TransliterationType input_mode) {
   // In case of the Latin input modes, we don't perform expansion.
   switch (input_mode) {
     case transliteration::HALF_ASCII:
     case transliteration::FULL_ASCII: {
-      *base = GetQueryForPrediction(composition, input_mode);
-      expanded->clear();
-      return;
+      return std::make_tuple(GetQueryForPrediction(composition, input_mode),
+                             absl::btree_set<std::string>());
     }
     default: {
     }
   }
-  std::string base_query;
-  composition.GetExpandedStrings(&base_query, expanded);
+
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  auto[base_query, expanded] = composition.GetExpandedStrings();
+
   // The above `GetExpandedStrings` generates expansion for modifier key as
   // well, e.g., if the composition is "ざ", `expanded` contains "さ" too.
   // However, "ざ" is usually composed by explicitly hitting the modifier key.
   // So we don't want to generate prediction from "さ" in this case. The
   // following code removes such unnecessary expansion.
   const std::string asis = composition.GetStringWithTrimMode(ASIS);
-  RemoveExpandedCharsForModifier(asis, base_query, expanded);
+  RemoveExpandedCharsForModifier(asis, base_query, &expanded);
 
-  *base = japanese_util::FullWidthAsciiToHalfWidthAscii(base_query);
+  return std::make_tuple(
+    japanese_util::FullWidthAsciiToHalfWidthAscii(base_query), expanded);
 }
 
 std::string GetStringForTypeCorrection(const Composition &composition) {
@@ -533,9 +533,9 @@ std::string ComposerData::GetQueryForPrediction() const {
   return common::GetQueryForPrediction(composition_, input_mode_);
 }
 
-void ComposerData::GetQueriesForPrediction(std::string *base,
-                                       std::set<std::string> *expanded) const {
-  common::GetQueriesForPrediction(composition_, input_mode_, base, expanded);
+std::pair<std::string, absl::btree_set<std::string>>
+ComposerData::GetQueriesForPrediction() const {
+  return common::GetQueriesForPrediction(composition_, input_mode_);
 }
 
 std::string ComposerData::GetStringForTypeCorrection() const {
@@ -1058,10 +1058,9 @@ std::string Composer::GetQueryForPrediction() const {
   return common::GetQueryForPrediction(composition_, input_mode_);
 }
 
-void Composer::GetQueriesForPrediction(std::string *base,
-                                       std::set<std::string> *expanded) const {
-  return common::GetQueriesForPrediction(composition_, input_mode_, base,
-                                           expanded);
+std::pair<std::string, absl::btree_set<std::string>>
+Composer::GetQueriesForPrediction() const {
+  return common::GetQueriesForPrediction(composition_, input_mode_);
 }
 
 std::string Composer::GetStringForTypeCorrection() const {

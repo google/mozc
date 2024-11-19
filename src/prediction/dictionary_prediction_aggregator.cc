@@ -35,11 +35,12 @@
 #include <cstdint>
 #include <iterator>
 #include <optional>
-#include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
+#include "absl/container/btree_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -245,7 +246,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
  public:
   PredictiveLookupCallback(PredictionTypes types, size_t limit,
                            size_t original_key_len,
-                           const std::set<std::string> *subsequent_chars,
+                           const absl::btree_set<std::string> &subsequent_chars,
                            Segment::Candidate::SourceInfo source_info,
                            int zip_code_id, int unknown_id,
                            absl::string_view non_expanded_original_key,
@@ -266,7 +267,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
       delete;
 
   ResultType OnKey(absl::string_view key) override {
-    if (subsequent_chars_ == nullptr) {
+    if (subsequent_chars_.empty()) {
       return TRAVERSE_CONTINUE;
     }
     // If |subsequent_chars_| was provided, check if the substring of |key|
@@ -282,7 +283,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
     // TODO(noriyukit): std::vector<string> would be better than set<string>.
     // To this end, we need to fix Comopser as well.
     const absl::string_view rest = absl::ClippedSubstr(key, original_key_len_);
-    for (const std::string &chr : *subsequent_chars_) {
+    for (const std::string &chr : subsequent_chars_) {
       if (absl::StartsWith(rest, chr)) {
         return TRAVERSE_CONTINUE;
       }
@@ -332,7 +333,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
   const PredictionTypes types_;
   const size_t limit_;
   const size_t original_key_len_;
-  const std::set<std::string> *subsequent_chars_ = nullptr;
+  const absl::btree_set<std::string> &subsequent_chars_;
   const Segment::Candidate::SourceInfo source_info_;
   const int zip_code_id_;
   const int unknown_id_;
@@ -379,14 +380,13 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
 class DictionaryPredictionAggregator::PredictiveBigramLookupCallback
     : public PredictiveLookupCallback {
  public:
-  PredictiveBigramLookupCallback(PredictionTypes types, size_t limit,
-                                 size_t original_key_len,
-                                 const std::set<std::string> *subsequent_chars,
-                                 absl::string_view history_value,
-                                 Segment::Candidate::SourceInfo source_info,
-                                 int zip_code_id, int unknown_id,
-                                 absl::string_view non_expanded_original_key,
-                                 std::vector<Result> *results)
+  PredictiveBigramLookupCallback(
+      PredictionTypes types, size_t limit, size_t original_key_len,
+      const absl::btree_set<std::string> &subsequent_chars,
+      absl::string_view history_value,
+      Segment::Candidate::SourceInfo source_info, int zip_code_id,
+      int unknown_id, absl::string_view non_expanded_original_key,
+      std::vector<Result> *results)
       : PredictiveLookupCallback(
             types, limit, original_key_len, subsequent_chars, source_info,
             zip_code_id, unknown_id, non_expanded_original_key, results),
@@ -1352,11 +1352,12 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
     PredictionTypes types, size_t lookup_limit,
     Segment::Candidate::SourceInfo source_info, int zip_code_id, int unknown_id,
     std::vector<Result> *results) {
+  const absl::btree_set<std::string> empty_expanded;
   if (!request.has_composer()) {
     std::string input_key(history_key);
     input_key.append(segments.conversion_segment(0).key());
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      nullptr, source_info, zip_code_id,
+                                      empty_expanded, source_info, zip_code_id,
                                       unknown_id, "", results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
@@ -1367,14 +1368,12 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   // "か", "き", etc
   // Example2 kana input: for "あか", we will get |base|, "あ" and |expanded|,
   // "か", and "が".
-  std::string base;
-  std::set<std::string> expanded;
-  request.composer().GetQueriesForPrediction(&base, &expanded);
-  std::string input_key;
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
+  const auto [base, expanded] = request.composer().GetQueriesForPrediction();
   if (expanded.empty()) {
-    input_key = absl::StrCat(history_key, base);
+    const std::string input_key = absl::StrCat(history_key, base);
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      nullptr, source_info, zip_code_id,
+                                      expanded, source_info, zip_code_id,
                                       unknown_id, "", results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
@@ -1390,9 +1389,10 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   // times is not so expensive.  Also, the number of lookup results is limited
   // by |lookup_limit|.
   for (const std::string &expanded_char : expanded) {
-    input_key = absl::StrCat(history_key, base, expanded_char);
+    const std::string input_key =
+        absl::StrCat(history_key, base, expanded_char);
     PredictiveLookupCallback callback(
-        types, lookup_limit, input_key.size(), nullptr, source_info,
+        types, lookup_limit, input_key.size(), empty_expanded, source_info,
         zip_code_id, unknown_id, non_expanded_original_key, results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
@@ -1404,11 +1404,12 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
     const Segments &segments, PredictionTypes types, size_t lookup_limit,
     Segment::Candidate::SourceInfo source_info, int unknown_id_,
     std::vector<Result> *results) const {
+  absl::btree_set<std::string> expanded;
   if (!request.has_composer()) {
     std::string input_key(history_key);
     input_key.append(segments.conversion_segment(0).key());
     PredictiveBigramLookupCallback callback(
-        types, lookup_limit, input_key.size(), nullptr, history_value,
+        types, lookup_limit, input_key.size(), expanded, history_value,
         source_info, zip_code_id_, unknown_id_, "", results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
@@ -1419,17 +1420,17 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
   // "か", "き", etc
   // Example2 kana input: for "あか", we will get |base|, "あ" and |expanded|,
   // "か", and "が".
+  // auto = std::pair<std::string, absl::btree_set<std::string>>
   std::string base;
-  std::set<std::string> expanded;
-  request.composer().GetQueriesForPrediction(&base, &expanded);
+  std::tie(base, expanded) = request.composer().GetQueriesForPrediction();
   const std::string input_key = absl::StrCat(history_key, base);
   const std::string non_expanded_original_key =
       absl::StrCat(history_key, segments.conversion_segment(0).key());
 
-  PredictiveBigramLookupCallback callback(
-      types, lookup_limit, input_key.size(),
-      expanded.empty() ? nullptr : &expanded, history_value, source_info,
-      zip_code_id_, unknown_id_, non_expanded_original_key, results);
+  PredictiveBigramLookupCallback callback(types, lookup_limit, input_key.size(),
+                                          expanded, history_value, source_info,
+                                          zip_code_id_, unknown_id_,
+                                          non_expanded_original_key, results);
   dictionary.LookupPredictive(input_key, request, &callback);
 }
 
@@ -1438,12 +1439,14 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
     const absl::string_view input_key, PredictionTypes types,
     size_t lookup_limit, std::vector<Result> *results) const {
   const size_t prev_results_size = results->size();
+  const absl::btree_set<std::string> empty_expanded;
   if (Util::IsUpperAscii(input_key)) {
     // For upper case key, look up its lower case version and then transform
     // the results to upper case.
     std::string key(input_key);
     Util::LowerString(&key);
-    PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
+    PredictiveLookupCallback callback(types, lookup_limit, key.size(),
+                                      empty_expanded,
                                       Segment::Candidate::SOURCE_INFO_NONE,
                                       zip_code_id_, unknown_id_, "", results);
     dictionary.LookupPredictive(key, request, &callback);
@@ -1455,7 +1458,8 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
     // the results to capital.
     std::string key(input_key);
     Util::LowerString(&key);
-    PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
+    PredictiveLookupCallback callback(types, lookup_limit, key.size(),
+                                      empty_expanded,
                                       Segment::Candidate::SOURCE_INFO_NONE,
                                       zip_code_id_, unknown_id_, "", results);
     dictionary.LookupPredictive(key, request, &callback);
@@ -1465,7 +1469,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
   } else {
     // For other cases (lower and as-is), just look up directly.
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      nullptr,
+                                      empty_expanded,
                                       Segment::Candidate::SOURCE_INFO_NONE,
                                       zip_code_id_, unknown_id_, "", results);
     dictionary.LookupPredictive(input_key, request, &callback);
