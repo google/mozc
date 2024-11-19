@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/internal/composition.h"
@@ -52,66 +53,101 @@
 namespace mozc {
 namespace composer {
 
-// ComposerData will be updated to store const values instead of the base class
-// of Composer object in the future. So that ComposerData will become an
-// immutable object.
+// ComposerData is a data structure that represents the current state of the
+// composer. It is used by Converter, Predictor and Rewriters as a const object.
 class ComposerData {
  public:
-  ComposerData() = default;
-  virtual ~ComposerData() = default;
+  // This constructor is temporary and should be removed, when ConverterRequest
+  // is updated to use a const ComposerData.
+  ABSL_DEPRECATED("Do not use this constructor except in converter_request.h")
+  ComposerData(): composition_(Composition(nullptr)) {}
+
+  ComposerData(Composition composition,
+               size_t position,
+               transliteration::TransliterationType input_mode,
+               commands::Context::InputFieldType input_field_type,
+               std::string source_text,
+               std::vector<commands::SessionCommand::CompositionEvent>
+                   compositions_for_handwriting);
 
   // Copyable and movable.
-  ComposerData(const ComposerData &) = default;
-  ComposerData &operator=(const ComposerData &) = default;
-  ComposerData(ComposerData &&) = default;
-  ComposerData &operator=(ComposerData &&) = default;
+  ComposerData(const ComposerData &other);
+  ComposerData &operator=(const ComposerData &);
+  ComposerData(ComposerData &&other) noexcept;
+  ComposerData &operator=(ComposerData &&) noexcept;
 
-  virtual transliteration::TransliterationType GetInputMode() const = 0;
+  transliteration::TransliterationType GetInputMode() const;
 
   // Returns a preedit string with user's preferences.
-  virtual std::string GetStringForPreedit() const = 0;
+  std::string GetStringForPreedit() const;
 
   // Returns a conversion query normalized ascii characters in half width
-  virtual std::string GetQueryForConversion() const = 0;
+  std::string GetQueryForConversion() const;
 
   // Returns a prediction query trimmed the tail alphabet characters.
-  virtual std::string GetQueryForPrediction() const = 0;
+  std::string GetQueryForPrediction() const;
 
   // Returns a expanded prediction query.
-  virtual void GetQueriesForPrediction(
-      std::string *base, std::set<std::string> *expanded) const = 0;
+  void GetQueriesForPrediction(
+      std::string *base, std::set<std::string> *expanded) const;
 
   // Returns a string to be used for type correction.
-  virtual std::string GetStringForTypeCorrection() const = 0;
+  std::string GetStringForTypeCorrection() const;
 
-  virtual size_t GetLength() const = 0;
-  virtual size_t GetCursor() const = 0;
+  size_t GetLength() const;
+  size_t GetCursor() const;
 
-  virtual absl::Span<const commands::SessionCommand::CompositionEvent>
-  GetHandwritingCompositions() const = 0;
+  absl::Span<const commands::SessionCommand::CompositionEvent>
+  GetHandwritingCompositions() const;
 
   // Returns raw input from a user.
   // The main purpose is Transliteration.
-  virtual std::string GetRawString() const = 0;
+  std::string GetRawString() const;
 
   // Returns substring of raw input.  The position and size is based on the
   // composed string.  For example, when [さ|sa][し|shi][み|mi] is the
   // composition, GetRawSubString(0, 2) returns "sashi".
-  virtual std::string GetRawSubString(size_t position, size_t size) const = 0;
+  std::string GetRawSubString(size_t position, size_t size) const;
 
   // Generate transliterations.
-  virtual void GetTransliterations(
-      transliteration::Transliterations *t13ns) const = 0;
+  void GetTransliterations(
+      transliteration::Transliterations *t13ns) const;
 
   // Generate substrings of transliterations.
-  virtual void GetSubTransliterations(
-      size_t position, size_t size,
-      transliteration::Transliterations *transliterations) const = 0;
+  void GetSubTransliterations(size_t position, size_t size,
+                              transliteration::Transliterations *t13ns) const;
 
-  virtual const std::string &source_text() const = 0;
+  const std::string &source_text() const {return source_text_; }
+
+ private:
+  // Composition copied from the Composer as a snapshot.
+  Composition composition_;
+
+  // Cursor position.
+  size_t position_ = 0;
+
+  // Input mode of IME (e.g. HIRAGANA, HALF_ASCII, etc.)
+  transliteration::TransliterationType input_mode_ = transliteration::HIRAGANA;
+
+  // Type of the input field to input texts.
+  commands::Context::InputFieldType input_field_type_ =
+      commands::Context::NORMAL;
+
+  // The original text for the composition.
+  // The value is usually empty, and used for reverse conversion.
+  std::string source_text_;
+
+  // Example:
+  //   {{"かん字", 0.99}, {"かlv字", 0.01}}
+  // Please refer to commands.proto
+  std::vector<commands::SessionCommand::CompositionEvent>
+      compositions_for_handwriting_;
 };
 
-class Composer final : public ComposerData {
+// Composer is a class that manages the composing text. It provides methods to
+// edit the text by users. Composer creates ComposerData as the snapshot of the
+// current state of the composer.
+class Composer final {
  public:
   // Pseudo commands in composer.
   enum InternalCommand {
@@ -128,6 +164,8 @@ class Composer final : public ComposerData {
   Composer &operator=(const Composer &) = default;
   Composer(Composer &&) = default;
   Composer &operator=(Composer &&) = default;
+
+  ComposerData CreateComposerData() const;
 
   // Reset all composing data except table.
   void Reset();
@@ -160,7 +198,7 @@ class Composer final : public ComposerData {
   // do not call this method (e.g. CursorToEnd, CursorToBeginning).
   void UpdateInputMode();
 
-  transliteration::TransliterationType GetInputMode() const override;
+  transliteration::TransliterationType GetInputMode() const;
   transliteration::TransliterationType GetComebackInputMode() const;
   void ToggleInputMode();
 
@@ -172,27 +210,27 @@ class Composer final : public ComposerData {
                   std::string *right) const;
 
   // Returns a preedit string with user's preferences.
-  std::string GetStringForPreedit() const override;
+  std::string GetStringForPreedit() const;
 
   // Returns a submit string with user's preferences.  The difference
   // from the preedit string is the handling of the last 'n'.
   std::string GetStringForSubmission() const;
 
   // Returns a conversion query normalized ascii characters in half width
-  std::string GetQueryForConversion() const override;
+  std::string GetQueryForConversion() const;
 
   // Returns a prediction query trimmed the tail alphabet characters.
-  std::string GetQueryForPrediction() const override;
+  std::string GetQueryForPrediction() const;
 
   // Returns a expanded prediction query.
   void GetQueriesForPrediction(std::string *base,
-                               std::set<std::string> *expanded) const override;
+                               std::set<std::string> *expanded) const;
 
   // Returns a string to be used for type correction.
-  std::string GetStringForTypeCorrection() const override;
+  std::string GetStringForTypeCorrection() const;
 
-  size_t GetLength() const override;
-  size_t GetCursor() const override;
+  size_t GetLength() const;
+  size_t GetCursor() const;
   void EditErase();
 
   // Deletes a character at specified position.
@@ -232,7 +270,7 @@ class Composer final : public ComposerData {
       absl::Span<const commands::SessionCommand::CompositionEvent *const>
           compositions);
   absl::Span<const commands::SessionCommand::CompositionEvent>
-  GetHandwritingCompositions() const override;
+  GetHandwritingCompositions() const;
 
   bool InsertCharacterKeyAndPreedit(absl::string_view key,
                                     absl::string_view preedit);
@@ -250,25 +288,24 @@ class Composer final : public ComposerData {
 
   // Returns raw input from a user.
   // The main purpose is Transliteration.
-  std::string GetRawString() const override;
+  std::string GetRawString() const;
 
   // Returns substring of raw input.  The position and size is based on the
   // composed string.  For example, when [さ|sa][し|shi][み|mi] is the
   // composition, GetRawSubString(0, 2) returns "sashi".
-  std::string GetRawSubString(size_t position, size_t size) const override;
+  std::string GetRawSubString(size_t position, size_t size) const;
 
   // Generate transliterations.
   void GetTransliterations(
-      transliteration::Transliterations *t13ns) const override;
+      transliteration::Transliterations *t13ns) const;
 
   // Generate substrings of specified transliteration.
   std::string GetSubTransliteration(transliteration::TransliterationType type,
                                     size_t position, size_t size) const;
 
   // Generate substrings of transliterations.
-  void GetSubTransliterations(
-      size_t position, size_t size,
-      transliteration::Transliterations *transliterations) const override;
+  void GetSubTransliterations(size_t position, size_t size,
+                              transliteration::Transliterations *t13ns) const;
 
   // Check if the preedit is can be modified.
   bool EnableInsert() const;
@@ -304,7 +341,7 @@ class Composer final : public ComposerData {
 
   bool is_new_input() const;
   size_t shifted_sequence_count() const;
-  const std::string &source_text() const override;
+  const std::string &source_text() const;
   std::string *mutable_source_text();
   void set_source_text(absl::string_view source_text);
   size_t max_length() const;
@@ -351,12 +388,12 @@ class Composer final : public ComposerData {
   const Table *table_;
 
   // Timestamp of last modified.
-  int64_t timestamp_msec_ = 0;
+  int64_t timestamp_msec_;
 
   // If the duration between key inputs is more than timeout_threadhols_msec_,
   // the STOP_KEY_TOGGLING event is sent before the next key input.
   // If the value is 0, STOP_KEY_TOGGLING is not sent.
-  int timeout_threshold_msec_ = 0;
+  int timeout_threshold_msec_;
 
   // Whether the next insertion is the beginning of typing after an
   // editing command like SetInputMode or not.  Some conversion rules

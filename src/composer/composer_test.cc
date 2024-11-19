@@ -40,6 +40,7 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "absl/types/span.h"
 #include "base/clock_mock.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
@@ -3051,5 +3052,185 @@ TEST_F(ComposerTest, UpdateComposition) {
   EXPECT_EQ(composer_->GetQueryForPrediction(), "ねこ");
   EXPECT_EQ(composer_->GetHandwritingCompositions().size(), 2);
 }
+
+TEST_F(ComposerTest, CreateComposerData) {
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("ka", "か", "");
+  table_->AddRule("ki", "き", "");
+
+  InsertKey("a", composer_.get());
+  InsertKeyWithMode("a", commands::FULL_KATAKANA, composer_.get());
+  InsertKey("k", composer_.get());
+
+  ComposerData data(composer_->CreateComposerData());
+  EXPECT_EQ(data.GetInputMode(), composer_->GetInputMode());
+  EXPECT_EQ(data.GetStringForPreedit(), "あアｋ");
+  EXPECT_EQ(data.GetStringForPreedit(), composer_->GetStringForPreedit());
+  EXPECT_EQ(data.GetQueryForConversion(), composer_->GetQueryForConversion());
+  EXPECT_EQ(data.GetQueryForPrediction(), "あア");
+  EXPECT_EQ(data.GetQueryForPrediction(), composer_->GetQueryForPrediction());
+  EXPECT_EQ(data.GetStringForTypeCorrection(),
+            composer_->GetStringForTypeCorrection());
+  EXPECT_EQ(data.GetLength(), composer_->GetLength());
+  EXPECT_EQ(data.GetCursor(), composer_->GetCursor());
+  EXPECT_EQ(data.GetRawString(), composer_->GetRawString());
+  EXPECT_EQ(data.GetRawSubString(0, 2), composer_->GetRawSubString(0, 2));
+  EXPECT_EQ(data.GetRawSubString(1, 1), composer_->GetRawSubString(1, 1));
+  EXPECT_EQ(data.source_text(), composer_->source_text());
+
+  EXPECT_EQ(data.GetHandwritingCompositions().size(), 0);
+  EXPECT_EQ(composer_->GetHandwritingCompositions().size(), 0);
+
+  {  // Queries for prediction
+    std::string data_base;
+    std::set<std::string> data_expanded;
+    data.GetQueriesForPrediction(&data_base, &data_expanded);
+    EXPECT_EQ(data_base, "あア");
+    EXPECT_EQ(data_expanded.size(), 3);
+
+    std::string composer_base;
+    std::set<std::string> composer_expanded;
+    composer_->GetQueriesForPrediction(&composer_base, &composer_expanded);
+    EXPECT_EQ(data_base, composer_base);
+    EXPECT_EQ(data_expanded.size(), composer_expanded.size());
+
+    const std::set<std::string> expected_expanded = {"k", "か", "き"};
+    EXPECT_EQ(data_expanded, composer_expanded);
+    EXPECT_EQ(data_expanded, expected_expanded);
+  }
+
+  {  // Transliterations
+    transliteration::Transliterations data_t13ns;
+    data.GetTransliterations(&data_t13ns);
+    transliteration::Transliterations composer_t13ns;
+    const transliteration::Transliterations expected_t13ns = {
+        "ああｋ", "アアｋ", "aak",    "AAK",    "aak", "Aak",
+        "ａａｋ", "ＡＡＫ", "ａａｋ", "Ａａｋ", "ｱｱk"};
+    composer_->GetTransliterations(&composer_t13ns);
+    EXPECT_EQ(data_t13ns.size(), 11);
+    EXPECT_EQ(data_t13ns.size(), composer_t13ns.size());
+    EXPECT_EQ(data_t13ns, expected_t13ns);
+    EXPECT_EQ(data_t13ns, composer_t13ns);
+  }
+
+  {  // SubTransliterations
+    transliteration::Transliterations data_t13ns;
+    data.GetSubTransliterations(2, 1, &data_t13ns);
+    transliteration::Transliterations composer_t13ns;
+    const transliteration::Transliterations expected_t13ns = {
+        "ｋ", "ｋ", "k", "K", "k", "K", "ｋ", "Ｋ", "ｋ", "Ｋ", "k"};
+    composer_->GetSubTransliterations(2, 1, &composer_t13ns);
+    EXPECT_EQ(data_t13ns.size(), 11);
+    EXPECT_EQ(data_t13ns.size(), composer_t13ns.size());
+    EXPECT_EQ(data_t13ns, expected_t13ns);
+    EXPECT_EQ(data_t13ns, composer_t13ns);
+  }
+}
+
+TEST_F(ComposerTest, CreateComposerDataForHandwriting) {
+  commands::SessionCommand command;
+  commands::SessionCommand::CompositionEvent *composition_event =
+      command.add_composition_events();
+  composition_event->set_composition_string("ねこ");
+  composition_event->set_probability(0.9);
+  composition_event = command.add_composition_events();
+  composition_event->set_composition_string("ね二");
+  composition_event->set_probability(0.1);
+  composer_->SetCompositionsForHandwriting(command.composition_events());
+
+  ComposerData data(composer_->CreateComposerData());
+  EXPECT_EQ(data.GetInputMode(), composer_->GetInputMode());
+  EXPECT_EQ(data.GetStringForPreedit(), composer_->GetStringForPreedit());
+  EXPECT_EQ(data.GetQueryForConversion(), composer_->GetQueryForConversion());
+  EXPECT_EQ(data.GetQueryForPrediction(), "ねこ");
+  EXPECT_EQ(data.GetQueryForPrediction(), composer_->GetQueryForPrediction());
+  EXPECT_EQ(data.GetStringForTypeCorrection(),
+            composer_->GetStringForTypeCorrection());
+  EXPECT_EQ(data.GetLength(), composer_->GetLength());
+  EXPECT_EQ(data.GetCursor(), composer_->GetCursor());
+  EXPECT_EQ(data.GetRawString(), composer_->GetRawString());
+  EXPECT_EQ(data.GetRawSubString(0, 2), composer_->GetRawSubString(0, 2));
+  EXPECT_EQ(data.GetRawSubString(1, 1), composer_->GetRawSubString(1, 1));
+  EXPECT_EQ(data.source_text(), composer_->source_text());
+
+  {  // HandwritingCompositions
+    const absl::Span<const commands::SessionCommand::CompositionEvent>
+        data_events = data.GetHandwritingCompositions();
+    const absl::Span<const commands::SessionCommand::CompositionEvent>
+        composer_events = composer_->GetHandwritingCompositions();
+    EXPECT_EQ(data_events.size(), 2);
+    EXPECT_EQ(data_events.size(), composer_events.size());
+    for (int i = 0; i < data_events.size(); ++i) {
+      EXPECT_EQ(data_events[i].composition_string(),
+                composer_events[i].composition_string());
+      EXPECT_EQ(data_events[i].probability(), composer_events[i].probability());
+    }
+  }
+
+  {  // Queries for prediction
+    std::string data_base;
+    std::set<std::string> data_expanded;
+    data.GetQueriesForPrediction(&data_base, &data_expanded);
+    EXPECT_EQ(data_base, "ねこ");
+    EXPECT_EQ(data_expanded.size(), 0);
+
+    std::string composer_base;
+    std::set<std::string> composer_expanded;
+    composer_->GetQueriesForPrediction(&composer_base, &composer_expanded);
+    EXPECT_EQ(data_base, composer_base);
+    EXPECT_EQ(data_expanded.size(), composer_expanded.size());
+    EXPECT_EQ(data_expanded, composer_expanded);  // Empty
+  }
+}
+
+TEST_F(ComposerTest, CreateComposerDataForSourceText) {
+  absl::string_view source_text = "再変換用";
+  absl::string_view preedit_text = "さいへんかんよう";
+  composer_->set_source_text(source_text);
+  composer_->SetPreeditTextForTestOnly(preedit_text);
+  ComposerData data(composer_->CreateComposerData());
+  EXPECT_EQ(data.GetInputMode(), composer_->GetInputMode());
+  EXPECT_EQ(data.GetStringForPreedit(), composer_->GetStringForPreedit());
+  EXPECT_EQ(data.GetQueryForConversion(), composer_->GetQueryForConversion());
+  EXPECT_EQ(data.GetQueryForPrediction(), preedit_text);
+  EXPECT_EQ(data.GetQueryForPrediction(), composer_->GetQueryForPrediction());
+  EXPECT_EQ(data.GetStringForTypeCorrection(),
+            composer_->GetStringForTypeCorrection());
+  EXPECT_EQ(data.GetLength(), composer_->GetLength());
+  EXPECT_EQ(data.GetCursor(), composer_->GetCursor());
+  EXPECT_EQ(data.GetRawString(), composer_->GetRawString());
+  EXPECT_EQ(data.GetRawSubString(0, 2), composer_->GetRawSubString(0, 2));
+  EXPECT_EQ(data.GetRawSubString(1, 1), composer_->GetRawSubString(1, 1));
+  EXPECT_EQ(data.source_text(), source_text);
+  EXPECT_EQ(data.source_text(), composer_->source_text());
+}
+
+TEST_F(ComposerTest, CreateComposerOperators) {
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("ka", "か", "");
+  table_->AddRule("ki", "き", "");
+
+  InsertKey("a", composer_.get());
+  InsertKeyWithMode("a", commands::FULL_KATAKANA, composer_.get());
+  InsertKey("k", composer_.get());
+
+  const ComposerData data(composer_->CreateComposerData());
+  const ComposerData copied = data;
+  const ComposerData moved = std::move(data);
+
+  EXPECT_EQ(copied.GetInputMode(), moved.GetInputMode());
+  EXPECT_EQ(copied.GetStringForPreedit(), moved.GetStringForPreedit());
+  EXPECT_EQ(copied.GetQueryForConversion(), moved.GetQueryForConversion());
+  EXPECT_EQ(copied.GetQueryForPrediction(), moved.GetQueryForPrediction());
+  EXPECT_EQ(copied.GetStringForTypeCorrection(),
+            moved.GetStringForTypeCorrection());
+  EXPECT_EQ(copied.GetLength(), moved.GetLength());
+  EXPECT_EQ(copied.GetCursor(), moved.GetCursor());
+  EXPECT_EQ(copied.GetRawString(), moved.GetRawString());
+  EXPECT_EQ(copied.GetRawSubString(0, 2), moved.GetRawSubString(0, 2));
+  EXPECT_EQ(copied.GetRawSubString(1, 1), moved.GetRawSubString(1, 1));
+  EXPECT_EQ(copied.source_text(), moved.source_text());
+}
+
 }  // namespace composer
 }  // namespace mozc
