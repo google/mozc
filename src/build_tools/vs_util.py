@@ -37,10 +37,14 @@ import sys
 from typing import Union
 
 
-def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
+def get_vcvarsall(
+  arch: str,
+  path_hint: Union[str, None] = None
+) -> pathlib.Path:
   """Returns the path of 'vcvarsall.bat'.
 
   Args:
+    arch: host/target architecture
     path_hint: optional path to vcvarsall.bat
 
   Returns:
@@ -78,12 +82,17 @@ def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
       'Microsoft.VisualStudio.Product.Professional',
       'Microsoft.VisualStudio.Product.Community',
       'Microsoft.VisualStudio.Product.BuildTools',
-      '-requires',
-      'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
       '-find',
       'VC/Auxiliary/Build/vcvarsall.bat',
       '-utf8',
   ]
+  cmd += [
+    '-requires',
+    'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
+  ]
+  if arch.endswith('arm64'):
+    cmd += ['Microsoft.VisualStudio.Component.VC.Tools.ARM64']
+
   process = subprocess.Popen(
       cmd,
       stdout=subprocess.PIPE,
@@ -103,11 +112,18 @@ def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
 
   vcvarsall = pathlib.Path(stdout.splitlines()[0])
   if not vcvarsall.exists():
-    raise FileNotFoundError(
-        'Could not find vcvarsall.bat.'
-        'Consider using --vcvarsall_path option e.g.\n'
+    msg = 'Could not find vcvarsall.bat.'
+    if arch.endswith('arm64'):
+      msg += (
+        ' Make sure Microsoft.VisualStudio.Component.VC.Tools.ARM64 is'
+        ' installed.'
+      )
+    else:
+      msg += (
+        ' Consider using --vcvarsall_path option e.g.\n'
         r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
-    )
+      )
+    raise FileNotFoundError(msg)
 
   return vcvarsall
 
@@ -151,7 +167,7 @@ def get_vs_env_vars(
     ChildProcessError: When 'vcvarsall.bat' cannot be executed.
     FileNotFoundError: When 'vcvarsall.bat' cannot be found.
   """
-  vcvarsall = get_vcvarsall(vcvarsall_path_hint)
+  vcvarsall = get_vcvarsall(arch, vcvarsall_path_hint)
 
   pycmd = (r'import json;'
            r'import os;'
