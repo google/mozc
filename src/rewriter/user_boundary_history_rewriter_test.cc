@@ -87,10 +87,7 @@ Segments MakeSegments(absl::Span<const absl::string_view> segments_texts,
 class UserBoundaryHistoryRewriterTest
     : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    config::ConfigHandler::GetDefaultConfig(&config_);
-    request_.set_config(&config_);
-  }
+  void SetUp() override { config::ConfigHandler::GetDefaultConfig(&config_); }
 
   void TearDown() override {
     MockConverter converter;
@@ -106,7 +103,10 @@ class UserBoundaryHistoryRewriterTest
     config_.set_history_learning_level(level);
   }
 
-  ConversionRequest request_;
+  ConversionRequest CreateConversionRequest() {
+    return ConversionRequestBuilder().SetConfig(config_).Build();
+  }
+
   config::Config config_;
 };
 
@@ -118,11 +118,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, CreateFile) {
   EXPECT_OK(FileUtil::FileExists(history_file));
 }
 
-// Test if the rewriter can learn the splitting poisition at which user
+// Test if the rewriter can learn the splitting position at which user
 // explicitly resized segments.
 TEST_F(UserBoundaryHistoryRewriterTest, SplitSegmentByHistory) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  const ConversionRequest convreq = CreateConversionRequest();
 
   MockConverter converter;
   UserBoundaryHistoryRewriter rewriter(&converter);
@@ -132,7 +133,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, SplitSegmentByHistory) {
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     // This field needs to be set to indicate that user resized this segments.
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // Verify if ["たんぽぽ"] is split into ["たん", "ぽぽ"]. Since the actual
@@ -141,12 +142,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, SplitSegmentByHistory) {
     // TODO(noriyukit): The current implementation always sets the length array
     // size to 8 with padded zeros. Better to set the actual length.
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
                                          /*start_segment_index=*/0,
                                          /*segments_size=*/1,
                                          ElementsAre(2, 2, 0, 0, 0, 0, 0, 0)))
         .WillOnce(Return(true));
-    EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
+    EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -155,6 +156,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, SplitSegmentByHistory) {
 TEST_F(UserBoundaryHistoryRewriterTest, JoinSegmentsByHistory) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  const ConversionRequest convreq = CreateConversionRequest();
 
   MockConverter converter;
   UserBoundaryHistoryRewriter rewriter(&converter);
@@ -164,7 +166,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, JoinSegmentsByHistory) {
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FIXED_VALUE);
     // This field needs to be set to indicate that user resized this segments.
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // Verify if ["たん", "ぽぽ"] is joined to ["たんぽぽ"]. Since the actual
@@ -173,12 +175,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, JoinSegmentsByHistory) {
     // TODO(noriyukit): The current implementation always sets the length array
     // size to 8 with padded zeros. Better to set the actual length.
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
                                          /*start_segment_index=*/0,
                                          /*segments_size=*/2,
                                          ElementsAre(4, 0, 0, 0, 0, 0, 0, 0)))
         .WillOnce(Return(true));
-    EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
+    EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -190,15 +192,17 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenIncognito) {
   {
     // History should not be learned during incognito mode.
     SetIncognito(true);
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // Turn off the incognito mode. ResizeSegment() should not be called.
     SetIncognito(false);
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -210,15 +214,17 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenReadOnly) {
   {
     // History should not be learned in read only mode.
     SetLearningLevel(config::Config::READ_ONLY);
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // Enable learning again. ResizeSegment() should not be called.
     SetLearningLevel(config::Config::DEFAULT_HISTORY);
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -228,25 +234,27 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenDisableUserHistory) {
 
   MockConverter converter;
   UserBoundaryHistoryRewriter rewriter(&converter);
-  ConversionRequest request(request_);
   {
     // History should not be learned when user history is disabled.
-    request.set_enable_user_history_for_conversion(false);
+    ConversionRequest convreq = CreateConversionRequest();
+    convreq.set_enable_user_history_for_conversion(false);
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // Enable learning again. ResizeSegment() should not be called.
-    request.set_enable_user_history_for_conversion(true);
+    ConversionRequest convreq = CreateConversionRequest();
+    convreq.set_enable_user_history_for_conversion(true);
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  const ConversionRequest convreq = CreateConversionRequest();
 
   MockConverter converter;
   UserBoundaryHistoryRewriter rewriter(&converter);
@@ -254,18 +262,19 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
     // History should not be learned when sements is not resized.
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(false);  // Not resized!
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // ResizeSegment() should not be called.
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  const ConversionRequest convreq = CreateConversionRequest();
 
   MockConverter converter;
   UserBoundaryHistoryRewriter rewriter(&converter);
@@ -273,13 +282,13 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
     // History IS learned.
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // ResizeSegment() should not be called after clearing the history.
     rewriter.Clear();
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -291,16 +300,18 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenIncognito) {
   UserBoundaryHistoryRewriter rewriter(&converter);
   {
     // History IS learned.
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // ResizeSegment() should not be called in incognito mode even after the
     // rewriter learned the history.
     SetIncognito(true);
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -312,16 +323,18 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenNoHistory) {
   UserBoundaryHistoryRewriter rewriter(&converter);
   {
     // History IS learned.
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // ResizeSegment() should not be called when history is disabled in config
     // even after the rewriter learned the history.
+    const ConversionRequest convreq = CreateConversionRequest();
     SetLearningLevel(config::Config::NO_HISTORY);
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -331,20 +344,20 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
 
   MockConverter converter;
   UserBoundaryHistoryRewriter rewriter(&converter);
-  ConversionRequest request(request_);
+  ConversionRequest convreq = CreateConversionRequest();
   {
     // History IS learned.
-    request.set_enable_user_history_for_conversion(true);
+    convreq.set_enable_user_history_for_conversion(true);
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // ResizeSegment() should not be called when history is disabled in request
     // even after the rewriter learned the history.
-    request.set_enable_user_history_for_conversion(false);
+    convreq.set_enable_user_history_for_conversion(false);
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -356,16 +369,18 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenAlreadyResized) {
   UserBoundaryHistoryRewriter rewriter(&converter);
   {
     // History IS learned.
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
     // ResizeSegment() should not be called when the input segment is already
     // resized by the user.
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
     segments.set_resized(true);
-    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -376,53 +391,57 @@ TEST_F(UserBoundaryHistoryRewriterTest, FailureOfSplitIsNotFatal) {
   MockConverter converter;
   UserBoundaryHistoryRewriter rewriter(&converter);
   {
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
 
     segments = MakeSegments({"わた", "げ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
-    rewriter.Finish(request_, &segments);
+    rewriter.Finish(convreq, &segments);
   }
   {
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
                                          /*start_segment_index=*/0,
                                          /*segments_size=*/1, _))
         .WillOnce(Return(false));
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
                                          /*start_segment_index=*/1,
                                          /*segments_size=*/1, _))
         .WillOnce(Return(false));
-    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
   {
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
     const Segments resized =
         MakeSegments({"たん", "ぽぽ", "わたげ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
                                          /*start_segment_index=*/0,
                                          /*segments_size=*/1, _))
         .WillOnce(DoAll(SetArgPointee<0>(resized), Return(true)));
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
                                          /*start_segment_index=*/1,
                                          /*segments_size=*/1, _))
         .WillOnce(Return(false));
-    EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
+    EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }
   {
+    const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
     const Segments resized =
         MakeSegments({"たんぽぽ", "わた", "げ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
                                          /*start_segment_index=*/0,
                                          /*segments_size=*/1, _))
         .WillOnce(Return(false));
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
                                          /*start_segment_index=*/1,
                                          /*segments_size=*/1, _))
         .WillOnce(DoAll(SetArgPointee<0>(resized), Return(true)));
-    EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
+    EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }
 }
 

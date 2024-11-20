@@ -104,11 +104,11 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
   const std::string kZipcode = "107-0052";
   const std::string kAddress = "東京都港区赤坂";
-  ConversionRequest request;
   config::Config config;
-  request.set_config(&config);
 
   {
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetConfig(config).Build();
     Segments segments;
     AddSegment("test", "test", NON_ZIPCODE, pos_matcher_, &segments);
     EXPECT_FALSE(zipcode_rewriter.Rewrite(request, &segments));
@@ -116,6 +116,8 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
   {
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetConfig(config).Build();
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, pos_matcher_, &segments);
@@ -125,6 +127,8 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
   {
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetConfig(config).Build();
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, pos_matcher_, &segments);

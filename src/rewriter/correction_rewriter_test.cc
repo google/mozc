@@ -69,11 +69,6 @@ Segment::Candidate *AddCandidate(const absl::string_view key,
 
 class CorrectionRewriterTest : public testing::Test {
  protected:
-  CorrectionRewriterTest() {
-    convreq_.set_request(&request_);
-    convreq_.set_config(&config_);
-  }
-
   void SetUp() override {
     // Create a rewriter with one entry: (TSUKIGIME, gekkyoku, tsukigime)
     const std::vector<absl::string_view> values = {"TSUKIGIME"};
@@ -88,9 +83,11 @@ class CorrectionRewriterTest : public testing::Test {
     config_.set_use_spelling_correction(true);
   }
 
+  static ConversionRequest ConvReq(const config::Config &config) {
+    return ConversionRequestBuilder().SetConfig(config).Build();
+  }
+
   std::unique_ptr<CorrectionRewriter> rewriter_;
-  ConversionRequest convreq_;
-  commands::Request request_;
   config::Config config_;
 
  private:
@@ -100,7 +97,8 @@ class CorrectionRewriterTest : public testing::Test {
 };
 
 TEST_F(CorrectionRewriterTest, CapabilityTest) {
-  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::ALL);
+  const ConversionRequest convreq = ConvReq(config_);
+  EXPECT_EQ(rewriter_->capability(convreq), RewriterInterface::ALL);
 }
 
 TEST_F(CorrectionRewriterTest, RewriteTest) {
@@ -115,10 +113,12 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
 
   config_.set_use_spelling_correction(false);
 
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
+  const ConversionRequest convreq1 = ConvReq(config_);
+  EXPECT_FALSE(rewriter_->Rewrite(convreq1, &segments));
 
   config_.set_use_spelling_correction(true);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  const ConversionRequest convreq2 = ConvReq(config_);
+  EXPECT_TRUE(rewriter_->Rewrite(convreq2, &segments));
 
   // candidate 0
   EXPECT_EQ(

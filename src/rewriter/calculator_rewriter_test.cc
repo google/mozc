@@ -99,15 +99,18 @@ int GetIndexOfCalculatedCandidate(const Segments &segments) {
 
 class CalculatorRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  CalculatorRewriterTest() {
-    convreq_.set_request(&request_);
-    convreq_.set_config(&config_);
-  }
-
   static bool InsertCandidate(const CalculatorRewriter &calculator_rewriter,
                               const absl::string_view value, size_t insert_pos,
                               Segment *segment) {
     return calculator_rewriter.InsertCandidate(value, insert_pos, segment);
+  }
+
+  static ConversionRequest ConvReq(const config::Config &config,
+                                   const commands::Request &request) {
+    return ConversionRequestBuilder()
+        .SetConfig(config)
+        .SetRequest(request)
+        .Build();
   }
 
   CalculatorMock &calculator_mock() { return calculator_mock_; }
@@ -125,7 +128,6 @@ class CalculatorRewriterTest : public testing::TestWithTempUserProfile {
     CalculatorFactory::SetCalculator(nullptr);
   }
 
-  ConversionRequest convreq_;
   commands::Request request_;
   config::Config config_;
 
@@ -176,12 +178,13 @@ TEST_F(CalculatorRewriterTest, BasicTest) {
 
   Segments segments;
   SetSegment("test", "test", &segments);
-  calculator_rewriter.Rewrite(convreq_, &segments);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  calculator_rewriter.Rewrite(convreq, &segments);
   EXPECT_EQ(GetIndexOfCalculatedCandidate(segments), -1);
   EXPECT_EQ(calculator_mock().calculation_counter(), counter_at_first + 1);
 
   SetSegment("key", "key", &segments);
-  calculator_rewriter.Rewrite(convreq_, &segments);
+  calculator_rewriter.Rewrite(convreq, &segments);
   int index = GetIndexOfCalculatedCandidate(segments);
   EXPECT_NE(index, -1);
   EXPECT_EQ(segments.segment(0).candidate(index).value, "value");
@@ -208,7 +211,8 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   AddSegment("1", "1", &segments);
   AddSegment("=", "=", &segments);
 
-  calculator_rewriter.Rewrite(convreq_, &segments);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  calculator_rewriter.Rewrite(convreq, &segments);
   EXPECT_EQ(segments.segments_size(), 1);  // merged
 
   int index = GetIndexOfCalculatedCandidate(segments);
@@ -258,7 +262,8 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
   Segments segments;
   AddSegment(kExpression, kExpression, &segments);
 
-  calculator_rewriter.Rewrite(convreq_, &segments);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  calculator_rewriter.Rewrite(convreq, &segments);
   const int index = GetIndexOfCalculatedCandidate(segments);
 
   EXPECT_EQ(segments.segment(0).candidate(index).description, description);
@@ -282,7 +287,8 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
     AddSegment("1", "1", &segments);
     AddSegment("=", "=", &segments);
     config_.set_use_calculator(true);
-    EXPECT_TRUE(calculator_rewriter.Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(calculator_rewriter.Rewrite(convreq, &segments));
   }
 
   {
@@ -292,7 +298,8 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
     AddSegment("1", "1", &segments);
     AddSegment("=", "=", &segments);
     config_.set_use_calculator(false);
-    EXPECT_FALSE(calculator_rewriter.Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_FALSE(calculator_rewriter.Rewrite(convreq, &segments));
   }
 }
 
@@ -301,11 +308,13 @@ TEST_F(CalculatorRewriterTest, MobileEnvironmentTest) {
   CalculatorRewriter rewriter(&converter);
   {
     request_.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq_));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
   }
   {
     request_.set_mixed_conversion(false);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq_));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
   }
 }
 
@@ -316,7 +325,8 @@ TEST_F(CalculatorRewriterTest, EmptyKeyTest) {
     Segments segments;
     AddSegment("", "1", &segments);
     config_.set_use_calculator(true);
-    EXPECT_FALSE(calculator_rewriter.Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_FALSE(calculator_rewriter.Rewrite(convreq, &segments));
   }
 }
 

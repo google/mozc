@@ -197,11 +197,6 @@ class TestDataManager : public testing::MockDataManager {
 
 class EmojiRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  EmojiRewriterTest() {
-    convreq_.set_request(&request_);
-    convreq_.set_config(&config_);
-  }
-
   void SetUp() override {
     // Enable emoji conversion
     config::ConfigHandler::GetDefaultConfig(&config_);
@@ -217,7 +212,14 @@ class EmojiRewriterTest : public testing::TestWithTempUserProfile {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  ConversionRequest convreq_;
+  static ConversionRequest ConvReq(const config::Config &config,
+                                   const commands::Request &request) {
+    return ConversionRequestBuilder()
+        .SetConfig(config)
+        .SetRequest(request)
+        .Build();
+  }
+
   commands::Request request_;
   config::Config config_;
   std::unique_ptr<EmojiRewriter> rewriter_;
@@ -231,19 +233,24 @@ class EmojiRewriterTest : public testing::TestWithTempUserProfile {
 
 TEST_F(EmojiRewriterTest, Capability) {
   request_.set_emoji_rewriter_capability(Request::NOT_AVAILABLE);
-  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::NOT_AVAILABLE);
+  const ConversionRequest convreq1 = ConvReq(config_, request_);
+  EXPECT_EQ(rewriter_->capability(convreq1), RewriterInterface::NOT_AVAILABLE);
 
   request_.set_emoji_rewriter_capability(Request::CONVERSION);
-  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::CONVERSION);
+  const ConversionRequest convreq2 = ConvReq(config_, request_);
+  EXPECT_EQ(rewriter_->capability(convreq2), RewriterInterface::CONVERSION);
 
   request_.set_emoji_rewriter_capability(Request::PREDICTION);
-  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::PREDICTION);
+  const ConversionRequest convreq3 = ConvReq(config_, request_);
+  EXPECT_EQ(rewriter_->capability(convreq3), RewriterInterface::PREDICTION);
 
   request_.set_emoji_rewriter_capability(Request::SUGGESTION);
-  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::SUGGESTION);
+  const ConversionRequest convreq4 = ConvReq(config_, request_);
+  EXPECT_EQ(rewriter_->capability(convreq4), RewriterInterface::SUGGESTION);
 
   request_.set_emoji_rewriter_capability(Request::ALL);
-  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::ALL);
+  const ConversionRequest convreq5 = ConvReq(config_, request_);
+  EXPECT_EQ(rewriter_->capability(convreq5), RewriterInterface::ALL);
 }
 
 TEST_F(EmojiRewriterTest, ConvertedSegmentsHasEmoji) {
@@ -254,27 +261,28 @@ TEST_F(EmojiRewriterTest, ConvertedSegmentsHasEmoji) {
 
   Segments segments;
   SetSegment("neko", "test", &segments);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
   EXPECT_EQ(CountEmojiCandidates(segments), 0);
 
   SetSegment("Neko", "test", &segments);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
   EXPECT_EQ(CountEmojiCandidates(segments), 1);
   EXPECT_TRUE(HasExpectedCandidate(segments, "CAT"));
 
   SetSegment("Nezumi", "test", &segments);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
   EXPECT_EQ(CountEmojiCandidates(segments), 2);
   EXPECT_TRUE(HasExpectedCandidate(segments, "MOUSE"));
   EXPECT_TRUE(HasExpectedCandidate(segments, "RAT"));
 
   SetSegment(kEmoji, "test", &segments);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
   EXPECT_EQ(CountEmojiCandidates(segments), 9);
 }
 
 TEST_F(EmojiRewriterTest, NoConversionWithDisabledSettings) {
-  // This test checks no emoji conversion occur if emoji convrsion is disabled
+  // This test checks no emoji conversion occur if emoji conversion is disabled
   // in settings. Same segments are tested with ConvertedSegmentsHasEmoji test.
 
   // Disable emoji conversion in settings
@@ -282,22 +290,23 @@ TEST_F(EmojiRewriterTest, NoConversionWithDisabledSettings) {
 
   Segments segments;
   SetSegment("test", "test", &segments);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
   EXPECT_EQ(CountEmojiCandidates(segments), 0);
 
   SetSegment("Neko", "test", &segments);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
+  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
   EXPECT_EQ(CountEmojiCandidates(segments), 0);
   EXPECT_FALSE(HasExpectedCandidate(segments, "CAT"));
 
   SetSegment("Nezumi", "test", &segments);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
+  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
   EXPECT_EQ(CountEmojiCandidates(segments), 0);
   EXPECT_FALSE(HasExpectedCandidate(segments, "MOUSE"));
   EXPECT_FALSE(HasExpectedCandidate(segments, "RAT"));
 
   SetSegment(kEmoji, "test", &segments);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
+  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
   EXPECT_EQ(CountEmojiCandidates(segments), 0);
 }
 
@@ -308,8 +317,9 @@ TEST_F(EmojiRewriterTest, CheckDescription) {
       dictionary::PosMatcher(data_manager.GetPosMatcherData()));
 
   SetSegment("Emoji", "test", &segments);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  EXPECT_TRUE(variants_rewriter.Rewrite(convreq_, &segments));
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
+  EXPECT_TRUE(variants_rewriter.Rewrite(convreq, &segments));
   ASSERT_LT(0, CountEmojiCandidates(segments));
   const Segment &segment = segments.segment(0);
   for (int i = 0; i < segment.candidates_size(); ++i) {
@@ -344,7 +354,8 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
       candidate->content_value = value;
     }
   }
-  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
 
   ASSERT_EQ(segments.segments_size(), 1);
   const Segment &segment = segments.segment(0);
@@ -368,26 +379,27 @@ TEST_F(EmojiRewriterTest, CheckUsageStats) {
 
   // Converting non-emoji candidates does not matter.
   SetSegment("test", "test", &segments);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-  rewriter_->Finish(convreq_, &segments);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
+  rewriter_->Finish(convreq, &segments);
   EXPECT_STATS_NOT_EXIST(kStatsKey);
 
   // Converting an emoji candidate.
   SetSegment("Nezumi", "test", &segments);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
   ChooseEmojiCandidate(&segments);
-  rewriter_->Finish(convreq_, &segments);
+  rewriter_->Finish(convreq, &segments);
   EXPECT_COUNT_STATS(kStatsKey, 1);
   SetSegment(kEmoji, "test", &segments);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
   ChooseEmojiCandidate(&segments);
-  rewriter_->Finish(convreq_, &segments);
+  rewriter_->Finish(convreq, &segments);
   EXPECT_COUNT_STATS(kStatsKey, 2);
 
   // Converting non-emoji keeps the previous usage stats.
   SetSegment("test", "test", &segments);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-  rewriter_->Finish(convreq_, &segments);
+  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
+  rewriter_->Finish(convreq, &segments);
   EXPECT_COUNT_STATS(kStatsKey, 2);
 }
 
@@ -395,12 +407,14 @@ TEST_F(EmojiRewriterTest, QueryNormalization) {
   {
     Segments segments;
     SetSegment("Ｎｅｋｏ", "Neko", &segments);
-    EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
   }
   {
     Segments segments;
     SetSegment("Neko", "Neko", &segments);
-    EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
   }
 }
 
@@ -409,56 +423,66 @@ TEST_F(EmojiRewriterTest, FullDataTest) {
   {
     Segments segments;
     SetSegment("ＯＫ", "OK", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
   {
     Segments segments;
     SetSegment("OK", "OK", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
   // U+2795 (HEAVY PLUS SIGN)
   {
     Segments segments;
     SetSegment("＋", "+", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
   {
     Segments segments;
     SetSegment("+", "+", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
   // U+1F522 (INPUT SYMBOL FOR NUMBERS)
   {
     Segments segments;
     SetSegment("１２３４", "1234", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
   {
     Segments segments;
     SetSegment("1234", "1234", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
   // U+1F552 (CLOCK FACE THREE OCLOCK)
   {
     Segments segments;
     SetSegment("３じ", "3ji", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
   {
     Segments segments;
     SetSegment("3じ", "3ji", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
   // U+31 U+FE0F U+20E3 (KEYCAP 1)
   {
     Segments segments;
     SetSegment("１", "1", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
   {
     Segments segments;
     SetSegment("1", "1", &segments);
-    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq, &segments));
   }
 }
 

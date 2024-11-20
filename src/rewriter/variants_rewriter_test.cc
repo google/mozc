@@ -918,8 +918,8 @@ TEST_F(VariantsRewriterTest, LearningLevel) {
       CharacterFormManager::GetCharacterFormManager();
   config::Config config;
   config.set_history_learning_level(Config::NO_HISTORY);
-  ConversionRequest request;
-  request.set_config(&config);
+  const ConversionRequest request =
+      ConversionRequestBuilder().SetConfig(config).Build();
 
   Segments segments;
 

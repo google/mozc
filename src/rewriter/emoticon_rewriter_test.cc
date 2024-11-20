@@ -80,12 +80,11 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
   std::unique_ptr<EmoticonRewriter> emoticon_rewriter =
       EmoticonRewriter::CreateFromDataManager(mock_data_manager_);
 
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  ConversionRequest request;
-  request.set_config(&config);
+  config::Config config = config::ConfigHandler::DefaultConfig();
   {
     config.set_use_emoticon_conversion(true);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetConfig(config).Build();
 
     Segments segments;
     AddSegment("test", "test", &segments);
@@ -111,6 +110,8 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
 
   {
     config.set_use_emoticon_conversion(false);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetConfig(config).Build();
 
     Segments segments;
     AddSegment("test", "test", &segments);
@@ -140,16 +141,18 @@ TEST_F(EmoticonRewriterTest, MobileEnvironmentTest) {
       EmoticonRewriter::CreateFromDataManager(mock_data_manager_);
 
   commands::Request request;
-  ConversionRequest convreq;
-  convreq.set_request(&request);
 
   {
     request.set_mixed_conversion(true);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
   }
 }

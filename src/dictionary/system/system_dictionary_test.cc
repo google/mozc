@@ -91,9 +91,6 @@ class SystemDictionaryTest : public testing::TestWithTempUserProfile {
         {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss", "dictionary00.txt"});
     text_dict_.LoadWithLineLimit(dic_path, "",
                                  absl::GetFlag(FLAGS_dictionary_test_size));
-
-    convreq_.set_request(&request_);
-    convreq_.set_config(&config_);
   }
 
   void SetUp() override {
@@ -118,6 +115,14 @@ class SystemDictionaryTest : public testing::TestWithTempUserProfile {
     config::ConfigHandler::SetConfig(config);
   }
 
+  static ConversionRequest ConvReq(const config::Config &config,
+                                   const commands::Request &request) {
+    return ConversionRequestBuilder()
+        .SetConfig(config)
+        .SetRequest(request)
+        .Build();
+  }
+
   void BuildAndWriteSystemDictionary(absl::Span<Token *const> source,
                                      size_t num_tokens,
                                      const std::string &filename);
@@ -131,7 +136,6 @@ class SystemDictionaryTest : public testing::TestWithTempUserProfile {
   dictionary::PosMatcher pos_matcher_;
   TextDictionaryLoader text_dict_;
 
-  ConversionRequest convreq_;
   config::Config config_;
   commands::Request request_;
   TempDirectory temp_dir_;
@@ -238,7 +242,8 @@ TEST_F(SystemDictionaryTest, Callback) {
         .WillRepeatedly(
             Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
 
-    system_dic->LookupPredictive("start", convreq_, &mock_callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPredictive("start", convreq, &mock_callback);
   }
 
   {
@@ -256,7 +261,8 @@ TEST_F(SystemDictionaryTest, Callback) {
         .WillRepeatedly(
             Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
 
-    system_dic->LookupExact("start", convreq_, &mock_callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupExact("start", convreq, &mock_callback);
   }
 
   {
@@ -285,7 +291,8 @@ TEST_F(SystemDictionaryTest, Callback) {
         .WillRepeatedly(
             Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
 
-    system_dic->LookupPrefix("start", convreq_, &mock_callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPrefix("start", convreq, &mock_callback);
   }
 }
 
@@ -344,19 +351,20 @@ TEST_F(SystemDictionaryTest, NormalWord) {
   CollectTokenCallback callback;
 
   // Look up by exact key.
-  system_dic->LookupPrefix(token.key, convreq_, &callback);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  system_dic->LookupPrefix(token.key, convreq, &callback);
   ASSERT_EQ(1, callback.tokens().size());
   EXPECT_TOKEN_EQ(token, callback.tokens().front());
 
   // Look up by prefix.
   callback.Clear();
-  system_dic->LookupPrefix("あいう", convreq_, &callback);
+  system_dic->LookupPrefix("あいう", convreq, &callback);
   ASSERT_EQ(1, callback.tokens().size());
   EXPECT_TOKEN_EQ(token, callback.tokens().front());
 
   // Nothing should be looked up.
   callback.Clear();
-  system_dic->LookupPrefix("かきく", convreq_, &callback);
+  system_dic->LookupPrefix("かきく", convreq, &callback);
   EXPECT_TRUE(callback.tokens().empty());
 }
 
@@ -375,7 +383,8 @@ TEST_F(SystemDictionaryTest, SameWord) {
 
   // All the tokens should be looked up.
   CollectTokenCallback callback;
-  system_dic->LookupPrefix("あ", convreq_, &callback);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  system_dic->LookupPrefix("あ", convreq, &callback);
   EXPECT_TOKENS_EQ_UNORDERED(source_tokens, callback.tokens());
 }
 
@@ -387,9 +396,10 @@ TEST_F(SystemDictionaryTest, LookupAllWords) {
   ASSERT_TRUE(system_dic);
 
   // All the tokens should be looked up.
+  const ConversionRequest convreq = ConvReq(config_, request_);
   for (size_t i = 0; i < source_tokens.size(); ++i) {
     CheckTokenExistenceCallback callback(source_tokens[i].get());
-    system_dic->LookupPrefix(source_tokens[i]->key, convreq_, &callback);
+    system_dic->LookupPrefix(source_tokens[i]->key, convreq, &callback);
     EXPECT_TRUE(callback.found())
         << "Token was not found: " << PrintToken(*source_tokens[i]);
   }
@@ -409,7 +419,8 @@ TEST_F(SystemDictionaryTest, SimpleLookupPrefix) {
 
   // |t0| should be looked up from |k1|.
   CheckTokenExistenceCallback callback(&t0);
-  system_dic->LookupPrefix(k1, convreq_, &callback);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  system_dic->LookupPrefix(k1, convreq, &callback);
   EXPECT_TRUE(callback.found());
 }
 
@@ -468,8 +479,9 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   // Test for normal prefix lookup without key expansion.
   {
     LookupPrefixTestCallback callback;
+    const ConversionRequest convreq = ConvReq(config_, request_);
     system_dic->LookupPrefix("あい",  // "あい"
-                             convreq_, &callback);
+                             convreq, &callback);
     const std::set<std::pair<std::string, std::string>> &result =
         callback.result();
     // "あ" -- "あい" should be found.
@@ -490,7 +502,8 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   // feature.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefix("かきく", convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPrefix("かきく", convreq, &callback);
     const std::set<std::pair<std::string, std::string>> &result =
         callback.result();
     // Only "か" should be found as the callback doesn't traverse the subtree of
@@ -505,7 +518,8 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   // Test for TRAVERSE_NEXT_KEY.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefix("さしす", convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPrefix("さしす", convreq, &callback);
     const std::set<std::pair<std::string, std::string>> &result =
         callback.result();
     // Only "さし" should be found as tokens for "さ" is skipped (see
@@ -520,7 +534,8 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
   // Test for TRAVERSE_DONE.
   {
     LookupPrefixTestCallback callback;
-    system_dic->LookupPrefix("たちつ", convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPrefix("たちつ", convreq, &callback);
     const std::set<std::pair<std::string, std::string>> &result =
         callback.result();
     // Nothing should be found as the traversal is immediately done after seeing
@@ -534,7 +549,8 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     // Use kana modifier insensitive lookup
     request_.set_kana_modifier_insensitive_conversion(true);
     config_.set_use_kana_modifier_insensitive_conversion(true);
-    system_dic->LookupPrefix("はひ", convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPrefix("はひ", convreq, &callback);
     const std::set<std::pair<std::string, std::string>> &result =
         callback.result();
     const char *kExpectedKeys[] = {
@@ -568,7 +584,8 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
   // All the tokens in |tokens| should be looked up by "まみむめも".
   constexpr char kMamimumemo[] = "まみむめも";
   CheckMultiTokensExistenceCallback callback({&tokens[0], &tokens[1]});
-  system_dic->LookupPredictive(kMamimumemo, convreq_, &callback);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  system_dic->LookupPredictive(kMamimumemo, convreq, &callback);
   EXPECT_TRUE(callback.AreAllFound());
 }
 
@@ -588,14 +605,16 @@ TEST_F(SystemDictionaryTest, LookupPredictiveKanaModifierInsensitiveLookup) {
   CollectTokenCallback callback;
   request_.set_kana_modifier_insensitive_conversion(false);
   config_.set_use_kana_modifier_insensitive_conversion(false);
-  system_dic->LookupPredictive(kKey, convreq_, &callback);
+  const ConversionRequest convreq1 = ConvReq(config_, request_);
+  system_dic->LookupPredictive(kKey, convreq1, &callback);
   EXPECT_TRUE(callback.tokens().empty());
 
   // With Kana modifier insensitive lookup flag, every token is looked up.
   callback.Clear();
   request_.set_kana_modifier_insensitive_conversion(true);
   config_.set_use_kana_modifier_insensitive_conversion(true);
-  system_dic->LookupPredictive(kKey, convreq_, &callback);
+  const ConversionRequest convreq2 = ConvReq(config_, request_);
+  system_dic->LookupPredictive(kKey, convreq2, &callback);
   EXPECT_TOKENS_EQ_UNORDERED(source_tokens, callback.tokens());
 }
 
@@ -615,7 +634,8 @@ TEST_F(SystemDictionaryTest, LookupPredictiveCutOffEmulatingBFS) {
   // expected that "あいうえお" is not looked up because of longer key cut-off
   // mechanism.  However, "あい" is looked up as it's short.
   CheckMultiTokensExistenceCallback callback({&tokens[0], &tokens[1]});
-  system_dic->LookupPredictive("あ", convreq_, &callback);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  system_dic->LookupPredictive("あ", convreq, &callback);
   EXPECT_TRUE(callback.IsFound(&tokens[0]));
   EXPECT_FALSE(callback.IsFound(&tokens[1]));
 }
@@ -633,16 +653,17 @@ TEST_F(SystemDictionaryTest, LookupExact) {
 
   // |t0| should not be looked up from |k1|.
   CheckTokenExistenceCallback callback0(&t0);
-  system_dic->LookupExact(k1, convreq_, &callback0);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  system_dic->LookupExact(k1, convreq, &callback0);
   EXPECT_FALSE(callback0.found());
   // But |t1| should be found.
   CheckTokenExistenceCallback callback1(&t1);
-  system_dic->LookupExact(k1, convreq_, &callback1);
+  system_dic->LookupExact(k1, convreq, &callback1);
   EXPECT_TRUE(callback1.found());
 
   // Nothing should be found from "hoge".
   CollectTokenCallback callback_hoge;
-  system_dic->LookupExact("hoge", convreq_, &callback_hoge);
+  system_dic->LookupExact("hoge", convreq, &callback_hoge);
   EXPECT_TRUE(callback_hoge.tokens().empty());
 }
 
@@ -672,7 +693,8 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   for (size_t source_index = 0; source_index < test_size; ++source_index) {
     const Token &source_token = *source_tokens[source_index];
     CollectTokenCallback callback;
-    system_dic->LookupReverse(source_token.value, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupReverse(source_token.value, convreq, &callback);
 
     bool found = false;
     for (const Token &token : callback.tokens()) {
@@ -708,7 +730,8 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
     // append "が"
     const std::string key = absl::StrCat(tokens[7].value, "が");
     CollectTokenCallback callback;
-    system_dic->LookupReverse(key, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupReverse(key, convreq, &callback);
     bool found = false;
     for (const Token &token : callback.tokens()) {
       if (CompareTokensForLookup(tokens[7], token, true)) {
@@ -746,8 +769,9 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
        ++it, --size) {
     const Token &t = **it;
     CollectTokenCallback callback1, callback2;
-    system_dic_without_index->LookupReverse(t.value, convreq_, &callback1);
-    system_dic_with_index->LookupReverse(t.value, convreq_, &callback2);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic_without_index->LookupReverse(t.value, convreq, &callback1);
+    system_dic_with_index->LookupReverse(t.value, convreq, &callback2);
 
     absl::Span<const Token> tokens1 = callback1.tokens();
     absl::Span<const Token> tokens2 = callback2.tokens();
@@ -778,7 +802,8 @@ TEST_F(SystemDictionaryTest, LookupReverseWithCache) {
   target_token.key.swap(target_token.value);
 
   CheckTokenExistenceCallback callback(&target_token);
-  system_dic->LookupReverse(kDoraemon, convreq_, &callback);
+  const ConversionRequest convreq = ConvReq(config_, request_);
+  system_dic->LookupReverse(kDoraemon, convreq, &callback);
   EXPECT_TRUE(callback.found())
       << "Could not find " << PrintToken(source_token);
   system_dic->ClearReverseLookupCache();
@@ -799,7 +824,8 @@ TEST_F(SystemDictionaryTest, SpellingCorrectionTokens) {
 
   for (size_t i = 0; i < source_tokens.size(); ++i) {
     CheckTokenExistenceCallback callback(source_tokens[i]);
-    system_dic->LookupPrefix(source_tokens[i]->key, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPrefix(source_tokens[i]->key, convreq, &callback);
     EXPECT_TRUE(callback.found())
         << "Token " << i << " was not found: " << PrintToken(*source_tokens[i]);
   }
@@ -831,7 +857,8 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   for (size_t i = 0; i < std::size(tokens); ++i) {
     CheckTokenExistenceCallback callback(&tokens[i]);
     // "かつこう" -> "かつ", "かっこ", "かつこう", "かっこう" and "がっこう"
-    system_dic->LookupPrefix(k2, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPrefix(k2, convreq, &callback);
     EXPECT_TRUE(callback.found())
         << "Token " << i << " was not found: " << PrintToken(tokens[i]);
   }
@@ -841,14 +868,16 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
     // "かつ" -> "かつ", "かっこ", "かつこう", "かっこう" and "がっこう"
     std::vector<Token *> expected = MakeTokenPointers(&tokens);
     CheckMultiTokensExistenceCallback callback(expected);
-    system_dic->LookupPredictive(k0, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPredictive(k0, convreq, &callback);
     EXPECT_TRUE(callback.AreAllFound());
   }
   {
     // "かっこ" -> "かっこ", "かっこう" and "がっこう"
     std::vector<Token *> expected = {&tokens[1], &tokens[3], &tokens[4]};
     CheckMultiTokensExistenceCallback callback(expected);
-    system_dic->LookupPredictive(k1, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPredictive(k1, convreq, &callback);
     EXPECT_TRUE(callback.AreAllFound());
   }
 }
@@ -868,7 +897,8 @@ TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
   request_.set_kana_modifier_insensitive_conversion(true);
   config_.set_use_kana_modifier_insensitive_conversion(true);
   CheckTokenExistenceCallback callback(&t0);
-  system_dic->LookupPrefix(k, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+  system_dic->LookupPrefix(k, convreq, &callback);
   EXPECT_TRUE(callback.found()) << "Not found: " << PrintToken(t0);
 }
 
@@ -902,13 +932,15 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
                                                 &tokens[4]};
     for (size_t i = 0; i < to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(to_be_looked_up[i]);
-      system_dic->LookupPrefix(k3, convreq_, &callback);
+      const ConversionRequest convreq = ConvReq(config_, request_);
+      system_dic->LookupPrefix(k3, convreq, &callback);
       EXPECT_TRUE(callback.found())
           << "Token is not found: " << PrintToken(*to_be_looked_up[i]);
     }
     for (size_t i = 0; i < not_to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(not_to_be_looked_up[i]);
-      system_dic->LookupPrefix(k3, convreq_, &callback);
+      const ConversionRequest convreq = ConvReq(config_, request_);
+      system_dic->LookupPrefix(k3, convreq, &callback);
       EXPECT_FALSE(callback.found()) << "Token should not be found: "
                                      << PrintToken(*not_to_be_looked_up[i]);
     }
@@ -923,13 +955,15 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
                                                 &tokens[4]};
     for (size_t i = 0; i < to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(to_be_looked_up[i]);
-      system_dic->LookupPredictive(k1, convreq_, &callback);
+      const ConversionRequest convreq = ConvReq(config_, request_);
+      system_dic->LookupPredictive(k1, convreq, &callback);
       EXPECT_TRUE(callback.found())
           << "Token is not found: " << PrintToken(*to_be_looked_up[i]);
     }
     for (size_t i = 0; i < not_to_be_looked_up.size(); ++i) {
       CheckTokenExistenceCallback callback(not_to_be_looked_up[i]);
-      system_dic->LookupPredictive(k3, convreq_, &callback);
+      const ConversionRequest convreq = ConvReq(config_, request_);
+      system_dic->LookupPredictive(k3, convreq, &callback);
       EXPECT_FALSE(callback.found()) << "Token should not be found: "
                                      << PrintToken(*not_to_be_looked_up[i]);
     }
@@ -954,7 +988,8 @@ TEST_F(SystemDictionaryTest, ShouldNotUseSmallCostEncodingForHeteronyms) {
 
   for (size_t i = 0; i < source_tokens.size(); ++i) {
     CheckTokenExistenceCallback callback(source_tokens[i]);
-    system_dic->LookupPrefix(source_tokens[i]->key, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_, request_);
+    system_dic->LookupPrefix(source_tokens[i]->key, convreq, &callback);
     // The original token will not be found when the token is encoded with
     // small_cost_encoding
     EXPECT_TRUE(callback.found())

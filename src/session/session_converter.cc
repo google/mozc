@@ -103,9 +103,10 @@ absl::string_view GetCandidateShortcuts(
 // Creates ConversionRequest to fill incognito candidate words.
 ConversionRequest CreateIncognitoConversionRequest(
     const ConversionRequest &base_request, const Config &incognito_config) {
-  ConversionRequest request = base_request;
-  request.set_config(&incognito_config);
-  return request;
+  return ConversionRequestBuilder()
+      .SetConversionRequest(base_request)
+      .SetConfig(incognito_config)
+      .Build();
 }
 
 // Calculate cursor offset for committed text.

@@ -185,10 +185,10 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   ConversionRequest CreateConversionRequest() const {
-    ConversionRequest convreq;
-    convreq.set_config(config_.get());
-    convreq.set_request(request_.get());
-    return convreq;
+    return ConversionRequestBuilder()
+        .SetConfig(*config_)
+        .SetRequest(*request_)
+        .Build();
   }
 
   std::unique_ptr<config::Config> config_;
