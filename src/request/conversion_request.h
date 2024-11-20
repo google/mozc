@@ -202,7 +202,6 @@ class ConversionRequest {
     DCHECK(config_);
     return *config_;
   }
-  void set_config(const config::Config *config) { config_ = config; }
 
   const Params &params() const { return params_; }
 

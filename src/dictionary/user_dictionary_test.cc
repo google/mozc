@@ -194,7 +194,6 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
  protected:
   UserDictionaryTest()
       : suppression_dictionary_(std::make_unique<SuppressionDictionary>()) {
-    convreq_.set_config(&config_);
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
@@ -224,6 +223,10 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
         UserPos::CreateFromDataManager(mock_data_manager_),
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()),
         Singleton<SuppressionDictionary>::get());
+  }
+
+  ConversionRequest ConvReq(const config::Config &config) {
+    return ConversionRequestBuilder().SetConfig(config).Build();
   }
 
   struct Entry {
@@ -268,21 +271,24 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
   std::vector<Entry> LookupPredictive(absl::string_view key,
                                       const UserDictionary &dic) {
     EntryCollector collector;
-    dic.LookupPredictive(key, convreq_, &collector);
+    const ConversionRequest convreq = ConvReq(config_);
+    dic.LookupPredictive(key, convreq, &collector);
     return std::move(collector).entries();
   }
 
   std::vector<Entry> LookupPrefix(absl::string_view key,
                                   const UserDictionary &dic) {
     EntryCollector collector;
-    dic.LookupPrefix(key, convreq_, &collector);
+    const ConversionRequest convreq = ConvReq(config_);
+    dic.LookupPrefix(key, convreq, &collector);
     return std::move(collector).entries();
   }
 
   std::vector<Entry> LookupExact(absl::string_view key,
                                  const UserDictionary &dic) {
     EntryCollector collector;
-    dic.LookupExact(key, convreq_, &collector);
+    const ConversionRequest convreq = ConvReq(config_);
+    dic.LookupExact(key, convreq, &collector);
     return std::move(collector).entries();
   }
 
@@ -323,12 +329,12 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
   std::string LookupComment(const UserDictionary &dic, absl::string_view key,
                             absl::string_view value) {
     std::string comment;
-    dic.LookupComment(key, value, convreq_, &comment);
+    const ConversionRequest convreq = ConvReq(config_);
+    dic.LookupComment(key, value, convreq, &comment);
     return comment;
   }
 
   std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
-  ConversionRequest convreq_;
   config::Config config_;
 
  private:
@@ -366,7 +372,8 @@ TEST_F(UserDictionaryTest, TestLookupPredictiveCallback) {
       .Times(1)
       .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
 
-  dic->LookupPredictive("start", convreq_, &mock_callback);
+  const ConversionRequest convreq = ConvReq(config_);
+  dic->LookupPredictive("start", convreq, &mock_callback);
 }
 
 TEST_F(UserDictionaryTest, TestLookupExactCallback) {
@@ -391,7 +398,8 @@ TEST_F(UserDictionaryTest, TestLookupExactCallback) {
       .Times(1)
       .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
 
-  dic->LookupExact("start", convreq_, &mock_callback);
+  const ConversionRequest convreq = ConvReq(config_);
+  dic->LookupExact("start", convreq, &mock_callback);
 }
 
 TEST_F(UserDictionaryTest, TestLookupPrefixCallback) {
@@ -424,7 +432,8 @@ TEST_F(UserDictionaryTest, TestLookupPrefixCallback) {
       .Times(1)
       .WillRepeatedly(Return(DictionaryInterface::Callback::TRAVERSE_CONTINUE));
 
-  dic->LookupPrefix("start", convreq_, &mock_callback);
+  const ConversionRequest convreq = ConvReq(config_);
+  dic->LookupPrefix("start", convreq, &mock_callback);
 }
 
 TEST_F(UserDictionaryTest, TestLookupPredictive) {
@@ -800,7 +809,8 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
       dic->Reload();
       for (int i = 0; i < 1000; ++i) {
         CollectTokenCallback callback;
-        dic->LookupPrefix(keys[i], convreq_, &callback);
+        const ConversionRequest convreq = ConvReq(config_);
+        dic->LookupPrefix(keys[i], convreq, &callback);
       }
     }
     dic->WaitForReloader();
@@ -915,13 +925,15 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   {
     constexpr char kKey[] = "key0123";
     CollectTokenCallback callback;
-    user_dic->LookupPrefix(kKey, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_);
+    user_dic->LookupPrefix(kKey, convreq, &callback);
     EXPECT_THAT(callback.tokens(), Each(Field(&Token::value, Eq("default"))));
   }
   {
     constexpr char kKey[] = "key";
     CollectTokenCallback callback;
-    user_dic->LookupPredictive(kKey, convreq_, &callback);
+    const ConversionRequest convreq = ConvReq(config_);
+    user_dic->LookupPredictive(kKey, convreq, &callback);
     EXPECT_THAT(
         callback.tokens(),
         Each(Field(&Token::value, AnyOf(Eq("suggest_only"), Eq("default")))));
@@ -990,24 +1002,25 @@ TEST_F(UserDictionaryTest, LookupComment) {
   // Entry is in user dictionary but has no comment.
   std::string comment;
   comment = "prev comment";
+  const ConversionRequest convreq = ConvReq(config_);
   EXPECT_FALSE(
-      dic->LookupComment("comment_key1", "comment_value2", convreq_, &comment));
+      dic->LookupComment("comment_key1", "comment_value2", convreq, &comment));
   EXPECT_EQ(comment, "prev comment");
 
   // Usual case: single key-value pair with comment.
   EXPECT_TRUE(
-      dic->LookupComment("comment_key2", "comment_value2", convreq_, &comment));
+      dic->LookupComment("comment_key2", "comment_value2", convreq, &comment));
   EXPECT_EQ(comment, "comment");
 
   // There exist two entries having the same key, value and POS.  Since POS is
   // irrelevant to comment lookup, the first nonempty comment should be found.
   EXPECT_TRUE(
-      dic->LookupComment("comment_key3", "comment_value3", convreq_, &comment));
+      dic->LookupComment("comment_key3", "comment_value3", convreq, &comment));
   EXPECT_EQ(comment, "comment1");
 
   // White-space only comments should be cleared.
   EXPECT_FALSE(
-      dic->LookupComment("comment_key4", "comment_value4", convreq_, &comment));
+      dic->LookupComment("comment_key4", "comment_value4", convreq, &comment));
   // The previous comment should remain.
   EXPECT_EQ(comment, "comment1");
 
