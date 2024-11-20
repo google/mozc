@@ -226,7 +226,6 @@ TEST_F(ComposerTest, OutputMode) {
   composer_->InsertCharacter("i");
   composer_->InsertCharacter("u");
 
-  ;
   EXPECT_EQ(composer_->GetStringForPreedit(), "あいう");
 
   composer_->SetOutputMode(transliteration::FULL_ASCII);
