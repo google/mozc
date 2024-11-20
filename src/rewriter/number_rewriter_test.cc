@@ -909,18 +909,20 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttribute) {
 TEST_F(NumberRewriterTest, DuplicateCandidateTest) {
   // To reproduce issue b/6714268.
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
-  ConversionRequest convreq;
   commands::Request request;
-  convreq.set_request(&request);
   std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
 
   {
     request.set_mixed_conversion(true);
+    const ConversionRequest convreq =
+      ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
+    const ConversionRequest convreq =
+      ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
   }
 }

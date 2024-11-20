@@ -164,11 +164,12 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
   // 'Google Japan'
   {
     Segments segments;
-    ConversionRequest conversion_request;
     commands::Request request;
     request.mutable_decoder_experiment_params()
         ->set_english_variation_space_insertion_mode(1);
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request = ConversionRequestBuilder()
+            .SetRequest(request)
+            .Build();
 
     Segment *seg1 = segments.push_back_segment();
     Segment *seg2 = segments.push_back_segment();
@@ -216,11 +217,12 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
   // '<NO CANDIDATE> Japan'
   {
     Segments segments;
-    ConversionRequest conversion_request;
     commands::Request request;
     request.mutable_decoder_experiment_params()
         ->set_english_variation_space_insertion_mode(1);
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request = ConversionRequestBuilder()
+            .SetRequest(request)
+            .Build();
 
     Segment *seg1 = segments.push_back_segment();
     Segment *seg2 = segments.push_back_segment();
@@ -249,11 +251,12 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
   // 'ぐーぐるJapan'
   {
     Segments segments;
-    ConversionRequest conversion_request;
     commands::Request request;
     request.mutable_decoder_experiment_params()
         ->set_english_variation_space_insertion_mode(1);
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request = ConversionRequestBuilder()
+            .SetRequest(request)
+            .Build();
 
     Segment *seg1 = segments.push_back_segment();
     Segment *seg2 = segments.push_back_segment();
@@ -566,17 +569,20 @@ TEST_F(EnglishVariantsRewriterTest, FillConsumedKeySize) {
 }
 
 TEST_F(EnglishVariantsRewriterTest, MobileEnvironmentTest) {
-  ConversionRequest convreq;
   commands::Request request;
-  convreq.set_request(&request);
 
   {
     request.set_mixed_conversion(true);
+    const ConversionRequest convreq = ConversionRequestBuilder()
+            .SetRequest(request)
+            .Build();
     EXPECT_EQ(rewriter_->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter_->capability(convreq), RewriterInterface::CONVERSION);
   }
 }

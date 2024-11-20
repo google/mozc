@@ -105,9 +105,7 @@ TEST_F(T13nPromotionRewriterTest, Capability) {
   EXPECT_EQ(rewriter.capability(mobile_conv_request), RewriterInterface::ALL);
 
   // Desktop
-  commands::Request default_request;
   ConversionRequest default_conv_request;
-  default_conv_request.set_request(&default_request);
   EXPECT_EQ(rewriter.capability(default_conv_request),
             RewriterInterface::NOT_AVAILABLE);
 }

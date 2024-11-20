@@ -55,9 +55,7 @@ class OrderRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   ConversionRequest CreateConversionRequest(const commands::Request &request) {
-    ConversionRequest convreq;
-    convreq.set_request(&request);
-    return convreq;
+    return ConversionRequestBuilder().SetRequest(request).Build();
   }
 
   std::unique_ptr<OrderRewriter> rewriter_;

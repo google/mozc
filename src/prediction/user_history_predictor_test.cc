@@ -2144,10 +2144,7 @@ TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
 
 TEST_F(UserHistoryPredictorTest, IsValidSuggestionForMixedConversion) {
   UserHistoryPredictor::Entry entry;
-
-  commands::Request request;
-  ConversionRequest conversion_request;
-  conversion_request.set_request(&request);
+  const ConversionRequest conversion_request;
 
   entry.set_suggestion_freq(1);
   EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestionForMixedConversion(

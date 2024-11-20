@@ -252,8 +252,8 @@ TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileSymbolKey) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   commands::Request command_request;
   request_test_util::FillMobileRequest(&command_request);
-  ConversionRequest request;
-  request.set_request(&command_request);
+  const ConversionRequest request =
+      ConversionRequestBuilder().SetRequest(command_request).Build();
 
   {
     Segments segments;
@@ -276,8 +276,8 @@ TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileAlphabetKey) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   commands::Request command_request;
   request_test_util::FillMobileRequest(&command_request);
-  ConversionRequest request;
-  request.set_request(&command_request);
+  const ConversionRequest request =
+      ConversionRequestBuilder().SetRequest(command_request).Build();
 
   {
     Segments segments;
@@ -320,18 +320,20 @@ TEST_F(SymbolRewriterTest, SetKey) {
 }
 
 TEST_F(SymbolRewriterTest, MobileEnvironmentTest) {
-  ConversionRequest convreq;
   commands::Request request;
-  convreq.set_request(&request);
   SymbolRewriter rewriter(converter_, data_manager_.get());
 
   {
     request.set_mixed_conversion(true);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::CONVERSION);
   }
 }

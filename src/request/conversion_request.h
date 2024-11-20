@@ -191,7 +191,6 @@ class ConversionRequest {
     DCHECK(request_);
     return *request_;
   }
-  void set_request(const commands::Request *request) { request_ = request; }
 
   const commands::Context &context() const {
     DCHECK(context_);

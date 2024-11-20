@@ -1391,8 +1391,10 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(UserSegmentHistoryNumberTest, UserSegmentHistoryRewriterTest) {
   const commands::Request request = GetParam();
-  ConversionRequest convreq = CreateConversionRequest();
-  convreq.set_request(&request);
+  const ConversionRequest convreq = ConversionRequestBuilder()
+                                        .SetConfig(*config_)
+                                        .SetRequest(request)
+                                        .Build();
 
   SetNumberForm(Config::FULL_WIDTH);
   Segments segments;

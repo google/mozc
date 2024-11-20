@@ -70,22 +70,23 @@ class A11yDescriptionRewriterTest : public ::testing::Test {
 };
 
 TEST_F(A11yDescriptionRewriterTest, WithoutData) {
-  ConversionRequest a11y_conv_request;
   commands::Request a11y_request;
-
   a11y_request.set_enable_a11y_description(true);
-  a11y_conv_request.set_request(&a11y_request);
+
+  const ConversionRequest a11y_conv_request =
+      ConversionRequestBuilder().SetRequest(a11y_request).Build();
 
   EXPECT_EQ(GetRewriterWithoutData()->capability(a11y_conv_request),
             RewriterInterface::NOT_AVAILABLE);
 }
 
 TEST_F(A11yDescriptionRewriterTest, FeatureDisabled) {
-  ConversionRequest a11y_conv_request, non_a11y_conv_request;
+  ConversionRequest non_a11y_conv_request;
   commands::Request a11y_request;
 
   a11y_request.set_enable_a11y_description(true);
-  a11y_conv_request.set_request(&a11y_request);
+  const ConversionRequest a11y_conv_request =
+      ConversionRequestBuilder().SetRequest(a11y_request).Build();
 
   EXPECT_EQ(GetRewriter()->capability(a11y_conv_request),
             RewriterInterface::ALL);

@@ -171,8 +171,8 @@ TEST_F(MergerRewriterTest, RewriteSuggestionWithMixedConversion) {
   // should result that the merger rewriter does not trim exceeded suggestions.
   commands::Request commands_request;
   commands_request.set_mixed_conversion(true);
-  ConversionRequest request;
-  request.set_request(&commands_request);
+  ConversionRequest request =
+      ConversionRequestBuilder().SetRequest(commands_request).Build();
   request.set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(request.request().mixed_conversion());
 

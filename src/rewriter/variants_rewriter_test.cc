@@ -704,8 +704,8 @@ TEST_F(VariantsRewriterTest, RewriteForMixedConversion) {
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   Request request;
   request.set_mixed_conversion(true);  // Request mixed conversion.
-  ConversionRequest conv_request;
-  conv_request.set_request(&request);
+  ConversionRequest conv_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
   conv_request.set_request_type(ConversionRequest::SUGGESTION);
   {
     Segments segments;
@@ -785,8 +785,8 @@ TEST_F(VariantsRewriterTest, RewriteForPartialSuggestion) {
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   Request request;
   request.set_mixed_conversion(true);  // Request mixed conversion.
-  ConversionRequest conv_request;
-  conv_request.set_request(&request);
+  ConversionRequest conv_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
   conv_request.set_request_type(ConversionRequest::SUGGESTION);
   {
     Segments segments;

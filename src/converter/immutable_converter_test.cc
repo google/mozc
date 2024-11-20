@@ -456,37 +456,30 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
 }  // namespace
 
 TEST(ImmutableConverterTest, EnableAutoPartialSuggestion) {
-  const commands::Request request;
   ConversionRequest conversion_request;
-  conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(true);
 
   EXPECT_TRUE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 
 TEST(ImmutableConverterTest, DisableAutoPartialSuggestion) {
-  const commands::Request request;
   ConversionRequest conversion_request;
-  conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(false);
 
   EXPECT_FALSE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 
 TEST(ImmutableConverterTest, AutoPartialSuggestionDefault) {
-  const commands::Request request;
-  ConversionRequest conversion_request;
-  conversion_request.set_request(&request);
-
+  const ConversionRequest conversion_request;
   EXPECT_FALSE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 
 TEST(ImmutableConverterTest, FirstInnerSegment) {
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
-  ConversionRequest conversion_request;
+  ConversionRequest conversion_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
-  conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(true);
   conversion_request.set_max_conversion_candidates_size(100);
 
@@ -512,9 +505,9 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
   request_test_util::FillMobileRequest(&request);
   request.mutable_decoder_experiment_params()
       ->set_enable_realtime_conversion_candidate_checker(true);
-  ConversionRequest conversion_request;
+  ConversionRequest conversion_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
-  conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(true);
   conversion_request.set_max_conversion_candidates_size(100);
 
@@ -582,9 +575,9 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFilteringParams) {
   request.mutable_decoder_experiment_params()
       ->set_realtime_conversion_candidate_checker_cost_max_diff(
           4605);  // 500*log(10000);
-  ConversionRequest conversion_request;
+  ConversionRequest conversion_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
-  conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(true);
   conversion_request.set_max_conversion_candidates_size(100);
 

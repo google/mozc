@@ -66,13 +66,17 @@ TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
 
 TEST(RemoveRedundantCandidateRewriterTest, CapabilityTest) {
   RemoveRedundantCandidateRewriter rewriter;
-  ConversionRequest convreq;
   commands::Request request;
-  convreq.set_request(&request);
-  { EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::NOT_AVAILABLE); }
+  {
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetRequest(request).Build();
+    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::NOT_AVAILABLE);
+  }
 
   {
     request.set_mixed_conversion(true);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::ALL);
   }
 }

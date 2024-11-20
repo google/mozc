@@ -285,9 +285,9 @@ TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterTest) {
     commands::Request request;
     request.add_additional_renderable_character_groups(
         commands::Request::EMOJI_13_0);
-    ConversionRequest conversion_request;
+    const ConversionRequest conversion_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
     Segments segments;
-    conversion_request.set_request(&request);
 
     segments.Clear();
     AddSegment("a", {"🛻", "🤵‍♀", "🥸"}, &segments);
@@ -315,9 +315,9 @@ TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterE160Test) {
     commands::Request request;
     request.add_additional_renderable_character_groups(
         commands::Request::EMOJI_16_0);
-    ConversionRequest conversion_request;
     Segments segments;
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
 
     segments.Clear();
     AddSegment("えもじ", {"🪏", "🫆", "🫟"}, &segments);
@@ -349,9 +349,7 @@ TEST_F(EnvironmentalFilterRewriterTest, NoRemoveTest) {
 
 TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
   {
-    commands::Request request;
-    ConversionRequest conversion_request;
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request;
 
     Segments segments;
     segments.Clear();
@@ -365,9 +363,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
   }
 
   {
-    commands::Request request;
-    ConversionRequest conversion_request;
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request;
 
     Segments segments;
     segments.Clear();
@@ -389,8 +385,8 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
     commands::Request request;
     request.add_additional_renderable_character_groups(
         commands::Request::EMPTY);
-    ConversionRequest conversion_request;
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
 
     Segments segments;
     segments.Clear();
@@ -407,8 +403,8 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
     commands::Request request;
     request.add_additional_renderable_character_groups(
         commands::Request::KANA_SUPPLEMENT_6_0);
-    ConversionRequest conversion_request;
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
 
     Segments segments;
     segments.Clear();
@@ -427,8 +423,8 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
         commands::Request::KANA_SUPPLEMENT_6_0);
     request.add_additional_renderable_character_groups(
         commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0);
-    ConversionRequest conversion_request;
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
 
     Segments segments;
     segments.Clear();
@@ -449,8 +445,8 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
         commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0);
     request.add_additional_renderable_character_groups(
         commands::Request::KANA_EXTENDED_A_14_0);
-    ConversionRequest conversion_request;
-    conversion_request.set_request(&request);
+    const ConversionRequest conversion_request =
+      ConversionRequestBuilder().SetRequest(request).Build();
 
     Segments segments;
     segments.Clear();
