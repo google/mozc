@@ -274,7 +274,7 @@ Composition::GetExpandedStrings() const {
   Transliterators::Transliterator transliterator = Transliterators::LOCAL;
   if (chunks_.empty()) {
     MOZC_VLOG(1) << "The composition size is zero.";
-    return std::make_tuple(std::string(), absl::btree_set<std::string>());
+    return std::make_pair(std::string(), absl::btree_set<std::string>());
   }
 
   std::string base;
@@ -287,7 +287,7 @@ Composition::GetExpandedStrings() const {
   // Get expanded from the last chunk
   const absl::btree_set<std::string> expanded =
       chunks_.back().GetExpandedResults();
-  return std::make_tuple(base, expanded);
+  return std::make_pair(base, expanded);
 }
 
 std::string Composition::GetString() const {

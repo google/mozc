@@ -375,8 +375,8 @@ std::pair<std::string, absl::btree_set<std::string>> GetQueriesForPrediction(
   switch (input_mode) {
     case transliteration::HALF_ASCII:
     case transliteration::FULL_ASCII: {
-      return std::make_tuple(GetQueryForPrediction(composition, input_mode),
-                             absl::btree_set<std::string>());
+      return std::make_pair(GetQueryForPrediction(composition, input_mode),
+                            absl::btree_set<std::string>());
     }
     default: {
     }
@@ -393,7 +393,7 @@ std::pair<std::string, absl::btree_set<std::string>> GetQueriesForPrediction(
   const std::string asis = composition.GetStringWithTrimMode(ASIS);
   RemoveExpandedCharsForModifier(asis, base_query, &expanded);
 
-  return std::make_tuple(
+  return std::make_pair(
     japanese_util::FullWidthAsciiToHalfWidthAscii(base_query), expanded);
 }
 
