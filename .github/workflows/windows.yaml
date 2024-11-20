@@ -122,6 +122,7 @@ jobs:
         working-directory: .\src
         env:
           ANDROID_NDK_HOME: ""
+          USE_BAZEL_VERSION: "7.4.1"
         run: |
           bazel --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
 

@@ -167,6 +167,7 @@ Note that you can specify `--qtdir=` option instead of `--noqt` in GYP phase sin
 Additional requirements:
 
 * [Bazel](https://bazel.build/)
+  * ⚠️ Bazel 8.x is not yet supported ([#1118](https://github.com/google/mozc/issues/1118))
 * [MSYS2](https://github.com/msys2/msys2)
 
 After running `build_tools/update_deps.py` and `build_tools/build_qt.py`, run the following command instead of `build_mozc.py`:
