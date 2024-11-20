@@ -166,6 +166,10 @@ class Composer final {
   Composer(Composer &&) = default;
   Composer &operator=(Composer &&) = default;
 
+  // Return an empty ComposerData used for placeholder.
+  static ComposerData CreateEmptyComposerData();
+
+  // Return a ComposerData with the current state of the composer.
   ComposerData CreateComposerData() const;
 
   // Reset all composing data except table.

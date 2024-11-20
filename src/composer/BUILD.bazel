@@ -65,6 +65,7 @@ mozc_cc_library(
         "//testing:friend_test",
         "//transliteration",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/log",

@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/no_destructor.h"
 #include "absl/container/btree_set.h"
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
@@ -592,6 +593,14 @@ Composer::Composer(const Table *table, const commands::Request *request,
     config_ = &config::ConfigHandler::DefaultConfig();
   }
   Reset();
+}
+
+// static
+ComposerData Composer::CreateEmptyComposerData() {
+  static const absl::NoDestructor<Table> table;
+  static const absl::NoDestructor<Composition> composition(table.get());
+  return ComposerData(*composition, 0, transliteration::HIRAGANA,
+                      commands::Context::NORMAL, "", {});
 }
 
 ComposerData Composer::CreateComposerData() const {

@@ -74,7 +74,9 @@ class ConversionRequest {
   };
 
   ConversionRequest()
-      : request_(&commands::Request::default_instance()),
+      : has_composer_(false),
+        composer_(composer::Composer::CreateEmptyComposerData()),
+        request_(&commands::Request::default_instance()),
         context_(&commands::Context::default_instance()),
         config_(&config::ConfigHandler::DefaultConfig()) {}
 
@@ -88,11 +90,12 @@ class ConversionRequest {
         context_(context),
         config_(config) {}
 
-  // Copyable and movable.
   ConversionRequest(const ConversionRequest &) = default;
-  ConversionRequest &operator=(const ConversionRequest &) = default;
   ConversionRequest(ConversionRequest &&) = default;
-  ConversionRequest &operator=(ConversionRequest &&) = default;
+
+  // operator= are not available since this class has a const member.
+  ConversionRequest &operator=(const ConversionRequest &) = delete;
+  ConversionRequest &operator=(ConversionRequest &&) = delete;
 
   RequestType request_type() const { return request_type_; }
   void set_request_type(RequestType request_type) {
@@ -208,7 +211,7 @@ class ConversionRequest {
   // Required fields
   // Input composer to generate a key for conversion, suggestion, etc.
   bool has_composer_ = false;
-  composer::ComposerData composer_;
+  const composer::ComposerData composer_;
 
   // Input request.
   const commands::Request *request_;
