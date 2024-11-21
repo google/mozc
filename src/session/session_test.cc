@@ -564,7 +564,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
   ConversionRequest CreateConversionRequest(const Session &session) {
     const ImeContext &context = session.context();
     const ConversionRequest request(context.composer(), context.GetRequest(),
-                                    &context.client_context(),
+                                    context.client_context(),
                                     &context.GetConfig());
     return request;
   }
@@ -3942,7 +3942,7 @@ TEST_F(SessionTest, Shortcut) {
     SetAiueo(&segments);
     const ImeContext &context = session.context();
     const ConversionRequest request(context.composer(), context.GetRequest(),
-                                    &context.client_context(),
+                                    context.client_context(),
                                     &context.GetConfig());
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))

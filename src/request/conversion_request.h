@@ -116,12 +116,12 @@ class ConversionRequest {
   ConversionRequest()
       : ConversionRequest(false, composer::Composer::CreateEmptyComposerData(),
                           commands::Request::default_instance(),
-                          &commands::Context::default_instance(),
+                          commands::Context::default_instance(),
                           &config::ConfigHandler::DefaultConfig(), Params()) {}
 
   ConversionRequest(const composer::Composer &composer,
                     const commands::Request &request,
-                    const commands::Context *context,
+                    const commands::Context &context,
                     const config::Config *config)
       : ConversionRequest(true, composer.CreateComposerData(),
                           request, context, config, Params()) {}
@@ -129,13 +129,13 @@ class ConversionRequest {
   ConversionRequest(bool has_composer,
                     const composer::ComposerData &composer,
                     const commands::Request &request,
-                    const commands::Context *context,
+                    const commands::Context &context,
                     const config::Config *config,
                     Params params)
       : has_composer_(has_composer),
         composer_(composer),
         request_(request),
-        context_(*context),
+        context_(context),
         config_(config),
         params_(params) {}
 
@@ -282,13 +282,11 @@ class ConversionRequestBuilder {
 
     // TODO(b/365909808): Remove using default_instance() when the variables are
     // set copied constat values instead of pointers.
-    const commands::Context *context =
-        context_ != nullptr ? context_ : &commands::Context::default_instance();
     const config::Config *config =
         config_ != nullptr ? config_ : &config::ConfigHandler::DefaultConfig();
 
     return ConversionRequest(has_composer_, std::move(composer_data_),
-                             std::move(request_), context, config,
+                             std::move(request_), std::move(context_), config,
                              std::move(params_));
   }
 
@@ -297,7 +295,7 @@ class ConversionRequestBuilder {
     has_composer_ = base_convreq.has_composer();
     composer_data_ = base_convreq.composer();
     request_ = base_convreq.request();
-    context_ = &base_convreq.context();
+    context_ = base_convreq.context();
     config_ = &base_convreq.config();
     params_ = base_convreq.params();
     return *this;
@@ -319,7 +317,7 @@ class ConversionRequestBuilder {
     return *this;
   }
   ConversionRequestBuilder &SetContext(const commands::Context &context) {
-    context_ = &context;
+    context_ = context;
     return *this;
   }
   ConversionRequestBuilder &SetConfig(const config::Config &config) {
@@ -336,7 +334,7 @@ class ConversionRequestBuilder {
   bool has_composer_ = false;
   composer::ComposerData composer_data_;
   commands::Request request_;
-  const commands::Context *context_ = nullptr;
+  commands::Context context_;
   const config::Config *config_ = nullptr;
   ConversionRequest::Params params_;
 };
