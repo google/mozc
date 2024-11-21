@@ -135,7 +135,7 @@ class ConversionRequest {
       : has_composer_(has_composer),
         composer_(composer),
         request_(request),
-        context_(context),
+        context_(*context),
         config_(config),
         params_(params) {}
 
@@ -192,8 +192,7 @@ class ConversionRequest {
   }
 
   const commands::Context &context() const {
-    DCHECK(context_);
-    return *context_;
+    return context_;
   }
 
   const config::Config &config() const {
@@ -266,7 +265,7 @@ class ConversionRequest {
   const commands::Request request_;
 
   // Input context.
-  const commands::Context *context_;
+  const commands::Context context_;
 
   // Input config.
   const config::Config *config_;
