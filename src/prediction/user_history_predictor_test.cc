@@ -114,7 +114,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   ConversionRequest CreateConversionRequest(
       const composer::Composer &composer) const {
-    ConversionRequest convreq(composer, &request_, &context_, &config_);
+    ConversionRequest convreq(composer, request_, &context_, &config_);
     convreq.set_max_user_history_prediction_candidates_size(10);
     convreq.set_max_user_history_prediction_candidates_size_for_zero_query(10);
     return convreq;
@@ -1349,7 +1349,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     SetUpInputForSuggestionWithHistory("", "たろうは", "太郎は", &composer_,
                                        &segments);
     // convreq5 is not zero query suggestion unlike other convreqs.
-    ConversionRequest convreq5(composer_, &non_zero_query_request, &context,
+    ConversionRequest convreq5(composer_, non_zero_query_request, &context,
                                &config_);
     EXPECT_FALSE(predictor->PredictForRequest(convreq5, &segments));
 
@@ -1391,7 +1391,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     convreq2.set_request_type(ConversionRequest::SUGGESTION);
 
     // Zero query suggestion is disabled.
-    ConversionRequest non_zero_query_convreq(composer_, &non_zero_query_request,
+    ConversionRequest non_zero_query_convreq(composer_, non_zero_query_request,
                                              &context, &config_);
     AddSegment("", &segments);  // empty request
     EXPECT_FALSE(
@@ -3180,10 +3180,10 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
   predictor->Finish(convreq2, &segments);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
-  const ConversionRequest convreq3 = SetUpInputForSuggestionWithHistory(
-      "", "わたしの", "私の", &composer_, &segments);
   commands::Request request;
   request_.set_zero_query_suggestion(true);
+  const ConversionRequest convreq3 = SetUpInputForSuggestionWithHistory(
+      "", "わたしの", "私の", &composer_, &segments);
   EXPECT_TRUE(predictor->PredictForRequest(convreq3, &segments));
   EXPECT_TRUE(FindCandidateByValue("名前は", segments));
 }
@@ -4813,9 +4813,9 @@ TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
     AddCandidate(0, hist_value, &segments);
     predictor->Finish(convreq1, &segments);
     segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    request_.set_zero_query_suggestion(true);
     const ConversionRequest convreq2 = SetUpInputForSuggestionWithHistory(
         "", hist_key, hist_value, &composer_, &segments);
-    request_.set_zero_query_suggestion(true);
     ASSERT_TRUE(predictor->PredictForRequest(convreq2, &segments));
   }
 

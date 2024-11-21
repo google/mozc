@@ -1197,10 +1197,8 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NumberStyleLearningTest, NumberRewriterTest) {
   std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
   const commands::Request request = GetParam();
-  const composer::Composer composer;
-  const commands::Context context;
-  ConversionRequest convreq(composer, &request, &context,
-                            &config::ConfigHandler::DefaultConfig());
+  const ConversionRequest convreq =
+      ConversionRequestBuilder().SetRequest(request).Build();
 
   LearnNumberStyle(convreq, pos_matcher_, *rewriter);
 
