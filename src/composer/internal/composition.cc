@@ -168,7 +168,7 @@ size_t Composition::ConvertPosition(
   const size_t chunk_length_to = chunk_it->GetLength(transliterator_to);
   if (inner_position_from == chunk_length_from) {
     // If the inner_position_from is the end of the chunk (ex. "ka|"
-    // vs "か"), the converterd position should be the end of the
+    // vs "か"), the converted position should be the end of the
     // chunk too (ie. "か|").
     return position_to + chunk_length_to;
   }
