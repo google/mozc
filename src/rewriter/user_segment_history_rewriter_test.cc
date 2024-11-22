@@ -310,41 +310,48 @@ TEST_F(UserSegmentHistoryRewriterTest, DisableTest) {
   Segments segments;
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
-  ConversionRequest conversion_request = CreateConversionRequest();
+  const ConversionRequest convreq_hist_true =
+      ConversionRequestBuilder()
+          .SetConfig(*config_)
+          .SetRequest(*request_)
+          .SetOptions({.enable_user_history_for_conversion = true})
+          .Build();
+  const ConversionRequest convreq_hist_false =
+      ConversionRequestBuilder()
+          .SetConfig(*config_)
+          .SetRequest(*request_)
+          .SetOptions({.enable_user_history_for_conversion = false})
+          .Build();
 
   {
     InitSegments(&segments, 1);
-    conversion_request.set_enable_user_history_for_conversion(true);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(conversion_request, &segments);
+    rewriter->Finish(convreq_hist_true, &segments);
     InitSegments(&segments, 1);
-    rewriter->Rewrite(conversion_request, &segments);
+    rewriter->Rewrite(convreq_hist_true, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
 
     InitSegments(&segments, 1);
-    conversion_request.set_enable_user_history_for_conversion(false);
-    rewriter->Rewrite(conversion_request, &segments);
+    rewriter->Rewrite(convreq_hist_false, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
 
     InitSegments(&segments, 1);
-    conversion_request.set_enable_user_history_for_conversion(true);
-    rewriter->Rewrite(conversion_request, &segments);
+    rewriter->Rewrite(convreq_hist_true, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
   }
 
   {
     InitSegments(&segments, 1);
-    conversion_request.set_enable_user_history_for_conversion(false);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(conversion_request, &segments);
+    rewriter->Finish(convreq_hist_false, &segments);
     InitSegments(&segments, 1);
-    rewriter->Rewrite(conversion_request, &segments);
+    rewriter->Rewrite(convreq_hist_false, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
   }
 }

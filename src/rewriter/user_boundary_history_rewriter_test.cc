@@ -236,16 +236,22 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenDisableUserHistory) {
   UserBoundaryHistoryRewriter rewriter(&converter);
   {
     // History should not be learned when user history is disabled.
-    ConversionRequest convreq = CreateConversionRequest();
-    convreq.set_enable_user_history_for_conversion(false);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetConfig(config_)
+            .SetOptions({.enable_user_history_for_conversion = false})
+            .Build();
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
     rewriter.Finish(convreq, &segments);
   }
   {
     // Enable learning again. ResizeSegment() should not be called.
-    ConversionRequest convreq = CreateConversionRequest();
-    convreq.set_enable_user_history_for_conversion(true);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetConfig(config_)
+            .SetOptions({.enable_user_history_for_conversion = true})
+            .Build();
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
     EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
@@ -344,10 +350,13 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
 
   MockConverter converter;
   UserBoundaryHistoryRewriter rewriter(&converter);
-  ConversionRequest convreq = CreateConversionRequest();
   {
     // History IS learned.
-    convreq.set_enable_user_history_for_conversion(true);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetConfig(config_)
+            .SetOptions({.enable_user_history_for_conversion = true})
+            .Build();
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
     segments.set_resized(true);
     rewriter.Finish(convreq, &segments);
@@ -355,7 +364,11 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
   {
     // ResizeSegment() should not be called when history is disabled in request
     // even after the rewriter learned the history.
-    convreq.set_enable_user_history_for_conversion(false);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetConfig(config_)
+            .SetOptions({.enable_user_history_for_conversion = false})
+            .Build();
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
     EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }

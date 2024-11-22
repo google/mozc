@@ -188,9 +188,6 @@ class ConversionRequest {
   bool enable_user_history_for_conversion() const {
     return options_.enable_user_history_for_conversion;
   }
-  void set_enable_user_history_for_conversion(bool value) {
-    options_.enable_user_history_for_conversion = value;
-  }
 
   ComposerKeySelection composer_key_selection() const {
     return options_.composer_key_selection;
