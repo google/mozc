@@ -214,7 +214,7 @@ TEST_F(UserSegmentHistoryRewriterTest, InvalidInputsTest) {
       CreateUserSegmentHistoryRewriter());
   segments.Clear();
 
-  ConversionRequest convreq = CreateConversionRequest();
+  const ConversionRequest convreq = CreateConversionRequest();
   EXPECT_FALSE(rewriter->Rewrite(convreq, &segments));
   rewriter->Finish(convreq, &segments);
 }
@@ -226,7 +226,7 @@ TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
 
   {
     config_->set_incognito_mode(false);
-    ConversionRequest convreq1 = CreateConversionRequest();
+    const ConversionRequest convreq1 = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -239,7 +239,7 @@ TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
 
     config_->set_incognito_mode(true);
     InitSegments(&segments, 1);
-    ConversionRequest convreq2 = CreateConversionRequest();
+    const ConversionRequest convreq2 = CreateConversionRequest();
     rewriter->Rewrite(convreq2, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
   }
@@ -247,7 +247,7 @@ TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
   {
     rewriter->Clear();  // clear history
     config_->set_incognito_mode(true);
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -267,7 +267,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
 
   {
     config_->set_history_learning_level(Config::DEFAULT_HISTORY);
-    ConversionRequest convreq1 = CreateConversionRequest();
+    const ConversionRequest convreq1 = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -279,13 +279,13 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
 
     config_->set_history_learning_level(Config::NO_HISTORY);
-    ConversionRequest convreq2 = CreateConversionRequest();
+    const ConversionRequest convreq2 = CreateConversionRequest();
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq2, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
 
     config_->set_history_learning_level(Config::READ_ONLY);
-    ConversionRequest convreq3 = CreateConversionRequest();
+    const ConversionRequest convreq3 = CreateConversionRequest();
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq3, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
@@ -293,7 +293,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
 
   {
     config_->set_history_learning_level(Config::NO_HISTORY);
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -364,7 +364,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
   rewriter->Clear();
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
 
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -426,7 +426,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
 
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -477,7 +477,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
   Clock::SetClockForUnitTest(&clock);
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
 
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -568,7 +568,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
   Clock::SetClockForUnitTest(&clock);
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(4, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -616,7 +616,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
       CreateUserSegmentHistoryRewriter());
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     rewriter->Clear();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -632,7 +632,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     rewriter->Clear();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -648,7 +648,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     rewriter->Clear();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -671,7 +671,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContextSensitive) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -693,7 +693,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContextSensitive) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -722,7 +722,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
@@ -762,7 +762,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   // In learning phase, lid is different
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
@@ -779,7 +779,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   // In learning phase, suffix (functional value) is different
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, "", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":other", 1);
@@ -796,7 +796,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   // In apply phase, lid is different
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
@@ -815,7 +815,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   // In apply phase, suffix (functional value) is different
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
@@ -839,7 +839,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
@@ -864,7 +864,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
@@ -889,7 +889,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
@@ -907,7 +907,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
@@ -925,7 +925,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
@@ -943,7 +943,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
@@ -967,7 +967,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NotReplaceableForDifferentId) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
     AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
     AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 200, 300);
@@ -997,7 +997,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableForSameId) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
     AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
     AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 1, 1);
@@ -1027,7 +1027,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
 
   rewriter->Clear();
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
     AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
     // Prepare candidate2 as T13N candidate.
@@ -1065,7 +1065,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
         c->rid = 10;
       }
     };
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
 
     set_up_segments();
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -1093,7 +1093,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
   rewriter->Clear();
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
 
     segments.mutable_segment(0)->mutable_candidate(0)->value = "1234";
@@ -1116,7 +1116,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 2);
 
     segments.mutable_segment(1)->mutable_candidate(0)->value = "1234";
@@ -1147,7 +1147,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
   rewriter->Clear();
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->insert_candidate(2);
@@ -1162,7 +1162,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->insert_candidate(2);
@@ -1185,7 +1185,7 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
   rewriter->Clear();
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->set_key("key1");
     Segment::Candidate *candidate =
@@ -1201,7 +1201,7 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->set_key("key2");
     Segment::Candidate *candidate =
@@ -1217,7 +1217,7 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->set_key("key1");
     Segment::Candidate *candidate =
@@ -1245,7 +1245,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
   rewriter->Clear();
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("12");
@@ -1264,7 +1264,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("14");
@@ -1294,7 +1294,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
   rewriter->Clear();
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("1234");
@@ -1312,7 +1312,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("1234");
@@ -1343,7 +1343,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
   rewriter->Clear();
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("1234");
@@ -1361,7 +1361,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     segments.add_segment();
     {
@@ -1462,7 +1462,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
   rewriter->Clear();
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("10");
@@ -1478,7 +1478,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     rewriter->Finish(convreq, &segments);  // learn kanji
   }
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("1234");
@@ -1496,7 +1496,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->set_key("9");
     {
@@ -1526,7 +1526,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   ClockMock clock(absl::UnixEpoch());
   Clock::SetClockForUnitTest(&clock);
 
-  ConversionRequest convreq = CreateConversionRequest();
+  const ConversionRequest convreq = CreateConversionRequest();
   InitSegments(&segments, 1);
   segments.mutable_segment(0)->move_candidate(2, 0);
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -1573,7 +1573,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459520) {
 
   rewriter->Clear();
 
-  ConversionRequest convreq = CreateConversionRequest();
+  const ConversionRequest convreq = CreateConversionRequest();
   InitSegments(&segments, 2);
   segments.mutable_segment(0)->move_candidate(2, 0);
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -1601,7 +1601,7 @@ TEST_F(UserSegmentHistoryRewriterTest, PuntuationsTest) {
 
   rewriter->Clear();
 
-  ConversionRequest convreq = CreateConversionRequest();
+  const ConversionRequest convreq = CreateConversionRequest();
   InitSegments(&segments, 2);
   segments.mutable_segment(1)->set_key(".");
   for (int i = 1; i < kCandidatesSize; ++i) {
@@ -1634,7 +1634,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression3264619) {
       CreateUserSegmentHistoryRewriter());
 
   // Too big candidates
-  ConversionRequest convreq = CreateConversionRequest();
+  const ConversionRequest convreq = CreateConversionRequest();
   InitSegments(&segments, 2, 1024);
   segments.mutable_segment(0)->move_candidate(512, 0);
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -1659,7 +1659,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
   rewriter->Clear();
   absl::BitGen gen;
   for (int i = 0; i < 5; ++i) {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     const int n = absl::Uniform(gen, 0, 10);
     const std::string expected = segments.segment(0).candidate(n).value;
@@ -1684,7 +1684,7 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
       CreateUserSegmentHistoryRewriter());
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("abc");
@@ -1702,7 +1702,7 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     segments.Clear();
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("abc");
@@ -1795,7 +1795,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
                 Segment::FIXED_VALUE);
     }
 
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     rewriter->Finish(convreq, &segments);
   }
 
@@ -1839,7 +1839,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
                 Segment::FIXED_VALUE);
     }
 
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     rewriter->Finish(convreq, &segments);
   }
 
@@ -1883,7 +1883,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
                 Segment::FIXED_VALUE);
     }
 
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     rewriter->Finish(convreq, &segments);
   }
 
@@ -1904,7 +1904,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
     candidate->content_key = "なかの";
     candidate->content_key = "なかの";
 
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     EXPECT_TRUE(rewriter->Rewrite(convreq, &segments));
     EXPECT_EQ(segments.segment(0).candidate(0).value, "中野");
   }
@@ -2018,7 +2018,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Revert) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     rewriter->Finish(convreq, &segments);
   }
 
@@ -2034,7 +2034,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Revert) {
     candidate->content_value = "ａｂｃ";
     candidate->content_key = "abc";
     candidate->content_key = "abc";
-    ConversionRequest convreq = CreateConversionRequest();
+    const ConversionRequest convreq = CreateConversionRequest();
     EXPECT_FALSE(rewriter->Rewrite(convreq, &segments));
   }
 }
