@@ -2629,26 +2629,30 @@ TEST_F(UserHistoryPredictorTest, GetRomanMisspelledKey) {
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->value = "test";
 
-  const ConversionRequest convreq = CreateConversionRequest(composer_);
-
   config_.set_preedit_method(config::Config::ROMAN);
+  const ConversionRequest convreq1 = CreateConversionRequest(composer_);
   seg->set_key("");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq, segments), "");
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq1, segments),
+            "");
 
   seg->set_key("おねがいしまうs");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq, segments),
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq1, segments),
             "onegaisimaus");
 
   seg->set_key("おねがいします");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq, segments), "");
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq1, segments),
+            "");
 
   config_.set_preedit_method(config::Config::KANA);
+  const ConversionRequest convreq2 = CreateConversionRequest(composer_);
 
   seg->set_key("おねがいしまうs");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq, segments), "");
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq2, segments),
+            "");
 
   seg->set_key("おねがいします");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq, segments), "");
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq2, segments),
+            "");
 }
 
 TEST_F(UserHistoryPredictorTest, RomanFuzzyLookupEntry) {

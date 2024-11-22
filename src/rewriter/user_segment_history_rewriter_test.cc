@@ -225,28 +225,29 @@ TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
       CreateUserSegmentHistoryRewriter());
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
     config_->set_incognito_mode(false);
+    ConversionRequest convreq1 = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq1, &segments);
     InitSegments(&segments, 1);
-    rewriter->Rewrite(convreq, &segments);
+    rewriter->Rewrite(convreq1, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
 
     config_->set_incognito_mode(true);
     InitSegments(&segments, 1);
-    rewriter->Rewrite(convreq, &segments);
+    ConversionRequest convreq2 = CreateConversionRequest();
+    rewriter->Rewrite(convreq2, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
     rewriter->Clear();  // clear history
     config_->set_incognito_mode(true);
+    ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
@@ -265,32 +266,34 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
       CreateUserSegmentHistoryRewriter());
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
     config_->set_history_learning_level(Config::DEFAULT_HISTORY);
+    ConversionRequest convreq1 = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq1, &segments);
     InitSegments(&segments, 1);
-    rewriter->Rewrite(convreq, &segments);
+    rewriter->Rewrite(convreq1, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
 
     config_->set_history_learning_level(Config::NO_HISTORY);
+    ConversionRequest convreq2 = CreateConversionRequest();
     InitSegments(&segments, 1);
-    rewriter->Rewrite(convreq, &segments);
+    rewriter->Rewrite(convreq2, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
 
     config_->set_history_learning_level(Config::READ_ONLY);
+    ConversionRequest convreq3 = CreateConversionRequest();
     InitSegments(&segments, 1);
-    rewriter->Rewrite(convreq, &segments);
+    rewriter->Rewrite(convreq3, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
   }
 
   {
-    ConversionRequest convreq = CreateConversionRequest();
     config_->set_history_learning_level(Config::NO_HISTORY);
+    ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=

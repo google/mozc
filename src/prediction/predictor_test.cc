@@ -400,16 +400,18 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
-  ConversionRequest convreq = CreateConversionRequest();
-  convreq.set_request_type(ConversionRequest::SUGGESTION);
-
   config_->set_presentation_mode(true);
-  EXPECT_FALSE(predictor->PredictForRequest(convreq, &segments));
+  ConversionRequest convreq1 = CreateConversionRequest();
+  convreq1.set_request_type(ConversionRequest::SUGGESTION);
+
+  EXPECT_FALSE(predictor->PredictForRequest(convreq1, &segments));
   EXPECT_FALSE(pred1->predict_called());
   EXPECT_FALSE(pred2->predict_called());
 
   config_->set_presentation_mode(false);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  ConversionRequest convreq2 = CreateConversionRequest();
+  convreq2.set_request_type(ConversionRequest::SUGGESTION);
+  EXPECT_TRUE(predictor->PredictForRequest(convreq2, &segments));
   EXPECT_TRUE(pred1->predict_called());
   EXPECT_TRUE(pred2->predict_called());
 }

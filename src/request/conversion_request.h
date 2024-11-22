@@ -126,6 +126,17 @@ class ConversionRequest {
       : ConversionRequest(true, composer.CreateComposerData(),
                           request, context, config, Params()) {}
 
+  // Remove unnecessary but potentially large fields for ConversionRequest from
+  // Config and return it.
+  // TODO(b/365909808): Move this method to Session after updating the
+  // ConversionRequest constructor.
+  static config::Config TrimConfig(const config::Config &base_config) {
+    config::Config config = base_config;
+    config.clear_custom_keymap_table();
+    config.clear_custom_roman_table();
+    return config;
+  }
+
   ConversionRequest(bool has_composer,
                     const composer::ComposerData &composer,
                     const commands::Request &request,
@@ -136,7 +147,7 @@ class ConversionRequest {
         composer_(composer),
         request_(request),
         context_(context),
-        config_(config),
+        config_(TrimConfig(*config)),
         params_(params) {}
 
   ConversionRequest(const ConversionRequest &) = default;
@@ -196,8 +207,7 @@ class ConversionRequest {
   }
 
   const config::Config &config() const {
-    DCHECK(config_);
-    return *config_;
+    return config_;
   }
 
   const Params &params() const { return params_; }
@@ -211,7 +221,7 @@ class ConversionRequest {
 
   bool IsKanaModifierInsensitiveConversion() const {
     return request_.kana_modifier_insensitive_conversion() &&
-           config_->use_kana_modifier_insensitive_conversion() &&
+           config_.use_kana_modifier_insensitive_conversion() &&
            params_.kana_modifier_insensitive_conversion_;
   }
 
@@ -268,7 +278,7 @@ class ConversionRequest {
   const commands::Context context_;
 
   // Input config.
-  const config::Config *config_;
+  const config::Config config_;
 
   // Params for conversion request.
   Params params_;
