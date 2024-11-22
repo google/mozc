@@ -454,16 +454,23 @@ class DictionaryPredictionAggregatorTest
   }
 
   ConversionRequest CreateConversionRequest(
-      ConversionRequest::RequestType request_type) const {
-    ConversionRequest convreq(*composer_, *request_, context_, *config_);
-    convreq.set_request_type(request_type);
-    return convreq;
+      ConversionRequest::Options &&options) const {
+    return ConversionRequestBuilder()
+        .SetComposer(*composer_)
+        .SetRequest(*request_)
+        .SetConfig(*config_)
+        .SetOptions(std::move(options))
+        .Build();
   }
   ConversionRequest CreateSuggestionConversionRequest() const {
-    return CreateConversionRequest(ConversionRequest::SUGGESTION);
+    ConversionRequest::Options options;
+    options.request_type = ConversionRequest::SUGGESTION;
+    return CreateConversionRequest(std::move(options));
   }
   ConversionRequest CreatePredictionConversionRequest() const {
-    return CreateConversionRequest(ConversionRequest::PREDICTION);
+    ConversionRequest::Options options;
+    options.request_type = ConversionRequest::PREDICTION;
+    return CreateConversionRequest(std::move(options));
   }
 
   static std::unique_ptr<MockDataAndAggregator> CreateAggregatorWithMockData() {
@@ -542,7 +549,6 @@ class DictionaryPredictionAggregatorTest
   std::unique_ptr<composer::Table> table_;
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
-  commands::Context context_;
 };
 
 TEST_F(DictionaryPredictionAggregatorTest, OnOffTest) {
@@ -600,8 +606,8 @@ TEST_F(DictionaryPredictionAggregatorTest, PartialSuggestion) {
   Segment *seg = segments.add_segment();
   seg->set_key("ぐーぐるあ");
   seg->set_segment_type(Segment::FREE);
-  const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PARTIAL_SUGGESTION);
+  const ConversionRequest convreq = CreateConversionRequest(
+      {.request_type = ConversionRequest::PARTIAL_SUGGESTION});
   std::vector<Result> results;
   EXPECT_NE(NO_PREDICTION, aggregator.AggregatePredictionForRequest(
                                convreq, segments, &results));
@@ -624,9 +630,9 @@ TEST_F(DictionaryPredictionAggregatorTest,
   composer_->MoveCursorLeft();
   segments.mutable_conversion_segment(0)->set_key("ぐーぐる");
 
-  ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PARTIAL_SUGGESTION);
-  convreq.set_use_actual_converter_for_realtime_conversion(true);
+  const ConversionRequest convreq = CreateConversionRequest(
+      {.request_type = ConversionRequest::PARTIAL_SUGGESTION,
+       .use_actual_converter_for_realtime_conversion = true});
 
   // StartConversion should not be called for partial.
   EXPECT_CALL(*data_and_aggregator->mutable_converter(), StartConversion(_, _))
@@ -1015,7 +1021,8 @@ TEST_F(DictionaryPredictionAggregatorTest, TriggerConditionsLatinInputMode) {
     // Has realtime results for PARTIAL_SUGGESTION request.
     config_->set_use_dictionary_suggest(true);
     const ConversionRequest partial_suggestion_convreq =
-        CreateConversionRequest(ConversionRequest::PARTIAL_SUGGESTION);
+        CreateConversionRequest(
+            {.request_type = ConversionRequest::PARTIAL_SUGGESTION});
     EXPECT_EQ(aggregator.AggregatePredictionForRequest(
                   partial_suggestion_convreq, segments, &results),
               REALTIME);
@@ -1540,8 +1547,11 @@ TEST_F(DictionaryPredictionAggregatorTest, GetRealtimeCandidateMaxSize) {
 
   constexpr size_t kMaxSize = 100;
   segments.push_back_segment();
-  ConversionRequest suggestion_convreq = CreateSuggestionConversionRequest();
-  suggestion_convreq.set_max_dictionary_prediction_candidates_size(kMaxSize);
+
+  const ConversionRequest suggestion_convreq = CreateConversionRequest({
+      .request_type = ConversionRequest::SUGGESTION,
+      .max_dictionary_prediction_candidates_size = kMaxSize,
+  });
   const ConversionRequest prediction_convreq =
       CreatePredictionConversionRequest();
 
@@ -1565,10 +1575,10 @@ TEST_F(DictionaryPredictionAggregatorTest, GetRealtimeCandidateMaxSize) {
   EXPECT_GE(kMaxSize, suggestion_mixed);
 
   // partial, non-mixed-conversion
-  const ConversionRequest partial_suggestion_convreq =
-      CreateConversionRequest(ConversionRequest::PARTIAL_SUGGESTION);
-  const ConversionRequest partial_prediction_convreq =
-      CreateConversionRequest(ConversionRequest::PARTIAL_PREDICTION);
+  const ConversionRequest partial_suggestion_convreq = CreateConversionRequest(
+      {.request_type = ConversionRequest::PARTIAL_SUGGESTION});
+  const ConversionRequest partial_prediction_convreq = CreateConversionRequest(
+      {.request_type = ConversionRequest::PARTIAL_PREDICTION});
 
   const size_t partial_prediction_no_mixed =
       aggregator.GetRealtimeCandidateMaxSize(partial_prediction_convreq,
@@ -1609,10 +1619,15 @@ TEST_F(DictionaryPredictionAggregatorTest,
   Segment *segment = segments.add_segment();
 
   constexpr size_t kMaxSize = 100;
-  ConversionRequest suggestion_convreq = CreateSuggestionConversionRequest();
-  suggestion_convreq.set_max_dictionary_prediction_candidates_size(kMaxSize);
-  ConversionRequest prediction_convreq = CreatePredictionConversionRequest();
-  prediction_convreq.set_max_dictionary_prediction_candidates_size(kMaxSize);
+  const ConversionRequest suggestion_convreq =
+      CreateConversionRequest(
+      {.request_type = ConversionRequest::SUGGESTION,
+       .max_dictionary_prediction_candidates_size = kMaxSize});
+      CreateSuggestionConversionRequest();
+  const ConversionRequest prediction_convreq =
+      CreateConversionRequest(
+      {.request_type = ConversionRequest::PREDICTION,
+       .max_dictionary_prediction_candidates_size = kMaxSize});
 
   // for short key, try to provide many results as possible
   segment->set_key("short");
@@ -1871,9 +1886,9 @@ TEST_F(DictionaryPredictionAggregatorTest, UseActualConverterRequest) {
     Segments segments;
 
     InitSegmentsWithKey(kKey, &segments);
-    ConversionRequest convreq = CreateSuggestionConversionRequest();
-    convreq.set_use_actual_converter_for_realtime_conversion(true);
-
+    const ConversionRequest convreq = CreateConversionRequest(
+        {.request_type = ConversionRequest::SUGGESTION,
+         .use_actual_converter_for_realtime_conversion = true});
     std::vector<Result> results;
     aggregator.AggregatePredictionForRequest(convreq, segments, &results);
     ASSERT_GT(results.size(), 0);
@@ -1891,9 +1906,9 @@ TEST_F(DictionaryPredictionAggregatorTest, UseActualConverterRequest) {
     Segments segments;
 
     InitSegmentsWithKey(kKey, &segments);
-
-    ConversionRequest convreq = CreateSuggestionConversionRequest();
-    convreq.set_use_actual_converter_for_realtime_conversion(false);
+    const ConversionRequest convreq = CreateConversionRequest(
+        {.request_type = ConversionRequest::SUGGESTION,
+         .use_actual_converter_for_realtime_conversion = false});
     std::vector<Result> results;
     aggregator.AggregatePredictionForRequest(convreq, segments, &results);
     ASSERT_GT(results.size(), 0);
@@ -2587,8 +2602,9 @@ TEST_F(DictionaryPredictionAggregatorTest,
   }
   std::vector<Result> results;
   SetUpInputForSuggestion(kCapriHiragana, composer_.get(), &segments);
-  ConversionRequest convreq1 = CreateSuggestionConversionRequest();
-  convreq1.set_use_actual_converter_for_realtime_conversion(false);
+  const ConversionRequest convreq1 = CreateConversionRequest(
+      {.request_type = ConversionRequest::SUGGESTION,
+       .use_actual_converter_for_realtime_conversion = false});
   aggregator.AggregateUnigramCandidate(convreq1, segments, &results);
   ASSERT_FALSE(results.empty());
   EXPECT_TRUE(results[0].candidate_attributes &
@@ -2927,8 +2943,9 @@ TEST_F(DictionaryPredictionAggregatorTest, DoNotModifyHistorySegment) {
   Segments segments;
   SetUpInputForSuggestionWithHistory("てすと", "103", "103", composer_.get(),
                                      &segments);
-  ConversionRequest convreq = CreatePredictionConversionRequest();
-  convreq.set_use_actual_converter_for_realtime_conversion(false);
+  const ConversionRequest convreq = CreateConversionRequest(
+      {.request_type = ConversionRequest::PREDICTION,
+       .use_actual_converter_for_realtime_conversion = false});
 
   std::vector<Result> results;
   EXPECT_TRUE(

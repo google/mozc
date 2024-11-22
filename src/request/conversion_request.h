@@ -180,9 +180,6 @@ class ConversionRequest {
   bool use_actual_converter_for_realtime_conversion() const {
     return options_.use_actual_converter_for_realtime_conversion;
   }
-  void set_use_actual_converter_for_realtime_conversion(bool value) {
-    options_.use_actual_converter_for_realtime_conversion = value;
-  }
 
   bool create_partial_candidates() const {
     return options_.create_partial_candidates;
