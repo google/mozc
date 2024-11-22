@@ -211,9 +211,6 @@ class ConversionRequest {
   size_t max_conversion_candidates_size() const {
     return options_.max_conversion_candidates_size;
   }
-  void set_max_conversion_candidates_size(size_t value) {
-    options_.max_conversion_candidates_size = value;
-  }
 
   size_t max_user_history_prediction_candidates_size() const {
     return options_.max_user_history_prediction_candidates_size;

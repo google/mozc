@@ -256,9 +256,12 @@ bool TryNormalizingKeyAsMathExpression(const absl::string_view s,
 
 ConversionRequest CreateConversionRequestWithType(
     const ConversionRequest &request, ConversionRequest::RequestType type) {
-  ConversionRequest new_request = request;
-  new_request.set_request_type(type);
-  return new_request;
+  ConversionRequest::Options options = request.options();
+  options.request_type = type;
+  return ConversionRequestBuilder()
+      .SetConversionRequest(request)
+      .SetOptions(std::move(options))
+      .Build();
 }
 
 }  // namespace
@@ -278,7 +281,7 @@ void Converter::Init(const engine::Modules &modules,
 
 bool Converter::StartConversion(const ConversionRequest &original_request,
                                 Segments *segments) const {
-  ConversionRequest request = CreateConversionRequestWithType(
+  const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::CONVERSION);
   if (!request.has_composer()) {
     LOG(ERROR) << "Request doesn't have composer";
@@ -308,7 +311,7 @@ bool Converter::StartConversionWithKey(Segments *segments,
   if (key.empty()) {
     return false;
   }
-  ConversionRequest default_request;
+  const ConversionRequest default_request;
   return Convert(default_request, key, segments);
 }
 
@@ -349,8 +352,10 @@ bool Converter::StartReverseConversion(Segments *segments,
     }
   }
 
-  ConversionRequest default_request;
-  default_request.set_request_type(ConversionRequest::REVERSE_CONVERSION);
+  const ConversionRequest default_request =
+      ConversionRequestBuilder()
+          .SetOptions({.request_type = ConversionRequest::REVERSE_CONVERSION})
+          .Build();
   if (!immutable_converter_->ConvertForRequest(default_request, segments)) {
     return false;
   }
@@ -430,7 +435,7 @@ bool Converter::Predict(const ConversionRequest &request,
 
 bool Converter::StartPrediction(const ConversionRequest &original_request,
                                 Segments *segments) const {
-  ConversionRequest request = CreateConversionRequestWithType(
+  const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PREDICTION);
   if (!request.has_composer()) {
     LOG(ERROR) << "Composer is nullptr";
@@ -443,21 +448,25 @@ bool Converter::StartPrediction(const ConversionRequest &original_request,
 
 bool Converter::StartPredictionWithKey(Segments *segments,
                                        const absl::string_view key) const {
-  ConversionRequest default_request;
-  default_request.set_request_type(ConversionRequest::PREDICTION);
+  const ConversionRequest default_request =
+      ConversionRequestBuilder()
+          .SetOptions({.request_type = ConversionRequest::PREDICTION})
+          .Build();
   return Predict(default_request, key, segments);
 }
 
 bool Converter::StartSuggestionWithKey(Segments *segments,
                                        const absl::string_view key) const {
-  ConversionRequest default_request;
-  default_request.set_request_type(ConversionRequest::SUGGESTION);
+  const ConversionRequest default_request =
+      ConversionRequestBuilder()
+          .SetOptions({.request_type = ConversionRequest::SUGGESTION})
+          .Build();
   return Predict(default_request, key, segments);
 }
 
 bool Converter::StartSuggestion(const ConversionRequest &original_request,
                                 Segments *segments) const {
-  ConversionRequest request = CreateConversionRequestWithType(
+  const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::SUGGESTION);
   DCHECK(request.has_composer());
   std::string prediction_key = request.composer().GetQueryForPrediction();
@@ -466,14 +475,16 @@ bool Converter::StartSuggestion(const ConversionRequest &original_request,
 
 bool Converter::StartPartialSuggestionWithKey(
     Segments *segments, const absl::string_view key) const {
-  ConversionRequest default_request;
-  default_request.set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
+  const ConversionRequest default_request =
+      ConversionRequestBuilder()
+          .SetOptions({.request_type = ConversionRequest::PARTIAL_SUGGESTION})
+          .Build();
   return Predict(default_request, key, segments);
 }
 
 bool Converter::StartPartialSuggestion(
     const ConversionRequest &original_request, Segments *segments) const {
-  ConversionRequest request = CreateConversionRequestWithType(
+  const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PARTIAL_SUGGESTION);
   DCHECK(request.has_composer());
   const size_t cursor = request.composer().GetCursor();
@@ -489,14 +500,16 @@ bool Converter::StartPartialSuggestion(
 
 bool Converter::StartPartialPredictionWithKey(
     Segments *segments, const absl::string_view key) const {
-  ConversionRequest default_request;
-  default_request.set_request_type(ConversionRequest::PARTIAL_PREDICTION);
+  const ConversionRequest default_request =
+      ConversionRequestBuilder()
+          .SetOptions({.request_type = ConversionRequest::PARTIAL_PREDICTION})
+          .Build();
   return Predict(default_request, key, segments);
 }
 
 bool Converter::StartPartialPrediction(
     const ConversionRequest &original_request, Segments *segments) const {
-  ConversionRequest request = CreateConversionRequestWithType(
+  const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PARTIAL_PREDICTION);
   DCHECK(request.has_composer());
   const size_t cursor = request.composer().GetCursor();
@@ -886,7 +899,6 @@ void Converter::CompletePosIds(Segment::Candidate *candidate) const {
   // In order to reduce the latency, first, expand 5 candidates.
   // If no valid candidates are found within 5 candidates, expand
   // candidates step-by-step.
-  ConversionRequest request;
   for (size_t size = kExpandSizeStart; size < kExpandSizeMax;
        size += kExpandSizeDiff) {
     Segments segments;
@@ -896,8 +908,13 @@ void Converter::CompletePosIds(Segment::Candidate *candidate) const {
     // However, PREDICTION mode produces "predictions", meaning
     // that keys of result candidate are not always the same as
     // query key. It would be nice to have PREDICTION_REALTIME_CONVERSION_ONLY.
-    request.set_request_type(ConversionRequest::PREDICTION);
-    request.set_max_conversion_candidates_size(size);
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetOptions({
+                .request_type = ConversionRequest::PREDICTION,
+                .max_conversion_candidates_size = static_cast<int>(size),
+            })
+            .Build();
     // In order to complete PosIds, call ImmutableConverter again.
     if (!immutable_converter_->ConvertForRequest(request, &segments)) {
       LOG(ERROR) << "ImmutableConverter::Convert() failed";

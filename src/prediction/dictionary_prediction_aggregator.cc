@@ -206,9 +206,12 @@ size_t GetDefaultSizeForRealtimeCandidates(bool is_long_key) {
 
 ConversionRequest GetConversionRequestForRealtimeCandidates(
     const ConversionRequest &request, size_t realtime_candidates_size) {
-  ConversionRequest ret = request;
-  ret.set_max_conversion_candidates_size(realtime_candidates_size);
-  return ret;
+  ConversionRequest::Options options = request.options();
+  options.max_conversion_candidates_size = realtime_candidates_size;
+  return ConversionRequestBuilder()
+      .SetConversionRequest(request)
+      .SetOptions(std::move(options))
+      .Build();
 }
 
 Segments GetSegmentsForRealtimeCandidatesGeneration(
