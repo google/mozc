@@ -192,9 +192,6 @@ class ConversionRequest {
   ComposerKeySelection composer_key_selection() const {
     return options_.composer_key_selection;
   }
-  void set_composer_key_selection(ComposerKeySelection selection) {
-    options_.composer_key_selection = selection;
-  }
 
   const commands::Request &request() const { return request_; }
   const commands::Context &context() const { return context_; }
@@ -204,9 +201,6 @@ class ConversionRequest {
   // TODO(noriyukit): Remove these methods after removing skip_slow_rewriters_
   // flag.
   bool skip_slow_rewriters() const { return options_.skip_slow_rewriters; }
-  void set_skip_slow_rewriters(bool value) {
-    options_.skip_slow_rewriters = value;
-  }
 
   bool IsKanaModifierInsensitiveConversion() const {
     return request_.kana_modifier_insensitive_conversion() &&

@@ -884,9 +884,13 @@ TEST_F(ConverterTest, CompletePosIds) {
     Segment *seg = segments.add_segment();
     seg->set_key(kTestKeys[i]);
     seg->set_segment_type(Segment::FREE);
-    ConversionRequest request;
-    request.set_request_type(ConversionRequest::PREDICTION);
-    request.set_max_conversion_candidates_size(20);
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetOptions({
+                .request_type = ConversionRequest::PREDICTION,
+                .max_conversion_candidates_size = 20,
+            })
+            .Build();
     CHECK(converter_and_data->immutable_converter->ConvertForRequest(
         request, &segments));
     const int lid = segments.segment(0).candidate(0).lid;
@@ -990,8 +994,10 @@ TEST_F(ConverterTest, StartSuggestion) {
     composer.InsertCharacter("shi");
 
     commands::Context context;
-    ConversionRequest request(composer, client_request, context, config);
-    request.set_request_type(ConversionRequest::SUGGESTION);
+    ConversionRequest::Options options = {.request_type =
+                                             ConversionRequest::SUGGESTION};
+    const ConversionRequest request(composer, client_request, context, config,
+                                    std::move(options));
 
     Segments segments;
     EXPECT_TRUE(converter->StartSuggestion(request, &segments));
@@ -1009,8 +1015,10 @@ TEST_F(ConverterTest, StartSuggestion) {
     composer.InsertCharacter("si");
 
     commands::Context context;
-    ConversionRequest request(composer, client_request, context, config);
-    request.set_request_type(ConversionRequest::SUGGESTION);
+    ConversionRequest::Options options = {.request_type =
+                                             ConversionRequest::SUGGESTION};
+    const ConversionRequest request(composer, client_request, context, config,
+                                    std::move(options));
 
     Segments segments;
     EXPECT_TRUE(converter->StartSuggestion(request, &segments));
@@ -1145,10 +1153,14 @@ TEST_F(ConverterTest, PredictSetKey) {
       orig_candidates_size = seg->candidates_size();
     }
 
-    ConversionRequest request;
-    request.set_request_type(ConversionRequest::PREDICTION);
-    request.set_should_call_set_key_in_prediction(
-        test_data.should_call_set_key_in_prediction);
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetOptions({
+                .request_type = ConversionRequest::PREDICTION,
+                .should_call_set_key_in_prediction =
+                    test_data.should_call_set_key_in_prediction,
+            })
+            .Build();
 
     ASSERT_TRUE(converter->Predict(request, kPredictionKey, &segments));
 
@@ -1243,9 +1255,12 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     composer::Composer composer(&table, &default_request(), &config);
     composer.InsertCharacterPreedit("わたしh");
 
-    ConversionRequest request =
-        ConversionRequestBuilder().SetComposer(composer).Build();
-    request.set_composer_key_selection(ConversionRequest::CONVERSION_KEY);
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetOptions(
+                {.composer_key_selection = ConversionRequest::CONVERSION_KEY})
+            .Build();
     ASSERT_TRUE(converter->StartConversion(request, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 2);
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "私");
@@ -1256,9 +1271,12 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     composer::Composer composer(&table, &default_request(), &config);
     composer.InsertCharacterPreedit("わたしh");
 
-    ConversionRequest request =
-        ConversionRequestBuilder().SetComposer(composer).Build();
-    request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetOptions(
+                {.composer_key_selection = ConversionRequest::PREDICTION_KEY})
+            .Build();
     ASSERT_TRUE(converter->StartConversion(request, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "私");
@@ -1642,8 +1660,11 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
   {
     composer.SetPreeditTextForTestOnly("てすとが");
     commands::Context context;
-    ConversionRequest conversion_request(composer, request, context, config);
-    conversion_request.set_request_type(ConversionRequest::PREDICTION);
+    ConversionRequest::Options options = {
+        .request_type = ConversionRequest::PREDICTION,
+    };
+    const ConversionRequest conversion_request(composer, request, context,
+                                               config, std::move(options));
     Segments segments;
     EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
@@ -1841,8 +1862,11 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   composer.SetPreeditTextForTestOnly("あい");
   commands::Context context;
 
-  ConversionRequest conversion_request(composer, request, context, config);
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+  ConversionRequest::Options options = {
+      .request_type = ConversionRequest::PREDICTION,
+  };
+  const ConversionRequest conversion_request(composer, request, context, config,
+                                             std::move(options));
   Segments segments;
 
   // Remember user history 3 times after getting the top candidate
