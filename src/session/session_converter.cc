@@ -39,7 +39,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -61,10 +60,6 @@
 #include "session/session_usage_stats_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
-
-ABSL_FLAG(bool, use_actual_converter_for_realtime_conversion, true,
-          "If true, use the actual (non-immutable) converter for real "
-          "time conversion.");
 
 namespace mozc {
 namespace session {
@@ -113,12 +108,6 @@ ConversionRequest CreateIncognitoConversionRequest(
 int32_t CalculateCursorOffset(absl::string_view committed_text) {
   // If committed_text is a bracket pair, set the cursor in the middle.
   return Util::IsBracketPairText(committed_text) ? -1 : 0;
-}
-
-void SetUseActualConverterForRealtimeConversion(
-    const Request &request, ConversionRequest *conversion_request) {
-  conversion_request->set_use_actual_converter_for_realtime_conversion(
-      absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
 }
 
 // Make a segment having one candidate. The value of candidate is the
@@ -485,7 +474,7 @@ bool SessionConverter::SuggestWithPreferences(
   bool use_partial_composition = (cursor != composer.GetLength() &&
                                   cursor != 0 && request_->mixed_conversion());
   // Setup request based on the above two flags.
-  SetUseActualConverterForRealtimeConversion(*request_, &conversion_request);
+  conversion_request.set_use_actual_converter_for_realtime_conversion(true);
   if (use_partial_composition) {
     // Auto partial suggestion should be activated only when we use all the
     // composition.
@@ -584,7 +573,7 @@ bool SessionConverter::PredictWithPreferences(
   ConversionRequest conversion_request(composer, *request_, context, *config_);
   SetConversionPreferences(preferences, &segments_, &conversion_request);
   SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
-  SetUseActualConverterForRealtimeConversion(*request_, &conversion_request);
+  conversion_request.set_use_actual_converter_for_realtime_conversion(true);
 
   const bool predict_first =
       !CheckState(PREDICTION) && IsEmptySegment(previous_suggestions_);

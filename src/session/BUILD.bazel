@@ -77,7 +77,6 @@ mozc_cc_library(
         "//session/internal:session_output",
         "//transliteration",
         "//usage_stats",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
