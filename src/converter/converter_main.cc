@@ -295,12 +295,13 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
   composer::Composer composer(&composer::Table::GetDefaultTable(), &request,
                               config);
   commands::Context context;
-  ConversionRequest conversion_request =
-      ConversionRequest(composer, request, context, *config);
-  conversion_request.set_max_conversion_candidates_size(
-      absl::GetFlag(FLAGS_max_conversion_candidates_size));
-  conversion_request.set_create_partial_candidates(
-      request.auto_partial_suggestion());
+  ConversionRequest::Options options = {
+      .max_conversion_candidates_size =
+          absl::GetFlag(FLAGS_max_conversion_candidates_size),
+      .create_partial_candidates = request.auto_partial_suggestion(),
+  };
+  const ConversionRequest conversion_request = ConversionRequest(
+      composer, request, context, *config, std::move(options));
 
   const std::string &func = fields[0];
   if (func == "startconversion" || func == "start" || func == "s") {

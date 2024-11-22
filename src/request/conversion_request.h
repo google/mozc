@@ -184,9 +184,6 @@ class ConversionRequest {
   bool create_partial_candidates() const {
     return options_.create_partial_candidates;
   }
-  void set_create_partial_candidates(bool value) {
-    options_.create_partial_candidates = value;
-  }
 
   bool enable_user_history_for_conversion() const {
     return options_.enable_user_history_for_conversion;

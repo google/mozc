@@ -1923,9 +1923,12 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   const dictionary::PosMatcher pos_matcher(
       engine->GetDataManager()->GetPosMatcherData());
   commands::Context context;
-  ConversionRequest conversion_request(composer, request, context, config);
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
-  conversion_request.set_create_partial_candidates(true);
+  ConversionRequest::Options options = {
+      .request_type = ConversionRequest::PREDICTION,
+      .create_partial_candidates = true,
+  };
+  const ConversionRequest conversion_request(composer, request, context, config,
+                                             std::move(options));
 
   Segments segments;
   // History segment.

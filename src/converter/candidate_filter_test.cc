@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -866,8 +867,13 @@ TEST_P(CandidateFilterTestWithParam, FilterNoisyNumberCandidate) {
   ConversionRequest::RequestType type = GetParam();
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> nodes1;
-  request_->set_request_type(type);
-  request_->set_create_partial_candidates(true);
+  ConversionRequest::Options options = request_->options();
+  options.request_type = type;
+  options.create_partial_candidates = true;
+  const ConversionRequest convreq = ConversionRequestBuilder()
+                                        .SetConversionRequest(*request_)
+                                        .SetOptions(std::move(options))
+                                        .Build();
   {
     Node *n1 = NewNode();
     n1->key = "さん";
@@ -892,7 +898,7 @@ TEST_P(CandidateFilterTestWithParam, FilterNoisyNumberCandidate) {
   c1->cost = 1000;
   c1->structure_cost = 50;
 
-  EXPECT_EQ(filter->FilterCandidate(*request_, c1->key, c1, nodes1, nodes1),
+  EXPECT_EQ(filter->FilterCandidate(convreq, c1->key, c1, nodes1, nodes1),
             CandidateFilter::BAD_CANDIDATE);
 
   std::vector<const Node *> nodes2;
@@ -920,7 +926,7 @@ TEST_P(CandidateFilterTestWithParam, FilterNoisyNumberCandidate) {
   c2->cost = 1000;
   c2->structure_cost = 50;
 
-  EXPECT_EQ(filter->FilterCandidate(*request_, c2->key, c2, nodes2, nodes2),
+  EXPECT_EQ(filter->FilterCandidate(convreq, c2->key, c2, nodes2, nodes2),
             CandidateFilter::BAD_CANDIDATE);
 
   std::vector<const Node *> nodes3;
@@ -948,7 +954,7 @@ TEST_P(CandidateFilterTestWithParam, FilterNoisyNumberCandidate) {
   c3->cost = 1000;
   c3->structure_cost = 50;
 
-  EXPECT_EQ(filter->FilterCandidate(*request_, c3->key, c3, nodes3, nodes3),
+  EXPECT_EQ(filter->FilterCandidate(convreq, c3->key, c3, nodes3, nodes3),
             CandidateFilter::GOOD_CANDIDATE);
 
   std::vector<const Node *> nodes4;
@@ -981,7 +987,7 @@ TEST_P(CandidateFilterTestWithParam, FilterNoisyNumberCandidate) {
   c4->cost = 1000;
   c4->structure_cost = 50;
 
-  EXPECT_EQ(filter->FilterCandidate(*request_, c4->key, c4, nodes4, nodes4),
+  EXPECT_EQ(filter->FilterCandidate(convreq, c4->key, c4, nodes4, nodes4),
             CandidateFilter::GOOD_CANDIDATE);
 }
 

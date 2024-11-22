@@ -118,9 +118,11 @@ TEST(ImmutableConverterTest, KeepKeyForPrediction) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::PREDICTION);
-  request.set_max_conversion_candidates_size(10);
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetOptions({.request_type = ConversionRequest::PREDICTION,
+                       .max_conversion_candidates_size = 10})
+          .Build();
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "よろしくおねがいしま";
   segment->set_key(kRequestKey);
@@ -258,8 +260,10 @@ TEST(ImmutableConverterTest, AddPredictiveNodes) {
   ImmutableConverter *converter = data_and_converter->GetConverter();
 
   {
-    ConversionRequest request;
-    request.set_request_type(ConversionRequest::CONVERSION);
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetOptions({.request_type = ConversionRequest::CONVERSION})
+            .Build();
     converter->MakeLatticeNodesForPredictiveNodes(segments, request, &lattice);
     EXPECT_FALSE(dictionary_ptr->received_target_query());
     EXPECT_TRUE(suffix_dictionary_ptr->received_target_query());
@@ -273,9 +277,11 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::PREDICTION);
-  request.set_max_conversion_candidates_size(1);
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetOptions({.request_type = ConversionRequest::PREDICTION,
+                       .max_conversion_candidates_size = 1})
+          .Build();
   EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
                                                                     &segments));
   ASSERT_EQ(1, segments.segments_size());
@@ -431,9 +437,14 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
-  ConversionRequest conversion_request = request;
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
-  conversion_request.set_max_conversion_candidates_size(10);
+  ConversionRequest::Options options = request.options();
+  options.request_type = ConversionRequest::PREDICTION;
+  options.max_conversion_candidates_size = 10;
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetConversionRequest(request)
+          .SetOptions(std::move(options))
+          .Build();
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
@@ -456,16 +467,17 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
 }  // namespace
 
 TEST(ImmutableConverterTest, EnableAutoPartialSuggestion) {
-  ConversionRequest conversion_request;
-  conversion_request.set_create_partial_candidates(true);
-
+  const ConversionRequest conversion_request = ConversionRequestBuilder()
+      .SetOptions({.create_partial_candidates = true})
+      .Build();
+  EXPECT_TRUE(conversion_request.create_partial_candidates());
   EXPECT_TRUE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 
 TEST(ImmutableConverterTest, DisableAutoPartialSuggestion) {
-  ConversionRequest conversion_request;
-  conversion_request.set_create_partial_candidates(false);
-
+  const ConversionRequest conversion_request = ConversionRequestBuilder()
+      .SetOptions({.create_partial_candidates = false})
+      .Build();
   EXPECT_FALSE(AutoPartialSuggestionTestHelper(conversion_request));
 }
 
@@ -477,11 +489,15 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionDefault) {
 TEST(ImmutableConverterTest, FirstInnerSegment) {
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
-  ConversionRequest conversion_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
-  conversion_request.set_create_partial_candidates(true);
-  conversion_request.set_max_conversion_candidates_size(100);
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetRequest(request)
+          .SetOptions({
+              .request_type = ConversionRequest::PREDICTION,
+              .max_conversion_candidates_size = 100,
+              .create_partial_candidates = true,
+          })
+          .Build();
 
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
 
@@ -505,11 +521,15 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
   request_test_util::FillMobileRequest(&request);
   request.mutable_decoder_experiment_params()
       ->set_enable_realtime_conversion_candidate_checker(true);
-  ConversionRequest conversion_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
-  conversion_request.set_create_partial_candidates(true);
-  conversion_request.set_max_conversion_candidates_size(100);
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetRequest(request)
+          .SetOptions({
+              .request_type = ConversionRequest::PREDICTION,
+              .max_conversion_candidates_size = 100,
+              .create_partial_candidates = true,
+          })
+          .Build();
 
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
   constexpr auto ValueIs = [](const auto &value) {
@@ -575,11 +595,15 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFilteringParams) {
   request.mutable_decoder_experiment_params()
       ->set_realtime_conversion_candidate_checker_cost_max_diff(
           4605);  // 500*log(10000);
-  ConversionRequest conversion_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
-  conversion_request.set_create_partial_candidates(true);
-  conversion_request.set_max_conversion_candidates_size(100);
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetRequest(request)
+          .SetOptions({
+              .request_type = ConversionRequest::PREDICTION,
+              .max_conversion_candidates_size = 100,
+              .create_partial_candidates = true,
+          })
+          .Build();
 
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
   constexpr auto ValueIs = [](const auto &value) {
