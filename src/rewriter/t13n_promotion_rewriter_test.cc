@@ -84,13 +84,14 @@ class T13nPromotionRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   ConversionRequest CreateMobileConversionRequest() const {
-    return ConversionRequest(composer_, mobile_request_, context_,
-                             &config::ConfigHandler::DefaultConfig());
+    return ConversionRequestBuilder()
+        .SetComposer(composer_)
+        .SetRequest(mobile_request_)
+        .Build();
   }
 
   std::unique_ptr<TransliterationRewriter> t13n_rewriter_;
   composer::Composer composer_;
-  commands::Context context_;
   commands::Request mobile_request_;
 
  private:

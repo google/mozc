@@ -165,7 +165,7 @@ class MobilePredictorTest : public ::testing::Test {
   }
 
   ConversionRequest CreateConversionRequest() const {
-    return ConversionRequest(*composer_, *request_, context_, config_.get());
+    return ConversionRequest(*composer_, *request_, context_, *config_);
   }
 
   std::unique_ptr<mozc::composer::Composer> composer_;
@@ -273,7 +273,7 @@ class PredictorTest : public ::testing::Test {
   }
 
   ConversionRequest CreateConversionRequest() const {
-    return ConversionRequest(*composer_, *request_, context_, config_.get());
+    return ConversionRequest(*composer_, *request_, context_, *config_);
   }
 
   std::unique_ptr<mozc::composer::Composer> composer_;

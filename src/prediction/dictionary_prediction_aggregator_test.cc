@@ -455,7 +455,7 @@ class DictionaryPredictionAggregatorTest
 
   ConversionRequest CreateConversionRequest(
       ConversionRequest::RequestType request_type) const {
-    ConversionRequest convreq(*composer_, *request_, context_, config_.get());
+    ConversionRequest convreq(*composer_, *request_, context_, *config_);
     convreq.set_request_type(request_type);
     return convreq;
   }
@@ -2876,13 +2876,7 @@ TEST_F(DictionaryPredictionAggregatorTest, GetZeroQueryCandidates) {
     ASSERT_EQ(test_case.expected_candidates.size(),
               test_case.expected_types.size());
 
-    commands::Request client_request;
-    composer::Table table;
-    const config::Config &config = config::ConfigHandler::DefaultConfig();
-    composer::Composer composer(&table, &client_request, &config);
-    commands::Context context;
-    const ConversionRequest request(composer, client_request, context, &config);
-
+    const ConversionRequest request;
     std::vector<ZeroQueryResult> actual_candidates;
     const bool actual_result =
         DictionaryPredictionAggregatorTestPeer::GetZeroQueryCandidatesForKey(

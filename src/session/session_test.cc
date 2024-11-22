@@ -563,10 +563,8 @@ class SessionTest : public testing::TestWithTempUserProfile {
 
   ConversionRequest CreateConversionRequest(const Session &session) {
     const ImeContext &context = session.context();
-    const ConversionRequest request(context.composer(), context.GetRequest(),
-                                    context.client_context(),
-                                    &context.GetConfig());
-    return request;
+    return ConversionRequest(context.composer(), context.GetRequest(),
+                             context.client_context(), context.GetConfig());
   }
 
   void SetupMockForReverseConversion(const absl::string_view kanji,
@@ -3943,7 +3941,7 @@ TEST_F(SessionTest, Shortcut) {
     const ImeContext &context = session.context();
     const ConversionRequest request(context.composer(), context.GetRequest(),
                                     context.client_context(),
-                                    &context.GetConfig());
+                                    context.GetConfig());
     FillT13Ns(request, &segments);
     EXPECT_CALL(converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));

@@ -114,7 +114,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   ConversionRequest CreateConversionRequest(
       const composer::Composer &composer) const {
-    ConversionRequest convreq(composer, request_, context_, &config_);
+    ConversionRequest convreq(composer, request_, context_, config_);
     convreq.set_max_user_history_prediction_candidates_size(10);
     convreq.set_max_user_history_prediction_candidates_size_for_zero_query(10);
     return convreq;
@@ -1349,8 +1349,8 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     SetUpInputForSuggestionWithHistory("", "たろうは", "太郎は", &composer_,
                                        &segments);
     // convreq5 is not zero query suggestion unlike other convreqs.
-    ConversionRequest convreq5(composer_, non_zero_query_request, context,
-                               &config_);
+    const ConversionRequest convreq5(composer_, non_zero_query_request, context,
+                                     config_);
     EXPECT_FALSE(predictor->PredictForRequest(convreq5, &segments));
 
     const ConversionRequest convreq6 = SetUpInputForSuggestionWithHistory(
@@ -1391,8 +1391,8 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     convreq2.set_request_type(ConversionRequest::SUGGESTION);
 
     // Zero query suggestion is disabled.
-    ConversionRequest non_zero_query_convreq(composer_, non_zero_query_request,
-                                             context, &config_);
+    const ConversionRequest non_zero_query_convreq(
+        composer_, non_zero_query_request, context, config_);
     AddSegment("", &segments);  // empty request
     EXPECT_FALSE(
         predictor->PredictForRequest(non_zero_query_convreq, &segments));

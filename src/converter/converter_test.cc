@@ -990,7 +990,7 @@ TEST_F(ConverterTest, StartSuggestion) {
     composer.InsertCharacter("shi");
 
     commands::Context context;
-    ConversionRequest request(composer, client_request, context, &config);
+    ConversionRequest request(composer, client_request, context, config);
     request.set_request_type(ConversionRequest::SUGGESTION);
 
     Segments segments;
@@ -1009,7 +1009,7 @@ TEST_F(ConverterTest, StartSuggestion) {
     composer.InsertCharacter("si");
 
     commands::Context context;
-    ConversionRequest request(composer, client_request, context, &config);
+    ConversionRequest request(composer, client_request, context, config);
     request.set_request_type(ConversionRequest::SUGGESTION);
 
     Segments segments;
@@ -1642,7 +1642,7 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
   {
     composer.SetPreeditTextForTestOnly("てすとが");
     commands::Context context;
-    ConversionRequest conversion_request(composer, request, context, &config);
+    ConversionRequest conversion_request(composer, request, context, config);
     conversion_request.set_request_type(ConversionRequest::PREDICTION);
     Segments segments;
     EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
@@ -1841,7 +1841,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   composer.SetPreeditTextForTestOnly("あい");
   commands::Context context;
 
-  ConversionRequest conversion_request(composer, request, context, &config);
+  ConversionRequest conversion_request(composer, request, context, config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
   Segments segments;
 
@@ -1897,7 +1897,7 @@ TEST_F(ConverterTest,
   composer.SetPreeditTextForTestOnly("おつかれ");
   commands::Context context;
 
-  ConversionRequest conversion_request(composer, request, context, &config);
+  ConversionRequest conversion_request(composer, request, context, config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
   Segments segments;
 
@@ -1923,7 +1923,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   const dictionary::PosMatcher pos_matcher(
       engine->GetDataManager()->GetPosMatcherData());
   commands::Context context;
-  ConversionRequest conversion_request(composer, request, context, &config);
+  ConversionRequest conversion_request(composer, request, context, config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
   conversion_request.set_create_partial_candidates(true);
 

@@ -75,7 +75,7 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
     const commands::Context context;
     const config::Config config = config::ConfigHandler::DefaultConfig();
     composer::Composer composer(&table, &request, &config);
-    ConversionRequest conv_request(composer, request, context, &config);
+    ConversionRequest conv_request(composer, request, context, config);
     // Converter returns false, but not crash.
     EXPECT_FALSE(converter->StartConversion(conv_request, &segments));
   }
