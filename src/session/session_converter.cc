@@ -127,6 +127,12 @@ void InitSegmentsFromString(std::string key, std::string preedit,
   c->content_key = std::move(key);
 }
 
+void SetConversionPreferences(
+    const ConversionPreferences &preferences, Segments &segments,
+    ConversionRequest::Options &request) {
+  segments.set_max_history_segments_size(preferences.max_history_size);
+  request.enable_user_history_for_conversion = preferences.use_history;
+}
 }  // namespace
 
 SessionConverter::SessionConverter(const ConverterInterface *converter,
@@ -175,9 +181,11 @@ bool SessionConverter::ConvertWithPreferences(
   const commands::Context context;
   DCHECK(request_);
   DCHECK(config_);
-  ConversionRequest conversion_request(composer, *request_, context, *config_);
-  SetConversionPreferences(preferences, &segments_, &conversion_request);
-  SetRequestType(ConversionRequest::CONVERSION, &conversion_request);
+  ConversionRequest::Options options;
+  SetConversionPreferences(preferences, segments_, options);
+  SetRequestType(ConversionRequest::CONVERSION, options);
+  const ConversionRequest conversion_request(composer, *request_, context,
+                                             *config_, std::move(options));
 
   if (!converter_->StartConversion(conversion_request, &segments_)) {
     LOG(WARNING) << "StartConversion() failed";
@@ -452,12 +460,9 @@ bool SessionConverter::SuggestWithPreferences(
     return false;
   }
 
-  DCHECK(request_);
-  DCHECK(config_);
-  ConversionRequest conversion_request(composer, *request_, context, *config_);
   // Initialize the conversion request and segments for suggestion.
-  SetConversionPreferences(preferences, &segments_, &conversion_request);
-
+  ConversionRequest::Options options;
+  SetConversionPreferences(preferences, segments_, options);
   segments_.clear_conversion_segments();
 
   const size_t cursor = composer.GetCursor();
@@ -474,21 +479,25 @@ bool SessionConverter::SuggestWithPreferences(
   bool use_partial_composition = (cursor != composer.GetLength() &&
                                   cursor != 0 && request_->mixed_conversion());
   // Setup request based on the above two flags.
-  conversion_request.set_use_actual_converter_for_realtime_conversion(true);
+  options.use_actual_converter_for_realtime_conversion = true;
   if (use_partial_composition) {
     // Auto partial suggestion should be activated only when we use all the
     // composition.
     // Note: For now, use_partial_composition is only for mobile typing.
-    SetRequestType(ConversionRequest::PARTIAL_PREDICTION, &conversion_request);
+    SetRequestType(ConversionRequest::PARTIAL_PREDICTION, options);
   } else {
-    conversion_request.set_create_partial_candidates(
-        request_->auto_partial_suggestion());
+    options.create_partial_candidates = request_->auto_partial_suggestion();
     if (use_prediction_candidate) {
-      SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
+      SetRequestType(ConversionRequest::PREDICTION, options);
     } else {
-      SetRequestType(ConversionRequest::SUGGESTION, &conversion_request);
+      SetRequestType(ConversionRequest::SUGGESTION, options);
     }
   }
+
+  DCHECK(config_);
+  const ConversionRequest conversion_request(composer, *request_, context,
+                                             *config_, std::move(options));
+
   // Start actual suggestion/prediction.
   bool result;
   if (use_partial_composition) {
@@ -567,13 +576,15 @@ bool SessionConverter::PredictWithPreferences(
   ResetResult();
 
   // Initialize the segments and conversion_request for prediction
+  ConversionRequest::Options options;
+  SetConversionPreferences(preferences, segments_, options);
   const commands::Context context;
   DCHECK(request_);
   DCHECK(config_);
-  ConversionRequest conversion_request(composer, *request_, context, *config_);
-  SetConversionPreferences(preferences, &segments_, &conversion_request);
-  SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
-  conversion_request.set_use_actual_converter_for_realtime_conversion(true);
+  SetRequestType(ConversionRequest::PREDICTION, options);
+  options.use_actual_converter_for_realtime_conversion = true;
+  const ConversionRequest conversion_request(composer, *request_, context,
+                                             *config_, std::move(options));
 
   const bool predict_first =
       !CheckState(PREDICTION) && IsEmptySegment(previous_suggestions_);
@@ -858,11 +869,13 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
   CommitUsageStats(SessionConverterInterface::COMPOSITION, context);
   DCHECK(request_);
   DCHECK(config_);
-  ConversionRequest conversion_request(composer, *request_, context, *config_);
   // the request mode is CONVERSION, as the user experience
   // is similar to conversion. UserHistoryPredictor distinguishes
   // CONVERSION from SUGGESTION now.
-  SetRequestType(ConversionRequest::CONVERSION, &conversion_request);
+  ConversionRequest::Options options;
+  SetRequestType(ConversionRequest::CONVERSION, options);
+  const ConversionRequest conversion_request(composer, *request_, context,
+                                             *config_, std::move(options));
   converter_->FinishConversion(conversion_request, &segments_);
   ResetState();
 }
@@ -1199,14 +1212,6 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
         segments_.conversion_segment(segment_index_),
         output->mutable_removed_candidate_words_for_debug());
   }
-}
-
-// static
-void SessionConverter::SetConversionPreferences(
-    const ConversionPreferences &preferences, Segments *segments,
-    ConversionRequest *request) {
-  segments->set_max_history_segments_size(preferences.max_history_size);
-  request->set_enable_user_history_for_conversion(preferences.use_history);
 }
 
 SessionConverter *SessionConverter::Clone() const {
@@ -1882,9 +1887,9 @@ void SessionConverter::CommitUsageStatsWithSegmentsSize(
 // Sets request type and update the session_converter's state
 void SessionConverter::SetRequestType(
     ConversionRequest::RequestType request_type,
-    ConversionRequest *conversion_request) {
+    ConversionRequest::Options &options) {
   request_type_ = request_type;
-  conversion_request->set_request_type(request_type);
+  options.request_type = request_type;
 }
 
 Config SessionConverter::CreateIncognitoConfig() {

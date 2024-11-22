@@ -246,11 +246,6 @@ class SessionConverter : public SessionConverterInterface {
   // Set setting by the context.
   void OnStartComposition(const commands::Context &context) override;
 
-  // Fills conversion request and segments with the conversion preferences.
-  static void SetConversionPreferences(const ConversionPreferences &preferences,
-                                       Segments *segments,
-                                       ConversionRequest *request);
-
   // Copies SessionConverter
   // TODO(hsumita): Copy all member variables.
   // Currently, converter_ is not copied.
@@ -363,8 +358,9 @@ class SessionConverter : public SessionConverterInterface {
       SessionConverterInterface::State commit_state,
       const commands::Context &context, size_t commit_segments_size);
 
+  // Sets request type and update the session_converter's state
   void SetRequestType(ConversionRequest::RequestType request_type,
-                      ConversionRequest *conversion_request);
+                      ConversionRequest::Options &options);
 
   // Creates a config for incognito mode from the current config.
   config::Config CreateIncognitoConfig();

@@ -183,8 +183,8 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
 
   static void AppendCandidateList(ConversionRequest::RequestType request_type,
                                   SessionConverter *converter) {
-    ConversionRequest unused_request;
-    converter->SetRequestType(request_type, &unused_request);
+    ConversionRequest::Options unused_options;
+    converter->SetRequestType(request_type, unused_options);
     converter->AppendCandidateList();
   }
 
