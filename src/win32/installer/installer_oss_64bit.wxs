@@ -64,6 +64,11 @@
     <Launch Condition="Privileged" Message="Mozc をインストールするには管理者権限が必要です。" />
     <Media Id="1" Cabinet="Mozc.cab" EmbedCab="yes" CompressionLevel="high" />
 
+    <Property Id="PROCESSOR_ARCHITECTURE">
+      <RegistrySearch Id="ProcessorArchitectureValue" Type="raw" Root="HKLM" Key="System\CurrentControlSet\Control\Session Manager\Environment" Name="PROCESSOR_ARCHITECTURE" />
+    </Property>
+    <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="ARM64 環境へのインストールは未対応です" />
+
     <!-- Set Add/Remove Program Icon -->
     <Icon Id="add_remove_program_icon.ico" SourceFile="$(var.AddRemoveProgramIconPath)" />
     <Property Id="ARPPRODUCTICON" Value="add_remove_program_icon.ico" />
