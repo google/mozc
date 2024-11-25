@@ -1671,10 +1671,6 @@ void DictionaryPredictionAggregator::AggregateEnglishPredictionUsingRawInput(
   DCHECK(results);
   DCHECK(dictionary_);
 
-  if (!request.has_composer()) {
-    return;
-  }
-
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
@@ -1698,8 +1694,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 
   const size_t prev_results_size = results->size();
 
-  if (!request.has_composer() || segments.conversion_segments_size() == 0 ||
-      prev_results_size > 10000) {
+  if (segments.conversion_segments_size() == 0 || prev_results_size > 10000) {
     return;
   }
 

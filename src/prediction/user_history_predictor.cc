@@ -1451,12 +1451,6 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
   DCHECK(input_key);
   DCHECK(base);
 
-  if (!request.has_composer()) {
-    *input_key = segments.conversion_segment(0).key();
-    *base = segments.conversion_segment(0).key();
-    return;
-  }
-
   *input_key = request.composer().GetStringForPreedit();
   // auto = std::pair<std::string, absl::btree_set<std::string>>
   const auto [query_base, expanded_set] =

@@ -151,8 +151,11 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   bool IsSuggested(UserHistoryPredictor *predictor, const absl::string_view key,
                    const absl::string_view value) {
+    composer::Composer composer;
+    composer.SetPreeditTextForTestOnly(key);
     const ConversionRequest conversion_request =
         ConversionRequestBuilder()
+            .SetComposer(composer)
             .SetRequestType(ConversionRequest::SUGGESTION)
             .Build();
     Segments segments;
@@ -163,8 +166,11 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   bool IsPredicted(UserHistoryPredictor *predictor, const absl::string_view key,
                    const absl::string_view value) {
+    composer::Composer composer;
+    composer.SetPreeditTextForTestOnly(key);
     const ConversionRequest conversion_request =
         ConversionRequestBuilder()
+            .SetComposer(composer)
             .SetRequestType(ConversionRequest::PREDICTION)
             .Build();
     Segments segments;
