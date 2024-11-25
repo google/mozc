@@ -426,11 +426,32 @@ bool Converter::Predict(const ConversionRequest &request,
   return IsValidSegments(request, *segments);
 }
 
+namespace {
+bool ValidateConversionRequestForPrediction(const ConversionRequest &request) {
+  switch (request.request_type()) {
+    case ConversionRequest::CONVERSION:
+      // Conversion request is not for prediction.
+      return false;
+    case ConversionRequest::PREDICTION:
+    case ConversionRequest::SUGGESTION:
+      // Typical use case.
+      return true;
+    case ConversionRequest::PARTIAL_PREDICTION:
+    case ConversionRequest::PARTIAL_SUGGESTION: {
+      // Partial prediction/suggestion request is applicable only if the
+      // cursor is in the middle of the composer.
+      const size_t cursor = request.composer().GetCursor();
+      return cursor != 0 || cursor != request.composer().GetLength();
+    }
+    default:
+      ABSL_UNREACHABLE();
+  }
+}
+}  // namespace
 
-bool Converter::StartPrediction(const ConversionRequest &original_request,
+bool Converter::StartPrediction(const ConversionRequest &request,
                                 Segments *segments) const {
-  const ConversionRequest request = CreateConversionRequestWithType(
-      original_request, ConversionRequest::PREDICTION);
+  DCHECK(ValidateConversionRequestForPrediction(request));
   return Predict(request, segments);
 }
 

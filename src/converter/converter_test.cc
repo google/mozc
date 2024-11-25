@@ -163,10 +163,14 @@ class InsertPlaceholderWordsRewriter : public RewriterInterface {
   }
 };
 
-ConversionRequest ConvReqWithKey(absl::string_view key) {
+ConversionRequest ConvReq(absl::string_view key,
+                          ConversionRequest::RequestType request_type) {
   composer::Composer composer;
   composer.SetPreeditTextForTestOnly(key);
-  return ConversionRequestBuilder().SetComposer(composer).Build();
+  return ConversionRequestBuilder()
+      .SetComposer(composer)
+      .SetRequestType(request_type)
+      .Build();
 }
 
 }  // namespace
@@ -391,12 +395,13 @@ TEST_F(ConverterTest, CanConvertTest) {
   CHECK(converter);
   {
     Segments segments;
-    EXPECT_TRUE(converter->StartConversion(ConvReqWithKey("-"), &segments));
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("-", ConversionRequest::CONVERSION), &segments));
   }
   {
     Segments segments;
-    EXPECT_TRUE(
-        converter->StartConversion(ConvReqWithKey("おきておきて"), &segments));
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("おきておきて", ConversionRequest::CONVERSION), &segments));
   }
 }
 
@@ -410,7 +415,8 @@ std::string ContextAwareConvert(const std::string &first_key,
   CHECK(converter);
 
   Segments segments;
-  EXPECT_TRUE(converter->StartConversion(ConvReqWithKey(first_key), &segments));
+  EXPECT_TRUE(converter->StartConversion(
+      ConvReq(first_key, ConversionRequest::CONVERSION), &segments));
 
   std::string converted;
   int segment_num = 0;
@@ -444,8 +450,8 @@ std::string ContextAwareConvert(const std::string &first_key,
   // TODO(team): Use StartConversionForRequest instead of StartConversion.
   const ConversionRequest default_request;
   converter->FinishConversion(default_request, &segments);
-  EXPECT_TRUE(
-      converter->StartConversion(ConvReqWithKey(second_key), &segments));
+  EXPECT_TRUE(converter->StartConversion(
+      ConvReq(second_key, ConversionRequest::CONVERSION), &segments));
   EXPECT_EQ(segments.segments_size(), segment_num + 1);
 
   return segments.segment(segment_num).candidate(0).value;
@@ -807,8 +813,8 @@ TEST_F(ConverterTest, CandidateKeyTest) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
-  EXPECT_TRUE(
-      converter->StartConversion(ConvReqWithKey("わたしは"), &segments));
+  EXPECT_TRUE(converter->StartConversion(
+      ConvReq("わたしは", ConversionRequest::CONVERSION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
   EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたし");
@@ -828,8 +834,8 @@ TEST_F(ConverterTest, Regression3437022) {
 
   {
     // Make sure convert result is one segment
-    EXPECT_TRUE(
-        converter->StartConversion(ConvReqWithKey(kKey1 + kKey2), &segments));
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq(kKey1 + kKey2, ConversionRequest::CONVERSION), &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
               kValue1 + kValue2);
@@ -837,14 +843,16 @@ TEST_F(ConverterTest, Regression3437022) {
   {
     // Make sure we can convert first part
     segments.Clear();
-    EXPECT_TRUE(converter->StartConversion(ConvReqWithKey(kKey1), &segments));
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq(kKey1, ConversionRequest::CONVERSION), &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, kValue1);
   }
   {
     // Make sure we can convert last part
     segments.Clear();
-    EXPECT_TRUE(converter->StartConversion(ConvReqWithKey(kKey2), &segments));
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq(kKey2, ConversionRequest::CONVERSION), &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, kValue2);
   }
@@ -857,8 +865,8 @@ TEST_F(ConverterTest, Regression3437022) {
   dic->AddEntry(kKey1 + kKey2, kValue1 + kValue2);
   dic->UnLock();
 
-  EXPECT_TRUE(
-      converter->StartConversion(ConvReqWithKey(kKey1 + kKey2), &segments));
+  EXPECT_TRUE(converter->StartConversion(
+      ConvReq(kKey1 + kKey2, ConversionRequest::CONVERSION), &segments));
 
   int rest_size = 0;
   for (const Segment &segment : segments.conversion_segments().drop(1)) {
@@ -945,7 +953,8 @@ TEST_F(ConverterTest, Regression3046266) {
 
   constexpr char kValueNotExpected[] = "中";
 
-  EXPECT_TRUE(converter->StartConversion(ConvReqWithKey(kKey1), &segments));
+  EXPECT_TRUE(converter->StartConversion(
+      ConvReq(kKey1, ConversionRequest::CONVERSION), &segments));
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_TRUE(converter->CommitSegmentValue(&segments, 0, 0));
 
@@ -953,7 +962,8 @@ TEST_F(ConverterTest, Regression3046266) {
   const ConversionRequest default_request;
   converter->FinishConversion(default_request, &segments);
 
-  EXPECT_TRUE(converter->StartConversion(ConvReqWithKey(kKey2), &segments));
+  EXPECT_TRUE(converter->StartConversion(
+      ConvReq(kKey2, ConversionRequest::CONVERSION), &segments));
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
@@ -971,7 +981,8 @@ TEST_F(ConverterTest, Regression5502496) {
   constexpr char kKey[] = "みんあ";
   constexpr char kValueExpected[] = "みんな";
 
-  EXPECT_TRUE(converter->StartConversion(ConvReqWithKey(kKey), &segments));
+  EXPECT_TRUE(converter->StartConversion(
+      ConvReq(kKey, ConversionRequest::CONVERSION), &segments));
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
   bool found = false;
@@ -1048,8 +1059,8 @@ TEST_F(ConverterTest, StartPartialPrediction) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
-  EXPECT_TRUE(
-      converter->StartPartialPrediction(ConvReqWithKey("わたしは"), &segments));
+  EXPECT_TRUE(converter->StartPartialPrediction(
+      ConvReq("わたしは", ConversionRequest::PARTIAL_PREDICTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
   EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたしは");
@@ -1061,8 +1072,8 @@ TEST_F(ConverterTest, StartPartialSuggestion) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
-  EXPECT_TRUE(
-      converter->StartPartialSuggestion(ConvReqWithKey("わたしは"), &segments));
+  EXPECT_TRUE(converter->StartPartialSuggestion(
+      ConvReq("わたしは", ConversionRequest::PARTIAL_SUGGESTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
   EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたしは");
@@ -1073,8 +1084,8 @@ TEST_F(ConverterTest, StartPartialPredictionMobile) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
-  EXPECT_TRUE(
-      converter->StartPartialPrediction(ConvReqWithKey("わたしは"), &segments));
+  EXPECT_TRUE(converter->StartPartialPrediction(
+      ConvReq("わたしは", ConversionRequest::PARTIAL_PREDICTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
   EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたしは");
@@ -1085,8 +1096,8 @@ TEST_F(ConverterTest, StartPartialSuggestionMobile) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
-  EXPECT_TRUE(
-      converter->StartPartialSuggestion(ConvReqWithKey("わたしは"), &segments));
+  EXPECT_TRUE(converter->StartPartialSuggestion(
+      ConvReq("わたしは", ConversionRequest::PARTIAL_SUGGESTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
   EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたしは");
@@ -1234,7 +1245,8 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   Segments segments;
   {
     // Dictionary suggestion
-    EXPECT_TRUE(converter.StartSuggestion(ConvReqWithKey("てすと"), &segments));
+    EXPECT_TRUE(converter.StartSuggestion(
+        ConvReq("てすと", ConversionRequest::SUGGESTION), &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_LE(1, segments.conversion_segment(0).candidates_size());
     EXPECT_TRUE(FindCandidateByValue("<>!?", segments.conversion_segment(0)));
@@ -1244,8 +1256,8 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   {
     // Realtime conversion
     segments.Clear();
-    EXPECT_TRUE(
-        converter.StartSuggestion(ConvReqWithKey("てすとの"), &segments));
+    EXPECT_TRUE(converter.StartSuggestion(
+        ConvReq("てすとの", ConversionRequest::SUGGESTION), &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_LE(1, segments.conversion_segment(0).candidates_size());
     EXPECT_TRUE(FindCandidateByValue("<>!?の", segments.conversion_segment(0)));
@@ -1641,7 +1653,8 @@ TEST_F(ConverterTest, UserEntryShouldBePromoted) {
   CHECK(converter);
   {
     Segments segments;
-    EXPECT_TRUE(converter->StartConversion(ConvReqWithKey("あい"), &segments));
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("あい", ConversionRequest::CONVERSION), &segments));
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     ASSERT_LT(1, segments.conversion_segment(0).candidates_size());
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "哀");
@@ -1699,7 +1712,8 @@ TEST_F(ConverterTest, UserEntryShouldBePromotedMobilePrediction) {
   CHECK(converter);
   {
     Segments segments;
-    EXPECT_TRUE(converter->StartPrediction(ConvReqWithKey("あい"), &segments));
+    EXPECT_TRUE(converter->StartPrediction(
+        ConvReq("あい", ConversionRequest::PREDICTION), &segments));
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     ASSERT_LT(1, segments.conversion_segment(0).candidates_size());
 
@@ -1734,7 +1748,8 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized) {
   CHECK(converter);
   {
     Segments segments;
-    EXPECT_TRUE(converter->StartConversion(ConvReqWithKey("あい"), &segments));
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("あい", ConversionRequest::CONVERSION), &segments));
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     ASSERT_LT(1, segments.conversion_segment(0).candidates_size());
     EXPECT_FALSE(FindCandidateByValue("哀", segments.conversion_segment(0)));
@@ -1759,8 +1774,8 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritizedPrediction) {
     CHECK(converter);
     {
       Segments segments;
-      EXPECT_TRUE(
-          converter->StartPrediction(ConvReqWithKey("あい"), &segments));
+      EXPECT_TRUE(converter->StartPrediction(
+          ConvReq("あい", ConversionRequest::PREDICTION), &segments));
       ASSERT_EQ(segments.conversion_segments_size(), 1);
       ASSERT_LT(1, segments.conversion_segment(0).candidates_size());
       EXPECT_FALSE(FindCandidateByValue("哀", segments.conversion_segment(0)));
@@ -1782,8 +1797,8 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependent) {
   CHECK(converter);
   {
     Segments segments;
-    EXPECT_TRUE(
-        converter->StartConversion(ConvReqWithKey("じゅうじか"), &segments));
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("じゅうじか", ConversionRequest::CONVERSION), &segments));
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_FALSE(
         FindCandidateByValue("Google+うじか", segments.conversion_segment(0)));
@@ -1807,8 +1822,8 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependentPrediction) {
 
     {
       Segments segments;
-      EXPECT_TRUE(
-          converter->StartPrediction(ConvReqWithKey("じゅうじか"), &segments));
+      EXPECT_TRUE(converter->StartPrediction(
+          ConvReq("じゅうじか", ConversionRequest::PREDICTION), &segments));
       ASSERT_EQ(segments.conversion_segments_size(), 1);
       EXPECT_FALSE(FindCandidateByValue("Google+うじか",
                                         segments.conversion_segment(0)));
@@ -1830,8 +1845,8 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent) {
   CHECK(converter);
   {
     Segments segments;
-    EXPECT_TRUE(
-        converter->StartConversion(ConvReqWithKey("じゅうじか"), &segments));
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("じゅうじか", ConversionRequest::CONVERSION), &segments));
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_FALSE(
         FindCandidateByValue("Google+うじか", segments.conversion_segment(0)));
@@ -1854,8 +1869,8 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependentPrediction) {
     CHECK(converter);
     {
       Segments segments;
-      EXPECT_TRUE(
-          converter->StartConversion(ConvReqWithKey("じゅうじか"), &segments));
+      EXPECT_TRUE(converter->StartConversion(
+          ConvReq("じゅうじか", ConversionRequest::CONVERSION), &segments));
       ASSERT_EQ(segments.conversion_segments_size(), 1);
       EXPECT_FALSE(FindCandidateByValue("Google+うじか",
                                         segments.conversion_segment(0)));

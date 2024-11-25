@@ -1597,7 +1597,7 @@ TEST_F(SessionConverterTest, CommitConvertedBracketPairText) {
   composer_->InsertCharacterPreedit(kKakko);
 
   // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+  EXPECT_CALL(mock_converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   ASSERT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
   std::vector<int> expected_indices = {0};
@@ -1727,7 +1727,7 @@ TEST_F(SessionConverterTest, ClearSegmentsBeforeSuggest) {
 
   // Call Suggest() and sets the segments of converter to the following one.
   const Segments &segments = GetSegmentsTest();
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+  EXPECT_CALL(mock_converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   composer_->InsertCharacterPreedit("てすと");
   EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
@@ -1736,7 +1736,7 @@ TEST_F(SessionConverterTest, ClearSegmentsBeforeSuggest) {
   // Then, call Suggest() again. It should be called with brand new segments.
   Segments empty;
   EXPECT_CALL(mock_converter,
-              StartSuggestion(_, Pointee(EqualsSegments(empty))))
+              StartPrediction(_, Pointee(EqualsSegments(empty))))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
 }
@@ -1779,7 +1779,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+  EXPECT_CALL(mock_converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   ASSERT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
   std::vector<int> expected_indices = {0};
@@ -1860,7 +1860,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+  EXPECT_CALL(mock_converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
   Mock::VerifyAndClearExpectations(&mock_converter);
@@ -1981,7 +1981,7 @@ TEST_F(SessionConverterTest, PartialPrediction) {
   composer_->MoveCursorTo(3);
 
   // Partial prediction for "ここで"
-  EXPECT_CALL(mock_converter, StartPartialPrediction(_, _))
+  EXPECT_CALL(mock_converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments1), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
   Mock::VerifyAndClearExpectations(&mock_converter);
@@ -2036,7 +2036,7 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+  EXPECT_CALL(mock_converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
   Mock::VerifyAndClearExpectations(&mock_converter);
@@ -2238,7 +2238,7 @@ TEST_F(SessionConverterTest, SuggestFillIncognitoCandidateWords) {
     MockConverter mock_converter;
     SessionConverter converter(&mock_converter, request_.get(), config_.get());
     EXPECT_CALL(mock_converter,
-                StartSuggestion(IsIncognitoConversionRequest(false), _))
+                StartPrediction(IsIncognitoConversionRequest(false), _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
     commands::Output output;
@@ -2253,10 +2253,10 @@ TEST_F(SessionConverterTest, SuggestFillIncognitoCandidateWords) {
     MockConverter mock_converter;
     SessionConverter converter(&mock_converter, request_.get(), config_.get());
     EXPECT_CALL(mock_converter,
-                StartSuggestion(IsIncognitoConversionRequest(false), _))
+                StartPrediction(IsIncognitoConversionRequest(false), _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     EXPECT_CALL(mock_converter,
-                StartSuggestion(IsIncognitoConversionRequest(true), _))
+                StartPrediction(IsIncognitoConversionRequest(true), _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
     commands::Output output;
@@ -2321,7 +2321,7 @@ TEST_F(SessionConverterTest, SuppressSuggestionWhenNotRequested) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _)).Times(0);
+  EXPECT_CALL(mock_converter, StartPrediction(_, _)).Times(0);
   // No candidates should be visible because we are on password field.
 
   ConversionPreferences conversion_preferences =
@@ -2341,7 +2341,7 @@ TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _)).Times(0);
+  EXPECT_CALL(mock_converter, StartPrediction(_, _)).Times(0);
 
   // No candidates should be visible because we are on password field.
   EXPECT_FALSE(converter.Suggest(*composer_, Context::default_instance()));
@@ -2631,7 +2631,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
     // SUGGESTION
     MockConverter mock_converter;
     SessionConverter converter(&mock_converter, request_.get(), config_.get());
-    EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+    EXPECT_CALL(mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     converter.Suggest(*composer_, Context::default_instance());
     std::string preedit;
@@ -2776,7 +2776,7 @@ TEST_F(SessionConverterTest, Issue1948334) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+  EXPECT_CALL(mock_converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
   Mock::VerifyAndClearExpectations(&mock_converter);
@@ -2794,7 +2794,7 @@ TEST_F(SessionConverterTest, Issue1948334) {
   composer_->InsertCharacterPreedit("もず");
 
   // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+  EXPECT_CALL(mock_converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
   Mock::VerifyAndClearExpectations(&mock_converter);
@@ -3007,7 +3007,7 @@ TEST_F(SessionConverterTest, Issue2031986) {
     candidate->value = "AAAA";
     candidate = segment->add_candidate();
     candidate->value = "Aaaa";
-    EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+    EXPECT_CALL(mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
   // Get suggestion
@@ -3019,7 +3019,7 @@ TEST_F(SessionConverterTest, Issue2031986) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("aaaaa");
-    EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+    EXPECT_CALL(mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
   }
   // Hide suggestion
@@ -3144,7 +3144,7 @@ TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
   segment->set_key("");
   segment->add_candidate()->value = "search";
   segment->add_candidate()->value = "input";
-  EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+  EXPECT_CALL(mock_converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   EXPECT_TRUE(composer_->Empty());
@@ -3332,7 +3332,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0, Segment::Candidate::DEFAULT_COMMAND);
-    EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+    EXPECT_CALL(mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     converter.Suggest(*composer_, Context::default_instance());
 
@@ -3349,7 +3349,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 1, Segment::Candidate::DEFAULT_COMMAND);
-    EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+    EXPECT_CALL(mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     converter.Suggest(*composer_, Context::default_instance());
 
@@ -3536,7 +3536,7 @@ TEST_F(SessionConverterTest, ConversionFail) {
   {
     Segments segments;
     SetAiueo(&segments);
-    EXPECT_CALL(mock_converter, StartSuggestion(_, _))
+    EXPECT_CALL(mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     composer_->InsertCharacterPreedit(kChars_Aiueo);
 

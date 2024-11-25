@@ -467,9 +467,11 @@ bool SessionConverter::SuggestWithPreferences(
   //                  prediction API.
   // - (true, true): Mobile suggestion with richer candidates through
   //                  prediction API, using partial composition text.
-  bool use_prediction_candidate = request_->mixed_conversion();
-  bool use_partial_composition = (cursor != composer.GetLength() &&
-                                  cursor != 0 && request_->mixed_conversion());
+  const bool use_prediction_candidate = request_->mixed_conversion();
+  const bool use_partial_composition =
+      (cursor != composer.GetLength() && cursor != 0 &&
+       request_->mixed_conversion());
+
   // Setup request based on the above two flags.
   options.use_actual_converter_for_realtime_conversion = true;
   if (use_partial_composition) {
@@ -491,16 +493,7 @@ bool SessionConverter::SuggestWithPreferences(
                                              *config_, std::move(options));
 
   // Start actual suggestion/prediction.
-  bool result;
-  if (use_partial_composition) {
-    result = converter_->StartPartialPrediction(conversion_request, &segments_);
-  } else {
-    if (use_prediction_candidate) {
-      result = converter_->StartPrediction(conversion_request, &segments_);
-    } else {
-      result = converter_->StartSuggestion(conversion_request, &segments_);
-    }
-  }
+  bool result = converter_->StartPrediction(conversion_request, &segments_);
   if (!result) {
     MOZC_VLOG(1)
         << "Start(Partial?)(Suggestion|Prediction)ForRequest() returns no "
@@ -509,21 +502,26 @@ bool SessionConverter::SuggestWithPreferences(
     converter_->CancelConversion(&segments_);
     return false;
   }
+
   // Fill incognito candidates if required.
   // The candidates are always from suggestion API
   // as richer results are not needed.
   if (request_->fill_incognito_candidate_words()) {
     const Config incognito_config = CreateIncognitoConfig();
+    ConversionRequest::Options incognito_options = conversion_request.options();
+    incognito_options.enable_user_history_for_conversion = false;
+    incognito_options.request_type = use_partial_composition
+                                         ? ConversionRequest::PARTIAL_SUGGESTION
+                                         : ConversionRequest::SUGGESTION;
     const ConversionRequest incognito_conversion_request =
-        CreateIncognitoConversionRequest(conversion_request, incognito_config);
+        ConversionRequestBuilder()
+            .SetConversionRequest(conversion_request)
+            .SetConfig(incognito_config)
+            .SetOptions(std::move(incognito_options))
+            .Build();
     incognito_segments_.Clear();
-    if (use_partial_composition) {
-      result = converter_->StartPartialSuggestion(incognito_conversion_request,
-                                                  &incognito_segments_);
-    } else {
-      result = converter_->StartSuggestion(incognito_conversion_request,
-                                           &incognito_segments_);
-    }
+    result = converter_->StartPrediction(incognito_conversion_request,
+                                         &incognito_segments_);
     if (!result) {
       MOZC_VLOG(1)
           << "Start(Partial?)SuggestionForRequest() for incognito request "
@@ -531,7 +529,7 @@ bool SessionConverter::SuggestWithPreferences(
       // TODO(noriyukit): Check if fall through here is ok.
     }
   }
-  DCHECK_EQ(1, segments_.conversion_segments_size());
+  DCHECK_EQ(segments_.conversion_segments_size(), 1);
 
   // Copy current suggestions so that we can merge
   // prediction/suggestions later
