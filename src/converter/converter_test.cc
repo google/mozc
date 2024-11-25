@@ -1164,12 +1164,14 @@ TEST_F(ConverterTest, PredictSetKey) {
       orig_candidates_size = seg->candidates_size();
     }
 
+    composer::Composer composer;
+    composer.SetPreeditTextForTestOnly(kPredictionKey);
     const ConversionRequest request =
         ConversionRequestBuilder()
+            .SetComposer(composer)
             .SetRequestType(ConversionRequest::PREDICTION)
             .Build();
-
-    ASSERT_TRUE(converter->Predict(request, kPredictionKey, &segments));
+    ASSERT_TRUE(converter->Predict(request, &segments));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).key(), kPredictionKey);

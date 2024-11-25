@@ -276,26 +276,21 @@ bool Converter::StartConversion(const ConversionRequest &original_request,
   const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::CONVERSION);
 
-  std::string conversion_key;
+  std::string key;
   switch (request.composer_key_selection()) {
     case ConversionRequest::CONVERSION_KEY:
-      conversion_key = request.composer().GetQueryForConversion();
+      key = request.composer().GetQueryForConversion();
       break;
     case ConversionRequest::PREDICTION_KEY:
-      conversion_key = request.composer().GetQueryForPrediction();
+      key = request.composer().GetQueryForPrediction();
       break;
     default:
       ABSL_UNREACHABLE();
   }
-  if (conversion_key.empty()) {
+  if (key.empty()) {
     return false;
   }
 
-  return Convert(request, conversion_key, segments);
-}
-
-bool Converter::Convert(const ConversionRequest &request,
-                        const absl::string_view key, Segments *segments) const {
   SetKey(segments, key);
   if (!immutable_converter_->ConvertForRequest(request, segments)) {
     // Conversion can fail for keys like "12". Even in such cases, rewriters
@@ -377,9 +372,28 @@ void Converter::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
   }
 }
 
-// TODO(noriyukit): |key| can be a member of ConversionRequest.
+namespace {
+std::string GetPredictionKey(const ConversionRequest &request) {
+  switch (request.request_type()) {
+    case ConversionRequest::PREDICTION:
+    case ConversionRequest::SUGGESTION:
+      return request.composer().GetQueryForPrediction();
+    case ConversionRequest::PARTIAL_PREDICTION:
+    case ConversionRequest::PARTIAL_SUGGESTION: {
+      const std::string prediction_key =
+          request.composer().GetQueryForConversion();
+      return std::string(Util::Utf8SubString(prediction_key, 0,
+                                             request.composer().GetCursor()));
+    }
+    default:
+      ABSL_UNREACHABLE();
+  }
+}
+}  // namespace
+
 bool Converter::Predict(const ConversionRequest &request,
-                        const absl::string_view key, Segments *segments) const {
+                        Segments *segments) const {
+  const std::string key = GetPredictionKey(request);
   if (ShouldSetKeyForPrediction(key, *segments)) {
     SetKey(segments, key);
   }
@@ -412,52 +426,43 @@ bool Converter::Predict(const ConversionRequest &request,
   return IsValidSegments(request, *segments);
 }
 
+
 bool Converter::StartPrediction(const ConversionRequest &original_request,
                                 Segments *segments) const {
   const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PREDICTION);
-
-  std::string prediction_key = request.composer().GetQueryForPrediction();
-  return Predict(request, prediction_key, segments);
+  return Predict(request, segments);
 }
 
 bool Converter::StartSuggestion(const ConversionRequest &original_request,
                                 Segments *segments) const {
   const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::SUGGESTION);
-  std::string prediction_key = request.composer().GetQueryForPrediction();
-  return Predict(request, prediction_key, segments);
+  return Predict(request, segments);
 }
 
 bool Converter::StartPartialSuggestion(
     const ConversionRequest &original_request, Segments *segments) const {
-  const ConversionRequest request = CreateConversionRequestWithType(
-      original_request, ConversionRequest::PARTIAL_SUGGESTION);
-  const size_t cursor = request.composer().GetCursor();
-  if (cursor == 0 || cursor == request.composer().GetLength()) {
-    return StartSuggestion(request, segments);
+  const size_t cursor = original_request.composer().GetCursor();
+  if (cursor == 0 || cursor == original_request.composer().GetLength()) {
+    return StartSuggestion(original_request, segments);
   }
 
-  std::string conversion_key = request.composer().GetQueryForConversion();
-  strings::Assign(conversion_key,
-                  Util::Utf8SubString(conversion_key, 0, cursor));
-  return Predict(request, conversion_key, segments);
+  const ConversionRequest request = CreateConversionRequestWithType(
+      original_request, ConversionRequest::PARTIAL_SUGGESTION);
+  return Predict(request, segments);
 }
 
 bool Converter::StartPartialPrediction(
     const ConversionRequest &original_request, Segments *segments) const {
-  const ConversionRequest request = CreateConversionRequestWithType(
-      original_request, ConversionRequest::PARTIAL_PREDICTION);
-  const size_t cursor = request.composer().GetCursor();
-  if (cursor == 0 || cursor == request.composer().GetLength()) {
-    return StartPrediction(request, segments);
+  const size_t cursor = original_request.composer().GetCursor();
+  if (cursor == 0 || cursor == original_request.composer().GetLength()) {
+    return StartPrediction(original_request, segments);
   }
 
-  std::string conversion_key = request.composer().GetQueryForConversion();
-  strings::Assign(conversion_key,
-                  Util::Utf8SubString(conversion_key, 0, cursor));
-
-  return Predict(request, conversion_key, segments);
+  const ConversionRequest request = CreateConversionRequestWithType(
+      original_request, ConversionRequest::PARTIAL_PREDICTION);
+  return Predict(request, segments);
 }
 
 void Converter::FinishConversion(const ConversionRequest &request,

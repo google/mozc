@@ -168,11 +168,6 @@ class Converter final : public ConverterInterface {
                              std::string *value, uint16_t *id) const;
 
   ABSL_MUST_USE_RESULT bool Predict(const ConversionRequest &request,
-                                    absl::string_view key,
-                                    Segments *segments) const;
-
-  ABSL_MUST_USE_RESULT bool Convert(const ConversionRequest &request,
-                                    absl::string_view key,
                                     Segments *segments) const;
 
   const dictionary::PosMatcher *pos_matcher_ = nullptr;
