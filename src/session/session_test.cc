@@ -4237,118 +4237,128 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   }
 }
 
-TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
+TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion1) {
   // This is a unittest against http://b/2977131.
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-  {
-    Session session(&engine);
-    InitSessionToPrecomposition(&session);
-    commands::Command command;
-    EXPECT_TRUE(SendKey("N", &session, &command));
-    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
-    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
-    // Global mode should be kept as HIRAGANA
-    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+  commands::Command command;
+  EXPECT_TRUE(SendKey("N", &session, &command));
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+  EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
+  // Global mode should be kept as HIRAGANA
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    segment->set_key("NFL");
-    segment->add_candidate()->value = "NFL";
-    const ConversionRequest request = CreateConversionRequest(session);
-    FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
-        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  segment->set_key("NFL");
+  segment->add_candidate()->value = "NFL";
+  const ConversionRequest request = CreateConversionRequest(session);
+  FillT13Ns(request, &segments);
+  EXPECT_CALL(converter, StartConversion(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
-    EXPECT_TRUE(session.Convert(&command));
-    EXPECT_FALSE(command.output().has_candidate_window());
-    EXPECT_FALSE(command.output().candidate_window().has_focused_index());
-    EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
-    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
-    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
+  EXPECT_TRUE(session.Convert(&command));
+  EXPECT_FALSE(command.output().has_candidate_window());
+  EXPECT_FALSE(command.output().candidate_window().has_focused_index());
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+  EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
-    EXPECT_TRUE(SendKey("a", &session, &command));
-    EXPECT_FALSE(command.output().has_candidate_window());
-    EXPECT_RESULT("NFL", command);
-    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
-    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
-    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
-  }
+  EXPECT_TRUE(SendKey("a", &session, &command));
+  EXPECT_FALSE(command.output().has_candidate_window());
+  EXPECT_RESULT("NFL", command);
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+  EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
+}
 
-  {
-    Session session(&engine);
-    InitSessionToPrecomposition(&session);
-    commands::Command command;
-    EXPECT_TRUE(SendKey("N", &session, &command));
-    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
-    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
-    // Global mode should be kept as HIRAGANA
-    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
+TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
+  // This is a unittest against http://b/2977131.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    segment->set_key("NFL");
-    segment->add_candidate()->value = "NFL";
-    EXPECT_CALL(converter, StartPrediction(_, _))
-        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+  commands::Command command;
+  EXPECT_TRUE(SendKey("N", &session, &command));
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+  EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
+  // Global mode should be kept as HIRAGANA
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
-    EXPECT_TRUE(session.PredictAndConvert(&command));
-    ASSERT_TRUE(command.output().has_candidate_window());
-    EXPECT_TRUE(command.output().candidate_window().has_focused_index());
-    EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
-    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
-    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  segment->set_key("NFL");
+  segment->add_candidate()->value = "NFL";
+  EXPECT_CALL(converter, StartPrediction(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
-    EXPECT_TRUE(SendKey("a", &session, &command));
-    EXPECT_FALSE(command.output().has_candidate_window());
-    EXPECT_RESULT("NFL", command);
+  EXPECT_TRUE(session.PredictAndConvert(&command));
+  ASSERT_TRUE(command.output().has_candidate_window());
+  EXPECT_TRUE(command.output().candidate_window().has_focused_index());
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+  EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
-    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
-    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
-    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
-  }
+  EXPECT_CALL(converter, StartSuggestion(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
+  EXPECT_TRUE(SendKey("a", &session, &command));
+  EXPECT_FALSE(command.output().has_candidate_window());
+  EXPECT_RESULT("NFL", command);
 
-  {
-    Session session(&engine);
-    InitSessionToPrecomposition(&session);
-    commands::Command command;
-    EXPECT_TRUE(SendKey("N", &session, &command));
-    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
-    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
-    // Global mode should be kept as HIRAGANA
-    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+  EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
+}
 
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    segment->set_key("NFL");
-    segment->add_candidate()->value = "NFL";
-    const ConversionRequest request = CreateConversionRequest(session);
-    FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
-        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion3) {
+  // This is a unittest against http://b/2977131.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-    EXPECT_TRUE(session.ConvertToHalfASCII(&command));
-    EXPECT_FALSE(command.output().has_candidate_window());
-    EXPECT_FALSE(command.output().candidate_window().has_focused_index());
-    EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
-    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
-    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+  commands::Command command;
+  EXPECT_TRUE(SendKey("N", &session, &command));
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+  EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
+  // Global mode should be kept as HIRAGANA
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
-    EXPECT_TRUE(SendKey("a", &session, &command));
-    EXPECT_FALSE(command.output().has_candidate_window());
-    EXPECT_RESULT("NFL", command);
-    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
-    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
-    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
-  }
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  segment->set_key("NFL");
+  segment->add_candidate()->value = "NFL";
+  const ConversionRequest request = CreateConversionRequest(session);
+  FillT13Ns(request, &segments);
+  EXPECT_CALL(converter, StartConversion(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  EXPECT_TRUE(session.ConvertToHalfASCII(&command));
+  EXPECT_FALSE(command.output().has_candidate_window());
+  EXPECT_FALSE(command.output().candidate_window().has_focused_index());
+  EXPECT_EQ(command.output().candidate_window().focused_index(), 0);
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+  EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
+
+  EXPECT_TRUE(SendKey("a", &session, &command));
+  EXPECT_FALSE(command.output().has_candidate_window());
+  EXPECT_RESULT("NFL", command);
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+  EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 }
 
 TEST_F(SessionTest, StatusOutput) {
