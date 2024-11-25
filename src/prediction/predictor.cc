@@ -238,10 +238,13 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
 
   bool result = false;
   int remained_size = size;
-  ConversionRequest request_for_prediction = request;
-  request_for_prediction.set_max_user_history_prediction_candidates_size(size);
-  request_for_prediction
-      .set_max_user_history_prediction_candidates_size_for_zero_query(size);
+  ConversionRequest::Options options = request.options();
+  options.max_user_history_prediction_candidates_size = size;
+  options.max_user_history_prediction_candidates_size_for_zero_query = size;
+  ConversionRequest request_for_prediction = ConversionRequestBuilder()
+                                                 .SetConversionRequest(request)
+                                                 .SetOptions(std::move(options))
+                                                 .Build();
   result |= user_history_predictor_->PredictForRequest(request_for_prediction,
                                                        segments);
   remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
@@ -252,9 +255,14 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
     return result;
   }
 
-  request_for_prediction.set_max_dictionary_prediction_candidates_size(
-      remained_size);
-  result |= dictionary_predictor_->PredictForRequest(request_for_prediction,
+  ConversionRequest::Options options2 = request_for_prediction.options();
+  options2.max_dictionary_prediction_candidates_size = remained_size;
+  const ConversionRequest request_for_prediction2 =
+      ConversionRequestBuilder()
+          .SetConversionRequest(request_for_prediction)
+          .SetOptions(std::move(options2))
+          .Build();
+  result |= dictionary_predictor_->PredictForRequest(request_for_prediction2,
                                                      segments);
   return result;
 }
@@ -281,35 +289,38 @@ MobilePredictor::~MobilePredictor() = default;
 
 ConversionRequest MobilePredictor::GetRequestForPredict(
     const ConversionRequest &request, const Segments &segments) {
-  ConversionRequest ret = request;
+  ConversionRequest::Options options = request.options();
   size_t history_prediction_size = GetHistoryPredictionSizeFromRequest(request);
   switch (request.request_type()) {
     case ConversionRequest::SUGGESTION: {
-      ret.set_max_user_history_prediction_candidates_size(
-          history_prediction_size);
-      ret.set_max_user_history_prediction_candidates_size_for_zero_query(4);
-      ret.set_max_dictionary_prediction_candidates_size(20);
+      options.max_user_history_prediction_candidates_size =
+          history_prediction_size;
+      options.max_user_history_prediction_candidates_size_for_zero_query = 4;
+      options.max_dictionary_prediction_candidates_size = 20;
       break;
     }
     case ConversionRequest::PARTIAL_SUGGESTION: {
-      ret.set_max_dictionary_prediction_candidates_size(20);
+      options.max_dictionary_prediction_candidates_size = 20;
       break;
     }
     case ConversionRequest::PARTIAL_PREDICTION: {
-      ret.set_max_dictionary_prediction_candidates_size(kMobilePredictionSize);
+      options.max_dictionary_prediction_candidates_size = kMobilePredictionSize;
       break;
     }
     case ConversionRequest::PREDICTION: {
-      ret.set_max_user_history_prediction_candidates_size(
-          history_prediction_size);
-      ret.set_max_user_history_prediction_candidates_size_for_zero_query(4);
-      ret.set_max_dictionary_prediction_candidates_size(kMobilePredictionSize);
+      options.max_user_history_prediction_candidates_size =
+          history_prediction_size;
+      options.max_user_history_prediction_candidates_size_for_zero_query = 4;
+      options.max_dictionary_prediction_candidates_size = kMobilePredictionSize;
       break;
     }
     default:
       DLOG(ERROR) << "Unexpected request type: " << request.request_type();
   }
-  return ret;
+  return ConversionRequestBuilder()
+      .SetConversionRequest(request)
+      .SetOptions(std::move(options))
+      .Build();
 }
 
 namespace {
