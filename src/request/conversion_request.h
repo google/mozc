@@ -219,17 +219,9 @@ class ConversionRequest {
   size_t max_user_history_prediction_candidates_size_for_zero_query() const {
     return options_.max_user_history_prediction_candidates_size_for_zero_query;
   }
-  void set_max_user_history_prediction_candidates_size_for_zero_query(
-      size_t value) {
-    options_.max_user_history_prediction_candidates_size_for_zero_query =
-        value;
-  }
 
   size_t max_dictionary_prediction_candidates_size() const {
     return options_.max_dictionary_prediction_candidates_size;
-  }
-  void set_max_dictionary_prediction_candidates_size(size_t value) {
-    options_.max_dictionary_prediction_candidates_size = value;
   }
 
   bool should_call_set_key_in_prediction() const {

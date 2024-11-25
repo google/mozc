@@ -983,9 +983,10 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
 
   Segments segments;
   InitSegmentsWithKey("test", &segments);
-  ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::SUGGESTION);
-  convreq.set_max_dictionary_prediction_candidates_size(kTestSize);
+  const ConversionRequest convreq = CreateConversionRequestWithOptions({
+      .request_type = ConversionRequest::SUGGESTION,
+      .max_dictionary_prediction_candidates_size = kTestSize,
+  });
 
   predictor.AddPredictionToCandidates(convreq, &segments,
                                       absl::MakeSpan(results));
@@ -1023,10 +1024,10 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
 
   Segments segments;
   InitSegmentsWithKey("test", &segments);
-  ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::SUGGESTION);
-  convreq.set_max_dictionary_prediction_candidates_size(kLowCostCandidateSize +
-                                                        1);
+  const ConversionRequest convreq = CreateConversionRequestWithOptions({
+      .request_type = ConversionRequest::SUGGESTION,
+      .max_dictionary_prediction_candidates_size = kLowCostCandidateSize + 1,
+  });
 
   predictor.AddPredictionToCandidates(convreq, &segments,
                                       absl::MakeSpan(results));
@@ -1145,9 +1146,10 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigramOnMobile) {
   Segments segments;
   InitSegmentsWithKey("てすと", &segments);
 
-  ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
-  convreq.set_max_dictionary_prediction_candidates_size(100);
+  const ConversionRequest convreq = CreateConversionRequestWithOptions({
+      .request_type = ConversionRequest::PREDICTION,
+      .max_dictionary_prediction_candidates_size = 100,
+  });
   EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
   int exact_count = 0;
   for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
@@ -1201,9 +1203,11 @@ TEST_F(DictionaryPredictorTest, DoNotFilterUnigrmsForHandwriting) {
   Segments segments;
   InitSegmentsWithKey("かん字", &segments);
 
-  ConversionRequest convreq_for_prediction =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
-  convreq_for_prediction.set_max_dictionary_prediction_candidates_size(100);
+  const ConversionRequest convreq_for_prediction =
+      CreateConversionRequestWithOptions({
+          .request_type = ConversionRequest::PREDICTION,
+          .max_dictionary_prediction_candidates_size = 100,
+      });
   EXPECT_TRUE(predictor.PredictForRequest(convreq_for_prediction, &segments));
   int exact_count = 0;
   for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
