@@ -115,7 +115,7 @@ class ConversionRequest {
   };
 
   ConversionRequest()
-      : ConversionRequest(false, composer::Composer::CreateEmptyComposerData(),
+      : ConversionRequest(composer::Composer::CreateEmptyComposerData(),
                           commands::Request::default_instance(),
                           commands::Context::default_instance(),
                           config::ConfigHandler::DefaultConfig(), Options()) {}
@@ -125,7 +125,7 @@ class ConversionRequest {
                     const commands::Context &context,
                     const config::Config &config,
                     Options &&options)
-      : ConversionRequest(true, composer.CreateComposerData(), request, context,
+      : ConversionRequest(composer.CreateComposerData(), request, context,
                           config, std::move(options)) {}
 
   // Remove unnecessary but potentially large options for ConversionRequest from
@@ -139,12 +139,11 @@ class ConversionRequest {
     return config;
   }
 
-  ConversionRequest(bool has_composer, const composer::ComposerData &composer,
+  ConversionRequest(const composer::ComposerData &composer,
                     const commands::Request &request,
                     const commands::Context &context,
                     const config::Config &config, Options &&options)
-      : has_composer_(has_composer),
-        composer_(composer),
+      : composer_(composer),
         request_(request),
         context_(context),
         config_(TrimConfig(config)),
@@ -159,7 +158,6 @@ class ConversionRequest {
 
   RequestType request_type() const { return options_.request_type; }
 
-  bool has_composer() const { return has_composer_; }
   const composer::ComposerData &composer() const { return composer_; }
 
   bool use_actual_converter_for_realtime_conversion() const {
@@ -216,7 +214,6 @@ class ConversionRequest {
  private:
   // Required options
   // Input composer to generate a key for conversion, suggestion, etc.
-  bool has_composer_ = false;
   const composer::ComposerData composer_;
 
   // Input request.
@@ -237,14 +234,13 @@ class ConversionRequestBuilder {
   ConversionRequest Build() {
     DCHECK(buildable_);
     buildable_ = false;
-    return ConversionRequest(has_composer_, std::move(composer_data_),
-                             std::move(request_), std::move(context_),
-                             std::move(config_), std::move(options_));
+    return ConversionRequest(std::move(composer_data_), std::move(request_),
+                             std::move(context_), std::move(config_),
+                             std::move(options_));
   }
 
   ConversionRequestBuilder &SetConversionRequest(
       const ConversionRequest &base_convreq) {
-    has_composer_ = base_convreq.has_composer();
     composer_data_ = base_convreq.composer();
     request_ = base_convreq.request();
     context_ = base_convreq.context();
@@ -255,12 +251,10 @@ class ConversionRequestBuilder {
 
   ConversionRequestBuilder &SetComposerData(
       composer::ComposerData &&composer_data) {
-    has_composer_ = true;
     composer_data_ = std::move(composer_data);
     return *this;
   }
   ConversionRequestBuilder &SetComposer(const composer::Composer &composer) {
-    has_composer_ = true;
     composer_data_ = composer.CreateComposerData();
     return *this;
   }
@@ -288,7 +282,6 @@ class ConversionRequestBuilder {
 
  private:
   bool buildable_ = true;
-  bool has_composer_ = false;
   composer::ComposerData composer_data_;
   commands::Request request_;
   commands::Context context_;
