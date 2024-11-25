@@ -1022,7 +1022,7 @@ TEST_F(ConverterTest, StartSuggestion) {
                                     std::move(options));
 
     Segments segments;
-    EXPECT_TRUE(converter->StartSuggestion(request, &segments));
+    EXPECT_TRUE(converter->StartPrediction(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
                 transliteration::HALF_ASCII);
@@ -1043,7 +1043,7 @@ TEST_F(ConverterTest, StartSuggestion) {
                                     std::move(options));
 
     Segments segments;
-    EXPECT_TRUE(converter->StartSuggestion(request, &segments));
+    EXPECT_TRUE(converter->StartPrediction(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
                 transliteration::HALF_ASCII);
@@ -1059,7 +1059,7 @@ TEST_F(ConverterTest, StartPartialPrediction) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
-  EXPECT_TRUE(converter->StartPartialPrediction(
+  EXPECT_TRUE(converter->StartPrediction(
       ConvReq("わたしは", ConversionRequest::PARTIAL_PREDICTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
@@ -1072,7 +1072,7 @@ TEST_F(ConverterTest, StartPartialSuggestion) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
-  EXPECT_TRUE(converter->StartPartialSuggestion(
+  EXPECT_TRUE(converter->StartPrediction(
       ConvReq("わたしは", ConversionRequest::PARTIAL_SUGGESTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
@@ -1084,7 +1084,7 @@ TEST_F(ConverterTest, StartPartialPredictionMobile) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
-  EXPECT_TRUE(converter->StartPartialPrediction(
+  EXPECT_TRUE(converter->StartPrediction(
       ConvReq("わたしは", ConversionRequest::PARTIAL_PREDICTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
@@ -1096,7 +1096,7 @@ TEST_F(ConverterTest, StartPartialSuggestionMobile) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
-  EXPECT_TRUE(converter->StartPartialSuggestion(
+  EXPECT_TRUE(converter->StartPrediction(
       ConvReq("わたしは", ConversionRequest::PARTIAL_SUGGESTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
@@ -1245,7 +1245,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   Segments segments;
   {
     // Dictionary suggestion
-    EXPECT_TRUE(converter.StartSuggestion(
+    EXPECT_TRUE(converter.StartPrediction(
         ConvReq("てすと", ConversionRequest::SUGGESTION), &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_LE(1, segments.conversion_segment(0).candidates_size());
@@ -1256,7 +1256,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   {
     // Realtime conversion
     segments.Clear();
-    EXPECT_TRUE(converter.StartSuggestion(
+    EXPECT_TRUE(converter.StartPrediction(
         ConvReq("てすとの", ConversionRequest::SUGGESTION), &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_LE(1, segments.conversion_segment(0).candidates_size());

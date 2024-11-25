@@ -116,21 +116,6 @@ class MinimalConverter : public ConverterInterface {
     return AddAsIsCandidate(request, segments);
   }
 
-  bool StartSuggestion(const ConversionRequest &request,
-                       Segments *segments) const override {
-    return AddAsIsCandidate(request, segments);
-  }
-
-  bool StartPartialPrediction(const ConversionRequest &request,
-                              Segments *segments) const override {
-    return false;
-  }
-
-  bool StartPartialSuggestion(const ConversionRequest &request,
-                              Segments *segments) const override {
-    return false;
-  }
-
   void FinishConversion(const ConversionRequest &request,
                         Segments *segments) const override {}
 

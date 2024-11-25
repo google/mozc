@@ -68,21 +68,6 @@ class ConverterInterface {
   virtual bool StartPrediction(const ConversionRequest &request,
                                Segments *segments) const = 0;
 
-  // Starts suggestion for given request.
-  ABSL_MUST_USE_RESULT
-  virtual bool StartSuggestion(const ConversionRequest &request,
-                               Segments *segments) const = 0;
-
-  // Starts partial prediction for given request.
-  ABSL_MUST_USE_RESULT
-  virtual bool StartPartialPrediction(const ConversionRequest &request,
-                                      Segments *segments) const = 0;
-
-  // Starts partial suggestion for given request.
-  ABSL_MUST_USE_RESULT
-  virtual bool StartPartialSuggestion(const ConversionRequest &request,
-                                      Segments *segments) const = 0;
-
   // Finish conversion.
   // Segments are cleared. Context is not cleared
   virtual void FinishConversion(const ConversionRequest &request,

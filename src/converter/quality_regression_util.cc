@@ -283,9 +283,9 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     const ConversionRequest conv_req(
         composer, request_, context, config_,
         {.request_type = ConversionRequest::SUGGESTION});
-    if (!converter_->StartSuggestion(conv_req, &segments_)) {
-      return absl::UnknownError(
-          absl::StrCat("StartSuggestion failed: ", item.OutputAsTSV()));
+    if (!converter_->StartPrediction(conv_req, &segments_)) {
+      return absl::UnknownError(absl::StrCat(
+          "StartPrediction for suggestion failed: ", item.OutputAsTSV()));
     }
   } else if (command == kZeroQueryExpect || command == kZeroQueryNotExpect) {
     commands::Request request = request_;
@@ -298,9 +298,9 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
           composer, request, context, config_,
           {.request_type = ConversionRequest::SUGGESTION,
            .max_conversion_candidates_size = 10});
-      if (!converter_->StartSuggestion(conv_req, &segments_)) {
-        return absl::UnknownError(
-            absl::StrCat("StartSuggestion failed: ", item.OutputAsTSV()));
+      if (!converter_->StartPrediction(conv_req, &segments_)) {
+        return absl::UnknownError(absl::StrCat(
+            "StartSuggestion for suggestion failed: ", item.OutputAsTSV()));
       }
       if (!converter_->CommitSegmentValue(&segments_, 0, 0)) {
         return absl::UnknownError(

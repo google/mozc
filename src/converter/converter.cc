@@ -455,37 +455,6 @@ bool Converter::StartPrediction(const ConversionRequest &request,
   return Predict(request, segments);
 }
 
-bool Converter::StartSuggestion(const ConversionRequest &original_request,
-                                Segments *segments) const {
-  const ConversionRequest request = CreateConversionRequestWithType(
-      original_request, ConversionRequest::SUGGESTION);
-  return Predict(request, segments);
-}
-
-bool Converter::StartPartialSuggestion(
-    const ConversionRequest &original_request, Segments *segments) const {
-  const size_t cursor = original_request.composer().GetCursor();
-  if (cursor == 0 || cursor == original_request.composer().GetLength()) {
-    return StartSuggestion(original_request, segments);
-  }
-
-  const ConversionRequest request = CreateConversionRequestWithType(
-      original_request, ConversionRequest::PARTIAL_SUGGESTION);
-  return Predict(request, segments);
-}
-
-bool Converter::StartPartialPrediction(
-    const ConversionRequest &original_request, Segments *segments) const {
-  const size_t cursor = original_request.composer().GetCursor();
-  if (cursor == 0 || cursor == original_request.composer().GetLength()) {
-    return StartPrediction(original_request, segments);
-  }
-
-  const ConversionRequest request = CreateConversionRequestWithType(
-      original_request, ConversionRequest::PARTIAL_PREDICTION);
-  return Predict(request, segments);
-}
-
 void Converter::FinishConversion(const ConversionRequest &request,
                                  Segments *segments) const {
   CommitUsageStats(segments, segments->history_segments_size(),

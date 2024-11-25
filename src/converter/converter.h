@@ -71,15 +71,6 @@ class Converter final : public ConverterInterface {
   ABSL_MUST_USE_RESULT
   bool StartPrediction(const ConversionRequest &request,
                        Segments *segments) const override;
-  ABSL_MUST_USE_RESULT
-  bool StartSuggestion(const ConversionRequest &request,
-                       Segments *segments) const override;
-  ABSL_MUST_USE_RESULT
-  bool StartPartialPrediction(const ConversionRequest &request,
-                              Segments *segments) const override;
-  ABSL_MUST_USE_RESULT
-  bool StartPartialSuggestion(const ConversionRequest &request,
-                              Segments *segments) const override;
 
   void FinishConversion(const ConversionRequest &request,
                         Segments *segments) const override;
