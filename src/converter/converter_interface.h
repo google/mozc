@@ -58,12 +58,6 @@ class ConverterInterface {
   virtual bool StartConversion(const ConversionRequest &request,
                                Segments *segments) const = 0;
 
-  // Start conversion with key.
-  // key is a request written in Hiragana sequence
-  ABSL_MUST_USE_RESULT
-  virtual bool StartConversionWithKey(Segments *segments,
-                                      absl::string_view key) const = 0;
-
   // Start reverse conversion with key.
   ABSL_MUST_USE_RESULT
   virtual bool StartReverseConversion(Segments *segments,
@@ -74,40 +68,20 @@ class ConverterInterface {
   virtual bool StartPrediction(const ConversionRequest &request,
                                Segments *segments) const = 0;
 
-  // Start prediction with key (request_type = PREDICTION)
-  ABSL_MUST_USE_RESULT
-  virtual bool StartPredictionWithKey(Segments *segments,
-                                      absl::string_view key) const = 0;
-
   // Starts suggestion for given request.
   ABSL_MUST_USE_RESULT
   virtual bool StartSuggestion(const ConversionRequest &request,
                                Segments *segments) const = 0;
-
-  // Start suggestion with key (request_type = SUGGESTION)
-  ABSL_MUST_USE_RESULT
-  virtual bool StartSuggestionWithKey(Segments *segments,
-                                      absl::string_view key) const = 0;
 
   // Starts partial prediction for given request.
   ABSL_MUST_USE_RESULT
   virtual bool StartPartialPrediction(const ConversionRequest &request,
                                       Segments *segments) const = 0;
 
-  // Start prediction with key (request_type = PARTIAL_PREDICTION)
-  ABSL_MUST_USE_RESULT
-  virtual bool StartPartialPredictionWithKey(Segments *segments,
-                                             absl::string_view key) const = 0;
-
   // Starts partial suggestion for given request.
   ABSL_MUST_USE_RESULT
   virtual bool StartPartialSuggestion(const ConversionRequest &request,
                                       Segments *segments) const = 0;
-
-  // Start suggestion with key (request_type = PARTIAL_SUGGESTION)
-  ABSL_MUST_USE_RESULT
-  virtual bool StartPartialSuggestionWithKey(Segments *segments,
-                                             absl::string_view key) const = 0;
 
   // Finish conversion.
   // Segments are cleared. Context is not cleared

@@ -512,8 +512,6 @@ mozc_cc_test(
         ":converter_interface",
         ":segments",
         "//composer",
-        "//composer:table",
-        "//config:config_handler",
         "//engine:engine_factory",
         "//engine:engine_interface",
         "//protocol:commands_cc_proto",
@@ -521,6 +519,7 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

@@ -50,30 +50,20 @@ class StrictMockConverter : public ConverterInterface {
   MOCK_METHOD(bool, StartConversion,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
-  MOCK_METHOD(bool, StartConversionWithKey,
-              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartReverseConversion,
               (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartPrediction,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
-  MOCK_METHOD(bool, StartPredictionWithKey,
-              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartSuggestion,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
-  MOCK_METHOD(bool, StartSuggestionWithKey,
-              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartPartialPrediction,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
-  MOCK_METHOD(bool, StartPartialPredictionWithKey,
-              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartPartialSuggestion,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
-  MOCK_METHOD(bool, StartPartialSuggestionWithKey,
-              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(void, FinishConversion,
               (const ConversionRequest &request, Segments *segments),
               (const, override));

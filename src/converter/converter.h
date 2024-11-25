@@ -66,35 +66,20 @@ class Converter final : public ConverterInterface {
   bool StartConversion(const ConversionRequest &request,
                        Segments *segments) const override;
   ABSL_MUST_USE_RESULT
-  bool StartConversionWithKey(Segments *segments,
-                              absl::string_view key) const override;
-  ABSL_MUST_USE_RESULT
   bool StartReverseConversion(Segments *segments,
                               absl::string_view key) const override;
   ABSL_MUST_USE_RESULT
   bool StartPrediction(const ConversionRequest &request,
                        Segments *segments) const override;
   ABSL_MUST_USE_RESULT
-  bool StartPredictionWithKey(Segments *segments,
-                              absl::string_view key) const override;
-  ABSL_MUST_USE_RESULT
   bool StartSuggestion(const ConversionRequest &request,
                        Segments *segments) const override;
-  ABSL_MUST_USE_RESULT
-  bool StartSuggestionWithKey(Segments *segments,
-                              absl::string_view key) const override;
   ABSL_MUST_USE_RESULT
   bool StartPartialPrediction(const ConversionRequest &request,
                               Segments *segments) const override;
   ABSL_MUST_USE_RESULT
-  bool StartPartialPredictionWithKey(Segments *segments,
-                                     absl::string_view key) const override;
-  ABSL_MUST_USE_RESULT
   bool StartPartialSuggestion(const ConversionRequest &request,
                               Segments *segments) const override;
-  ABSL_MUST_USE_RESULT
-  bool StartPartialSuggestionWithKey(Segments *segments,
-                                     absl::string_view key) const override;
 
   void FinishConversion(const ConversionRequest &request,
                         Segments *segments) const override;

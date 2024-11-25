@@ -294,15 +294,6 @@ bool Converter::StartConversion(const ConversionRequest &original_request,
   return Convert(request, conversion_key, segments);
 }
 
-bool Converter::StartConversionWithKey(Segments *segments,
-                                       const absl::string_view key) const {
-  if (key.empty()) {
-    return false;
-  }
-  const ConversionRequest default_request;
-  return Convert(default_request, key, segments);
-}
-
 bool Converter::Convert(const ConversionRequest &request,
                         const absl::string_view key, Segments *segments) const {
   SetKey(segments, key);
@@ -430,39 +421,12 @@ bool Converter::StartPrediction(const ConversionRequest &original_request,
   return Predict(request, prediction_key, segments);
 }
 
-bool Converter::StartPredictionWithKey(Segments *segments,
-                                       const absl::string_view key) const {
-  const ConversionRequest default_request =
-      ConversionRequestBuilder()
-          .SetOptions({.request_type = ConversionRequest::PREDICTION})
-          .Build();
-  return Predict(default_request, key, segments);
-}
-
-bool Converter::StartSuggestionWithKey(Segments *segments,
-                                       const absl::string_view key) const {
-  const ConversionRequest default_request =
-      ConversionRequestBuilder()
-          .SetOptions({.request_type = ConversionRequest::SUGGESTION})
-          .Build();
-  return Predict(default_request, key, segments);
-}
-
 bool Converter::StartSuggestion(const ConversionRequest &original_request,
                                 Segments *segments) const {
   const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::SUGGESTION);
   std::string prediction_key = request.composer().GetQueryForPrediction();
   return Predict(request, prediction_key, segments);
-}
-
-bool Converter::StartPartialSuggestionWithKey(
-    Segments *segments, const absl::string_view key) const {
-  const ConversionRequest default_request =
-      ConversionRequestBuilder()
-          .SetOptions({.request_type = ConversionRequest::PARTIAL_SUGGESTION})
-          .Build();
-  return Predict(default_request, key, segments);
 }
 
 bool Converter::StartPartialSuggestion(
@@ -478,15 +442,6 @@ bool Converter::StartPartialSuggestion(
   strings::Assign(conversion_key,
                   Util::Utf8SubString(conversion_key, 0, cursor));
   return Predict(request, conversion_key, segments);
-}
-
-bool Converter::StartPartialPredictionWithKey(
-    Segments *segments, const absl::string_view key) const {
-  const ConversionRequest default_request =
-      ConversionRequestBuilder()
-          .SetOptions({.request_type = ConversionRequest::PARTIAL_PREDICTION})
-          .Build();
-  return Predict(default_request, key, segments);
 }
 
 bool Converter::StartPartialPrediction(

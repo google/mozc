@@ -314,7 +314,11 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
         NumberUtil::SimpleAtoi(fields[2]),  // begin pos
         NumberUtil::SimpleAtoi(fields[3]),  // end pos
         fields[4]);
-    const bool result = converter.StartConversionWithKey(segments, fields[1]);
+    composer::Composer composer;
+    composer.SetPreeditTextForTestOnly(fields[1]);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetComposer(composer).Build();
+    const bool result = converter.StartConversion(convreq, segments);
     Lattice::ResetDebugDisplayNode();
     return result;
   } else if (func == "reverseconversion" || func == "reverse" || func == "r") {
