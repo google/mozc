@@ -1174,8 +1174,10 @@ bool UserHistoryPredictor::LookupEntry(RequestType request_type,
 }
 
 bool UserHistoryPredictor::Predict(Segments *segments) const {
-  ConversionRequest default_request;
-  default_request.set_request_type(ConversionRequest::PREDICTION);
+  const ConversionRequest default_request =
+      ConversionRequestBuilder()
+          .SetRequestType(ConversionRequest::PREDICTION)
+          .Build();
   return PredictForRequest(default_request, segments);
 }
 

@@ -110,6 +110,10 @@ class TestRewriter : public RewriterInterface {
 
 class MergerRewriterTest : public testing::TestWithTempUserProfile {};
 
+ConversionRequest ConvReq(ConversionRequest::RequestType request_type) {
+  return ConversionRequestBuilder().SetRequestType(request_type).Build();
+}
+
 TEST_F(MergerRewriterTest, Rewrite) {
   std::string call_result;
   MergerRewriter merger;
@@ -138,8 +142,7 @@ TEST_F(MergerRewriterTest, RewriteSuggestion) {
   std::string call_result;
   MergerRewriter merger;
   Segments segments;
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::SUGGESTION);
+  const ConversionRequest request = ConvReq(ConversionRequest::SUGGESTION);
 
   merger.AddRewriter(std::make_unique<TestRewriter>(
       &call_result, "a", true, RewriterInterface::SUGGESTION));
@@ -171,9 +174,11 @@ TEST_F(MergerRewriterTest, RewriteSuggestionWithMixedConversion) {
   // should result that the merger rewriter does not trim exceeded suggestions.
   commands::Request commands_request;
   commands_request.set_mixed_conversion(true);
-  ConversionRequest request =
-      ConversionRequestBuilder().SetRequest(commands_request).Build();
-  request.set_request_type(ConversionRequest::SUGGESTION);
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequest(commands_request)
+          .SetRequestType(ConversionRequest::SUGGESTION)
+          .Build();
   EXPECT_TRUE(request.request().mixed_conversion());
 
   merger.AddRewriter(std::make_unique<TestRewriter>(
@@ -202,7 +207,6 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
   std::string call_result;
   MergerRewriter merger;
   Segments segments;
-  ConversionRequest request;
   merger.AddRewriter(std::make_unique<TestRewriter>(
       &call_result, "a", false, RewriterInterface::CONVERSION));
   merger.AddRewriter(std::make_unique<TestRewriter>(
@@ -215,8 +219,9 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "e", false,
                                                     RewriterInterface::ALL));
 
-  request.set_request_type(ConversionRequest::CONVERSION);
-  EXPECT_FALSE(merger.Rewrite(request, &segments));
+  const ConversionRequest request_conversion =
+      ConvReq(ConversionRequest::CONVERSION);
+  EXPECT_FALSE(merger.Rewrite(request_conversion, &segments));
   EXPECT_EQ(
       "a.Rewrite();"
       "d.Rewrite();"
@@ -224,30 +229,34 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
       call_result);
   call_result.clear();
 
-  request.set_request_type(ConversionRequest::PREDICTION);
-  EXPECT_FALSE(merger.Rewrite(request, &segments));
+  const ConversionRequest request_prediction =
+      ConvReq(ConversionRequest::PREDICTION);
+  EXPECT_FALSE(merger.Rewrite(request_prediction, &segments));
   EXPECT_EQ(call_result,
             "c.Rewrite();"
             "d.Rewrite();"
             "e.Rewrite();");
   call_result.clear();
 
-  request.set_request_type(ConversionRequest::SUGGESTION);
-  EXPECT_FALSE(merger.Rewrite(request, &segments));
+  const ConversionRequest request_suggestion =
+      ConvReq(ConversionRequest::SUGGESTION);
+  EXPECT_FALSE(merger.Rewrite(request_suggestion, &segments));
   EXPECT_EQ(call_result,
             "b.Rewrite();"
             "e.Rewrite();");
   call_result.clear();
 
-  request.set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
-  EXPECT_FALSE(merger.Rewrite(request, &segments));
+  const ConversionRequest request_partial_suggestion =
+      ConvReq(ConversionRequest::PARTIAL_SUGGESTION);
+  EXPECT_FALSE(merger.Rewrite(request_partial_suggestion, &segments));
   EXPECT_EQ(call_result,
             "b.Rewrite();"
             "e.Rewrite();");
   call_result.clear();
 
-  request.set_request_type(ConversionRequest::PARTIAL_PREDICTION);
-  EXPECT_FALSE(merger.Rewrite(request, &segments));
+  const ConversionRequest request_partial_prediction =
+      ConvReq(ConversionRequest::PARTIAL_PREDICTION);
+  EXPECT_FALSE(merger.Rewrite(request_partial_prediction, &segments));
   EXPECT_EQ(call_result,
             "c.Rewrite();"
             "d.Rewrite();"

@@ -1005,8 +1005,11 @@ DictionaryPredictionAggregator::GenerateQueryForHandwriting(
     Segment *segment = tmp_segments.add_segment();
     segment->set_key(composition_event.composition_string());
   }
-  ConversionRequest request_for_realtime = request;
-  request_for_realtime.set_request_type(ConversionRequest::REVERSE_CONVERSION);
+  const ConversionRequest request_for_realtime =
+      ConversionRequestBuilder()
+          .SetConversionRequest(request)
+          .SetRequestType(ConversionRequest::REVERSE_CONVERSION)
+          .Build();
   if (!immutable_converter_->ConvertForRequest(request_for_realtime,
                                                &tmp_segments) ||
       tmp_segments.conversion_segments_size() == 0 ||

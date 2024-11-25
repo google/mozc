@@ -168,9 +168,6 @@ class ConversionRequest {
   ConversionRequest &operator=(ConversionRequest &&) = delete;
 
   RequestType request_type() const { return options_.request_type; }
-  void set_request_type(RequestType request_type) {
-    options_.request_type = request_type;
-  }
 
   bool has_composer() const { return has_composer_; }
   const composer::ComposerData &composer() const { return composer_; }
@@ -293,6 +290,11 @@ class ConversionRequestBuilder {
   }
   ConversionRequestBuilder &SetOptions(ConversionRequest::Options &&options) {
     options_ = std::move(options);
+    return *this;
+  }
+  ConversionRequestBuilder &SetRequestType(
+      ConversionRequest::RequestType request_type) {
+    options_.request_type = request_type;
     return *this;
   }
 

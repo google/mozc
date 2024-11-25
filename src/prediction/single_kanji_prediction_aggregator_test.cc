@@ -30,6 +30,7 @@
 #include "prediction/single_kanji_prediction_aggregator.h"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -91,9 +92,11 @@ class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
   }
 
   ConversionRequest CreateConversionRequest() const {
-    ConversionRequest convreq(*composer_, *request_, context_, *config_);
-    convreq.set_request_type(ConversionRequest::PREDICTION);
-    return convreq;
+    ConversionRequest::Options options = {
+        .request_type = ConversionRequest::PREDICTION,
+    };
+    return ConversionRequest(*composer_, *request_, context_, *config_,
+                             std::move(options));
   }
 
   std::unique_ptr<composer::Composer> composer_;

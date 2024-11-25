@@ -84,8 +84,12 @@ class SingleKanjiRewriterTest : public testing::TestWithTempUserProfile {
     return false;
   }
 
-  static ConversionRequest ConvReq(const commands::Request &request) {
-    return ConversionRequestBuilder().SetRequest(request).Build();
+  static ConversionRequest ConvReq(const commands::Request &request,
+                                   ConversionRequest::RequestType type) {
+    return ConversionRequestBuilder()
+        .SetRequest(request)
+        .SetRequestType(type)
+        .Build();
   }
 
   const ConversionRequest default_request_;
@@ -98,7 +102,8 @@ TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
 
   commands::Request request;
   request.set_mixed_conversion(false);
-  const ConversionRequest convreq = ConvReq(request);
+  const ConversionRequest convreq =
+      ConvReq(request, ConversionRequest::CONVERSION);
   EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
 }
 
@@ -130,13 +135,15 @@ TEST_F(SingleKanjiRewriterTest, MobileEnvironmentTest) {
 
   {
     request.set_mixed_conversion(true);
-    const ConversionRequest convreq = ConvReq(request);
+    const ConversionRequest convreq =
+        ConvReq(request, ConversionRequest::CONVERSION);
     EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
-    const ConversionRequest convreq = ConvReq(request);
+    const ConversionRequest convreq =
+        ConvReq(request, ConversionRequest::CONVERSION);
     EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
   }
 }
@@ -247,8 +254,8 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
 
     commands::Request request;
     request_test_util::FillMobileRequest(&request);
-    ConversionRequest convreq = ConvReq(request);
-    convreq.set_request_type(ConversionRequest::PREDICTION);
+    const ConversionRequest convreq =
+        ConvReq(request, ConversionRequest::PREDICTION);
     ASSERT_TRUE(rewriter.capability(convreq) & RewriterInterface::PREDICTION);
     EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
@@ -259,8 +266,8 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
 
     commands::Request request;
     request_test_util::FillMobileRequestWithHardwareKeyboard(&request);
-    ConversionRequest convreq = ConvReq(request);
-    convreq.set_request_type(ConversionRequest::PREDICTION);
+    const ConversionRequest convreq =
+        ConvReq(request, ConversionRequest::PREDICTION);
     ASSERT_FALSE(rewriter.capability(convreq) & RewriterInterface::PREDICTION);
   }
 
@@ -270,8 +277,8 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
 
     commands::Request request;
     request_test_util::FillMobileRequestWithHardwareKeyboard(&request);
-    ConversionRequest convreq = ConvReq(request);
-    convreq.set_request_type(ConversionRequest::CONVERSION);
+    const ConversionRequest convreq =
+        ConvReq(request, ConversionRequest::CONVERSION);
     ASSERT_TRUE(rewriter.capability(convreq) & RewriterInterface::CONVERSION);
     EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }
@@ -286,7 +293,8 @@ TEST_F(SingleKanjiRewriterTest, NoVariationTest) {
   commands::Request request;
   request.mutable_decoder_experiment_params()->set_variation_character_types(
       commands::DecoderExperimentParams::NO_VARIATION);
-  ConversionRequest svs_convreq = ConvReq(request);
+  const ConversionRequest svs_convreq =
+      ConvReq(request, ConversionRequest::CONVERSION);
 
   EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_TRUE(rewriter.Rewrite(svs_convreq, &segments));
@@ -303,7 +311,8 @@ TEST_F(SingleKanjiRewriterTest, SvsVariationTest) {
   commands::Request request;
   request.mutable_decoder_experiment_params()->set_variation_character_types(
       commands::DecoderExperimentParams::SVS_JAPANESE);
-  ConversionRequest svs_convreq = ConvReq(request);
+  const ConversionRequest svs_convreq =
+      ConvReq(request, ConversionRequest::CONVERSION);
 
   EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_TRUE(rewriter.Rewrite(svs_convreq, &segments));

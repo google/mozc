@@ -105,11 +105,12 @@ class LanguageAwareRewriterTest : public testing::TestWithTempUserProfile {
     }
     Segment *segment = segments->mutable_conversion_segment(0);
     segment->set_key(*composition);
-    ConversionRequest request = ConversionRequestBuilder()
-                                    .SetComposer(composer)
-                                    .SetRequest(client_request)
-                                    .Build();
-    request.set_request_type(ConversionRequest::SUGGESTION);
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequest(client_request)
+            .SetRequestType(ConversionRequest::SUGGESTION)
+            .Build();
 
     return rewriter->Rewrite(request, segments);
   }
@@ -347,9 +348,11 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key(composition);
-    ConversionRequest request =
-        ConversionRequestBuilder().SetComposer(composer).Build();
-    request.set_request_type(ConversionRequest::SUGGESTION);
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestType(ConversionRequest::SUGGESTION)
+            .Build();
 
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
 

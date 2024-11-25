@@ -667,8 +667,10 @@ TEST_F(VariantsRewriterTest, RewriteForPrediction) {
   CharacterFormManager *character_form_manager =
       CharacterFormManager::GetCharacterFormManager();
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::PREDICTION);
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequestType(ConversionRequest::PREDICTION)
+          .Build();
   {
     Segments segments;
     InitSegmentsForAlphabetRewrite("abc", &segments);
@@ -704,9 +706,11 @@ TEST_F(VariantsRewriterTest, RewriteForMixedConversion) {
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   Request request;
   request.set_mixed_conversion(true);  // Request mixed conversion.
-  ConversionRequest conv_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
-  conv_request.set_request_type(ConversionRequest::SUGGESTION);
+  const ConversionRequest conv_request =
+      ConversionRequestBuilder()
+          .SetRequest(request)
+          .SetRequestType(ConversionRequest::SUGGESTION)
+          .Build();
   {
     Segments segments;
     InitSegmentsForAlphabetRewrite("abc", &segments);
@@ -785,9 +789,11 @@ TEST_F(VariantsRewriterTest, RewriteForPartialSuggestion) {
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   Request request;
   request.set_mixed_conversion(true);  // Request mixed conversion.
-  ConversionRequest conv_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
-  conv_request.set_request_type(ConversionRequest::SUGGESTION);
+  const ConversionRequest conv_request =
+      ConversionRequestBuilder()
+          .SetRequest(request)
+          .SetRequestType(ConversionRequest::SUGGESTION)
+          .Build();
   {
     Segments segments;
 
@@ -822,8 +828,10 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
   CharacterFormManager *character_form_manager =
       CharacterFormManager::GetCharacterFormManager();
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::SUGGESTION);
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequestType(ConversionRequest::SUGGESTION)
+          .Build();
   {
     Segments segments;
     InitSegmentsForAlphabetRewrite("abc", &segments);

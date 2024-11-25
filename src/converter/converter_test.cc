@@ -1921,8 +1921,10 @@ TEST_F(ConverterTest,
   composer.SetPreeditTextForTestOnly("おつかれ");
   commands::Context context;
 
-  ConversionRequest conversion_request(composer, request, context, config);
-  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+  ConversionRequest::Options options = {.request_type =
+                                            ConversionRequest::PREDICTION};
+  const ConversionRequest conversion_request(composer, request, context, config,
+                                             std::move(options));
   Segments segments;
 
   EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));

@@ -81,6 +81,10 @@ class MockDataAndImmutableConverter {
   std::unique_ptr<ImmutableConverter> immutable_converter_;
 };
 
+ConversionRequest ConvReq(ConversionRequest::RequestType request_type) {
+  return ConversionRequestBuilder().SetRequestType(request_type).Build();
+}
+
 }  // namespace
 
 class NBestGeneratorTest : public ::testing::Test {
@@ -120,8 +124,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
 
   Lattice lattice;
   lattice.SetKey("しんこうする");
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::CONVERSION);
+  const ConversionRequest request = ConvReq(ConversionRequest::CONVERSION);
   converter->MakeLattice(request, &segments, &lattice);
 
   std::vector<uint16_t> group;
@@ -177,8 +180,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
 
   Lattice lattice;
   lattice.SetKey(kText);
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::CONVERSION);
+  const ConversionRequest request = ConvReq(ConversionRequest::CONVERSION);
   converter->MakeLattice(request, &segments, &lattice);
 
   std::vector<uint16_t> group;
@@ -229,8 +231,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
 
   Lattice lattice;
   lattice.SetKey(kInput);
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::PREDICTION);
+  const ConversionRequest request = ConvReq(ConversionRequest::PREDICTION);
   converter->MakeLattice(request, &segments, &lattice);
 
   std::vector<uint16_t> group;
@@ -305,8 +306,7 @@ TEST_F(NBestGeneratorTest, NoPartialCandidateBetweenAlphabets) {
 
   Lattice lattice;
   lattice.SetKey(kInput);
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::PREDICTION);
+  const ConversionRequest request = ConvReq(ConversionRequest::PREDICTION);
   converter->MakeLattice(request, &segments, &lattice);
 
   std::vector<uint16_t> group;
@@ -350,8 +350,7 @@ TEST_F(NBestGeneratorTest, NoAlphabetsConnection2Nodes) {
 
   Lattice lattice;
   lattice.SetKey(kText);
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::CONVERSION);
+  const ConversionRequest request = ConvReq(ConversionRequest::CONVERSION);
   converter->MakeLattice(request, &segments, &lattice);
 
   std::vector<uint16_t> group;
@@ -392,8 +391,7 @@ TEST_F(NBestGeneratorTest, NoAlphabetsConnection3Nodes) {
 
   Lattice lattice;
   lattice.SetKey(kText);
-  ConversionRequest request;
-  request.set_request_type(ConversionRequest::CONVERSION);
+  const ConversionRequest request = ConvReq(ConversionRequest::CONVERSION);
   converter->MakeLattice(request, &segments, &lattice);
 
   std::vector<uint16_t> group;
@@ -413,7 +411,7 @@ TEST_F(NBestGeneratorTest, NoAlphabetsConnection3Nodes) {
   Segment result_segment;
   nbest_generator->SetCandidates(request, "", 10, &result_segment);
   // Tne top candidate consists of two elements, "eupho" and "東京". Such
-  // connection from English word to a noraml word is possible.
+  // connection from English word to a normal word is possible.
   ASSERT_GE(result_segment.candidates_size(), 1);
   EXPECT_EQ(result_segment.candidate(0).value, "eupho東京");
   EXPECT_EQ(result_segment.candidate(0).inner_segment_boundary.size(), 2);

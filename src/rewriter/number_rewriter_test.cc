@@ -217,8 +217,9 @@ TEST_F(NumberRewriterTest, RequestType) {
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "012";
     candidate->content_value = "012";
-    ConversionRequest request;
-    request.set_request_type(test_data.request_type_);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetRequestType(test_data.request_type_)
+            .Build();
     EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), test_data.expected_candidate_number_);
   }
