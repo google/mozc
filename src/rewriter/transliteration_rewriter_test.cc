@@ -448,9 +448,8 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
   Segment *segment = segments.add_segment();
   CHECK(segment);
 
-  const commands::Context context;
-  const ConversionRequest request(composer, default_request(), context,
-                                  default_config());
+  const ConversionRequest request =
+      ConversionRequestBuilder().SetComposer(composer).Build();
 
   segment->set_key("あ");
   segment = segments.add_segment();
@@ -518,7 +517,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
   segment->set_key("い、");
   const commands::Context context;
   const ConversionRequest rewrite_request(composer, request, context,
-                                          default_config());
+                                          default_config(), {});
   EXPECT_TRUE(t13n_rewriter->Rewrite(rewrite_request, &segments));
 
   // Do not want to show raw keys for implementation

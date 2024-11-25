@@ -69,13 +69,7 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
   }
   {
     Segments segments;
-    // Create an empty composer.
-    const Table table;
-    const commands::Request request;
-    const commands::Context context;
-    const config::Config config = config::ConfigHandler::DefaultConfig();
-    composer::Composer composer(&table, &request, &config);
-    ConversionRequest conv_request(composer, request, context, config);
+    const ConversionRequest conv_request;
     // Converter returns false, but not crash.
     EXPECT_FALSE(converter->StartConversion(conv_request, &segments));
   }

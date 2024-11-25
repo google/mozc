@@ -117,16 +117,6 @@ class ConversionRequest {
                           commands::Context::default_instance(),
                           config::ConfigHandler::DefaultConfig(), Options()) {}
 
-  // TODO(b/365909808): Remove this constructor after migrating to the
-  // constructor with Options.
-  ABSL_DEPRECATED("Use the constructor with Options instead.")
-  ConversionRequest(const composer::Composer &composer,
-                    const commands::Request &request,
-                    const commands::Context &context,
-                    const config::Config &config)
-      : ConversionRequest(true, composer.CreateComposerData(), request, context,
-                          config, Options()) {}
-
   ConversionRequest(const composer::Composer &composer,
                     const commands::Request &request,
                     const commands::Context &context,

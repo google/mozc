@@ -378,7 +378,7 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
       DCHECK(request_);
       DCHECK(config_);
       const ConversionRequest conversion_request(composer, *request_, context,
-                                                 *config_);
+                                                 *config_, {});
       if (!converter_->ResizeSegment(&segments_, conversion_request, 0,
                                      Util::CharsLen(composition))) {
         LOG(WARNING) << "ResizeSegment failed for segments.";
@@ -693,7 +693,7 @@ void SessionConverter::Commit(const composer::Composer &composer,
   DCHECK(request_);
   DCHECK(config_);
   const ConversionRequest conversion_request(composer, *request_, context,
-                                             *config_);
+                                             *config_, {});
   converter_->FinishConversion(conversion_request, &segments_);
   ResetState();
 }
@@ -744,7 +744,7 @@ bool SessionConverter::CommitSuggestionInternal(
     CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
     DCHECK(config_);
     const ConversionRequest conversion_request(composer, *request_, context,
-                                               *config_);
+                                               *config_, {});
     converter_->FinishConversion(conversion_request, &segments_);
     DCHECK_EQ(0, segments_.conversion_segments_size());
     ResetState();
@@ -976,7 +976,7 @@ void SessionConverter::ResizeSegmentWidth(const composer::Composer &composer,
   DCHECK(request_);
   DCHECK(config_);
   const ConversionRequest conversion_request(composer, *request_, context,
-                                             *config_);
+                                             *config_, {});
   if (!converter_->ResizeSegment(&segments_, conversion_request, segment_index_,
                                  delta)) {
     return;

@@ -430,7 +430,8 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
     InsertASCIISequence("query", &composer);
 
     const commands::Context context;
-    const ConversionRequest conv_request(composer, request, context, config);
+    const ConversionRequest conv_request(composer, request, context, config,
+                                         {});
     EXPECT_EQ(rewriter.capability(conv_request), param.type);
   }
 }

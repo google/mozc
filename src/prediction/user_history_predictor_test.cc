@@ -1365,7 +1365,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
                                        &segments);
     // convreq5 is not zero query suggestion unlike other convreqs.
     const ConversionRequest convreq5(composer_, non_zero_query_request, context,
-                                     config_);
+                                     config_, {});
     EXPECT_FALSE(predictor->PredictForRequest(convreq5, &segments));
 
     const ConversionRequest convreq6 = SetUpInputForSuggestionWithHistory(
@@ -1406,7 +1406,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
 
     // Zero query suggestion is disabled.
     const ConversionRequest non_zero_query_convreq(
-        composer_, non_zero_query_request, context, config_);
+        composer_, non_zero_query_request, context, config_, {});
     AddSegment("", &segments);  // empty request
     EXPECT_FALSE(
         predictor->PredictForRequest(non_zero_query_convreq, &segments));
