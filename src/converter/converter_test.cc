@@ -1182,7 +1182,7 @@ TEST_F(ConverterTest, PredictSetKey) {
             .SetComposer(composer)
             .SetRequestType(ConversionRequest::PREDICTION)
             .Build();
-    ASSERT_TRUE(converter->Predict(request, &segments));
+    ASSERT_TRUE(converter->StartPrediction(request, &segments));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).key(), kPredictionKey);

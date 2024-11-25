@@ -373,6 +373,27 @@ void Converter::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
 }
 
 namespace {
+bool ValidateConversionRequestForPrediction(const ConversionRequest &request) {
+  switch (request.request_type()) {
+    case ConversionRequest::CONVERSION:
+      // Conversion request is not for prediction.
+      return false;
+    case ConversionRequest::PREDICTION:
+    case ConversionRequest::SUGGESTION:
+      // Typical use case.
+      return true;
+    case ConversionRequest::PARTIAL_PREDICTION:
+    case ConversionRequest::PARTIAL_SUGGESTION: {
+      // Partial prediction/suggestion request is applicable only if the
+      // cursor is in the middle of the composer.
+      const size_t cursor = request.composer().GetCursor();
+      return cursor != 0 || cursor != request.composer().GetLength();
+    }
+    default:
+      ABSL_UNREACHABLE();
+  }
+}
+
 std::string GetPredictionKey(const ConversionRequest &request) {
   switch (request.request_type()) {
     case ConversionRequest::PREDICTION:
@@ -391,8 +412,10 @@ std::string GetPredictionKey(const ConversionRequest &request) {
 }
 }  // namespace
 
-bool Converter::Predict(const ConversionRequest &request,
-                        Segments *segments) const {
+bool Converter::StartPrediction(const ConversionRequest &request,
+                                Segments *segments) const {
+  DCHECK(ValidateConversionRequestForPrediction(request));
+
   const std::string key = GetPredictionKey(request);
   if (ShouldSetKeyForPrediction(key, *segments)) {
     SetKey(segments, key);
@@ -424,35 +447,6 @@ bool Converter::Predict(const ConversionRequest &request,
                                      segments->mutable_conversion_segment(0));
   }
   return IsValidSegments(request, *segments);
-}
-
-namespace {
-bool ValidateConversionRequestForPrediction(const ConversionRequest &request) {
-  switch (request.request_type()) {
-    case ConversionRequest::CONVERSION:
-      // Conversion request is not for prediction.
-      return false;
-    case ConversionRequest::PREDICTION:
-    case ConversionRequest::SUGGESTION:
-      // Typical use case.
-      return true;
-    case ConversionRequest::PARTIAL_PREDICTION:
-    case ConversionRequest::PARTIAL_SUGGESTION: {
-      // Partial prediction/suggestion request is applicable only if the
-      // cursor is in the middle of the composer.
-      const size_t cursor = request.composer().GetCursor();
-      return cursor != 0 || cursor != request.composer().GetLength();
-    }
-    default:
-      ABSL_UNREACHABLE();
-  }
-}
-}  // namespace
-
-bool Converter::StartPrediction(const ConversionRequest &request,
-                                Segments *segments) const {
-  DCHECK(ValidateConversionRequestForPrediction(request));
-  return Predict(request, segments);
 }
 
 void Converter::FinishConversion(const ConversionRequest &request,

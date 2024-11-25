@@ -158,9 +158,6 @@ class Converter final : public ConverterInterface {
   bool GetLastConnectivePart(absl::string_view preceding_text, std::string *key,
                              std::string *value, uint16_t *id) const;
 
-  ABSL_MUST_USE_RESULT bool Predict(const ConversionRequest &request,
-                                    Segments *segments) const;
-
   const dictionary::PosMatcher *pos_matcher_ = nullptr;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   std::unique_ptr<prediction::PredictorInterface> predictor_;
