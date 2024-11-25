@@ -227,13 +227,6 @@ class ConversionRequest {
   bool should_call_set_key_in_prediction() const {
     return options_.should_call_set_key_in_prediction;
   }
-  void set_should_call_set_key_in_prediction(bool value) {
-    options_.should_call_set_key_in_prediction = value;
-  }
-
-  void set_kana_modifier_insensitive_conversion(bool value) {
-    options_.kana_modifier_insensitive_conversion = value;
-  }
 
  private:
   // Required options

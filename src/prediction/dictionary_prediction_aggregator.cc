@@ -1725,9 +1725,13 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
   // from being used during the candidate aggregation. Kana modifier
   // insensitive dictionary lookup is also disabled as composition
   // spellchecker has already fixed them.
-  ConversionRequest corrected_request = request;
+  ConversionRequest::Options options = request.options();
+  options.kana_modifier_insensitive_conversion = false;
+  ConversionRequest corrected_request = ConversionRequestBuilder()
+                                            .SetConversionRequest(request)
+                                            .SetOptions(std::move(options))
+                                            .Build();
   corrected_request.reset_composer();
-  corrected_request.set_kana_modifier_insensitive_conversion(false);
 
   // Populates number when number candidate is not added.
   bool number_added = base_selected_types & NUMBER;
