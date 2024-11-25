@@ -116,9 +116,8 @@ bool MaybeRedundant(const absl::string_view reference,
 }
 
 bool IsLatinInputMode(const ConversionRequest &request) {
-  return (request.has_composer() &&
-          (request.composer().GetInputMode() == transliteration::HALF_ASCII ||
-           request.composer().GetInputMode() == transliteration::FULL_ASCII));
+  return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
+         request.composer().GetInputMode() == transliteration::FULL_ASCII;
 }
 
 bool IsQwertyMobileTable(const ConversionRequest &request) {
@@ -1055,7 +1054,6 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
     std::vector<Result> *results) const {
   DCHECK(results);
   DCHECK(dictionary_);
-  DCHECK(request.has_composer());
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION);
   const commands::DecoderExperimentParams &param =
@@ -1485,8 +1483,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
     dictionary.LookupPredictive(input_key, request, &callback);
   }
   // If input mode is FULL_ASCII, then convert the results to full-width.
-  if (request.has_composer() &&
-      request.composer().GetInputMode() == transliteration::FULL_ASCII) {
+  if (request.composer().GetInputMode() == transliteration::FULL_ASCII) {
     std::string tmp;
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       tmp.assign((*results)[i].value);

@@ -1542,7 +1542,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
     num_done = 1;
   }
 
-  if (request.has_composer() && !conversion_segments.empty()) {
+  if (!conversion_segments.empty()) {
     // Select the insert position by Romaji table.  Note:
     // TOGGLE_FLICK_TO_HIRAGANA uses digits for Hiragana composing, date/time
     // conversion is performed even when typing Hiragana characters.  Thus, it

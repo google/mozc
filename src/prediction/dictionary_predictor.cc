@@ -101,9 +101,8 @@ bool IsDebug(const ConversionRequest &request) {
 }
 
 bool IsLatinInputMode(const ConversionRequest &request) {
-  return (request.has_composer() &&
-          (request.composer().GetInputMode() == transliteration::HALF_ASCII ||
-           request.composer().GetInputMode() == transliteration::FULL_ASCII));
+  return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
+         request.composer().GetInputMode() == transliteration::FULL_ASCII;
 }
 
 bool IsMixedConversionEnabled(const Request &request) {
@@ -724,7 +723,6 @@ void DictionaryPredictor::FillCandidate(
   DCHECK(candidate);
 
   const bool cursor_at_tail =
-      request.has_composer() &&
       request.composer().GetCursor() == request.composer().GetLength();
 
   strings::Assign(candidate->content_key, key_value.key);

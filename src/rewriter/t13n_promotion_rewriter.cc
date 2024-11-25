@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <string>
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
@@ -55,9 +54,8 @@ namespace {
 constexpr size_t kLatinT13nOffset = 3;
 
 bool IsLatinInputMode(const ConversionRequest &request) {
-  return (request.has_composer() &&
-          (request.composer().GetInputMode() == transliteration::HALF_ASCII ||
-           request.composer().GetInputMode() == transliteration::FULL_ASCII));
+  return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
+         request.composer().GetInputMode() == transliteration::FULL_ASCII;
 }
 
 bool MaybeInsertLatinT13n(Segment *segment) {

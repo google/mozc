@@ -275,10 +275,6 @@ bool Converter::StartConversion(const ConversionRequest &original_request,
                                 Segments *segments) const {
   const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::CONVERSION);
-  if (!request.has_composer()) {
-    LOG(ERROR) << "Request doesn't have composer";
-    return false;
-  }
 
   std::string conversion_key;
   switch (request.composer_key_selection()) {
@@ -429,10 +425,6 @@ bool Converter::StartPrediction(const ConversionRequest &original_request,
                                 Segments *segments) const {
   const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PREDICTION);
-  if (!request.has_composer()) {
-    LOG(ERROR) << "Composer is nullptr";
-    return false;
-  }
 
   std::string prediction_key = request.composer().GetQueryForPrediction();
   return Predict(request, prediction_key, segments);
@@ -460,7 +452,6 @@ bool Converter::StartSuggestion(const ConversionRequest &original_request,
                                 Segments *segments) const {
   const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::SUGGESTION);
-  DCHECK(request.has_composer());
   std::string prediction_key = request.composer().GetQueryForPrediction();
   return Predict(request, prediction_key, segments);
 }
@@ -478,7 +469,6 @@ bool Converter::StartPartialSuggestion(
     const ConversionRequest &original_request, Segments *segments) const {
   const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PARTIAL_SUGGESTION);
-  DCHECK(request.has_composer());
   const size_t cursor = request.composer().GetCursor();
   if (cursor == 0 || cursor == request.composer().GetLength()) {
     return StartSuggestion(request, segments);
@@ -503,7 +493,6 @@ bool Converter::StartPartialPrediction(
     const ConversionRequest &original_request, Segments *segments) const {
   const ConversionRequest request = CreateConversionRequestWithType(
       original_request, ConversionRequest::PARTIAL_PREDICTION);
-  DCHECK(request.has_composer());
   const size_t cursor = request.composer().GetCursor();
   if (cursor == 0 || cursor == request.composer().GetLength()) {
     return StartPrediction(request, segments);

@@ -3223,5 +3223,20 @@ TEST_F(ComposerTest, CreateComposerOperators) {
   EXPECT_EQ(copied.source_text(), moved.source_text());
 }
 
+TEST_F(ComposerTest, CreateEmptyComposerData) {
+  const ComposerData data = Composer::CreateEmptyComposerData();
+  EXPECT_EQ(data.GetInputMode(), transliteration::HIRAGANA);
+  EXPECT_EQ(data.GetStringForPreedit(), "");
+  EXPECT_EQ(data.GetQueryForConversion(), "");
+  EXPECT_EQ(data.GetQueryForPrediction(), "");
+  EXPECT_EQ(data.GetStringForTypeCorrection(), "");
+  EXPECT_EQ(data.GetLength(), 0);
+  EXPECT_EQ(data.GetCursor(), 0);
+  EXPECT_EQ(data.GetRawString(), "");
+  EXPECT_EQ(data.GetRawSubString(0, 2), "");
+  EXPECT_EQ(data.GetRawSubString(1, 1), "");
+  EXPECT_EQ(data.source_text(), "");
+}
+
 }  // namespace composer
 }  // namespace mozc

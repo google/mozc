@@ -186,7 +186,7 @@ void GetAlphabetIds(const Segment &segment, uint16_t *lid, uint16_t *rid) {
 // BM_DesktopStationPredictionCorpusSuggestion 6149502840 -> 6152393270 (1.000)
 bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
                                         Segments *segments) const {
-  if (segments->conversion_segments_size() != 1 || !request.has_composer()) {
+  if (segments->conversion_segments_size() != 1) {
     return false;
   }
 
@@ -275,7 +275,7 @@ void LanguageAwareRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (segments->conversion_segments_size() != 1 || !request.has_composer()) {
+  if (segments->conversion_segments_size() != 1) {
     return;
   }
 

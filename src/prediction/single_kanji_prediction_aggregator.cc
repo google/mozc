@@ -52,16 +52,6 @@ namespace mozc::prediction {
 
 namespace {
 
-std::string GetKey(const ConversionRequest &request, const Segments &segments) {
-  std::string key;
-  if (request.has_composer()) {
-    key = request.composer().GetQueryForPrediction();
-  } else {
-    key = segments.conversion_segment(0).key();
-  }
-  return key;
-}
-
 bool UseSvs(const ConversionRequest &request) {
   return request.request()
              .decoder_experiment_params()
@@ -97,7 +87,8 @@ std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
 
   const bool use_svs = UseSvs(request);
 
-  std::string original_input_key = GetKey(request, segments);
+  const std::string original_input_key =
+      request.composer().GetQueryForPrediction();
   int offset = 0;
   for (std::string key = original_input_key; !key.empty();
        StripLastChar(&key)) {

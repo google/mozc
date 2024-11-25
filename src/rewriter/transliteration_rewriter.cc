@@ -58,10 +58,6 @@ namespace {
 
 bool IsComposerApplicable(const ConversionRequest &request,
                           const Segments *segments) {
-  if (!request.has_composer()) {
-    return false;
-  }
-
   std::string conversion_query;
   if (request.request_type() == ConversionRequest::PREDICTION ||
       request.request_type() == ConversionRequest::SUGGESTION) {
@@ -355,11 +351,6 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
     // one conversion segment.
     // This is spec matter.
     // Rewriting multiple segments will not make users happier.
-    return false;
-  }
-  // This process is done on composer's data.
-  // If the request doesn't have a composer, this method can do nothing.
-  if (!request.has_composer()) {
     return false;
   }
   const composer::ComposerData &composer = request.composer();
