@@ -1361,7 +1361,7 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
     Segment::Candidate::SourceInfo source_info, int zip_code_id, int unknown_id,
     std::vector<Result> *results) {
   const absl::btree_set<std::string> empty_expanded;
-  if (!request.has_composer()) {
+  if (request.use_conversion_segment_key_as_typing_corrected_key()) {
     std::string input_key(history_key);
     input_key.append(segments.conversion_segment(0).key());
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
@@ -1413,7 +1413,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
     Segment::Candidate::SourceInfo source_info, int unknown_id_,
     std::vector<Result> *results) const {
   absl::btree_set<std::string> expanded;
-  if (!request.has_composer()) {
+  if (request.use_conversion_segment_key_as_typing_corrected_key()) {
     std::string input_key(history_key);
     input_key.append(segments.conversion_segment(0).key());
     PredictiveBigramLookupCallback callback(
@@ -1721,17 +1721,19 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     return;
   }
 
-  // Make ConversionRequest that has no composer to avoid the original key
-  // from being used during the candidate aggregation. Kana modifier
-  // insensitive dictionary lookup is also disabled as composition
+  // Make ConversionRequest that uses conversion_segment(0).key() as typing
+  // corrected key instead of ComposerData to avoid the original key from being
+  // used during the candidate aggregation.
+  // Kana modifier insensitive dictionary lookup is also disabled as composition
   // spellchecker has already fixed them.
   ConversionRequest::Options options = request.options();
   options.kana_modifier_insensitive_conversion = false;
-  ConversionRequest corrected_request = ConversionRequestBuilder()
-                                            .SetConversionRequest(request)
-                                            .SetOptions(std::move(options))
-                                            .Build();
-  corrected_request.reset_composer();
+  options.use_conversion_segment_key_as_typing_corrected_key = true;
+  const ConversionRequest corrected_request =
+      ConversionRequestBuilder()
+          .SetConversionRequest(request)
+          .SetOptions(std::move(options))
+          .Build();
 
   // Populates number when number candidate is not added.
   bool number_added = base_selected_types & NUMBER;
@@ -1826,10 +1828,10 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
   }
 
   std::string input_key;
-  if (request.has_composer()) {
-    input_key = request.composer().GetQueryForPrediction();
-  } else {
+  if (request.use_conversion_segment_key_as_typing_corrected_key()) {
     input_key = segments.conversion_segment(0).key();
+  } else {
+    input_key = request.composer().GetQueryForPrediction();
   }
 
   return AggregateNumberCandidates(input_key, results);
@@ -1879,15 +1881,12 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
     return;
   }
 
-  const std::string &input_key = [&]() {
-    std::string ret;
-    if (request.has_composer()) {
-      ret = request.composer().GetQueryForPrediction();
-    } else {
-      ret = segments.conversion_segment(0).key();
-    }
-    return ret;
-  }();
+  // TODO(b/365909808): Change GetQueryForPrediction() to return string_view.
+  // It returns std::string now.
+  const std::string input_key =
+      request.use_conversion_segment_key_as_typing_corrected_key()
+          ? segments.conversion_segment(0).key()
+          : request.composer().GetQueryForPrediction();
 
   const size_t input_key_len = Util::CharsLen(input_key);
   if (input_key_len <= 1) {

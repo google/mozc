@@ -33,7 +33,6 @@
 #include <cstddef>
 #include <utility>
 
-#include "absl/base/attributes.h"
 #include "absl/log/check.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
@@ -109,6 +108,10 @@ class ConversionRequest {
 
     // If true, enable kana modifier insensitive conversion.
     bool kana_modifier_insensitive_conversion = true;
+
+    // If true, use conversion_segment(0).key() instead of ComposerData.
+    // TODO(b/365909808): Create a new string field to store the key.
+    bool use_conversion_segment_key_as_typing_corrected_key = false;
   };
 
   ConversionRequest()
@@ -159,8 +162,6 @@ class ConversionRequest {
   bool has_composer() const { return has_composer_; }
   const composer::ComposerData &composer() const { return composer_; }
 
-  void reset_composer() { has_composer_ = false; }
-
   bool use_actual_converter_for_realtime_conversion() const {
     return options_.use_actual_converter_for_realtime_conversion;
   }
@@ -206,6 +207,10 @@ class ConversionRequest {
 
   size_t max_dictionary_prediction_candidates_size() const {
     return options_.max_dictionary_prediction_candidates_size;
+  }
+
+  bool use_conversion_segment_key_as_typing_corrected_key() const {
+    return options_.use_conversion_segment_key_as_typing_corrected_key;
   }
 
  private:
