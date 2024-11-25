@@ -1121,20 +1121,16 @@ TEST_F(ConverterTest, PredictSetKey) {
   // Tests whether SetKey method is called or not.
   struct TestData {
     // Input conditions.
-    const bool should_call_set_key_in_prediction;  // Member of Request.
     const std::optional<absl::string_view> key;    // Input key presence.
 
     const bool expect_set_key_is_called;
   };
   const TestData test_data_list[] = {
-      {true, std::nullopt, true},
-      {true, kPredictionKey, true},
-      {true, kPredictionKey2, true},
-      {false, std::nullopt, true},
-      {false, kPredictionKey2, true},
+      {std::nullopt, true},
+      {kPredictionKey2, true},
       // This is the only case where SetKey() is not called; because SetKey is
       // not requested in Request and Segments' key is already present.
-      {false, kPredictionKey, false},
+      {kPredictionKey, false},
   };
 
   std::unique_ptr<ConverterAndData> converter_and_data(
@@ -1155,11 +1151,7 @@ TEST_F(ConverterTest, PredictSetKey) {
 
     const ConversionRequest request =
         ConversionRequestBuilder()
-            .SetOptions({
-                .request_type = ConversionRequest::PREDICTION,
-                .should_call_set_key_in_prediction =
-                    test_data.should_call_set_key_in_prediction,
-            })
+            .SetRequestType(ConversionRequest::PREDICTION)
             .Build();
 
     ASSERT_TRUE(converter->Predict(request, kPredictionKey, &segments));

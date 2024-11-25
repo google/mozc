@@ -107,9 +107,6 @@ class ConversionRequest {
     // Please refer to session/internal/keymap.h
     bool enable_user_history_for_conversion = true;
 
-    // If true, set conversion key to output segments in prediction.
-    bool should_call_set_key_in_prediction = false;
-
     // If true, enable kana modifier insensitive conversion.
     bool kana_modifier_insensitive_conversion = true;
   };
@@ -219,10 +216,6 @@ class ConversionRequest {
 
   size_t max_dictionary_prediction_candidates_size() const {
     return options_.max_dictionary_prediction_candidates_size;
-  }
-
-  bool should_call_set_key_in_prediction() const {
-    return options_.should_call_set_key_in_prediction;
   }
 
  private:

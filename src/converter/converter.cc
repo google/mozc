@@ -89,15 +89,13 @@ void SetKey(Segments *segments, const absl::string_view key) {
   MOZC_VLOG(2) << segments->DebugString();
 }
 
-bool ShouldSetKeyForPrediction(const ConversionRequest &request,
-                               const absl::string_view key,
+bool ShouldSetKeyForPrediction(const absl::string_view key,
                                const Segments &segments) {
-  // (1) If should_call_set_key_in_prediction is true, invoke SetKey.
-  // (2) If the segment size is 0, invoke SetKey because the segments is not
+  // (1) If the segment size is 0, invoke SetKey because the segments is not
   //   correctly prepared.
   //   If the key of the segments differs from the input key,
   //   invoke SetKey because current segments should be completely reset.
-  // (3) Otherwise keep current key and candidates.
+  // (2) Otherwise keep current key and candidates.
   //
   // This SetKey omitting is for mobile predictor.
   // On normal inputting, we are showing suggestion results. When users
@@ -109,14 +107,8 @@ bool ShouldSetKeyForPrediction(const ConversionRequest &request,
   // incomplete input, for example, conversion key is "あ" for the input "a",
   // and will still be "あ" for the input "ak". For avoiding mis-reset of
   // the results, we will reset always for suggestion request type.
-  if (request.should_call_set_key_in_prediction()) {
-    return true;  // SetKey for (1)
-  }
-  if (segments.conversion_segments_size() == 0 ||
-      segments.conversion_segment(0).key() != key) {
-    return true;  // (2)
-  }
-  return false;  // (3)
+  return segments.conversion_segments_size() == 0 ||
+         segments.conversion_segment(0).key() != key;
 }
 
 bool IsMobile(const ConversionRequest &request) {
@@ -401,7 +393,7 @@ void Converter::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
 // TODO(noriyukit): |key| can be a member of ConversionRequest.
 bool Converter::Predict(const ConversionRequest &request,
                         const absl::string_view key, Segments *segments) const {
-  if (ShouldSetKeyForPrediction(request, key, *segments)) {
+  if (ShouldSetKeyForPrediction(key, *segments)) {
     SetKey(segments, key);
   }
   DCHECK_EQ(1, segments->conversion_segments_size());
