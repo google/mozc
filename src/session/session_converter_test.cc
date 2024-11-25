@@ -330,8 +330,6 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
 
     EXPECT_EQ(lhs.conversion_preferences().use_history,
               rhs.conversion_preferences().use_history);
-    EXPECT_EQ(lhs.conversion_preferences().max_history_size,
-              rhs.conversion_preferences().max_history_size);
     EXPECT_EQ(IsCandidateListVisible(lhs), IsCandidateListVisible(rhs));
 
     Segments segments_lhs, segments_rhs;
@@ -1737,8 +1735,6 @@ TEST_F(SessionConverterTest, ClearSegmentsBeforeSuggest) {
 
   // Then, call Suggest() again. It should be called with brand new segments.
   Segments empty;
-  empty.set_max_history_segments_size(
-      converter.conversion_preferences().max_history_size);
   EXPECT_CALL(mock_converter,
               StartSuggestion(_, Pointee(EqualsSegments(empty))))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));

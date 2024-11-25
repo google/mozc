@@ -48,7 +48,6 @@ namespace mozc {
 namespace session {
 
 struct ConversionPreferences {
-  int max_history_size;
   bool use_history;
 
   // This is a flag to check if the converter should return the suggestion

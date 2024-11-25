@@ -126,13 +126,6 @@ void InitSegmentsFromString(std::string key, std::string preedit,
   c->key = key;
   c->content_key = std::move(key);
 }
-
-void SetConversionPreferences(
-    const ConversionPreferences &preferences, Segments &segments,
-    ConversionRequest::Options &request) {
-  segments.set_max_history_segments_size(preferences.max_history_size);
-  request.enable_user_history_for_conversion = preferences.use_history;
-}
 }  // namespace
 
 SessionConverter::SessionConverter(const ConverterInterface *converter,
@@ -150,7 +143,6 @@ SessionConverter::SessionConverter(const ConverterInterface *converter,
       client_revision_(0),
       candidate_list_visible_(false) {
   conversion_preferences_.use_history = true;
-  conversion_preferences_.max_history_size = kDefaultMaxHistorySize;
   conversion_preferences_.request_suggestion = true;
   candidate_list_.set_page_size(request->candidate_page_size());
   SetConfig(config);
@@ -182,7 +174,7 @@ bool SessionConverter::ConvertWithPreferences(
   DCHECK(request_);
   DCHECK(config_);
   ConversionRequest::Options options;
-  SetConversionPreferences(preferences, segments_, options);
+  options.enable_user_history_for_conversion = preferences.use_history;
   SetRequestType(ConversionRequest::CONVERSION, options);
   const ConversionRequest conversion_request(composer, *request_, context,
                                              *config_, std::move(options));
@@ -462,7 +454,7 @@ bool SessionConverter::SuggestWithPreferences(
 
   // Initialize the conversion request and segments for suggestion.
   ConversionRequest::Options options;
-  SetConversionPreferences(preferences, segments_, options);
+  options.enable_user_history_for_conversion = preferences.use_history;
   segments_.clear_conversion_segments();
 
   const size_t cursor = composer.GetCursor();
@@ -577,7 +569,7 @@ bool SessionConverter::PredictWithPreferences(
 
   // Initialize the segments and conversion_request for prediction
   ConversionRequest::Options options;
-  SetConversionPreferences(preferences, segments_, options);
+  options.enable_user_history_for_conversion = preferences.use_history;
   const commands::Context context;
   DCHECK(request_);
   DCHECK(config_);
