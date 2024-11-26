@@ -68,7 +68,7 @@ class BasePredictor : public PredictorInterface {
   // Syncs user history.
   bool Sync() override;
 
-  // Reloads usre history.
+  // Reloads user history.
   bool Reload() override;
 
   // Waits for syncer to complete.
