@@ -135,58 +135,6 @@ bool IsValidSegments(const ConversionRequest &request,
   return true;
 }
 
-// Extracts the last substring that consists of the same script type.
-// Returns true if the last substring is successfully extracted.
-//   Examples:
-//   - "" -> false
-//   - "x " -> "x" / ALPHABET
-//   - "x  " -> false
-//   - "C60" -> "60" / NUMBER
-//   - "200x" -> "x" / ALPHABET
-//   (currently only NUMBER and ALPHABET are supported)
-bool ExtractLastTokenWithScriptType(const absl::string_view text,
-                                    std::string *last_token,
-                                    Util::ScriptType *last_script_type) {
-  last_token->clear();
-  *last_script_type = Util::SCRIPT_TYPE_SIZE;
-
-  ConstChar32ReverseIterator iter(text);
-  if (iter.Done()) {
-    return false;
-  }
-
-  // Allow one whitespace at the end.
-  if (iter.Get() == ' ') {
-    iter.Next();
-    if (iter.Done()) {
-      return false;
-    }
-    if (iter.Get() == ' ') {
-      return false;
-    }
-  }
-
-  std::vector<char32_t> reverse_last_token;
-  Util::ScriptType last_script_type_found = Util::GetScriptType(iter.Get());
-  for (; !iter.Done(); iter.Next()) {
-    const char32_t codepoint = iter.Get();
-    if ((codepoint == ' ') ||
-        (Util::GetScriptType(codepoint) != last_script_type_found)) {
-      break;
-    }
-    reverse_last_token.push_back(codepoint);
-  }
-
-  *last_script_type = last_script_type_found;
-  // TODO(yukawa): Replace reverse_iterator with const_reverse_iterator when
-  //     build failure on Android is fixed.
-  for (std::vector<char32_t>::reverse_iterator it = reverse_last_token.rbegin();
-       it != reverse_last_token.rend(); ++it) {
-    Util::CodepointToUtf8Append(*it, last_token);
-  }
-  return true;
-}
-
 // Tries normalizing input text as a math expression, where full-width numbers
 // and math symbols are converted to their half-width equivalents except for
 // some special symbols, e.g., "×", "÷", and "・". Returns false if the input
@@ -264,6 +212,7 @@ Converter::Converter(const engine::Modules &modules,
       immutable_converter_(immutable_converter),
       pos_matcher_(*modules.GetPosMatcher()),
       suppression_dictionary_(*modules.GetSuppressionDictionary()),
+      history_reconstructor_(*modules.GetPosMatcher()),
       general_noun_id_(pos_matcher_.GetGeneralNounId()) {}
 
 void Converter::Init(std::unique_ptr<PredictorInterface> predictor,
@@ -521,26 +470,7 @@ bool Converter::DeleteCandidateFromHistory(const Segments &segments,
 bool Converter::ReconstructHistory(
     Segments *segments, const absl::string_view preceding_text) const {
   segments->Clear();
-
-  std::string key;
-  std::string value;
-  uint16_t id;
-  if (!GetLastConnectivePart(preceding_text, &key, &value, &id)) {
-    return false;
-  }
-
-  Segment *segment = segments->add_segment();
-  segment->set_key(key);
-  segment->set_segment_type(Segment::HISTORY);
-  Segment::Candidate *candidate = segment->push_back_candidate();
-  candidate->rid = id;
-  candidate->lid = id;
-  candidate->content_key = key;
-  candidate->key = std::move(key);
-  candidate->content_value = value;
-  candidate->value = std::move(value);
-  candidate->attributes = Segment::Candidate::NO_LEARNING;
-  return true;
+  return history_reconstructor_.ReconstructHistory(preceding_text, segments);
 }
 
 bool Converter::CommitSegmentValueInternal(
@@ -947,12 +877,94 @@ void Converter::CommitUsageStats(const Segments *segments,
   UsageStats::IncrementCountBy("SubmittedTotalLength", submitted_total_length);
 }
 
-bool Converter::GetLastConnectivePart(const absl::string_view preceding_text,
-                                      std::string *key, std::string *value,
-                                      uint16_t *id) const {
+namespace {
+// Extracts the last substring that consists of the same script type.
+// Returns true if the last substring is successfully extracted.
+//   Examples:
+//   - "" -> false
+//   - "x " -> "x" / ALPHABET
+//   - "x  " -> false
+//   - "C60" -> "60" / NUMBER
+//   - "200x" -> "x" / ALPHABET
+//   (currently only NUMBER and ALPHABET are supported)
+bool ExtractLastTokenWithScriptType(const absl::string_view text,
+                                    std::string *last_token,
+                                    Util::ScriptType *last_script_type) {
+  last_token->clear();
+  *last_script_type = Util::SCRIPT_TYPE_SIZE;
+
+  ConstChar32ReverseIterator iter(text);
+  if (iter.Done()) {
+    return false;
+  }
+
+  // Allow one whitespace at the end.
+  if (iter.Get() == ' ') {
+    iter.Next();
+    if (iter.Done()) {
+      return false;
+    }
+    if (iter.Get() == ' ') {
+      return false;
+    }
+  }
+
+  std::vector<char32_t> reverse_last_token;
+  Util::ScriptType last_script_type_found = Util::GetScriptType(iter.Get());
+  for (; !iter.Done(); iter.Next()) {
+    const char32_t codepoint = iter.Get();
+    if ((codepoint == ' ') ||
+        (Util::GetScriptType(codepoint) != last_script_type_found)) {
+      break;
+    }
+    reverse_last_token.push_back(codepoint);
+  }
+
+  *last_script_type = last_script_type_found;
+  // TODO(yukawa): Replace reverse_iterator with const_reverse_iterator when
+  //     build failure on Android is fixed.
+  for (std::vector<char32_t>::reverse_iterator it = reverse_last_token.rbegin();
+       it != reverse_last_token.rend(); ++it) {
+    Util::CodepointToUtf8Append(*it, last_token);
+  }
+  return true;
+}
+}  // namespace
+
+namespace converter {
+HistoryReconstructor::HistoryReconstructor(
+    const dictionary::PosMatcher &pos_matcher)
+    : pos_matcher_(pos_matcher) {}
+
+bool HistoryReconstructor::ReconstructHistory(absl::string_view preceding_text,
+                                              Segments *segments) const {
+  std::string key;
+  std::string value;
+  uint16_t id;
+  if (!GetLastConnectivePart(preceding_text, &key, &value, &id)) {
+    return false;
+  }
+
+  Segment *segment = segments->add_segment();
+  segment->set_key(key);
+  segment->set_segment_type(Segment::HISTORY);
+  Segment::Candidate *candidate = segment->push_back_candidate();
+  candidate->rid = id;
+  candidate->lid = id;
+  candidate->content_key = key;
+  candidate->key = std::move(key);
+  candidate->content_value = value;
+  candidate->value = std::move(value);
+  candidate->attributes = Segment::Candidate::NO_LEARNING;
+  return true;
+}
+
+bool HistoryReconstructor::GetLastConnectivePart(
+    const absl::string_view preceding_text, std::string *key,
+    std::string *value, uint16_t *id) const {
   key->clear();
   value->clear();
-  *id = general_noun_id_;
+  *id = pos_matcher_.GetGeneralNounId();
 
   Util::ScriptType last_script_type = Util::SCRIPT_TYPE_SIZE;
   std::string last_token;
@@ -979,5 +991,5 @@ bool Converter::GetLastConnectivePart(const absl::string_view preceding_text,
       return false;
   }
 }
-
+}  // namespace converter
 }  // namespace mozc

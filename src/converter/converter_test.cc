@@ -1493,45 +1493,44 @@ TEST_F(ConverterTest, StartReverseConversion) {
   }
 }
 
-TEST_F(ConverterTest, GetLastConnectivePart) {
-  std::unique_ptr<ConverterAndData> converter_and_data(
-      CreateStubbedConverterAndData());
-  Converter *converter = converter_and_data->converter.get();
+TEST(HistoryReconstructorTest, GetLastConnectivePart) {
+  const testing::MockDataManager data_manager;
+  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
+  const converter::HistoryReconstructor reconstructor(pos_matcher);
 
   {
     std::string key;
     std::string value;
     uint16_t id = 0;
-    EXPECT_FALSE(converter->GetLastConnectivePart("", &key, &value, &id));
-    EXPECT_FALSE(converter->GetLastConnectivePart(" ", &key, &value, &id));
-    EXPECT_FALSE(converter->GetLastConnectivePart("  ", &key, &value, &id));
+    EXPECT_FALSE(reconstructor.GetLastConnectivePart("", &key, &value, &id));
+    EXPECT_FALSE(reconstructor.GetLastConnectivePart(" ", &key, &value, &id));
+    EXPECT_FALSE(reconstructor.GetLastConnectivePart("  ", &key, &value, &id));
   }
 
   {
     std::string key;
     std::string value;
     uint16_t id = 0;
-    EXPECT_TRUE(converter->GetLastConnectivePart("a", &key, &value, &id));
+    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a", &key, &value, &id));
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "a");
-    EXPECT_EQ(id,
-              converter_and_data->converter->pos_matcher_.GetUniqueNounId());
+    EXPECT_EQ(id, pos_matcher.GetUniqueNounId());
 
-    EXPECT_TRUE(converter->GetLastConnectivePart("a ", &key, &value, &id));
-    EXPECT_EQ(key, "a");
-    EXPECT_EQ(value, "a");
-
-    EXPECT_FALSE(converter->GetLastConnectivePart("a  ", &key, &value, &id));
-
-    EXPECT_TRUE(converter->GetLastConnectivePart("a ", &key, &value, &id));
+    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a ", &key, &value, &id));
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "a");
 
-    EXPECT_TRUE(converter->GetLastConnectivePart("a10a", &key, &value, &id));
+    EXPECT_FALSE(reconstructor.GetLastConnectivePart("a  ", &key, &value, &id));
+
+    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a ", &key, &value, &id));
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "a");
 
-    EXPECT_TRUE(converter->GetLastConnectivePart("ａ", &key, &value, &id));
+    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a10a", &key, &value, &id));
+    EXPECT_EQ(key, "a");
+    EXPECT_EQ(value, "a");
+
+    EXPECT_TRUE(reconstructor.GetLastConnectivePart("ａ", &key, &value, &id));
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "ａ");
   }
@@ -1540,16 +1539,17 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
     std::string key;
     std::string value;
     uint16_t id = 0;
-    EXPECT_TRUE(converter->GetLastConnectivePart("10", &key, &value, &id));
+    EXPECT_TRUE(reconstructor.GetLastConnectivePart("10", &key, &value, &id));
     EXPECT_EQ(key, "10");
     EXPECT_EQ(value, "10");
-    EXPECT_EQ(id, converter_and_data->converter->pos_matcher_.GetNumberId());
+    EXPECT_EQ(id, pos_matcher.GetNumberId());
 
-    EXPECT_TRUE(converter->GetLastConnectivePart("10a10", &key, &value, &id));
+    EXPECT_TRUE(
+        reconstructor.GetLastConnectivePart("10a10", &key, &value, &id));
     EXPECT_EQ(key, "10");
     EXPECT_EQ(value, "10");
 
-    EXPECT_TRUE(converter->GetLastConnectivePart("１０", &key, &value, &id));
+    EXPECT_TRUE(reconstructor.GetLastConnectivePart("１０", &key, &value, &id));
     EXPECT_EQ(key, "10");
     EXPECT_EQ(value, "１０");
   }
@@ -1558,7 +1558,7 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
     std::string key;
     std::string value;
     uint16_t id = 0;
-    EXPECT_FALSE(converter->GetLastConnectivePart("あ", &key, &value, &id));
+    EXPECT_FALSE(reconstructor.GetLastConnectivePart("あ", &key, &value, &id));
   }
 }
 
