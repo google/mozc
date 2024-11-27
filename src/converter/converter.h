@@ -53,6 +53,19 @@
 
 namespace mozc {
 
+namespace converter {
+class ReverseConverter {
+ public:
+  explicit ReverseConverter(
+      const ImmutableConverterInterface &immutable_converter);
+
+  bool ReverseConvert(absl::string_view key, Segments *segments) const;
+
+ private:
+  const ImmutableConverterInterface &immutable_converter_;
+};
+}  // namespace converter
+
 class Converter final : public ConverterInterface {
  public:
   Converter(const engine::Modules &modules,
@@ -162,6 +175,7 @@ class Converter final : public ConverterInterface {
   const dictionary::PosMatcher &pos_matcher_;
   const dictionary::SuppressionDictionary &suppression_dictionary_;
   const converter::HistoryReconstructor history_reconstructor_;
+  const converter::ReverseConverter reverse_converter_;
   const uint16_t general_noun_id_ = std::numeric_limits<uint16_t>::max();
 
   std::unique_ptr<prediction::PredictorInterface> predictor_;
