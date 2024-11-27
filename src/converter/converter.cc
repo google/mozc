@@ -258,17 +258,19 @@ ConversionRequest CreateConversionRequestWithType(
 
 }  // namespace
 
-void Converter::Init(const engine::Modules &modules,
-                     std::unique_ptr<PredictorInterface> predictor,
-                     std::unique_ptr<RewriterInterface> rewriter,
-                     ImmutableConverterInterface *immutable_converter) {
+Converter::Converter(const engine::Modules &modules,
+                     const ImmutableConverterInterface &immutable_converter)
+    : modules_(modules),
+      immutable_converter_(immutable_converter),
+      pos_matcher_(*modules.GetPosMatcher()),
+      suppression_dictionary_(*modules.GetSuppressionDictionary()),
+      general_noun_id_(pos_matcher_.GetGeneralNounId()) {}
+
+void Converter::Init(std::unique_ptr<PredictorInterface> predictor,
+                     std::unique_ptr<RewriterInterface> rewriter) {
   // Initializes in order of declaration.
-  pos_matcher_ = modules.GetPosMatcher();
-  suppression_dictionary_ = modules.GetSuppressionDictionary();
   predictor_ = std::move(predictor);
   rewriter_ = std::move(rewriter);
-  immutable_converter_ = immutable_converter;
-  general_noun_id_ = pos_matcher_->GetGeneralNounId();
 }
 
 bool Converter::StartConversion(const ConversionRequest &original_request,
@@ -292,7 +294,7 @@ bool Converter::StartConversion(const ConversionRequest &original_request,
   }
 
   SetKey(segments, key);
-  if (!immutable_converter_->ConvertForRequest(request, segments)) {
+  if (!immutable_converter_.ConvertForRequest(request, segments)) {
     // Conversion can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
@@ -330,7 +332,7 @@ bool Converter::StartReverseConversion(Segments *segments,
       ConversionRequestBuilder()
           .SetOptions({.request_type = ConversionRequest::REVERSE_CONVERSION})
           .Build();
-  if (!immutable_converter_->ConvertForRequest(default_request, segments)) {
+  if (!immutable_converter_.ConvertForRequest(default_request, segments)) {
     return false;
   }
   if (segments->segments_size() == 0) {
@@ -725,7 +727,7 @@ bool Converter::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!immutable_converter_->ConvertForRequest(request, segments)) {
+  if (!immutable_converter_.ConvertForRequest(request, segments)) {
     // Conversion can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
@@ -791,7 +793,7 @@ bool Converter::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!immutable_converter_->ConvertForRequest(request, segments)) {
+  if (!immutable_converter_.ConvertForRequest(request, segments)) {
     // Conversion can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
@@ -841,7 +843,7 @@ void Converter::CompletePosIds(Segment::Candidate *candidate) const {
             })
             .Build();
     // In order to complete PosIds, call ImmutableConverter again.
-    if (!immutable_converter_->ConvertForRequest(request, &segments)) {
+    if (!immutable_converter_.ConvertForRequest(request, &segments)) {
       LOG(ERROR) << "ImmutableConverter::Convert() failed";
       return;
     }
@@ -874,7 +876,7 @@ void Converter::RewriteAndSuppressCandidates(const ConversionRequest &request,
   }
   // Optimization for common use case: Since most of users don't use suppression
   // dictionary and we can skip the subsequent check.
-  if (suppression_dictionary_->IsEmpty()) {
+  if (suppression_dictionary_.IsEmpty()) {
     return;
   }
   // Although the suppression dictionary is applied at node-level in dictionary
@@ -884,7 +886,7 @@ void Converter::RewriteAndSuppressCandidates(const ConversionRequest &request,
   for (Segment &segment : segments->conversion_segments()) {
     for (size_t j = 0; j < segment.candidates_size();) {
       const Segment::Candidate &cand = segment.candidate(j);
-      if (suppression_dictionary_->SuppressEntry(cand.key, cand.value)) {
+      if (suppression_dictionary_.SuppressEntry(cand.key, cand.value)) {
         segment.erase_candidate(j);
       } else {
         ++j;
@@ -964,13 +966,13 @@ bool Converter::GetLastConnectivePart(const absl::string_view preceding_text,
     case Util::NUMBER: {
       *key = japanese_util::FullWidthAsciiToHalfWidthAscii(last_token);
       *value = std::move(last_token);
-      *id = pos_matcher_->GetNumberId();
+      *id = pos_matcher_.GetNumberId();
       return true;
     }
     case Util::ALPHABET: {
       *key = japanese_util::FullWidthAsciiToHalfWidthAscii(last_token);
       *value = std::move(last_token);
-      *id = pos_matcher_->GetUniqueNounId();
+      *id = pos_matcher_.GetUniqueNounId();
       return true;
     }
     default:

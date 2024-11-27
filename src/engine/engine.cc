@@ -188,7 +188,7 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
   // TODO(noriyukit): This circular dependency is a bad design as careful
   // handling is necessary to avoid infinite loop. Find more beautiful design
   // and fix it!
-  converter_ = std::make_unique<Converter>();
+  converter_ = std::make_unique<Converter>(*modules_, *immutable_converter_);
   RETURN_IF_NULL(converter_);
 
   std::unique_ptr<PredictorInterface> predictor;
@@ -223,8 +223,7 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
   RETURN_IF_NULL(rewriter);
   rewriter_ = rewriter.get();  // Keep the reference
 
-  converter_->Init(*modules_, std::move(predictor), std::move(rewriter),
-                   immutable_converter_.get());
+  converter_->Init(std::move(predictor), std::move(rewriter));
 
   user_data_manager_ = std::make_unique<UserDataManager>(predictor_, rewriter_);
 

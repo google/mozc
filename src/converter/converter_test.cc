@@ -288,13 +288,15 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     const engine::Modules &modules = converter_and_data->modules;
     converter_and_data->immutable_converter =
         std::make_unique<ImmutableConverter>(modules);
-    converter_and_data->converter = std::make_unique<Converter>();
+    const ImmutableConverterInterface &immutable_converter =
+        *converter_and_data->immutable_converter;
+    converter_and_data->converter =
+        std::make_unique<Converter>(modules, immutable_converter);
 
     auto predictor = CreatePredictor(predictor_type, modules.GetPosMatcher(),
                                      *converter_and_data);
     converter_and_data->converter->Init(
-        modules, std::move(predictor), std::move(rewriter),
-        converter_and_data->immutable_converter.get());
+        std::move(predictor), std::move(rewriter));
   }
 
   std::unique_ptr<ConverterAndData> CreateConverterAndData(
@@ -1232,15 +1234,13 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
 
   auto immutable_converter = std::make_unique<ImmutableConverter>(modules);
-  Converter converter;
+  Converter converter(modules, *immutable_converter);
   converter.Init(
-      modules,
       DefaultPredictor::CreateDefaultPredictor(
           std::make_unique<DictionaryPredictor>(modules, &converter,
                                                 immutable_converter.get()),
           std::make_unique<UserHistoryPredictor>(modules, false), &converter),
-      std::make_unique<Rewriter>(modules, converter),
-      immutable_converter.get());
+      std::make_unique<Rewriter>(modules, converter));
 
   Segments segments;
   {
@@ -1515,7 +1515,7 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "a");
     EXPECT_EQ(id,
-              converter_and_data->converter->pos_matcher_->GetUniqueNounId());
+              converter_and_data->converter->pos_matcher_.GetUniqueNounId());
 
     EXPECT_TRUE(converter->GetLastConnectivePart("a ", &key, &value, &id));
     EXPECT_EQ(key, "a");
@@ -1543,7 +1543,7 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
     EXPECT_TRUE(converter->GetLastConnectivePart("10", &key, &value, &id));
     EXPECT_EQ(key, "10");
     EXPECT_EQ(value, "10");
-    EXPECT_EQ(id, converter_and_data->converter->pos_matcher_->GetNumberId());
+    EXPECT_EQ(id, converter_and_data->converter->pos_matcher_.GetNumberId());
 
     EXPECT_TRUE(converter->GetLastConnectivePart("10a10", &key, &value, &id));
     EXPECT_EQ(key, "10");
@@ -2020,11 +2020,13 @@ TEST_F(ConverterTest, RevertConversion) {
 
   converter_and_data->immutable_converter =
       std::make_unique<ImmutableConverter>(modules);
-  converter_and_data->converter = std::make_unique<Converter>();
+  const ImmutableConverterInterface &immutable_converter =
+      *converter_and_data->immutable_converter;
+  converter_and_data->converter =
+      std::make_unique<Converter>(modules, immutable_converter);
 
   converter_and_data->converter->Init(
-      modules, std::move(mock_predictor), std::move(mock_rewriter),
-      converter_and_data->immutable_converter.get());
+      std::move(mock_predictor), std::move(mock_rewriter));
 
   ConverterInterface *converter = converter_and_data->converter.get();
   Segments segments;

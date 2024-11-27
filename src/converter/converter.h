@@ -54,13 +54,12 @@ namespace mozc {
 
 class Converter final : public ConverterInterface {
  public:
-  Converter() = default;
+  Converter(const engine::Modules &modules,
+            const ImmutableConverterInterface &immutable_converter);
 
   // Lazily initializes the internal members. Must be called before the use.
-  void Init(const engine::Modules &modules,
-            std::unique_ptr<prediction::PredictorInterface> predictor,
-            std::unique_ptr<RewriterInterface> rewriter,
-            ImmutableConverterInterface *immutable_converter);
+  void Init(std::unique_ptr<prediction::PredictorInterface> predictor,
+            std::unique_ptr<RewriterInterface> rewriter);
 
   ABSL_MUST_USE_RESULT
   bool StartConversion(const ConversionRequest &request,
@@ -158,12 +157,14 @@ class Converter final : public ConverterInterface {
   bool GetLastConnectivePart(absl::string_view preceding_text, std::string *key,
                              std::string *value, uint16_t *id) const;
 
-  const dictionary::PosMatcher *pos_matcher_ = nullptr;
-  const dictionary::SuppressionDictionary *suppression_dictionary_;
+  const engine::Modules &modules_;
+  const ImmutableConverterInterface &immutable_converter_;
+  const dictionary::PosMatcher &pos_matcher_;
+  const dictionary::SuppressionDictionary &suppression_dictionary_;
+  const uint16_t general_noun_id_ = std::numeric_limits<uint16_t>::max();
+
   std::unique_ptr<prediction::PredictorInterface> predictor_;
   std::unique_ptr<RewriterInterface> rewriter_;
-  const ImmutableConverterInterface *immutable_converter_ = nullptr;
-  uint16_t general_noun_id_ = std::numeric_limits<uint16_t>::max();
 };
 
 }  // namespace mozc
