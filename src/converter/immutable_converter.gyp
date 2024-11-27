@@ -33,16 +33,6 @@
 {
   'targets': [
     {
-      'target_name': 'immutable_converter_interface',
-      'type': 'static_library',
-      'sources': [
-        'immutable_converter_interface.cc',
-      ],
-      'dependencies': [
-        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
-      ],
-    },
-    {
       'target_name': 'immutable_converter',
       'type': 'static_library',
       'sources': [
@@ -62,6 +52,7 @@
         '<(mozc_oss_src_dir)/engine/engine_base.gyp:modules',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_rewriter_files#host',
         'immutable_converter_interface',
       ],

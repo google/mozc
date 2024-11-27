@@ -315,7 +315,6 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "immutable_converter_interface",
-    srcs = ["immutable_converter_interface.cc"],
     hdrs = ["immutable_converter_interface.h"],
     visibility = [
         "//:__subpackages__",

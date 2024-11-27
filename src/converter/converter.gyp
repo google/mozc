@@ -54,7 +54,6 @@
         'converter_base.gyp:segmenter',
         'converter_base.gyp:segments',
         'immutable_converter.gyp:immutable_converter',
-        'immutable_converter.gyp:immutable_converter_interface',
       ],
       'export_dependent_settings': [
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',

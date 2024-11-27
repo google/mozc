@@ -42,18 +42,12 @@ class ImmutableConverterInterface {
  public:
   virtual ~ImmutableConverterInterface() = default;
 
-  // This method is equivalent to:
-  //   const ConversionRequest request;
-  //   ConvertForRequest(request, segments);
-  // TODO(hidehiko): Deprecate this method and use ConvertForRequest.
-  ABSL_MUST_USE_RESULT virtual bool Convert(Segments *segments) const;
-
   // This method should be pure-virtual method in theory.
   // However, to keep the backward compatibility until the deprecation of
   // Conversion method, we provide the default implementation.
   // Please see the .cc file.
   ABSL_MUST_USE_RESULT virtual bool ConvertForRequest(
-      const ConversionRequest &request, Segments *segments) const;
+      const ConversionRequest &request, Segments *segments) const = 0;
 
  protected:
   ImmutableConverterInterface() = default;

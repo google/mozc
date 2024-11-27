@@ -326,7 +326,12 @@ TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   EXPECT_LE(1, segments.segments_size());
   EXPECT_LT(0, segments.segment(0).candidates_size());
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
@@ -425,7 +430,12 @@ TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
   // least one candidate is generated.
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetRequestType(ConversionRequest::CONVERSION)
+          .Build();
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   EXPECT_EQ(segments.history_segments_size(), 0);
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_GT(segments.segment(0).candidates_size(), 0);
