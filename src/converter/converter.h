@@ -42,6 +42,7 @@
 #include "converter/converter_interface.h"
 #include "converter/history_reconstructor.h"
 #include "converter/immutable_converter_interface.h"
+#include "converter/reverse_converter.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
@@ -52,19 +53,6 @@
 #include "testing/friend_test.h"
 
 namespace mozc {
-
-namespace converter {
-class ReverseConverter {
- public:
-  explicit ReverseConverter(
-      const ImmutableConverterInterface &immutable_converter);
-
-  bool ReverseConvert(absl::string_view key, Segments *segments) const;
-
- private:
-  const ImmutableConverterInterface &immutable_converter_;
-};
-}  // namespace converter
 
 class Converter final : public ConverterInterface {
  public:

@@ -40,6 +40,7 @@
         '<(gen_out_mozc_dir)/dictionary/pos_matcher_impl.inc',
         'converter.cc',
         'history_reconstructor.cc',
+        'reverse_converter.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',

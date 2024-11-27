@@ -323,7 +323,6 @@ mozc_cc_library(
         ":segments",
         "//request:conversion_request",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/log",
     ],
 )
 
@@ -425,11 +424,10 @@ mozc_cc_library(
         ":converter_interface",
         ":history_reconstructor",
         ":immutable_converter_interface",
+        ":reverse_converter",
         ":segments",
-        "//base:japanese_util",
         "//base:util",
         "//base:vlog",
-        "//base/strings:assign",
         "//composer",
         "//dictionary:pos_matcher",
         "//dictionary:suppression_dictionary",
@@ -554,6 +552,46 @@ mozc_cc_test(
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
         "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "reverse_converter",
+    srcs = ["reverse_converter.cc"],
+    hdrs = ["reverse_converter.h"],
+    deps = [
+        ":immutable_converter_interface",
+        ":segments",
+        "//base:util",
+        "//base/strings:assign",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+mozc_cc_test(
+    name = "reverse_converter_test",
+    srcs = ["reverse_converter_test.cc"],
+    deps = [
+        ":immutable_converter_no_factory",
+        ":reverse_converter",
+        ":segments",
+        "//data_manager/testing:mock_data_manager",
+        "//engine:modules",
+        "//prediction:dictionary_predictor",
+        "//prediction:predictor",
+        "//prediction:user_history_predictor",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:user_dictionary_storage_cc_proto",
+        "//rewriter",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
