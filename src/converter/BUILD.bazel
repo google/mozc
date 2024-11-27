@@ -423,6 +423,7 @@ mozc_cc_library(
     ],
     deps = [
         ":converter_interface",
+        ":history_reconstructor",
         ":immutable_converter_interface",
         ":segments",
         "//base:japanese_util",
@@ -519,6 +520,40 @@ mozc_cc_test(
         "//testing:mozctest",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+mozc_cc_library(
+    name = "history_reconstructor",
+    srcs = ["history_reconstructor.cc"],
+    hdrs = ["history_reconstructor.h"],
+    deps = [
+        ":segments",
+        "//base:japanese_util",
+        "//base:util",
+        "//dictionary:pos_matcher",
+        "//protocol:commands_cc_proto",
+        "//testing:friend_test",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+mozc_cc_test(
+    name = "history_reconstructor_test",
+    srcs = ["history_reconstructor_test.cc"],
+    deps = [
+        ":history_reconstructor",
+        ":segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher",
+        "//prediction:dictionary_predictor",
+        "//prediction:predictor",
+        "//prediction:user_history_predictor",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:user_dictionary_storage_cc_proto",
+        "//testing:gunit_main",
     ],
 )
 

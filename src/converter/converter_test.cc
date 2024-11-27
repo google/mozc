@@ -30,7 +30,6 @@
 #include "converter/converter.h"
 
 #include <cstddef>
-#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -1490,75 +1489,6 @@ TEST_F(ConverterTest, StartReverseConversion) {
     ASSERT_EQ(segments.segments_size(), 1);
     ASSERT_EQ(segments.conversion_segment(0).candidates_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, kInputHalf);
-  }
-}
-
-TEST(HistoryReconstructorTest, GetLastConnectivePart) {
-  const testing::MockDataManager data_manager;
-  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
-  const converter::HistoryReconstructor reconstructor(pos_matcher);
-
-  {
-    std::string key;
-    std::string value;
-    uint16_t id = 0;
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart("", &key, &value, &id));
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart(" ", &key, &value, &id));
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart("  ", &key, &value, &id));
-  }
-
-  {
-    std::string key;
-    std::string value;
-    uint16_t id = 0;
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a", &key, &value, &id));
-    EXPECT_EQ(key, "a");
-    EXPECT_EQ(value, "a");
-    EXPECT_EQ(id, pos_matcher.GetUniqueNounId());
-
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a ", &key, &value, &id));
-    EXPECT_EQ(key, "a");
-    EXPECT_EQ(value, "a");
-
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart("a  ", &key, &value, &id));
-
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a ", &key, &value, &id));
-    EXPECT_EQ(key, "a");
-    EXPECT_EQ(value, "a");
-
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a10a", &key, &value, &id));
-    EXPECT_EQ(key, "a");
-    EXPECT_EQ(value, "a");
-
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("ａ", &key, &value, &id));
-    EXPECT_EQ(key, "a");
-    EXPECT_EQ(value, "ａ");
-  }
-
-  {
-    std::string key;
-    std::string value;
-    uint16_t id = 0;
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("10", &key, &value, &id));
-    EXPECT_EQ(key, "10");
-    EXPECT_EQ(value, "10");
-    EXPECT_EQ(id, pos_matcher.GetNumberId());
-
-    EXPECT_TRUE(
-        reconstructor.GetLastConnectivePart("10a10", &key, &value, &id));
-    EXPECT_EQ(key, "10");
-    EXPECT_EQ(value, "10");
-
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("１０", &key, &value, &id));
-    EXPECT_EQ(key, "10");
-    EXPECT_EQ(value, "１０");
-  }
-
-  {
-    std::string key;
-    std::string value;
-    uint16_t id = 0;
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart("あ", &key, &value, &id));
   }
 }
 

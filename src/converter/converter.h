@@ -40,6 +40,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/converter_interface.h"
+#include "converter/history_reconstructor.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -51,26 +52,6 @@
 #include "testing/friend_test.h"
 
 namespace mozc {
-namespace converter {
-class HistoryReconstructor {
- public:
-  explicit HistoryReconstructor(const dictionary::PosMatcher &pos_matcher);
-
-  ABSL_MUST_USE_RESULT
-  bool ReconstructHistory(absl::string_view preceding_text,
-                          Segments *segments) const;
-
-  // Returns the substring of |str|. This substring consists of similar script
-  // type and you can use it as preceding text for conversion.
-  bool GetLastConnectivePart(absl::string_view preceding_text, std::string *key,
-                             std::string *value, uint16_t *id) const;
-
- private:
-  FRIEND_TEST(HistoryReconstructorTest, GetLastConnectivePart);
-
-  const dictionary::PosMatcher &pos_matcher_;
-};
-}  // namespace converter
 
 class Converter final : public ConverterInterface {
  public:
