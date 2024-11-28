@@ -268,8 +268,8 @@ class ConversionRequest {
 class ConversionRequestBuilder {
  public:
   ConversionRequest Build() {
-    DCHECK(buildable_);
-    buildable_ = false;
+    DCHECK_LE(stage_, 3);
+    stage_ = 100;
     return ConversionRequest(std::move(composer_data_), std::move(request_),
                              std::move(context_), std::move(config_),
                              std::move(options_));
@@ -277,6 +277,8 @@ class ConversionRequestBuilder {
 
   ConversionRequestBuilder &SetConversionRequest(
       const ConversionRequest &base_convreq) {
+    DCHECK_LE(stage_, 1);
+    stage_ = 1;
     composer_data_ = base_convreq.composer();
     request_ = base_convreq.request();
     context_ = base_convreq.context();
@@ -284,44 +286,65 @@ class ConversionRequestBuilder {
     options_ = base_convreq.options();
     return *this;
   }
-
   ConversionRequestBuilder &SetComposerData(
       composer::ComposerData &&composer_data) {
+    DCHECK_LE(stage_, 2);
+    stage_ = 2;
     composer_data_ = std::move(composer_data);
     return *this;
   }
   ConversionRequestBuilder &SetComposer(const composer::Composer &composer) {
+    DCHECK_LE(stage_, 2);
+    stage_ = 2;
     composer_data_ = composer.CreateComposerData();
     return *this;
   }
   ConversionRequestBuilder &SetRequest(const commands::Request &request) {
+    DCHECK_LE(stage_, 2);
+    stage_ = 2;
     request_ = request;
     return *this;
   }
   ConversionRequestBuilder &SetContext(const commands::Context &context) {
+    DCHECK_LE(stage_, 2);
+    stage_ = 2;
     context_ = context;
     return *this;
   }
   ConversionRequestBuilder &SetConfig(const config::Config &config) {
+    DCHECK_LE(stage_, 2);
+    stage_ = 2;
     config_ = config;
     return *this;
   }
   ConversionRequestBuilder &SetOptions(ConversionRequest::Options &&options) {
+    DCHECK_LE(stage_, 2);
+    stage_ = 2;
     options_ = std::move(options);
     return *this;
   }
   ConversionRequestBuilder &SetRequestType(
       ConversionRequest::RequestType request_type) {
+    DCHECK_LE(stage_, 3);
+    stage_ = 3;
     options_.request_type = request_type;
     return *this;
   }
   ConversionRequestBuilder &SetKey(absl::string_view key) {
+    DCHECK_LE(stage_, 3);
+    stage_ = 3;
     strings::Assign(options_.key, key);
     return *this;
   }
 
  private:
-  bool buildable_ = true;
+  // The stage of the builder.
+  // 0: No data set
+  // 1: ConversionRequest set.
+  // 2: ComposerData, Request, Context, Config, Options set.
+  // 3: RequestType, Key, as values of Options set.
+  // 100: Build() called.
+  int stage_ = 0;
   composer::ComposerData composer_data_;
   commands::Request request_;
   commands::Context context_;
