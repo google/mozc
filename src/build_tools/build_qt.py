@@ -671,17 +671,23 @@ def build_on_mac(args: argparse.Namespace) -> None:
   exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
   exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
-  if qt_src_dir == qt_dest_dir:
-    # No need to run 'install' command.
-    return
+  if qt_src_dir != qt_dest_dir:
+    if qt_dest_dir.exists():
+      if args.dryrun:
+        print(f'dryrun: delete {qt_dest_dir}')
+      else:
+        shutil.rmtree(qt_dest_dir)
 
-  if qt_dest_dir.exists():
-    if args.dryrun:
-      print(f'dryrun: delete {qt_dest_dir}')
-    else:
-      shutil.rmtree(qt_dest_dir)
+    exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
-  exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+    # Copy include files.
+    for include in ['QtCore', 'QtGui', 'QtPrintSupport', 'QtWidgets']:
+      src = qt_src_dir.joinpath('include').joinpath(include)
+      dest = qt_dest_dir.joinpath('include').joinpath(include)
+      if args.dryrun:
+        print(f'dryrun: copy {src} => {dest}')
+      else:
+        shutil.copytree(src=src, dst=dest)
 
   for tool in ['moc', 'rcc', 'uic']:
     src = qt_host_dir.joinpath('libexec').joinpath(tool)
@@ -839,27 +845,24 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
-  if qt_src_dir == qt_dest_dir:
-    # No need to run 'install' command.
-    return
+  if qt_src_dir != qt_dest_dir:
+    if qt_dest_dir.exists():
+      if args.dryrun:
+        print(f'dryrun: shutil.rmtree({qt_dest_dir})')
+      else:
+        shutil.rmtree(qt_dest_dir)
 
-  if qt_dest_dir.exists():
-    if args.dryrun:
-      print(f'dryrun: shutil.rmtree({qt_dest_dir})')
-    else:
-      shutil.rmtree(qt_dest_dir)
-
-  exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
-
-  # When both '--debug' and '--release' are specified for Qt6, we need to run
-  # the command again with '--config debug' option to install debug DLLs.
-  if args.debug and args.release:
-    install_cmds += ['--config', 'debug']
     exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
-  for bool in ['moc.exe', 'rcc.exe', 'uic.exe']:
-    src = qt_host_dir.joinpath('bin').joinpath(bool)
-    dest = qt_dest_dir.joinpath('bin').joinpath(bool)
+    # When both '--debug' and '--release' are specified for Qt6, we need to run
+    # the command again with '--config debug' option to install debug DLLs.
+    if args.debug and args.release:
+      install_cmds += ['--config', 'debug']
+      exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+  for tool in ['moc.exe', 'rcc.exe', 'uic.exe']:
+    src = qt_host_dir.joinpath('bin').joinpath(tool)
+    dest = qt_dest_dir.joinpath('bin').joinpath(tool)
     if args.dryrun:
       print(f'dryrun: copy {src} => {dest}')
     else:
