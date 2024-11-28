@@ -119,7 +119,7 @@ class ConversionRequest {
 
     // If true, use conversion_segment(0).key() instead of ComposerData.
     // TODO(b/365909808): Create a new string field to store the key.
-    bool use_conversion_segment_key_as_typing_corrected_key = false;
+    bool use_already_typing_corrected_key = false;
   };
 
   ConversionRequest()
@@ -241,8 +241,8 @@ class ConversionRequest {
     return options_.max_dictionary_prediction_candidates_size;
   }
 
-  bool use_conversion_segment_key_as_typing_corrected_key() const {
-    return options_.use_conversion_segment_key_as_typing_corrected_key;
+  bool use_already_typing_corrected_key() const {
+    return options_.use_already_typing_corrected_key;
   }
 
   absl::string_view key() const { return options_.key; }

@@ -1361,9 +1361,8 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
     Segment::Candidate::SourceInfo source_info, int zip_code_id, int unknown_id,
     std::vector<Result> *results) {
   const absl::btree_set<std::string> empty_expanded;
-  if (request.use_conversion_segment_key_as_typing_corrected_key()) {
-    std::string input_key(history_key);
-    input_key.append(segments.conversion_segment(0).key());
+  if (request.use_already_typing_corrected_key()) {
+    const std::string input_key = absl::StrCat(history_key, request.key());
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
                                       empty_expanded, source_info, zip_code_id,
                                       unknown_id, "", results);
@@ -1413,9 +1412,9 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
     Segment::Candidate::SourceInfo source_info, int unknown_id_,
     std::vector<Result> *results) const {
   absl::btree_set<std::string> expanded;
-  if (request.use_conversion_segment_key_as_typing_corrected_key()) {
+  if (request.use_already_typing_corrected_key()) {
     std::string input_key(history_key);
-    input_key.append(segments.conversion_segment(0).key());
+    input_key.append(request.key());
     PredictiveBigramLookupCallback callback(
         types, lookup_limit, input_key.size(), expanded, history_value,
         source_info, zip_code_id_, unknown_id_, "", results);
@@ -1716,20 +1715,6 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     return;
   }
 
-  // Make ConversionRequest that uses conversion_segment(0).key() as typing
-  // corrected key instead of ComposerData to avoid the original key from being
-  // used during the candidate aggregation.
-  // Kana modifier insensitive dictionary lookup is also disabled as composition
-  // spellchecker has already fixed them.
-  ConversionRequest::Options options = request.options();
-  options.kana_modifier_insensitive_conversion = false;
-  options.use_conversion_segment_key_as_typing_corrected_key = true;
-  const ConversionRequest corrected_request =
-      ConversionRequestBuilder()
-          .SetConversionRequest(request)
-          .SetOptions(std::move(options))
-          .Build();
-
   // Populates number when number candidate is not added.
   bool number_added = base_selected_types & NUMBER;
 
@@ -1740,6 +1725,21 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     // Makes dummy segments with corrected query.
     Segments corrected_segments = segments;
     corrected_segments.mutable_conversion_segment(0)->set_key(key);
+
+    // Make ConversionRequest that uses conversion_segment(0).key() as typing
+    // corrected key instead of ComposerData to avoid the original key from
+    // being used during the candidate aggregation.
+    // Kana modifier insensitive dictionary lookup is also disabled as
+    // composition spellchecker has already fixed them.
+    ConversionRequest::Options options = request.options();
+    options.kana_modifier_insensitive_conversion = false;
+    options.use_already_typing_corrected_key = true;
+    options.key = key;
+    const ConversionRequest corrected_request =
+        ConversionRequestBuilder()
+            .SetConversionRequest(request)
+            .SetOptions(std::move(options))
+            .Build();
 
     std::vector<Result> corrected_results;
 
@@ -1822,12 +1822,7 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
     return false;
   }
 
-  absl::string_view input_key =
-      request.use_conversion_segment_key_as_typing_corrected_key()
-          ? segments.conversion_segment(0).key()
-          : request.key();
-
-  return AggregateNumberCandidates(input_key, results);
+  return AggregateNumberCandidates(request.key(), results);
 }
 
 bool DictionaryPredictionAggregator::AggregateNumberCandidates(
@@ -1874,11 +1869,7 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
     return;
   }
 
-  absl::string_view input_key =
-      request.use_conversion_segment_key_as_typing_corrected_key()
-          ? segments.conversion_segment(0).key()
-          : request.key();
-
+  absl::string_view input_key = request.key();
   const size_t input_key_len = Util::CharsLen(input_key);
   if (input_key_len <= 1) {
     return;
