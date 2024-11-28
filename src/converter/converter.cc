@@ -156,17 +156,7 @@ bool Converter::StartConversion(const ConversionRequest &request,
                                 Segments *segments) const {
   DCHECK_EQ(request.request_type(), ConversionRequest::CONVERSION);
 
-  std::string key;
-  switch (request.composer_key_selection()) {
-    case ConversionRequest::CONVERSION_KEY:
-      key = request.composer().GetQueryForConversion();
-      break;
-    case ConversionRequest::PREDICTION_KEY:
-      key = request.composer().GetQueryForPrediction();
-      break;
-    default:
-      ABSL_UNREACHABLE();
-  }
+  absl::string_view key = request.key();
   if (key.empty()) {
     return false;
   }
@@ -241,30 +231,13 @@ bool ValidateConversionRequestForPrediction(const ConversionRequest &request) {
       ABSL_UNREACHABLE();
   }
 }
-
-std::string GetPredictionKey(const ConversionRequest &request) {
-  switch (request.request_type()) {
-    case ConversionRequest::PREDICTION:
-    case ConversionRequest::SUGGESTION:
-      return request.composer().GetQueryForPrediction();
-    case ConversionRequest::PARTIAL_PREDICTION:
-    case ConversionRequest::PARTIAL_SUGGESTION: {
-      const std::string prediction_key =
-          request.composer().GetQueryForConversion();
-      return std::string(Util::Utf8SubString(prediction_key, 0,
-                                             request.composer().GetCursor()));
-    }
-    default:
-      ABSL_UNREACHABLE();
-  }
-}
 }  // namespace
 
 bool Converter::StartPrediction(const ConversionRequest &request,
                                 Segments *segments) const {
   DCHECK(ValidateConversionRequestForPrediction(request));
 
-  const std::string key = GetPredictionKey(request);
+  absl::string_view key = request.key();
   if (ShouldSetKeyForPrediction(key, *segments)) {
     SetKey(segments, key);
   }

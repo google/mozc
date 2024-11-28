@@ -39,11 +39,14 @@ mozc_cc_library(
     name = "conversion_request",
     hdrs = ["conversion_request.h"],
     deps = [
+        "//base:util",
+        "//base/strings:assign",
         "//composer",
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

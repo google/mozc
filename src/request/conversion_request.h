@@ -31,9 +31,13 @@
 #define MOZC_REQUEST_CONVERSION_REQUEST_H_
 
 #include <cstddef>
+#include <string>
 #include <utility>
 
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
+#include "base/strings/assign.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
@@ -81,6 +85,10 @@ class ConversionRequest {
     // the definition of ComposerKeySelection above.
     ComposerKeySelection composer_key_selection = CONVERSION_KEY;
 
+    // Key used for conversion.
+    // This is typically a Hiragana text to be converted to Kanji words.
+    std::string key;
+
     int max_conversion_candidates_size = kMaxConversionCandidatesSize;
     int max_user_history_prediction_candidates_size = 3;
     int max_user_history_prediction_candidates_size_for_zero_query = 4;
@@ -123,8 +131,7 @@ class ConversionRequest {
   ConversionRequest(const composer::Composer &composer,
                     const commands::Request &request,
                     const commands::Context &context,
-                    const config::Config &config,
-                    Options &&options)
+                    const config::Config &config, Options &&options)
       : ConversionRequest(composer.CreateComposerData(), request, context,
                           config, std::move(options)) {}
 
@@ -139,6 +146,26 @@ class ConversionRequest {
     return config;
   }
 
+  static std::string GetKey(const composer::ComposerData &composer,
+                            const RequestType type,
+                            const ComposerKeySelection selection) {
+    if (type == CONVERSION && selection == CONVERSION_KEY) {
+      return composer.GetQueryForConversion();
+    }
+
+    if ((type == CONVERSION && selection == PREDICTION_KEY) ||
+        type == PREDICTION || type == SUGGESTION) {
+      return composer.GetQueryForPrediction();
+    }
+
+    if (type == PARTIAL_PREDICTION || type == PARTIAL_SUGGESTION) {
+      const std::string prediction_key = composer.GetQueryForConversion();
+      return std::string(
+          Util::Utf8SubString(prediction_key, 0, composer.GetCursor()));
+    }
+    return "";
+  }
+
   ConversionRequest(const composer::ComposerData &composer,
                     const commands::Request &request,
                     const commands::Context &context,
@@ -147,7 +174,14 @@ class ConversionRequest {
         request_(request),
         context_(context),
         config_(TrimConfig(config)),
-        options_(options) {}
+        options_(options) {
+    // If the key is specified, use it. Otherwise, generate it.
+    // NOTE: Specifying Composer is preferred over specifying key directly.
+    if (options_.key.empty()) {
+      options_.key = GetKey(composer_, options_.request_type,
+                            options_.composer_key_selection);
+    }
+  }
 
   ConversionRequest(const ConversionRequest &) = default;
   ConversionRequest(ConversionRequest &&) = default;
@@ -210,6 +244,8 @@ class ConversionRequest {
   bool use_conversion_segment_key_as_typing_corrected_key() const {
     return options_.use_conversion_segment_key_as_typing_corrected_key;
   }
+
+  absl::string_view key() const { return options_.key; }
 
  private:
   // Required options
@@ -277,6 +313,10 @@ class ConversionRequestBuilder {
   ConversionRequestBuilder &SetRequestType(
       ConversionRequest::RequestType request_type) {
     options_.request_type = request_type;
+    return *this;
+  }
+  ConversionRequestBuilder &SetKey(absl::string_view key) {
+    strings::Assign(options_.key, key);
     return *this;
   }
 
