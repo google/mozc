@@ -111,13 +111,11 @@ bool ShouldSetKeyForPrediction(const absl::string_view key,
          segments.conversion_segment(0).key() != key;
 }
 
-bool IsMobile(const ConversionRequest &request) {
-  return request.request().zero_query_suggestion() &&
-         request.request().mixed_conversion();
-}
-
 bool IsValidSegments(const ConversionRequest &request,
                      const Segments &segments) {
+  const bool is_mobile = request.request().zero_query_suggestion() &&
+                         request.request().mixed_conversion();
+
   // All segments should have candidate
   for (const Segment &segment : segments) {
     if (segment.candidates_size() != 0) {
@@ -127,22 +125,12 @@ bool IsValidSegments(const ConversionRequest &request,
     // So it's ok if we have meta candidates even if we don't have candidates
     // TODO(team): we may remove mobile check if other platforms accept
     // meta candidate only segment
-    if (IsMobile(request) && segment.meta_candidates_size() != 0) {
+    if (is_mobile && segment.meta_candidates_size() != 0) {
       continue;
     }
     return false;
   }
   return true;
-}
-
-ConversionRequest CreateConversionRequestWithType(
-    const ConversionRequest &request, ConversionRequest::RequestType type) {
-  ConversionRequest::Options options = request.options();
-  options.request_type = type;
-  return ConversionRequestBuilder()
-      .SetConversionRequest(request)
-      .SetOptions(std::move(options))
-      .Build();
 }
 
 }  // namespace
@@ -164,10 +152,9 @@ void Converter::Init(std::unique_ptr<PredictorInterface> predictor,
   rewriter_ = std::move(rewriter);
 }
 
-bool Converter::StartConversion(const ConversionRequest &original_request,
+bool Converter::StartConversion(const ConversionRequest &request,
                                 Segments *segments) const {
-  const ConversionRequest request = CreateConversionRequestWithType(
-      original_request, ConversionRequest::CONVERSION);
+  DCHECK_EQ(request.request_type(), ConversionRequest::CONVERSION);
 
   std::string key;
   switch (request.composer_key_selection()) {
