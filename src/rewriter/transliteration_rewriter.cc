@@ -58,29 +58,17 @@ namespace {
 
 bool IsComposerApplicable(const ConversionRequest &request,
                           const Segments *segments) {
-  std::string conversion_query;
-  if (request.request_type() == ConversionRequest::PREDICTION ||
-      request.request_type() == ConversionRequest::SUGGESTION) {
-    conversion_query = request.composer().GetQueryForPrediction();
-  } else {
-    conversion_query = request.composer().GetQueryForConversion();
-    if (request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
-        request.request_type() == ConversionRequest::PARTIAL_SUGGESTION) {
-      Util::Utf8SubString(conversion_query, 0, request.composer().GetCursor(),
-                          &conversion_query);
-    }
-  }
-
   std::string segments_key;
   for (const Segment &segment : segments->conversion_segments()) {
     segments_key.append(segment.key());
   }
-  if (conversion_query != segments_key) {
-    DLOG(WARNING) << "composer seems invalid: composer_key " << conversion_query
-                  << " segments_key " << segments_key;
-    return false;
+  if (request.key() == segments_key) {
+    return true;
   }
-  return true;
+
+  DLOG(WARNING) << "composer seems invalid: composer_key " << request.key()
+                << " segments_key " << segments_key;
+  return false;
 }
 
 void NormalizeT13ns(std::vector<std::string> *t13ns) {

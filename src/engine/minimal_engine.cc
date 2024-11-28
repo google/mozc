@@ -93,8 +93,7 @@ bool AddAsIsCandidate(const absl::string_view key, Segments *segments) {
 }
 
 bool AddAsIsCandidate(const ConversionRequest &request, Segments *segments) {
-  const std::string key = request.composer().GetQueryForConversion();
-  return AddAsIsCandidate(key, segments);
+  return AddAsIsCandidate(request.key(), segments);
 }
 
 class MinimalConverter : public ConverterInterface {

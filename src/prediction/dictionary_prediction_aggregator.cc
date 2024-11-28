@@ -1822,12 +1822,10 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
     return false;
   }
 
-  std::string input_key;
-  if (request.use_conversion_segment_key_as_typing_corrected_key()) {
-    input_key = segments.conversion_segment(0).key();
-  } else {
-    input_key = request.composer().GetQueryForPrediction();
-  }
+  absl::string_view input_key =
+      request.use_conversion_segment_key_as_typing_corrected_key()
+          ? segments.conversion_segment(0).key()
+          : request.key();
 
   return AggregateNumberCandidates(input_key, results);
 }
@@ -1876,12 +1874,10 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
     return;
   }
 
-  // TODO(b/365909808): Change GetQueryForPrediction() to return string_view.
-  // It returns std::string now.
-  const std::string input_key =
+  absl::string_view input_key =
       request.use_conversion_segment_key_as_typing_corrected_key()
           ? segments.conversion_segment(0).key()
-          : request.composer().GetQueryForPrediction();
+          : request.key();
 
   const size_t input_key_len = Util::CharsLen(input_key);
   if (input_key_len <= 1) {
