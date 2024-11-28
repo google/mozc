@@ -273,6 +273,10 @@ class DictionaryPredictor : public PredictorInterface {
       const ConversionRequest &request, const Segments &segments,
       std::vector<absl::Nonnull<const Result *>> *results) const;
 
+  void MaybeRerankZeroQuerySuggestion(
+      const ConversionRequest &request, const Segments &segments,
+      std::vector<absl::Nonnull<const Result *>> *results) const;
+
   static void MaybeApplyPostCorrection(const ConversionRequest &request,
                                        const engine::Modules &modules,
                                        Segments *segments);

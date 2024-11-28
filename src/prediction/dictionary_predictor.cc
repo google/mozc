@@ -446,6 +446,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     final_results_ptrs.emplace_back(&result);
   }
 
+  MaybeRerankZeroQuerySuggestion(request, *segments, &final_results_ptrs);
+
   MaybeRerankAggressiveTypingCorrection(request, *segments,
                                         &final_results_ptrs);
 
@@ -476,6 +478,18 @@ void DictionaryPredictor::MaybeRerankAggressiveTypingCorrection(
       modules_.GetSupplementalModel();
   if (supplemental_model == nullptr) return;
   supplemental_model->RerankTypingCorrection(request, segments, results);
+}
+
+void DictionaryPredictor::MaybeRerankZeroQuerySuggestion(
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<absl::Nonnull<const Result *>> *results) const {
+  if (!IsTypingCorrectionEnabled(request)) {
+    return;
+  }
+  const engine::SupplementalModelInterface *supplemental_model =
+      modules_.GetSupplementalModel();
+  if (supplemental_model == nullptr) return;
+  supplemental_model->RerankZeroQuerySuggestion(request, segments, results);
 }
 
 // static
