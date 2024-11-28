@@ -127,7 +127,7 @@ message Footer {
 }
 
 message CandidateWord {
-  // Unique number specifing the candidate.  This may be a negative value.
+  // Unique number specifying the candidate. This may be a negative value.
   optional int32 id = 1;
   // The first index should be zero and index numbers should increase by one.
   optional uint32 index = 2;
@@ -190,7 +190,7 @@ message CandidateWindow {
   // if the composition is "あいう" and the cursor is the position is between
   // "あ" and "い" (e.g. "あ|いう"), the number should be 1.
   // Note, Util::CharsLen does not take care of IVS or combining character
-  // so much.  Thus CharsLen's behavoir on those characters might be changed.
+  // so much.  Thus CharsLen's behavior on those characters might be changed.
   required uint32 position = 6;
 
   // Nested candidates aka cascading window.
