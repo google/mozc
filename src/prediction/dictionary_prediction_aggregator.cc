@@ -1930,7 +1930,8 @@ void DictionaryPredictionAggregator::MaybePopulateTypingCorrectionPenalty(
       modules_.GetSupplementalModel();
   if (!supplemental_model) return;
 
-  supplemental_model->PopulateTypeCorrectedQuery(request, segments, results);
+  supplemental_model->PopulateTypeCorrectedQuery(request, segments,
+                                                 absl::Span<Result>(*results));
 }
 
 }  // namespace prediction
