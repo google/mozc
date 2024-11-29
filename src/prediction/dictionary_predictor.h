@@ -142,9 +142,11 @@ class DictionaryPredictor : public PredictorInterface {
           aggregator,
       const ImmutableConverterInterface *immutable_converter);
 
+  // It is better to pass the rvalue of `results` if the
+  // caller doesn't use the results after calling this method.
   bool AddPredictionToCandidates(const ConversionRequest &request,
                                  Segments *segments,
-                                 absl::Span<Result> results) const;
+                                 std::vector<Result> results) const;
 
   void FillCandidate(
       const ConversionRequest &request, const Result &result,
@@ -271,11 +273,11 @@ class DictionaryPredictor : public PredictorInterface {
 
   void MaybeRerankAggressiveTypingCorrection(
       const ConversionRequest &request, const Segments &segments,
-      std::vector<absl::Nonnull<const Result *>> *results) const;
+      std::vector<Result> &results) const;
 
-  void MaybeRerankZeroQuerySuggestion(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<absl::Nonnull<const Result *>> *results) const;
+  void MaybeRerankZeroQuerySuggestion(const ConversionRequest &request,
+                                      const Segments &segments,
+                                      std::vector<Result> &results) const;
 
   static void MaybeApplyPostCorrection(const ConversionRequest &request,
                                        const engine::Modules &modules,

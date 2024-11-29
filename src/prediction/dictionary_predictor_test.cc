@@ -131,7 +131,7 @@ class DictionaryPredictorTestPeer {
 
   bool AddPredictionToCandidates(const ConversionRequest &request,
                                  Segments *segments,
-                                 absl::Span<Result> results) const {
+                                 std::vector<Result> &results) const {
     return predictor_.AddPredictionToCandidates(request, segments, results);
   }
 
@@ -920,8 +920,7 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
   config_->set_verbose_level(1);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  predictor.AddPredictionToCandidates(convreq, &segments,
-                                      absl::MakeSpan(results));
+  predictor.AddPredictionToCandidates(convreq, &segments, results);
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
@@ -947,8 +946,7 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
 
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
-  predictor.AddPredictionToCandidates(convreq, &segments,
-                                      absl::MakeSpan(results));
+  predictor.AddPredictionToCandidates(convreq, &segments, results);
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
@@ -988,8 +986,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
       .max_dictionary_prediction_candidates_size = kTestSize,
   });
 
-  predictor.AddPredictionToCandidates(convreq, &segments,
-                                      absl::MakeSpan(results));
+  predictor.AddPredictionToCandidates(convreq, &segments, results);
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   ASSERT_EQ(kTestSize, segments.conversion_segment(0).candidates_size());
@@ -1029,8 +1026,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
       .max_dictionary_prediction_candidates_size = kLowCostCandidateSize + 1,
   });
 
-  predictor.AddPredictionToCandidates(convreq, &segments,
-                                      absl::MakeSpan(results));
+  predictor.AddPredictionToCandidates(convreq, &segments, results);
 
   ASSERT_EQ(1, segments.conversion_segments_size());
   ASSERT_EQ(kLowCostCandidateSize,
@@ -1489,8 +1485,7 @@ TEST_F(DictionaryPredictorTest, Dedup) {
     InitSegmentsWithKey("test", &segments);
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::PREDICTION);
-    predictor.AddPredictionToCandidates(convreq, &segments,
-                                        absl::MakeSpan(results));
+    predictor.AddPredictionToCandidates(convreq, &segments, results);
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), kSize);
@@ -1528,8 +1523,8 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
   InitSegmentsWithKey("original_key", &segments);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
-  predictor.AddPredictionToCandidates(convreq, &segments,
-                                      absl::MakeSpan(results));
+  predictor.AddPredictionToCandidates(convreq, &segments, results);
+
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment segment = segments.conversion_segment(0);
   EXPECT_EQ(segment.candidates_size(), 3);
@@ -1563,8 +1558,7 @@ TEST_F(DictionaryPredictorTest, SortResult) {
   InitSegmentsWithKey("test", &segments);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
-  predictor.AddPredictionToCandidates(convreq, &segments,
-                                      absl::MakeSpan(results));
+  predictor.AddPredictionToCandidates(convreq, &segments, results);
 
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);

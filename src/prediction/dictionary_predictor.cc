@@ -311,7 +311,8 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
 
   MaybeRescoreResults(request, *segments, absl::MakeSpan(results));
 
-  return AddPredictionToCandidates(request, segments, absl::MakeSpan(results));
+  // `results` are no longer used.
+  return AddPredictionToCandidates(request, segments, std::move(results));
 }
 
 void DictionaryPredictor::RewriteResultsForPrediction(
@@ -363,7 +364,7 @@ void DictionaryPredictor::MaybePopulateTypingCorrectedResults(
 
 bool DictionaryPredictor::AddPredictionToCandidates(
     const ConversionRequest &request, Segments *segments,
-    absl::Span<Result> results) const {
+    std::vector<Result> results) const {
   DCHECK(segments);
 
   const KeyValueView history = GetHistoryKeyAndValue(*segments);
@@ -371,20 +372,13 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
 
-  // This pointer array is used to perform heap operations efficiently.
-  std::vector<const Result *> result_ptrs;
-  result_ptrs.reserve(results.size());
-  for (const auto &r : results) result_ptrs.push_back(&r);
-
   // Instead of sorting all the results, we construct a heap.
   // This is done in linear time and
   // we can pop as many results as we need efficiently.
-  auto min_heap_cmp = [](const Result *lhs, const Result *rhs) {
-    // `rhs < lhs` instead of `lhs < rhs`, since `make_heap()` creates max heap
-    // by default.
-    return ResultCostLess()(*rhs, *lhs);
-  };
-  std::make_heap(result_ptrs.begin(), result_ptrs.end(), min_heap_cmp);
+  std::make_heap(results.begin(), results.end(),
+                 [](const Result &lhs, const Result &rhs) {
+                   return ResultCostLess()(rhs, lhs);
+                 });
 
   const size_t max_candidates_size = std::min(
       request.max_dictionary_prediction_candidates_size(), results.size());
@@ -419,41 +413,42 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 #endif  // MOZC_DEBUG
 
-  std::vector<absl::Nonnull<const Result *>> final_results_ptrs;
-  final_results_ptrs.reserve(result_ptrs.size());
   std::shared_ptr<Result> prev_top_result;
+  std::vector<Result> final_results;
 
-  for (size_t i = 0; i < result_ptrs.size(); ++i) {
-    std::pop_heap(result_ptrs.begin(), result_ptrs.end() - i, min_heap_cmp);
-    const Result &result = *result_ptrs[result_ptrs.size() - i - 1];
+  for (size_t i = 0; i < results.size(); ++i) {
+    std::pop_heap(results.begin(), results.end() - i,
+                  [](const Result &lhs, const Result &rhs) {
+                    return ResultCostLess()(rhs, lhs);
+                  });
+    Result &result = results[results.size() - i - 1];
 
-    if (final_results_ptrs.size() >= max_candidates_size ||
+    if (final_results.size() >= max_candidates_size ||
         result.cost >= kInfinity) {
       break;
     }
 
     if (i == 0 && (prev_top_result = MaybeGetPreviousTopResult(
                        result, request, *segments)) != nullptr) {
-      final_results_ptrs.emplace_back(prev_top_result.get());
+      final_results.emplace_back(*prev_top_result);
     }
 
     std::string log_message;
-    if (filter.ShouldRemove(result, final_results_ptrs.size(), &log_message)) {
+    if (filter.ShouldRemove(result, final_results.size(), &log_message)) {
       MOZC_ADD_DEBUG_CANDIDATE(result, log_message);
       continue;
     }
 
-    final_results_ptrs.emplace_back(&result);
+    final_results.emplace_back(std::move(result));
   }
 
-  MaybeRerankZeroQuerySuggestion(request, *segments, &final_results_ptrs);
+  MaybeRerankAggressiveTypingCorrection(request, *segments, final_results);
 
-  MaybeRerankAggressiveTypingCorrection(request, *segments,
-                                        &final_results_ptrs);
+  MaybeRerankZeroQuerySuggestion(request, *segments, final_results);
 
   // Fill segments from final_results_ptrs.
-  for (const Result *result : final_results_ptrs) {
-    FillCandidate(request, *result, GetCandidateKeyAndValue(*result, history),
+  for (const Result &result : final_results) {
+    FillCandidate(request, result, GetCandidateKeyAndValue(result, history),
                   merged_types, segment->push_back_candidate());
   }
 
@@ -464,14 +459,14 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     AddRescoringDebugDescription(segments);
   }
 
-  return !final_results_ptrs.empty();
+  return !final_results.empty();
 #undef MOZC_ADD_DEBUG_CANDIDATE
 }
 
 void DictionaryPredictor::MaybeRerankAggressiveTypingCorrection(
     const ConversionRequest &request, const Segments &segments,
-    std::vector<absl::Nonnull<const Result *>> *results) const {
-  if (!IsTypingCorrectionEnabled(request) || results->empty()) {
+    std::vector<Result> &results) const {
+  if (!IsTypingCorrectionEnabled(request) || results.empty()) {
     return;
   }
   const engine::SupplementalModelInterface *supplemental_model =
@@ -482,7 +477,7 @@ void DictionaryPredictor::MaybeRerankAggressiveTypingCorrection(
 
 void DictionaryPredictor::MaybeRerankZeroQuerySuggestion(
     const ConversionRequest &request, const Segments &segments,
-    std::vector<absl::Nonnull<const Result *>> *results) const {
+    std::vector<Result> &results) const {
   if (!IsTypingCorrectionEnabled(request)) {
     return;
   }
