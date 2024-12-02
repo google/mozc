@@ -442,18 +442,13 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     final_results.emplace_back(std::move(result));
   }
 
-  MaybeRerankAggressiveTypingCorrection(request, *segments, final_results);
-
-  MaybeRerankZeroQuerySuggestion(request, *segments, final_results);
+  MaybeApplyPostCorrection(request, *segments, final_results);
 
   // Fill segments from final_results_ptrs.
   for (const Result &result : final_results) {
     FillCandidate(request, result, GetCandidateKeyAndValue(result, history),
                   merged_types, segment->push_back_candidate());
   }
-
-  // TODO(b/320221782): Add unit tests for MaybeApplyPostCorrection.
-  MaybeApplyPostCorrection(request, modules_, segments);
 
   if (IsDebug(request) && modules_.GetSupplementalModel()) {
     AddRescoringDebugDescription(segments);
@@ -463,34 +458,9 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 #undef MOZC_ADD_DEBUG_CANDIDATE
 }
 
-void DictionaryPredictor::MaybeRerankAggressiveTypingCorrection(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> &results) const {
-  if (!IsTypingCorrectionEnabled(request) || results.empty()) {
-    return;
-  }
-  const engine::SupplementalModelInterface *supplemental_model =
-      modules_.GetSupplementalModel();
-  if (supplemental_model == nullptr) return;
-  supplemental_model->RerankTypingCorrection(request, segments, results);
-}
-
-void DictionaryPredictor::MaybeRerankZeroQuerySuggestion(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> &results) const {
-  if (!IsTypingCorrectionEnabled(request)) {
-    return;
-  }
-  const engine::SupplementalModelInterface *supplemental_model =
-      modules_.GetSupplementalModel();
-  if (supplemental_model == nullptr) return;
-  supplemental_model->RerankZeroQuerySuggestion(request, segments, results);
-}
-
-// static
 void DictionaryPredictor::MaybeApplyPostCorrection(
-    const ConversionRequest &request, const engine::Modules &modules,
-    Segments *segments) {
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<Result> &results) const {
   // b/363902660:
   // Stop applying post correction when typing correction is disabled.
   // We may want to use other conditions if we want to enable post correction
@@ -499,11 +469,9 @@ void DictionaryPredictor::MaybeApplyPostCorrection(
     return;
   }
   const engine::SupplementalModelInterface *supplemental_model =
-      modules.GetSupplementalModel();
-  if (supplemental_model == nullptr) {
-    return;
-  }
-  supplemental_model->PostCorrect(request, segments);
+      modules_.GetSupplementalModel();
+  if (supplemental_model == nullptr) return;
+  supplemental_model->PostCorrect(request, segments, results);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(

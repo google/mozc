@@ -64,16 +64,9 @@ class MockSupplementalModel : public SupplementalModelInterface {
               (const ConversionRequest &request, const Segments &segments,
                absl::Span<prediction::Result> results),
               (const, override));
-  MOCK_METHOD(void, RerankTypingCorrection,
-              (const ConversionRequest &request, const Segments &segments,
-               std::vector<prediction::Result> &results),
-              (const, override));
-  MOCK_METHOD(void, RerankZeroQuerySuggestion,
-              (const ConversionRequest &request, const Segments &segments,
-               std::vector<prediction::Result> &results),
-              (const, override));
   MOCK_METHOD(void, PostCorrect,
-              (const ConversionRequest &, absl::Nonnull<Segments *> segments),
+              (const ConversionRequest &, const Segments &egments,
+               std::vector<prediction::Result> &results),
               (const, override));
   MOCK_METHOD(void, RescoreResults,
               (const ConversionRequest &request, const Segments &segments,

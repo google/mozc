@@ -271,17 +271,9 @@ class DictionaryPredictor : public PredictorInterface {
                                            const Segments &segments,
                                            std::vector<Result> *results) const;
 
-  void MaybeRerankAggressiveTypingCorrection(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> &results) const;
-
-  void MaybeRerankZeroQuerySuggestion(const ConversionRequest &request,
-                                      const Segments &segments,
-                                      std::vector<Result> &results) const;
-
-  static void MaybeApplyPostCorrection(const ConversionRequest &request,
-                                       const engine::Modules &modules,
-                                       Segments *segments);
+  void MaybeApplyPostCorrection(const ConversionRequest &request,
+                                const Segments &segments,
+                                std::vector<Result> &results) const;
 
   void MaybeRescoreResults(const ConversionRequest &request,
                            const Segments &segments,
