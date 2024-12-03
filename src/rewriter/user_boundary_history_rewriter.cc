@@ -144,7 +144,7 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
   }
 
   if (segments->resized()) {
-    Insert(segments, request);
+    Insert(request, *segments);
 #ifdef __ANDROID__
     // TODO(hidehiko): UsageStats requires some functionalities, e.g. network,
     // which are not needed for mozc's main features.
@@ -188,7 +188,7 @@ bool UserBoundaryHistoryRewriter::Rewrite(const ConversionRequest &request,
   }
 
   if (!segments->resized()) {
-    return Resize(segments, request);
+    return Resize(request, *segments);
   }
 
   return false;
@@ -225,13 +225,13 @@ bool UserBoundaryHistoryRewriter::Reload() {
 }
 
 bool UserBoundaryHistoryRewriter::Resize(
-    Segments *segments, const ConversionRequest &request) const {
+    const ConversionRequest &request, Segments &segments) const {
   bool result = false;
 
-  const size_t history_segments_size = segments->history_segments_size();
+  const size_t history_segments_size = segments.history_segments_size();
 
   // resize segments in [history_segments_size .. target_segments_size - 1]
-  const size_t target_segments_size = segments->segments_size();
+  const size_t target_segments_size = segments.segments_size();
 
   // No effective segments found
   if (target_segments_size <= history_segments_size) {
@@ -241,7 +241,7 @@ bool UserBoundaryHistoryRewriter::Resize(
   std::deque<std::pair<std::string, size_t>> keys(target_segments_size -
                                                   history_segments_size);
   for (size_t i = history_segments_size; i < target_segments_size; ++i) {
-    const Segment &segment = segments->segment(i);
+    const Segment &segment = segments.segment(i);
     keys[i - history_segments_size].first = segment.key();
     const size_t length = Util::CharsLen(segment.key());
     if (length > 255) {  // too long segment
@@ -279,7 +279,7 @@ bool UserBoundaryHistoryRewriter::Resize(
                        << static_cast<int>(length_array[5]) << " "
                        << static_cast<int>(length_array[6]) << " "
                        << static_cast<int>(length_array[7]) << "]";
-          if (parent_converter_->ResizeSegment(segments, request,
+          if (parent_converter_->ResizeSegment(&segments, request,
                                                i - history_segments_size, j + 1,
                                                length_array)) {
             result = true;
@@ -302,14 +302,14 @@ bool UserBoundaryHistoryRewriter::Resize(
 }
 
 bool UserBoundaryHistoryRewriter::Insert(
-    Segments *segments, const ConversionRequest &request) const {
+    const ConversionRequest &request, Segments &segments) const {
   bool result = false;
 
-  const size_t history_segments_size = segments->history_segments_size();
+  const size_t history_segments_size = segments.history_segments_size();
 
   // Get the prefix of segments having FIXED_VALUE state.
   size_t target_segments_size = history_segments_size;
-  for (const Segment &segment : segments->all().drop(history_segments_size)) {
+  for (const Segment &segment : segments.all().drop(history_segments_size)) {
     if (segment.segment_type() == Segment::FIXED_VALUE) {
       ++target_segments_size;
     }
@@ -323,7 +323,7 @@ bool UserBoundaryHistoryRewriter::Insert(
   std::deque<std::pair<std::string, size_t>> keys(target_segments_size -
                                                   history_segments_size);
   for (size_t i = history_segments_size; i < target_segments_size; ++i) {
-    const Segment &segment = segments->segment(i);
+    const Segment &segment = segments.segment(i);
     keys[i - history_segments_size].first = segment.key();
     const size_t length = Util::CharsLen(segment.key());
     if (length > 255) {  // too long segment
