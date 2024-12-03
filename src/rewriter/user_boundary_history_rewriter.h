@@ -54,8 +54,8 @@ class UserBoundaryHistoryRewriter : public RewriterInterface {
   void Clear() override;
 
  private:
-  bool ResizeOrInsert(Segments *segments, const ConversionRequest &request,
-                      int type) const;
+  bool Resize(Segments *segments, const ConversionRequest &request) const;
+  bool Insert(Segments *segments, const ConversionRequest &request) const;
 
   const ConverterInterface *parent_converter_;
   std::unique_ptr<mozc::storage::LruStorage> storage_;

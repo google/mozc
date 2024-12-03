@@ -64,8 +64,6 @@ constexpr uint32_t kSeedValue = 0x761fea81;
 
 constexpr char kFileName[] = "user://boundary.db";
 
-enum { INSERT, RESIZE };
-
 class LengthArray {
  public:
   void ToUCharArray(uint8_t *array) const {
@@ -146,11 +144,11 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
   }
 
   if (segments->resized()) {
-    ResizeOrInsert(segments, request, INSERT);
+    Insert(segments, request);
 #ifdef __ANDROID__
     // TODO(hidehiko): UsageStats requires some functionalities, e.g. network,
     // which are not needed for mozc's main features.
-    // So, to focus on the main features' developping, we just skip it for now.
+    // So, to focus on the main features' developing, we just skip it for now.
     // Note: we can #ifdef inside SetInteger, but to build it we need to build
     // other methods in usage_stats as well. So we'll exclude the method here
     // for now.
@@ -190,7 +188,7 @@ bool UserBoundaryHistoryRewriter::Rewrite(const ConversionRequest &request,
   }
 
   if (!segments->resized()) {
-    return ResizeOrInsert(segments, request, RESIZE);
+    return Resize(segments, request);
   }
 
   return false;
@@ -226,24 +224,94 @@ bool UserBoundaryHistoryRewriter::Reload() {
   return true;
 }
 
-// TODO(taku): split Reize/Insert into different functions
-bool UserBoundaryHistoryRewriter::ResizeOrInsert(
-    Segments *segments, const ConversionRequest &request, int type) const {
+bool UserBoundaryHistoryRewriter::Resize(
+    Segments *segments, const ConversionRequest &request) const {
   bool result = false;
 
   const size_t history_segments_size = segments->history_segments_size();
 
   // resize segments in [history_segments_size .. target_segments_size - 1]
-  size_t target_segments_size = segments->segments_size();
+  const size_t target_segments_size = segments->segments_size();
 
-  // when INSERTING new history,
-  // Get the prefix of segments having FIXED_VALUE state.
-  if (type == INSERT) {
-    target_segments_size = history_segments_size;
-    for (const Segment &segment : segments->all().drop(history_segments_size)) {
-      if (segment.segment_type() == Segment::FIXED_VALUE) {
-        ++target_segments_size;
+  // No effective segments found
+  if (target_segments_size <= history_segments_size) {
+    return false;
+  }
+
+  std::deque<std::pair<std::string, size_t>> keys(target_segments_size -
+                                                  history_segments_size);
+  for (size_t i = history_segments_size; i < target_segments_size; ++i) {
+    const Segment &segment = segments->segment(i);
+    keys[i - history_segments_size].first = segment.key();
+    const size_t length = Util::CharsLen(segment.key());
+    if (length > 255) {  // too long segment
+      MOZC_VLOG(2) << "too long segment";
+      return false;
+    }
+    keys[i - history_segments_size].second = length;
+  }
+
+  for (size_t i = history_segments_size; i < target_segments_size; ++i) {
+    constexpr size_t kMaxKeysSize = 5;
+    const size_t keys_size = std::min(kMaxKeysSize, keys.size());
+    std::string key;
+    uint8_t length_array[8] = {};
+    for (size_t k = 0; k < keys_size; ++k) {
+      key += keys[k].first;
+      length_array[k] = static_cast<uint8_t>(keys[k].second);
+    }
+    for (int j = static_cast<int>(keys_size) - 1; j >= 0; --j) {
+      const LengthArray *value =
+          reinterpret_cast<const LengthArray *>(storage_->Lookup(key));
+      if (value != nullptr) {
+        LengthArray orig_value;
+        orig_value.CopyFromUCharArray(length_array);
+        if (!value->Equal(orig_value)) {
+          value->ToUCharArray(length_array);
+          const int old_segments_size = static_cast<int>(target_segments_size);
+          MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: ["
+                       << i - history_segments_size << ", " << j + 1
+                       << ") resize: [" << static_cast<int>(length_array[0])
+                       << " " << static_cast<int>(length_array[1]) << " "
+                       << static_cast<int>(length_array[2]) << " "
+                       << static_cast<int>(length_array[3]) << " "
+                       << static_cast<int>(length_array[4]) << " "
+                       << static_cast<int>(length_array[5]) << " "
+                       << static_cast<int>(length_array[6]) << " "
+                       << static_cast<int>(length_array[7]) << "]";
+          if (parent_converter_->ResizeSegment(segments, request,
+                                               i - history_segments_size, j + 1,
+                                               length_array)) {
+            result = true;
+          } else {
+            LOG(WARNING) << "ResizeSegment failed for key: " << key;
+          }
+          i += (j + target_segments_size - old_segments_size);
+          break;
+        }
       }
+
+      length_array[j] = 0;
+      key.erase(key.size() - keys[j].first.size());
+    }
+
+    keys.pop_front();  // delete first item
+  }
+
+  return result;
+}
+
+bool UserBoundaryHistoryRewriter::Insert(
+    Segments *segments, const ConversionRequest &request) const {
+  bool result = false;
+
+  const size_t history_segments_size = segments->history_segments_size();
+
+  // Get the prefix of segments having FIXED_VALUE state.
+  size_t target_segments_size = history_segments_size;
+  for (const Segment &segment : segments->all().drop(history_segments_size)) {
+    if (segment.segment_type() == Segment::FIXED_VALUE) {
+      ++target_segments_size;
     }
   }
 
@@ -275,52 +343,19 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
       length_array[k] = static_cast<uint8_t>(keys[k].second);
     }
     for (int j = static_cast<int>(keys_size) - 1; j >= 0; --j) {
-      if (type == RESIZE) {
-        const LengthArray *value =
-            reinterpret_cast<const LengthArray *>(storage_->Lookup(key));
-        if (value != nullptr) {
-          LengthArray orig_value;
-          orig_value.CopyFromUCharArray(length_array);
-          if (!value->Equal(orig_value)) {
-            value->ToUCharArray(length_array);
-            const int old_segments_size =
-                static_cast<int>(target_segments_size);
-            MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: ["
-                         << i - history_segments_size << ", " << j + 1
-                         << ") resize: [" << static_cast<int>(length_array[0])
-                         << " " << static_cast<int>(length_array[1]) << " "
-                         << static_cast<int>(length_array[2]) << " "
-                         << static_cast<int>(length_array[3]) << " "
-                         << static_cast<int>(length_array[4]) << " "
-                         << static_cast<int>(length_array[5]) << " "
-                         << static_cast<int>(length_array[6]) << " "
-                         << static_cast<int>(length_array[7]) << "]";
-            if (parent_converter_->ResizeSegment(segments, request,
-                                                 i - history_segments_size,
-                                                 j + 1, length_array)) {
-              result = true;
-            } else {
-              LOG(WARNING) << "ResizeSegment failed for key: " << key;
-            }
-            i += (j + target_segments_size - old_segments_size);
-            break;
-          }
-        }
-      } else if (type == INSERT) {
-        MOZC_VLOG(2) << "InserteSegment key: " << key << " "
-                     << i - history_segments_size << " " << j + 1 << " "
-                     << static_cast<int>(length_array[0]) << " "
-                     << static_cast<int>(length_array[1]) << " "
-                     << static_cast<int>(length_array[2]) << " "
-                     << static_cast<int>(length_array[3]) << " "
-                     << static_cast<int>(length_array[4]) << " "
-                     << static_cast<int>(length_array[5]) << " "
-                     << static_cast<int>(length_array[6]) << " "
-                     << static_cast<int>(length_array[7]);
-        LengthArray inserted_value;
-        inserted_value.CopyFromUCharArray(length_array);
-        storage_->Insert(key, reinterpret_cast<const char *>(&inserted_value));
-      }
+      MOZC_VLOG(2) << "InserteSegment key: " << key << " "
+                   << i - history_segments_size << " " << j + 1 << " "
+                   << static_cast<int>(length_array[0]) << " "
+                   << static_cast<int>(length_array[1]) << " "
+                   << static_cast<int>(length_array[2]) << " "
+                   << static_cast<int>(length_array[3]) << " "
+                   << static_cast<int>(length_array[4]) << " "
+                   << static_cast<int>(length_array[5]) << " "
+                   << static_cast<int>(length_array[6]) << " "
+                   << static_cast<int>(length_array[7]);
+      LengthArray inserted_value;
+      inserted_value.CopyFromUCharArray(length_array);
+      storage_->Insert(key, reinterpret_cast<const char *>(&inserted_value));
 
       length_array[j] = 0;
       key.erase(key.size() - keys[j].first.size());
