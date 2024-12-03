@@ -33,7 +33,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
-#include <memory>
 #include <string>
 #include <utility>
 
@@ -55,8 +54,6 @@
 
 namespace mozc {
 namespace {
-
-using ::mozc::storage::LruStorage;
 
 constexpr int kValueSize = 4;
 constexpr uint32_t kLruSize = 5000;
@@ -110,8 +107,7 @@ class LengthArray {
 
 UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter(
     const ConverterInterface *parent_converter)
-    : parent_converter_(parent_converter),
-      storage_(std::make_unique<LruStorage>()) {
+    : parent_converter_(parent_converter) {
   DCHECK(parent_converter_);
   Reload();
 }
@@ -138,11 +134,6 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (storage_ == nullptr) {
-    MOZC_VLOG(2) << "storage is NULL";
-    return;
-  }
-
   if (segments->resized()) {
     Insert(request, *segments);
 #ifdef __ANDROID__
@@ -156,7 +147,7 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
     // update usage stats here
     usage_stats::UsageStats::SetInteger(
         "UserBoundaryHistoryEntrySize",
-        static_cast<int>(storage_->used_size()));
+        static_cast<int>(storage_.used_size()));
 #endif  // __ANDROID__
   }
 }
@@ -178,11 +169,6 @@ bool UserBoundaryHistoryRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  if (storage_ == nullptr) {
-    MOZC_VLOG(2) << "storage is NULL";
-    return false;
-  }
-
   if (request.skip_slow_rewriters()) {
     return false;
   }
@@ -195,18 +181,16 @@ bool UserBoundaryHistoryRewriter::Rewrite(const ConversionRequest &request,
 }
 
 bool UserBoundaryHistoryRewriter::Sync() {
-  if (storage_) {
-    storage_->DeleteElementsUntouchedFor62Days();
-  }
+  storage_.DeleteElementsUntouchedFor62Days();
   return true;
 }
 
 bool UserBoundaryHistoryRewriter::Reload() {
   const std::string filename = ConfigFileStream::GetFileName(kFileName);
-  if (!storage_->OpenOrCreate(filename.c_str(), kValueSize, kLruSize,
-                              kSeedValue)) {
+  if (!storage_.OpenOrCreate(filename.c_str(), kValueSize, kLruSize,
+                             kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserBoundaryHistoryRewriter";
-    storage_.reset();
+    storage_.Clear();
     return false;
   }
 
@@ -215,7 +199,7 @@ bool UserBoundaryHistoryRewriter::Reload() {
 
   // merge pending file does not always exist.
   if (absl::Status s = FileUtil::FileExists(merge_pending_file); s.ok()) {
-    storage_->Merge(merge_pending_file.c_str());
+    storage_.Merge(merge_pending_file.c_str());
     FileUtil::UnlinkOrLogError(merge_pending_file);
   } else if (!absl::IsNotFound(s)) {
     LOG(ERROR) << "Cannot check if " << merge_pending_file << " exists: " << s;
@@ -262,7 +246,7 @@ bool UserBoundaryHistoryRewriter::Resize(
     }
     for (int j = static_cast<int>(keys_size) - 1; j >= 0; --j) {
       const LengthArray *value =
-          reinterpret_cast<const LengthArray *>(storage_->Lookup(key));
+          reinterpret_cast<const LengthArray *>(storage_.Lookup(key));
       if (value != nullptr) {
         LengthArray orig_value;
         orig_value.CopyFromUCharArray(length_array);
@@ -301,8 +285,8 @@ bool UserBoundaryHistoryRewriter::Resize(
   return result;
 }
 
-bool UserBoundaryHistoryRewriter::Insert(
-    const ConversionRequest &request, Segments &segments) const {
+bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
+                                         Segments &segments) {
   bool result = false;
 
   const size_t history_segments_size = segments.history_segments_size();
@@ -355,7 +339,7 @@ bool UserBoundaryHistoryRewriter::Insert(
                    << static_cast<int>(length_array[7]);
       LengthArray inserted_value;
       inserted_value.CopyFromUCharArray(length_array);
-      storage_->Insert(key, reinterpret_cast<const char *>(&inserted_value));
+      storage_.Insert(key, reinterpret_cast<const char *>(&inserted_value));
 
       length_array[j] = 0;
       key.erase(key.size() - keys[j].first.size());
@@ -368,10 +352,8 @@ bool UserBoundaryHistoryRewriter::Insert(
 }
 
 void UserBoundaryHistoryRewriter::Clear() {
-  if (storage_ != nullptr) {
-    MOZC_VLOG(1) << "Clearing user segment data";
-    storage_->Clear();
-  }
+  MOZC_VLOG(1) << "Clearing user segment data";
+  storage_.Clear();
 }
 
 }  // namespace mozc
