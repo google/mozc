@@ -30,6 +30,7 @@
 #include "rewriter/user_boundary_history_rewriter.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -40,6 +41,7 @@
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
@@ -63,18 +65,7 @@ constexpr char kFileName[] = "user://boundary.db";
 
 class LengthArray {
  public:
-  void ToUCharArray(uint8_t *array) const {
-    array[0] = length0_;
-    array[1] = length1_;
-    array[2] = length2_;
-    array[3] = length3_;
-    array[4] = length4_;
-    array[5] = length5_;
-    array[6] = length6_;
-    array[7] = length7_;
-  }
-
-  void CopyFromUCharArray(const uint8_t *array) {
+  explicit LengthArray(const std::array<uint8_t, 8> &array) {
     length0_ = array[0];
     length1_ = array[1];
     length2_ = array[2];
@@ -85,14 +76,21 @@ class LengthArray {
     length7_ = array[7];
   }
 
-  bool Equal(const LengthArray &r) const {
-    return (length0_ == r.length0_ && length1_ == r.length1_ &&
-            length2_ == r.length2_ && length3_ == r.length3_ &&
-            length4_ == r.length4_ && length5_ == r.length5_ &&
-            length6_ == r.length6_ && length7_ == r.length7_);
+  std::array<uint8_t, 8> ToUint8Array() const {
+    return {length0_, length1_, length2_, length3_,
+            length4_, length5_, length6_, length7_};
+  }
+
+  bool Equal(const std::array<uint8_t, 8> &other) const {
+    return length0_ == other[0] && length1_ == other[1] &&
+           length2_ == other[2] && length3_ == other[3] &&
+           length4_ == other[4] && length5_ == other[5] &&
+           length6_ == other[6] && length7_ == other[7];
   }
 
  private:
+  // Variables are initialized and converted by reinterpret_casts.
+  // Do not remove / add variables until the reinterpret_casts are removed.
   uint8_t length0_ : 4;
   uint8_t length1_ : 4;
   uint8_t length2_ : 4;
@@ -239,7 +237,7 @@ bool UserBoundaryHistoryRewriter::Resize(
     constexpr size_t kMaxKeysSize = 5;
     const size_t keys_size = std::min(kMaxKeysSize, keys.size());
     std::string key;
-    uint8_t length_array[8] = {};
+    std::array<uint8_t, 8> length_array = {0, 0, 0, 0, 0, 0, 0, 0};
     for (size_t k = 0; k < keys_size; ++k) {
       key += keys[k].first;
       length_array[k] = static_cast<uint8_t>(keys[k].second);
@@ -248,21 +246,13 @@ bool UserBoundaryHistoryRewriter::Resize(
       const LengthArray *value =
           reinterpret_cast<const LengthArray *>(storage_.Lookup(key));
       if (value != nullptr) {
-        LengthArray orig_value;
-        orig_value.CopyFromUCharArray(length_array);
-        if (!value->Equal(orig_value)) {
-          value->ToUCharArray(length_array);
+        if (!value->Equal(length_array)) {
+          length_array = value->ToUint8Array();
           const int old_segments_size = static_cast<int>(target_segments_size);
           MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: ["
-                       << i - history_segments_size << ", " << j + 1
-                       << ") resize: [" << static_cast<int>(length_array[0])
-                       << " " << static_cast<int>(length_array[1]) << " "
-                       << static_cast<int>(length_array[2]) << " "
-                       << static_cast<int>(length_array[3]) << " "
-                       << static_cast<int>(length_array[4]) << " "
-                       << static_cast<int>(length_array[5]) << " "
-                       << static_cast<int>(length_array[6]) << " "
-                       << static_cast<int>(length_array[7]) << "]";
+                       << i - history_segments_size << ", " << j + 1 << "] "
+                       << "resize: [" << absl::StrJoin(length_array, " ")
+                       << "]";
           if (parent_converter_->ResizeSegment(&segments, request,
                                                i - history_segments_size, j + 1,
                                                length_array)) {
@@ -321,7 +311,7 @@ bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
     constexpr size_t kMaxKeysSize = 5;
     const size_t keys_size = std::min(kMaxKeysSize, keys.size());
     std::string key;
-    uint8_t length_array[8] = {};
+    std::array<uint8_t, 8> length_array = {0, 0, 0, 0, 0, 0, 0, 0};
     for (size_t k = 0; k < keys_size; ++k) {
       key += keys[k].first;
       length_array[k] = static_cast<uint8_t>(keys[k].second);
@@ -329,16 +319,8 @@ bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
     for (int j = static_cast<int>(keys_size) - 1; j >= 0; --j) {
       MOZC_VLOG(2) << "InserteSegment key: " << key << " "
                    << i - history_segments_size << " " << j + 1 << " "
-                   << static_cast<int>(length_array[0]) << " "
-                   << static_cast<int>(length_array[1]) << " "
-                   << static_cast<int>(length_array[2]) << " "
-                   << static_cast<int>(length_array[3]) << " "
-                   << static_cast<int>(length_array[4]) << " "
-                   << static_cast<int>(length_array[5]) << " "
-                   << static_cast<int>(length_array[6]) << " "
-                   << static_cast<int>(length_array[7]);
-      LengthArray inserted_value;
-      inserted_value.CopyFromUCharArray(length_array);
+                   << absl::StrJoin(length_array, " ");
+      const LengthArray inserted_value(length_array);
       storage_.Insert(key, reinterpret_cast<const char *>(&inserted_value));
 
       length_array[j] = 0;
