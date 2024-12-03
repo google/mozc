@@ -162,15 +162,7 @@ bool Converter::StartConversion(const ConversionRequest &request,
   }
 
   SetKey(segments, key);
-  if (!immutable_converter_.ConvertForRequest(request, segments)) {
-    // Conversion can fail for keys like "12". Even in such cases, rewriters
-    // (e.g., number and variant rewriters) can populate some candidates.
-    // Therefore, this is not an error.
-    MOZC_VLOG(1) << "ConvertForRequest failed for key: "
-                 << segments->segment(0).key();
-  }
-  RewriteAndSuppressCandidates(request, segments);
-  TrimCandidates(request, segments);
+  ApplyConversion(segments, request);
   return IsValidSegments(request, *segments);
 }
 
@@ -527,15 +519,7 @@ bool Converter::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!immutable_converter_.ConvertForRequest(request, segments)) {
-    // Conversion can fail for keys like "12". Even in such cases, rewriters
-    // (e.g., number and variant rewriters) can populate some candidates.
-    // Therefore, this is not an error.
-    MOZC_VLOG(1) << "ConvertForRequest failed for key: "
-                 << segments->segment(0).key();
-  }
-  RewriteAndSuppressCandidates(request, segments);
-  TrimCandidates(request, segments);
+  ApplyConversion(segments, request);
   return true;
 }
 
@@ -593,6 +577,12 @@ bool Converter::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
+  ApplyConversion(segments, request);
+  return true;
+}
+
+void Converter::ApplyConversion(Segments *segments,
+                                const ConversionRequest &request) const {
   if (!immutable_converter_.ConvertForRequest(request, segments)) {
     // Conversion can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
@@ -602,7 +592,6 @@ bool Converter::ResizeSegment(Segments *segments,
   }
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
-  return true;
 }
 
 void Converter::CompletePosIds(Segment::Candidate *candidate) const {

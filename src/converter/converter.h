@@ -111,6 +111,11 @@ class Converter final : public ConverterInterface {
       size_t start_segment_index, size_t segments_size,
       absl::Span<const uint8_t> new_size_array) const override;
 
+  // Execute ImmutableConverter, Rewriters, SuppressionDictionary.
+  // ApplyConversion does not initialize the Segment unlike StartConversion.
+  void ApplyConversion(Segments *segments,
+                       const ConversionRequest &request) const;
+
  private:
   FRIEND_TEST(ConverterTest, CompletePosIds);
   FRIEND_TEST(ConverterTest, DefaultPredictor);
