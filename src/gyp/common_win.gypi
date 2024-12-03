@@ -135,6 +135,9 @@
             'UACExecutionLevel': '0',  # level="asInvoker"
             'UACUIAccess': 'false',    # uiAccess="false"
             'MinimumRequiredVersion': '10.0',
+            'AdditionalOptions': [
+              '/CETCOMPAT',
+            ],
           },
         },
         'msvs_configuration_attributes': {
@@ -158,6 +161,9 @@
           },
           'VCLinkerTool': {
             'TargetMachine': '<(win_target_machine_x64)',
+            'AdditionalOptions': [
+              '/CETCOMPAT',
+            ],
           },
         },
       },
@@ -337,9 +343,6 @@
           'shell32.lib',
           'user32.lib',
           'uuid.lib',
-        ],
-        'AdditionalOptions': [
-          '/CETCOMPAT',
         ],
         'DataExecutionPrevention': '2',        # /NXCOMPAT
         'EnableCOMDATFolding': '2',            # /OPT:ICF
