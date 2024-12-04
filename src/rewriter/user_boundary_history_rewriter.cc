@@ -33,9 +33,10 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <deque>
+#include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -99,6 +100,69 @@ class LengthArray {
   uint8_t length5_ : 4;
   uint8_t length6_ : 4;
   uint8_t length7_ : 4;
+};
+
+class SegmentsKey {
+ public:
+  SegmentsKey() = delete;
+  SegmentsKey(std::string &&whole_key, std::vector<int> &&byte_indexs,
+              std::vector<uint8_t> &&char_sizes)
+      : whole_key_(std::move(whole_key)),
+        byte_indexs_(std::move(byte_indexs)),
+        char_sizes_(std::move(char_sizes)) {}
+
+  static std::optional<const SegmentsKey> Create(const Segments &segments) {
+    std::string whole_key;
+    std::vector<int> byte_indexs;  // indexes in bytes (3 for "あ")
+    std::vector<uint8_t> char_sizes;  // sizes in chars (1 for "あ")
+
+    size_t byte_index = 0;
+    for (const Segment &segment : segments.conversion_segments()) {
+      absl::string_view key = segment.key();
+      absl::StrAppend(&whole_key, key);
+      byte_indexs.push_back(byte_index);
+      byte_index += key.size();
+
+      const size_t key_size = Util::CharsLen(key);
+      if (key_size > 255) {  // too long segment
+        return std::nullopt;
+      }
+      char_sizes.push_back(static_cast<uint8_t>(key_size));
+    }
+    byte_indexs.push_back(byte_index);
+    return SegmentsKey(std::move(whole_key), std::move(byte_indexs),
+                       std::move(char_sizes));
+  }
+
+  // Returns the key of the segments at segment_index with segment_size.
+  absl::string_view GetKey(size_t segment_index, size_t segment_size) const {
+    DCHECK_LT(segment_index + segment_size, byte_indexs_.size());
+    const size_t start_index = byte_indexs_[segment_index];
+    const size_t end_index = byte_indexs_[segment_index + segment_size];
+    const size_t key_size = end_index - start_index;
+    return absl::string_view(whole_key_.data() + start_index, key_size);
+  }
+
+  // Returns the length array of the segments at segment_index with
+  // segment_size.
+  std::array<uint8_t, 8> GetLengthArray(size_t segment_index,
+                                        size_t segment_size) const {
+    const size_t size = std::min<size_t>(segment_size, 8);
+    std::array<uint8_t, 8> length_array = {0, 0, 0, 0, 0, 0, 0, 0};
+    for (size_t i = 0; i < size; ++i) {
+      length_array[i] = char_sizes_[segment_index + i];
+    }
+    return length_array;
+  }
+
+ private:
+  // If segments are {"これは", "Mozcの", "こーどです"},
+  // whole_key_: "これはMozcのこーどです" (31 bytes in total)
+  // byte_indexs_: {0, 9, 16, 31}
+  // char_sizes_: {3, 5, 5}
+  const std::string whole_key_;
+  const std::vector<int> byte_indexs_;  // indexes in bytes (3 for "あ")
+  const std::vector<uint8_t> char_sizes_;  // sizes in chars (1 for "あ")
 };
 
 }  // namespace
@@ -215,40 +279,32 @@ bool UserBoundaryHistoryRewriter::Resize(
     return false;
   }
 
-  std::deque<std::pair<std::string, size_t>> keys(target_segments_size);
-  for (size_t i = 0; i < target_segments_size; ++i) {
-    const Segment &segment = segments.conversion_segment(i);
-    keys[i].first = segment.key();
-    const size_t length = Util::CharsLen(segment.key());
-    if (length > 255) {  // too long segment
-      MOZC_VLOG(2) << "too long segment";
-      return false;
-    }
-    keys[i].second = length;
+  std::optional<const SegmentsKey> segments_key = SegmentsKey::Create(segments);
+  if (!segments_key) {
+    MOZC_VLOG(2) << "too long segment";
+    return false;
   }
 
   bool result = false;
   for (size_t seg_idx = 0; seg_idx < target_segments_size; ++seg_idx) {
-    constexpr size_t kMaxKeysSize = 5;
-    const size_t keys_size = std::min(kMaxKeysSize, keys.size());
-    std::string key;
-    std::array<uint8_t, 8> length_array = {0, 0, 0, 0, 0, 0, 0, 0};
-    for (size_t k = 0; k < keys_size; ++k) {
-      key += keys[k].first;
-      length_array[k] = static_cast<uint8_t>(keys[k].second);
-    }
+    constexpr int kMaxKeysSize = 5;
+    const int keys_size =
+        std::clamp<int>(target_segments_size - seg_idx, 0, kMaxKeysSize);
     for (size_t seg_size = keys_size; seg_size != 0; --seg_size) {
+      absl::string_view key = segments_key->GetKey(seg_idx, seg_size);
       const LengthArray *value =
           reinterpret_cast<const LengthArray *>(storage_.Lookup(key));
       if (value != nullptr) {
+        const std::array<uint8_t, 8> length_array =
+            segments_key->GetLengthArray(seg_idx, seg_size);
         if (!value->Equal(length_array)) {
-          length_array = value->ToUint8Array();
+          const std::array<uint8_t, 8> updated_array = value->ToUint8Array();
           MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: ["
                        << seg_idx << ", " << seg_size << "] "
-                       << "resize: [" << absl::StrJoin(length_array, " ")
+                       << "resize: [" << absl::StrJoin(updated_array, " ")
                        << "]";
           if (parent_converter_->ResizeSegment(&segments, request, seg_idx,
-                                               seg_size, length_array)) {
+                                               seg_size, updated_array)) {
             result = true;
           } else {
             LOG(WARNING) << "ResizeSegment failed for key: " << key;
@@ -257,12 +313,7 @@ bool UserBoundaryHistoryRewriter::Resize(
           break;
         }
       }
-
-      length_array[seg_size - 1] = 0;
-      key.erase(key.size() - keys[seg_size - 1].first.size());
     }
-
-    keys.pop_front();  // delete first item
   }
 
   return result;
@@ -283,39 +334,26 @@ bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
     return false;
   }
 
-  std::deque<std::pair<std::string, size_t>> keys(target_segments_size);
-  for (size_t i = 0; i < target_segments_size; ++i) {
-    const Segment &segment = segments.conversion_segment(i);
-    keys[i].first = segment.key();
-    const size_t length = Util::CharsLen(segment.key());
-    if (length > 255) {  // too long segment
-      MOZC_VLOG(2) << "too long segment";
-      return false;
-    }
-    keys[i].second = length;
+  std::optional<const SegmentsKey> segments_key = SegmentsKey::Create(segments);
+  if (!segments_key) {
+    MOZC_VLOG(2) << "too long segment";
+    return false;
   }
 
   bool result = false;
   for (size_t seg_idx = 0; seg_idx < target_segments_size; ++seg_idx) {
     constexpr size_t kMaxKeysSize = 5;
-    const size_t keys_size = std::min(kMaxKeysSize, keys.size());
-    std::string key;
-    std::array<uint8_t, 8> length_array = {0, 0, 0, 0, 0, 0, 0, 0};
-    for (size_t k = 0; k < keys_size; ++k) {
-      key += keys[k].first;
-      length_array[k] = static_cast<uint8_t>(keys[k].second);
-    }
+    const int keys_size =
+        std::clamp<int>(target_segments_size - seg_idx, 0, kMaxKeysSize);
     for (size_t seg_size = keys_size; seg_size != 0; --seg_size) {
+      const absl::string_view key = segments_key->GetKey(seg_idx, seg_size);
+      const std::array<uint8_t, 8> length_array =
+          segments_key->GetLengthArray(seg_idx, seg_size);
       MOZC_VLOG(2) << "InserteSegment key: " << key << " " << seg_idx << " "
                    << seg_size << " " << absl::StrJoin(length_array, " ");
       const LengthArray inserted_value(length_array);
       storage_.Insert(key, reinterpret_cast<const char *>(&inserted_value));
-
-      length_array[seg_size - 1] = 0;
-      key.erase(key.size() - keys[seg_size - 1].first.size());
     }
-
-    keys.pop_front();  // delete first item
   }
 
   return result;
