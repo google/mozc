@@ -208,32 +208,27 @@ bool UserBoundaryHistoryRewriter::Reload() {
 
 bool UserBoundaryHistoryRewriter::Resize(
     const ConversionRequest &request, Segments &segments) const {
-  bool result = false;
-
-  const size_t history_segments_size = segments.history_segments_size();
-
-  // resize segments in [history_segments_size .. target_segments_size - 1]
-  const size_t target_segments_size = segments.segments_size();
+  const size_t target_segments_size = segments.conversion_segments_size();
 
   // No effective segments found
-  if (target_segments_size <= history_segments_size) {
+  if (target_segments_size == 0) {
     return false;
   }
 
-  std::deque<std::pair<std::string, size_t>> keys(target_segments_size -
-                                                  history_segments_size);
-  for (size_t i = history_segments_size; i < target_segments_size; ++i) {
-    const Segment &segment = segments.segment(i);
-    keys[i - history_segments_size].first = segment.key();
+  std::deque<std::pair<std::string, size_t>> keys(target_segments_size);
+  for (size_t i = 0; i < target_segments_size; ++i) {
+    const Segment &segment = segments.conversion_segment(i);
+    keys[i].first = segment.key();
     const size_t length = Util::CharsLen(segment.key());
     if (length > 255) {  // too long segment
       MOZC_VLOG(2) << "too long segment";
       return false;
     }
-    keys[i - history_segments_size].second = length;
+    keys[i].second = length;
   }
 
-  for (size_t i = history_segments_size; i < target_segments_size; ++i) {
+  bool result = false;
+  for (size_t seg_idx = 0; seg_idx < target_segments_size; ++seg_idx) {
     constexpr size_t kMaxKeysSize = 5;
     const size_t keys_size = std::min(kMaxKeysSize, keys.size());
     std::string key;
@@ -248,19 +243,18 @@ bool UserBoundaryHistoryRewriter::Resize(
       if (value != nullptr) {
         if (!value->Equal(length_array)) {
           length_array = value->ToUint8Array();
-          const int old_segments_size = static_cast<int>(target_segments_size);
           MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: ["
-                       << i - history_segments_size << ", " << j + 1 << "] "
+                       << seg_idx << ", " << j + 1 << "] "
                        << "resize: [" << absl::StrJoin(length_array, " ")
                        << "]";
           if (parent_converter_->ResizeSegment(&segments, request,
-                                               i - history_segments_size, j + 1,
+                                               seg_idx, j + 1,
                                                length_array)) {
             result = true;
           } else {
             LOG(WARNING) << "ResizeSegment failed for key: " << key;
           }
-          i += (j + target_segments_size - old_segments_size);
+          seg_idx += j;
           break;
         }
       }
@@ -277,37 +271,33 @@ bool UserBoundaryHistoryRewriter::Resize(
 
 bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
                                          Segments &segments) {
-  bool result = false;
-
-  const size_t history_segments_size = segments.history_segments_size();
-
   // Get the prefix of segments having FIXED_VALUE state.
-  size_t target_segments_size = history_segments_size;
-  for (const Segment &segment : segments.all().drop(history_segments_size)) {
+  size_t target_segments_size = 0;
+  for (const Segment &segment : segments.conversion_segments()) {
     if (segment.segment_type() == Segment::FIXED_VALUE) {
       ++target_segments_size;
     }
   }
 
   // No effective segments found
-  if (target_segments_size <= history_segments_size) {
+  if (target_segments_size == 0) {
     return false;
   }
 
-  std::deque<std::pair<std::string, size_t>> keys(target_segments_size -
-                                                  history_segments_size);
-  for (size_t i = history_segments_size; i < target_segments_size; ++i) {
-    const Segment &segment = segments.segment(i);
-    keys[i - history_segments_size].first = segment.key();
+  std::deque<std::pair<std::string, size_t>> keys(target_segments_size);
+  for (size_t i = 0; i < target_segments_size; ++i) {
+    const Segment &segment = segments.conversion_segment(i);
+    keys[i].first = segment.key();
     const size_t length = Util::CharsLen(segment.key());
     if (length > 255) {  // too long segment
       MOZC_VLOG(2) << "too long segment";
       return false;
     }
-    keys[i - history_segments_size].second = length;
+    keys[i].second = length;
   }
 
-  for (size_t i = history_segments_size; i < target_segments_size; ++i) {
+  bool result = false;
+  for (size_t seg_idx = 0; seg_idx < target_segments_size; ++seg_idx) {
     constexpr size_t kMaxKeysSize = 5;
     const size_t keys_size = std::min(kMaxKeysSize, keys.size());
     std::string key;
@@ -318,7 +308,7 @@ bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
     }
     for (int j = static_cast<int>(keys_size) - 1; j >= 0; --j) {
       MOZC_VLOG(2) << "InserteSegment key: " << key << " "
-                   << i - history_segments_size << " " << j + 1 << " "
+                   << seg_idx << " " << j + 1 << " "
                    << absl::StrJoin(length_array, " ");
       const LengthArray inserted_value(length_array);
       storage_.Insert(key, reinterpret_cast<const char *>(&inserted_value));
