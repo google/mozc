@@ -50,7 +50,6 @@
 #include "base/clock_mock.h"
 #include "composer/query.h"
 #include "config/config_handler.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"

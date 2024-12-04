@@ -38,8 +38,6 @@
 
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
-#include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
@@ -93,13 +91,6 @@ class SessionConverterInterface {
   // Return the default conversion preferences to be used for custom
   // conversion.
   virtual const ConversionPreferences &conversion_preferences() const = 0;
-
-  // Gets the selected candidate. If no candidate is selected, returns NULL.
-  virtual const Segment::Candidate *GetSelectedCandidateOfFocusedSegment()
-      const = 0;
-
-  // Gets the candidate specified by id. If id is invalid, nullptr is returned.
-  virtual const Segment::Candidate *GetCandidateById(int id) const = 0;
 
   // Send a conversion request to the converter.
   virtual bool Convert(const composer::Composer &composer) = 0;

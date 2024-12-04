@@ -989,23 +989,6 @@ void SessionConverter::SegmentWidthShrink(const composer::Composer &composer) {
   ResizeSegmentWidth(composer, -1);
 }
 
-const Segment::Candidate *
-SessionConverter::GetSelectedCandidateOfFocusedSegment() const {
-  if (!candidate_list_.focused()) {
-    return nullptr;
-  }
-  const Candidate &cand = candidate_list_.focused_candidate();
-  return GetCandidateById(cand.id());
-}
-
-const Segment::Candidate *SessionConverter::GetCandidateById(int id) const {
-  const Segment &segment = segments_.conversion_segment(segment_index_);
-  if (!segment.is_valid_index(id)) {
-    return nullptr;
-  }
-  return &segment.candidate(id);
-}
-
 void SessionConverter::CandidateNext(const composer::Composer &composer) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();

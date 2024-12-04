@@ -41,7 +41,6 @@
 
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -73,13 +72,6 @@ class SessionConverter : public SessionConverterInterface {
   // Returns the default conversion preferences to be used for custom
   // conversion.
   const ConversionPreferences &conversion_preferences() const override;
-
-  // Gets the selected candidate. If no candidate is selected, returns nullptr.
-  const Segment::Candidate *GetSelectedCandidateOfFocusedSegment()
-      const override;
-
-  // Gets the candidate specified by id.
-  const Segment::Candidate *GetCandidateById(int id) const override;
 
   // Sends a conversion request to the converter.
   bool Convert(const composer::Composer &composer) override;

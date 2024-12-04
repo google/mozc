@@ -364,7 +364,6 @@ mozc_cc_test(
         "//base:clock_mock",
         "//composer:query",
         "//config:config_handler",
-        "//converter:segments",
         "//data_manager",
         "//data_manager/testing:mock_data_manager",
         "//engine",
@@ -795,8 +794,6 @@ mozc_cc_library(
     visibility = ["//session/internal:__pkg__"],
     deps = [
         "//composer",
-        "//converter:converter_interface",
-        "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//transliteration",
