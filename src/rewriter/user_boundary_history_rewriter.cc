@@ -295,6 +295,7 @@ bool UserBoundaryHistoryRewriter::Resize(
           reinterpret_cast<const LengthArray *>(storage_.Lookup(key));
       if (value == nullptr) {
         // If the key is not in the history, resize is not needed.
+        // Continue to the next step with a smaller segment key.
         continue;
       }
 
@@ -302,8 +303,9 @@ bool UserBoundaryHistoryRewriter::Resize(
           segments_key->GetLengthArray(seg_idx, seg_size);
       if (value->Equal(length_array)) {
         // If the segments are already same as the history, resize is not
-        // needed.
-        continue;
+        // needed. Skip the checked segments.
+        seg_idx += seg_size - 1;  // -1 as the main loop will add +1.
+        break;
       }
 
       const std::array<uint8_t, 8> updated_array = value->ToUint8Array();
@@ -345,7 +347,6 @@ bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
     return false;
   }
 
-  bool result = false;
   for (size_t seg_idx = 0; seg_idx < target_segments_size; ++seg_idx) {
     constexpr size_t kMaxKeysSize = 5;
     const int keys_size =
@@ -361,7 +362,7 @@ bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
     }
   }
 
-  return result;
+  return true;
 }
 
 void UserBoundaryHistoryRewriter::Clear() {
