@@ -376,24 +376,12 @@ class ProgramFilesX86Cache {
     path->clear();
 
     wchar_t program_files_path_buffer[MAX_PATH] = {};
-#if defined(_M_X64)
-    // In 64-bit processes (such as Text Input Prosessor DLL for 64-bit apps),
-    // CSIDL_PROGRAM_FILES points 64-bit Program Files directory. In this case,
-    // we should use CSIDL_PROGRAM_FILESX86 to find server, renderer, and other
-    // binaries' path.
+    // For historical reasons Mozc executables have been installed under
+    // %ProgramFiles(x86)%.
+    // TODO(https://github.com/google/mozc/issues/1086): Stop using "(x86)".
     const HRESULT result =
         ::SHGetFolderPathW(nullptr, CSIDL_PROGRAM_FILESX86, nullptr,
                            SHGFP_TYPE_CURRENT, program_files_path_buffer);
-#elif defined(_M_IX86)
-    // In 32-bit processes (such as server, renderer, and other binaries),
-    // CSIDL_PROGRAM_FILES always points 32-bit Program Files directory
-    // even if they are running in 64-bit Windows.
-    const HRESULT result =
-        ::SHGetFolderPathW(nullptr, CSIDL_PROGRAM_FILES, nullptr,
-                           SHGFP_TYPE_CURRENT, program_files_path_buffer);
-#else  // !_M_X64 && !_M_IX86
-#error "Unsupported CPU architecture"
-#endif  // _M_X64, _M_IX86, and others
     if (FAILED(result)) {
       return result;
     }
