@@ -237,30 +237,29 @@ bool UserBoundaryHistoryRewriter::Resize(
       key += keys[k].first;
       length_array[k] = static_cast<uint8_t>(keys[k].second);
     }
-    for (int j = static_cast<int>(keys_size) - 1; j >= 0; --j) {
+    for (size_t seg_size = keys_size; seg_size != 0; --seg_size) {
       const LengthArray *value =
           reinterpret_cast<const LengthArray *>(storage_.Lookup(key));
       if (value != nullptr) {
         if (!value->Equal(length_array)) {
           length_array = value->ToUint8Array();
           MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: ["
-                       << seg_idx << ", " << j + 1 << "] "
+                       << seg_idx << ", " << seg_size << "] "
                        << "resize: [" << absl::StrJoin(length_array, " ")
                        << "]";
-          if (parent_converter_->ResizeSegment(&segments, request,
-                                               seg_idx, j + 1,
-                                               length_array)) {
+          if (parent_converter_->ResizeSegment(&segments, request, seg_idx,
+                                               seg_size, length_array)) {
             result = true;
           } else {
             LOG(WARNING) << "ResizeSegment failed for key: " << key;
           }
-          seg_idx += j;
+          seg_idx += seg_size - 1;  // -1 as the main loop will add +1.
           break;
         }
       }
 
-      length_array[j] = 0;
-      key.erase(key.size() - keys[j].first.size());
+      length_array[seg_size - 1] = 0;
+      key.erase(key.size() - keys[seg_size - 1].first.size());
     }
 
     keys.pop_front();  // delete first item
@@ -306,15 +305,14 @@ bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
       key += keys[k].first;
       length_array[k] = static_cast<uint8_t>(keys[k].second);
     }
-    for (int j = static_cast<int>(keys_size) - 1; j >= 0; --j) {
-      MOZC_VLOG(2) << "InserteSegment key: " << key << " "
-                   << seg_idx << " " << j + 1 << " "
-                   << absl::StrJoin(length_array, " ");
+    for (size_t seg_size = keys_size; seg_size != 0; --seg_size) {
+      MOZC_VLOG(2) << "InserteSegment key: " << key << " " << seg_idx << " "
+                   << seg_size << " " << absl::StrJoin(length_array, " ");
       const LengthArray inserted_value(length_array);
       storage_.Insert(key, reinterpret_cast<const char *>(&inserted_value));
 
-      length_array[j] = 0;
-      key.erase(key.size() - keys[j].first.size());
+      length_array[seg_size - 1] = 0;
+      key.erase(key.size() - keys[seg_size - 1].first.size());
     }
 
     keys.pop_front();  // delete first item
