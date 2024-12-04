@@ -82,11 +82,11 @@ class LengthArray {
             length4_, length5_, length6_, length7_};
   }
 
-  bool Equal(const std::array<uint8_t, 8> &other) const {
-    return length0_ == other[0] && length1_ == other[1] &&
-           length2_ == other[2] && length3_ == other[3] &&
-           length4_ == other[4] && length5_ == other[5] &&
-           length6_ == other[6] && length7_ == other[7];
+  bool Equal(const LengthArray &other) const {
+    return length0_ == other.length0_ && length1_ == other.length1_ &&
+           length2_ == other.length2_ && length3_ == other.length3_ &&
+           length4_ == other.length4_ && length5_ == other.length5_ &&
+           length6_ == other.length6_ && length7_ == other.length7_;
   }
 
  private:
@@ -145,14 +145,13 @@ class SegmentsKey {
 
   // Returns the length array of the segments at segment_index with
   // segment_size.
-  std::array<uint8_t, 8> GetLengthArray(size_t segment_index,
-                                        size_t segment_size) const {
+  LengthArray GetLengthArray(size_t segment_index, size_t segment_size) const {
     const size_t size = std::min<size_t>(segment_size, 8);
     std::array<uint8_t, 8> length_array = {0, 0, 0, 0, 0, 0, 0, 0};
     for (size_t i = 0; i < size; ++i) {
       length_array[i] = char_sizes_[segment_index + i];
     }
-    return length_array;
+    return LengthArray(length_array);
   }
 
  private:
@@ -294,25 +293,31 @@ bool UserBoundaryHistoryRewriter::Resize(
       absl::string_view key = segments_key->GetKey(seg_idx, seg_size);
       const LengthArray *value =
           reinterpret_cast<const LengthArray *>(storage_.Lookup(key));
-      if (value != nullptr) {
-        const std::array<uint8_t, 8> length_array =
-            segments_key->GetLengthArray(seg_idx, seg_size);
-        if (!value->Equal(length_array)) {
-          const std::array<uint8_t, 8> updated_array = value->ToUint8Array();
-          MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: ["
-                       << seg_idx << ", " << seg_size << "] "
-                       << "resize: [" << absl::StrJoin(updated_array, " ")
-                       << "]";
-          if (parent_converter_->ResizeSegment(&segments, request, seg_idx,
-                                               seg_size, updated_array)) {
-            result = true;
-          } else {
-            LOG(WARNING) << "ResizeSegment failed for key: " << key;
-          }
-          seg_idx += seg_size - 1;  // -1 as the main loop will add +1.
-          break;
-        }
+      if (value == nullptr) {
+        // If the key is not in the history, resize is not needed.
+        continue;
       }
+
+      const LengthArray length_array =
+          segments_key->GetLengthArray(seg_idx, seg_size);
+      if (value->Equal(length_array)) {
+        // If the segments are already same as the history, resize is not
+        // needed.
+        continue;
+      }
+
+      const std::array<uint8_t, 8> updated_array = value->ToUint8Array();
+      MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: [" << seg_idx
+                   << ", " << seg_size << "] "
+                   << "resize: [" << absl::StrJoin(updated_array, " ") << "]";
+      if (parent_converter_->ResizeSegment(&segments, request, seg_idx,
+                                           seg_size, updated_array)) {
+        result = true;
+      } else {
+        LOG(WARNING) << "ResizeSegment failed for key: " << key;
+      }
+      seg_idx += seg_size - 1;  // -1 as the main loop will add +1.
+      break;
     }
   }
 
@@ -347,12 +352,12 @@ bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,
         std::clamp<int>(target_segments_size - seg_idx, 0, kMaxKeysSize);
     for (size_t seg_size = keys_size; seg_size != 0; --seg_size) {
       const absl::string_view key = segments_key->GetKey(seg_idx, seg_size);
-      const std::array<uint8_t, 8> length_array =
+      const LengthArray length_array =
           segments_key->GetLengthArray(seg_idx, seg_size);
       MOZC_VLOG(2) << "InserteSegment key: " << key << " " << seg_idx << " "
-                   << seg_size << " " << absl::StrJoin(length_array, " ");
-      const LengthArray inserted_value(length_array);
-      storage_.Insert(key, reinterpret_cast<const char *>(&inserted_value));
+                   << seg_size << " "
+                   << absl::StrJoin(length_array.ToUint8Array(), " ");
+      storage_.Insert(key, reinterpret_cast<const char *>(&length_array));
     }
   }
 
