@@ -47,7 +47,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_token.h"
-#include "engine/engine_interface.h"
+#include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -571,40 +571,31 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
   }
 
 // Macro for {"M/D", "日付"}
-#define DATE(month, day) \
-  { #month "/" #day, "日付" }
+#define DATE(month, day) {#month "/" #day, "日付"}
 
 // Macro for {"M月D日", "日付"}
-#define KANJI_DATE(month, day) \
-  { #month "月" #day "日", "日付" }
+#define KANJI_DATE(month, day) {#month "月" #day "日", "日付"}
 
 // Macro for {"H:M", "時刻"}
-#define TIME(hour, minute) \
-  { #hour ":" #minute, "時刻" }
+#define TIME(hour, minute) {#hour ":" #minute, "時刻"}
 
 // Macro for {"H時M分", "時刻"}
-#define KANJI_TIME(hour, minute) \
-  { #hour "時" #minute "分", "時刻" }
+#define KANJI_TIME(hour, minute) {#hour "時" #minute "分", "時刻"}
 
 // Macro for {"H時半", "時刻"}
-#define KANJI_TIME_HAN(hour) \
-  { #hour "時半", "時刻" }
+#define KANJI_TIME_HAN(hour) {#hour "時半", "時刻"}
 
 // Macro for {"午前H時M分", "時刻"}
-#define GOZEN(hour, minute) \
-  { "午前" #hour "時" #minute "分", "時刻" }
+#define GOZEN(hour, minute) {"午前" #hour "時" #minute "分", "時刻"}
 
 // Macro for {"午後H時M分", "時刻"}
-#define GOGO(hour, minute) \
-  { "午後" #hour "時" #minute "分", "時刻" }
+#define GOGO(hour, minute) {"午後" #hour "時" #minute "分", "時刻"}
 
 // Macro for {"午前H時半", "時刻"}
-#define GOZEN_HAN(hour) \
-  { "午前" #hour "時半", "時刻" }
+#define GOZEN_HAN(hour) {"午前" #hour "時半", "時刻"}
 
 // Macro for {"午後H時半", "時刻"}
-#define GOGO_HAN(hour) \
-  { "午後" #hour "時半", "時刻" }
+#define GOGO_HAN(hour) {"午後" #hour "時半", "時刻"}
 
   // Targets of rewrite.
   using ValueAndDescription = std::pair<const char *, const char *>;
@@ -1322,8 +1313,7 @@ TEST_P(RewriteAdTest, MockConverter) {
 TEST_P(RewriteAdTest, MockDataManager) {
   const RewriteAdData &data = GetParam();
   MockDictionary dictionary;
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   DateRewriter rewriter(engine->GetConverter(), &dictionary);
   Segments segments;
   for (const auto &[key, value] : data.segments) {

@@ -34,6 +34,7 @@
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "engine/engine.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
@@ -53,7 +54,7 @@ ConversionRequest ConvReq(absl::string_view key) {
 class ConverterRegressionTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
-  std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = EngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   CHECK(converter);
@@ -80,7 +81,7 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
 }
 
 TEST_F(ConverterRegressionTest, Regression3323108) {
-  std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = EngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 

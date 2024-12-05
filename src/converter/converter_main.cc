@@ -464,8 +464,8 @@ bool IsConsistentEngineNameAndType(const std::string &engine_name,
          kConsistentPairs->end();
 }
 
-void RunLoop(std::unique_ptr<EngineInterface> engine,
-             commands::Request &&request, config::Config &&config) {
+void RunLoop(std::unique_ptr<Engine> engine, commands::Request &&request,
+             config::Config &&config) {
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
@@ -527,7 +527,7 @@ int main(int argc, char **argv) {
 
   mozc::config::Config config = mozc::config::ConfigHandler::DefaultConfig();
   mozc::commands::Request request;
-  std::unique_ptr<mozc::EngineInterface> engine;
+  std::unique_ptr<mozc::Engine> engine;
   if (absl::GetFlag(FLAGS_engine_type) == "desktop") {
     engine =
         mozc::Engine::CreateDesktopEngine(*std::move(data_manager)).value();

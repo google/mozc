@@ -40,7 +40,7 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
-#include "engine/engine_interface.h"
+#include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -200,8 +200,7 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   CalculatorRewriter calculator_rewriter(engine->GetConverter());
 
   // Push back separated segments.
@@ -277,8 +276,7 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   CalculatorRewriter calculator_rewriter(engine->GetConverter());
   {
     Segments segments;

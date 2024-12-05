@@ -39,7 +39,7 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "engine/engine_interface.h"
+#include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -113,7 +113,7 @@ class SymbolRewriterTest : public testing::TestWithTempUserProfile {
     data_manager_ = std::make_unique<testing::MockDataManager>();
   }
 
-  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<Engine> engine_;
   const ConverterInterface *converter_;
   std::unique_ptr<testing::MockDataManager> data_manager_;
 };

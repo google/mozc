@@ -40,7 +40,7 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
-#include "engine/engine_interface.h"
+#include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -82,7 +82,7 @@ class UnicodeRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override { engine_ = MockDataEngineFactory::Create().value(); }
 
-  std::unique_ptr<EngineInterface> engine_;
+  std::unique_ptr<Engine> engine_;
   const commands::Request &default_request() const { return default_request_; }
   const config::Config &default_config() const { return default_config_; }
   const commands::Context &default_context() const { return default_context_; }
