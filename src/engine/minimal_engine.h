@@ -58,14 +58,15 @@ class MinimalEngine : public EngineInterface {
   bool Sync() override { return true; }
   bool Wait() override { return true; }
   bool ReloadAndWait() override { return true; }
-  absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
-                             bool is_mobile) override {
-    return absl::OkStatus();
-  }
   UserDataManagerInterface *GetUserDataManager() override;
   absl::string_view GetDataVersion() const override { return "0.0.0"; }
-  const DataManagerInterface *GetDataManager() const override;
   std::vector<std::string> GetPosList() const override;
+
+  absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
+                             bool is_mobile) {
+    return absl::OkStatus();
+  }
+  const DataManagerInterface *GetDataManager() const;
 
  private:
   std::unique_ptr<ConverterInterface> converter_;

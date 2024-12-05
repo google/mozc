@@ -37,9 +37,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
-#include "data_manager/data_manager_interface.h"
 #include "engine/engine_interface.h"
-#include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "testing/gmock.h"
@@ -54,12 +52,8 @@ class MockEngine : public EngineInterface {
   MOCK_METHOD(bool, Sync, (), (override));
   MOCK_METHOD(bool, Wait, (), (override));
   MOCK_METHOD(bool, ReloadAndWait, (), (override));
-  MOCK_METHOD(absl::Status, ReloadModules,
-              (std::unique_ptr<engine::Modules>, bool), (override));
   MOCK_METHOD(UserDataManagerInterface *, GetUserDataManager, (), (override));
   MOCK_METHOD(absl::string_view, GetDataVersion, (), (const, override));
-  MOCK_METHOD(const DataManagerInterface *, GetDataManager, (),
-              (const, override));
   MOCK_METHOD(std::vector<std::string>, GetPosList, (), (const, override));
   MOCK_METHOD(void, SetSupplementalModel,
               (const engine::SupplementalModelInterface *), (override));

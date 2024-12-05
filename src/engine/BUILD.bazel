@@ -85,7 +85,6 @@ mozc_cc_library(
     hdrs = ["engine_interface.h"],
     deps = [
         ":engine_builder",
-        ":modules",
         ":supplemental_model_interface",
         ":user_data_manager_interface",
         "//converter:converter_interface",
@@ -241,7 +240,6 @@ mozc_cc_library(
     hdrs = ["engine_mock.h"],
     deps = [
         ":engine_interface",
-        ":modules",
         ":supplemental_model_interface",
         ":user_data_manager_interface",
         "//converter:converter_interface",

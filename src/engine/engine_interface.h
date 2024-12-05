@@ -37,9 +37,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
-#include "data_manager/data_manager_interface.h"
 #include "engine/data_loader.h"
-#include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/engine_builder.pb.h"
@@ -82,18 +80,11 @@ class EngineInterface {
   // Returns true if successfully reloaded and waited, or did nothing.
   virtual bool ReloadAndWait() = 0;
 
-  // Reloads the modules and update objects in Engine.
-  virtual absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
-                                     bool is_mobile) = 0;
-
   // Gets a user data manager.
   virtual UserDataManagerInterface *GetUserDataManager() = 0;
 
   // Gets the version of underlying data set.
   virtual absl::string_view GetDataVersion() const = 0;
-
-  // Gets the data manager.
-  virtual const DataManagerInterface *GetDataManager() const = 0;
 
   // Gets the user POS list.
   virtual std::vector<std::string> GetPosList() const = 0;

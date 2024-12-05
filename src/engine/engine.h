@@ -114,7 +114,7 @@ class Engine : public EngineInterface {
   bool ReloadAndWait() override;
 
   absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
-                             bool is_mobile) override;
+                             bool is_mobile);
 
   UserDataManagerInterface *GetUserDataManager() override {
     return initialized_ ? user_data_manager_.get()
@@ -125,7 +125,7 @@ class Engine : public EngineInterface {
     return GetDataManager()->GetDataVersion();
   }
 
-  const DataManagerInterface *GetDataManager() const override {
+  const DataManagerInterface *GetDataManager() const {
     return initialized_ ? &modules_->GetDataManager()
                         : minimal_engine_.GetDataManager();
   }
