@@ -43,7 +43,6 @@
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
-
 class MergerRewriter : public RewriterInterface {
  public:
   MergerRewriter() = default;
@@ -51,34 +50,6 @@ class MergerRewriter : public RewriterInterface {
 
   MergerRewriter(const MergerRewriter &) = delete;
   MergerRewriter &operator=(const MergerRewriter &) = delete;
-
-  // Returns true if rewriter can be called with the segments.
-  bool CheckCapability(const ConversionRequest &request,
-                       const Segments *segments,
-                       const RewriterInterface &rewriter) const {
-    if (segments == nullptr) {
-      return false;
-    }
-    switch (request.request_type()) {
-      case ConversionRequest::CONVERSION:
-        return ((rewriter.capability(request) &
-                 RewriterInterface::CONVERSION) != 0);
-
-      case ConversionRequest::PREDICTION:
-      case ConversionRequest::PARTIAL_PREDICTION:
-        return ((rewriter.capability(request) &
-                 RewriterInterface::PREDICTION) != 0);
-
-      case ConversionRequest::SUGGESTION:
-      case ConversionRequest::PARTIAL_SUGGESTION:
-        return ((rewriter.capability(request) &
-                 RewriterInterface::SUGGESTION) != 0);
-
-      case ConversionRequest::REVERSE_CONVERSION:
-      default:
-        return false;
-    }
-  }
 
   void AddRewriter(std::unique_ptr<RewriterInterface> rewriter) {
     DCHECK(rewriter);
@@ -88,8 +59,28 @@ class MergerRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override {
     bool result = false;
+    if (segments == nullptr) {
+      return false;
+    }
+
+    const CapabilityType capability_type = [&request]() {
+      switch (request.request_type()) {
+        case ConversionRequest::CONVERSION:
+          return RewriterInterface::CONVERSION;
+        case ConversionRequest::PREDICTION:
+        case ConversionRequest::PARTIAL_PREDICTION:
+          return RewriterInterface::PREDICTION;
+        case ConversionRequest::SUGGESTION:
+        case ConversionRequest::PARTIAL_SUGGESTION:
+          return RewriterInterface::SUGGESTION;
+        case ConversionRequest::REVERSE_CONVERSION:
+        default:
+          return RewriterInterface::NOT_AVAILABLE;
+      }
+    }();
+
     for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
-      if (CheckCapability(request, segments, *rewriter)) {
+      if (rewriter->capability(request) & capability_type) {
         result |= rewriter->Rewrite(request, segments);
       }
     }
