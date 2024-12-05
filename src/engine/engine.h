@@ -42,7 +42,6 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/data_loader.h"
 #include "engine/engine_interface.h"
 #include "engine/minimal_engine.h"
@@ -105,10 +104,6 @@ class Engine : public EngineInterface {
     } else {
       return minimal_engine_.GetPredictorName();
     }
-  }
-  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
-    return initialized_ ? modules_->GetMutableSuppressionDictionary()
-                        : minimal_engine_.GetSuppressionDictionary();
   }
 
   // Functions for Reload, Sync, Wait return true if successfully operated

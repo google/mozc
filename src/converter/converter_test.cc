@@ -64,7 +64,6 @@
 #include "dictionary/user_dictionary_stub.h"
 #include "dictionary/user_pos.h"
 #include "engine/engine.h"
-#include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
 #include "prediction/dictionary_predictor.h"
@@ -853,7 +852,8 @@ TEST_F(ConverterTest, Regression3437022) {
   // Add compound entry to suppression dictionary
   segments.Clear();
 
-  SuppressionDictionary *dic = engine->GetSuppressionDictionary();
+  SuppressionDictionary *dic =
+      engine->GetModulesForTesting()->GetMutableSuppressionDictionary();
   dic->Lock();
   dic->AddEntry(kKey1 + kKey2, kValue1 + kValue2);
   dic->UnLock();

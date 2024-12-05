@@ -38,11 +38,9 @@
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/engine_interface.h"
 #include "engine/modules.h"
 #include "engine/user_data_manager_interface.h"
-#include "prediction/predictor_interface.h"
 
 namespace mozc {
 
@@ -56,7 +54,6 @@ class MinimalEngine : public EngineInterface {
 
   ConverterInterface *GetConverter() const override;
   absl::string_view GetPredictorName() const override;
-  dictionary::SuppressionDictionary *GetSuppressionDictionary() override;
   bool Reload() override { return true; }
   bool Sync() override { return true; }
   bool Wait() override { return true; }
@@ -72,8 +69,6 @@ class MinimalEngine : public EngineInterface {
 
  private:
   std::unique_ptr<ConverterInterface> converter_;
-  std::unique_ptr<prediction::PredictorInterface> predictor_;
-  std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
   std::unique_ptr<const DataManagerInterface> data_manager_;
 };

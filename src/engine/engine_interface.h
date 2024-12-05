@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/data_loader.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
@@ -64,10 +63,6 @@ class EngineInterface {
 
   // Returns the predictor name.
   virtual absl::string_view GetPredictorName() const = 0;
-
-  // Returns a reference to the suppression dictionary. The returned instance is
-  // managed by the engine class and should not be deleted by callers.
-  virtual dictionary::SuppressionDictionary *GetSuppressionDictionary() = 0;
 
   // Reloads internal data, e.g., user dictionary, etc.
   // This function may read data from local files.

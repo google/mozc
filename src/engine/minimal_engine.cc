@@ -44,15 +44,11 @@
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/user_data_manager_interface.h"
-#include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
 namespace {
-
-using ::mozc::prediction::PredictorInterface;
 
 class UserDataManagerStub : public UserDataManagerInterface {
  public:
@@ -169,29 +165,10 @@ class MinimalConverter : public ConverterInterface {
     return true;
   }
 };
-
-class MinimalPredictor : public PredictorInterface {
- public:
-  MinimalPredictor() : name_("MinimalPredictor") {}
-
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const override {
-    return AddAsIsCandidate(request, segments);
-  }
-
-  const std::string &GetPredictorName() const override { return name_; }
-
- private:
-  const std::string name_;
-};
-
 }  // namespace
 
 MinimalEngine::MinimalEngine()
     : converter_(std::make_unique<MinimalConverter>()),
-      predictor_(std::make_unique<MinimalPredictor>()),
-      suppression_dictionary_(
-          std::make_unique<dictionary::SuppressionDictionary>()),
       user_data_manager_(std::make_unique<UserDataManagerStub>()),
       data_manager_(std::make_unique<DataManager>()) {}
 
@@ -200,11 +177,8 @@ ConverterInterface *MinimalEngine::GetConverter() const {
 }
 
 absl::string_view MinimalEngine::GetPredictorName() const {
-  return predictor_ ? predictor_->GetPredictorName() : absl::string_view();
-}
-
-dictionary::SuppressionDictionary *MinimalEngine::GetSuppressionDictionary() {
-  return suppression_dictionary_.get();
+  constexpr absl::string_view kPredictorName = "MinimalPredictor";
+  return kPredictorName;
 }
 
 UserDataManagerInterface *MinimalEngine::GetUserDataManager() {

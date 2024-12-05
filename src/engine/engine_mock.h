@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/engine_interface.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
@@ -51,8 +50,6 @@ class MockEngine : public EngineInterface {
  public:
   MOCK_METHOD(ConverterInterface *, GetConverter, (), (const, override));
   MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
-  MOCK_METHOD(dictionary::SuppressionDictionary *, GetSuppressionDictionary, (),
-              (override));
   MOCK_METHOD(bool, Reload, (), (override));
   MOCK_METHOD(bool, Sync, (), (override));
   MOCK_METHOD(bool, Wait, (), (override));
