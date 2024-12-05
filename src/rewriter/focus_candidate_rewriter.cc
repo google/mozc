@@ -131,10 +131,7 @@ bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
 FocusCandidateRewriter::FocusCandidateRewriter(
     const DataManagerInterface *data_manager)
     : pos_matcher_(data_manager->GetPosMatcherData()) {
-  const char *array = nullptr;
-  size_t size = 0;
-  data_manager->GetCounterSuffixSortedArray(&array, &size);
-  const absl::string_view data(array, size);
+  absl::string_view data = data_manager->GetCounterSuffixSortedArray();
   // Data manager is responsible for providing a valid data.  Just verify data
   // in debug build.
   DCHECK(SerializedStringArray::VerifyData(data));

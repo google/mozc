@@ -41,6 +41,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "converter/connector.h"
 #include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"
@@ -104,12 +105,13 @@ absl::Status Modules::Init(
   }
 
   if (!dictionary_) {
-    const char *dictionary_data = nullptr;
-    int dictionary_size = 0;
-    data_manager_->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
+    absl::string_view dictionary_data =
+        data_manager_->GetSystemDictionaryData();
 
     absl::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
-        SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
+        SystemDictionary::Builder(dictionary_data.data(),
+                                  dictionary_data.size())
+            .Build();
     if (!sysdic.ok()) {
       return std::move(sysdic).status();
     }
@@ -123,7 +125,7 @@ absl::Status Modules::Init(
 
   if (!suffix_dictionary_) {
     absl::string_view suffix_key_array_data, suffix_value_array_data;
-    const uint32_t *token_array = nullptr;
+    absl::Span<const uint32_t> token_array;
     data_manager_->GetSuffixDictionaryData(
         &suffix_key_array_data, &suffix_value_array_data, &token_array);
     suffix_dictionary_ = std::make_unique<SuffixDictionary>(

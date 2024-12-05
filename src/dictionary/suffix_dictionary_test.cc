@@ -36,6 +36,7 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
@@ -60,7 +61,7 @@ TEST(SuffixDictionaryTest, Callback) {
   {
     const testing::MockDataManager manager;
     absl::string_view key_array_data, value_arra_data;
-    const uint32_t *token_array = nullptr;
+    absl::Span<const uint32_t> token_array;
     manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
                                     &token_array);
     dic = std::make_unique<SuffixDictionary>(key_array_data, value_arra_data,
@@ -86,7 +87,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
   {
     const testing::MockDataManager manager;
     absl::string_view key_array_data, value_arra_data;
-    const uint32_t *token_array = nullptr;
+    absl::Span<const uint32_t> token_array;
     manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
                                     &token_array);
     dic = std::make_unique<SuffixDictionary>(key_array_data, value_arra_data,

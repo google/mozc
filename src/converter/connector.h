@@ -49,8 +49,7 @@ class Connector final {
   static absl::StatusOr<Connector> CreateFromDataManager(
       const DataManagerInterface &data_manager);
 
-  static absl::StatusOr<Connector> Create(const char *connection_data,
-                                          size_t connection_size,
+  static absl::StatusOr<Connector> Create(absl::string_view connection_data,
                                           int cache_size);
 
   int GetTransitionCost(uint16_t rid, uint16_t lid) const;
@@ -61,8 +60,7 @@ class Connector final {
  private:
   class Row;
 
-  absl::Status Init(const char *connection_data, size_t connection_size,
-                    int cache_size);
+  absl::Status Init(absl::string_view connection_data, int cache_size);
 
   int LookupCost(uint16_t rid, uint16_t lid) const;
 

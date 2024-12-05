@@ -61,29 +61,28 @@ class DataManagerInterface {
 
   // Returns a reference to PosMatcher class handling POS rules. Don't
   // delete the returned pointer, which is owned by the manager.
-  virtual const uint16_t *GetPosMatcherData() const = 0;
+  virtual absl::Span<const uint16_t> GetPosMatcherData() const = 0;
 
   // Returns the address of an array of lid group.
-  virtual const uint8_t *GetPosGroupData() const = 0;
+  virtual absl::Span<const uint8_t> GetPosGroupData() const = 0;
 
   // Returns the address of connection data and its size.
-  virtual void GetConnectorData(const char **data, size_t *size) const = 0;
+  virtual absl::string_view GetConnectorData() const = 0;
 
   // Returns the addresses and their sizes necessary to create a segmenter.
-  virtual void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
-                                const uint16_t **l_table,
-                                const uint16_t **r_table,
-                                size_t *bitarray_num_bytes,
-                                const char **bitarray_data,
-                                const uint16_t **boundary_data) const = 0;
+  virtual void GetSegmenterData(
+      size_t *l_num_elements, size_t *r_num_elements,
+      absl::Span<const uint16_t> *l_table, absl::Span<const uint16_t> *r_table,
+      absl::Span<const char> *bitarray_data,
+      absl::Span<const uint16_t> *boundary_data) const = 0;
 
   // Returns the address of system dictionary data and its size.
-  virtual void GetSystemDictionaryData(const char **data, int *size) const = 0;
+  virtual absl::string_view GetSystemDictionaryData() const = 0;
 
   // Returns the array containing keys, values, and token (lid, rid, cost).
-  virtual void GetSuffixDictionaryData(absl::string_view *key_array,
-                                       absl::string_view *value_array,
-                                       const uint32_t **token_array) const = 0;
+  virtual void GetSuffixDictionaryData(
+      absl::string_view *key_array, absl::string_view *value_array,
+      absl::Span<const uint32_t> *token_array) const = 0;
 
   // Gets a reference to reading correction data array and its size.
   virtual void GetReadingCorrectionData(
@@ -139,8 +138,7 @@ class DataManagerInterface {
 #endif  // NO_USAGE_REWRITER
 
   // Gets the address and size of a sorted array of counter suffix values.
-  virtual void GetCounterSuffixSortedArray(const char **array,
-                                           size_t *size) const = 0;
+  virtual absl::string_view GetCounterSuffixSortedArray() const = 0;
 
   // Gets the zero query prediction data.
   virtual void GetZeroQueryData(

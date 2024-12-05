@@ -34,6 +34,7 @@
 #include <memory>
 
 #include "absl/log/check.h"
+#include "absl/types/span.h"
 #include "base/container/bitarray.h"
 #include "converter/node.h"
 #include "data_manager/data_manager_interface.h"
@@ -44,35 +45,26 @@ std::unique_ptr<Segmenter> Segmenter::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
   size_t l_num_elements = 0;
   size_t r_num_elements = 0;
-  const uint16_t *l_table = nullptr;
-  const uint16_t *r_table = nullptr;
-  size_t bitarray_num_bytes = 0;
-  const char *bitarray_data = nullptr;
-  const uint16_t *boundary_data = nullptr;
+  absl::Span<const uint16_t> l_table, r_table, boundary_data;
+  absl::Span<const char> bitarray_data;
   data_manager.GetSegmenterData(&l_num_elements, &r_num_elements, &l_table,
-                                &r_table, &bitarray_num_bytes, &bitarray_data,
-                                &boundary_data);
+                                &r_table, &bitarray_data, &boundary_data);
   return std::make_unique<Segmenter>(l_num_elements, r_num_elements, l_table,
-                                     r_table, bitarray_num_bytes, bitarray_data,
-                                     boundary_data);
+                                     r_table, bitarray_data, boundary_data);
 }
 
 Segmenter::Segmenter(size_t l_num_elements, size_t r_num_elements,
-                     const uint16_t *l_table, const uint16_t *r_table,
-                     size_t bitarray_num_bytes, const char *bitarray_data,
-                     const uint16_t *boundary_data)
+                     absl::Span<const uint16_t> l_table,
+                     absl::Span<const uint16_t> r_table,
+                     absl::Span<const char> bitarray_data,
+                     absl::Span<const uint16_t> boundary_data)
     : l_num_elements_(l_num_elements),
       r_num_elements_(r_num_elements),
       l_table_(l_table),
       r_table_(r_table),
-      bitarray_num_bytes_(bitarray_num_bytes),
       bitarray_data_(bitarray_data),
       boundary_data_(boundary_data) {
-  DCHECK(l_table_);
-  DCHECK(r_table_);
-  DCHECK(bitarray_data_);
-  DCHECK(boundary_data_);
-  CHECK_LE(l_num_elements_ * r_num_elements_, bitarray_num_bytes_ * 8);
+  CHECK_LE(l_num_elements_ * r_num_elements_, bitarray_data_.size() * 8);
 }
 
 bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
@@ -105,7 +97,7 @@ bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
 bool Segmenter::IsBoundary(uint16_t rid, uint16_t lid) const {
   const uint32_t bitarray_index =
       l_table_[rid] + l_num_elements_ * r_table_[lid];
-  return BitArray::GetValue(bitarray_data_, bitarray_index);
+  return BitArray::GetValue(bitarray_data_.data(), bitarray_index);
 }
 
 int32_t Segmenter::GetPrefixPenalty(uint16_t lid) const {

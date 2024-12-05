@@ -481,14 +481,12 @@ DataManager::Status DataManager::InitUserPosManagerDataFromFile(
   return InitUserPosManagerDataFromArray(data, magic);
 }
 
-void DataManager::GetConnectorData(const char **data, size_t *size) const {
-  *data = connection_data_.data();
-  *size = connection_data_.size();
+absl::string_view DataManager::GetConnectorData() const {
+  return connection_data_;
 }
 
-void DataManager::GetSystemDictionaryData(const char **data, int *size) const {
-  *data = dictionary_data_.data();
-  *size = dictionary_data_.size();
+absl::string_view DataManager::GetSystemDictionaryData() const {
+  return dictionary_data_;
 }
 
 absl::Span<const uint32_t> DataManager::GetCollocationData() const {
@@ -509,34 +507,33 @@ void DataManager::GetUserPosData(absl::string_view *token_array_data,
   *string_array_data = user_pos_string_array_data_;
 }
 
-const uint16_t *DataManager::GetPosMatcherData() const {
-  return reinterpret_cast<const uint16_t *>(pos_matcher_data_.data());
+absl::Span<const uint16_t> DataManager::GetPosMatcherData() const {
+  return MakeSpanFromAlignedBuffer<uint16_t>(pos_matcher_data_);
 }
 
-const uint8_t *DataManager::GetPosGroupData() const {
-  return reinterpret_cast<const uint8_t *>(pos_group_data_.data());
+absl::Span<const uint8_t> DataManager::GetPosGroupData() const {
+  return MakeSpanFromAlignedBuffer<uint8_t>(pos_group_data_);
 }
 
 void DataManager::GetSegmenterData(
-    size_t *l_num_elements, size_t *r_num_elements, const uint16_t **l_table,
-    const uint16_t **r_table, size_t *bitarray_num_bytes,
-    const char **bitarray_data, const uint16_t **boundary_data) const {
+    size_t *l_num_elements, size_t *r_num_elements,
+    absl::Span<const uint16_t> *l_table, absl::Span<const uint16_t> *r_table,
+    absl::Span<const char> *bitarray_data,
+    absl::Span<const uint16_t> *boundary_data) const {
   *l_num_elements = segmenter_compressed_lsize_;
   *r_num_elements = segmenter_compressed_rsize_;
-  *l_table = reinterpret_cast<const uint16_t *>(segmenter_ltable_.data());
-  *r_table = reinterpret_cast<const uint16_t *>(segmenter_rtable_.data());
-  *bitarray_num_bytes = segmenter_bitarray_.size();
-  *bitarray_data = segmenter_bitarray_.data();
-  *boundary_data = reinterpret_cast<const uint16_t *>(boundary_data_.data());
+  *l_table = MakeSpanFromAlignedBuffer<uint16_t>(segmenter_ltable_);
+  *r_table = MakeSpanFromAlignedBuffer<uint16_t>(segmenter_rtable_);
+  *bitarray_data = MakeSpanFromAlignedBuffer<char>(segmenter_bitarray_);
+  *boundary_data = MakeSpanFromAlignedBuffer<uint16_t>(boundary_data_);
 }
 
-void DataManager::GetSuffixDictionaryData(absl::string_view *key_array_data,
-                                          absl::string_view *value_array_data,
-                                          const uint32_t **token_array) const {
+void DataManager::GetSuffixDictionaryData(
+    absl::string_view *key_array_data, absl::string_view *value_array_data,
+    absl::Span<const uint32_t> *token_array) const {
   *key_array_data = suffix_key_array_data_;
   *value_array_data = suffix_value_array_data_;
-  *token_array =
-      reinterpret_cast<const uint32_t *>(suffix_token_array_data_.data());
+  *token_array = MakeSpanFromAlignedBuffer<uint32_t>(suffix_token_array_data_);
 }
 
 void DataManager::GetReadingCorrectionData(
@@ -591,10 +588,8 @@ void DataManager::GetA11yDescriptionRewriterData(
   *string_array_data = a11y_description_string_array_data_;
 }
 
-void DataManager::GetCounterSuffixSortedArray(const char **array,
-                                              size_t *size) const {
-  *array = counter_suffix_data_.data();
-  *size = counter_suffix_data_.size();
+absl::string_view DataManager::GetCounterSuffixSortedArray() const {
+  return counter_suffix_data_;
 }
 
 void DataManager::GetZeroQueryData(

@@ -66,11 +66,9 @@ std::unique_ptr<DictionaryData> CreateDictionaryData() {
   auto ret = std::make_unique<DictionaryData>();
   testing::MockDataManager data_manager;
   ret->pos_matcher.Set(data_manager.GetPosMatcherData());
-  const char *dictionary_data = nullptr;
-  int dictionary_size = 0;
-  data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
+  absl::string_view dictionary_data = data_manager.GetSystemDictionaryData();
   std::unique_ptr<SystemDictionary> sys_dict =
-      SystemDictionary::Builder(dictionary_data, dictionary_size)
+      SystemDictionary::Builder(dictionary_data.data(), dictionary_data.size())
           .Build()
           .value();
   auto val_dict = std::make_unique<ValueDictionary>(ret->pos_matcher,

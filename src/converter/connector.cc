@@ -179,26 +179,21 @@ absl::StatusOr<Connector> Connector::CreateFromDataManager(
 #else   // __ANDROID__
   constexpr int kCacheSize = 1024;
 #endif  // __ANDROID__
-  const char *connection_data = nullptr;
-  size_t connection_data_size = 0;
-  data_manager.GetConnectorData(&connection_data, &connection_data_size);
-  return Create(connection_data, connection_data_size, kCacheSize);
+  return Create(data_manager.GetConnectorData(), kCacheSize);
 }
 
-absl::StatusOr<Connector> Connector::Create(const char *connection_data,
-                                            size_t connection_size,
+absl::StatusOr<Connector> Connector::Create(absl::string_view connection_data,
                                             int cache_size) {
   Connector connector;
-  absl::Status status =
-      connector.Init(connection_data, connection_size, cache_size);
+  absl::Status status = connector.Init(connection_data, cache_size);
   if (!status.ok()) {
     return status;
   }
   return connector;
 }
 
-absl::Status Connector::Init(const char *connection_data,
-                             size_t connection_size, int cache_size) {
+absl::Status Connector::Init(absl::string_view connection_data,
+                             int cache_size) {
   // Check if the cache_size is the power of 2.
   if ((cache_size & (cache_size - 1)) != 0) {
     return absl::InvalidArgumentError(absl::StrCat(
@@ -209,21 +204,21 @@ absl::Status Connector::Init(const char *connection_data,
   cache_value_.resize(cache_size);
 
   absl::StatusOr<Metadata> metadata =
-      ParseMetadata(connection_data, connection_size);
+      ParseMetadata(connection_data.data(), connection_data.size());
   if (!metadata.ok()) {
     return std::move(metadata).status();
   }
   resolution_ = metadata->resolution;
 
   // Set the read location to the metadata end.
-  auto *ptr = connection_data + Metadata::kByteSize;
-  const auto *data_end = connection_data + connection_size;
+  const char *ptr = connection_data.data() + Metadata::kByteSize;
+  const char *data_end = connection_data.data() + connection_data.size();
 
-  const auto &gen_debug_info = [connection_data, connection_size,
+  const auto &gen_debug_info = [connection_data,
                                 &metadata](const char *ptr) -> std::string {
     return absl::StrCat(metadata->DebugString(),
-                        ", Reader{location: ", ptr - connection_data,
-                        ", datasize: ", connection_size, "}");
+                        ", Reader{location: ", ptr - connection_data.data(),
+                        ", datasize: ", connection_data.size(), "}");
   };
 
   // A helper macro to check if the array is aligned at 32-bit boundary.  If

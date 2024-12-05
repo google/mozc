@@ -33,6 +33,7 @@
 #include <cstdint>
 
 #include "absl/base/attributes.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace dictionary {
@@ -42,7 +43,7 @@ namespace dictionary {
 // value like string_view.
 class PosGroup {
  public:
-  explicit PosGroup(const uint8_t *lid_group ABSL_ATTRIBUTE_LIFETIME_BOUND)
+  explicit PosGroup(absl::Span<const uint8_t> lid_group)
       : lid_group_(lid_group) {}
 
   PosGroup(const PosGroup &) = default;
@@ -55,7 +56,7 @@ class PosGroup {
   }
 
  private:
-  const uint8_t *lid_group_;
+  const absl::Span<const uint8_t> lid_group_;
 };
 
 }  // namespace dictionary

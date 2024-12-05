@@ -251,12 +251,8 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
 }
 
 void DataManagerTestBase::CounterSuffixTest_ValidateTest() {
-  const char *data = nullptr;
-  size_t data_size = 0;
-  data_manager_->GetCounterSuffixSortedArray(&data, &data_size);
-
   SerializedStringArray suffix_array;
-  ASSERT_TRUE(suffix_array.Init(absl::string_view(data, data_size)));
+  ASSERT_TRUE(suffix_array.Init(data_manager_->GetCounterSuffixSortedArray()));
 
   // Check if the array is sorted in ascending order.
   absl::string_view prev_suffix;  // The smallest string.

@@ -34,6 +34,7 @@
 #include <optional>
 
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/strings/zstring_view.h"
 
@@ -97,6 +98,9 @@ class Mmap final {
   constexpr const char *data() const { return data_.data(); }
   constexpr absl::Span<char> span() { return data_; }
   constexpr absl::Span<const char> span() const { return data_; }
+  constexpr absl::string_view string_view() const {
+    return absl::string_view(data(), size());
+  }
 
   constexpr bool empty() const { return data_.empty(); }
   constexpr size_t size() const { return data_.size(); }

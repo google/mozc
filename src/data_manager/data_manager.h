@@ -105,24 +105,24 @@ class DataManager : public DataManagerInterface {
 
   // Implementation of DataManagerInterface.
   std::optional<std::string> GetFilename() const override { return filename_; }
-  const uint16_t *GetPosMatcherData() const override;
+  absl::Span<const uint16_t> GetPosMatcherData() const override;
   void GetUserPosData(absl::string_view *token_array_data,
                       absl::string_view *string_array_data) const override;
-  void GetConnectorData(const char **data, size_t *size) const override;
-  void GetSystemDictionaryData(const char **data, int *size) const override;
+  absl::string_view GetConnectorData() const override;
+  absl::string_view GetSystemDictionaryData() const override;
   absl::Span<const uint32_t> GetCollocationData() const override;
   absl::Span<const uint32_t> GetCollocationSuppressionData() const override;
   absl::Span<const uint32_t> GetSuggestionFilterData() const override;
-  const uint8_t *GetPosGroupData() const override;
-  void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
-                        const uint16_t **l_table, const uint16_t **r_table,
-                        size_t *bitarray_num_bytes, const char **bitarray_data,
-                        const uint16_t **boundary_data) const override;
-  void GetCounterSuffixSortedArray(const char **array,
-                                   size_t *size) const override;
-  void GetSuffixDictionaryData(absl::string_view *key_array_data,
-                               absl::string_view *value_array_data,
-                               const uint32_t **token_array) const override;
+  absl::Span<const uint8_t> GetPosGroupData() const override;
+  void GetSegmenterData(
+      size_t *l_num_elements, size_t *r_num_elements,
+      absl::Span<const uint16_t> *l_table, absl::Span<const uint16_t> *r_table,
+      absl::Span<const char> *bitarray_data,
+      absl::Span<const uint16_t> *boundary_data) const override;
+  absl::string_view GetCounterSuffixSortedArray() const;
+  void GetSuffixDictionaryData(
+      absl::string_view *key_array, absl::string_view *value_array,
+      absl::Span<const uint32_t> *token_array) const override;
   void GetReadingCorrectionData(
       absl::string_view *value_array_data, absl::string_view *error_array_data,
       absl::string_view *correction_array_data) const override;
