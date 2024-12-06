@@ -46,7 +46,6 @@
 #include "engine/data_loader.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
-#include "engine/user_data_manager_interface.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
@@ -56,60 +55,6 @@
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
-namespace {
-
-using ::mozc::prediction::PredictorInterface;
-
-class UserDataManager final : public UserDataManagerInterface {
- public:
-  UserDataManager(PredictorInterface *predictor, RewriterInterface *rewriter)
-      : predictor_(predictor), rewriter_(rewriter) {}
-
-  UserDataManager(const UserDataManager &) = delete;
-  UserDataManager &operator=(const UserDataManager &) = delete;
-
-  bool Sync() override;
-  bool Reload() override;
-  bool ClearUserHistory() override;
-  bool ClearUserPrediction() override;
-  bool ClearUnusedUserPrediction() override;
-  bool Wait() override;
-
- private:
-  PredictorInterface *predictor_;
-  RewriterInterface *rewriter_;
-};
-
-bool UserDataManager::Sync() {
-  // TODO(noriyukit): In the current implementation, if rewriter_->Sync() fails,
-  // predictor_->Sync() is never called. Check if we should call
-  // predictor_->Sync() or not.
-  return rewriter_->Sync() && predictor_->Sync();
-}
-
-bool UserDataManager::Reload() {
-  // TODO(noriyukit): The same TODO as Sync().
-  return rewriter_->Reload() && predictor_->Reload();
-}
-
-bool UserDataManager::ClearUserHistory() {
-  rewriter_->Clear();
-  return true;
-}
-
-bool UserDataManager::ClearUserPrediction() {
-  predictor_->ClearAllHistory();
-  return true;
-}
-
-bool UserDataManager::ClearUnusedUserPrediction() {
-  predictor_->ClearUnusedHistory();
-  return true;
-}
-
-bool UserDataManager::Wait() { return predictor_->Wait(); }
-
-}  // namespace
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
@@ -191,7 +136,7 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
   converter_ = std::make_unique<Converter>(*modules_, *immutable_converter_);
   RETURN_IF_NULL(converter_);
 
-  std::unique_ptr<PredictorInterface> predictor;
+  std::unique_ptr<prediction::PredictorInterface> predictor;
   {
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
@@ -225,8 +170,6 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
 
   converter_->Init(std::move(predictor), std::move(rewriter));
 
-  user_data_manager_ = std::make_unique<UserDataManager>(predictor_, rewriter_);
-
   initialized_ = true;
   return absl::Status();
 
@@ -234,36 +177,41 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
 }
 
 bool Engine::Reload() {
-  if (!modules_->GetUserDictionary()) {
-    return true;
+  if (modules_ && modules_->GetUserDictionary()) {
+    modules_->GetUserDictionary()->Reload();
   }
-  MOZC_VLOG(1) << "Reloading user dictionary";
-  bool result_dictionary = modules_->GetUserDictionary()->Reload();
-  MOZC_VLOG(1) << "Reloading UserDataManager";
-  bool result_user_data = GetUserDataManager()->Reload();
-  return result_dictionary && result_user_data;
+  return rewriter_ && rewriter_->Reload() && predictor_ && predictor_->Reload();
 }
 
 bool Engine::Sync() {
-  GetUserDataManager()->Sync();
-  if (!modules_->GetUserDictionary()) {
-    return true;
+  if (modules_ && modules_->GetUserDictionary()) {
+    modules_->GetUserDictionary()->Sync();
   }
-  return modules_->GetUserDictionary()->Sync();
+  return rewriter_ && rewriter_->Sync() && predictor_ && predictor_->Sync();
 }
 
 bool Engine::Wait() {
-  if (modules_->GetUserDictionary()) {
+  if (modules_ && modules_->GetUserDictionary()) {
     modules_->GetUserDictionary()->WaitForReloader();
   }
-  return GetUserDataManager()->Wait();
+  return predictor_ && predictor_->Wait();
 }
 
-bool Engine::ReloadAndWait() {
-  if (!Reload()) {
-    return false;
+bool Engine::ReloadAndWait() { return Reload() && Wait(); }
+
+bool Engine::ClearUserHistory() {
+  if (rewriter_) {
+    rewriter_->Clear();
   }
-  return Wait();
+  return true;
+}
+
+bool Engine::ClearUserPrediction() {
+  return predictor_ && predictor_->ClearAllHistory();
+}
+
+bool Engine::ClearUnusedUserPrediction() {
+  return predictor_ && predictor_->ClearUnusedHistory();
 }
 
 bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
@@ -303,8 +251,8 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
       continue;
     }
 
-    if (user_data_manager_) {
-      user_data_manager_->Wait();
+    if (predictor_) {
+      predictor_->Wait();
     }
 
     // Reloads DataManager.

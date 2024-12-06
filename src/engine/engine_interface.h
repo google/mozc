@@ -37,9 +37,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
-#include "engine/data_loader.h"
 #include "engine/supplemental_model_interface.h"
-#include "engine/user_data_manager_interface.h"
 #include "protocol/engine_builder.pb.h"
 
 namespace mozc {
@@ -62,32 +60,38 @@ class EngineInterface {
   // Returns the predictor name.
   virtual absl::string_view GetPredictorName() const = 0;
 
+  // Gets the version of underlying data set.
+  virtual absl::string_view GetDataVersion() const = 0;
+
   // Reloads internal data, e.g., user dictionary, etc.
   // This function may read data from local files.
   // Returns true if successfully reloaded or did nothing.
-  virtual bool Reload() = 0;
+  virtual bool Reload() { return true; }
 
   // Synchronizes internal data, e.g., user dictionary, etc.
   // This function may write data into local files.
   // Returns true if successfully synced or did nothing.
-  virtual bool Sync() = 0;
+  virtual bool Sync() { return true; }
 
   // Waits for reloader.
   // Returns true if successfully waited or did nothing.
-  virtual bool Wait() = 0;
+  virtual bool Wait() { return true; }
 
   // Reloads internal data and wait for reloader.
   // Returns true if successfully reloaded and waited, or did nothing.
-  virtual bool ReloadAndWait() = 0;
+  virtual bool ReloadAndWait() { return true; }
 
-  // Gets a user data manager.
-  virtual UserDataManagerInterface *GetUserDataManager() = 0;
+  // Clears user history data.
+  virtual bool ClearUserHistory() { return true; }
 
-  // Gets the version of underlying data set.
-  virtual absl::string_view GetDataVersion() const = 0;
+  // Clears user prediction data.
+  virtual bool ClearUserPrediction() { return true; }
+
+  // Clears unused user prediction data.
+  virtual bool ClearUnusedUserPrediction() { return true; }
 
   // Gets the user POS list.
-  virtual std::vector<std::string> GetPosList() const = 0;
+  virtual std::vector<std::string> GetPosList() const { return {}; }
 
   virtual void SetSupplementalModel(
       const engine::SupplementalModelInterface *supplemental_model) {}
@@ -99,8 +103,6 @@ class EngineInterface {
   virtual bool SendEngineReloadRequest(const EngineReloadRequest &request) {
     return false;
   }
-  virtual void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) {}
-  virtual void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) {}
 
  protected:
   EngineInterface() = default;

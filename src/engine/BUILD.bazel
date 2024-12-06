@@ -47,12 +47,10 @@ mozc_cc_library(
         "//base:thread",
         "//data_manager",
         "//protocol:engine_builder_cc_proto",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -84,11 +82,8 @@ mozc_cc_library(
     name = "engine_interface",
     hdrs = ["engine_interface.h"],
     deps = [
-        ":engine_builder",
         ":supplemental_model_interface",
-        ":user_data_manager_interface",
         "//converter:converter_interface",
-        "//data_manager:data_manager_interface",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -189,7 +184,6 @@ mozc_cc_library(
         ":minimal_engine",
         ":modules",
         ":supplemental_model_interface",
-        ":user_data_manager_interface",
         "//base:vlog",
         "//converter",
         "//converter:converter_interface",
@@ -241,9 +235,7 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":supplemental_model_interface",
-        ":user_data_manager_interface",
         "//converter:converter_interface",
-        "//data_manager:data_manager_interface",
         "//testing:gunit",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
@@ -359,31 +351,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "user_data_manager_mock",
-    testonly = 1,
-    hdrs = ["user_data_manager_mock.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
-    deps = [
-        ":user_data_manager_interface",
-        "//testing:gunit",
-    ],
-)
-
-mozc_cc_library(
-    name = "user_data_manager_interface",
-    hdrs = ["user_data_manager_interface.h"],
-    visibility = [
-        # For //session:session_handler_scenario_test.
-        "//session:__pkg__",
-    ],
-    deps = [
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_library(
     name = "minimal_engine",
     srcs = ["minimal_engine.cc"],
     hdrs = ["minimal_engine.h"],
@@ -393,7 +360,6 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":modules",
-        ":user_data_manager_interface",
         "//base/strings:assign",
         "//composer",
         "//converter:converter_interface",

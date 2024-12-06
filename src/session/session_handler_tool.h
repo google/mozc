@@ -40,7 +40,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "engine/engine_interface.h"
-#include "engine/user_data_manager_interface.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -101,8 +100,8 @@ class SessionHandlerTool {
                            bool allow_callback);
 
   uint64_t id_;  // Session ID
+  EngineInterface *engine_ = nullptr;
   std::unique_ptr<SessionObserverInterface> usage_observer_;
-  UserDataManagerInterface *data_manager_;
   std::unique_ptr<SessionHandlerInterface> handler_;
   std::string callback_text_;
 };

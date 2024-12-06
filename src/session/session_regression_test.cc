@@ -45,7 +45,6 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
-#include "engine/user_data_manager_interface.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -96,9 +95,9 @@ class SessionRegressionTest : public testing::TestWithTempUserProfile {
 
     // Clear previous data just in case. It should work without this clear,
     // however the reality is Windows environment has a flacky test issue.
-    engine->GetUserDataManager()->ClearUserHistory();
-    engine->GetUserDataManager()->ClearUserPrediction();
-    engine->GetUserDataManager()->Wait();
+    engine->ClearUserHistory();
+    engine->ClearUserPrediction();
+    engine->Wait();
 
     handler_ = std::make_unique<SessionHandler>(std::move(engine));
     ResetSession();

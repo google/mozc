@@ -59,7 +59,6 @@
 #include "config/config_handler.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
-#include "engine/user_data_manager_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
@@ -100,8 +99,8 @@ std::string ToTextFormat(const Message &proto) {
 
 SessionHandlerTool::SessionHandlerTool(std::unique_ptr<EngineInterface> engine)
     : id_(0),
+      engine_(engine.get()),
       usage_observer_(std::make_unique<SessionUsageObserver>()),
-      data_manager_(engine->GetUserDataManager()),
       handler_(std::make_unique<SessionHandler>(std::move(engine))) {
   handler_->AddObserver(usage_observer_.get());
 }
@@ -260,7 +259,9 @@ bool SessionHandlerTool::SetConfig(const config::Config &config,
 }
 
 bool SessionHandlerTool::SyncData() {
-  return data_manager_->Sync() && data_manager_->Wait();
+  engine_->Sync();
+  engine_->Wait();
+  return true;
 }
 
 void SessionHandlerTool::SetCallbackText(const absl::string_view text) {

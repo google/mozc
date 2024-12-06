@@ -59,7 +59,6 @@
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
-#include "engine/user_data_manager_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
@@ -618,7 +617,6 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalledTest) {
       commands::Input::CLEANUP,
   };
   for (size_t i = 0; i < std::size(command_types); ++i) {
-    MockUserDataManager mock_user_data_manager;
     auto engine = std::make_unique<MockEngine>();
     EXPECT_CALL(*engine, Sync()).WillOnce(Return(true));
 
@@ -633,7 +631,6 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalledTest) {
 }
 
 TEST_F(SessionHandlerTest, SyncDataTest) {
-  MockUserDataManager mock_user_data_manager;
   auto engine = std::make_unique<MockEngine>();
   EXPECT_CALL(*engine, Sync()).WillOnce(Return(true));
   EXPECT_CALL(*engine, Wait()).WillOnce(Return(true));

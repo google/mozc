@@ -40,7 +40,6 @@
 #include "data_manager/data_manager_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/modules.h"
-#include "engine/user_data_manager_interface.h"
 
 namespace mozc {
 
@@ -54,23 +53,17 @@ class MinimalEngine : public EngineInterface {
 
   ConverterInterface *GetConverter() const override;
   absl::string_view GetPredictorName() const override;
-  bool Reload() override { return true; }
-  bool Sync() override { return true; }
-  bool Wait() override { return true; }
-  bool ReloadAndWait() override { return true; }
-  UserDataManagerInterface *GetUserDataManager() override;
   absl::string_view GetDataVersion() const override { return "0.0.0"; }
-  std::vector<std::string> GetPosList() const override;
 
   absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
                              bool is_mobile) {
     return absl::OkStatus();
   }
+
   const DataManagerInterface *GetDataManager() const;
 
  private:
   std::unique_ptr<ConverterInterface> converter_;
-  std::unique_ptr<UserDataManagerInterface> user_data_manager_;
   std::unique_ptr<const DataManagerInterface> data_manager_;
 };
 

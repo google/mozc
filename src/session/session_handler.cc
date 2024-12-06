@@ -54,7 +54,6 @@
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
 #include "engine/supplemental_model_interface.h"
-#include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/engine_builder.pb.h"
@@ -253,21 +252,21 @@ bool SessionHandler::ReloadAndWait(commands::Command *command) {
 
 bool SessionHandler::ClearUserHistory(commands::Command *command) {
   MOZC_VLOG(1) << "Clearing user history";
-  engine_->GetUserDataManager()->ClearUserHistory();
+  engine_->ClearUserHistory();
   UsageStats::IncrementCount("ClearUserHistory");
   return true;
 }
 
 bool SessionHandler::ClearUserPrediction(commands::Command *command) {
   MOZC_VLOG(1) << "Clearing user prediction";
-  engine_->GetUserDataManager()->ClearUserPrediction();
+  engine_->ClearUserPrediction();
   UsageStats::IncrementCount("ClearUserPrediction");
   return true;
 }
 
 bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
   MOZC_VLOG(1) << "Clearing unused user prediction";
-  engine_->GetUserDataManager()->ClearUnusedUserPrediction();
+  engine_->ClearUnusedUserPrediction();
   UsageStats::IncrementCount("ClearUnusedUserPrediction");
   return true;
 }

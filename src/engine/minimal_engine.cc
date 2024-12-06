@@ -44,23 +44,10 @@
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/data_manager_interface.h"
-#include "engine/user_data_manager_interface.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
 namespace {
-
-class UserDataManagerStub : public UserDataManagerInterface {
- public:
-  UserDataManagerStub() = default;
-
-  bool Sync() override { return true; }
-  bool Reload() override { return true; }
-  bool ClearUserHistory() override { return true; }
-  bool ClearUserPrediction() override { return true; }
-  bool ClearUnusedUserPrediction() override { return true; }
-  bool Wait() override { return true; }
-};
 
 bool AddAsIsCandidate(const absl::string_view key, Segments *segments) {
   if (key.empty()) {
@@ -169,7 +156,6 @@ class MinimalConverter : public ConverterInterface {
 
 MinimalEngine::MinimalEngine()
     : converter_(std::make_unique<MinimalConverter>()),
-      user_data_manager_(std::make_unique<UserDataManagerStub>()),
       data_manager_(std::make_unique<DataManager>()) {}
 
 ConverterInterface *MinimalEngine::GetConverter() const {
@@ -181,14 +167,8 @@ absl::string_view MinimalEngine::GetPredictorName() const {
   return kPredictorName;
 }
 
-UserDataManagerInterface *MinimalEngine::GetUserDataManager() {
-  return user_data_manager_.get();
-}
-
 const DataManagerInterface *MinimalEngine::GetDataManager() const {
   return data_manager_.get();
 }
-
-std::vector<std::string> MinimalEngine::GetPosList() const { return {}; }
 
 }  // namespace mozc

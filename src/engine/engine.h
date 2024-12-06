@@ -47,7 +47,6 @@
 #include "engine/minimal_engine.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
-#include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -113,13 +112,12 @@ class Engine : public EngineInterface {
   bool Wait() override;
   bool ReloadAndWait() override;
 
+  bool ClearUserHistory() override;
+  bool ClearUserPrediction() override;
+  bool ClearUnusedUserPrediction() override;
+
   absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
                              bool is_mobile);
-
-  UserDataManagerInterface *GetUserDataManager() override {
-    return initialized_ ? user_data_manager_.get()
-                        : minimal_engine_.GetUserDataManager();
-  }
 
   absl::string_view GetDataVersion() const override {
     return GetDataManager()->GetDataVersion();
@@ -150,10 +148,11 @@ class Engine : public EngineInterface {
   // Maybe reload a new data manager. Returns true if reloaded.
   bool MaybeReloadEngine(EngineReloadResponse *response) override;
   bool SendEngineReloadRequest(const EngineReloadRequest &request) override;
-  void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) override {
+
+  void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) {
     loader_ = std::move(loader);
   }
-  void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) override {
+  void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) {
     loader_->SetAlwaysWaitForLoaderResponseFutureForTesting(value);
   }
 
@@ -179,7 +178,6 @@ class Engine : public EngineInterface {
   RewriterInterface *rewriter_ = nullptr;
 
   std::unique_ptr<Converter> converter_;
-  std::unique_ptr<UserDataManagerInterface> user_data_manager_;
 };
 
 }  // namespace mozc
