@@ -137,17 +137,14 @@ class Engine : public EngineInterface {
                         : minimal_engine_.GetPosList();
   }
 
-  void SetSupplementalModel(
-      const engine::SupplementalModelInterface *supplemental_model) override {
-    modules_->SetSupplementalModel(supplemental_model);
-  }
-
   // For testing only.
   engine::Modules *GetModulesForTesting() const { return modules_.get(); }
 
   // Maybe reload a new data manager. Returns true if reloaded.
   bool MaybeReloadEngine(EngineReloadResponse *response) override;
   bool SendEngineReloadRequest(const EngineReloadRequest &request) override;
+  bool SendSupplementalModelReloadRequest(
+      const EngineReloadRequest &request) override;
 
   void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) {
     loader_ = std::move(loader);
@@ -170,6 +167,7 @@ class Engine : public EngineInterface {
   std::unique_ptr<DataLoader> loader_;
   std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
+  std::unique_ptr<engine::SupplementalModelInterface> supplemental_model_;
 
   // TODO(noriyukit): Currently predictor and rewriter are created by this class
   // but owned by converter_. Since this class creates these two, it'd be better

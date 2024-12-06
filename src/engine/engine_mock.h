@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
-#include "engine/supplemental_model_interface.h"
 #include "testing/gmock.h"
 
 namespace mozc {
@@ -56,8 +55,6 @@ class MockEngine : public EngineInterface {
   MOCK_METHOD(bool, ClearUnusedUserPrediction, (), (override));
   MOCK_METHOD(bool, ReloadAndWait, (), (override));
   MOCK_METHOD(std::vector<std::string>, GetPosList, (), (const, override));
-  MOCK_METHOD(void, SetSupplementalModel,
-              (const engine::SupplementalModelInterface *), (override));
 };
 
 }  // namespace mozc

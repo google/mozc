@@ -37,7 +37,6 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
-#include "engine/supplemental_model_interface.h"
 #include "protocol/engine_builder.pb.h"
 
 namespace mozc {
@@ -93,14 +92,15 @@ class EngineInterface {
   // Gets the user POS list.
   virtual std::vector<std::string> GetPosList() const { return {}; }
 
-  virtual void SetSupplementalModel(
-      const engine::SupplementalModelInterface *supplemental_model) {}
-
   // Maybe reload a new data manager. Returns true if reloaded.
   virtual bool MaybeReloadEngine(EngineReloadResponse *response) {
     return false;
   }
   virtual bool SendEngineReloadRequest(const EngineReloadRequest &request) {
+    return false;
+  }
+  virtual bool SendSupplementalModelReloadRequest(
+      const EngineReloadRequest &request) {
     return false;
   }
 

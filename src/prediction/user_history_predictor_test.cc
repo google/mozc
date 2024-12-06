@@ -442,7 +442,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   void SetSupplementalModel(
-      const engine::SupplementalModelInterface *supplemental_model) {
+      engine::SupplementalModelInterface *supplemental_model) {
     data_and_predictor_->modules.SetSupplementalModel(supplemental_model);
   }
 

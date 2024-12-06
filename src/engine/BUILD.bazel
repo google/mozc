@@ -32,6 +32,7 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_select",
+    "mozc_select_enable_supplemental_model",
 )
 
 package(default_visibility = ["//:__subpackages__"])
@@ -82,7 +83,6 @@ mozc_cc_library(
     name = "engine_interface",
     hdrs = ["engine_interface.h"],
     deps = [
-        ":supplemental_model_interface",
         "//converter:converter_interface",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/status",
@@ -204,7 +204,9 @@ mozc_cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-    ],
+    ] + mozc_select_enable_supplemental_model([
+        "//supplemental_model:supplemental_model_factory",
+    ]),
 )
 
 mozc_cc_test(
@@ -234,7 +236,6 @@ mozc_cc_library(
     hdrs = ["engine_mock.h"],
     deps = [
         ":engine_interface",
-        ":supplemental_model_interface",
         "//converter:converter_interface",
         "//testing:gunit",
         "@com_google_absl//absl/status",

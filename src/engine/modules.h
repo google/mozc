@@ -116,8 +116,13 @@ class Modules {
   const engine::SupplementalModelInterface *GetSupplementalModel() const {
     return supplemental_model_;
   }
+
+  engine::SupplementalModelInterface *GetMutableSupplementalModel() {
+    return supplemental_model_;
+  }
+
   void SetSupplementalModel(
-      const engine::SupplementalModelInterface *supplemental_model) {
+      engine::SupplementalModelInterface *supplemental_model) {
     supplemental_model_ = supplemental_model;
   }
 
@@ -137,11 +142,8 @@ class Modules {
       single_kanji_prediction_aggregator_;
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;
-
-  // SupplementalModel used for homonym correction.
-  // Module doesn't have the ownership of supplemental_model_,
-  // SessionHandler owns this this instance. (usually a singleton object).
-  const engine::SupplementalModelInterface *supplemental_model_ = nullptr;
+  // The owner of supplemental_model_ is Engine.
+  engine::SupplementalModelInterface *supplemental_model_ = nullptr;
 };
 
 }  // namespace engine

@@ -58,7 +58,6 @@
 #include "engine/minimal_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
-#include "engine/supplemental_model_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
@@ -68,7 +67,6 @@
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "usage_stats/usage_stats_testing_util.h"
-
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
@@ -817,6 +815,5 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
   EXPECT_EQ(handler.engine().GetPredictorName(), "MobilePredictor");
   EXPECT_EQ(handler.GetDataVersion(), mock_version_);
 }
-
 
 }  // namespace mozc

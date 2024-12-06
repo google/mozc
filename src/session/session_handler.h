@@ -42,7 +42,6 @@
 #include "composer/table.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
-#include "engine/supplemental_model_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/common.h"
@@ -89,7 +88,6 @@ class SessionHandler : public SessionHandlerInterface {
   FRIEND_TEST(SessionHandlerTest, KeyMapTest);
   FRIEND_TEST(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest);
   FRIEND_TEST(SessionHandlerTest, EngineRollbackDataTest);
-  FRIEND_TEST(SessionHandlerTest, CheckSpellingTest);
 
   using SessionMap =
       mozc::storage::LruCache<SessionID, std::unique_ptr<session::Session>>;
@@ -129,7 +127,6 @@ class SessionHandler : public SessionHandlerInterface {
   bool SendUserDictionaryCommand(commands::Command *command);
   bool SendEngineReloadRequest(commands::Command *command);
   bool NoOperation(commands::Command *command);
-  bool CheckSpelling(commands::Command *command);
   bool ReloadSupplementalModel(commands::Command *command);
   bool GetServerVersion(commands::Command *command) const;
 
@@ -157,7 +154,6 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<const commands::Request> request_;
   std::unique_ptr<const config::Config> config_;
   std::unique_ptr<keymap::KeyMapManager> key_map_manager_;
-  std::unique_ptr<engine::SupplementalModelInterface> supplemental_model_;
 
   absl::BitGen bitgen_;
 };

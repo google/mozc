@@ -113,12 +113,10 @@ class EngineTest : public ::testing::Test {
 };
 
 TEST_F(EngineTest, ReloadModulesTest) {
-  SupplementalModelForTesting supplemental_model;
-  engine_->SetSupplementalModel(&supplemental_model);
-  EXPECT_EQ(engine_->GetModulesForTesting()->GetSupplementalModel(),
-            &supplemental_model);
-
   auto modules = std::make_unique<engine::Modules>();
+  SupplementalModelForTesting supplemental_model;
+  modules->SetSupplementalModel(&supplemental_model);
+
   CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
 
   const bool is_mobile = true;

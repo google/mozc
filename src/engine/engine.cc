@@ -54,6 +54,7 @@
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 
+
 namespace mozc {
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
@@ -117,12 +118,8 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
 
   RETURN_IF_NULL(modules);
 
-  // Keeps the previous supplemental_model if exists.
-  const engine::SupplementalModelInterface *supplemental_model =
-      modules_->GetSupplementalModel();
-
   modules_ = std::move(modules);
-  modules_->SetSupplementalModel(supplemental_model);
+
 
   immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
   RETURN_IF_NULL(immutable_converter_);
@@ -281,6 +278,14 @@ bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
   }
   loader_->RegisterRequest(request);
   loader_->StartNewDataBuildTask();
+  return true;
+}
+
+bool Engine::SendSupplementalModelReloadRequest(
+    const EngineReloadRequest &request) {
+  if (modules_ && modules_->GetSupplementalModel()) {
+    modules_->GetMutableSupplementalModel()->LoadAsync(request);
+  }
   return true;
 }
 

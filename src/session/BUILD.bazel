@@ -313,8 +313,6 @@ mozc_cc_library(
     ] + mozc_select_enable_session_watchdog([
         "//base:process",
         ":session_watch_dog",
-    ]) + mozc_select_enable_supplemental_model([
-        "//supplemental_model:supplemental_model_factory",
     ]),
 )
 
