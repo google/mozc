@@ -33,6 +33,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
@@ -40,6 +41,7 @@
 #include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/util.h"
@@ -525,26 +527,32 @@ bool Converter::ResizeSegment(Segments *segments,
 
 bool Converter::ResizeSegment(Segments *segments,
                               const ConversionRequest &request,
-                              size_t start_segment_index, size_t segments_size,
+                              size_t start_segment_index,
+                              size_t unused_segments_size,
                               absl::Span<const uint8_t> new_size_array) const {
   if (request.request_type() != ConversionRequest::CONVERSION) {
     return false;
   }
 
-  constexpr size_t kMaxArraySize = 256;
   start_segment_index = GetSegmentIndex(segments, start_segment_index);
-  const size_t end_segment_index = start_segment_index + segments_size;
-  if (start_segment_index == kErrorIndex ||
-      end_segment_index <= start_segment_index ||
-      end_segment_index > segments->segments_size() ||
-      new_size_array.size() > kMaxArraySize) {
+  if (start_segment_index == kErrorIndex) {
+    return false;
+  }
+
+  const size_t total_size =
+      std::accumulate(new_size_array.begin(), new_size_array.end(), 0);
+  if (total_size == 0) {
     return false;
   }
 
   std::string key;
-  for (const Segment &segment :
-       segments->all().subrange(start_segment_index, segments_size)) {
-    key += segment.key();
+  size_t segments_size = 0;
+  for (const Segment &segment : segments->all().drop(start_segment_index)) {
+    absl::StrAppend(&key, segment.key());
+    ++segments_size;
+    if (Util::CharsLen(key) >= total_size) {
+      break;
+    }
   }
 
   if (key.empty()) {
