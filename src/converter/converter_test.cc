@@ -29,7 +29,9 @@
 
 #include "converter/converter.h"
 
+#include <array>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -64,6 +66,7 @@
 #include "dictionary/user_dictionary_stub.h"
 #include "dictionary/user_pos.h"
 #include "engine/engine.h"
+#include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
 #include "prediction/dictionary_predictor.h"
@@ -104,8 +107,16 @@ using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::StrEq;
 
-void PushBackCandidate(Segment *segment, absl::string_view text) {
-  Segment::Candidate *cand = segment->push_back_candidate();
+Segment &AddSegment(absl::string_view key, Segment::SegmentType type,
+                    Segments &segments) {
+  Segment *segment = segments.add_segment();
+  segment->set_key(key);
+  segment->set_segment_type(type);
+  return *segment;
+}
+
+void PushBackCandidate(absl::string_view text, Segment &segment) {
+  Segment::Candidate *cand = segment.push_back_candidate();
   cand->key = std::string(text);
   cand->content_key = cand->key;
   cand->value = cand->key;
@@ -125,7 +136,7 @@ class StubPredictor : public PredictorInterface {
     if (seg->key().empty()) {
       return false;
     }
-    PushBackCandidate(seg, seg->key());
+    PushBackCandidate(seg->key(), *seg);
     return true;
   }
 
@@ -1159,7 +1170,7 @@ TEST_F(ConverterTest, PredictSetKey) {
     if (test_data.key) {
       Segment *seg = segments.add_segment();
       seg->set_key(*test_data.key);
-      PushBackCandidate(seg, *test_data.key);
+      PushBackCandidate(*test_data.key, *seg);
       orig_candidates_size = seg->candidates_size();
     }
 
@@ -1947,4 +1958,295 @@ TEST_F(ConverterTest, RevertConversion) {
   converter->RevertConversion(&segments);
 }
 
+TEST_F(ConverterTest, ResizeSegmentWithOffset) {
+  constexpr Segment::SegmentType kFixedBoundary = Segment::FIXED_BOUNDARY;
+  constexpr Segment::SegmentType kFree = Segment::FREE;
+
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
+  ConverterInterface *converter = engine->GetConverter();
+
+  {
+    // Resize {"あいうえ"} to {"あいう", "え"}
+    Segments segments;
+    AddSegment("あいうえ", kFree, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int offset = -1;
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(converter->ResizeSegment(&segments, convreq,
+                                         start_segment_index, offset));
+    ASSERT_EQ(segments.conversion_segments_size(), 2);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あいう");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "え");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFree);
+  }
+
+  {
+    // Resize {"あ", "い", "う", "え"} to {"あいう", "え"}
+    Segments segments;
+    AddSegment("あ", kFree, segments);
+    AddSegment("い", kFree, segments);
+    AddSegment("う", kFree, segments);
+    AddSegment("え", kFree, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int offset = 2;
+    EXPECT_EQ(segments.conversion_segments_size(), 4);
+    EXPECT_TRUE(converter->ResizeSegment(&segments, convreq,
+                                         start_segment_index, offset));
+    ASSERT_EQ(segments.conversion_segments_size(), 2);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あいう");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "え");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFree);
+  }
+
+  {
+    // Resize {"あ", "い", "う", "え"} to {"あ", "いう", "え"}
+    Segments segments;
+    AddSegment("あ", kFree, segments);
+    AddSegment("い", kFree, segments);
+    AddSegment("う", kFree, segments);
+    AddSegment("え", kFree, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 1;
+    const int offset = 1;
+    EXPECT_EQ(segments.conversion_segments_size(), 4);
+    EXPECT_TRUE(converter->ResizeSegment(&segments, convreq,
+                                         start_segment_index, offset));
+    ASSERT_EQ(segments.conversion_segments_size(), 3);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あ");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "いう");
+    EXPECT_EQ(segments.conversion_segment(2).key(), "え");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFree);
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(2).segment_type(), kFree);
+  }
+
+  {
+    // Invalid offset: 0
+    Segments segments;
+    AddSegment("あい", kFree, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int offset = 0;
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_FALSE(converter->ResizeSegment(&segments, convreq,
+                                          start_segment_index, offset));
+  }
+
+  {
+    // Invalid offset: more than the end of the segment
+    Segments segments;
+    AddSegment("あい", kFree, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int offset = 1;
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_FALSE(converter->ResizeSegment(&segments, convreq,
+                                          start_segment_index, offset));
+  }
+
+  {
+    // Invalid offset: less than the start of the segment
+    Segments segments;
+    AddSegment("あい", kFree, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int offset = -2;
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_FALSE(converter->ResizeSegment(&segments, convreq,
+                                          start_segment_index, offset));
+  }
+}
+
+TEST_F(ConverterTest, ResizeSegmentWithArray) {
+  constexpr Segment::SegmentType kFixedBoundary = Segment::FIXED_BOUNDARY;
+  constexpr Segment::SegmentType kFree = Segment::FREE;
+
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
+  ConverterInterface *converter = engine->GetConverter();
+
+  {
+    // Resize {"あいうえ"} to {"あいう", "え"}
+    Segments segments;
+    AddSegment("あいうえ", kFree, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int segments_size = 1;
+    const std::array<uint8_t, 2> size_array = {3, 1};
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(converter->ResizeSegment(
+        &segments, convreq, start_segment_index, segments_size, size_array));
+    ASSERT_EQ(segments.conversion_segments_size(), 2);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あいう");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "え");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFixedBoundary);
+  }
+
+  {
+    // Resize {"あいうえ"} to {"あいう", "え"} with history segments.
+    // Even if segments has histroy segments, arguments for ResizeSegment is not
+    // changed.
+    Segments segments;
+    Segment &history0 = AddSegment("やゆよ", Segment::HISTORY, segments);
+    PushBackCandidate("ヤユヨ", history0);
+    Segment &history1 = AddSegment("わをん", Segment::HISTORY, segments);
+    PushBackCandidate("ワヲン", history1);
+    AddSegment("あいうえ", Segment::FREE, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int segments_size = 1;
+    const std::array<uint8_t, 2> size_array = {3, 1};
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(converter->ResizeSegment(
+        &segments, convreq, start_segment_index, segments_size, size_array));
+    ASSERT_EQ(segments.conversion_segments_size(), 2);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あいう");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "え");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFixedBoundary);
+  }
+
+  {
+    // Resize {"あいうえ"} to {"あいう", "え"} where size_array contains 0
+    // values.
+    Segments segments;
+    AddSegment("あいうえ", Segment::FREE, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int segments_size = 1;
+    const std::array<uint8_t, 8> size_array = {3, 1, 0, 0, 0, 0, 0, 0};
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(converter->ResizeSegment(
+        &segments, convreq, start_segment_index, segments_size, size_array));
+    ASSERT_EQ(segments.conversion_segments_size(), 2);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あいう");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "え");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFixedBoundary);
+  }
+
+  {
+    // Resize {"あいうえおかきくけ"} to {"あい", "うえ", "お", "かき", "くけ"}
+    Segments segments;
+    AddSegment("あいうえおかきくけ", Segment::FREE, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int segments_size = 1;
+    const std::array<uint8_t, 5> size_array = {2, 2, 1, 2, 2};
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(converter->ResizeSegment(
+        &segments, convreq, start_segment_index, segments_size, size_array));
+    ASSERT_EQ(segments.conversion_segments_size(), 5);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あい");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "うえ");
+    EXPECT_EQ(segments.conversion_segment(2).key(), "お");
+    EXPECT_EQ(segments.conversion_segment(3).key(), "かき");
+    EXPECT_EQ(segments.conversion_segment(4).key(), "くけ");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(2).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(3).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(4).segment_type(), kFixedBoundary);
+  }
+
+  {
+    // Resize {"あいう", "えお", "かき", "くけ"} to
+    // {"あいうえ", "お", "かきくけ"}
+    Segments segments;
+    AddSegment("あいう", Segment::FREE, segments);
+    AddSegment("えお", Segment::FREE, segments);
+    AddSegment("かき", Segment::FREE, segments);
+    AddSegment("くけ", Segment::FREE, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int segments_size = 4;
+    const std::array<uint8_t, 3> size_array = {4, 1, 4};
+    EXPECT_EQ(segments.conversion_segments_size(), 4);
+    EXPECT_TRUE(converter->ResizeSegment(
+        &segments, convreq, start_segment_index, segments_size, size_array));
+    ASSERT_EQ(segments.conversion_segments_size(), 3);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あいうえ");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "お");
+    EXPECT_EQ(segments.conversion_segment(2).key(), "かきくけ");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(2).segment_type(), kFixedBoundary);
+  }
+
+  {
+    // Resize {"あいう", "えお", "かき", "くけ"} to
+    // {"あいうえ", "お"} and keeping {"かき", "くけ"} as-is.
+    Segments segments;
+    AddSegment("あいう", Segment::FREE, segments);
+    AddSegment("えお", Segment::FREE, segments);
+    AddSegment("かき", Segment::FREE, segments);
+    AddSegment("くけ", Segment::FREE, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int segments_size = 2;
+    const std::array<uint8_t, 2> size_array = {4, 1};
+    EXPECT_EQ(segments.conversion_segments_size(), 4);
+    EXPECT_TRUE(converter->ResizeSegment(
+        &segments, convreq, start_segment_index, segments_size, size_array));
+    ASSERT_EQ(segments.conversion_segments_size(), 4);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あいうえ");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "お");
+    EXPECT_EQ(segments.conversion_segment(2).key(), "かき");
+    EXPECT_EQ(segments.conversion_segment(3).key(), "くけ");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFixedBoundary);
+    EXPECT_EQ(segments.conversion_segment(2).segment_type(), kFree);
+    EXPECT_EQ(segments.conversion_segment(3).segment_type(), kFree);
+  }
+
+  {
+    // Resize {"あいうえ"} to {"あいう"} and keeping {"え"} as-is.
+    Segments segments;
+    AddSegment("あいうえ", Segment::FREE, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 0;
+    const int segments_size = 1;
+    const std::array<uint8_t, 1> size_array = {3};
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(converter->ResizeSegment(
+        &segments, convreq, start_segment_index, segments_size, size_array));
+    ASSERT_EQ(segments.conversion_segments_size(), 2);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あいう");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "え");
+    EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
+    // Note: the segment_type for "え" should be FREE to keep the consistency
+    // with the other overloaded ResizeSegment.
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFixedBoundary);
+  }
+
+  {
+    // Resize {"あいう", "えお", "かき", "くけ"} to {"かきくけ"} while
+    // {"あいう", "えお"} are free to be modified.
+    Segments segments;
+    AddSegment("あいう", Segment::FREE, segments);
+    AddSegment("えお", Segment::FREE, segments);
+    AddSegment("かき", Segment::FREE, segments);
+    AddSegment("くけ", Segment::FREE, segments);
+    const ConversionRequest convreq;
+    const int start_segment_index = 2;
+    const int segments_size = 2;
+    const std::array<uint8_t, 1> size_array = {4};
+    EXPECT_EQ(segments.conversion_segments_size(), 4);
+    EXPECT_TRUE(converter->ResizeSegment(
+        &segments, convreq, start_segment_index, segments_size, size_array));
+
+    // Since {"あいう", "えお"} may be modified too, the segment index for
+    // "かきくけ" may be different from 2.
+    const size_t resized_size = segments.conversion_segments_size();
+    const Segment &last_segment = segments.conversion_segment(resized_size - 1);
+    EXPECT_EQ(last_segment.key(), "かきくけ");
+    EXPECT_EQ(last_segment.segment_type(), kFixedBoundary);
+  }
+}
 }  // namespace mozc

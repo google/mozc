@@ -476,6 +476,7 @@ mozc_cc_test(
         "//dictionary:user_dictionary_stub",
         "//dictionary:user_pos",
         "//engine",
+        "//engine:engine_interface",
         "//engine:mock_data_engine_factory",
         "//engine:modules",
         "//prediction:dictionary_predictor",
