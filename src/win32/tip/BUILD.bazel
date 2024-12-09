@@ -32,9 +32,9 @@
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
-    "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
+    "mozc_win32_cc_prod_binary",
     "mozc_win32_resource_from_template",
 )
 load(
@@ -42,19 +42,10 @@ load(
     "features_gdi",
 )
 
-mozc_cc_binary(
-    name = "mozc_tip",
-    srcs = ["mozc_tip_main.cc"],
-    features = ["generate_pdb_file"],
-    linkopts = [
-        "/DEBUG:FULL",
-        "/PDBALTPATH:%_PDB%",
-    ],
-    linkshared = True,
+mozc_cc_library(
+    name = "mozc_tip_deps",
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    visibility = ["//win32/installer:__subpackages__"],  # Scheuklappen: keep
-    win_def_file = "mozc_tip.def",
     deps = [
         ":mozc_tip_resource",
         ":tip_class_factory",
@@ -71,6 +62,42 @@ mozc_cc_binary(
         "//config:stats_config_util",
         "//win32/base:tsf_profile",
         "@com_google_absl//absl/base",
+    ],
+)
+
+mozc_win32_cc_prod_binary(
+    name = "mozc_tip32",
+    srcs = ["mozc_tip_main.cc"],
+    cpu = "x64_x86_windows",
+    executable_name_map = {
+        "Mozc": "mozc_tip32.dll",
+        "GoogleJapaneseInput": "GoogleIMEJaTIP32.dll",
+    },
+    static_crt = True,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//win32/installer:__subpackages__"],  # Scheuklappen: keep
+    win_def_file = "mozc_tip.def",
+    deps = [
+        ":mozc_tip_deps",
+    ],
+)
+
+mozc_win32_cc_prod_binary(
+    name = "mozc_tip64",
+    srcs = ["mozc_tip_main.cc"],
+    cpu = "x64_windows",
+    executable_name_map = {
+        "Mozc": "mozc_tip64.dll",
+        "GoogleJapaneseInput": "GoogleIMEJaTIP64.dll",
+    },
+    static_crt = True,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//win32/installer:__subpackages__"],  # Scheuklappen: keep
+    win_def_file = "mozc_tip.def",
+    deps = [
+        ":mozc_tip_deps",
     ],
 )
 

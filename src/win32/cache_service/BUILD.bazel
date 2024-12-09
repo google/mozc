@@ -35,16 +35,22 @@ load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
-    "mozc_cc_binary",
     "mozc_cc_library",
+    "mozc_win32_cc_prod_binary",
     "mozc_win32_resource_from_template",
 )
 
 package(default_visibility = ["//:__subpackages__"])
 
-mozc_cc_binary(
+mozc_win32_cc_prod_binary(
     name = "mozc_cache_service",
     srcs = ["mozc_cache_service.cc"],
+    cpu = "x64_windows",
+    executable_name_map = {
+        "Mozc": "mozc_cache_service.exe",
+        "GoogleJapaneseInput": "GoogleIMEJaCacheService.exe",
+    },
+    static_crt = False,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [

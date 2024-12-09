@@ -32,8 +32,8 @@
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
-    "mozc_cc_binary",
     "mozc_cc_library",
+    "mozc_win32_cc_prod_binary",
     "mozc_win32_resource_from_template",
 )
 
@@ -41,9 +41,15 @@ package(
     default_visibility = ["//visibility:private"],
 )
 
-mozc_cc_binary(
+mozc_win32_cc_prod_binary(
     name = "mozc_broker_main",
     srcs = ["mozc_broker_main.cc"],
+    cpu = "x64_windows",
+    executable_name_map = {
+        "Mozc": "mozc_broker.exe",
+        "GoogleJapaneseInput": "GoogleIMEJaBroker.exe",
+    },
+    static_crt = False,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     visibility = ["//win32/installer:__subpackages__"],  # Scheuklappen: keep

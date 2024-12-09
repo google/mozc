@@ -46,6 +46,7 @@ load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bu
 load("@windows_sdk//:windows_sdk_rules.bzl", "windows_resource")
 load(
     "//:config.bzl",
+    "BAZEL_TOOLS_PREFIX",
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
     "MACOS_MIN_OS_VER",
@@ -202,6 +203,180 @@ register_extension_info(
     extension = mozc_win32_resource_from_template,
     label_regex_for_dep = "{extension_name}",
 )
+
+def _win_executable_transition_impl(
+        settings,  # @unused
+        attr):
+    features = []
+    if attr.static_crt:
+        features = ["static_link_msvcrt"]
+    return {
+        "//command_line_option:features": features,
+        "//command_line_option:cpu": attr.cpu,
+    }
+
+_win_executable_transition = transition(
+    implementation = _win_executable_transition_impl,
+    inputs = [],
+    outputs = [
+        "//command_line_option:features",
+        "//command_line_option:cpu",
+    ],
+)
+
+def _mozc_win_build_rule_impl(ctx):
+    input_file = ctx.file.target
+    output = ctx.actions.declare_file(
+        ctx.label.name + "." + input_file.extension,
+    )
+    if input_file.path == output.path:
+        fail("input=%d and output=%d are the same." % (input_file.path, output.path))
+
+    # Create a symlink as we do not need to create an actual copy.
+    ctx.actions.symlink(
+        output = output,
+        target_file = input_file,
+        is_executable = True,
+    )
+    return [DefaultInfo(
+        files = depset([output]),
+        executable = output,
+    )]
+
+# The follwoing CPU values are mentioned in https://bazel.build/configure/windows#build_cpp
+CPU = struct(
+    ARM64 = "arm64_windows",  # aarch64 (64-bit) environment
+    X64 = "x64_windows",  # x86-64 (64-bit) environment
+    X86 = "x64_x86_windows",  # x86 (32-bit) environment
+)
+
+_mozc_win_build_rule = rule(
+    implementation = _mozc_win_build_rule_impl,
+    cfg = _win_executable_transition,
+    attrs = {
+        "_allowlist_function_transition": attr.label(
+            default = BAZEL_TOOLS_PREFIX + "//tools/allowlists/function_transition_allowlist",
+        ),
+        "target": attr.label(
+            allow_single_file = [".dll", ".exe"],
+            doc = "the actual Bazel target to be built.",
+            mandatory = True,
+        ),
+        "static_crt": attr.bool(),
+        "cpu": attr.string(),
+    },
+)
+
+# Define a transition target with the given build target with the given build configurations.
+#
+# For instance, the following code creates a target "my_target" with setting "cpu" as "x64_windows"
+# and setting "static_link_msvcrt" feature.
+#
+#   mozc_win_build_rule(
+#       name = "my_target",
+#       cpu = CPU.X64,
+#       static_crt = True,
+#       target = "//bath/to/target:my_target",
+#   )
+#
+# See the following page for the details on transition.
+# https://bazel.build/rules/lib/builtins/transition
+def mozc_win_build_target(
+        name,
+        target,
+        cpu = CPU.X64,
+        static_crt = False,
+        target_compatible_with = [],
+        tags = [],
+        **kwargs):
+    """Define a transition target with the given build target with the given build configurations.
+
+    The following code creates a target "my_target" with setting "cpu" as "x64_windows" and setting
+    "static_link_msvcrt" feature.
+
+      mozc_win_build_target(
+          name = "my_target",
+          cpu = CPU.X64,
+          static_crt = True,
+          target = "//bath/to/target:my_target",
+      )
+
+    Args:
+      name: name of the target.
+      target: the actual Bazel target to be built with the specified configurations.
+      cpu: CPU type of the target.
+      static_crt: True if the target should be built with static CRT.
+      target_compatible_with: optional. Visibility for the unit test target.
+      tags: optional. Tags for both the library and unit test targets.
+      **kwargs: other arguments passed to mozc_objc_library.
+    """
+    mandatory_target_compatible_with = [
+        "@platforms//os:windows",
+    ]
+    for item in mandatory_target_compatible_with:
+        if item not in target_compatible_with:
+            target_compatible_with.append(item)
+
+    mandatory_tags = MOZC_TAGS.WIN_ONLY
+    for item in mandatory_tags:
+        if item not in tags:
+            tags.append(item)
+
+    _mozc_win_build_rule(
+        name = name,
+        target = target,
+        cpu = cpu,
+        static_crt = static_crt,
+        target_compatible_with = target_compatible_with,
+        tags = tags,
+        **kwargs
+    )
+
+def mozc_win32_cc_prod_binary(
+        name,
+        executable_name_map = {},  # @unused
+        srcs = [],  # @unused
+        deps = [],  # @unused
+        linkopts = [],  # @unused
+        cpu = CPU.X64,
+        static_crt = False,
+        tags = MOZC_TAGS.WIN_ONLY,
+        win_def_file = None,  # @unused
+        target_compatible_with = ["@platforms//os:windows"],
+        visibility = ["//visibility:public"],  # @unused
+        **kwargs):
+    """A rule to build production binaries for Windows.
+
+    This wraps mozc_cc_binary so that you can specify the target CPU
+    architecture and CRT linkage type in a declarative manner with also building
+    a debug symbol file (*.pdb).
+
+    Implicit output targets:
+      name.pdb: A debug symbol file.
+
+    Args:
+      name: name of the target.
+      executable_name_map: a map from the branding name to the executable name.
+      srcs: .cc files to build the executable.
+      deps: deps to build the executable.
+      linkopts: linker options to build the executable.
+      cpu: optional. The target CPU architecture.
+      static_crt: optional. True if the target should be built with static CRT.
+      tags: optional. Tags for both the library and unit test targets.
+      win_def_file: optional. win32 def file to define exported functions.
+      target_compatible_with: optional. Defines target platforms.
+      visibility: optional. The visibility of the target.
+      **kwargs: other arguments passed to mozc_cc_binary.
+    """
+    mozc_win_build_target(
+        name = name,
+        target = "//data/prod:prod_binary",
+        cpu = cpu,
+        static_crt = static_crt,
+        target_compatible_with = target_compatible_with,
+        tags = tags,
+        **kwargs
+    )
 
 def mozc_cc_win32_library(
         name,

@@ -35,6 +35,7 @@ load(
     "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
+    "mozc_win32_cc_prod_binary",
     "mozc_win32_resource_from_template",
 )
 
@@ -44,9 +45,15 @@ package(
     features = ["gdi"],
 )
 
-mozc_cc_binary(
+mozc_win32_cc_prod_binary(
     name = "win32_renderer_main",
     srcs = ["win32_renderer_main.cc"],
+    cpu = "x64_windows",
+    executable_name_map = {
+        "Mozc": "mozc_renderer.exe",
+        "GoogleJapaneseInput": "GoogleIMEJaRenderer.exe",
+    },
+    static_crt = False,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     visibility = ["//win32/installer:__subpackages__"],  # Scheuklappen: keep

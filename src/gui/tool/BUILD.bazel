@@ -32,6 +32,7 @@ load(
     "MOZC_TAGS",
     "mozc_cc_library",
     "mozc_select",
+    "mozc_win32_cc_prod_binary",
     "mozc_win32_resource_from_template",
 )
 load("//:config.bzl", "BRANDING")
@@ -130,6 +131,24 @@ mozc_cc_qt_binary(
             ":mozc_tool_win32_resource",
         ],
     ),
+)
+
+mozc_win32_cc_prod_binary(
+    name = "mozc_tool_win",
+    cpu = "x64_windows",
+    executable_name_map = {
+        "Mozc": "mozc_tool.exe",
+        "GoogleJapaneseInput": "GoogleIMEJaTool.exe",
+    },
+    static_crt = False,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":mozc_tool_main_lib",
+        ":mozc_tool_win32_resource",
+        "@qt_win",
+    ],
 )
 
 mozc_macos_qt_application(

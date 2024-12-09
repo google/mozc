@@ -30,18 +30,23 @@
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
-    "mozc_cc_binary",
+    "mozc_win32_cc_prod_binary",
     "mozc_win32_resource_from_template",
 )
 
-mozc_cc_binary(
+mozc_win32_cc_prod_binary(
     name = "custom_action",
     srcs = [
         "custom_action.cc",
         "custom_action.h",
         "resource.h",
     ],
-    linkshared = True,
+    cpu = "x64_windows",
+    executable_name_map = {
+        "Mozc": "mozc_installer_helper.dll",
+        "GoogleJapaneseInput": "GoogleIMEJaInstallerHelper.dll",
+    },
+    static_crt = True,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     visibility = ["//win32/installer:__subpackages__"],  # Scheuklappen: keep
