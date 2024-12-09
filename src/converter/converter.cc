@@ -525,11 +525,10 @@ bool Converter::ResizeSegment(Segments *segments,
   return true;
 }
 
-bool Converter::ResizeSegment(Segments *segments,
-                              const ConversionRequest &request,
-                              size_t start_segment_index,
-                              size_t unused_segments_size,
-                              absl::Span<const uint8_t> new_size_array) const {
+bool Converter::ResizeSegments(Segments *segments,
+                               const ConversionRequest &request,
+                               size_t start_segment_index,
+                               absl::Span<const uint8_t> new_size_array) const {
   if (request.request_type() != ConversionRequest::CONVERSION) {
     return false;
   }

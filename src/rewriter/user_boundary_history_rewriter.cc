@@ -312,8 +312,8 @@ bool UserBoundaryHistoryRewriter::Resize(
       MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: [" << seg_idx
                    << ", " << seg_size << "] "
                    << "resize: [" << absl::StrJoin(updated_array, " ") << "]";
-      if (parent_converter_->ResizeSegment(&segments, request, seg_idx,
-                                           seg_size, updated_array)) {
+      if (parent_converter_->ResizeSegments(&segments, request, seg_idx,
+                                            updated_array)) {
         result = true;
       } else {
         LOG(WARNING) << "ResizeSegment failed for key: " << key;

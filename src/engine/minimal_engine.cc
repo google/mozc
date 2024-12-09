@@ -146,9 +146,9 @@ class MinimalConverter : public ConverterInterface {
     return true;
   }
 
-  bool ResizeSegment(Segments *segments, const ConversionRequest &request,
-                     size_t start_segment_index, size_t segments_size,
-                     absl::Span<const uint8_t> new_size_array) const override {
+  bool ResizeSegments(Segments *segments, const ConversionRequest &request,
+                      size_t start_segment_index,
+                      absl::Span<const uint8_t> new_size_array) const override {
     return true;
   }
 };

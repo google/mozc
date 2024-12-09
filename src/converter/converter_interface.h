@@ -144,9 +144,9 @@ class ConverterInterface {
 
   // Resize [start_segment_index, start_segment_index + segment_size]
   // segments with the new size in new_size_array.
-  ABSL_MUST_USE_RESULT virtual bool ResizeSegment(
+  ABSL_MUST_USE_RESULT virtual bool ResizeSegments(
       Segments *segments, const ConversionRequest &request,
-      size_t start_segment_index, size_t segments_size,
+      size_t start_segment_index,
       absl::Span<const uint8_t> new_size_array) const = 0;
 
  protected:

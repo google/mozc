@@ -142,10 +142,9 @@ TEST_F(UserBoundaryHistoryRewriterTest, SplitSegmentByHistory) {
     // TODO(noriyukit): The current implementation always sets the length array
     // size to 8 with padded zeros. Better to set the actual length.
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
-                                         /*start_segment_index=*/0,
-                                         /*segments_size=*/1,
-                                         ElementsAre(2, 2, 0, 0, 0, 0, 0, 0)))
+    EXPECT_CALL(converter, ResizeSegments(&segments, Ref(convreq),
+                                          /*start_segment_index=*/0,
+                                          ElementsAre(2, 2, 0, 0, 0, 0, 0, 0)))
         .WillOnce(Return(true));
     EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }
@@ -175,10 +174,9 @@ TEST_F(UserBoundaryHistoryRewriterTest, JoinSegmentsByHistory) {
     // TODO(noriyukit): The current implementation always sets the length array
     // size to 8 with padded zeros. Better to set the actual length.
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
-                                         /*start_segment_index=*/0,
-                                         /*segments_size=*/2,
-                                         ElementsAre(4, 0, 0, 0, 0, 0, 0, 0)))
+    EXPECT_CALL(converter, ResizeSegments(&segments, Ref(convreq),
+                                          /*start_segment_index=*/0,
+                                          ElementsAre(4, 0, 0, 0, 0, 0, 0, 0)))
         .WillOnce(Return(true));
     EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }
@@ -416,13 +414,11 @@ TEST_F(UserBoundaryHistoryRewriterTest, FailureOfSplitIsNotFatal) {
   {
     const ConversionRequest convreq = CreateConversionRequest();
     Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
-                                         /*start_segment_index=*/0,
-                                         /*segments_size=*/1, _))
+    EXPECT_CALL(converter, ResizeSegments(&segments, Ref(convreq),
+                                          /*start_segment_index=*/0, _))
         .WillOnce(Return(false));
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
-                                         /*start_segment_index=*/1,
-                                         /*segments_size=*/1, _))
+    EXPECT_CALL(converter, ResizeSegments(&segments, Ref(convreq),
+                                          /*start_segment_index=*/1, _))
         .WillOnce(Return(false));
     EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
@@ -431,13 +427,11 @@ TEST_F(UserBoundaryHistoryRewriterTest, FailureOfSplitIsNotFatal) {
     Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
     const Segments resized =
         MakeSegments({"たん", "ぽぽ", "わたげ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
-                                         /*start_segment_index=*/0,
-                                         /*segments_size=*/1, _))
+    EXPECT_CALL(converter, ResizeSegments(&segments, Ref(convreq),
+                                          /*start_segment_index=*/0, _))
         .WillOnce(DoAll(SetArgPointee<0>(resized), Return(true)));
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
-                                         /*start_segment_index=*/1,
-                                         /*segments_size=*/1, _))
+    EXPECT_CALL(converter, ResizeSegments(&segments, Ref(convreq),
+                                          /*start_segment_index=*/1, _))
         .WillOnce(Return(false));
     EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }
@@ -446,13 +440,11 @@ TEST_F(UserBoundaryHistoryRewriterTest, FailureOfSplitIsNotFatal) {
     Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
     const Segments resized =
         MakeSegments({"たんぽぽ", "わた", "げ"}, Segment::FREE);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
-                                         /*start_segment_index=*/0,
-                                         /*segments_size=*/1, _))
+    EXPECT_CALL(converter, ResizeSegments(&segments, Ref(convreq),
+                                          /*start_segment_index=*/0, _))
         .WillOnce(Return(false));
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(convreq),
-                                         /*start_segment_index=*/1,
-                                         /*segments_size=*/1, _))
+    EXPECT_CALL(converter, ResizeSegments(&segments, Ref(convreq),
+                                          /*start_segment_index=*/1, _))
         .WillOnce(DoAll(SetArgPointee<0>(resized), Return(true)));
     EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }

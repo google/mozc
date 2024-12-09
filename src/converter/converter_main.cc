@@ -388,15 +388,20 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
       return converter.ResizeSegment(segments, conversion_request,
                                      NumberUtil::SimpleAtoi(fields[1]),
                                      NumberUtil::SimpleAtoi(fields[2]));
-    } else if (fields.size() > 3) {
+    }
+  } else if (func == "resizesegments" || func == "resizes") {
+    options.request_type = ConversionRequest::CONVERSION;
+    const ConversionRequest conversion_request = ConversionRequest(
+        composer, request, context, *config, std::move(options));
+    if (fields.size() > 3) {
       std::vector<uint8_t> new_arrays;
-      for (size_t i = 3; i < fields.size(); ++i) {
+      for (size_t i = 2; i < fields.size(); ++i) {
         new_arrays.push_back(
             static_cast<uint8_t>(NumberUtil::SimpleAtoi(fields[i])));
       }
-      return converter.ResizeSegment(
+      return converter.ResizeSegments(
           segments, conversion_request, NumberUtil::SimpleAtoi(fields[1]),
-          NumberUtil::SimpleAtoi(fields[2]), new_arrays);
+          new_arrays);
     }
   } else if (func == "disableuserhistory") {
     config->set_history_learning_level(config::Config::NO_HISTORY);

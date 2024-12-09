@@ -106,9 +106,9 @@ class Converter final : public ConverterInterface {
                                           const ConversionRequest &request,
                                           size_t segment_index,
                                           int offset_length) const override;
-  ABSL_MUST_USE_RESULT bool ResizeSegment(
+  ABSL_MUST_USE_RESULT bool ResizeSegments(
       Segments *segments, const ConversionRequest &request,
-      size_t start_segment_index, size_t unused_segments_size,
+      size_t start_segment_index,
       absl::Span<const uint8_t> new_size_array) const override;
 
   // Execute ImmutableConverter, Rewriters, SuppressionDictionary.

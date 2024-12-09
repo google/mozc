@@ -84,9 +84,9 @@ class StrictMockConverter : public ConverterInterface {
               (Segments * segments, const ConversionRequest &request,
                size_t segment_index, int offset_length),
               (const, override));
-  MOCK_METHOD(bool, ResizeSegment,
+  MOCK_METHOD(bool, ResizeSegments,
               (Segments * segments, const ConversionRequest &request,
-               size_t start_segment_index, size_t segments_size,
+               size_t start_segment_index,
                absl::Span<const uint8_t> new_size_array),
               (const, override));
 };
