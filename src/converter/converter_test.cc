@@ -2213,9 +2213,9 @@ TEST_F(ConverterTest, ResizeSegmentsWithArray) {
     EXPECT_EQ(segments.conversion_segment(0).key(), "あいう");
     EXPECT_EQ(segments.conversion_segment(1).key(), "え");
     EXPECT_EQ(segments.conversion_segment(0).segment_type(), kFixedBoundary);
-    // Note: the segment_type for "え" should be FREE to keep the consistency
-    // with the other overloaded ResizeSegment.
-    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFixedBoundary);
+    // Non specified segment (i.e. "え") is FREE to keep the consistency
+    // with ResizeSegment.
+    EXPECT_EQ(segments.conversion_segment(1).segment_type(), kFree);
   }
 
   {
