@@ -287,10 +287,13 @@ bool SessionConverter::ConvertToTransliteration(
     // preedit as a single segment.  We should modify
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
     // from the session layer.
-    if (segments_.conversion_segments_size() != 1) {
-      std::string composition;
-      GetPreedit(0, segments_.conversion_segments_size(), &composition);
-      ResizeSegmentWidth(composer, Util::CharsLen(composition));
+    if (segment_index_ + 1 != segments_.conversion_segments_size()) {
+      size_t offset = 0;
+      for (const Segment &segment :
+           segments_.conversion_segments().drop(segment_index_ + 1)) {
+        offset += Util::CharsLen(segment.key());
+      }
+      ResizeSegmentWidth(composer, offset);
     }
 
     DCHECK(CheckState(CONVERSION));
