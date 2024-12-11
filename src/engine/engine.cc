@@ -41,7 +41,9 @@
 #include "absl/strings/string_view.h"
 #include "base/vlog.h"
 #include "converter/converter.h"
+#include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
+#include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "engine/data_loader.h"
 #include "engine/modules.h"
@@ -98,9 +100,7 @@ std::unique_ptr<Engine> Engine::CreateEngine() {
   return absl::WrapUnique(new Engine());
 }
 
-Engine::Engine()
-    : loader_(std::make_unique<DataLoader>()),
-      modules_(std::make_unique<engine::Modules>()) {}
+Engine::Engine() : loader_(std::make_unique<DataLoader>()) {}
 
 absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
                                    bool is_mobile) {
@@ -118,97 +118,69 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
 
   RETURN_IF_NULL(modules);
 
-  modules_ = std::move(modules);
 
+  auto immutable_converter_factory = [](const engine::Modules &modules) {
+    return std::make_unique<ImmutableConverter>(modules);
+  };
 
-  immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
-  RETURN_IF_NULL(immutable_converter_);
+  auto predictor_factory =
+      [is_mobile](const engine::Modules &modules,
+                  const ConverterInterface *converter,
+                  const ImmutableConverterInterface *immutable_converter) {
+        auto dictionary_predictor =
+            std::make_unique<prediction::DictionaryPredictor>(
+                modules, converter, immutable_converter);
 
-  // Since predictor and rewriter require a pointer to a converter instance,
-  // allocate it first without initialization. It is initialized at the end of
-  // this method.
-  // TODO(noriyukit): This circular dependency is a bad design as careful
-  // handling is necessary to avoid infinite loop. Find more beautiful design
-  // and fix it!
-  converter_ = std::make_unique<Converter>(*modules_, *immutable_converter_);
+        const bool enable_content_word_learning = is_mobile;
+        auto user_history_predictor =
+            std::make_unique<prediction::UserHistoryPredictor>(
+                modules, enable_content_word_learning);
+
+        return is_mobile ? prediction::MobilePredictor::CreateMobilePredictor(
+                               std::move(dictionary_predictor),
+                               std::move(user_history_predictor), converter)
+                         : prediction::DefaultPredictor::CreateDefaultPredictor(
+                               std::move(dictionary_predictor),
+                               std::move(user_history_predictor), converter);
+      };
+
+  auto rewriter_factory = [](const engine::Modules &modules,
+                             const ConverterInterface *converter) {
+    return std::make_unique<Rewriter>(modules, *converter);
+  };
+
+  converter_ = std::make_unique<Converter>(std::move(modules),
+                                           immutable_converter_factory,
+                                           predictor_factory, rewriter_factory);
+
   RETURN_IF_NULL(converter_);
 
-  std::unique_ptr<prediction::PredictorInterface> predictor;
-  {
-    // Create a predictor with three sub-predictors, dictionary predictor, user
-    // history predictor, and extra predictor.
-    auto dictionary_predictor =
-        std::make_unique<prediction::DictionaryPredictor>(
-            *modules_, converter_.get(), immutable_converter_.get());
-    RETURN_IF_NULL(dictionary_predictor);
-
-    const bool enable_content_word_learning = is_mobile;
-    auto user_history_predictor =
-        std::make_unique<prediction::UserHistoryPredictor>(
-            *modules_, enable_content_word_learning);
-    RETURN_IF_NULL(user_history_predictor);
-
-    if (is_mobile) {
-      predictor = prediction::MobilePredictor::CreateMobilePredictor(
-          std::move(dictionary_predictor), std::move(user_history_predictor),
-          converter_.get());
-    } else {
-      predictor = prediction::DefaultPredictor::CreateDefaultPredictor(
-          std::move(dictionary_predictor), std::move(user_history_predictor),
-          converter_.get());
-    }
-    RETURN_IF_NULL(predictor);
-  }
-  predictor_ = predictor.get();  // Keep the reference
-
-  auto rewriter = std::make_unique<Rewriter>(*modules_, *converter_);
-  RETURN_IF_NULL(rewriter);
-  rewriter_ = rewriter.get();  // Keep the reference
-
-  converter_->Init(std::move(predictor), std::move(rewriter));
-
-  initialized_ = true;
-  return absl::Status();
+  return absl::OkStatus();
 
 #undef RETURN_IF_NULL
 }
 
-bool Engine::Reload() {
-  if (modules_ && modules_->GetUserDictionary()) {
-    modules_->GetUserDictionary()->Reload();
-  }
-  return rewriter_ && rewriter_->Reload() && predictor_ && predictor_->Reload();
-}
+bool Engine::Reload() { return converter_ && converter_->Reload(); }
 
-bool Engine::Sync() {
-  if (modules_ && modules_->GetUserDictionary()) {
-    modules_->GetUserDictionary()->Sync();
-  }
-  return rewriter_ && rewriter_->Sync() && predictor_ && predictor_->Sync();
-}
+bool Engine::Sync() { return converter_ && converter_->Sync(); }
 
-bool Engine::Wait() {
-  if (modules_ && modules_->GetUserDictionary()) {
-    modules_->GetUserDictionary()->WaitForReloader();
-  }
-  return predictor_ && predictor_->Wait();
-}
+bool Engine::Wait() { return converter_ && converter_->Wait(); }
 
 bool Engine::ReloadAndWait() { return Reload() && Wait(); }
 
 bool Engine::ClearUserHistory() {
-  if (rewriter_) {
-    rewriter_->Clear();
+  if (converter_) {
+    converter_->rewriter()->Clear();
   }
   return true;
 }
 
 bool Engine::ClearUserPrediction() {
-  return predictor_ && predictor_->ClearAllHistory();
+  return converter_ && converter_->predictor()->ClearAllHistory();
 }
 
 bool Engine::ClearUnusedUserPrediction() {
-  return predictor_ && predictor_->ClearUnusedHistory();
+  return converter_ && converter_->predictor()->ClearUnusedHistory();
 }
 
 bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
@@ -248,8 +220,8 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
       continue;
     }
 
-    if (predictor_) {
-      predictor_->Wait();
+    if (converter_) {
+      converter_->predictor()->Wait();
     }
 
     // Reloads DataManager.
@@ -273,9 +245,6 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
 }
 
 bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
-  if (!loader_) {
-    return false;
-  }
   loader_->RegisterRequest(request);
   loader_->StartNewDataBuildTask();
   return true;
@@ -283,8 +252,8 @@ bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
 
 bool Engine::SendSupplementalModelReloadRequest(
     const EngineReloadRequest &request) {
-  if (modules_ && modules_->GetSupplementalModel()) {
-    modules_->GetMutableSupplementalModel()->LoadAsync(request);
+  if (converter_ && converter_->modules()->GetSupplementalModel()) {
+    converter_->modules()->GetMutableSupplementalModel()->LoadAsync(request);
   }
   return true;
 }

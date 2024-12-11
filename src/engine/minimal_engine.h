@@ -37,7 +37,6 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
-#include "data_manager/data_manager_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/modules.h"
 
@@ -52,7 +51,9 @@ class MinimalEngine : public EngineInterface {
   MinimalEngine &operator=(const MinimalEngine &) = delete;
 
   ConverterInterface *GetConverter() const override;
-  absl::string_view GetPredictorName() const override;
+  absl::string_view GetPredictorName() const override {
+    return "MinimalPredictor";
+  }
   absl::string_view GetDataVersion() const override { return "0.0.0"; }
 
   absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
@@ -60,11 +61,8 @@ class MinimalEngine : public EngineInterface {
     return absl::OkStatus();
   }
 
-  const DataManagerInterface *GetDataManager() const;
-
  private:
   std::unique_ptr<ConverterInterface> converter_;
-  std::unique_ptr<const DataManagerInterface> data_manager_;
 };
 
 }  // namespace mozc

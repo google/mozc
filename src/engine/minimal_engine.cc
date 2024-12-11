@@ -42,8 +42,6 @@
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager.h"
-#include "data_manager/data_manager_interface.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
@@ -155,20 +153,10 @@ class MinimalConverter : public ConverterInterface {
 }  // namespace
 
 MinimalEngine::MinimalEngine()
-    : converter_(std::make_unique<MinimalConverter>()),
-      data_manager_(std::make_unique<DataManager>()) {}
+    : converter_(std::make_unique<MinimalConverter>()) {}
 
 ConverterInterface *MinimalEngine::GetConverter() const {
   return converter_.get();
-}
-
-absl::string_view MinimalEngine::GetPredictorName() const {
-  constexpr absl::string_view kPredictorName = "MinimalPredictor";
-  return kPredictorName;
-}
-
-const DataManagerInterface *MinimalEngine::GetDataManager() const {
-  return data_manager_.get();
 }
 
 }  // namespace mozc

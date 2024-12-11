@@ -137,21 +137,23 @@ bool IsValidSegments(const ConversionRequest &request,
 
 }  // namespace
 
-Converter::Converter(const engine::Modules &modules,
-                     const ImmutableConverterInterface &immutable_converter)
-    : modules_(modules),
-      immutable_converter_(immutable_converter),
-      pos_matcher_(*modules.GetPosMatcher()),
-      suppression_dictionary_(*modules.GetSuppressionDictionary()),
-      history_reconstructor_(*modules.GetPosMatcher()),
-      reverse_converter_(immutable_converter),
-      general_noun_id_(pos_matcher_.GetGeneralNounId()) {}
-
-void Converter::Init(std::unique_ptr<PredictorInterface> predictor,
-                     std::unique_ptr<RewriterInterface> rewriter) {
-  // Initializes in order of declaration.
-  predictor_ = std::move(predictor);
-  rewriter_ = std::move(rewriter);
+Converter::Converter(
+    std::unique_ptr<engine::Modules> modules,
+    const ImmutableConverterFactory &immutable_converter_factory,
+    const PredictorFactory &predictor_factory,
+    const RewriterFactory &rewriter_factory)
+    : modules_(std::move(modules)),
+      immutable_converter_(immutable_converter_factory(*modules_)),
+      pos_matcher_(*modules_->GetPosMatcher()),
+      suppression_dictionary_(*modules_->GetSuppressionDictionary()),
+      history_reconstructor_(*modules_->GetPosMatcher()),
+      reverse_converter_(*immutable_converter_),
+      general_noun_id_(pos_matcher_.GetGeneralNounId()) {
+  DCHECK(immutable_converter_);
+  predictor_ = predictor_factory(*modules_, this, immutable_converter_.get());
+  rewriter_ = rewriter_factory(*modules_, this);
+  DCHECK(predictor_);
+  DCHECK(rewriter_);
 }
 
 bool Converter::StartConversion(const ConversionRequest &request,
@@ -594,7 +596,7 @@ bool Converter::ResizeSegments(Segments *segments,
 
 void Converter::ApplyConversion(Segments *segments,
                                 const ConversionRequest &request) const {
-  if (!immutable_converter_.ConvertForRequest(request, segments)) {
+  if (!immutable_converter_->ConvertForRequest(request, segments)) {
     // Conversion can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
@@ -643,7 +645,7 @@ void Converter::CompletePosIds(Segment::Candidate *candidate) const {
             })
             .Build();
     // In order to complete PosIds, call ImmutableConverter again.
-    if (!immutable_converter_.ConvertForRequest(request, &segments)) {
+    if (!immutable_converter_->ConvertForRequest(request, &segments)) {
       LOG(ERROR) << "ImmutableConverter::Convert() failed";
       return;
     }
@@ -746,4 +748,26 @@ void Converter::CommitUsageStats(const Segments *segments,
                            segment_length * 1000);
   UsageStats::IncrementCountBy("SubmittedTotalLength", submitted_total_length);
 }
+
+bool Converter::Reload() {
+  if (modules()->GetUserDictionary()) {
+    modules()->GetUserDictionary()->Reload();
+  }
+  return rewriter()->Reload() && predictor()->Reload();
+}
+
+bool Converter::Sync() {
+  if (modules()->GetUserDictionary()) {
+    modules()->GetUserDictionary()->Sync();
+  }
+  return rewriter()->Sync() && predictor()->Sync();
+}
+
+bool Converter::Wait() {
+  if (modules()->GetUserDictionary()) {
+    modules()->GetUserDictionary()->WaitForReloader();
+  }
+  return predictor()->Wait();
+}
+
 }  // namespace mozc

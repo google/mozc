@@ -365,8 +365,6 @@ mozc_cc_library(
         "//composer",
         "//converter:converter_interface",
         "//converter:segments",
-        "//data_manager",
-        "//data_manager:data_manager_interface",
         "//request:conversion_request",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",

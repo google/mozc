@@ -32,6 +32,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -227,30 +228,22 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 
   void TearDown() override { UsageStats::ClearAllStatsForTest(); }
 
-  // This struct holds resources used by converter.
-  struct ConverterAndData {
-    engine::Modules modules;
-    std::unique_ptr<ImmutableConverterInterface> immutable_converter;
-    std::unique_ptr<Converter> converter;
-  };
-
   // Returns initialized predictor for the given type.
-  // Note that all fields of |converter_and_data| should be filled including
-  // |converter_and_data.converter|. |converter| will be initialized using
-  // predictor pointer, but predictor need the pointer for |converter| for
-  // initializing. Prease see mozc/engine/engine.cc for details.
-  // Caller should manage the ownership.
+  // |converter| will be initialized using predictor pointer, but predictor need
+  // the pointer for |converter| for initializing. Prease see
+  // mozc/engine/engine.cc for details. Caller should manage the ownership.
   std::unique_ptr<PredictorInterface> CreatePredictor(
-      PredictorType predictor_type, const PosMatcher *pos_matcher,
-      const ConverterAndData &converter_and_data) {
+      const engine::Modules &modules, PredictorType predictor_type,
+      const ConverterInterface *converter,
+      const ImmutableConverterInterface *immutable_converter) {
     if (predictor_type == STUB_PREDICTOR) {
       return std::make_unique<StubPredictor>();
     }
 
-    std::unique_ptr<PredictorInterface> (*predictor_factory)(
+    std::function<std::unique_ptr<PredictorInterface>(
         std::unique_ptr<PredictorInterface>,
-        std::unique_ptr<PredictorInterface>, const ConverterInterface *) =
-        nullptr;
+        std::unique_ptr<PredictorInterface>, const ConverterInterface *)>
+        predictor_factory = nullptr;
     bool enable_content_word_learning = false;
 
     switch (predictor_type) {
@@ -269,70 +262,62 @@ class ConverterTest : public testing::TestWithTempUserProfile {
         break;
     }
 
-    CHECK(converter_and_data.converter.get()) << "converter should be filled.";
-    const engine::Modules &modules = converter_and_data.modules;
-
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
     auto dictionary_predictor = std::make_unique<DictionaryPredictor>(
-        modules, converter_and_data.converter.get(),
-        converter_and_data.immutable_converter.get());
+        modules, converter, immutable_converter);
     CHECK(dictionary_predictor);
 
     auto user_history_predictor = std::make_unique<UserHistoryPredictor>(
         modules, enable_content_word_learning);
     CHECK(user_history_predictor);
 
-    auto ret_predictor = (*predictor_factory)(
-        std::move(dictionary_predictor), std::move(user_history_predictor),
-        converter_and_data.converter.get());
+    auto ret_predictor =
+        predictor_factory(std::move(dictionary_predictor),
+                          std::move(user_history_predictor), converter);
     CHECK(ret_predictor);
     return ret_predictor;
   }
 
-  // Initializes ConverterAndData with mock data set using given
+  // Initializes Converter with mock data set using given
   // |user_dictionary| and |suppression_dictionary|.
-  void InitConverters(std::unique_ptr<RewriterInterface> rewriter,
-                      PredictorType predictor_type,
-                      ConverterAndData *converter_and_data) {
-    const engine::Modules &modules = converter_and_data->modules;
-    converter_and_data->immutable_converter =
-        std::make_unique<ImmutableConverter>(modules);
-    const ImmutableConverterInterface &immutable_converter =
-        *converter_and_data->immutable_converter;
-    converter_and_data->converter =
-        std::make_unique<Converter>(modules, immutable_converter);
-
-    auto predictor = CreatePredictor(predictor_type, modules.GetPosMatcher(),
-                                     *converter_and_data);
-    converter_and_data->converter->Init(std::move(predictor),
-                                        std::move(rewriter));
-  }
-
-  std::unique_ptr<ConverterAndData> CreateConverterAndData(
+  std::unique_ptr<Converter> CreateConverter(
+      std::unique_ptr<engine::Modules> modules,
       std::unique_ptr<RewriterInterface> rewriter,
       PredictorType predictor_type) {
-    auto converter_and_data = std::make_unique<ConverterAndData>();
-
-    engine::Modules &modules = converter_and_data->modules;
-    modules.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
-    CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
-
-    InitConverters(std::move(rewriter), predictor_type,
-                   converter_and_data.get());
-    return converter_and_data;
+    return std::make_unique<Converter>(
+        std::move(modules),
+        [&](const engine::Modules &modules) {
+          return std::make_unique<ImmutableConverter>(modules);
+        },
+        [&](const engine::Modules &modules, const ConverterInterface *converter,
+            const ImmutableConverterInterface *immutable_converter) {
+          return CreatePredictor(modules, predictor_type, converter,
+                                 immutable_converter);
+        },
+        [&](const engine::Modules &modules,
+            const ConverterInterface *converter) {
+          return std::move(rewriter);
+        });
   }
 
-  std::unique_ptr<ConverterAndData> CreateStubbedConverterAndData() {
-    return CreateConverterAndData(std::make_unique<StubRewriter>(),
-                                  STUB_PREDICTOR);
+  std::unique_ptr<Converter> CreateConverter(
+      std::unique_ptr<RewriterInterface> rewriter,
+      PredictorType predictor_type) {
+    auto modules = std::make_unique<engine::Modules>();
+    modules->PresetUserDictionary(std::make_unique<UserDictionaryStub>());
+    CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
+    return CreateConverter(std::move(modules), std::move(rewriter),
+                           predictor_type);
   }
 
-  std::unique_ptr<ConverterAndData>
-  CreateConverterAndDataWithUserDefinedEntries(
+  std::unique_ptr<Converter> CreateStubbedConverter() {
+    return CreateConverter(std::make_unique<StubRewriter>(), STUB_PREDICTOR);
+  }
+
+  std::unique_ptr<Converter> CreateConverterWithUserDefinedEntries(
       absl::Span<const UserDefinedEntry> user_defined_entries,
       PredictorType predictor_type) {
-    auto converter_and_data = std::make_unique<ConverterAndData>();
     auto data_manager = std::make_unique<testing::MockDataManager>();
 
     auto pos_matcher = std::make_unique<dictionary::PosMatcher>(
@@ -354,16 +339,15 @@ class ConverterTest : public testing::TestWithTempUserProfile {
       user_dictionary->Load(storage);
     }
 
-    engine::Modules &modules = converter_and_data->modules;
-    modules.PresetPosMatcher(std::move(pos_matcher));
-    modules.PresetSuppressionDictionary(std::move(suppression_dictionary));
-    modules.PresetUserDictionary(std::move(user_dictionary));
+    auto modules = std::make_unique<engine::Modules>();
+    modules->PresetPosMatcher(std::move(pos_matcher));
+    modules->PresetSuppressionDictionary(std::move(suppression_dictionary));
+    modules->PresetUserDictionary(std::move(user_dictionary));
 
-    CHECK_OK(modules.Init(std::move(data_manager)));
+    CHECK_OK(modules->Init(std::move(data_manager)));
 
-    InitConverters(std::make_unique<StubRewriter>(), predictor_type,
-                   converter_and_data.get());
-    return converter_and_data;
+    return CreateConverter(std::move(modules), std::make_unique<StubRewriter>(),
+                           predictor_type);
   }
 
   std::unique_ptr<Engine> CreateEngineWithMobilePredictor() {
@@ -899,9 +883,7 @@ TEST_F(ConverterTest, CompletePosIds) {
       "おおきな", "いっちゃわないね", "わたしのなまえはなかのです",
   };
 
-  std::unique_ptr<ConverterAndData> converter_and_data =
-      CreateStubbedConverterAndData();
-  Converter *converter = converter_and_data->converter.get();
+  std::unique_ptr<Converter> converter = CreateStubbedConverter();
   for (size_t i = 0; i < std::size(kTestKeys); ++i) {
     Segments segments;
     Segment *seg = segments.add_segment();
@@ -914,8 +896,8 @@ TEST_F(ConverterTest, CompletePosIds) {
                 .max_conversion_candidates_size = 20,
             })
             .Build();
-    CHECK(converter_and_data->immutable_converter->ConvertForRequest(
-        request, &segments));
+    CHECK(converter->immutable_converter()->ConvertForRequest(request,
+                                                              &segments));
     const int lid = segments.segment(0).candidate(0).lid;
     const int rid = segments.segment(0).candidate(0).rid;
     Segment::Candidate candidate;
@@ -1158,11 +1140,7 @@ TEST_F(ConverterTest, PredictSetKey) {
       {kPredictionKey, false},
   };
 
-  std::unique_ptr<ConverterAndData> converter_and_data(
-      CreateStubbedConverterAndData());
-  Converter *converter = converter_and_data->converter.get();
-  ASSERT_NE(converter, nullptr);
-  // Note that TearDown method will reset above stubs.
+  std::unique_ptr<Converter> converter = CreateStubbedConverter();
 
   for (const TestData &test_data : test_data_list) {
     Segments segments;
@@ -1226,18 +1204,25 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   EXPECT_CALL(*mock_user_dictionary, LookupPrefix(StrEq("てすとの"), _, _))
       .WillRepeatedly(InvokeCallbackWithUserDictionaryToken{"てすと", "<>!?"});
 
-  engine::Modules modules;
-  modules.PresetUserDictionary(std::move(mock_user_dictionary));
-  CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
+  auto modules = std::make_unique<engine::Modules>();
+  modules->PresetUserDictionary(std::move(mock_user_dictionary));
+  CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
 
-  auto immutable_converter = std::make_unique<ImmutableConverter>(modules);
-  Converter converter(modules, *immutable_converter);
-  converter.Init(
-      DefaultPredictor::CreateDefaultPredictor(
-          std::make_unique<DictionaryPredictor>(modules, &converter,
-                                                immutable_converter.get()),
-          std::make_unique<UserHistoryPredictor>(modules, false), &converter),
-      std::make_unique<Rewriter>(modules, converter));
+  Converter converter(
+      std::move(modules),
+      [&](const engine::Modules &modules) {
+        return std::make_unique<ImmutableConverter>(modules);
+      },
+      [](const engine::Modules &modules, const ConverterInterface *converter,
+         const ImmutableConverterInterface *immutable_converter) {
+        return DefaultPredictor::CreateDefaultPredictor(
+            std::make_unique<DictionaryPredictor>(modules, converter,
+                                                  immutable_converter),
+            std::make_unique<UserHistoryPredictor>(modules, false), converter);
+      },
+      [](const engine::Modules &modules, const ConverterInterface *converter) {
+        return std::make_unique<Rewriter>(modules, *converter);
+      });
 
   Segments segments;
   {
@@ -1302,15 +1287,17 @@ TEST_F(ConverterTest, ComposerKeySelection) {
 }
 
 TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
-  std::unique_ptr<ConverterAndData> ret(CreateConverterAndData(
-      std::make_unique<InsertPlaceholderWordsRewriter>(), STUB_PREDICTOR));
+  std::unique_ptr<Converter> converter = CreateConverter(
+      std::make_unique<InsertPlaceholderWordsRewriter>(), STUB_PREDICTOR);
+
+  engine::Modules *modules = converter->modules();
 
   // Set up suppression dictionary
-  ret->modules.GetMutableSuppressionDictionary()->Lock();
-  ret->modules.GetMutableSuppressionDictionary()->AddEntry("tobefiltered",
-                                                           "ToBeFiltered");
-  ret->modules.GetMutableSuppressionDictionary()->UnLock();
-  EXPECT_FALSE(ret->modules.GetMutableSuppressionDictionary()->IsEmpty());
+  modules->GetMutableSuppressionDictionary()->Lock();
+  modules->GetMutableSuppressionDictionary()->AddEntry("tobefiltered",
+                                                       "ToBeFiltered");
+  modules->GetMutableSuppressionDictionary()->UnLock();
+  EXPECT_FALSE(modules->GetMutableSuppressionDictionary()->IsEmpty());
 
   // Convert
   composer::Table table;
@@ -1323,7 +1310,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
                                         .SetConfig(config)
                                         .Build();
   Segments segments;
-  EXPECT_TRUE(ret->converter->StartConversion(request, &segments));
+  EXPECT_TRUE(converter->StartConversion(request, &segments));
 
   // Verify that words inserted by the rewriter is suppressed if its in the
   // suppression_dictionary.
@@ -1568,12 +1555,9 @@ TEST_F(ConverterTest, UserEntryShouldBePromoted) {
   user_defined_entries.push_back(
       UserDefinedEntry("あい", "哀", UserDictionary::NOUN));
 
-  std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
-                                                   STUB_PREDICTOR);
+  std::unique_ptr<Converter> converter = CreateConverterWithUserDefinedEntries(
+      user_defined_entries, STUB_PREDICTOR);
 
-  ConverterInterface *converter = ret->converter.get();
-  CHECK(converter);
   {
     Segments segments;
     EXPECT_TRUE(converter->StartConversion(
@@ -1597,12 +1581,9 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
   composer::Composer composer(&table, &request, &config);
   request_test_util::FillMobileRequest(&request);
 
-  std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
-                                                   MOBILE_PREDICTOR);
+  std::unique_ptr<Converter> converter = CreateConverterWithUserDefinedEntries(
+      user_defined_entries, MOBILE_PREDICTOR);
 
-  ConverterInterface *converter = ret->converter.get();
-  CHECK(converter);
   {
     composer.SetPreeditTextForTestOnly("てすとが");
     commands::Context context;
@@ -1627,12 +1608,9 @@ TEST_F(ConverterTest, UserEntryShouldBePromotedMobilePrediction) {
   user_defined_entries.push_back(
       UserDefinedEntry("あい", "哀", UserDictionary::NOUN));
 
-  std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
-                                                   MOBILE_PREDICTOR);
+  std::unique_ptr<Converter> converter = CreateConverterWithUserDefinedEntries(
+      user_defined_entries, MOBILE_PREDICTOR);
 
-  ConverterInterface *converter = ret->converter.get();
-  CHECK(converter);
   {
     Segments segments;
     EXPECT_TRUE(converter->StartPrediction(
@@ -1663,12 +1641,9 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized) {
   user_defined_entries.push_back(
       UserDefinedEntry("あい", "哀", UserDictionary::SUPPRESSION_WORD));
 
-  std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
-                                                   STUB_PREDICTOR);
+  std::unique_ptr<Converter> converter = CreateConverterWithUserDefinedEntries(
+      user_defined_entries, STUB_PREDICTOR);
 
-  ConverterInterface *converter = ret->converter.get();
-  CHECK(converter);
   {
     Segments segments;
     EXPECT_TRUE(converter->StartConversion(
@@ -1690,11 +1665,8 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritizedPrediction) {
 
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
   for (int i = 0; i < std::size(types); ++i) {
-    std::unique_ptr<ConverterAndData> ret =
-        CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
-                                                     types[i]);
-    ConverterInterface *converter = ret->converter.get();
-    CHECK(converter);
+    std::unique_ptr<Converter> converter =
+        CreateConverterWithUserDefinedEntries(user_defined_entries, types[i]);
     {
       Segments segments;
       EXPECT_TRUE(converter->StartPrediction(
@@ -1712,12 +1684,9 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependent) {
   user_defined_entries.push_back(
       UserDefinedEntry("じゅ", "Google+", UserDictionary::ABBREVIATION));
 
-  std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
-                                                   STUB_PREDICTOR);
+  std::unique_ptr<Converter> converter = CreateConverterWithUserDefinedEntries(
+      user_defined_entries, STUB_PREDICTOR);
 
-  ConverterInterface *converter = ret->converter.get();
-  CHECK(converter);
   {
     Segments segments;
     EXPECT_TRUE(converter->StartConversion(
@@ -1736,12 +1705,8 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependentPrediction) {
 
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
   for (int i = 0; i < std::size(types); ++i) {
-    std::unique_ptr<ConverterAndData> ret =
-        CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
-                                                     types[i]);
-
-    ConverterInterface *converter = ret->converter.get();
-    CHECK(converter);
+    std::unique_ptr<Converter> converter =
+        CreateConverterWithUserDefinedEntries(user_defined_entries, types[i]);
 
     {
       Segments segments;
@@ -1760,12 +1725,9 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent) {
   user_defined_entries.push_back(
       UserDefinedEntry("じゅ", "Google+", UserDictionary::SUGGESTION_ONLY));
 
-  std::unique_ptr<ConverterAndData> ret =
-      CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
-                                                   STUB_PREDICTOR);
+  std::unique_ptr<Converter> converter = CreateConverterWithUserDefinedEntries(
+      user_defined_entries, STUB_PREDICTOR);
 
-  ConverterInterface *converter = ret->converter.get();
-  CHECK(converter);
   {
     Segments segments;
     EXPECT_TRUE(converter->StartConversion(
@@ -1784,12 +1746,9 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependentPrediction) {
 
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
   for (int i = 0; i < std::size(types); ++i) {
-    std::unique_ptr<ConverterAndData> ret =
-        CreateConverterAndDataWithUserDefinedEntries(user_defined_entries,
-                                                     types[i]);
+    std::unique_ptr<Converter> converter =
+        CreateConverterWithUserDefinedEntries(user_defined_entries, types[i]);
 
-    ConverterInterface *converter = ret->converter.get();
-    CHECK(converter);
     {
       Segments segments;
       EXPECT_TRUE(converter->StartConversion(
@@ -1900,7 +1859,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   composer::Composer composer(&table, &request, &config);
   request_test_util::FillMobileRequest(&request);
   const dictionary::PosMatcher pos_matcher(
-      engine->GetDataManager()->GetPosMatcherData());
+      engine->GetModulesForTesting()->GetDataManager().GetPosMatcherData());
   commands::Context context;
   ConversionRequest::Options options = {
       .request_type = ConversionRequest::PREDICTION,
@@ -1932,26 +1891,29 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
 TEST_F(ConverterTest, RevertConversion) {
   auto mock_predictor = absl::make_unique<MockPredictor>();
   auto mock_rewriter = absl::make_unique<MockRewriter>();
-  auto converter_and_data = std::make_unique<ConverterAndData>();
 
   EXPECT_CALL(*mock_predictor, Revert(_)).Times(1);
   EXPECT_CALL(*mock_rewriter, Revert(_)).Times(1);
 
-  engine::Modules &modules = converter_and_data->modules;
-  modules.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
-  CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
+  auto modules = std::make_unique<engine::Modules>();
+  modules->PresetUserDictionary(std::make_unique<UserDictionaryStub>());
+  CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
 
-  converter_and_data->immutable_converter =
-      std::make_unique<ImmutableConverter>(modules);
-  const ImmutableConverterInterface &immutable_converter =
-      *converter_and_data->immutable_converter;
-  converter_and_data->converter =
-      std::make_unique<Converter>(modules, immutable_converter);
+  std::unique_ptr<Converter> converter = std::make_unique<Converter>(
+      std::move(modules),
+      [](const engine::Modules &modules) {
+        return std::make_unique<ImmutableConverter>(modules);
+      },
+      [&mock_predictor](
+          const engine::Modules &modules, const ConverterInterface *converter,
+          const ImmutableConverterInterface *immutable_converter) {
+        return std::move(mock_predictor);
+      },
+      [&mock_rewriter](const engine::Modules &modules,
+                       const ConverterInterface *converter) {
+        return std::move(mock_rewriter);
+      });
 
-  converter_and_data->converter->Init(std::move(mock_predictor),
-                                      std::move(mock_rewriter));
-
-  ConverterInterface *converter = converter_and_data->converter.get();
   Segments segments;
   segments.push_back_revert_entry();
 

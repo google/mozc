@@ -32,6 +32,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <string>
@@ -56,12 +57,26 @@ namespace mozc {
 
 class Converter final : public ConverterInterface {
  public:
-  Converter(const engine::Modules &modules,
-            const ImmutableConverterInterface &immutable_converter);
+  using ImmutableConverterFactory =
+      std::function<std::unique_ptr<const ImmutableConverterInterface>(
+          const engine::Modules &modules)>;
 
-  // Lazily initializes the internal members. Must be called before the use.
-  void Init(std::unique_ptr<prediction::PredictorInterface> predictor,
-            std::unique_ptr<RewriterInterface> rewriter);
+  using PredictorFactory =
+      std::function<std::unique_ptr<prediction::PredictorInterface>(
+          const engine::Modules &modules, const ConverterInterface *converter,
+          const ImmutableConverterInterface *immutable_converter)>;
+
+  using RewriterFactory = std::function<std::unique_ptr<RewriterInterface>(
+      const engine::Modules &modules, const ConverterInterface *converter)>;
+
+  // Converter is initialized with the factory methods of ImmutableConverter,
+  // Predictor and Rewriter, so that all these sub components share the
+  // same resources and modules. Converter creates these sub modules and holds
+  // their ownership.
+  Converter(std::unique_ptr<engine::Modules> modules,
+            const ImmutableConverterFactory &immutable_converter_factory,
+            const PredictorFactory &predictor_factory,
+            const RewriterFactory &rewriter_factory);
 
   ABSL_MUST_USE_RESULT
   bool StartConversion(const ConversionRequest &request,
@@ -116,6 +131,25 @@ class Converter final : public ConverterInterface {
   void ApplyConversion(Segments *segments,
                        const ConversionRequest &request) const;
 
+  // Reloads internal data, e.g., user dictionary, etc.
+  bool Reload();
+
+  // Synchronizes internal data, e.g., user dictionary, etc.
+  bool Sync();
+
+  // Waits for pending operations executed in different threads.
+  bool Wait();
+
+  prediction::PredictorInterface *predictor() const { return predictor_.get(); }
+
+  RewriterInterface *rewriter() const { return rewriter_.get(); }
+
+  const ImmutableConverterInterface *immutable_converter() const {
+    return immutable_converter_.get();
+  }
+
+  engine::Modules *modules() const { return modules_.get(); }
+
  private:
   FRIEND_TEST(ConverterTest, CompletePosIds);
   FRIEND_TEST(ConverterTest, DefaultPredictor);
@@ -163,16 +197,16 @@ class Converter final : public ConverterInterface {
   bool GetLastConnectivePart(absl::string_view preceding_text, std::string *key,
                              std::string *value, uint16_t *id) const;
 
-  const engine::Modules &modules_;
-  const ImmutableConverterInterface &immutable_converter_;
+  std::unique_ptr<engine::Modules> modules_;
+  std::unique_ptr<const ImmutableConverterInterface> immutable_converter_;
+  std::unique_ptr<prediction::PredictorInterface> predictor_;
+  std::unique_ptr<RewriterInterface> rewriter_;
+
   const dictionary::PosMatcher &pos_matcher_;
   const dictionary::SuppressionDictionary &suppression_dictionary_;
   const converter::HistoryReconstructor history_reconstructor_;
   const converter::ReverseConverter reverse_converter_;
   const uint16_t general_noun_id_ = std::numeric_limits<uint16_t>::max();
-
-  std::unique_ptr<prediction::PredictorInterface> predictor_;
-  std::unique_ptr<RewriterInterface> rewriter_;
 };
 
 }  // namespace mozc

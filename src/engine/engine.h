@@ -40,7 +40,6 @@
 #include "absl/strings/string_view.h"
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "engine/data_loader.h"
 #include "engine/engine_interface.h"
@@ -94,15 +93,15 @@ class Engine : public EngineInterface {
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
 
+  // TODO(taku): Avoid returning pointer, as converter_ may be updated
+  // dynamically and return value will become a dangling pointer.
   ConverterInterface *GetConverter() const override {
-    return initialized_ ? converter_.get() : minimal_engine_.GetConverter();
+    return converter_ ? converter_.get() : minimal_engine_.GetConverter();
   }
+
   absl::string_view GetPredictorName() const override {
-    if (initialized_) {
-      return predictor_ ? predictor_->GetPredictorName() : absl::string_view();
-    } else {
-      return minimal_engine_.GetPredictorName();
-    }
+    return converter_ ? converter_->predictor()->GetPredictorName()
+                      : minimal_engine_.GetPredictorName();
   }
 
   // Functions for Reload, Sync, Wait return true if successfully operated
@@ -120,12 +119,8 @@ class Engine : public EngineInterface {
                              bool is_mobile);
 
   absl::string_view GetDataVersion() const override {
-    return GetDataManager()->GetDataVersion();
-  }
-
-  const DataManagerInterface *GetDataManager() const {
-    return initialized_ ? &modules_->GetDataManager()
-                        : minimal_engine_.GetDataManager();
+    return converter_ ? converter_->modules()->GetDataManager().GetDataVersion()
+                      : minimal_engine_.GetDataVersion();
   }
 
   // Returns a list of part-of-speech (e.g. "名詞", "動詞一段") to be used for
@@ -133,12 +128,15 @@ class Engine : public EngineInterface {
   // Since the POS set may differ per LM, this function returns
   // available POS items. In practice, the POS items are rarely changed.
   std::vector<std::string> GetPosList() const override {
-    return initialized_ ? modules_->GetUserDictionary()->GetPosList()
-                        : minimal_engine_.GetPosList();
+    return converter_ && converter_->modules()->GetUserDictionary()
+               ? converter_->modules()->GetUserDictionary()->GetPosList()
+               : minimal_engine_.GetPosList();
   }
 
   // For testing only.
-  engine::Modules *GetModulesForTesting() const { return modules_.get(); }
+  engine::Modules *GetModulesForTesting() const {
+    return converter_->modules();
+  }
 
   // Maybe reload a new data manager. Returns true if reloaded.
   bool MaybeReloadEngine(EngineReloadResponse *response) override;
@@ -160,21 +158,9 @@ class Engine : public EngineInterface {
   // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
   absl::Status Init(std::unique_ptr<engine::Modules> modules, bool is_mobile);
 
-  // If initialized_ is false, minimal_engine_ is used as a fallback engine.
-  bool initialized_ = false;
   MinimalEngine minimal_engine_;
-
   std::unique_ptr<DataLoader> loader_;
-  std::unique_ptr<engine::Modules> modules_;
-  std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
   std::unique_ptr<engine::SupplementalModelInterface> supplemental_model_;
-
-  // TODO(noriyukit): Currently predictor and rewriter are created by this class
-  // but owned by converter_. Since this class creates these two, it'd be better
-  // if Engine class owns these two instances.
-  prediction::PredictorInterface *predictor_ = nullptr;
-  RewriterInterface *rewriter_ = nullptr;
-
   std::unique_ptr<Converter> converter_;
 };
 
