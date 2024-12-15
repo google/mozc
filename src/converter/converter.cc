@@ -30,8 +30,10 @@
 #include "converter/converter.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -441,90 +443,23 @@ bool Converter::ResizeSegment(Segments *segments,
     return false;
   }
 
-  segment_index = GetSegmentIndex(segments, segment_index);
-  if (segment_index == kErrorIndex) {
+  if (segment_index >= segments->conversion_segments_size()) {
     return false;
   }
 
-  // the last segments cannot become longer
-  if (offset_length > 0 && segment_index == segments->segments_size() - 1) {
+  absl::string_view key = segments->conversion_segment(segment_index).key();
+  if (key.empty()) {
     return false;
   }
 
-  const Segment &cur_segment = segments->segment(segment_index);
-  const size_t cur_length = Util::CharsLen(cur_segment.key());
-
-  // length cannot become 0
-  if (cur_length + offset_length == 0) {
+  const int key_len = Util::CharsLen(key);
+  const int new_size = key_len + offset_length;
+  if (new_size <= 0 || new_size > std::numeric_limits<uint8_t>::max()) {
     return false;
   }
-
-  const std::string cur_segment_key = cur_segment.key();
-
-  if (offset_length > 0) {
-    int length = offset_length;
-    std::string last_key;
-    size_t last_clen = 0;
-    {
-      std::string new_key = cur_segment_key;
-      while (segment_index + 1 < segments->segments_size()) {
-        last_key = segments->segment(segment_index + 1).key();
-        segments->erase_segment(segment_index + 1);
-        last_clen = Util::CharsLen(last_key);
-        length -= static_cast<int>(last_clen);
-        if (length <= 0) {
-          std::string tmp;
-          Util::Utf8SubString(last_key, 0, length + last_clen, &tmp);
-          new_key += tmp;
-          break;
-        }
-        new_key += last_key;
-      }
-
-      Segment *segment = segments->mutable_segment(segment_index);
-      segment->Clear();
-      segment->set_segment_type(Segment::FIXED_BOUNDARY);
-      segment->set_key(std::move(new_key));
-    }  // scope out |segment|, |new_key|
-
-    if (length < 0) {  // remaining part
-      Segment *segment = segments->insert_segment(segment_index + 1);
-      segment->set_segment_type(Segment::FREE);
-      segment->set_key(
-          Util::Utf8SubString(last_key, static_cast<size_t>(length + last_clen),
-                              static_cast<size_t>(-length)));
-    }
-  } else if (offset_length < 0) {
-    if (cur_length + offset_length > 0) {
-      Segment *segment1 = segments->mutable_segment(segment_index);
-      segment1->Clear();
-      segment1->set_segment_type(Segment::FIXED_BOUNDARY);
-      segment1->set_key(
-          Util::Utf8SubString(cur_segment_key, 0, cur_length + offset_length));
-    }
-
-    if (segment_index + 1 < segments->segments_size()) {
-      Segment *segment2 = segments->mutable_segment(segment_index + 1);
-      segment2->set_segment_type(Segment::FREE);
-      std::string tmp;
-      Util::Utf8SubString(cur_segment_key,
-                          std::max<size_t>(0, cur_length + offset_length),
-                          cur_length, &tmp);
-      tmp += segment2->key();
-      segment2->set_key(std::move(tmp));
-    } else {
-      Segment *segment2 = segments->add_segment();
-      segment2->set_segment_type(Segment::FREE);
-      segment2->set_key(Util::Utf8SubString(
-          cur_segment_key, std::max<size_t>(0, cur_length + offset_length),
-          cur_length));
-    }
-  }
-
-  segments->set_resized(true);
-
-  ApplyConversion(segments, request);
-  return true;
+  const std::array<uint8_t, 1> new_size_array = {
+      static_cast<uint8_t>(new_size)};
+  return ResizeSegments(segments, request, segment_index, new_size_array);
 }
 
 bool Converter::ResizeSegments(Segments *segments,
@@ -547,21 +482,23 @@ bool Converter::ResizeSegments(Segments *segments,
   }
 
   std::string key;
+  size_t key_len = 0;
   size_t segments_size = 0;
   for (const Segment &segment : segments->all().drop(start_segment_index)) {
     absl::StrAppend(&key, segment.key());
+    key_len += Util::CharsLen(segment.key());
     ++segments_size;
-    if (Util::CharsLen(key) >= total_size) {
+    if (key_len >= total_size) {
       break;
     }
   }
 
-  if (key.empty()) {
+  // If key is empty or less than the total size of new segments, return false.
+  if (key_len == 0 || key_len < total_size) {
     return false;
   }
 
   size_t consumed = 0;
-  const size_t key_len = Util::CharsLen(key);
   std::vector<std::string> new_keys;
   new_keys.reserve(new_size_array.size());
 
@@ -580,12 +517,20 @@ bool Converter::ResizeSegments(Segments *segments,
     seg->set_key(std::move(new_keys[i]));
   }
 
-  // If there is a remaining key, create a segment as a FREE type.
+  // If there is a remaining key, replace the next segment with the new key
+  // prepending the remaining key to the next segment as a FREE type.
   if (consumed < key_len) {
-    Segment *seg =
-        segments->insert_segment(start_segment_index + new_keys.size());
+    std::string next_segment_key(
+        Util::Utf8SubString(key, consumed, key_len - consumed));
+    const size_t next_segment_index = start_segment_index + new_keys.size();
+    if (next_segment_index < segments->segments_size()) {
+      absl::StrAppend(&next_segment_key,
+                      segments->segment(next_segment_index).key());
+      segments->erase_segment(next_segment_index);
+    }
+    Segment *seg = segments->insert_segment(next_segment_index);
     seg->set_segment_type(Segment::FREE);
-    seg->set_key(Util::Utf8SubString(key, consumed, key_len - consumed));
+    seg->set_key(next_segment_key);
   }
 
   segments->set_resized(true);
