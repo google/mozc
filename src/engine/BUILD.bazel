@@ -38,7 +38,7 @@ load(
 package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
-    name = "engine_builder",
+    name = "data_loader",
     srcs = ["data_loader.cc"],
     hdrs = ["data_loader.h"],
     deps = [
@@ -48,10 +48,13 @@ mozc_cc_library(
         "//base:thread",
         "//data_manager",
         "//protocol:engine_builder_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -64,7 +67,7 @@ mozc_cc_test(
         "//data_manager/testing:mock_mozc.data",
     ],
     deps = [
-        ":engine_builder",
+        ":data_loader",
         "//base:file_util",
         "//base:hash",
         "//base/file:temp_dir",
@@ -73,9 +76,13 @@ mozc_cc_test(
         "//protocol:engine_builder_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -179,7 +186,7 @@ mozc_cc_library(
     hdrs = ["engine.h"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":engine_builder",
+        ":data_loader",
         ":engine_interface",
         ":minimal_engine",
         ":modules",

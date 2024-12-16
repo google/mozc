@@ -98,7 +98,7 @@ class EngineTest : public ::testing::Test {
 
   void SetUp() override {
     engine_ = Engine::CreateEngine();
-    engine_->SetAlwaysWaitForLoaderResponseFutureForTesting(true);
+    engine_->SetAlwaysWaitForTesting(true);
   }
 
   std::unique_ptr<Engine> engine_;
@@ -140,7 +140,7 @@ TEST_F(EngineTest, DataLoadSuccessfulScenarioTest) {
   EXPECT_EQ(engine_->GetDataVersion(), mock_version_);
 
   // The engine is not updated with the same request.
-  EXPECT_TRUE(engine_->SendEngineReloadRequest(mock_request_));
+  EXPECT_FALSE(engine_->SendEngineReloadRequest(mock_request_));
   EXPECT_FALSE(engine_->MaybeReloadEngine(&response));
   EXPECT_EQ(engine_->GetDataVersion(), mock_version_);
 }
@@ -171,7 +171,7 @@ TEST_F(EngineTest, ReloadInvalidDataTest) {
 
   // Sends the same request again, but the request is already marked as
   // unregistered.
-  EXPECT_TRUE(engine_->SendEngineReloadRequest(invalid_path_request_));
+  EXPECT_FALSE(engine_->SendEngineReloadRequest(invalid_path_request_));
   EXPECT_FALSE(engine_->MaybeReloadEngine(&response));
 }
 

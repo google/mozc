@@ -32,11 +32,15 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/thread.h"
@@ -67,24 +71,40 @@ EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
 }
 }  // namespace
 
+DataLoader::~DataLoader() { Wait(); }
+
 uint64_t DataLoader::GetRequestId(const EngineReloadRequest &request) const {
   return Fingerprint(request.SerializeAsString());
 }
 
-uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
+std::optional<DataLoader::RequestData> DataLoader::GetPendingRequestData()
+    const {
+  absl::ReaderMutexLock lock(&mutex_);
+
+  if (requests_.empty()) {
+    return std::nullopt;
+  }
+
+  const RequestData &top = requests_.front();
+  if (top.id == current_request_id_) {
+    return std::nullopt;
+  }
+
+  return top;
+}
+
+bool DataLoader::RegisterRequest(const EngineReloadRequest &request) {
+  absl::WriterMutexLock lock(&mutex_);
+
   const uint64_t id = GetRequestId(request);
 
-  // Already requesting the top priority request.
-  // No need to register the same ID again.
-  if (top_request_id_ == id) {
-    DCHECK(!requests_.empty() && requests_.front().id == id);
-    return top_request_id_;
+  if (id == current_request_id_) {
+    return false;
   }
 
   // The request is invalid since it has already been unregistered.
   if (unregistered_.contains(id)) {
-    DCHECK_EQ(top_request_id_, requests_.empty() ? 0 : requests_.front().id);
-    return top_request_id_;
+    return false;
   }
 
   ++sequence_id_;
@@ -94,24 +114,28 @@ uint64_t DataLoader::RegisterRequest(const EngineReloadRequest &request) {
   if (it != requests_.end()) {
     it->sequence_id = sequence_id_;
   } else {
-    requests_.emplace_back(
-        RequestData{id, request.priority(), sequence_id_, request});
+    requests_.emplace_back(RequestData{id, sequence_id_, request});
+    LOG(INFO) << "New request is registered: " << requests_.back();
   }
 
   // Sorts the requests so requests[0] stores the request with
   // the highest priority.
   std::sort(requests_.begin(), requests_.end(),
             [](const RequestData &lhs, const RequestData &rhs) {
-              return (lhs.priority < rhs.priority ||
-                      (lhs.priority == rhs.priority &&
+              return (lhs.request.priority() < rhs.request.priority() ||
+                      (lhs.request.priority() == rhs.request.priority() &&
                        lhs.sequence_id > rhs.sequence_id));
             });
 
-  top_request_id_ = requests_.front().id;
-  return top_request_id_;
+  // Needs the reloading process only when requests[0] is different from
+  // current_request_id_.
+  return current_request_id_ != requests_.front().id;
 }
 
-uint64_t DataLoader::ReportLoadFailure(uint64_t id) {
+void DataLoader::ReportLoadFailure(const DataLoader::RequestData &request) {
+  absl::WriterMutexLock lock(&mutex_);
+  LOG(ERROR) << "Failed to load data: " << request;
+  const uint64_t id = request.id;
   const auto it =
       std::remove_if(requests_.begin(), requests_.end(),
                      [id](const RequestData &v) { return v.id == id; });
@@ -119,18 +143,21 @@ uint64_t DataLoader::ReportLoadFailure(uint64_t id) {
     requests_.erase(it, requests_.end());
     unregistered_.emplace(id);
   }
-
-  // Update the top request ID from the remaining sorted requests.
-  top_request_id_ = requests_.empty() ? 0 : requests_.front().id;
-  return top_request_id_;
 }
 
-namespace {
-DataLoader::Response BuildResponse(uint64_t id, EngineReloadRequest request) {
-  DataLoader::Response result;
-  result.id = id;
-  result.response.set_status(EngineReloadResponse::DATA_MISSING);
-  *result.response.mutable_request() = request;
+void DataLoader::ReportLoadSuccess(const DataLoader::RequestData &request) {
+  absl::WriterMutexLock lock(&mutex_);
+  LOG(INFO) << "New data is loaded: " << request;
+  current_request_id_ = request.id;
+}
+
+std::unique_ptr<DataLoader::Response> DataLoader::BuildResponse(
+    const DataLoader::RequestData &request_data) {
+  auto result = std::make_unique<DataLoader::Response>();
+  result->response.set_status(EngineReloadResponse::DATA_MISSING);
+
+  const EngineReloadRequest &request = request_data.request;
+  *result->response.mutable_request() = request;
 
   // Initializes DataManager
   auto data_manager = std::make_unique<DataManager>();
@@ -141,20 +168,20 @@ DataLoader::Response BuildResponse(uint64_t id, EngineReloadRequest request) {
                                          request.magic_number())
             : data_manager->InitFromFile(request.file_path());
     if (status != DataManager::Status::OK) {
-      LOG(ERROR) << "Failed to load data [" << status << "] " << request;
-      result.response.set_status(ConvertStatus(status));
-      DCHECK_NE(result.response.status(), EngineReloadResponse::RELOAD_READY);
+      LOG(ERROR) << "Failed to load data [" << status << "] " << request_data;
+      result->response.set_status(ConvertStatus(status));
+      DCHECK_NE(result->response.status(), EngineReloadResponse::RELOAD_READY);
       return result;
     }
   }
 
   // Copies file to install location.
   if (request.has_install_location()) {
-    const absl::Status s = FileUtil::LinkOrCopyFile(request.file_path(),
-                                                    request.install_location());
-    if (!s.ok()) {
-      LOG(ERROR) << "Copy faild: " << request << ": " << s;
-      result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
+    const absl::Status status = FileUtil::LinkOrCopyFile(
+        request.file_path(), request.install_location());
+    if (!status.ok()) {
+      LOG(ERROR) << "Copy faild: [" << status << "] " << request_data;
+      result->response.set_status(EngineReloadResponse::INSTALL_FAILURE);
       return result;
     }
   }
@@ -163,105 +190,88 @@ DataLoader::Response BuildResponse(uint64_t id, EngineReloadRequest request) {
   {
     const absl::Status status = modules->Init(std::move(data_manager));
     if (!status.ok()) {
-      LOG(ERROR) << "Failed to load modules [" << status << "] " << request;
-      result.response.set_status(EngineReloadResponse::DATA_BROKEN);
+      LOG(ERROR) << "Failed to load modules [" << status << "] "
+                 << request_data;
+      result->response.set_status(EngineReloadResponse::DATA_BROKEN);
       return result;
     }
   }
 
-  result.response.set_status(EngineReloadResponse::RELOAD_READY);
-
-  // Stores modules.
-  result.modules = std::move(modules);
+  result->response.set_status(EngineReloadResponse::RELOAD_READY);
+  result->modules = std::move(modules);
 
   return result;
 }
-}  // namespace
 
-DataLoader::ResponseFuture DataLoader::Build(uint64_t id) const {
-  // Finds the request associated with `id`.
-  const auto it =
-      std::find_if(requests_.begin(), requests_.end(),
-                   [id](const RequestData &v) { return v.id == id; });
-  if (it == requests_.end()) {
-    return DataLoader::ResponseFuture([id]() {
-      Response response;
-      response.id = id;
-      response.response.set_status(EngineReloadResponse::DATA_MISSING);
-      return response;
-    });
+// StartReloadLoop is executed in loader's thread.
+void DataLoader::StartReloadLoop(DataLoader::ReloadedCallback callback) {
+  while (true) {
+    std::optional<RequestData> request_data = GetPendingRequestData();
+
+    // No pending request.
+    if (!request_data.has_value()) {
+      break;
+    }
+
+    // When the high priority data is not registered, waits at most kTimeout
+    // until a new high priority data is registered. Retry the loop when a new
+    // high priority data is registered while waiting.
+    constexpr absl::Duration kTimeout = absl::Milliseconds(100);
+    if (!high_priority_data_registered_.HasBeenNotified() &&
+        high_priority_data_registered_.WaitForNotificationWithTimeout(
+            kTimeout)) {
+      continue;
+    }
+
+    LOG(INFO) << "Building a new module: " << *request_data;
+    std::unique_ptr<Response> response = BuildResponse(*request_data);
+    if (response->response.status() != EngineReloadResponse::RELOAD_READY) {
+      ReportLoadFailure(*request_data);
+      continue;
+    }
+
+    // Passes the modules to the engine via callback.
+    absl::Status reload_status = callback(std::move(response));
+    if (!reload_status.ok()) {
+      ReportLoadFailure(*request_data);
+      continue;
+    }
+
+    ReportLoadSuccess(*request_data);
   }
-
-  EngineReloadRequest request = it->request;
-  return DataLoader::ResponseFuture([id, request = std::move(request)]() {
-    return BuildResponse(id, request);
-  });
 }
 
-bool DataLoader::StartNewDataBuildTask() {
-  // Checks if already using the highest priority data.
-  if (current_request_id_ == top_request_id_ || top_request_id_ == 0) {
+// This method is called only by the main engine thread.
+bool DataLoader::StartNewDataBuildTask(const EngineReloadRequest &request,
+                                       DataLoader::ReloadedCallback callback) {
+  if (!RegisterRequest(request)) {
     return false;
   }
 
-  if (loader_response_future_.has_value()) {
-    // Checks if the currently loading task is the highest priority request.
-    // Note, Get() may wait until loader_response_future_ is ready.
-    if (loader_response_future_->Get().id == top_request_id_) {
-      return true;
-    }
-
-    // Do not use this result as the new request is already queued.
-    mozc::DataLoader::Response loader_response =
-        (*std::move(loader_response_future_)).Get();
-    loader_response_future_.reset();
-
-    // If the response is invalid, report it as failure not to retry for the
-    // same request in future.
-    if (!loader_response.modules || loader_response.response.status() !=
-                                        EngineReloadResponse::RELOAD_READY) {
-      ReportLoadFailure(loader_response.id);
-    }
+  // Receives high priority data.
+  constexpr int kHighPriority = 10;
+  if (!high_priority_data_registered_.HasBeenNotified() &&
+      request.priority() <= kHighPriority) {
+    high_priority_data_registered_.Notify();
   }
 
-  LOG(INFO) << "Building a new module (current ID =" << current_request_id_
-            << ", top ID =" << top_request_id_ << ")";
-  loader_response_future_ = Build(top_request_id_);
+  if (!IsRunning()) {
+    // Restarts StartReloadLoop from scratch when the thread is not running.
+    // Needs to copy the `callback` as the callback is executed in other thread.
+    load_.emplace([this, callback]() { StartReloadLoop(callback); });
+  }
+
   return true;
 }
 
-bool DataLoader::IsBuildResponseReady() const {
-  return loader_response_future_.has_value() &&
-         loader_response_future_->Ready();
+void DataLoader::Wait() const {
+  if (load_.has_value()) {
+    load_->Wait();
+  }
 }
 
-std::unique_ptr<DataLoader::Response>
-DataLoader::MaybeMoveDataLoaderResponse() {
-  // Checks if an existing load process.
-  if (!loader_response_future_) {
-    return nullptr;
-  }
-
-  // Waits the loading if the no new data is loaded so far.
-  if (current_request_id_ == 0 || always_wait_for_loader_response_future_) {
-    loader_response_future_->Wait();
-  }
-
-  if (!loader_response_future_->Ready()) {
-    return nullptr;
-  }
-
-  // Returns the new DataLoader::Response that is ready to use.
-  mozc::DataLoader::Response loader_response =
-      (*std::move(loader_response_future_)).Get();
-  loader_response_future_.reset();
-
-  return std::make_unique<DataLoader::Response>(std::move(loader_response));
-}
-
-void DataLoader::Clear() {
-  requests_.clear();
-  sequence_id_ = 0;
+bool DataLoader::IsRunning() const {
+  return load_.has_value() && !load_->Ready();
 }
 
 }  // namespace mozc

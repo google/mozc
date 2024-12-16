@@ -144,24 +144,22 @@ class Engine : public EngineInterface {
   bool SendSupplementalModelReloadRequest(
       const EngineReloadRequest &request) override;
 
-  void SetDataLoaderForTesting(std::unique_ptr<DataLoader> loader) {
-    loader_ = std::move(loader);
-  }
-  void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) {
-    loader_->SetAlwaysWaitForLoaderResponseFutureForTesting(value);
-  }
+  void SetAlwaysWaitForTesting(bool value) { always_wait_for_testing_ = value; }
 
  private:
-  Engine();
+  Engine() = default;
 
   // Initializes the engine object by the given modules and is_mobile flag.
   // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
   absl::Status Init(std::unique_ptr<engine::Modules> modules, bool is_mobile);
 
   MinimalEngine minimal_engine_;
-  std::unique_ptr<DataLoader> loader_;
+  DataLoader loader_;
+
   std::unique_ptr<engine::SupplementalModelInterface> supplemental_model_;
   std::unique_ptr<Converter> converter_;
+  std::unique_ptr<DataLoader::Response> loader_response_;
+  bool always_wait_for_testing_ = false;
 };
 
 }  // namespace mozc

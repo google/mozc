@@ -171,7 +171,7 @@ class SessionHandlerTest : public SessionHandlerTestBase {
     Clock::SetClockForUnitTest(nullptr);
 
     std::unique_ptr<Engine> engine = Engine::CreateEngine();
-    engine->SetAlwaysWaitForLoaderResponseFutureForTesting(true);
+    engine->SetAlwaysWaitForTesting(true);
     handler_ = std::make_unique<SessionHandler>(std::move(engine));
   }
 

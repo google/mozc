@@ -100,8 +100,6 @@ std::unique_ptr<Engine> Engine::CreateEngine() {
   return absl::WrapUnique(new Engine());
 }
 
-Engine::Engine() : loader_(std::make_unique<DataLoader>()) {}
-
 absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
                                    bool is_mobile) {
   ReloadAndWait();
@@ -110,14 +108,6 @@ absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
 
 absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
                           bool is_mobile) {
-#define RETURN_IF_NULL(ptr)                                               \
-  do {                                                                    \
-    if (!(ptr))                                                           \
-      return absl::ResourceExhaustedError("engine.cc: " #ptr " is null"); \
-  } while (false)
-
-  RETURN_IF_NULL(modules);
-
 
   auto immutable_converter_factory = [](const engine::Modules &modules) {
     return std::make_unique<ImmutableConverter>(modules);
@@ -149,15 +139,17 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
     return std::make_unique<Rewriter>(modules, *converter);
   };
 
-  converter_ = std::make_unique<Converter>(std::move(modules),
-                                           immutable_converter_factory,
-                                           predictor_factory, rewriter_factory);
+  auto converter = std::make_unique<Converter>(
+      std::move(modules), immutable_converter_factory, predictor_factory,
+      rewriter_factory);
 
-  RETURN_IF_NULL(converter_);
+  if (!converter) {
+    return absl::ResourceExhaustedError("engine.cc: converter_ is null");
+  }
+
+  converter_ = std::move(converter);
 
   return absl::OkStatus();
-
-#undef RETURN_IF_NULL
 }
 
 bool Engine::Reload() { return converter_ && converter_->Reload(); }
@@ -184,70 +176,34 @@ bool Engine::ClearUnusedUserPrediction() {
 }
 
 bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
-  if (response == nullptr || !loader_) {
-    LOG(ERROR) << "response or loader_ is null";
+  if (!converter_ || always_wait_for_testing_) {
+    loader_.Wait();
+  }
+
+  if (loader_.IsRunning() || !loader_response_) {
     return false;
   }
 
-  // In the while loop, tries to reload the new data. If the new data is broken,
-  // tries it again as a next round of this while loop.
-  while (true) {
-    if (!loader_->StartNewDataBuildTask()) {
-      // No new build process is running or ready.
-      return false;
-    }
+  const bool is_mobile = loader_response_->response.request().engine_type() ==
+                         EngineReloadRequest::MOBILE;
+  *response = std::move(loader_response_->response);
 
-    std::unique_ptr<DataLoader::Response> loader_response =
-        loader_->MaybeMoveDataLoaderResponse();
-    if (!loader_response) {
-      // No new data is available. The build process is still running.
-      return false;
-    }
-
-    *response = loader_response->response;
-    LOG(INFO) << "New data is ready (install_location="
-              << response->request().install_location() << ")";
-
-    if (!loader_response->modules ||
-        response->status() != EngineReloadResponse::RELOAD_READY) {
-      // The loader_response does not contain a valid result.
-
-      // This request id causes a critical error.
-      LOG(ERROR) << "Failure in loading response: " << *response;
-
-      // Unregisters the invalid ID and continues to rebuild a new data loader.
-      loader_->ReportLoadFailure(loader_response->id);
-      continue;
-    }
-
-    if (converter_) {
-      converter_->predictor()->Wait();
-    }
-
-    // Reloads DataManager.
-    const bool is_mobile =
-        response->request().engine_type() == EngineReloadRequest::MOBILE;
-    absl::Status reload_status =
-        ReloadModules(std::move(loader_response->modules), is_mobile);
-    if (!reload_status.ok()) {
-      LOG(ERROR) << reload_status;
-
-      // Unregisters the invalid ID and continues to rebuild a new data loader.
-      loader_->ReportLoadFailure(loader_response->id);
-      continue;
-    }
-
-    loader_->ReportLoadSuccess(loader_response->id);
+  const absl::Status reload_status =
+      ReloadModules(std::move(loader_response_->modules), is_mobile);
+  if (reload_status.ok()) {
     response->set_status(EngineReloadResponse::RELOADED);
-    return true;
   }
-  ABSL_UNREACHABLE();
+  loader_response_.reset();
+
+  return reload_status.ok();
 }
 
 bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
-  loader_->RegisterRequest(request);
-  loader_->StartNewDataBuildTask();
-  return true;
+  return loader_.StartNewDataBuildTask(
+      request, [this](std::unique_ptr<DataLoader::Response> response) {
+        loader_response_ = std::move(response);
+        return absl::OkStatus();
+      });
 }
 
 bool Engine::SendSupplementalModelReloadRequest(

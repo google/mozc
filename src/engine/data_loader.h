@@ -31,11 +31,15 @@
 #define MOZC_ENGINE_DATA_LOADER_H_
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/notification.h"
 #include "base/thread.h"
 #include "engine/modules.h"
 #include "protocol/engine_builder.pb.h"
@@ -44,106 +48,102 @@ namespace mozc {
 
 // DataLoader receives requests for loading language model data and loads the
 // data from the top priority request. The language model data is asynchronously
-// loaded in a sub-thread.
-// Since DataLoader uses a single sub-thread, if it receives a number of
-// requests at once, the loading operations are done one-by-one as a synchronous
-// operations.
-//  DataLoader is designed to be thread-compatible, similar to other
-// components like std::vector and most of other Mozc classes.
-// https://blog.reverberate.org/2021/12/18/thread-safety-cpp-rust.html
+// loaded in a sub-thread. `StartNewDataBuildTask` accepts the request and
+// returns immediately. Once the model is loaded, the UpdateClalback is called.
+// Note that the callback is executed in different thread (not a caller's
+// thread)
 class DataLoader {
  public:
   DataLoader() = default;
   DataLoader(const DataLoader &) = delete;
   DataLoader &operator=(const DataLoader &) = delete;
-  virtual ~DataLoader() = default;
+  virtual ~DataLoader();
 
   struct Response {
-    uint64_t id = 0;  // engine id. Fingerprint of EngineReloadRequest.
     EngineReloadResponse response;
     std::unique_ptr<engine::Modules> modules;
   };
 
-  // Wrapped with BackgroundFuture so the data loading is
-  // executed asynchronously.
-  using ResponseFuture = BackgroundFuture<Response>;
+  using ReloadedCallback =
+      std::function<absl::Status(std::unique_ptr<Response> response)>;
 
-  // Returns the request id associated with the request.
-  uint64_t GetRequestId(const EngineReloadRequest &request) const;
+  // Start a new data build and reload task. Returns true the `request` is
+  // accepted. This method returns immediately. Actual data-loading task is
+  // executed asynchronously in a different thread. When the new module is
+  // loaded successfully, `callback` is called to pass the ownership of the new
+  // modules from the loader to caller. Note that `callback` is also executed in
+  // a different thread asynchronously. `callback` is not called when
+  // the data-loading failed.
+  bool StartNewDataBuildTask(const EngineReloadRequest &request,
+                             ReloadedCallback callback);
 
-  // Accepts engine reload request and immediately returns the engine id with
-  // the highest priority defined as follows:
-  //  - Request with higher request priority (e.g., downloaded > bundled)
-  //  - When the priority is the same, the request registered last.
-  // The engine id 0 is reserved for unused engine.
-  uint64_t RegisterRequest(const EngineReloadRequest &request);
+  // Waits for loading thread.
+  void Wait() const;
 
-  // Unregister the request associated with the `id` and immediately returns
-  // the new engine id after the unregistration. This method is usually called
-  // to notify the request is not processed due to model loading failures and
-  // avoid the multiple loading operations.  Client needs to load or use the
-  // engine of returned id. The unregistered request will not be accepted after
-  // calling this method.
-  uint64_t ReportLoadFailure(uint64_t id);
+  // Returns true if the loading thread is running.
+  bool IsRunning() const;
 
-  // Sets the id of DataLoader::Response as the ID of the currently using data.
-  void ReportLoadSuccess(uint64_t id) { current_request_id_ = id; }
-
-  // Builds the new engine associated with `id`.
-  // This method returns the future object immediately.
-  // All errors are stored in EngineReloadResponse::response::status.
-  ResponseFuture Build(uint64_t id) const;
-
-  void Clear();
-
-  // Maybe start a new data build task from the top priority request.
-  // If the existing build task is running, this function waits for that task.
-  // Returns true if a new build task started. The new build task
-  // triggered by DataLoader::Build runs in a sub-thread and is non-blocking.
-  bool StartNewDataBuildTask();
-
-  // Returns true if a new data loader response is ready.
-  bool IsBuildResponseReady() const;
-
-  // Returns true if loading a new data. This should be used only in unit tests.
-  bool IsBuildingForTesting() const {
-    return loader_response_future_.has_value();
-  }
-
-  // Maybe move the data loader response to the caller.
-  // Otherwise nullptr is returned.
-  std::unique_ptr<DataLoader::Response> MaybeMoveDataLoaderResponse();
-
-  // Used only in unittest to perform blocking behavior.
-  void SetAlwaysWaitForLoaderResponseFutureForTesting(bool value) {
-    always_wait_for_loader_response_future_ = value;
+  // Disables specific handling for high priority data.
+  void NotifyHighPriorityDataRegisteredForTesting() {
+    high_priority_data_registered_.Notify();
   }
 
  private:
   struct RequestData {
     uint64_t id = 0;           // Fingerprint of request.
-    int32_t priority = 0;      // Priority of the model. smaller is better.
     uint32_t sequence_id = 0;  // Sequential id.
     EngineReloadRequest request;
+
+    template <typename Sink>
+    friend void AbslStringify(Sink &sink, const RequestData &p) {
+      sink.Append(absl::StrCat("id=", p.id, " priority=", p.request.priority(),
+                               " sequence_id=", p.sequence_id,
+                               " file_path=", p.request.file_path()));
+    }
   };
 
-  // Sequential counter assigned to RequestData.
-  uint32_t sequence_id_ = 0;
+  // Builds new response from `request_data`.
+  std::unique_ptr<Response> BuildResponse(const RequestData &request_data);
 
-  absl::flat_hash_set<uint64_t> unregistered_;
-  std::vector<RequestData> requests_;
+  // Accepts engine reload request and immediately returns whether
+  // the `request` is accepted or not.
+  bool RegisterRequest(const EngineReloadRequest &request);
 
-  // Id of the highest priority request in the registered requests.
-  // 0 means that no request have been registered or valid yet.
-  uint64_t top_request_id_ = 0;
+  // Returns the RequestData to be processed. Return std::nullopt when
+  // no request should be processed.
+  std::optional<RequestData> GetPendingRequestData() const;
+
+  // Returns the request id associated with the request.
+  uint64_t GetRequestId(const EngineReloadRequest &request) const;
+
+  // Unregister the request.
+  void ReportLoadFailure(const RequestData &request_data);
+
+  // Register the request.
+  void ReportLoadSuccess(const RequestData &request_data);
+
+  void StartReloadLoop(DataLoader::ReloadedCallback callback);
+
+  // The internal data are accessed by the main thread and loader's thread
+  // so need to protect them via Mutex.
+  mutable absl::Mutex mutex_;
+
+  absl::flat_hash_set<uint64_t> unregistered_ ABSL_GUARDED_BY(mutex_);
+  std::vector<RequestData> requests_ ABSL_GUARDED_BY(mutex_);
 
   // Id of the request for the current data.
   // 0 means that no data has been updated yet.
-  uint64_t current_request_id_ = 0;
+  uint64_t current_request_id_ ABSL_GUARDED_BY(mutex_) = 0;
 
-  std::optional<DataLoader::ResponseFuture> loader_response_future_;
-  // used only in unittest to perform blocking behavior.
-  bool always_wait_for_loader_response_future_ = false;
+  // Sequential counter assigned to RequestData.
+  // When the priority is the same, the larger sequence_id is preferred,
+  // meaning that the model registered later is preferred.
+  uint32_t sequence_id_ ABSL_GUARDED_BY(mutex_) = 0;
+
+  // Notify when a new high priority data is registered.
+  absl::Notification high_priority_data_registered_;
+
+  std::optional<BackgroundFuture<void>> load_;
 };
 
 }  // namespace mozc
