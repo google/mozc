@@ -65,13 +65,6 @@ bazel_dep(
     repo_name = "build_bazel_apple_support",
 )
 
-# Java rules (7.9.0 2024-08-13)
-# https://github.com/bazelbuild/rules_java
-bazel_dep(
-    name = "rules_java",
-    version = "7.9.0",
-)
-
 # Android NDK rules (0.1.2 2024-07-23)
 # https://github.com/bazelbuild/rules_android_ndk
 bazel_dep(
