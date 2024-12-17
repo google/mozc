@@ -174,6 +174,36 @@ class InsertPlaceholderWordsRewriter : public RewriterInterface {
   }
 };
 
+class ResizeSegmentsRewriter : public RewriterInterface {
+ public:
+  ResizeSegmentsRewriter(size_t segment_index,
+                         std::array<uint8_t, 8> segment_sizes)
+      : segment_index_(segment_index), segment_sizes_(segment_sizes) {}
+
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override {
+    return true;
+  }
+
+  std::optional<RewriterInterface::ResizeSegmentsRequest>
+  CheckResizeSegmentsRequest(const ConversionRequest &request,
+                             const Segments &segments) const override {
+    if (segments.resized()) {
+      return std::nullopt;
+    }
+
+    RewriterInterface::ResizeSegmentsRequest resize_request = {
+      .segment_index = segment_index_,
+      .segment_sizes = segment_sizes_,
+    };
+    return resize_request;
+  }
+
+ private:
+  size_t segment_index_ = 0;
+  std::array<uint8_t, 8> segment_sizes_ = {0, 0, 0, 0, 0, 0, 0, 0};
+};
+
 ConversionRequest ConvReq(absl::string_view key,
                           ConversionRequest::RequestType request_type) {
   composer::Composer composer;
@@ -2201,6 +2231,66 @@ TEST_F(ConverterTest, ResizeSegmentsWithArray) {
     const Segment &last_segment = segments.conversion_segment(resized_size - 1);
     EXPECT_EQ(last_segment.key(), "かきくけ");
     EXPECT_EQ(last_segment.segment_type(), kFixedBoundary);
+  }
+}
+
+TEST_F(ConverterTest, ResizeSegmentsRequest) {
+  {
+    const size_t index = 0;
+    const std::array<uint8_t, 8> sizes = {1, 2, 3, 0, 0, 0, 0, 0};
+    std::unique_ptr<Converter> converter = CreateConverter(
+        std::make_unique<ResizeSegmentsRewriter>(index, sizes), STUB_PREDICTOR);
+
+    Segments segments;
+
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetKey("あいうえおかき").Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+
+    ASSERT_EQ(segments.conversion_segments_size(), 4);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あ");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "いう");
+    EXPECT_EQ(segments.conversion_segment(2).key(), "えおか");
+    EXPECT_EQ(segments.conversion_segment(3).key(), "き");
+  }
+
+  {
+    const size_t index = 0;
+    const std::array<uint8_t, 8> sizes = {3, 3, 0, 0, 0, 0, 0};
+    std::unique_ptr<Converter> converter = CreateConverter(
+        std::make_unique<ResizeSegmentsRewriter>(index, sizes), STUB_PREDICTOR);
+
+    Segments segments;
+
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetKey("あいうえおかき").Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+
+    ASSERT_EQ(segments.conversion_segments_size(), 3);
+    EXPECT_EQ(segments.conversion_segment(0).key(), "あいう");
+    EXPECT_EQ(segments.conversion_segment(1).key(), "えおか");
+    EXPECT_EQ(segments.conversion_segment(2).key(), "き");
+  }
+
+  {
+    const size_t index = 1;
+    const std::array<uint8_t, 8> sizes = {1, 2, 0, 0, 0, 0, 0};
+    std::unique_ptr<Converter> converter = CreateConverter(
+        std::make_unique<ResizeSegmentsRewriter>(index, sizes), STUB_PREDICTOR);
+
+    Segments segments;
+
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetKey("あいうえおかき").Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+
+    // The total size of segments and the size of the first segment are not
+    // specified.
+    ASSERT_GE(segments.conversion_segments_size(), 3);
+    ASSERT_LE(Util::CharsLen(segments.conversion_segment(0).key()), 4);
+
+    EXPECT_EQ(Util::CharsLen(segments.conversion_segment(1).key()), 1);
+    EXPECT_EQ(Util::CharsLen(segments.conversion_segment(2).key()), 2);
   }
 }
 }  // namespace mozc

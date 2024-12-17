@@ -36,6 +36,7 @@
 #include <limits>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -618,9 +619,28 @@ void Converter::CompletePosIds(Segment::Candidate *candidate) const {
 
 void Converter::RewriteAndSuppressCandidates(const ConversionRequest &request,
                                              Segments *segments) const {
+  // 1. Resize segments if needed.
+  // Check if the segments need to be resized.
+  if (std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+          rewriter_->CheckResizeSegmentsRequest(request, *segments);
+      resize_request.has_value()) {
+    if (ResizeSegments(segments, request, resize_request->segment_index,
+                       resize_request->segment_sizes)) {
+      // If the segments are resized, ResizeSegments recursively executed
+      // RewriteAndSuppressCandidates with resized segments. No need to execute
+      // them again.
+      // TODO(b/381537649): Stop using the recursive call of
+      // RewriteAndSuppressCandidates.
+      return;
+    }
+  }
+
+  // 2. Rewrite candidates in each segment.
   if (!rewriter_->Rewrite(request, segments)) {
     return;
   }
+
+  // 3. Suppress candidates in each segment.
   // Optimization for common use case: Since most of users don't use suppression
   // dictionary and we can skip the subsequent check.
   if (suppression_dictionary_.IsEmpty()) {
