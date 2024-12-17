@@ -2293,4 +2293,20 @@ TEST_F(ConverterTest, ResizeSegmentsRequest) {
     EXPECT_EQ(Util::CharsLen(segments.conversion_segment(2).key()), 2);
   }
 }
+
+TEST_F(ConverterTest, IntegrationWithCalculatorRewriter) {
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
+  ConverterInterface *converter = engine->GetConverter();
+
+  {
+    Segments segments;
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetKey("1+1=").Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "2");
+  }
+}
+
 }  // namespace mozc

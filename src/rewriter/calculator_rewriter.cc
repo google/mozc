@@ -31,6 +31,8 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <string>
 
 #include "absl/log/check.h"
@@ -40,7 +42,6 @@
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/util.h"
-#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -50,12 +51,6 @@
 
 namespace mozc {
 
-CalculatorRewriter::CalculatorRewriter(
-    const ConverterInterface *parent_converter)
-    : parent_converter_(parent_converter) {
-  DCHECK(parent_converter_);
-}
-
 int CalculatorRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
@@ -63,12 +58,43 @@ int CalculatorRewriter::capability(const ConversionRequest &request) const {
   return RewriterInterface::CONVERSION;
 }
 
+std::optional<RewriterInterface::ResizeSegmentsRequest>
+CalculatorRewriter::CheckResizeSegmentsRequest(const ConversionRequest &request,
+                                               const Segments &segments) const {
+  if (!request.config().use_calculator()) {
+    return std::nullopt;
+  }
+
+  const CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
+
+  const size_t segments_size = segments.conversion_segments_size();
+  if (segments_size <= 1) {
+    return std::nullopt;
+  }
+
+  // Merge keys of all conversion segments and try calculation.
+  std::string merged_key;
+  for (const Segment &segment : segments.conversion_segments()) {
+    merged_key += segment.key();
+  }
+  // The decision to calculate and calculation itself are both done by the
+  // calculator.
+  std::string result;
+  if (!calculator->CalculateString(merged_key, &result)) {
+    return std::nullopt;
+  }
+
+  // Merge all conversion segments.
+  const uint8_t key_size = static_cast<uint8_t>(Util::CharsLen(merged_key));
+  ResizeSegmentsRequest resize_request = {
+    .segment_index = 0,
+    .segment_sizes = { key_size, 0, 0, 0, 0, 0, 0, 0 },
+  };
+  return resize_request;
+}
+
 // Rewrites candidates when conversion segments of |segments| represents an
-// expression that can be calculated. In such case, if |segments| consists
-// of multiple segments, it merges them by calling ConverterInterface::
-// ResizeSegment(), otherwise do calculation and insertion.
-// TODO(tok): It currently calculates same expression twice, if |segments| is
-//            a valid expression.
+// expression that can be calculated.
 bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
                                  Segments *segments) const {
   if (!request.config().use_calculator()) {
@@ -78,50 +104,27 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
   CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
 
   const size_t segments_size = segments->conversion_segments_size();
-  if (segments_size == 0) {
+  if (segments_size != 1) {
     return false;
   }
 
   // If |segments| has only one conversion segment, try calculation and insert
   // the result on success.
-  if (segments_size == 1) {
-    const std::string &key = segments->conversion_segment(0).key();
-    std::string result;
-    if (key.empty()) {
-      return false;
-    }
-    if (!calculator->CalculateString(key, &result)) {
-      return false;
-    }
-    // Insert the result.
-    if (!InsertCandidate(result, 0, segments->mutable_conversion_segment(0))) {
-      return false;
-    }
-    return true;
+  const std::string &key = segments->conversion_segment(0).key();
+  if (key.empty()) {
+    return false;
   }
 
-  // Merge keys of all conversion segments and try calculation.
-  std::string merged_key;
-  for (const Segment &segment : segments->conversion_segments()) {
-    merged_key += segment.key();
-  }
-  // The decision to calculate and calculation itself are both done by the
-  // calculator.
   std::string result;
-  if (!calculator->CalculateString(merged_key, &result)) {
+  if (!calculator->CalculateString(key, &result)) {
     return false;
   }
 
-  // Merge all conversion segments.
-  int offset = Util::CharsLen(merged_key) -
-               Util::CharsLen(segments->conversion_segment(0).key());
-  // ConverterInterface::ResizeSegment() calls Rewriter::Rewrite(), so
-  // CalculatorRewriter::Rewrite() is recursively called with merged
-  // conversion segment.
-  if (!parent_converter_->ResizeSegment(segments, request, 0, offset)) {
-    LOG(ERROR) << "Failed to merge conversion segments";
+  // Insert the result.
+  if (!InsertCandidate(result, 0, segments->mutable_conversion_segment(0))) {
     return false;
   }
+
   return true;
 }
 
