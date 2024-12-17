@@ -68,7 +68,7 @@
     # Sources for Proto3.
     'protobuf_sources': [
       '<!@(<(glob_protobuf) . cpp_features.pb.cc descriptor.pb.cc)',
-      '<!@(<(glob_protobuf) . "*.cc" --exclude "*.pb.cc" reflection_tester.cc)',
+      '<!@(<(glob_protobuf) . "*.cc" --exclude "*.pb.cc" "lazy_repeated_field*.cc" reflection_tester.cc)',
       '<!@(<(glob_protobuf) io "*.cc")',
       '<!@(<(glob_protobuf) stubs "*.cc")',
       '<!@(<(glob) --notest --base <(protobuf_root)/third_party/utf8_range utf8_validity.cc utf8_range.c)',
