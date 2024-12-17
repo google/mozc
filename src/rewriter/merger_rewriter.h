@@ -32,6 +32,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -43,6 +44,7 @@
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
+
 class MergerRewriter : public RewriterInterface {
  public:
   MergerRewriter() = default;
@@ -56,9 +58,24 @@ class MergerRewriter : public RewriterInterface {
     rewriters_.push_back(std::move(rewriter));
   }
 
+  std::optional<ResizeSegmentsRequest> CheckResizeSegmentsRequest(
+      const ConversionRequest &request, const Segments &segments) const {
+    if (segments.resized()) {
+      return std::nullopt;
+    }
+
+    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+      std::optional<ResizeSegmentsRequest> resize_request =
+          rewriter->CheckResizeSegmentsRequest(request, segments);
+      if (resize_request.has_value()) {
+        return resize_request;
+      }
+    }
+    return std::nullopt;
+  }
+
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override {
-    bool result = false;
     if (segments == nullptr) {
       return false;
     }
@@ -79,9 +96,10 @@ class MergerRewriter : public RewriterInterface {
       }
     }();
 
+    bool is_updated = false;
     for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
       if (rewriter->capability(request) & capability_type) {
-        result |= rewriter->Rewrite(request, segments);
+        is_updated |= rewriter->Rewrite(request, segments);
       }
     }
 
@@ -96,7 +114,7 @@ class MergerRewriter : public RewriterInterface {
                                   candidate_size - max_suggestions);
       }
     }
-    return result;
+    return is_updated;
   }
 
   // This method is mainly called when user puts SPACE key

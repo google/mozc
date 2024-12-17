@@ -30,7 +30,10 @@
 #ifndef MOZC_REWRITER_REWRITER_INTERFACE_H_
 #define MOZC_REWRITER_REWRITER_INTERFACE_H_
 
+#include <array>
 #include <cstddef>  // for size_t
+#include <cstdint>
+#include <optional>
 
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -54,6 +57,22 @@ class RewriterInterface {
   // is called after StartConversion().
   virtual int capability(const ConversionRequest &request) const {
     return CONVERSION;
+  }
+
+  struct ResizeSegmentsRequest {
+    // Position of the segment to be resized.
+    size_t segment_index = 0;
+
+    // The new size of each segment in Unicode character (e.g. 3 for "あいう").
+    // The type and size (i.e. uint8_t and 8) comes from the implementation of
+    // UserBoundaryHistoryRewriter that stores the segment sizes in this format.
+    using SegmentSizes = std::array<uint8_t, 8>;
+    SegmentSizes segment_sizes = {0, 0, 0, 0, 0, 0, 0, 0};
+  };
+
+  virtual std::optional<ResizeSegmentsRequest> CheckResizeSegmentsRequest(
+      const ConversionRequest &request, const Segments &segments) const {
+    return std::nullopt;
   }
 
   virtual bool Rewrite(const ConversionRequest &request,
