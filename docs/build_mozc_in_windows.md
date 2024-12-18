@@ -38,6 +38,12 @@ Building Mozc on Windows requires the following software.
 
   * [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/#visual-studio-community-2022)
     * [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) should also work
+    * Make sure that the following components are installed.
+      * `Microsoft.VisualStudio.Component.VC.Redist.14.Latest`
+      * `Microsoft.VisualStudio.Component.VC.ATL`
+      * `Microsoft.VisualStudio.Component.VC.Tools.x86.x64`
+      * `Microsoft.VisualStudio.Component.VC.ATL.ARM64`
+      * `Microsoft.VisualStudio.Component.VC.Tools.ARM64`
   * Python 3.9 or later with the following pip modules.
     * `six`
     * `requests`
