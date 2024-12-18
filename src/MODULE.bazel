@@ -49,12 +49,11 @@ bazel_dep(
     version = "0.34.0",
 )
 
-# Bazel macOS build (3.5.1 2024-04-09)
-# Note, versions after 3.5.1 result a build failure of universal binary.
+# Bazel macOS build (3.16.1 2024-12-13)
 # https://github.com/bazelbuild/rules_apple
 bazel_dep(
     name = "rules_apple",
-    version = "3.5.1",
+    version = "3.16.1",
     repo_name = "build_bazel_rules_apple",
 )
 
