@@ -75,7 +75,8 @@ genrule(
         "//win32/cache_service:mozc_cache_service",
         "//win32/tip:mozc_tip32",
         "//win32/tip:mozc_tip64",
-        "//win32/tip:mozc_tip64.pdb",
+        # Temporary disabled until mozc_win32_cc_prod_binary supports pdb file.
+        # "//win32/tip:mozc_tip64.pdb",
         "//win32/custom_action",
         _WXS_FILE,
         "//base:mozc_version_txt",
@@ -96,7 +97,8 @@ genrule(
         "--mozc_cache_service=$(location //win32/cache_service:mozc_cache_service)",
         "--mozc_tip32=$(location //win32/tip:mozc_tip32)",
         "--mozc_tip64=$(location //win32/tip:mozc_tip64)",
-        "--mozc_tip64_pdb=$(location //win32/tip:mozc_tip64.pdb)",
+        # Temporary disabled until mozc_win32_cc_prod_binary supports pdb file.
+        # "--mozc_tip64_pdb=$(location //win32/tip:mozc_tip64.pdb)",
         "--custom_action=$(location //win32/custom_action)",
         "--icon_path=$(location //data/images/win:product_icon.ico)",
         "--credit_file=$(location //data/installer:credits_en.html)",

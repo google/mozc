@@ -335,15 +335,15 @@ def mozc_win_build_target(
 def mozc_win32_cc_prod_binary(
         name,
         executable_name_map = {},  # @unused
-        srcs = [],  # @unused
-        deps = [],  # @unused
-        linkopts = [],  # @unused
+        srcs = [],
+        deps = [],
+        linkopts = [],
         cpu = CPU.X64,
         static_crt = False,
         tags = MOZC_TAGS.WIN_ONLY,
-        win_def_file = None,  # @unused
+        win_def_file = None,
         target_compatible_with = ["@platforms//os:windows"],
-        visibility = ["//visibility:public"],  # @unused
+        visibility = ["//visibility:public"],
         **kwargs):
     """A rule to build production binaries for Windows.
 
@@ -368,9 +368,23 @@ def mozc_win32_cc_prod_binary(
       visibility: optional. The visibility of the target.
       **kwargs: other arguments passed to mozc_cc_binary.
     """
+    target_name = name + "_cc_binary"
+    mozc_cc_binary(
+        name = target_name,
+        srcs = srcs,
+        linkopts = linkopts,
+        linkshared = static_crt,
+        tags = tags,
+        target_compatible_with = target_compatible_with,
+        visibility = visibility,
+        win_def_file = win_def_file,
+        deps = deps,
+        **kwargs
+    )
+
     mozc_win_build_target(
         name = name,
-        target = "//data/prod:prod_binary",
+        target = target_name,
         cpu = cpu,
         static_crt = static_crt,
         target_compatible_with = target_compatible_with,
