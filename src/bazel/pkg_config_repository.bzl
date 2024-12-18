@@ -75,7 +75,7 @@ cc_library(
 """
 
 EXPORTS_FILES_TEMPLATE = """
-exports_files(glob(["libexec/*"]))
+exports_files(glob(["libexec/*"], allow_empty=True))
 """
 
 def _exec_pkg_config(repo_ctx, flags):
