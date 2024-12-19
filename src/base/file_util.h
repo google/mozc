@@ -189,10 +189,6 @@ class FileUtil {
 
   // Sets a mock for unittest.
   static void SetMockForUnitTest(FileUtilInterface *mock);
-
-  // Make a hard-link or copy of `src_file`.
-  static absl::Status LinkOrCopyFile(const std::string &src_path,
-                                     const std::string &dst_path);
 };
 
 // RAII wrapper for a file. Unlinks the file when this instance goes out of

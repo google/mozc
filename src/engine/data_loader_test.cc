@@ -98,8 +98,7 @@ class DataLoaderTest : public testing::TestWithTempUserProfile,
   EngineReloadRequest oss_request_;
 };
 
-TEST_P(DataLoaderTest, AsyncBuildWithoutInstall) {
-  // Test request without install.
+TEST_P(DataLoaderTest, AsyncBuild) {
   request_.set_engine_type(GetParam().type);
   request_.set_file_path(mock_data_path_);
   request_.set_magic_number(kMockMagicNumber);
@@ -137,60 +136,6 @@ TEST_P(DataLoaderTest, AsyncBuildWithoutInstall) {
   EXPECT_FALSE(loader.StartNewDataBuildTask(request_, kNeverCalled));
 
   EXPECT_EQ(callback_called, 1);
-}
-
-TEST_P(DataLoaderTest, AsyncBuildWithInstall) {
-  // Test request with install.  Since the requested file is copied,
-  // |mock_data_path_| is copied to a temporary file.
-  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
-  const std::string src_path =
-      FileUtil::JoinPath({temp_dir.path(), "src.data"});
-  ASSERT_OK(FileUtil::CopyFile(mock_data_path_, src_path));
-
-  const std::string install_path =
-      FileUtil::JoinPath({temp_dir.path(), "dst.data"});
-
-  request_.set_engine_type(GetParam().type);
-  request_.set_file_path(src_path);
-  request_.set_install_location(install_path);
-  request_.set_magic_number(kMockMagicNumber);
-
-  DataManager data_manager;
-  data_manager.InitFromFile(src_path, kMockMagicNumber);
-  absl::string_view expected_version = data_manager.GetDataVersion();
-  const std::string expected_filename = data_manager.GetFilename().value();
-
-  DataLoader loader;
-  loader.NotifyHighPriorityDataRegisteredForTesting();
-
-  int callback_called = 0;
-  EXPECT_TRUE(loader.StartNewDataBuildTask(
-      request_, [&](std::unique_ptr<DataLoader::Response> response) {
-        const DataManagerInterface &response_data_manager =
-            response->modules->GetDataManager();
-        EXPECT_EQ(response_data_manager.GetDataVersion(), expected_version);
-        EXPECT_TRUE(response_data_manager.GetFilename());
-        EXPECT_EQ(response_data_manager.GetFilename().value(),
-                  expected_filename);
-        EXPECT_EQ(response->response.request().engine_type(), GetParam().type);
-        ++callback_called;
-        return absl::OkStatus();
-      }));
-
-  // Sends the same request. It is accepted, but callback is not called.
-  EXPECT_TRUE(loader.StartNewDataBuildTask(request_, kNeverCalled));
-
-  loader.Wait();
-
-  // Sends the same request. It is NOT accepted, as the loader finishes
-  // the loading process.
-  EXPECT_FALSE(loader.StartNewDataBuildTask(request_, kNeverCalled));
-
-  EXPECT_EQ(callback_called, 1);
-
-  // Verify |src_path| was copied.
-  EXPECT_OK(FileUtil::FileExists(src_path));
-  EXPECT_OK(FileUtil::FileExists(install_path));
 }
 
 TEST_P(DataLoaderTest, AsyncBuildRepeatedly) {

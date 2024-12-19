@@ -701,40 +701,4 @@ void FileUtil::SetMockForUnitTest(FileUtilInterface *mock) {
   FileUtilSingleton::SetMock(mock);
 }
 
-absl::Status FileUtil::LinkOrCopyFile(const std::string &src_path,
-                                      const std::string &dst_path) {
-  absl::StatusOr<bool> is_equiv = FileUtil::IsEquivalent(src_path, dst_path);
-  if (!is_equiv.ok()) {
-    LOG(WARNING) << "Cannot test file equivalence: " << is_equiv.status();
-    // Try hard link or copy.
-  } else if (*is_equiv) {
-    // IsEquivalent() checks if src and dst are the same path or sym/hard link.
-    // This does not check the contents of the files.
-    return absl::OkStatus();
-  }
-
-  const std::string tmp_dst_path = dst_path + ".tmp";
-  FileUtil::UnlinkOrLogError(tmp_dst_path);
-  if (absl::Status s = FileUtil::CreateHardLink(src_path, tmp_dst_path);
-      !s.ok()) {
-    LOG(WARNING) << "Cannot create hardlink from " << src_path << " to "
-                 << tmp_dst_path << ": " << s;
-    // If an error happens, fallback to file copy.
-    if (absl::Status s = FileUtil::CopyFile(src_path, tmp_dst_path); !s.ok()) {
-      return absl::Status(
-          s.code(), absl::StrCat("Cannot copy file. from: ", src_path,
-                                 " to: ", tmp_dst_path, ": ", s.message()));
-    }
-  }
-
-  if (absl::Status s = FileUtil::AtomicRename(tmp_dst_path, dst_path);
-      !s.ok()) {
-    return absl::Status(
-        s.code(), absl::StrCat("AtomicRename failed: ", s.message(),
-                               "; from: ", tmp_dst_path, ", to: ", dst_path));
-  }
-
-  return absl::OkStatus();
-}
-
 }  // namespace mozc

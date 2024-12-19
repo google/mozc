@@ -175,17 +175,6 @@ std::unique_ptr<DataLoader::Response> DataLoader::BuildResponse(
     }
   }
 
-  // Copies file to install location.
-  if (request.has_install_location()) {
-    const absl::Status status = FileUtil::LinkOrCopyFile(
-        request.file_path(), request.install_location());
-    if (!status.ok()) {
-      LOG(ERROR) << "Copy faild: [" << status << "] " << request_data;
-      result->response.set_status(EngineReloadResponse::INSTALL_FAILURE);
-      return result;
-    }
-  }
-
   auto modules = std::make_unique<engine::Modules>();
   {
     const absl::Status status = modules->Init(std::move(data_manager));
