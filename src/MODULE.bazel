@@ -42,11 +42,11 @@ bazel_dep(
     version = "1.7.1",
 )
 
-# rules_python: 0.34.0 2024-07-01
+# rules_python: 1.0.0 2024-12-06
 # https://github.com/bazelbuild/rules_python/
 bazel_dep(
     name = "rules_python",
-    version = "0.34.0",
+    version = "1.0.0",
 )
 
 # Bazel macOS build (3.16.1 2024-12-13)
