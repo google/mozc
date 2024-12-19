@@ -337,13 +337,14 @@ def mozc_win32_cc_prod_binary(
         executable_name_map = {},  # @unused
         srcs = [],
         deps = [],
+        features = None,
         linkopts = [],
         cpu = CPU.X64,
         static_crt = False,
         tags = MOZC_TAGS.WIN_ONLY,
         win_def_file = None,
         target_compatible_with = ["@platforms//os:windows"],
-        visibility = ["//visibility:public"],
+        visibility = None,
         **kwargs):
     """A rule to build production binaries for Windows.
 
@@ -359,6 +360,7 @@ def mozc_win32_cc_prod_binary(
       executable_name_map: a map from the branding name to the executable name.
       srcs: .cc files to build the executable.
       deps: deps to build the executable.
+      features: features to be passed to mozc_cc_binary.
       linkopts: linker options to build the executable.
       cpu: optional. The target CPU architecture.
       static_crt: optional. True if the target should be built with static CRT.
@@ -372,23 +374,25 @@ def mozc_win32_cc_prod_binary(
     mozc_cc_binary(
         name = target_name,
         srcs = srcs,
+        deps = deps,
+        features = features,
         linkopts = linkopts,
         linkshared = static_crt,
         tags = tags,
         target_compatible_with = target_compatible_with,
         visibility = visibility,
         win_def_file = win_def_file,
-        deps = deps,
         **kwargs
     )
 
     mozc_win_build_target(
         name = name,
-        target = target_name,
         cpu = cpu,
         static_crt = static_crt,
-        target_compatible_with = target_compatible_with,
         tags = tags,
+        target = target_name,
+        target_compatible_with = target_compatible_with,
+        visibility = visibility,
         **kwargs
     )
 
