@@ -72,7 +72,17 @@ bazel_dep(
 )
 single_version_override(
     module_name = "rules_android_ndk",
-    patches = ["bazel/rules_android_ndk.patch"],
+    # Bazel's built-in patch engine cannot deal with a patch file that affects
+    # multiple files. This is why we have two separate patch files here.
+    # https://github.com/bazelbuild/bazel/issues/10267
+    patches = [
+        # Look like this should have been included in the following PR.
+        # https://github.com/bazelbuild/rules_android_ndk/pull/37
+        "bazel/rules_android_ndk.allow_empty_glob.patch",
+        # Might be removed after the folloing PR.
+        # https://github.com/bazelbuild/rules_android_ndk/pull/63
+        "bazel/rules_android_ndk.patch",
+    ],
     version = "0.1.2",
 )
 
