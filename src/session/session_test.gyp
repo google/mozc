@@ -105,7 +105,6 @@
         '<(mozc_oss_src_dir)/base/base_test.gyp:clock_mock',
         '<(mozc_oss_src_dir)/data_manager/oss/oss_data_manager.gyp:oss_data_manager',
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '<(mozc_oss_src_dir)/engine/engine.gyp:minimal_engine',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',

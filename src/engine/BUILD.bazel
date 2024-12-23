@@ -362,9 +362,6 @@ mozc_cc_library(
     name = "minimal_engine",
     srcs = ["minimal_engine.cc"],
     hdrs = ["minimal_engine.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
     deps = [
         ":engine_interface",
         ":modules",

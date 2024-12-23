@@ -365,7 +365,6 @@ mozc_cc_test(
         "//engine",
         "//engine:engine_interface",
         "//engine:engine_mock",
-        "//engine:minimal_engine",
         "//engine:mock_data_engine_factory",
         "//engine:modules",
         "//engine:supplemental_model_interface",

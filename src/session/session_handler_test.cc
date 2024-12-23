@@ -55,7 +55,6 @@
 #include "engine/engine.h"
 #include "engine/engine_interface.h"
 #include "engine/engine_mock.h"
-#include "engine/minimal_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
 #include "protocol/commands.pb.h"
