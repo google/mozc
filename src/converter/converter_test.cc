@@ -381,7 +381,9 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   }
 
   std::unique_ptr<Engine> CreateEngineWithMobilePredictor() {
-    return Engine::CreateMobileEngineHelper<testing::MockDataManager>().value();
+    return Engine::CreateMobileEngine(
+               std::make_unique<testing::MockDataManager>())
+        .value();
   }
 
   bool FindCandidateByValue(absl::string_view value,

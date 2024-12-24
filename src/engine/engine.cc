@@ -62,27 +62,23 @@ namespace mozc {
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
     std::unique_ptr<const DataManager> data_manager) {
   constexpr bool kIsMobile = false;
-
-  auto modules = std::make_unique<engine::Modules>();
-  absl::Status modules_status = modules->Init(std::move(data_manager));
-  if (!modules_status.ok()) {
-    return modules_status;
-  }
-
-  return CreateEngine(std::move(modules), kIsMobile);
+  return CreateEngine(std::move(data_manager), kIsMobile);
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
     std::unique_ptr<const DataManager> data_manager) {
   constexpr bool kIsMobile = true;
+  return CreateEngine(std::move(data_manager), kIsMobile);
+}
 
+absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
+    std::unique_ptr<const DataManager> data_manager, bool is_mobile) {
   auto modules = std::make_unique<engine::Modules>();
   absl::Status modules_status = modules->Init(std::move(data_manager));
   if (!modules_status.ok()) {
     return modules_status;
   }
-
-  return CreateEngine(std::move(modules), kIsMobile);
+  return CreateEngine(std::move(modules), is_mobile);
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(

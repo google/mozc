@@ -64,24 +64,14 @@ class Engine : public EngineInterface {
   static absl::StatusOr<std::unique_ptr<Engine>> CreateDesktopEngine(
       std::unique_ptr<const DataManager> data_manager);
 
-  // Helper function for the above factory, where data manager is instantiated
-  // by a default constructor.  Intended to be used for OssDataManager etc.
-  template <typename DataManagerType>
-  static absl::StatusOr<std::unique_ptr<Engine>> CreateDesktopEngineHelper() {
-    return CreateDesktopEngine(std::make_unique<const DataManagerType>());
-  }
-
   // Creates an instance with mobile configuration from a data manager.  The
   // ownership of data manager is passed to the engine instance.
   static absl::StatusOr<std::unique_ptr<Engine>> CreateMobileEngine(
       std::unique_ptr<const DataManager> data_manager);
 
-  // Helper function for the above factory, where data manager is instantiated
-  // by a default constructor.  Intended to be used for OssDataManager etc.
-  template <typename DataManagerType>
-  static absl::StatusOr<std::unique_ptr<Engine>> CreateMobileEngineHelper() {
-    return CreateMobileEngine(std::make_unique<const DataManagerType>());
-  }
+  // Creates an instance from a data manager and is_mobile flag.
+  static absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(
+      std::unique_ptr<const DataManager> data_manager, bool is_mobile);
 
   // Creates an instance with the given modules and is_mobile flag.
   static absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(

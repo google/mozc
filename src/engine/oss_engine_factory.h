@@ -44,9 +44,9 @@ class OssEngineFactory {
  public:
   static absl::StatusOr<std::unique_ptr<Engine>> Create() {
 #ifdef __ANDROID__
-    return Engine::CreateMobileEngineHelper<oss::OssDataManager>();
+    return Engine::CreateMobileEngine(std::make_unique<oss::OssDataManager>());
 #else   // __ANDROID__
-    return Engine::CreateDesktopEngineHelper<oss::OssDataManager>();
+    return Engine::CreateDesktopEngine(std::make_unique<oss::OssDataManager>());
 #endif  // __ANDROID__
   }
 };
