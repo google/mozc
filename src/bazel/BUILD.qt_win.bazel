@@ -25,7 +25,9 @@ cc_library(
         ],
     }),
     hdrs = glob([
-        "include",
+        "include/QtCore/*",
+        "include/QtGui/*",
+        "include/QtWidgets/*",
     ]),
     includes = [
         "include",
