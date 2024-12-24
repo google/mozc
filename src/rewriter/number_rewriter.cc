@@ -50,7 +50,7 @@
 #include "base/vlog.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -455,7 +455,7 @@ std::vector<NumberUtil::NumberString> GetNumbersInDefaultOrder(
 
 }  // namespace
 
-NumberRewriter::NumberRewriter(const DataManagerInterface *data_manager)
+NumberRewriter::NumberRewriter(const DataManager *data_manager)
     : pos_matcher_(data_manager->GetPosMatcherData()) {
   absl::string_view data = data_manager->GetCounterSuffixSortedArray();
   // Data manager is responsible for providing a valid data.  Just verify data

@@ -55,7 +55,7 @@
 #include "converter/converter_mock.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
@@ -373,8 +373,7 @@ class MockImmutableConverter : public ImmutableConverterInterface {
 class MockSingleKanjiPredictionAggregator
     : public SingleKanjiPredictionAggregator {
  public:
-  explicit MockSingleKanjiPredictionAggregator(
-      const DataManagerInterface &data_manager)
+  explicit MockSingleKanjiPredictionAggregator(const DataManager &data_manager)
       : SingleKanjiPredictionAggregator(data_manager) {}
   ~MockSingleKanjiPredictionAggregator() override = default;
   MOCK_METHOD(std::vector<Result>, AggregateResults,

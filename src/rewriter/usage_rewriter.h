@@ -42,7 +42,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
@@ -53,7 +53,7 @@ namespace mozc {
 
 class UsageRewriter : public RewriterInterface {
  public:
-  UsageRewriter(const DataManagerInterface *data_manager,
+  UsageRewriter(const DataManager *data_manager,
                 const dictionary::DictionaryInterface *dictionary);
   ~UsageRewriter() override = default;
   bool Rewrite(const ConversionRequest &request,

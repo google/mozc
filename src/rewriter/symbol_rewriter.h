@@ -43,14 +43,14 @@ namespace mozc {
 
 class ConversionRequest;
 class ConverterInterface;
-class DataManagerInterface;
+class DataManager;
 class Segment;
 class Segments;
 
 class SymbolRewriter : public RewriterInterface {
  public:
   explicit SymbolRewriter(const ConverterInterface *parent_converter,
-                          const DataManagerInterface *data_manager);
+                          const DataManager *data_manager);
   ~SymbolRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;

@@ -37,7 +37,7 @@
 #include "absl/status/status.h"
 #include "converter/connector.h"
 #include "converter/segmenter.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -56,7 +56,7 @@ class Modules {
   Modules(const Modules &) = delete;
   Modules &operator=(const Modules &) = delete;
 
-  absl::Status Init(std::unique_ptr<const DataManagerInterface> data_manager);
+  absl::Status Init(std::unique_ptr<const DataManager> data_manager);
 
   // Preset functions must be called before Init.
   void PresetPosMatcher(
@@ -74,7 +74,7 @@ class Modules {
       std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
           single_kanji_prediction_aggregator);
 
-  const DataManagerInterface &GetDataManager() const {
+  const DataManager &GetDataManager() const {
     // DataManager must be valid.
     DCHECK(data_manager_);
     return *data_manager_;
@@ -128,7 +128,7 @@ class Modules {
 
  private:
   bool initialized_ = false;
-  std::unique_ptr<const DataManagerInterface> data_manager_;
+  std::unique_ptr<const DataManager> data_manager_;
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   Connector connector_;

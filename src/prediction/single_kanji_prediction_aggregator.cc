@@ -40,7 +40,7 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "prediction/result.h"
@@ -71,7 +71,7 @@ void StripLastChar(std::string *key) {
 }  // namespace
 
 SingleKanjiPredictionAggregator::SingleKanjiPredictionAggregator(
-    const DataManagerInterface &data_manager)
+    const DataManager &data_manager)
     : single_kanji_dictionary_(
           new dictionary::SingleKanjiDictionary(data_manager)),
       pos_matcher_(std::make_unique<dictionary::PosMatcher>(

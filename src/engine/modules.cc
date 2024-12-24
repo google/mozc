@@ -44,7 +44,7 @@
 #include "absl/types/span.h"
 #include "converter/connector.h"
 #include "converter/segmenter.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/dictionary_impl.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
@@ -70,8 +70,7 @@ using ::mozc::dictionary::ValueDictionary;
 namespace mozc {
 namespace engine {
 
-absl::Status Modules::Init(
-    std::unique_ptr<const DataManagerInterface> data_manager) {
+absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
 #define RETURN_IF_NULL(ptr)                                                \
   do {                                                                     \
     if (!(ptr))                                                            \

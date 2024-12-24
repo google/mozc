@@ -40,7 +40,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/user_pos_interface.h"
 
 namespace mozc {
@@ -180,7 +180,7 @@ class UserPos : public UserPosInterface {
   using const_iterator = iterator;
 
   static std::unique_ptr<UserPos> CreateFromDataManager(
-      const DataManagerInterface &manager);
+      const DataManager &manager);
 
   // Initializes the user pos from the given binary data.  The provided byte
   // data must outlive this instance.

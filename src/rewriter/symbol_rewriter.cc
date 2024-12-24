@@ -46,7 +46,7 @@
 #include "base/vlog.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -356,7 +356,7 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
 }
 
 SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter,
-                               const DataManagerInterface *data_manager)
+                               const DataManager *data_manager)
     : parent_converter_(parent_converter) {
   DCHECK(parent_converter_);
   absl::string_view token_array_data, string_array_data;

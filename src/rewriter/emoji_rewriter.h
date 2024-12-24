@@ -36,7 +36,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/emoji_data.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
@@ -71,7 +71,7 @@ class EmojiRewriter : public RewriterInterface {
   static constexpr size_t kEmojiDataByteLength = 28;
   using IteratorRange = std::pair<EmojiDataIterator, EmojiDataIterator>;
 
-  explicit EmojiRewriter(const DataManagerInterface &data_manager);
+  explicit EmojiRewriter(const DataManager &data_manager);
   EmojiRewriter(const EmojiRewriter &) = delete;
   EmojiRewriter &operator=(const EmojiRewriter &) = delete;
 

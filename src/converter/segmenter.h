@@ -35,14 +35,14 @@
 #include <memory>
 
 #include "converter/node.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 
 namespace mozc {
 
 class Segmenter {
  public:
   static std::unique_ptr<Segmenter> CreateFromDataManager(
-      const DataManagerInterface &data_manager);
+      const DataManager &data_manager);
 
   // This class does not take the ownership of pointer parameters.
   Segmenter(size_t l_num_elements, size_t r_num_elements,

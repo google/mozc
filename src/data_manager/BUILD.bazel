@@ -43,22 +43,12 @@ load("//bazel:stubs.bzl", "bzl_library")
 package(default_visibility = ["//visibility:public"])
 
 mozc_cc_library(
-    name = "data_manager_interface",
-    hdrs = ["data_manager_interface.h"],
-    deps = [
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
-mozc_cc_library(
     name = "data_manager",
     srcs = [
         "data_manager.cc",
     ],
     hdrs = ["data_manager.h"],
     deps = [
-        ":data_manager_interface",
         ":dataset_reader",
         ":serialized_dictionary",
         "//base:mmap",
@@ -85,7 +75,7 @@ mozc_cc_library(
     hdrs = ["data_manager_test_base.h"],
     deps = [
         ":connection_file_reader",
-        ":data_manager_interface",
+        ":data_manager",
         "//base:file_stream",
         "//base:util",
         "//base/container:serialized_string_array",

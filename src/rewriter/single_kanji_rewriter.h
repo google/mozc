@@ -37,7 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "request/conversion_request.h"
@@ -47,7 +47,7 @@ namespace mozc {
 
 class SingleKanjiRewriter : public RewriterInterface {
  public:
-  explicit SingleKanjiRewriter(const DataManagerInterface &data_manager);
+  explicit SingleKanjiRewriter(const DataManager &data_manager);
   ~SingleKanjiRewriter() override;
 
   int capability(const ConversionRequest &request) const override;

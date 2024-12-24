@@ -44,7 +44,7 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "engine/data_loader.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
@@ -60,7 +60,7 @@
 namespace mozc {
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
-    std::unique_ptr<const DataManagerInterface> data_manager) {
+    std::unique_ptr<const DataManager> data_manager) {
   constexpr bool kIsMobile = false;
 
   auto modules = std::make_unique<engine::Modules>();
@@ -73,7 +73,7 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
-    std::unique_ptr<const DataManagerInterface> data_manager) {
+    std::unique_ptr<const DataManager> data_manager) {
   constexpr bool kIsMobile = true;
 
   auto modules = std::make_unique<engine::Modules>();

@@ -46,7 +46,7 @@
 #include "base/strings/assign.h"
 #include "base/vlog.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/emoji_data.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -141,7 +141,7 @@ std::vector<std::unique_ptr<Segment::Candidate>> CreateEmojiData(
 }
 }  // namespace
 
-EmojiRewriter::EmojiRewriter(const DataManagerInterface &data_manager) {
+EmojiRewriter::EmojiRewriter(const DataManager &data_manager) {
   absl::string_view string_array_data;
   data_manager.GetEmojiRewriterData(&token_array_data_, &string_array_data);
   DCHECK(SerializedStringArray::VerifyData(string_array_data));

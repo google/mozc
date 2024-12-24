@@ -44,7 +44,7 @@
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 
 namespace mozc {
@@ -161,8 +161,7 @@ class Uint32ArrayIterator {
 
 }  // namespace
 
-SingleKanjiDictionary::SingleKanjiDictionary(
-    const DataManagerInterface &data_manager) {
+SingleKanjiDictionary::SingleKanjiDictionary(const DataManager &data_manager) {
   absl::string_view string_array_data;
   absl::string_view variant_type_array_data;
   absl::string_view variant_string_array_data;

@@ -40,7 +40,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 
@@ -91,7 +91,7 @@ CorrectionRewriter::CorrectionRewriter(
 // static
 std::unique_ptr<CorrectionRewriter>
 CorrectionRewriter::CreateCorrectionRewriter(
-    const DataManagerInterface *data_manager) {
+    const DataManager *data_manager) {
   absl::string_view value_array_data, error_array_data, correction_array_data;
   data_manager->GetReadingCorrectionData(&value_array_data, &error_array_data,
                                          &correction_array_data);

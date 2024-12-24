@@ -37,7 +37,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 
 namespace mozc {
@@ -45,7 +45,7 @@ namespace dictionary {
 
 class SingleKanjiDictionary {
  public:
-  explicit SingleKanjiDictionary(const DataManagerInterface &data_manager);
+  explicit SingleKanjiDictionary(const DataManager &data_manager);
 
   SingleKanjiDictionary(const SingleKanjiDictionary &) = delete;
   SingleKanjiDictionary &operator=(const SingleKanjiDictionary &) = delete;

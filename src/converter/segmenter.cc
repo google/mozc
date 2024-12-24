@@ -37,12 +37,12 @@
 #include "absl/types/span.h"
 #include "base/container/bitarray.h"
 #include "converter/node.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 
 namespace mozc {
 
 std::unique_ptr<Segmenter> Segmenter::CreateFromDataManager(
-    const DataManagerInterface &data_manager) {
+    const DataManager &data_manager) {
   size_t l_num_elements = 0;
   size_t r_num_elements = 0;
   absl::Span<const uint16_t> l_table, r_table, boundary_data;

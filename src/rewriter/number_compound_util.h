@@ -60,7 +60,7 @@ enum NumberScriptType {
 // "一階" can be split as "一" + "階".  At the same time, script type of
 // number can be obtained.  A sorted array of counter suffix needs to be
 // provided, which can be obtained using data manager; see
-// data_manager/data_manager_interface.h.  Returns false if the input cannot be
+// data_manager/data_manager.h.  Returns false if the input cannot be
 // split.
 bool SplitStringIntoNumberAndCounterSuffix(
     const SerializedStringArray &suffix_array, absl::string_view input,

@@ -40,14 +40,14 @@
 
 namespace mozc {
 
-class DataManagerInterface;
+class DataManager;
 
 // Provides common unit tests for DataManager.
 class DataManagerTestBase : public ::testing::Test {
  protected:
   typedef bool (*IsBoundaryFunc)(uint16_t, uint16_t);
 
-  DataManagerTestBase(DataManagerInterface *data_manager,
+  DataManagerTestBase(DataManager *data_manager,
                       // The following three are used in segmenter test.
                       size_t lsize, size_t rsize, IsBoundaryFunc is_boundary,
                       // The following two are used in connector test.
@@ -71,7 +71,7 @@ class DataManagerTestBase : public ::testing::Test {
   void SuggestionFilterTest_IsBadSuggestion();
   void CounterSuffixTest_ValidateTest();
 
-  std::unique_ptr<DataManagerInterface> data_manager_;
+  std::unique_ptr<DataManager> data_manager_;
   const uint16_t lsize_;
   const uint16_t rsize_;
   IsBoundaryFunc is_boundary_;

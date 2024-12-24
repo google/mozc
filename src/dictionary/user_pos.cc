@@ -44,7 +44,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "base/strings/assign.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 
 namespace mozc {
 namespace dictionary {
@@ -176,7 +176,7 @@ bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
 }
 
 std::unique_ptr<UserPos> UserPos::CreateFromDataManager(
-    const DataManagerInterface &manager) {
+    const DataManager &manager) {
   absl::string_view token_array_data, string_array_data;
   manager.GetUserPosData(&token_array_data, &string_array_data);
   return std::make_unique<UserPos>(token_array_data, string_array_data);

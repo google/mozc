@@ -42,7 +42,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "rewriter/number_compound_util.h"
 
 namespace mozc {
@@ -129,7 +129,7 @@ bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
 }  // namespace
 
 FocusCandidateRewriter::FocusCandidateRewriter(
-    const DataManagerInterface *data_manager)
+    const DataManager *data_manager)
     : pos_matcher_(data_manager->GetPosMatcherData()) {
   absl::string_view data = data_manager->GetCounterSuffixSortedArray();
   // Data manager is responsible for providing a valid data.  Just verify data

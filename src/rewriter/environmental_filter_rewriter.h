@@ -59,7 +59,7 @@
 #include "absl/types/span.h"
 #include "base/text_normalizer.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -100,7 +100,7 @@ class EnvironmentalFilterRewriter : public RewriterInterface {
   // and |value_list|.  If NULL pointer is passed to it, Mozc process
   // terminates with an error.
   explicit EnvironmentalFilterRewriter(
-      const DataManagerInterface &data_manager);
+      const DataManager &data_manager);
 
   int capability(const ConversionRequest &request) const override;
 

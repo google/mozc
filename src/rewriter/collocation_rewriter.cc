@@ -50,7 +50,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "rewriter/collocation_util.h"
@@ -557,7 +557,7 @@ bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
 }
 
 std::unique_ptr<CollocationRewriter> CollocationRewriter::Create(
-    const DataManagerInterface &data_manager) {
+    const DataManager &data_manager) {
   absl::StatusOr<CollocationFilter> collocation_filter =
       CollocationFilter::Create(data_manager.GetCollocationData());
   if (!collocation_filter.ok()) {

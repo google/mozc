@@ -44,7 +44,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/mmap.h"
-#include "data_manager/data_manager_interface.h"
 
 namespace mozc {
 
@@ -54,7 +53,7 @@ class DataSetReader;  // Forward-declare this as it is used privately.
 // (dictionary, LM, etc.).
 // TODO(noriyukit): Migrate all the embedded data managers, such as
 // oss/oss_data_manager.h, to this one.
-class DataManager : public DataManagerInterface {
+class DataManager {
  public:
   // Return status for initialization.
   enum class Status {
@@ -79,6 +78,7 @@ class DataManager : public DataManagerInterface {
   DataManager() = default;
   DataManager(const DataManager &) = delete;
   DataManager &operator=(const DataManager &) = delete;
+  virtual ~DataManager() = default;
 
   // Parses |array| and extracts byte blocks of data set.  The |array| must
   // outlive this instance.  The second version specifies a custom magic number
@@ -104,66 +104,65 @@ class DataManager : public DataManagerInterface {
                                         absl::string_view magic);
 
   // Implementation of DataManagerInterface.
-  std::optional<std::string> GetFilename() const override { return filename_; }
-  absl::Span<const uint16_t> GetPosMatcherData() const override;
-  void GetUserPosData(absl::string_view *token_array_data,
-                      absl::string_view *string_array_data) const override;
-  absl::string_view GetConnectorData() const override;
-  absl::string_view GetSystemDictionaryData() const override;
-  absl::Span<const uint32_t> GetCollocationData() const override;
-  absl::Span<const uint32_t> GetCollocationSuppressionData() const override;
-  absl::Span<const uint32_t> GetSuggestionFilterData() const override;
-  absl::Span<const uint8_t> GetPosGroupData() const override;
-  void GetSegmenterData(
+  virtual std::optional<std::string> GetFilename() const { return filename_; }
+  virtual absl::Span<const uint16_t> GetPosMatcherData() const;
+  virtual void GetUserPosData(absl::string_view *token_array_data,
+                              absl::string_view *string_array_data) const;
+  virtual absl::string_view GetConnectorData() const;
+  virtual absl::string_view GetSystemDictionaryData() const;
+  virtual absl::Span<const uint32_t> GetCollocationData() const;
+  virtual absl::Span<const uint32_t> GetCollocationSuppressionData() const;
+  virtual absl::Span<const uint32_t> GetSuggestionFilterData() const;
+  virtual absl::Span<const uint8_t> GetPosGroupData() const;
+  virtual void GetSegmenterData(
       size_t *l_num_elements, size_t *r_num_elements,
       absl::Span<const uint16_t> *l_table, absl::Span<const uint16_t> *r_table,
       absl::Span<const char> *bitarray_data,
-      absl::Span<const uint16_t> *boundary_data) const override;
+      absl::Span<const uint16_t> *boundary_data) const;
   absl::string_view GetCounterSuffixSortedArray() const;
-  void GetSuffixDictionaryData(
+  virtual void GetSuffixDictionaryData(
       absl::string_view *key_array, absl::string_view *value_array,
-      absl::Span<const uint32_t> *token_array) const override;
-  void GetReadingCorrectionData(
+      absl::Span<const uint32_t> *token_array) const;
+  virtual void GetReadingCorrectionData(
       absl::string_view *value_array_data, absl::string_view *error_array_data,
-      absl::string_view *correction_array_data) const override;
-  void GetSymbolRewriterData(
+      absl::string_view *correction_array_data) const;
+  virtual void GetSymbolRewriterData(
       absl::string_view *token_array_data,
-      absl::string_view *string_array_data) const override;
-  void GetEmoticonRewriterData(
+      absl::string_view *string_array_data) const;
+  virtual void GetEmoticonRewriterData(
       absl::string_view *token_array_data,
-      absl::string_view *string_array_data) const override;
-  void GetEmojiRewriterData(
-      absl::string_view *token_array_data,
-      absl::string_view *string_array_data) const override;
-  void GetSingleKanjiRewriterData(
+      absl::string_view *string_array_data) const;
+  virtual void GetEmojiRewriterData(absl::string_view *token_array_data,
+                                    absl::string_view *string_array_data) const;
+  virtual void GetSingleKanjiRewriterData(
       absl::string_view *token_array_data, absl::string_view *string_array_data,
       absl::string_view *variant_type_array_data,
       absl::string_view *variant_token_array_data,
       absl::string_view *variant_string_array_data,
       absl::string_view *noun_prefix_token_array_data,
-      absl::string_view *noun_prefix_string_array_data) const override;
-  void GetA11yDescriptionRewriterData(
+      absl::string_view *noun_prefix_string_array_data) const;
+  virtual void GetA11yDescriptionRewriterData(
       absl::string_view *token_array_data,
-      absl::string_view *string_array_data) const override;
-  void GetZeroQueryData(
+      absl::string_view *string_array_data) const;
+  virtual void GetZeroQueryData(
       absl::string_view *zero_query_token_array_data,
       absl::string_view *zero_query_string_array_data,
       absl::string_view *zero_query_number_token_array_data,
-      absl::string_view *zero_query_number_string_array_data) const override;
+      absl::string_view *zero_query_number_string_array_data) const;
 
 #ifndef NO_USAGE_REWRITER
-  void GetUsageRewriterData(
+  virtual void GetUsageRewriterData(
       absl::string_view *base_conjugation_suffix_data,
       absl::string_view *conjugation_suffix_data,
       absl::string_view *conjugation_index_data,
       absl::string_view *usage_items_data,
-      absl::string_view *string_array_data) const override;
+      absl::string_view *string_array_data) const;
 #endif  // NO_USAGE_REWRITER
 
-  absl::string_view GetDataVersion() const override;
+  virtual absl::string_view GetDataVersion() const;
 
-  std::optional<std::pair<size_t, size_t>> GetOffsetAndSize(
-      absl::string_view name) const override;
+  virtual std::optional<std::pair<size_t, size_t>> GetOffsetAndSize(
+      absl::string_view name) const;
 
  private:
   Status InitFromReader(const DataSetReader &reader);

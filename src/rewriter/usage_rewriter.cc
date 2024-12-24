@@ -43,7 +43,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
@@ -53,7 +53,7 @@ namespace mozc {
 
 using ::mozc::dictionary::DictionaryInterface;
 
-UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
+UsageRewriter::UsageRewriter(const DataManager *data_manager,
                              const DictionaryInterface *dictionary)
     : pos_matcher_(data_manager->GetPosMatcherData()),
       dictionary_(dictionary),

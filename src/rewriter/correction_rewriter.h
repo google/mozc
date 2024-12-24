@@ -36,7 +36,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -48,7 +48,7 @@ class CorrectionRewriter : public RewriterInterface {
   // default provided by data_manager.  The caller takes the ownership of the
   // instance.
   static std::unique_ptr<CorrectionRewriter> CreateCorrectionRewriter(
-      const DataManagerInterface *data_manager);
+      const DataManager *data_manager);
 
   CorrectionRewriter(absl::string_view value_array_data,
                      absl::string_view error_array_data,

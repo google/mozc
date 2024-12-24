@@ -140,7 +140,7 @@ mozc_cc_library(
     srcs = ["connector.cc"],
     hdrs = ["connector.h"],
     deps = [
-        "//data_manager:data_manager_interface",
+        "//data_manager",
         "//storage/louds:simple_succinct_bit_vector_index",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/base:core_headers",
@@ -280,7 +280,7 @@ mozc_cc_library(
     deps = [
         ":node",
         "//base/container:bitarray",
-        "//data_manager:data_manager_interface",
+        "//data_manager",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/types:span",
     ],
@@ -465,7 +465,7 @@ mozc_cc_test(
         "//composer",
         "//composer:table",
         "//config:config_handler",
-        "//data_manager:data_manager_interface",
+        "//data_manager",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_mock",

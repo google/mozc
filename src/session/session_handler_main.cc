@@ -179,7 +179,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   }
 }
 
-std::unique_ptr<const DataManagerInterface> CreateDataManager(
+std::unique_ptr<const DataManager> CreateDataManager(
     const std::string &dictionary) {
   if (dictionary == "oss") {
     return std::make_unique<const oss::OssDataManager>();

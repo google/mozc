@@ -42,7 +42,7 @@
 #include "base/strings/assign.h"
 #include "base/vlog.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
@@ -100,7 +100,7 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
 }  // namespace
 
 SingleKanjiRewriter::SingleKanjiRewriter(
-    const DataManagerInterface &data_manager)
+    const DataManager &data_manager)
     : pos_matcher_(data_manager.GetPosMatcherData()),
       single_kanji_dictionary_(
           new dictionary::SingleKanjiDictionary(data_manager)) {}

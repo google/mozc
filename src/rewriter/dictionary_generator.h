@@ -39,7 +39,7 @@
 
 #include "absl/container/btree_set.h"
 #include "absl/strings/str_format.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/user_pos_interface.h"
 
 namespace mozc {
@@ -80,7 +80,7 @@ bool operator<(const Token &lhs, const Token &rhs);
 
 class DictionaryGenerator {
  public:
-  explicit DictionaryGenerator(const DataManagerInterface &data_manager);
+  explicit DictionaryGenerator(const DataManager &data_manager);
 
   DictionaryGenerator(DictionaryGenerator &&) = default;
   DictionaryGenerator &operator=(DictionaryGenerator &&) = default;

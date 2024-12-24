@@ -46,7 +46,6 @@
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "data_manager/data_manager.h"
-#include "data_manager/data_manager_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -115,7 +114,7 @@ TEST_P(DataLoaderTest, AsyncBuild) {
 
   EXPECT_TRUE(loader.StartNewDataBuildTask(
       request_, [&](std::unique_ptr<DataLoader::Response> response) {
-        const DataManagerInterface &response_data_manager =
+        const DataManager &response_data_manager =
             response->modules->GetDataManager();
         EXPECT_EQ(response_data_manager.GetDataVersion(), expected_version);
         EXPECT_TRUE(response_data_manager.GetFilename());

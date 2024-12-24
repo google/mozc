@@ -38,7 +38,7 @@
 #include <utility>
 
 #include "absl/log/check.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 
@@ -75,7 +75,7 @@ bool operator<(const Token &lhs, const Token &rhs) {
 }
 
 DictionaryGenerator::DictionaryGenerator(
-    const DataManagerInterface &data_manager) {
+    const DataManager &data_manager) {
   const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
   open_bracket_id_ = pos_matcher.GetOpenBracketId();
   close_bracket_id_ = pos_matcher.GetCloseBracketId();
