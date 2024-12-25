@@ -111,11 +111,11 @@
       ],
     },
     {
-      'target_name': 'minimal_engine',
+      'target_name': 'minimal_converter',
       'type': 'static_library',
       'sources': [
         '<(gen_out_dir)/../dictionary/pos_matcher_impl.inc',
-        'minimal_engine.cc',
+        'minimal_converter.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/composer/composer.gyp:composer',

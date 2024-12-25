@@ -46,6 +46,7 @@
 #include "converter/immutable_converter_interface.h"
 #include "data_manager/data_manager.h"
 #include "engine/data_loader.h"
+#include "engine/minimal_converter.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/dictionary_predictor.h"
@@ -95,6 +96,8 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
 std::unique_ptr<Engine> Engine::CreateEngine() {
   return absl::WrapUnique(new Engine());
 }
+
+Engine::Engine() : minimal_converter_(CreateMinimalConverter()) {}
 
 absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
                                    bool is_mobile) {

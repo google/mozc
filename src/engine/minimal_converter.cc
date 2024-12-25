@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/minimal_engine.h"
+#include "engine/minimal_converter.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -39,7 +39,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/strings/assign.h"
-#include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -152,11 +151,8 @@ class MinimalConverter : public ConverterInterface {
 };
 }  // namespace
 
-MinimalEngine::MinimalEngine()
-    : converter_(std::make_unique<MinimalConverter>()) {}
-
-ConverterInterface *MinimalEngine::GetConverter() const {
-  return converter_.get();
+std::unique_ptr<ConverterInterface> CreateMinimalConverter() {
+  return std::make_unique<MinimalConverter>();
 }
 
 }  // namespace mozc

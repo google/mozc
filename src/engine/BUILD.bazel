@@ -187,7 +187,7 @@ mozc_cc_library(
     deps = [
         ":data_loader",
         ":engine_interface",
-        ":minimal_engine",
+        ":minimal_converter",
         ":modules",
         ":supplemental_model_interface",
         "//base:vlog",
@@ -358,19 +358,15 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "minimal_engine",
-    srcs = ["minimal_engine.cc"],
-    hdrs = ["minimal_engine.h"],
+    name = "minimal_converter",
+    srcs = ["minimal_converter.cc"],
+    hdrs = ["minimal_converter.h"],
     deps = [
-        ":engine_interface",
-        ":modules",
         "//base/strings:assign",
-        "//composer",
         "//converter:converter_interface",
         "//converter:segments",
         "//request:conversion_request",
         "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],

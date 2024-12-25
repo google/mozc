@@ -43,7 +43,7 @@
 #include "data_manager/data_manager.h"
 #include "engine/data_loader.h"
 #include "engine/engine_interface.h"
-#include "engine/minimal_engine.h"
+#include "engine/minimal_converter.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/predictor_interface.h"
@@ -86,12 +86,13 @@ class Engine : public EngineInterface {
   // TODO(taku): Avoid returning pointer, as converter_ may be updated
   // dynamically and return value will become a dangling pointer.
   ConverterInterface *GetConverter() const override {
-    return converter_ ? converter_.get() : minimal_engine_.GetConverter();
+    return converter_ ? converter_.get() : minimal_converter_.get();
   }
 
   absl::string_view GetPredictorName() const override {
+    static absl::string_view kDefaultPredictorName = "MinimalPredictor";
     return converter_ ? converter_->predictor()->GetPredictorName()
-                      : minimal_engine_.GetPredictorName();
+                      : kDefaultPredictorName;
   }
 
   // Functions for Reload, Sync, Wait return true if successfully operated
@@ -109,8 +110,9 @@ class Engine : public EngineInterface {
                              bool is_mobile);
 
   absl::string_view GetDataVersion() const override {
+    static absl::string_view kDefaultDataVersion = "0.0.0";
     return converter_ ? converter_->modules()->GetDataManager().GetDataVersion()
-                      : minimal_engine_.GetDataVersion();
+                      : kDefaultDataVersion;
   }
 
   // Returns a list of part-of-speech (e.g. "名詞", "動詞一段") to be used for
@@ -118,9 +120,10 @@ class Engine : public EngineInterface {
   // Since the POS set may differ per LM, this function returns
   // available POS items. In practice, the POS items are rarely changed.
   std::vector<std::string> GetPosList() const override {
-    return converter_ && converter_->modules()->GetUserDictionary()
-               ? converter_->modules()->GetUserDictionary()->GetPosList()
-               : minimal_engine_.GetPosList();
+    if (converter_ && converter_->modules()->GetUserDictionary()) {
+      return converter_->modules()->GetUserDictionary()->GetPosList();
+    }
+    return {};
   }
 
   // For testing only.
@@ -137,17 +140,17 @@ class Engine : public EngineInterface {
   void SetAlwaysWaitForTesting(bool value) { always_wait_for_testing_ = value; }
 
  private:
-  Engine() = default;
+  Engine();
 
   // Initializes the engine object by the given modules and is_mobile flag.
   // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
   absl::Status Init(std::unique_ptr<engine::Modules> modules, bool is_mobile);
 
-  MinimalEngine minimal_engine_;
   DataLoader loader_;
 
   std::unique_ptr<engine::SupplementalModelInterface> supplemental_model_;
   std::unique_ptr<Converter> converter_;
+  std::unique_ptr<ConverterInterface> minimal_converter_;
   std::unique_ptr<DataLoader::Response> loader_response_;
   bool always_wait_for_testing_ = false;
 };

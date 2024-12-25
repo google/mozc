@@ -27,44 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_ENGINE_MINIMAL_ENGINE_H_
-#define MOZC_ENGINE_MINIMAL_ENGINE_H_
+#ifndef MOZC_ENGINE_MINIMAL_CONVERTER_H_
+#define MOZC_ENGINE_MINIMAL_CONVERTER_H_
 
 #include <memory>
-#include <string>
-#include <vector>
 
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
-#include "engine/engine_interface.h"
-#include "engine/modules.h"
 
 namespace mozc {
 
-// A minimal implementation of EngineInterface, which copies input key to the
-// first candidate.
-class MinimalEngine : public EngineInterface {
- public:
-  MinimalEngine();
-  MinimalEngine(const MinimalEngine &) = delete;
-  MinimalEngine &operator=(const MinimalEngine &) = delete;
-
-  ConverterInterface *GetConverter() const override;
-  absl::string_view GetPredictorName() const override {
-    return "MinimalPredictor";
-  }
-  absl::string_view GetDataVersion() const override { return "0.0.0"; }
-
-  absl::Status ReloadModules(std::unique_ptr<engine::Modules> modules,
-                             bool is_mobile) {
-    return absl::OkStatus();
-  }
-
- private:
-  std::unique_ptr<ConverterInterface> converter_;
-};
+std::unique_ptr<ConverterInterface> CreateMinimalConverter();
 
 }  // namespace mozc
 
-#endif  // MOZC_ENGINE_MINIMAL_ENGINE_H_
+#endif  // MOZC_ENGINE_MINIMAL_CONVERTER_H_
