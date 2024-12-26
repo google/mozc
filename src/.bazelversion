@@ -1,5 +1,5 @@
 
 8.0.0
-# The first liine is intentionally empty to allow any Bazel versions.
+# The first line is intentionally empty to allow any Bazel versions.
 # We have checked the build and tests with Bazel 8.0.0.
-# Remove the first line and use Bazelisk to use the confirmed version.
+# Remove the first empty line and use Bazelisk to use the confirmed version.
