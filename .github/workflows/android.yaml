@@ -30,7 +30,7 @@ jobs:
       - name: build
         working-directory: ./src
         env:
-          USE_BAZEL_VERSION: "7.4.1"
+          USE_BAZEL_VERSION: "8.0.0"
         run: |
           bazel build --config oss_android package --config release_build
 

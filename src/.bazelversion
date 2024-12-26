@@ -1,5 +1,5 @@
 
-7.4.1
+8.0.0
 # The first liine is intentionally empty to allow any Bazel versions.
-# We have checked the build and tests with Bazel 7.4.1.
+# We have checked the build and tests with Bazel 8.0.0.
 # Remove the first line and use Bazelisk to use the confirmed version.

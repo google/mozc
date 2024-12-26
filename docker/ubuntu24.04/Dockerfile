@@ -55,11 +55,10 @@ RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
 
 ## Set up bazelisk as bazel
-RUN curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.22.0/bazelisk-linux-amd64 \
+RUN curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64 \
   && mv bazelisk-linux-amd64 /home/mozc_builder/bin/bazel \
   && chmod u+x /home/mozc_builder/bin/bazel
-### TODO(https://github.com/google/mozc/issues/1118): Support Bazel 8.0
-ENV USE_BAZEL_VERSION 7.4.1
+ENV USE_BAZEL_VERSION 8.0.0
 
 ## Set up Android SDK and NDK
 ENV ANDROID_HOME /home/mozc_builder/Android/Sdk

@@ -34,7 +34,7 @@ jobs:
       - name: bazel build
         working-directory: ./src
         env:
-          USE_BAZEL_VERSION: "7.4.1"
+          USE_BAZEL_VERSION: "8.0.0"
         run: |
           bazel build --config oss_linux package --config release_build
 
@@ -67,6 +67,6 @@ jobs:
       - name: bazel test
         working-directory: ./src
         env:
-          USE_BAZEL_VERSION: "7.4.1"
+          USE_BAZEL_VERSION: "8.0.0"
         run: |
           bazel test ... --config oss_linux --build_tests_only -c dbg
