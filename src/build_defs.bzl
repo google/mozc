@@ -339,6 +339,7 @@ def mozc_win32_cc_prod_binary(
         deps = [],
         features = None,
         linkopts = [],
+        linkshared = False,
         cpu = CPU.X64,
         static_crt = False,
         tags = MOZC_TAGS.WIN_ONLY,
@@ -362,6 +363,7 @@ def mozc_win32_cc_prod_binary(
       deps: deps to build the executable.
       features: features to be passed to mozc_cc_binary.
       linkopts: linker options to build the executable.
+      linkshared: True if the target is a shared library (DLL).
       cpu: optional. The target CPU architecture.
       static_crt: optional. True if the target should be built with static CRT.
       tags: optional. Tags for both the library and unit test targets.
@@ -377,7 +379,7 @@ def mozc_win32_cc_prod_binary(
         deps = deps,
         features = features,
         linkopts = linkopts,
-        linkshared = static_crt,
+        linkshared = linkshared,
         tags = tags,
         target_compatible_with = target_compatible_with,
         visibility = visibility,
