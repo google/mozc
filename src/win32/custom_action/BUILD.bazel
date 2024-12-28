@@ -41,7 +41,7 @@ mozc_win32_cc_prod_binary(
         "custom_action.h",
         "resource.h",
     ],
-    cpu = "x64_windows",
+    cpu = "@platforms//cpu:x86_64",
     executable_name_map = {
         "Mozc": "mozc_installer_helper.dll",
         "GoogleJapaneseInput": "GoogleIMEJaInstallerHelper.dll",

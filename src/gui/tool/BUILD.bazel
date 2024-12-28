@@ -135,7 +135,7 @@ mozc_cc_qt_binary(
 
 mozc_win32_cc_prod_binary(
     name = "mozc_tool_win",
-    cpu = "x64_windows",
+    cpu = "@platforms//cpu:x86_64",
     executable_name_map = {
         "Mozc": "mozc_tool.exe",
         "GoogleJapaneseInput": "GoogleIMEJaTool.exe",
