@@ -79,6 +79,7 @@
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
+#include "rewriter/date_rewriter.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gmock.h"
@@ -2308,6 +2309,33 @@ TEST_F(ConverterTest, IntegrationWithCalculatorRewriter) {
     ASSERT_TRUE(converter->StartConversion(convreq, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "2");
+  }
+}
+
+TEST_F(ConverterTest, IntegrationWithDateRewriter) {
+  MockDictionary dictionary;
+  // Since DateRewriter is not used in some build targets, the test needs to
+  // explicitly add it to the converter.
+  std::unique_ptr<Converter> converter = CreateConverter(
+      std::make_unique<DateRewriter>(&dictionary), STUB_PREDICTOR);
+
+  {
+    Segments segments;
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetKey("へいせい30ねん").Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(FindCandidateByValue("2018年", segments.conversion_segment(0)));
+  }
+
+  {
+    Segments segments;
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetKey("794ねん").Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(
+        FindCandidateByValue("延暦13年", segments.conversion_segment(0)));
   }
 }
 

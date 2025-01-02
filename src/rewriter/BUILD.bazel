@@ -265,8 +265,6 @@ mozc_cc_test(
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_mock",
         "//dictionary:dictionary_token",
-        "//engine",
-        "//engine:mock_data_engine_factory",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",

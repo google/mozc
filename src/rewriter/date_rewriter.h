@@ -32,13 +32,13 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
-#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "request/conversion_request.h"
@@ -62,11 +62,14 @@ struct DateCandidate {
 class DateRewriter : public RewriterInterface {
  public:
   DateRewriter() = default;
-  explicit DateRewriter(const ConverterInterface *parent_converter,
-                        const dictionary::DictionaryInterface *dictionary)
-      : parent_converter_(parent_converter), dictionary_(dictionary) {}
+  explicit DateRewriter(const dictionary::DictionaryInterface *dictionary)
+      : dictionary_(dictionary) {}
 
   int capability(const ConversionRequest &request) const override;
+
+  std::optional<ResizeSegmentsRequest> CheckResizeSegmentsRequest(
+      const ConversionRequest &request,
+      const Segments &segments) const override;
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
@@ -157,12 +160,11 @@ class DateRewriter : public RewriterInterface {
                           size_t &num_done_out);
   static bool RewriteEra(Segments::range segments_range, size_t &num_done_out);
   static bool RewriteAd(Segments::range segments_range, size_t &num_done_out);
-  bool ResizeSegmentsForRewriteAd(const ConversionRequest &request,
-                                  Segments::const_range segments_range,
-                                  Segments *segments) const;
-  bool ResizeSegments(const ConversionRequest &request,
-                      Segments::const_iterator segments_begin,
-                      absl::string_view key, Segments *segments) const;
+
+  // Returns the value if rewrite for AD wants to resize the segments.
+  std::optional<ResizeSegmentsRequest> CheckResizeSegmentsForAd(
+      const ConversionRequest &request, const Segments &segments,
+      size_t segment_index) const;
 
   // When only one conversion segment has consecutive number characters,
   // this function adds date and time candidates.
@@ -187,7 +189,6 @@ class DateRewriter : public RewriterInterface {
       absl::string_view str,
       std::vector<date_rewriter_internal::DateCandidate> *results);
 
-  const ConverterInterface *const parent_converter_ = nullptr;
   const dictionary::DictionaryInterface *const dictionary_ = nullptr;
 };
 

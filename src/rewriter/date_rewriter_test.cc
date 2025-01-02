@@ -30,7 +30,7 @@
 #include "rewriter/date_rewriter.h"
 
 #include <cstddef>
-#include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -47,8 +47,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_token.h"
-#include "engine/engine.h"
-#include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -68,8 +66,6 @@ using ::testing::ElementsAre;
 using ::testing::Field;
 using ::testing::Matcher;
 using ::testing::Not;
-using ::testing::Ref;
-using ::testing::Return;
 using ::testing::StrEq;
 using ::testing::Values;
 
@@ -1128,7 +1124,7 @@ TEST_F(DateRewriterTest, ExtraFormatTest) {
       .WillOnce(InvokeCallbackWithUserDictionaryToken{"{YEAR}{MONTH}{DATE}"});
 
   MockConverter converter;
-  DateRewriter rewriter(&converter, &dictionary);
+  DateRewriter rewriter(&dictionary);
 
   Segments segments;
   InitSegment("きょう", "今日", &segments);
@@ -1162,7 +1158,7 @@ TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
                 LookupExact(StrEq(DateRewriter::kExtraFormatKey), _, _))
         .WillOnce(InvokeCallbackWithUserDictionaryToken{std::string(input)});
     MockConverter converter;
-    DateRewriter rewriter(&converter, &dictionary);
+    DateRewriter rewriter(&dictionary);
     Segments segments;
     InitSegment("きょう", "今日", &segments);
     const ConversionRequest request;
@@ -1282,77 +1278,57 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(RewriteAdTest, MockConverter) {
   const RewriteAdData &data = GetParam();
   MockDictionary dictionary;
-  MockConverter converter;
-  DateRewriter rewriter(&converter, &dictionary);
+  DateRewriter rewriter(&dictionary);
   Segments segments;
   for (const auto &[key, value] : data.segments) {
     AppendSegment(key, value, &segments);
   }
   const ConversionRequest request;
-  EXPECT_CALL(dictionary, LookupExact(_, _, _));
 
-  // If resizing, it should call `converter.ResizeSegment()`.
-  if (!data.resized_key.empty()) {
-    int resize_length = Util::CharsLen(data.resized_key) -
-                        Util::CharsLen(data.segments[data.segment_index].first);
-    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request),
-                                         data.segment_index, resize_length))
-        .WillOnce(Return(true));
-  }
-  EXPECT_EQ(rewriter.Rewrite(request, &segments),
-            !data.candidate.empty() || !data.resized_key.empty());
+  std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+      rewriter.CheckResizeSegmentsRequest(request, segments);
 
-  // The `MockConverter` doesn't actually resize, so don't check candidates if
-  // resized.
-  if (data.resized_key.empty() && !data.candidate.empty()) {
-    const Segment &segment = segments.segment(data.segment_index);
-    EXPECT_THAT(segment, ContainsCandidate(ValueIs(data.candidate)));
-  }
-}
+  if (data.resized_key.empty()) {
+    // Resize is not expected.
+    EXPECT_FALSE(resize_request.has_value());
 
-TEST_P(RewriteAdTest, MockDataManager) {
-  const RewriteAdData &data = GetParam();
-  MockDictionary dictionary;
-  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  DateRewriter rewriter(engine->GetConverter(), &dictionary);
-  Segments segments;
-  for (const auto &[key, value] : data.segments) {
-    AppendSegment(key, value, &segments);
-  }
-  const ConversionRequest request;
-  EXPECT_CALL(dictionary, LookupExact(_, _, _));
-  EXPECT_EQ(rewriter.Rewrite(request, &segments),
-            !data.candidate.empty() || !data.resized_key.empty());
+    if (data.candidate.empty()) {
+      // Rewrite is not expected.
+      EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+    } else {
+      // Rewrite is expected.
+      EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+      const Segment &segment = segments.segment(data.segment_index);
+      EXPECT_THAT(segment, ContainsCandidate(ValueIs(data.candidate)));
+    }
 
-  EXPECT_EQ(segments.resized(), !data.resized_key.empty());
-  const Segment &segment = segments.segment(data.segment_index);
-  if (!data.resized_key.empty()) {
-    // If resized, the key should match the `resized_key`. The `MockDataManager`
-    // doesn't call `Rewriter::Rewrite()`, so candidates are not rewritten.
-    EXPECT_EQ(segment.key(), data.resized_key);
-  } else if (!data.candidate.empty()) {
-    // If not resized, the candidates should contain the `cadidate`.
-    EXPECT_THAT(segment, ContainsCandidate(ValueIs(data.candidate)));
+  } else {
+    // Resize is expected.
+    EXPECT_TRUE(resize_request.has_value());
+    EXPECT_EQ(resize_request->segment_index, data.segment_index);
+    EXPECT_EQ(resize_request->segment_sizes[0],
+              Util::CharsLen(data.resized_key));
   }
 }
 
 // Test if `Segments::set_resized(true)` prevents merging segments.
 TEST_F(DateRewriterTest, RewriteAdResizedSegments) {
   MockDictionary dictionary;
-  MockConverter converter;
-  DateRewriter rewriter(&converter, &dictionary);
+  DateRewriter rewriter(&dictionary);
   Segments segments;
   InitSegment("へいせい", "平成", &segments);
   AppendSegment("23", "23", &segments);
   AppendSegment("ねん", "年", &segments);
   const ConversionRequest request;
   segments.set_resized(true);
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+
+  std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+      rewriter.CheckResizeSegmentsRequest(request, segments);
+  EXPECT_FALSE(resize_request.has_value());
 
   segments.set_resized(false);
-  EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request), 0, 4))
-      .WillOnce(Return(true));
-  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+  resize_request = rewriter.CheckResizeSegmentsRequest(request, segments);
+  EXPECT_TRUE(resize_request.has_value());
 }
 
 }  // namespace mozc

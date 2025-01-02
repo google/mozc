@@ -119,7 +119,7 @@ Rewriter::Rewriter(const engine::Modules &modules,
         std::make_unique<UserSegmentHistoryRewriter>(&pos_matcher, pos_group));
   }
 
-  AddRewriter(std::make_unique<DateRewriter>(&parent_converter, dictionary));
+  AddRewriter(std::make_unique<DateRewriter>(dictionary));
   AddRewriter(std::make_unique<FortuneRewriter>());
 #if !(defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE))
   // CommandRewriter is not tested well on Android or iOS.

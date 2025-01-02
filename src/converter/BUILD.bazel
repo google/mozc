@@ -489,6 +489,7 @@ mozc_cc_test(
         "//request:conversion_request",
         "//request:request_test_util",
         "//rewriter",
+        "//rewriter:date_rewriter",
         "//rewriter:rewriter_interface",
         "//testing:gunit_main",
         "//testing:mozctest",
