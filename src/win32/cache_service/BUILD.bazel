@@ -45,7 +45,7 @@ package(default_visibility = ["//:__subpackages__"])
 mozc_win32_cc_prod_binary(
     name = "mozc_cache_service",
     srcs = ["mozc_cache_service.cc"],
-    cpu = "x64_windows",
+    cpu = "@platforms//cpu:x86_64",
     executable_name_map = {
         "Mozc": "mozc_cache_service.exe",
         "GoogleJapaneseInput": "GoogleIMEJaCacheService.exe",
