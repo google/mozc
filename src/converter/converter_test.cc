@@ -2369,4 +2369,18 @@ TEST_F(ConverterTest, IntegrationWithUnicodeRewriter) {
   }
 }
 
+TEST_F(ConverterTest, IntegrationWithSmallLetterRewriter) {
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
+  ConverterInterface *converter = engine->GetConverter();
+
+  {
+    Segments segments;
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetKey("^123").Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(FindCandidateByValue("¹²³", segments.conversion_segment(0)));
+  }
+}
 }  // namespace mozc

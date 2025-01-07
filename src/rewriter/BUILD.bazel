@@ -356,6 +356,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["small_letter_rewriter_test.cc"],
     deps = [
+        ":rewriter_interface",
         ":small_letter_rewriter",
         "//base/strings:assign",
         "//converter:segments",

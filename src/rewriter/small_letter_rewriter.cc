@@ -29,7 +29,10 @@
 
 #include "rewriter/small_letter_rewriter.h"
 
+#include <cstddef>
 #include <cstdint>
+#include <limits>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -39,7 +42,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
-#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -194,30 +196,6 @@ bool ConvertExpressions(const absl::string_view input, std::string *value) {
   return input != *value;
 }
 
-// Resizes the segment size if not previously modified. Returns true if the
-// segment size is 1 after resize.
-bool EnsureSingleSegment(const ConversionRequest &request, Segments *segments,
-                         const ConverterInterface *parent_converter,
-                         const absl::string_view key) {
-  if (segments->conversion_segments_size() == 1) {
-    return true;
-  }
-
-  if (segments->resized()) {
-    // The given segments are resized by user so don't modify anymore.
-    return false;
-  }
-
-  const uint32_t resize_len =
-      Util::CharsLen(key) -
-      Util::CharsLen(segments->conversion_segment(0).key());
-  if (!parent_converter->ResizeSegment(segments, request, 0, resize_len)) {
-    return false;
-  }
-  DCHECK_EQ(1, segments->conversion_segments_size());
-  return true;
-}
-
 void AddCandidate(std::string key, std::string description, std::string value,
                   int index, Segment *segment) {
   DCHECK(segment);
@@ -238,13 +216,18 @@ void AddCandidate(std::string key, std::string description, std::string value,
                             Segment::Candidate::NO_VARIANTS_EXPANSION);
 }
 
-}  // namespace
+std::optional<std::string> GetValue(absl::string_view key) {
+  std::string value;
+  if (!ConvertExpressions(key, &value)) {
+    return std::nullopt;
+  }
 
-SmallLetterRewriter::SmallLetterRewriter(
-    const ConverterInterface *parent_converter)
-    : parent_converter_(parent_converter) {
-  DCHECK(parent_converter_);
+  if (value.empty()) {
+    return std::nullopt;
+  }
+  return value;
 }
+}  // namespace
 
 int SmallLetterRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {
@@ -253,23 +236,41 @@ int SmallLetterRewriter::capability(const ConversionRequest &request) const {
   return RewriterInterface::CONVERSION;
 }
 
+std::optional<RewriterInterface::ResizeSegmentsRequest>
+SmallLetterRewriter::CheckResizeSegmentsRequest(
+    const ConversionRequest &request, const Segments &segments) const {
+  if (segments.resized() || segments.conversion_segments_size() <= 1) {
+    return std::nullopt;
+  }
+
+  absl::string_view key = request.key();
+  const size_t key_len = Util::CharsLen(key);
+  if (key_len > std::numeric_limits<uint8_t>::max()) {
+    return std::nullopt;
+  }
+  const uint8_t segment_size = static_cast<uint8_t>(key_len);
+
+  std::optional<std::string> value = GetValue(key);
+  if (!value.has_value()) {
+    return std::nullopt;
+  }
+
+  ResizeSegmentsRequest resize_request = {
+      .segment_index = 0,
+      .segment_sizes = {segment_size, 0, 0, 0, 0, 0, 0, 0},
+  };
+  return resize_request;
+}
+
 bool SmallLetterRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
-  std::string key;
-  for (const Segment &segment : segments->conversion_segments()) {
-    key += segment.key();
-  }
-
-  std::string value;
-  if (!ConvertExpressions(key, &value)) {
+  if (segments->conversion_segments_size() != 1) {
     return false;
   }
 
-  if (value.empty()) {
-    return false;
-  }
-
-  if (!EnsureSingleSegment(request, segments, parent_converter_, key)) {
+  absl::string_view key = request.key();
+  std::optional<std::string> value = GetValue(key);
+  if (!value.has_value()) {
     return false;
   }
 
@@ -277,7 +278,8 @@ bool SmallLetterRewriter::Rewrite(const ConversionRequest &request,
 
   // Candidates from this function should not be on high position. -1 will
   // overwritten with the last index of candidates.
-  AddCandidate(std::move(key), "上下付き文字", std::move(value), -1, segment);
+  AddCandidate(std::string(key), "上下付き文字", std::move(value.value()), -1,
+               segment);
   return true;
 }
 
