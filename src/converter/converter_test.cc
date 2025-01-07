@@ -2339,4 +2339,19 @@ TEST_F(ConverterTest, IntegrationWithDateRewriter) {
   }
 }
 
+TEST_F(ConverterTest, IntegrationWithSymbolRewriter) {
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
+  ConverterInterface *converter = engine->GetConverter();
+
+  {
+    Segments segments;
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetKey("ー>").Build();
+    ASSERT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_TRUE(FindCandidateByValue("→", segments.conversion_segment(0)));
+  }
+}
+
 }  // namespace mozc

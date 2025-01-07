@@ -30,8 +30,11 @@
 #include "rewriter/symbol_rewriter.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
+#include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -315,50 +318,58 @@ bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest &request,
 
 bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
                                             Segments *segments) const {
-  if (segments->conversion_segments_size() == 0) {
+  if (segments->conversion_segments_size() != 1) {
     return false;
   }
 
-  std::string key;
-  for (const Segment &segment : segments->conversion_segments()) {
-    key += segment.key();
-  }
-
+  absl::string_view key = segments->conversion_segment(0).key();
   const SerializedDictionary::IterRange range = dictionary_->equal_range(key);
   if (range.first == range.second) {
     return false;
   }
 
-  if (segments->conversion_segments_size() == 1) {
-    InsertCandidates(GetOffset(request, key), range,
-                     false,  // not context sensitive
-                     segments->mutable_conversion_segment(0));
-    return true;
-  }
-
-  if (segments->resized()) {
-    // The given segments are resized by user so don't modify anymore.
-    return false;
-  }
-  const size_t all_length = Util::CharsLen(key);
-  const size_t first_length =
-      Util::CharsLen(segments->conversion_segment(0).key());
-  const int diff = static_cast<int>(all_length - first_length);
-  if (diff <= 0) {
-    return false;
-  }
-  if (!parent_converter_->ResizeSegment(segments, request, 0, diff)) {
-    LOG(WARNING) << "ResizeSegment failed: diff = " << diff
-                 << ", segments = " << segments->DebugString();
-    return false;
-  }
+  InsertCandidates(GetOffset(request, key), range,
+                   false,  // not context sensitive
+                   segments->mutable_conversion_segment(0));
   return true;
 }
 
-SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter,
-                               const DataManager *data_manager)
-    : parent_converter_(parent_converter) {
-  DCHECK(parent_converter_);
+std::optional<RewriterInterface::ResizeSegmentsRequest>
+SymbolRewriter::CheckResizeSegmentsRequest(const ConversionRequest &request,
+                                           const Segments &segments) const {
+  if (segments.conversion_segments_size() <= 1) {
+    return std::nullopt;
+  }
+
+  if (segments.resized()) {
+    // The given segments are resized by user so don't modify anymore.
+    return std::nullopt;
+  }
+
+  std::string key;
+  for (const Segment &segment : segments.conversion_segments()) {
+    absl::StrAppend(&key, segment.key());
+  }
+
+  const size_t key_len = Util::CharsLen(key);
+  if (key_len > std::numeric_limits<uint8_t>::max()) {
+    return std::nullopt;
+  }
+  const uint8_t segment_size = static_cast<uint8_t>(key_len);
+
+  const SerializedDictionary::IterRange range = dictionary_->equal_range(key);
+  if (range.first == range.second) {
+    return std::nullopt;
+  }
+
+  ResizeSegmentsRequest resize_request = {
+      .segment_index = 0,
+      .segment_sizes = {segment_size, 0, 0, 0, 0, 0, 0, 0},
+  };
+  return resize_request;
+}
+
+SymbolRewriter::SymbolRewriter(const DataManager *data_manager) {
   absl::string_view token_array_data, string_array_data;
   data_manager->GetSymbolRewriterData(&token_array_data, &string_array_data);
   DCHECK(SerializedDictionary::VerifyData(token_array_data, string_array_data));
