@@ -200,10 +200,11 @@ void PrintMessage(const protobuf::Message &message,
 // Normalizes a symbol with the following rules:
 // - all alphabets are converted to lowercase
 // - underscore('_') is converted to dash('-')
-std::string NormalizeSymbol(std::string symbol) {
-  Util::LowerString(&symbol);
-  std::replace(symbol.begin(), symbol.end(), '_', '-');
-  return symbol;
+std::string NormalizeSymbol(absl::string_view symbol) {
+  std::string normalized(symbol);
+  Util::LowerString(&normalized);
+  std::replace(normalized.begin(), normalized.end(), '_', '-');
+  return normalized;
 }
 
 // Returns a quoted string as a string literal in S-expression.

@@ -82,7 +82,7 @@ void PrintMessage(const mozc::protobuf::Message &message,
 // Normalizes a symbol with the following rule:
 // - all alphabets are converted to lowercase
 // - underscore('_') is converted to dash('-')
-std::string NormalizeSymbol(std::string symbol);
+std::string NormalizeSymbol(absl::string_view symbol);
 
 // Returns a quoted string as a string literal in S-expression.
 // - double-quote is converted to backslash + double-quote
