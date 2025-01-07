@@ -67,7 +67,7 @@ class Converter final : public ConverterInterface {
           const ImmutableConverterInterface *immutable_converter)>;
 
   using RewriterFactory = std::function<std::unique_ptr<RewriterInterface>(
-      const engine::Modules &modules, const ConverterInterface *converter)>;
+      const engine::Modules &modules)>;
 
   // Converter is initialized with the factory methods of ImmutableConverter,
   // Predictor and Rewriter, so that all these sub components share the

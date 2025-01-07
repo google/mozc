@@ -326,8 +326,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
           return CreatePredictor(modules, predictor_type, converter,
                                  immutable_converter);
         },
-        [&](const engine::Modules &modules,
-            const ConverterInterface *converter) {
+        [&](const engine::Modules &modules) {
           return std::move(rewriter);
         });
   }
@@ -1253,8 +1252,8 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                                                   immutable_converter),
             std::make_unique<UserHistoryPredictor>(modules, false), converter);
       },
-      [](const engine::Modules &modules, const ConverterInterface *converter) {
-        return std::make_unique<Rewriter>(modules, *converter);
+      [](const engine::Modules &modules) {
+        return std::make_unique<Rewriter>(modules);
       });
 
   Segments segments;
@@ -1942,8 +1941,7 @@ TEST_F(ConverterTest, RevertConversion) {
           const ImmutableConverterInterface *immutable_converter) {
         return std::move(mock_predictor);
       },
-      [&mock_rewriter](const engine::Modules &modules,
-                       const ConverterInterface *converter) {
+      [&mock_rewriter](const engine::Modules &modules) {
         return std::move(mock_rewriter);
       });
 

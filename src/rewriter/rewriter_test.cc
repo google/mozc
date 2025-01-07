@@ -34,7 +34,6 @@
 #include <string>
 
 #include "absl/log/check.h"
-#include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/modules.h"
@@ -64,13 +63,12 @@ class RewriterTest : public testing::TestWithTempUserProfile {
   void SetUp() override {
     modules_ = std::make_unique<engine::Modules>();
     CHECK_OK(modules_->Init(std::make_unique<testing::MockDataManager>()));
-    rewriter_ = std::make_unique<Rewriter>(*modules_, mock_converter_);
+    rewriter_ = std::make_unique<Rewriter>(*modules_);
   }
 
   const RewriterInterface *GetRewriter() const { return rewriter_.get(); }
 
   std::unique_ptr<engine::Modules> modules_;
-  MockConverter mock_converter_;
   std::unique_ptr<Rewriter> rewriter_;
 };
 

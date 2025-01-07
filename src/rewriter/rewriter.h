@@ -30,7 +30,6 @@
 #ifndef MOZC_REWRITER_REWRITER_H_
 #define MOZC_REWRITER_REWRITER_H_
 
-#include "converter/converter_interface.h"
 #include "engine/modules.h"
 #include "rewriter/merger_rewriter.h"
 
@@ -38,8 +37,7 @@ namespace mozc {
 
 class Rewriter : public MergerRewriter {
  public:
-  Rewriter(const engine::Modules &modules,
-           const ConverterInterface &parent_converter);
+  explicit Rewriter(const engine::Modules &modules);
   Rewriter(const Rewriter &) = delete;
   Rewriter &operator=(const Rewriter &) = delete;
 };

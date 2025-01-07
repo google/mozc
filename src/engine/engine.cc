@@ -133,9 +133,8 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
                                std::move(user_history_predictor), converter);
       };
 
-  auto rewriter_factory = [](const engine::Modules &modules,
-                             const ConverterInterface *converter) {
-    return std::make_unique<Rewriter>(modules, *converter);
+  auto rewriter_factory = [](const engine::Modules &modules) {
+    return std::make_unique<Rewriter>(modules);
   };
 
   auto converter = std::make_unique<Converter>(
