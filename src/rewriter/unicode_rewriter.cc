@@ -31,6 +31,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -47,6 +49,7 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 namespace {
@@ -122,50 +125,73 @@ bool UnicodeRewriter::RewriteToUnicodeCharFormat(
   return true;
 }
 
-// If the key is in the "U+xxxx" format, the corresponding Unicode
-// character is added. (ex. "U+0041" -> "A").
-bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
-    const ConversionRequest &request, Segments *segments) const {
-  std::string key;
-  for (const Segment &segment : segments->conversion_segments()) {
-    key += segment.key();
-  }
-
+namespace {
+std::optional<std::string> GetValue(absl::string_view key) {
   if (!IsValidCodepointExpression(key)) {
-    return false;
+    return std::nullopt;
   }
 
   uint32_t codepoint = 0;
   if (!UCS4ExpressionToInteger(key, &codepoint)) {
-    return false;
+    return std::nullopt;
   }
 
   if (!Util::IsAcceptableCharacterAsCandidate(codepoint)) {
-    return false;
+    return std::nullopt;
   }
 
   const std::string value = Util::CodepointToUtf8(codepoint);
   if (value.empty()) {
+    return std::nullopt;
+  }
+
+  return value;
+}
+}  // namespace
+
+std::optional<RewriterInterface::ResizeSegmentsRequest>
+UnicodeRewriter::CheckResizeSegmentsRequest(const ConversionRequest &request,
+                                            const Segments &segments) const {
+  if (segments.resized() || segments.conversion_segments_size() <= 1) {
+    // The given segments are already resized.
+    return std::nullopt;
+  }
+
+  absl::string_view key = request.key();
+  const size_t key_len = Util::CharsLen(key);
+  if (key_len > std::numeric_limits<uint8_t>::max()) {
+    return std::nullopt;
+  }
+  const uint8_t segment_size = static_cast<uint8_t>(key_len);
+
+  std::optional<std::string> value = GetValue(key);
+  if (!value.has_value()) {
+    return std::nullopt;
+  }
+
+  ResizeSegmentsRequest resize_request = {
+      .segment_index = 0,
+      .segment_sizes = {segment_size, 0, 0, 0, 0, 0, 0, 0},
+  };
+  return resize_request;
+}
+
+// If the key is in the "U+xxxx" format, the corresponding Unicode
+// character is added. (ex. "U+0041" -> "A").
+bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
+    const ConversionRequest &request, Segments *segments) const {
+  if (segments->conversion_segments_size() != 1) {
     return false;
   }
 
-  if (segments->conversion_segments_size() > 1) {
-    if (segments->resized()) {
-      // The given segments are resized by user so don't modify anymore.
-      return false;
-    }
-
-    const uint32_t resize_len =
-        Util::CharsLen(key) -
-        Util::CharsLen(segments->conversion_segment(0).key());
-    if (!parent_converter_->ResizeSegment(segments, request, 0, resize_len)) {
-      return false;
-    }
+  absl::string_view key = request.key();
+  std::optional<std::string> value = GetValue(key);
+  if (!value.has_value()) {
+    return false;
   }
-  DCHECK_EQ(1, segments->conversion_segments_size());
 
   Segment *segment = segments->mutable_conversion_segment(0);
-  AddCandidate(std::move(key), std::move(value), 0, segment);
+  AddCandidate(std::string(key), std::move(value.value()), 0, segment);
   return true;
 }
 

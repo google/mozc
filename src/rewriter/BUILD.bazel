@@ -809,6 +809,7 @@ mozc_cc_test(
     timeout = "moderate",
     srcs = ["unicode_rewriter_test.cc"],
     deps = [
+        ":rewriter_interface",
         ":unicode_rewriter",
         "//composer",
         "//converter:segments",

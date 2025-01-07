@@ -30,8 +30,7 @@
 #ifndef MOZC_REWRITER_UNICODE_REWRITER_H_
 #define MOZC_REWRITER_UNICODE_REWRITER_H_
 
-#include "absl/log/check.h"
-#include "converter/converter_interface.h"
+#include <optional>
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
@@ -40,10 +39,9 @@ namespace mozc {
 
 class UnicodeRewriter : public RewriterInterface {
  public:
-  explicit UnicodeRewriter(const ConverterInterface *parent_converter)
-      : parent_converter_(parent_converter) {
-    DCHECK(parent_converter_);
-  }
+  std::optional<RewriterInterface::ResizeSegmentsRequest>
+  CheckResizeSegmentsRequest(const ConversionRequest &request,
+                             const Segments &segments) const override;
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
@@ -53,7 +51,6 @@ class UnicodeRewriter : public RewriterInterface {
                                   Segments *segments) const;
   bool RewriteFromUnicodeCharFormat(const ConversionRequest &request,
                                     Segments *segments) const;
-  const ConverterInterface *parent_converter_;
 };
 
 }  // namespace mozc

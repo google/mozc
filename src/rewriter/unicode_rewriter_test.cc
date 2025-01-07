@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "absl/strings/str_format.h"
@@ -45,6 +46,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -95,8 +97,7 @@ class UnicodeRewriterTest : public testing::TestWithTempUserProfile {
 
 TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   Segments segments;
-  UnicodeRewriter rewriter(engine_->GetConverter());
-  const ConversionRequest request;
+  UnicodeRewriter rewriter;
 
   struct UCS4UTF8Data {
     absl::string_view codepoint;
@@ -163,6 +164,8 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   for (uint32_t ascii = 0x20; ascii < 0x7F; ++ascii) {
     const std::string codepoint = absl::StrFormat("U+00%02X", ascii);
     InitSegments(codepoint, codepoint, &segments);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey(codepoint).Build();
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(segments.segment(0).candidate(0).value.at(0), ascii);
     EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
@@ -171,8 +174,10 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
 
   // Mozc accepts Japanese characters
   for (size_t i = 0; i < std::size(kCodepointUtf8Data); ++i) {
-    InitSegments(kCodepointUtf8Data[i].codepoint,
-                 kCodepointUtf8Data[i].codepoint, &segments);
+    absl::string_view codepoint = kCodepointUtf8Data[i].codepoint;
+    InitSegments(codepoint, codepoint, &segments);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey(codepoint).Build();
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(ContainCandidate(segments, kCodepointUtf8Data[i].utf8));
     EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
@@ -182,58 +187,125 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   // Mozc does not accept other characters
   for (size_t i = 0; i < std::size(kMozcUnsupportedUtf8); ++i) {
     InitSegments(kMozcUnsupportedUtf8[i], kMozcUnsupportedUtf8[i], &segments);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey(kMozcUnsupportedUtf8[i]).Build();
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }
 
   // Invalid style input
-  InitSegments("U+123456789ABCDEF0", "U+123456789ABCDEF0", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  absl::string_view invalid_key1 = "U+123456789ABCDEF0";
+  InitSegments(invalid_key1, invalid_key1, &segments);
+  const ConversionRequest request1 =
+      ConversionRequestBuilder().SetKey(invalid_key1).Build();
+  EXPECT_FALSE(rewriter.Rewrite(request1, &segments));
 
-  InitSegments("U+1234567", "U+12345678", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  absl::string_view invalid_key2 = "U+12345678";
+  InitSegments(invalid_key2, invalid_key2, &segments);
+  const ConversionRequest request2 =
+      ConversionRequestBuilder().SetKey(invalid_key2).Build();
+  EXPECT_FALSE(rewriter.Rewrite(request2, &segments));
 
-  InitSegments("U+XYZ", "U+XYZ", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  absl::string_view invalid_key3 = "U+XYZ";
+  InitSegments(invalid_key3, invalid_key3, &segments);
+  const ConversionRequest request3 =
+      ConversionRequestBuilder().SetKey(invalid_key3).Build();
+  EXPECT_FALSE(rewriter.Rewrite(request3, &segments));
 
-  InitSegments("12345", "12345", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  absl::string_view invalid_key4 = "12345";
+  InitSegments(invalid_key4, invalid_key4, &segments);
+  const ConversionRequest request4 =
+      ConversionRequestBuilder().SetKey(invalid_key4).Build();
+  EXPECT_FALSE(rewriter.Rewrite(request4, &segments));
 
-  InitSegments("U12345", "U12345", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  absl::string_view invalid_key5 = "U12345";
+  InitSegments(invalid_key5, invalid_key5, &segments);
+  const ConversionRequest request5 =
+      ConversionRequestBuilder().SetKey(invalid_key5).Build();
+  EXPECT_FALSE(rewriter.Rewrite(request5, &segments));
 }
 
 TEST_F(UnicodeRewriterTest, MultipleSegment) {
-  Segments segments;
-  UnicodeRewriter rewriter(engine_->GetConverter());
-  const ConversionRequest request;
+  UnicodeRewriter rewriter;
 
-  // Multiple segments are combined.
-  InitSegments("U+0", "U+0", &segments);
-  AddSegment("02", "02", &segments);
-  AddSegment("0", "0", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  EXPECT_EQ(segments.conversion_segments_size(), 1);
-  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value.at(0), ' ');
+  {
+    // Multiple segments to be combined.
+    Segments segments;
+    InitSegments("U+0", "U+0", &segments);
+    AddSegment("02", "02", &segments);
+    AddSegment("0", "0", &segments);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey("U+0020").Build();
+    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+        rewriter.CheckResizeSegmentsRequest(request, segments);
+    EXPECT_TRUE(resize_request.has_value());
+    EXPECT_EQ(resize_request->segment_index, 0);
+    EXPECT_EQ(resize_request->segment_sizes[0], 6);
+    EXPECT_EQ(resize_request->segment_sizes[1], 0);
+  }
 
-  // If the segments is already resized, returns false.
-  InitSegments("U+0020", "U+0020", &segments);
-  AddSegment("U+0020", "U+0020", &segments);
-  segments.set_resized(true);
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  {
+    // The segments is already resized.
+    Segments segments;
+    InitSegments("U+0", "U+0", &segments);
+    AddSegment("02", "02", &segments);
+    AddSegment("0", "0", &segments);
+    segments.set_resized(true);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey("U+0020").Build();
+    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+        rewriter.CheckResizeSegmentsRequest(request, segments);
+    EXPECT_FALSE(resize_request.has_value());
+  }
 
-  // History segment has to be ignored.
-  // In this case 1st segment is HISTORY
-  // so this rewriting returns true.
-  InitSegments("U+0020", "U+0020", &segments);
-  AddSegment("U+0020", "U+0020", &segments);
-  segments.set_resized(true);
-  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
-  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value.at(0), ' ');
+  {
+    // The size of segments is one.
+    Segments segments;
+    InitSegments("U+0020", "U+0020", &segments);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey("U+0020").Build();
+    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+        rewriter.CheckResizeSegmentsRequest(request, segments);
+    EXPECT_FALSE(resize_request.has_value());
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value.at(0), ' ');
+  }
+
+  {
+    // History segment has to be ignored.
+    Segments segments;
+    InitSegments("U+0", "U+0", &segments);
+    AddSegment("02", "02", &segments);
+    AddSegment("0", "0", &segments);
+    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey("020").Build();
+    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+        rewriter.CheckResizeSegmentsRequest(request, segments);
+    EXPECT_FALSE(resize_request.has_value());
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  }
+
+  {
+    // History segment has to be ignored.
+    // In this case 1st segment is HISTORY
+    // so this rewriting returns true.
+    Segments segments;
+    InitSegments("U+0020", "U+0020", &segments);
+    AddSegment("U+0020", "U+0020", &segments);
+    segments.set_resized(true);
+    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey("U+0020").Build();
+    std::optional<RewriterInterface::ResizeSegmentsRequest> resize_request =
+        rewriter.CheckResizeSegmentsRequest(request, segments);
+    EXPECT_FALSE(resize_request.has_value());
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value.at(0), ' ');
+  }
 }
 
 TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
-  UnicodeRewriter rewriter(engine_->GetConverter());
+  UnicodeRewriter rewriter;
   {  // Typical case
     composer::Composer composer(nullptr, &default_request(), &default_config());
     composer.set_source_text("A");

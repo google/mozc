@@ -105,7 +105,7 @@ Rewriter::Rewriter(const engine::Modules &modules,
   AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager));
   AddRewriter(std::make_unique<CalculatorRewriter>());
   AddRewriter(std::make_unique<SymbolRewriter>(data_manager));
-  AddRewriter(std::make_unique<UnicodeRewriter>(&parent_converter));
+  AddRewriter(std::make_unique<UnicodeRewriter>());
   AddRewriter(std::make_unique<VariantsRewriter>(pos_matcher));
   AddRewriter(std::make_unique<ZipcodeRewriter>(pos_matcher));
   AddRewriter(std::make_unique<DiceRewriter>());
