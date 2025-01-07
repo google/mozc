@@ -48,10 +48,10 @@
 #include "base/file_util.h"
 #include "base/util.h"
 #include "base/vlog.h"
-#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "storage/lru_storage.h"
 #include "usage_stats/usage_stats.h"
 
@@ -166,10 +166,7 @@ class SegmentsKey {
 
 }  // namespace
 
-UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter(
-    const ConverterInterface *parent_converter)
-    : parent_converter_(parent_converter) {
-  DCHECK(parent_converter_);
+UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter() {
   Reload();
 }
 
@@ -213,32 +210,82 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
   }
 }
 
-bool UserBoundaryHistoryRewriter::Rewrite(const ConversionRequest &request,
-                                          Segments *segments) const {
+std::optional<RewriterInterface::ResizeSegmentsRequest>
+UserBoundaryHistoryRewriter::CheckResizeSegmentsRequest(
+    const ConversionRequest &request, const Segments &segments) const {
+  if (segments.resized()) {
+    return std::nullopt;
+  }
+
   if (request.config().incognito_mode()) {
     MOZC_VLOG(2) << "incognito mode";
-    return false;
+    return std::nullopt;
   }
 
   if (request.config().history_learning_level() == config::Config::NO_HISTORY) {
     MOZC_VLOG(2) << "history_learning_level is NO_HISTORY";
-    return false;
+    return std::nullopt;
   }
 
   if (!request.enable_user_history_for_conversion()) {
     MOZC_VLOG(2) << "user history for conversion is disabled";
-    return false;
+    return std::nullopt;
   }
 
   if (request.skip_slow_rewriters()) {
-    return false;
+    return std::nullopt;
   }
 
-  if (!segments->resized()) {
-    return Resize(request, *segments);
+  const size_t target_segments_size = segments.conversion_segments_size();
+
+  // No effective segments found
+  if (target_segments_size == 0) {
+    return std::nullopt;
   }
 
-  return false;
+  std::optional<const SegmentsKey> segments_key = SegmentsKey::Create(segments);
+  if (!segments_key) {
+    MOZC_VLOG(2) << "too long segment";
+    return std::nullopt;
+  }
+
+  for (size_t seg_idx = 0; seg_idx < target_segments_size; ++seg_idx) {
+    constexpr int kMaxKeysSize = 5;
+    const int keys_size =
+        std::clamp<int>(target_segments_size - seg_idx, 0, kMaxKeysSize);
+    for (size_t seg_size = keys_size; seg_size != 0; --seg_size) {
+      absl::string_view key = segments_key->GetKey(seg_idx, seg_size);
+      const LengthArray *value =
+          reinterpret_cast<const LengthArray *>(storage_.Lookup(key));
+      if (value == nullptr) {
+        // If the key is not in the history, resize is not needed.
+        // Continue to the next step with a smaller segment key.
+        continue;
+      }
+
+      const LengthArray length_array =
+          segments_key->GetLengthArray(seg_idx, seg_size);
+      if (value->Equal(length_array)) {
+        // If the segments are already same as the history, resize is not
+        // needed. Skip the checked segments.
+        seg_idx += seg_size - 1;  // -1 as the main loop will add +1.
+        break;
+      }
+
+      const std::array<uint8_t, 8> updated_array = value->ToUint8Array();
+      MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: [" << seg_idx
+                   << ", " << seg_size << "] "
+                   << "resize: [" << absl::StrJoin(updated_array, " ") << "]";
+
+      const ResizeSegmentsRequest resize_request = {
+          .segment_index = seg_idx,
+          .segment_sizes = std::move(updated_array),
+      };
+      return resize_request;
+    }
+  }
+
+  return std::nullopt;
 }
 
 bool UserBoundaryHistoryRewriter::Sync() {
@@ -267,63 +314,6 @@ bool UserBoundaryHistoryRewriter::Reload() {
   }
 
   return true;
-}
-
-bool UserBoundaryHistoryRewriter::Resize(
-    const ConversionRequest &request, Segments &segments) const {
-  const size_t target_segments_size = segments.conversion_segments_size();
-
-  // No effective segments found
-  if (target_segments_size == 0) {
-    return false;
-  }
-
-  std::optional<const SegmentsKey> segments_key = SegmentsKey::Create(segments);
-  if (!segments_key) {
-    MOZC_VLOG(2) << "too long segment";
-    return false;
-  }
-
-  bool result = false;
-  for (size_t seg_idx = 0; seg_idx < target_segments_size; ++seg_idx) {
-    constexpr int kMaxKeysSize = 5;
-    const int keys_size =
-        std::clamp<int>(target_segments_size - seg_idx, 0, kMaxKeysSize);
-    for (size_t seg_size = keys_size; seg_size != 0; --seg_size) {
-      absl::string_view key = segments_key->GetKey(seg_idx, seg_size);
-      const LengthArray *value =
-          reinterpret_cast<const LengthArray *>(storage_.Lookup(key));
-      if (value == nullptr) {
-        // If the key is not in the history, resize is not needed.
-        // Continue to the next step with a smaller segment key.
-        continue;
-      }
-
-      const LengthArray length_array =
-          segments_key->GetLengthArray(seg_idx, seg_size);
-      if (value->Equal(length_array)) {
-        // If the segments are already same as the history, resize is not
-        // needed. Skip the checked segments.
-        seg_idx += seg_size - 1;  // -1 as the main loop will add +1.
-        break;
-      }
-
-      const std::array<uint8_t, 8> updated_array = value->ToUint8Array();
-      MOZC_VLOG(2) << "ResizeSegment key: " << key << " segments: [" << seg_idx
-                   << ", " << seg_size << "] "
-                   << "resize: [" << absl::StrJoin(updated_array, " ") << "]";
-      if (parent_converter_->ResizeSegments(&segments, request, seg_idx,
-                                            updated_array)) {
-        result = true;
-      } else {
-        LOG(WARNING) << "ResizeSegment failed for key: " << key;
-      }
-      seg_idx += seg_size - 1;  // -1 as the main loop will add +1.
-      break;
-    }
-  }
-
-  return result;
 }
 
 bool UserBoundaryHistoryRewriter::Insert(const ConversionRequest &request,

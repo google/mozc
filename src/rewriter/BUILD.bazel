@@ -202,11 +202,11 @@ mozc_cc_test(
     size = "small",
     srcs = ["user_boundary_history_rewriter_test.cc"],
     deps = [
+        ":rewriter_interface",
         ":user_boundary_history_rewriter",
         "//base:file_util",
         "//base:system_util",
         "//config:config_handler",
-        "//converter:converter_mock",
         "//converter:segments",
         "//protocol:config_cc_proto",
         "//request:conversion_request",

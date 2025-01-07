@@ -112,8 +112,7 @@ Rewriter::Rewriter(const engine::Modules &modules,
   AddRewriter(std::make_unique<SmallLetterRewriter>());
 
   if (absl::GetFlag(FLAGS_use_history_rewriter)) {
-    AddRewriter(
-        std::make_unique<UserBoundaryHistoryRewriter>(&parent_converter));
+    AddRewriter(std::make_unique<UserBoundaryHistoryRewriter>());
     AddRewriter(
         std::make_unique<UserSegmentHistoryRewriter>(&pos_matcher, pos_group));
   }
