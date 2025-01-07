@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """A helper script to use Visual Studio."""
+
 import json
 import os
 import pathlib
@@ -38,8 +39,7 @@ from typing import Union
 
 
 def get_vcvarsall(
-  arch: str,
-  path_hint: Union[str, None] = None
+    arch: str, path_hint: Union[str, None] = None
 ) -> pathlib.Path:
   """Returns the path of 'vcvarsall.bat'.
 
@@ -67,7 +67,8 @@ def get_vcvarsall(
     program_files_x86 = r'C:\Program Files (x86)'
 
   vswhere_path = pathlib.Path(program_files_x86).joinpath(
-      'Microsoft Visual Studio', 'Installer', 'vswhere.exe')
+      'Microsoft Visual Studio', 'Installer', 'vswhere.exe'
+  )
   if not vswhere_path.exists():
     raise FileNotFoundError(
         'Could not find vswhere.exe.'
@@ -87,8 +88,8 @@ def get_vcvarsall(
       '-utf8',
   ]
   cmd += [
-    '-requires',
-    'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
+      '-requires',
+      'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
   ]
   if arch.endswith('arm64'):
     cmd += ['Microsoft.VisualStudio.Component.VC.Tools.ARM64']
@@ -99,7 +100,8 @@ def get_vcvarsall(
       stderr=subprocess.PIPE,
       shell=False,
       text=True,
-      encoding='utf-8')
+      encoding='utf-8',
+  )
   stdout, stderr = process.communicate()
   exitcode = process.wait()
   if exitcode != 0:
@@ -115,13 +117,13 @@ def get_vcvarsall(
     msg = 'Could not find vcvarsall.bat.'
     if arch.endswith('arm64'):
       msg += (
-        ' Make sure Microsoft.VisualStudio.Component.VC.Tools.ARM64 is'
-        ' installed.'
+          ' Make sure Microsoft.VisualStudio.Component.VC.Tools.ARM64 is'
+          ' installed.'
       )
     else:
       msg += (
-        ' Consider using --vcvarsall_path option e.g.\n'
-        r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
+          ' Consider using --vcvarsall_path option e.g.\n'
+          r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
       )
     raise FileNotFoundError(msg)
 
@@ -169,9 +171,11 @@ def get_vs_env_vars(
   """
   vcvarsall = get_vcvarsall(arch, vcvarsall_path_hint)
 
-  pycmd = (r'import json;'
-           r'import os;'
-           r'print(json.dumps(dict(os.environ), ensure_ascii=True))')
+  pycmd = (
+      r'import json;'
+      r'import os;'
+      r'print(json.dumps(dict(os.environ), ensure_ascii=True))'
+  )
   cmd = f'("{vcvarsall}" {arch}>nul)&&("{sys.executable}" -c "{pycmd}")'
   process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
   stdout, _ = process.communicate()
@@ -179,4 +183,3 @@ def get_vs_env_vars(
   if exitcode != 0:
     raise ChildProcessError(f'Failed to execute {vcvarsall}')
   return json.loads(stdout.decode('ascii'))
-
