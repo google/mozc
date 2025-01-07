@@ -59,6 +59,17 @@
       ],
       'dependencies': [
         'minimal_converter',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/converter/converter.gyp:converter',
+        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
+        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_dictionary',
+        '<(mozc_oss_src_dir)/engine/engine_base.gyp:modules',
+        '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:user_dictionary_storage_proto',
+        '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
       ],
     },
     {
