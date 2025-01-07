@@ -345,7 +345,7 @@ EVENT is the last input event, which is usually passed by the command loop."
        ((mozc-protobuf-get output 'consumed)
         (let ((result (mozc-protobuf-get output 'result))
               (preedit (mozc-protobuf-get output 'preedit))
-              (candidates (mozc-protobuf-get output 'candidates)))
+              (candidates (mozc-protobuf-get output 'candidate-window)))
           (if (not (or result preedit))
               (mozc-clean-up-changes-on-buffer)  ; nothing to show
             (when result  ; Insert the result first.
