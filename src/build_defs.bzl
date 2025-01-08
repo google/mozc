@@ -212,7 +212,7 @@ def _win_executable_transition_impl(
         features = ["static_link_msvcrt"]
     return {
         "//command_line_option:features": features,
-        "//command_line_option:cpu": attr.cpu,
+        "//command_line_option:platforms": [attr.platform],
     }
 
 _win_executable_transition = transition(
@@ -220,7 +220,7 @@ _win_executable_transition = transition(
     inputs = [],
     outputs = [
         "//command_line_option:features",
-        "//command_line_option:cpu",
+        "//command_line_option:platforms",
     ],
 )
 
@@ -243,11 +243,10 @@ def _mozc_win_build_rule_impl(ctx):
         executable = output,
     )]
 
-# The follwoing CPU values are mentioned in https://bazel.build/configure/windows#build_cpp
 CPU = struct(
-    ARM64 = "arm64_windows",  # aarch64 (64-bit) environment
-    X64 = "x64_windows",  # x86-64 (64-bit) environment
-    X86 = "x64_x86_windows",  # x86 (32-bit) environment
+    ARM64 = "@platforms//cpu:arm64",  # aarch64 (64-bit) environment
+    X64 = "@platforms//cpu:x86_64",  # x86-64 (64-bit) environment
+    X86 = "@platforms//cpu:x86_32",  # x86 (32-bit) environment
 )
 
 _mozc_win_build_rule = rule(
@@ -263,7 +262,7 @@ _mozc_win_build_rule = rule(
             mandatory = True,
         ),
         "static_crt": attr.bool(),
-        "cpu": attr.string(),
+        "platform": attr.label(),
     },
 )
 
@@ -311,6 +310,7 @@ def mozc_win_build_target(
       **kwargs: other arguments passed to mozc_objc_library.
     """
     mandatory_target_compatible_with = [
+        cpu,
         "@platforms//os:windows",
     ]
     for item in mandatory_target_compatible_with:
@@ -322,10 +322,20 @@ def mozc_win_build_target(
         if item not in tags:
             tags.append(item)
 
+    platform_name = "_" + name + "_platform"
+    native.platform(
+        name = platform_name,
+        constraint_values = [
+            cpu,
+            "@platforms//os:windows",
+        ],
+        visibility = ["//visibility:private"],
+    )
+
     _mozc_win_build_rule(
         name = name,
         target = target,
-        cpu = cpu,
+        platform = platform_name,
         static_crt = static_crt,
         target_compatible_with = target_compatible_with,
         tags = tags,
