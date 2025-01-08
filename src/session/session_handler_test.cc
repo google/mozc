@@ -803,7 +803,7 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
   CHECK_OK(modules->Init(std::move(data_manager)));
 
   SessionHandler handler(std::move(engine));
-  EXPECT_EQ(handler.engine().GetPredictorName(), "MinimalPredictor");
+  EXPECT_NE(handler.GetDataVersion(), mock_version_);
 
   ASSERT_EQ(SendMockEngineReloadRequest(handler, mock_request_),
             EngineReloadResponse::ACCEPTED);
@@ -811,7 +811,6 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
   // CreateSession updates the Engine including the Predictor.
   uint64_t id = 0;
   ASSERT_TRUE(CreateSession(handler, &id));
-  EXPECT_EQ(handler.engine().GetPredictorName(), "MobilePredictor");
   EXPECT_EQ(handler.GetDataVersion(), mock_version_);
 }
 

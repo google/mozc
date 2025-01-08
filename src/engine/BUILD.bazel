@@ -259,17 +259,6 @@ mozc_cc_library(
     ),
 )
 
-mozc_cc_test(
-    name = "engine_factory_test",
-    srcs = ["engine_factory_test.cc"],
-    deps = [
-        ":engine_factory",
-        ":engine_interface",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/strings:string_view",
-    ],
-)
-
 mozc_cc_library(
     name = "eval_engine_factory",
     srcs = ["eval_engine_factory.cc"],

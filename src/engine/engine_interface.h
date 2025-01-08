@@ -56,9 +56,6 @@ class EngineInterface {
   // engine class and should not be deleted by callers.
   virtual ConverterInterface *GetConverter() const = 0;
 
-  // Returns the predictor name.
-  virtual absl::string_view GetPredictorName() const = 0;
-
   // Gets the version of underlying data set.
   virtual absl::string_view GetDataVersion() const = 0;
 

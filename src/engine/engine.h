@@ -89,12 +89,6 @@ class Engine : public EngineInterface {
     return converter_ ? converter_.get() : minimal_converter_.get();
   }
 
-  absl::string_view GetPredictorName() const override {
-    static absl::string_view kDefaultPredictorName = "MinimalPredictor";
-    return converter_ ? converter_->predictor()->GetPredictorName()
-                      : kDefaultPredictorName;
-  }
-
   // Functions for Reload, Sync, Wait return true if successfully operated
   // or did nothing.
   bool Reload() override;

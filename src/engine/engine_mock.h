@@ -45,7 +45,6 @@ namespace mozc {
 class MockEngine : public EngineInterface {
  public:
   MOCK_METHOD(ConverterInterface *, GetConverter, (), (const, override));
-  MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
   MOCK_METHOD(absl::string_view, GetDataVersion, (), (const, override));
   MOCK_METHOD(bool, Reload, (), (override));
   MOCK_METHOD(bool, Sync, (), (override));
