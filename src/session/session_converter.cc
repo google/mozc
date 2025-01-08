@@ -795,8 +795,8 @@ void SessionConverter::CommitSegmentsInternal(
   candidate_list_visible_ = false;
   *consumed_key_size = 0;
 
-  // If the number of segments is one, just call Commit.
-  if (segments_.conversion_segments_size() == segments_to_commit) {
+  // If commit all segments, just call Commit.
+  if (segments_.conversion_segments_size() <= segments_to_commit) {
     Commit(composer, context);
     return;
   }
@@ -813,15 +813,11 @@ void SessionConverter::CommitSegmentsInternal(
   std::vector<size_t> candidate_ids;
   for (size_t i = 0; i < segments_to_commit; ++i) {
     // Get the i-th (0 origin) conversion segment and the selected candidate.
-    Segment *segment = segments_.mutable_conversion_segment(i);
-    if (!segment) {
-      LOG(ERROR) << "There is no segment on position " << i;
-      return;
-    }
+    const Segment &segment = segments_.conversion_segment(i);
 
     // Accumulate the size of i-th segment's key.
     // The caller will remove corresponding characters from the composer.
-    *consumed_key_size += Util::CharsLen(segment->key());
+    *consumed_key_size += Util::CharsLen(segment.key());
 
     // Collect candidate's id for each segment.
     candidate_ids.push_back(GetCandidateIndexForConverter(i));
