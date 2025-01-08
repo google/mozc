@@ -112,22 +112,24 @@ def get_vcvarsall(
       msgs += ['-----stderr-----', stderr]
     raise ChildProcessError('\n'.join(msgs))
 
-  vcvarsall = pathlib.Path(stdout.splitlines()[0])
-  if not vcvarsall.exists():
-    msg = 'Could not find vcvarsall.bat.'
-    if arch.endswith('arm64'):
-      msg += (
-          ' Make sure Microsoft.VisualStudio.Component.VC.Tools.ARM64 is'
-          ' installed.'
-      )
-    else:
-      msg += (
-          ' Consider using --vcvarsall_path option e.g.\n'
-          r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
-      )
-    raise FileNotFoundError(msg)
+  lines = stdout.splitlines()
+  if len(lines) > 0:
+    vcvarsall = pathlib.Path(lines[0])
+    if vcvarsall.exists():
+      return vcvarsall
 
-  return vcvarsall
+  msg = 'Could not find vcvarsall.bat.'
+  if arch.endswith('arm64'):
+    msg += (
+        ' Make sure Microsoft.VisualStudio.Component.VC.Tools.ARM64 is'
+        ' installed.'
+    )
+  else:
+    msg += (
+        ' Consider using --vcvarsall_path option e.g.\n'
+        r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
+    )
+  raise FileNotFoundError(msg)
 
 
 def get_vs_env_vars(
