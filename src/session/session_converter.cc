@@ -69,8 +69,6 @@ using ::mozc::commands::Request;
 using ::mozc::config::Config;
 using ::mozc::usage_stats::UsageStats;
 
-constexpr size_t kDefaultMaxHistorySize = 3;
-
 absl::string_view GetCandidateShortcuts(
     config::Config::SelectionShortcut selection_shortcut) {
   // Keyboard shortcut for candidates.
@@ -93,15 +91,6 @@ absl::string_view GetCandidateShortcuts(
       break;
   }
   return shortcut;
-}
-
-// Creates ConversionRequest to fill incognito candidate words.
-ConversionRequest CreateIncognitoConversionRequest(
-    const ConversionRequest &base_request, const Config &incognito_config) {
-  return ConversionRequestBuilder()
-      .SetConversionRequest(base_request)
-      .SetConfig(incognito_config)
-      .Build();
 }
 
 // Calculate cursor offset for committed text.
