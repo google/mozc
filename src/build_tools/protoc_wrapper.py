@@ -85,6 +85,12 @@ def main():
   protoc_path = opts.protoc_command
   if opts.protoc_dir:
     protoc_path = os.path.join(os.path.abspath(opts.protoc_dir), protoc_path)
+    # A hack for ARM64 build with GYP on Windows.
+    #   https://github.com/google/mozc/issues/1130
+    # ARM64 version of protoc.exe does not work on x64 machine, so use x64
+    # version with an assumption that it's already built.
+    if os.name == 'nt' and protoc_path.endswith('_arm64\\protoc.exe'):
+      protoc_path = protoc_path.replace('_arm64\\protoc', '_x64\\protoc')
 
   # The path of proto file should be transformed as a relative path from
   # the project root so that correct relative paths should be embedded into
