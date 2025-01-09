@@ -67,7 +67,6 @@
 namespace mozc {
 namespace {
 
-using ::mozc::prediction::PredictorInterface;
 using ::mozc::usage_stats::UsageStats;
 
 constexpr size_t kErrorIndex = static_cast<size_t>(-1);
@@ -240,8 +239,8 @@ bool Converter::StartPrediction(const ConversionRequest &request,
   if (ShouldSetKeyForPrediction(key, *segments)) {
     SetKey(segments, key);
   }
-  DCHECK_EQ(1, segments->conversion_segments_size());
-  DCHECK_EQ(key, segments->conversion_segment(0).key());
+  DCHECK_EQ(segments->conversion_segments_size(), 1);
+  DCHECK_EQ(segments->conversion_segment(0).key(), key);
 
   if (!predictor_->PredictForRequest(request, segments)) {
     // Prediction can fail for keys like "12". Even in such cases, rewriters
