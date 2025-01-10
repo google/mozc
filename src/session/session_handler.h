@@ -40,7 +40,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "composer/table.h"
-#include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -148,8 +147,6 @@ class SessionHandler : public SessionHandlerInterface {
 
   std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<session::SessionObserverHandler> observer_handler_;
-  std::unique_ptr<user_dictionary::UserDictionarySessionHandler>
-      user_dictionary_session_handler_;
   std::unique_ptr<composer::TableManager> table_manager_;
   std::unique_ptr<const commands::Request> request_;
   std::unique_ptr<const config::Config> config_;

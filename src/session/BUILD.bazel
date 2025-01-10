@@ -293,7 +293,6 @@ mozc_cc_library(
         "//config:config_handler",
         "//converter:converter_interface",
         "//data_manager",
-        "//dictionary:user_dictionary_session_handler",
         "//engine",
         "//engine:engine_interface",
         "//engine:supplemental_model_interface",

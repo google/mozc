@@ -38,6 +38,7 @@
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "protocol/engine_builder.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
 
@@ -98,6 +99,13 @@ class EngineInterface {
   }
   virtual bool SendSupplementalModelReloadRequest(
       const EngineReloadRequest &request) {
+    return false;
+  }
+
+  // Evaluates user dictionary command.
+  virtual bool EvaluateUserDictionaryCommand(
+      const user_dictionary::UserDictionaryCommand &command,
+      user_dictionary::UserDictionaryCommandStatus *status) {
     return false;
   }
 

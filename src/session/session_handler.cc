@@ -51,7 +51,6 @@
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -138,8 +137,6 @@ SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine)
   last_cleanup_time_ = absl::InfinitePast();
   last_create_session_time_ = absl::InfinitePast();
   observer_handler_ = std::make_unique<session::SessionObserverHandler>();
-  user_dictionary_session_handler_ =
-      std::make_unique<user_dictionary::UserDictionarySessionHandler>();
   table_manager_ = std::make_unique<composer::TableManager>();
   request_ = std::make_unique<commands::Request>();
   config_ = config::ConfigHandler::GetConfig();
@@ -643,13 +640,13 @@ bool SessionHandler::SendUserDictionaryCommand(commands::Command *command) {
     return false;
   }
   user_dictionary::UserDictionaryCommandStatus status;
-  const bool result = user_dictionary_session_handler_->Evaluate(
-      command->input().user_dictionary_command(), &status);
-  if (result) {
-    status.Swap(
-        command->mutable_output()->mutable_user_dictionary_command_status());
+  if (!engine_->EvaluateUserDictionaryCommand(
+          command->input().user_dictionary_command(), &status)) {
+    return false;
   }
-  return result;
+  *command->mutable_output()->mutable_user_dictionary_command_status() =
+      std::move(status);
+  return true;
 }
 
 bool SessionHandler::SendEngineReloadRequest(commands::Command *command) {

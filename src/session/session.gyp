@@ -105,7 +105,6 @@
         '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '<(mozc_oss_src_dir)/config/config.gyp:character_form_manager',
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_dictionary',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
