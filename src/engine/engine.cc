@@ -110,11 +110,6 @@ absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
 absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
                           bool is_mobile) {
 
-  if (!user_dictionary_session_handler_) {
-    user_dictionary_session_handler_ =
-        std::make_unique<user_dictionary::UserDictionarySessionHandler>();
-  }
-
   auto immutable_converter_factory = [](const engine::Modules &modules) {
     return std::make_unique<ImmutableConverter>(modules);
   };
@@ -222,8 +217,7 @@ bool Engine::SendSupplementalModelReloadRequest(
 bool Engine::EvaluateUserDictionaryCommand(
     const user_dictionary::UserDictionaryCommand &command,
     user_dictionary::UserDictionaryCommandStatus *status) {
-  return user_dictionary_session_handler_ &&
-         user_dictionary_session_handler_->Evaluate(command, status);
+  return user_dictionary_session_handler_.Evaluate(command, status);
 }
 
 }  // namespace mozc
