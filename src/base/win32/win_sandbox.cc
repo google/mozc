@@ -359,7 +359,6 @@ std::wstring Sid::GetName() const {
 }
 
 std::wstring Sid::GetAccountName() const {
-  wchar_t *ptr = nullptr;
   DWORD name_size = 0;
   DWORD domain_name_size = 0;
   SID_NAME_USE name_use;
