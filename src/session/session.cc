@@ -166,6 +166,18 @@ void SetSessionState(const ImeContext::State state, ImeContext *context) {
   }
 }
 
+void SetStateToPredompositionAndCancel(ImeContext *context) {
+  SetSessionState(ImeContext::PRECOMPOSITION, context);
+  // mutable_converter's internal state should be updated by calling Cancel().
+  // Internal state contains:
+  // - candidate list
+  // - result text to commit
+  if (!context->mutable_converter()->CheckState(
+          SessionConverterInterface::COMPOSITION)) {
+    context->mutable_converter()->Cancel();
+  }
+}
+
 commands::CompositionMode ToCompositionMode(
     mozc::transliteration::TransliterationType type) {
   commands::CompositionMode mode = commands::HIRAGANA;
@@ -1155,12 +1167,8 @@ bool Session::Revert(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   ClearUndoContext();
 
-  if (context_->state() == ImeContext::CONVERSION) {
-    context_->mutable_converter()->Cancel();
-  }
-
-  SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
-  OutputMode(command);
+  SetStateToPredompositionAndCancel(context_.get());
+  Output(command);
   return true;
 }
 
@@ -1175,8 +1183,8 @@ bool Session::ResetContext(commands::Command *command) {
 
   context_->mutable_converter()->Reset();
 
-  SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
-  OutputMode(command);
+  SetStateToPredompositionAndCancel(context_.get());
+  Output(command);
   return true;
 }
 
@@ -1744,21 +1752,10 @@ bool Session::EditCancel(commands::Command *command) {
 
   command->mutable_output()->set_consumed(true);
 
-  // To work around b/5034698, we need to use OutputMode() unless the
-  // original text is restored to cancel reconversion.
-  const bool text_restored = TryCancelConvertReverse(command);
-  SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
-  if (text_restored) {
-    Output(command);
-  } else {
-    // It is nice to use Output() instead of OutputMode().  However, if
-    // Output() is used, unnecessary candidate words are shown because
-    // the previous candidate state is not cleared here.  To fix it, we
-    // should carefully modify SessionConverter. See b/5034698.
-    //
-    // TODO(komatsu): Use Output() instead of OutputMode.
-    OutputMode(command);
-  }
+  TryCancelConvertReverse(command);
+
+  SetStateToPredompositionAndCancel(context_.get());
+  Output(command);
   return true;
 }
 
@@ -2565,11 +2562,10 @@ bool Session::Delete(commands::Command *command) {
   context_->mutable_composer()->Delete();
   ClearUndoContext();
   if (context_->mutable_composer()->Empty()) {
-    SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
-    OutputMode(command);
+    SetStateToPredompositionAndCancel(context_.get());
+    Output(command);
   } else if (Suggest(command->input())) {
     Output(command);
-    return true;
   } else {
     OutputComposition(command);
   }
@@ -2581,11 +2577,10 @@ bool Session::Backspace(commands::Command *command) {
   context_->mutable_composer()->Backspace();
   ClearUndoContext();
   if (context_->mutable_composer()->Empty()) {
-    SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
-    OutputMode(command);
+    SetStateToPredompositionAndCancel(context_.get());
+    Output(command);
   } else if (Suggest(command->input())) {
     Output(command);
-    return true;
   } else {
     OutputComposition(command);
   }

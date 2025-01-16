@@ -7948,7 +7948,6 @@ void FindCandidateIDs(const commands::CandidateWindow &candidate_window,
   for (size_t i = 0; i < candidate_window.candidate_size(); ++i) {
     const commands::CandidateWindow::Candidate &candidate =
         candidate_window.candidate(i);
-    LOG(INFO) << candidate.value();
     if (candidate.value() == value) {
       ids->push_back(candidate.id());
     }
@@ -10291,6 +10290,82 @@ TEST_F(SessionTest, SetConfig) {
   EXPECT_EQ(&config, &session.context_->GetConfig());
   // SetConfig() resets undo context.
   EXPECT_TRUE(session.undo_contexts_.empty());
+}
+
+TEST_F(SessionTest, ClearCompositionByBackspace) {
+  // The internal candidate list should be cleared when the composition is
+  // cleared by backspace.
+  MockConverter converter;
+
+  Segments segments;
+  {
+    // Set up a mock conversion result.
+    Segment *segment;
+    segment = segments.add_segment();
+    segment->set_key("あ");
+    segment->add_candidate()->value = "あ";
+  }
+
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+  EXPECT_CALL(converter, StartPrediction(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  Session session(&engine);
+  InitSessionToPrecomposition(&session, *mobile_request_);
+  commands::Command command;
+
+  EXPECT_TRUE(SendKey("1", &session, &command));
+  EXPECT_SINGLE_SEGMENT("あ", command);
+  EXPECT_TRUE(command.output().has_all_candidate_words());
+
+  EXPECT_TRUE(SendKey("Backspace", &session, &command));
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_all_candidate_words());
+
+  // Input mode switch command can output the current internal candidate list,
+  // which should be cleared by the above backspace.
+  session.InputModeSwitchKanaType(&command);
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_all_candidate_words());
+}
+
+TEST_F(SessionTest, ClearCompositionByEscape) {
+  // The internal candidate list should be cleared when the composition is
+  // cleared by escape.
+  MockConverter converter;
+
+  Segments segments;
+  {
+    // Set up a mock conversion result.
+    Segment *segment;
+    segment = segments.add_segment();
+    segment->set_key("あ");
+    segment->add_candidate()->value = "あ";
+  }
+
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+  EXPECT_CALL(converter, StartPrediction(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  Session session(&engine);
+  InitSessionToPrecomposition(&session, *mobile_request_);
+  commands::Command command;
+
+  EXPECT_TRUE(SendKey("1", &session, &command));
+  EXPECT_SINGLE_SEGMENT("あ", command);
+  EXPECT_TRUE(command.output().has_all_candidate_words());
+
+  EXPECT_TRUE(SendKey("Escape", &session, &command));
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_all_candidate_words());
+
+  // Input mode switch command can output the current internal candidate list,
+  // which should be cleared by the above backspace.
+  session.InputModeSwitchKanaType(&command);
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_all_candidate_words());
 }
 
 }  // namespace session
