@@ -29,10 +29,8 @@ jobs:
 
       - name: build
         working-directory: ./src
-        env:
-          USE_BAZEL_VERSION: "8.0.0"
         run: |
-          bazel build --config oss_android package --config release_build
+          bazelisk build --config oss_android package --config release_build
 
       - name: upload artifacts
         uses: actions/upload-artifact@v4

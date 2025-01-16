@@ -62,9 +62,8 @@ ENV PKG_CONFIG_PATH="/home/mozc_builder/work/mozc/docker/ubuntu22.04/qt6-core-pk
 
 ## Set up bazelisk as bazel
 RUN curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64 \
-  && mv bazelisk-linux-amd64 /home/mozc_builder/bin/bazel \
-  && chmod u+x /home/mozc_builder/bin/bazel
-ENV USE_BAZEL_VERSION 8.0.0
+  && mv bazelisk-linux-amd64 /home/mozc_builder/bin/bazelisk \
+  && chmod u+x /home/mozc_builder/bin/bazelisk
 
 ## Set up Android SDK and NDK
 ENV ANDROID_HOME /home/mozc_builder/Android/Sdk

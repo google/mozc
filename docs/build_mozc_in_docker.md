@@ -14,7 +14,7 @@ docker build --rm --tag mozc_ubuntu24.04 .
 docker create --interactive --tty --name mozc_build mozc_ubuntu24.04
 
 docker start mozc_build
-docker exec mozc_build bazel build package --config oss_linux --config release_build
+docker exec mozc_build bazelisk build package --config oss_linux --config release_build
 docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
 ```
 
@@ -48,7 +48,7 @@ Notes
 
 ```
 docker start mozc_build
-docker exec mozc_build bazel build package --config oss_linux --config release_build
+docker exec mozc_build bazelisk build package --config oss_linux --config release_build
 docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
 ```
 
@@ -63,7 +63,7 @@ Notes
 ## Build Mozc for Linux Desktop
 
 ```
-bazel build package --config oss_linux --config release_build
+bazelisk build package --config oss_linux --config release_build
 ```
 
 Note: You might want to execute `docker start --interactive mozc_build`
@@ -92,7 +92,7 @@ Install paths are configurable by modifying
 #### Run all tests
 
 ```
-bazel test ... --config oss_linux --build_tests_only -c dbg
+bazelisk test ... --config oss_linux --build_tests_only -c dbg
 ```
 
 * `...` means all targets under the current and subdirectories.
@@ -101,7 +101,7 @@ bazel test ... --config oss_linux --build_tests_only -c dbg
 ### Run tests under the specific directories
 
 ```
-bazel test base/... composer/... --config oss_linux --build_tests_only -c dbg
+bazelisk test base/... composer/... --config oss_linux --build_tests_only -c dbg
 ```
 
 * `<dir>/...` means all targets under the `<dir>/` directory.
@@ -110,7 +110,7 @@ bazel test base/... composer/... --config oss_linux --build_tests_only -c dbg
 ### Run tests without the specific directories
 
 ```
-bazel test ... --config oss_linux --build_tests_only -c dbg -- -base/...
+bazelisk test ... --config oss_linux --build_tests_only -c dbg -- -base/...
 ```
 
 * `--` means the end of the flags which start from `-`.
@@ -120,7 +120,7 @@ bazel test ... --config oss_linux --build_tests_only -c dbg -- -base/...
 ### Run the specific test
 
 ```
-bazel test base:util_test --config oss_linux -c dbg
+bazelisk test base:util_test --config oss_linux -c dbg
 ```
 
 * `util_test` is defined in `base/BUILD.bazel`.
@@ -128,7 +128,7 @@ bazel test base:util_test --config oss_linux -c dbg
 ### Output logs to stderr
 
 ```
-bazel test base:util_test --config oss_linux --test_arg=--stderrthreshold=0 --test_output=all
+bazelisk test base:util_test --config oss_linux --test_arg=--stderrthreshold=0 --test_output=all
 ```
 
 *   The `--test_arg=--stderrthreshold=0 --test_output=all` flags shows the
@@ -177,13 +177,13 @@ You may have some build errors when you update build environment or configuratio
 In that case, try the following command to [refetch external repositories](https://bazel.build/extending/repo#forcing_refetch_of_external_repositories).
 
 ```
-bazel sync --configure
+bazelisk sync --configure
 ```
 
 If the issue persists, also try the following command to [clean Bazel's build cache](https://bazel.build/docs/user-manual#clean)
 
 ```
-bazel clean --expunge
+bazelisk clean --expunge
 ```
 
 ## Build Mozc library for Android:
@@ -195,7 +195,7 @@ Client code for Android apk is deprecated.
 The conversion engine for Android is built with Bazel.
 
 ```
-bazel build package --config oss_android
+bazelisk build package --config oss_android
 ```
 
 `package` is an alias to build `android/jni:native_libs`.

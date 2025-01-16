@@ -81,7 +81,7 @@ protoc --encode=mozc.config.Config protocol/config.proto < config.textproto > co
 `protoc` can be built as follows
 
 ```
-bazel build @com_google_protobuf//:protoc
+bazelisk build @com_google_protobuf//:protoc
 ```
 
 ## IBus

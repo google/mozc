@@ -122,9 +122,8 @@ jobs:
         working-directory: .\src
         env:
           ANDROID_NDK_HOME: ""
-          USE_BAZEL_VERSION: "8.0.0"
         run: |
-          bazel --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
+          bazelisk --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
 
       - name: upload Mozc64_bazel.msi
         uses: actions/upload-artifact@v4

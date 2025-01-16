@@ -166,14 +166,14 @@ Note that you can specify `--qtdir=` option instead of `--noqt` in GYP phase sin
 
 Additional requirements:
 
-* [Bazel](https://bazel.build/)
-  * check [src/.bazelversion](../src/.bazelversion) for the supported Bazel version.
+* [Bazelisk](https://github.com/bazelbuild/bazelisk)
+  * Bazelisk is a wrapper of [Bazel](https://bazel.build/) to use the specific version of Bazel.
 * [MSYS2](https://github.com/msys2/msys2)
 
 After running `build_tools/update_deps.py` and `build_tools/build_qt.py`, run the following command instead of `build_mozc.py`:
 
 ```
-bazel --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
+bazelisk --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
 ```
 
 You have release build binaries in `bazel-bin\win32\installer\Mozc64.msi`.
