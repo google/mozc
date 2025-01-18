@@ -266,82 +266,6 @@ _mozc_win_build_rule = rule(
     },
 )
 
-# Define a transition target with the given build target with the given build configurations.
-#
-# For instance, the following code creates a target "my_target" with setting "cpu" as "x64_windows"
-# and setting "static_link_msvcrt" feature.
-#
-#   mozc_win_build_rule(
-#       name = "my_target",
-#       cpu = CPU.X64,
-#       static_crt = True,
-#       target = "//bath/to/target:my_target",
-#   )
-#
-# See the following page for the details on transition.
-# https://bazel.build/rules/lib/builtins/transition
-def mozc_win_build_target(
-        name,
-        target,
-        cpu = CPU.X64,
-        static_crt = False,
-        target_compatible_with = [],
-        tags = [],
-        **kwargs):
-    """Define a transition target with the given build target with the given build configurations.
-
-    The following code creates a target "my_target" with setting "cpu" as "x64_windows" and setting
-    "static_link_msvcrt" feature.
-
-      mozc_win_build_target(
-          name = "my_target",
-          cpu = CPU.X64,
-          static_crt = True,
-          target = "//bath/to/target:my_target",
-      )
-
-    Args:
-      name: name of the target.
-      target: the actual Bazel target to be built with the specified configurations.
-      cpu: CPU type of the target.
-      static_crt: True if the target should be built with static CRT.
-      target_compatible_with: optional. Visibility for the unit test target.
-      tags: optional. Tags for both the library and unit test targets.
-      **kwargs: other arguments passed to mozc_objc_library.
-    """
-    mandatory_target_compatible_with = [
-        cpu,
-        "@platforms//os:windows",
-    ]
-    for item in mandatory_target_compatible_with:
-        if item not in target_compatible_with:
-            target_compatible_with.append(item)
-
-    mandatory_tags = MOZC_TAGS.WIN_ONLY
-    for item in mandatory_tags:
-        if item not in tags:
-            tags.append(item)
-
-    platform_name = "_" + name + "_platform"
-    native.platform(
-        name = platform_name,
-        constraint_values = [
-            cpu,
-            "@platforms//os:windows",
-        ],
-        visibility = ["//visibility:private"],
-    )
-
-    _mozc_win_build_rule(
-        name = name,
-        target = target,
-        platform = platform_name,
-        static_crt = static_crt,
-        target_compatible_with = target_compatible_with,
-        tags = tags,
-        **kwargs
-    )
-
 def mozc_win32_cc_prod_binary(
         name,
         executable_name_map = {},  # @unused
@@ -397,9 +321,32 @@ def mozc_win32_cc_prod_binary(
         **kwargs
     )
 
-    mozc_win_build_target(
+    mandatory_target_compatible_with = [
+        cpu,
+        "@platforms//os:windows",
+    ]
+    for item in mandatory_target_compatible_with:
+        if item not in target_compatible_with:
+            target_compatible_with.append(item)
+
+    mandatory_tags = MOZC_TAGS.WIN_ONLY
+    for item in mandatory_tags:
+        if item not in tags:
+            tags.append(item)
+
+    platform_name = "_" + name + "_platform"
+    native.platform(
+        name = platform_name,
+        constraint_values = [
+            cpu,
+            "@platforms//os:windows",
+        ],
+        visibility = ["//visibility:private"],
+    )
+
+    _mozc_win_build_rule(
         name = name,
-        cpu = cpu,
+        platform = platform_name,
         static_crt = static_crt,
         tags = tags,
         target = target_name,
