@@ -41,8 +41,6 @@ RUN apt-get update && apt-get install -y \
     libibus-1.0-dev libglib2.0-dev qt6-base-dev libgl-dev \
     ## Packages for misc tools
     nano \
-    ## Setting up Android SDK requires OpenJDK.
-    openjdk-17-jdk \
   && rm -rf /var/lib/apt/lists/*
 
 # Working environemnt
@@ -59,12 +57,10 @@ RUN curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/ba
   && mv bazelisk-linux-amd64 /home/mozc_builder/bin/bazelisk \
   && chmod u+x /home/mozc_builder/bin/bazelisk
 
-## Set up Android SDK and NDK
-ENV ANDROID_HOME /home/mozc_builder/Android/Sdk
-RUN mkdir -p ${ANDROID_HOME}
-RUN curl -LO https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip && unzip commandlinetools-linux-10406996_latest.zip -d ${ANDROID_HOME} && rm commandlinetools-linux-10406996_latest.zip
-RUN yes | ${ANDROID_HOME}/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_HOME} "cmdline-tools;latest" "platforms;android-33" "build-tools;33.0.2" "platform-tools" "ndk;27.1.12297006"
-ENV ANDROID_NDK_HOME ${ANDROID_HOME}/ndk/27.1.12297006
+## Set up Android NDK
+## https://github.com/android/ndk/wiki/Home/90998c4e6080643138a764cb4aa7261261ed766b#ndk-r27b-2024-lts
+RUN curl -LO https://dl.google.com/android/repository/android-ndk-r27b-linux.zip && unzip android-ndk-r27b-linux.zip && rm android-ndk-r27b-linux.zip
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r27b
 
 # check out Mozc source with submodules
 RUN mkdir /home/mozc_builder/work/mozc
