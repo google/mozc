@@ -180,6 +180,7 @@ bzl_library(
         "//bazel:run_build_tool_bzl",
         "//bazel:stubs.bzl",
         "//devtools/build_cleaner/skylark:build_defs_lib",
+        "@bazel_skylib//rules:select_file",
         "@build_bazel_rules_apple//apple:macos",
     ],
 )
