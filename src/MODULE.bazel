@@ -66,11 +66,28 @@ bazel_dep(
 )
 
 # Apple Support for Bazel (1.16.0 2024-07-10)
+## this must come above 'rules_cc'
+## https://github.com/bazelbuild/apple_support/blob/d87e8b07f3345e750834dbb6ce38c7c7d3b8b44b/README.md#bazel-7-setup
 bazel_dep(
     name = "apple_support",
     version = "1.16.0",
     repo_name = "build_bazel_apple_support",
 )
+
+# rules_cc: 0.0.17 2024-11-19
+# https://github.com/bazelbuild/rules_cc/
+bazel_dep(
+    name = "rules_cc",
+    version = "0.0.17",
+)
+
+cc_configure = use_extension(
+    "@rules_cc//cc:extensions.bzl",
+    "cc_configure_extension",
+)
+use_repo(cc_configure, "local_config_cc")
+
+register_toolchains("@local_config_cc//:all")
 
 # Android NDK rules (0.1.2 2024-07-23)
 # https://github.com/bazelbuild/rules_android_ndk
