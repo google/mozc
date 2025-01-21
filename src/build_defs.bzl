@@ -210,7 +210,7 @@ def _win_executable_transition_impl(
         attr):
     features = ["generate_pdb_file"]
     if attr.static_crt:
-        features += ["static_link_msvcrt"]
+        features.append("static_link_msvcrt")
     return {
         "//command_line_option:features": features,
         "//command_line_option:platforms": [attr.platform],
