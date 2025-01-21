@@ -56,18 +56,6 @@ test:macos_env   --test_tag_filters=-nomac
 build:windows_env --build_tag_filters=-nowin
 test:windows_env   --test_tag_filters=-nowin
 
-# Bazel does not register cc toolchains for Windows by default.
-# We need to explicitly specify them to be compatible with the new behavior
-# introduced by --incompatible_enable_cc_toolchain_resolution
-# https://github.com/google/mozc/issues/1112
-# https://bazel.build/extending/toolchains#registering-building-toolchains
-build:windows_env --extra_toolchains=@@rules_cc++cc_configure_extension+local_config_cc//:cc-toolchain-arm64_windows
-build:windows_env --extra_toolchains=@@rules_cc++cc_configure_extension+local_config_cc//:cc-toolchain-x64_windows
-build:windows_env --extra_toolchains=@@rules_cc++cc_configure_extension+local_config_cc//:cc-toolchain-x64_x86_windows
-test:windows_env  --extra_toolchains=@@rules_cc++cc_configure_extension+local_config_cc//:cc-toolchain-arm64_windows
-test:windows_env  --extra_toolchains=@@rules_cc++cc_configure_extension+local_config_cc//:cc-toolchain-x64_windows
-test:windows_env  --extra_toolchains=@@rules_cc++cc_configure_extension+local_config_cc//:cc-toolchain-x64_x86_windows
-
 # Android specific options
 build:android_env --copt "-DOS_ANDROID"
 build:android_env --build_tag_filters=-noandroid
