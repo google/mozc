@@ -340,6 +340,11 @@ def mozc_win32_cc_prod_binary(
         "/DEBUG:FULL",
         "/PDBALTPATH:%_PDB%",
     ])
+
+    # '/CETCOMPAT' is available only on x86/x64 architectures.
+    if cpu in ["@platforms//cpu:x86_32", "@platforms//cpu:x86_64"]:
+        modified_linkopts.append("/CETCOMPAT")
+
     mozc_cc_binary(
         name = intermediate_name,
         srcs = srcs,
