@@ -572,6 +572,31 @@ void Segments::pop_back_segment() {
   }
 }
 
+void Segments::InitForConvert(absl::string_view key) {
+  set_max_history_segments_size(4);
+  clear_conversion_segments();
+
+  Segment *segment = add_segment();
+  segment->set_key(key);
+  segment->set_segment_type(mozc::Segment::FREE);
+
+  MOZC_VLOG(2) << DebugString();
+}
+
+void Segments::InitForCommit(absl::string_view key, absl::string_view value) {
+  clear_conversion_segments();
+
+  Segment *segment = add_segment();
+  segment->set_key(key);
+  segment->set_segment_type(Segment::FIXED_VALUE);
+
+  Segment::Candidate *candidate = segment->add_candidate();
+  candidate->key = std::string(key);
+  candidate->content_key = std::string(key);
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
+}
+
 void Segments::Clear() {
   clear_segments();
   clear_revert_entries();

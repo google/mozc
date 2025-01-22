@@ -699,6 +699,13 @@ class Segments final {
   // Returns all history value when size == -1.
   std::string history_value(int size = -1) const;
 
+  // Initializes the segments with the given key as a preparation of conversion.
+  void InitForConvert(absl::string_view key);
+
+  // Initializes the segments with the given key and value as a preparation of
+  // committing the value.
+  void InitForCommit(absl::string_view key, absl::string_view value);
+
   // clear segments
   void Clear();
 

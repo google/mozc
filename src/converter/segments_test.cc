@@ -402,6 +402,38 @@ TEST(SegmentsTest, CopyTest) {
   }
 }
 
+TEST(SegmentsTest, InitForConvert) {
+  Segments segments;
+  segments.InitForConvert("first");
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_EQ(segments.conversion_segment(0).key(), "first");
+  EXPECT_EQ(segments.conversion_segment(0).segment_type(), Segment::FREE);
+  EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
+
+  Segment *segment = segments.add_segment();
+  segment->set_key("second");
+  EXPECT_EQ(segments.conversion_segments_size(), 2);
+
+  segments.InitForConvert("update");
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_EQ(segments.conversion_segment(0).key(), "update");
+  EXPECT_EQ(segments.conversion_segment(0).segment_type(), Segment::FREE);
+}
+
+TEST(SegmentsTest, InitForCommit) {
+  Segments segments;
+  segments.InitForCommit("key", "value");
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  const Segment &segment = segments.conversion_segment(0);
+  EXPECT_EQ(segment.key(), "key");
+  EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
+  ASSERT_EQ(segment.candidates_size(), 1);
+  EXPECT_EQ(segment.candidate(0).key, "key");
+  EXPECT_EQ(segment.candidate(0).value, "value");
+  EXPECT_EQ(segment.candidate(0).content_key, "key");
+  EXPECT_EQ(segment.candidate(0).content_value, "value");
+}
+
 TEST(CandidateTest, functional_key) {
   Segment::Candidate candidate;
 

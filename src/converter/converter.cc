@@ -80,21 +80,8 @@ size_t GetSegmentIndex(const Segments *segments, size_t segment_index) {
   return result;
 }
 
-void SetKey(Segments *segments, const absl::string_view key) {
-  segments->set_max_history_segments_size(4);
-  segments->clear_conversion_segments();
-
-  mozc::Segment *seg = segments->add_segment();
-  DCHECK(seg);
-
-  seg->set_key(key);
-  seg->set_segment_type(mozc::Segment::FREE);
-
-  MOZC_VLOG(2) << segments->DebugString();
-}
-
-bool ShouldSetKeyForPrediction(const absl::string_view key,
-                               const Segments &segments) {
+bool ShouldInitSegmentsForPrediction(absl::string_view key,
+                                     const Segments &segments) {
   // (1) If the segment size is 0, invoke SetKey because the segments is not
   //   correctly prepared.
   //   If the key of the segments differs from the input key,
@@ -167,7 +154,7 @@ bool Converter::StartConversion(const ConversionRequest &request,
     return false;
   }
 
-  SetKey(segments, key);
+  segments->InitForConvert(key);
   ApplyConversion(segments, request);
   return IsValidSegments(request, *segments);
 }
@@ -178,7 +165,7 @@ bool Converter::StartReverseConversion(Segments *segments,
   if (key.empty()) {
     return false;
   }
-  SetKey(segments, key);
+  segments->InitForConvert(key);
 
   return reverse_converter_.ReverseConvert(key, segments);
 }
@@ -236,8 +223,8 @@ bool Converter::StartPrediction(const ConversionRequest &request,
   DCHECK(ValidateConversionRequestForPrediction(request));
 
   absl::string_view key = request.key();
-  if (ShouldSetKeyForPrediction(key, *segments)) {
-    SetKey(segments, key);
+  if (ShouldInitSegmentsForPrediction(key, *segments)) {
+    segments->InitForConvert(key);
   }
   DCHECK_EQ(segments->conversion_segments_size(), 1);
   DCHECK_EQ(segments->conversion_segment(0).key(), key);
@@ -576,7 +563,7 @@ void Converter::CompletePosIds(Segment::Candidate *candidate) const {
   for (size_t size = kExpandSizeStart; size < kExpandSizeMax;
        size += kExpandSizeDiff) {
     Segments segments;
-    SetKey(&segments, candidate->key);
+    segments.InitForConvert(candidate->key);
     // use PREDICTION mode, as the size of segments after
     // PREDICTION mode is always 1, thanks to real time conversion.
     // However, PREDICTION mode produces "predictions", meaning

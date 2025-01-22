@@ -98,23 +98,6 @@ int32_t CalculateCursorOffset(absl::string_view committed_text) {
   // If committed_text is a bracket pair, set the cursor in the middle.
   return Util::IsBracketPairText(committed_text) ? -1 : 0;
 }
-
-// Make a segment having one candidate. The value of candidate is the
-// same as the preedit.  This function can be used for error handling.
-// When the converter fails, we can call this function to make a
-// virtual segment.
-void InitSegmentsFromString(std::string key, std::string preedit,
-                            Segments *segments) {
-  segments->clear_conversion_segments();
-  Segment *segment = segments->add_segment();
-  segment->set_key(key);
-  segment->set_segment_type(Segment::FIXED_VALUE);
-  Segment::Candidate *c = segment->add_candidate();
-  c->value = preedit;
-  c->content_value = std::move(preedit);
-  c->key = key;
-  c->content_key = std::move(key);
-}
 }  // namespace
 
 SessionConverter::SessionConverter(const ConverterInterface *converter,
@@ -842,8 +825,7 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
   // Cursor offset needs to be calculated based on normalized text.
   SessionOutput::FillCursorOffsetResult(
       CalculateCursorOffset(normalized_preedit), &result_);
-  InitSegmentsFromString(std::move(key), std::move(normalized_preedit),
-                         &segments_);
+  segments_.InitForCommit(key, normalized_preedit);
   CommitUsageStats(SessionConverterInterface::COMPOSITION, context);
   DCHECK(request_);
   DCHECK(config_);
