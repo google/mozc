@@ -712,6 +712,15 @@ class Segments final {
   // Dump Segments structure
   std::string DebugString() const;
 
+  // Prepend the candidates of `previous_segment` to the first conversion
+  // segment. This is used to merge the previous suggestion results to the
+  // prediction results.
+  void PrependCandidates(const Segment &previous_segment);
+
+  // Resize the segments starting from `start_index` with the given `new_sizes`.
+  // Returns true if the segments are resized.
+  bool Resize(size_t start_index, absl::Span<const uint8_t> new_sizes);
+
   friend std::ostream &operator<<(std::ostream &os, const Segments &segments) {
     return os << segments.DebugString();
   }

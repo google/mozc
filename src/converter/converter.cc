@@ -35,16 +35,13 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
-#include <numeric>
 #include <optional>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/util.h"
@@ -462,65 +459,9 @@ bool Converter::ResizeSegments(Segments *segments,
     return false;
   }
 
-  const size_t total_size =
-      std::accumulate(new_size_array.begin(), new_size_array.end(), 0);
-  if (total_size == 0) {
+  if (!segments->Resize(start_segment_index, new_size_array)) {
     return false;
   }
-
-  std::string key;
-  size_t key_len = 0;
-  size_t segments_size = 0;
-  for (const Segment &segment : segments->all().drop(start_segment_index)) {
-    absl::StrAppend(&key, segment.key());
-    key_len += Util::CharsLen(segment.key());
-    ++segments_size;
-    if (key_len >= total_size) {
-      break;
-    }
-  }
-
-  // If key is empty or less than the total size of new segments, return false.
-  if (key_len == 0 || key_len < total_size) {
-    return false;
-  }
-
-  size_t consumed = 0;
-  std::vector<std::string> new_keys;
-  new_keys.reserve(new_size_array.size());
-
-  for (size_t new_size : new_size_array) {
-    if (new_size != 0 && consumed < key_len) {
-      new_keys.emplace_back(Util::Utf8SubString(key, consumed, new_size));
-      consumed += new_size;
-    }
-  }
-
-  segments->erase_segments(start_segment_index, segments_size);
-
-  for (size_t i = 0; i < new_keys.size(); ++i) {
-    Segment *seg = segments->insert_segment(start_segment_index + i);
-    seg->set_segment_type(Segment::FIXED_BOUNDARY);
-    seg->set_key(std::move(new_keys[i]));
-  }
-
-  // If there is a remaining key, replace the next segment with the new key
-  // prepending the remaining key to the next segment as a FREE type.
-  if (consumed < key_len) {
-    std::string next_segment_key(
-        Util::Utf8SubString(key, consumed, key_len - consumed));
-    const size_t next_segment_index = start_segment_index + new_keys.size();
-    if (next_segment_index < segments->segments_size()) {
-      absl::StrAppend(&next_segment_key,
-                      segments->segment(next_segment_index).key());
-      segments->erase_segment(next_segment_index);
-    }
-    Segment *seg = segments->insert_segment(next_segment_index);
-    seg->set_segment_type(Segment::FREE);
-    seg->set_key(next_segment_key);
-  }
-
-  segments->set_resized(true);
 
   ApplyConversion(segments, request);
   return true;

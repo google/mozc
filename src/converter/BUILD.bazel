@@ -51,6 +51,7 @@ mozc_cc_library(
     deps = [
         ":lattice",
         "//base:number_util",
+        "//base:util",
         "//base:vlog",
         "//base/container:freelist",
         "//base/strings:assign",

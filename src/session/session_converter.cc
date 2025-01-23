@@ -378,35 +378,6 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
   return true;
 }
 
-namespace {
-
-// Prepend the candidates to the first conversion segment.
-void PrependCandidates(const Segment &previous_segment, std::string preedit,
-                       Segments *segments) {
-  DCHECK(segments);
-
-  // TODO(taku) want to have a method in converter to make an empty segment
-  if (segments->conversion_segments_size() == 0) {
-    segments->clear_conversion_segments();
-    Segment *segment = segments->add_segment();
-    segment->set_key(std::move(preedit));
-  }
-
-  DCHECK_EQ(1, segments->conversion_segments_size());
-  Segment *segment = segments->mutable_conversion_segment(0);
-  DCHECK(segment);
-
-  const size_t cands_size = previous_segment.candidates_size();
-  for (size_t i = 0; i < cands_size; ++i) {
-    Segment::Candidate *candidate = segment->push_front_candidate();
-    *candidate = previous_segment.candidate(cands_size - i - 1);
-  }
-  segment->mutable_meta_candidates()->assign(
-      previous_segment.meta_candidates().begin(),
-      previous_segment.meta_candidates().end());
-}
-}  // namespace
-
 bool SessionConverter::Suggest(const composer::Composer &composer,
                                const commands::Context &context) {
   return SuggestWithPreferences(composer, context, conversion_preferences_);
@@ -576,8 +547,7 @@ bool SessionConverter::PredictWithPreferences(
   }
 
   // Merge suggestions and prediction
-  std::string preedit = composer.GetStringForPreedit();
-  PrependCandidates(previous_suggestions_, std::move(preedit), &segments_);
+  segments_.PrependCandidates(previous_suggestions_);
 
   segment_index_ = 0;
   state_ = PREDICTION;
