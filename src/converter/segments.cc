@@ -46,16 +46,13 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "base/vlog.h"
-
-#ifndef NDEBUG
-#include "absl/strings/str_cat.h"
-#endif  // !NDEBUG
 
 namespace mozc {
 namespace {
