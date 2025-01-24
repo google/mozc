@@ -1520,9 +1520,12 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  bool modified = false;
-
   const Segments::range conversion_segments = segments->conversion_segments();
+  if (conversion_segments.empty()) {
+    return false;
+  }
+
+  bool modified = false;
   const std::string extra_format = GetExtraFormat(dictionary_);
   size_t num_done = 1;
   for (Segments::range rest_segments = conversion_segments;
@@ -1543,23 +1546,23 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
     num_done = 1;
   }
 
-  if (!conversion_segments.empty()) {
-    // Select the insert position by Romaji table.  Note:
-    // TOGGLE_FLICK_TO_HIRAGANA uses digits for Hiragana composing, date/time
-    // conversion is performed even when typing Hiragana characters.  Thus, it
-    // should not be promoted.
-    int insert_pos =
-        static_cast<int>(conversion_segments.front().candidates_size());
-    switch (request.request().special_romanji_table()) {
-      case commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII:
-        insert_pos = 1;
-        break;
-      default:
-        break;
-    }
-    modified |=
-        RewriteConsecutiveDigits(request.composer(), insert_pos, segments);
+  // Select the insert position by Romaji table.  Note:
+  // TOGGLE_FLICK_TO_HIRAGANA uses digits for Hiragana composing, date/time
+  // conversion is performed even when typing Hiragana characters.  Thus, it
+  // should not be promoted.
+  int insert_pos =
+      static_cast<int>(conversion_segments.front().candidates_size());
+  switch (request.request().special_romanji_table()) {
+    case commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII:
+    case commands::Request::FLICK_TO_NUMBER:
+    case commands::Request::TOGGLE_FLICK_TO_NUMBER:
+      insert_pos = 1;
+      break;
+    default:
+      break;
   }
+  modified |=
+      RewriteConsecutiveDigits(request.composer(), insert_pos, segments);
 
   return modified;
 }
