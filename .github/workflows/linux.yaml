@@ -65,4 +65,4 @@ jobs:
       - name: bazel test
         working-directory: ./src
         run: |
-          bazelisk test ... --config oss_linux --build_tests_only -c dbg
+          bazelisk test ... --config oss_linux -c dbg
