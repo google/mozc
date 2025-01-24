@@ -345,6 +345,16 @@ def mozc_win32_cc_prod_binary(
     if cpu in ["@platforms//cpu:x86_32", "@platforms//cpu:x86_64"]:
         modified_linkopts.append("/CETCOMPAT")
 
+    LOAD_LIBRARY_SEARCH_APPLICATION_DIR = 0x200
+    LOAD_LIBRARY_SEARCH_SYSTEM32 = 0x800
+    load_flags = LOAD_LIBRARY_SEARCH_SYSTEM32
+    if not linkshared:
+        # We build *.exe with dynamic CRT and deploy CRT DLLs into the
+        # application dir. Thus LOAD_LIBRARY_SEARCH_APPLICATION_DIR is also
+        # necessary.
+        load_flags += LOAD_LIBRARY_SEARCH_APPLICATION_DIR
+    modified_linkopts.append("/DEPENDENTLOADFLAG:0x%X" % load_flags)
+
     mozc_cc_binary(
         name = intermediate_name,
         srcs = srcs,
