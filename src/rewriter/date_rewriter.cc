@@ -1240,8 +1240,7 @@ std::optional<std::string> GetNDigits(const composer::ComposerData &composer,
   // Note that only one segment is in the Segments, but sometimes like
   // on partial conversion, segment.key() is different from the size of
   // the whole composition.
-  const std::string raw =
-      composer.GetRawSubString(0, Util::CharsLen(segment.key()));
+  const std::string raw = composer.GetRawSubString(0, segment.key_len());
   if (validated = VaridateNDigits(raw, n); validated) {
     return validated.value();
   }

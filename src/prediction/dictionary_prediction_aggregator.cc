@@ -184,7 +184,7 @@ bool HasHistoryKeyLongerThanOrEqualTo(const Segments &segments,
 bool IsLongKeyForRealtimeCandidates(const Segments &segments) {
   constexpr int kFewResultThreshold = 8;
   return (segments.segments_size() > 0 &&
-          Util::CharsLen(segments.segment(0).key()) >= kFewResultThreshold);
+          segments.segment(0).key_len() >= kFewResultThreshold);
 }
 
 size_t GetMaxSizeForRealtimeCandidates(const ConversionRequest &request,
@@ -617,7 +617,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
   }
 
   const std::string &key = segments.conversion_segment(0).key();
-  const size_t key_len = Util::CharsLen(key);
+  const size_t key_len = segments.conversion_segment(0).key_len();
 
   // TODO(toshiyuki): Check if we can remove this SUGGESTION check.
   // i.e. can we return NO_PREDICTION here for both of SUGGESTION and

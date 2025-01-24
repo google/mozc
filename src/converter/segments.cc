@@ -229,6 +229,7 @@ Segment::Segment(const Segment &x)
     : removed_candidates_for_debug_(x.removed_candidates_for_debug_),
       segment_type_(x.segment_type_),
       key_(x.key_),
+      key_len_(x.key_len_),
       meta_candidates_(x.meta_candidates_) {
   DeepCopyCandidates(x.candidates_);
 }
@@ -237,6 +238,7 @@ Segment &Segment::operator=(const Segment &x) {
   removed_candidates_for_debug_ = x.removed_candidates_for_debug_;
   segment_type_ = x.segment_type_;
   key_ = x.key_;
+  key_len_ = x.key_len_;
   meta_candidates_ = x.meta_candidates_;
 
   clear_candidates();
@@ -400,6 +402,7 @@ void Segment::move_candidate(int old_idx, int new_idx) {
 void Segment::Clear() {
   clear_candidates();
   key_.clear();
+  key_len_ = 0;
   meta_candidates_.clear();
   segment_type_ = FREE;
 }
@@ -635,7 +638,7 @@ bool Segments::Resize(size_t start_index, absl::Span<const uint8_t> new_sizes) {
   size_t modified_segments_size = 0;
   for (const Segment &segment : all().drop(start_index)) {
     absl::StrAppend(&key, segment.key());
-    key_len += Util::CharsLen(segment.key());
+    key_len += segment.key_len();
     ++modified_segments_size;
     if (key_len >= total_size) {
       break;

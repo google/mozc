@@ -47,6 +47,7 @@
 #include "base/container/freelist.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
+#include "base/util.h"
 #include "converter/lattice.h"
 #include "testing/friend_test.h"
 
@@ -348,9 +349,14 @@ class Segment final {
   }
 
   const std::string &key() const { return key_; }
+
+  // Returns the length of the key in Unicode characters. (e.g. 1 for "あ")
+  size_t key_len() const { return key_len_; }
+
   template <typename T>
   void set_key(T &&key) {
     strings::Assign(key_, std::forward<T>(key));
+    key_len_ = Util::CharsLen(key_);
   }
 
   // check if the specified index is valid or not.
@@ -434,6 +440,7 @@ class Segment final {
   // for partial suggestion or not.
   // You should detect that by using both Composer and Segments.
   std::string key_;
+  size_t key_len_ = 0;
   std::deque<Candidate *> candidates_;
   std::vector<Candidate> meta_candidates_;
   std::vector<std::unique_ptr<Candidate>> pool_;

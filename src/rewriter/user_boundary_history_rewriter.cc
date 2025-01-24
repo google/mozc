@@ -123,7 +123,7 @@ class SegmentsKey {
       byte_indexs.push_back(byte_index);
       byte_index += key.size();
 
-      const size_t key_size = Util::CharsLen(key);
+      const size_t key_size = segment.key_len();
       if (key_size > 255) {  // too long segment
         return std::nullopt;
       }

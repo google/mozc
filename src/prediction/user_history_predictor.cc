@@ -1190,10 +1190,9 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  const size_t input_key_len =
-      Util::CharsLen(segments->conversion_segment(0).key());
+  const bool is_empty_input = segments->conversion_segment(0).key().empty();
   const Entry *prev_entry = LookupPrevEntry(*segments);
-  if (input_key_len == 0 && prev_entry == nullptr) {
+  if (is_empty_input && prev_entry == nullptr) {
     MOZC_VLOG(1) << "If input_key_len is 0, prev_entry must be set";
     return false;
   }
@@ -1201,7 +1200,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
   const auto &params = request.request().decoder_experiment_params();
 
   const bool is_zero_query =
-      ((request_type == ZERO_QUERY_SUGGESTION) && (input_key_len == 0));
+      (request_type == ZERO_QUERY_SUGGESTION) && is_empty_input;
   size_t max_prediction_size =
       request.max_user_history_prediction_candidates_size();
   size_t max_prediction_char_coverage =
@@ -1514,7 +1513,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
     LOG(ERROR) << "Unknown mode";
     return false;
   }
-  const uint32_t input_key_len = Util::CharsLen(segment->key());
+  const uint32_t input_key_len = segment->key_len();
 
   const int filter_mode =
       request.request()

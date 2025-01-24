@@ -334,8 +334,7 @@ void DictionaryPredictor::RewriteResultsForPrediction(
   }
 
   if (!is_mixed_conversion) {
-    const size_t input_key_len =
-        Util::CharsLen(segments.conversion_segment(0).key());
+    const size_t input_key_len = segments.conversion_segment(0).key_len();
     RemoveMissSpelledCandidates(input_key_len, results);
   }
 }
@@ -347,9 +346,8 @@ void DictionaryPredictor::MaybePopulateTypingCorrectedResults(
     return;
   }
 
-  const size_t key_len = Util::CharsLen(segments.conversion_segment(0).key());
   constexpr int kMinTypingCorrectionKeyLen = 3;
-  if (key_len < kMinTypingCorrectionKeyLen) {
+  if (segments.conversion_segment(0).key_len() < kMinTypingCorrectionKeyLen) {
     return;
   }
 

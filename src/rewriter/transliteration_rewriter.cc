@@ -249,18 +249,17 @@ bool TransliterationRewriter::FillT13nsFromComposer(
   bool modified = false;
   size_t composition_pos = 0;
   for (Segment &segment : segments->conversion_segments()) {
-    const std::string &key = segment.key();
-    if (key.empty()) {
+    const size_t composition_len = segment.key_len();
+    if (composition_len == 0) {
       continue;
     }
-    const size_t composition_len = Util::CharsLen(key);
     std::vector<std::string> t13ns;
     request.composer().GetSubTransliterations(composition_pos, composition_len,
                                               &t13ns);
     composition_pos += composition_len;
 
     ModifyT13ns(request, segment, &t13ns);
-    modified |= SetTransliterations(t13ns, key, &segment);
+    modified |= SetTransliterations(t13ns, segment.key(), &segment);
   }
   return modified;
 }
@@ -347,8 +346,7 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
   // Note that only one segment is in the Segments, but sometimes like
   // on partial conversion, segment.key() is different from the size of
   // the whole composition.
-  const std::string raw =
-      composer.GetRawSubString(0, Util::CharsLen(segment->key()));
+  const std::string raw = composer.GetRawSubString(0, segment->key_len());
   if (raw.empty()) {
     return false;
   }

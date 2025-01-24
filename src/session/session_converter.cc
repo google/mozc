@@ -263,7 +263,7 @@ bool SessionConverter::ConvertToTransliteration(
       size_t offset = 0;
       for (const Segment &segment :
            segments_.conversion_segments().drop(segment_index_ + 1)) {
-        offset += Util::CharsLen(segment.key());
+        offset += segment.key_len();
       }
       ResizeSegmentWidth(composer, offset);
     }
@@ -759,7 +759,7 @@ void SessionConverter::CommitSegmentsInternal(
 
     // Accumulate the size of i-th segment's key.
     // The caller will remove corresponding characters from the composer.
-    *consumed_key_size += Util::CharsLen(segment.key());
+    *consumed_key_size += segment.key_len();
 
     // Collect candidate's id for each segment.
     candidate_ids.push_back(GetCandidateIndexForConverter(i));
@@ -1292,7 +1292,7 @@ size_t SessionConverter::GetConsumedPreeditSize(const size_t index,
         segments_.conversion_segment(i).candidate(id);
     DCHECK(
         !(candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED));
-    result += Util::CharsLen(segments_.conversion_segment(i).key());
+    result += segments_.conversion_segment(i).key_len();
   }
   return result;
 }

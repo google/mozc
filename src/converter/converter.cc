@@ -373,7 +373,7 @@ bool Converter::CommitPartialSuggestionSegmentValue(
   DCHECK_LT(0, segment->candidates_size());
   const Segment::Candidate &submitted_candidate = segment->candidate(0);
   const bool auto_partial_suggestion =
-      Util::CharsLen(submitted_candidate.key) != Util::CharsLen(segment->key());
+      Util::CharsLen(submitted_candidate.key) != segment->key_len();
   segment->set_key(current_segment_key);
 
   Segment *new_segment = segments->insert_segment(raw_segment_index + 1);
@@ -431,12 +431,11 @@ bool Converter::ResizeSegment(Segments *segments,
     return false;
   }
 
-  absl::string_view key = segments->conversion_segment(segment_index).key();
-  if (key.empty()) {
+  const size_t key_len = segments->conversion_segment(segment_index).key_len();
+  if (key_len == 0) {
     return false;
   }
 
-  const int key_len = Util::CharsLen(key);
   const int new_size = key_len + offset_length;
   if (new_size <= 0 || new_size > std::numeric_limits<uint8_t>::max()) {
     return false;

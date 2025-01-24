@@ -101,6 +101,7 @@ MATCHER_P(EqualsSegment, segment, "") {
   }
   COMPARE_PROPERTY(segment_type);
   COMPARE_PROPERTY(key);
+  COMPARE_PROPERTY(key_len);
 #undef COMPARE_PROPERTY
 
   // Compare candidates.

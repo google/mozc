@@ -798,6 +798,14 @@ TEST(CandidateTest, InnerSegmentIterator) {
   }
 }
 
+TEST(SegmentTest, KeyLength) {
+  Segment segment;
+  segment.set_key("test");
+  EXPECT_EQ(segment.key_len(), 4);
+  segment.set_key("あいう");
+  EXPECT_EQ(segment.key_len(), 3);
+}
+
 TEST(SegmentTest, Copy) {
   Segment src;
 
@@ -813,16 +821,18 @@ TEST(SegmentTest, Copy) {
   // Test copy constructor.
   Segment dest(src);
   EXPECT_EQ(dest.key(), src.key());
+  EXPECT_EQ(dest.key_len(), src.key_len());
   EXPECT_EQ(dest.segment_type(), src.segment_type());
   EXPECT_EQ(dest.candidate(0).key, src.candidate(0).key);
   EXPECT_EQ(dest.candidate(1).key, src.candidate(1).key);
   EXPECT_EQ(dest.meta_candidate(0).key, src.meta_candidate(0).key);
 
   // Test copy assignment.
-  dest.add_candidate()->key = "dummy";
-  dest.add_candidate()->key = "dummy";
+  dest.add_candidate()->key = "placeholder";
+  dest.add_candidate()->key = "placeholder";
   dest = src;
   EXPECT_EQ(dest.key(), src.key());
+  EXPECT_EQ(dest.key_len(), src.key_len());
   EXPECT_EQ(dest.segment_type(), src.segment_type());
   EXPECT_EQ(dest.candidate(0).key, src.candidate(0).key);
   EXPECT_EQ(dest.candidate(1).key, src.candidate(1).key);
