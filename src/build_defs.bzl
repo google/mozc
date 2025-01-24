@@ -415,6 +415,7 @@ def mozc_win32_cc_prod_binary(
         name = name + "_pdb_file",
         srcs = [name],
         output_group = "pdb_file",
+        target_compatible_with = target_compatible_with,
         visibility = ["//visibility:private"],
     )
 
