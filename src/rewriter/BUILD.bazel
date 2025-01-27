@@ -85,7 +85,6 @@ mozc_cc_library(
         "//dictionary:pos_matcher",
         "//request:conversion_request",
         "//storage:existence_filter",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status:statusor",
@@ -106,6 +105,8 @@ mozc_cc_test(
         "//request:conversion_request",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

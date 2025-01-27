@@ -30,6 +30,7 @@
 #include "rewriter/collocation_rewriter.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -38,7 +39,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
@@ -55,8 +55,6 @@
 #include "request/conversion_request.h"
 #include "rewriter/collocation_util.h"
 #include "storage/existence_filter.h"
-
-ABSL_FLAG(bool, use_collocation, true, "use collocation rewrite");
 
 namespace mozc {
 namespace collocation_rewriter_internal {
@@ -175,33 +173,11 @@ void ResolveCompoundSegment(const absl::string_view top_value,
                             const SegmentLookupType type,
                             std::vector<std::string> *output) {
   // see "http://ja.wikipedia.org/wiki/助詞"
-  static constexpr char kPat1[] = "が";
-  // "の" was not good...
-  // static constexpr char kPat2[] = "の";
-  static constexpr char kPat3[] = "を";
-  static constexpr char kPat4[] = "に";
-  static constexpr char kPat5[] = "へ";
-  static constexpr char kPat6[] = "と";
-  static constexpr char kPat7[] = "から";
-  static constexpr char kPat8[] = "より";
-  static constexpr char kPat9[] = "で";
+  // "の" is excluded because it is not good for collocation.
+  static constexpr std::array<absl::string_view, 8> kParticles = {
+      "が", "を", "に", "へ", "と", "から", "より", "で"};
 
-  static const struct {
-    const char *pat;
-    size_t len;
-  } kParticles[] = {{kPat1, std::size(kPat1) - 1},
-                    //    {kPat2, std::size(kPat2) - 1},
-                    {kPat3, std::size(kPat3) - 1},
-                    {kPat4, std::size(kPat4) - 1},
-                    {kPat5, std::size(kPat5) - 1},
-                    {kPat6, std::size(kPat6) - 1},
-                    {kPat7, std::size(kPat7) - 1},
-                    {kPat8, std::size(kPat8) - 1},
-                    {kPat9, std::size(kPat9) - 1},
-                    {nullptr, 0}};
-
-  for (size_t i = 0; kParticles[i].pat != nullptr; ++i) {
-    const absl::string_view particle(kParticles[i].pat, kParticles[i].len);
+  for (absl::string_view particle : kParticles) {
     absl::string_view first_content, second;
     if (!ParseCompound(top_value, particle, &first_content, &second)) {
       continue;
@@ -251,8 +227,8 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
     output->push_back(content);
     // "舞って" workaround
     // V+"て" is often treated as one compound.
-    static constexpr char kPat[] = "て";
-    if (absl::EndsWith(content, absl::string_view(kPat, std::size(kPat) - 1))) {
+    static constexpr absl::string_view pattern = "て";
+    if (absl::EndsWith(content, pattern)) {
       push_back_normalized_string(
           Util::Utf8SubString(content, 0, content_len - 1));
     }
@@ -316,8 +292,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
 
   // "<XXいる|>" can be rewrote to "<YY|いる>" and vice versa
   {
-    static constexpr char kPat[] = "いる";  // "いる"
-    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
+    static constexpr absl::string_view kSuffix = "いる";
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
         absl::EndsWith(top_value, kSuffix) &&
         absl::EndsWith(aux_value, kSuffix)) {
@@ -341,8 +316,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
 
   // "<XXせる|>" can be rewrote to "<YY|せる>" and vice versa
   {
-    constexpr char kPat[] = "せる";
-    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
+    static constexpr absl::string_view kSuffix = "せる";
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
         absl::EndsWith(top_value, kSuffix) &&
         absl::EndsWith(aux_value, kSuffix)) {
@@ -369,8 +343,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
   // "<XX|する>" can be rewrote using "<XXす|る>" and "<XX|する>"
   // in "<XX|する>", XX must be single script type
   {
-    static constexpr char kPat[] = "する";
-    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
+    static constexpr absl::string_view kSuffix = "する";
     if (aux_value_len == 2 && absl::EndsWith(aux_value, kSuffix)) {
       if (content_script_type != Util::KATAKANA &&
           content_script_type != Util::HIRAGANA &&
@@ -390,8 +363,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
   // "<XXる>" can be rewrote using "<XX|る>"
   // "まとめる", "衰える"
   {
-    static constexpr char kPat[] = "る";
-    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
+    static constexpr absl::string_view kSuffix = "る";
     if (aux_value_len == 0 && absl::EndsWith(value, kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYる"
@@ -404,16 +376,14 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
 
   // "<XXす>" can be rewrote using "XXする"
   {
-    static constexpr char kPat[] = "す";
-    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
+    static constexpr absl::string_view kSuffix = "す";
     if (absl::EndsWith(value, kSuffix) &&
         Util::IsScriptType(Util::Utf8SubString(value, 0, value_len - 1),
                            Util::KANJI)) {
       if (type == RIGHT) {
-        constexpr char kRu[] = "る";
+        static constexpr absl::string_view kRu = "る";
         // "YYする" in addition to "YY"
-        push_back_normalized_string(
-            absl::StrCat(value, absl::string_view(kRu, std::size(kRu) - 1)));
+        push_back_normalized_string(absl::StrCat(value, kRu));
       }
       return true;
     }
@@ -421,8 +391,8 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
 
   // "<XXし|た>" can be rewrote using "<XX|した>"
   {
-    static constexpr char kPat[] = "した";
-    const absl::string_view kShi(kPat, 3), kTa(kPat + 3, 3);
+    static constexpr absl::string_view kShi = "し";
+    static constexpr absl::string_view kTa = "た";
     if (absl::EndsWith(content, kShi) && aux_value == kTa &&
         absl::EndsWith(top_content, kShi) && top_aux_value == kTa) {
       if (type == RIGHT) {
@@ -579,9 +549,6 @@ std::unique_ptr<CollocationRewriter> CollocationRewriter::Create(
 
 bool CollocationRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
-  if (!absl::GetFlag(FLAGS_use_collocation)) {
-    return false;
-  }
   return RewriteCollocation(segments);
 }
 

@@ -31,10 +31,12 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -54,10 +56,10 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
   // Helper data structures to define test cases.
   // Used to generate Segment::Candidate.
   struct CandidateData {
-    const char *key;
-    const char *content_key;
-    const char *value;
-    const char *content_value;
+    const absl::string_view key;
+    const absl::string_view content_key;
+    const absl::string_view value;
+    const absl::string_view content_value;
     const int32_t cost;
     const uint16_t lid;
     const uint16_t rid;
@@ -65,16 +67,12 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
 
   // Used to generate Segment.
   struct SegmentData {
-    const char *key;
-    const CandidateData *candidates;
-    const size_t candidates_size;
+    const absl::string_view key;
+    const absl::Span<const CandidateData> candidates;
   };
 
   // Used to generate Segments.
-  struct SegmentsData {
-    const SegmentData *segments;
-    const size_t segments_size;
-  };
+  using SegmentsData = absl::Span<const SegmentData>;
 
   CollocationRewriterTest()
       : pos_matcher_(data_manager_.GetPosMatcherData()),
@@ -83,7 +81,7 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
   // Makes a segment from SegmentData.
   static void MakeSegment(const SegmentData &data, Segment *segment) {
     segment->set_key(data.key);
-    for (size_t i = 0; i < data.candidates_size; ++i) {
+    for (size_t i = 0; i < data.candidates.size(); ++i) {
       Segment::Candidate *cand = segment->add_candidate();
       const CandidateData &cand_data = data.candidates[i];
       cand->key = cand_data.key;
@@ -99,8 +97,8 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
   // Makes a segments from SegmentsData.
   static void MakeSegments(const SegmentsData &data, Segments *segments) {
     segments->Clear();
-    for (size_t i = 0; i < data.segments_size; ++i) {
-      MakeSegment(data.segments[i], segments->add_segment());
+    for (const SegmentData &seg_data : data) {
+      MakeSegment(seg_data, segments->add_segment());
     }
   }
 
@@ -133,27 +131,27 @@ TEST_F(CollocationRewriterTest, NekowoKaitai) {
   // "ネコを" | "買いたい"
   // "猫を"   | "解体"
   //         | "飼いたい"
-  const char *kNekowo = "ねこを";
-  const char *kNeko = "ねこ";
+  constexpr absl::string_view kNekowo = "ねこを";
+  constexpr absl::string_view kNeko = "ねこ";
   const uint16_t id = pos_matcher_.GetUnknownId();
-  const CandidateData kNekowoCands[] = {
+  const std::vector<CandidateData> kNekowoCands = {
       {kNekowo, kNeko, "ネコを", "ネコを", 0, id, id},
       {kNekowo, kNeko, "猫を", "猫を", 0, id, id},
   };
-  const char *kKaitaiHiragana = "かいたい";
-  const char *kBuy = "買いたい";
-  const char *kCut = "解体";
-  const char *kFeed = "飼いたい";
-  const CandidateData kKaitaiCands[] = {
+  constexpr absl::string_view kKaitaiHiragana = "かいたい";
+  constexpr absl::string_view kBuy = "買いたい";
+  constexpr absl::string_view kCut = "解体";
+  constexpr absl::string_view kFeed = "飼いたい";
+  const std::vector<CandidateData> kKaitaiCands = {
       {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
-  const SegmentData kSegmentData[] = {
-      {kNekowo, kNekowoCands, std::size(kNekowoCands)},
-      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
+  const std::vector<SegmentData> kSegmentData = {
+      {kNekowo, kNekowoCands},
+      {kKaitaiHiragana, kKaitaiCands},
   };
-  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData};
 
   Segments segments;
   MakeSegments(kSegments, &segments);
@@ -170,27 +168,27 @@ TEST_F(CollocationRewriterTest, MagurowoKaitai) {
   // "マグロを" | "買いたい"
   // "鮪を"    | "解体"
   //          | "飼いたい"
-  const char *kMagurowo = "まぐろを";
-  const char *kMaguro = "まぐろ";
+  constexpr absl::string_view kMagurowo = "まぐろを";
+  constexpr absl::string_view kMaguro = "まぐろ";
   const uint16_t id = pos_matcher_.GetUnknownId();
-  const CandidateData kMagurowoCands[] = {
+  const std::vector<CandidateData> kMagurowoCands = {
       {kMagurowo, kMaguro, "マグロを", "マグロ", 0, id, id},
       {kMagurowo, kMaguro, "鮪を", "鮪", 0, id, id},
   };
-  const char *kKaitaiHiragana = "かいたい";
-  const char *kBuy = "買いたい";
-  const char *kCut = "解体";
-  const char *kFeed = "飼いたい";
-  const CandidateData kKaitaiCands[] = {
+  constexpr absl::string_view kKaitaiHiragana = "かいたい";
+  constexpr absl::string_view kBuy = "買いたい";
+  constexpr absl::string_view kCut = "解体";
+  constexpr absl::string_view kFeed = "飼いたい";
+  const std::vector<CandidateData> kKaitaiCands = {
       {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
-  const SegmentData kSegmentData[] = {
-      {kMagurowo, kMagurowoCands, std::size(kMagurowoCands)},
-      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
+  const std::vector<SegmentData> kSegmentData = {
+      {kMagurowo, kMagurowoCands},
+      {kKaitaiHiragana, kKaitaiCands},
   };
-  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData};
 
   Segments segments;
   MakeSegments(kSegments, &segments);
@@ -204,35 +202,35 @@ TEST_F(CollocationRewriterTest, CrossOverAdverbSegment) {
   // "ねこを"    | "ネコを" "猫を"
   // "すごく"    | "すごく"
   // "かいたい"  | "買いたい" "解体" "飼いたい"
-  const char *kNekowo = "ねこを";
-  const char *kNeko = "ねこ";
+  constexpr absl::string_view kNekowo = "ねこを";
+  constexpr absl::string_view kNeko = "ねこ";
   const uint16_t id = pos_matcher_.GetUnknownId();
-  const CandidateData kNekowoCands[] = {
+  const std::vector<CandidateData> kNekowoCands = {
       {kNekowo, kNeko, "ネコを", "ネコを", 0, id, id},
       {kNekowo, kNeko, "猫を", "猫を", 0, id, id},
   };
 
-  const char *kSugoku = "すごく";
+  constexpr absl::string_view kSugoku = "すごく";
   const uint16_t adverb_id = pos_matcher_.GetAdverbId();
-  const CandidateData kSugokuCands[] = {
+  const std::vector<CandidateData> kSugokuCands = {
       {kSugoku, kSugoku, kSugoku, kSugoku, 0, adverb_id, adverb_id},
   };
 
-  const char *kKaitaiHiragana = "かいたい";
-  const char *kBuy = "買いたい";
-  const char *kCut = "解体";
-  const char *kFeed = "飼いたい";
-  const CandidateData kKaitaiCands[] = {
+  constexpr absl::string_view kKaitaiHiragana = "かいたい";
+  constexpr absl::string_view kBuy = "買いたい";
+  constexpr absl::string_view kCut = "解体";
+  constexpr absl::string_view kFeed = "飼いたい";
+  const std::vector<CandidateData> kKaitaiCands = {
       {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
-  const SegmentData kSegmentData[] = {
-      {kNekowo, kNekowoCands, std::size(kNekowoCands)},
-      {kSugoku, kSugokuCands, std::size(kSugokuCands)},
-      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
+  const std::vector<SegmentData> kSegmentData = {
+      {kNekowo, kNekowoCands},
+      {kSugoku, kSugokuCands},
+      {kKaitaiHiragana, kKaitaiCands},
   };
-  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData};
 
   Segments segments;
   MakeSegments(kSegments, &segments);
@@ -247,34 +245,34 @@ TEST_F(CollocationRewriterTest, DoNotCrossOverNonAdverbSegment) {
   // "ねこを"    | "ネコを" "猫を"
   // "すごく"    | "すごく"
   // "かいたい"  | "買いたい" "解体" "飼いたい"
-  const char *kNekowo = "ねこを";
-  const char *kNeko = "ねこ";
+  constexpr absl::string_view kNekowo = "ねこを";
+  constexpr absl::string_view kNeko = "ねこ";
   const uint16_t id = pos_matcher_.GetUnknownId();
-  const CandidateData kNekowoCands[] = {
+  const std::vector<CandidateData> kNekowoCands = {
       {kNekowo, kNeko, "ネコを", "ネコを", 0, id, id},
       {kNekowo, kNeko, "猫を", "猫を", 0, id, id},
   };
 
-  const char *kSugoku = "すごく";
-  const CandidateData kSugokuCands[] = {
+  constexpr absl::string_view kSugoku = "すごく";
+  const std::vector<CandidateData> kSugokuCands = {
       {kSugoku, kSugoku, kSugoku, kSugoku, 0, id, id},
   };
 
-  const char *kKaitaiHiragana = "かいたい";
-  const char *kBuy = "買いたい";
-  const char *kCut = "解体";
-  const char *kFeed = "飼いたい";
-  const CandidateData kKaitaiCands[] = {
+  constexpr absl::string_view kKaitaiHiragana = "かいたい";
+  constexpr absl::string_view kBuy = "買いたい";
+  constexpr absl::string_view kCut = "解体";
+  constexpr absl::string_view kFeed = "飼いたい";
+  const std::vector<CandidateData> kKaitaiCands = {
       {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
-  const SegmentData kSegmentData[] = {
-      {kNekowo, kNekowoCands, std::size(kNekowoCands)},
-      {kSugoku, kSugokuCands, std::size(kSugokuCands)},
-      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
+  const std::vector<SegmentData> kSegmentData = {
+      {kNekowo, kNekowoCands},
+      {kSugoku, kSugokuCands},
+      {kKaitaiHiragana, kKaitaiCands},
   };
-  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData};
 
   Segments segments;
   MakeSegments(kSegments, &segments);
@@ -296,27 +294,27 @@ TEST_F(CollocationRewriterTest, DoNotPromoteHighCostCandidate) {
   // "ネコを" | "買いたい"
   // "猫を"   | "解体"
   //         | "飼いたい" (high cost)
-  const char *kNekowo = "ねこを";
-  const char *kNeko = "ねこ";
+  constexpr absl::string_view kNekowo = "ねこを";
+  constexpr absl::string_view kNeko = "ねこ";
   const uint16_t id = pos_matcher_.GetUnknownId();
-  const CandidateData kNekowoCands[] = {
+  const std::vector<CandidateData> kNekowoCands = {
       {kNekowo, kNeko, "ネコを", "ネコを", 0, id, id},
       {kNekowo, kNeko, "猫を", "猫を", 0, id, id},
   };
-  const char *kKaitaiHiragana = "かいたい";
-  const char *kBuy = "買いたい";
-  const char *kCut = "解体";
-  const char *kFeed = "飼いたい";
-  const CandidateData kKaitaiCands[] = {
+  constexpr absl::string_view kKaitaiHiragana = "かいたい";
+  constexpr absl::string_view kBuy = "買いたい";
+  constexpr absl::string_view kCut = "解体";
+  constexpr absl::string_view kFeed = "飼いたい";
+  const std::vector<CandidateData> kKaitaiCands = {
       {kKaitaiHiragana, kKaitaiHiragana, kBuy, kBuy, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kCut, kCut, 0, id, id},
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 10000, id, id},
   };
-  const SegmentData kSegmentData[] = {
-      {kNekowo, kNekowoCands, std::size(kNekowoCands)},
-      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
+  const std::vector<SegmentData> kSegmentData = {
+      {kNekowo, kNekowoCands},
+      {kKaitaiHiragana, kKaitaiCands},
   };
-  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData};
 
   Segments segments;
   MakeSegments(kSegments, &segments);
@@ -328,17 +326,17 @@ TEST_F(CollocationRewriterTest, DoNotPromoteHighCostCandidate) {
 
 TEST_F(CollocationRewriterTest, ImmuneToInvalidSegments) {
   const uint16_t kUnkId = pos_matcher_.GetUnknownId();
-  const CandidateData kNekowoCands[] = {
+  const std::vector<CandidateData> kNekowoCands = {
       {"ねこを", "ねこ", "猫", "猫を", 0, kUnkId, kUnkId},
   };
-  const CandidateData kKaitaiCands[] = {
+  const std::vector<CandidateData> kKaitaiCands = {
       {"かいたい", "かいたい", "飼いたい", "飼いたい", 0, kUnkId, kUnkId},
   };
-  const SegmentData kSegmentData[] = {
-      {"ねこを", kNekowoCands, std::size(kNekowoCands)},
-      {"かいたい", kKaitaiCands, std::size(kKaitaiCands)},
+  const std::vector<SegmentData> kSegmentData = {
+      {"ねこを", kNekowoCands},
+      {"かいたい", kKaitaiCands},
   };
-  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData};
 
   {
     Segments segments;
@@ -365,18 +363,18 @@ TEST_F(CollocationRewriterTest, RemoveNumber) {
     // "一週" | "回って"
     // "一周" |
     const uint16_t id = pos_matcher_.GetUnknownId();
-    const CandidateData kLeftCands[] = {
+    const std::vector<CandidateData> kLeftCands = {
         {"いっしゅう", "いっしゅう", "一週", "一週", 0, id, id},
         {"いっしゅう", "いっしゅう", "一周", "一周", 0, id, id},
     };
-    const CandidateData kRightCands[] = {
+    const std::vector<CandidateData> kRightCands = {
         {"まわって", "まわっ", "回って", "回っ", 0, id, id},
     };
-    const SegmentData kSegmentData[] = {
-        {"いっしゅう", kLeftCands, std::size(kLeftCands)},
-        {"まわって", kRightCands, std::size(kRightCands)},
+    const std::vector<SegmentData> kSegmentData = {
+        {"いっしゅう", kLeftCands},
+        {"まわって", kRightCands},
     };
-    const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+    const SegmentsData kSegments = {kSegmentData};
 
     Segments segments;
     MakeSegments(kSegments, &segments);
@@ -392,18 +390,18 @@ TEST_F(CollocationRewriterTest, RemoveNumber) {
     // "週" | "一回って"
     // "周" |
     const uint16_t id = pos_matcher_.GetUnknownId();
-    const CandidateData kLeftCands[] = {
+    const std::vector<CandidateData> kLeftCands = {
         {"しゅう", "しゅう", "週", "週", 0, id, id},
         {"しゅう", "しゅう", "周", "周", 0, id, id},
     };
-    const CandidateData kRightCands[] = {
+    const std::vector<CandidateData> kRightCands = {
         {"いっかいって", "いっかい", "一回って", "一回", 0, id, id},
     };
-    const SegmentData kSegmentData[] = {
-        {"しゅう", kLeftCands, std::size(kLeftCands)},
-        {"いっかいって", kRightCands, std::size(kRightCands)},
+    const std::vector<SegmentData> kSegmentData = {
+        {"しゅう", kLeftCands},
+        {"いっかいって", kRightCands},
     };
-    const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+    const SegmentsData kSegments = {kSegmentData};
 
     Segments segments;
     MakeSegments(kSegments, &segments);
