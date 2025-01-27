@@ -68,19 +68,62 @@
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE
 #endif                           // __APPLE__
 
-#include "rewriter/date_rewriter.h"
-#include "rewriter/fortune_rewriter.h"
-#include "rewriter/user_dictionary_rewriter.h"
 
+// CommandRewriter is not tested well on Android or iOS.
+// So we temporarily disable it.
+// TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
 #if !(defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE))
-#include "rewriter/command_rewriter.h"
+#define MOZC_COMMAND_REWRITER
 #endif  // !(__ANDROID__ || TARGET_OS_IPHONE)
 
-#ifndef NO_USAGE_REWRITER
-#include "rewriter/usage_rewriter.h"
-#endif  // !NO_USAGE_REWRITER
+// DateRewriter may return the date information that is possibly different from
+// the user's environment.
+#define MOZC_DATE_REWRITER
 
+// FortuneRewriter changes the result when invoked in another day but it also
+// suffers from the inconsistency of locale between server and user's
+// environment.
+#define MOZC_FORTUNE_REWRITER
+
+// UsageRewriter is not used by non application build.
+#ifndef NO_USAGE_REWRITER
+#define MOZC_USAGE_REWRITER
+#endif  // NO_USAGE_REWRITER
+
+// UserDictionaryRewriter is only for application build because it will
+// access to the local files per user.
+#define MOZC_USER_DICTIONARY_REWRITER
+
+// HistoryRewriter is used only for application build because it will
+// access to the local files at the initialization timing.
+#define MOZC_USER_HISTORY_REWRITER
+
+
+#ifdef MOZC_COMMAND_REWRITER
+#include "rewriter/command_rewriter.h"
+#endif  // MOZC_COMMAND_REWRITER
+
+#ifdef MOZC_DATA_REWRITER
+#include "rewriter/date_rewriter.h"
+#endif  // MOZC_DATA_REWRITER
+
+#ifdef MOZC_FORTUNE_REWRITER
+#include "rewriter/fortune_rewriter.h"
+#endif  // MOZC_FORTUNE_REWRITER
+
+#ifdef MOZC_USAGE_REWRITER
+#include "rewriter/usage_rewriter.h"
+#endif  // MOZC_USAGE_REWRITER
+
+#ifdef MOZC_USER_DICTIONARY_REWRITER
+#include "rewriter/user_dictionary_rewriter.h"
+#endif  // MOZC_USER_DICTIONARY_REWRITER
+
+#ifdef MOZC_USER_HISTORY_REWRITER
 ABSL_FLAG(bool, use_history_rewriter, true, "Use history rewriter or not.");
+#else   // MOZC_USER_HISTORY_REWRITER
+ABSL_FLAG(bool, use_history_rewriter, false, "Use history rewriter or not.");
+#endif  // MOZC_USER_HISTORY_REWRITER
 
 namespace mozc {
 
@@ -90,7 +133,10 @@ Rewriter::Rewriter(const engine::Modules &modules) {
   const dictionary::PosMatcher &pos_matcher = *modules.GetPosMatcher();
   const dictionary::PosGroup *pos_group = modules.GetPosGroup();
 
+#ifdef MOZC_USER_DICTIONARY_REWRITER
   AddRewriter(std::make_unique<UserDictionaryRewriter>());
+#endif  // MOZC_USER_DICTIONARY_REWRITER
+
   AddRewriter(std::make_unique<FocusCandidateRewriter>(data_manager));
   AddRewriter(std::make_unique<LanguageAwareRewriter>(pos_matcher, dictionary));
   AddRewriter(std::make_unique<TransliterationRewriter>(pos_matcher));
@@ -115,17 +161,22 @@ Rewriter::Rewriter(const engine::Modules &modules) {
         std::make_unique<UserSegmentHistoryRewriter>(&pos_matcher, pos_group));
   }
 
+#ifdef MOZC_DATE_REWRITERS
   AddRewriter(std::make_unique<DateRewriter>(dictionary));
+#endif  // MOZC_DATE_REWRITERS
+
+#ifdef MOZC_FORTUNE_REWRITERS
   AddRewriter(std::make_unique<FortuneRewriter>());
-#if !(defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE))
-  // CommandRewriter is not tested well on Android or iOS.
-  // So we temporarily disable it.
-  // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
+#endif  // MOZC_FORTUNE_REWRITERS
+
+#ifdef MOZC_COMMAND_REWRITER
   AddRewriter(std::make_unique<CommandRewriter>());
-#endif  // !(__ANDROID__ || TARGET_OS_IPHONE)
-#ifndef NO_USAGE_REWRITER
+#endif  // MOZC_COMMAND_REWRITER
+
+#ifdef MOZC_USAGE_REWRITER
   AddRewriter(std::make_unique<UsageRewriter>(data_manager, dictionary));
-#endif  // NO_USAGE_REWRITER
+#endif  // MOZC_USAGE_REWRITER
+
   AddRewriter(
       std::make_unique<VersionRewriter>(data_manager->GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
