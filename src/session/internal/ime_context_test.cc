@@ -38,9 +38,9 @@
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "engine/session_converter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/session_converter.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
@@ -49,6 +49,7 @@ namespace mozc {
 namespace session {
 
 using ::mozc::composer::Composer;
+using ::mozc::engine::SessionConverter;
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;

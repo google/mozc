@@ -117,23 +117,6 @@
       },
     },
     {
-      'target_name': 'session_converter_test',
-      'type': 'executable',
-      'sources': [
-        'session_converter_test.cc',
-      ],
-      'dependencies': [
-        '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
-        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_oss_src_dir)/testing/testing.gyp:testing',
-        '<(mozc_oss_src_dir)/testing/testing.gyp:testing_util',
-        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
-        'session.gyp:session',
-      ],
-    },
-    {
       'target_name': 'session_module_test',
       'type': 'executable',
       'sources': [
@@ -198,10 +181,8 @@
       'target_name': 'session_internal_test',
       'type': 'executable',
       'sources': [
-        'internal/candidate_list_test.cc',
         'internal/ime_context_test.cc',
         'internal/keymap_test.cc',
-        'internal/session_output_test.cc',
         'internal/key_event_transformer_test.cc',
       ],
       'dependencies': [
@@ -254,21 +235,6 @@
       },
     },
     {
-      'target_name': 'session_converter_stress_test',
-      'type': 'executable',
-      'sources': [
-        'session_converter_stress_test.cc'
-      ],
-      'dependencies': [
-        '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
-        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
-        'session.gyp:session',
-      ],
-      'variables': {
-        'test_size': 'large',
-      },
-    },
-    {
       'target_name': 'session_handler_scenario_test',
       'type': 'executable',
       'sources': [
@@ -305,11 +271,9 @@
         ## Stress tests and scenario tests are disabled,
         ## because they take long time (~100sec in total).
         ## Those tests are checked by other tools (e.g. Bazel test).
-        # 'session_converter_stress_test',
         # 'session_handler_scenario_test',
         # 'session_handler_stress_test',
         'random_keyevents_generator_test',
-        'session_converter_test',
         'session_handler_test',
         'session_key_handling_test',
         'session_internal_test',

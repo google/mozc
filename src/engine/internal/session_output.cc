@@ -29,7 +29,7 @@
 
 // Class functions to be used for output by the Session class.
 
-#include "session/internal/session_output.h"
+#include "engine/internal/session_output.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -50,12 +50,12 @@
 #include "base/version.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
+#include "engine/internal/candidate_list.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
-#include "session/internal/candidate_list.h"
 
 namespace mozc {
-namespace session {
+namespace engine {
 namespace {
 
 bool FillAnnotation(const Segment::Candidate &candidate_value,
@@ -523,5 +523,5 @@ void SessionOutput::FillCursorOffsetResult(int32_t cursor_offset,
   result_proto->set_cursor_offset(cursor_offset);
 }
 
-}  // namespace session
+}  // namespace engine
 }  // namespace mozc

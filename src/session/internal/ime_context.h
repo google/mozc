@@ -39,11 +39,11 @@
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
+#include "engine/session_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/key_event_transformer.h"
 #include "session/internal/keymap.h"
-#include "session/session_converter_interface.h"
 
 namespace mozc {
 namespace session {
@@ -74,9 +74,14 @@ class ImeContext final {
     composer_ = std::move(composer);
   }
 
-  const SessionConverterInterface &converter() const { return *converter_; }
-  SessionConverterInterface *mutable_converter() { return converter_.get(); }
-  void set_converter(std::unique_ptr<SessionConverterInterface> converter) {
+  const engine::SessionConverterInterface &converter() const {
+    return *converter_;
+  }
+  engine::SessionConverterInterface *mutable_converter() {
+    return converter_.get();
+  }
+  void set_converter(
+      std::unique_ptr<engine::SessionConverterInterface> converter) {
     converter_ = std::move(converter);
   }
 
@@ -140,7 +145,7 @@ class ImeContext final {
   absl::Time last_command_time_ = absl::InfinitePast();
 
   std::unique_ptr<composer::Composer> composer_;
-  std::unique_ptr<SessionConverterInterface> converter_;
+  std::unique_ptr<engine::SessionConverterInterface> converter_;
   KeyEventTransformer key_event_transformer_;
 
   const commands::Request *request_;

@@ -29,7 +29,7 @@
 
 // CandidateList and Candidate classes to be used with Session class.
 
-#include "session/internal/candidate_list.h"
+#include "engine/internal/candidate_list.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -41,7 +41,7 @@
 #include "base/hash.h"
 
 namespace mozc {
-namespace session {
+namespace engine {
 
 void Candidate::Clear() {
   id_ = 0;
@@ -331,5 +331,5 @@ CandidateList *CandidateList::mutable_focused_subcandidate_list() {
   return candidates_[focused_index_].mutable_subcandidate_list();
 }
 
-}  // namespace session
+}  // namespace engine
 }  // namespace mozc

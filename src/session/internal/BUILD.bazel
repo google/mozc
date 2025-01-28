@@ -36,7 +36,11 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = [
+    "//engine:__subpackages__",
+    "//gui/config_dialog:__subpackages__",
+    "//session:__subpackages__",
+])
 
 mozc_cc_library(
     name = "ime_context",
@@ -47,9 +51,9 @@ mozc_cc_library(
         ":keymap",
         "//composer",
         "//config:config_handler",
+        "//engine:session_converter_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//session:session_converter_interface",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/time",
     ],
@@ -94,41 +98,6 @@ mozc_cc_library(
     ],
 )
 
-mozc_cc_library(
-    name = "candidate_list",
-    srcs = ["candidate_list.cc"],
-    hdrs = ["candidate_list.h"],
-    deps = [
-        "//base:hash",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
-mozc_cc_library(
-    name = "session_output",
-    srcs = ["session_output.cc"],
-    hdrs = ["session_output.h"],
-    deps = [
-        ":candidate_list",
-        "//base:text_normalizer",
-        "//base:util",
-        "//base:version",
-        "//base/strings:assign",
-        "//composer",
-        "//converter:segments",
-        "//protocol:candidate_window_cc_proto",
-        "//protocol:commands_cc_proto",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
 mozc_cc_test(
     name = "ime_context_test",
     size = "small",
@@ -142,9 +111,9 @@ mozc_cc_test(
         "//converter:converter_interface",
         "//converter:converter_mock",
         "//converter:segments",
+        "//engine:session_converter",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//session:session_converter",
         "//testing:gunit_main",
         "//testing:testing_util",
         "@com_google_absl//absl/time",
@@ -181,33 +150,5 @@ mozc_cc_test(
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "candidate_list_test",
-    size = "small",
-    srcs = ["candidate_list_test.cc"],
-    deps = [
-        ":candidate_list",
-        "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_test(
-    name = "session_output_test",
-    size = "small",
-    timeout = "moderate",
-    srcs = ["session_output_test.cc"],
-    deps = [
-        ":candidate_list",
-        ":session_output",
-        "//base:text_normalizer",
-        "//base:util",
-        "//converter:segments",
-        "//protocol:candidate_window_cc_proto",
-        "//protocol:commands_cc_proto",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )

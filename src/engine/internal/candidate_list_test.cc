@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "session/internal/candidate_list.h"
+#include "engine/internal/candidate_list.h"
 
 #include <memory>
 #include <tuple>
@@ -35,7 +35,7 @@
 #include "testing/gunit.h"
 
 namespace mozc {
-namespace session {
+namespace engine {
 
 class CandidateListTest : public testing::Test {
  protected:
@@ -468,5 +468,5 @@ TEST_F(CandidateListTest, NextAvailableId) {
   EXPECT_EQ(sub_sub_list_2_1_->next_available_id(), 214);
 }
 
-}  // namespace session
+}  // namespace engine
 }  // namespace mozc

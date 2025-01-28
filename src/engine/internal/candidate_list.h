@@ -29,8 +29,8 @@
 
 // CandidateList and Candidate classes to be used with Session class.
 
-#ifndef MOZC_SESSION_INTERNAL_CANDIDATE_LIST_H_
-#define MOZC_SESSION_INTERNAL_CANDIDATE_LIST_H_
+#ifndef MOZC_ENGINE_INTERNAL_CANDIDATE_LIST_H_
+#define MOZC_ENGINE_INTERNAL_CANDIDATE_LIST_H_
 
 #include <algorithm>
 #include <cstddef>
@@ -46,7 +46,7 @@
 #include "absl/types/span.h"
 
 namespace mozc {
-namespace session {
+namespace engine {
 
 class CandidateList;  // This is fully declared at the bottom.
 
@@ -205,7 +205,7 @@ class CandidateList final {
   bool focused_;
 };
 
-}  // namespace session
+}  // namespace engine
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_INTERNAL_CANDIDATE_LIST_H_
+#endif  // MOZC_ENGINE_INTERNAL_CANDIDATE_LIST_H_

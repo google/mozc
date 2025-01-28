@@ -34,9 +34,9 @@
 
 #include "absl/log/check.h"
 #include "composer/composer.h"
+#include "engine/session_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
-#include "session/session_converter_interface.h"
 
 namespace mozc {
 namespace session {

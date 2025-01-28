@@ -59,29 +59,6 @@ class SessionUsageStatsUtilTest : public ::testing::Test {
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
-TEST_F(SessionUsageStatsUtilTest, HasExperimentalFeature) {
-  constexpr absl::string_view kFeatureName1 = "TestFeature1";
-  constexpr absl::string_view kFeatureName2 = "TestFeature2";
-  Context context;
-
-  EXPECT_FALSE(
-      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName1));
-  EXPECT_FALSE(
-      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName2));
-
-  context.add_experimental_features(kFeatureName1);
-  EXPECT_TRUE(
-      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName1));
-  EXPECT_FALSE(
-      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName2));
-
-  context.add_experimental_features(kFeatureName2);
-  EXPECT_TRUE(
-      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName1));
-  EXPECT_TRUE(
-      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName2));
-}
-
 TEST_F(SessionUsageStatsUtilTest, AddSendKeyInputStats) {
   Input input;
   input.set_type(Input::SEND_KEY);

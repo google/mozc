@@ -29,7 +29,7 @@
 
 // A class handling the converter on the session layer.
 
-#include "session/session_converter.h"
+#include "engine/session_converter.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -50,19 +51,18 @@
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "engine/internal/candidate_list.h"
+#include "engine/internal/session_output.h"
+#include "engine/session_converter_interface.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/internal/candidate_list.h"
-#include "session/internal/session_output.h"
-#include "session/session_converter_interface.h"
-#include "session/session_usage_stats_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
-namespace session {
+namespace engine {
 namespace {
 
 using ::mozc::commands::Request;
@@ -91,6 +91,12 @@ absl::string_view GetCandidateShortcuts(
       break;
   }
   return shortcut;
+}
+
+bool HasExperimentalFeature(const commands::Context &context,
+                            absl::string_view key) {
+  return absl::c_any_of(context.experimental_features(),
+                        [=](absl::string_view f) { return f == key; });
 }
 
 // Calculate cursor offset for committed text.
@@ -1084,7 +1090,7 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
   }
   if (CheckState(COMPOSITION)) {
     if (!composer.Empty()) {
-      session::SessionOutput::FillPreedit(composer, output->mutable_preedit());
+      SessionOutput::FillPreedit(composer, output->mutable_preedit());
     }
   }
 
@@ -1099,7 +1105,7 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
     // When the suggestion comes from zero query suggestion, the
     // composer is empty.  In that case, preedit is not rendered.
     if (!composer.Empty()) {
-      session::SessionOutput::FillPreedit(composer, output->mutable_preedit());
+      SessionOutput::FillPreedit(composer, output->mutable_preedit());
     }
   } else if (CheckState(PREDICTION | CONVERSION)) {
     // Conversion on Prediction or Conversion
@@ -1782,12 +1788,10 @@ void SessionConverter::CommitUsageStatsWithSegmentsSize(
   UsageStats::IncrementCount("CommitFrom" + stats_str);
 
   if (stats_str != "Unknown") {
-    if (SessionUsageStatsUtil::HasExperimentalFeature(context,
-                                                      "chrome_omnibox")) {
+    if (HasExperimentalFeature(context, "chrome_omnibox")) {
       UsageStats::IncrementCount("CommitFrom" + stats_str + "InChromeOmnibox");
     }
-    if (SessionUsageStatsUtil::HasExperimentalFeature(context,
-                                                      "google_search_box")) {
+    if (HasExperimentalFeature(context, "google_search_box")) {
       UsageStats::IncrementCount("CommitFrom" + stats_str +
                                  "InGoogleSearchBox");
     }
@@ -1811,5 +1815,5 @@ Config SessionConverter::CreateIncognitoConfig() {
   return ret;
 }
 
-}  // namespace session
+}  // namespace engine
 }  // namespace mozc

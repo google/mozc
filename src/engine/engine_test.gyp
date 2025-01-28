@@ -57,11 +57,69 @@
         }
       ],
     },
+    {
+      'target_name': 'engine_internal_test',
+      'type': 'executable',
+      'sources': [
+        'internal/candidate_list_test.cc',
+        'internal/session_output_test.cc',
+      ],
+      'dependencies': [
+        '<(mozc_oss_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
+        '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:testing_util',
+        'engine.gyp:session_converter',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'session_converter_test',
+      'type': 'executable',
+      'sources': [
+        'session_converter_test.cc',
+      ],
+      'dependencies': [
+        '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:testing',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:testing_util',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
+        'engine.gyp:session_converter',
+      ],
+    },
+    {
+      'target_name': 'session_converter_stress_test',
+      'type': 'executable',
+      'sources': [
+        'session_converter_stress_test.cc'
+      ],
+      'dependencies': [
+        '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        'engine.gyp:session_converter',
+      ],
+      'variables': {
+        'test_size': 'large',
+      },
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'engine_all_test',
       'type': 'none',
       'dependencies': [
+        ## Stress tests and scenario tests are disabled,
+        ## because they take long time (~100sec in total).
+        ## Those tests are checked by other tools (e.g. Bazel test).
+        # 'session_converter_stress_test',
+        'session_converter_test',
+        'engine_internal_test',
         'data_loader_test',
       ],
     },

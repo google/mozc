@@ -42,12 +42,6 @@ class SessionUsageStatsUtil {
   SessionUsageStatsUtil(const SessionUsageStatsUtil &) = delete;
   SessionUsageStatsUtil &operator=(const SessionUsageStatsUtil &) = delete;
 
-  // Returns true if the key is in input::context.  This function can be called
-  // multiple times if there are multiple target keys.  It is not efficient, but
-  // acceptable because the size of the experimental_features is very small,
-  // which is less than 5.
-  static bool HasExperimentalFeature(const commands::Context &context,
-                                     absl::string_view key);
   static void AddSendKeyInputStats(const mozc::commands::Input &input);
   static void AddSendKeyOutputStats(const mozc::commands::Output &output);
   static void AddSendCommandInputStats(const mozc::commands::Input &input);

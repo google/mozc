@@ -39,7 +39,6 @@
       'sources': [
         '<(gen_out_dir)/../dictionary/pos_matcher_impl.inc',
         'session.cc',
-        'session_converter.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_log',
@@ -50,6 +49,7 @@
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:segments',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:session_converter',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
@@ -65,9 +65,7 @@
       'type' : 'static_library',
       'hard_dependency': 1,
       'sources': [
-        'internal/candidate_list.cc',
         'internal/ime_context.cc',
-        'internal/session_output.cc',
         'internal/key_event_transformer.cc',
       ],
       'dependencies': [

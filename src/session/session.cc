@@ -50,14 +50,14 @@
 #include "composer/key_event_util.h"
 #include "composer/table.h"
 #include "engine/engine_interface.h"
+#include "engine/internal/session_output.h"
+#include "engine/session_converter.h"
+#include "engine/session_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/key_event_transformer.h"
 #include "session/internal/keymap.h"
-#include "session/internal/session_output.h"
-#include "session/session_converter.h"
-#include "session/session_converter_interface.h"
 #include "session/session_usage_stats_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
@@ -70,6 +70,9 @@ namespace mozc {
 namespace session {
 namespace {
 
+using ::mozc::engine::ConversionPreferences;
+using ::mozc::engine::SessionConverter;
+using ::mozc::engine::SessionConverterInterface;
 using ::mozc::usage_stats::UsageStats;
 
 // Maximum size of multiple undo stack.
@@ -2749,7 +2752,8 @@ void Session::OutputMode(commands::Command *command) const {
 void Session::OutputComposition(commands::Command *command) const {
   OutputMode(command);
   commands::Preedit *preedit = command->mutable_output()->mutable_preedit();
-  SessionOutput::FillPreedit(context_->composer(), preedit);
+  // TODO(taku): Removes the dependency to SessionOutput.
+  engine::SessionOutput::FillPreedit(context_->composer(), preedit);
 }
 
 void Session::OutputKey(commands::Command *command) const {

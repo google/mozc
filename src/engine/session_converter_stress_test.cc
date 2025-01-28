@@ -40,9 +40,9 @@
 #include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
+#include "engine/session_converter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/session_converter.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
@@ -57,7 +57,7 @@ ABSL_FLAG(int32_t, test_srand_seed, 0,
           "used only when \"test_deterministic\" is true");
 
 namespace mozc {
-namespace session {
+namespace engine {
 
 class SessionConverterStressTest : public testing::TestWithTempUserProfile {
  public:
@@ -125,5 +125,5 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   }
 }
 
-}  // namespace session
+}  // namespace engine
 }  // namespace mozc

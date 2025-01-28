@@ -33,7 +33,7 @@
 // T13Ns. If you want to add test case related to T13Ns, please make sure
 // you set T13Ns to the result for a mock converter.
 
-#include "session/session_converter.h"
+#include "engine/session_converter.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -54,13 +54,13 @@
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "engine/internal/candidate_list.h"
+#include "engine/session_converter_interface.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
-#include "session/internal/candidate_list.h"
-#include "session/session_converter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -70,7 +70,7 @@
 #include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
-namespace session {
+namespace engine {
 namespace {
 
 using ::mozc::commands::Context;
@@ -3865,5 +3865,5 @@ TEST_F(SessionConverterTest, ResultTokensWithInnerSegements) {
   EXPECT_EQ(output.result().tokens(2).lid(), -1);
   EXPECT_EQ(output.result().tokens(2).rid(), 201);
 }
-}  // namespace session
+}  // namespace engine
 }  // namespace mozc

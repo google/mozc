@@ -29,8 +29,8 @@
 
 // A class handling the converter on the session layer.
 
-#ifndef MOZC_SESSION_SESSION_CONVERTER_H_
-#define MOZC_SESSION_SESSION_CONVERTER_H_
+#ifndef MOZC_ENGINE_SESSION_CONVERTER_H_
+#define MOZC_ENGINE_SESSION_CONVERTER_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -42,15 +42,15 @@
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "engine/internal/candidate_list.h"
+#include "engine/session_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/internal/candidate_list.h"
-#include "session/session_converter_interface.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
-namespace session {
+namespace engine {
 
 // Class handling ConverterInterface with a session state.  This class
 // support stateful operations related with the converter.
@@ -411,7 +411,7 @@ class SessionConverter : public SessionConverterInterface {
   bool use_cascading_window_;
 };
 
-}  // namespace session
+}  // namespace engine
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_SESSION_CONVERTER_H_
+#endif  // MOZC_EGINE_SESSION_CONVERTER_H_

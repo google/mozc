@@ -100,7 +100,6 @@ mozc_cc_library(
         "//base:system_util",
         "//base:vlog",
         "//config:stats_config_util",
-        "//session",
         "//session:session_server",
         "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/flags:flag",

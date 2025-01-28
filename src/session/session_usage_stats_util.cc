@@ -49,6 +49,12 @@ using ::mozc::commands::Input;
 using ::mozc::commands::Output;
 using ::mozc::usage_stats::UsageStats;
 
+bool HasExperimentalFeature(const commands::Context &context,
+                            absl::string_view key) {
+  return absl::c_any_of(context.experimental_features(),
+                        [=](absl::string_view f) { return f == key; });
+}
+
 // Splits a text by delimiter, capitalizes each piece and joins them.
 // ex. "AbCd_efgH" => "AbcdEfgh" (delimiter = '_')
 void CamelCaseString(std::string *str, char delm) {
@@ -60,12 +66,6 @@ void CamelCaseString(std::string *str, char delm) {
   *str = absl::StrJoin(pieces, "");
 }
 }  // namespace
-
-bool SessionUsageStatsUtil::HasExperimentalFeature(
-    const commands::Context &context, const absl::string_view key) {
-  return absl::c_any_of(context.experimental_features(),
-                        [=](const absl::string_view f) { return f == key; });
-}
 
 void SessionUsageStatsUtil::AddSendKeyInputStats(const Input &input) {
   CHECK(input.has_key() && input.type() == commands::Input::SEND_KEY);

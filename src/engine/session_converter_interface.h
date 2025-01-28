@@ -29,8 +29,8 @@
 
 // A class handling the converter on the session layer.
 
-#ifndef MOZC_SESSION_SESSION_CONVERTER_INTERFACE_H_
-#define MOZC_SESSION_SESSION_CONVERTER_INTERFACE_H_
+#ifndef MOZC_ENGINE_SESSION_CONVERTER_INTERFACE_H_
+#define MOZC_ENGINE_SESSION_CONVERTER_INTERFACE_H_
 
 #include <cstddef>
 #include <optional>
@@ -43,7 +43,7 @@
 #include "transliteration/transliteration.h"
 
 namespace mozc {
-namespace session {
+namespace engine {
 
 struct ConversionPreferences {
   bool use_history;
@@ -238,7 +238,7 @@ class SessionConverterInterface {
   virtual void set_use_cascading_window(bool use_cascading_window) = 0;
 };
 
-}  // namespace session
+}  // namespace engine
 }  // namespace mozc
 
 #endif  // MOZC_SESSION_SESSION_CONVERTER_INTERFACE_H_
