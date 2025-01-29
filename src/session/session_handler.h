@@ -46,7 +46,6 @@
 #include "session/common.h"
 #include "session/internal/keymap.h"
 #include "session/session.h"
-#include "session/session_handler_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"
 #include "storage/lru_cache.h"
@@ -58,28 +57,26 @@
 
 namespace mozc {
 
-class SessionHandler : public SessionHandlerInterface {
+class SessionHandler {
  public:
   explicit SessionHandler(std::unique_ptr<EngineInterface> engine);
   SessionHandler(const SessionHandler &) = delete;
   SessionHandler &operator=(const SessionHandler &) = delete;
-  ~SessionHandler() override = default;
+  ~SessionHandler() = default;
 
   // Returns true if SessionHandle is available.
-  bool IsAvailable() const override;
+  bool IsAvailable() const;
 
-  bool EvalCommand(commands::Command *command) override;
+  bool EvalCommand(commands::Command *command);
 
   // Starts watch dog timer to cleanup sessions.
-  void StartWatchDog() override;
+  void StartWatchDog();
 
   // NewSession returns new Session.
   std::unique_ptr<session::Session> NewSession();
 
-  void AddObserver(session::SessionObserverInterface *observer) override;
-  absl::string_view GetDataVersion() const override {
-    return engine_->GetDataVersion();
-  }
+  void AddObserver(session::SessionObserverInterface *observer);
+  absl::string_view GetDataVersion() const { return engine_->GetDataVersion(); }
 
   const EngineInterface &engine() const { return *engine_; }
 

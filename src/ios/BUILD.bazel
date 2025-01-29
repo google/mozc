@@ -50,7 +50,6 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
         "//session:session_handler",
-        "//session:session_handler_interface",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/synchronization",

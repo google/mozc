@@ -33,16 +33,16 @@
 
 namespace mozc {
 
-class SessionHandlerInterface {
+class SessionHandler {
  public:
-  SessionHandlerInterface() = default;
-  ~SessionHandlerInterface() = default;
+  SessionHandler() = default;
+  ~SessionHandler() = default;
 };
 
 namespace ios {
 
 IosEngine::IosEngine(const std::string &data_file_path)
-    : session_handler_(new SessionHandlerInterface), session_id_(0) {}
+    : session_handler_(new SessionHandler), session_id_(0) {}
 
 IosEngine::~IosEngine() = default;
 
@@ -60,17 +60,11 @@ bool IosEngine::SetConfig(const config::Config &config,
   return true;
 }
 
-bool IosEngine::CreateSession(commands::Command *command) {
-  return true;
-}
+bool IosEngine::CreateSession(commands::Command *command) { return true; }
 
-bool IosEngine::DeleteSession(commands::Command *command) {
-  return true;
-}
+bool IosEngine::DeleteSession(commands::Command *command) { return true; }
 
-bool IosEngine::ResetContext(commands::Command *command) {
-  return true;
-}
+bool IosEngine::ResetContext(commands::Command *command) { return true; }
 
 bool IosEngine::SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
                                commands::Command *command) {
