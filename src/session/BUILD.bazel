@@ -190,7 +190,6 @@ mozc_cc_library(
     ],
     hdrs = ["session_handler.h"],
     visibility = [
-        "//:__subpackages__",
         "//android:__subpackages__",
         "//ios:__subpackages__",
         "//server:__subpackages__",
@@ -707,7 +706,6 @@ mozc_cc_library(
     name = "session_handler_interface",
     hdrs = ["session_handler_interface.h"],
     visibility = [
-        "//:__subpackages__",
         "//ios:__subpackages__",
     ],
     deps = [
