@@ -41,7 +41,7 @@
 
 namespace mozc {
 
-class SessionHandler;
+class SessionHandlerInterface;
 
 namespace ios {
 
@@ -194,7 +194,8 @@ class IosEngine {
   bool Reload(commands::Command *command);
 
   absl::Mutex mutex_;
-  std::unique_ptr<SessionHandler> session_handler_ ABSL_PT_GUARDED_BY(mutex_);
+  std::unique_ptr<SessionHandlerInterface> session_handler_
+      ABSL_PT_GUARDED_BY(mutex_);
   uint64_t session_id_ = 0;
   commands::Request current_request_;
   InputConfigTuple current_config_tuple_;

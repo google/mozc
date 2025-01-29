@@ -27,66 +27,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+// An interface of session manager of Mozc server.
 
-#include "ios/ios_engine.h"
+#ifndef MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_
+#define MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_
+
+#include "absl/strings/string_view.h"
+#include "protocol/commands.pb.h"
+#include "session/session_observer_interface.h"
 
 namespace mozc {
 
 class SessionHandlerInterface {
  public:
   SessionHandlerInterface() = default;
-  ~SessionHandlerInterface() = default;
+
+  SessionHandlerInterface(const SessionHandlerInterface &) = delete;
+  SessionHandlerInterface &operator=(const SessionHandlerInterface &) = delete;
+
+  virtual ~SessionHandlerInterface() = default;
+
+  // Returns true if SessionHandle is available.
+  virtual bool IsAvailable() const = 0;
+
+  virtual bool EvalCommand(commands::Command *command) = 0;
+
+  // Starts watch dog timer to cleanup sessions.
+  virtual void StartWatchDog() = 0;
+
+  virtual void AddObserver(session::SessionObserverInterface *observer) = 0;
+
+  virtual absl::string_view GetDataVersion() const = 0;
 };
 
-namespace ios {
-
-IosEngine::IosEngine(const std::string &data_file_path)
-    : session_handler_(new SessionHandlerInterface), session_id_(0) {}
-
-IosEngine::~IosEngine() = default;
-
-bool IosEngine::SetMobileRequest(const std::string &keyboard_layout,
-                                 commands::Command *command) {
-  return true;
-}
-
-void FillMobileConfig(config::Config *config) {
-  // Do nothing.
-}
-
-bool IosEngine::SetConfig(const config::Config &config,
-                          commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::CreateSession(commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::DeleteSession(commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::ResetContext(commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
-                               commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::SendKey(const std::string &character,
-                        commands::Command *command) {
-  return true;
-}
-
-bool IosEngine::SendSessionCommand(
-    const commands::SessionCommand &session_command,
-    commands::Command *command) {
-  return true;
-}
-
-}  // namespace ios
 }  // namespace mozc
+
+#endif  // MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_

@@ -60,7 +60,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
-#include "session/session_handler.h"
+#include "session/session_handler_interface.h"
 #include "session/session_handler_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -89,7 +89,7 @@ EngineReloadResponse::Status SendMockEngineReloadRequest(
   return command.output().engine_reload_response().status();
 }
 
-bool CreateSession(SessionHandler &handler, uint64_t *id) {
+bool CreateSession(SessionHandlerInterface &handler, uint64_t *id) {
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
   command.mutable_input()->mutable_capability()->set_text_deletion(
@@ -101,21 +101,21 @@ bool CreateSession(SessionHandler &handler, uint64_t *id) {
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
-bool DeleteSession(SessionHandler &handler, uint64_t id) {
+bool DeleteSession(SessionHandlerInterface &handler, uint64_t id) {
   commands::Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
   return handler.EvalCommand(&command);
 }
 
-bool CleanUp(SessionHandler &handler, uint64_t id) {
+bool CleanUp(SessionHandlerInterface &handler, uint64_t id) {
   commands::Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEANUP);
   return handler.EvalCommand(&command);
 }
 
-bool IsGoodSession(SessionHandler &handler, uint64_t id) {
+bool IsGoodSession(SessionHandlerInterface &handler, uint64_t id) {
   commands::Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::SEND_KEY);

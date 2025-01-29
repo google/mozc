@@ -65,6 +65,7 @@
 #include "protocol/config.pb.h"
 #include "request/request_test_util.h"
 #include "session/session_handler.h"
+#include "session/session_handler_interface.h"
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.h"
