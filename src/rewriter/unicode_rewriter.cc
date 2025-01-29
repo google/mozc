@@ -140,7 +140,7 @@ std::optional<std::string> GetValue(absl::string_view key) {
     return std::nullopt;
   }
 
-  const std::string value = Util::CodepointToUtf8(codepoint);
+  std::string value = Util::CodepointToUtf8(codepoint);
   if (value.empty()) {
     return std::nullopt;
   }
