@@ -29,7 +29,7 @@
 
 // CandidateList and Candidate classes to be used with Session class.
 
-#include "engine/internal/candidate_list.h"
+#include "engine/candidate_list.h"
 
 #include <cstddef>
 #include <cstdint>

@@ -29,8 +29,8 @@
 
 // Class functions to be used for output by the Session class.
 
-#ifndef MOZC_ENGINE_INTERNAL_SESSION_OUTPUT_H_
-#define MOZC_ENGINE_INTERNAL_SESSION_OUTPUT_H_
+#ifndef MOZC_ENGINE_SESSION_OUTPUT_H_
+#define MOZC_ENGINE_SESSION_OUTPUT_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -39,7 +39,7 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
-#include "engine/internal/candidate_list.h"
+#include "engine/candidate_list.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 
@@ -137,4 +137,4 @@ class SessionOutput {
 }  // namespace engine
 }  // namespace mozc
 
-#endif  // MOZC_ENGINE_INTERNAL_SESSION_OUTPUT_H_
+#endif  // MOZC_ENGINE_SESSION_OUTPUT_H_

@@ -49,7 +49,7 @@
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap.h"
+#include "session/keymap.h"
 
 #if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."

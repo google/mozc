@@ -54,7 +54,7 @@
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "engine/internal/candidate_list.h"
+#include "engine/candidate_list.h"
 #include "engine/session_converter_interface.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"

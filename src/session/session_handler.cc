@@ -57,7 +57,7 @@
 #include "protocol/engine_builder.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "session/common.h"
-#include "session/internal/keymap.h"
+#include "session/keymap.h"
 #include "session/session.h"
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"

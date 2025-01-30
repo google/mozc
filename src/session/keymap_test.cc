@@ -29,7 +29,7 @@
 
 // Keymap utils of Mozc interface.
 
-#include "session/internal/keymap.h"
+#include "session/keymap.h"
 
 #include <istream>
 #include <memory>

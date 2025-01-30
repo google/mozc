@@ -40,7 +40,7 @@
       'target_name': 'keymap',
       'type': 'static_library',
       'sources': [
-        'internal/keymap.cc',
+        'keymap.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',

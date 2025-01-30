@@ -210,7 +210,7 @@ mozc_cc_qt_library(
         "//gui/base:singleton_window_helper",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//session/internal:keymap",
+        "//session:keymap",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/container:flat_hash_map",

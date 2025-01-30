@@ -61,8 +61,8 @@
       'target_name': 'engine_internal_test',
       'type': 'executable',
       'sources': [
-        'internal/candidate_list_test.cc',
-        'internal/session_output_test.cc',
+        'candidate_list_test.cc',
+        'session_output_test.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/base.gyp:base',

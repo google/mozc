@@ -30,8 +30,8 @@
 // ImeContext class contains the whole internal variables representing
 // a session.
 
-#ifndef MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
-#define MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
+#ifndef MOZC_SESSION_IME_CONTEXT_H_
+#define MOZC_SESSION_IME_CONTEXT_H_
 
 #include <memory>
 #include <utility>
@@ -42,8 +42,8 @@
 #include "engine/session_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/key_event_transformer.h"
-#include "session/internal/keymap.h"
+#include "session/key_event_transformer.h"
+#include "session/keymap.h"
 
 namespace mozc {
 namespace session {
@@ -165,4 +165,4 @@ class ImeContext final {
 }  // namespace session
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
+#endif  // MOZC_SESSION_IME_CONTEXT_H_

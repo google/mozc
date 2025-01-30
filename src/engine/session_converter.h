@@ -42,7 +42,7 @@
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
-#include "engine/internal/candidate_list.h"
+#include "engine/candidate_list.h"
 #include "engine/session_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

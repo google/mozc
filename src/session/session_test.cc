@@ -62,8 +62,8 @@
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
 #include "rewriter/transliteration_rewriter.h"
-#include "session/internal/ime_context.h"
-#include "session/internal/keymap.h"
+#include "session/ime_context.h"
+#include "session/keymap.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -2424,7 +2424,7 @@ TEST_F(SessionTest, RequestUndo) {
 
   // It is OK not to check ImeContext::DIRECT because you cannot
   // assign any key event to Undo command in DIRECT mode.
-  // See "session/internal/keymap_interface.h".
+  // See "session/keymap_interface.h".
 
   InitSessionToPrecomposition(&session);
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session))

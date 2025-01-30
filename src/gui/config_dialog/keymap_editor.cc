@@ -62,8 +62,7 @@
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap.h"
-// TODO(komatsu): internal files should not be used from external modules.
+#include "session/keymap.h"
 
 #if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."

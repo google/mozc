@@ -65,8 +65,8 @@
       'type' : 'static_library',
       'hard_dependency': 1,
       'sources': [
-        'internal/ime_context.cc',
-        'internal/key_event_transformer.cc',
+        'ime_context.cc',
+        'key_event_transformer.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',

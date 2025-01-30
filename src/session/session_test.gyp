@@ -181,9 +181,9 @@
       'target_name': 'session_internal_test',
       'type': 'executable',
       'sources': [
-        'internal/ime_context_test.cc',
-        'internal/keymap_test.cc',
-        'internal/key_event_transformer_test.cc',
+        'ime_context_test.cc',
+        'keymap_test.cc',
+        'key_event_transformer_test.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/base.gyp:base',

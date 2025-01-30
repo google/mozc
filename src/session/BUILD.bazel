@@ -46,10 +46,10 @@ mozc_cc_library(
     name = "session_interface",
     hdrs = ["session_interface.h"],
     deps = [
+        ":keymap",
         "//composer:table",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//session/internal:keymap",
         "@com_google_absl//absl/time",
     ],
 )
@@ -62,6 +62,9 @@ mozc_cc_library(
         "//evaluation:__subpackages__",
     ],
     deps = [
+        ":ime_context",
+        ":key_event_transformer",
+        ":keymap",
         ":session_interface",
         ":session_usage_stats_util",
         "//base:clock",
@@ -72,12 +75,9 @@ mozc_cc_library(
         "//engine:engine_interface",
         "//engine:session_converter",
         "//engine:session_converter_interface",
-        "//engine/internal:session_output",
+        "//engine:session_output",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//session/internal:ime_context",
-        "//session/internal:key_event_transformer",
-        "//session/internal:keymap",
         "//testing:friend_test",
         "//transliteration",
         "//usage_stats",
@@ -95,6 +95,8 @@ mozc_cc_test(
     srcs = ["session_test.cc"],
     shard_count = 8,
     deps = [
+        ":ime_context",
+        ":keymap",
         ":session",
         "//base:vlog",
         "//base/strings:assign",
@@ -116,8 +118,6 @@ mozc_cc_test(
         "//request:conversion_request",
         "//request:request_test_util",
         "//rewriter:transliteration_rewriter",
-        "//session/internal:ime_context",
-        "//session/internal:keymap",
         "//testing:gunit_main",
         "//testing:mozctest",
         "//transliteration",
@@ -140,6 +140,7 @@ mozc_cc_test(
     ],
     shard_count = 8,
     deps = [
+        ":ime_context",
         ":session",
         ":session_handler",
         "//composer:key_parser",
@@ -152,7 +153,6 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:request_test_util",
-        "//session/internal:ime_context",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",
@@ -195,6 +195,7 @@ mozc_cc_library(
         "//server:__subpackages__",
     ],
     deps = [
+        ":keymap",
         ":session",
         ":session_handler_interface",
         ":session_observer_handler",
@@ -219,7 +220,6 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//protocol:engine_builder_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
-        "//session/internal:keymap",
         "//storage:lru_cache",
         "//testing:friend_test",
         "//usage_stats",
@@ -271,6 +271,7 @@ mozc_cc_test(
         "//data_manager/testing:mock_mozc.data",
     ],
     deps = [
+        ":keymap",
         ":session_handler",
         ":session_handler_interface",
         ":session_handler_test_util",
@@ -288,7 +289,6 @@ mozc_cc_test(
         "//engine:supplemental_model_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//session/internal:keymap",
         "//testing:gunit_main",
         "//testing:mozctest",
         "//usage_stats:usage_stats_testing_util",
@@ -455,6 +455,7 @@ mozc_cc_library(
         "//win32:__subpackages__",
     ],
     deps = [
+        ":keymap",
         "//base:config_file_stream",
         "//base:util",
         "//composer:key_event_util",
@@ -462,7 +463,6 @@ mozc_cc_library(
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//session/internal:keymap",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
@@ -543,12 +543,12 @@ mozc_cc_library(
         "//server:__subpackages__",
     ],
     deps = [
+        ":keymap",
         "//base:japanese_util",
         "//base:util",
         "//base:vlog",
         "//composer:key_parser",
         "//protocol:commands_cc_proto",
-        "//session/internal:keymap",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/random",
@@ -720,4 +720,125 @@ mozc_cc_library(
     hdrs = ["session_observer_interface.h"],
     visibility = ["//visibility:private"],
     deps = ["//protocol:commands_cc_proto"],
+)
+
+mozc_cc_library(
+    name = "ime_context",
+    srcs = ["ime_context.cc"],
+    hdrs = ["ime_context.h"],
+    visibility = [
+        "//session:__subpackages__",
+    ],
+    deps = [
+        ":key_event_transformer",
+        ":keymap",
+        "//composer",
+        "//config:config_handler",
+        "//engine:session_converter_interface",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+mozc_cc_library(
+    name = "keymap",
+    srcs = ["keymap.cc"],
+    hdrs = ["keymap.h"],
+    visibility = [
+        "//gui/config_dialog:__subpackages__",
+        "//session:__subpackages__",
+    ],
+    deps = [
+        "//base:config_file_stream",
+        "//base:file_stream",
+        "//base:util",
+        "//base/protobuf:repeated_field",
+        "//composer:key_event_util",
+        "//composer:key_parser",
+        "//config:config_handler",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//testing:friend_test",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "key_event_transformer",
+    srcs = ["key_event_transformer.cc"],
+    hdrs = ["key_event_transformer.h"],
+    visibility = [
+        "//session:__subpackages__",
+    ],
+    deps = [
+        "//base:japanese_util",
+        "//composer:key_event_util",
+        "//config:config_handler",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+    ],
+)
+
+mozc_cc_test(
+    name = "ime_context_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["ime_context_test.cc"],
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
+    deps = [
+        ":ime_context",
+        "//composer",
+        "//composer:table",
+        "//converter:converter_interface",
+        "//converter:converter_mock",
+        "//converter:segments",
+        "//engine:session_converter",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//testing:gunit_main",
+        "//testing:testing_util",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+mozc_cc_test(
+    name = "keymap_test",
+    size = "small",
+    srcs = [
+        "keymap_test.cc",
+    ],
+    deps = [
+        ":keymap",
+        "//base:config_file_stream",
+        "//composer:key_parser",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/container:flat_hash_set",
+    ],
+)
+
+mozc_cc_test(
+    name = "key_event_transformer_test",
+    size = "small",
+    srcs = ["key_event_transformer_test.cc"],
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
+    deps = [
+        ":key_event_transformer",
+        "//base:singleton",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
 )

@@ -44,7 +44,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/common.h"
-#include "session/internal/keymap.h"
+#include "session/keymap.h"
 #include "session/session.h"
 #include "session/session_handler_interface.h"
 #include "session/session_observer_handler.h"

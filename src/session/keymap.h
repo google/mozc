@@ -29,8 +29,8 @@
 
 // Keymap utils of Mozc interface.
 
-#ifndef MOZC_SESSION_INTERNAL_KEYMAP_H_
-#define MOZC_SESSION_INTERNAL_KEYMAP_H_
+#ifndef MOZC_SESSION_KEYMAP_H_
+#define MOZC_SESSION_KEYMAP_H_
 
 #include <istream>
 #include <string>
@@ -418,4 +418,4 @@ void KeyMap<T>::Clear() {
 }  // namespace keymap
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_INTERNAL_KEYMAP_H_
+#endif  // MOZC_SESSION_KEYMAP_H_

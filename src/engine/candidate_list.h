@@ -29,8 +29,8 @@
 
 // CandidateList and Candidate classes to be used with Session class.
 
-#ifndef MOZC_ENGINE_INTERNAL_CANDIDATE_LIST_H_
-#define MOZC_ENGINE_INTERNAL_CANDIDATE_LIST_H_
+#ifndef MOZC_ENGINE_CANDIDATE_LIST_H_
+#define MOZC_ENGINE_CANDIDATE_LIST_H_
 
 #include <algorithm>
 #include <cstddef>
@@ -208,4 +208,4 @@ class CandidateList final {
 }  // namespace engine
 }  // namespace mozc
 
-#endif  // MOZC_ENGINE_INTERNAL_CANDIDATE_LIST_H_
+#endif  // MOZC_ENGINE_CANDIDATE_LIST_H_

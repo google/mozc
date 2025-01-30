@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/internal/session_output.h"
+#include "engine/session_output.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -38,7 +38,7 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
-#include "engine/internal/candidate_list.h"
+#include "engine/candidate_list.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"

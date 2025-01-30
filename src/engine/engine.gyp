@@ -99,8 +99,8 @@
       'type' : 'static_library',
       'hard_dependency': 1,
       'sources': [
-        'internal/candidate_list.cc',
-        'internal/session_output.cc',
+        'candidate_list.cc',
+        'session_output.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',

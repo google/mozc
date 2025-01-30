@@ -49,7 +49,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/request_test_util.h"
-#include "session/internal/ime_context.h"
+#include "session/ime_context.h"
 #include "session/session.h"
 #include "session/session_handler.h"
 #include "testing/gunit.h"

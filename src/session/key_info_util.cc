@@ -47,7 +47,7 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap.h"
+#include "session/keymap.h"
 
 namespace mozc {
 namespace {

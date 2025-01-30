@@ -29,7 +29,7 @@
 
 // Class functions to be used for output by the Session class.
 
-#include "engine/internal/session_output.h"
+#include "engine/session_output.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -50,7 +50,7 @@
 #include "base/version.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
-#include "engine/internal/candidate_list.h"
+#include "engine/candidate_list.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 
