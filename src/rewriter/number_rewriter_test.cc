@@ -29,6 +29,7 @@
 
 #include "rewriter/number_rewriter.h"
 
+#include <array>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -40,9 +41,7 @@
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
-#include "composer/composer.h"
 #include "config/character_form_manager.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -817,51 +816,53 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   // Expected data to succeed tests.
-  constexpr const char *kSuccess[][3] = {
+  constexpr std::array<std::array<absl::string_view, 3>, 3> kSuccess = {{
       {"1000", "1,000", "１，０００"},
       {"12345678", "12,345,678", "１２，３４５，６７８"},
       {"1234.5", "1,234.5", "１，２３４．５"},
-  };
+  }};
 
-  for (size_t i = 0; i < std::size(kSuccess); ++i) {
+  for (const std::array<absl::string_view, 3> &success : kSuccess) {
     Segments segments;
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
-    candidate->key = kSuccess[i][0];
-    candidate->content_key = kSuccess[i][0];
-    candidate->value = kSuccess[i][0];
-    candidate->content_value = kSuccess[i][0];
+    candidate->key = success[0];
+    candidate->content_key = success[0];
+    candidate->value = success[0];
+    candidate->content_value = success[0];
+
     EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
-    EXPECT_TRUE(FindValue(segments.segment(0), kSuccess[i][1]))
-        << "Input : " << kSuccess[i][0];
-    EXPECT_TRUE(FindValue(segments.segment(0), kSuccess[i][2]))
-        << "Input : " << kSuccess[i][0];
+    EXPECT_TRUE(FindValue(segments.segment(0), success[1]))
+        << "Input : " << success[0];
+    EXPECT_TRUE(FindValue(segments.segment(0), success[2]))
+        << "Input : " << success[0];
   }
 
   // Expected data to fail tests.
-  constexpr const char *kFail[][3] = {
+  constexpr std::array<std::array<absl::string_view, 3>, 3> kFail = {{
       {"123", ",123", "，１２３"},
       {"999", ",999", "，９９９"},
       {"0000", "0,000", "０，０００"},
-  };
+  }};
 
-  for (size_t i = 0; i < std::size(kFail); ++i) {
+  for (const std::array<absl::string_view, 3> &fail : kFail) {
     Segments segments;
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
-    candidate->key = kFail[i][0];
-    candidate->content_key = kFail[i][0];
-    candidate->value = kFail[i][0];
-    candidate->content_value = kFail[i][0];
+    candidate->key = fail[0];
+    candidate->content_key = fail[0];
+    candidate->value = fail[0];
+    candidate->content_value = fail[0];
+
     EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
-    EXPECT_FALSE(FindValue(segments.segment(0), kFail[i][1]))
-        << "Input : " << kFail[i][0];
-    EXPECT_FALSE(FindValue(segments.segment(0), kFail[i][2]))
-        << "Input : " << kFail[i][0];
+    EXPECT_FALSE(FindValue(segments.segment(0), fail[1]))
+        << "Input : " << fail[0];
+    EXPECT_FALSE(FindValue(segments.segment(0), fail[2]))
+        << "Input : " << fail[0];
   }
 }
 
@@ -950,7 +951,7 @@ TEST_F(NumberRewriterTest, RewriteArabicNumberTest) {
   Segment *segment = segments.push_back_segment();
   segment->set_key("いち");
   struct CandData {
-    const char *value;
+    const absl::string_view value;
     int pos_id;
   };
   const CandData kCandList[] = {
@@ -1276,4 +1277,51 @@ TEST_F(NumberRewriterTest, NoModification) {
   EXPECT_GT(seg->candidates_size(), 3);
 }
 
+TEST_F(NumberRewriterTest, RewriteMultipleTimes) {
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  Segments segments;
+  Segment *seg = segments.push_back_segment();
+  seg->set_key("１２");
+
+  Segment::Candidate *candidate = seg->add_candidate();
+  candidate->lid = pos_matcher_.GetGeneralNounId();
+  candidate->rid = pos_matcher_.GetGeneralNounId();
+  candidate->key = "１２";
+  candidate->content_key = candidate->key;
+  candidate->value = "１２";
+  candidate->content_value = candidate->value;
+  candidate->cost = 5925;
+  candidate->wcost = 5000;
+
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
+  EXPECT_EQ(seg->candidates_size(), 11);
+  EXPECT_EQ(seg->candidate(0).value, "12");
+  EXPECT_EQ(seg->candidate(1).value, "一二");
+  EXPECT_EQ(seg->candidate(2).value, "１２");
+  EXPECT_EQ(seg->candidate(3).value, "十二");
+  EXPECT_EQ(seg->candidate(4).value, "壱拾弐");
+  EXPECT_EQ(seg->candidate(5).value, "Ⅻ");
+  EXPECT_EQ(seg->candidate(6).value, "ⅻ");
+  EXPECT_EQ(seg->candidate(7).value, "⑫");
+  EXPECT_EQ(seg->candidate(8).value, "0xc");
+  EXPECT_EQ(seg->candidate(9).value, "014");
+  EXPECT_EQ(seg->candidate(10).value, "0b1100");
+
+  // TODO(komatsu): This is not the ideal behavior.
+  // Rewriting multiple times should not change the result.
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
+  EXPECT_EQ(seg->candidates_size(), 33);
+  EXPECT_EQ(seg->candidate(0).value, "12");
+  EXPECT_EQ(seg->candidate(1).value, "１２");
+  EXPECT_EQ(seg->candidate(2).value, "一二");
+  EXPECT_EQ(seg->candidate(3).value, "１２");
+  EXPECT_EQ(seg->candidate(4).value, "十二");
+  EXPECT_EQ(seg->candidate(5).value, "壱拾弐");
+  EXPECT_EQ(seg->candidate(6).value, "Ⅻ");
+  EXPECT_EQ(seg->candidate(7).value, "ⅻ");
+  EXPECT_EQ(seg->candidate(8).value, "⑫");
+  EXPECT_EQ(seg->candidate(9).value, "0xc");
+  EXPECT_EQ(seg->candidate(10).value, "014");
+  EXPECT_EQ(seg->candidate(11).value, "0b1100");
+}
 }  // namespace mozc
