@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <optional>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -295,35 +296,26 @@ class CheckValueOperator {
 
 // If we have the candidates to be inserted before the base candidate,
 // delete them.
-void EraseExistingCandidates(
-    absl::Span<const Segment::Candidate> results, int base_candidate_pos,
-    RewriteType type, Segment *seg,
-    std::vector<RewriteCandidateInfo> *rewrite_candidate_info_list) {
-  DCHECK(seg);
+void FindEraseCandidates(absl::Span<const Segment::Candidate> results,
+                         int base_candidate_pos, RewriteType type,
+                         const Segment &seg, std::set<int> *erase_positions) {
   // Remember base candidate value
-  const int start_pos = std::min<int>(
-      base_candidate_pos + GetInsertOffset(type), seg->candidates_size() - 1);
+  const int start_pos =
+      std::min<int>(base_candidate_pos + GetInsertOffset(type),
+                    seg.candidates_size() - 1);
   for (int pos = start_pos; pos >= 0; --pos) {
     if (pos == base_candidate_pos) {
       continue;
     }
+    if (seg.candidate(pos).attributes & Segment::Candidate::NO_MODIFICATION) {
+      continue;
+    }
+
     // Simple liner search. |results| size is small. (at most 10 or so)
-    const auto iter =
-        std::find_if(results.begin(), results.end(),
-                     CheckValueOperator(seg->candidate(pos).value));
-    if (iter == results.end()) {
-      continue;
-    }
-    if (seg->candidate(pos).attributes & Segment::Candidate::NO_MODIFICATION) {
-      continue;
-    }
-
-    seg->erase_candidate(pos);
-
-    // Adjust position in rewrite_candidate_info.
-    for (size_t i = 0; i < rewrite_candidate_info_list->size(); ++i) {
-      if ((*rewrite_candidate_info_list)[i].position > pos) {
-        --(*rewrite_candidate_info_list)[i].position;
+    for (const Segment::Candidate &cand : results) {
+      if (cand.value == seg.candidate(pos).value) {
+        erase_positions->insert(pos);
+        break;
       }
     }
   }
@@ -526,12 +518,13 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
        request.request_type() == ConversionRequest::CONVERSION);
   const bool should_rerank = ShouldRerankCandidates(request, *segments);
 
-  std::vector<RewriteCandidateInfo> rewrite_candidate_infos =
+  const std::vector<RewriteCandidateInfo> infos =
       GetRewriteCandidateInfos(suffix_array_, *seg, pos_matcher_);
 
   bool modified = false;
-  for (int i = rewrite_candidate_infos.size() - 1; i >= 0; --i) {
-    const RewriteCandidateInfo &info = rewrite_candidate_infos[i];
+  std::set<int> erase_positions;  // Use std::set for deterministic order.
+  for (auto it = infos.rbegin(); it != infos.rend(); ++it) {
+    const RewriteCandidateInfo &info = *it;
     if (info.candidate.content_value.size() > info.candidate.value.size()) {
       LOG(ERROR) << "Invalid content_value/value: ";
       break;
@@ -565,16 +558,17 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
       continue;
     }
 
-    // Caution!!!: This invocation will update the data inside of the
-    // rewrite_candidate_infos. Thus, |info| also can be updated as well
-    // regardless of whether it's const reference-ness.
-    EraseExistingCandidates(number_candidates, info.position, info.type, seg,
-                            &rewrite_candidate_infos);
-    int insert_pos = GetInsertPos(info.position, *seg, info.type);
+    FindEraseCandidates(number_candidates, info.position, info.type, *seg,
+                        &erase_positions);
+    const int insert_pos = GetInsertPos(info.position, *seg, info.type);
     DCHECK_LT(info.position, insert_pos);
     InsertConvertedCandidates(number_candidates, info.candidate, info.position,
                               insert_pos, seg);
     modified = true;
+  }
+
+  for (auto it = erase_positions.rbegin(); it != erase_positions.rend(); ++it) {
+    seg->erase_candidate(*it);
   }
 
   return modified;
