@@ -1307,21 +1307,19 @@ TEST_F(NumberRewriterTest, RewriteMultipleTimes) {
   EXPECT_EQ(seg->candidate(9).value, "014");
   EXPECT_EQ(seg->candidate(10).value, "0b1100");
 
-  // TODO(komatsu): This is not the ideal behavior.
   // Rewriting multiple times should not change the result.
-  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
-  EXPECT_EQ(seg->candidates_size(), 33);
+  EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
+  EXPECT_EQ(seg->candidates_size(), 11);
   EXPECT_EQ(seg->candidate(0).value, "12");
-  EXPECT_EQ(seg->candidate(1).value, "１２");
-  EXPECT_EQ(seg->candidate(2).value, "一二");
-  EXPECT_EQ(seg->candidate(3).value, "１２");
-  EXPECT_EQ(seg->candidate(4).value, "十二");
-  EXPECT_EQ(seg->candidate(5).value, "壱拾弐");
-  EXPECT_EQ(seg->candidate(6).value, "Ⅻ");
-  EXPECT_EQ(seg->candidate(7).value, "ⅻ");
-  EXPECT_EQ(seg->candidate(8).value, "⑫");
-  EXPECT_EQ(seg->candidate(9).value, "0xc");
-  EXPECT_EQ(seg->candidate(10).value, "014");
-  EXPECT_EQ(seg->candidate(11).value, "0b1100");
+  EXPECT_EQ(seg->candidate(1).value, "一二");
+  EXPECT_EQ(seg->candidate(2).value, "１２");
+  EXPECT_EQ(seg->candidate(3).value, "十二");
+  EXPECT_EQ(seg->candidate(4).value, "壱拾弐");
+  EXPECT_EQ(seg->candidate(5).value, "Ⅻ");
+  EXPECT_EQ(seg->candidate(6).value, "ⅻ");
+  EXPECT_EQ(seg->candidate(7).value, "⑫");
+  EXPECT_EQ(seg->candidate(8).value, "0xc");
+  EXPECT_EQ(seg->candidate(9).value, "014");
+  EXPECT_EQ(seg->candidate(10).value, "0b1100");
 }
 }  // namespace mozc

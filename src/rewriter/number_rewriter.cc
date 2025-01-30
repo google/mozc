@@ -96,6 +96,12 @@ std::optional<RewriteCandidateInfo> GetRewriteCandidateInfo(
   if (c.attributes & Segment::Candidate::NO_MODIFICATION) {
     return std::nullopt;
   }
+  // Do not rewrite hex/oct/bin number.
+  if (c.style == NumberUtil::NumberString::NUMBER_HEX ||
+      c.style == NumberUtil::NumberString::NUMBER_OCT ||
+      c.style == NumberUtil::NumberString::NUMBER_BIN) {
+    return std::nullopt;
+  }
 
   RewriteCandidateInfo info;
   info.position = base_candidate_pos;
@@ -493,6 +499,23 @@ bool NumberRewriter::Rewrite(const ConversionRequest &request,
   return modified;
 }
 
+namespace {
+bool IsAlreadyUpdated(absl::Span<const Segment::Candidate> number_candidates,
+                      const Segment &seg) {
+  absl::flat_hash_set<absl::string_view> values;
+  for (int i = 0; i < seg.candidates_size(); ++i) {
+    values.insert(seg.candidate(i).value);
+  }
+
+  for (const auto &candidate : number_candidates) {
+    if (!values.contains(candidate.value)) {
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
                                        Segment *seg, Segments *segments) const {
   DCHECK(segments);
@@ -536,6 +559,11 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
 
     const std::vector<Segment::Candidate> number_candidates =
         GenerateCandidatesToInsert(info.candidate, output, should_rerank);
+
+    // If all the candidates are already in the segment, do nothing.
+    if (IsAlreadyUpdated(number_candidates, *seg)) {
+      continue;
+    }
 
     // Caution!!!: This invocation will update the data inside of the
     // rewrite_candidate_infos. Thus, |info| also can be updated as well
