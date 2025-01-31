@@ -63,7 +63,6 @@
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
-#include "engine/engine_interface.h"
 #include "engine/supplemental_model_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -399,9 +398,9 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
         new_arrays.push_back(
             static_cast<uint8_t>(NumberUtil::SimpleAtoi(fields[i])));
       }
-      return converter.ResizeSegments(
-          segments, conversion_request, NumberUtil::SimpleAtoi(fields[1]),
-          new_arrays);
+      return converter.ResizeSegments(segments, conversion_request,
+                                      NumberUtil::SimpleAtoi(fields[1]),
+                                      new_arrays);
     }
   } else if (func == "disableuserhistory") {
     config->set_history_learning_level(config::Config::NO_HISTORY);

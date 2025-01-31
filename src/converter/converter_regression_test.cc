@@ -36,7 +36,6 @@
 #include "converter/segments.h"
 #include "engine/engine.h"
 #include "engine/engine_factory.h"
-#include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"

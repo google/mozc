@@ -67,7 +67,6 @@
 #include "dictionary/user_dictionary_stub.h"
 #include "dictionary/user_pos.h"
 #include "engine/engine.h"
-#include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
 #include "prediction/dictionary_predictor.h"
@@ -326,9 +325,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
           return CreatePredictor(modules, predictor_type, converter,
                                  immutable_converter);
         },
-        [&](const engine::Modules &modules) {
-          return std::move(rewriter);
-        });
+        [&](const engine::Modules &modules) { return std::move(rewriter); });
   }
 
   std::unique_ptr<Converter> CreateConverter(
@@ -1955,8 +1952,7 @@ TEST_F(ConverterTest, ResizeSegmentWithOffset) {
   constexpr Segment::SegmentType kFixedBoundary = Segment::FIXED_BOUNDARY;
   constexpr Segment::SegmentType kFree = Segment::FREE;
 
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   {
@@ -2059,8 +2055,7 @@ TEST_F(ConverterTest, ResizeSegmentsWithArray) {
   constexpr Segment::SegmentType kFixedBoundary = Segment::FIXED_BOUNDARY;
   constexpr Segment::SegmentType kFree = Segment::FREE;
 
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   {
@@ -2296,8 +2291,7 @@ TEST_F(ConverterTest, ResizeSegmentsRequest) {
 }
 
 TEST_F(ConverterTest, IntegrationWithCalculatorRewriter) {
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   {
@@ -2338,8 +2332,7 @@ TEST_F(ConverterTest, IntegrationWithDateRewriter) {
 }
 
 TEST_F(ConverterTest, IntegrationWithSymbolRewriter) {
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   {
@@ -2353,8 +2346,7 @@ TEST_F(ConverterTest, IntegrationWithSymbolRewriter) {
 }
 
 TEST_F(ConverterTest, IntegrationWithUnicodeRewriter) {
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   {
@@ -2368,8 +2360,7 @@ TEST_F(ConverterTest, IntegrationWithUnicodeRewriter) {
 }
 
 TEST_F(ConverterTest, IntegrationWithSmallLetterRewriter) {
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   {

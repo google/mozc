@@ -50,7 +50,6 @@
 #include "composer/key_event_util.h"
 #include "composer/table.h"
 #include "engine/engine_interface.h"
-#include "engine/session_converter.h"
 #include "engine/session_converter_interface.h"
 #include "engine/session_output.h"
 #include "protocol/commands.pb.h"
@@ -71,7 +70,6 @@ namespace session {
 namespace {
 
 using ::mozc::engine::ConversionPreferences;
-using ::mozc::engine::SessionConverter;
 using ::mozc::engine::SessionConverterInterface;
 using ::mozc::usage_stats::UsageStats;
 
@@ -237,8 +235,8 @@ void Session::InitContext(ImeContext *context) const {
   context->set_composer(std::make_unique<composer::Composer>(
       &composer::Table::GetDefaultTable(), &context->GetRequest(),
       &context->GetConfig()));
-  context->set_converter(std::make_unique<SessionConverter>(
-      engine_->GetConverter(), &context->GetRequest(), &context->GetConfig()));
+  context->set_converter(engine_->CreateSessionConverter(context->GetRequest(),
+                                                         context->GetConfig()));
 #ifdef _WIN32
   // On Windows session is started with direct mode.
   // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.

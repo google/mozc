@@ -38,6 +38,7 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
+#include "engine/engine.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/session_converter.h"
@@ -92,8 +93,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   const commands::Request request;
   config::Config config;
 
-  std::unique_ptr<EngineInterface> engine =
-      MockDataEngineFactory::Create().value();
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   ConverterInterface* converter = engine->GetConverter();
   SessionConverter sconverter(converter, &request, &config);
   composer::Table table;
