@@ -89,7 +89,7 @@ class VariantsRewriter : public RewriterInterface {
   enum DescriptionType {
     FULL_HALF_WIDTH = 1,  // automatically detect full/haflwidth.
     DEPRECATED_FULL_HALF_WIDTH_WITH_UNKNOWN = 2,  // Deprecated.
-    // Set half/full widith for symbols.
+    // Set half/full width for symbols.
     // This flag must be used together with FULL_HALF_WIDTH.
     // If WITH_UNKNOWN is specified, assign FULL/HALF width annotation
     // more aggressively.

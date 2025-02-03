@@ -382,7 +382,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
 
     if (type == EXPAND_VARIANT) {
       // Insert default candidate to position |i| and
-      // rewrite original(|i+1|) to altenative
+      // rewrite original(|i+1|) to alternative
       Segment::Candidate *new_candidate = seg->insert_candidate(i);
       DCHECK(new_candidate);
 
