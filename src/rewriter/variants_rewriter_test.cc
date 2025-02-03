@@ -31,7 +31,9 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
@@ -590,72 +592,72 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
 }
 
 TEST_F(VariantsRewriterTest, GetFormTypesFromStringPair) {
-  VariantsRewriter::FormType f1, f2;
+  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("", ""));
 
-  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("", &f1, "", &f2));
+  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("abc", "ab"));
 
-  EXPECT_FALSE(
-      VariantsRewriter::GetFormTypesFromStringPair("abc", &f1, "ab", &f2));
+  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("abc", "abc"));
 
-  EXPECT_FALSE(
-      VariantsRewriter::GetFormTypesFromStringPair("abc", &f1, "abc", &f2));
+  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("12", "12"));
 
   EXPECT_FALSE(
-      VariantsRewriter::GetFormTypesFromStringPair("12", &f1, "12", &f2));
-
-  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("あいう", &f1,
-                                                            "あいう", &f2));
-
-  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("アイウ", &f1,
-                                                            "アイウ", &f2));
+      VariantsRewriter::GetFormTypesFromStringPair("あいう", "あいう"));
 
   EXPECT_FALSE(
-      VariantsRewriter::GetFormTypesFromStringPair("愛", &f1, "恋", &f2));
+      VariantsRewriter::GetFormTypesFromStringPair("アイウ", "アイウ"));
 
-  EXPECT_TRUE(
-      VariantsRewriter::GetFormTypesFromStringPair("ABC", &f1, "ＡＢＣ", &f2));
-  EXPECT_EQ(f1, VariantsRewriter::HALF_WIDTH_FORM);
-  EXPECT_EQ(f2, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("愛", "恋"));
 
-  EXPECT_TRUE(
-      VariantsRewriter::GetFormTypesFromStringPair("ａｂｃ", &f1, "abc", &f2));
-  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
-  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+  std::optional<
+      std::pair<VariantsRewriter::FormType, VariantsRewriter::FormType>>
+      result = VariantsRewriter::GetFormTypesFromStringPair("ABC", "ＡＢＣ");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, VariantsRewriter::HALF_WIDTH_FORM);
+  EXPECT_EQ(result->second, VariantsRewriter::FULL_WIDTH_FORM);
 
-  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair("おばQ", &f1,
-                                                           "おばＱ", &f2));
-  EXPECT_EQ(f1, VariantsRewriter::HALF_WIDTH_FORM);
-  EXPECT_EQ(f2, VariantsRewriter::FULL_WIDTH_FORM);
+  result = VariantsRewriter::GetFormTypesFromStringPair("ａｂｃ", "abc");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(result->second, VariantsRewriter::HALF_WIDTH_FORM);
 
-  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair(
-      "よろしくヨロシク", &f1, "よろしくﾖﾛｼｸ", &f2));
-  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
-  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+  result = VariantsRewriter::GetFormTypesFromStringPair("おばQ", "おばＱ");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, VariantsRewriter::HALF_WIDTH_FORM);
+  EXPECT_EQ(result->second, VariantsRewriter::FULL_WIDTH_FORM);
 
-  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair(
-      "よろしくグーグル", &f1, "よろしくｸﾞｰｸﾞﾙ", &f2));
-  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
-  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+  result = VariantsRewriter::GetFormTypesFromStringPair("よろしくヨロシク",
+                                                        "よろしくﾖﾛｼｸ");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(result->second, VariantsRewriter::HALF_WIDTH_FORM);
+
+  result = VariantsRewriter::GetFormTypesFromStringPair("よろしくグーグル",
+                                                        "よろしくｸﾞｰｸﾞﾙ");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(result->second, VariantsRewriter::HALF_WIDTH_FORM);
 
   // semi voice sound mark
-  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair(
-      "カッパよろしくグーグル", &f1, "ｶｯﾊﾟよろしくｸﾞｰｸﾞﾙ", &f2));
-  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
-  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+  result = VariantsRewriter::GetFormTypesFromStringPair(
+      "カッパよろしくグーグル", "ｶｯﾊﾟよろしくｸﾞｰｸﾞﾙ");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(result->second, VariantsRewriter::HALF_WIDTH_FORM);
 
-  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair("ヨロシクＱ", &f1,
-                                                           "ﾖﾛｼｸQ", &f2));
-  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
-  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+  result = VariantsRewriter::GetFormTypesFromStringPair("ヨロシクＱ", "ﾖﾛｼｸQ");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(result->second, VariantsRewriter::HALF_WIDTH_FORM);
 
-  // mixed
-  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("ヨロシクQ", &f1,
-                                                            "ﾖﾛｼｸＱ", &f2));
+  // // mixed
+  EXPECT_FALSE(
+      VariantsRewriter::GetFormTypesFromStringPair("ヨロシクQ", "ﾖﾛｼｸＱ"));
 
-  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair(
-      "京都Qぐーぐる", &f1, "京都Ｑぐーぐる", &f2));
-  EXPECT_EQ(f1, VariantsRewriter::HALF_WIDTH_FORM);
-  EXPECT_EQ(f2, VariantsRewriter::FULL_WIDTH_FORM);
+  result = VariantsRewriter::GetFormTypesFromStringPair("京都Qぐーぐる",
+                                                        "京都Ｑぐーぐる");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, VariantsRewriter::HALF_WIDTH_FORM);
+  EXPECT_EQ(result->second, VariantsRewriter::FULL_WIDTH_FORM);
 }
 
 TEST_F(VariantsRewriterTest, RewriteForConversion) {
