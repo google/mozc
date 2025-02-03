@@ -134,12 +134,29 @@ class VariantsRewriter : public RewriterInterface {
                              int description_type,
                              Segment::Candidate *candidate);
   bool RewriteSegment(RewriteType type, Segment *seg) const;
+
+  // Generates values for primary and secondary candidates.
+  //
+  // There are two orthogonal categories for two candidates.
+  //
+  // * {primary, secondary}: The primary candidate ranked higher than secondary.
+  //   If the user has configured half-width value as primary, full-width value
+  //   will be secondary.
+  // * {original, alternative}: Original is the candidate that already exists in
+  //   the segment before this rewriter. The original candidate is used as the
+  //   input to this rewriter. Alternative is the candidate that is generated
+  //   from the original candidate.
+  //
+  // original can be either primary or secondary. alternative will be the
+  // opposite of original.
+  //
+  // Returns true if at least one of the values is modified.
   bool GenerateAlternatives(
-      const Segment::Candidate &original, std::string *default_value,
-      std::string *alternative_value, std::string *default_content_value,
-      std::string *alternative_content_value,
-      std::vector<uint32_t> *default_inner_segment_boundary,
-      std::vector<uint32_t> *alternative_inner_segment_boundary) const;
+      const Segment::Candidate &original, std::string *primary_value,
+      std::string *secondary_value, std::string *primary_content_value,
+      std::string *secondary_content_value,
+      std::vector<uint32_t> *primary_inner_segment_boundary,
+      std::vector<uint32_t> *secondary_inner_segment_boundary) const;
 
   const dictionary::PosMatcher pos_matcher_;
 };

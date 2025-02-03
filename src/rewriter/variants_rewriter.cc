@@ -412,10 +412,10 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
   };
 
   // Regular Candidate
-  std::string default_value, alternative_value;
-  std::string default_content_value, alternative_content_value;
-  std::vector<uint32_t> default_inner_segment_boundary;
-  std::vector<uint32_t> alternative_inner_segment_boundary;
+  std::string primary_value, secondary_value;
+  std::string primary_content_value, secondary_content_value;
+  std::vector<uint32_t> primary_inner_segment_boundary;
+  std::vector<uint32_t> secondary_inner_segment_boundary;
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
     Segment::Candidate *original_candidate = seg->mutable_candidate(i);
     DCHECK(original_candidate);
@@ -432,80 +432,80 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       continue;
     }
 
-    if (!GenerateAlternatives(*original_candidate, &default_value,
-                              &alternative_value, &default_content_value,
-                              &alternative_content_value,
-                              &default_inner_segment_boundary,
-                              &alternative_inner_segment_boundary)) {
+    if (!GenerateAlternatives(*original_candidate, &primary_value,
+                              &secondary_value, &primary_content_value,
+                              &secondary_content_value,
+                              &primary_inner_segment_boundary,
+                              &secondary_inner_segment_boundary)) {
       SetDescriptionForCandidate(pos_matcher_, original_candidate);
       continue;
     }
 
     // auto = std::pair<Util::FormType, Util::FormType>
-    const auto [default_form, alternative_form] =
-        GetFormTypesFromStringPair(default_value, alternative_value);
-    const bool is_default_half_width = (default_form == Util::HALF_WIDTH);
-    const bool is_alternative_half_width =
-        (alternative_form == Util::HALF_WIDTH);
-    const int default_description_type =
-        (get_description_type(default_form) | CHARACTER_FORM | ZIPCODE |
+    const auto [primary_form, secondary_form] =
+        GetFormTypesFromStringPair(primary_value, secondary_value);
+    const bool is_primary_half_width = (primary_form == Util::HALF_WIDTH);
+    const bool is_secondary_half_width =
+        (secondary_form == Util::HALF_WIDTH);
+    const int primary_description_type =
+        (get_description_type(primary_form) | CHARACTER_FORM | ZIPCODE |
          SPELLING_CORRECTION);
-    const int alternative_description_type =
-        (get_description_type(alternative_form) | CHARACTER_FORM | ZIPCODE |
+    const int secondary_description_type =
+        (get_description_type(secondary_form) | CHARACTER_FORM | ZIPCODE |
          SPELLING_CORRECTION);
 
     if (type == EXPAND_VARIANT) {
       // Insert default candidate to position |i| and
       // rewrite original(|i+1|) to alternative
-      auto new_candidate =
+      auto alt_candidate =
           std::make_unique<Segment::Candidate>(*original_candidate);
 
-      if (original_candidate->value == default_value) {
-        SetDescription(pos_matcher_, default_description_type,
+      if (original_candidate->value == primary_value) {
+        SetDescription(pos_matcher_, primary_description_type,
                        original_candidate);
 
-        new_candidate->value = std::move(alternative_value);
-        new_candidate->content_value = std::move(alternative_content_value);
-        new_candidate->inner_segment_boundary =
-            std::move(alternative_inner_segment_boundary);
-        new_candidate->style =
-            GetStyle(original_candidate->style, is_alternative_half_width);
-        SetDescription(pos_matcher_, alternative_description_type,
-                      new_candidate.get());
-        seg->insert_candidate(i + 1, std::move(new_candidate));
+        alt_candidate->value = std::move(secondary_value);
+        alt_candidate->content_value = std::move(secondary_content_value);
+        alt_candidate->inner_segment_boundary =
+            std::move(secondary_inner_segment_boundary);
+        alt_candidate->style =
+            GetStyle(original_candidate->style, is_secondary_half_width);
+        SetDescription(pos_matcher_, secondary_description_type,
+                      alt_candidate.get());
+        seg->insert_candidate(i + 1, std::move(alt_candidate));
       } else {
-        new_candidate->value = std::move(default_value);
-        new_candidate->content_value = std::move(default_content_value);
-        new_candidate->inner_segment_boundary =
-            std::move(default_inner_segment_boundary);
-        new_candidate->style =
-            GetStyle(original_candidate->style, is_default_half_width);
-        SetDescription(pos_matcher_, default_description_type,
-                       new_candidate.get());
+        alt_candidate->value = std::move(primary_value);
+        alt_candidate->content_value = std::move(primary_content_value);
+        alt_candidate->inner_segment_boundary =
+            std::move(primary_inner_segment_boundary);
+        alt_candidate->style =
+            GetStyle(original_candidate->style, is_primary_half_width);
+        SetDescription(pos_matcher_, primary_description_type,
+                       alt_candidate.get());
 
-        SetDescription(pos_matcher_, alternative_description_type,
+        SetDescription(pos_matcher_, secondary_description_type,
                        original_candidate);
-        seg->insert_candidate(i, std::move(new_candidate));
+        seg->insert_candidate(i, std::move(alt_candidate));
       }
       ++i;  // skip inserted candidate
     } else if (type == SELECT_VARIANT) {
-      if (original_candidate->value == default_value) {
-        SetDescription(pos_matcher_, default_description_type,
+      if (original_candidate->value == primary_value) {
+        SetDescription(pos_matcher_, primary_description_type,
                        original_candidate);
       } else {
-        auto new_candidate =
+        auto alt_candidate =
             std::make_unique<Segment::Candidate>(*original_candidate);
-        // Replace the original candidate with the new candidate.
-        new_candidate->value = std::move(default_value);
-        new_candidate->content_value = std::move(default_content_value);
-        new_candidate->inner_segment_boundary =
-            std::move(default_inner_segment_boundary);
-        new_candidate->style =
-            GetStyle(original_candidate->style, is_default_half_width);
-        SetDescription(pos_matcher_, default_description_type,
-                      new_candidate.get());
+        // Replace the original candidate to the alternative candidate.
+        alt_candidate->value = std::move(primary_value);
+        alt_candidate->content_value = std::move(primary_content_value);
+        alt_candidate->inner_segment_boundary =
+            std::move(primary_inner_segment_boundary);
+        alt_candidate->style =
+            GetStyle(original_candidate->style, is_primary_half_width);
+        SetDescription(pos_matcher_, primary_description_type,
+                      alt_candidate.get());
         seg->erase_candidate(i);
-        seg->insert_candidate(i, std::move(new_candidate));
+        seg->insert_candidate(i, std::move(alt_candidate));
       }
     }
     modified = true;
@@ -516,17 +516,17 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
 // Try generating default and alternative character forms.  Inner segment
 // boundary is taken into account.  When no rewrite happens, false is returned.
 bool VariantsRewriter::GenerateAlternatives(
-    const Segment::Candidate &original, std::string *default_value,
-    std::string *alternative_value, std::string *default_content_value,
-    std::string *alternative_content_value,
-    std::vector<uint32_t> *default_inner_segment_boundary,
-    std::vector<uint32_t> *alternative_inner_segment_boundary) const {
-  default_value->clear();
-  alternative_value->clear();
-  default_content_value->clear();
-  alternative_content_value->clear();
-  default_inner_segment_boundary->clear();
-  alternative_inner_segment_boundary->clear();
+    const Segment::Candidate &original, std::string *primary_value,
+    std::string *secondary_value, std::string *primary_content_value,
+    std::string *secondary_content_value,
+    std::vector<uint32_t> *primary_inner_segment_boundary,
+    std::vector<uint32_t> *secondary_inner_segment_boundary) const {
+  primary_value->clear();
+  secondary_value->clear();
+  primary_content_value->clear();
+  secondary_content_value->clear();
+  primary_inner_segment_boundary->clear();
+  secondary_inner_segment_boundary->clear();
 
   const config::CharacterFormManager *manager =
       CharacterFormManager::GetCharacterFormManager();
@@ -542,16 +542,16 @@ bool VariantsRewriter::GenerateAlternatives(
   }
   if (original.inner_segment_boundary.empty() || !is_valid) {
     if (!manager->ConvertConversionStringWithAlternative(
-            original.value, default_value, alternative_value)) {
+            original.value, primary_value, secondary_value)) {
       return false;
     }
     if (original.value != original.content_value) {
       manager->ConvertConversionStringWithAlternative(
-          original.content_value, default_content_value,
-          alternative_content_value);
+          original.content_value, primary_content_value,
+          secondary_content_value);
     } else {
-      *default_content_value = *default_value;
-      *alternative_content_value = *alternative_value;
+      *primary_content_value = *primary_value;
+      *secondary_content_value = *secondary_value;
     }
     return true;
   }
@@ -560,43 +560,43 @@ bool VariantsRewriter::GenerateAlternatives(
   // least one inner segment is rewritten, the whole segment is considered
   // rewritten.
   bool at_least_one_modified = false;
-  std::string inner_default_value, inner_alternative_value;
-  std::string inner_default_content_value, inner_alternative_content_value;
+  std::string inner_primary_value, inner_secondary_value;
+  std::string inner_primary_content_value, inner_secondary_content_value;
   for (Segment::Candidate::InnerSegmentIterator iter(&original); !iter.Done();
        iter.Next()) {
-    inner_default_value.clear();
-    inner_alternative_value.clear();
+    inner_primary_value.clear();
+    inner_secondary_value.clear();
     if (!manager->ConvertConversionStringWithAlternative(
-            iter.GetValue(), &inner_default_value, &inner_alternative_value)) {
-      inner_default_value.assign(iter.GetValue().data(),
+            iter.GetValue(), &inner_primary_value, &inner_secondary_value)) {
+      inner_primary_value.assign(iter.GetValue().data(),
                                  iter.GetValue().size());
-      inner_alternative_value.assign(iter.GetValue().data(),
+      inner_secondary_value.assign(iter.GetValue().data(),
                                      iter.GetValue().size());
     } else {
       at_least_one_modified = true;
     }
     if (iter.GetValue() != iter.GetContentValue()) {
-      inner_default_content_value.clear();
-      inner_alternative_content_value.clear();
+      inner_primary_content_value.clear();
+      inner_secondary_content_value.clear();
       manager->ConvertConversionStringWithAlternative(
-          iter.GetContentValue(), &inner_default_content_value,
-          &inner_alternative_content_value);
+          iter.GetContentValue(), &inner_primary_content_value,
+          &inner_secondary_content_value);
     } else {
-      inner_default_content_value = inner_default_value;
-      inner_alternative_content_value = inner_alternative_value;
+      inner_primary_content_value = inner_primary_value;
+      inner_secondary_content_value = inner_secondary_value;
     }
-    absl::StrAppend(default_value, inner_default_value);
-    absl::StrAppend(alternative_value, inner_alternative_value);
-    absl::StrAppend(default_content_value, inner_default_content_value);
-    absl::StrAppend(alternative_content_value, inner_alternative_content_value);
-    default_inner_segment_boundary->push_back(Segment::Candidate::EncodeLengths(
-        iter.GetKey().size(), inner_default_value.size(),
-        iter.GetContentKey().size(), inner_default_content_value.size()));
-    alternative_inner_segment_boundary->push_back(
+    absl::StrAppend(primary_value, inner_primary_value);
+    absl::StrAppend(secondary_value, inner_secondary_value);
+    absl::StrAppend(primary_content_value, inner_primary_content_value);
+    absl::StrAppend(secondary_content_value, inner_secondary_content_value);
+    primary_inner_segment_boundary->push_back(Segment::Candidate::EncodeLengths(
+        iter.GetKey().size(), inner_primary_value.size(),
+        iter.GetContentKey().size(), inner_primary_content_value.size()));
+    secondary_inner_segment_boundary->push_back(
         Segment::Candidate::EncodeLengths(
-            iter.GetKey().size(), inner_alternative_value.size(),
+            iter.GetKey().size(), inner_secondary_value.size(),
             iter.GetContentKey().size(),
-            inner_alternative_content_value.size()));
+            inner_secondary_content_value.size()));
   }
   return at_least_one_modified;
 }
