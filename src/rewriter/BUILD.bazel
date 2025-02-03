@@ -631,6 +631,7 @@ mozc_cc_test(
         ":variants_rewriter",
         "//base:japanese_util",
         "//base:number_util",
+        "//base:util",
         "//config:character_form_manager",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",

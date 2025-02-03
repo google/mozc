@@ -31,12 +31,12 @@
 #define MOZC_REWRITER_VARIANTS_REWRITER_H_
 
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "base/util.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
@@ -95,15 +95,13 @@ class VariantsRewriter : public RewriterInterface {
   //  form1=Half form2=Full
   //
   // If input1 and input2 have mixed form types and the result
-  // is ambiguous, this function returns std::nullopt.
+  // is ambiguous, this function returns {FULL_HALF_WIDTH, FULL_HALF_WIDTH}.
   //
   // Ambiguous case:
   //  input1="ABC１２３" input2="ＡＢＣ123"
-  //  return std::nullopt.
-  enum FormType { UNKNOWN_FORM, HALF_WIDTH_FORM, FULL_WIDTH_FORM };
-  static std::optional<std::pair<FormType, FormType>>
-  GetFormTypesFromStringPair(absl::string_view input1,
-                             absl::string_view input2);
+  //  return {FULL_HALF_WIDTH, FULL_HALF_WIDTH}.
+  static std::pair<Util::FormType, Util::FormType> GetFormTypesFromStringPair(
+      absl::string_view input1, absl::string_view input2);
 
  private:
   // 1) Full width / half width description

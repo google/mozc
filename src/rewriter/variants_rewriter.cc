@@ -31,7 +31,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -113,16 +112,16 @@ bool HasCharacterFormDescription(const absl::string_view value) {
 // Returns NumberString::Style corresponding to the given form
 NumberUtil::NumberString::Style GetStyle(
     const NumberUtil::NumberString::Style original_style,
-    VariantsRewriter::FormType form) {
+    bool is_half_width_form) {
   switch (original_style) {
     case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
     case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
-      return (form == VariantsRewriter::HALF_WIDTH_FORM)
+      return is_half_width_form
                  ? NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH
                  : NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
     case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH:
     case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH:
-      return (form == VariantsRewriter::HALF_WIDTH_FORM)
+      return is_half_width_form
                  ? NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH
                  : NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH;
     default:
@@ -328,11 +327,13 @@ Utf8AsChars32::const_iterator SkipHalfWidthVoiceSoundMark(
 
 }  // namespace
 
-std::optional<std::pair<VariantsRewriter::FormType, VariantsRewriter::FormType>>
+std::pair<Util::FormType, Util::FormType>
 VariantsRewriter::GetFormTypesFromStringPair(absl::string_view input1,
                                              absl::string_view input2) {
-  VariantsRewriter::FormType output_form1 = UNKNOWN_FORM;
-  VariantsRewriter::FormType output_form2 = UNKNOWN_FORM;
+  static constexpr std::pair<Util::FormType, Util::FormType> kUnknownForm = {
+      Util::UNKNOWN_FORM, Util::UNKNOWN_FORM};
+  Util::FormType output_form1 = Util::UNKNOWN_FORM;
+  Util::FormType output_form2 = Util::UNKNOWN_FORM;
 
   Utf8AsChars32 chars1(input1), chars2(input2);
   auto it1 = chars1.begin(), it2 = chars2.begin();
@@ -350,38 +351,39 @@ VariantsRewriter::GetFormTypesFromStringPair(absl::string_view input1,
 
     // TODO(taku): have to check that normalized w1 and w2 are identical
     if (script1 != script2) {
-      return std::nullopt;
+      return kUnknownForm;
     }
 
     DCHECK_EQ(script1, script2);
 
     // when having different forms, record the diff.
     if (form1 == Util::FULL_WIDTH && form2 == Util::HALF_WIDTH) {
-      if (output_form1 == HALF_WIDTH_FORM ||
-          output_form2 == FULL_WIDTH_FORM) {
+      if (output_form1 == Util::HALF_WIDTH ||
+          output_form2 == Util::FULL_WIDTH) {
         // inconsistent with the previous forms.
-        return std::nullopt;
+        return kUnknownForm;
       }
-      output_form1 = FULL_WIDTH_FORM;
-      output_form2 = HALF_WIDTH_FORM;
+      output_form1 = Util::FULL_WIDTH;
+      output_form2 = Util::HALF_WIDTH;
     } else if (form1 == Util::HALF_WIDTH && form2 == Util::FULL_WIDTH) {
-      if (output_form1 == FULL_WIDTH_FORM ||
-          output_form2 == HALF_WIDTH_FORM) {
+      if (output_form1 == Util::FULL_WIDTH ||
+          output_form2 == Util::HALF_WIDTH) {
         // inconsistent with the previous forms.
-        return std::nullopt;
+        return kUnknownForm;
       }
-      output_form1 = HALF_WIDTH_FORM;
-      output_form2 = FULL_WIDTH_FORM;
+      output_form1 = Util::HALF_WIDTH;
+      output_form2 = Util::FULL_WIDTH;
     }
   }
 
   // length should be the same
   if (it1 != chars1.end() || it2 != chars2.end()) {
-    return std::nullopt;
+    return kUnknownForm;
   }
 
-  if (output_form1 == UNKNOWN_FORM || output_form2 == UNKNOWN_FORM) {
-    return std::nullopt;
+  if (output_form1 == Util::UNKNOWN_FORM ||
+      output_form2 == Util::UNKNOWN_FORM) {
+    return kUnknownForm;
   }
 
   return std::make_pair(output_form1, output_form2);
@@ -401,6 +403,17 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     }
     SetDescriptionForTransliteration(pos_matcher_, candidate);
   }
+
+  auto get_description_type = [](Util::FormType form) {
+    switch (form) {
+      case Util::FULL_WIDTH:
+        return VariantsRewriter::FULL_WIDTH;
+      case Util::HALF_WIDTH:
+        return VariantsRewriter::HALF_WIDTH;
+      default:
+        return VariantsRewriter::FULL_HALF_WIDTH;
+    }
+  };
 
   // Regular Candidate
   std::string default_value, alternative_value;
@@ -432,34 +445,18 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       continue;
     }
 
-    FormType default_form = UNKNOWN_FORM;
-    FormType alternative_form = UNKNOWN_FORM;
-
-    int default_description_type =
-        (CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION);
-
-    int alternative_description_type =
-        (CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION);
-
-    std::optional<std::pair<FormType, FormType>> form_types =
+    // auto = std::pair<Util::FormType, Util::FormType>
+    const auto [default_form, alternative_form] =
         GetFormTypesFromStringPair(default_value, alternative_value);
-    if (form_types.has_value()) {
-      default_form = form_types->first;
-      alternative_form = form_types->second;
-      if (default_form == HALF_WIDTH_FORM) {
-        default_description_type |= HALF_WIDTH;
-      } else if (default_form == FULL_WIDTH_FORM) {
-        default_description_type |= FULL_WIDTH;
-      }
-      if (alternative_form == HALF_WIDTH_FORM) {
-        alternative_description_type |= HALF_WIDTH;
-      } else if (alternative_form == FULL_WIDTH_FORM) {
-        alternative_description_type |= FULL_WIDTH;
-      }
-    } else {
-      default_description_type |= FULL_HALF_WIDTH;
-      alternative_description_type |= FULL_HALF_WIDTH;
-    }
+    const bool is_default_half_width = (default_form == Util::HALF_WIDTH);
+    const bool is_alternative_half_width =
+        (alternative_form == Util::HALF_WIDTH);
+    const int default_description_type =
+        (get_description_type(default_form) | CHARACTER_FORM | ZIPCODE |
+         SPELLING_CORRECTION);
+    const int alternative_description_type =
+        (get_description_type(alternative_form) | CHARACTER_FORM | ZIPCODE |
+         SPELLING_CORRECTION);
 
     if (type == EXPAND_VARIANT) {
       // Insert default candidate to position |i| and
@@ -480,7 +477,8 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       new_candidate->inner_segment_boundary =
           std::move(default_inner_segment_boundary);
       new_candidate->attributes = original_candidate->attributes;
-      new_candidate->style = GetStyle(original_candidate->style, default_form);
+      new_candidate->style =
+          GetStyle(original_candidate->style, is_default_half_width);
       SetDescription(pos_matcher_, default_description_type, new_candidate);
 
       original_candidate->value = std::move(alternative_value);
@@ -488,7 +486,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       original_candidate->inner_segment_boundary =
           std::move(alternative_inner_segment_boundary);
       original_candidate->style =
-          GetStyle(original_candidate->style, alternative_form);
+          GetStyle(original_candidate->style, is_alternative_half_width);
       SetDescription(pos_matcher_, alternative_description_type,
                      original_candidate);
       ++i;  // skip inserted candidate
@@ -499,7 +497,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       original_candidate->inner_segment_boundary =
           std::move(default_inner_segment_boundary);
       original_candidate->style =
-          GetStyle(original_candidate->style, default_form);
+          GetStyle(original_candidate->style, is_default_half_width);
       SetDescription(pos_matcher_, default_description_type,
                      original_candidate);
     }
