@@ -344,36 +344,31 @@ VariantsRewriter::GetFormTypesFromStringPair(absl::string_view input1,
       break;
     }
 
-    const Util::ScriptType script1 = Util::GetScriptType(*it1);
-    const Util::ScriptType script2 = Util::GetScriptType(*it2);
-    const Util::FormType form1 = Util::GetFormType(*it1);
-    const Util::FormType form2 = Util::GetFormType(*it2);
-
     // TODO(taku): have to check that normalized w1 and w2 are identical
-    if (script1 != script2) {
+    if (Util::GetScriptType(*it1) != Util::GetScriptType(*it2)) {
       return kUnknownForm;
     }
 
-    DCHECK_EQ(script1, script2);
+    const Util::FormType form1 = Util::GetFormType(*it1);
+    const Util::FormType form2 = Util::GetFormType(*it2);
+    DCHECK_NE(form1, Util::UNKNOWN_FORM);
+    DCHECK_NE(form2, Util::UNKNOWN_FORM);
 
-    // when having different forms, record the diff.
-    if (form1 == Util::FULL_WIDTH && form2 == Util::HALF_WIDTH) {
-      if (output_form1 == Util::HALF_WIDTH ||
-          output_form2 == Util::FULL_WIDTH) {
-        // inconsistent with the previous forms.
-        return kUnknownForm;
-      }
-      output_form1 = Util::FULL_WIDTH;
-      output_form2 = Util::HALF_WIDTH;
-    } else if (form1 == Util::HALF_WIDTH && form2 == Util::FULL_WIDTH) {
-      if (output_form1 == Util::FULL_WIDTH ||
-          output_form2 == Util::HALF_WIDTH) {
-        // inconsistent with the previous forms.
-        return kUnknownForm;
-      }
-      output_form1 = Util::HALF_WIDTH;
-      output_form2 = Util::FULL_WIDTH;
+    // when having different forms, record the diff in the next step.
+    if (form1 == form2) {
+      continue;
     }
+
+    const bool is_consistent =
+        (output_form1 == Util::UNKNOWN_FORM || output_form1 == form1) &&
+        (output_form2 == Util::UNKNOWN_FORM || output_form2 == form2);
+    if (!is_consistent) {
+      // inconsistent with the previous forms.
+      return kUnknownForm;
+    }
+
+    output_form1 = form1;
+    output_form2 = form2;
   }
 
   // length should be the same
