@@ -385,6 +385,75 @@ VariantsRewriter::GetFormTypesFromStringPair(absl::string_view input1,
   return std::make_pair(output_form1, output_form2);
 }
 
+VariantsRewriter::AlternativeCandidateResult
+VariantsRewriter::CreateAlternativeCandidate(
+    const Segment::Candidate &original_candidate) const {
+  std::string primary_value, secondary_value;
+  std::string primary_content_value, secondary_content_value;
+  std::vector<uint32_t> primary_inner_segment_boundary;
+  std::vector<uint32_t> secondary_inner_segment_boundary;
+
+  AlternativeCandidateResult result;
+  if (!GenerateAlternatives(
+          original_candidate, &primary_value, &secondary_value,
+          &primary_content_value, &secondary_content_value,
+          &primary_inner_segment_boundary, &secondary_inner_segment_boundary)) {
+    return result;
+  }
+
+  auto get_description_type = [](Util::FormType form) {
+    switch (form) {
+      case Util::FULL_WIDTH:
+        return VariantsRewriter::FULL_WIDTH;
+      case Util::HALF_WIDTH:
+        return VariantsRewriter::HALF_WIDTH;
+      default:
+        return VariantsRewriter::FULL_HALF_WIDTH;
+    }
+  };
+
+  // auto = std::pair<Util::FormType, Util::FormType>
+  const auto [primary_form, secondary_form] =
+      GetFormTypesFromStringPair(primary_value, secondary_value);
+  const bool is_primary_half_width = (primary_form == Util::HALF_WIDTH);
+  const bool is_secondary_half_width = (secondary_form == Util::HALF_WIDTH);
+  const int primary_description_type =
+      (get_description_type(primary_form) | CHARACTER_FORM | ZIPCODE |
+       SPELLING_CORRECTION);
+  const int secondary_description_type =
+      (get_description_type(secondary_form) | CHARACTER_FORM | ZIPCODE |
+       SPELLING_CORRECTION);
+
+  auto new_candidate = std::make_unique<Segment::Candidate>(original_candidate);
+
+  if (original_candidate.value == primary_value) {
+    result.is_original_candidate_primary = true;
+    result.original_candidate_description_type = primary_description_type;
+
+    new_candidate->value = std::move(secondary_value);
+    new_candidate->content_value = std::move(secondary_content_value);
+    new_candidate->inner_segment_boundary =
+        std::move(secondary_inner_segment_boundary);
+    new_candidate->style =
+        GetStyle(original_candidate.style, is_secondary_half_width);
+    SetDescription(pos_matcher_, secondary_description_type,
+                   new_candidate.get());
+  } else {
+    result.is_original_candidate_primary = false;
+    result.original_candidate_description_type = secondary_description_type;
+
+    new_candidate->value = std::move(primary_value);
+    new_candidate->content_value = std::move(primary_content_value);
+    new_candidate->inner_segment_boundary =
+        std::move(primary_inner_segment_boundary);
+    new_candidate->style =
+        GetStyle(original_candidate.style, is_primary_half_width);
+    SetDescription(pos_matcher_, primary_description_type, new_candidate.get());
+  }
+  result.alternative_candidate = std::move(new_candidate);
+  return result;
+}
+
 bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
   CHECK(seg);
   bool modified = false;
@@ -400,22 +469,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     SetDescriptionForTransliteration(pos_matcher_, candidate);
   }
 
-  auto get_description_type = [](Util::FormType form) {
-    switch (form) {
-      case Util::FULL_WIDTH:
-        return VariantsRewriter::FULL_WIDTH;
-      case Util::HALF_WIDTH:
-        return VariantsRewriter::HALF_WIDTH;
-      default:
-        return VariantsRewriter::FULL_HALF_WIDTH;
-    }
-  };
-
   // Regular Candidate
-  std::string primary_value, secondary_value;
-  std::string primary_content_value, secondary_content_value;
-  std::vector<uint32_t> primary_inner_segment_boundary;
-  std::vector<uint32_t> secondary_inner_segment_boundary;
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
     Segment::Candidate *original_candidate = seg->mutable_candidate(i);
     DCHECK(original_candidate);
@@ -432,80 +486,36 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       continue;
     }
 
-    if (!GenerateAlternatives(*original_candidate, &primary_value,
-                              &secondary_value, &primary_content_value,
-                              &secondary_content_value,
-                              &primary_inner_segment_boundary,
-                              &secondary_inner_segment_boundary)) {
+    AlternativeCandidateResult result =
+        CreateAlternativeCandidate(*original_candidate);
+    if (result.alternative_candidate == nullptr) {
       SetDescriptionForCandidate(pos_matcher_, original_candidate);
       continue;
     }
 
-    // auto = std::pair<Util::FormType, Util::FormType>
-    const auto [primary_form, secondary_form] =
-        GetFormTypesFromStringPair(primary_value, secondary_value);
-    const bool is_primary_half_width = (primary_form == Util::HALF_WIDTH);
-    const bool is_secondary_half_width =
-        (secondary_form == Util::HALF_WIDTH);
-    const int primary_description_type =
-        (get_description_type(primary_form) | CHARACTER_FORM | ZIPCODE |
-         SPELLING_CORRECTION);
-    const int secondary_description_type =
-        (get_description_type(secondary_form) | CHARACTER_FORM | ZIPCODE |
-         SPELLING_CORRECTION);
-
     if (type == EXPAND_VARIANT) {
       // Insert default candidate to position |i| and
       // rewrite original(|i+1|) to alternative
-      auto alt_candidate =
-          std::make_unique<Segment::Candidate>(*original_candidate);
-
-      if (original_candidate->value == primary_value) {
-        SetDescription(pos_matcher_, primary_description_type,
+      if (result.is_original_candidate_primary) {
+        SetDescription(pos_matcher_, result.original_candidate_description_type,
                        original_candidate);
 
-        alt_candidate->value = std::move(secondary_value);
-        alt_candidate->content_value = std::move(secondary_content_value);
-        alt_candidate->inner_segment_boundary =
-            std::move(secondary_inner_segment_boundary);
-        alt_candidate->style =
-            GetStyle(original_candidate->style, is_secondary_half_width);
-        SetDescription(pos_matcher_, secondary_description_type,
-                      alt_candidate.get());
-        seg->insert_candidate(i + 1, std::move(alt_candidate));
+        seg->insert_candidate(i + 1, std::move(result.alternative_candidate));
       } else {
-        alt_candidate->value = std::move(primary_value);
-        alt_candidate->content_value = std::move(primary_content_value);
-        alt_candidate->inner_segment_boundary =
-            std::move(primary_inner_segment_boundary);
-        alt_candidate->style =
-            GetStyle(original_candidate->style, is_primary_half_width);
-        SetDescription(pos_matcher_, primary_description_type,
-                       alt_candidate.get());
-
-        SetDescription(pos_matcher_, secondary_description_type,
+        SetDescription(pos_matcher_, result.original_candidate_description_type,
                        original_candidate);
-        seg->insert_candidate(i, std::move(alt_candidate));
+        seg->insert_candidate(i, std::move(result.alternative_candidate));
       }
       ++i;  // skip inserted candidate
     } else if (type == SELECT_VARIANT) {
-      if (original_candidate->value == primary_value) {
-        SetDescription(pos_matcher_, primary_description_type,
+      if (result.is_original_candidate_primary) {
+        SetDescription(pos_matcher_, result.original_candidate_description_type,
                        original_candidate);
+        // new_candidate is not used.
       } else {
-        auto alt_candidate =
-            std::make_unique<Segment::Candidate>(*original_candidate);
         // Replace the original candidate to the alternative candidate.
-        alt_candidate->value = std::move(primary_value);
-        alt_candidate->content_value = std::move(primary_content_value);
-        alt_candidate->inner_segment_boundary =
-            std::move(primary_inner_segment_boundary);
-        alt_candidate->style =
-            GetStyle(original_candidate->style, is_primary_half_width);
-        SetDescription(pos_matcher_, primary_description_type,
-                      alt_candidate.get());
         seg->erase_candidate(i);
-        seg->insert_candidate(i, std::move(alt_candidate));
+        seg->insert_candidate(i, std::move(result.alternative_candidate));
       }
     }
     modified = true;
@@ -546,9 +556,9 @@ bool VariantsRewriter::GenerateAlternatives(
       return false;
     }
     if (original.value != original.content_value) {
-      manager->ConvertConversionStringWithAlternative(
-          original.content_value, primary_content_value,
-          secondary_content_value);
+      manager->ConvertConversionStringWithAlternative(original.content_value,
+                                                      primary_content_value,
+                                                      secondary_content_value);
     } else {
       *primary_content_value = *primary_value;
       *secondary_content_value = *secondary_value;
@@ -571,7 +581,7 @@ bool VariantsRewriter::GenerateAlternatives(
       inner_primary_value.assign(iter.GetValue().data(),
                                  iter.GetValue().size());
       inner_secondary_value.assign(iter.GetValue().data(),
-                                     iter.GetValue().size());
+                                   iter.GetValue().size());
     } else {
       at_least_one_modified = true;
     }
@@ -595,8 +605,7 @@ bool VariantsRewriter::GenerateAlternatives(
     secondary_inner_segment_boundary->push_back(
         Segment::Candidate::EncodeLengths(
             iter.GetKey().size(), inner_secondary_value.size(),
-            iter.GetContentKey().size(),
-            inner_secondary_content_value.size()));
+            iter.GetContentKey().size(), inner_secondary_content_value.size()));
   }
   return at_least_one_modified;
 }

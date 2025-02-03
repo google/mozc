@@ -31,6 +31,7 @@
 #define MOZC_REWRITER_VARIANTS_REWRITER_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -157,6 +158,15 @@ class VariantsRewriter : public RewriterInterface {
       std::string *secondary_content_value,
       std::vector<uint32_t> *primary_inner_segment_boundary,
       std::vector<uint32_t> *secondary_inner_segment_boundary) const;
+
+  // Returns an alternative candidate and information for the base candidate.
+  struct AlternativeCandidateResult {
+    bool is_original_candidate_primary;
+    int original_candidate_description_type;
+    std::unique_ptr<Segment::Candidate> alternative_candidate = nullptr;
+  };
+  AlternativeCandidateResult CreateAlternativeCandidate(
+      const Segment::Candidate &original_candidate) const;
 
   const dictionary::PosMatcher pos_matcher_;
 };
