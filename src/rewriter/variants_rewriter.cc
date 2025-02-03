@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -456,45 +457,56 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     if (type == EXPAND_VARIANT) {
       // Insert default candidate to position |i| and
       // rewrite original(|i+1|) to alternative
-      Segment::Candidate *new_candidate = seg->insert_candidate(i);
-      DCHECK(new_candidate);
+      auto new_candidate =
+          std::make_unique<Segment::Candidate>(*original_candidate);
 
-      new_candidate->key = original_candidate->key;
-      new_candidate->value = std::move(default_value);
-      new_candidate->content_key = original_candidate->content_key;
-      new_candidate->content_value = std::move(default_content_value);
-      new_candidate->consumed_key_size = original_candidate->consumed_key_size;
-      new_candidate->cost = original_candidate->cost;
-      new_candidate->structure_cost = original_candidate->structure_cost;
-      new_candidate->lid = original_candidate->lid;
-      new_candidate->rid = original_candidate->rid;
-      new_candidate->description = original_candidate->description;
-      new_candidate->inner_segment_boundary =
-          std::move(default_inner_segment_boundary);
-      new_candidate->attributes = original_candidate->attributes;
-      new_candidate->style =
-          GetStyle(original_candidate->style, is_default_half_width);
-      SetDescription(pos_matcher_, default_description_type, new_candidate);
+      if (original_candidate->value == default_value) {
+        SetDescription(pos_matcher_, default_description_type,
+                       original_candidate);
 
-      original_candidate->value = std::move(alternative_value);
-      original_candidate->content_value = std::move(alternative_content_value);
-      original_candidate->inner_segment_boundary =
-          std::move(alternative_inner_segment_boundary);
-      original_candidate->style =
-          GetStyle(original_candidate->style, is_alternative_half_width);
-      SetDescription(pos_matcher_, alternative_description_type,
-                     original_candidate);
+        new_candidate->value = std::move(alternative_value);
+        new_candidate->content_value = std::move(alternative_content_value);
+        new_candidate->inner_segment_boundary =
+            std::move(alternative_inner_segment_boundary);
+        new_candidate->style =
+            GetStyle(original_candidate->style, is_alternative_half_width);
+        SetDescription(pos_matcher_, alternative_description_type,
+                      new_candidate.get());
+        seg->insert_candidate(i + 1, std::move(new_candidate));
+      } else {
+        new_candidate->value = std::move(default_value);
+        new_candidate->content_value = std::move(default_content_value);
+        new_candidate->inner_segment_boundary =
+            std::move(default_inner_segment_boundary);
+        new_candidate->style =
+            GetStyle(original_candidate->style, is_default_half_width);
+        SetDescription(pos_matcher_, default_description_type,
+                       new_candidate.get());
+
+        SetDescription(pos_matcher_, alternative_description_type,
+                       original_candidate);
+        seg->insert_candidate(i, std::move(new_candidate));
+      }
       ++i;  // skip inserted candidate
     } else if (type == SELECT_VARIANT) {
-      // Rewrite original to default
-      original_candidate->value = std::move(default_value);
-      original_candidate->content_value = std::move(default_content_value);
-      original_candidate->inner_segment_boundary =
-          std::move(default_inner_segment_boundary);
-      original_candidate->style =
-          GetStyle(original_candidate->style, is_default_half_width);
-      SetDescription(pos_matcher_, default_description_type,
-                     original_candidate);
+      if (original_candidate->value == default_value) {
+        SetDescription(pos_matcher_, default_description_type,
+                       original_candidate);
+      } else {
+        auto new_candidate =
+            std::make_unique<Segment::Candidate>(*original_candidate);
+        // Replace the original candidate with the new candidate.
+        new_candidate->value = std::move(default_value);
+        new_candidate->content_value = std::move(default_content_value);
+        new_candidate->inner_segment_boundary =
+            std::move(default_inner_segment_boundary);
+        new_candidate->style =
+            GetStyle(original_candidate->style, is_default_half_width);
+        SetDescription(pos_matcher_, default_description_type,
+                      new_candidate.get());
+        seg->erase_candidate(i);
+        seg->insert_candidate(i, std::move(new_candidate));
+      }
     }
     modified = true;
   }
