@@ -401,28 +401,25 @@ VariantsRewriter::CreateAlternativeCandidate(
     return result;
   }
 
-  auto get_description_type = [](Util::FormType form) {
-    switch (form) {
-      case Util::FULL_WIDTH:
-        return VariantsRewriter::FULL_WIDTH;
-      case Util::HALF_WIDTH:
-        return VariantsRewriter::HALF_WIDTH;
-      default:
-        return VariantsRewriter::FULL_HALF_WIDTH;
-    }
-  };
-
   // auto = std::pair<Util::FormType, Util::FormType>
   const auto [primary_form, secondary_form] =
       GetFormTypesFromStringPair(primary_value, secondary_value);
   const bool is_primary_half_width = (primary_form == Util::HALF_WIDTH);
   const bool is_secondary_half_width = (secondary_form == Util::HALF_WIDTH);
-  const int primary_description_type =
-      (get_description_type(primary_form) | CHARACTER_FORM | ZIPCODE |
-       SPELLING_CORRECTION);
-  const int secondary_description_type =
-      (get_description_type(secondary_form) | CHARACTER_FORM | ZIPCODE |
-       SPELLING_CORRECTION);
+
+  auto get_description_type = [](Util::FormType form) {
+    constexpr int kBaseTypes = CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION;
+    switch (form) {
+      case Util::FULL_WIDTH:
+        return VariantsRewriter::FULL_WIDTH | kBaseTypes;
+      case Util::HALF_WIDTH:
+        return VariantsRewriter::HALF_WIDTH | kBaseTypes;
+      default:
+        return VariantsRewriter::FULL_HALF_WIDTH | kBaseTypes;
+    }
+  };
+  const int primary_description_type = get_description_type(primary_form);
+  const int secondary_description_type = get_description_type(secondary_form);
 
   auto new_candidate = std::make_unique<Segment::Candidate>(original_candidate);
 
@@ -493,30 +490,20 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       continue;
     }
 
+    SetDescription(pos_matcher_, result.original_candidate_description_type,
+                   original_candidate);
     if (type == EXPAND_VARIANT) {
-      // Insert default candidate to position |i| and
-      // rewrite original(|i+1|) to alternative
-      if (result.is_original_candidate_primary) {
-        SetDescription(pos_matcher_, result.original_candidate_description_type,
-                       original_candidate);
-
-        seg->insert_candidate(i + 1, std::move(result.alternative_candidate));
-      } else {
-        SetDescription(pos_matcher_, result.original_candidate_description_type,
-                       original_candidate);
-        seg->insert_candidate(i, std::move(result.alternative_candidate));
-      }
+      // If the original candidate is the primary candidate, insert alternative
+      // candidate after the original candidate as the secondary candidate.
+      const int index = result.is_original_candidate_primary ? i + 1 : i;
+      seg->insert_candidate(index, std::move(result.alternative_candidate));
       ++i;  // skip inserted candidate
-    } else if (type == SELECT_VARIANT) {
-      if (result.is_original_candidate_primary) {
-        SetDescription(pos_matcher_, result.original_candidate_description_type,
-                       original_candidate);
-        // new_candidate is not used.
-      } else {
-        // Replace the original candidate to the alternative candidate.
-        seg->erase_candidate(i);
-        seg->insert_candidate(i, std::move(result.alternative_candidate));
-      }
+    } else if (!result.is_original_candidate_primary) {
+      DCHECK_EQ(type, SELECT_VARIANT);
+      // If the original candidate is not the primary candidate, remove it and
+      // insert the alternative candidate as a replacement.
+      seg->erase_candidate(i);
+      seg->insert_candidate(i, std::move(result.alternative_candidate));
     }
     modified = true;
   }
