@@ -43,18 +43,6 @@ load(
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
 mozc_cc_library(
-    name = "session_interface",
-    hdrs = ["session_interface.h"],
-    deps = [
-        ":keymap",
-        "//composer:table",
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_library(
     name = "session",
     srcs = ["session.cc"],
     hdrs = ["session.h"],
@@ -65,7 +53,6 @@ mozc_cc_library(
         ":ime_context",
         ":key_event_transformer",
         ":keymap",
-        ":session_interface",
         ":session_usage_stats_util",
         "//base:clock",
         "//base:util",
@@ -197,7 +184,6 @@ mozc_cc_library(
     deps = [
         ":keymap",
         ":session",
-        ":session_handler_interface",
         ":session_observer_handler",
         ":session_observer_interface",
         "//base:clock",
@@ -242,7 +228,7 @@ mozc_cc_library(
     ],
     hdrs = ["session_handler_test_util.h"],
     deps = [
-        ":session_handler_interface",
+        ":session_handler",
         "//base:config_file_stream",
         "//base:file_util",
         "//config:character_form_manager",
@@ -272,7 +258,6 @@ mozc_cc_test(
     deps = [
         ":keymap",
         ":session_handler",
-        ":session_handler_interface",
         ":session_handler_test_util",
         "//base:clock",
         "//base:clock_mock",
@@ -316,7 +301,6 @@ mozc_cc_library(
     ],
     deps = [
         ":session_handler",
-        ":session_handler_interface",
         ":session_usage_observer",
         "//base:vlog",
         "//engine:engine_factory",
@@ -599,7 +583,6 @@ mozc_cc_library(
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":session_handler",
-        ":session_handler_interface",
         ":session_observer_interface",
         ":session_usage_observer",
         "//base:config_file_stream",
@@ -699,19 +682,6 @@ mozc_cc_test(
         "//supplemental_model:supplemental_model_factory",
         "//supplemental_model:supplemental_model_registration",
     ]),
-)
-
-mozc_cc_library(
-    name = "session_handler_interface",
-    hdrs = ["session_handler_interface.h"],
-    visibility = [
-        "//ios:__subpackages__",
-    ],
-    deps = [
-        ":session_observer_interface",
-        "//protocol:commands_cc_proto",
-        "@com_google_absl//absl/strings",
-    ],
 )
 
 mozc_cc_library(

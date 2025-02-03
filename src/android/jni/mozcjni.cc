@@ -55,7 +55,7 @@ namespace jni {
 namespace {
 
 // The global instance of Mozc system to be initialized in onPostLoad().
-std::unique_ptr<SessionHandlerInterface> g_session_handler;
+std::unique_ptr<SessionHandler> g_session_handler;
 
 // Concrete implementation for MozcJni.evalCommand
 jbyteArray JNICALL evalCommand(JNIEnv *env, jclass clazz,
@@ -120,8 +120,8 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
   return *std::move(engine);
 }
 
-std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
-    JNIEnv *env, jstring j_data_file_path) {
+std::unique_ptr<SessionHandler> CreateSessionHandler(JNIEnv *env,
+                                                     jstring j_data_file_path) {
   if (env == nullptr) {
     LOG(DFATAL) << "JNIEnv is null";
     return nullptr;

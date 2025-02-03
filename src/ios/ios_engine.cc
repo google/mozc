@@ -46,7 +46,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "session/session_handler.h"
-#include "session/session_handler_interface.h"
 
 namespace mozc {
 namespace ios {
@@ -76,7 +75,7 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
   return *std::move(engine);
 }
 
-std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
+std::unique_ptr<SessionHandler> CreateSessionHandler(
     const std::string &data_file_path) {
   std::unique_ptr<EngineInterface> engine = CreateMobileEngine(data_file_path);
   return std::make_unique<SessionHandler>(std::move(engine));

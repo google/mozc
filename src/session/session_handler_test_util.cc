@@ -40,7 +40,7 @@
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/session_handler_interface.h"
+#include "session/session_handler.h"
 #include "storage/registry.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
@@ -58,7 +58,7 @@ using ::mozc::commands::Command;
 using ::mozc::config::CharacterFormManager;
 using ::mozc::config::ConfigHandler;
 
-bool CreateSession(SessionHandlerInterface *handler, uint64_t *id) {
+bool CreateSession(SessionHandler *handler, uint64_t *id) {
   Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
   command.mutable_input()->mutable_capability()->set_text_deletion(
@@ -70,28 +70,28 @@ bool CreateSession(SessionHandlerInterface *handler, uint64_t *id) {
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
-bool DeleteSession(SessionHandlerInterface *handler, uint64_t id) {
+bool DeleteSession(SessionHandler *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
   return handler->EvalCommand(&command);
 }
 
-bool CleanUp(SessionHandlerInterface *handler, uint64_t id) {
+bool CleanUp(SessionHandler *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEANUP);
   return handler->EvalCommand(&command);
 }
 
-bool ClearUserPrediction(SessionHandlerInterface *handler, uint64_t id) {
+bool ClearUserPrediction(SessionHandler *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEAR_USER_PREDICTION);
   return handler->EvalCommand(&command);
 }
 
-bool IsGoodSession(SessionHandlerInterface *handler, uint64_t id) {
+bool IsGoodSession(SessionHandler *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::SEND_KEY);
