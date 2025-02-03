@@ -589,6 +589,75 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
   }
 }
 
+TEST_F(VariantsRewriterTest, GetFormTypesFromStringPair) {
+  VariantsRewriter::FormType f1, f2;
+
+  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("", &f1, "", &f2));
+
+  EXPECT_FALSE(
+      VariantsRewriter::GetFormTypesFromStringPair("abc", &f1, "ab", &f2));
+
+  EXPECT_FALSE(
+      VariantsRewriter::GetFormTypesFromStringPair("abc", &f1, "abc", &f2));
+
+  EXPECT_FALSE(
+      VariantsRewriter::GetFormTypesFromStringPair("12", &f1, "12", &f2));
+
+  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("あいう", &f1,
+                                                            "あいう", &f2));
+
+  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("アイウ", &f1,
+                                                            "アイウ", &f2));
+
+  EXPECT_FALSE(
+      VariantsRewriter::GetFormTypesFromStringPair("愛", &f1, "恋", &f2));
+
+  EXPECT_TRUE(
+      VariantsRewriter::GetFormTypesFromStringPair("ABC", &f1, "ＡＢＣ", &f2));
+  EXPECT_EQ(f1, VariantsRewriter::HALF_WIDTH_FORM);
+  EXPECT_EQ(f2, VariantsRewriter::FULL_WIDTH_FORM);
+
+  EXPECT_TRUE(
+      VariantsRewriter::GetFormTypesFromStringPair("ａｂｃ", &f1, "abc", &f2));
+  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+
+  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair("おばQ", &f1,
+                                                           "おばＱ", &f2));
+  EXPECT_EQ(f1, VariantsRewriter::HALF_WIDTH_FORM);
+  EXPECT_EQ(f2, VariantsRewriter::FULL_WIDTH_FORM);
+
+  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair(
+      "よろしくヨロシク", &f1, "よろしくﾖﾛｼｸ", &f2));
+  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+
+  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair(
+      "よろしくグーグル", &f1, "よろしくｸﾞｰｸﾞﾙ", &f2));
+  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+
+  // semi voice sound mark
+  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair(
+      "カッパよろしくグーグル", &f1, "ｶｯﾊﾟよろしくｸﾞｰｸﾞﾙ", &f2));
+  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+
+  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair("ヨロシクＱ", &f1,
+                                                           "ﾖﾛｼｸQ", &f2));
+  EXPECT_EQ(f1, VariantsRewriter::FULL_WIDTH_FORM);
+  EXPECT_EQ(f2, VariantsRewriter::HALF_WIDTH_FORM);
+
+  // mixed
+  EXPECT_FALSE(VariantsRewriter::GetFormTypesFromStringPair("ヨロシクQ", &f1,
+                                                            "ﾖﾛｼｸＱ", &f2));
+
+  EXPECT_TRUE(VariantsRewriter::GetFormTypesFromStringPair(
+      "京都Qぐーぐる", &f1, "京都Ｑぐーぐる", &f2));
+  EXPECT_EQ(f1, VariantsRewriter::HALF_WIDTH_FORM);
+  EXPECT_EQ(f2, VariantsRewriter::FULL_WIDTH_FORM);
+}
+
 TEST_F(VariantsRewriterTest, RewriteForConversion) {
   CharacterFormManager *character_form_manager =
       CharacterFormManager::GetCharacterFormManager();

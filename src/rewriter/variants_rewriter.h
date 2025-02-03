@@ -81,6 +81,28 @@ class VariantsRewriter : public RewriterInterface {
   static void SetDescriptionForPrediction(dictionary::PosMatcher pos_matcher,
                                           Segment::Candidate *candidate);
 
+  // Returns form types for given two pair of strings.
+  // This function tries to find the difference between
+  // |input1| and |input2| and find the place where the script
+  // form (halfwidth/fullwidth) is different. This function returns
+  // true if input1 or input2 needs to have full/half width annotation.
+  //
+  // Example:
+  //  input1="ABCぐーぐる input2="ＡＢＣ"
+  //  form1=Half form2=Full
+  //
+  // If input1 and input2 have mixed form types and the result
+  // is ambiguous, this function returns false.
+  //
+  // Ambiguous case:
+  //  input1="ABC１２３" input2="ＡＢＣ123"
+  //  return false.
+  enum FormType { UNKNOWN_FORM, HALF_WIDTH_FORM, FULL_WIDTH_FORM };
+  static bool GetFormTypesFromStringPair(absl::string_view input1,
+                                         FormType *form1,
+                                         absl::string_view input2,
+                                         FormType *form2);
+
  private:
   // 1) Full width / half width description
   // 2) CharForm (hiragana/katakana) description

@@ -43,6 +43,7 @@
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/number_util.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "config/character_form_manager.h"
@@ -111,16 +112,16 @@ bool HasCharacterFormDescription(const absl::string_view value) {
 // Returns NumberString::Style corresponding to the given form
 NumberUtil::NumberString::Style GetStyle(
     const NumberUtil::NumberString::Style original_style,
-    CharacterFormManager::FormType form) {
+    VariantsRewriter::FormType form) {
   switch (original_style) {
     case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
     case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
-      return (form == CharacterFormManager::HALF_WIDTH)
+      return (form == VariantsRewriter::HALF_WIDTH_FORM)
                  ? NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH
                  : NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
     case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH:
     case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH:
-      return (form == CharacterFormManager::HALF_WIDTH)
+      return (form == VariantsRewriter::HALF_WIDTH_FORM)
                  ? NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH
                  : NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH;
     default:
@@ -306,6 +307,88 @@ int VariantsRewriter::capability(const ConversionRequest &request) const {
   return RewriterInterface::ALL;
 }
 
+namespace {
+
+bool IsHalfWidthVoiceSoundMark(char32_t ch) {
+  // 0xFF9E: Halfwidth voice sound mark
+  // 0xFF9F: Halfwidth semi-voice sound mark
+  return ch == 0xFF9E || ch == 0xFF9F;
+}
+
+// Skip halfwidth voice/semi-voice sound mark as they are treated as one
+// character.
+Utf8AsChars32::const_iterator SkipHalfWidthVoiceSoundMark(
+    Utf8AsChars32::const_iterator it, Utf8AsChars32::const_iterator last) {
+  while (it != last && IsHalfWidthVoiceSoundMark(*it)) {
+    ++it;
+  }
+  return it;
+}
+
+}  // namespace
+
+bool VariantsRewriter::GetFormTypesFromStringPair(
+    const absl::string_view input1, FormType *output_form1,
+    const absl::string_view input2, FormType *output_form2) {
+  CHECK(output_form1);
+  CHECK(output_form2);
+
+  *output_form1 = UNKNOWN_FORM;
+  *output_form2 = UNKNOWN_FORM;
+
+  Utf8AsChars32 chars1(input1), chars2(input2);
+  auto it1 = chars1.begin(), it2 = chars2.begin();
+  for (; it1 != chars1.end() && it2 != chars2.end(); ++it1, ++it2) {
+    it1 = SkipHalfWidthVoiceSoundMark(it1, chars1.end());
+    it2 = SkipHalfWidthVoiceSoundMark(it2, chars2.end());
+    if (it1 == chars1.end() || it2 == chars2.end()) {
+      break;
+    }
+
+    const Util::ScriptType script1 = Util::GetScriptType(*it1);
+    const Util::ScriptType script2 = Util::GetScriptType(*it2);
+    const Util::FormType form1 = Util::GetFormType(*it1);
+    const Util::FormType form2 = Util::GetFormType(*it2);
+
+    // TODO(taku): have to check that normalized w1 and w2 are identical
+    if (script1 != script2) {
+      return false;
+    }
+
+    DCHECK_EQ(script1, script2);
+
+    // when having different forms, record the diff.
+    if (form1 == Util::FULL_WIDTH && form2 == Util::HALF_WIDTH) {
+      if (*output_form1 == HALF_WIDTH_FORM ||
+          *output_form2 == FULL_WIDTH_FORM) {
+        // inconsistent with the previous forms.
+        return false;
+      }
+      *output_form1 = FULL_WIDTH_FORM;
+      *output_form2 = HALF_WIDTH_FORM;
+    } else if (form1 == Util::HALF_WIDTH && form2 == Util::FULL_WIDTH) {
+      if (*output_form1 == FULL_WIDTH_FORM ||
+          *output_form2 == HALF_WIDTH_FORM) {
+        // inconsistent with the previous forms.
+        return false;
+      }
+      *output_form1 = HALF_WIDTH_FORM;
+      *output_form2 = FULL_WIDTH_FORM;
+    }
+  }
+
+  // length should be the same
+  if (it1 != chars1.end() || it2 != chars2.end()) {
+    return false;
+  }
+
+  if (*output_form1 == UNKNOWN_FORM || *output_form2 == UNKNOWN_FORM) {
+    return false;
+  }
+
+  return true;
+}
+
 bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
   CHECK(seg);
   bool modified = false;
@@ -351,10 +434,8 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       continue;
     }
 
-    CharacterFormManager::FormType default_form =
-        CharacterFormManager::UNKNOWN_FORM;
-    CharacterFormManager::FormType alternative_form =
-        CharacterFormManager::UNKNOWN_FORM;
+    FormType default_form = UNKNOWN_FORM;
+    FormType alternative_form = UNKNOWN_FORM;
 
     int default_description_type =
         (CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION);
@@ -362,17 +443,16 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     int alternative_description_type =
         (CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION);
 
-    if (CharacterFormManager::GetFormTypesFromStringPair(
-            default_value, &default_form, alternative_value,
-            &alternative_form)) {
-      if (default_form == CharacterFormManager::HALF_WIDTH) {
+    if (GetFormTypesFromStringPair(default_value, &default_form,
+                                   alternative_value, &alternative_form)) {
+      if (default_form == HALF_WIDTH_FORM) {
         default_description_type |= HALF_WIDTH;
-      } else if (default_form == CharacterFormManager::FULL_WIDTH) {
+      } else if (default_form == FULL_WIDTH_FORM) {
         default_description_type |= FULL_WIDTH;
       }
-      if (alternative_form == CharacterFormManager::HALF_WIDTH) {
+      if (alternative_form == HALF_WIDTH_FORM) {
         alternative_description_type |= HALF_WIDTH;
-      } else if (alternative_form == CharacterFormManager::FULL_WIDTH) {
+      } else if (alternative_form == FULL_WIDTH_FORM) {
         alternative_description_type |= FULL_WIDTH;
       }
     } else {
