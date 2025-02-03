@@ -42,9 +42,13 @@ package(default_visibility = ["//:__subpackages__"])
 mozc_cc_library(
     name = "segments",
     srcs = [
+        "candidate.cc",
         "segments.cc",
     ],
-    hdrs = ["segments.h"],
+    hdrs = [
+        "candidate.h",
+        "segments.h",
+    ],
     visibility = [
         "//:__subpackages__",
     ],
@@ -70,11 +74,22 @@ mozc_cc_test(
     srcs = ["segments_test.cc"],
     deps = [
         ":segments",
-        "//base:number_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "candidate_test",
+    size = "small",
+    srcs = ["candidate_test.cc"],
+    deps = [
+        ":segments",
+        "//base:number_util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
