@@ -46,10 +46,10 @@
 namespace mozc {
 namespace engine {
 
-class SessionOutput {
+class EngineOutput {
  public:
-  SessionOutput(const SessionOutput &) = delete;
-  SessionOutput &operator=(const SessionOutput &) = delete;
+  EngineOutput(const EngineOutput &) = delete;
+  EngineOutput &operator=(const EngineOutput &) = delete;
 
   // Fill the CandidateWindow_Candidate protobuf with the contents of candidate.
   static void FillCandidate(

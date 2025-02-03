@@ -36,8 +36,8 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "engine/engine_converter_interface.h"
 #include "engine/engine_interface.h"
-#include "engine/session_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gmock.h"
@@ -47,8 +47,8 @@ namespace mozc {
 class MockEngine : public EngineInterface {
  public:
   MOCK_METHOD(absl::string_view, GetDataVersion, (), (const, override));
-  MOCK_METHOD(std::unique_ptr<engine::SessionConverterInterface>,
-              CreateSessionConverter,
+  MOCK_METHOD(std::unique_ptr<engine::EngineConverterInterface>,
+              CreateEngineConverter,
               (const commands::Request &request, const config::Config &config),
               (const, override));
   MOCK_METHOD(bool, Reload, (), (override));

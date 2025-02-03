@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// A class handling the converter on the session layer.
+// A class handling the converter as an interface for the session layer.
 
-#ifndef MOZC_ENGINE_SESSION_CONVERTER_H_
-#define MOZC_ENGINE_SESSION_CONVERTER_H_
+#ifndef MOZC_ENGINE_ENGINE_CONVERTER_H_
+#define MOZC_ENGINE_ENGINE_CONVERTER_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -43,7 +43,7 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "engine/candidate_list.h"
-#include "engine/session_converter_interface.h"
+#include "engine/engine_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -54,13 +54,13 @@ namespace engine {
 
 // Class handling ConverterInterface with a session state.  This class
 // support stateful operations related with the converter.
-class SessionConverter : public SessionConverterInterface {
+class EngineConverter : public EngineConverterInterface {
  public:
-  SessionConverter(const ConverterInterface *converter,
-                   const commands::Request *request,
-                   const config::Config *config);
-  SessionConverter(const SessionConverter &) = delete;
-  SessionConverter &operator=(const SessionConverter &) = delete;
+  EngineConverter(const ConverterInterface *converter,
+                  const commands::Request *request,
+                  const config::Config *config);
+  EngineConverter(const EngineConverter &) = delete;
+  EngineConverter &operator=(const EngineConverter &) = delete;
 
   // Checks if the current state is in the state bitmap.
   bool CheckState(States) const override;
@@ -126,7 +126,7 @@ class SessionConverter : public SessionConverterInterface {
   // The key of the candidate is "にほんご". Therefore, when the candidate is
   // committed by this function, consumed_key_size will be set to 4.
   // |consumed_key_size| can be very large value
-  // (i.e. SessionConverter::kConsumedAllCharacters).
+  // (i.e. EngineConverter::kConsumedAllCharacters).
   // In this case all the composition characters are consumed.
   // Examples:
   // - {composition: "にほんご|", value: "日本語", consumed_key_size: 4}
@@ -239,10 +239,10 @@ class SessionConverter : public SessionConverterInterface {
   // Set setting by the context.
   void OnStartComposition(const commands::Context &context) override;
 
-  // Copies SessionConverter
+  // Copies EngineConverter
   // TODO(hsumita): Copy all member variables.
   // Currently, converter_ is not copied.
-  SessionConverter *Clone() const override;
+  EngineConverter *Clone() const override;
 
   void set_selection_shortcut(
       config::Config::SelectionShortcut selection_shortcut) override {
@@ -259,7 +259,7 @@ class SessionConverter : public SessionConverterInterface {
       std::numeric_limits<size_t>::max();
 
  private:
-  friend class SessionConverterTest;
+  friend class EngineConverterTest;
 
   // Resets the result value stored at the previous command.
   void ResetResult();
@@ -345,13 +345,13 @@ class SessionConverter : public SessionConverterInterface {
   void InitializeSelectedCandidateIndices();
   void UpdateSelectedCandidateIndex();
   void UpdateCandidateStats(absl::string_view base_name, int32_t index);
-  void CommitUsageStats(SessionConverterInterface::State commit_state,
+  void CommitUsageStats(EngineConverterInterface::State commit_state,
                         const commands::Context &context);
   void CommitUsageStatsWithSegmentsSize(
-      SessionConverterInterface::State commit_state,
+      EngineConverterInterface::State commit_state,
       const commands::Context &context, size_t commit_segments_size);
 
-  // Sets request type and update the session_converter's state
+  // Sets request type and update the engine_converter's state
   void SetRequestType(ConversionRequest::RequestType request_type,
                       ConversionRequest::Options &options);
 
@@ -381,7 +381,7 @@ class SessionConverter : public SessionConverterInterface {
   const commands::Request *request_;
   const config::Config *config_;
 
-  SessionConverterInterface::State state_;
+  EngineConverterInterface::State state_;
 
   // Remembers request type to manage state.
   // TODO(team): Check whether we can switch behaviors using state_
@@ -414,4 +414,4 @@ class SessionConverter : public SessionConverterInterface {
 }  // namespace engine
 }  // namespace mozc
 
-#endif  // MOZC_EGINE_SESSION_CONVERTER_H_
+#endif  // MOZC_ENGINE_ENGINE_CONVERTER_H_

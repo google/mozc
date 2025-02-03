@@ -309,11 +309,11 @@ class Session {
   // it requires the argument id.
   bool SelectCandidate(mozc::commands::Command *command);
 
-  // Calls SessionConverter::ConmmitHeadToFocusedSegments()
+  // Calls EngineConverter::ConmmitHeadToFocusedSegments()
   // and deletes characters from the composer.
   void CommitHeadToFocusedSegmentsInternal(const commands::Context &context);
 
-  // Commits without SessionConverter.
+  // Commits without EngineConverter.
   void CommitCompositionDirectly(commands::Command *command);
   void CommitSourceTextDirectly(commands::Command *command);
   void CommitRawTextDirectly(commands::Command *command);
@@ -322,10 +322,10 @@ class Session {
   bool CommitInternal(commands::Command *command,
                       bool trigger_zero_query_suggest);
 
-  // Calls SessionConverter::Suggest if the condition is applicable to
-  // call it.  True is returned when SessionConverter::Suggest is
+  // Calls EngineConverter::Suggest if the condition is applicable to
+  // call it.  True is returned when EngineConverter::Suggest is
   // called and results exist.  False is returned when
-  // SessionConverter::Suggest is not called or no results exist.
+  // EngineConverter::Suggest is not called or no results exist.
   bool Suggest(const mozc::commands::Input &input);
 
   // Commands like EditCancel should restore the original string used for

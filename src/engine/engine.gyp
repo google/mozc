@@ -58,6 +58,7 @@
         'engine.cc',
       ],
       'dependencies': [
+        'engine_converter',
         'minimal_converter',
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_status',
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
@@ -73,10 +74,10 @@
       ],
     },
     {
-      'target_name': 'session_converter',
+      'target_name': 'engine_converter',
       'type': 'static_library',
       'sources': [
-        'session_converter.cc',
+        'engine_converter.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_log',
@@ -100,7 +101,7 @@
       'hard_dependency': 1,
       'sources': [
         'candidate_list.cc',
-        'session_output.cc',
+        'engine_output.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',

@@ -36,7 +36,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "engine/session_converter_interface.h"
+#include "engine/engine_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/engine_builder.pb.h"
@@ -57,9 +57,9 @@ class EngineInterface {
 
   // Creates new session converter.
   // This method is called per input context.
-  virtual std::unique_ptr<engine::SessionConverterInterface>
-  CreateSessionConverter(const commands::Request &request,
-                         const config::Config &config) const = 0;
+  virtual std::unique_ptr<engine::EngineConverterInterface>
+  CreateEngineConverter(const commands::Request &request,
+                        const config::Config &config) const = 0;
 
   // Gets the version of underlying data set.
   virtual absl::string_view GetDataVersion() const = 0;

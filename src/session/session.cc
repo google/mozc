@@ -49,9 +49,9 @@
 #include "composer/composer.h"
 #include "composer/key_event_util.h"
 #include "composer/table.h"
+#include "engine/engine_converter_interface.h"
 #include "engine/engine_interface.h"
-#include "engine/session_converter_interface.h"
-#include "engine/session_output.h"
+#include "engine/engine_output.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/ime_context.h"
@@ -70,7 +70,7 @@ namespace session {
 namespace {
 
 using ::mozc::engine::ConversionPreferences;
-using ::mozc::engine::SessionConverterInterface;
+using ::mozc::engine::EngineConverterInterface;
 using ::mozc::usage_stats::UsageStats;
 
 // Maximum size of multiple undo stack.
@@ -174,7 +174,7 @@ void SetStateToPredompositionAndCancel(ImeContext *context) {
   // - candidate list
   // - result text to commit
   if (!context->mutable_converter()->CheckState(
-          SessionConverterInterface::COMPOSITION)) {
+          EngineConverterInterface::COMPOSITION)) {
     context->mutable_converter()->Cancel();
   }
 }
@@ -235,8 +235,8 @@ void Session::InitContext(ImeContext *context) const {
   context->set_composer(std::make_unique<composer::Composer>(
       &composer::Table::GetDefaultTable(), &context->GetRequest(),
       &context->GetConfig()));
-  context->set_converter(engine_->CreateSessionConverter(context->GetRequest(),
-                                                         context->GetConfig()));
+  context->set_converter(engine_->CreateEngineConverter(context->GetRequest(),
+                                                        context->GetConfig()));
 #ifdef _WIN32
   // On Windows session is started with direct mode.
   // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
@@ -452,7 +452,7 @@ bool Session::TestSendKey(commands::Command *command) {
   if (state == ImeContext::PRECOMPOSITION) {
     keymap::PrecompositionState::Commands key_command;
     const bool is_suggestion =
-        context_->converter().CheckState(SessionConverterInterface::SUGGESTION);
+        context_->converter().CheckState(EngineConverterInterface::SUGGESTION);
     const bool result =
         is_suggestion ? keymap->GetCommandZeroQuerySuggestion(key, &key_command)
                       : keymap->GetCommandPrecomposition(key, &key_command);
@@ -631,7 +631,7 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
   keymap::PrecompositionState::Commands key_command;
   const keymap::KeyMapManager *keymap = &context_->GetKeyMapManager();
   const bool result =
-      context_->converter().CheckState(SessionConverterInterface::SUGGESTION)
+      context_->converter().CheckState(EngineConverterInterface::SUGGESTION)
           ? keymap->GetCommandZeroQuerySuggestion(command->input().key(),
                                                   &key_command)
           : keymap->GetCommandPrecomposition(command->input().key(),
@@ -724,7 +724,7 @@ bool Session::SendKeyCompositionState(commands::Command *command) {
   keymap::CompositionState::Commands key_command;
   const keymap::KeyMapManager *keymap = &context_->GetKeyMapManager();
   const bool result =
-      context_->converter().CheckState(SessionConverterInterface::SUGGESTION)
+      context_->converter().CheckState(EngineConverterInterface::SUGGESTION)
           ? keymap->GetCommandSuggestion(command->input().key(), &key_command)
           : keymap->GetCommandComposition(command->input().key(), &key_command);
 
@@ -866,7 +866,7 @@ bool Session::SendKeyConversionState(commands::Command *command) {
   keymap::ConversionState::Commands key_command;
   const keymap::KeyMapManager *keymap = &context_->GetKeyMapManager();
   const bool result =
-      context_->converter().CheckState(SessionConverterInterface::PREDICTION)
+      context_->converter().CheckState(EngineConverterInterface::PREDICTION)
           ? keymap->GetCommandPrediction(command->input().key(), &key_command)
           : keymap->GetCommandConversion(command->input().key(), &key_command);
 
@@ -1995,14 +1995,14 @@ bool Session::Suggest(const commands::Input &input) {
   // |request_suggestion| is not supposed to always ensure suppressing
   // suggestion since this field is used for performance improvement
   // by skipping interim suggestions.  However, the implementation of
-  // SessionConverter::SuggestWithPreferences does not perform suggest
+  // EngineConverter::SuggestWithPreferences does not perform suggest
   // whenever this flag is on.  So the caller should consider whether
   // this flag should be set or not.  Because the original logic was
   // implemented in Session::InserCharacter, we check the input.type()
   // is SEND_KEY assuming SEND_KEY results InsertCharacter (in most
   // cases).
   //
-  // TODO(komatsu): Move the logic into SessionConverter.
+  // TODO(komatsu): Move the logic into EngineConverter.
   if (input.has_request_suggestion() &&
       input.type() == commands::Input::SEND_KEY) {
     ConversionPreferences conversion_preferences =
@@ -2751,7 +2751,7 @@ void Session::OutputComposition(commands::Command *command) const {
   OutputMode(command);
   commands::Preedit *preedit = command->mutable_output()->mutable_preedit();
   // TODO(taku): Removes the dependency to SessionOutput.
-  engine::SessionOutput::FillPreedit(context_->composer(), preedit);
+  engine::EngineOutput::FillPreedit(context_->composer(), preedit);
 }
 
 void Session::OutputKey(commands::Command *command) const {

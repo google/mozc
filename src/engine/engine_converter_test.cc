@@ -33,7 +33,7 @@
 // T13Ns. If you want to add test case related to T13Ns, please make sure
 // you set T13Ns to the result for a mock converter.
 
-#include "engine/session_converter.h"
+#include "engine/engine_converter.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -55,7 +55,7 @@
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/candidate_list.h"
-#include "engine/session_converter_interface.h"
+#include "engine/engine_converter_interface.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -103,7 +103,7 @@ void AddSegmentWithSingleCandidate(Segments *segments, absl::string_view key,
   cand->content_value = cand->value;
 }
 
-class SessionConverterTest : public testing::TestWithTempUserProfile {
+class EngineConverterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
@@ -125,64 +125,63 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  static void GetSegments(const SessionConverter &converter, Segments *dest) {
+  static void GetSegments(const EngineConverter &converter, Segments *dest) {
     CHECK(dest);
     *dest = converter.segments_;
   }
 
-  static const Segments &GetSegments(const SessionConverter &converter) {
+  static const Segments &GetSegments(const EngineConverter &converter) {
     return converter.segments_;
   }
 
-  static void SetSegments(const Segments &src, SessionConverter *converter) {
+  static void SetSegments(const Segments &src, EngineConverter *converter) {
     CHECK(converter);
     converter->segments_ = src;
   }
 
-  static const commands::Result &GetResult(const SessionConverter &converter) {
+  static const commands::Result &GetResult(const EngineConverter &converter) {
     return converter.result_;
   }
 
   static const CandidateList &GetCandidateList(
-      const SessionConverter &converter) {
+      const EngineConverter &converter) {
     return converter.candidate_list_;
   }
 
-  static SessionConverterInterface::State GetState(
-      const SessionConverter &converter) {
+  static EngineConverterInterface::State GetState(
+      const EngineConverter &converter) {
     return converter.state_;
   }
 
-  static void SetState(SessionConverterInterface::State state,
-                       SessionConverter *converter) {
+  static void SetState(EngineConverterInterface::State state,
+                       EngineConverter *converter) {
     converter->state_ = state;
   }
 
-  static size_t GetSegmentIndex(const SessionConverter &converter) {
+  static size_t GetSegmentIndex(const EngineConverter &converter) {
     return converter.segment_index_;
   }
 
-  static bool IsCandidateListVisible(const SessionConverter &converter) {
+  static bool IsCandidateListVisible(const EngineConverter &converter) {
     return converter.candidate_list_visible_;
   }
 
-  static const commands::Request &GetRequest(
-      const SessionConverter &converter) {
+  static const commands::Request &GetRequest(const EngineConverter &converter) {
     return *converter.request_;
   }
 
-  static void GetPreedit(const SessionConverter &converter, size_t index,
+  static void GetPreedit(const EngineConverter &converter, size_t index,
                          size_t size, std::string *conversion) {
     converter.GetPreedit(index, size, conversion);
   }
 
-  static void GetConversion(const SessionConverter &converter, size_t index,
+  static void GetConversion(const EngineConverter &converter, size_t index,
                             size_t size, std::string *conversion) {
     converter.GetConversion(index, size, conversion);
   }
 
   static void AppendCandidateList(ConversionRequest::RequestType request_type,
-                                  SessionConverter *converter) {
+                                  EngineConverter *converter) {
     ConversionRequest::Options unused_options;
     converter->SetRequestType(request_type, unused_options);
     converter->AppendCandidateList();
@@ -322,8 +321,8 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
     }
   }
 
-  static void ExpectSameSessionConverter(const SessionConverter &lhs,
-                                         const SessionConverter &rhs) {
+  static void ExpectSameEngineConverter(const EngineConverter &lhs,
+                                        const EngineConverter &rhs) {
     EXPECT_EQ(lhs.IsActive(), rhs.IsActive());
     EXPECT_EQ(IsCandidateListVisible(lhs), IsCandidateListVisible(rhs));
     EXPECT_EQ(GetSegmentIndex(lhs), GetSegmentIndex(rhs));
@@ -374,7 +373,7 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
   }
 
   static ::testing::AssertionResult ExpectSelectedCandidateIndices(
-      const char *, const char *, const SessionConverter &converter,
+      const char *, const char *, const EngineConverter &converter,
       absl::Span<const int> expected) {
     absl::Span<const int> actual = converter.selected_candidate_indices_;
 
@@ -421,9 +420,9 @@ class SessionConverterTest : public testing::TestWithTempUserProfile {
 #define EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, indices) \
   EXPECT_PRED_FORMAT2(ExpectSelectedCandidateIndices, converter, indices);
 
-TEST_F(SessionConverterTest, Convert) {
+TEST_F(EngineConverterTest, Convert) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   {
     Segments segments;
     SetAiueo(&segments);
@@ -482,9 +481,9 @@ TEST_F(SessionConverterTest, Convert) {
   EXPECT_COUNT_STATS("ConversionCandidates0", 1);
 }
 
-TEST_F(SessionConverterTest, ConvertWithSpellingCorrection) {
+TEST_F(EngineConverterTest, ConvertWithSpellingCorrection) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   {
     Segments segments;
     SetAiueo(&segments);
@@ -502,9 +501,9 @@ TEST_F(SessionConverterTest, ConvertWithSpellingCorrection) {
   EXPECT_TRUE(IsCandidateListVisible(converter));
 }
 
-TEST_F(SessionConverterTest, ConvertToTransliteration) {
+TEST_F(EngineConverterTest, ConvertToTransliteration) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   {
     Segments segments;
     SetAiueo(&segments);
@@ -570,9 +569,9 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
   EXPECT_COUNT_STATS("ConversionCandidates0", 1);
 }
 
-TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
+TEST_F(EngineConverterTest, ConvertToTransliterationWithMultipleSegments) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   {
     Segments segments;
@@ -617,9 +616,9 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
   }
 }
 
-TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
+TEST_F(EngineConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   {
     Segments segments;
     {
@@ -693,12 +692,12 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
   }
 }
 
-TEST_F(SessionConverterTest, MultiSegmentsConversion) {
+TEST_F(EngineConverterTest, MultiSegmentsConversion) {
   const std::string kKamabokono = "かまぼこの";
   const std::string kInbou = "いんぼう";
 
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   {
     Segments segments;
     SetKamaboko(&segments);
@@ -970,9 +969,9 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   }
 }
 
-TEST_F(SessionConverterTest, Transliterations) {
+TEST_F(EngineConverterTest, Transliterations) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   composer_->InsertCharacterKeyAndPreedit("h", "く");
   composer_->InsertCharacterKeyAndPreedit("J", "ま");
 
@@ -1023,9 +1022,9 @@ TEST_F(SessionConverterTest, Transliterations) {
   }
 }
 
-TEST_F(SessionConverterTest, T13NWithResegmentation) {
+TEST_F(EngineConverterTest, T13NWithResegmentation) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   {
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -1106,9 +1105,9 @@ TEST_F(SessionConverterTest, T13NWithResegmentation) {
   }
 }
 
-TEST_F(SessionConverterTest, ConvertToHalfWidth) {
+TEST_F(EngineConverterTest, ConvertToHalfWidth) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   std::vector<int> expected_indices;
   composer_->InsertCharacterKeyAndPreedit("a", "あ");
   composer_->InsertCharacterKeyAndPreedit("b", "ｂ");
@@ -1187,11 +1186,11 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
   }
 }
 
-TEST_F(SessionConverterTest, ConvertToHalfWidth2) {
+TEST_F(EngineConverterTest, ConvertToHalfWidth2) {
   // http://b/2517514
   // ConvertToHalfWidth converts punctuations differently w/ or w/o kana.
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   composer_->InsertCharacterKeyAndPreedit("q", "ｑ");
   composer_->InsertCharacterKeyAndPreedit(",", "、");
   composer_->InsertCharacterKeyAndPreedit(".", "。");
@@ -1225,9 +1224,9 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth2) {
   }
 }
 
-TEST_F(SessionConverterTest, SwitchKanaTypeFromCompositionMode) {
+TEST_F(EngineConverterTest, SwitchKanaTypeFromCompositionMode) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   composer_->InsertCharacterKeyAndPreedit("a", "あ");
   composer_->InsertCharacterKeyAndPreedit("b", "ｂ");
   composer_->InsertCharacterKeyAndPreedit("c", "ｃ");
@@ -1289,9 +1288,9 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromCompositionMode) {
   }
 }
 
-TEST_F(SessionConverterTest, SwitchKanaTypeFromConversionMode) {
+TEST_F(EngineConverterTest, SwitchKanaTypeFromConversionMode) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   composer_->EditErase();
   composer_->InsertCharacterKeyAndPreedit("ka", "か");
   composer_->InsertCharacterKeyAndPreedit("n", "ん");
@@ -1384,9 +1383,9 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromConversionMode) {
   }
 }
 
-TEST_F(SessionConverterTest, ResizeSegmentFailedInSwitchKanaType) {
+TEST_F(EngineConverterTest, ResizeSegmentFailedInSwitchKanaType) {
   const MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   // ResizeSegment() is called when the conversion result has multiple segments.
   // Let the underlying converter return the result with two segments.
@@ -1408,9 +1407,9 @@ TEST_F(SessionConverterTest, ResizeSegmentFailedInSwitchKanaType) {
   EXPECT_TRUE(converter.SwitchKanaType(*composer_));
 }
 
-TEST_F(SessionConverterTest, CommitFirstSegment) {
+TEST_F(EngineConverterTest, CommitFirstSegment) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   SetKamaboko(&segments);
   composer_->InsertCharacterPreedit("かまぼこ");
@@ -1484,9 +1483,9 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
   EXPECT_COUNT_STATS("ConversionCandidates1", 1);
 }
 
-TEST_F(SessionConverterTest, CommitHeadToFocusedSegments) {
+TEST_F(EngineConverterTest, CommitHeadToFocusedSegments) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   const std::string kIberiko = "いべりこ";
   const std::string kNekowo = "ねこを";
   const std::string kItadaita = "いただいた";
@@ -1545,9 +1544,9 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegments) {
   EXPECT_TRUE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, CommitHeadToFocusedSegmentsAtLastSegment) {
+TEST_F(EngineConverterTest, CommitHeadToFocusedSegmentsAtLastSegment) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   Segments segments;
   SetKamaboko(&segments);
@@ -1573,9 +1572,9 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegmentsAtLastSegment) {
   EXPECT_FALSE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, CommitConvertedBracketPairText) {
+TEST_F(EngineConverterTest, CommitConvertedBracketPairText) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   const std::string kKakko = "かっこ";
 
@@ -1636,7 +1635,7 @@ TEST_F(SessionConverterTest, CommitConvertedBracketPairText) {
   composer_->Reset();
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_FALSE(converter.IsActive());
-  EXPECT_EQ(committed_key_size, SessionConverter::kConsumedAllCharacters);
+  EXPECT_EQ(committed_key_size, EngineConverter::kConsumedAllCharacters);
 
   {  // Check the result
     commands::Output output;
@@ -1649,16 +1648,16 @@ TEST_F(SessionConverterTest, CommitConvertedBracketPairText) {
     EXPECT_EQ(result.value(), "「」");
     EXPECT_EQ(result.key(), kKakko);
     EXPECT_EQ(result.cursor_offset(), -1);
-    EXPECT_EQ(GetState(converter), SessionConverterInterface::COMPOSITION);
+    EXPECT_EQ(GetState(converter), EngineConverterInterface::COMPOSITION);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
 
   EXPECT_FALSE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, CommitPreedit) {
+TEST_F(EngineConverterTest, CommitPreedit) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   std::vector<int> expected_indices;
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1692,9 +1691,9 @@ TEST_F(SessionConverterTest, CommitPreedit) {
   EXPECT_COUNT_STATS("CommitFromComposition", 1);
 }
 
-TEST_F(SessionConverterTest, CommitPreeditBracketPairText) {
+TEST_F(EngineConverterTest, CommitPreeditBracketPairText) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   std::vector<int> expected_indices;
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -1721,9 +1720,9 @@ TEST_F(SessionConverterTest, CommitPreeditBracketPairText) {
   EXPECT_FALSE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, ClearSegmentsBeforeSuggest) {
+TEST_F(EngineConverterTest, ClearSegmentsBeforeSuggest) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   // Call Suggest() and sets the segments of converter to the following one.
   const Segments &segments = GetSegmentsTest();
@@ -1741,9 +1740,9 @@ TEST_F(SessionConverterTest, ClearSegmentsBeforeSuggest) {
   EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
 }
 
-TEST_F(SessionConverterTest, PredictIsNotCalledInPredictionState) {
+TEST_F(EngineConverterTest, PredictIsNotCalledInPredictionState) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   // Call Predict() and sets the segments of converter to the following one. By
   // calling Predict(), converter enters PREDICTION state.
@@ -1759,9 +1758,9 @@ TEST_F(SessionConverterTest, PredictIsNotCalledInPredictionState) {
   EXPECT_TRUE(converter.Predict(*composer_));
 }
 
-TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
+TEST_F(EngineConverterTest, CommitSuggestionByIndex) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
     Segment *segment = segments.add_segment();
@@ -1818,7 +1817,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   composer_->Reset();
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_FALSE(converter.IsActive());
-  EXPECT_EQ(committed_key_size, SessionConverter::kConsumedAllCharacters);
+  EXPECT_EQ(committed_key_size, EngineConverter::kConsumedAllCharacters);
 
   {  // Check the result
     commands::Output output;
@@ -1830,7 +1829,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
     const commands::Result &result = output.result();
     EXPECT_EQ(result.value(), kChars_Momonga);
     EXPECT_EQ(result.key(), kChars_Momonga);
-    EXPECT_EQ(GetState(converter), SessionConverterInterface::COMPOSITION);
+    EXPECT_EQ(GetState(converter), EngineConverterInterface::COMPOSITION);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
 
@@ -1840,9 +1839,9 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   EXPECT_COUNT_STATS("PredictionCandidates1", 1);
 }
 
-TEST_F(SessionConverterTest, CommitSuggestionById) {
+TEST_F(EngineConverterTest, CommitSuggestionById) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
     Segment *segment = segments.add_segment();
@@ -1885,7 +1884,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   composer_->Reset();
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_FALSE(converter.IsActive());
-  EXPECT_EQ(committed_key_size, SessionConverter::kConsumedAllCharacters);
+  EXPECT_EQ(committed_key_size, EngineConverter::kConsumedAllCharacters);
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
   {  // Check the result
@@ -1898,7 +1897,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
     const commands::Result &result = output.result();
     EXPECT_EQ(result.value(), kChars_Momonga);
     EXPECT_EQ(result.key(), kChars_Momonga);
-    EXPECT_EQ(GetState(converter), SessionConverterInterface::COMPOSITION);
+    EXPECT_EQ(GetState(converter), EngineConverterInterface::COMPOSITION);
   }
 
   EXPECT_COUNT_STATS("Commit", 1);
@@ -1908,10 +1907,10 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
                      1);
 }
 
-TEST_F(SessionConverterTest, PartialPrediction) {
+TEST_F(EngineConverterTest, PartialPrediction) {
   request_test_util::FillMobileRequest(request_.get());
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments1, segments2;
   Segments suggestion_segments;
   const std::string kChars_Kokode = "ここで";
@@ -2009,7 +2008,7 @@ TEST_F(SessionConverterTest, PartialPrediction) {
     const commands::Result &result = output.result();
     EXPECT_EQ(result.value(), "此処では");
     EXPECT_EQ(result.key(), kChars_Kokode);
-    EXPECT_EQ(GetState(converter), SessionConverterInterface::SUGGESTION);
+    EXPECT_EQ(GetState(converter), EngineConverterInterface::SUGGESTION);
   }
 
   EXPECT_COUNT_STATS("Commit", 1);
@@ -2018,9 +2017,9 @@ TEST_F(SessionConverterTest, PartialPrediction) {
   EXPECT_COUNT_STATS("PredictionCandidates0", 1);
 }
 
-TEST_F(SessionConverterTest, SuggestAndPredict) {
+TEST_F(EngineConverterTest, SuggestAndPredict) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
     Segment *segment = segments.add_segment();
@@ -2213,7 +2212,7 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   }
 }
 
-TEST_F(SessionConverterTest, SuggestFillIncognitoCandidateWords) {
+TEST_F(EngineConverterTest, SuggestFillIncognitoCandidateWords) {
   Segments segments;
   {  // Initialize mock segments for suggestion
     Segment *segment = segments.add_segment();
@@ -2236,7 +2235,7 @@ TEST_F(SessionConverterTest, SuggestFillIncognitoCandidateWords) {
   {
     request_->set_fill_incognito_candidate_words(false);
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     EXPECT_CALL(mock_converter,
                 StartPrediction(IsIncognitoConversionRequest(false), _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2251,7 +2250,7 @@ TEST_F(SessionConverterTest, SuggestFillIncognitoCandidateWords) {
   {
     request_->set_fill_incognito_candidate_words(true);
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     EXPECT_CALL(mock_converter,
                 StartPrediction(IsIncognitoConversionRequest(false), _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2268,9 +2267,9 @@ TEST_F(SessionConverterTest, SuggestFillIncognitoCandidateWords) {
   }
 }
 
-TEST_F(SessionConverterTest, OnePhaseSuggestion) {
+TEST_F(EngineConverterTest, OnePhaseSuggestion) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   request_->set_mixed_conversion(true);
   Segments segments;
   {  // Initialize mock segments for suggestion (internally prediction)
@@ -2315,9 +2314,9 @@ TEST_F(SessionConverterTest, OnePhaseSuggestion) {
   }
 }
 
-TEST_F(SessionConverterTest, SuppressSuggestionWhenNotRequested) {
+TEST_F(EngineConverterTest, SuppressSuggestionWhenNotRequested) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
@@ -2333,9 +2332,9 @@ TEST_F(SessionConverterTest, SuppressSuggestionWhenNotRequested) {
   EXPECT_FALSE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
+TEST_F(EngineConverterTest, SuppressSuggestionOnPasswordField) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   composer_->SetInputFieldType(Context::PASSWORD);
   composer_->InsertCharacterPreedit(kChars_Mo);
@@ -2349,10 +2348,10 @@ TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
   EXPECT_FALSE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, AppendCandidateList) {
+TEST_F(EngineConverterTest, AppendCandidateList) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-  SetState(SessionConverterInterface::CONVERSION, &converter);
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
+  SetState(EngineConverterInterface::CONVERSION, &converter);
   converter.set_use_cascading_window(true);
   Segments segments;
 
@@ -2416,10 +2415,10 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
   }
 }
 
-TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
+TEST_F(EngineConverterTest, AppendCandidateListForRequestTypes) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-  SetState(SessionConverterInterface::SUGGESTION, &converter);
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
+  SetState(EngineConverterInterface::SUGGESTION, &converter);
   Segments segments;
 
   {
@@ -2455,9 +2454,9 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
   }
 }
 
-TEST_F(SessionConverterTest, ReloadConfig) {
+TEST_F(EngineConverterTest, ReloadConfig) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   SetAiueo(&segments);
   composer_->InsertCharacterPreedit("あいうえお");
@@ -2505,9 +2504,9 @@ TEST_F(SessionConverterTest, ReloadConfig) {
   }
 }
 
-TEST_F(SessionConverterTest, OutputAllCandidateWords) {
+TEST_F(EngineConverterTest, OutputAllCandidateWords) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   SetKamaboko(&segments);
   const std::string kKamabokono = "かまぼこの";
@@ -2583,7 +2582,7 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
   }
 }
 
-TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
+TEST_F(EngineConverterTest, GetPreeditAndGetConversion) {
   Segments segments;
 
   Segment *segment;
@@ -2613,7 +2612,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   {
     // PREDICTION
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     EXPECT_CALL(mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     EXPECT_CALL(mock_converter, FocusSegmentValue(_, 0, 1))
@@ -2630,7 +2629,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   {
     // SUGGESTION
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     EXPECT_CALL(mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     converter.Suggest(*composer_, Context::default_instance());
@@ -2657,7 +2656,7 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   {
     // CONVERSION
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     EXPECT_CALL(mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     EXPECT_CALL(mock_converter, FocusSegmentValue(_, 0, 1))
@@ -2673,9 +2672,9 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
   }
 }
 
-TEST_F(SessionConverterTest, GetAndSetSegments) {
+TEST_F(EngineConverterTest, GetAndSetSegments) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
 
   // Set history segments.
@@ -2717,9 +2716,9 @@ TEST_F(SessionConverterTest, GetAndSetSegments) {
             src.history_segment(2).candidate(0).value);
 }
 
-TEST_F(SessionConverterTest, Clone) {
+TEST_F(EngineConverterTest, Clone) {
   MockConverter mock_converter;
-  SessionConverter src(&mock_converter, request_.get(), config_.get());
+  EngineConverter src(&mock_converter, request_.get(), config_.get());
 
   const std::string kKamabokono = "かまぼこの";
   const std::string kInbou = "いんぼう";
@@ -2738,9 +2737,9 @@ TEST_F(SessionConverterTest, Clone) {
 
   {  // validation
     // Copy and validate
-    std::unique_ptr<SessionConverter> dest(src.Clone());
+    std::unique_ptr<EngineConverter> dest(src.Clone());
     ASSERT_TRUE(dest.get() != nullptr);
-    ExpectSameSessionConverter(src, *dest);
+    ExpectSameEngineConverter(src, *dest);
 
     // Convert source
     EXPECT_TRUE(src.Convert(*composer_));
@@ -2748,19 +2747,19 @@ TEST_F(SessionConverterTest, Clone) {
 
     // Convert destination and validate
     EXPECT_TRUE(dest->Convert(*composer_));
-    ExpectSameSessionConverter(src, *dest);
+    ExpectSameEngineConverter(src, *dest);
 
     // Copy converted and validate
     dest.reset(src.Clone());
     ASSERT_TRUE(dest.get() != nullptr);
-    ExpectSameSessionConverter(src, *dest);
+    ExpectSameEngineConverter(src, *dest);
   }
 }
 
 // Suggest() in the suggestion state was not accepted.  (http://b/1948334)
-TEST_F(SessionConverterTest, Issue1948334) {
+TEST_F(EngineConverterTest, Issue1948334) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for the first suggestion
     Segment *segment = segments.add_segment();
@@ -2816,7 +2815,7 @@ TEST_F(SessionConverterTest, Issue1948334) {
   }
 }
 
-TEST_F(SessionConverterTest, Issue1960362) {
+TEST_F(EngineConverterTest, Issue1960362) {
   // Testcase against http://b/1960362, a candidate list was not
   // updated when ConvertToTransliteration changed the size of segments.
 
@@ -2831,7 +2830,7 @@ TEST_F(SessionConverterTest, Issue1960362) {
   composer_->InsertCharacter("t");
 
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   Segments segments;
   {
@@ -2881,10 +2880,10 @@ TEST_F(SessionConverterTest, Issue1960362) {
   EXPECT_EQ(conversion.segment(0).value(), "jyut");
 }
 
-TEST_F(SessionConverterTest, Issue1978201) {
+TEST_F(EngineConverterTest, Issue1978201) {
   // This is a unittest against http://b/1978201
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   composer_->InsertCharacterPreedit(kChars_Mo);
 
@@ -2936,9 +2935,9 @@ TEST_F(SessionConverterTest, Issue1978201) {
   }
 }
 
-TEST_F(SessionConverterTest, Issue1981020) {
+TEST_F(EngineConverterTest, Issue1981020) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   // "〜〜〜〜" U+301C * 4
   const std::string wave_dash_301c = "〜〜〜〜";
   composer_->InsertCharacterPreedit(wave_dash_301c);
@@ -2961,11 +2960,11 @@ TEST_F(SessionConverterTest, Issue1981020) {
 #endif  // _WIN32
 }
 
-TEST_F(SessionConverterTest, Issue2029557) {
+TEST_F(EngineConverterTest, Issue2029557) {
   // Unittest against http://b/2029557
   // a<tab><F6> raised a DCHECK error.
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   // Composition (as "a")
   composer_->InsertCharacterPreedit("a");
 
@@ -2992,11 +2991,11 @@ TEST_F(SessionConverterTest, Issue2029557) {
   EXPECT_TRUE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, Issue2031986) {
+TEST_F(EngineConverterTest, Issue2031986) {
   // Unittest against http://b/2031986
   // aaaaa<Shift+Enter> raised a CRT error.
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   {  // Initialize a suggest result triggered by "aaaa".
     Segments segments;
@@ -3028,14 +3027,14 @@ TEST_F(SessionConverterTest, Issue2031986) {
   EXPECT_FALSE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, Issue2040116) {
+TEST_F(EngineConverterTest, Issue2040116) {
   // Unittest against http://b/2040116
   //
   // It happens when the first Predict returns results but the next
   // MaybeExpandPrediction does not return any results.  That's a
   // trick by GoogleSuggest.
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   composer_->InsertCharacterPreedit("G");
 
   {
@@ -3110,9 +3109,9 @@ TEST_F(SessionConverterTest, Issue2040116) {
   }
 }
 
-TEST_F(SessionConverterTest, GetReadingText) {
+TEST_F(EngineConverterTest, GetReadingText) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   const char *kKanjiAiueo = "阿伊宇江於";
   // Set up Segments for reverse conversion.
@@ -3133,9 +3132,9 @@ TEST_F(SessionConverterTest, GetReadingText) {
   EXPECT_EQ(reading, kChars_Aiueo);
 }
 
-TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
+TEST_F(EngineConverterTest, ZeroQuerySuggestion) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   // Set up a mock suggestion result.
   Segments segments;
@@ -3167,27 +3166,27 @@ TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
   }
 }
 
-TEST(SessionConverterResetTest, Reset) {
+TEST(EngineConverterResetTest, Reset) {
   MockConverter mock_converter;
   const Request request;
   const Config config;
-  SessionConverter converter(&mock_converter, &request, &config);
+  EngineConverter converter(&mock_converter, &request, &config);
   EXPECT_CALL(mock_converter, ResetConversion(_));
   converter.Reset();
 }
 
-TEST(SessionConverterRevertTest, Revert) {
+TEST(EngineConverterRevertTest, Revert) {
   MockConverter mock_converter;
   const Request request;
   const Config config;
-  SessionConverter converter(&mock_converter, &request, &config);
+  EngineConverter converter(&mock_converter, &request, &config);
   EXPECT_CALL(mock_converter, RevertConversion(_));
   converter.Revert();
 }
 
-TEST_F(SessionConverterTest, DeleteCandidateFromHistory) {
+TEST_F(EngineConverterTest, DeleteCandidateFromHistory) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   EXPECT_CALL(mock_converter, DeleteCandidateFromHistory(_, _, _))
       .WillRepeatedly(Return(true));
@@ -3213,9 +3212,9 @@ TEST_F(SessionConverterTest, DeleteCandidateFromHistory) {
   EXPECT_FALSE(converter.DeleteCandidateFromHistory(-100));
 }
 
-TEST_F(SessionConverterTest, CommitHead) {
+TEST_F(EngineConverterTest, CommitHead) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   composer_->InsertCharacterPreedit(kChars_Aiueo);
 
   size_t committed_size;
@@ -3253,9 +3252,9 @@ TEST_F(SessionConverterTest, CommitHead) {
   EXPECT_STATS_NOT_EXIST("CommitFromComposition");
 }
 
-TEST_F(SessionConverterTest, CommandCandidate) {
+TEST_F(EngineConverterTest, CommandCandidate) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   SetAiueo(&segments);
   composer_->InsertCharacterPreedit("あいうえお");
@@ -3274,7 +3273,7 @@ TEST_F(SessionConverterTest, CommandCandidate) {
   EXPECT_FALSE(output.has_result());
 }
 
-TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
+TEST_F(EngineConverterTest, CommandCandidateWithCommitCommands) {
   const std::string kKamabokono = "かまぼこの";
   const std::string kInbou = "いんぼう";
   composer_->InsertCharacterPreedit(kKamabokono + kInbou);
@@ -3283,7 +3282,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     // The first candidate is a command candidate, so
     // CommitFirstSegment resets all conversion.
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     Segments segments;
     SetKamaboko(&segments);
     SetCommandCandidate(&segments, 0, 0, Segment::Candidate::DEFAULT_COMMAND);
@@ -3306,7 +3305,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     // The second candidate is a command candidate, so
     // CommitFirstSegment commits all conversion.
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     Segments segments;
     SetKamaboko(&segments);
     SetCommandCandidate(&segments, 1, 0, Segment::Candidate::DEFAULT_COMMAND);
@@ -3328,7 +3327,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
   {
     // The selected suggestion with Id is a command candidate.
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0, Segment::Candidate::DEFAULT_COMMAND);
@@ -3345,7 +3344,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
   {
     // The selected suggestion with Index is a command candidate.
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 1, Segment::Candidate::DEFAULT_COMMAND);
@@ -3360,12 +3359,12 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
   }
 }
 
-TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
+TEST_F(EngineConverterTest, ExecuteCommandCandidate) {
   // Enable Incognito mode
   {
     config_->set_incognito_mode(false);
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
     Segments segments;
     SetAiueo(&segments);
@@ -3393,7 +3392,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
   {
     config_->set_incognito_mode(false);
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
     Segments segments;
     SetAiueo(&segments);
@@ -3421,7 +3420,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
   {
     config_->set_presentation_mode(false);
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
     Segments segments;
     SetAiueo(&segments);
@@ -3449,7 +3448,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
   {
     config_->set_incognito_mode(true);
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
     Segments segments;
     SetAiueo(&segments);
@@ -3474,11 +3473,11 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
   }
 }
 
-TEST_F(SessionConverterTest, PropagateConfigToRenderer) {
+TEST_F(EngineConverterTest, PropagateConfigToRenderer) {
   // Disable information_list_config()
   {
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
     Segments segments;
     SetAiueo(&segments);
     composer_->InsertCharacterPreedit("あいうえお");
@@ -3503,9 +3502,9 @@ TEST_F(SessionConverterTest, PropagateConfigToRenderer) {
   }
 }
 
-TEST_F(SessionConverterTest, ConversionFail) {
+TEST_F(EngineConverterTest, ConversionFail) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   // Conversion fails.
   {
@@ -3520,7 +3519,7 @@ TEST_F(SessionConverterTest, ConversionFail) {
     EXPECT_FALSE(converter.Convert(*composer_));
     Mock::VerifyAndClearExpectations(&mock_converter);
     EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_TRUE(converter.CheckState(SessionConverterInterface::COMPOSITION));
+    EXPECT_TRUE(converter.CheckState(EngineConverterInterface::COMPOSITION));
 
     commands::Output output;
     converter.FillOutput(*composer_, &output);
@@ -3543,7 +3542,7 @@ TEST_F(SessionConverterTest, ConversionFail) {
     EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
     Mock::VerifyAndClearExpectations(&mock_converter);
     EXPECT_TRUE(IsCandidateListVisible(converter));
-    EXPECT_TRUE(converter.CheckState(SessionConverterInterface::SUGGESTION));
+    EXPECT_TRUE(converter.CheckState(EngineConverterInterface::SUGGESTION));
 
     commands::Output output;
     converter.FillOutput(*composer_, &output);
@@ -3563,7 +3562,7 @@ TEST_F(SessionConverterTest, ConversionFail) {
     EXPECT_FALSE(converter.Convert(*composer_));
     Mock::VerifyAndClearExpectations(&mock_converter);
     EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_TRUE(converter.CheckState(SessionConverterInterface::COMPOSITION));
+    EXPECT_TRUE(converter.CheckState(EngineConverterInterface::COMPOSITION));
 
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
@@ -3572,11 +3571,11 @@ TEST_F(SessionConverterTest, ConversionFail) {
   }
 }
 
-TEST_F(SessionConverterTest, ResetByClientRevision) {
+TEST_F(EngineConverterTest, ResetByClientRevision) {
   const int32_t kRevision = 0x1234;
 
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   Context context;
 
   // Initialize the session converter with given context age.
@@ -3592,9 +3591,9 @@ TEST_F(SessionConverterTest, ResetByClientRevision) {
   converter.OnStartComposition(context);
 }
 
-TEST_F(SessionConverterTest, ResetByPrecedingText) {
+TEST_F(EngineConverterTest, ResetByPrecedingText) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   // no preceding_text -> Reset should not be called.
   {
@@ -3681,7 +3680,7 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
   }
 }
 
-TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
+TEST_F(EngineConverterTest, ReconstructHistoryByPrecedingText) {
   constexpr uint16_t kId = 1234;
   constexpr char kKey[] = "1";
   constexpr char kValue[] = "1";
@@ -3705,7 +3704,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
   // With revision
   {
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
     EXPECT_CALL(mock_converter, ReconstructHistory(_, absl::string_view(kKey)))
         .WillOnce(DoAll(SetArgPointee<0>(mock_result), Return(true)));
@@ -3727,7 +3726,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
   // Without revision
   {
     MockConverter mock_converter;
-    SessionConverter converter(&mock_converter, request_.get(), config_.get());
+    EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
     EXPECT_CALL(mock_converter, ReconstructHistory(_, absl::string_view(kKey)))
         .WillOnce(DoAll(SetArgPointee<0>(mock_result), Return(true)));
@@ -3747,20 +3746,20 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
 }
 
 // Test whether Request::candidate_page_size is correctly propagated to
-// CandidateList.page_size in SessionConverter.  The tests for the behavior
+// CandidateList.page_size in EngineConverter.  The tests for the behavior
 // of CandidateList.page_size is in session/internal/candidate_list_test.cc
-TEST_F(SessionConverterTest, CandidatePageSize) {
+TEST_F(EngineConverterTest, CandidatePageSize) {
   constexpr size_t kPageSize = 3;
   request_->set_candidate_page_size(kPageSize);
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
   EXPECT_EQ(GetCandidateList(converter).page_size(), kPageSize);
 }
 
 // Test output.result.tokens is filled on commit.
-TEST_F(SessionConverterTest, ResultTokens) {
+TEST_F(EngineConverterTest, ResultTokens) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   Segments segments;
   {
@@ -3816,9 +3815,9 @@ TEST_F(SessionConverterTest, ResultTokens) {
   EXPECT_EQ(output.result().tokens(2).rid(), 201);
 }
 
-TEST_F(SessionConverterTest, ResultTokensWithInnerSegements) {
+TEST_F(EngineConverterTest, ResultTokensWithInnerSegements) {
   MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  EngineConverter converter(&mock_converter, request_.get(), config_.get());
 
   Segments segments;
   {

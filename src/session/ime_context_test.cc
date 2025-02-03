@@ -38,7 +38,7 @@
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
-#include "engine/session_converter.h"
+#include "engine/engine_converter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gmock.h"
@@ -49,7 +49,7 @@ namespace mozc {
 namespace session {
 
 using ::mozc::composer::Composer;
-using ::mozc::engine::SessionConverter;
+using ::mozc::engine::EngineConverter;
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
@@ -80,7 +80,7 @@ TEST(ImeContextTest, BasicTest) {
 
   MockConverter converter;
   context.set_converter(
-      std::make_unique<SessionConverter>(&converter, &request, &config));
+      std::make_unique<EngineConverter>(&converter, &request, &config));
 
   context.set_state(ImeContext::COMPOSITION);
   EXPECT_EQ(context.state(), ImeContext::COMPOSITION);
@@ -123,13 +123,13 @@ TEST(ImeContextTest, CopyContext) {
     ImeContext source;
     source.set_composer(std::make_unique<Composer>(&table, &request, &config));
     source.set_converter(
-        std::make_unique<SessionConverter>(&converter, &request, &config));
+        std::make_unique<EngineConverter>(&converter, &request, &config));
 
     ImeContext destination;
     destination.set_composer(
         std::make_unique<Composer>(&table, &request, &config));
     destination.set_converter(
-        std::make_unique<SessionConverter>(&converter, &request, &config));
+        std::make_unique<EngineConverter>(&converter, &request, &config));
 
     source.set_state(ImeContext::COMPOSITION);
     source.mutable_composer()->InsertCharacter("a");
@@ -154,13 +154,13 @@ TEST(ImeContextTest, CopyContext) {
     source.set_last_command_time(kLastCommandTime);
     source.set_composer(std::make_unique<Composer>(&table, &request, &config));
     source.set_converter(
-        std::make_unique<SessionConverter>(&converter, &request, &config));
+        std::make_unique<EngineConverter>(&converter, &request, &config));
 
     ImeContext destination;
     destination.set_composer(
         std::make_unique<Composer>(&table, &request, &config));
     destination.set_converter(
-        std::make_unique<SessionConverter>(&converter, &request, &config));
+        std::make_unique<EngineConverter>(&converter, &request, &config));
 
     source.set_state(ImeContext::CONVERSION);
     source.mutable_composer()->InsertCharacter("a");

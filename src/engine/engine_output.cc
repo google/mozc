@@ -29,7 +29,7 @@
 
 // Class functions to be used for output by the Session class.
 
-#include "engine/session_output.h"
+#include "engine/engine_output.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -165,7 +165,7 @@ void FillAllCandidateWordsInternal(
 }  // namespace
 
 // static
-void SessionOutput::FillCandidate(
+void EngineOutput::FillCandidate(
     const Segment &segment, const Candidate &candidate,
     commands::CandidateWindow_Candidate *candidate_proto) {
   DCHECK(segment.is_valid_index(candidate.id()));
@@ -192,7 +192,7 @@ void SessionOutput::FillCandidate(
 }
 
 // static
-void SessionOutput::FillCandidateWindow(
+void EngineOutput::FillCandidateWindow(
     const Segment &segment, const CandidateList &candidate_list,
     const size_t position, commands::CandidateWindow *candidate_window_proto) {
   if (candidate_list.focused()) {
@@ -234,7 +234,7 @@ void SessionOutput::FillCandidateWindow(
 }
 
 // static
-void SessionOutput::FillAllCandidateWords(
+void EngineOutput::FillAllCandidateWords(
     const Segment &segment, const CandidateList &candidate_list,
     const commands::Category category,
     commands::CandidateList *candidate_list_proto) {
@@ -245,7 +245,7 @@ void SessionOutput::FillAllCandidateWords(
 }
 
 // static
-void SessionOutput::FillRemovedCandidates(
+void EngineOutput::FillRemovedCandidates(
     const Segment &segment, commands::CandidateList *candidate_list_proto) {
   int index = 1000;
   absl::Span<const Segment::Candidate> candidates =
@@ -259,8 +259,8 @@ void SessionOutput::FillRemovedCandidates(
 }
 
 // static
-bool SessionOutput::ShouldShowUsages(const Segment &segment,
-                                     const CandidateList &cand_list) {
+bool EngineOutput::ShouldShowUsages(const Segment &segment,
+                                    const CandidateList &cand_list) {
   // Check if the shown candidate have the usage data.
   for (const Candidate &candidate_ptr : cand_list.focused_page()) {
     if (candidate_ptr.HasSubcandidateList()) {
@@ -274,7 +274,7 @@ bool SessionOutput::ShouldShowUsages(const Segment &segment,
 }
 
 // static
-void SessionOutput::FillUsages(
+void EngineOutput::FillUsages(
     const Segment &segment, const CandidateList &cand_list,
     commands::CandidateWindow *candidate_window_proto) {
   if (!ShouldShowUsages(segment, cand_list)) {
@@ -320,7 +320,7 @@ void SessionOutput::FillUsages(
 }
 
 // static
-void SessionOutput::FillShortcuts(
+void EngineOutput::FillShortcuts(
     absl::string_view shortcuts,
     commands::CandidateWindow *candidate_window_proto) {
   const size_t num_loop = std::min<size_t>(
@@ -333,7 +333,7 @@ void SessionOutput::FillShortcuts(
 }
 
 // static
-void SessionOutput::FillSubLabel(commands::Footer *footer) {
+void EngineOutput::FillSubLabel(commands::Footer *footer) {
   // Delete the label because sub_label will be drawn on the same
   // place for the label.
   footer->clear_label();
@@ -352,8 +352,8 @@ void SessionOutput::FillSubLabel(commands::Footer *footer) {
 }
 
 // static
-bool SessionOutput::FillFooter(const commands::Category category,
-                               commands::CandidateWindow *candidate_window) {
+bool EngineOutput::FillFooter(const commands::Category category,
+                              commands::CandidateWindow *candidate_window) {
   if (category != commands::SUGGESTION && category != commands::PREDICTION &&
       category != commands::CONVERSION) {
     return false;
@@ -412,10 +412,10 @@ bool SessionOutput::FillFooter(const commands::Category category,
 }
 
 // static
-bool SessionOutput::AddSegment(const absl::string_view key,
-                               const absl::string_view value,
-                               const uint32_t segment_type_mask,
-                               commands::Preedit *preedit) {
+bool EngineOutput::AddSegment(const absl::string_view key,
+                              const absl::string_view value,
+                              const uint32_t segment_type_mask,
+                              commands::Preedit *preedit) {
   // Key is always normalized as a preedit text.
   std::string normalized_key = TextNormalizer::NormalizeText(key);
 
@@ -447,8 +447,8 @@ bool SessionOutput::AddSegment(const absl::string_view key,
 }
 
 // static
-void SessionOutput::FillPreedit(const composer::Composer &composer,
-                                commands::Preedit *preedit) {
+void EngineOutput::FillPreedit(const composer::Composer &composer,
+                               commands::Preedit *preedit) {
   const std::string output = composer.GetStringForPreedit();
 
   constexpr uint32_t kBaseType = PREEDIT;
@@ -458,10 +458,10 @@ void SessionOutput::FillPreedit(const composer::Composer &composer,
 }
 
 // static
-void SessionOutput::FillConversion(const Segments &segments,
-                                   const size_t segment_index,
-                                   const int candidate_id,
-                                   commands::Preedit *preedit) {
+void EngineOutput::FillConversion(const Segments &segments,
+                                  const size_t segment_index,
+                                  const int candidate_id,
+                                  commands::Preedit *preedit) {
   constexpr uint32_t kBaseType = CONVERSION;
   // Cursor position in conversion state should be the end of the preedit.
   size_t cursor = 0;
@@ -486,7 +486,7 @@ void SessionOutput::FillConversion(const Segments &segments,
 }
 
 // static
-void SessionOutput::FillConversionResultWithoutNormalization(
+void EngineOutput::FillConversionResultWithoutNormalization(
     std::string key, std::string result, commands::Result *result_proto) {
   result_proto->set_type(commands::Result::STRING);
   result_proto->set_key(std::move(key));
@@ -494,9 +494,9 @@ void SessionOutput::FillConversionResultWithoutNormalization(
 }
 
 // static
-void SessionOutput::FillConversionResult(const absl::string_view key,
-                                         std::string result,
-                                         commands::Result *result_proto) {
+void EngineOutput::FillConversionResult(const absl::string_view key,
+                                        std::string result,
+                                        commands::Result *result_proto) {
   // Key should be normalized as a preedit text.
   std::string normalized_key = TextNormalizer::NormalizeText(key);
 
@@ -506,8 +506,8 @@ void SessionOutput::FillConversionResult(const absl::string_view key,
 }
 
 // static
-void SessionOutput::FillPreeditResult(const absl::string_view preedit,
-                                      commands::Result *result_proto) {
+void EngineOutput::FillPreeditResult(const absl::string_view preedit,
+                                     commands::Result *result_proto) {
   std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
   // Copy before passing the value to FillConversionResultWithoutNormalization.
   // std::move() is evaluated out of order when used directly in the function
@@ -518,8 +518,8 @@ void SessionOutput::FillPreeditResult(const absl::string_view preedit,
 }
 
 // static
-void SessionOutput::FillCursorOffsetResult(int32_t cursor_offset,
-                                           commands::Result *result_proto) {
+void EngineOutput::FillCursorOffsetResult(int32_t cursor_offset,
+                                          commands::Result *result_proto) {
   result_proto->set_cursor_offset(cursor_offset);
 }
 

@@ -50,26 +50,26 @@ struct ConversionPreferences {
 
   // This is a flag to check if the converter should return the suggestion
   // or not. Indeed, the design is actually twisted, because clients should
-  // be able to avoid the invocation of SessionConverter::Suggest, if they'd
-  // like. However, The current SessionConverter's architecture is too
+  // be able to avoid the invocation of EngineConverter::Suggest, if they'd
+  // like. However, The current EngineConverter's architecture is too
   // complicated and has too many limitations to ensure the full state
   // transition. In order to support "skipping suggestion" for the performance
   // without current client's breakage in short period, this flag is
   // introduced.
-  // TODO(hidehiko,komatsu): Remove this flag, when the full SessionConverter
+  // TODO(hidehiko,komatsu): Remove this flag, when the full EngineConverter
   //   refactoring is done and gets safer for future development/extensions.
   bool request_suggestion;
 };
 
 // Class handling ConverterInterface with a session state.  This class
 // support stateful operations related with the converter.
-class SessionConverterInterface {
+class EngineConverterInterface {
  public:
-  SessionConverterInterface() = default;
-  SessionConverterInterface(const SessionConverterInterface &) = delete;
-  SessionConverterInterface &operator=(const SessionConverterInterface &) =
+  EngineConverterInterface() = default;
+  EngineConverterInterface(const EngineConverterInterface &) = delete;
+  EngineConverterInterface &operator=(const EngineConverterInterface &) =
       delete;
-  virtual ~SessionConverterInterface() = default;
+  virtual ~EngineConverterInterface() = default;
 
   typedef int States;
   enum State {
@@ -218,11 +218,11 @@ class SessionConverterInterface {
                           commands::Output *output) const = 0;
 
   // Set setting by the request.
-  // Currently this is especially for SessionConverter.
+  // Currently this is especially for EngineConverter.
   virtual void SetRequest(const commands::Request *request) = 0;
 
   // Set setting by the config.
-  // Currently this is especially for SessionConverter.
+  // Currently this is especially for EngineConverter.
   virtual void SetConfig(const config::Config *config) = 0;
 
   // Update the internal state by the context.
@@ -230,7 +230,7 @@ class SessionConverterInterface {
 
   // Clone instance.
   // Callee object doesn't have the ownership of the cloned instance.
-  virtual SessionConverterInterface *Clone() const = 0;
+  virtual EngineConverterInterface *Clone() const = 0;
 
   virtual void set_selection_shortcut(
       config::Config::SelectionShortcut selection_shortcut) = 0;

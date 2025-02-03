@@ -39,7 +39,7 @@
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
-#include "engine/session_converter_interface.h"
+#include "engine/engine_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/key_event_transformer.h"
@@ -74,14 +74,14 @@ class ImeContext final {
     composer_ = std::move(composer);
   }
 
-  const engine::SessionConverterInterface &converter() const {
+  const engine::EngineConverterInterface &converter() const {
     return *converter_;
   }
-  engine::SessionConverterInterface *mutable_converter() {
+  engine::EngineConverterInterface *mutable_converter() {
     return converter_.get();
   }
   void set_converter(
-      std::unique_ptr<engine::SessionConverterInterface> converter) {
+      std::unique_ptr<engine::EngineConverterInterface> converter) {
     converter_ = std::move(converter);
   }
 
@@ -145,7 +145,7 @@ class ImeContext final {
   absl::Time last_command_time_ = absl::InfinitePast();
 
   std::unique_ptr<composer::Composer> composer_;
-  std::unique_ptr<engine::SessionConverterInterface> converter_;
+  std::unique_ptr<engine::EngineConverterInterface> converter_;
   KeyEventTransformer key_event_transformer_;
 
   const commands::Request *request_;

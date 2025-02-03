@@ -34,7 +34,7 @@
 
 #include "absl/log/check.h"
 #include "composer/composer.h"
-#include "engine/session_converter_interface.h"
+#include "engine/engine_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "session/keymap.h"
 

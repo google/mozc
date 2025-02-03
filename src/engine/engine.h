@@ -43,10 +43,10 @@
 #include "data_manager/data_manager.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/data_loader.h"
+#include "engine/engine_converter.h"
 #include "engine/engine_interface.h"
 #include "engine/minimal_converter.h"
 #include "engine/modules.h"
-#include "engine/session_converter.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/predictor_interface.h"
 #include "protocol/commands.pb.h"
@@ -93,11 +93,11 @@ class Engine : public EngineInterface {
     return converter_ ? converter_.get() : minimal_converter_.get();
   }
 
-  std::unique_ptr<engine::SessionConverterInterface> CreateSessionConverter(
+  std::unique_ptr<engine::EngineConverterInterface> CreateEngineConverter(
       const commands::Request &request,
       const config::Config &config) const override {
-    return std::make_unique<engine::SessionConverter>(GetConverter(), &request,
-                                                      &config);
+    return std::make_unique<engine::EngineConverter>(GetConverter(), &request,
+                                                     &config);
   }
 
   // Functions for Reload, Sync, Wait return true if successfully operated
