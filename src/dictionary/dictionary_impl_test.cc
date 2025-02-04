@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
@@ -305,7 +304,6 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
 TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   std::unique_ptr<DictionaryData> data = CreateDictionaryData();
   DictionaryInterface *d = data->dictionary.get();
-  NodeAllocator allocator;
 
   constexpr char kKey[] = "ぐーぐる";
   constexpr char kValue[] = "Google";
@@ -338,7 +336,6 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
 TEST_F(DictionaryImplTest, LookupComment) {
   std::unique_ptr<DictionaryData> data = CreateDictionaryData();
   DictionaryInterface *d = data->dictionary.get();
-  NodeAllocator allocator;
 
   std::string comment;
   const ConversionRequest convreq = ConvReq(config_);

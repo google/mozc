@@ -79,7 +79,6 @@ mozc_cc_test(
         ":user_dictionary_stub",
         "//base:util",
         "//config:config_handler",
-        "//converter:node_allocator",
         "//data_manager/testing:mock_data_manager",
         "//dictionary/system:system_dictionary",
         "//dictionary/system:value_dictionary",
