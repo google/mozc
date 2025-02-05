@@ -454,9 +454,9 @@ std::vector<NumberUtil::NumberString> GetNumbersInDefaultOrder(
 
 }  // namespace
 
-NumberRewriter::NumberRewriter(const DataManager *data_manager)
-    : pos_matcher_(data_manager->GetPosMatcherData()) {
-  absl::string_view data = data_manager->GetCounterSuffixSortedArray();
+NumberRewriter::NumberRewriter(const DataManager &data_manager)
+    : pos_matcher_(data_manager.GetPosMatcherData()) {
+  absl::string_view data = data_manager.GetCounterSuffixSortedArray();
   // Data manager is responsible for providing a valid data.  Just verify data
   // in debug build.
   DCHECK(SerializedStringArray::VerifyData(data));

@@ -163,7 +163,7 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
   const PosGroup &pos_group() const { return *pos_group_; }
 
   NumberRewriter *CreateNumberRewriter() const {
-    return new NumberRewriter(&mock_data_manager_);
+    return new NumberRewriter(mock_data_manager_);
   }
 
   UserSegmentHistoryRewriter *CreateUserSegmentHistoryRewriter() const {

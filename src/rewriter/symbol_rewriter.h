@@ -50,7 +50,7 @@ class Segments;
 
 class SymbolRewriter : public RewriterInterface {
  public:
-  explicit SymbolRewriter(const DataManager *data_manager);
+  explicit SymbolRewriter(const DataManager &data_manager);
   ~SymbolRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;

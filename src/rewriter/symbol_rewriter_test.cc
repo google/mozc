@@ -115,7 +115,7 @@ class SymbolRewriterTest : public testing::TestWithTempUserProfile {
 // TODO(toshiyuki): Modify symbol rewriter so that we can use symbol dictionary
 // for testing.
 TEST_F(SymbolRewriterTest, CheckResizeSegmentsRequestTest) {
-  SymbolRewriter symbol_rewriter(data_manager_.get());
+  SymbolRewriter symbol_rewriter(*data_manager_);
   const ConversionRequest request;
 
   {
@@ -149,7 +149,7 @@ TEST_F(SymbolRewriterTest, CheckResizeSegmentsRequestTest) {
 }
 
 TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
-  SymbolRewriter symbol_rewriter(data_manager_.get());
+  SymbolRewriter symbol_rewriter(*data_manager_);
   const ConversionRequest request;
   {
     Segments segments;
@@ -164,7 +164,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
 }
 
 TEST_F(SymbolRewriterTest, HentaiganaSymbolTest) {
-  SymbolRewriter symbol_rewriter(data_manager_.get());
+  SymbolRewriter symbol_rewriter(*data_manager_);
   const ConversionRequest request;
   {
     Segments segments;
@@ -189,7 +189,7 @@ TEST_F(SymbolRewriterTest, HentaiganaSymbolTest) {
 }
 
 TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
-  SymbolRewriter symbol_rewriter(data_manager_.get());
+  SymbolRewriter symbol_rewriter(*data_manager_);
   const ConversionRequest request;
   {
     Segments segments;
@@ -202,7 +202,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
 }
 
 TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
-  SymbolRewriter symbol_rewriter(data_manager_.get());
+  SymbolRewriter symbol_rewriter(*data_manager_);
   const ConversionRequest request;
   {
     Segments segments;
@@ -236,7 +236,7 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
 }
 
 TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileSymbolKey) {
-  SymbolRewriter symbol_rewriter(data_manager_.get());
+  SymbolRewriter symbol_rewriter(*data_manager_);
   commands::Request command_request;
   request_test_util::FillMobileRequest(&command_request);
   const ConversionRequest request =
@@ -260,7 +260,7 @@ TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileSymbolKey) {
 }
 
 TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileAlphabetKey) {
-  SymbolRewriter symbol_rewriter(data_manager_.get());
+  SymbolRewriter symbol_rewriter(*data_manager_);
   commands::Request command_request;
   request_test_util::FillMobileRequest(&command_request);
   const ConversionRequest request =
@@ -286,7 +286,7 @@ TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileAlphabetKey) {
 }
 
 TEST_F(SymbolRewriterTest, SetKey) {
-  SymbolRewriter symbol_rewriter(data_manager_.get());
+  SymbolRewriter symbol_rewriter(*data_manager_);
   Segments segments;
   const ConversionRequest request;
 
@@ -308,7 +308,7 @@ TEST_F(SymbolRewriterTest, SetKey) {
 
 TEST_F(SymbolRewriterTest, MobileEnvironmentTest) {
   commands::Request request;
-  SymbolRewriter rewriter(data_manager_.get());
+  SymbolRewriter rewriter(*data_manager_);
 
   {
     request.set_mixed_conversion(true);
@@ -326,7 +326,7 @@ TEST_F(SymbolRewriterTest, MobileEnvironmentTest) {
 }
 
 TEST_F(SymbolRewriterTest, ExpandSpace) {
-  SymbolRewriter symbol_rewriter(data_manager_.get());
+  SymbolRewriter symbol_rewriter(*data_manager_);
   Segments segments;
   const ConversionRequest request;
 
@@ -361,7 +361,7 @@ TEST_F(SymbolRewriterTest, ExpandSpace) {
 }
 
 TEST_F(SymbolRewriterTest, InvalidSizeOfSegments) {
-  const SymbolRewriter rewriter(data_manager_.get());
+  const SymbolRewriter rewriter(*data_manager_);
 
   // Valid case: segment size is 1.
   {
@@ -389,7 +389,7 @@ TEST_F(SymbolRewriterTest, InvalidSizeOfSegments) {
 }
 
 TEST_F(SymbolRewriterTest, ResizeSegmentFailureIsNotFatal) {
-  const SymbolRewriter rewriter(data_manager_.get());
+  const SymbolRewriter rewriter(*data_manager_);
 
   Segments segments;
   const ConversionRequest request;

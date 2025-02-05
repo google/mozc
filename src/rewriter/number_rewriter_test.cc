@@ -132,7 +132,7 @@ class NumberRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   std::unique_ptr<NumberRewriter> CreateNumberRewriter() {
-    return std::make_unique<NumberRewriter>(&mock_data_manager_);
+    return std::make_unique<NumberRewriter>(mock_data_manager_);
   }
 
   const testing::MockDataManager mock_data_manager_;

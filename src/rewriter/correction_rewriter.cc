@@ -93,9 +93,9 @@ CorrectionRewriter::CorrectionRewriter(
 
 // static
 std::unique_ptr<CorrectionRewriter>
-CorrectionRewriter::CreateCorrectionRewriter(const DataManager *data_manager) {
+CorrectionRewriter::CreateCorrectionRewriter(const DataManager &data_manager) {
   absl::string_view value_array_data, error_array_data, correction_array_data;
-  data_manager->GetReadingCorrectionData(&value_array_data, &error_array_data,
+  data_manager.GetReadingCorrectionData(&value_array_data, &error_array_data,
                                          &correction_array_data);
   return std::make_unique<CorrectionRewriter>(
       value_array_data, error_array_data, correction_array_data);

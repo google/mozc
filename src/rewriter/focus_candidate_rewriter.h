@@ -47,7 +47,7 @@ struct CounterSuffixEntry;
 
 class FocusCandidateRewriter : public RewriterInterface {
  public:
-  explicit FocusCandidateRewriter(const DataManager *data_manager);
+  explicit FocusCandidateRewriter(const DataManager &data_manager);
   FocusCandidateRewriter(const FocusCandidateRewriter &) = delete;
   FocusCandidateRewriter &operator=(const FocusCandidateRewriter &) = delete;
   ~FocusCandidateRewriter() override;

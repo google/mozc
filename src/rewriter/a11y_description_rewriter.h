@@ -45,7 +45,7 @@ namespace mozc {
 
 class A11yDescriptionRewriter : public RewriterInterface {
  public:
-  explicit A11yDescriptionRewriter(const DataManager *data_manager);
+  explicit A11yDescriptionRewriter(const DataManager &data_manager);
 
   A11yDescriptionRewriter(const A11yDescriptionRewriter &) = delete;
   A11yDescriptionRewriter &operator=(const A11yDescriptionRewriter &) = delete;

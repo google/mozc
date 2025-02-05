@@ -46,7 +46,7 @@ namespace mozc {
 // A rewriter to expand number styles (NumberUtil::NumberString::Style)
 class NumberRewriter : public RewriterInterface {
  public:
-  explicit NumberRewriter(const DataManager *data_manager);
+  explicit NumberRewriter(const DataManager &data_manager);
   NumberRewriter(const NumberRewriter &) = delete;
   NumberRewriter &operator=(const NumberRewriter &) = delete;
   ~NumberRewriter() override;

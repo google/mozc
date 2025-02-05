@@ -48,7 +48,7 @@ class CorrectionRewriter : public RewriterInterface {
   // default provided by data_manager.  The caller takes the ownership of the
   // instance.
   static std::unique_ptr<CorrectionRewriter> CreateCorrectionRewriter(
-      const DataManager *data_manager);
+      const DataManager &data_manager);
 
   CorrectionRewriter(absl::string_view value_array_data,
                      absl::string_view error_array_data,

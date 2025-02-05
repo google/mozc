@@ -54,8 +54,8 @@ void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
 class A11yDescriptionRewriterTest : public ::testing::Test {
  protected:
   A11yDescriptionRewriterTest()
-      : rewriter_(&mock_data_manager_),
-        rewriter_without_data_(&dummy_data_manager_) {}
+      : rewriter_(mock_data_manager_),
+        rewriter_without_data_(dummy_data_manager_) {}
 
   const RewriterInterface *GetRewriter() { return &rewriter_; }
   const RewriterInterface *GetRewriterWithoutData() {

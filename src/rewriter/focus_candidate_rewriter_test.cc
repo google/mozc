@@ -64,7 +64,7 @@ void AddCandidateWithContentValue(Segment *segment,
 class FocusCandidateRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    rewriter_ = std::make_unique<FocusCandidateRewriter>(&mock_data_manager_);
+    rewriter_ = std::make_unique<FocusCandidateRewriter>(mock_data_manager_);
   }
 
   const RewriterInterface *GetRewriter() { return rewriter_.get(); }

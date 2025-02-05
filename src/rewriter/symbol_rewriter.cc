@@ -369,9 +369,9 @@ SymbolRewriter::CheckResizeSegmentsRequest(const ConversionRequest &request,
   return resize_request;
 }
 
-SymbolRewriter::SymbolRewriter(const DataManager *data_manager) {
+SymbolRewriter::SymbolRewriter(const DataManager &data_manager) {
   absl::string_view token_array_data, string_array_data;
-  data_manager->GetSymbolRewriterData(&token_array_data, &string_array_data);
+  data_manager.GetSymbolRewriterData(&token_array_data, &string_array_data);
   DCHECK(SerializedDictionary::VerifyData(token_array_data, string_array_data));
   dictionary_ = std::make_unique<SerializedDictionary>(token_array_data,
                                                        string_array_data);

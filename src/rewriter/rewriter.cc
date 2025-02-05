@@ -128,7 +128,7 @@ ABSL_FLAG(bool, use_history_rewriter, false, "Use history rewriter or not.");
 namespace mozc {
 
 Rewriter::Rewriter(const engine::Modules &modules) {
-  const DataManager *data_manager = &modules.GetDataManager();
+  const DataManager &data_manager = modules.GetDataManager();
   const dictionary::DictionaryInterface *dictionary = modules.GetDictionary();
   const dictionary::PosMatcher &pos_matcher = *modules.GetPosMatcher();
   const dictionary::PosGroup *pos_group = modules.GetPosGroup();
@@ -142,11 +142,11 @@ Rewriter::Rewriter(const engine::Modules &modules) {
   AddRewriter(std::make_unique<TransliterationRewriter>(pos_matcher));
   AddRewriter(std::make_unique<EnglishVariantsRewriter>(pos_matcher));
   AddRewriter(std::make_unique<NumberRewriter>(data_manager));
-  AddRewriter(CollocationRewriter::Create(*data_manager));
-  AddRewriter(std::make_unique<SingleKanjiRewriter>(*data_manager));
+  AddRewriter(CollocationRewriter::Create(data_manager));
+  AddRewriter(std::make_unique<SingleKanjiRewriter>(data_manager));
   AddRewriter(std::make_unique<IvsVariantsRewriter>());
-  AddRewriter(std::make_unique<EmojiRewriter>(*data_manager));
-  AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager));
+  AddRewriter(std::make_unique<EmojiRewriter>(data_manager));
+  AddRewriter(EmoticonRewriter::CreateFromDataManager(data_manager));
   AddRewriter(std::make_unique<CalculatorRewriter>());
   AddRewriter(std::make_unique<SymbolRewriter>(data_manager));
   AddRewriter(std::make_unique<UnicodeRewriter>());
@@ -178,10 +178,10 @@ Rewriter::Rewriter(const engine::Modules &modules) {
 #endif  // MOZC_USAGE_REWRITER
 
   AddRewriter(
-      std::make_unique<VersionRewriter>(data_manager->GetDataVersion()));
+      std::make_unique<VersionRewriter>(data_manager.GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
   AddRewriter(std::make_unique<T13nPromotionRewriter>());
-  AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(*data_manager));
+  AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(data_manager));
   AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());
   AddRewriter(std::make_unique<OrderRewriter>());
   AddRewriter(std::make_unique<A11yDescriptionRewriter>(data_manager));
