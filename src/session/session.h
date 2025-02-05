@@ -230,13 +230,13 @@ class Session {
 
   bool ReportBug(mozc::commands::Command *command);
 
-  void SetConfig(const mozc::config::Config *config);
+  void SetConfig(const mozc::config::Config &config);
 
-  void SetKeyMapManager(const mozc::keymap::KeyMapManager *key_map_manager);
+  void SetKeyMapManager(const mozc::keymap::KeyMapManager &key_map_manager);
 
-  void SetRequest(const mozc::commands::Request *request);
+  void SetRequest(const mozc::commands::Request &request);
 
-  void SetTable(const mozc::composer::Table *table);
+  void SetTable(const mozc::composer::Table &table);
 
   // Set client capability for this session.  Used by unittest.
   void set_client_capability(const mozc::commands::Capability &capability);

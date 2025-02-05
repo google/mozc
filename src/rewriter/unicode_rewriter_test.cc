@@ -307,7 +307,7 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
 TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   UnicodeRewriter rewriter;
   {  // Typical case
-    composer::Composer composer(nullptr, &default_request(), &default_config());
+    composer::Composer composer(default_request(), default_config());
     composer.set_source_text("A");
     const ConversionRequest request =
         ConversionRequestBuilder().SetComposer(composer).Build();
@@ -320,7 +320,7 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   }
 
   {  // If source_text is not set, this rewrite is not triggered.
-    composer::Composer composer(nullptr, &default_request(), &default_config());
+    composer::Composer composer(default_request(), default_config());
     const ConversionRequest request =
         ConversionRequestBuilder().SetComposer(composer).Build();
 
@@ -333,7 +333,7 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
 
   {  // If source_text is not a single character, this rewrite is not
      // triggered.
-    composer::Composer composer(nullptr, &default_request(), &default_config());
+    composer::Composer composer(default_request(), default_config());
     composer.set_source_text("AB");
     const ConversionRequest request =
         ConversionRequestBuilder().SetComposer(composer).Build();
@@ -345,7 +345,7 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   }
 
   {  // Multibyte character is also supported.
-    composer::Composer composer(nullptr, &default_request(), &default_config());
+    composer::Composer composer(default_request(), default_config());
     composer.set_source_text("愛");
     const ConversionRequest request =
         ConversionRequestBuilder().SetComposer(composer).Build();

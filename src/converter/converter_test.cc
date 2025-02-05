@@ -1023,7 +1023,7 @@ TEST_F(ConverterTest, StartSuggestion) {
   config::Config config;
 
   {
-    composer::Composer composer(&table, &client_request, &config);
+    composer::Composer composer(table, client_request, config);
 
     composer.InsertCharacter("shi");
 
@@ -1044,7 +1044,7 @@ TEST_F(ConverterTest, StartSuggestion) {
   }
 
   {
-    composer::Composer composer(&table, &client_request, &config);
+    composer::Composer composer(table, client_request, config);
 
     composer.InsertCharacter("si");
 
@@ -1284,7 +1284,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
   config::Config config;
   {
     Segments segments;
-    composer::Composer composer(&table, &default_request(), &config);
+    composer::Composer composer(table, default_request(), config);
     composer.InsertCharacterPreedit("わたしh");
 
     const ConversionRequest request =
@@ -1300,7 +1300,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
   }
   {
     Segments segments;
-    composer::Composer composer(&table, &default_request(), &config);
+    composer::Composer composer(table, default_request(), config);
     composer.InsertCharacterPreedit("わたしh");
 
     const ConversionRequest request =
@@ -1331,7 +1331,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   // Convert
   composer::Table table;
   config::Config config;
-  composer::Composer composer(&table, &default_request(), &config);
+  composer::Composer composer(table, default_request(), config);
   composer.InsertCharacter("placeholder");
   commands::Context context;
   const ConversionRequest request = ConversionRequestBuilder()
@@ -1533,7 +1533,7 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   composer::Table table;
   const config::Config &config = config::ConfigHandler::DefaultConfig();
   mozc::commands::Request request_proto;
-  mozc::composer::Composer composer(&table, &request_proto, &config);
+  mozc::composer::Composer composer(table, request_proto, config);
   composer.InsertCharacterPreedit("あ");
   const ConversionRequest request1 = ConversionRequestBuilder()
                                          .SetComposer(composer)
@@ -1607,7 +1607,7 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   composer::Table table;
-  composer::Composer composer(&table, &request, &config);
+  composer::Composer composer(table, request, config);
   request_test_util::FillMobileRequest(&request);
 
   std::unique_ptr<Converter> converter = CreateConverterWithUserDefinedEntries(
@@ -1799,7 +1799,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
   composer::Table table;
-  composer::Composer composer(&table, &request, &config);
+  composer::Composer composer(table, request, config);
   composer.SetPreeditTextForTestOnly("あい");
   commands::Context context;
 
@@ -1857,7 +1857,7 @@ TEST_F(ConverterTest,
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   composer::Table table;
-  composer::Composer composer(&table, &request, &config);
+  composer::Composer composer(table, request, config);
   request_test_util::FillMobileRequest(&request);
   composer.SetPreeditTextForTestOnly("おつかれ");
   commands::Context context;
@@ -1885,7 +1885,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   composer::Table table;
-  composer::Composer composer(&table, &request, &config);
+  composer::Composer composer(table, request, config);
   request_test_util::FillMobileRequest(&request);
   const dictionary::PosMatcher pos_matcher(
       engine->GetModulesForTesting()->GetDataManager().GetPosMatcherData());

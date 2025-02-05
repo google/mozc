@@ -87,8 +87,8 @@ class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
     config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
     table_ = std::make_unique<composer::Table>();
-    composer_ = std::make_unique<composer::Composer>(
-        table_.get(), request_.get(), config_.get());
+    composer_ =
+        std::make_unique<composer::Composer>(*table_, *request_, *config_);
   }
 
   ConversionRequest CreateConversionRequest() const {

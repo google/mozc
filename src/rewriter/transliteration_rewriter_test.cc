@@ -150,7 +150,7 @@ TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request(), &default_config());
+  composer::Composer composer(table, default_request(), default_config());
   SetAkann(&composer);
 
   Segments segments;
@@ -198,7 +198,7 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request(), &default_config());
+  composer::Composer composer(table, default_request(), default_config());
   InsertASCIISequence("ssh", &composer);
 
   Segments segments;
@@ -207,11 +207,12 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
 
   commands::Request input;
   input.set_mixed_conversion(true);
-  const ConversionRequest request = ConversionRequestBuilder()
-                                  .SetComposer(composer)
-                                  .SetRequest(input)
-                                  .SetRequestType(ConversionRequest::SUGGESTION)
-                                  .Build();
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequest(input)
+          .SetRequestType(ConversionRequest::SUGGESTION)
+          .Build();
   {
     // Although the segment key is "っ" as a partial string of the full
     // composition, the transliteration key should be "っsh" as the
@@ -236,7 +237,7 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request(), &default_config());
+  composer::Composer composer(table, default_request(), default_config());
 
   // Set kamabokoinbou to composer.
   {
@@ -278,7 +279,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request(), &default_config());
+  composer::Composer composer(table, default_request(), default_config());
 
   // Set kan to composer.
   {
@@ -325,7 +326,7 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
 
-  composer::Composer composer(&table, &default_request(), &default_config());
+  composer::Composer composer(table, default_request(), default_config());
   SetAkann(&composer);
 
   Segments segments;
@@ -441,7 +442,7 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(default_request(), default_config());
-  composer::Composer composer(&table, &default_request(), &default_config());
+  composer::Composer composer(table, default_request(), default_config());
   InsertASCIISequence("a", &composer);
 
   Segments segments;
@@ -506,7 +507,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());
-  composer::Composer composer(&table, &request, &default_config());
+  composer::Composer composer(table, request, default_config());
 
   {
     InsertASCIISequence("11#", &composer);
@@ -553,7 +554,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());
-  composer::Composer composer(&table, &request, &default_config());
+  composer::Composer composer(table, request, default_config());
 
   {
     InsertASCIISequence("1212", &composer);
@@ -608,7 +609,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());
-  composer::Composer composer(&table, &request, &default_config());
+  composer::Composer composer(table, request, default_config());
 
   {
     InsertASCIISequence("1a", &composer);
@@ -662,7 +663,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
   table.InitializeWithRequestAndConfig(client_request, default_config());
 
   {
-    composer::Composer composer(&table, &client_request, &default_config());
+    composer::Composer composer(table, client_request, default_config());
 
     InsertASCIISequence("shi", &composer);
     EXPECT_EQ(composer.GetQueryForConversion(), kShi);
@@ -681,7 +682,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
   }
 
   {
-    composer::Composer composer(&table, &client_request, &default_config());
+    composer::Composer composer(table, client_request, default_config());
 
     InsertASCIISequence("si", &composer);
     EXPECT_EQ(composer.GetQueryForConversion(), kShi);
@@ -711,7 +712,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request, default_config());
-  composer::Composer composer(&table, &request, &default_config());
+  composer::Composer composer(table, request, default_config());
   {
     InsertASCIISequence("<'de", &composer);
     EXPECT_EQ(composer.GetQueryForConversion(), "あん゜で");
@@ -793,7 +794,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
       continue;
     }
 
-    composer::Composer composer(&table, &request, &default_config());
+    composer::Composer composer(table, request, default_config());
 
     std::string ascii_input(1, static_cast<char>(i));
     InsertASCIISequence(ascii_input, &composer);
@@ -840,7 +841,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
   composer::Table table;
   table.InitializeWithRequestAndConfig(client_request, default_config());
   {
-    composer::Composer composer(&table, &client_request, &default_config());
+    composer::Composer composer(table, client_request, default_config());
 
     InsertASCIISequence("ssh", &composer);
     EXPECT_EQ(composer.GetQueryForPrediction(), kXtsu);
@@ -873,7 +874,7 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
   composer::Table table;
   table.InitializeWithRequestAndConfig(client_request, default_config());
   {
-    composer::Composer composer(&table, &client_request, &default_config());
+    composer::Composer composer(table, client_request, default_config());
 
     InsertASCIISequence("ssh", &composer);  // "っsh|"
     EXPECT_EQ(composer.GetQueryForPrediction(), kXtsu);

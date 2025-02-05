@@ -63,7 +63,7 @@ size_t InsertCharacters(const std::string& input, size_t pos,
 
 class CompositionTest : public testing::Test {
  protected:
-  CompositionTest() : table_(), composition_(&table_) {
+  CompositionTest() : table_(), composition_(table_) {
     composition_.SetInputMode(Transliterators::CONVERSION_STRING);
   }
 
@@ -259,7 +259,7 @@ TEST_F(CompositionTest, SplitRawChunk) {
   };
   for (int i = 0; i < std::size(test_cases); ++i) {
     const TestCase& test = test_cases[i];
-    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, nullptr);
+    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, table_);
     right_orig_chunk.set_conversion(test.conversion);
     right_orig_chunk.set_pending(test.pending);
     right_orig_chunk.set_raw(test.raw);
@@ -302,7 +302,7 @@ TEST_F(CompositionTest, SplitConversionChunk) {
   };
   for (int i = 0; i < std::size(test_cases); ++i) {
     const TestCase& test = test_cases[i];
-    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, nullptr);
+    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, table_);
     right_orig_chunk.set_conversion(test.conversion);
     right_orig_chunk.set_pending(test.pending);
     right_orig_chunk.set_raw(test.raw);
@@ -348,7 +348,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
     const TestCase& test = test_cases[i];
 
     {  // Test RAW mode
-      Composition raw_comp(&table_);
+      Composition raw_comp(table_);
       InitComposition(raw_comp);
       raw_comp.SetDisplayMode(dummy_position, Transliterators::RAW_STRING);
       raw_comp.MaybeSplitChunkAt(test.position);
@@ -357,7 +357,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
     }
 
     {  // Test CONVERSION mode
-      Composition conv_comp(&table_);
+      Composition conv_comp(table_);
       InitComposition(conv_comp);
       conv_comp.SetDisplayMode(dummy_position,
                                Transliterators::CONVERSION_STRING);
@@ -372,7 +372,7 @@ namespace {
 std::string GetDeletedString(Transliterators::Transliterator t12r,
                              const int position) {
   Table table;
-  Composition comp(&table);
+  Composition comp(table);
 
   InitComposition(comp);
   comp.SetDisplayMode(0, t12r);
@@ -504,10 +504,10 @@ std::string GetInsertedString(Transliterators::Transliterator t12r,
                               const size_t position, std::string input) {
   Table table;
   InitTable(table);
-  Composition comp(&table);
+  Composition comp(table);
   InitComposition(comp);
 
-  comp.SetTable(&table);
+  comp.SetTable(table);
   comp.SetDisplayMode(0, t12r);
   comp.InsertAt(position, std::move(input));
 
@@ -840,7 +840,7 @@ TEST_F(CompositionTest, SetTable) {
   std::string result = composition_.GetString();
   EXPECT_EQ(result, "ｋ");
 
-  composition_.SetTable(&table2);
+  composition_.SetTable(table2);
 
   pos = composition_.InsertAt(pos, "a");
   result = composition_.GetString();
@@ -1136,7 +1136,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
 
   {
     // empty chunks + "n" -> empty chunks + "n"
-    Composition comp(&table_);
+    Composition comp(table_);
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1155,7 +1155,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
   {
     // [x] + "n" -> [x] + "n"
     // No combination performed.
-    Composition comp(&table_);
+    Composition comp(table_);
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1175,7 +1175,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
   {
     // Append "a" to [n][y] -> [ny] + "a"
     // Combination performed.
-    Composition comp(&table_);
+    Composition comp(table_);
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1196,7 +1196,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
   {
     // Append "a" to [x][n][y] -> [x][ny] + "a"
     // Combination performed.
-    Composition comp(&table_);
+    Composition comp(table_);
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1220,7 +1220,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     // Append "a" of conversion value to [x][n][y] -> [x][ny] + "a"
     // Combination performed.  If composition input contains a
     // conversion, the conversion is used rather than a raw value.
-    Composition comp(&table_);
+    Composition comp(table_);
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1671,7 +1671,7 @@ TEST_F(CompositionTest, SetTransliteratorOnEmpty) {
 }
 
 TEST_F(CompositionTest, Copy) {
-  Composition src(&table_);
+  Composition src(table_);
   src.SetInputMode(Transliterators::FULL_KATAKANA);
 
   AppendChunk("も", "", "mo", src);
@@ -1685,7 +1685,7 @@ TEST_F(CompositionTest, Copy) {
   const Composition copy(src);
   EXPECT_EQ(copy, src);
 
-  Composition copy2(nullptr);
+  Composition copy2;
   copy2 = src;
   EXPECT_EQ(copy2, src);
 }

@@ -99,13 +99,13 @@ class ImeContext final {
   State state() const { return state_; }
   void set_state(State state) { state_ = state; }
 
-  void SetRequest(const commands::Request *request);
+  void SetRequest(const commands::Request &request);
   const commands::Request &GetRequest() const;
 
-  void SetConfig(const config::Config *config);
+  void SetConfig(const config::Config &config);
   const config::Config &GetConfig() const;
 
-  void SetKeyMapManager(const keymap::KeyMapManager *key_map_manager);
+  void SetKeyMapManager(const keymap::KeyMapManager &key_map_manager);
   const keymap::KeyMapManager &GetKeyMapManager() const;
 
   const commands::Capability &client_capability() const {

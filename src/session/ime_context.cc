@@ -51,10 +51,10 @@ composer::Composer *ImeContext::mutable_composer() {
   return composer_.get();
 }
 
-void ImeContext::SetRequest(const commands::Request *request) {
-  request_ = request;
-  converter_->SetRequest(request_);
-  composer_->SetRequest(request_);
+void ImeContext::SetRequest(const commands::Request &request) {
+  request_ = &request;
+  converter_->SetRequest(*request_);
+  composer_->SetRequest(*request_);
 }
 
 const commands::Request &ImeContext::GetRequest() const {
@@ -62,14 +62,14 @@ const commands::Request &ImeContext::GetRequest() const {
   return *request_;
 }
 
-void ImeContext::SetConfig(const config::Config *config) {
-  config_ = config;
+void ImeContext::SetConfig(const config::Config &config) {
+  config_ = &config;
 
   DCHECK(converter_.get());
-  converter_->SetConfig(config_);
+  converter_->SetConfig(*config_);
 
   DCHECK(composer_.get());
-  composer_->SetConfig(config_);
+  composer_->SetConfig(*config_);
 
   key_event_transformer_.ReloadConfig(*config_);
 }
@@ -80,16 +80,15 @@ const config::Config &ImeContext::GetConfig() const {
 }
 
 void ImeContext::SetKeyMapManager(
-    const keymap::KeyMapManager *key_map_manager) {
-  DCHECK(key_map_manager);
-  key_map_manager_ = key_map_manager;
+    const keymap::KeyMapManager &key_map_manager) {
+  key_map_manager_ = &key_map_manager;
 }
 
 const keymap::KeyMapManager &ImeContext::GetKeyMapManager() const {
   if (key_map_manager_) {
     return *key_map_manager_;
   }
-  static keymap::KeyMapManager *void_key_map_manager =
+  static const keymap::KeyMapManager *void_key_map_manager =
       new keymap::KeyMapManager();
   return *void_key_map_manager;
 }
@@ -107,9 +106,9 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
 
   dest->set_state(src.state());
 
-  dest->SetRequest(src.request_);
-  dest->SetConfig(src.config_);
-  dest->SetKeyMapManager(&src.GetKeyMapManager());
+  dest->SetRequest(*src.request_);
+  dest->SetConfig(*src.config_);
+  dest->SetKeyMapManager(src.GetKeyMapManager());
 
   *dest->mutable_client_capability() = src.client_capability();
   *dest->mutable_application_info() = src.application_info();

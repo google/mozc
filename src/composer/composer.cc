@@ -384,7 +384,7 @@ std::pair<std::string, absl::btree_set<std::string>> GetQueriesForPrediction(
   }
 
   // auto = std::pair<std::string, absl::btree_set<std::string>>
-  auto[base_query, expanded] = composition.GetExpandedStrings();
+  auto [base_query, expanded] = composition.GetExpandedStrings();
 
   // The above `GetExpandedStrings` generates expansion for modifier key as
   // well, e.g., if the composition is "ざ", `expanded` contains "さ" too.
@@ -395,7 +395,7 @@ std::pair<std::string, absl::btree_set<std::string>> GetQueriesForPrediction(
   RemoveExpandedCharsForModifier(asis, base_query, &expanded);
 
   return std::make_pair(
-    japanese_util::FullWidthAsciiToHalfWidthAscii(base_query), expanded);
+      japanese_util::FullWidthAsciiToHalfWidthAscii(base_query), expanded);
 }
 
 std::string GetStringForTypeCorrection(const Composition &composition) {
@@ -460,8 +460,7 @@ void GetTransliterations(const Composition &composition,
 ComposerData::ComposerData(
     Composition composition, size_t position,
     transliteration::TransliterationType input_mode,
-    commands::Context::InputFieldType input_field_type,
-    std::string source_text,
+    commands::Context::InputFieldType input_field_type, std::string source_text,
     std::vector<commands::SessionCommand::CompositionEvent>
         compositions_for_handwriting)
     : composition_(composition),
@@ -552,7 +551,7 @@ std::string ComposerData::GetRawString() const {
 }
 
 std::string ComposerData::GetRawSubString(const size_t position,
-                                      const size_t size) const {
+                                          const size_t size) const {
   return common::GetRawSubString(composition_, position, size);
 }
 
@@ -570,12 +569,15 @@ void ComposerData::GetSubTransliterations(
 // Composer
 
 Composer::Composer()
-    : Composer(&Table::GetDefaultTable(),
-               &commands::Request::default_instance(),
-               &config::ConfigHandler::DefaultConfig()) {}
+    : Composer(Table::GetDefaultTable(), commands::Request::default_instance(),
+               config::ConfigHandler::DefaultConfig()) {}
 
-Composer::Composer(const Table *table, const commands::Request *request,
-                   const config::Config *config)
+Composer::Composer(const commands::Request &request,
+                   const config::Config &config)
+    : Composer(Table::GetDefaultTable(), request, config) {}
+
+Composer::Composer(const Table &table, const commands::Request &request,
+                   const config::Config &config)
     : position_(0),
       input_mode_(transliteration::HIRAGANA),
       output_mode_(transliteration::HIRAGANA),
@@ -584,21 +586,18 @@ Composer::Composer(const Table *table, const commands::Request *request,
       shifted_sequence_count_(0),
       composition_(table),
       max_length_(kMaxPreeditLength),
-      request_(request),
-      config_(config),
-      table_(table),
+      request_(&request),
+      config_(&config),
+      table_(&table),
       is_new_input_(true) {
   SetInputMode(transliteration::HIRAGANA);
-  if (config_ == nullptr) {
-    config_ = &config::ConfigHandler::DefaultConfig();
-  }
   Reset();
 }
 
 // static
 ComposerData Composer::CreateEmptyComposerData() {
   static const absl::NoDestructor<Table> table;
-  static const absl::NoDestructor<Composition> composition(table.get());
+  static const absl::NoDestructor<Composition> composition(*table);
   return ComposerData(*composition, 0, transliteration::HIRAGANA,
                       commands::Context::NORMAL, "", {});
 }
@@ -625,16 +624,16 @@ void Composer::ReloadConfig() {
 
 bool Composer::Empty() const { return (GetLength() == 0); }
 
-void Composer::SetTable(const Table *table) {
-  table_ = table;
-  composition_.SetTable(table);
+void Composer::SetTable(const Table &table) {
+  table_ = &table;
+  composition_.SetTable(*table_);
 }
 
-void Composer::SetRequest(const commands::Request *request) {
-  request_ = request;
+void Composer::SetRequest(const commands::Request &request) {
+  request_ = &request;
 }
 
-void Composer::SetConfig(const config::Config *config) { config_ = config; }
+void Composer::SetConfig(const config::Config &config) { config_ = &config; }
 
 void Composer::SetInputMode(transliteration::TransliterationType mode) {
   comeback_input_mode_ = mode;

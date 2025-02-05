@@ -56,8 +56,8 @@ enum TrimMode {
 
 class Composition final {
  public:
-  explicit Composition(const Table *table)
-      : table_(table), input_t12r_(Transliterators::CONVERSION_STRING) {}
+  Composition() = default;
+  explicit Composition(const Table &table) : table_(&table) {}
 
   // Copyable and movable.
   Composition(const Composition &) = default;
@@ -139,7 +139,7 @@ class Composition final {
   // Return true if the composition is advised to be committed immediately.
   bool ShouldCommit() const;
 
-  void SetTable(const Table *table);
+  void SetTable(const Table &table);
 
   bool IsToggleable(size_t position) const;
 
@@ -216,9 +216,10 @@ class Composition final {
   std::string GetStringWithModes(Transliterators::Transliterator transliterator,
                                  TrimMode trim_mode) const;
 
-  const Table *table_;
+  const Table *table_ = nullptr;
   CharChunkList chunks_;
-  Transliterators::Transliterator input_t12r_;
+  Transliterators::Transliterator input_t12r_ =
+      Transliterators::CONVERSION_STRING;
 };
 
 }  // namespace composer

@@ -160,8 +160,7 @@ class MobilePredictorTest : public ::testing::Test {
 
     request_ = std::make_unique<commands::Request>();
     request_test_util::FillMobileRequest(request_.get());
-    composer_ = std::make_unique<composer::Composer>(nullptr, request_.get(),
-                                                     config_.get());
+    composer_ = std::make_unique<composer::Composer>(*request_, *config_);
   }
 
   ConversionRequest CreateConversionRequest(
@@ -271,8 +270,7 @@ class PredictorTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(config_.get());
 
     request_ = std::make_unique<commands::Request>();
-    composer_ = std::make_unique<composer::Composer>(nullptr, request_.get(),
-                                                     config_.get());
+    composer_ = std::make_unique<composer::Composer>(*request_, *config_);
   }
 
   ConversionRequest CreateConversionRequest(

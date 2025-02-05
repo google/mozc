@@ -219,11 +219,11 @@ class EngineConverterInterface {
 
   // Set setting by the request.
   // Currently this is especially for EngineConverter.
-  virtual void SetRequest(const commands::Request *request) = 0;
+  virtual void SetRequest(const commands::Request &request) = 0;
 
   // Set setting by the config.
   // Currently this is especially for EngineConverter.
-  virtual void SetConfig(const config::Config *config) = 0;
+  virtual void SetConfig(const config::Config &config) = 0;
 
   // Update the internal state by the context.
   virtual void OnStartComposition(const commands::Context &context) = 0;

@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   mozc::composer::Table table;
   table.LoadFromFile(absl::GetFlag(FLAGS_table).c_str());
 
-  mozc::composer::Composition composition(&table);
+  mozc::composer::Composition composition(table);
 
   std::string command;
   size_t pos = 0;

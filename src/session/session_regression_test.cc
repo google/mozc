@@ -161,7 +161,7 @@ class SessionRegressionTest : public testing::TestWithTempUserProfile {
     commands::Request request;
     table_ = std::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(request, config_);
-    session_->SetTable(table_.get());
+    session_->SetTable(*table_);
   }
 
   const testing::MockDataManager data_manager_;
@@ -359,7 +359,7 @@ TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggestion) {
 
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
-  session_->SetRequest(&request);
+  session_->SetRequest(request);
 
   InitSessionToPrecomposition(session_.get());
   commands::Command command;
@@ -422,7 +422,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config.set_use_auto_conversion(true);
-    session_->SetConfig(&config);
+    session_->SetConfig(config);
 
     constexpr char kInputKeys[] = "aiueo.";
     for (size_t i = 0; i < kInputKeys[i]; ++i) {
@@ -445,7 +445,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
     config::Config config;
     config::ConfigHandler::GetConfig(&config);
     config.set_use_auto_conversion(true);
-    session_->SetConfig(&config);
+    session_->SetConfig(config);
 
     constexpr char kInputKeys[] = "1234.";
     for (size_t i = 0; i < kInputKeys[i]; ++i) {
@@ -532,7 +532,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
   // Pending char chunk remains after committing transliteration.
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
-  session_->SetRequest(&request);
+  session_->SetRequest(request);
 
   InitSessionToPrecomposition(session_.get());
 
@@ -553,7 +553,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
 TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
-  session_->SetRequest(&request);
+  session_->SetRequest(request);
 
   InitSessionToPrecomposition(session_.get());
 

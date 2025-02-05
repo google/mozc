@@ -52,9 +52,8 @@ int main(int argc, char **argv) {
 
   mozc::composer::Table table;
   table.LoadFromFile(absl::GetFlag(FLAGS_table).c_str());
-  std::unique_ptr<mozc::composer::Composer> composer(
-      new mozc::composer::Composer(&table, &Request::default_instance(),
-                                   &Config::default_instance()));
+  auto composer = std::make_unique<mozc::composer::Composer>(
+      table, Request::default_instance(), Config::default_instance());
 
   std::string command;
   std::string left, focused, right;

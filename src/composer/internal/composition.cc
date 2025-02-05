@@ -403,7 +403,7 @@ void Composition::CombinePendingChunks(CharChunkList::iterator it,
   while (it != chunks_.begin()) {
     CharChunkList::iterator left_it = it;
     --left_it;
-    if (!left_it->IsConvertible(input_t12r_, table_,
+    if (!left_it->IsConvertible(input_t12r_, *table_,
                                 absl::StrCat(it->pending(), next_input))) {
       return;
     }
@@ -416,7 +416,7 @@ void Composition::CombinePendingChunks(CharChunkList::iterator it,
 // Insert a chunk to the prev of it.
 CharChunkList::iterator Composition::InsertChunk(
     CharChunkList::const_iterator it) {
-  return chunks_.insert(it, CharChunk(input_t12r_, table_));
+  return chunks_.insert(it, CharChunk(input_t12r_, *table_));
 }
 
 const CharChunkList &Composition::GetCharChunkList() const { return chunks_; }
@@ -434,7 +434,7 @@ CharChunkList::iterator Composition::GetInsertionChunk(
   }
 
   const CharChunkList::iterator left_it = std::prev(it);
-  if (left_it->IsAppendable(input_t12r_, table_)) {
+  if (left_it->IsAppendable(input_t12r_, *table_)) {
     return left_it;
   }
   return InsertChunk(it);
@@ -444,7 +444,7 @@ void Composition::SetInputMode(Transliterators::Transliterator transliterator) {
   input_t12r_ = transliterator;
 }
 
-void Composition::SetTable(const Table *table) { table_ = table; }
+void Composition::SetTable(const Table &table) { table_ = &table; }
 
 bool Composition::IsToggleable(size_t position) const {
   size_t inner_position = 0;

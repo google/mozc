@@ -204,11 +204,11 @@ void SessionHandler::UpdateSessions(const config::Config &config,
     if (!session) {
       continue;
     }
-    session->SetConfig(config_.get());
-    session->SetKeyMapManager(key_map_manager_.get());
-    session->SetRequest(request_.get());
+    session->SetConfig(*config_);
+    session->SetKeyMapManager(*key_map_manager_);
+    session->SetRequest(*request_);
     if (table != nullptr) {
-      session->SetTable(table);
+      session->SetTable(*table);
     }
   }
   config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(

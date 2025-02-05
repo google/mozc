@@ -338,8 +338,8 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
     config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
     table_ = std::make_unique<composer::Table>();
-    composer_ = std::make_unique<composer::Composer>(
-        table_.get(), request_.get(), config_.get());
+    composer_ =
+        std::make_unique<composer::Composer>(*table_, *request_, *config_);
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }

@@ -291,8 +291,7 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
 
   CHECK_FIELDS_LENGTH(1);
 
-  composer::Composer composer(&composer::Table::GetDefaultTable(), &request,
-                              config);
+  composer::Composer composer(request, *config);
   commands::Context context;
   ConversionRequest::Options options = {
       .max_conversion_candidates_size =

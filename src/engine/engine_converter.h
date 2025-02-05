@@ -56,9 +56,9 @@ namespace engine {
 // support stateful operations related with the converter.
 class EngineConverter : public EngineConverterInterface {
  public:
-  EngineConverter(const ConverterInterface *converter,
-                  const commands::Request *request,
-                  const config::Config *config);
+  EngineConverter(const ConverterInterface &converter,
+                  const commands::Request &request,
+                  const config::Config &config);
   EngineConverter(const EngineConverter &) = delete;
   EngineConverter &operator=(const EngineConverter &) = delete;
 
@@ -231,10 +231,10 @@ class EngineConverter : public EngineConverterInterface {
                   commands::Output *output) const override;
 
   // Sets setting by the request;
-  void SetRequest(const commands::Request *request) override;
+  void SetRequest(const commands::Request &request) override;
 
   // Sets setting by the config;
-  void SetConfig(const config::Config *config) override;
+  void SetConfig(const config::Config &config) override;
 
   // Set setting by the context.
   void OnStartComposition(const commands::Context &context) override;
@@ -358,7 +358,7 @@ class EngineConverter : public EngineConverterInterface {
   // Creates a config for incognito mode from the current config.
   config::Config CreateIncognitoConfig();
 
-  const ConverterInterface *converter_;
+  const ConverterInterface *converter_ = nullptr;
   // Conversion stats used by converter_.
   Segments segments_;
 
@@ -378,8 +378,8 @@ class EngineConverter : public EngineConverterInterface {
   // Component of the candidate list converted from segments_to result_.
   CandidateList candidate_list_;
 
-  const commands::Request *request_;
-  const config::Config *config_;
+  const commands::Request *request_ = nullptr;
+  const config::Config *config_ = nullptr;
 
   EngineConverterInterface::State state_;
 

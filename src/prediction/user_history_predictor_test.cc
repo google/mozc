@@ -102,7 +102,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     config::ConfigHandler::GetDefaultConfig(&config_);
     config_.set_use_typing_correction(true);
     table_ = std::make_unique<composer::Table>();
-    composer_ = composer::Composer(table_.get(), &request_, &config_);
+    composer_ = composer::Composer(*table_, request_, config_);
     data_and_predictor_ = CreateDataAndPredictor();
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
@@ -2923,7 +2923,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
-  composer_.SetTable(table_.get());
+  composer_.SetTable(*table_);
   Segments segments;
 
   const ConversionRequest convreq =
@@ -2945,7 +2945,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
-  composer_.SetTable(table_.get());
+  composer_.SetTable(*table_);
   Segments segments;
   Random random;
 
@@ -2966,7 +2966,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
 // input_key != base by composer modification.
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
-  composer_.SetTable(table_.get());
+  composer_.SetTable(*table_);
   Segments segments;
 
   {
@@ -2982,7 +2982,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
-  composer_.SetTable(table_.get());
+  composer_.SetTable(*table_);
   Segments segments;
 
   {
@@ -3058,7 +3058,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
   table_->LoadFromFile("system://flick-hiragana.tsv");
-  composer_.SetTable(table_.get());
+  composer_.SetTable(*table_);
   Segments segments;
 
   {
@@ -3083,7 +3083,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
   table_->LoadFromFile("system://12keys-hiragana.tsv");
-  composer_.SetTable(table_.get());
+  composer_.SetTable(*table_);
   Segments segments;
 
   {
@@ -3108,7 +3108,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
   table_->LoadFromFile("system://kana.tsv");
-  composer_.SetTable(table_.get());
+  composer_.SetTable(*table_);
   Segments segments;
 
   const ConversionRequest convreq =

@@ -95,7 +95,7 @@ class LanguageAwareRewriterTest : public testing::TestWithTempUserProfile {
     config::Config default_config;
     table.InitializeWithRequestAndConfig(client_request, default_config);
 
-    composer::Composer composer(&table, &client_request, &default_config);
+    composer::Composer composer(table, client_request, default_config);
     InsertASCIISequence(key, &composer);
     *composition = composer.GetStringForPreedit();
 
@@ -339,7 +339,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     config::Config default_config;
     table.InitializeWithRequestAndConfig(client_request, default_config);
 
-    composer::Composer composer(&table, &client_request, &default_config);
+    composer::Composer composer(table, client_request, default_config);
     InsertASCIISequence("python", &composer);
     const std::string composition = composer.GetStringForPreedit();
     EXPECT_EQ(composition, kPyTeyoN);
@@ -426,7 +426,7 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
     composer::Table table;
     table.InitializeWithRequestAndConfig(request, config);
 
-    composer::Composer composer(&table, &request, &config);
+    composer::Composer composer(table, request, config);
     InsertASCIISequence("query", &composer);
 
     const commands::Context context;

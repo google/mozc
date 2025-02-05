@@ -250,7 +250,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
 
   if (command == kConversionExpect || command == kConversionNotExpect ||
       command == kConversionMatch || command == kConversionNotMatch) {
-    composer::Composer composer(&table, &request_, &config_);
+    composer::Composer composer(table, request_, config_);
     composer.SetPreeditTextForTestOnly(key);
     const ConversionRequest conv_req(
         composer, request_, commands::Context::default_instance(), config_, {});
@@ -264,7 +264,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
       return absl::UnknownError("StartReverseConversion failed");
     }
   } else if (command == kPredictionExpect || command == kPredictionNotExpect) {
-    composer::Composer composer(&table, &request_, &config_);
+    composer::Composer composer(table, request_, config_);
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest::Options options;
     options.request_type = ConversionRequest::PREDICTION;
@@ -278,7 +278,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
           "StartPredictionForRequest failed: ", item.OutputAsTSV()));
     }
   } else if (command == kSuggestionExpect || command == kSuggestionNotExpect) {
-    composer::Composer composer(&table, &request_, &config_);
+    composer::Composer composer(table, request_, config_);
     composer.SetPreeditTextForTestOnly(key);
     const ConversionRequest conv_req(
         composer, request_, context, config_,
@@ -292,7 +292,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     request.set_zero_query_suggestion(true);
     request.set_mixed_conversion(true);
     {
-      composer::Composer composer(&table, &request, &config_);
+      composer::Composer composer(table, request, config_);
       composer.SetPreeditTextForTestOnly(key);
       const ConversionRequest conv_req(
           composer, request, context, config_,
@@ -310,7 +310,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     }
     {
       // Issues zero-query request.
-      composer::Composer composer(&table, &request, &config_);
+      composer::Composer composer(table, request, config_);
       const ConversionRequest conv_req(
           composer, request, context, config_,
           {.request_type = ConversionRequest::PREDICTION,

@@ -61,10 +61,9 @@ class ComposerData {
   // This constructor is temporary and should be removed, when ConverterRequest
   // is updated to use a const ComposerData.
   ABSL_DEPRECATED("Do not use this constructor except in converter_request.h")
-  ComposerData(): composition_(Composition(nullptr)) {}
+  ComposerData() = default;
 
-  ComposerData(Composition composition,
-               size_t position,
+  ComposerData(Composition composition, size_t position,
                transliteration::TransliterationType input_mode,
                commands::Context::InputFieldType input_field_type,
                std::string source_text,
@@ -89,8 +88,8 @@ class ComposerData {
   std::string GetQueryForPrediction() const;
 
   // Returns a expanded prediction query.
-  std::pair<std::string, absl::btree_set<std::string>>
-  GetQueriesForPrediction() const;
+  std::pair<std::string, absl::btree_set<std::string>> GetQueriesForPrediction()
+      const;
 
   // Returns a string to be used for type correction.
   std::string GetStringForTypeCorrection() const;
@@ -111,14 +110,13 @@ class ComposerData {
   std::string GetRawSubString(size_t position, size_t size) const;
 
   // Generate transliterations.
-  void GetTransliterations(
-      transliteration::Transliterations *t13ns) const;
+  void GetTransliterations(transliteration::Transliterations *t13ns) const;
 
   // Generate substrings of transliterations.
   void GetSubTransliterations(size_t position, size_t size,
                               transliteration::Transliterations *t13ns) const;
 
-  absl::string_view source_text() const {return source_text_; }
+  absl::string_view source_text() const { return source_text_; }
 
  private:
   // Composition copied from the Composer as a snapshot.
@@ -157,8 +155,11 @@ class Composer final {
   };
 
   Composer();
-  Composer(const Table *table, const commands::Request *request,
-           const config::Config *config);
+  Composer(const Table &table, const commands::Request &request,
+           const config::Config &config);
+  // This constructor is for testing.
+  ABSL_DEPRECATED("Use the constructor with Table")
+  Composer(const commands::Request &request, const config::Config &config);
 
   // Copyable and movable.
   Composer(const Composer &) = default;
@@ -187,10 +188,10 @@ class Composer final {
   // Check the preedit string is empty or not.
   bool Empty() const;
 
-  void SetTable(const Table *table);
+  void SetTable(const Table &table);
 
-  void SetRequest(const commands::Request *request);
-  void SetConfig(const config::Config *config);
+  void SetRequest(const commands::Request &request);
+  void SetConfig(const config::Config &config);
 
   void SetInputMode(transliteration::TransliterationType mode);
   void SetTemporaryInputMode(transliteration::TransliterationType mode);
@@ -228,8 +229,8 @@ class Composer final {
   std::string GetQueryForPrediction() const;
 
   // Returns a expanded prediction query.
-  std::pair<std::string, absl::btree_set<std::string>>
-  GetQueriesForPrediction() const;
+  std::pair<std::string, absl::btree_set<std::string>> GetQueriesForPrediction()
+      const;
 
   // Returns a string to be used for type correction.
   std::string GetStringForTypeCorrection() const;
@@ -301,8 +302,7 @@ class Composer final {
   std::string GetRawSubString(size_t position, size_t size) const;
 
   // Generate transliterations.
-  void GetTransliterations(
-      transliteration::Transliterations *t13ns) const;
+  void GetTransliterations(transliteration::Transliterations *t13ns) const;
 
   // Generate substrings of specified transliteration.
   std::string GetSubTransliteration(transliteration::TransliterationType type,
@@ -390,9 +390,9 @@ class Composer final {
 
   size_t max_length_;
 
-  const commands::Request *request_;
-  const config::Config *config_;
-  const Table *table_;
+  const commands::Request *request_ = nullptr;
+  const config::Config *config_ = nullptr;
+  const Table *table_ = nullptr;
 
   // Timestamp of last modified.
   int64_t timestamp_msec_;

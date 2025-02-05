@@ -507,8 +507,8 @@ class SessionTest : public testing::TestWithTempUserProfile {
     EXPECT_CALL(*mock_engine, CreateEngineConverter)
         .WillRepeatedly([mock_converter](const commands::Request &request,
                                          const config::Config &config) {
-          return std::make_unique<engine::EngineConverter>(mock_converter,
-                                                           &request, &config);
+          return std::make_unique<engine::EngineConverter>(*mock_converter,
+                                                           request, config);
         });
   }
 
@@ -538,11 +538,11 @@ class SessionTest : public testing::TestWithTempUserProfile {
 
   void InitSessionWithRequest(Session *session,
                               const commands::Request &request) {
-    session->SetRequest(&request);
+    session->SetRequest(request);
     table_ = std::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
-    session->SetTable(table_.get());
+    session->SetTable(*table_);
   }
 
   // set result for "like"
@@ -620,7 +620,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
 
     // Enable zero query suggest.
     request->set_zero_query_suggestion(enable);
-    session->SetRequest(request);
+    session->SetRequest(*request);
 
     // Type "google".
     commands::Command command;
@@ -740,8 +740,8 @@ TEST_F(SessionTest, TestOfTestForSetup) {
     InitCreateEngineConverterMock(&engine, &converter);
 
     Session session(&engine);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     SendKey("a", &session, &command);
@@ -1876,7 +1876,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
 
   config::Config config;
   config.set_use_cascading_window(false);
-  session.SetConfig(&config);
+  session.SetConfig(config);
 
   commands::Command command;
   InitSessionToPrecomposition(&session);
@@ -2183,7 +2183,7 @@ TEST_F(SessionTest, RomajiInput) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  session.get_internal_composer_only_for_unittest()->SetTable(&table);
+  session.get_internal_composer_only_for_unittest()->SetTable(table);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -2221,7 +2221,7 @@ TEST_F(SessionTest, KanaInput) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  session.get_internal_composer_only_for_unittest()->SetTable(&table);
+  session.get_internal_composer_only_for_unittest()->SetTable(table);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -3195,7 +3195,7 @@ TEST_F(SessionTest, CommitRawTextKanaInput) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  session.get_internal_composer_only_for_unittest()->SetTable(&table);
+  session.get_internal_composer_only_for_unittest()->SetTable(table);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -3428,7 +3428,7 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   config::Config config;
   config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
   // Update KeyEventTransformer
-  session.SetConfig(&config);
+  session.SetConfig(config);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
   commands::Capability capability;
@@ -3641,7 +3641,7 @@ TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  session.SetConfig(&config);
+  session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3944,7 +3944,7 @@ TEST_F(SessionTest, Shortcut) {
     InitCreateEngineConverterMock(&engine, &converter);
 
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     Segments segments;
@@ -3985,7 +3985,7 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  session.SetConfig(&config);
+  session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
   Segments segments;
@@ -4030,7 +4030,7 @@ TEST_F(SessionTest, ShortcutFromVK) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  session.SetConfig(&config);
+  session.SetConfig(config);
   InitSessionToPrecomposition(&session, client_request);
 
   Segments segments;
@@ -4075,7 +4075,7 @@ TEST_F(SessionTest, NumpadKey) {
 
   config::Config config;
   config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
-  session.SetConfig(&config);
+  session.SetConfig(config);
 
   // In the Precomposition state, numpad keys should not be consumed.
   EXPECT_TRUE(TestSendKey("Numpad1", &session, &command));
@@ -4101,7 +4101,7 @@ TEST_F(SessionTest, NumpadKey) {
   EXPECT_TRUE(GetComposition(command).empty());
 
   config.set_numpad_character_form(config::Config::NUMPAD_HALF_WIDTH);
-  session.SetConfig(&config);
+  session.SetConfig(config);
 
   // In the Precomposition state, numpad keys should not be consumed.
   EXPECT_TRUE(TestSendKey("Numpad1", &session, &command));
@@ -4181,7 +4181,7 @@ TEST_F(SessionTest, KanaSymbols) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  session.SetConfig(&config);
+  session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
   {
@@ -4878,7 +4878,7 @@ TEST_F(SessionTest, InsertSpace) {
   // Change the setting to HALF_WIDTH.
   config::Config config;
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-  session.SetConfig(&config);
+  session.SetConfig(config);
   command.Clear();
   *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session.InsertSpace(&command));
@@ -4919,7 +4919,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
   // Change the setting to HALF_WIDTH.
   config::Config config;
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-  session.SetConfig(&config);
+  session.SetConfig(config);
   command.Clear();
   *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session.InsertSpaceToggled(&command));
@@ -5043,8 +5043,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5060,8 +5060,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5093,8 +5093,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5111,8 +5111,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5147,8 +5147,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5166,8 +5166,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5203,8 +5203,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5218,8 +5218,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5259,8 +5259,8 @@ TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5307,8 +5307,8 @@ TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5354,9 +5354,9 @@ TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
+  session.SetConfig(config);
 
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5402,8 +5402,8 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
   InitSessionToDirect(&session);
 
   commands::Command command;
@@ -5453,8 +5453,8 @@ TEST_F(SessionTest, InsertSpaceInDirectMode) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
   InitSessionToDirect(&session);
 
   commands::Command command;
@@ -5519,8 +5519,8 @@ TEST_F(SessionTest, InsertSpaceInCompositionMode) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5572,8 +5572,8 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
 
   {
     InitSessionToConversionWithAiueo(&session, &converter);
@@ -5674,7 +5674,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     // Hiragana
@@ -5706,7 +5706,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Set config to 'half' -- all mode has to emit half-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     // Hiragana
@@ -5740,7 +5740,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // full-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     // Hiragana
@@ -5776,7 +5776,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     // Use HALF_KATAKANA for the new input mode
@@ -6121,7 +6121,7 @@ TEST_F(SessionTest, Issue2190364) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  session.SetConfig(&config);
+  session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -6405,8 +6405,8 @@ TEST_F(SessionTest, Issue2282319) {
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
   InitSessionToPrecomposition(&session);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
 
   commands::Command command;
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
@@ -6441,8 +6441,8 @@ TEST_F(SessionTest, Issue2297060) {
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
   InitSessionToPrecomposition(&session);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
 
   commands::Command command;
   EXPECT_TRUE(SendKey("Ctrl Space", &session, &command));
@@ -6463,7 +6463,7 @@ TEST_F(SessionTest, Issue2379374) {
   // Set numpad_character_form with NUMPAD_DIRECT_INPUT
   config::Config config;
   config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
-  session.SetConfig(&config);
+  session.SetConfig(config);
 
   Segments segments;
   {  // Set mock conversion.
@@ -6669,8 +6669,8 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
   InitSessionToDirect(&session);
   commands::Command command;
 
@@ -6692,7 +6692,7 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
-  session.get_internal_composer_only_for_unittest()->SetTable(&table);
+  session.get_internal_composer_only_for_unittest()->SetTable(table);
 
   commands::Command command;
   SendKey("k", &session, &command);
@@ -6822,8 +6822,8 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
   // In MSIME keymap, Hiragana is assigned for
   // ImputModeHiragana in Precomposition.
@@ -7155,8 +7155,8 @@ TEST_F(SessionTest, Issue5742293) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -7195,7 +7195,7 @@ TEST_F(SessionTest, AutoConversion) {
   config.set_use_auto_conversion(false);
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -7206,7 +7206,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -7220,7 +7220,7 @@ TEST_F(SessionTest, AutoConversion) {
   config.set_use_auto_conversion(true);
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -7232,7 +7232,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -7246,7 +7246,7 @@ TEST_F(SessionTest, AutoConversion) {
   // Don't trigger auto conversion for the pattern number + "."
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -7259,7 +7259,7 @@ TEST_F(SessionTest, AutoConversion) {
   // Don't trigger auto conversion for the ".."
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -7271,7 +7271,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -7284,7 +7284,7 @@ TEST_F(SessionTest, AutoConversion) {
   // Don't trigger auto conversion for "." only.
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -7296,7 +7296,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -7309,7 +7309,7 @@ TEST_F(SessionTest, AutoConversion) {
   // Do auto conversion even if romanji-table is modified.
   {
     Session session(&engine);
-    session.SetConfig(&config);
+    session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     // Modify romanji-table to convert "zz" -> "。"
@@ -7318,7 +7318,7 @@ TEST_F(SessionTest, AutoConversion) {
     zz_table.AddRule("su", "す", "");
     zz_table.AddRule("to", "と", "");
     zz_table.AddRule("zz", "。", "");
-    session.get_internal_composer_only_for_unittest()->SetTable(&zz_table);
+    session.get_internal_composer_only_for_unittest()->SetTable(zz_table);
 
     // The last "zz" is converted to "." and triggering key for auto conversion
     commands::Command command;
@@ -7351,7 +7351,7 @@ TEST_F(SessionTest, AutoConversion) {
 
           for (int i = 0; i < 4; ++i) {
             Session session(&engine);
-            session.SetConfig(&config);
+            session.SetConfig(config);
             InitSessionToPrecomposition(&session);
             commands::Command command;
 
@@ -7449,8 +7449,8 @@ TEST_F(SessionTest, KeitaiInputToggle) {
 
   Session session(&engine);
   keymap::KeyMapManager key_map_manager(config);
-  session.SetConfig(&config);
-  session.SetKeyMapManager(&key_map_manager);
+  session.SetConfig(config);
+  session.SetKeyMapManager(key_map_manager);
 
   InitSessionToPrecomposition(&session, *mobile_request_);
   commands::Command command;
@@ -7589,8 +7589,8 @@ TEST_F(SessionTest, KeitaiInputFlick) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
     InsertCharacterCodeAndString('6', "は", &session, &command);
     InsertCharacterCodeAndString('3', "し", &session, &command);
@@ -7604,8 +7604,8 @@ TEST_F(SessionTest, KeitaiInputFlick) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
 
     SendKey("6", &session, &command);
@@ -7621,8 +7621,8 @@ TEST_F(SessionTest, KeitaiInputFlick) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
 
     SendKey("1", &session, &command);
@@ -7697,8 +7697,8 @@ TEST_F(SessionTest, ToggleFlick) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
     InsertCharacterChars("6d*888888;", &session, &command);
     EXPECT_EQ(command.output().preedit().segment(0).value(), "はじょう");
@@ -7707,8 +7707,8 @@ TEST_F(SessionTest, ToggleFlick) {
   {
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
 
     InsertCharacterChars("1233", &session, &command);  // Toggle
@@ -8305,7 +8305,7 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
   // Disable zero query suggest.
   commands::Request request;
   request.set_zero_query_suggestion(false);
-  session.SetRequest(&request);
+  session.SetRequest(request);
 
   // Type "google".
   commands::Command command;
@@ -8403,7 +8403,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     // Enable zero query suggest.
     commands::Request request;
     request.set_zero_query_suggestion(true);
-    session.SetRequest(&request);
+    session.SetRequest(request);
 
     // Type "g".
     commands::Command command;
@@ -8598,11 +8598,11 @@ TEST_F(SessionTest, Issue4437420) {
   command.Clear();
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
-  session.SetRequest(&request);
+  session.SetRequest(request);
   auto table = std::make_unique<composer::Table>();
   table->InitializeWithRequestAndConfig(request,
                                         config::ConfigHandler::DefaultConfig());
-  session.SetTable(table.get());
+  session.SetTable(*table);
   // Type "2*" to produce "A".
   SetSendKeyCommand("2", &command);
   *command.mutable_input()->mutable_config() = overriding_config;
@@ -8618,11 +8618,11 @@ TEST_F(SessionTest, Issue4437420) {
   command.Clear();
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
-  session.SetRequest(&request);
+  session.SetRequest(request);
   table = std::make_unique<composer::Table>();
   table->InitializeWithRequestAndConfig(request,
                                         config::ConfigHandler::DefaultConfig());
-  session.SetTable(table.get());
+  session.SetTable(*table);
   // Type "2" to produce "Aa".
   SetSendKeyCommand("2", &command);
   *command.mutable_input()->mutable_config() = overriding_config;
@@ -8682,11 +8682,11 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
-    session.SetRequest(&request);
+    session.SetRequest(request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
-    session.SetTable(&table);
+    session.SetTable(table);
 
     // Type "2" to produce "a".
     SetSendKeyCommand("2", &command);
@@ -8727,11 +8727,11 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-    session.SetRequest(&request);
+    session.SetRequest(request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
-    session.SetTable(&table);
+    session.SetTable(table);
     // Type "33{<}{<}" to produce "さ"->"し"->"さ"->"そ".
     SetSendKeyCommand("3", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
@@ -8769,11 +8769,11 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-    session.SetRequest(&request);
+    session.SetRequest(request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
-    session.SetTable(&table);
+    session.SetTable(table);
     // Type "3*{<}*{<}", and composition should change
     // "さ"->"ざ"->(No change)->"さ"->(No change).
     SetSendKeyCommand("3", &command);
@@ -8817,11 +8817,11 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-    session.SetRequest(&request);
+    session.SetRequest(request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
-    session.SetTable(&table);
+    session.SetTable(table);
     // Type "{<}" and do nothing
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
     *command.mutable_input()->mutable_config() = overriding_config;
@@ -8896,11 +8896,11 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-    session.SetRequest(&request);
+    session.SetRequest(request);
     composer::Table table;
     table.InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
-    session.SetTable(&table);
+    session.SetTable(table);
 
     // commit "あ" to push UNDO stack
     SetSendKeyCommand("1", &command);
@@ -8947,12 +8947,12 @@ TEST_F(SessionTest, DedupAfterUndo) {
     commands::Request request(*mobile_request_);
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-    session.SetRequest(&request);
+    session.SetRequest(request);
 
     composer::Table table;
     table.InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
-    session.SetTable(&table);
+    session.SetTable(table);
 
     // Type "!" to produce "！".
     SetSendKeyCommand("!", &command);
@@ -9170,7 +9170,7 @@ TEST_F(SessionTest, CommitHead) {
   table.AddRule("mo", "も", "");
   table.AddRule("zu", "ず", "");
 
-  session.get_internal_composer_only_for_unittest()->SetTable(&table);
+  session.get_internal_composer_only_for_unittest()->SetTable(table);
 
   InitSessionToPrecomposition(&session);
   commands::Command command;
@@ -9274,7 +9274,7 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(commands::Request::DEFAULT_TABLE);
-  session.SetRequest(&request);
+  session.SetRequest(request);
 
   InitSessionToPrecomposition(&session, request);
 
@@ -9327,12 +9327,12 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
 
   request.set_zero_query_suggestion(false);
   request.set_special_romanji_table(commands::Request::DEFAULT_TABLE);
-  session.SetRequest(&request);
+  session.SetRequest(request);
 
   composer::Table table;
   table.InitializeWithRequestAndConfig(request,
                                        config::ConfigHandler::DefaultConfig());
-  session.SetTable(&table);
+  session.SetTable(table);
 
   SwitchInputFieldType(commands::Context::PASSWORD, &session);
   SwitchInputMode(commands::HALF_ASCII, &session);
@@ -9473,8 +9473,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   {  // Cancel of Precomposition and deactivate IME
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9493,8 +9493,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   {  // Cancel of Composition and deactivate IME
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9515,8 +9515,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   {  // Cancel of Suggestion and deactivate IME
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9545,8 +9545,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   {  // Cancel of Conversion and deactivate IME
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToConversionWithAiueo(&session, &converter);
 
     commands::Command command;
@@ -9565,8 +9565,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   {  // Cancel of Reverse conversion and deactivate IME
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9629,8 +9629,8 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
      // when Precomposition state.
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9649,8 +9649,8 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   {  // Cancel of Composition in password field
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9669,8 +9669,8 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   {  // Cancel of Conversion in password field
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToConversionWithAiueo(&session, &converter);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9689,8 +9689,8 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   {  // Cancel of Reverse conversion in password field
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9750,8 +9750,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   {  // Cancel of Precomposition and deactivate IME in password field.
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9779,8 +9779,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   {  // Cancel of Composition and deactivate IME in password field
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9808,8 +9808,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   {  // Cancel of Conversion and deactivate IME in password field
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToConversionWithAiueo(&session, &converter);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9836,8 +9836,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   {  // Cancel of Reverse conversion and deactivate IME in password field
     Session session(&engine);
     keymap::KeyMapManager key_map_manager(config);
-    session.SetConfig(&config);
-    session.SetKeyMapManager(&key_map_manager);
+    session.SetConfig(config);
+    session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9901,7 +9901,7 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  session.SetConfig(&config);
+  session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
   Segments segments_a_conv;
@@ -10296,7 +10296,7 @@ TEST_F(SessionTest, SetConfig) {
   InitCreateEngineConverterMock(&engine, &converter);
   Session session(&engine);
   session.PushUndoContext();
-  session.SetConfig(&config);
+  session.SetConfig(config);
 
   EXPECT_EQ(&config, &session.context_->GetConfig());
   // SetConfig() resets undo context.

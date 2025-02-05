@@ -111,12 +111,14 @@ bool GetFromPending(const Table *table, const absl::string_view key,
 }  // namespace
 
 CharChunk::CharChunk(Transliterators::Transliterator transliterator,
-                     const Table *table)
-    : table_(table),
-      transliterator_(transliterator),
-      attributes_(NO_TABLE_ATTRIBUTE),
-      local_length_cache_(std::string::npos) {
-  DCHECK_NE(Transliterators::LOCAL, transliterator);
+                     const Table &table)
+    : table_(&table), transliterator_(transliterator) {
+  DCHECK_NE(transliterator, Transliterators::LOCAL);
+}
+
+CharChunk::CharChunk(Transliterators::Transliterator transliterator)
+    : transliterator_(transliterator) {
+  DCHECK_NE(transliterator, Transliterators::LOCAL);
 }
 
 void CharChunk::Clear() {
@@ -256,14 +258,14 @@ absl::btree_set<std::string> CharChunk::GetExpandedResults() const {
 bool CharChunk::IsFixed() const { return pending_.empty(); }
 
 bool CharChunk::IsAppendable(Transliterators::Transliterator t12r,
-                             const Table *table) const {
+                             const Table &table) const {
   return !pending_.empty() &&
          (t12r == Transliterators::LOCAL || t12r == transliterator_) &&
-         table == table_;
+         &table == table_;
 }
 
 bool CharChunk::IsConvertible(Transliterators::Transliterator t12r,
-                              const Table *table,
+                              const Table &table,
                               const absl::string_view input) const {
   if (!IsAppendable(t12r, table)) {
     return false;
@@ -272,7 +274,7 @@ bool CharChunk::IsConvertible(Transliterators::Transliterator t12r,
   size_t key_length = 0;
   bool fixed = false;
   std::string key = absl::StrCat(pending_, input);
-  const Entry *entry = table->LookUpPrefix(key, &key_length, &fixed);
+  const Entry *entry = table.LookUpPrefix(key, &key_length, &fixed);
 
   return entry && (key.size() == key_length) && fixed;
 }
@@ -563,7 +565,7 @@ absl::StatusOr<CharChunk> CharChunk::SplitChunk(
               DeleteSpecialKeys(conversion_ + pending_), &raw_lhs, &raw_rhs,
               &converted_lhs, &converted_rhs);
 
-  CharChunk left_new_chunk(transliterator_, table_);
+  CharChunk left_new_chunk(transliterator_, *table_);
   left_new_chunk.set_raw(raw_lhs);
   set_raw(std::move(raw_rhs));
 

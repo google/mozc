@@ -36,6 +36,7 @@
 #include <utility>
 
 #include "absl/container/btree_set.h"
+#include "absl/base/attributes.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -55,14 +56,16 @@ namespace composer {
 class CharChunk final {
  public:
   // LOCAL transliterator is not accepted.
-  CharChunk(Transliterators::Transliterator transliterator, const Table *table);
+  CharChunk(Transliterators::Transliterator transliterator, const Table &table);
+  // This constructor is for testing.
+  ABSL_DEPRECATED("Use the constructor with Table")
+  explicit CharChunk(Transliterators::Transliterator transliterator);
 
   // Copyable and movable.
   CharChunk(const CharChunk &x) = default;
   CharChunk &operator=(const CharChunk &x) = default;
   CharChunk(CharChunk &&x) = default;
   CharChunk &operator=(CharChunk &&x) = default;
-
   void Clear();
 
   size_t GetLength(Transliterators::Transliterator t12r) const;
@@ -83,7 +86,7 @@ class CharChunk final {
 
   // True if IsAppendable() is true and this object is fixed (|pending_|=="")
   // when |input| is appended.
-  bool IsConvertible(Transliterators::Transliterator t12r, const Table *table,
+  bool IsConvertible(Transliterators::Transliterator t12r, const Table &table,
                      absl::string_view input) const;
 
   // Combines all fields with |left_chunk|.
@@ -96,7 +99,7 @@ class CharChunk final {
   // Return true if this char chunk accepts additional characters with
   // the specified transliterator and the table.
   bool IsAppendable(Transliterators::Transliterator t12r,
-                    const Table *table) const;
+                    const Table &table) const;
 
   // Splits this CharChunk at |position| and returns the left chunk. Returns
   // nullptr on failure.
@@ -199,7 +202,7 @@ class CharChunk final {
  private:
   void AddInputAndConvertedChar(CompositionInput *composition_input);
 
-  const Table *table_;
+  const Table *table_ = nullptr;
 
   // There are four variables to represent a composing text:
   // `raw_`, `conversion_`, `pending_`, and `ambiguous_`.
@@ -230,8 +233,8 @@ class CharChunk final {
   // In this case, "ん" is stored to `ambiguous_` instead of `conversion_`.
   std::string ambiguous_;
   Transliterators::Transliterator transliterator_;
-  TableAttributes attributes_;
-  mutable size_t local_length_cache_;
+  TableAttributes attributes_ = NO_TABLE_ATTRIBUTE;
+  mutable size_t local_length_cache_ = std::string::npos;
 };
 
 }  // namespace composer

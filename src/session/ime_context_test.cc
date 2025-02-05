@@ -59,7 +59,7 @@ TEST(ImeContextTest, DefaultValues) {
   ImeContext context;
   EXPECT_EQ(context.create_time(), absl::InfinitePast());
   EXPECT_EQ(context.last_command_time(), absl::InfinitePast());
-  EXPECT_TRUE(nullptr == context.mutable_converter());
+  EXPECT_FALSE(context.mutable_converter());
   EXPECT_EQ(context.state(), ImeContext::NONE);
   EXPECT_PROTO_EQ(commands::Request::default_instance(), context.GetRequest());
 }
@@ -76,16 +76,16 @@ TEST(ImeContextTest, BasicTest) {
 
   const commands::Request request;
 
-  context.set_composer(std::make_unique<Composer>(nullptr, &request, &config));
+  context.set_composer(std::make_unique<Composer>(request, config));
 
   MockConverter converter;
   context.set_converter(
-      std::make_unique<EngineConverter>(&converter, &request, &config));
+      std::make_unique<EngineConverter>(converter, request, config));
 
   context.set_state(ImeContext::COMPOSITION);
   EXPECT_EQ(context.state(), ImeContext::COMPOSITION);
 
-  context.SetRequest(&request);
+  context.SetRequest(request);
   EXPECT_PROTO_EQ(request, context.GetRequest());
 
   context.mutable_client_capability()->set_text_deletion(
@@ -121,21 +121,21 @@ TEST(ImeContextTest, CopyContext) {
 
   {
     ImeContext source;
-    source.set_composer(std::make_unique<Composer>(&table, &request, &config));
+    source.set_composer(std::make_unique<Composer>(table, request, config));
     source.set_converter(
-        std::make_unique<EngineConverter>(&converter, &request, &config));
+        std::make_unique<EngineConverter>(converter, request, config));
 
     ImeContext destination;
     destination.set_composer(
-        std::make_unique<Composer>(&table, &request, &config));
+        std::make_unique<Composer>(table, request, config));
     destination.set_converter(
-        std::make_unique<EngineConverter>(&converter, &request, &config));
+        std::make_unique<EngineConverter>(converter, request, config));
 
     source.set_state(ImeContext::COMPOSITION);
     source.mutable_composer()->InsertCharacter("a");
     source.mutable_composer()->InsertCharacter("n");
 
-    source.SetConfig(&config);
+    source.SetConfig(config);
 
     std::string composition = source.composer().GetStringForSubmission();
     EXPECT_EQ(composition, "あｎ");
@@ -152,15 +152,15 @@ TEST(ImeContextTest, CopyContext) {
     ImeContext source;
     source.set_create_time(kCreateTime);
     source.set_last_command_time(kLastCommandTime);
-    source.set_composer(std::make_unique<Composer>(&table, &request, &config));
+    source.set_composer(std::make_unique<Composer>(table, request, config));
     source.set_converter(
-        std::make_unique<EngineConverter>(&converter, &request, &config));
+        std::make_unique<EngineConverter>(converter, request, config));
 
     ImeContext destination;
     destination.set_composer(
-        std::make_unique<Composer>(&table, &request, &config));
+        std::make_unique<Composer>(table, request, config));
     destination.set_converter(
-        std::make_unique<EngineConverter>(&converter, &request, &config));
+        std::make_unique<EngineConverter>(converter, request, config));
 
     source.set_state(ImeContext::CONVERSION);
     source.mutable_composer()->InsertCharacter("a");

@@ -56,6 +56,7 @@ mozc_cc_library(
         "//base/strings:assign",
         "//base/strings:unicode",
         "//composer:table",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",

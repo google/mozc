@@ -96,8 +96,8 @@ class Engine : public EngineInterface {
   std::unique_ptr<engine::EngineConverterInterface> CreateEngineConverter(
       const commands::Request &request,
       const config::Config &config) const override {
-    return std::make_unique<engine::EngineConverter>(GetConverter(), &request,
-                                                     &config);
+    return std::make_unique<engine::EngineConverter>(*GetConverter(), request,
+                                                     config);
   }
 
   // Functions for Reload, Sync, Wait return true if successfully operated

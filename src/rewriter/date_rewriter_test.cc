@@ -550,7 +550,7 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
   DateRewriter rewriter;
   const commands::Request request;
   const config::Config config;
-  const composer::Composer composer(nullptr, &request, &config);
+  const composer::Composer composer(request, config);
   const ConversionRequest conversion_request =
       ConversionRequestBuilder().SetComposer(composer).Build();
 
@@ -907,7 +907,7 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
   table.AddRule("3", "d", "");
   const commands::Request request;
   const config::Config config;
-  composer::Composer composer(&table, &request, &config);
+  composer::Composer composer(table, request, config);
 
   // Key sequence : 2223
   // Preedit : cd
@@ -982,7 +982,7 @@ TEST_F(DateRewriterTest, MobileEnvironmentTest) {
 TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
   commands::Request request;
   const config::Config config;
-  const composer::Composer composer(nullptr, &request, &config);
+  const composer::Composer composer(request, config);
 
   // Init an instance of Segments for this test.
   Segments test_segments;
@@ -1039,7 +1039,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
 TEST_F(DateRewriterTest, ConsecutiveDigitsFromMetaCandidates) {
   commands::Request request;
   const config::Config config;
-  const composer::Composer composer(nullptr, &request, &config);
+  const composer::Composer composer(request, config);
   const ConversionRequest conversion_request =
       ConversionRequestBuilder().SetComposer(composer).Build();
 
@@ -1057,7 +1057,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsFromMetaCandidates) {
 TEST_F(DateRewriterTest, ConsecutiveDigitsWithMinusSign) {
   commands::Request request;
   const config::Config config;
-  const composer::Composer composer(nullptr, &request, &config);
+  const composer::Composer composer(request, config);
   const ConversionRequest conversion_request =
       ConversionRequestBuilder().SetComposer(composer).Build();
 
@@ -1083,7 +1083,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsWithMinusSign) {
 TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionWithHistory) {
   commands::Request request;
   const config::Config config;
-  const composer::Composer composer(nullptr, &request, &config);
+  const composer::Composer composer(request, config);
   const ConversionRequest conversion_request =
       ConversionRequestBuilder().SetComposer(composer).Build();
 

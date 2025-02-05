@@ -110,8 +110,7 @@ class ComposerTest : public ::testing::Test {
     table_ = std::make_unique<Table>();
     config_ = std::make_unique<Config>();
     request_ = std::make_unique<Request>();
-    composer_ =
-        std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
+    composer_ = std::make_unique<Composer>(*table_, *request_, *config_);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
@@ -855,8 +854,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
-  composer_ =
-      std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
+  composer_ = std::make_unique<Composer>(*table_, *request_, *config_);
 
   {
     // "a" → "あ" (Hiragana)
@@ -1258,8 +1256,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
-  composer_ =
-      std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
+  composer_ = std::make_unique<Composer>(*table_, *request_, *config_);
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1324,8 +1321,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   }
 
   config_->set_shift_key_mode_switch(Config::OFF);
-  composer_ =
-      std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
+  composer_ = std::make_unique<Composer>(*table_, *request_, *config_);
 
   {  // Google
     InsertKey("G", composer_.get());
@@ -1557,7 +1553,7 @@ TEST_F(ComposerTest, DisabledUpdateInputMode) {
   // Set the flag disable.
   commands::Request request;
   request.set_update_input_mode_from_surrounding_text(false);
-  composer_->SetRequest(&request);
+  composer_->SetRequest(request);
 
   table_->AddRule("a", "あ", "");
   table_->AddRule("i", "い", "");
@@ -2515,7 +2511,7 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
   request.set_mixed_conversion(true);
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
-  composer_->SetRequest(&request);
+  composer_->SetRequest(request);
   table_->InitializeWithRequestAndConfig(
       request, config::ConfigHandler::DefaultConfig());
   composer_->InsertCharacter("2");
@@ -2945,7 +2941,8 @@ TEST_F(ComposerTest, NBforeN_WithFullWidth) {
   EXPECT_EQ(right, "");
 
   // auto = std::pair<std::string, absl::btree_set<std::string>>
-  const auto [queries_base, queries_expanded] = composer_->GetQueriesForPrediction();
+  const auto [queries_base, queries_expanded] =
+      composer_->GetQueriesForPrediction();
   EXPECT_EQ(queries_base, "あn");
 
   EXPECT_EQ(composer_->GetQueryForPrediction(), "あnn");
