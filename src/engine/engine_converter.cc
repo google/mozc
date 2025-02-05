@@ -792,7 +792,7 @@ void EngineConverter::CommitPreedit(const composer::Composer &composer,
   const std::string key = composer.GetQueryForConversion();
   const std::string preedit = composer.GetStringForSubmission();
   std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
-  EngineOutput::FillPreeditResult(preedit, &result_);
+  output::FillPreeditResult(preedit, &result_);
 
   // Add ResultToken
   commands::ResultToken *token = result_.add_tokens();
@@ -800,8 +800,8 @@ void EngineConverter::CommitPreedit(const composer::Composer &composer,
   token->set_value(preedit);
 
   // Cursor offset needs to be calculated based on normalized text.
-  EngineOutput::FillCursorOffsetResult(
-      CalculateCursorOffset(normalized_preedit), &result_);
+  output::FillCursorOffsetResult(CalculateCursorOffset(normalized_preedit),
+                                 &result_);
   segments_.InitForCommit(key, normalized_preedit);
   CommitUsageStats(EngineConverterInterface::COMPOSITION, context);
   DCHECK(request_);
@@ -828,9 +828,8 @@ void EngineConverter::CommitHead(size_t count,
   }
   Util::Utf8SubString(preedit, 0, *consumed_key_size, &preedit);
   const std::string composition = TextNormalizer::NormalizeText(preedit);
-  EngineOutput::FillPreeditResult(composition, &result_);
-  EngineOutput::FillCursorOffsetResult(CalculateCursorOffset(composition),
-                                       &result_);
+  output::FillPreeditResult(composition, &result_);
+  output::FillCursorOffsetResult(CalculateCursorOffset(composition), &result_);
 }
 
 void EngineConverter::Revert() { converter_->RevertConversion(&segments_); }
@@ -1080,6 +1079,11 @@ void MaybeFillConfig(Segment::Candidate::Command command,
 }
 }  // namespace
 
+void EngineConverter::FillPreedit(const composer::Composer &composer,
+                                  commands::Preedit *preedit) const {
+  output::FillPreedit(composer, preedit);
+}
+
 void EngineConverter::FillOutput(const composer::Composer &composer,
                                  commands::Output *output) const {
   if (!output) {
@@ -1091,7 +1095,7 @@ void EngineConverter::FillOutput(const composer::Composer &composer,
   }
   if (CheckState(COMPOSITION)) {
     if (!composer.Empty()) {
-      EngineOutput::FillPreedit(composer, output->mutable_preedit());
+      output::FillPreedit(composer, output->mutable_preedit());
     }
   }
 
@@ -1106,7 +1110,7 @@ void EngineConverter::FillOutput(const composer::Composer &composer,
     // When the suggestion comes from zero query suggestion, the
     // composer is empty.  In that case, preedit is not rendered.
     if (!composer.Empty()) {
-      EngineOutput::FillPreedit(composer, output->mutable_preedit());
+      output::FillPreedit(composer, output->mutable_preedit());
     }
   } else if (CheckState(PREDICTION | CONVERSION)) {
     // Conversion on Prediction or Conversion
@@ -1128,7 +1132,7 @@ void EngineConverter::FillOutput(const composer::Composer &composer,
 
   // For debug. Removed candidate words through the conversion process.
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
-    EngineOutput::FillRemovedCandidates(
+    output::FillRemovedCandidates(
         segments_.conversion_segment(segment_index_),
         output->mutable_removed_candidate_words_for_debug());
   }
@@ -1349,9 +1353,8 @@ bool EngineConverter::UpdateResult(size_t index, size_t size,
   if (consumed_key_size) {
     *consumed_key_size = GetConsumedPreeditSize(index, size);
   }
-  EngineOutput::FillConversionResult(preedit, conversion, &result_);
-  EngineOutput::FillCursorOffsetResult(CalculateCursorOffset(conversion),
-                                       &result_);
+  output::FillConversionResult(preedit, conversion, &result_);
+  output::FillCursorOffsetResult(CalculateCursorOffset(conversion), &result_);
   UpdateResultTokens(index, size);
   return true;
 }
@@ -1480,8 +1483,8 @@ const Segment::Candidate &EngineConverter::GetSelectedCandidate(
 
 void EngineConverter::FillConversion(commands::Preedit *preedit) const {
   DCHECK(CheckState(PREDICTION | CONVERSION));
-  EngineOutput::FillConversion(segments_, segment_index_,
-                               candidate_list_.focused_id(), preedit);
+  output::FillConversion(segments_, segment_index_,
+                         candidate_list_.focused_id(), preedit);
 }
 
 void EngineConverter::FillResult(commands::Result *result) const {
@@ -1514,13 +1517,13 @@ void EngineConverter::FillCandidateWindow(
   }
 
   const Segment &segment = segments_.conversion_segment(segment_index_);
-  EngineOutput::FillCandidateWindow(segment, candidate_list_, position,
-                                    candidate_window);
+  output::FillCandidateWindow(segment, candidate_list_, position,
+                              candidate_window);
 
   // Shortcut keys
   if (CheckState(PREDICTION | CONVERSION)) {
-    EngineOutput::FillShortcuts(GetCandidateShortcuts(selection_shortcut_),
-                                candidate_window);
+    output::FillShortcuts(GetCandidateShortcuts(selection_shortcut_),
+                          candidate_window);
   }
 
   // Store category
@@ -1570,7 +1573,7 @@ void EngineConverter::FillCandidateWindow(
   }
 
   // Store footer.
-  EngineOutput::FillFooter(candidate_window->category(), candidate_window);
+  output::FillFooter(candidate_window->category(), candidate_window);
 }
 
 void EngineConverter::FillAllCandidateWords(
@@ -1606,8 +1609,7 @@ void EngineConverter::FillAllCandidateWords(
     return;
   }
   const Segment &segment = segments_.conversion_segment(segment_index_);
-  EngineOutput::FillAllCandidateWords(segment, candidate_list_, category,
-                                      candidates);
+  output::FillAllCandidateWords(segment, candidate_list_, category, candidates);
 }
 
 void EngineConverter::FillIncognitoCandidateWords(

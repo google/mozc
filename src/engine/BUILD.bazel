@@ -41,6 +41,9 @@ mozc_cc_library(
     name = "data_loader",
     srcs = ["data_loader.cc"],
     hdrs = ["data_loader.h"],
+    visibility = [
+        "//engine:__subpackages__",
+    ],
     deps = [
         ":modules",
         "//base:file_util",
@@ -360,6 +363,9 @@ mozc_cc_library(
     name = "minimal_converter",
     srcs = ["minimal_converter.cc"],
     hdrs = ["minimal_converter.h"],
+    visibility = [
+        "//engine:__subpackages__",
+    ],
     deps = [
         ":engine_converter",
         ":engine_converter_interface",
@@ -479,7 +485,6 @@ mozc_cc_library(
     hdrs = ["candidate_list.h"],
     visibility = [
         "//engine:__subpackages__",
-        "//session:__subpackages__",
     ],
     deps = [
         "//base:hash",
@@ -496,7 +501,6 @@ mozc_cc_library(
     hdrs = ["engine_output.h"],
     visibility = [
         "//engine:__subpackages__",
-        "//session:__subpackages__",
     ],
     deps = [
         ":candidate_list",

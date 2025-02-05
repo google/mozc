@@ -51,7 +51,6 @@
 #include "composer/table.h"
 #include "engine/engine_converter_interface.h"
 #include "engine/engine_interface.h"
-#include "engine/engine_output.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/ime_context.h"
@@ -2749,9 +2748,8 @@ void Session::OutputMode(commands::Command *command) const {
 
 void Session::OutputComposition(commands::Command *command) const {
   OutputMode(command);
-  commands::Preedit *preedit = command->mutable_output()->mutable_preedit();
-  // TODO(taku): Removes the dependency to SessionOutput.
-  engine::EngineOutput::FillPreedit(context_->composer(), preedit);
+  context_->converter().FillPreedit(
+      context_->composer(), command->mutable_output()->mutable_preedit());
 }
 
 void Session::OutputKey(commands::Command *command) const {

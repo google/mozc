@@ -226,6 +226,10 @@ class EngineConverter : public EngineConverterInterface {
   void PopOutput(const composer::Composer &composer,
                  commands::Output *output) override;
 
+  // Fills preedit
+  void FillPreedit(const composer::Composer &composer,
+                   commands::Preedit *preedit) const override;
+
   // Fills protocol buffers
   void FillOutput(const composer::Composer &composer,
                   commands::Output *output) const override;

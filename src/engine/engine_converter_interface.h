@@ -213,6 +213,10 @@ class EngineConverterInterface {
   virtual void PopOutput(const composer::Composer &composer,
                          commands::Output *output) = 0;
 
+  // Fill preedit
+  virtual void FillPreedit(const composer::Composer &composer,
+                           commands::Preedit *preedit) const = 0;
+
   // Fill protocol buffers
   virtual void FillOutput(const composer::Composer &composer,
                           commands::Output *output) const = 0;

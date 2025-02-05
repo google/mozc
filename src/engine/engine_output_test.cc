@@ -94,7 +94,7 @@ TEST(EngineOutputTest, FillCandidate) {
   candidate_list.AddCandidate(-789, "minus 789");
 
   candidate.set_id(13);
-  EngineOutput::FillCandidate(segment, candidate, &candidate_proto);
+  output::FillCandidate(segment, candidate, &candidate_proto);
   EXPECT_EQ(candidate_proto.id(), 13);
   EXPECT_EQ(candidate_proto.value(), kValue13);
   EXPECT_FALSE(candidate_proto.has_annotation());
@@ -102,7 +102,7 @@ TEST(EngineOutputTest, FillCandidate) {
   candidate.Clear();
   candidate_proto.Clear();
   candidate.set_id(42);
-  EngineOutput::FillCandidate(segment, candidate, &candidate_proto);
+  output::FillCandidate(segment, candidate, &candidate_proto);
   EXPECT_EQ(candidate_proto.id(), 42);
   EXPECT_EQ(candidate_proto.value(), kValue42);
   EXPECT_TRUE(candidate_proto.has_annotation());
@@ -113,7 +113,7 @@ TEST(EngineOutputTest, FillCandidate) {
   candidate.Clear();
   candidate_proto.Clear();
   candidate.set_subcandidate_list(&candidate_list);
-  EngineOutput::FillCandidate(segment, candidate, &candidate_proto);
+  output::FillCandidate(segment, candidate, &candidate_proto);
   EXPECT_TRUE(candidate_proto.has_id());
   EXPECT_EQ(candidate_proto.id(), kFirstIdInSubList);
   EXPECT_EQ(candidate_proto.value(), kSubcandidateList);
@@ -146,8 +146,8 @@ TEST(EngineOutputTest, FillCandidateWindow) {
   subcandidate_list.AddCandidate(4, "4");
 
   // Focused index = 0. page_size = 9.
-  EngineOutput::FillCandidateWindow(segment, candidate_list, 0,
-                                    &candidate_window_proto);
+  output::FillCandidateWindow(segment, candidate_list, 0,
+                              &candidate_window_proto);
   EXPECT_EQ(candidate_window_proto.page_size(), 9);
   EXPECT_EQ(candidate_window_proto.candidate_size(), 3);
   EXPECT_EQ(candidate_window_proto.position(), 0);
@@ -162,8 +162,8 @@ TEST(EngineOutputTest, FillCandidateWindow) {
   candidate_window_proto.Clear();
   candidate_list.MoveToId(3);
   candidate_list.set_page_size(5);
-  EngineOutput::FillCandidateWindow(segment, candidate_list, 1,
-                                    &candidate_window_proto);
+  output::FillCandidateWindow(segment, candidate_list, 1,
+                              &candidate_window_proto);
   EXPECT_EQ(candidate_window_proto.page_size(), 5);
   EXPECT_EQ(candidate_window_proto.candidate_size(), 3);
   EXPECT_EQ(candidate_window_proto.position(), 1);
@@ -194,8 +194,8 @@ TEST(EngineOutputTest, FillCandidateWindow) {
   candidate_window_proto.Clear();
   candidate_list.set_focused(false);
   subcandidate_list.set_focused(true);
-  EngineOutput::FillCandidateWindow(segment, candidate_list, 0,
-                                    &candidate_window_proto);
+  output::FillCandidateWindow(segment, candidate_list, 0,
+                              &candidate_window_proto);
   EXPECT_FALSE(candidate_window_proto.has_focused_index());
   EXPECT_TRUE(
       candidate_window_proto.sub_candidate_window().has_focused_index());
@@ -203,8 +203,8 @@ TEST(EngineOutputTest, FillCandidateWindow) {
   candidate_window_proto.Clear();
   candidate_list.set_focused(false);
   subcandidate_list.set_focused(false);
-  EngineOutput::FillCandidateWindow(segment, candidate_list, 0,
-                                    &candidate_window_proto);
+  output::FillCandidateWindow(segment, candidate_list, 0,
+                              &candidate_window_proto);
   EXPECT_FALSE(candidate_window_proto.has_focused_index());
   EXPECT_FALSE(
       candidate_window_proto.sub_candidate_window().has_focused_index());
@@ -212,8 +212,8 @@ TEST(EngineOutputTest, FillCandidateWindow) {
   candidate_window_proto.Clear();
   candidate_list.set_focused(true);
   subcandidate_list.set_focused(false);
-  EngineOutput::FillCandidateWindow(segment, candidate_list, 0,
-                                    &candidate_window_proto);
+  output::FillCandidateWindow(segment, candidate_list, 0,
+                              &candidate_window_proto);
   EXPECT_TRUE(candidate_window_proto.has_focused_index());
   EXPECT_FALSE(
       candidate_window_proto.sub_candidate_window().has_focused_index());
@@ -289,8 +289,8 @@ TEST(EngineOutputTest, FillAllCandidateWords) {
 
   // Execute FillAllCandidateWords
   const commands::Category kCategory = commands::PREDICTION;
-  EngineOutput::FillAllCandidateWords(segment, main_list, kCategory,
-                                      &candidates_proto);
+  output::FillAllCandidateWords(segment, main_list, kCategory,
+                                &candidates_proto);
 
   // Varidation
   EXPECT_EQ(candidates_proto.focused_index(), 1);
@@ -387,8 +387,8 @@ TEST(EngineOutputTest, FillAllCandidateWords_Attributes) {
 
   // Execute FillAllCandidateWords
   const commands::Category kCategory = commands::PREDICTION;
-  EngineOutput::FillAllCandidateWords(segment, candidate_list, kCategory,
-                                      &candidates_proto);
+  output::FillAllCandidateWords(segment, candidate_list, kCategory,
+                                &candidates_proto);
 
   // Varidation
   EXPECT_EQ(candidates_proto.focused_index(), 0);
@@ -427,7 +427,7 @@ TEST(EngineOutputTest, ShouldShowUsages) {
     candidate_list.AddSubCandidateList(&sub);
     candidate_list.set_focused(true);
     ASSERT_TRUE(candidate_list.MoveToId(0));
-    ASSERT_FALSE(EngineOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_FALSE(output::ShouldShowUsages(segment, candidate_list));
   }
   {
     Segment segment;
@@ -441,7 +441,7 @@ TEST(EngineOutputTest, ShouldShowUsages) {
     candidate_list.AddSubCandidateList(&sub);
     candidate_list.set_focused(true);
     ASSERT_TRUE(candidate_list.MoveToId(0));
-    ASSERT_TRUE(EngineOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(output::ShouldShowUsages(segment, candidate_list));
   }
   {
     Segment segment;
@@ -470,19 +470,19 @@ TEST(EngineOutputTest, ShouldShowUsages) {
     //  [00-08],[09-17],[18-26],[27-29]+subcandidate
     candidate_list.set_focused(true);
     ASSERT_TRUE(candidate_list.MoveToId(0));
-    ASSERT_TRUE(EngineOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(output::ShouldShowUsages(segment, candidate_list));
     ASSERT_TRUE(candidate_list.MoveToId(8));
-    ASSERT_TRUE(EngineOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(output::ShouldShowUsages(segment, candidate_list));
     ASSERT_TRUE(candidate_list.MoveToId(9));
-    ASSERT_TRUE(EngineOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(output::ShouldShowUsages(segment, candidate_list));
     ASSERT_TRUE(candidate_list.MoveToId(17));
-    ASSERT_TRUE(EngineOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(output::ShouldShowUsages(segment, candidate_list));
     ASSERT_TRUE(candidate_list.MoveToId(18));
-    ASSERT_FALSE(EngineOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_FALSE(output::ShouldShowUsages(segment, candidate_list));
     ASSERT_TRUE(candidate_list.MoveToId(26));
-    ASSERT_FALSE(EngineOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_FALSE(output::ShouldShowUsages(segment, candidate_list));
     ASSERT_TRUE(candidate_list.MoveToId(27));
-    ASSERT_FALSE(EngineOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_FALSE(output::ShouldShowUsages(segment, candidate_list));
   }
 }
 
@@ -533,7 +533,7 @@ TEST(EngineOutputTest, FillUsages) {
 
   candidate_list.MoveToId(2);
   candidate_window_proto.Clear();
-  EngineOutput::FillUsages(segment, candidate_list, &candidate_window_proto);
+  output::FillUsages(segment, candidate_list, &candidate_window_proto);
   ASSERT_TRUE(candidate_window_proto.has_usages());
   // There is no focused usage.
   EXPECT_FALSE(candidate_window_proto.usages().has_focused_index());
@@ -551,7 +551,7 @@ TEST(EngineOutputTest, FillUsages) {
 
   candidate_list.MoveToId(12);
   candidate_window_proto.Clear();
-  EngineOutput::FillUsages(segment, candidate_list, &candidate_window_proto);
+  output::FillUsages(segment, candidate_list, &candidate_window_proto);
   ASSERT_TRUE(candidate_window_proto.has_usages());
   // Focused usage index is 20
   EXPECT_TRUE(candidate_window_proto.usages().has_focused_index());
@@ -580,7 +580,7 @@ TEST(EngineOutputTest, FillUsages) {
 
   candidate_list.MoveToId(19);
   candidate_window_proto.Clear();
-  EngineOutput::FillUsages(segment, candidate_list, &candidate_window_proto);
+  output::FillUsages(segment, candidate_list, &candidate_window_proto);
   ASSERT_TRUE(candidate_window_proto.has_usages());
   EXPECT_TRUE(candidate_window_proto.usages().has_focused_index());
   EXPECT_EQ(candidate_window_proto.usages().focused_index(), 0);
@@ -599,7 +599,7 @@ TEST(EngineOutputTest, FillUsages) {
 
   candidate_list.MoveToId(20);
   candidate_window_proto.Clear();
-  EngineOutput::FillUsages(segment, candidate_list, &candidate_window_proto);
+  output::FillUsages(segment, candidate_list, &candidate_window_proto);
   ASSERT_TRUE(candidate_window_proto.has_usages());
   EXPECT_TRUE(candidate_window_proto.usages().has_focused_index());
   EXPECT_EQ(candidate_window_proto.usages().focused_index(), 1);
@@ -607,7 +607,7 @@ TEST(EngineOutputTest, FillUsages) {
   // usages(id:100) of "val19" and "val21" are merged
   candidate_list.MoveToId(21);
   candidate_window_proto.Clear();
-  EngineOutput::FillUsages(segment, candidate_list, &candidate_window_proto);
+  output::FillUsages(segment, candidate_list, &candidate_window_proto);
   ASSERT_TRUE(candidate_window_proto.has_usages());
   EXPECT_TRUE(candidate_window_proto.usages().has_focused_index());
   EXPECT_EQ(candidate_window_proto.usages().focused_index(), 0);
@@ -615,14 +615,14 @@ TEST(EngineOutputTest, FillUsages) {
   // usages(id:110) of "val20" and "val22" are merged
   candidate_list.MoveToId(22);
   candidate_window_proto.Clear();
-  EngineOutput::FillUsages(segment, candidate_list, &candidate_window_proto);
+  output::FillUsages(segment, candidate_list, &candidate_window_proto);
   ASSERT_TRUE(candidate_window_proto.has_usages());
   EXPECT_TRUE(candidate_window_proto.usages().has_focused_index());
   EXPECT_EQ(candidate_window_proto.usages().focused_index(), 1);
 
   candidate_list.MoveToId(28);
   candidate_window_proto.Clear();
-  EngineOutput::FillUsages(segment, candidate_list, &candidate_window_proto);
+  output::FillUsages(segment, candidate_list, &candidate_window_proto);
   ASSERT_FALSE(candidate_window_proto.has_usages());
 }
 
@@ -635,7 +635,7 @@ TEST(EngineOutputTest, FillShortcuts) {
   }
   ASSERT_EQ(candidate_window_proto1.candidate_size(), 10);
 
-  EngineOutput::FillShortcuts(kDigits, &candidate_window_proto1);
+  output::FillShortcuts(kDigits, &candidate_window_proto1);
   EXPECT_EQ(candidate_window_proto1.candidate(0).annotation().shortcut(),
             kDigits.substr(0, 1));
   EXPECT_EQ(candidate_window_proto1.candidate(8).annotation().shortcut(),
@@ -649,7 +649,7 @@ TEST(EngineOutputTest, FillShortcuts) {
   }
   ASSERT_EQ(candidate_window_proto2.candidate_size(), 3);
 
-  EngineOutput::FillShortcuts(kDigits, &candidate_window_proto2);
+  output::FillShortcuts(kDigits, &candidate_window_proto2);
   EXPECT_EQ(candidate_window_proto2.candidate(0).annotation().shortcut(),
             kDigits.substr(0, 1));
   EXPECT_EQ(candidate_window_proto2.candidate(2).annotation().shortcut(),
@@ -658,8 +658,7 @@ TEST(EngineOutputTest, FillShortcuts) {
 
 TEST(EngineOutputTest, FillFooter) {
   commands::CandidateWindow candidate_window;
-  EXPECT_TRUE(
-      EngineOutput::FillFooter(commands::SUGGESTION, &candidate_window));
+  EXPECT_TRUE(output::FillFooter(commands::SUGGESTION, &candidate_window));
   EXPECT_TRUE(candidate_window.has_footer());
 
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
@@ -677,16 +676,14 @@ TEST(EngineOutputTest, FillFooter) {
   EXPECT_FALSE(candidate_window.footer().logo_visible());
 
   candidate_window.Clear();
-  EXPECT_TRUE(
-      EngineOutput::FillFooter(commands::PREDICTION, &candidate_window));
+  EXPECT_TRUE(output::FillFooter(commands::PREDICTION, &candidate_window));
   EXPECT_TRUE(candidate_window.has_footer());
   EXPECT_FALSE(candidate_window.footer().has_label());
   EXPECT_TRUE(candidate_window.footer().index_visible());
   EXPECT_TRUE(candidate_window.footer().logo_visible());
 
   candidate_window.Clear();
-  EXPECT_TRUE(
-      EngineOutput::FillFooter(commands::CONVERSION, &candidate_window));
+  EXPECT_TRUE(output::FillFooter(commands::CONVERSION, &candidate_window));
   EXPECT_TRUE(candidate_window.has_footer());
   EXPECT_FALSE(candidate_window.footer().has_label());
   EXPECT_TRUE(candidate_window.footer().index_visible());
@@ -694,11 +691,11 @@ TEST(EngineOutputTest, FillFooter) {
 
   candidate_window.Clear();
   EXPECT_FALSE(
-      EngineOutput::FillFooter(commands::TRANSLITERATION, &candidate_window));
+      output::FillFooter(commands::TRANSLITERATION, &candidate_window));
   EXPECT_FALSE(candidate_window.has_footer());
 
   candidate_window.Clear();
-  EXPECT_FALSE(EngineOutput::FillFooter(commands::USAGE, &candidate_window));
+  EXPECT_FALSE(output::FillFooter(commands::USAGE, &candidate_window));
   EXPECT_FALSE(candidate_window.has_footer());
 
   candidate_window.Clear();
@@ -713,8 +710,7 @@ TEST(EngineOutputTest, FillFooter) {
   for (int i = 0; i < 20; ++i) {
     candidate_window.clear_footer();
     candidate_window.set_focused_index(i);
-    EXPECT_TRUE(
-        EngineOutput::FillFooter(commands::PREDICTION, &candidate_window));
+    EXPECT_TRUE(output::FillFooter(commands::PREDICTION, &candidate_window));
     if (i % 2 == 0) {
       ASSERT_TRUE(candidate_window.has_footer());
       ASSERT_TRUE(candidate_window.footer().has_label());
@@ -739,7 +735,7 @@ TEST(EngineOutputTest, FillFooter) {
 TEST(EngineOutputTest, FillSubLabel) {
   commands::Footer footer;
   footer.set_label("to be deleted");
-  EngineOutput::FillSubLabel(&footer);
+  output::FillSubLabel(&footer);
   EXPECT_TRUE(footer.has_sub_label());
   EXPECT_FALSE(footer.has_label());
   EXPECT_GT(footer.sub_label().size(), 6);  // 6 == strlen("build ")
@@ -754,8 +750,8 @@ TEST(EngineOutputTest, AddSegment) {
     // "〜" is a character to be processed by TextNormalizer::NormalizeText
     const std::string kKey = "ゔ〜 preedit focused";
     const std::string kValue = "ゔ〜 PREEDIT FOCUSED";
-    const int types = EngineOutput::PREEDIT | EngineOutput::FOCUSED;
-    EXPECT_TRUE(EngineOutput::AddSegment(kKey, kValue, types, &preedit));
+    const int types = output::PREEDIT | output::FOCUSED;
+    EXPECT_TRUE(output::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(preedit.segment_size(), index + 1);
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
@@ -771,8 +767,8 @@ TEST(EngineOutputTest, AddSegment) {
   {
     const std::string kKey = "ゔ〜 preedit";
     const std::string kValue = "ゔ〜 PREEDIT";
-    const int types = EngineOutput::PREEDIT;
-    EXPECT_TRUE(EngineOutput::AddSegment(kKey, kValue, types, &preedit));
+    const int types = output::PREEDIT;
+    EXPECT_TRUE(output::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(preedit.segment_size(), index + 1);
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
@@ -788,8 +784,8 @@ TEST(EngineOutputTest, AddSegment) {
   {
     const std::string kKey = "ゔ〜 conversion focused";
     const std::string kValue = "ゔ〜 CONVERSION FOCUSED";
-    const int types = EngineOutput::CONVERSION | EngineOutput::FOCUSED;
-    EXPECT_TRUE(EngineOutput::AddSegment(kKey, kValue, types, &preedit));
+    const int types = output::CONVERSION | output::FOCUSED;
+    EXPECT_TRUE(output::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(preedit.segment_size(), index + 1);
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
@@ -806,8 +802,8 @@ TEST(EngineOutputTest, AddSegment) {
   {
     const std::string kKey = "ゔ〜 conversion";
     const std::string kValue = "ゔ〜 CONVERSION";
-    const int types = EngineOutput::CONVERSION;
-    EXPECT_TRUE(EngineOutput::AddSegment(kKey, kValue, types, &preedit));
+    const int types = output::CONVERSION;
+    EXPECT_TRUE(output::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(preedit.segment_size(), index + 1);
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
@@ -824,8 +820,8 @@ TEST(EngineOutputTest, AddSegment) {
   {
     const std::string kKey = "abc";
     const std::string kValue = "";  // empty value
-    const int types = EngineOutput::CONVERSION;
-    EXPECT_FALSE(EngineOutput::AddSegment(kKey, kValue, types, &preedit));
+    const int types = output::CONVERSION;
+    EXPECT_FALSE(output::AddSegment(kKey, kValue, types, &preedit));
     EXPECT_EQ(preedit.segment_size(), index);
   }
 }
@@ -834,8 +830,7 @@ TEST(EngineOutputTest, FillConversionResultWithoutNormalization) {
   constexpr char kInput[] = "ゔ";
 
   commands::Result result;
-  EngineOutput::FillConversionResultWithoutNormalization(kInput, kInput,
-                                                         &result);
+  output::FillConversionResultWithoutNormalization(kInput, kInput, &result);
   EXPECT_EQ(result.type(), commands::Result::STRING);
   EXPECT_EQ(result.key(), kInput);    // should not be normalized
   EXPECT_EQ(result.value(), kInput);  // should not be normalized
@@ -843,7 +838,7 @@ TEST(EngineOutputTest, FillConversionResultWithoutNormalization) {
 
 TEST(EngineOutputTest, FillConversionResult) {
   commands::Result result;
-  EngineOutput::FillConversionResult("abc", "ABC", &result);
+  output::FillConversionResult("abc", "ABC", &result);
   EXPECT_EQ(result.type(), commands::Result::STRING);
   EXPECT_EQ(result.key(), "abc");
   EXPECT_EQ(result.value(), "ABC");
@@ -851,13 +846,13 @@ TEST(EngineOutputTest, FillConversionResult) {
 
 TEST(EngineOutputTest, FillCursorOffsetResult) {
   commands::Result result;
-  EngineOutput::FillCursorOffsetResult(-1, &result);
+  output::FillCursorOffsetResult(-1, &result);
   EXPECT_EQ(result.cursor_offset(), -1);
 }
 
 TEST(EngineOutputTest, FillPreeditResult) {
   commands::Result result;
-  EngineOutput::FillPreeditResult("ABC", &result);
+  output::FillPreeditResult("ABC", &result);
   EXPECT_EQ(result.type(), commands::Result::STRING);
   EXPECT_EQ(result.key(), "ABC");
   EXPECT_EQ(result.value(), "ABC");
@@ -883,8 +878,8 @@ TEST(EngineOutputTest, FillAllCandidateWords_NonFocused) {
   {
     // Execute FillAllCandidateWords
     const commands::Category kCategory = commands::SUGGESTION;
-    EngineOutput::FillAllCandidateWords(segment, main_list, kCategory,
-                                        &candidates_proto);
+    output::FillAllCandidateWords(segment, main_list, kCategory,
+                                  &candidates_proto);
 
     // Varidation
     EXPECT_FALSE(candidates_proto.has_focused_index());
@@ -895,8 +890,8 @@ TEST(EngineOutputTest, FillAllCandidateWords_NonFocused) {
     // When the category is SUGGESTION, has_focused_index never return true in
     // real usage. This is just a test case.
     const commands::Category kCategory = commands::SUGGESTION;
-    EngineOutput::FillAllCandidateWords(segment, main_list, kCategory,
-                                        &candidates_proto);
+    output::FillAllCandidateWords(segment, main_list, kCategory,
+                                  &candidates_proto);
 
     // Validation
     // If a candidate is focused, true is expected.
@@ -918,7 +913,7 @@ TEST(EngineOutputTest, FillRemovedCandidateWords) {
   segment.removed_candidates_for_debug_.push_back(candidate);
 
   // Execute FillAllCandidateWords
-  EngineOutput::FillRemovedCandidates(segment, &candidates_proto);
+  output::FillRemovedCandidates(segment, &candidates_proto);
 }
 
 }  // namespace engine
