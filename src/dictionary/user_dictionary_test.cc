@@ -65,8 +65,6 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace dictionary {
@@ -194,13 +192,10 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
  protected:
   UserDictionaryTest()
       : suppression_dictionary_(std::make_unique<SuppressionDictionary>()) {
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
   ~UserDictionaryTest() override {
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
-
     // This config initialization will be removed once ConversionRequest can
     // take config as an injected argument.
     config::Config config;
@@ -339,7 +334,6 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
 
  private:
   const testing::MockDataManager mock_data_manager_;
-  usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(UserDictionaryTest, TestLookupPredictiveCallback) {
@@ -938,54 +932,6 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
         callback.tokens(),
         Each(Field(&Token::value, AnyOf(Eq("suggest_only"), Eq("default")))));
   }
-}
-
-TEST_F(UserDictionaryTest, TestUsageStats) {
-  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
-  // Wait for async reload called from the constructor.
-  dic->WaitForReloader();
-  UserDictionaryStorage storage("");
-
-  {
-    UserDictionaryStorage::UserDictionary *dic1 =
-        storage.GetProto().add_dictionaries();
-    CHECK(dic1);
-    UserDictionaryStorage::UserDictionaryEntry *entry;
-    entry = dic1->add_entries();
-    CHECK(entry);
-    entry->set_key("key1");
-    entry->set_value("value1");
-    entry->set_pos(user_dictionary::UserDictionary::NOUN);
-    entry = dic1->add_entries();
-    CHECK(entry);
-    entry->set_key("key2");
-    entry->set_value("value2");
-    entry->set_pos(user_dictionary::UserDictionary::NOUN);
-  }
-  {
-    UserDictionaryStorage::UserDictionary *dic2 =
-        storage.GetProto().add_dictionaries();
-    CHECK(dic2);
-    UserDictionaryStorage::UserDictionaryEntry *entry;
-    entry = dic2->add_entries();
-    CHECK(entry);
-    entry->set_key("key3");
-    entry->set_value("value3");
-    entry->set_pos(user_dictionary::UserDictionary::NOUN);
-    entry = dic2->add_entries();
-    CHECK(entry);
-    entry->set_key("key4");
-    entry->set_value("value4");
-    entry->set_pos(user_dictionary::UserDictionary::NOUN);
-    entry = dic2->add_entries();
-    CHECK(entry);
-    entry->set_key("key5");
-    entry->set_value("value5");
-    entry->set_pos(user_dictionary::UserDictionary::NOUN);
-  }
-  dic->Load(storage.GetProto());
-
-  EXPECT_INTEGER_STATS("UserRegisteredWord", 5);
 }
 
 TEST_F(UserDictionaryTest, LookupComment) {

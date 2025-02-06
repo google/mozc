@@ -44,7 +44,6 @@
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler.h"
-#include "session/session_usage_observer.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -158,8 +157,6 @@ class RPCServer {
 
     CHECK_GE(::listen(server_socket_, SOMAXCONN), 0) << "listen failed";
     CHECK_NE(server_socket_, 0);
-
-    handler_->AddObserver(Singleton<session::SessionUsageObserver>::get());
   }
 
   ~RPCServer() {

@@ -69,7 +69,6 @@
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
-#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace dictionary {
@@ -238,9 +237,6 @@ class UserDictionary::TokensIndex {
               OrderByKeyThenById());
 
     MOZC_VLOG(1) << user_pos_tokens_.size() << " user dic entries loaded";
-
-    usage_stats::UsageStats::SetInteger(
-        "UserRegisteredWord", static_cast<int>(user_pos_tokens_.size()));
   }
 
  private:

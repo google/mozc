@@ -59,12 +59,9 @@
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "transliteration/transliteration.h"
-#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace {
-
-using ::mozc::usage_stats::UsageStats;
 
 constexpr size_t kErrorIndex = static_cast<size_t>(-1);
 
@@ -254,9 +251,6 @@ bool Converter::StartPrediction(const ConversionRequest &request,
 
 void Converter::FinishConversion(const ConversionRequest &request,
                                  Segments *segments) const {
-  CommitUsageStats(segments, segments->history_segments_size(),
-                   segments->conversion_segments_size());
-
   for (Segment &segment : *segments) {
     // revert SUBMITTED segments to FIXED_VALUE
     // SUBMITTED segments are created by "submit first segment" operation
@@ -367,24 +361,14 @@ bool Converter::CommitPartialSuggestionSegmentValue(
                                   Segment::SUBMITTED)) {
     return false;
   }
-  CommitUsageStats(segments, raw_segment_index, 1);
 
   Segment *segment = segments->mutable_segment(raw_segment_index);
   DCHECK_LT(0, segment->candidates_size());
-  const Segment::Candidate &submitted_candidate = segment->candidate(0);
-  const bool auto_partial_suggestion =
-      Util::CharsLen(submitted_candidate.key) != segment->key_len();
   segment->set_key(current_segment_key);
 
   Segment *new_segment = segments->insert_segment(raw_segment_index + 1);
   new_segment->set_key(new_segment_key);
   DCHECK_GT(segments->conversion_segments_size(), 0);
-
-  if (auto_partial_suggestion) {
-    UsageStats::IncrementCount("CommitAutoPartialSuggestion");
-  } else {
-    UsageStats::IncrementCount("CommitPartialSuggestion");
-  }
 
   return true;
 }
@@ -401,7 +385,6 @@ bool Converter::FocusSegmentValue(Segments *segments, size_t segment_index,
 
 bool Converter::CommitSegments(Segments *segments,
                                absl::Span<const size_t> candidate_index) const {
-  const size_t conversion_segment_index = segments->history_segments_size();
   for (size_t i = 0; i < candidate_index.size(); ++i) {
     // 2nd argument must always be 0 because on each iteration
     // 1st segment is submitted.
@@ -411,7 +394,6 @@ bool Converter::CommitSegments(Segments *segments,
       return false;
     }
   }
-  CommitUsageStats(segments, conversion_segment_index, candidate_index.size());
   return true;
 }
 
@@ -607,37 +589,6 @@ void Converter::TrimCandidates(const ConversionRequest &request,
     segment.erase_candidates(candidates_limit,
                              candidates_size - candidates_limit);
   }
-}
-
-void Converter::CommitUsageStats(const Segments *segments,
-                                 size_t begin_segment_index,
-                                 size_t segment_length) const {
-  if (segment_length == 0) {
-    return;
-  }
-  if (begin_segment_index + segment_length > segments->segments_size()) {
-    LOG(ERROR) << "Invalid state. segments size: " << segments->segments_size()
-               << " required size: " << begin_segment_index + segment_length;
-    return;
-  }
-
-  // Timing stats are scaled by 1,000 to improve the accuracy of average values.
-
-  uint64_t submitted_total_length = 0;
-  for (const Segment &segment :
-       segments->all().subrange(begin_segment_index, segment_length)) {
-    const uint32_t submitted_length =
-        Util::CharsLen(segment.candidate(0).value);
-    UsageStats::UpdateTiming("SubmittedSegmentLengthx1000",
-                             submitted_length * 1000);
-    submitted_total_length += submitted_length;
-  }
-
-  UsageStats::UpdateTiming("SubmittedLengthx1000",
-                           submitted_total_length * 1000);
-  UsageStats::UpdateTiming("SubmittedSegmentNumberx1000",
-                           segment_length * 1000);
-  UsageStats::IncrementCountBy("SubmittedTotalLength", submitted_total_length);
 }
 
 bool Converter::Reload() {

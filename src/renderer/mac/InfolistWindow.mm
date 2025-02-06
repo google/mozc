@@ -69,20 +69,6 @@ namespace mozc {
 namespace renderer {
 namespace mac {
 
-namespace {
-bool SendUsageStatsEvent(client::SendCommandInterface* command_sender,
-                         const SessionCommand::UsageStatsEvent event) {
-  if (command_sender == nullptr) {
-    return false;
-  }
-  SessionCommand command;
-  command.set_type(SessionCommand::USAGE_STATS_EVENT);
-  command.set_usage_stats_event(event);
-  Output dummy_output;
-  return command_sender->SendCommand(command, &dummy_output);
-}
-}  // namespace
-
 InfolistWindow::InfolistWindow() : lasttimer_(nullptr), command_sender_(nullptr) {
   timer_handler_ = [[InfolistWindowTimerHandler alloc] initWithInfolistWindow:this];
 }
@@ -137,20 +123,12 @@ void InfolistWindow::DelayShow(int delay) {
 }
 
 void InfolistWindow::Hide() {
-  bool visible = IsVisible();
   RendererBaseWindow::Hide();
-  if (visible) {
-    SendUsageStatsEvent(command_sender_, SessionCommand::INFOLIST_WINDOW_HIDE);
-  }
   visible_ = false;
 }
 
 void InfolistWindow::Show() {
-  bool visible = IsVisible();
   RendererBaseWindow::Show();
-  if (!visible) {
-    SendUsageStatsEvent(command_sender_, SessionCommand::INFOLIST_WINDOW_SHOW);
-  }
   visible_ = true;
 }
 

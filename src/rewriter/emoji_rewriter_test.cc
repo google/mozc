@@ -51,8 +51,6 @@
 #include "rewriter/variants_rewriter.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace {
@@ -202,14 +200,8 @@ class EmojiRewriterTest : public testing::TestWithTempUserProfile {
     config::ConfigHandler::GetDefaultConfig(&config_);
     config_.set_use_emoji_conversion(true);
 
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
-
     rewriter_ = std::make_unique<EmojiRewriter>(test_data_manager_);
     full_data_rewriter_ = std::make_unique<EmojiRewriter>(mock_data_manager_);
-  }
-
-  void TearDown() override {
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   static ConversionRequest ConvReq(const config::Config &config,
@@ -228,7 +220,6 @@ class EmojiRewriterTest : public testing::TestWithTempUserProfile {
  private:
   const testing::MockDataManager mock_data_manager_;
   const TestDataManager test_data_manager_;
-  usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(EmojiRewriterTest, Capability) {
@@ -366,41 +357,6 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
   const Segment::Candidate &candidate = segment.candidate(kExpectPosition);
   EXPECT_TRUE(EmojiRewriter::IsEmojiCandidate(candidate));
   EXPECT_EQ(candidate.value, "CAT");
-}
-
-TEST_F(EmojiRewriterTest, CheckUsageStats) {
-  // This test checks the data stored in usage stats for EmojiRewriter.
-
-  constexpr char kStatsKey[] = "CommitEmoji";
-  Segments segments;
-
-  // No use, no registered keys
-  EXPECT_STATS_NOT_EXIST(kStatsKey);
-
-  // Converting non-emoji candidates does not matter.
-  SetSegment("test", "test", &segments);
-  const ConversionRequest convreq = ConvReq(config_, request_);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
-  rewriter_->Finish(convreq, &segments);
-  EXPECT_STATS_NOT_EXIST(kStatsKey);
-
-  // Converting an emoji candidate.
-  SetSegment("Nezumi", "test", &segments);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
-  ChooseEmojiCandidate(&segments);
-  rewriter_->Finish(convreq, &segments);
-  EXPECT_COUNT_STATS(kStatsKey, 1);
-  SetSegment(kEmoji, "test", &segments);
-  EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
-  ChooseEmojiCandidate(&segments);
-  rewriter_->Finish(convreq, &segments);
-  EXPECT_COUNT_STATS(kStatsKey, 2);
-
-  // Converting non-emoji keeps the previous usage stats.
-  SetSegment("test", "test", &segments);
-  EXPECT_FALSE(rewriter_->Rewrite(convreq, &segments));
-  rewriter_->Finish(convreq, &segments);
-  EXPECT_COUNT_STATS(kStatsKey, 2);
 }
 
 TEST_F(EmojiRewriterTest, QueryNormalization) {

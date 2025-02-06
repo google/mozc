@@ -600,7 +600,6 @@
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'gen_post_install_dialog_files',
         'qrc_post_install_dialog',
       ],

@@ -34,7 +34,6 @@
 #include "base/run_level.h"
 #include "gui/base/setup_util.h"
 #include "gui/base/util.h"
-#include "usage_stats/usage_stats.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -67,15 +66,11 @@ PostInstallDialog::PostInstallDialog() : setuputil_(new SetupUtil()) {
 }
 
 void PostInstallDialog::OnOk() {
-  usage_stats::UsageStats::IncrementCount("PostInstallOkButton");
   ApplySettings();
   done(QDialog::Accepted);
 }
 
-void PostInstallDialog::reject() {
-  usage_stats::UsageStats::IncrementCount("PostInstallRejectButton");
-  done(QDialog::Rejected);
-}
+void PostInstallDialog::reject() { done(QDialog::Rejected); }
 
 void PostInstallDialog::ApplySettings() {
 #ifdef _WIN32

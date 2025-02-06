@@ -249,8 +249,6 @@ class DictionaryPredictor : public PredictorInterface {
                                      bool is_suggestion,
                                      size_t total_candidates_size);
 
-  void MaybeRecordUsageStats(const Segment::Candidate &candidate) const;
-
   // Sets candidate description.
   void SetDescription(PredictionTypes types,
                       Segment::Candidate *candidate) const;

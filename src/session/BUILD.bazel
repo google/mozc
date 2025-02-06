@@ -53,7 +53,6 @@ mozc_cc_library(
         ":ime_context",
         ":key_event_transformer",
         ":keymap",
-        ":session_usage_stats_util",
         "//base:clock",
         "//base:util",
         "//composer",
@@ -65,7 +64,6 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//testing:friend_test",
         "//transliteration",
-        "//usage_stats",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
@@ -107,8 +105,6 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:mozctest",
         "//transliteration",
-        "//usage_stats",
-        "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status:statusor",
@@ -147,28 +143,6 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "session_observer_handler",
-    srcs = ["session_observer_handler.cc"],
-    hdrs = ["session_observer_handler.h"],
-    deps = [
-        ":session_observer_interface",
-        "//protocol:commands_cc_proto",
-    ],
-)
-
-mozc_cc_test(
-    name = "session_observer_handler_test",
-    size = "small",
-    srcs = ["session_observer_handler_test.cc"],
-    deps = [
-        ":session_observer_handler",
-        ":session_observer_interface",
-        "//protocol:commands_cc_proto",
-        "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
     name = "session_handler",
     srcs = [
         "common.h",
@@ -183,8 +157,6 @@ mozc_cc_library(
     deps = [
         ":keymap",
         ":session",
-        ":session_observer_handler",
-        ":session_observer_interface",
         "//base:clock",
         "//base:singleton",
         "//base:stopwatch",
@@ -206,7 +178,6 @@ mozc_cc_library(
         "//protocol:user_dictionary_storage_cc_proto",
         "//storage:lru_cache",
         "//testing:friend_test",
-        "//usage_stats",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/random",
@@ -237,7 +208,6 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//storage:registry",
         "//testing:mozctest",
-        "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
     ],
 )
@@ -274,7 +244,6 @@ mozc_cc_test(
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
-        "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/random",
@@ -300,7 +269,6 @@ mozc_cc_library(
     ],
     deps = [
         ":session_handler",
-        ":session_usage_observer",
         "//base:vlog",
         "//engine:engine_factory",
         "//ipc",
@@ -380,55 +348,6 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "session_usage_observer",
-    srcs = ["session_usage_observer.cc"],
-    hdrs = ["session_usage_observer.h"],
-    visibility = [
-        "//android:__subpackages__",
-        "//server:__subpackages__",
-        "//usage_stats:__subpackages__",
-    ],
-    deps = [
-        ":session_observer_interface",
-        "//base:clock",
-        "//base:vlog",
-        "//config:stats_config_util",
-        "//protocol:candidate_window_cc_proto",
-        "//protocol:commands_cc_proto",
-        "//protocol:state_cc_proto",
-        "//usage_stats",
-        "//usage_stats:usage_stats_cc_proto",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/synchronization",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_test(
-    name = "session_usage_observer_test",
-    size = "small",
-    srcs = ["session_usage_observer_test.cc"],
-    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
-    deps = [
-        ":session_usage_observer",
-        "//base:clock",
-        "//base:clock_mock",
-        "//config:stats_config_util",
-        "//config:stats_config_util_mock",
-        "//protocol:commands_cc_proto",
-        "//testing:gunit_main",
-        "//testing:mozctest",
-        "//usage_stats",
-        "//usage_stats:usage_stats_cc_proto",
-        "//usage_stats:usage_stats_testing_util",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_library(
     name = "key_info_util",
     srcs = ["key_info_util.cc"],
     hdrs = ["key_info_util.h"],
@@ -463,35 +382,6 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
-    name = "session_usage_stats_util",
-    srcs = ["session_usage_stats_util.cc"],
-    hdrs = ["session_usage_stats_util.h"],
-    deps = [
-        "//base:util",
-        "//protocol:commands_cc_proto",
-        "//usage_stats",
-        "@com_google_absl//absl/algorithm:container",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "session_usage_stats_util_test",
-    size = "small",
-    srcs = ["session_usage_stats_util_test.cc"],
-    deps = [
-        ":session_usage_stats_util",
-        "//composer:key_parser",
-        "//protocol:commands_cc_proto",
-        "//testing:gunit_main",
-        "//usage_stats",
-        "//usage_stats:usage_stats_testing_util",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -582,8 +472,6 @@ mozc_cc_library(
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":session_handler",
-        ":session_observer_interface",
-        ":session_usage_observer",
         "//base:config_file_stream",
         "//base:file_util",
         "//base:number_util",
@@ -604,7 +492,6 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//request:request_test_util",
         "//storage:registry",
-        "//usage_stats",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
@@ -650,7 +537,6 @@ mozc_cc_test(
     srcs = ["session_handler_scenario_test.cc"],
     data = [
         "//data/test/session/scenario:scenario_files",
-        "//data/test/session/scenario/usage_stats:usage_stats_scenario_files",
     ],
     shard_count = 8,
     tags = [
@@ -681,13 +567,6 @@ mozc_cc_test(
         "//supplemental_model:supplemental_model_factory",
         "//supplemental_model:supplemental_model_registration",
     ]),
-)
-
-mozc_cc_library(
-    name = "session_observer_interface",
-    hdrs = ["session_observer_interface.h"],
-    visibility = ["//visibility:private"],
-    deps = ["//protocol:commands_cc_proto"],
 )
 
 mozc_cc_library(

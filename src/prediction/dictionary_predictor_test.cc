@@ -71,8 +71,6 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc::prediction {
 
@@ -340,13 +338,9 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
     table_ = std::make_unique<composer::Table>();
     composer_ =
         std::make_unique<composer::Composer>(*table_, *request_, *config_);
-
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  void TearDown() override {
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
-  }
+  void TearDown() override {}
 
   ConversionRequest CreateConversionRequestWithOptions(
       ConversionRequest::Options &&options) const {
@@ -366,9 +360,6 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
   commands::Context context_;
-
- private:
-  mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(DictionaryPredictorTest, IsAggressiveSuggestion) {
@@ -1600,56 +1591,6 @@ TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidates_size(), 2);
   EXPECT_EQ(segments.segment(0).candidate(0).value, "会いう");
-}
-
-TEST_F(DictionaryPredictorTest, UsageStats) {
-  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  DictionaryPredictorTestPeer *predictor =
-      data_and_predictor->mutable_predictor();
-
-  const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::SUGGESTION);
-  Segments segments;
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeNone", 0);
-  SetSegmentForCommit(
-      "★", Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NONE, &segments);
-  predictor->Finish(convreq, &segments);
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeNone", 1);
-
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeNumberSuffix", 0);
-  SetSegmentForCommit(
-      "個", Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX,
-      &segments);
-  predictor->Finish(convreq, &segments);
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeNumberSuffix", 1);
-
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeEmoticon", 0);
-  SetSegmentForCommit(
-      "＼(^o^)／", Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOTICON,
-      &segments);
-  predictor->Finish(convreq, &segments);
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeEmoticon", 1);
-
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeEmoji", 0);
-  SetSegmentForCommit("❕",
-                      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOJI,
-                      &segments);
-  predictor->Finish(convreq, &segments);
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeEmoji", 1);
-
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeBigram", 0);
-  SetSegmentForCommit(
-      "ヒルズ", Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM,
-      &segments);
-  predictor->Finish(convreq, &segments);
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeBigram", 1);
-
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeSuffix", 0);
-  SetSegmentForCommit(
-      "が", Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX,
-      &segments);
-  predictor->Finish(convreq, &segments);
-  EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeSuffix", 1);
 }
 
 TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {

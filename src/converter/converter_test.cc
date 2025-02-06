@@ -85,8 +85,6 @@
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace {
@@ -103,7 +101,6 @@ using ::mozc::prediction::DictionaryPredictor;
 using ::mozc::prediction::MobilePredictor;
 using ::mozc::prediction::PredictorInterface;
 using ::mozc::prediction::UserHistoryPredictor;
-using ::mozc::usage_stats::UsageStats;
 using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::StrEq;
@@ -254,10 +251,6 @@ class ConverterTest : public testing::TestWithTempUserProfile {
         : key(k), value(v), pos(p) {}
   };
 
-  void SetUp() override { UsageStats::ClearAllStatsForTest(); }
-
-  void TearDown() override { UsageStats::ClearAllStatsForTest(); }
-
   // Returns initialized predictor for the given type.
   // |converter| will be initialized using predictor pointer, but predictor need
   // the pointer for |converter| for initializing. Prease see
@@ -407,7 +400,6 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 
  private:
   const commands::Request default_request_;
-  mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 // test for issue:2209644
@@ -484,53 +476,20 @@ std::string ContextAwareConvert(const std::string &first_key,
 TEST_F(ConverterTest, ContextAwareConversionTest) {
   // Desirable context aware conversions
   EXPECT_EQ(ContextAwareConvert("きき", "危機", "いっぱつ"), "一髪");
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 2000, 1, 2000, 2000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 2000, 1, 2000, 2000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 1000, 1, 1000, 1000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 2);
 
   EXPECT_EQ(ContextAwareConvert("きょうと", "京都", "だい"), "大");
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 4000, 2, 2000, 2000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 4000, 2, 2000, 2000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 2000, 2, 1000, 1000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 4);
-
   EXPECT_EQ(ContextAwareConvert("もんだい", "問題", "てん"), "点");
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 6000, 3, 2000, 2000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 6000, 3, 2000, 2000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 3000, 3, 1000, 1000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 6);
 
   EXPECT_EQ(ContextAwareConvert("いのうえ", "井上", "ようすい"), "陽水");
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 8000, 4, 2000, 2000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 8000, 4, 2000, 2000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 4000, 4, 1000, 1000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 8);
 
   // Undesirable context aware conversions
   EXPECT_NE(ContextAwareConvert("19じ", "19時", "しゅうごう"), "宗号");
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 11000, 6, 1000, 2000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 11000, 5, 2000, 3000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 6000, 5, 1000, 2000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 11);
 
   EXPECT_NE(ContextAwareConvert("の", "の", "なまえ"), "な前");
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 12000, 7, 1000, 2000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 12000, 6, 1000, 3000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 7000, 6, 1000, 2000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 12);
 
   EXPECT_NE(ContextAwareConvert("の", "の", "しりょう"), "し料");
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 13000, 8, 1000, 2000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 13000, 7, 1000, 3000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 8000, 7, 1000, 2000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 13);
 
   EXPECT_NE(ContextAwareConvert("ぼくと", "僕と", "しらいさん"), "し礼賛");
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 15000, 9, 1000, 2000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 15000, 8, 1000, 3000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 9000, 8, 1000, 2000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 15);
 }
 
 TEST_F(ConverterTest, CommitSegmentValue) {
@@ -628,11 +587,6 @@ TEST_F(ConverterTest, CommitSegments) {
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.history_segment(0).segment_type(), Segment::HISTORY);
     EXPECT_EQ(segments.history_segment(1).segment_type(), Segment::SUBMITTED);
-
-    EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 3000, 1, 3000, 3000);
-    EXPECT_TIMING_STATS("SubmittedLengthx1000", 3000, 1, 3000, 3000);
-    EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 1000, 1, 1000, 1000);
-    EXPECT_COUNT_STATS("SubmittedTotalLength", 3);
   }
 
   // Reset the test data.
@@ -651,11 +605,6 @@ TEST_F(ConverterTest, CommitSegments) {
     EXPECT_EQ(segments.history_segment(0).segment_type(), Segment::HISTORY);
     EXPECT_EQ(segments.history_segment(1).segment_type(), Segment::SUBMITTED);
     EXPECT_EQ(segments.history_segment(2).segment_type(), Segment::SUBMITTED);
-
-    EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 8000, 3, 2000, 3000);
-    EXPECT_TIMING_STATS("SubmittedLengthx1000", 8000, 2, 3000, 5000);
-    EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 3000, 2, 1000, 2000);
-    EXPECT_COUNT_STATS("SubmittedTotalLength", 8);
   }
 }
 
@@ -703,126 +652,6 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
       EXPECT_EQ(segment.key(), "right2");
     }
   }
-}
-
-TEST_F(ConverterTest, CommitPartialSuggestionUsageStats) {
-  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
-  CHECK(converter);
-  Segments segments;
-
-  // History segment.
-  {
-    Segment *segment = segments.add_segment();
-    segment->set_key("あした");
-    segment->set_segment_type(Segment::HISTORY);
-
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->key = "あした";
-    candidate->value = "今日";
-  }
-
-  {
-    Segment *segment = segments.add_segment();
-    segment->set_key("かつこうに");
-
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value = "学校に";
-    candidate->key = "がっこうに";
-
-    candidate = segment->add_candidate();
-    candidate->value = "格好に";
-    candidate->key = "かっこうに";
-
-    candidate = segment->add_candidate();
-    candidate->value = "かつこうに";
-    candidate->key = "かつこうに";
-  }
-
-  EXPECT_STATS_NOT_EXIST("CommitPartialSuggestion");
-  EXPECT_TRUE(converter->CommitPartialSuggestionSegmentValue(
-      &segments, 0, 1, "かつこうに", "いく"));
-  EXPECT_EQ(segments.history_segments_size(), 2);
-  EXPECT_EQ(segments.conversion_segments_size(), 1);
-  EXPECT_EQ(segments.history_segment(0).segment_type(), Segment::HISTORY);
-  EXPECT_EQ(segments.history_segment(1).segment_type(), Segment::SUBMITTED);
-  {
-    // The tail segment of the history segments uses
-    // CommitPartialSuggestionSegmentValue's |current_segment_key| parameter
-    // and contains original value.
-    const Segment &segment =
-        segments.history_segment(segments.history_segments_size() - 1);
-    EXPECT_EQ(segment.segment_type(), Segment::SUBMITTED);
-    EXPECT_EQ(segment.candidate(0).value, "格好に");
-    EXPECT_EQ(segment.candidate(0).key, "かっこうに");
-    EXPECT_EQ(segment.key(), "かつこうに");
-    EXPECT_NE(segment.candidate(0).attributes & Segment::Candidate::RERANKED,
-              0);
-  }
-  {
-    // The head segment of the conversion segments uses |new_segment_key|.
-    const Segment &segment = segments.conversion_segment(0);
-    EXPECT_EQ(segment.segment_type(), Segment::FREE);
-    EXPECT_EQ(segment.key(), "いく");
-  }
-
-  EXPECT_COUNT_STATS("CommitPartialSuggestion", 1);
-  EXPECT_TIMING_STATS("SubmittedSegmentLengthx1000", 3000, 1, 3000, 3000);
-  EXPECT_TIMING_STATS("SubmittedLengthx1000", 3000, 1, 3000, 3000);
-  EXPECT_TIMING_STATS("SubmittedSegmentNumberx1000", 1000, 1, 1000, 1000);
-  EXPECT_COUNT_STATS("SubmittedTotalLength", 3);
-}
-
-TEST_F(ConverterTest, CommitAutoPartialSuggestionUsageStats) {
-  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
-  CHECK(converter);
-  Segments segments;
-
-  {
-    Segment *segment = segments.add_segment();
-    segment->set_key("かつこうにいく");
-
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value = "学校にいく";
-    candidate->key = "がっこうにいく";
-
-    candidate = segment->add_candidate();
-    candidate->value = "学校に行く";
-    candidate->key = "がっこうにいく";
-
-    candidate = segment->add_candidate();
-    candidate->value = "学校に";
-    candidate->key = "がっこうに";
-  }
-
-  EXPECT_STATS_NOT_EXIST("CommitPartialSuggestion");
-  EXPECT_TRUE(converter->CommitPartialSuggestionSegmentValue(
-      &segments, 0, 2, "かつこうに", "いく"));
-  EXPECT_EQ(segments.segments_size(), 2);
-  EXPECT_EQ(segments.history_segments_size(), 1);
-  EXPECT_EQ(segments.conversion_segments_size(), 1);
-  {
-    // The tail segment of the history segments uses
-    // CommitPartialSuggestionSegmentValue's |current_segment_key| parameter
-    // and contains original value.
-    const Segment &segment =
-        segments.history_segment(segments.history_segments_size() - 1);
-    EXPECT_EQ(segment.segment_type(), Segment::SUBMITTED);
-    EXPECT_EQ(segment.candidate(0).value, "学校に");
-    EXPECT_EQ(segment.candidate(0).key, "がっこうに");
-    EXPECT_EQ(segment.key(), "かつこうに");
-    EXPECT_NE(segment.candidate(0).attributes & Segment::Candidate::RERANKED,
-              0);
-  }
-  {
-    // The head segment of the conversion segments uses |new_segment_key|.
-    const Segment &segment = segments.conversion_segment(0);
-    EXPECT_EQ(segment.segment_type(), Segment::FREE);
-    EXPECT_EQ(segment.key(), "いく");
-  }
-
-  EXPECT_COUNT_STATS("CommitAutoPartialSuggestion", 1);
 }
 
 TEST_F(ConverterTest, CandidateKeyTest) {

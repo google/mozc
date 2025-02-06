@@ -85,13 +85,6 @@ class EmojiRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
-  // Counts the number of segments in which emoji candidates are selected,
-  // and stores the result as usage stats.
-  // NOTE: This method is expected to be called after the segments are processed
-  // with COMMIT command in a SessionConverter instance.  May record wrong
-  // stats if you call this method in other situation.
-  void Finish(const ConversionRequest &request, Segments *segments) override;
-
   // Returns true if the given candidate includes emoji characters.
   // TODO(peria, hidehiko): Unify this checker and IsEmojiEntry defined in
   //     predictor/user_history_predictor.cc.  If you make similar functions

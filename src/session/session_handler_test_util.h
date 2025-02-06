@@ -38,7 +38,6 @@
 #include "protocol/config.pb.h"
 #include "session/session_handler.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace session {
@@ -76,7 +75,6 @@ class SessionHandlerTestBase : public ::mozc::testing::TestWithTempUserProfile {
   int32_t flags_last_command_timeout_backup_;
   int32_t flags_last_create_session_timeout_backup_;
   bool flags_restricted_backup_;
-  usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 }  // namespace testing

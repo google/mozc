@@ -172,14 +172,15 @@ mozc_cc_library(
     deps = [
         "//dictionary:user_dictionary_storage",
         "//dictionary:user_dictionary_util",
-    ] + mozc_select(windows = [
-        "//usage_stats",
-        "//win32/base:imm_util",
-        "@com_google_absl//absl/log",
-        ":msime_user_dictionary_importer",
-        ":win_util",
-        "//dictionary:user_dictionary_importer",
-    ]),
+    ] + mozc_select(
+        windows = [
+            "//win32/base:imm_util",
+            "@com_google_absl//absl/log",
+            ":msime_user_dictionary_importer",
+            ":win_util",
+            "//dictionary:user_dictionary_importer",
+        ],
+    ),
 )
 
 mozc_cc_qt_library(

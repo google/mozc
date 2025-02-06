@@ -45,7 +45,6 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 
@@ -239,9 +238,6 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
     candidate->description = "もしかして";
   }
 
-  // Set usage stats
-  usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionTriggered");
-
   return true;
 }
 
@@ -268,29 +264,4 @@ bool IsLanguageAwareInputCandidate(absl::string_view raw_string,
   return true;
 }
 }  // namespace
-
-void LanguageAwareRewriter::Finish(const ConversionRequest &request,
-                                   Segments *segments) {
-  if (!IsEnabled(request)) {
-    return;
-  }
-
-  if (segments->conversion_segments_size() != 1) {
-    return;
-  }
-
-  // Update usage stats
-  const Segment &segment = segments->conversion_segment(0);
-  // Ignores segments which are not converted or not committed.
-  if (segment.candidates_size() == 0 ||
-      segment.segment_type() != Segment::FIXED_VALUE) {
-    return;
-  }
-
-  if (IsLanguageAwareInputCandidate(request.composer().GetRawString(),
-                                    segment.candidate(0))) {
-    usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionCommitted");
-  }
-}
-
 }  // namespace mozc

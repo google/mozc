@@ -100,7 +100,6 @@
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files#host',
       ],

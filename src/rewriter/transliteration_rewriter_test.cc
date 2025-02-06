@@ -52,8 +52,6 @@
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace {
@@ -77,11 +75,8 @@ void SetAkann(composer::Composer *composer) {
 class TransliterationRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    usage_stats::UsageStats::ClearAllStatsForTest();
     config::ConfigHandler::GetDefaultConfig(&default_config_);
   }
-
-  void TearDown() override { usage_stats::UsageStats::ClearAllStatsForTest(); }
 
   TransliterationRewriter *CreateTransliterationRewriter() const {
     return new TransliterationRewriter(
@@ -91,8 +86,6 @@ class TransliterationRewriterTest : public testing::TestWithTempUserProfile {
   const commands::Request &default_request() const { return default_request_; }
 
   const config::Config &default_config() const { return default_config_; }
-
-  usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 
   const testing::MockDataManager mock_data_manager_;
 

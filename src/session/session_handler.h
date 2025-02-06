@@ -46,8 +46,6 @@
 #include "session/common.h"
 #include "session/keymap.h"
 #include "session/session.h"
-#include "session/session_observer_handler.h"
-#include "session/session_observer_interface.h"
 #include "storage/lru_cache.h"
 #include "testing/friend_test.h"
 
@@ -75,7 +73,6 @@ class SessionHandler {
   // NewSession returns new Session.
   std::unique_ptr<session::Session> NewSession();
 
-  void AddObserver(session::SessionObserverInterface *observer);
   absl::string_view GetDataVersion() const { return engine_->GetDataVersion(); }
 
   const EngineInterface &engine() const { return *engine_; }
@@ -143,7 +140,6 @@ class SessionHandler {
   absl::Time last_create_session_time_ = absl::InfinitePast();
 
   std::unique_ptr<EngineInterface> engine_;
-  std::unique_ptr<session::SessionObserverHandler> observer_handler_;
   std::unique_ptr<composer::TableManager> table_manager_;
   std::unique_ptr<const commands::Request> request_;
   std::unique_ptr<const config::Config> config_;

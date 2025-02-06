@@ -186,12 +186,6 @@ class Converter final : public ConverterInterface {
   void TrimCandidates(const ConversionRequest &request,
                       Segments *segments) const;
 
-  // Commits usage stats for committed text.
-  // |begin_segment_index| is a index of whole segments. (history and conversion
-  // segments)
-  void CommitUsageStats(const Segments *segments, size_t begin_segment_index,
-                        size_t segment_length) const;
-
   // Returns the substring of |str|. This substring consists of similar script
   // type and you can use it as preceding text for conversion.
   bool GetLastConnectivePart(absl::string_view preceding_text, std::string *key,

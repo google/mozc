@@ -68,7 +68,6 @@
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'prediction.gyp:prediction',
       ],
       'variables': {

@@ -56,9 +56,7 @@
 #include "session/ime_context.h"
 #include "session/key_event_transformer.h"
 #include "session/keymap.h"
-#include "session/session_usage_stats_util.h"
 #include "transliteration/transliteration.h"
-#include "usage_stats/usage_stats.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE
@@ -70,7 +68,6 @@ namespace {
 
 using ::mozc::engine::ConversionPreferences;
 using ::mozc::engine::EngineConverterInterface;
-using ::mozc::usage_stats::UsageStats;
 
 // Maximum size of multiple undo stack.
 const size_t kMultipleUndoMaxSize = 10;
@@ -302,8 +299,6 @@ bool Session::SendCommand(commands::Command *command) {
   }
   TransformInput(command->mutable_input());
 
-  SessionUsageStatsUtil::AddSendCommandInputStats(command->input());
-
   const commands::SessionCommand &session_command = command->input().command();
   bool result = false;
   if (session_command.type() == commands::SessionCommand::SWITCH_INPUT_MODE) {
@@ -374,12 +369,6 @@ bool Session::SendCommand(commands::Command *command) {
       break;
     case commands::SessionCommand::SWITCH_INPUT_FIELD_TYPE:
       result = SwitchInputFieldType(command);
-      break;
-    case commands::SessionCommand::USAGE_STATS_EVENT:
-      // Set consumed to false, because the client don't need to do anything
-      // when it receive the output from the server.
-      command->mutable_output()->set_consumed(false);
-      result = true;
       break;
     case commands::SessionCommand::UNDO_OR_REWIND:
       result = UndoOrRewind(command);
@@ -521,8 +510,6 @@ bool Session::SendKey(commands::Command *command) {
   // state instead of directly using context_->state().
   HandleIndirectImeOnOff(command);
 
-  SessionUsageStatsUtil::AddSendKeyInputStats(command->input());
-
   bool result = false;
   switch (context_->state()) {
     case ImeContext::DIRECT:
@@ -545,8 +532,6 @@ bool Session::SendKey(commands::Command *command) {
       result = false;
       break;
   }
-
-  SessionUsageStatsUtil::AddSendKeyOutputStats(command->output());
 
   MaybeSetUndoStatus(command);
   return result;
@@ -601,10 +586,7 @@ bool Session::SendKeyDirectInputState(commands::Command *command) {
   if (!keymap->GetCommandDirect(command->input().key(), &key_command)) {
     return EchoBackAndClearUndoContext(command);
   }
-  std::string command_name;
-  if (keymap->GetNameFromCommandDirect(key_command, &command_name)) {
-    UsageStats::IncrementCount("Performed_Direct_" + command_name);
-  }
+
   switch (key_command) {
     case keymap::DirectInputState::IME_ON:
       return IMEOn(command);
@@ -638,10 +620,6 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
 
   if (!result) {
     return EchoBackAndClearUndoContext(command);
-  }
-  std::string command_name;
-  if (keymap->GetNameFromCommandPrecomposition(key_command, &command_name)) {
-    UsageStats::IncrementCount("Performed_Precomposition_" + command_name);
   }
 
   // Update the client context (if any) for later use. Note that the client
@@ -730,10 +708,7 @@ bool Session::SendKeyCompositionState(commands::Command *command) {
   if (!result) {
     return DoNothing(command);
   }
-  std::string command_name;
-  if (keymap->GetNameFromCommandComposition(key_command, &command_name)) {
-    UsageStats::IncrementCount("Performed_Composition_" + command_name);
-  }
+
   switch (key_command) {
     case keymap::CompositionState::INSERT_CHARACTER:
       return InsertCharacter(command);
@@ -872,10 +847,7 @@ bool Session::SendKeyConversionState(commands::Command *command) {
   if (!result) {
     return DoNothing(command);
   }
-  std::string command_name;
-  if (keymap->GetNameFromCommandConversion(key_command, &command_name)) {
-    UsageStats::IncrementCount("Performed_Conversion_" + command_name);
-  }
+
   switch (key_command) {
     case keymap::ConversionState::INSERT_CHARACTER:
       return InsertCharacter(command);

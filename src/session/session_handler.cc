@@ -59,9 +59,6 @@
 #include "session/common.h"
 #include "session/keymap.h"
 #include "session/session.h"
-#include "session/session_observer_handler.h"
-#include "session/session_observer_interface.h"
-#include "usage_stats/usage_stats.h"
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "base/process.h"
@@ -103,8 +100,6 @@ ABSL_FLAG(bool, restricted, false, "Launch server with restricted setting");
 namespace mozc {
 namespace {
 
-using mozc::usage_stats::UsageStats;
-
 bool IsApplicationAlive(const session::Session *session) {
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   const commands::ApplicationInfo &info = session->application_info();
@@ -136,7 +131,6 @@ SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine)
   last_session_empty_time_ = Clock::GetAbslTime();
   last_cleanup_time_ = absl::InfinitePast();
   last_create_session_time_ = absl::InfinitePast();
-  observer_handler_ = std::make_unique<session::SessionObserverHandler>();
   table_manager_ = std::make_unique<composer::TableManager>();
   request_ = std::make_unique<commands::Request>();
   config_ = config::ConfigHandler::GetConfig();
@@ -226,7 +220,6 @@ bool SessionHandler::Shutdown(commands::Command *command) {
   MOZC_VLOG(1) << "Shutdown server";
   SyncData(command);
   is_available_ = false;
-  UsageStats::IncrementCount("ShutDown");
   return true;
 }
 
@@ -247,21 +240,18 @@ bool SessionHandler::ReloadAndWait(commands::Command *command) {
 bool SessionHandler::ClearUserHistory(commands::Command *command) {
   MOZC_VLOG(1) << "Clearing user history";
   engine_->ClearUserHistory();
-  UsageStats::IncrementCount("ClearUserHistory");
   return true;
 }
 
 bool SessionHandler::ClearUserPrediction(commands::Command *command) {
   MOZC_VLOG(1) << "Clearing user prediction";
   engine_->ClearUserPrediction();
-  UsageStats::IncrementCount("ClearUserPrediction");
   return true;
 }
 
 bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
   MOZC_VLOG(1) << "Clearing unused user prediction";
   engine_->ClearUnusedUserPrediction();
-  UsageStats::IncrementCount("ClearUnusedUserPrediction");
   return true;
 }
 
@@ -284,7 +274,6 @@ bool SessionHandler::SetConfig(commands::Command *command) {
   *command->mutable_output()->mutable_config() = command->input().config();
   MaybeUpdateConfig(command);
 
-  UsageStats::IncrementCount("SetConfig");
   return true;
 }
 
@@ -377,7 +366,6 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
   }
 
   if (eval_succeeded) {
-    UsageStats::IncrementCount("SessionAllEvent");
     if (command->input().type() != commands::Input::CREATE_SESSION) {
       // Fill a session ID even if command->input() doesn't have a id to ensure
       // that response size should not be 0, which causes disconnection of IPC.
@@ -389,15 +377,7 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
         commands::Output::SESSION_FAILURE);
   }
 
-  if (eval_succeeded) {
-    // TODO(komatsu): Make sure if checking eval_succeeded is necessary or not.
-    observer_handler_->EvalCommandHandler(*command);
-  }
-
   stopwatch.Stop();
-  UsageStats::UpdateTiming(
-      "ElapsedTimeUSec",
-      static_cast<uint32_t>(absl::ToInt64Microseconds(stopwatch.GetElapsed())));
 
   return is_available_;
 }
@@ -405,10 +385,6 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
 std::unique_ptr<session::Session> SessionHandler::NewSession() {
   // Session doesn't take the ownership of engine.
   return std::make_unique<session::Session>(engine_.get());
-}
-
-void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
-  observer_handler_->AddObserver(observer);
 }
 
 void SessionHandler::MaybeUpdateConfig(commands::Command *command) {
@@ -545,8 +521,6 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 
   // session is not empty.
   last_session_empty_time_ = absl::InfinitePast();
-
-  UsageStats::IncrementCount("SessionCreated");
 
   return true;
 }

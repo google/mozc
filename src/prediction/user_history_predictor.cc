@@ -75,13 +75,11 @@
 #include "rewriter/variants_rewriter.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
-#include "usage_stats/usage_stats.h"
 
 namespace mozc::prediction {
 namespace {
 
 using ::mozc::composer::TypeCorrectedQuery;
-using ::mozc::usage_stats::UsageStats;
 
 // Finds suggestion candidates from the most recent 3000 history in LRU.
 // We don't check all history, since suggestion is called every key event
@@ -478,10 +476,6 @@ bool UserHistoryPredictor::Save() {
   for (const DicElement *elm = tail; elm != nullptr; elm = elm->prev) {
     *history.GetProto().add_entries() = elm->value;
   }
-
-  // Updates usage stats here.
-  UsageStats::SetInteger("UserHistoryPredictorEntrySize",
-                         static_cast<int>(history.GetProto().entries_size()));
 
   if (!history.Save()) {
     LOG(ERROR) << "UserHistoryStorage::Save() failed";
@@ -1847,31 +1841,6 @@ void UserHistoryPredictor::Insert(std::string key, std::string value,
   updated_ = true;
 }
 
-void UserHistoryPredictor::MaybeRecordUsageStats(
-    const Segments &segments) const {
-  const Segment &segment = segments.conversion_segment(0);
-  if (segment.candidates_size() < 1) {
-    MOZC_VLOG(2) << "candidates size < 1";
-    return;
-  }
-
-  const Segment::Candidate &candidate = segment.candidate(0);
-  if (segment.segment_type() != Segment::FIXED_VALUE) {
-    MOZC_VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
-    return;
-  }
-
-  if (!(candidate.source_info & Segment::Candidate::USER_HISTORY_PREDICTOR)) {
-    MOZC_VLOG(2) << "candidate is not from user_history_predictor";
-    return;
-  }
-
-  UsageStats::IncrementCount("CommitUserHistoryPredictor");
-  if (segment.key().empty()) {
-    UsageStats::IncrementCount("CommitUserHistoryPredictorZeroQuery");
-  }
-}
-
 void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
     const Segments &segments) {
   const Segment &segment = segments.conversion_segment(0);
@@ -1939,8 +1908,6 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     LOG(WARNING) << "Syncer is running";
     return;
   }
-
-  MaybeRecordUsageStats(*segments);
 
   const RequestType request_type = request.request().zero_query_suggestion()
                                        ? ZERO_QUERY_SUGGESTION

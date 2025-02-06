@@ -61,7 +61,6 @@
 #include "rewriter/variants_rewriter.h"
 #include "storage/lru_storage.h"
 #include "transliteration/transliteration.h"
-#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace {
@@ -822,10 +821,6 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
     Segments::RevertEntry *new_entry = segments->push_back_revert_entry();
     *new_entry = entry;
   }
-
-  // update usage stats here
-  usage_stats::UsageStats::SetInteger("UserSegmentHistoryEntrySize",
-                                      static_cast<int>(storage_->used_size()));
 }
 
 bool UserSegmentHistoryRewriter::Sync() {

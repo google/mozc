@@ -64,7 +64,6 @@
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'prediction_base.gyp:suggestion_filter',
         'prediction_protocol',
       ],

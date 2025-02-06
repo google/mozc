@@ -386,8 +386,8 @@ message SessionCommand {
     // Specify the input field type.
     SWITCH_INPUT_FIELD_TYPE = 12;
 
-    // Client side event information for collecting usage statistics
-    USAGE_STATS_EVENT = 13;
+    reserved 13;
+    reserved "USAGE_STATS_EVENT";
 
     // This command is used in only Android.
     // Works UNDO or rewind HIRAGANA characters based on the state.
@@ -459,38 +459,8 @@ message SessionCommand {
 
   reserved 6;  // Deprecated input_field_type
 
-  // Client side event for collecting usage statistics
-  enum UsageStatsEvent {
-    INFOLIST_WINDOW_SHOW = 1;
-    INFOLIST_WINDOW_HIDE = 2;
-    HANDWRITING_OPEN_EVENT = 3;
-    HANDWRITING_COMMIT_EVENT = 4;
-    CHARACTER_PALETTE_OPEN_EVENT = 5;
-    CHARACTER_PALETTE_COMMIT_EVENT = 6;
-    SOFTWARE_KEYBOARD_LAYOUT_LANDSCAPE = 7;
-    SOFTWARE_KEYBOARD_LAYOUT_PORTRAIT = 8;
-    SUBMITTED_CANDIDATE_ROW_0 = 9;
-    SUBMITTED_CANDIDATE_ROW_1 = 10;
-    SUBMITTED_CANDIDATE_ROW_2 = 11;
-    SUBMITTED_CANDIDATE_ROW_3 = 12;
-    SUBMITTED_CANDIDATE_ROW_4 = 13;
-    SUBMITTED_CANDIDATE_ROW_5 = 14;
-    SUBMITTED_CANDIDATE_ROW_6 = 15;
-    SUBMITTED_CANDIDATE_ROW_7 = 16;
-    SUBMITTED_CANDIDATE_ROW_8 = 17;
-    SUBMITTED_CANDIDATE_ROW_9 = 18;
-    SUBMITTED_CANDIDATE_ROW_GE10 = 19;
-    KEYBOARD_FOLD_EVENT = 20;
-    KEYBOARD_EXPAND_EVENT = 21;
-    MUSHROOM_SELECTION_DIALOG_OPEN_EVENT = 22;
-    reserved 23, 24;  // Deprecated keyboard height stats.
-    SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE = 25;
-    SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT = 26;
-    SOFTWARE_KEYBOARD_LAYOUT_ENGLISH_LANDSCAPE = 27;
-    SOFTWARE_KEYBOARD_LAYOUT_ENGLISH_PORTRAIT = 28;
-  }
-  optional UsageStatsEvent usage_stats_event = 7;
-  optional int32 usage_stats_event_int_value = 9;
+  reserved 7;  // Deprecated usage_stats_event
+  reserved 9;  // Deprecated usage_stats_event_int_value
 
   reserved 8;  // Deprecated caret_rectangle
 

@@ -58,7 +58,6 @@ mozc_cc_library(
         "//engine",
         "//protocol:commands_cc_proto",
         "//session:session_handler",
-        "//session:session_usage_observer",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/random",

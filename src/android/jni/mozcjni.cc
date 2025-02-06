@@ -29,6 +29,7 @@
 
 // JNI wrapper for SessionHandler.
 
+#include <utility>
 #ifdef __ANDROID__
 
 #include <jni.h>
@@ -48,7 +49,6 @@
 #include "engine/engine.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler.h"
-#include "session/session_usage_observer.h"
 
 namespace mozc {
 namespace jni {
@@ -136,9 +136,7 @@ std::unique_ptr<SessionHandler> CreateSessionHandler(JNIEnv *env,
     engine = CreateMobileEngine(data_file_path);
   }
   DCHECK(engine);
-  auto result = std::make_unique<SessionHandler>(std::move(engine));
-  result->AddObserver(Singleton<session::SessionUsageObserver>::get());
-  return result;
+  return std::make_unique<SessionHandler>(std::move(engine));
 }
 
 // Does post-load tasks.

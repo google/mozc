@@ -79,8 +79,6 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc::prediction {
 namespace {
@@ -104,13 +102,9 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     table_ = std::make_unique<composer::Table>();
     composer_ = composer::Composer(*table_, request_, config_);
     data_and_predictor_ = CreateDataAndPredictor();
-
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  void TearDown() override {
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
-  }
+  void TearDown() override {}
 
   ConversionRequest CreateConversionRequestWithOptions(
       const composer::Composer &composer,
@@ -469,7 +463,6 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   std::unique_ptr<DataAndPredictor> data_and_predictor_;
-  mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
@@ -4039,38 +4032,6 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
-}
-
-TEST_F(UserHistoryPredictorTest, UsageStats) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-
-  Segments segments;
-  EXPECT_COUNT_STATS("CommitUserHistoryPredictor", 0);
-  EXPECT_COUNT_STATS("CommitUserHistoryPredictorZeroQuery", 0);
-
-  const ConversionRequest convreq1 =
-      SetUpInputForConversion("なまえは", &composer_, &segments);
-  AddCandidate(0, "名前は", &segments);
-  segments.mutable_conversion_segment(0)->mutable_candidate(0)->source_info |=
-      Segment::Candidate::USER_HISTORY_PREDICTOR;
-  predictor->Finish(convreq1, &segments);
-
-  EXPECT_COUNT_STATS("CommitUserHistoryPredictor", 1);
-  EXPECT_COUNT_STATS("CommitUserHistoryPredictorZeroQuery", 0);
-
-  segments.Clear();
-
-  // Zero query
-  const ConversionRequest convreq2 =
-      SetUpInputForConversion("", &composer_, &segments);
-  AddCandidate(0, "名前は", &segments);
-  segments.mutable_conversion_segment(0)->mutable_candidate(0)->source_info |=
-      Segment::Candidate::USER_HISTORY_PREDICTOR;
-  predictor->Finish(convreq2, &segments);
-
-  // UserHistoryPredictor && ZeroQuery
-  EXPECT_COUNT_STATS("CommitUserHistoryPredictor", 2);
-  EXPECT_COUNT_STATS("CommitUserHistoryPredictorZeroQuery", 1);
 }
 
 TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {

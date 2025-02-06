@@ -62,19 +62,6 @@ namespace {
 const COLORREF kDefaultBackgroundColor = RGB(0xff, 0xff, 0xff);
 const UINT_PTR kIdDelayShowHideTimer = 100;
 
-bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
-                         const SessionCommand::UsageStatsEvent &event) {
-  if (command_sender == nullptr) {
-    return false;
-  }
-  SessionCommand command;
-  command.set_type(SessionCommand::USAGE_STATS_EVENT);
-  command.set_usage_stats_event(event);
-  MOZC_VLOG(2) << "SendUsageStatsEvent " << command;
-  Output dummy_output;
-  return command_sender->SendCommand(command, &dummy_output);
-}
-
 void FillSolidRect(HDC dc, const RECT *rect, COLORREF color) {
   COLORREF old_color = ::SetBkColor(dc, color);
   if (old_color != CLR_INVALID) {
@@ -330,14 +317,9 @@ void InfolistWindow::DelayShow(UINT mseconds) {
   visible_ = true;
   KillTimer(kIdDelayShowHideTimer);
   if (mseconds <= 0) {
-    const bool current_visible = (IsWindowVisible() != FALSE);
     SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
     SendMessageW(WM_NCACTIVATE, FALSE);
-    if (!current_visible) {
-      SendUsageStatsEvent(send_command_interface_,
-                          SessionCommand::INFOLIST_WINDOW_SHOW);
-    }
   } else {
     SetTimer(kIdDelayShowHideTimer, mseconds, nullptr);
   }
@@ -347,12 +329,7 @@ void InfolistWindow::DelayHide(UINT mseconds) {
   visible_ = false;
   KillTimer(kIdDelayShowHideTimer);
   if (mseconds <= 0) {
-    const bool current_visible = (IsWindowVisible() != FALSE);
     ShowWindow(SW_HIDE);
-    if (current_visible) {
-      SendUsageStatsEvent(send_command_interface_,
-                          SessionCommand::INFOLIST_WINDOW_HIDE);
-    }
   } else {
     SetTimer(kIdDelayShowHideTimer, mseconds, nullptr);
   }

@@ -71,7 +71,6 @@
 #include "request/conversion_request.h"
 #include "request/request_util.h"
 #include "transliteration/transliteration.h"
-#include "usage_stats/usage_stats.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
@@ -82,7 +81,6 @@ namespace {
 
 using ::mozc::commands::Request;
 using ::mozc::prediction::dictionary_predictor_internal::KeyValueView;
-using ::mozc::usage_stats::UsageStats;
 
 // Used to emulate positive infinity for cost. This value is set for those
 // candidates that are thought to be aggressive; thus we can eliminate such
@@ -248,43 +246,6 @@ void DictionaryPredictor::Finish(const ConversionRequest &request,
   if (segment.segment_type() != Segment::FIXED_VALUE) {
     MOZC_VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
     return;
-  }
-
-  MaybeRecordUsageStats(candidate);
-}
-
-void DictionaryPredictor::MaybeRecordUsageStats(
-    const Segment::Candidate &candidate) const {
-  if (candidate.source_info &
-      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NONE) {
-    UsageStats::IncrementCount("CommitDictionaryPredictorZeroQueryTypeNone");
-  }
-
-  if (candidate.source_info &
-      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX) {
-    UsageStats::IncrementCount(
-        "CommitDictionaryPredictorZeroQueryTypeNumberSuffix");
-  }
-
-  if (candidate.source_info &
-      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOTICON) {
-    UsageStats::IncrementCount(
-        "CommitDictionaryPredictorZeroQueryTypeEmoticon");
-  }
-
-  if (candidate.source_info &
-      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOJI) {
-    UsageStats::IncrementCount("CommitDictionaryPredictorZeroQueryTypeEmoji");
-  }
-
-  if (candidate.source_info &
-      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM) {
-    UsageStats::IncrementCount("CommitDictionaryPredictorZeroQueryTypeBigram");
-  }
-
-  if (candidate.source_info &
-      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX) {
-    UsageStats::IncrementCount("CommitDictionaryPredictorZeroQueryTypeSuffix");
   }
 }
 

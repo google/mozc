@@ -90,7 +90,6 @@ mozc_cc_qt_library(
         "//gui/base:gui_base",
         "//gui/base:setup_util",
         "//gui/base:singleton_window_helper",
-        "//usage_stats",
         "@com_google_absl//absl/log",
     ] + mozc_select(
         windows = [

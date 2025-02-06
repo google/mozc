@@ -349,11 +349,9 @@ class EngineConverter : public EngineConverterInterface {
   void InitializeSelectedCandidateIndices();
   void UpdateSelectedCandidateIndex();
   void UpdateCandidateStats(absl::string_view base_name, int32_t index);
-  void CommitUsageStats(EngineConverterInterface::State commit_state,
-                        const commands::Context &context);
-  void CommitUsageStatsWithSegmentsSize(
-      EngineConverterInterface::State commit_state,
-      const commands::Context &context, size_t commit_segments_size);
+  void CommitSegmentsSize(EngineConverterInterface::State commit_state,
+                          const commands::Context &context);
+  void CommitSegmentsSize(size_t commit_segments_size);
 
   // Sets request type and update the engine_converter's state
   void SetRequestType(ConversionRequest::RequestType request_type,

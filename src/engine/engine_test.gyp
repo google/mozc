@@ -90,7 +90,6 @@
         '<(mozc_oss_src_dir)/testing/testing.gyp:testing',
         '<(mozc_oss_src_dir)/testing/testing.gyp:testing_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'engine.gyp:engine_converter',
       ],
     },

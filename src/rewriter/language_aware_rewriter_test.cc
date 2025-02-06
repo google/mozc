@@ -47,8 +47,6 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace {
@@ -74,10 +72,6 @@ void InsertASCIISequence(const absl::string_view text,
 
 class LanguageAwareRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override { usage_stats::UsageStats::ClearAllStatsForTest(); }
-
-  void TearDown() override { usage_stats::UsageStats::ClearAllStatsForTest(); }
-
   bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
                                      const absl::string_view key,
                                      bool is_mobile, std::string *composition,
@@ -115,7 +109,6 @@ class LanguageAwareRewriterTest : public testing::TestWithTempUserProfile {
     return rewriter->Rewrite(request, segments);
   }
 
-  usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
   const testing::MockDataManager data_manager_;
 };
 
@@ -298,70 +291,6 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
     Mock::VerifyAndClearExpectations(&dictionary);
-  }
-}
-
-TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
-  MockDictionary dictionary;
-  LanguageAwareRewriter rewriter(PosMatcher(data_manager_.GetPosMatcherData()),
-                                 dictionary);
-
-  EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionTriggered");
-  EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionCommitted");
-
-  const std::string kPyTeyoN = "ｐｙてょｎ";
-
-  {
-    // "python" is composed to "ｐｙてょｎ", but "python" should be suggested,
-    // because alphabet characters are in the middle of the word.
-    std::string composition;
-    Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(
-        &rewriter, "python", false, /* is_mobile */ &composition, &segments));
-    EXPECT_EQ(composition, kPyTeyoN);
-    ASSERT_EQ(1, segments.conversion_segments_size());
-    EXPECT_THAT(segments.conversion_segment(0),
-                HasSingleCandidate(IsLangAwareCandidate("python")));
-    EXPECT_COUNT_STATS("LanguageAwareSuggestionTriggered", 1);
-    EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionCommitted");
-    Mock::VerifyAndClearExpectations(&dictionary);
-  }
-  {
-    // Call Rewrite with "python" again, then call Finish.  Both ...Triggered
-    // and ...Committed should be incremented.
-    // Note, RewriteWithLanguageAwareInput is not used here, because
-    // Finish also requires ConversionRequest.
-    commands::Request client_request;
-    client_request.set_language_aware_input(
-        commands::Request::LANGUAGE_AWARE_SUGGESTION);
-
-    composer::Table table;
-    config::Config default_config;
-    table.InitializeWithRequestAndConfig(client_request, default_config);
-
-    composer::Composer composer(table, client_request, default_config);
-    InsertASCIISequence("python", &composer);
-    const std::string composition = composer.GetStringForPreedit();
-    EXPECT_EQ(composition, kPyTeyoN);
-
-    // Perform the rewrite command.
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    segment->set_key(composition);
-    const ConversionRequest request =
-        ConversionRequestBuilder()
-            .SetComposer(composer)
-            .SetRequestType(ConversionRequest::SUGGESTION)
-            .Build();
-
-    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-
-    EXPECT_COUNT_STATS("LanguageAwareSuggestionTriggered", 2);
-
-    segment->set_segment_type(Segment::FIXED_VALUE);
-    EXPECT_LT(0, segment->candidates_size());
-    rewriter.Finish(request, &segments);
-    EXPECT_COUNT_STATS("LanguageAwareSuggestionCommitted", 1);
   }
 }
 

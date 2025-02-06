@@ -69,8 +69,6 @@
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 
@@ -78,7 +76,6 @@ namespace session {
 namespace {
 
 using ::mozc::commands::Request;
-using ::mozc::usage_stats::UsageStats;
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Mock;
@@ -398,8 +395,6 @@ void SwitchInputMode(commands::CompositionMode mode, Session *session) {
 class SessionTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    UsageStats::ClearAllStatsForTest();
-
     mobile_request_ = std::make_unique<Request>();
     request_test_util::FillMobileRequest(mobile_request_.get());
 
@@ -409,7 +404,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
   }
 
-  void TearDown() override { UsageStats::ClearAllStatsForTest(); }
+  void TearDown() override {}
 
   void InsertCharacterChars(const absl::string_view chars, Session *session,
                             commands::Command *command) const {
@@ -716,7 +711,6 @@ class SessionTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter_;
   std::unique_ptr<composer::Table> table_;
   std::unique_ptr<Request> mobile_request_;
-  mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
   const testing::MockDataManager mock_data_manager_;
 };
 
@@ -875,11 +869,6 @@ TEST_F(SessionTest, SendCommand) {
     SendCommand(commands::SessionCommand::RESET_CONTEXT, &session, &command);
     EXPECT_FALSE(command.output().consumed());
   }
-
-  // USAGE_STATS_EVENT
-  SendCommand(commands::SessionCommand::USAGE_STATS_EVENT, &session, &command);
-  EXPECT_TRUE(command.output().has_consumed());
-  EXPECT_FALSE(command.output().consumed());
 }
 
 TEST_F(SessionTest, SwitchInputMode) {
@@ -6947,23 +6936,17 @@ TEST_F(SessionTest, PerformedCommand) {
   {
     commands::Command command;
     // IMEOff
-    EXPECT_STATS_NOT_EXIST("Performed_Precomposition_IMEOff");
     SendSpecialKey(commands::KeyEvent::OFF, &session, &command);
-    EXPECT_COUNT_STATS("Performed_Precomposition_IMEOff", 1);
   }
   {
     commands::Command command;
     // IMEOn
-    EXPECT_STATS_NOT_EXIST("Performed_Direct_IMEOn");
     SendSpecialKey(commands::KeyEvent::ON, &session, &command);
-    EXPECT_COUNT_STATS("Performed_Direct_IMEOn", 1);
   }
   {
     commands::Command command;
     // 'a'
-    EXPECT_STATS_NOT_EXIST("Performed_Precomposition_InsertCharacter");
     SendKey("a", &session, &command);
-    EXPECT_COUNT_STATS("Performed_Precomposition_InsertCharacter", 1);
   }
   {
     // SetStartConversion for changing state to Convert.
@@ -6975,16 +6958,12 @@ TEST_F(SessionTest, PerformedCommand) {
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     commands::Command command;
     // SPACE
-    EXPECT_STATS_NOT_EXIST("Performed_Composition_Convert");
     SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
-    EXPECT_COUNT_STATS("Performed_Composition_Convert", 1);
   }
   {
     commands::Command command;
     // ENTER
-    EXPECT_STATS_NOT_EXIST("Performed_Conversion_Commit");
     SendSpecialKey(commands::KeyEvent::ENTER, &session, &command);
-    EXPECT_COUNT_STATS("Performed_Conversion_Commit", 1);
   }
 }
 

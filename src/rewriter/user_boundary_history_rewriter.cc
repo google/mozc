@@ -53,7 +53,6 @@
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "storage/lru_storage.h"
-#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace {
@@ -113,7 +112,7 @@ class SegmentsKey {
 
   static std::optional<const SegmentsKey> Create(const Segments &segments) {
     std::string whole_key;
-    std::vector<int> byte_indexs;  // indexes in bytes (3 for "あ")
+    std::vector<int> byte_indexs;     // indexes in bytes (3 for "あ")
     std::vector<uint8_t> char_sizes;  // sizes in chars (1 for "あ")
 
     size_t byte_index = 0;
@@ -160,15 +159,13 @@ class SegmentsKey {
   // byte_indexs_: {0, 9, 16, 31}
   // char_sizes_: {3, 5, 5}
   const std::string whole_key_;
-  const std::vector<int> byte_indexs_;  // indexes in bytes (3 for "あ")
+  const std::vector<int> byte_indexs_;     // indexes in bytes (3 for "あ")
   const std::vector<uint8_t> char_sizes_;  // sizes in chars (1 for "あ")
 };
 
 }  // namespace
 
-UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter() {
-  Reload();
-}
+UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter() { Reload(); }
 
 void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
                                          Segments *segments) {
@@ -194,19 +191,6 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
 
   if (segments->resized()) {
     Insert(request, *segments);
-#ifdef __ANDROID__
-    // TODO(hidehiko): UsageStats requires some functionalities, e.g. network,
-    // which are not needed for mozc's main features.
-    // So, to focus on the main features' developing, we just skip it for now.
-    // Note: we can #ifdef inside SetInteger, but to build it we need to build
-    // other methods in usage_stats as well. So we'll exclude the method here
-    // for now.
-#else   // __ANDROID__
-    // update usage stats here
-    usage_stats::UsageStats::SetInteger(
-        "UserBoundaryHistoryEntrySize",
-        static_cast<int>(storage_.used_size()));
-#endif  // __ANDROID__
   }
 }
 

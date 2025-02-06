@@ -65,7 +65,6 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
@@ -213,7 +212,6 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
       uint64_t id = 0;
       EXPECT_TRUE(CreateSession(handler, &id));
       ++expected_session_created_num;
-      EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
       clock.Advance(absl::Seconds(interval_time));
     }
@@ -237,7 +235,6 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
       uint64_t id = 0;
       EXPECT_TRUE(CreateSession(handler, &id));
       ++expected_session_created_num;
-      EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
       clock.Advance(absl::Seconds(interval_time));
     }
@@ -253,7 +250,6 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     uint64_t id = 0;
     EXPECT_TRUE(CreateSession(handler, &id));
     ++expected_session_created_num;
-    EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
 
     // the oldest id no longer exists
     EXPECT_FALSE(IsGoodSession(handler, oldest_id));
@@ -405,10 +401,6 @@ TEST_F(SessionHandlerTest, ShutdownTest) {
     input->set_type(commands::Input::NO_OPERATION);
     EXPECT_FALSE(handler.EvalCommand(&command));
   }
-
-  EXPECT_COUNT_STATS("ShutDown", 1);
-  // CreateSession and Shutdown.
-  EXPECT_COUNT_STATS("SessionAllEvent", 2);
 }
 
 TEST_F(SessionHandlerTest, ClearHistoryTest) {
@@ -424,7 +416,6 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
     input->set_type(commands::Input::CLEAR_USER_HISTORY);
     EXPECT_TRUE(handler.EvalCommand(&command));
     EXPECT_EQ(command.output().id(), session_id);
-    EXPECT_COUNT_STATS("ClearUserHistory", 1);
   }
 
   {
@@ -434,7 +425,6 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
     input->set_type(commands::Input::CLEAR_USER_PREDICTION);
     EXPECT_TRUE(handler.EvalCommand(&command));
     EXPECT_EQ(command.output().id(), session_id);
-    EXPECT_COUNT_STATS("ClearUserPrediction", 1);
   }
 
   {
@@ -444,11 +434,7 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
     input->set_type(commands::Input::CLEAR_UNUSED_USER_PREDICTION);
     EXPECT_TRUE(handler.EvalCommand(&command));
     EXPECT_EQ(command.output().id(), session_id);
-    EXPECT_COUNT_STATS("ClearUnusedUserPrediction", 1);
   }
-
-  // CreateSession and Clear{History|UserPrediction|UnusedUserPrediction}.
-  EXPECT_COUNT_STATS("SessionAllEvent", 4);
 }
 
 TEST_F(SessionHandlerTest, ElapsedTimeTest) {
@@ -459,7 +445,6 @@ TEST_F(SessionHandlerTest, ElapsedTimeTest) {
   ClockMock clock(absl::FromUnixSeconds(1000));
   Clock::SetClockForUnitTest(&clock);
   EXPECT_TRUE(CreateSession(handler, &id));
-  EXPECT_TIMING_STATS("ElapsedTimeUSec", 0, 1, 0, 0);
   Clock::SetClockForUnitTest(nullptr);
 }
 
@@ -533,10 +518,6 @@ TEST_F(SessionHandlerTest, ConfigTest) {
     EXPECT_EQ(command.output().launch_tool_mode(),
               commands::Output::WORD_REGISTER_DIALOG);
   }
-
-  EXPECT_COUNT_STATS("SetConfig", 1);
-  // CreateSession, GetConfig and SetConfig.
-  EXPECT_COUNT_STATS("SessionAllEvent", 3);
 }
 
 TEST_F(SessionHandlerTest, UpdateComposition) {

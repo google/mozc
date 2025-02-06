@@ -66,8 +66,6 @@
 #include "testing/mozctest.h"
 #include "testing/testing_util.h"
 #include "transliteration/transliteration.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
 namespace engine {
@@ -106,8 +104,6 @@ void AddSegmentWithSingleCandidate(Segments *segments, absl::string_view key,
 class EngineConverterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
-
     config_ = std::make_unique<Config>();
     config_->set_use_cascading_window(true);
     request_ = std::make_unique<Request>();
@@ -121,8 +117,6 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   void TearDown() override {
     table_.reset();
     composer_.reset();
-
-    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   static void GetSegments(const EngineConverter &converter, Segments *dest) {
@@ -411,7 +405,6 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<composer::Table> table_;
   std::unique_ptr<Request> request_;
   std::unique_ptr<Config> config_;
-  mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 
  private:
   const testing::MockDataManager mock_data_manager_;
@@ -475,10 +468,6 @@ TEST_F(EngineConverterTest, Convert) {
   // Converter should be inactive after submission
   EXPECT_FALSE(converter.IsActive());
   EXPECT_FALSE(IsCandidateListVisible(converter));
-
-  EXPECT_COUNT_STATS("Commit", 1);
-  EXPECT_COUNT_STATS("CommitFromConversion", 1);
-  EXPECT_COUNT_STATS("ConversionCandidates0", 1);
 }
 
 TEST_F(EngineConverterTest, ConvertWithSpellingCorrection) {
@@ -490,6 +479,7 @@ TEST_F(EngineConverterTest, ConvertWithSpellingCorrection) {
     composer_->InsertCharacterPreedit("あいうえお");
     FillT13Ns(&segments, composer_.get());
     segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes |=
+
         Segment::Candidate::SPELLING_CORRECTION;
     EXPECT_CALL(mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -563,10 +553,6 @@ TEST_F(EngineConverterTest, ConvertToTransliteration) {
   }
 
   converter.Commit(*composer_, Context::default_instance());
-
-  EXPECT_COUNT_STATS("Commit", 1);
-  EXPECT_COUNT_STATS("CommitFromConversion", 1);
-  EXPECT_COUNT_STATS("ConversionCandidates0", 1);
 }
 
 TEST_F(EngineConverterTest, ConvertToTransliterationWithMultipleSegments) {
@@ -1476,11 +1462,6 @@ TEST_F(EngineConverterTest, CommitFirstSegment) {
   EXPECT_EQ(size, Util::CharsLen(kKamabokono));
   EXPECT_TRUE(converter.IsActive());
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-
-  EXPECT_COUNT_STATS("Commit", 1);
-  EXPECT_COUNT_STATS("CommitFromConversion", 1);
-  EXPECT_STATS_NOT_EXIST("ConversionCandidates0");
-  EXPECT_COUNT_STATS("ConversionCandidates1", 1);
 }
 
 TEST_F(EngineConverterTest, CommitHeadToFocusedSegments) {
@@ -1686,9 +1667,6 @@ TEST_F(EngineConverterTest, CommitPreedit) {
     EXPECT_EQ(result.tokens(0).rid(), -1);
   }
   EXPECT_FALSE(converter.IsActive());
-
-  EXPECT_COUNT_STATS("Commit", 1);
-  EXPECT_COUNT_STATS("CommitFromComposition", 1);
 }
 
 TEST_F(EngineConverterTest, CommitPreeditBracketPairText) {
@@ -1832,11 +1810,6 @@ TEST_F(EngineConverterTest, CommitSuggestionByIndex) {
     EXPECT_EQ(GetState(converter), EngineConverterInterface::COMPOSITION);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
-
-  EXPECT_COUNT_STATS("Commit", 1);
-  // Suggestion is counted as Prediction
-  EXPECT_COUNT_STATS("CommitFromPrediction", 1);
-  EXPECT_COUNT_STATS("PredictionCandidates1", 1);
 }
 
 TEST_F(EngineConverterTest, CommitSuggestionById) {
@@ -1899,12 +1872,6 @@ TEST_F(EngineConverterTest, CommitSuggestionById) {
     EXPECT_EQ(result.key(), kChars_Momonga);
     EXPECT_EQ(GetState(converter), EngineConverterInterface::COMPOSITION);
   }
-
-  EXPECT_COUNT_STATS("Commit", 1);
-  // Suggestion is counted as Prediction.
-  EXPECT_COUNT_STATS("CommitFromPrediction", 1);
-  EXPECT_COUNT_STATS("PredictionCandidates" + std::to_string(kCandidateIndex),
-                     1);
 }
 
 TEST_F(EngineConverterTest, PartialPrediction) {
@@ -2010,11 +1977,6 @@ TEST_F(EngineConverterTest, PartialPrediction) {
     EXPECT_EQ(result.key(), kChars_Kokode);
     EXPECT_EQ(GetState(converter), EngineConverterInterface::SUGGESTION);
   }
-
-  EXPECT_COUNT_STATS("Commit", 1);
-  // Suggestion is counted as Prediction.
-  EXPECT_COUNT_STATS("CommitFromPrediction", 1);
-  EXPECT_COUNT_STATS("PredictionCandidates0", 1);
 }
 
 TEST_F(EngineConverterTest, SuggestAndPredict) {
@@ -3247,9 +3209,6 @@ TEST_F(EngineConverterTest, CommitHead) {
   EXPECT_EQ(result2.key(), "いうえ");
   preedit = composer_->GetStringForPreedit();
   EXPECT_EQ(preedit, "お");
-
-  EXPECT_STATS_NOT_EXIST("Commit");
-  EXPECT_STATS_NOT_EXIST("CommitFromComposition");
 }
 
 TEST_F(EngineConverterTest, CommandCandidate) {

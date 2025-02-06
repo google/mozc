@@ -54,9 +54,7 @@
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/transliteration/transliteration.gyp:transliteration',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:keymap',
-        'session_base.gyp:session_usage_stats_util',
         'session_internal',
       ],
     },
@@ -96,7 +94,6 @@
       'type': 'static_library',
       'sources': [
         'session_handler.cc',
-        'session_observer_handler.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
@@ -108,7 +105,6 @@
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:engine_builder_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:user_dictionary_storage_proto',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         ':session_watch_dog',
         'session_base.gyp:keymap',
       ],
@@ -129,7 +125,6 @@
       'dependencies': [
         ':session',
         ':session_handler',
-        ':session_usage_observer',
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/base/base.gyp:number_util',
@@ -138,23 +133,6 @@
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
-      ],
-    },
-    {
-      'target_name': 'session_usage_observer',
-      'type': 'static_library',
-      'hard_dependency': 1,
-      'sources': [
-        'session_usage_observer.cc',
-      ],
-      'dependencies': [
-        '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
-        '<(mozc_oss_src_dir)/base/base.gyp:base',
-        '<(mozc_oss_src_dir)/base/base.gyp:number_util',
-        '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
-        '<(mozc_oss_src_dir)/protocol/protocol.gyp:state_proto',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats_protocol',
       ],
     },
     {
@@ -167,11 +145,9 @@
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats_uploader',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:state_proto',
         'session_handler',
-        'session_usage_observer',
       ],
     },
     {

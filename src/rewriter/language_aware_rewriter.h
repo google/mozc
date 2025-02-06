@@ -53,8 +53,6 @@ class LanguageAwareRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
-  void Finish(const ConversionRequest &request, Segments *segments) override;
-
  private:
   // Fills the raw text if the query does not look like Japanese.
   bool FillRawText(const ConversionRequest &request, Segments *segments) const;

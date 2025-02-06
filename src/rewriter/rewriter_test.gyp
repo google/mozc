@@ -87,7 +87,6 @@
         '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',	
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'calculator/calculator.gyp:calculator_mock',
         'rewriter.gyp:rewriter',
       ],
@@ -132,7 +131,6 @@
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'rewriter.gyp:rewriter',
       ],
       'variables': {
@@ -153,7 +151,6 @@
         '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',	
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
-        '<(mozc_oss_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'rewriter.gyp:rewriter',
       ],
       'variables': {

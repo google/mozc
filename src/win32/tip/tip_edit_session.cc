@@ -73,7 +73,6 @@ using Candidate = ::mozc::commands::CandidateWindow_Candidate;
 using CompositionMode = ::mozc::commands::CompositionMode;
 using SpecialKey = ::mozc::commands::KeyEvent_SpecialKey;
 using CommandType = ::mozc::commands::SessionCommand::CommandType;
-using UsageStatsEvent = ::mozc::commands::SessionCommand::UsageStatsEvent;
 
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
@@ -722,23 +721,6 @@ bool TipEditSession::OnRendererCallbackAsync(TipTextService *text_service,
       command.set_type(type);
       command.set_id(candidate_id);
       return OnSessionCommandAsync(text_service, context, command);
-    }
-    case SessionCommand::USAGE_STATS_EVENT: {
-      const UsageStatsEvent event_id = static_cast<UsageStatsEvent>(lparam);
-      TipPrivateContext *private_context =
-          text_service->GetPrivateContext(context);
-      if (private_context == nullptr) {
-        return false;
-      }
-      SessionCommand command;
-      command.set_type(type);
-      command.set_usage_stats_event(event_id);
-      Output output_ignored;  // Discard the response in this case.
-      if (!private_context->GetClient()->SendCommand(command,
-                                                     &output_ignored)) {
-        return false;
-      }
-      return true;
     }
     default:
       return false;

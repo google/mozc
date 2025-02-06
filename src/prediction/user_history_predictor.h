@@ -499,8 +499,6 @@ class UserHistoryPredictor : public PredictorInterface {
   // such like password.
   bool IsPrivacySensitive(const Segments *segments) const;
 
-  void MaybeRecordUsageStats(const Segments &segments) const;
-
   // Removes history entries when the selected ratio is under the threshold.
   // Selected ratio:
   //  (# of candidate committed) / (# of candidate shown on commit event)
