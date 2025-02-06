@@ -167,7 +167,7 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   UserSegmentHistoryRewriter *CreateUserSegmentHistoryRewriter() const {
-    return new UserSegmentHistoryRewriter(&pos_matcher_, pos_group_.get());
+    return new UserSegmentHistoryRewriter(pos_matcher_, *pos_group_);
   }
 
   void SetNumberForm(Config::CharacterForm form) {

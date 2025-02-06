@@ -49,8 +49,8 @@ namespace mozc {
 
 class UserSegmentHistoryRewriter : public RewriterInterface {
  public:
-  UserSegmentHistoryRewriter(const dictionary::PosMatcher *pos_matcher,
-                             const dictionary::PosGroup *pos_group);
+  UserSegmentHistoryRewriter(const dictionary::PosMatcher &pos_matcher,
+                             const dictionary::PosGroup &pos_group);
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;

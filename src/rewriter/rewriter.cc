@@ -131,7 +131,7 @@ Rewriter::Rewriter(const engine::Modules &modules) {
   const DataManager &data_manager = modules.GetDataManager();
   const dictionary::DictionaryInterface &dictionary = *modules.GetDictionary();
   const dictionary::PosMatcher &pos_matcher = *modules.GetPosMatcher();
-  const dictionary::PosGroup *pos_group = modules.GetPosGroup();
+  const dictionary::PosGroup &pos_group = *modules.GetPosGroup();
 
 #ifdef MOZC_USER_DICTIONARY_REWRITER
   AddRewriter(std::make_unique<UserDictionaryRewriter>());
@@ -158,7 +158,7 @@ Rewriter::Rewriter(const engine::Modules &modules) {
   if (absl::GetFlag(FLAGS_use_history_rewriter)) {
     AddRewriter(std::make_unique<UserBoundaryHistoryRewriter>());
     AddRewriter(
-        std::make_unique<UserSegmentHistoryRewriter>(&pos_matcher, pos_group));
+        std::make_unique<UserSegmentHistoryRewriter>(pos_matcher, pos_group));
   }
 
 #ifdef MOZC_DATE_REWRITERS

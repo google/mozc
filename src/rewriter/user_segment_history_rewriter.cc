@@ -492,10 +492,10 @@ bool UserSegmentHistoryRewriter::SortCandidates(
 }
 
 UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
-    const PosMatcher *pos_matcher, const PosGroup *pos_group)
+    const PosMatcher &pos_matcher, const PosGroup &pos_group)
     : storage_(std::make_unique<LruStorage>()),
-      pos_matcher_(pos_matcher),
-      pos_group_(pos_group) {
+      pos_matcher_(&pos_matcher),
+      pos_group_(&pos_group) {
   Reload();
 
   CHECK_EQ(sizeof(uint32_t), sizeof(FeatureValue));
