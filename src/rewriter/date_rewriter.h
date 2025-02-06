@@ -62,8 +62,8 @@ struct DateCandidate {
 class DateRewriter : public RewriterInterface {
  public:
   DateRewriter() = default;
-  explicit DateRewriter(const dictionary::DictionaryInterface *dictionary)
-      : dictionary_(dictionary) {}
+  explicit DateRewriter(const dictionary::DictionaryInterface &dictionary)
+      : dictionary_(&dictionary) {}
 
   int capability(const ConversionRequest &request) const override;
 

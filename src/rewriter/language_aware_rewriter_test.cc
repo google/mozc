@@ -154,7 +154,7 @@ constexpr auto IsLangAwareCandidate =
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
   MockDictionary dictionary;
   LanguageAwareRewriter rewriter(PosMatcher(data_manager_.GetPosMatcherData()),
-                                 &dictionary);
+                                 dictionary);
   {
     // "python" is composed to "ｐｙてょｎ", but "python" should be suggested,
     // because alphabet characters are in the middle of the word.
@@ -304,7 +304,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
   MockDictionary dictionary;
   LanguageAwareRewriter rewriter(PosMatcher(data_manager_.GetPosMatcherData()),
-                                 &dictionary);
+                                 dictionary);
 
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionTriggered");
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionCommitted");
@@ -368,7 +368,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
 TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
   MockDictionary dictionary;
   LanguageAwareRewriter rewriter(PosMatcher(data_manager_.GetPosMatcherData()),
-                                 &dictionary);
+                                 dictionary);
   {
     // "1d*=" is composed to "１ｄ＊＝", which are the full width ascii
     // characters of "1d*=". We do not want to rewrite full width ascii to
@@ -413,7 +413,7 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
 
   MockDictionary dictionary;
   LanguageAwareRewriter rewriter(PosMatcher(data_manager_.GetPosMatcherData()),
-                                 &dictionary);
+                                 dictionary);
   for (const auto &param : kParams) {
     commands::Request request;
     request.set_language_aware_input(

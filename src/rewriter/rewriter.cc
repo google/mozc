@@ -129,7 +129,7 @@ namespace mozc {
 
 Rewriter::Rewriter(const engine::Modules &modules) {
   const DataManager &data_manager = modules.GetDataManager();
-  const dictionary::DictionaryInterface *dictionary = modules.GetDictionary();
+  const dictionary::DictionaryInterface &dictionary = *modules.GetDictionary();
   const dictionary::PosMatcher &pos_matcher = *modules.GetPosMatcher();
   const dictionary::PosGroup *pos_group = modules.GetPosGroup();
 

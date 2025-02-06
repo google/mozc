@@ -54,7 +54,7 @@ namespace mozc {
 class UsageRewriter : public RewriterInterface {
  public:
   UsageRewriter(const DataManager &data_manager,
-                const dictionary::DictionaryInterface *dictionary);
+                const dictionary::DictionaryInterface &dictionary);
   ~UsageRewriter() override = default;
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;

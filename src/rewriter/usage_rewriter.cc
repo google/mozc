@@ -54,9 +54,9 @@ namespace mozc {
 using ::mozc::dictionary::DictionaryInterface;
 
 UsageRewriter::UsageRewriter(const DataManager &data_manager,
-                             const DictionaryInterface *dictionary)
+                             const DictionaryInterface &dictionary)
     : pos_matcher_(data_manager.GetPosMatcherData()),
-      dictionary_(dictionary),
+      dictionary_(&dictionary),
       base_conjugation_suffix_(nullptr) {
   absl::string_view base_conjugation_suffix_data;
   absl::string_view conjugation_suffix_data;

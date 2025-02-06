@@ -117,11 +117,11 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   UsageRewriter *CreateUsageRewriter() const {
-    return new UsageRewriter(*data_manager_, user_dictionary_.get());
+    return new UsageRewriter(*data_manager_, *user_dictionary_);
   }
 
   UsageRewriter *CreateUsageRewriterWithTestDataManager() const {
-    return new UsageRewriter(*test_data_manager_, user_dictionary_.get());
+    return new UsageRewriter(*test_data_manager_, *user_dictionary_);
   }
 
   static ConversionRequest ConvReq(const config::Config &config,

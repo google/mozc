@@ -53,8 +53,8 @@ using dictionary::DictionaryInterface;
 using dictionary::PosMatcher;
 
 LanguageAwareRewriter::LanguageAwareRewriter(
-    const PosMatcher &pos_matcher, const DictionaryInterface *dictionary)
-    : unknown_id_(pos_matcher.GetUnknownId()), dictionary_(dictionary) {}
+    const PosMatcher &pos_matcher, const DictionaryInterface &dictionary)
+    : unknown_id_(pos_matcher.GetUnknownId()), dictionary_(&dictionary) {}
 
 LanguageAwareRewriter::~LanguageAwareRewriter() = default;
 

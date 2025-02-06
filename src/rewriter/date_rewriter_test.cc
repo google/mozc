@@ -1124,7 +1124,7 @@ TEST_F(DateRewriterTest, ExtraFormatTest) {
       .WillOnce(InvokeCallbackWithUserDictionaryToken{"{YEAR}{MONTH}{DATE}"});
 
   MockConverter converter;
-  DateRewriter rewriter(&dictionary);
+  DateRewriter rewriter(dictionary);
 
   Segments segments;
   InitSegment("きょう", "今日", &segments);
@@ -1158,7 +1158,7 @@ TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
                 LookupExact(StrEq(DateRewriter::kExtraFormatKey), _, _))
         .WillOnce(InvokeCallbackWithUserDictionaryToken{std::string(input)});
     MockConverter converter;
-    DateRewriter rewriter(&dictionary);
+    DateRewriter rewriter(dictionary);
     Segments segments;
     InitSegment("きょう", "今日", &segments);
     const ConversionRequest request;
@@ -1278,7 +1278,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(RewriteAdTest, MockConverter) {
   const RewriteAdData &data = GetParam();
   MockDictionary dictionary;
-  DateRewriter rewriter(&dictionary);
+  DateRewriter rewriter(dictionary);
   Segments segments;
   for (const auto &[key, value] : data.segments) {
     AppendSegment(key, value, &segments);
@@ -1314,7 +1314,7 @@ TEST_P(RewriteAdTest, MockConverter) {
 // Test if `Segments::set_resized(true)` prevents merging segments.
 TEST_F(DateRewriterTest, RewriteAdResizedSegments) {
   MockDictionary dictionary;
-  DateRewriter rewriter(&dictionary);
+  DateRewriter rewriter(dictionary);
   Segments segments;
   InitSegment("へいせい", "平成", &segments);
   AppendSegment("23", "23", &segments);

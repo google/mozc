@@ -2309,7 +2309,7 @@ TEST_F(ConverterTest, IntegrationWithDateRewriter) {
   // Since DateRewriter is not used in some build targets, the test needs to
   // explicitly add it to the converter.
   std::unique_ptr<Converter> converter = CreateConverter(
-      std::make_unique<DateRewriter>(&dictionary), STUB_PREDICTOR);
+      std::make_unique<DateRewriter>(dictionary), STUB_PREDICTOR);
 
   {
     Segments segments;
