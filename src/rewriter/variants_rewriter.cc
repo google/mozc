@@ -157,16 +157,16 @@ void VariantsRewriter::SetDescriptionForPrediction(const PosMatcher pos_matcher,
 }
 
 // static
-void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
-                                      int description_type,
-                                      Candidate *candidate) {
+std::string VariantsRewriter::GetDescription(const PosMatcher pos_matcher,
+                                             int description_type,
+                                             const Candidate &candidate) {
   absl::string_view character_form_message;
   std::vector<absl::string_view> pieces;
 
   // Add Character form.
   if (description_type & CHARACTER_FORM) {
     const Util::ScriptType type =
-        Util::GetScriptTypeWithoutSymbols(candidate->value);
+        Util::GetScriptTypeWithoutSymbols(candidate.value);
     switch (type) {
       case Util::HIRAGANA:
         character_form_message = kHiragana;
@@ -205,7 +205,7 @@ void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
         description_type &= ~FULL_HALF_WIDTH;
         break;
       case Util::UNKNOWN_SCRIPT:  // mixed character
-        if (HasCharacterFormDescription(candidate->value)) {
+        if (HasCharacterFormDescription(candidate.value)) {
           description_type |= FULL_HALF_WIDTH;
         } else {
           description_type &= ~FULL_HALF_WIDTH;
@@ -220,11 +220,11 @@ void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
   // If candidate already has a description, clear it.
   // Currently, character_form_message is treated as a "default"
   // description.
-  if (!candidate->description.empty()) {
+  if (!candidate.description.empty()) {
     character_form_message = absl::string_view();
   }
 
-  const Util::FormType form = Util::GetFormType(candidate->value);
+  const Util::FormType form = Util::GetFormType(candidate.value);
   // full/half char description
   if (description_type & FULL_HALF_WIDTH) {
     switch (form) {
@@ -253,35 +253,34 @@ void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
   }
 
   // add main message
-  if (candidate->value == "\\" ||
-      candidate->value == "＼") {  // full-width backslash
-    // if "\" (half-width backslash) or "＼" ()
+  if (candidate.value == "\\" || candidate.value == "＼") {
+    // if "\" (half-width backslash) or "＼" (full-width backslash)
     pieces.push_back("バックスラッシュ");
-  } else if (candidate->value == "¥") {
+  } else if (candidate.value == "¥") {
     // if "¥" (half-width Yen sign), append kYenKigou.
     pieces.push_back(kYenKigou);
-  } else if (candidate->value == "￥") {
+  } else if (candidate.value == "￥") {
     // if "￥" (full-width Yen sign), append only kYenKigou
     pieces.push_back(kYenKigou);
-  } else if (candidate->value == "~") {
+  } else if (candidate.value == "~") {
     pieces.push_back("チルダ");
-  } else if (!candidate->description.empty()) {
-    pieces.push_back(candidate->description);
+  } else if (!candidate.description.empty()) {
+    pieces.push_back(candidate.description);
   }
 
   // The following description tries to overwrite existing description.
   // TODO(taku): reconsider this behavior.
   // Zipcode description
-  if ((description_type & ZIPCODE) && pos_matcher.IsZipcode(candidate->lid) &&
-      candidate->lid == candidate->rid) {
-    if (!candidate->content_key.empty()) {
-      pieces = {candidate->content_key};
+  if ((description_type & ZIPCODE) && pos_matcher.IsZipcode(candidate.lid) &&
+      candidate.lid == candidate.rid) {
+    if (!candidate.content_key.empty()) {
+      pieces = {candidate.content_key};
     } else {
       pieces.clear();
     }
     // Append default description because it may contain extra description.
-    if (!candidate->description.empty()) {
-      pieces.push_back(candidate->description);
+    if (!candidate.description.empty()) {
+      pieces.push_back(candidate.description);
     }
   }
 
@@ -289,19 +288,35 @@ void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
   // TODO(taku): reconsider this behavior.
   // Spelling Correction description
   if ((description_type & SPELLING_CORRECTION) &&
-      (candidate->attributes & Candidate::SPELLING_CORRECTION)) {
-    // Add prefix to distinguish this candidate.
-    candidate->prefix = "→ ";
+      (candidate.attributes & Candidate::SPELLING_CORRECTION)) {
     // Append default description because it may contain extra description.
-    if (candidate->description.empty()) {
+    if (candidate.description.empty()) {
       pieces = {kDidYouMean};
     } else {
-      pieces = {kDidYouMean, candidate->description};
+      pieces = {kDidYouMean, candidate.description};
     }
   }
+  return absl::StrJoin(pieces, " ");
+}
 
+// static
+absl::string_view VariantsRewriter::GetPrefix(const int description_type,
+                                              const Candidate &candidate) {
+  if ((description_type & SPELLING_CORRECTION) &&
+      (candidate.attributes & Candidate::SPELLING_CORRECTION)) {
+    // Add prefix to distinguish this candidate.
+    return "→ ";
+  }
+  return "";
+}
+
+void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
+                                      int description_type,
+                                      Candidate *candidate) {
   // set new description
-  candidate->description = absl::StrJoin(pieces, " ");
+  candidate->description =
+      GetDescription(pos_matcher, description_type, *candidate);
+  candidate->prefix = GetPrefix(description_type, *candidate);
   candidate->attributes |= Candidate::NO_EXTRA_DESCRIPTION;
 }
 

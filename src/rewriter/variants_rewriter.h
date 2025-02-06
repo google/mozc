@@ -131,6 +131,11 @@ class VariantsRewriter : public RewriterInterface {
     SELECT_VARIANT = 1,  // Select preferred form
   };
 
+  static std::string GetDescription(dictionary::PosMatcher pos_matcher,
+                                    int description_type,
+                                    const Segment::Candidate &candidate);
+  static absl::string_view GetPrefix(int description_type,
+                                     const Segment::Candidate &candidate);
   static void SetDescription(dictionary::PosMatcher pos_matcher,
                              int description_type,
                              Segment::Candidate *candidate);
