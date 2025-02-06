@@ -245,4 +245,4 @@ class EngineConverterInterface {
 }  // namespace engine
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_SESSION_CONVERTER_INTERFACE_H_
+#endif  // MOZC_ENGINE_SESSION_CONVERTER_INTERFACE_H_

@@ -103,9 +103,9 @@
 #include "rewriter/command_rewriter.h"
 #endif  // MOZC_COMMAND_REWRITER
 
-#ifdef MOZC_DATA_REWRITER
+#ifdef MOZC_DATE_REWRITER
 #include "rewriter/date_rewriter.h"
-#endif  // MOZC_DATA_REWRITER
+#endif  // MOZC_DATE_REWRITER
 
 #ifdef MOZC_FORTUNE_REWRITER
 #include "rewriter/fortune_rewriter.h"
@@ -161,13 +161,13 @@ Rewriter::Rewriter(const engine::Modules &modules) {
         std::make_unique<UserSegmentHistoryRewriter>(pos_matcher, pos_group));
   }
 
-#ifdef MOZC_DATE_REWRITERS
+#ifdef MOZC_DATE_REWRITER
   AddRewriter(std::make_unique<DateRewriter>(dictionary));
-#endif  // MOZC_DATE_REWRITERS
+#endif  // MOZC_DATE_REWRITER
 
-#ifdef MOZC_FORTUNE_REWRITERS
+#ifdef MOZC_FORTUNE_REWRITER
   AddRewriter(std::make_unique<FortuneRewriter>());
-#endif  // MOZC_FORTUNE_REWRITERS
+#endif  // MOZC_FORTUNE_REWRITER
 
 #ifdef MOZC_COMMAND_REWRITER
   AddRewriter(std::make_unique<CommandRewriter>());
