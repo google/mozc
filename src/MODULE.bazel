@@ -90,26 +90,20 @@ use_repo(cc_configure, "local_config_cc")
 
 register_toolchains("@local_config_cc//:all")
 
-# Android NDK rules (0.1.2 2024-07-23)
+# Android NDK rules (0.1.3 2025-01-31)
 # https://github.com/bazelbuild/rules_android_ndk
 bazel_dep(
     name = "rules_android_ndk",
-    version = "0.1.2",
+    version = "0.1.3",
 )
 single_version_override(
     module_name = "rules_android_ndk",
-    # Bazel's built-in patch engine cannot deal with a patch file that affects
-    # multiple files. This is why we have two separate patch files here.
-    # https://github.com/bazelbuild/bazel/issues/10267
     patches = [
-        # Look like this should have been included in the following PR.
-        # https://github.com/bazelbuild/rules_android_ndk/pull/37
-        "bazel/rules_android_ndk.allow_empty_glob.patch",
         # Might be removed after the folloing PR.
         # https://github.com/bazelbuild/rules_android_ndk/pull/63
         "bazel/rules_android_ndk.patch",
     ],
-    version = "0.1.2",
+    version = "0.1.3",
 )
 
 android_ndk_repository_extension = use_extension(
