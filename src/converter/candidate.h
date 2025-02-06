@@ -55,7 +55,10 @@
 namespace mozc {
 namespace converter {
 
-struct Candidate {
+class Candidate {
+ public:
+  Candidate() = default;
+
   // LINT.IfChange
   enum Attribute {
     DEFAULT_ATTRIBUTE = 0,
