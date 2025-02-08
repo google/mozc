@@ -79,7 +79,6 @@
         'candidate.cc',
         'candidate_filter.cc',
         'nbest_generator.cc',
-        'node_list_builder.cc',
         'segments.cc',
       ],
       'dependencies': [

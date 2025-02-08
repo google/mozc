@@ -43,34 +43,18 @@
 
 namespace mozc {
 
-// Spatial cost penalty added to the token expanded via
-// the legacy dictionary-based variant handler. We currently add large cost so
-// the variant expansion happen only when the counter examples don't exist.
-inline int32_t GetLegacySpatialCostPenalty() {
-  static constexpr int32_t kLegacySpatialCostPenalty = 20000;
-  return kLegacySpatialCostPenalty;
-}
-
 // Spatial cost penalty per modification. We are going to
 // use the moderate penalty to increase the coverage, and re-calculate
 // the actual penalty with new typing correction module.
 // Per-modification penalty allows to recompute the added penalty
 // from the actual output of key by counting different characters.
 inline int32_t GetPerExpansionSpatialCostPenalty() {
-  static constexpr int32_t kPerExpansionSpatialCostPenalty = 2000;
+  static constexpr int32_t kPerExpansionSpatialCostPenalty = 2500;
   return kPerExpansionSpatialCostPenalty;
 }
 
-// Setting/Getting experimental flags to legacy typing correction handling.
-void SetTypingCorrectionLegacyExpansionMode(int32_t mode);
-
-int32_t GetTypingCorrectionLegacyExpansionMode();
-
 inline int32_t GetSpatialCostPenalty(int num_expanded) {
-  if (num_expanded == 0) return 0;
-  return GetTypingCorrectionLegacyExpansionMode() >= 3
-             ? num_expanded * GetPerExpansionSpatialCostPenalty()
-             : GetLegacySpatialCostPenalty();
+  return num_expanded * GetPerExpansionSpatialCostPenalty();
 }
 
 // Provides basic functionality for building a list of nodes.

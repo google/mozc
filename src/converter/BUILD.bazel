@@ -138,7 +138,6 @@ mozc_cc_library(
 
 mozc_cc_library(
     name = "node_list_builder",
-    srcs = ["node_list_builder.cc"],
     hdrs = ["node_list_builder.h"],
     deps = [
         ":node",
@@ -146,6 +145,7 @@ mozc_cc_library(
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
