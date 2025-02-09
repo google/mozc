@@ -43,6 +43,9 @@ build:compiler_msvc_like --copt "/J" --host_copt "/J"
 build:compiler_msvc_like --copt "/utf-8" --host_copt "/utf-8"
 build:compiler_msvc_like --cxxopt "/J" --host_cxxopt "/J"
 build:compiler_msvc_like --cxxopt "/utf-8" --host_cxxopt "/utf-8"
+## See https://github.com/protocolbuffers/protobuf/issues/20085
+## This can be removed if we can switch to clang-cl for Windows
+build:compiler_msvc_like --define=protobuf_allow_msvc=true
 
 ## Linux specific options
 build:linux_env --build_tag_filters=-nolinux --copt "-fPIC"
