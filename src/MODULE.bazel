@@ -2,39 +2,28 @@
 # To use Bzlmod, you need to specify --enable_bzlmod to the Bazel command or modify .bazelrc.
 module(name = "mozc")
 
-# abseil-cpp with patches for Bazel 8.0.0 is used instead of the local Abseil in third_party/.
-# Otherwise, `bazel fetch` will fail with the error: "cc_configure_extension no longer available".
-# References
-#   * https://github.com/bazelbuild/bazel/issues/24426
-#   * https://github.com/bazelbuild/bazel-central-registry/pull/3320
+# absl-cpp: 2025-02-04
+# https://github.com/abseil/abseil-cpp
 bazel_dep(
     name = "abseil-cpp",
-    version = "20240722.0.bcr.2",
+    version = "20250127.0",
     repo_name = "com_google_absl",
 )
 
-# This is also workaround for the above issue bazel/issues/24426.
-# This bazel_dep should be removed after the issue is fixed.
-bazel_dep(
-    name = "re2",
-    version = "2024-07-02.bcr.1",
-)
+# protobuf: 29.3 2025-01-09
+# https://github.com/protocolbuffers/protobuf
 bazel_dep(
     name = "protobuf",
+    version = "29.3",
     repo_name = "com_google_protobuf",
 )
-local_path_override(
-    module_name = "protobuf",
-    path = "third_party/protobuf",
-)
 
+# googletest: 1.16.0 2025-02-08
+# https://github.com/google/googletest
 bazel_dep(
     name = "googletest",
+    version = "1.16.0",
     repo_name = "com_google_googletest",
-)
-local_path_override(
-    module_name = "googletest",
-    path = "third_party/gtest",
 )
 
 # platforms: 0.0.10 2024-04-26
