@@ -37,8 +37,6 @@
         'encrypted_string_storage.cc',
         'existence_filter.cc',
         'lru_storage.cc',
-        'registry.cc',
-        'tiny_storage.cc',
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',

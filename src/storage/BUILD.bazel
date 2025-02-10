@@ -133,79 +133,6 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "storage_interaface",
-    hdrs = ["storage_interface.h"],
-    deps = ["//base:port"],
-)
-
-mozc_cc_library(
-    name = "tiny_storage",
-    srcs = ["tiny_storage.cc"],
-    hdrs = ["tiny_storage.h"],
-    deps = [
-        ":storage_interaface",
-        "//base:bits",
-        "//base:file_stream",
-        "//base:file_util",
-        "//base:mmap",
-        "//base:vlog",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "tiny_storage_test",
-    size = "small",
-    srcs = ["tiny_storage_test.cc"],
-    deps = [
-        ":storage_interaface",
-        ":tiny_storage",
-        "//base/file:temp_dir",
-        "//testing:gunit_main",
-        "//testing:mozctest",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_library(
-    name = "registry",
-    srcs = ["registry.cc"],
-    hdrs = ["registry.h"],
-    deps = [
-        ":storage_interaface",
-        ":tiny_storage",
-        "//base:bits",
-        "//base:file_util",
-        "//base:port",
-        "//base:singleton",
-        "//base:system_util",
-        "//base:vlog",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
-    ],
-)
-
-mozc_cc_test(
-    name = "registry_test",
-    size = "small",
-    srcs = ["registry_test.cc"],
-    deps = [
-        ":registry",
-        "//testing:gunit_main",
-        "//testing:mozctest",
-    ],
-)
-
-mozc_cc_library(
     name = "encrypted_string_storage",
     srcs = ["encrypted_string_storage.cc"],
     hdrs = ["encrypted_string_storage.h"],
@@ -228,7 +155,9 @@ mozc_cc_test(
     name = "encrypted_string_storage_test",
     size = "small",
     srcs = ["encrypted_string_storage_test.cc"],
-    tags = ["nowin"],  # TODO(yuryu): depends on //base:encryptor
+    tags = [
+        "nowin",
+    ],  # TODO(yuryu): depends on //base:encryptor
     deps = [
         ":encrypted_string_storage",
         "//base:file_stream",

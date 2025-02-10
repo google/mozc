@@ -65,7 +65,6 @@
 #include "protocol/config.pb.h"
 #include "request/request_test_util.h"
 #include "session/session_handler.h"
-#include "storage/registry.h"
 
 namespace mozc {
 namespace session {
@@ -335,7 +334,6 @@ void SessionHandlerInterpreter::ClearState() {
 
   // Some destructors may save the state on storages. To clear the state, we
   // explicitly call destructors before clearing storages.
-  storage::Registry::Clear();
   FileUtil::UnlinkOrLogError(
       ConfigFileStream::GetFileName("user://boundary.db"));
   FileUtil::UnlinkOrLogError(

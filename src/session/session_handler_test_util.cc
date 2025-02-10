@@ -41,7 +41,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_handler.h"
-#include "storage/registry.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
@@ -142,7 +141,6 @@ void SessionHandlerTestBase::ClearState() {
 
   // Some destructors may save the state on storages. To clear the state, we
   // explicitly call destructors before clearing storages.
-  storage::Registry::Clear();
   FileUtil::UnlinkOrLogError(
       ConfigFileStream::GetFileName("user://boundary.db"));
   FileUtil::UnlinkOrLogError(
