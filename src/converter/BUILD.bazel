@@ -786,6 +786,7 @@ mozc_cc_library(
 
 mozc_cc_binary(
     name = "quality_regression_main",
+    testonly = 1,
     srcs = ["quality_regression_main.cc"],
     deps = [
         ":quality_regression_util",
@@ -794,11 +795,14 @@ mozc_cc_binary(
         "//base/file:temp_dir",
         "//engine",
         "//engine:eval_engine_factory",
+        "//protocol:commands_cc_proto",
+        "//request:request_test_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/types:span",
     ],
 )

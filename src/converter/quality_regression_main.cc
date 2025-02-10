@@ -39,6 +39,7 @@
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/file/temp_dir.h"
 #include "base/init_mozc.h"
@@ -46,6 +47,8 @@
 #include "converter/quality_regression_util.h"
 #include "engine/engine.h"
 #include "engine/eval_engine_factory.h"
+#include "protocol/commands.pb.h"
+#include "request/request_test_util.h"
 
 ABSL_FLAG(std::vector<std::string>, test_files, {}, "regression test files");
 ABSL_FLAG(std::string, data_file, "", "engine data file");
@@ -60,13 +63,20 @@ using ::mozc::TempDirectory;
 using ::mozc::quality_regression::QualityRegressionUtil;
 
 absl::Status Run(std::ostream &out, const Engine &engine,
+                 absl::string_view engine_type,
                  absl::Span<const QualityRegressionUtil::TestItem> items) {
   QualityRegressionUtil util(engine.GetConverter());
+  if (engine_type == "mobile") {
+    mozc::commands::Request request;
+    mozc::request_test_util::FillMobileRequest(&request);
+    util.SetRequest(request);
+  }
   for (const QualityRegressionUtil::TestItem &item : items) {
     std::string actual_value;
     const absl::StatusOr<bool> result =
         util.ConvertAndTest(item, &actual_value);
     if (!result.ok()) {
+      LOG(INFO) << "Failed to convert: " << item.key;
       return result.status();
     }
     out << (result.value() ? "OK:\t" : "FAILED:\t") << item.key << "\t"
@@ -108,9 +118,11 @@ int main(int argc, char **argv) {
   absl::Status status;
   if (!absl::GetFlag(FLAGS_output).empty()) {
     std::ofstream out(absl::GetFlag(FLAGS_output));
-    status = Run(out, *create_result.value(), items);
+    status = Run(out, *create_result.value(), absl::GetFlag(FLAGS_engine_type),
+                 items);
   } else {
-    status = Run(std::cout, *create_result.value(), items);
+    status = Run(std::cout, *create_result.value(),
+                 absl::GetFlag(FLAGS_engine_type), items);
   }
   if (!status.ok()) {
     LOG(ERROR) << status;

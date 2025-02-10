@@ -50,6 +50,7 @@ def evaluation(
         name = evaluation_name,
         srcs = [data_file] + test_files,
         outs = [evaluation_out],
+        testonly = 1,
         cmd = """
             LANG=en_US.UTF8
 
@@ -77,6 +78,7 @@ def evaluation(
             "//base:mozc_version_txt",
         ],
         outs = outs,
+        testonly = 1,
         cmd = """
             $(location //converter:quality_regression) \
                 --version_file="$(location //base:mozc_version_txt)" \
