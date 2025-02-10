@@ -998,6 +998,11 @@ DictionaryPredictionAggregator::GenerateQueryForHandwriting(
     // Skip providing converted candidates for queries including white space.
     return std::nullopt;
   }
+  if (!Util::ContainsScriptType(composition_event.composition_string(),
+                                Util::HIRAGANA)) {
+    // Skip providing converted candidates for queries not including Hiragana.
+    return std::nullopt;
+  }
 
   Segments tmp_segments;
   {

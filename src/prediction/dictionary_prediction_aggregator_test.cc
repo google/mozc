@@ -3242,6 +3242,56 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingT13N) {
   // No "きた", "北"
 }
 
+TEST_F(DictionaryPredictionAggregatorTest, HandwritingNoHiragana) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  MockDictionary *mock_dict = data_and_aggregator->mutable_dictionary();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+  Segments segments;
+  // Handwriting request
+  request_test_util::FillMobileRequestForHandwriting(request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_max_composition_event_to_process(1);
+  {
+    commands::SessionCommand command;
+    commands::SessionCommand::CompositionEvent *composition_event =
+        command.add_composition_events();
+    composition_event->set_composition_string("南");
+    composition_event->set_probability(0.9);
+    composer_->Reset();
+    composer_->SetCompositionsForHandwriting(command.composition_events());
+
+    Segment *seg = segments.add_segment();
+    seg->set_key("南");
+    seg->set_segment_type(Segment::FREE);
+  }
+
+  // reverse conversion will not be called
+  {
+    EXPECT_CALL(
+        *data_and_aggregator->mutable_immutable_converter(),
+        ConvertForRequest(Truly([](const ConversionRequest &request) {
+                            return request.request_type() ==
+                                   ConversionRequest::REVERSE_CONVERSION;
+                          }),
+                          _))
+        .Times(0);
+  }
+
+  EXPECT_CALL(*mock_dict, LookupPredictive(_, _, _)).Times(0);
+  EXPECT_CALL(*mock_dict, LookupExact(_, _, _)).Times(0);
+
+  std::vector<Result> results;
+  const ConversionRequest convreq = CreatePredictionConversionRequest();
+  EXPECT_TRUE(
+      aggregator.AggregatePredictionForRequest(convreq, segments, &results) &
+      UNIGRAM);
+  EXPECT_EQ(results.size(), 1);
+  // composition from handwriting output
+  EXPECT_TRUE(FindResultByKeyValue(results, "南", "南"));
+}
+
 }  // namespace
 }  // namespace prediction
 }  // namespace mozc
