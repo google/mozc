@@ -44,19 +44,31 @@ namespace {
 
 // Mock interfaces for testing.
 MIDL_INTERFACE("A03A80F4-9254-4C8B-AF25-0674FCED18E5")
-IMock1 : public IUnknown { STDMETHOD(Test1)() = 0; };
+IMock1 : public IUnknown {
+  virtual ~IMock1() = default;
+  STDMETHOD(Test1)() = 0;
+};
 
 MIDL_INTERFACE("863EF391-8485-4257-8423-8D919D1AE8DC")
-IMock2 : public IUnknown { STDMETHOD(Test2)() = 0; };
+IMock2 : public IUnknown {
+  virtual ~IMock2() = default;
+  STDMETHOD(Test2)() = 0;
+};
 
 MIDL_INTERFACE("7CC0C082-8CA5-4A87-97C4-4FC14FBCE0B3")
-IDerived : public IMock1 { STDMETHOD(Derived()) = 0; };
+IDerived : public IMock1 {
+  virtual ~IDerived() = default;
+  STDMETHOD(Derived()) = 0;
+};
 
 MIDL_INTERFACE("F2B8DCC5-226C-4123-8F78-2BC36B574629")
-IDerivedDerived : public IDerived{};
+IDerivedDerived : public IDerived { virtual ~IDerivedDerived() = default; };
 
 MIDL_INTERFACE("9C1A7121-BF54-4826-856E-55A90864EE64")
-IRefCount : public IUnknown { STDMETHOD_(ULONG, RefCount)() = 0; };
+IRefCount : public IUnknown {
+  virtual ~IRefCount() = default;
+  STDMETHOD_(ULONG, RefCount)() = 0;
+};
 
 }  // namespace
 
