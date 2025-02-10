@@ -62,9 +62,9 @@ RUN curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/ba
   && chmod u+x /home/mozc_builder/bin/bazelisk
 
 ## Set up Android NDK
-## https://github.com/android/ndk/wiki/Home/90998c4e6080643138a764cb4aa7261261ed766b#ndk-r27b-2024-lts
-RUN curl -LO https://dl.google.com/android/repository/android-ndk-r27b-linux.zip && unzip android-ndk-r27b-linux.zip && rm android-ndk-r27b-linux.zip
-ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r27b
+## https://github.com/android/ndk/wiki/Home/24fe2d7ee3591346e0e8ae615977a15c0a4fba40#ndk-r28
+RUN curl -LO https://dl.google.com/android/repository/android-ndk-r28-linux.zip && unzip android-ndk-r28-linux.zip && rm android-ndk-r28-linux.zip
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r28
 
 # check out Mozc source with submodules
 RUN mkdir /home/mozc_builder/work/mozc
