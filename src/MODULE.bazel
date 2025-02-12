@@ -10,11 +10,12 @@ bazel_dep(
     repo_name = "com_google_absl",
 )
 
-# protobuf: 29.3 2025-01-09
+# protobuf: 29.1 2024-12-04
 # https://github.com/protocolbuffers/protobuf
+# Note, 29.3 was rolled back due to the build failure on Windows.
 bazel_dep(
     name = "protobuf",
-    version = "29.3",
+    version = "29.1",
     repo_name = "com_google_protobuf",
 )
 
