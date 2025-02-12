@@ -3156,7 +3156,7 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwriting) {
       aggregator.AggregatePredictionForRequest(convreq, segments, &results) &
       UNIGRAM);
 
-  EXPECT_EQ(results.size(), 5);
+  EXPECT_GE(results.size(), 5);
   // composition from handwriting output
   EXPECT_TRUE(FindResultByKeyValue(results, "かんじじてん", "かん字じ典"));
   EXPECT_TRUE(FindResultByKeyValue(results, "かlv字じ典", "かlv字じ典"));
@@ -3235,7 +3235,7 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingT13N) {
       aggregator.AggregatePredictionForRequest(convreq, segments, &results) &
       UNIGRAM);
 
-  EXPECT_EQ(results.size(), 2);
+  EXPECT_GE(results.size(), 2);
   // composition from handwriting output
   EXPECT_TRUE(FindResultByKeyValue(results, "きた", "キた"));
   EXPECT_TRUE(FindResultByKeyValue(results, "もた", "もた"));
@@ -3287,9 +3287,65 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingNoHiragana) {
   EXPECT_TRUE(
       aggregator.AggregatePredictionForRequest(convreq, segments, &results) &
       UNIGRAM);
-  EXPECT_EQ(results.size(), 1);
+  EXPECT_GE(results.size(), 1);
   // composition from handwriting output
   EXPECT_TRUE(FindResultByKeyValue(results, "南", "南"));
+}
+
+TEST_F(DictionaryPredictionAggregatorTest, HandwritingRealtime) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+  Segments segments;
+  // Handwriting request
+  request_test_util::FillMobileRequestForHandwriting(request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_max_composition_event_to_process(1);
+  {
+    commands::SessionCommand command;
+    commands::SessionCommand::CompositionEvent *composition_event =
+        command.add_composition_events();
+    composition_event->set_composition_string("ばらが");
+    composition_event->set_probability(0.9);
+    composer_->Reset();
+    composer_->SetCompositionsForHandwriting(command.composition_events());
+
+    Segment *seg = segments.add_segment();
+    seg->set_key("ばらが");
+    seg->set_segment_type(Segment::FREE);
+  }
+
+  // reverse conversion
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("ばらが");
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "ばらが";
+    candidate->value = "薔薇が";
+    candidate->content_key = "ばら";
+    candidate->content_value = "薔薇";
+
+    EXPECT_CALL(*data_and_aggregator->mutable_immutable_converter(),
+                ConvertForRequest(Truly([](const ConversionRequest &request) {
+                                    return request.request_type() ==
+                                           ConversionRequest::PREDICTION;
+                                  }),
+                                  _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+
+  std::vector<Result> results;
+  const ConversionRequest convreq = CreatePredictionConversionRequest();
+  EXPECT_TRUE(
+      aggregator.AggregatePredictionForRequest(convreq, segments, &results) &
+      UNIGRAM);
+
+  EXPECT_GE(results.size(), 2);
+  // composition from handwriting output
+  EXPECT_TRUE(FindResultByKeyValue(results, "ばらが", "ばらが"));
+  EXPECT_TRUE(FindResultByKeyValue(results, "ばらが", "薔薇が"));
 }
 
 }  // namespace

@@ -2189,7 +2189,7 @@ void ImmutableConverter::InsertCandidatesForPrediction(
   const size_t max_candidates_size = request.max_conversion_candidates_size();
 
   if (!request.create_partial_candidates()) {
-    // Desktop (or physical keyboard in Mobile)
+    // Desktop (or physical keyboard / handwriting in Mobile)
     InsertCandidates(request, segments, lattice, group, max_candidates_size,
                      SINGLE_SEGMENT);
     return;

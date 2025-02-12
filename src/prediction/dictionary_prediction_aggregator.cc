@@ -783,6 +783,11 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
   if (segments.conversion_segments_size() == 0) {
     return 0;
   }
+  if (request_util::IsHandwriting(request)) {
+    constexpr size_t kRealtimeCandidatesSizeForHandwriting = 3;
+    return kRealtimeCandidatesSizeForHandwriting;
+  }
+
   const bool is_long_key = IsLongKeyForRealtimeCandidates(segments);
   const size_t max_size =
       GetMaxSizeForRealtimeCandidates(request, segments, is_long_key);
@@ -1895,11 +1900,6 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
 
 bool DictionaryPredictionAggregator::ShouldAggregateRealTimeConversionResults(
     const ConversionRequest &request, const Segments &segments) {
-  if (request_util::IsHandwriting(request)) {
-    // TODO(toshiyuki): Implement the logic for handwriting
-    return false;
-  }
-
   constexpr size_t kMaxRealtimeKeySize = 300;  // 300 bytes in UTF8
   const std::string &key = segments.conversion_segment(0).key();
   if (key.empty() || key.size() >= kMaxRealtimeKeySize) {
