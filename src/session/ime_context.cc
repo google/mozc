@@ -31,89 +31,83 @@
 // a session.
 
 #include "session/ime_context.h"
+#include <memory>
+#include <utility>
 
-#include "absl/log/check.h"
+#include "absl/base/no_destructor.h"
+#include "absl/memory/memory.h"
+#include "absl/time/time.h"
 #include "composer/composer.h"
+#include "composer/table.h"
+#include "config/config_handler.h"
 #include "engine/engine_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "session/keymap.h"
 
 namespace mozc {
 namespace session {
+namespace {
 
-const composer::Composer &ImeContext::composer() const {
-  DCHECK(composer_.get());
-  return *composer_;
+const keymap::KeyMapManager &DefaultKeyMapManager() {
+  static const absl::NoDestructor<keymap::KeyMapManager> kDefaultKeyMapManager;
+  return *kDefaultKeyMapManager;
 }
 
-composer::Composer *ImeContext::mutable_composer() {
-  DCHECK(composer_.get());
-  return composer_.get();
+}  // namespace
+
+ImeContext::CopyableData::CopyableData()
+    : create_time(absl::InfinitePast()),
+      last_command_time(absl::InfinitePast()),
+      request(&commands::Request::default_instance()),
+      config(&config::ConfigHandler::DefaultConfig()),
+      key_map_manager(&DefaultKeyMapManager()),
+      composer(composer::Table::GetDefaultTable(), *request, *config),
+      state(NONE) {
+  key_event_transformer.ReloadConfig(*config);
+}
+
+ImeContext::ImeContext(
+    std::unique_ptr<engine::EngineConverterInterface> converter)
+    : converter_(std::move(converter)) {}
+
+ImeContext::ImeContext(const ImeContext &src) : data_(src.data_) {
+  if (src.converter_) {
+    converter_ = absl::WrapUnique(src.converter().Clone());
+  }
 }
 
 void ImeContext::SetRequest(const commands::Request &request) {
-  request_ = &request;
-  converter_->SetRequest(*request_);
-  composer_->SetRequest(*request_);
+  data_.request = &request;
+  if (converter_) {
+    converter_->SetRequest(*data_.request);
+  }
+  data_.composer.SetRequest(*data_.request);
 }
 
 const commands::Request &ImeContext::GetRequest() const {
-  DCHECK(request_);
-  return *request_;
+  return *data_.request;
 }
 
 void ImeContext::SetConfig(const config::Config &config) {
-  config_ = &config;
+  data_.config = &config;
 
-  DCHECK(converter_.get());
-  converter_->SetConfig(*config_);
+  if (converter_) {
+    converter_->SetConfig(*data_.config);
+  }
 
-  DCHECK(composer_.get());
-  composer_->SetConfig(*config_);
-
-  key_event_transformer_.ReloadConfig(*config_);
+  data_.composer.SetConfig(*data_.config);
+  data_.key_event_transformer.ReloadConfig(*data_.config);
 }
 
-const config::Config &ImeContext::GetConfig() const {
-  DCHECK(config_);
-  return *config_;
-}
+const config::Config &ImeContext::GetConfig() const { return *data_.config; }
 
 void ImeContext::SetKeyMapManager(
     const keymap::KeyMapManager &key_map_manager) {
-  key_map_manager_ = &key_map_manager;
+  data_.key_map_manager = &key_map_manager;
 }
 
 const keymap::KeyMapManager &ImeContext::GetKeyMapManager() const {
-  if (key_map_manager_) {
-    return *key_map_manager_;
-  }
-  static const keymap::KeyMapManager *void_key_map_manager =
-      new keymap::KeyMapManager();
-  return *void_key_map_manager;
+  return *data_.key_map_manager;
 }
-
-// static
-void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
-  DCHECK(dest);
-
-  dest->set_create_time(src.create_time());
-  dest->set_last_command_time(src.last_command_time());
-
-  *dest->mutable_composer() = src.composer();
-  dest->converter_.reset(src.converter().Clone());
-  dest->key_event_transformer_ = src.key_event_transformer_;
-
-  dest->set_state(src.state());
-
-  dest->SetRequest(*src.request_);
-  dest->SetConfig(*src.config_);
-  dest->SetKeyMapManager(src.GetKeyMapManager());
-
-  *dest->mutable_client_capability() = src.client_capability();
-  *dest->mutable_application_info() = src.application_info();
-  *dest->mutable_output() = src.output();
-}
-
 }  // namespace session
 }  // namespace mozc

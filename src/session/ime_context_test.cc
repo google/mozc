@@ -35,12 +35,14 @@
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "engine/engine_converter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "session/keymap.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
@@ -60,13 +62,19 @@ TEST(ImeContextTest, DefaultValues) {
   EXPECT_EQ(context.create_time(), absl::InfinitePast());
   EXPECT_EQ(context.last_command_time(), absl::InfinitePast());
   EXPECT_FALSE(context.mutable_converter());
+  EXPECT_TRUE(context.mutable_composer());
   EXPECT_EQ(context.state(), ImeContext::NONE);
   EXPECT_PROTO_EQ(commands::Request::default_instance(), context.GetRequest());
+  EXPECT_PROTO_EQ(config::ConfigHandler::DefaultConfig(), context.GetConfig());
 }
 
 TEST(ImeContextTest, BasicTest) {
-  ImeContext context;
-  config::Config config;
+  const commands::Request request;
+  const config::Config config;
+  const keymap::KeyMapManager keymap;
+
+  MockConverter converter;
+  ImeContext context(std::make_unique<EngineConverter>(converter));
 
   context.set_create_time(absl::FromUnixSeconds(100));
   EXPECT_EQ(context.create_time(), absl::FromUnixSeconds(100));
@@ -74,19 +82,15 @@ TEST(ImeContextTest, BasicTest) {
   context.set_last_command_time(absl::FromUnixSeconds(12345));
   EXPECT_EQ(context.last_command_time(), absl::FromUnixSeconds(12345));
 
-  const commands::Request request;
-
-  context.set_composer(std::make_unique<Composer>(request, config));
-
-  MockConverter converter;
-  context.set_converter(
-      std::make_unique<EngineConverter>(converter, request, config));
-
   context.set_state(ImeContext::COMPOSITION);
   EXPECT_EQ(context.state(), ImeContext::COMPOSITION);
 
   context.SetRequest(request);
+  context.SetConfig(config);
+  context.SetKeyMapManager(keymap);
   EXPECT_PROTO_EQ(request, context.GetRequest());
+  EXPECT_PROTO_EQ(config, context.GetConfig());
+  EXPECT_EQ(&keymap, &context.GetKeyMapManager());
 
   context.mutable_client_capability()->set_text_deletion(
       commands::Capability::DELETE_PRECEDING_TEXT);
@@ -107,6 +111,8 @@ TEST(ImeContextTest, CopyContext) {
   table.AddRule("na", "な", "");
   const commands::Request request;
   config::Config config;
+  const keymap::KeyMapManager keymap;
+
   config.set_session_keymap(config::Config::CHROMEOS);
 
   MockConverter converter;
@@ -120,53 +126,46 @@ TEST(ImeContextTest, CopyContext) {
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   {
-    ImeContext source;
-    source.set_composer(std::make_unique<Composer>(table, request, config));
-    source.set_converter(
-        std::make_unique<EngineConverter>(converter, request, config));
-
-    ImeContext destination;
-    destination.set_composer(
-        std::make_unique<Composer>(table, request, config));
-    destination.set_converter(
-        std::make_unique<EngineConverter>(converter, request, config));
+    ImeContext source(std::make_unique<EngineConverter>(converter));
+    source.SetRequest(request);
+    source.SetConfig(config);
+    source.SetKeyMapManager(keymap);
+    source.mutable_composer()->SetTable(table);
 
     source.set_state(ImeContext::COMPOSITION);
     source.mutable_composer()->InsertCharacter("a");
     source.mutable_composer()->InsertCharacter("n");
 
-    source.SetConfig(config);
-
     std::string composition = source.composer().GetStringForSubmission();
     EXPECT_EQ(composition, "あｎ");
 
-    ImeContext::CopyContext(source, &destination);
+    ImeContext destination(source);
+
+    EXPECT_PROTO_EQ(source.GetRequest(), destination.GetRequest());
+    EXPECT_PROTO_EQ(source.GetConfig(), destination.GetConfig());
+    EXPECT_EQ(&source.GetKeyMapManager(), &destination.GetKeyMapManager());
     EXPECT_EQ(destination.state(), ImeContext::COMPOSITION);
-    composition = source.composer().GetStringForSubmission();
+    composition = destination.composer().GetStringForSubmission();
     EXPECT_EQ(composition, "あｎ");
   }
 
   {
     constexpr absl::Time kCreateTime = absl::FromUnixSeconds(100);
     constexpr absl::Time kLastCommandTime = absl::FromUnixSeconds(200);
-    ImeContext source;
+
+    ImeContext source(std::make_unique<EngineConverter>(converter));
+    source.SetRequest(request);
+    source.SetConfig(config);
+    source.SetKeyMapManager(keymap);
+    source.mutable_composer()->SetTable(table);
     source.set_create_time(kCreateTime);
     source.set_last_command_time(kLastCommandTime);
-    source.set_composer(std::make_unique<Composer>(table, request, config));
-    source.set_converter(
-        std::make_unique<EngineConverter>(converter, request, config));
-
-    ImeContext destination;
-    destination.set_composer(
-        std::make_unique<Composer>(table, request, config));
-    destination.set_converter(
-        std::make_unique<EngineConverter>(converter, request, config));
 
     source.set_state(ImeContext::CONVERSION);
     source.mutable_composer()->InsertCharacter("a");
     source.mutable_composer()->InsertCharacter("n");
     source.mutable_converter()->Convert(source.composer());
-    const std::string &kQuick = "早い";
+    constexpr absl::string_view kQuick = "早い";
     source.mutable_composer()->set_source_text(kQuick);
 
     std::string composition = source.composer().GetQueryForConversion();
@@ -177,7 +176,7 @@ TEST(ImeContextTest, CopyContext) {
     EXPECT_EQ(output.preedit().segment_size(), 1);
     EXPECT_EQ(output.preedit().segment(0).value(), "庵");
 
-    ImeContext::CopyContext(source, &destination);
+    ImeContext destination(source);
     EXPECT_EQ(destination.create_time(), kCreateTime);
     EXPECT_EQ(destination.last_command_time(), kLastCommandTime);
     EXPECT_EQ(destination.state(), ImeContext::CONVERSION);

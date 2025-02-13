@@ -270,14 +270,14 @@ class Session {
   //   i) Session doesn't own the pointer.
   //  ii) The state of underlying converter will change because it manages user
   //      history, user dictionary, etc.
-  mozc::EngineInterface *engine_;
+  mozc::EngineInterface *engine_ = nullptr;
 
   std::unique_ptr<ImeContext> context_;
 
   // Undo stack. *begin is the oldest, and *back is the newest.
   std::deque<std::unique_ptr<ImeContext>> undo_contexts_;
 
-  void InitContext(ImeContext *context) const;
+  std::unique_ptr<ImeContext> CreateContext() const;
 
   void PushUndoContext();
   void PopUndoContext();

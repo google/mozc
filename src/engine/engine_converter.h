@@ -59,6 +59,7 @@ class EngineConverter : public EngineConverterInterface {
   EngineConverter(const ConverterInterface &converter,
                   const commands::Request &request,
                   const config::Config &config);
+  explicit EngineConverter(const ConverterInterface &converter);
   EngineConverter(const EngineConverter &) = delete;
   EngineConverter &operator=(const EngineConverter &) = delete;
 

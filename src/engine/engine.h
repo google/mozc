@@ -93,11 +93,9 @@ class Engine : public EngineInterface {
     return converter_ ? converter_.get() : minimal_converter_.get();
   }
 
-  std::unique_ptr<engine::EngineConverterInterface> CreateEngineConverter(
-      const commands::Request &request,
-      const config::Config &config) const override {
-    return std::make_unique<engine::EngineConverter>(*GetConverter(), request,
-                                                     config);
+  std::unique_ptr<engine::EngineConverterInterface> CreateEngineConverter()
+      const override {
+    return std::make_unique<engine::EngineConverter>(*GetConverter());
   }
 
   // Functions for Reload, Sync, Wait return true if successfully operated

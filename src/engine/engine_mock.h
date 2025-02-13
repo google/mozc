@@ -48,9 +48,7 @@ class MockEngine : public EngineInterface {
  public:
   MOCK_METHOD(absl::string_view, GetDataVersion, (), (const, override));
   MOCK_METHOD(std::unique_ptr<engine::EngineConverterInterface>,
-              CreateEngineConverter,
-              (const commands::Request &request, const config::Config &config),
-              (const, override));
+              CreateEngineConverter, (), (const, override));
   MOCK_METHOD(bool, Reload, (), (override));
   MOCK_METHOD(bool, Sync, (), (override));
   MOCK_METHOD(bool, Wait, (), (override));

@@ -50,6 +50,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "engine/candidate_list.h"
@@ -104,6 +105,10 @@ int32_t CalculateCursorOffset(absl::string_view committed_text) {
   return Util::IsBracketPairText(committed_text) ? -1 : 0;
 }
 }  // namespace
+
+EngineConverter::EngineConverter(const ConverterInterface &converter)
+    : EngineConverter(converter, commands::Request::default_instance(),
+                      config::ConfigHandler::DefaultConfig()) {}
 
 EngineConverter::EngineConverter(const ConverterInterface &converter,
                                  const Request &request, const Config &config)

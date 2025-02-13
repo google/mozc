@@ -404,6 +404,7 @@ mozc_cc_library(
         "//base:util",
         "//base:vlog",
         "//composer",
+        "//config:config_handler",
         "//converter:converter_interface",
         "//converter:segments",
         "//protocol:candidate_window_cc_proto",

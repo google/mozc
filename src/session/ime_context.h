@@ -50,29 +50,25 @@ namespace session {
 
 class ImeContext final {
  public:
-  ImeContext()
-      : request_(&commands::Request::default_instance()),
-        config_(&config::ConfigHandler::DefaultConfig()),
-        key_map_manager_(nullptr) {}
+  ImeContext() = default;
+  explicit ImeContext(
+      std::unique_ptr<engine::EngineConverterInterface> converter);
+  explicit ImeContext(const ImeContext &src);
 
-  ImeContext(const ImeContext &) = delete;
   ImeContext &operator=(const ImeContext &) = delete;
 
-  absl::Time create_time() const { return create_time_; }
-  void set_create_time(absl::Time create_time) { create_time_ = create_time; }
+  absl::Time create_time() const { return data_.create_time; }
+  void set_create_time(absl::Time create_time) {
+    data_.create_time = create_time;
+  }
 
-  absl::Time last_command_time() const { return last_command_time_; }
+  absl::Time last_command_time() const { return data_.last_command_time; }
   void set_last_command_time(absl::Time last_command_time) {
-    last_command_time_ = last_command_time;
+    data_.last_command_time = last_command_time;
   }
 
-  // Note that before using getter methods,
-  // |composer_| must be set non-null value.
-  const composer::Composer &composer() const;
-  composer::Composer *mutable_composer();
-  void set_composer(std::unique_ptr<composer::Composer> composer) {
-    composer_ = std::move(composer);
-  }
+  const composer::Composer &composer() const { return data_.composer; }
+  composer::Composer *mutable_composer() { return &data_.composer; }
 
   const engine::EngineConverterInterface &converter() const {
     return *converter_;
@@ -80,13 +76,9 @@ class ImeContext final {
   engine::EngineConverterInterface *mutable_converter() {
     return converter_.get();
   }
-  void set_converter(
-      std::unique_ptr<engine::EngineConverterInterface> converter) {
-    converter_ = std::move(converter);
-  }
 
   const KeyEventTransformer &key_event_transformer() const {
-    return key_event_transformer_;
+    return data_.key_event_transformer;
   }
 
   enum State {
@@ -96,8 +88,8 @@ class ImeContext final {
     COMPOSITION = 4,
     CONVERSION = 8,
   };
-  State state() const { return state_; }
-  void set_state(State state) { state_ = state; }
+  State state() const { return data_.state; }
+  void set_state(State state) { data_.state = state; }
 
   void SetRequest(const commands::Request &request);
   const commands::Request &GetRequest() const;
@@ -109,57 +101,67 @@ class ImeContext final {
   const keymap::KeyMapManager &GetKeyMapManager() const;
 
   const commands::Capability &client_capability() const {
-    return client_capability_;
+    return data_.client_capability;
   }
   commands::Capability *mutable_client_capability() {
-    return &client_capability_;
+    return &data_.client_capability;
   }
 
   const commands::ApplicationInfo &application_info() const {
-    return application_info_;
+    return data_.application_info;
   }
   commands::ApplicationInfo *mutable_application_info() {
-    return &application_info_;
+    return &data_.application_info;
   }
 
   // Note that this may not be the latest info: this is likely to be a snapshot
   // of during the precomposition state and may not be updated during
   // composition/conversion state.
-  const commands::Context &client_context() const { return client_context_; }
-  commands::Context *mutable_client_context() { return &client_context_; }
+  const commands::Context &client_context() const {
+    return data_.client_context;
+  }
+  commands::Context *mutable_client_context() { return &data_.client_context; }
 
-  const commands::Output &output() const { return output_; }
-  commands::Output *mutable_output() { return &output_; }
-
-  // Copy |source| context to |destination| context.
-  // TODO(hsumita): Renames it as CopyFrom and make it non-static to keep
-  // consistency with other classes.
-  static void CopyContext(const ImeContext &src, ImeContext *dest);
+  const commands::Output &output() const { return data_.output; }
+  commands::Output *mutable_output() { return &data_.output; }
 
  private:
-  // TODO(team): Actual use of |create_time_| is to keep the time when the
-  // session holding this instance is created and not the time when this
-  // instance is created. We may want to move out |create_time_| from ImeContext
-  // to Session, or somewhere more appropriate.
-  absl::Time create_time_ = absl::InfinitePast();
-  absl::Time last_command_time_ = absl::InfinitePast();
+  // Separate copyable data and non-copyable data to
+  // easily overload copy operator.
+  struct CopyableData {
+    CopyableData();
 
-  std::unique_ptr<composer::Composer> composer_;
+    // TODO(team): Actual use of |create_time| is to keep the time when the
+    // session holding this instance is created and not the time when this
+    // instance is created. We may want to move out |create_time| from
+    // ImeContext to Session, or somewhere more appropriate.
+    absl::Time create_time;
+    absl::Time last_command_time;
+
+    // TODO(team): We want to avoid using raw pointer to share
+    // frequently updated object with large footprint.
+    // Replace them with copy or std::shared_ptr to prevent dangling pointer.
+    const commands::Request *request;
+    const config::Config *config;
+    const keymap::KeyMapManager *key_map_manager;
+
+    composer::Composer composer;
+    KeyEventTransformer key_event_transformer;
+
+    State state;
+    commands::Capability client_capability;
+    commands::ApplicationInfo application_info;
+    commands::Context client_context;
+
+    // Storing the last output consisting of the last result and the
+    // last performed command.
+    commands::Output output;
+  };
+
+  CopyableData data_;
+
+  // converter_ should explicitly be copied via Clone() method.
   std::unique_ptr<engine::EngineConverterInterface> converter_;
-  KeyEventTransformer key_event_transformer_;
-
-  const commands::Request *request_;
-  const config::Config *config_;
-  const keymap::KeyMapManager *key_map_manager_;
-
-  State state_ = NONE;
-  commands::Capability client_capability_;
-  commands::ApplicationInfo application_info_;
-  commands::Context client_context_;
-
-  // Storing the last output consisting of the last result and the
-  // last performed command.
-  commands::Output output_;
 };
 
 }  // namespace session

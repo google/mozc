@@ -58,8 +58,7 @@ class EngineInterface {
   // Creates new session converter.
   // This method is called per input context.
   virtual std::unique_ptr<engine::EngineConverterInterface>
-  CreateEngineConverter(const commands::Request &request,
-                        const config::Config &config) const = 0;
+  CreateEngineConverter() const = 0;
 
   // Gets the version of underlying data set.
   virtual absl::string_view GetDataVersion() const = 0;

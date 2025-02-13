@@ -219,20 +219,13 @@ ImeContext::State GetEffectiveStateForTestSendKey(const commands::KeyEvent &key,
 
 }  // namespace
 
-// TODO(komatsu): Remove these argument by using/making singletons.
 Session::Session(EngineInterface *engine)
-    : engine_(engine), context_(new ImeContext) {
-  InitContext(context_.get());
-}
+    : engine_(engine), context_(CreateContext()) {}
 
-void Session::InitContext(ImeContext *context) const {
+std::unique_ptr<ImeContext> Session::CreateContext() const {
+  auto context = std::make_unique<ImeContext>(engine_->CreateEngineConverter());
   context->set_create_time(Clock::GetAbslTime());
-  context->set_last_command_time(absl::InfinitePast());
-  context->set_composer(std::make_unique<composer::Composer>(
-      composer::Table::GetDefaultTable(), context->GetRequest(),
-      context->GetConfig()));
-  context->set_converter(engine_->CreateEngineConverter(context->GetRequest(),
-                                                        context->GetConfig()));
+
 #ifdef _WIN32
   // On Windows session is started with direct mode.
   // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
@@ -240,10 +233,6 @@ void Session::InitContext(ImeContext *context) const {
 #else   // _WIN32
   context->set_state(ImeContext::PRECOMPOSITION);
 #endif  // _WIN32
-  context->mutable_client_context()->Clear();
-
-  context->SetConfig(context->GetConfig());
-  context->SetKeyMapManager(context->GetKeyMapManager());
 
   // TODO(team): Remove #if based behavior change for cascading window.
   // Tests for session layer (session_handler_scenario_test, etc) can be
@@ -252,14 +241,13 @@ void Session::InitContext(ImeContext *context) const {
     defined(__wasm__)
   context->mutable_converter()->set_use_cascading_window(false);
 #endif  // TARGET_OS_IPHONE || __linux__ || __wasm__
+
+  return context;
 }
 
 void Session::PushUndoContext() {
   // Copy the current context and push it to the undo stack.
-  auto prev_context = std::make_unique<ImeContext>();
-  InitContext(prev_context.get());
-  ImeContext::CopyContext(*context_, prev_context.get());
-  undo_contexts_.push_back(std::move(prev_context));
+  undo_contexts_.emplace_back(std::make_unique<ImeContext>(*context_));
   // If the stack size exceeds the limitation, purge the oldest entries.
   while (undo_contexts_.size() > kMultipleUndoMaxSize) {
     undo_contexts_.pop_front();

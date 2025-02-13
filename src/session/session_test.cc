@@ -500,10 +500,8 @@ class SessionTest : public testing::TestWithTempUserProfile {
   void InitCreateEngineConverterMock(MockEngine *mock_engine,
                                      MockConverter *mock_converter) {
     EXPECT_CALL(*mock_engine, CreateEngineConverter)
-        .WillRepeatedly([mock_converter](const commands::Request &request,
-                                         const config::Config &config) {
-          return std::make_unique<engine::EngineConverter>(*mock_converter,
-                                                           request, config);
+        .WillRepeatedly([mock_converter]() {
+          return std::make_unique<engine::EngineConverter>(*mock_converter);
         });
   }
 
