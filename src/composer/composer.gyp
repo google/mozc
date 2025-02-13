@@ -42,7 +42,6 @@
         'internal/char_chunk.cc',
         'internal/composition.cc',
         'internal/composition_input.cc',
-        'internal/converter.cc',
         'internal/mode_switching_handler.cc',
         'internal/special_key.cc',
         'internal/transliterators.cc',

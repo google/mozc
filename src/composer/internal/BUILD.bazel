@@ -193,29 +193,6 @@ mozc_cc_binary(
 )
 
 mozc_cc_library(
-    name = "converter",
-    srcs = ["converter.cc"],
-    hdrs = ["converter.h"],
-    visibility = [
-    ],  # for mozc_transliterator
-    deps = [
-        "//composer:table",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "converter_test",
-    size = "small",
-    srcs = ["converter_test.cc"],
-    deps = [
-        ":converter",
-        "//composer:table",
-        "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
     name = "mode_switching_handler",
     srcs = ["mode_switching_handler.cc"],
     hdrs = ["mode_switching_handler.h"],
@@ -235,17 +212,6 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ],
-)
-
-mozc_cc_binary(
-    name = "converter_main",
-    srcs = ["converter_main.cc"],
-    deps = [
-        ":converter",
-        "//base:init_mozc",
-        "//composer:table",
-        "@com_google_absl//absl/flags:flag",
     ],
 )
 
