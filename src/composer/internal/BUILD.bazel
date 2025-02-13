@@ -37,12 +37,6 @@ load(
 package(default_visibility = ["//composer:__subpackages__"])
 
 mozc_cc_library(
-    name = "transliterator_interface",
-    hdrs = ["transliterator_interface.h"],
-    deps = ["@com_google_absl//absl/strings"],
-)
-
-mozc_cc_library(
     name = "char_chunk",
     srcs = [
         "char_chunk.cc",
@@ -73,7 +67,6 @@ mozc_cc_library(
     ],
     hdrs = ["transliterators.h"],
     deps = [
-        ":transliterator_interface",
         "//base:japanese_util",
         "//base:singleton",
         "//base:util",
@@ -93,7 +86,6 @@ mozc_cc_test(
         "transliterators_test.cc",
     ],
     deps = [
-        ":transliterator_interface",
         ":transliterators",
         "//testing:gunit_main",
     ],
@@ -204,7 +196,8 @@ mozc_cc_library(
     name = "converter",
     srcs = ["converter.cc"],
     hdrs = ["converter.h"],
-    visibility = [],  # for mozc_transliterator
+    visibility = [
+    ],  # for mozc_transliterator
     deps = [
         "//composer:table",
         "@com_google_absl//absl/strings",

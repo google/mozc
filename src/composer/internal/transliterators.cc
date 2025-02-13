@@ -40,7 +40,6 @@
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "base/vlog.h"
-#include "composer/internal/transliterator_interface.h"
 #include "config/character_form_manager.h"
 
 namespace mozc {
@@ -91,7 +90,7 @@ bool SplitPrimaryString(const size_t position, const absl::string_view primary,
 
 // Singleton class which always uses a converted string rather than a
 // raw string.
-class ConversionStringSelector : public TransliteratorInterface {
+class ConversionStringSelector : public internal::TransliteratorInterface {
  public:
   ~ConversionStringSelector() override = default;
 
@@ -116,7 +115,7 @@ class ConversionStringSelector : public TransliteratorInterface {
 
 // Singleton class which always uses a raw string rather than a
 // converted string.
-class RawStringSelector : public TransliteratorInterface {
+class RawStringSelector : public internal::TransliteratorInterface {
  public:
   ~RawStringSelector() override = default;
 
@@ -134,7 +133,7 @@ class RawStringSelector : public TransliteratorInterface {
   }
 };
 
-class HiraganaTransliterator : public TransliteratorInterface {
+class HiraganaTransliterator : public internal::TransliteratorInterface {
  public:
   ~HiraganaTransliterator() override = default;
 
@@ -157,7 +156,7 @@ class HiraganaTransliterator : public TransliteratorInterface {
   }
 };
 
-class FullKatakanaTransliterator : public TransliteratorInterface {
+class FullKatakanaTransliterator : public internal::TransliteratorInterface {
  public:
   ~FullKatakanaTransliterator() override = default;
 
@@ -182,7 +181,7 @@ class FullKatakanaTransliterator : public TransliteratorInterface {
   }
 };
 
-class HalfKatakanaTransliterator : public TransliteratorInterface {
+class HalfKatakanaTransliterator : public internal::TransliteratorInterface {
  public:
   ~HalfKatakanaTransliterator() override = default;
 
@@ -222,7 +221,7 @@ class HalfKatakanaTransliterator : public TransliteratorInterface {
   }
 };
 
-class HalfAsciiTransliterator : public TransliteratorInterface {
+class HalfAsciiTransliterator : public internal::TransliteratorInterface {
  public:
   ~HalfAsciiTransliterator() override = default;
 
@@ -241,7 +240,7 @@ class HalfAsciiTransliterator : public TransliteratorInterface {
   }
 };
 
-class FullAsciiTransliterator : public TransliteratorInterface {
+class FullAsciiTransliterator : public internal::TransliteratorInterface {
  public:
   ~FullAsciiTransliterator() override = default;
 
@@ -263,7 +262,7 @@ class FullAsciiTransliterator : public TransliteratorInterface {
 }  // namespace
 
 // static
-const TransliteratorInterface *Transliterators::GetTransliterator(
+const internal::TransliteratorInterface *Transliterators::GetTransliterator(
     Transliterator transliterator) {
   MOZC_VLOG(2) << "Transliterators::GetTransliterator:" << transliterator;
   DCHECK(transliterator != LOCAL);

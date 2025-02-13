@@ -34,10 +34,42 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
-#include "composer/internal/transliterator_interface.h"
 
 namespace mozc {
 namespace composer {
+namespace internal {
+class TransliteratorInterface {
+ public:
+  virtual ~TransliteratorInterface() = default;
+
+  // Return the transliterated string of either raw or converted.
+  // Determination of which argument is used depends on the
+  // implementation.
+  //
+  // Expected usage examples:
+  // - HalfKatakanaTransliterator("a", "あ") => "ｱ"
+  // - FullAsciiTransliterator("a", "あ") => "ａ"
+  virtual std::string Transliterate(absl::string_view raw,
+                                    absl::string_view converted) const = 0;
+
+  // Split raw and converted strings based on the transliteration
+  // rule.  If raw or converted could not be deterministically split,
+  // fall back strings are fill and false is returned.  The first
+  // argument, position, is in character (rather than byte).
+  //
+  // Expected usage examples:
+  // - HiraganaTransliterator(1, "kk", "っk") => true
+  //   (raw_lhs, raw_rhs) => ("k", "k")
+  //   (conv_lhs, conv_rhs) => ("っ", "k")
+  // - HalfKatakanaTransliterator(1, "zu", "ず") => false
+  //   (raw_lhs, raw_rhs) => ("す", "゛")  fall back strings.
+  //   (conv_lhs, conv_rhs) => ("す", "゛")
+  virtual bool Split(size_t position, absl::string_view raw,
+                     absl::string_view converted, std::string *raw_lhs,
+                     std::string *raw_rhs, std::string *converted_lhs,
+                     std::string *converted_rhs) const = 0;
+};
+}  // namespace internal
 
 // Factory class providing basic TransliteratorInterface instances.
 class Transliterators {
@@ -68,7 +100,7 @@ class Transliterators {
 
   // Return a singleton instance of a TransliteratorInterface.
   // LOCAL transliterator is not accepted.
-  static const TransliteratorInterface *GetTransliterator(
+  static const internal::TransliteratorInterface *GetTransliterator(
       Transliterator transliterator);
 
   static bool SplitRaw(size_t position, absl::string_view raw,
