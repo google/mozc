@@ -54,10 +54,24 @@ class ConfigHandler {
   // This method returns a *copied* Config instance
   // so use this with caution, especially when custom_keymap_table exists
   // the copy operation against typically 5KB string always happens.
-  static void GetConfig(Config *config);
+  static config::Config GetCopiedConfig();
 
-  // Returns current Config as a unique_ptr.
-  // The same performance note as GetConfig(Config*) applies.
+  // Returns current const Config as a shared_ptr.
+  // The actual config is shared by ConfigHandler and caller unless config
+  // is updated. This method is also thread safe, i.e., it is safe for caller
+  // to use the Config while ConfigHandler is loading another config
+  // asynchronously.
+  // While std::shared_ptr is not recommended in the style guide, we use it to
+  // avoid unintentionally copying Config, which has a large footprint and is
+  // updated asynchronously.
+  static std::shared_ptr<const config::Config> GetSharedConfig();
+
+  // Legacy compatible interfaces.
+  // TODO(taku): Removes them. Uses GetCopiedConfig() and GetSharedConfig().
+  ABSL_DEPRECATED("Use GetCopiedConfig or GetSharedConfig")
+  static void GetConfig(config::Config *config);
+
+  ABSL_DEPRECATED("Use GetCopiedConfig or GetSharedConfig")
   static std::unique_ptr<config::Config> GetConfig();
 
   // Sets config.

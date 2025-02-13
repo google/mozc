@@ -88,14 +88,13 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 #endif  // NDEBUG
   ConfigHandler::SetMetaData(&input);
   ConfigHandler::SetConfig(input);
-  output.Clear();
-  ConfigHandler::GetConfig(&output);
-  std::unique_ptr<config::Config> output2 = ConfigHandler::GetConfig();
+  output = ConfigHandler::GetCopiedConfig();
+  config::Config output2 = ConfigHandler::GetCopiedConfig();
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
-  output2->mutable_general_config()->set_last_modified_time(0);
+  output2.mutable_general_config()->set_last_modified_time(0);
   EXPECT_EQ(absl::StrCat(output), absl::StrCat(input));
-  EXPECT_EQ(absl::StrCat(*output2), absl::StrCat(input));
+  EXPECT_EQ(absl::StrCat(output2), absl::StrCat(input));
 
   ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(false);
@@ -104,22 +103,20 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 #endif  // NDEBUG
   ConfigHandler::SetMetaData(&input);
   ConfigHandler::SetConfig(input);
-  output.Clear();
-  ConfigHandler::GetConfig(&output);
-  output2 = ConfigHandler::GetConfig();
+  output = ConfigHandler::GetCopiedConfig();
+  output2 = ConfigHandler::GetCopiedConfig();
 
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
-  output2->mutable_general_config()->set_last_modified_time(0);
+  output2.mutable_general_config()->set_last_modified_time(0);
   EXPECT_EQ(absl::StrCat(output), absl::StrCat(input));
-  EXPECT_EQ(absl::StrCat(*output2), absl::StrCat(input));
+  EXPECT_EQ(absl::StrCat(output2), absl::StrCat(input));
 
 #if defined(__ANDROID__) && defined(CHANNEL_DEV)
   input.Clear();
   EXPECT_FALSE(input.general_config().has_upload_usage_stats());
   EXPECT_TRUE(ConfigHandler::SetConfig(input));
-  output.Clear();
-  ConfigHandler::GetConfig(&output);
+  output = ConfigHandler::GetCopiedConfig();
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 
@@ -128,8 +125,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_TRUE(input.general_config().has_upload_usage_stats());
   EXPECT_FALSE(input.general_config().upload_usage_stats());
   EXPECT_TRUE(ConfigHandler::SetConfig(input));
-  output.Clear();
-  ConfigHandler::GetConfig(&output);
+  output = ConfigHandler::GetCopiedConfig();
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 #endif  // __ANDROID__ && CHANNEL_DEV
@@ -180,15 +176,17 @@ TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
 
   Clock::SetClockForUnitTest(&clock1);
   ConfigHandler::SetConfig(input);
-  std::unique_ptr<config::Config> output1 = ConfigHandler::GetConfig();
+  std::shared_ptr<const config::Config> output1 =
+      ConfigHandler::GetSharedConfig();
 
   ClockMock clock2(absl::FromUnixSeconds(1001));
   Clock::SetClockForUnitTest(&clock2);
   ConfigHandler::SetConfig(input);
-  std::unique_ptr<config::Config> output2 = ConfigHandler::GetConfig();
+  std::shared_ptr<const config::Config> output2 =
+      ConfigHandler::GetSharedConfig();
 
   // As SetConfig() is called twice with the same config,
-  // GetConfig() must return the identical (including metadata!) config.
+  // GetSharedConfig() must return the identical (including metadata!) config.
   // This also means no actual storage write access happened.
   EXPECT_EQ(absl::StrCat(*output1), absl::StrCat(*output2));
   Clock::SetClockForUnitTest(nullptr);
@@ -211,9 +209,8 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   ConfigHandler::SetConfig(mozc_config);
   ConfigHandler::SetConfigFileName("memory://set_config_file_name_test.db");
   // After SetConfigFileName called, settings are set as default.
-  Config updated_config;
-  ConfigHandler::GetConfig(&updated_config);
-  EXPECT_EQ(updated_config.incognito_mode(), default_incognito_mode);
+  EXPECT_EQ(ConfigHandler::GetSharedConfig()->incognito_mode(),
+            default_incognito_mode);
 }
 
 #if !defined(__ANDROID__)
@@ -239,9 +236,6 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
     ConfigHandler::SetConfigFileName(absl::StrCat("user://", file_name));
     ConfigHandler::Reload();
-
-    Config default_config;
-    ConfigHandler::GetConfig(&default_config);
   }
 }
 #endif  // !__ANDROID__
@@ -375,9 +369,8 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
 
     // Check to see if the returned config contains one of expected
     // |Config::character_form_rules()|.
-    Config returned_config;
-    ConfigHandler::GetConfig(&returned_config);
-    const auto &rules = ExtractCharacterFormRules(returned_config);
+    const auto &rules =
+        ExtractCharacterFormRules(ConfigHandler::GetCopiedConfig());
     ASSERT_TRUE(character_form_rules_set.contains(rules));
   }
 
@@ -399,9 +392,8 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
     for (int i = 0; i < 4; ++i) {
       get_threads.push_back(Thread([&cancel, &character_form_rules_set] {
         while (!cancel.HasBeenNotified()) {
-          Config config;
-          ConfigHandler::GetConfig(&config);
-          const auto &rules = ExtractCharacterFormRules(config);
+          const auto &rules =
+              ExtractCharacterFormRules(ConfigHandler::GetCopiedConfig());
           EXPECT_TRUE(character_form_rules_set.contains(rules));
         }
       }));
@@ -421,6 +413,22 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
       get_thread.Join();
     }
   }
+}
+
+TEST_F(ConfigHandlerTest, GetSharedConfig) {
+  auto config1 = ConfigHandler::GetSharedConfig();
+  auto config2 = ConfigHandler::GetSharedConfig();
+  EXPECT_EQ(config1, config2);
+
+  Config config = *config1;
+  config.mutable_general_config()->set_last_modified_time(100);
+  ConfigHandler::SetConfig(config);
+  auto config3 = ConfigHandler::GetSharedConfig();
+  EXPECT_NE(config1, config3);
+  EXPECT_NE(config2, config3);
+
+  auto config4 = ConfigHandler::GetSharedConfig();
+  EXPECT_EQ(config3, config4);
 }
 
 }  // namespace
