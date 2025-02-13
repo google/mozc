@@ -173,7 +173,7 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (request.config().incognito_mode()) {
+  if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito mode";
     return;
   }
@@ -201,7 +201,7 @@ UserBoundaryHistoryRewriter::CheckResizeSegmentsRequest(
     return std::nullopt;
   }
 
-  if (request.config().incognito_mode()) {
+  if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito mode";
     return std::nullopt;
   }

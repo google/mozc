@@ -711,7 +711,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
 
 bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
                                              const Segments &segments) const {
-  if (request.config().incognito_mode()) {
+  if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito_mode";
     return false;
   }

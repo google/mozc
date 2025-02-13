@@ -367,7 +367,7 @@ void UserDictionary::LookupPredictive(
   if (tokens_->empty()) {
     return;
   }
-  if (conversion_request.config().incognito_mode()) {
+  if (conversion_request.incognito_mode()) {
     return;
   }
 
@@ -413,7 +413,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
   if (tokens_->empty()) {
     return;
   }
-  if (conversion_request.config().incognito_mode()) {
+  if (conversion_request.incognito_mode()) {
     return;
   }
 
@@ -466,8 +466,7 @@ void UserDictionary::LookupExact(absl::string_view key,
                                  const ConversionRequest &conversion_request,
                                  Callback *callback) const {
   absl::ReaderMutexLock l(&mutex_);
-  if (key.empty() || tokens_->empty() ||
-      conversion_request.config().incognito_mode()) {
+  if (key.empty() || tokens_->empty() || conversion_request.incognito_mode()) {
     return;
   }
   auto [begin, end] =
@@ -504,7 +503,7 @@ bool UserDictionary::LookupComment(absl::string_view key,
                                    absl::string_view value,
                                    const ConversionRequest &conversion_request,
                                    std::string *comment) const {
-  if (key.empty() || conversion_request.config().incognito_mode()) {
+  if (key.empty() || conversion_request.incognito_mode()) {
     return false;
   }
 

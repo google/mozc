@@ -120,6 +120,11 @@ class ConversionRequest {
     // If true, use conversion_segment(0).key() instead of ComposerData.
     // TODO(b/365909808): Create a new string field to store the key.
     bool use_already_typing_corrected_key = false;
+
+    // Enables incognito mode even when Config.incognito_mode() is false.
+    // Use this flag to dynamically change the incognito_mode per client
+    // request.
+    bool incognito_mode = false;
   };
 
   ConversionRequest()
@@ -243,6 +248,13 @@ class ConversionRequest {
 
   bool use_already_typing_corrected_key() const {
     return options_.use_already_typing_corrected_key;
+  }
+
+  // Clients needs to check ConversionRequest::incognito_mode() instead
+  // of Config::incognito_mode(), as the incoginto mode can also set
+  // via Options.
+  bool incognito_mode() const {
+    return options_.incognito_mode || config_.incognito_mode();
   }
 
   absl::string_view key() const { return options_.key; }

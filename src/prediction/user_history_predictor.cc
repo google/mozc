@@ -1232,7 +1232,7 @@ bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
     return false;
   }
 
-  if (request.config().incognito_mode()) {
+  if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito mode";
     return false;
   }
@@ -1883,7 +1883,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (request.config().incognito_mode()) {
+  if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito mode";
     return;
   }

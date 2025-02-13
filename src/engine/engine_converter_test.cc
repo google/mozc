@@ -76,6 +76,7 @@ using ::mozc::commands::Request;
 using ::mozc::config::Config;
 using ::testing::_;
 using ::testing::DoAll;
+using ::testing::Eq;
 using ::testing::Mock;
 using ::testing::Pointee;
 using ::testing::Property;
@@ -2191,8 +2192,7 @@ TEST_F(EngineConverterTest, SuggestFillIncognitoCandidateWords) {
 
   // A matcher to test if the given conversion request sets incognito_mode().
   constexpr auto IsIncognitoConversionRequest = [](bool is_incognito) {
-    return Property(&ConversionRequest::config,
-                    Property(&Config::incognito_mode, is_incognito));
+    return Property(&ConversionRequest::incognito_mode, Eq(is_incognito));
   };
   {
     request_->set_fill_incognito_candidate_words(false);

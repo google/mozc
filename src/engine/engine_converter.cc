@@ -463,16 +463,16 @@ bool EngineConverter::SuggestWithPreferences(
   // The candidates are always from suggestion API
   // as richer results are not needed.
   if (request_->fill_incognito_candidate_words()) {
-    const Config &incognito_config = GetIncognitoConfig();
     ConversionRequest::Options incognito_options = conversion_request.options();
     incognito_options.enable_user_history_for_conversion = false;
     incognito_options.request_type = use_partial_composition
                                          ? ConversionRequest::PARTIAL_SUGGESTION
                                          : ConversionRequest::SUGGESTION;
+    incognito_options.incognito_mode = true;
     const ConversionRequest incognito_conversion_request =
         ConversionRequestBuilder()
             .SetConversionRequest(conversion_request)
-            .SetConfig(incognito_config)
+            .SetConfig(*config_)
             .SetOptions(std::move(incognito_options))
             .Build();
     incognito_segments_.Clear();
@@ -1642,7 +1642,6 @@ void EngineConverter::SetConfig(const config::Config &config) {
   updated_command_ = Segment::Candidate::DEFAULT_COMMAND;
   selection_shortcut_ = config.selection_shortcut();
   use_cascading_window_ = config.use_cascading_window();
-  incognito_config_.reset();
 }
 
 void EngineConverter::OnStartComposition(const commands::Context &context) {
@@ -1776,16 +1775,6 @@ void EngineConverter::SetRequestType(
     ConversionRequest::Options &options) {
   request_type_ = request_type;
   options.request_type = request_type;
-}
-
-const Config &EngineConverter::GetIncognitoConfig() {
-  if (!incognito_config_) {
-    // Initializes lazily. incognito_config_ is reset in SetConfig()
-    // method because *config_ is updated in SetConfig().
-    incognito_config_ = std::make_unique<Config>(*config_);
-    incognito_config_->set_incognito_mode(true);
-  }
-  return *incognito_config_;
 }
 
 }  // namespace engine

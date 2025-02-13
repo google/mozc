@@ -358,10 +358,6 @@ class EngineConverter : public EngineConverterInterface {
   void SetRequestType(ConversionRequest::RequestType request_type,
                       ConversionRequest::Options &options);
 
-  // Gets a config for incognito mode from the current config.
-  // `incognito_config_` is lazily initialized.
-  const config::Config &GetIncognitoConfig();
-
   const ConverterInterface *converter_ = nullptr;
   // Conversion stats used by converter_.
   Segments segments_;
@@ -384,7 +380,6 @@ class EngineConverter : public EngineConverterInterface {
 
   const commands::Request *request_ = nullptr;
   const config::Config *config_ = nullptr;
-  std::unique_ptr<config::Config> incognito_config_;
 
   EngineConverterInterface::State state_;
 

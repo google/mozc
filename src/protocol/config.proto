@@ -87,6 +87,9 @@ message Config {
 
   // Incognito mode:
   // Disable all mutable operation if incognito_mode is true
+  // Clients needs to check ConversionRequest::incognito_mode() instead
+  // of Config::incognito_mode(), as the incoginto mode can also set
+  // via Options.
   optional bool incognito_mode = 20 [default = false];
 
   reserved 21;

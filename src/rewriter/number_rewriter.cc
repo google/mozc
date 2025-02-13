@@ -169,8 +169,8 @@ std::vector<RewriteCandidateInfo> GetRewriteCandidateInfos(
   // Use the higher ranked candidate for deciding the insertion position.
   absl::flat_hash_set<std::string> seen;
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
-    std::optional<RewriteCandidateInfo> info = GetRewriteCandidateInfo(
-        suffix_array, seg, i, pos_matcher);
+    std::optional<RewriteCandidateInfo> info =
+        GetRewriteCandidateInfo(suffix_array, seg, i, pos_matcher);
     if (!info.has_value()) {
       continue;
     }
@@ -300,9 +300,8 @@ void FindEraseCandidates(absl::Span<const Segment::Candidate> results,
                          int base_candidate_pos, RewriteType type,
                          const Segment &seg, std::set<int> *erase_positions) {
   // Remember base candidate value
-  const int start_pos =
-      std::min<int>(base_candidate_pos + GetInsertOffset(type),
-                    seg.candidates_size() - 1);
+  const int start_pos = std::min<int>(
+      base_candidate_pos + GetInsertOffset(type), seg.candidates_size() - 1);
   for (int pos = start_pos; pos >= 0; --pos) {
     if (pos == base_candidate_pos) {
       continue;
@@ -596,7 +595,7 @@ bool NumberRewriter::ShouldRerankCandidates(const ConversionRequest &request,
     MOZC_VLOG(2) << "number style learning is not enabled.";
     return false;
   }
-  if (request.config().incognito_mode()) {
+  if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito mode";
     return false;
   }
@@ -653,7 +652,7 @@ void NumberRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (request.config().incognito_mode()) {
+  if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito_mode";
     return;
   }
