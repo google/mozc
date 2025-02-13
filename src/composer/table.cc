@@ -40,6 +40,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -568,14 +569,9 @@ TableManager::TableManager()
 const Table *TableManager::GetTable(const mozc::commands::Request &request,
                                     const mozc::config::Config &config) {
   // calculate the hash depending on the request and the config
-  uint32_t hash = request.special_romanji_table();
-  hash = hash * (mozc::config::Config_PreeditMethod_PreeditMethod_MAX + 1) +
-         config.preedit_method();
-  hash = hash * (mozc::config::Config_PunctuationMethod_PunctuationMethod_MAX +
-                 1) +
-         config.punctuation_method();
-  hash = hash * (mozc::config::Config_SymbolMethod_SymbolMethod_MAX + 1) +
-         config.symbol_method();
+  const uint32_t hash =
+      absl::HashOf(request.special_romanji_table(), config.preedit_method(),
+                   config.punctuation_method(), config.symbol_method());
 
   // When custom_roman_table is set, force to create new table.
   bool update_custom_roman_table = false;
