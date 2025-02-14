@@ -17,6 +17,7 @@ MODULE.bazel.lock
 .DS_Store
 
 # third_party dirs and cache dir checked out by update_deps.py
+/src/third_party/ndk/
 /src/third_party/ninja/
 /src/third_party/qt/
 /src/third_party/qt_host/
