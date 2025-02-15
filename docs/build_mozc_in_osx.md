@@ -22,7 +22,7 @@ python3 build_tools/update_deps.py
 # CMake is also required to build Qt.
 python3 build_tools/build_qt.py --release --confirm_license
 
-MOZC_QT_PATH=${PWD}/third_party/qt bazel build package --config oss_macos --config release_build
+MOZC_QT_PATH=${PWD}/third_party/qt bazelisk build package --config oss_macos --config release_build
 open bazel-bin/mac/Mozc.pkg
 ```
 
@@ -49,8 +49,9 @@ Building on Mac requires the following software.
 * [Xcode](https://apps.apple.com/us/app/xcode/id497799835)
   * Xcode 13 (macOS 13 SDK) or later
   * ⚠️Xcode Command Line Tools aren't sufficient.
-* [Bazel](https://docs.bazel.build/versions/master/install-os-x.html) for Bazel build
-  * check [src/.bazelversion](../src/.bazelversion) for the supported Bazel version.
+* [Bazelisk](https://github.com/bazelbuild/bazelisk)
+  * Bazelisk is a wrapper of [Bazel](https://bazel.build/) to use the specific version of Bazel.
+  * [src/.bazeliskrc](../src/.bazeliskrc) controls which version of Bazel is used.
 * Python 3.9 or later with the following pip module.
   * `requests`
 * CMake 3.18.4 or later (to build Qt6)

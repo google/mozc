@@ -167,7 +167,8 @@ Note that you can specify `--qtdir=` option instead of `--noqt` in GYP phase sin
 Additional requirements:
 
 * [Bazelisk](https://github.com/bazelbuild/bazelisk)
-  * Bazelisk is a wrapper of [Bazel](https://bazel.build/) to use the specific version of Bazel.
+  * Bazelisk is a wrapper of [Bazel](https://bazel.build) to use the specific version of Bazel.
+  * [src/.bazeliskrc](../src/.bazeliskrc) controls which version of Bazel is used.
 * [MSYS2](https://github.com/msys2/msys2)
 
 After running `build_tools/update_deps.py` and `build_tools/build_qt.py`, run the following command instead of `build_mozc.py`:
