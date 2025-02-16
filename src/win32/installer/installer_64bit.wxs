@@ -46,8 +46,8 @@
     http://msdn.microsoft.com/en-us/library/aa367850.aspx.
     So we change the product ID for every new version.
   -->
-  <Package Name="Google 日本語入力" Language="1041" Codepage="932" Version="$(var.MozcVersion)" Manufacturer="Google Inc." UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500">
-    <SummaryInformation Keywords="Installer" Description="Google 日本語入力 インストーラー" Manufacturer="Google Inc." Codepage="932" />
+  <Package Name="Google 日本語入力" Language="1041" Codepage="932" Version="$(var.MozcVersion)" Manufacturer="Google LLC" UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500">
+    <SummaryInformation Keywords="Installer" Description="Google 日本語入力 インストーラー" Manufacturer="Google LLC" Codepage="932" />
 
     <!--
                      VersionNT

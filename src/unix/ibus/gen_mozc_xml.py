@@ -213,7 +213,7 @@ def main():
       'exec': ibus_mozc_path + ' --ibus',
       # TODO(mazda): Generate the version number.
       'version': '0.0.0.0',
-      'author': 'Google Inc.',
+      'author': 'Google LLC',
       'license': 'New BSD',
       'homepage': 'https://github.com/google/mozc',
       'textdomain': 'ibus-mozc',
