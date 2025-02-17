@@ -64,8 +64,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   ~DictionaryPredictionAggregator() override = default;
 
   DictionaryPredictionAggregator(
-      const engine::Modules &modules, const ConverterInterface *converter,
-      const ImmutableConverterInterface *immutable_converter);
+      const engine::Modules &modules, const ConverterInterface &converter,
+      const ImmutableConverterInterface &immutable_converter);
 
   std::vector<Result> AggregateResults(const ConversionRequest &request,
                                        const Segments &segments) const override;
@@ -286,8 +286,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   friend class DictionaryPredictionAggregatorTestPeer;
 
   const engine::Modules &modules_;
-  const ConverterInterface *converter_;
-  const ImmutableConverterInterface *immutable_converter_;
+  const ConverterInterface &converter_;
+  const ImmutableConverterInterface &immutable_converter_;
   const dictionary::DictionaryInterface *dictionary_;
   const dictionary::DictionaryInterface *suffix_dictionary_;
   const uint16_t counter_suffix_word_id_;

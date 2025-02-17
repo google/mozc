@@ -257,15 +257,15 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   // mozc/engine/engine.cc for details. Caller should manage the ownership.
   std::unique_ptr<PredictorInterface> CreatePredictor(
       const engine::Modules &modules, PredictorType predictor_type,
-      const ConverterInterface *converter,
-      const ImmutableConverterInterface *immutable_converter) {
+      const ConverterInterface &converter,
+      const ImmutableConverterInterface &immutable_converter) {
     if (predictor_type == STUB_PREDICTOR) {
       return std::make_unique<StubPredictor>();
     }
 
     std::function<std::unique_ptr<PredictorInterface>(
         std::unique_ptr<PredictorInterface>,
-        std::unique_ptr<PredictorInterface>, const ConverterInterface *)>
+        std::unique_ptr<PredictorInterface>, const ConverterInterface &)>
         predictor_factory = nullptr;
     bool enable_content_word_learning = false;
 
@@ -313,8 +313,8 @@ class ConverterTest : public testing::TestWithTempUserProfile {
         [&](const engine::Modules &modules) {
           return std::make_unique<ImmutableConverter>(modules);
         },
-        [&](const engine::Modules &modules, const ConverterInterface *converter,
-            const ImmutableConverterInterface *immutable_converter) {
+        [&](const engine::Modules &modules, const ConverterInterface &converter,
+            const ImmutableConverterInterface &immutable_converter) {
           return CreatePredictor(modules, predictor_type, converter,
                                  immutable_converter);
         },
@@ -1071,8 +1071,8 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       [&](const engine::Modules &modules) {
         return std::make_unique<ImmutableConverter>(modules);
       },
-      [](const engine::Modules &modules, const ConverterInterface *converter,
-         const ImmutableConverterInterface *immutable_converter) {
+      [](const engine::Modules &modules, const ConverterInterface &converter,
+         const ImmutableConverterInterface &immutable_converter) {
         return DefaultPredictor::CreateDefaultPredictor(
             std::make_unique<DictionaryPredictor>(modules, converter,
                                                   immutable_converter),
@@ -1763,8 +1763,8 @@ TEST_F(ConverterTest, RevertConversion) {
         return std::make_unique<ImmutableConverter>(modules);
       },
       [&mock_predictor](
-          const engine::Modules &modules, const ConverterInterface *converter,
-          const ImmutableConverterInterface *immutable_converter) {
+          const engine::Modules &modules, const ConverterInterface &converter,
+          const ImmutableConverterInterface &immutable_converter) {
         return std::move(mock_predictor);
       },
       [&mock_rewriter](const engine::Modules &modules) {

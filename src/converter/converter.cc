@@ -133,7 +133,7 @@ Converter::Converter(
       reverse_converter_(*immutable_converter_),
       general_noun_id_(pos_matcher_.GetGeneralNounId()) {
   DCHECK(immutable_converter_);
-  predictor_ = predictor_factory(*modules_, this, immutable_converter_.get());
+  predictor_ = predictor_factory(*modules_, *this, *immutable_converter_);
   rewriter_ = rewriter_factory(*modules_);
   DCHECK(predictor_);
   DCHECK(rewriter_);

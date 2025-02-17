@@ -204,8 +204,8 @@ void MaybeFixRealtimeTopCost(absl::string_view input_key,
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor(
-    const engine::Modules &modules, const ConverterInterface *converter,
-    const ImmutableConverterInterface *immutable_converter)
+    const engine::Modules &modules, const ConverterInterface &converter,
+    const ImmutableConverterInterface &immutable_converter)
     : DictionaryPredictor(
           "DictionaryPredictor", modules,
           std::make_unique<prediction::DictionaryPredictionAggregator>(
@@ -215,7 +215,7 @@ DictionaryPredictor::DictionaryPredictor(
 DictionaryPredictor::DictionaryPredictor(
     std::string predictor_name, const engine::Modules &modules,
     std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator,
-    const ImmutableConverterInterface *immutable_converter)
+    const ImmutableConverterInterface &immutable_converter)
     : aggregator_(std::move(aggregator)),
       immutable_converter_(immutable_converter),
       connector_(modules.GetConnector()),
@@ -1140,7 +1140,7 @@ bool DictionaryPredictor::IsAggressiveSuggestion(size_t query_len,
 int DictionaryPredictor::CalculatePrefixPenalty(
     const ConversionRequest &request, const absl::string_view input_key,
     const Result &result,
-    const ImmutableConverterInterface *immutable_converter,
+    const ImmutableConverterInterface &immutable_converter,
     absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
   if (input_key == result.key) {
     LOG(WARNING) << "Invalid prefix key: " << result.key;
@@ -1173,7 +1173,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
                                     .SetOptions(std::move(options))
                                     .Build();
 
-  if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
+  if (immutable_converter.ConvertForRequest(req, &tmp_segments) &&
       tmp_segments.segment(0).candidates_size() > 0) {
     const Segment::Candidate &top_candidate =
         tmp_segments.segment(0).candidate(0);

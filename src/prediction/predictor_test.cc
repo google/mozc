@@ -180,7 +180,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
   MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), &converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -196,7 +196,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
       // We don't call history predictor
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1), &converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -211,7 +211,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
   MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), &converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -229,7 +229,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<UserHistoryPredictor>(modules, true), &converter);
+      std::make_unique<UserHistoryPredictor>(modules, true), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -252,7 +252,7 @@ TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
 
   MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
-      std::move(predictor1), std::move(predictor2), &converter);
+      std::move(predictor1), std::move(predictor2), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -290,7 +290,7 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
   MockConverter converter;
   auto predictor = std::make_unique<DefaultPredictor>(
       std::make_unique<NullPredictor>(true),
-      std::make_unique<NullPredictor>(true), &converter);
+      std::make_unique<NullPredictor>(true), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -304,7 +304,7 @@ TEST_F(PredictorTest, MixedReturnValue) {
   MockConverter converter;
   auto predictor = std::make_unique<DefaultPredictor>(
       std::make_unique<NullPredictor>(true),
-      std::make_unique<NullPredictor>(false), &converter);
+      std::make_unique<NullPredictor>(false), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -319,7 +319,7 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
   MockConverter converter;
   auto predictor = std::make_unique<DefaultPredictor>(
       std::make_unique<NullPredictor>(false),
-      std::make_unique<NullPredictor>(false), &converter);
+      std::make_unique<NullPredictor>(false), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -338,7 +338,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
       std::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
                                                           suggestions_size),
-      &converter);
+      converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -356,7 +356,7 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
       std::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
                                                           kPredictionSize),
-      &converter);
+      converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -379,7 +379,7 @@ TEST_F(PredictorTest, CallPredictForRequest) {
 
   MockConverter converter;
   auto predictor = std::make_unique<DefaultPredictor>(
-      std::move(predictor1), std::move(predictor2), &converter);
+      std::move(predictor1), std::move(predictor2), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -397,7 +397,7 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   const auto *pred2 = predictor2.get();  // Keep the reference
   MockConverter converter;
   auto predictor = std::make_unique<DefaultPredictor>(
-      std::move(predictor1), std::move(predictor2), &converter);
+      std::move(predictor1), std::move(predictor2), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -423,7 +423,7 @@ TEST_F(PredictorTest, PopulateReadingOfCommittedCandidateIfMissing) {
   MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<NullPredictor>(true),
-      std::make_unique<NullPredictor>(true), &converter);
+      std::make_unique<NullPredictor>(true), converter);
 
   // Mock reverse conversion adds reading "とうきょう".
   EXPECT_CALL(converter, StartReverseConversion(_, StrEq("東京")))
@@ -554,7 +554,7 @@ TEST_F(MobilePredictorTest, FillPos) {
   MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::move(mock_dictionary_predictor), std::move(mock_history_predictor),
-      &converter);
+      converter);
 
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);

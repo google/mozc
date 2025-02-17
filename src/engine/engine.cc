@@ -116,8 +116,8 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
 
   auto predictor_factory =
       [is_mobile](const engine::Modules &modules,
-                  const ConverterInterface *converter,
-                  const ImmutableConverterInterface *immutable_converter) {
+                  const ConverterInterface &converter,
+                  const ImmutableConverterInterface &immutable_converter) {
         auto dictionary_predictor =
             std::make_unique<prediction::DictionaryPredictor>(
                 modules, converter, immutable_converter);

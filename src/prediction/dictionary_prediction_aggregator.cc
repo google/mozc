@@ -520,8 +520,8 @@ class DictionaryPredictionAggregator::HandwritingLookupCallback
 };
 
 DictionaryPredictionAggregator::DictionaryPredictionAggregator(
-    const engine::Modules &modules, const ConverterInterface *converter,
-    const ImmutableConverterInterface *immutable_converter)
+    const engine::Modules &modules, const ConverterInterface &converter,
+    const ImmutableConverterInterface &immutable_converter)
     : modules_(modules),
       converter_(converter),
       immutable_converter_(immutable_converter),
@@ -838,7 +838,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
                                             .SetConversionRequest(request)
                                             .SetOptions(std::move(options))
                                             .Build();
-  if (!converter_->StartConversion(tmp_request, &tmp_segments)) {
+  if (!converter_.StartConversion(tmp_request, &tmp_segments)) {
     return false;
   }
 
@@ -891,8 +891,6 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
     const ConversionRequest &request, size_t realtime_candidates_size,
     bool insert_realtime_top_from_actual_converter, const Segments &segments,
     std::vector<Result> *results) const {
-  DCHECK(converter_);
-  DCHECK(immutable_converter_);
   DCHECK(results);
   if (realtime_candidates_size == 0) {
     return;
@@ -915,8 +913,8 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
                                                 realtime_candidates_size);
   Segments tmp_segments = GetSegmentsForRealtimeCandidatesGeneration(segments);
 
-  if (!immutable_converter_->ConvertForRequest(request_for_realtime,
-                                               &tmp_segments) ||
+  if (!immutable_converter_.ConvertForRequest(request_for_realtime,
+                                              &tmp_segments) ||
       tmp_segments.conversion_segments_size() == 0 ||
       tmp_segments.conversion_segment(0).candidates_size() == 0) {
     LOG(WARNING) << "Convert failed";
@@ -1019,8 +1017,8 @@ DictionaryPredictionAggregator::GenerateQueryForHandwriting(
           .SetConversionRequest(request)
           .SetRequestType(ConversionRequest::REVERSE_CONVERSION)
           .Build();
-  if (!immutable_converter_->ConvertForRequest(request_for_realtime,
-                                               &tmp_segments) ||
+  if (!immutable_converter_.ConvertForRequest(request_for_realtime,
+                                              &tmp_segments) ||
       tmp_segments.conversion_segments_size() == 0 ||
       tmp_segments.conversion_segment(0).candidates_size() == 0) {
     LOG(WARNING) << "Reverse conversion failed";

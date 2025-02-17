@@ -63,8 +63,8 @@ class Converter final : public ConverterInterface {
 
   using PredictorFactory =
       std::function<std::unique_ptr<prediction::PredictorInterface>(
-          const engine::Modules &modules, const ConverterInterface *converter,
-          const ImmutableConverterInterface *immutable_converter)>;
+          const engine::Modules &modules, const ConverterInterface &converter,
+          const ImmutableConverterInterface &immutable_converter)>;
 
   using RewriterFactory = std::function<std::unique_ptr<RewriterInterface>(
       const engine::Modules &modules)>;

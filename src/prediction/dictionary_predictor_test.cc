@@ -80,7 +80,7 @@ class DictionaryPredictorTestPeer {
       const engine::Modules &modules,
       std::unique_ptr<const prediction::PredictionAggregatorInterface>
           aggregator,
-      const ImmutableConverterInterface *immutable_converter)
+      const ImmutableConverterInterface &immutable_converter)
       : predictor_("DictionaryPredictorForTest", modules, std::move(aggregator),
                    immutable_converter) {}
 
@@ -307,7 +307,7 @@ class MockDataAndPredictor {
 
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
         modules_, absl::WrapUnique(mock_aggregator_),
-        &mock_immutable_converter_);
+        mock_immutable_converter_);
   }
 
   MockImmutableConverter *mutable_immutable_converter() {

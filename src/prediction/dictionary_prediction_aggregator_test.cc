@@ -84,8 +84,8 @@ using ::mozc::composer::TypeCorrectedQuery;
 class DictionaryPredictionAggregatorTestPeer {
  public:
   DictionaryPredictionAggregatorTestPeer(
-      const ConverterInterface *converter,
-      const ImmutableConverterInterface *immutable_converter,
+      const ConverterInterface &converter,
+      const ImmutableConverterInterface &immutable_converter,
       const engine::Modules &modules)
       : aggregator_(modules, converter, immutable_converter) {}
   virtual ~DictionaryPredictionAggregatorTestPeer() = default;
@@ -408,7 +408,7 @@ class MockDataAndAggregator {
     CHECK_NE(modules_.GetSuffixDictionary(), nullptr);
 
     aggregator_ = std::make_unique<DictionaryPredictionAggregatorTestPeer>(
-        &converter_, &mock_immutable_converter_, modules_);
+        converter_, mock_immutable_converter_, modules_);
   }
 
   MockDictionary *mutable_dictionary() { return mock_dictionary_; }

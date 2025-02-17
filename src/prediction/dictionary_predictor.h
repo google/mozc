@@ -80,8 +80,8 @@ class DictionaryPredictor : public PredictorInterface {
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
   DictionaryPredictor(const engine::Modules &modules,
-                      const ConverterInterface *converter,
-                      const ImmutableConverterInterface *immutable_converter);
+                      const ConverterInterface &converter,
+                      const ImmutableConverterInterface &immutable_converter);
 
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
@@ -140,7 +140,7 @@ class DictionaryPredictor : public PredictorInterface {
       std::string predictor_name, const engine::Modules &modules,
       std::unique_ptr<const prediction::PredictionAggregatorInterface>
           aggregator,
-      const ImmutableConverterInterface *immutable_converter);
+      const ImmutableConverterInterface &immutable_converter);
 
   // It is better to pass the rvalue of `results` if the
   // caller doesn't use the results after calling this method.
@@ -261,7 +261,7 @@ class DictionaryPredictor : public PredictorInterface {
   int CalculatePrefixPenalty(
       const ConversionRequest &request, absl::string_view input_key,
       const Result &result,
-      const ImmutableConverterInterface *immutable_converter,
+      const ImmutableConverterInterface &immutable_converter,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
   // Populates typing corrected results to `results`.
@@ -299,7 +299,7 @@ class DictionaryPredictor : public PredictorInterface {
   mutable std::shared_ptr<Result> prev_top_result_;
   mutable std::atomic<int32_t> prev_top_key_length_ = 0;
 
-  const ImmutableConverterInterface *immutable_converter_;
+  const ImmutableConverterInterface &immutable_converter_;
   const Connector &connector_;
   const Segmenter *segmenter_;
   const SuggestionFilter &suggestion_filter_;
