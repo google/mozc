@@ -44,6 +44,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/port.h"
 #include "base/strings/assign.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
@@ -275,6 +276,10 @@ void FillUsages(const Segment &segment, const CandidateList &cand_list,
   }
 
   commands::InformationList *usages = candidate_window_proto->mutable_usages();
+
+  if (TargetIsAndroid()) {
+    usages->set_delay(1000);
+  }
 
   using IndexInfoPair = std::pair<int32_t, commands::Information *>;
   absl::flat_hash_map<int32_t, IndexInfoPair> usageid_information_map;

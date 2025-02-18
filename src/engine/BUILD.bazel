@@ -502,6 +502,7 @@ mozc_cc_library(
     ],
     deps = [
         ":candidate_list",
+        "//base:port",
         "//base:text_normalizer",
         "//base:util",
         "//base:version",
