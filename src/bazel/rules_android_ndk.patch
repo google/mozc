@@ -1,15 +1,21 @@
 --- rules.bzl
 +++ rules.bzl
-@@ -25,8 +25,10 @@
+@@ -23,13 +23,14 @@ def _android_ndk_repository_impl(ctx):
+     Returns:
+         A final dict of configuration attributes and values.
      """
-     ndk_path = ctx.attr.path or ctx.os.environ.get("ANDROID_NDK_HOME", None)
-     if not ndk_path:
+-    ndk_path = ctx.attr.path or ctx.os.environ.get("ANDROID_NDK_HOME", None)
+-    if not ndk_path:
 -        fail("Either the ANDROID_NDK_HOME environment variable or the " +
 -             "path attribute of android_ndk_repository must be set.")
-+        print("Either the ANDROID_NDK_HOME environment variable or the " +
-+              "path attribute of android_ndk_repository must be set.")
-+        ctx.file("BUILD.bazel", "")
-+        return
++    ndk_path = ctx.attr.path or ctx.os.environ.get("ANDROID_NDK_HOME", "")
      if ndk_path.startswith("$WORKSPACE_ROOT"):
          ndk_path = str(ctx.workspace_root) + ndk_path.removeprefix("$WORKSPACE_ROOT")
- 
+
++    if not ctx.path(ndk_path).exists:
++        ctx.file("BUILD.bazel", "")
++        return
++
+     is_windows = False
+     executable_extension = ""
+     if ctx.os.name == "linux":
