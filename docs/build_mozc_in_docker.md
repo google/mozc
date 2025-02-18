@@ -19,7 +19,7 @@ docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
 ```
 
 ## Introduction
-Docker containers are available to build Mozc binaries for Android JNI library and Linux desktop.
+Docker containers are available to build Mozc binaries for Linux desktop.
 
 ## System Requirements
 Currently, only Ubuntu 24.04 is tested to host the Docker container to build Mozc.
@@ -185,22 +185,6 @@ If the issue persists, also try the following command to [clean Bazel's build ca
 ```
 bazelisk clean --expunge
 ```
-
-## Build Mozc library for Android:
-
-Client code for Android apk is deprecated.
-(the last revision with Android client code is
-[afb03dd](https://github.com/google/mozc/commit/afb03ddfe72dde4cf2409863a3bfea160f7a66d8)).
-
-The conversion engine for Android is built with Bazel.
-
-```
-bazelisk build package --config oss_android
-```
-
-`package` is an alias to build `android/jni:native_libs`.
-
-We have tested Android NDK r27. The former versions may not work.
 
 -----
 
