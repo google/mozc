@@ -71,6 +71,17 @@ bazel_dep(
     name = "rules_cc",
     version = "0.0.17",
 )
+single_version_override(
+    module_name = "rules_cc",
+    patches = [
+        # Enable to build x86 (32-bit) executables with clang-cl.
+        # https://github.com/bazelbuild/rules_cc/pull/360
+        "bazel/rules_cc_BUILD.windows.tpl.patch",
+        "bazel/rules_cc_windows_cc_configure.bzl.patch",
+        "bazel/rules_cc_windows_cc_toolchain_config.bzl.patch",
+    ],
+    version = "0.0.17",
+)
 
 cc_configure = use_extension(
     "@rules_cc//cc:extensions.bzl",

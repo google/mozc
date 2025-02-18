@@ -1,0 +1,16 @@
+--- cc/private/toolchain/windows_cc_configure.bzl
++++ cc/private/toolchain/windows_cc_configure.bzl
+@@ -879,10 +879,12 @@ def configure_windows_toolchain(repository_ctx):
+ 
+     template_vars = dict()
+     msvc_vars_x64 = _get_msvc_vars(repository_ctx, paths, "x64")
++    msvc_vars_x86 = _get_msvc_vars(repository_ctx, paths, "x86", msvc_vars_x64)
+     template_vars.update(msvc_vars_x64)
++    template_vars.update(msvc_vars_x86)
+     template_vars.update(_get_clang_cl_vars(repository_ctx, paths, msvc_vars_x64, "x64"))
++    template_vars.update(_get_clang_cl_vars(repository_ctx, paths, msvc_vars_x86, "x86"))
+     template_vars.update(_get_msys_mingw_vars(repository_ctx))
+-    template_vars.update(_get_msvc_vars(repository_ctx, paths, "x86", msvc_vars_x64))
+     template_vars.update(_get_msvc_vars(repository_ctx, paths, "arm", msvc_vars_x64))
+     msvc_vars_arm64 = _get_msvc_vars(repository_ctx, paths, "arm64", msvc_vars_x64)
+     template_vars.update(msvc_vars_arm64)
