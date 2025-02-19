@@ -4,9 +4,9 @@
 //
 #ifndef MOZC_RES_COMPANY_NAME
   #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-    #define MOZC_RES_COMPANY_NAME "Google Inc."
+    #define MOZC_RES_COMPANY_NAME "Google LLC"
   #elif defined(MOZC_BUILD)
-    #define MOZC_RES_COMPANY_NAME "Google Inc."
+    #define MOZC_RES_COMPANY_NAME "Google LLC"
   #endif
 #endif
 #ifndef MOZC_RES_FILE_DESCRIPTION

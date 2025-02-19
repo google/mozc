@@ -47,8 +47,8 @@
     http://msdn.microsoft.com/en-us/library/aa367850.aspx.
     So we change the product ID for every new version.
   -->
-  <Package Name="Mozc" Language="1041" Codepage="932" Version="$(var.MozcVersion)" Manufacturer="Google Inc." UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500">
-    <SummaryInformation Keywords="Installer" Description="Mozc インストーラー" Manufacturer="Google Inc." Codepage="932" />
+  <Package Name="Mozc" Language="1041" Codepage="932" Version="$(var.MozcVersion)" Manufacturer="Google LLC" UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500">
+    <SummaryInformation Keywords="Installer" Description="Mozc インストーラー" Manufacturer="Google LLC" Codepage="932" />
 
     <!--
                      VersionNT
