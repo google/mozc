@@ -42,11 +42,11 @@ import pathlib
 import shutil
 import stat
 import subprocess
-import sys
-import time
 import zipfile
 
 import requests
+
+from progress_printer import ProgressPrinter
 
 
 ABS_SCRIPT_PATH = pathlib.Path(__file__).absolute()
@@ -180,61 +180,6 @@ def download(archive: ArchiveInfo, dryrun: bool = False) -> None:
         f'{archive.filename} sha256 mismatch.'
         f' expected={archive.sha256} actual={actual_sha256}'
     )
-
-
-class ProgressPrinter:
-  """A utility to print progress message with carriage return and trancatoin."""
-
-  def __enter__(self):
-    if not sys.stdout.isatty():
-
-      class NoOpImpl:
-        """A no-op implementation in case stdout is not attached to concole."""
-
-        def print_line(self, msg: str) -> None:
-          """No-op implementation.
-
-          Args:
-            msg: Unused.
-          """
-          del msg  # Unused
-          return
-
-      self.cleaner = None
-      return NoOpImpl()
-
-    class Impl:
-      """A real implementation in case stdout is attached to concole."""
-      last_output_time_ns = time.time_ns()
-
-      def print_line(self, msg: str) -> None:
-        """Print the given message with carriage return and trancatoin.
-
-        Args:
-          msg: Message to be printed.
-        """
-        colmuns = os.get_terminal_size().columns
-        now = time.time_ns()
-        if (now - self.last_output_time_ns) < 25000000:
-          return
-        msg = msg + ' ' * max(colmuns - len(msg), 0)
-        msg = msg[0 : (colmuns)] + '\r'
-        sys.stdout.write(msg)
-        sys.stdout.flush()
-        self.last_output_time_ns = now
-
-    class Cleaner:
-      def cleanup(self) -> None:
-        colmuns = os.get_terminal_size().columns
-        sys.stdout.write(' ' * colmuns + '\r')
-        sys.stdout.flush()
-
-    self.cleaner = Cleaner()
-    return Impl()
-
-  def __exit__(self, *exc):
-    if self.cleaner:
-      self.cleaner.cleanup()
 
 
 def extract_ninja(dryrun: bool = False) -> None:
