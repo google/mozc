@@ -1,5 +1,5 @@
 name: CI for Android
-# https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
+# https://github.com/google/mozc/blob/master/docs/build_mozc_for_android.md
 
 # Run on push.
 on: push
@@ -11,8 +11,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTHON_VENV_ROOT: ${{ github.workspace }}/src/python-venv
+
 jobs:
-  build:
+  build_on_linux:
     # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -27,6 +30,25 @@ jobs:
         run: |
           sudo apt-get update
 
+      - name: Setup Python
+        run: |
+          python3 -m venv ${PYTHON_VENV_ROOT}
+          source ${PYTHON_VENV_ROOT}/bin/activate
+          python3 -m pip install requests
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v4
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install dependencies
+        working-directory: ./src
+        # This command uses src/third_party_cache as the download cache.
+        run: |
+          source ${PYTHON_VENV_ROOT}/bin/activate
+          python3 build_tools/update_deps.py
+
       - name: build
         working-directory: ./src
         run: |
@@ -38,3 +60,38 @@ jobs:
           name: native_libs.zip
           path: src/bazel-bin/android/jni/native_libs.zip
           if-no-files-found: warn
+
+  build_on_mac:
+    # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Setup Python
+        run: |
+          python3 -m venv ${PYTHON_VENV_ROOT}
+          source ${PYTHON_VENV_ROOT}/bin/activate
+          python3 -m pip install requests
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v4
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install dependencies
+        working-directory: ./src
+        # This command uses src/third_party_cache as the download cache.
+        run: |
+          source ${PYTHON_VENV_ROOT}/bin/activate
+          python3 build_tools/update_deps.py
+
+      - name: build
+        working-directory: ./src
+        run: |
+          bazelisk build --config oss_android package --config release_build
