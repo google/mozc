@@ -174,7 +174,7 @@ git update-index --no-assume-unchanged src/config.bzl
 ### Forcing reconfigure external dependencies
 
 You may have some build errors when you update build environment or configurations.
-In that case, try the following command to [refetch external repositories](https://bazel.build/extending/repo#forcing_refetch_of_external_repositories).
+In that case, try the following command to [refetch external repositories](https://bazel.build/external/repo#forcing_refetch_of_external_repos).
 
 ```
 bazelisk sync --configure

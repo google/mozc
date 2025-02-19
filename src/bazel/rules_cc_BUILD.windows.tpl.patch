@@ -69,13 +69,13 @@
 +toolchain(
 +    name = "cc-toolchain-x64_x86_windows-clang-cl",
 +    exec_compatible_with = [
-+        "@platforms//cpu:x86_64",
-+        "@platforms//os:windows",
++        "//third_party/bazel_platforms/cpu:x86_64",
++        "//third_party/bazel_platforms/os:windows",
 +        "@rules_cc//cc/private/toolchain:clang-cl",
 +    ],
 +    target_compatible_with = [
-+        "@platforms//cpu:x86_32",
-+        "@platforms//os:windows",
++        "//third_party/bazel_platforms/cpu:x86_32",
++        "//third_party/bazel_platforms/os:windows",
 +    ],
 +    toolchain = ":cc-compiler-x64_x86_windows-clang-cl",
 +    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
