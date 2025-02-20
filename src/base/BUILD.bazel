@@ -191,7 +191,12 @@ mozc_cc_library(
     srcs = ["singleton.cc"],
     hdrs = ["singleton.h"],
     visibility = ["//:__subpackages__"],
-    deps = ["@com_google_absl//absl/base"],
+    deps = [
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/synchronization",
+    ],
 )
 
 mozc_cc_test(

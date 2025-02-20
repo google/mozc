@@ -30,29 +30,32 @@
 #ifndef MOZC_BASE_SINGLETON_H_
 #define MOZC_BASE_SINGLETON_H_
 
-#include <optional>
-#include <utility>
+#include <atomic>
 
-#include "absl/base/call_once.h"
+#include "absl/base/attributes.h"
+#include "absl/base/const_init.h"
+#include "absl/base/no_destructor.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
+namespace internal {
 
-class SingletonFinalizer {
- public:
-  typedef void (*FinalizerFunc)();
+// Do not call this method directly. Use `Singleton<T>` instead.
+void AddSingletonFinalizer(void (*finalizer)());
 
-  // Do not call this method directly.
-  // use Singleton<Typename> instead.
-  static void AddFinalizer(FinalizerFunc func);
+}  // namespace internal
 
-  // Call Finalize() if you want to finalize
-  // all instances created by Sigleton.
-  //
-  // Mozc UI for Windows (DLL) can call
-  // SigletonFinalizer::Finalize()
-  // at an appropriate timing.
-  static void Finalize();
-};
+// Destructs all singletons created by `Singleton<T>`. The primary usage is to
+// call this right before unloading the Mozc UI for Windows DLL to avoid memory
+// leaks.
+//
+// Generally speaking, you SHOULD try to avoid singletons by injecting
+// dependencies instead.
+//
+// NOTE: This is a dangerous operation that can cause use-after-free when
+// misused.
+void FinalizeSingletons();
 
 // Thread-safe Singleton class.
 // Usage:
@@ -63,33 +66,35 @@ class SingletonFinalizer {
 template <typename T>
 class Singleton {
  public:
-  static T *get() {
-    absl::call_once(*once_, &Singleton<T>::Init);
+  static T *get() ABSL_LOCKS_EXCLUDED(mutex_) {
+    {
+      absl::ReaderMutexLock lock(&mutex_);  // NOLINT: In the program's steady
+                                            // state there's no write lock.
+      if (instance_ != nullptr) {
+        return instance_;
+      }
+    }
+
+    absl::MutexLock lock(&mutex_);
+    if (instance_ == nullptr) {
+      instance_ = new T();
+      internal::AddSingletonFinalizer(&Singleton<T>::Delete);
+    }
     return instance_;
   }
 
   // TEST ONLY! Do not call this method in production code.
-  static void Delete() {
+  static void Delete() ABSL_LOCKS_EXCLUDED(mutex_) {
+    absl::MutexLock lock(&mutex_);
     delete instance_;
     instance_ = nullptr;
-    once_.emplace();  // Reconstruct absl::once_flag in place.
   }
 
  private:
-  static void Init() {
-    SingletonFinalizer::AddFinalizer(&Singleton<T>::Delete);
-    instance_ = new T;
-  }
-
-  static std::optional<absl::once_flag> once_;
-  static T *instance_;
+  ABSL_CONST_INIT static inline absl::Mutex mutex_ =
+      absl::Mutex(absl::kConstInit);
+  ABSL_CONST_INIT static inline T *instance_ ABSL_GUARDED_BY(mutex_) = nullptr;
 };
-
-template <typename T>
-std::optional<absl::once_flag> Singleton<T>::once_(std::in_place);
-
-template <typename T>
-T *Singleton<T>::instance_ = nullptr;
 
 // SingletonMockable class.
 // Usage: (quote from clock.cc)
@@ -107,20 +112,20 @@ template <class Interface, class Impl>
 class SingletonMockable {
  public:
   static Interface *Get() {
-    if (mock_) {
-      return mock_;
+    if (Interface *mock = mock_.load(std::memory_order_acquire)) {
+      return mock;
     }
-    static Impl *impl = new Impl();
-    return impl;
+    static absl::NoDestructor<Impl> impl;
+    return impl.get();
   }
-  static void SetMock(Interface *mock) { mock_ = mock; }
+
+  static void SetMock(Interface *mock) {
+    mock_.store(mock, std::memory_order_release);
+  }
 
  private:
-  static Interface *mock_;
+  ABSL_CONST_INIT static inline std::atomic<Interface *> mock_ = nullptr;
 };
-
-template <class Interface, class Impl>
-Interface *SingletonMockable<Interface, Impl>::mock_ = nullptr;
 
 }  // namespace mozc
 

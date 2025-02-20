@@ -134,7 +134,7 @@ int MozcServer::Run() {
 }
 
 int MozcServer::Finalize() {
-  mozc::SingletonFinalizer::Finalize();
+  mozc::FinalizeSingletons();
   return 0;
 }
 

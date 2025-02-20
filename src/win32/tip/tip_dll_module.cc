@@ -66,7 +66,7 @@ void TipDllModule::PrepareForShutdown() {
   // Windows 8. Thus we must not shut down libraries that cannot be designed to
   // be re-initializable. For instance, we must not call following functions
   // here.
-  // - SingletonFinalizer::Finalize()            - b/10233768
+  // - mozc::FinalizeSingletons()                - b/10233768
   // - mozc::protobuf::ShutdownProtobufLibrary() - b/2126375
   absl::call_once(uninitialize_once_, &TipShutdownCrashReportHandler);
 }

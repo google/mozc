@@ -29,59 +29,41 @@
 
 #include "base/singleton.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#else  // _WIN32
-#include <cstdlib>
-#endif  // _WIN32
+#include <array>
+
+#include "absl/base/attributes.h"
+#include "absl/base/const_init.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/log/log.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
+namespace internal {
 namespace {
 
-constexpr size_t kMaxFinalizersSize = 256;
-size_t g_finalizers_size = 0;
-
-SingletonFinalizer::FinalizerFunc g_finalizers[kMaxFinalizersSize];
-
-// We can't use CHECK logic for Singleton because CHECK (and LOG)
-// obtains the singleton LogStream by calling Singleton::get().  If
-// something goes wrong during Singleton::get of the LogStream, it
-// recursively calls Singleton::get again to report errors, which
-// leads an inifinite wait loop because the first Singleton::get locks
-// everything.
-// ExitWithError() exits the program without reporting errors, which
-// is not good but better than an inifinite loop.
-void ExitWithError() {
-  // This logic is copied from logging.h
-#ifdef _WIN32
-  ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-#else   // _WIN32
-  exit(-1);
-#endif  // _WIN32
-}
+ABSL_CONST_INIT absl::Mutex mu(absl::kConstInit);
+ABSL_CONST_INIT std::array<void (*)(void), 256> finalizers
+    ABSL_GUARDED_BY(mu) = {};
+ABSL_CONST_INIT int size ABSL_GUARDED_BY(mu) = 0;
 
 }  // namespace
 
-void SingletonFinalizer::AddFinalizer(FinalizerFunc func) {
-  // When g_finalizers_size is equal to kMaxFinalizersSize,
-  // SingletonFinalizer::Finalize is called already.
-  if (g_finalizers_size >= kMaxFinalizersSize) {
-    ExitWithError();
+void AddSingletonFinalizer(void (*finalizer)()) ABSL_LOCKS_EXCLUDED(mu) {
+  absl::MutexLock lock(&mu);
+  if (size >= finalizers.size()) {
+    LOG(FATAL) << "Too many singletons";
   }
-  // This part is not thread safe.
-  // When two different classes are instantiated at the same time,
-  // this code will raise an exception.
-  g_finalizers[g_finalizers_size++] = func;
+  finalizers[size++] = finalizer;
 }
 
-void SingletonFinalizer::Finalize() {
-  // This part is not thread safe.
-  // When two different classes are instantiated at the same time,
-  // this code will raise an exception.
-  for (int i = static_cast<int>(g_finalizers_size) - 1; i >= 0; --i) {
-    (*g_finalizers[i])();
+}  // namespace internal
+
+void FinalizeSingletons() ABSL_LOCKS_EXCLUDED(internal::mu) {
+  absl::MutexLock lock(&internal::mu);
+  for (auto func : internal::finalizers) {
+    func();
   }
-  g_finalizers_size = 0;
+  internal::size = 0;
 }
 
 }  // namespace mozc
