@@ -129,6 +129,9 @@ android_ndk_repository_extension = use_extension(
     "@rules_android_ndk//:extension.bzl",
     "android_ndk_repository_extension",
 )
+android_ndk_repository_extension.configure(
+    path = "$WORKSPACE_ROOT/third_party/ndk/android-ndk-r28",
+)
 use_repo(android_ndk_repository_extension, "androidndk")
 
 register_toolchains("@androidndk//:all")
