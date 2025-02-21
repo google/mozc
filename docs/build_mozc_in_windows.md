@@ -68,6 +68,7 @@ python build_tools/update_deps.py
 
 In this step, additional build dependencies will be downloaded.
 
+  * [LLVM 19.1.7](https://github.com/llvm/llvm-project/releases/tag/llvmorg-19.1.7)
   * [Ninja 1.11.0](https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-win.zip)
   * [Qt 6.8.0](https://download.qt.io/archive/qt/6.8/6.8.0/submodules/qtbase-everywhere-src-6.8.0.tar.xz)
   * [.NET tools](../dotnet-tools.json)
