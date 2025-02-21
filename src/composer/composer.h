@@ -395,7 +395,7 @@ class Composer final {
   const Table *table_ = nullptr;
 
   // Timestamp of last modified.
-  int64_t timestamp_msec_;
+  int64_t timestamp_msec_ = 0;
 
   // If the duration between key inputs is more than timeout_threadhols_msec_,
   // the STOP_KEY_TOGGLING event is sent before the next key input.
