@@ -112,7 +112,8 @@ template <class Interface, class Impl>
 class SingletonMockable {
  public:
   static Interface *Get() {
-    if (Interface *mock = mock_.load(std::memory_order_acquire)) {
+    if (Interface *mock = mock_.load(std::memory_order_acquire);
+        mock != nullptr) {
       return mock;
     }
     static absl::NoDestructor<Impl> impl;
