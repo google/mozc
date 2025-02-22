@@ -60,9 +60,10 @@ namespace {
 class ConfigHandlerTest : public testing::TestWithTempUserProfile {
  protected:
   ConfigHandlerTest()
-      : default_config_filename_(ConfigHandler::GetConfigFileName()) {}
+      : default_config_filename_(ConfigHandler::GetConfigFileNameForTesting()) {
+  }
   ~ConfigHandlerTest() override {
-    ConfigHandler::SetConfigFileName(default_config_filename_);
+    ConfigHandler::SetConfigFileNameForTesting(default_config_filename_);
   }
 
  private:
@@ -77,8 +78,8 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   const std::string config_file =
       FileUtil::JoinPath(temp_dir.path(), "mozc_config_test_tmp");
   ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
-  ConfigHandler::SetConfigFileName(config_file);
-  EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
+  ConfigHandler::SetConfigFileNameForTesting(config_file);
+  EXPECT_EQ(ConfigHandler::GetConfigFileNameForTesting(), config_file);
   ConfigHandler::Reload();
 
   ConfigHandler::GetDefaultConfig(&input);
@@ -86,13 +87,12 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 #ifndef NDEBUG
   input.set_verbose_level(2);
 #endif  // NDEBUG
-  ConfigHandler::SetMetaData(&input);
   ConfigHandler::SetConfig(input);
   output = ConfigHandler::GetCopiedConfig();
   config::Config output2 = ConfigHandler::GetCopiedConfig();
-  input.mutable_general_config()->set_last_modified_time(0);
-  output.mutable_general_config()->set_last_modified_time(0);
-  output2.mutable_general_config()->set_last_modified_time(0);
+  input.clear_general_config();
+  output.clear_general_config();
+  output2.clear_general_config();
   EXPECT_EQ(absl::StrCat(output), absl::StrCat(input));
   EXPECT_EQ(absl::StrCat(output2), absl::StrCat(input));
 
@@ -101,14 +101,13 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 #ifndef NDEBUG
   input.set_verbose_level(0);
 #endif  // NDEBUG
-  ConfigHandler::SetMetaData(&input);
   ConfigHandler::SetConfig(input);
   output = ConfigHandler::GetCopiedConfig();
   output2 = ConfigHandler::GetCopiedConfig();
 
-  input.mutable_general_config()->set_last_modified_time(0);
-  output.mutable_general_config()->set_last_modified_time(0);
-  output2.mutable_general_config()->set_last_modified_time(0);
+  input.clear_general_config();
+  output.clear_general_config();
+  output2.clear_general_config();
   EXPECT_EQ(absl::StrCat(output), absl::StrCat(input));
   EXPECT_EQ(absl::StrCat(output2), absl::StrCat(input));
 
@@ -132,27 +131,35 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 }
 
 TEST_F(ConfigHandlerTest, SetMetadata) {
-  ClockMock clock1(absl::FromUnixSeconds(1000));
-  Clock::SetClockForUnitTest(&clock1);
-  Config input1;
-  ConfigHandler::SetMetaData(&input1);
+  auto make_Config_with_clock = [](int seconds, bool incognito) {
+    Config input = ConfigHandler::DefaultConfig();
+    input.set_incognito_mode(incognito);
+    ClockMock clock(absl::FromUnixSeconds(seconds));
+    Clock::SetClockForUnitTest(&clock);
+    ConfigHandler::SetConfig(input);
+    Clock::SetClockForUnitTest(nullptr);
+    return ConfigHandler::GetCopiedConfig();
+  };
 
-  ClockMock clock2(absl::FromUnixSeconds(1000));
-  Clock::SetClockForUnitTest(&clock2);
-  Config input2;
-  ConfigHandler::SetMetaData(&input2);
+  {
+    const Config input1 = make_Config_with_clock(1000, false);
+    const Config input2 = make_Config_with_clock(1000, false);
+    const Config input3 = make_Config_with_clock(1001, false);
 
-  ClockMock clock3(absl::FromUnixSeconds(1001));
-  Clock::SetClockForUnitTest(&clock3);
-  Config input3;
-  ConfigHandler::SetMetaData(&input3);
+    // Don't update the config as long as the content is the same.
+    EXPECT_EQ(absl::StrCat(input1), absl::StrCat(input2));
+    EXPECT_EQ(absl::StrCat(input2), absl::StrCat(input3));
+  }
 
-  // input1 and input2 are created at the same time,
-  // but input3 is not.
-  EXPECT_EQ(absl::StrCat(input1), absl::StrCat(input2));
-  EXPECT_NE(absl::StrCat(input2), absl::StrCat(input3));
-  EXPECT_NE(absl::StrCat(input3), absl::StrCat(input1));
-  Clock::SetClockForUnitTest(nullptr);
+  {
+    const Config input1 = make_Config_with_clock(1000, true);
+    const Config input2 = make_Config_with_clock(1000, false);
+    const Config input3 = make_Config_with_clock(1001, true);
+
+    EXPECT_EQ(input1.general_config().last_modified_time(), 1000);
+    EXPECT_EQ(input2.general_config().last_modified_time(), 1000);
+    EXPECT_EQ(input3.general_config().last_modified_time(), 1001);
+  }
 }
 
 TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
@@ -162,8 +169,8 @@ TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
   const std::string config_file =
       FileUtil::JoinPath(temp_dir.path(), "mozc_config_test_tmp");
   ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
-  ConfigHandler::SetConfigFileName(config_file);
-  EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
+  ConfigHandler::SetConfigFileNameForTesting(config_file);
+  EXPECT_EQ(ConfigHandler::GetConfigFileNameForTesting(), config_file);
   ConfigHandler::Reload();
 
   ConfigHandler::GetDefaultConfig(&input);
@@ -207,7 +214,8 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   const bool default_incognito_mode = mozc_config.incognito_mode();
   mozc_config.set_incognito_mode(!default_incognito_mode);
   ConfigHandler::SetConfig(mozc_config);
-  ConfigHandler::SetConfigFileName("memory://set_config_file_name_test.db");
+  ConfigHandler::SetConfigFileNameForTesting(
+      "memory://set_config_file_name_test.db");
   // After SetConfigFileName called, settings are set as default.
   EXPECT_EQ(ConfigHandler::GetSharedConfig()->incognito_mode(),
             default_incognito_mode);
@@ -234,7 +242,8 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     ASSERT_OK(FileUtil::CopyFile(src_path, dest_path))
         << "Copy failed: " << src_path << " to " << dest_path;
 
-    ConfigHandler::SetConfigFileName(absl::StrCat("user://", file_name));
+    ConfigHandler::SetConfigFileNameForTesting(
+        absl::StrCat("user://", file_name));
     ConfigHandler::Reload();
   }
 }
@@ -421,7 +430,7 @@ TEST_F(ConfigHandlerTest, GetSharedConfig) {
   EXPECT_EQ(config1, config2);
 
   Config config = *config1;
-  config.mutable_general_config()->set_last_modified_time(100);
+  config.set_incognito_mode(true);
   ConfigHandler::SetConfig(config);
   auto config3 = ConfigHandler::GetSharedConfig();
   EXPECT_NE(config1, config3);

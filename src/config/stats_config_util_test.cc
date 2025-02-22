@@ -676,8 +676,8 @@ TEST(StatsConfigUtilTestWin, IsEnabled) {
 #ifdef __ANDROID__
 TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
   const TempFile config_file(testing::MakeTempFileOrDie());
-  ConfigHandler::SetConfigFileName(config_file.path());
-  EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file.path());
+  ConfigHandler::SetConfigFileNameForTesting(config_file.path());
+  EXPECT_EQ(ConfigHandler::GetConfigFileNameForTesting(), config_file.path());
   ConfigHandler::Reload();
 #ifdef CHANNEL_DEV
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());

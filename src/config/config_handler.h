@@ -82,7 +82,9 @@ class ConfigHandler {
   // Using these functions are safer than using an uninitialized config value.
   // These functions are also thread-safe.
   static void GetDefaultConfig(Config *config);
+
   static const Config &DefaultConfig();
+  static std::shared_ptr<const config::Config> GetSharedDefaultConfig();
 
   // Reloads config from storage.
   //
@@ -90,13 +92,10 @@ class ConfigHandler {
   static void Reload();
 
   // Sets config file. (for unit testing)
-  static void SetConfigFileName(absl::string_view filename);
+  static void SetConfigFileNameForTesting(absl::string_view filename);
 
   // Get config file name.
-  static std::string GetConfigFileName();
-
-  // Utility function to put config meta data
-  static void SetMetaData(Config *config);
+  static std::string GetConfigFileNameForTesting();
 
   // Get default keymap for each platform.
   static Config::SessionKeymap GetDefaultKeyMap();

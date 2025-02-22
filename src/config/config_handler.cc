@@ -118,52 +118,16 @@ Config CreateDefaultConfig() {
   return config;
 }
 
-class ConfigHandlerImpl final {
- public:
-  ConfigHandlerImpl()
-      :  // <user_profile>/config1.db
-        filename_(absl::StrFormat("%s%d.db", kFileNamePrefix, kConfigVersion)),
-        default_config_(CreateDefaultConfig()) {
-    Reload();
-  }
-
-  std::shared_ptr<Config> GetSharedConfig();
-
-  const Config &DefaultConfig() const;
-
-  void SetConfig(const Config &config);
-  void Reload();
-
-  void SetConfigFileName(absl::string_view filename)
-      ABSL_LOCKS_EXCLUDED(mutex_);
-
-  std::string GetConfigFileName() ABSL_LOCKS_EXCLUDED(mutex_);
-
- private:
-  void SetConfigInternal(std::shared_ptr<Config> config);
-
-  std::string filename_ ABSL_GUARDED_BY(mutex_);
-  std::atomic<uint64_t> stored_config_hash_ = 0;
-  std::shared_ptr<Config> config_;
-  const Config default_config_;
-  mutable absl::Mutex mutex_;
-};
-
-ConfigHandlerImpl *GetConfigHandlerImpl() {
-  return Singleton<ConfigHandlerImpl>::get();
+void SetMetaData(Config *config) {
+  GeneralConfig *general_config = config->mutable_general_config();
+  general_config->set_config_version(kConfigVersion);
+  general_config->set_last_modified_time(
+      absl::ToUnixSeconds(Clock::GetAbslTime()));
+  general_config->set_last_modified_product_version(Version::GetMozcVersion());
+  general_config->set_platform(SystemUtil::GetOSVersionString());
 }
 
-std::shared_ptr<Config> ConfigHandlerImpl::GetSharedConfig() {
-  // TODO(all): use std::atomic<std::shared_ptr<T>> once it is fully supported.
-  return std::atomic_load(&config_);
-}
-
-const Config &ConfigHandlerImpl::DefaultConfig() const {
-  return default_config_;
-}
-
-// set config and rewrite internal data
-void ConfigHandlerImpl::SetConfigInternal(std::shared_ptr<Config> config) {
+void NormalizeConfig(Config *config) {
 #ifdef NDEBUG
   // Delete the optional field from the config.
   config->clear_verbose_level();
@@ -188,28 +152,90 @@ void ConfigHandlerImpl::SetConfigInternal(std::shared_ptr<Config> config) {
       !config->has_use_emoji_conversion()) {
     config->set_use_emoji_conversion(true);
   }
+}
 
+class ConfigHandlerImpl final {
+ public:
+  ConfigHandlerImpl()
+      :  // <user_profile>/config1.db
+        filename_(absl::StrFormat("%s%d.db", kFileNamePrefix, kConfigVersion)),
+        default_config_(std::make_shared<Config>(CreateDefaultConfig())) {
+    Reload();
+  }
+
+  std::shared_ptr<const Config> GetSharedConfig() const;
+  std::shared_ptr<const Config> GetSharedDefaultConfig() const;
+
+  void SetConfig(const Config &config);
+  void Reload();
+
+  void SetConfigFileName(absl::string_view filename)
+      ABSL_LOCKS_EXCLUDED(mutex_);
+
+  std::string GetConfigFileName() const ABSL_LOCKS_EXCLUDED(mutex_);
+
+ private:
+  void SetConfigInternal(std::shared_ptr<Config> config);
+
+  std::string filename_ ABSL_GUARDED_BY(mutex_);
+  std::atomic<uint64_t> config_hash_ = 0;   // hash of final config.
+  std::atomic<uint64_t> content_hash_ = 0;  // hash w/o metadata.
+  std::shared_ptr<Config> config_;
+  std::shared_ptr<const Config> default_config_;
+  mutable absl::Mutex mutex_;
+};
+
+ConfigHandlerImpl *GetConfigHandlerImpl() {
+  return Singleton<ConfigHandlerImpl>::get();
+}
+
+std::shared_ptr<const Config> ConfigHandlerImpl::GetSharedConfig() const {
+  // TODO(all): use std::atomic<std::shared_ptr<T>> once it is fully supported.
+  return std::atomic_load(&config_);
+}
+
+std::shared_ptr<const Config> ConfigHandlerImpl::GetSharedDefaultConfig()
+    const {
+  return default_config_;
+}
+
+// update internal data
+void ConfigHandlerImpl::SetConfigInternal(std::shared_ptr<Config> config) {
   std::atomic_store(&config_, std::move(config));
 }
 
 void ConfigHandlerImpl::SetConfig(const Config &config) {
-  const uint64_t hash = Fingerprint(config.SerializeAsString());
+  const uint64_t config_hash = Fingerprint(config.SerializeAsString());
 
-  // If the wire format of config
-  // (except for metadata, added by ConfigHandler::SetMetaData() soon later)
-  // is identical to the one of the previously stored config, skip updating.
-  if (stored_config_hash_ == hash) {
+  // If the wire format of config is identical to the one of the previously
+  // stored config, skip updating.
+  if (config_hash_ == config_hash) {
     return;
   }
-  stored_config_hash_ = hash;
 
   auto output_config = std::make_shared<Config>(config);
-  ConfigHandler::SetMetaData(output_config.get());
+
+  // Fix config because `config` may be broken.
+  NormalizeConfig(output_config.get());
+
+  // If the wire format of the config w/o metadata is identical to the one of
+  // the previous config, skip updating.
+  output_config->mutable_general_config()->clear_last_modified_time();
+  const uint64_t content_hash = Fingerprint(output_config->SerializeAsString());
+  if (content_hash_ == content_hash) {
+    return;
+  }
+  content_hash_ = content_hash;
+
+  // Set metadata and update `config_hash_`.
+  SetMetaData(output_config.get());
+  config_hash_ = Fingerprint(output_config->SerializeAsString());
 
   const std::string filename = GetConfigFileName();
 
   MOZC_VLOG(1) << "Setting new config: " << filename;
   ConfigFileStream::AtomicUpdate(filename, output_config->SerializeAsString());
+
 #ifdef _WIN32
   ConfigFileStream::FixupFilePermission(filename);
 #endif  // _WIN32
@@ -241,6 +267,8 @@ void ConfigHandlerImpl::Reload() {
   }
 
   // we set default config when file is broken
+  NormalizeConfig(input_config.get());
+
   SetConfigInternal(input_config);
 }
 
@@ -253,7 +281,7 @@ void ConfigHandlerImpl::SetConfigFileName(const absl::string_view filename) {
   Reload();
 }
 
-std::string ConfigHandlerImpl::GetConfigFileName() {
+std::string ConfigHandlerImpl::GetConfigFileName() const {
   absl::ReaderMutexLock lock(&mutex_);
   return filename_;
 }
@@ -265,9 +293,7 @@ std::unique_ptr<Config> ConfigHandler::GetConfig() {
   return std::make_unique<Config>(*GetSharedConfig());
 }
 
-Config ConfigHandler::GetCopiedConfig() {
-  return *GetConfigHandlerImpl()->GetSharedConfig();
-}
+Config ConfigHandler::GetCopiedConfig() { return *GetSharedConfig(); }
 
 std::shared_ptr<const Config> ConfigHandler::GetSharedConfig() {
   return GetConfigHandlerImpl()->GetSharedConfig();
@@ -279,33 +305,28 @@ void ConfigHandler::SetConfig(const Config &config) {
 
 // static
 void ConfigHandler::GetDefaultConfig(Config *config) {
-  *config = GetConfigHandlerImpl()->DefaultConfig();
+  *config = DefaultConfig();
+}
+
+std::shared_ptr<const Config> ConfigHandler::GetSharedDefaultConfig() {
+  return GetConfigHandlerImpl()->GetSharedDefaultConfig();
 }
 
 // static
 const Config &ConfigHandler::DefaultConfig() {
-  return GetConfigHandlerImpl()->DefaultConfig();
+  return *GetSharedDefaultConfig();
 }
 
 // Reload from file
 void ConfigHandler::Reload() { GetConfigHandlerImpl()->Reload(); }
 
-void ConfigHandler::SetConfigFileName(const absl::string_view filename) {
+void ConfigHandler::SetConfigFileNameForTesting(
+    const absl::string_view filename) {
   GetConfigHandlerImpl()->SetConfigFileName(filename);
 }
 
-std::string ConfigHandler::GetConfigFileName() {
+std::string ConfigHandler::GetConfigFileNameForTesting() {
   return GetConfigHandlerImpl()->GetConfigFileName();
-}
-
-// static
-void ConfigHandler::SetMetaData(Config *config) {
-  GeneralConfig *general_config = config->mutable_general_config();
-  general_config->set_config_version(kConfigVersion);
-  general_config->set_last_modified_time(
-      absl::ToUnixSeconds(Clock::GetAbslTime()));
-  general_config->set_last_modified_product_version(Version::GetMozcVersion());
-  general_config->set_platform(SystemUtil::GetOSVersionString());
 }
 
 Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
@@ -321,7 +342,7 @@ Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
 #ifdef _WIN32
 // static
 void ConfigHandler::FixupFilePermission() {
-  ConfigFileStream::FixupFilePermission(GetConfigFileName());
+  ConfigFileStream::FixupFilePermission(GetConfigFileNameForTesting());
 }
 #endif  // _WIN32
 
