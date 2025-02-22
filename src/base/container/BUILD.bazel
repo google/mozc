@@ -54,6 +54,80 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
+    name = "entry",
+    hdrs = ["entry.h"],
+)
+
+mozc_cc_library(
+    name = "flat_internal",
+    hdrs = ["flat_internal.h"],
+    deps = [
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_library(
+    name = "flat_map",
+    hdrs = ["flat_map.h"],
+    deps = [
+        ":entry",
+        ":flat_internal",
+        "@com_google_absl//absl/base:nullability",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "flat_map_test",
+    srcs = ["flat_map_test.cc"],
+    deps = [
+        ":flat_map",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "flat_multimap",
+    hdrs = ["flat_multimap.h"],
+    deps = [
+        ":entry",
+        ":flat_internal",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "flat_multimap_test",
+    srcs = ["flat_multimap_test.cc"],
+    deps = [
+        ":flat_multimap",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "flat_set",
+    hdrs = ["flat_set.h"],
+    deps = [
+        ":flat_internal",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "flat_set_test",
+    srcs = ["flat_set_test.cc"],
+    deps = [
+        ":flat_set",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
     name = "freelist",
     hdrs = ["freelist.h"],
     visibility = ["//:__subpackages__"],
