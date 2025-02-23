@@ -109,10 +109,10 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     config_->set_use_cascading_window(true);
     request_ = std::make_unique<Request>();
 
-    table_ = std::make_unique<composer::Table>();
+    table_ = std::make_shared<composer::Table>();
     table_->InitializeWithRequestAndConfig(*request_, *config_);
     composer_ =
-        std::make_unique<composer::Composer>(*table_, *request_, *config_);
+        std::make_unique<composer::Composer>(table_, *request_, *config_);
   }
 
   void TearDown() override {
@@ -403,7 +403,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   }
 
   std::unique_ptr<composer::Composer> composer_;
-  std::unique_ptr<composer::Table> table_;
+  std::shared_ptr<composer::Table> table_;
   std::unique_ptr<Request> request_;
   std::unique_ptr<Config> config_;
 

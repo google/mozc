@@ -335,9 +335,8 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
     request_ = std::make_unique<commands::Request>();
     config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
-    table_ = std::make_unique<composer::Table>();
-    composer_ =
-        std::make_unique<composer::Composer>(*table_, *request_, *config_);
+    composer_ = std::make_unique<composer::Composer>(
+        composer::Table::GetSharedDefaultTable(), *request_, *config_);
   }
 
   void TearDown() override {}
@@ -356,7 +355,6 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   std::unique_ptr<composer::Composer> composer_;
-  std::unique_ptr<composer::Table> table_;
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
   commands::Context context_;

@@ -846,9 +846,9 @@ TEST_F(ConverterTest, StartSuggestion) {
 
   const std::string kShi = "し";
 
-  composer::Table table;
-  table.AddRule("si", kShi, "");
-  table.AddRule("shi", kShi, "");
+  auto table = std::make_shared<composer::Table>();
+  table->AddRule("si", kShi, "");
+  table->AddRule("shi", kShi, "");
   config::Config config;
 
   {
@@ -1109,7 +1109,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
 TEST_F(ConverterTest, ComposerKeySelection) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
-  composer::Table table;
+  auto table = std::make_shared<composer::Table>();
   config::Config config;
   {
     Segments segments;
@@ -1158,7 +1158,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   EXPECT_FALSE(modules->GetMutableSuppressionDictionary()->IsEmpty());
 
   // Convert
-  composer::Table table;
+  auto table = std::make_shared<composer::Table>();
   config::Config config;
   composer::Composer composer(table, default_request(), config);
   composer.InsertCharacter("placeholder");
@@ -1359,7 +1359,7 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
-  composer::Table table;
+  auto table = std::make_shared<composer::Table>();
   const config::Config &config = config::ConfigHandler::DefaultConfig();
   mozc::commands::Request request_proto;
   mozc::composer::Composer composer(table, request_proto, config);
@@ -1435,7 +1435,7 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
   commands::Request request;
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
-  composer::Table table;
+  auto table = std::make_shared<composer::Table>();
   composer::Composer composer(table, request, config);
   request_test_util::FillMobileRequest(&request);
 
@@ -1627,7 +1627,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   config::ConfigHandler::GetDefaultConfig(&config);
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
-  composer::Table table;
+  auto table = std::make_shared<composer::Table>();
   composer::Composer composer(table, request, config);
   composer.SetPreeditTextForTestOnly("あい");
   commands::Context context;
@@ -1685,7 +1685,7 @@ TEST_F(ConverterTest,
   commands::Request request;
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
-  composer::Table table;
+  auto table = std::make_shared<composer::Table>();
   composer::Composer composer(table, request, config);
   request_test_util::FillMobileRequest(&request);
   composer.SetPreeditTextForTestOnly("おつかれ");
@@ -1713,7 +1713,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   commands::Request request;
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
-  composer::Table table;
+  auto table = std::make_shared<composer::Table>();
   composer::Composer composer(table, request, config);
   request_test_util::FillMobileRequest(&request);
   const dictionary::PosMatcher pos_matcher(

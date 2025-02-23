@@ -107,10 +107,10 @@ class ComposerTest : public ::testing::Test {
   ~ComposerTest() override = default;
 
   void SetUp() override {
-    table_ = std::make_unique<Table>();
+    table_ = std::make_shared<Table>();
     config_ = std::make_unique<Config>();
     request_ = std::make_unique<Request>();
-    composer_ = std::make_unique<Composer>(*table_, *request_, *config_);
+    composer_ = std::make_unique<Composer>(table_, *request_, *config_);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
@@ -123,7 +123,7 @@ class ComposerTest : public ::testing::Test {
   }
 
   std::unique_ptr<Composer> composer_;
-  std::unique_ptr<Table> table_;
+  std::shared_ptr<Table> table_;
   std::unique_ptr<Request> request_;
   std::unique_ptr<Config> config_;
 };
@@ -854,7 +854,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
-  composer_ = std::make_unique<Composer>(*table_, *request_, *config_);
+  composer_ = std::make_unique<Composer>(table_, *request_, *config_);
 
   {
     // "a" → "あ" (Hiragana)
@@ -1256,7 +1256,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
-  composer_ = std::make_unique<Composer>(*table_, *request_, *config_);
+  composer_ = std::make_unique<Composer>(table_, *request_, *config_);
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1321,7 +1321,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   }
 
   config_->set_shift_key_mode_switch(Config::OFF);
-  composer_ = std::make_unique<Composer>(*table_, *request_, *config_);
+  composer_ = std::make_unique<Composer>(table_, *request_, *config_);
 
   {  // Google
     InsertKey("G", composer_.get());

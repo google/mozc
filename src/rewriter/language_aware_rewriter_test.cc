@@ -30,6 +30,7 @@
 #include "rewriter/language_aware_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -85,9 +86,9 @@ class LanguageAwareRewriterTest : public testing::TestWithTempUserProfile {
       client_request.set_mixed_conversion(true);
     }
 
-    composer::Table table;
+    auto table = std::make_shared<composer::Table>();
     config::Config default_config;
-    table.InitializeWithRequestAndConfig(client_request, default_config);
+    table->InitializeWithRequestAndConfig(client_request, default_config);
 
     composer::Composer composer(table, client_request, default_config);
     InsertASCIISequence(key, &composer);
@@ -352,8 +353,8 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
     config::Config config;
     config.set_preedit_method(param.preedit_method);
 
-    composer::Table table;
-    table.InitializeWithRequestAndConfig(request, config);
+    auto table = std::make_shared<composer::Table>();
+    table->InitializeWithRequestAndConfig(request, config);
 
     composer::Composer composer(table, request, config);
     InsertASCIISequence("query", &composer);

@@ -31,6 +31,7 @@
 // a session.
 
 #include "session/ime_context.h"
+
 #include <memory>
 #include <utility>
 
@@ -61,7 +62,7 @@ ImeContext::CopyableData::CopyableData()
       request(&commands::Request::default_instance()),
       config(&config::ConfigHandler::DefaultConfig()),
       key_map_manager(&DefaultKeyMapManager()),
-      composer(composer::Table::GetDefaultTable(), *request, *config),
+      composer(composer::Table::GetSharedDefaultTable(), *request, *config),
       state(NONE) {
   key_event_transformer.ReloadConfig(*config);
 }

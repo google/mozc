@@ -111,6 +111,7 @@ mozc_cc_library(
         "//composer/internal:special_key",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/hash",

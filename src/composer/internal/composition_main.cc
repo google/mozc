@@ -29,6 +29,7 @@
 
 #include <cstddef>
 #include <iostream>  // NOLINT
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -44,8 +45,8 @@ ABSL_FLAG(std::string, table, "system://romanji-hiragana.tsv",
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  mozc::composer::Table table;
-  table.LoadFromFile(absl::GetFlag(FLAGS_table).c_str());
+  auto table = std::make_shared<mozc::composer::Table>();
+  table->LoadFromFile(absl::GetFlag(FLAGS_table).c_str());
 
   mozc::composer::Composition composition(table);
 

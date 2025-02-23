@@ -30,6 +30,7 @@
 #include "composer/internal/char_chunk.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -111,13 +112,14 @@ bool GetFromPending(const Table *table, const absl::string_view key,
 }  // namespace
 
 CharChunk::CharChunk(Transliterators::Transliterator transliterator,
-                     const Table &table)
-    : table_(&table), transliterator_(transliterator) {
+                     std::shared_ptr<const Table> table)
+    : table_(table), transliterator_(transliterator) {
+  DCHECK(table_);
   DCHECK_NE(transliterator, Transliterators::LOCAL);
 }
 
 CharChunk::CharChunk(Transliterators::Transliterator transliterator)
-    : transliterator_(transliterator) {
+    : table_(Table::GetSharedDefaultTable()), transliterator_(transliterator) {
   DCHECK_NE(transliterator, Transliterators::LOCAL);
 }
 
@@ -244,7 +246,7 @@ absl::btree_set<std::string> CharChunk::GetExpandedResults() const {
       continue;
     }
     absl::btree_set<std::string> loop_result;
-    if (!GetFromPending(table_, entry->pending(), kMaxRecursion,
+    if (!GetFromPending(table_.get(), entry->pending(), kMaxRecursion,
                         &loop_result)) {
       continue;
     }
@@ -261,7 +263,7 @@ bool CharChunk::IsAppendable(Transliterators::Transliterator t12r,
                              const Table &table) const {
   return !pending_.empty() &&
          (t12r == Transliterators::LOCAL || t12r == transliterator_) &&
-         &table == table_;
+         &table == table_.get();
 }
 
 bool CharChunk::IsConvertible(Transliterators::Transliterator t12r,
@@ -565,7 +567,7 @@ absl::StatusOr<CharChunk> CharChunk::SplitChunk(
               DeleteSpecialKeys(conversion_ + pending_), &raw_lhs, &raw_rhs,
               &converted_lhs, &converted_rhs);
 
-  CharChunk left_new_chunk(transliterator_, *table_);
+  CharChunk left_new_chunk(transliterator_, table_);
   left_new_chunk.set_raw(raw_lhs);
   set_raw(std::move(raw_rhs));
 

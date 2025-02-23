@@ -30,6 +30,7 @@
 #include "rewriter/date_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -902,9 +903,9 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
   Segments segments;
   DateRewriter rewriter;
 
-  composer::Table table;
-  table.AddRule("222", "c", "");
-  table.AddRule("3", "d", "");
+  auto table = std::make_shared<composer::Table>();
+  table->AddRule("222", "c", "");
+  table->AddRule("3", "d", "");
   const commands::Request request;
   const config::Config config;
   composer::Composer composer(table, request, config);

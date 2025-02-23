@@ -35,8 +35,8 @@
 #include <tuple>
 #include <utility>
 
-#include "absl/container/btree_set.h"
 #include "absl/base/attributes.h"
+#include "absl/container/btree_set.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -56,7 +56,8 @@ namespace composer {
 class CharChunk final {
  public:
   // LOCAL transliterator is not accepted.
-  CharChunk(Transliterators::Transliterator transliterator, const Table &table);
+  CharChunk(Transliterators::Transliterator transliterator,
+            std::shared_ptr<const Table> table);
   // This constructor is for testing.
   ABSL_DEPRECATED("Use the constructor with Table")
   explicit CharChunk(Transliterators::Transliterator transliterator);
@@ -142,7 +143,7 @@ class CharChunk final {
   Transliterators::Transliterator transliterator() const {
     return transliterator_;
   }
-  const Table *table() const { return table_; }
+  std::shared_ptr<const Table> table_for_testing() const { return table_; }
 
   const std::string &raw() const { return raw_; }
   template <typename String>
@@ -191,8 +192,9 @@ class CharChunk final {
     absl::Format(&sink,
                  "table = %p, raw = %s, conversion = %s, pending = %s, "
                  "ambiguous = %s, transliterator = %v, attributes = %v",
-                 chunk.table_, chunk.raw_, chunk.conversion_, chunk.pending_,
-                 chunk.ambiguous_, chunk.transliterator_, chunk.attributes_);
+                 chunk.table_.get(), chunk.raw_, chunk.conversion_,
+                 chunk.pending_, chunk.ambiguous_, chunk.transliterator_,
+                 chunk.attributes_);
   }
 
   // bool = should loop
@@ -202,7 +204,7 @@ class CharChunk final {
  private:
   void AddInputAndConvertedChar(CompositionInput *composition_input);
 
-  const Table *table_ = nullptr;
+  std::shared_ptr<const Table> table_;
 
   // There are four variables to represent a composing text:
   // `raw_`, `conversion_`, `pending_`, and `ambiguous_`.

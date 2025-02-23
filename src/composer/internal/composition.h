@@ -36,6 +36,7 @@
 #include <utility>
 
 #include "absl/container/btree_set.h"
+#include "absl/log/check.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "composer/internal/char_chunk.h"
@@ -57,7 +58,9 @@ enum TrimMode {
 class Composition final {
  public:
   Composition() = default;
-  explicit Composition(const Table &table) : table_(&table) {}
+  explicit Composition(std::shared_ptr<const Table> table) : table_(table) {
+    DCHECK(table_);
+  }
 
   // Copyable and movable.
   Composition(const Composition &) = default;
@@ -139,7 +142,7 @@ class Composition final {
   // Return true if the composition is advised to be committed immediately.
   bool ShouldCommit() const;
 
-  void SetTable(const Table &table);
+  void SetTable(std::shared_ptr<const Table> table);
 
   bool IsToggleable(size_t position) const;
 
@@ -193,7 +196,7 @@ class Composition final {
   void CombinePendingChunks(CharChunkList::iterator it,
                             const CompositionInput &input);
   const CharChunkList &GetCharChunkList() const;
-  const Table *table() const { return table_; }
+  std::shared_ptr<const Table> table_for_testing() const { return table_; }
   const CharChunkList &chunks() const { return chunks_; }
   Transliterators::Transliterator input_t12r() const { return input_t12r_; }
 
@@ -208,7 +211,7 @@ class Composition final {
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const Composition &composition) {
     absl::Format(&sink, "table = %p, input transliterator = %v, chunks = [%s]",
-                 composition.table_, composition.input_t12r_,
+                 composition.table_.get(), composition.input_t12r_,
                  absl::StrJoin(composition.chunks_, ", "));
   }
 
@@ -216,7 +219,7 @@ class Composition final {
   std::string GetStringWithModes(Transliterators::Transliterator transliterator,
                                  TrimMode trim_mode) const;
 
-  const Table *table_ = nullptr;
+  std::shared_ptr<const Table> table_;
   CharChunkList chunks_;
   Transliterators::Transliterator input_t12r_ =
       Transliterators::CONVERSION_STRING;

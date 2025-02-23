@@ -55,11 +55,12 @@ namespace mozc {
 namespace composer {
 
 // ComposerData is a data structure that represents the current state of the
-// composer. It is used by Converter, Predictor and Rewriters as a const object.
+// composer. It is used by Converter, Predictor and Rewriters as a const
+// object.
 class ComposerData {
  public:
-  // This constructor is temporary and should be removed, when ConverterRequest
-  // is updated to use a const ComposerData.
+  // This constructor is temporary and should be removed, when
+  // ConverterRequest is updated to use a const ComposerData.
   ABSL_DEPRECATED("Do not use this constructor except in converter_request.h")
   ComposerData() = default;
 
@@ -144,8 +145,8 @@ class ComposerData {
 };
 
 // Composer is a class that manages the composing text. It provides methods to
-// edit the text by users. Composer creates ComposerData as the snapshot of the
-// current state of the composer.
+// edit the text by users. Composer creates ComposerData as the snapshot of
+// the current state of the composer.
 class Composer final {
  public:
   // Pseudo commands in composer.
@@ -155,7 +156,7 @@ class Composer final {
   };
 
   Composer();
-  Composer(const Table &table, const commands::Request &request,
+  Composer(std::shared_ptr<const Table> table, const commands::Request &request,
            const config::Config &config);
   // This constructor is for testing.
   ABSL_DEPRECATED("Use the constructor with Table")
@@ -188,7 +189,7 @@ class Composer final {
   // Check the preedit string is empty or not.
   bool Empty() const;
 
-  void SetTable(const Table &table);
+  void SetTable(std::shared_ptr<const Table> table);
 
   void SetRequest(const commands::Request &request);
   void SetConfig(const config::Config &config);
@@ -390,9 +391,17 @@ class Composer final {
 
   size_t max_length_;
 
+  // TODO(all): Stop using raw pointer to achieve shared ownership.
   const commands::Request *request_ = nullptr;
   const config::Config *config_ = nullptr;
-  const Table *table_ = nullptr;
+
+  // Though we would like to avoid shared object, Table is not copyable so
+  // there is no other way to share them at this moment. The internal data
+  // of the Table is managed by std::unique_ptr, which makes simple copying
+  // impossible. Furthermore, copying the table every time would result in
+  // a significant performance degradation. Style guide says that we prefer
+  // to use std::shared_ptr for shared object.
+  std::shared_ptr<const Table> table_;
 
   // Timestamp of last modified.
   int64_t timestamp_msec_ = 0;

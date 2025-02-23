@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <memory>
 #include <sstream>  // NOLINT
 #include <string>
 #include <utility>
@@ -244,7 +245,7 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
   converter_->ResetConversion(&segments_);
   actual_value->clear();
 
-  composer::Table table;
+  auto table = std::make_shared<composer::Table>();
   config_.set_use_typing_correction(true);
   commands::Context context;
 

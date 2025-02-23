@@ -196,7 +196,8 @@ void SessionHandler::UpdateSessions(
     key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
   }
 
-  const composer::Table *table = table_manager_->GetTable(*request_, *config_);
+  std::shared_ptr<const composer::Table> table =
+      table_manager_->GetTable(*request_, *config_);
 
   for (SessionElement &element : *session_map_) {
     std::unique_ptr<session::Session> &session = element.value;
@@ -206,9 +207,7 @@ void SessionHandler::UpdateSessions(
     session->SetConfig(*config_);
     session->SetKeyMapManager(*key_map_manager_);
     session->SetRequest(*request_);
-    if (table != nullptr) {
-      session->SetTable(*table);
-    }
+    session->SetTable(table);
   }
 
   if (is_config_updated) {

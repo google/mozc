@@ -132,6 +132,9 @@ class Table final {
   // Return the default table.
   static const Table &GetDefaultTable();
 
+  // Return the default shared table.
+  static std::shared_ptr<const Table> GetSharedDefaultTable();
+
  private:
   friend class TypingCorrectorTest;
   friend class TypingCorrectionTest;
@@ -156,9 +159,9 @@ class TableManager {
   TableManager();
   ~TableManager() = default;
   // Return Table for the request and the config
-  // TableManager has ownership of the return value;
-  const Table *GetTable(const commands::Request &request,
-                        const config::Config &config);
+  // Return nullptr when no Table is available.
+  std::shared_ptr<const Table> GetTable(const commands::Request &request,
+                                        const config::Config &config);
 
   void ClearCaches();
 
@@ -169,7 +172,7 @@ class TableManager {
   //  config::Config::PreeditMethod
   //  config::Config::PunctuationMethod
   //  config::Config::SymbolMethod
-  absl::flat_hash_map<uint32_t, std::unique_ptr<const Table>> table_map_;
+  absl::flat_hash_map<uint32_t, std::shared_ptr<const Table>> table_map_;
   // Fingerprint for Config::custom_roman_table;
   uint32_t custom_roman_table_fingerprint_;
 };

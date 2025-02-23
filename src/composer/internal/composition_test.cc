@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <iterator>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -63,21 +64,21 @@ size_t InsertCharacters(const std::string& input, size_t pos,
 
 class CompositionTest : public testing::Test {
  protected:
-  CompositionTest() : table_(), composition_(table_) {
+  CompositionTest() : table_(std::make_shared<Table>()), composition_(table_) {
     composition_.SetInputMode(Transliterators::CONVERSION_STRING);
   }
 
   void SetInput(const absl::string_view raw, std::string conversion,
                 const bool is_new_input, CompositionInput* input) {
     input->Clear();
-    input->set_raw(table_.ParseSpecialKey(raw));
+    input->set_raw(table_->ParseSpecialKey(raw));
     if (!conversion.empty()) {
       input->set_conversion(std::move(conversion));
     }
     input->set_is_new_input(is_new_input);
   }
 
-  Table table_;
+  std::shared_ptr<Table> table_;
   Composition composition_;
 };
 
@@ -322,8 +323,8 @@ TEST_F(CompositionTest, SplitConversionChunk) {
 }
 
 TEST_F(CompositionTest, GetLength) {
-  table_.AddRule("a", "A", "");
-  table_.AddRule("ka", "K", "");
+  table_->AddRule("a", "A", "");
+  table_->AddRule("ka", "K", "");
 
   EXPECT_EQ(composition_.GetLength(), 0);
 
@@ -371,7 +372,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
 namespace {
 std::string GetDeletedString(Transliterators::Transliterator t12r,
                              const int position) {
-  Table table;
+  auto table = std::make_shared<Table>();
   Composition comp(table);
 
   InitComposition(comp);
@@ -431,8 +432,8 @@ TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
     CharChunkList::iterator it = composition.MaybeSplitChunkAt(0);
     for (const auto& item : data) {
       CharChunk& chunk = *composition.InsertChunk(it);
-      chunk.set_raw(table_.ParseSpecialKey(item.first));
-      chunk.set_pending(table_.ParseSpecialKey(item.second));
+      chunk.set_raw(table_->ParseSpecialKey(item.first));
+      chunk.set_pending(table_->ParseSpecialKey(item.second));
     }
   };
 
@@ -458,10 +459,10 @@ TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
     EXPECT_EQ(chunks.size(), 2);
     const CharChunk& chunk0 = *(chunks.begin());
     EXPECT_EQ(chunk0.raw(), "1");
-    EXPECT_EQ(chunk0.pending(), table_.ParseSpecialKey("{1}"));
+    EXPECT_EQ(chunk0.pending(), table_->ParseSpecialKey("{1}"));
     const CharChunk& chunk1 = *(std::next(chunks.begin()));
     EXPECT_EQ(chunk1.raw(), "2");
-    EXPECT_EQ(chunk1.pending(), table_.ParseSpecialKey("{2}2"));
+    EXPECT_EQ(chunk1.pending(), table_->ParseSpecialKey("{2}2"));
   }
 
   {
@@ -489,21 +490,21 @@ TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
 
 namespace {
 
-void InitTable(Table& table) {
-  table.AddRule("i", "い", "");
-  table.AddRule("ki", "き", "");
-  table.AddRule("kyi", "きぃ", "");
-  table.AddRule("ti", "ち", "");
-  table.AddRule("tya", "ちゃ", "");
-  table.AddRule("tyi", "ちぃ", "");
-  table.AddRule("ya", "や", "");
-  table.AddRule("yy", "っ", "y");
+void InitTable(Table* table) {
+  table->AddRule("i", "い", "");
+  table->AddRule("ki", "き", "");
+  table->AddRule("kyi", "きぃ", "");
+  table->AddRule("ti", "ち", "");
+  table->AddRule("tya", "ちゃ", "");
+  table->AddRule("tyi", "ちぃ", "");
+  table->AddRule("ya", "や", "");
+  table->AddRule("yy", "っ", "y");
 }
 
 std::string GetInsertedString(Transliterators::Transliterator t12r,
                               const size_t position, std::string input) {
-  Table table;
-  InitTable(table);
+  auto table = std::make_shared<Table>();
+  InitTable(table.get());
   Composition comp(table);
   InitComposition(comp);
 
@@ -574,7 +575,7 @@ TEST_F(CompositionTest, InsertAt) {
 }
 
 TEST_F(CompositionTest, GetExpandedStrings) {
-  InitTable(table_);
+  InitTable(table_.get());
   InitComposition(composition_);
 
   // a ky ki tta tty
@@ -715,10 +716,10 @@ TEST_F(CompositionTest, SetDisplayMode) {
 }
 
 TEST_F(CompositionTest, GetStringWithTrimMode) {
-  table_.AddRule("ka", "か", "");
-  table_.AddRule("n", "ん", "");
+  table_->AddRule("ka", "か", "");
+  table_->AddRule("n", "ん", "");
   // This makes the above rule ambiguous.
-  table_.AddRule("na", "な", "");
+  table_->AddRule("na", "な", "");
 
   std::string output_empty = composition_.GetStringWithTrimMode(TRIM);
   EXPECT_TRUE(output_empty.empty());
@@ -739,8 +740,8 @@ TEST_F(CompositionTest, GetStringWithTrimMode) {
 }
 
 TEST_F(CompositionTest, InsertKeyAndPreeditAt) {
-  table_.AddRule("す゛", "ず", "");
-  table_.AddRule("く゛", "ぐ", "");
+  table_->AddRule("す゛", "ず", "");
+  table_->AddRule("く゛", "ぐ", "");
 
   size_t pos = 0;
   pos = composition_.InsertKeyAndPreeditAt(pos, "m", "も");
@@ -758,13 +759,13 @@ TEST_F(CompositionTest, InsertKeyAndPreeditAt) {
 }
 
 TEST_F(CompositionTest, InsertKeyForN) {
-  table_.AddRule("a", "[A]", "");
-  table_.AddRule("n", "[N]", "");
-  table_.AddRule("nn", "[N]", "");
-  table_.AddRule("na", "[NA]", "");
-  table_.AddRule("nya", "[NYA]", "");
-  table_.AddRule("ya", "[YA]", "");
-  table_.AddRule("ka", "[KA]", "");
+  table_->AddRule("a", "[A]", "");
+  table_->AddRule("n", "[N]", "");
+  table_->AddRule("nn", "[N]", "");
+  table_->AddRule("na", "[NA]", "");
+  table_->AddRule("nya", "[NYA]", "");
+  table_->AddRule("ya", "[YA]", "");
+  table_->AddRule("ka", "[KA]", "");
 
   size_t pos = 0;
   pos = composition_.InsertAt(pos, "n");
@@ -787,8 +788,8 @@ TEST_F(CompositionTest, GetStringWithDisplayModeForKana) {
 }
 
 TEST_F(CompositionTest, InputMode) {
-  table_.AddRule("a", "あ", "");
-  table_.AddRule("ka", "か", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("ka", "か", "");
 
   size_t pos = 0;
   pos = composition_.InsertAt(pos, "k");
@@ -825,12 +826,12 @@ TEST_F(CompositionTest, InputMode) {
 }
 
 TEST_F(CompositionTest, SetTable) {
-  table_.AddRule("a", "あ", "");
-  table_.AddRule("ka", "か", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("ka", "か", "");
 
-  Table table2;
-  table2.AddRule("a", "あ", "");
-  table2.AddRule("ka", "か", "");
+  auto table2 = std::make_shared<Table>();
+  table2->AddRule("a", "あ", "");
+  table2->AddRule("ka", "か", "");
 
   composition_.SetInputMode(Transliterators::HIRAGANA);
 
@@ -848,7 +849,7 @@ TEST_F(CompositionTest, SetTable) {
 }
 
 TEST_F(CompositionTest, Transliterator) {
-  table_.AddRule("a", "あ", "");
+  table_->AddRule("a", "あ", "");
 
   // Insert "a" which is converted to "あ".
   size_t pos = 0;
@@ -875,7 +876,7 @@ TEST_F(CompositionTest, Transliterator) {
 }
 
 TEST_F(CompositionTest, HalfAsciiTransliterator) {
-  table_.AddRule("-", "ー", "");
+  table_->AddRule("-", "ー", "");
   composition_.SetInputMode(Transliterators::HALF_ASCII);
 
   size_t pos = 0;
@@ -889,9 +890,9 @@ TEST_F(CompositionTest, HalfAsciiTransliterator) {
 }
 
 TEST_F(CompositionTest, ShouldCommit) {
-  table_.AddRuleWithAttributes("ka", "[KA]", "", DIRECT_INPUT);
-  table_.AddRuleWithAttributes("tt", "[X]", "t", DIRECT_INPUT);
-  table_.AddRuleWithAttributes("ta", "[TA]", "", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("ka", "[KA]", "", DIRECT_INPUT);
+  table_->AddRuleWithAttributes("tt", "[X]", "t", DIRECT_INPUT);
+  table_->AddRuleWithAttributes("ta", "[TA]", "", NO_TABLE_ATTRIBUTE);
 
   size_t pos = 0;
 
@@ -932,7 +933,7 @@ TEST_F(CompositionTest, Issue2190364) {
 
 TEST_F(CompositionTest, Issue1817410) {
   // This is a unittest against http://b/2190364
-  table_.AddRule("ss", "っ", "s");
+  table_->AddRule("ss", "っ", "s");
 
   size_t pos = 0;
   pos = composition_.InsertAt(pos, "s");
@@ -979,8 +980,8 @@ TEST_F(CompositionTest, Issue1817410) {
 TEST_F(CompositionTest, Issue2209634) {
   // This is a unittest against http://b/2209634
   // "q@" becomes "qた@".
-  table_.AddRule("q", "", "た");
-  table_.AddRule("た@", "だ", "");
+  table_->AddRule("q", "", "た");
+  table_->AddRule("た@", "だ", "");
 
   composition_.SetInputMode(Transliterators::HALF_ASCII);
 
@@ -995,10 +996,10 @@ TEST_F(CompositionTest, Issue2209634) {
 TEST_F(CompositionTest, Issue2330530) {
   // This is a unittest against http://b/2330530
   // "Win" + Numpad7 becomes "Win77" instead of "Win7".
-  table_.AddRule("wi", "うぃ", "");
-  table_.AddRule("i", "い", "");
-  table_.AddRule("n", "ん", "");
-  table_.AddRule("na", "な", "");
+  table_->AddRule("wi", "うぃ", "");
+  table_->AddRule("i", "い", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
 
   composition_.SetInputMode(Transliterators::HALF_ASCII);
 
@@ -1018,12 +1019,12 @@ TEST_F(CompositionTest, Issue2330530) {
 TEST_F(CompositionTest, Issue2819580) {
   // This is a unittest against http://b/2819580.
   // 'y' after 'n' disappears.
-  table_.AddRule("po", "ぽ", "");
-  table_.AddRule("n", "ん", "");
-  table_.AddRule("na", "な", "");
-  table_.AddRule("ya", "や", "");
-  table_.AddRule("nya", "にゃ", "");
-  table_.AddRule("byo", "びょ", "");
+  table_->AddRule("po", "ぽ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
+  table_->AddRule("byo", "びょ", "");
 
   composition_.SetInputMode(Transliterators::HIRAGANA);
 
@@ -1045,12 +1046,12 @@ TEST_F(CompositionTest, Issue2819580) {
 TEST_F(CompositionTest, Issue2990253) {
   // SplitChunk fails.
   // Ambiguous text is left in rhs CharChunk invalidly.
-  table_.AddRule("po", "ぽ", "");
-  table_.AddRule("n", "ん", "");
-  table_.AddRule("na", "な", "");
-  table_.AddRule("ya", "や", "");
-  table_.AddRule("nya", "にゃ", "");
-  table_.AddRule("byo", "びょ", "");
+  table_->AddRule("po", "ぽ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
+  table_->AddRule("byo", "びょ", "");
 
   composition_.SetInputMode(Transliterators::HIRAGANA);
 
@@ -1076,12 +1077,12 @@ TEST_F(CompositionTest, Issue2990253) {
 TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText1) {
   // http://b/2990358
   // Test for mainly Composition::InsertAt()
-  table_.AddRule("po", "ぽ", "");
-  table_.AddRule("n", "ん", "");
-  table_.AddRule("na", "な", "");
-  table_.AddRule("ya", "や", "");
-  table_.AddRule("nya", "にゃ", "");
-  table_.AddRule("byo", "びょ", "");
+  table_->AddRule("po", "ぽ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
+  table_->AddRule("byo", "びょ", "");
 
   composition_.SetInputMode(Transliterators::HIRAGANA);
 
@@ -1108,8 +1109,8 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText2) {
   // http://b/2990358
   // Test for mainly Composition::InsertKeyAndPreeditAt()
 
-  table_.AddRule("す゛", "ず", "");
-  table_.AddRule("く゛", "ぐ", "");
+  table_->AddRule("す゛", "ず", "");
+  table_->AddRule("く゛", "ぐ", "");
 
   size_t pos = 0;
   pos = composition_.InsertKeyAndPreeditAt(pos, "m", "も");
@@ -1127,12 +1128,12 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText2) {
 }
 
 TEST_F(CompositionTest, CombinePendingChunks) {
-  table_.AddRule("po", "ぽ", "");
-  table_.AddRule("n", "ん", "");
-  table_.AddRule("na", "な", "");
-  table_.AddRule("ya", "や", "");
-  table_.AddRule("nya", "にゃ", "");
-  table_.AddRule("byo", "びょ", "");
+  table_->AddRule("po", "ぽ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
+  table_->AddRule("byo", "びょ", "");
 
   {
     // empty chunks + "n" -> empty chunks + "n"
@@ -1241,12 +1242,12 @@ TEST_F(CompositionTest, CombinePendingChunks) {
 }
 
 TEST_F(CompositionTest, NewChunkBehaviors) {
-  table_.AddRule("n", "", "ん");
-  table_.AddRule("na", "", "な");
-  table_.AddRuleWithAttributes("a", "", "あ", NEW_CHUNK);
-  table_.AddRule("ん*", "", "猫");
-  table_.AddRule("*", "", "");
-  table_.AddRule("ん#", "", "猫");
+  table_->AddRule("n", "", "ん");
+  table_->AddRule("na", "", "な");
+  table_->AddRuleWithAttributes("a", "", "あ", NEW_CHUNK);
+  table_->AddRule("ん*", "", "猫");
+  table_->AddRule("*", "", "");
+  table_->AddRule("ん#", "", "猫");
 
   CompositionInput input;
   {
@@ -1329,14 +1330,14 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
 TEST_F(CompositionTest, TwelveKeysInput) {
   // Simulates flick + toggle input mode.
 
-  table_.AddRule("n", "", "ん");
-  table_.AddRule("na", "", "な");
-  table_.AddRule("a", "", "あ");
-  table_.AddRule("*", "", "");
-  table_.AddRule("ほ*", "", "ぼ");
-  table_.AddRuleWithAttributes("7", "", "は", NEW_CHUNK);
-  table_.AddRule("は7", "", "ひ");
-  table_.AddRule("ひ*", "", "び");
+  table_->AddRule("n", "", "ん");
+  table_->AddRule("na", "", "な");
+  table_->AddRule("a", "", "あ");
+  table_->AddRule("*", "", "");
+  table_->AddRule("ほ*", "", "ぼ");
+  table_->AddRuleWithAttributes("7", "", "は", NEW_CHUNK);
+  table_->AddRule("は7", "", "ひ");
+  table_->AddRule("ひ*", "", "び");
 
   CompositionInput input;
   size_t pos = 0;
@@ -1372,7 +1373,7 @@ TEST_F(CompositionTest, TwelveKeysInput) {
 }
 
 TEST_F(CompositionTest, SpecialKeysInput) {
-  table_.AddRule("{*}j", "お", "");
+  table_->AddRule("{*}j", "お", "");
 
   CompositionInput input;
   size_t pos = 0;
@@ -1389,8 +1390,8 @@ TEST_F(CompositionTest, SpecialKeysInput) {
 }
 
 TEST_F(CompositionTest, SpecialKeysInputWithReplacedKey) {
-  table_.AddRule("r", "", "{r}");
-  table_.AddRule("{r}j", "お", "");
+  table_->AddRule("r", "", "{r}");
+  table_->AddRule("{r}j", "お", "");
 
   CompositionInput input;
   size_t pos = 0;
@@ -1409,7 +1410,7 @@ TEST_F(CompositionTest, SpecialKeysInputWithReplacedKey) {
 }
 
 TEST_F(CompositionTest, SpecialKeysInputWithLeadingPendingKey) {
-  table_.AddRule("{*}j", "お", "");
+  table_->AddRule("{*}j", "お", "");
 
   CompositionInput input;
   size_t pos = 0;
@@ -1432,13 +1433,13 @@ TEST_F(CompositionTest, SpecialKeysInputWithLeadingPendingKey) {
 }
 
 TEST_F(CompositionTest, DifferentRulesForSamePendingWithSpecialKeys) {
-  table_.AddRule("4", "", "[ta]");
-  table_.AddRule("[to]4", "", "[x]{#1}");
-  table_.AddRule("[x]{#1}4", "", "[ta]");
+  table_->AddRule("4", "", "[ta]");
+  table_->AddRule("[to]4", "", "[x]{#1}");
+  table_->AddRule("[x]{#1}4", "", "[ta]");
 
-  table_.AddRule("*", "", "");
-  table_.AddRule("[tu]*", "", "[x]{#2}");
-  table_.AddRule("[x]{#2}*", "", "[tu]");
+  table_->AddRule("*", "", "");
+  table_->AddRule("[tu]*", "", "[x]{#2}");
+  table_->AddRule("[x]{#2}*", "", "[tu]");
 
   {
     composition_.Erase();
@@ -1498,11 +1499,11 @@ TEST_F(CompositionTest, DifferentRulesForSamePendingWithSpecialKeys) {
 }
 
 TEST_F(CompositionTest, LoopingRuleFor12KeysWithSpecialKeys) {
-  table_.AddRule("2", "", "a");
-  table_.AddRule("a2", "", "b");
-  table_.AddRule("b2", "", "c");
-  table_.AddRule("c2", "", "{2}2");
-  table_.AddRule("{2}22", "", "a");
+  table_->AddRule("2", "", "a");
+  table_->AddRule("a2", "", "b");
+  table_->AddRule("b2", "", "c");
+  table_->AddRule("c2", "", "{2}2");
+  table_->AddRule("{2}22", "", "a");
 
   size_t pos = 0;
   pos = composition_.InsertAt(pos, "2");
@@ -1537,8 +1538,8 @@ TEST_F(CompositionTest, LoopingRuleFor12KeysWithSpecialKeys) {
 TEST_F(CompositionTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
-  table_.AddRule("ss", "っ", "s");
-  table_.AddRule("shi", "し", "");
+  table_->AddRule("ss", "っ", "s");
+  table_->AddRule("shi", "し", "");
 
   composition_.SetInputMode(Transliterators::HIRAGANA);
   size_t pos = 0;
@@ -1552,9 +1553,9 @@ TEST_F(CompositionTest, AlphanumericOfSSH) {
 }
 
 TEST_F(CompositionTest, GrassHack) {
-  table_.AddRule("ww", "っ", "w");
-  table_.AddRule("we", "うぇ", "");
-  table_.AddRule("www", "w", "ww");
+  table_->AddRule("ww", "っ", "w");
+  table_->AddRule("we", "うぇ", "");
+  table_->AddRule("www", "w", "ww");
 
   composition_.SetInputMode(Transliterators::HIRAGANA);
   size_t pos = 0;
@@ -1569,11 +1570,11 @@ TEST_F(CompositionTest, GrassHack) {
 }
 
 TEST_F(CompositionTest, RulesForFirstKeyEvents) {
-  table_.AddRuleWithAttributes("a", "[A]", "", NEW_CHUNK);
-  table_.AddRule("n", "[N]", "");
-  table_.AddRule("nn", "[N]", "");
-  table_.AddRule("na", "[NA]", "");
-  table_.AddRuleWithAttributes("ni", "[NI]", "", NEW_CHUNK);
+  table_->AddRuleWithAttributes("a", "[A]", "", NEW_CHUNK);
+  table_->AddRule("n", "[N]", "");
+  table_->AddRule("nn", "[N]", "");
+  table_->AddRule("na", "[NA]", "");
+  table_->AddRuleWithAttributes("ni", "[NI]", "", NEW_CHUNK);
 
   CompositionInput input;
 
@@ -1630,14 +1631,14 @@ TEST_F(CompositionTest, RulesForFirstKeyEvents) {
 }
 
 TEST_F(CompositionTest, NoTransliteration) {
-  table_.AddRuleWithAttributes("0", "0", "", NO_TABLE_ATTRIBUTE);
-  table_.AddRuleWithAttributes("1", "1", "", NO_TRANSLITERATION);
-  table_.AddRuleWithAttributes("kk", "っ", "k", NO_TABLE_ATTRIBUTE);
-  table_.AddRuleWithAttributes("ka", "か", "", NO_TRANSLITERATION);
-  table_.AddRuleWithAttributes("ss", "っ", "s", NO_TRANSLITERATION);
-  table_.AddRuleWithAttributes("sa", "さ", "", NO_TABLE_ATTRIBUTE);
-  table_.AddRuleWithAttributes("tt", "っ", "t", NO_TRANSLITERATION);
-  table_.AddRuleWithAttributes("ta", "た", "", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("0", "0", "", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("1", "1", "", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("kk", "っ", "k", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("ka", "か", "", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("ss", "っ", "s", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("sa", "さ", "", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("tt", "っ", "t", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("ta", "た", "", NO_TRANSLITERATION);
 
   composition_.SetInputMode(Transliterators::FULL_KATAKANA);
 
@@ -1646,11 +1647,11 @@ TEST_F(CompositionTest, NoTransliteration) {
 }
 
 TEST_F(CompositionTest, NoTransliterationIssue3497962) {
-  table_.AddRuleWithAttributes("2", "", "a", NEW_CHUNK | NO_TRANSLITERATION);
-  table_.AddRuleWithAttributes("a2", "", "b", NO_TABLE_ATTRIBUTE);
-  table_.AddRuleWithAttributes("b2", "", "c", NO_TABLE_ATTRIBUTE);
-  table_.AddRuleWithAttributes("c2", "", "{2}2", NO_TABLE_ATTRIBUTE);
-  table_.AddRuleWithAttributes("{2}22", "", "a", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("2", "", "a", NEW_CHUNK | NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("a2", "", "b", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("b2", "", "c", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("c2", "", "{2}2", NO_TABLE_ATTRIBUTE);
+  table_->AddRuleWithAttributes("{2}22", "", "a", NO_TABLE_ATTRIBUTE);
 
   composition_.SetInputMode(Transliterators::HIRAGANA);
 
@@ -1678,7 +1679,7 @@ TEST_F(CompositionTest, Copy) {
   AppendChunk("ず", "", "z", src);
   AppendChunk("く", "", "c", src);
 
-  EXPECT_EQ(&table_, src.table());
+  EXPECT_EQ(table_, src.table_for_testing());
   EXPECT_EQ(src.input_t12r(), Transliterators::FULL_KATAKANA);
   EXPECT_EQ(src.chunks().size(), 3);
 
@@ -1693,8 +1694,8 @@ TEST_F(CompositionTest, Copy) {
 TEST_F(CompositionTest, IsToggleable) {
   constexpr int kAttrs =
       TableAttribute::NEW_CHUNK | TableAttribute::NO_TRANSLITERATION;
-  table_.AddRuleWithAttributes("1", "", "{?}あ", kAttrs);
-  table_.AddRule("{?}あ1", "", "{*}あ");
+  table_->AddRuleWithAttributes("1", "", "{?}あ", kAttrs);
+  table_->AddRule("{?}あ1", "", "{*}あ");
 
   size_t pos = 0;
   pos = composition_.InsertAt(pos, "1");

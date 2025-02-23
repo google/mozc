@@ -532,10 +532,10 @@ class SessionTest : public testing::TestWithTempUserProfile {
   void InitSessionWithRequest(Session *session,
                               const commands::Request &request) {
     session->SetRequest(request);
-    table_ = std::make_unique<composer::Table>();
-    table_->InitializeWithRequestAndConfig(
+    auto table = std::make_shared<composer::Table>();
+    table->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
-    session->SetTable(*table_);
+    session->SetTable(table);
   }
 
   // set result for "like"
@@ -707,7 +707,6 @@ class SessionTest : public testing::TestWithTempUserProfile {
   //    constructor will be called *BEFORE* SetUp() is called.
   std::unique_ptr<Engine> mock_data_engine_;
   std::unique_ptr<TransliterationRewriter> t13n_rewriter_;
-  std::unique_ptr<composer::Table> table_;
   std::unique_ptr<Request> mobile_request_;
   const testing::MockDataManager mock_data_manager_;
 };
@@ -2159,10 +2158,10 @@ TEST_F(SessionTest, UpdatePreferences) {
 }
 
 TEST_F(SessionTest, RomajiInput) {
-  composer::Table table;
-  table.AddRule("pa", "ぱ", "");
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
+  auto table = std::make_shared<composer::Table>();
+  table->AddRule("pa", "ぱ", "");
+  table->AddRule("n", "ん", "");
+  table->AddRule("na", "な", "");
   // This rule makes the "n" rule ambiguous.
 
   MockConverter converter;
@@ -2200,8 +2199,8 @@ TEST_F(SessionTest, RomajiInput) {
 }
 
 TEST_F(SessionTest, KanaInput) {
-  composer::Table table;
-  table.AddRule("す゛", "ず", "");
+  auto table = std::make_shared<composer::Table>();
+  table->AddRule("す゛", "ず", "");
 
   MockConverter converter;
   MockEngine engine;
@@ -3174,8 +3173,8 @@ TEST_F(SessionTest, CommitRawText) {
 }
 
 TEST_F(SessionTest, CommitRawTextKanaInput) {
-  composer::Table table;
-  table.AddRule("す゛", "ず", "");
+  auto table = std::make_shared<composer::Table>();
+  table->AddRule("す゛", "ず", "");
 
   MockConverter converter;
   MockEngine engine;
@@ -6668,10 +6667,10 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
 }
 
 TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
-  composer::Table table;
-  table.AddRuleWithAttributes("ka", "か", "", composer::DIRECT_INPUT);
-  table.AddRuleWithAttributes("tt", "っ", "t", composer::DIRECT_INPUT);
-  table.AddRuleWithAttributes("ta", "た", "", composer::NO_TABLE_ATTRIBUTE);
+  auto table = std::make_shared<composer::Table>();
+  table->AddRuleWithAttributes("ka", "か", "", composer::DIRECT_INPUT);
+  table->AddRuleWithAttributes("tt", "っ", "t", composer::DIRECT_INPUT);
+  table->AddRuleWithAttributes("ta", "た", "", composer::NO_TABLE_ATTRIBUTE);
 
   MockConverter converter;
   MockEngine engine;
@@ -7290,11 +7289,11 @@ TEST_F(SessionTest, AutoConversion) {
     InitSessionToPrecomposition(&session);
 
     // Modify romanji-table to convert "zz" -> "。"
-    composer::Table zz_table;
-    zz_table.AddRule("te", "て", "");
-    zz_table.AddRule("su", "す", "");
-    zz_table.AddRule("to", "と", "");
-    zz_table.AddRule("zz", "。", "");
+    auto zz_table = std::make_shared<composer::Table>();
+    zz_table->AddRule("te", "て", "");
+    zz_table->AddRule("su", "す", "");
+    zz_table->AddRule("to", "と", "");
+    zz_table->AddRule("zz", "。", "");
     session.get_internal_composer_only_for_unittest()->SetTable(zz_table);
 
     // The last "zz" is converted to "." and triggering key for auto conversion
@@ -8576,10 +8575,10 @@ TEST_F(SessionTest, Issue4437420) {
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(request);
-  auto table = std::make_unique<composer::Table>();
+  auto table = std::make_shared<composer::Table>();
   table->InitializeWithRequestAndConfig(request,
                                         config::ConfigHandler::DefaultConfig());
-  session.SetTable(*table);
+  session.SetTable(table);
   // Type "2*" to produce "A".
   SetSendKeyCommand("2", &command);
   *command.mutable_input()->mutable_config() = overriding_config;
@@ -8596,10 +8595,10 @@ TEST_F(SessionTest, Issue4437420) {
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(request);
-  table = std::make_unique<composer::Table>();
+  table = std::make_shared<composer::Table>();
   table->InitializeWithRequestAndConfig(request,
                                         config::ConfigHandler::DefaultConfig());
-  session.SetTable(*table);
+  session.SetTable(table);
   // Type "2" to produce "Aa".
   SetSendKeyCommand("2", &command);
   *command.mutable_input()->mutable_config() = overriding_config;
@@ -8660,8 +8659,8 @@ TEST_F(SessionTest, UndoKeyAction) {
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
     session.SetRequest(request);
-    composer::Table table;
-    table.InitializeWithRequestAndConfig(
+    auto table = std::make_shared<composer::Table>();
+    table->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
     session.SetTable(table);
 
@@ -8705,8 +8704,8 @@ TEST_F(SessionTest, UndoKeyAction) {
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
     session.SetRequest(request);
-    composer::Table table;
-    table.InitializeWithRequestAndConfig(
+    auto table = std::make_shared<composer::Table>();
+    table->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
     session.SetTable(table);
     // Type "33{<}{<}" to produce "さ"->"し"->"さ"->"そ".
@@ -8747,8 +8746,8 @@ TEST_F(SessionTest, UndoKeyAction) {
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
     session.SetRequest(request);
-    composer::Table table;
-    table.InitializeWithRequestAndConfig(
+    auto table = std::make_shared<composer::Table>();
+    table->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
     session.SetTable(table);
     // Type "3*{<}*{<}", and composition should change
@@ -8795,8 +8794,8 @@ TEST_F(SessionTest, UndoKeyAction) {
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
     session.SetRequest(request);
-    composer::Table table;
-    table.InitializeWithRequestAndConfig(
+    auto table = std::make_shared<composer::Table>();
+    table->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
     session.SetTable(table);
     // Type "{<}" and do nothing
@@ -8874,8 +8873,8 @@ TEST_F(SessionTest, UndoKeyAction) {
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
     session.SetRequest(request);
-    composer::Table table;
-    table.InitializeWithRequestAndConfig(
+    auto table = std::make_shared<composer::Table>();
+    table->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
     session.SetTable(table);
 
@@ -8926,8 +8925,8 @@ TEST_F(SessionTest, DedupAfterUndo) {
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
     session.SetRequest(request);
 
-    composer::Table table;
-    table.InitializeWithRequestAndConfig(
+    auto table = std::make_shared<composer::Table>();
+    table->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig());
     session.SetTable(table);
 
@@ -9143,9 +9142,9 @@ TEST_F(SessionTest, CommitHead) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   Session session(&engine);
-  composer::Table table;
-  table.AddRule("mo", "も", "");
-  table.AddRule("zu", "ず", "");
+  auto table = std::make_shared<composer::Table>();
+  table->AddRule("mo", "も", "");
+  table->AddRule("zu", "ず", "");
 
   session.get_internal_composer_only_for_unittest()->SetTable(table);
 
@@ -9306,9 +9305,9 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
   request.set_special_romanji_table(commands::Request::DEFAULT_TABLE);
   session.SetRequest(request);
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(request,
-                                       config::ConfigHandler::DefaultConfig());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(request,
+                                        config::ConfigHandler::DefaultConfig());
   session.SetTable(table);
 
   SwitchInputFieldType(commands::Context::PASSWORD, &session);

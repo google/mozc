@@ -30,6 +30,7 @@
 #include "composer/internal/char_chunk.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -52,10 +53,10 @@ MATCHER(RestIsEmpty, "") { return arg.second.empty(); }
 
 TEST(CharChunkTest, AddInput_CharByChar) {
   // Test against http://b/1547858
-  Table table;
-  table.AddRule("i", "い", "");
-  table.AddRule("tt", "っ", "t");
-  table.AddRule("ta", "た", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("i", "い", "");
+  table->AddRule("tt", "っ", "t");
+  table->AddRule("ta", "た", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, table);
   std::pair<bool, absl::string_view> result = chunk1.AddInputInternal("i");
@@ -93,10 +94,10 @@ TEST(CharChunkTest, AddInput_CharByChar) {
 }
 
 TEST(CharChunkTest, AddInput_NoEffectInput) {
-  Table table;
-  table.AddRule("2", "", "<*>2");
-  table.AddRule("<*>1", "", "1");
-  table.AddRule("*", "", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("2", "", "<*>2");
+  table->AddRule("<*>1", "", "1");
+  table->AddRule("*", "", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, table);
   std::pair<bool, absl::string_view> result = chunk1.AddInputInternal("2");
@@ -119,14 +120,14 @@ TEST(CharChunkTest, AddInput_NoEffectInput) {
 }
 
 TEST(CharChunkTest, AddInput_ForN) {
-  Table table;
-  table.AddRule("a", "[A]", "");
-  table.AddRule("n", "[N]", "");
-  table.AddRule("nn", "[N]", "");
-  table.AddRule("na", "[NA]", "");
-  table.AddRule("nya", "[NYA]", "");
-  table.AddRule("ya", "[YA]", "");
-  table.AddRule("ka", "[KA]", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("a", "[A]", "");
+  table->AddRule("n", "[N]", "");
+  table->AddRule("nn", "[N]", "");
+  table->AddRule("na", "[NA]", "");
+  table->AddRule("nya", "[NYA]", "");
+  table->AddRule("ya", "[YA]", "");
+  table->AddRule("ka", "[KA]", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, table);
   std::pair<bool, absl::string_view> result = chunk1.AddInputInternal("n");
@@ -164,10 +165,10 @@ TEST(CharChunkTest, AddInput_ForN) {
 
 TEST(CharChunkTest, AddInput_WithString) {
   // Test against http://b/1547858
-  Table table;
-  table.AddRule("i", "い", "");
-  table.AddRule("tt", "っ", "t");
-  table.AddRule("ta", "た", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("i", "い", "");
+  table->AddRule("tt", "っ", "t");
+  table->AddRule("ta", "た", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, table);
   std::pair<bool, absl::string_view> result = chunk1.AddInputInternal("itta");
@@ -198,10 +199,10 @@ TEST(CharChunkTest, AddInput_WithString) {
 
 TEST(CharChunkTest, AddInput_EmptyOutput) {
   // Test against http://b/289217346
-  Table table;
-  table.AddRule("a", "", "");
-  table.AddRuleWithAttributes("b", "", "", NO_TRANSLITERATION);
-  table.AddRuleWithAttributes("c", "", "", NEW_CHUNK | NO_TRANSLITERATION);
+  auto table = std::make_shared<Table>();
+  table->AddRule("a", "", "");
+  table->AddRuleWithAttributes("b", "", "", NO_TRANSLITERATION);
+  table->AddRuleWithAttributes("c", "", "", NEW_CHUNK | NO_TRANSLITERATION);
 
   CharChunk chunk_a(Transliterators::CONVERSION_STRING, table);
   std::pair<bool, absl::string_view> result_a = chunk_a.AddInputInternal("a");
@@ -248,8 +249,8 @@ TEST(CharChunkTest, GetLength) {
 }
 
 TEST(CharChunkTest, AddCompositionInput) {
-  Table table;
-  table.AddRule("す゛", "ず", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("す゛", "ず", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, table);
   CompositionInput input;
@@ -300,8 +301,8 @@ TEST(CharChunkTest, AddCompositionInput) {
 }
 
 TEST(CharChunkTest, AddCompositionInputWithHalfAscii) {
-  Table table;
-  table.AddRule("-", "ー", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("-", "ー", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, table);
   CompositionInput input;
@@ -334,8 +335,8 @@ TEST(CharChunkTest, AddCompositionInputWithHalfAscii) {
 }
 
 TEST(CharChunkTest, OutputMode) {
-  Table table;
-  table.AddRule("a", "あ", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("a", "あ", "");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, table);
   chunk.AddInputInternal("a");
@@ -360,8 +361,8 @@ TEST(CharChunkTest, OutputMode) {
 }
 
 TEST(CharChunkTest, SplitChunk) {
-  Table table;
-  table.AddRule("mo", "も", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("mo", "も", "");
 
   CharChunk chunk(Transliterators::HIRAGANA, table);
 
@@ -394,28 +395,28 @@ TEST(CharChunkTest, SplitChunk) {
 }
 
 TEST(CharChunkTest, IsAppendable) {
-  Table table;
-  table.AddRule("mo", "も", "");
-  Table table_another;
+  auto table = std::make_shared<Table>();
+  table->AddRule("mo", "も", "");
+  auto table_another = std::make_shared<Table>();
 
   CharChunk chunk(Transliterators::HIRAGANA, table);
 
   EXPECT_THAT(chunk.AddInputInternal("m"), RestIsEmpty());
-  EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, table));
-  EXPECT_TRUE(chunk.IsAppendable(Transliterators::HIRAGANA, table));
-  EXPECT_FALSE(chunk.IsAppendable(Transliterators::FULL_KATAKANA, table));
-  EXPECT_FALSE(chunk.IsAppendable(Transliterators::LOCAL, table_another));
-  EXPECT_FALSE(chunk.IsAppendable(Transliterators::HIRAGANA, table_another));
+  EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, *table));
+  EXPECT_TRUE(chunk.IsAppendable(Transliterators::HIRAGANA, *table));
+  EXPECT_FALSE(chunk.IsAppendable(Transliterators::FULL_KATAKANA, *table));
+  EXPECT_FALSE(chunk.IsAppendable(Transliterators::LOCAL, *table_another));
+  EXPECT_FALSE(chunk.IsAppendable(Transliterators::HIRAGANA, *table_another));
 
   EXPECT_THAT(chunk.AddInputInternal("o"), RestIsEmpty());
-  EXPECT_FALSE(chunk.IsAppendable(Transliterators::LOCAL, table));
-  EXPECT_FALSE(chunk.IsAppendable(Transliterators::HIRAGANA, table));
-  EXPECT_FALSE(chunk.IsAppendable(Transliterators::FULL_KATAKANA, table));
+  EXPECT_FALSE(chunk.IsAppendable(Transliterators::LOCAL, *table));
+  EXPECT_FALSE(chunk.IsAppendable(Transliterators::HIRAGANA, *table));
+  EXPECT_FALSE(chunk.IsAppendable(Transliterators::FULL_KATAKANA, *table));
 }
 
 TEST(CharChunkTest, AddInputInternal) {
-  Table table;
-  table.AddRule("tt", "っ", "t");
+  auto table = std::make_shared<Table>();
+  table->AddRule("tt", "っ", "t");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, table);
   {
@@ -445,9 +446,9 @@ TEST(CharChunkTest, AddInputInternal) {
 }
 
 TEST(CharChunkTest, AddInputInternalDifferentPending) {
-  Table table;
-  table.AddRule("1", "", "あ");
-  table.AddRule("あ*", "", "ぁ");
+  auto table = std::make_shared<Table>();
+  table->AddRule("1", "", "あ");
+  table->AddRule("あ*", "", "ぁ");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, table);
   {
@@ -465,13 +466,13 @@ TEST(CharChunkTest, AddInputInternalDifferentPending) {
 }
 
 TEST(CharChunkTest, AddInputInternalAmbiguousConversion) {
-  Table table;
-  table.AddRule("a", "あ", "");
-  table.AddRule("n", "ん", "");
-  table.AddRule("nn", "ん", "");
-  table.AddRule("na", "な", "");
-  table.AddRule("ya", "や", "");
-  table.AddRule("nya", "にゃ", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("a", "あ", "");
+  table->AddRule("n", "ん", "");
+  table->AddRule("nn", "ん", "");
+  table->AddRule("na", "な", "");
+  table->AddRule("ya", "や", "");
+  table->AddRule("nya", "にゃ", "");
 
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
@@ -549,9 +550,9 @@ TEST(CharChunkTest, AddInputInternalAmbiguousConversion) {
 }
 
 TEST(CharChunkTest, AddInputInternalWithAttributes) {
-  Table table;
-  table.AddRuleWithAttributes("1", "", "あ", NO_TRANSLITERATION);
-  table.AddRule("あ*", "", "ぁ");
+  auto table = std::make_shared<Table>();
+  table->AddRuleWithAttributes("1", "", "あ", NO_TRANSLITERATION);
+  table->AddRule("あ*", "", "ぁ");
 
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
@@ -585,9 +586,9 @@ TEST(CharChunkTest, AddInputInternalWithAttributes) {
     EXPECT_EQ(chunk.attributes(), NO_TRANSLITERATION);
   }
 
-  Table table2;
-  table2.AddRuleWithAttributes("n", "ん", "", NO_TRANSLITERATION);
-  table2.AddRuleWithAttributes("na", "な", "", DIRECT_INPUT);
+  auto table2 = std::make_shared<Table>();
+  table2->AddRuleWithAttributes("n", "ん", "", NO_TRANSLITERATION);
+  table2->AddRuleWithAttributes("na", "な", "", DIRECT_INPUT);
 
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table2);
@@ -607,8 +608,8 @@ TEST(CharChunkTest, AddInputInternalWithAttributes) {
 }
 
 TEST(CharChunkTest, CaseSensitive) {
-  Table table;
-  table.AddRule("ka", "[ka]", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("ka", "[ka]", "");
   CharChunk chunk(Transliterators::CONVERSION_STRING, table);
 
   EXPECT_THAT(chunk.AddInputInternal("Ka"), RestIsEmpty());
@@ -618,21 +619,21 @@ TEST(CharChunkTest, CaseSensitive) {
 }
 
 TEST(CharChunkTest, TrimLeadingSpecialKey) {
-  Table table;
-  table.AddRule("ああ", "", "い");
-  table.AddRule("いあ", "", "う");
-  table.AddRule("あ{!}", "あ", "");
-  table.AddRule("い{!}", "い", "");
-  table.AddRule("う{!}", "う", "");
-  table.AddRule("{#}え", "え", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("ああ", "", "い");
+  table->AddRule("いあ", "", "う");
+  table->AddRule("あ{!}", "あ", "");
+  table->AddRule("い{!}", "い", "");
+  table->AddRule("う{!}", "う", "");
+  table->AddRule("{#}え", "え", "");
 
-  std::string input(table.ParseSpecialKey("ああ{!}{!}あ{!}"));
+  std::string input(table->ParseSpecialKey("ああ{!}{!}あ{!}"));
   {
     // Check a normal behavior. "ああ{!}" is converted to "い".
     CharChunk chunk(Transliterators::HIRAGANA, table);
     chunk.AddInput(&input);
-    EXPECT_EQ(input, table.ParseSpecialKey("{!}あ{!}"));
-    EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("ああ{!}"));
+    EXPECT_EQ(input, table->ParseSpecialKey("{!}あ{!}"));
+    EXPECT_EQ(chunk.raw(), table->ParseSpecialKey("ああ{!}"));
     EXPECT_EQ(chunk.conversion(), "い");
     EXPECT_EQ(chunk.pending(), "");
     EXPECT_EQ(chunk.ambiguous(), "");
@@ -644,18 +645,18 @@ TEST(CharChunkTest, TrimLeadingSpecialKey) {
     CharChunk chunk(Transliterators::HIRAGANA, table);
     chunk.AddInput(&input);
     EXPECT_EQ(input, "");
-    EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("あ{!}"));
+    EXPECT_EQ(chunk.raw(), table->ParseSpecialKey("あ{!}"));
     EXPECT_EQ(chunk.conversion(), "あ");
     EXPECT_EQ(chunk.pending(), "");
     EXPECT_EQ(chunk.ambiguous(), "");
   }
 
   // {?} is an unused special key.
-  input = table.ParseSpecialKey("い{?}あ");
+  input = table->ParseSpecialKey("い{?}あ");
   {
     CharChunk chunk(Transliterators::HIRAGANA, table);
     chunk.AddInput(&input);
-    EXPECT_EQ(input, table.ParseSpecialKey("{?}あ"));
+    EXPECT_EQ(input, table->ParseSpecialKey("{?}あ"));
     EXPECT_EQ(chunk.raw(), "い");
     EXPECT_EQ(chunk.conversion(), "");
     EXPECT_EQ(chunk.pending(), "い");
@@ -671,11 +672,11 @@ TEST(CharChunkTest, TrimLeadingSpecialKey) {
   }
 
   // {#} is a used special key for "{#}え".
-  input = table.ParseSpecialKey("い{#}え");
+  input = table->ParseSpecialKey("い{#}え");
   {
     CharChunk chunk(Transliterators::HIRAGANA, table);
     chunk.AddInput(&input);
-    EXPECT_EQ(input, table.ParseSpecialKey("{#}え"));
+    EXPECT_EQ(input, table->ParseSpecialKey("{#}え"));
     EXPECT_EQ(chunk.raw(), "い");
     EXPECT_EQ(chunk.conversion(), "");
     EXPECT_EQ(chunk.pending(), "い");
@@ -683,7 +684,7 @@ TEST(CharChunkTest, TrimLeadingSpecialKey) {
 
     // No input is used for this already filled chunk.
     chunk.AddInput(&input);
-    EXPECT_EQ(input, table.ParseSpecialKey("{#}え"));
+    EXPECT_EQ(input, table->ParseSpecialKey("{#}え"));
     EXPECT_EQ(chunk.raw(), "い");
     EXPECT_EQ(chunk.conversion(), "");
     EXPECT_EQ(chunk.pending(), "い");
@@ -692,53 +693,53 @@ TEST(CharChunkTest, TrimLeadingSpecialKey) {
 }
 
 TEST(CharChunkTest, LeadingSpecialKey) {
-  Table table;
-  table.AddRule("{!}あ", "い", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("{!}あ", "い", "");
 
-  std::string input(table.ParseSpecialKey("{!}"));
+  std::string input(table->ParseSpecialKey("{!}"));
 
   CharChunk chunk(Transliterators::HIRAGANA, table);
   chunk.AddInput(&input);
   EXPECT_EQ(input, "");
-  EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("{!}"));
+  EXPECT_EQ(chunk.raw(), table->ParseSpecialKey("{!}"));
   EXPECT_EQ(chunk.conversion(), "");
-  EXPECT_EQ(chunk.pending(), table.ParseSpecialKey("{!}"));
+  EXPECT_EQ(chunk.pending(), table->ParseSpecialKey("{!}"));
   EXPECT_EQ(chunk.ambiguous(), "");
 
   input = "あ";
   chunk.AddInput(&input);
   EXPECT_EQ(input, "");
-  EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("{!}あ"));
+  EXPECT_EQ(chunk.raw(), table->ParseSpecialKey("{!}あ"));
   EXPECT_EQ(chunk.conversion(), "い");
   EXPECT_EQ(chunk.pending(), "");
   EXPECT_EQ(chunk.ambiguous(), "");
 }
 
 TEST(CharChunkTest, LeadingSpecialKey2) {
-  Table table;
-  table.AddRule("{henkan}", "", "{r}");
-  table.AddRule("{r}j", "お", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("{henkan}", "", "{r}");
+  table->AddRule("{r}j", "お", "");
 
   size_t used_length = 0;
   bool fixed = false;
-  table.LookUpPrefix(table.ParseSpecialKey("{r}j"), &used_length, &fixed);
+  table->LookUpPrefix(table->ParseSpecialKey("{r}j"), &used_length, &fixed);
   EXPECT_EQ(used_length, 4);
   EXPECT_TRUE(fixed);
 
-  std::string input(table.ParseSpecialKey("{henkan}"));
+  std::string input(table->ParseSpecialKey("{henkan}"));
 
   CharChunk chunk(Transliterators::HIRAGANA, table);
   chunk.AddInput(&input);
   EXPECT_EQ(input, "");
-  EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("{henkan}"));
+  EXPECT_EQ(chunk.raw(), table->ParseSpecialKey("{henkan}"));
   EXPECT_EQ(chunk.conversion(), "");
-  EXPECT_EQ(chunk.pending(), table.ParseSpecialKey("{r}"));
+  EXPECT_EQ(chunk.pending(), table->ParseSpecialKey("{r}"));
   EXPECT_EQ(chunk.ambiguous(), "");
 
   input = "j";
   chunk.AddInput(&input);
   EXPECT_EQ(input, "");
-  EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("{henkan}j"));
+  EXPECT_EQ(chunk.raw(), table->ParseSpecialKey("{henkan}j"));
   EXPECT_EQ(chunk.conversion(), "お");
   EXPECT_EQ(chunk.pending(), "");
   EXPECT_EQ(chunk.ambiguous(), "");
@@ -747,9 +748,9 @@ TEST(CharChunkTest, LeadingSpecialKey2) {
 TEST(CharChunkTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
-  Table table;
-  table.AddRule("ss", "っ", "s");
-  table.AddRule("shi", "し", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("ss", "っ", "s");
+  table->AddRule("shi", "し", "");
 
   CharChunk chunk(Transliterators::HIRAGANA, table);
 
@@ -805,10 +806,10 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
 }
 
 TEST(CharChunkTest, ShouldCommit) {
-  Table table;
-  table.AddRuleWithAttributes("ka", "[KA]", "", DIRECT_INPUT);
-  table.AddRuleWithAttributes("tt", "[X]", "t", DIRECT_INPUT);
-  table.AddRuleWithAttributes("ta", "[TA]", "", NO_TABLE_ATTRIBUTE);
+  auto table = std::make_shared<Table>();
+  table->AddRuleWithAttributes("ka", "[KA]", "", DIRECT_INPUT);
+  table->AddRuleWithAttributes("tt", "[X]", "t", DIRECT_INPUT);
+  table->AddRuleWithAttributes("ta", "[TA]", "", NO_TABLE_ATTRIBUTE);
 
   {  // ka - DIRECT_INPUT
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
@@ -869,15 +870,15 @@ TEST(CharChunkTest, ShouldCommit) {
 }
 
 TEST(CharChunkTest, FlickAndToggle) {
-  Table table;
+  auto table = std::make_shared<Table>();
   // Rule for both toggle and flick
-  table.AddRuleWithAttributes("2", "", "[KA]", NEW_CHUNK);
+  table->AddRuleWithAttributes("2", "", "[KA]", NEW_CHUNK);
   // Rules for toggle
-  table.AddRuleWithAttributes("[KA]2", "", "[KI]", NO_TABLE_ATTRIBUTE);
-  table.AddRuleWithAttributes("[KI]2", "", "[KU]", NO_TABLE_ATTRIBUTE);
+  table->AddRuleWithAttributes("[KA]2", "", "[KI]", NO_TABLE_ATTRIBUTE);
+  table->AddRuleWithAttributes("[KI]2", "", "[KU]", NO_TABLE_ATTRIBUTE);
   // Rules for flick
-  table.AddRuleWithAttributes("a", "", "[KI]", END_CHUNK);
-  table.AddRuleWithAttributes("b", "", "[KU]", END_CHUNK);
+  table->AddRuleWithAttributes("a", "", "[KI]", END_CHUNK);
+  table->AddRuleWithAttributes("b", "", "[KU]", END_CHUNK);
 
   {  // toggle
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
@@ -935,11 +936,11 @@ TEST(CharChunkTest, FlickAndToggle) {
 }
 
 TEST(CharChunkTest, ShouldInsertNewChunk) {
-  Table table;
-  table.AddRuleWithAttributes("na", "[NA]", "", NO_TABLE_ATTRIBUTE);
-  table.AddRuleWithAttributes("a", "[A]", "", NEW_CHUNK);
-  table.AddRuleWithAttributes("ni", "[NI]", "", NO_TABLE_ATTRIBUTE);
-  table.AddRuleWithAttributes("i", "[I]", "", NO_TABLE_ATTRIBUTE);
+  auto table = std::make_shared<Table>();
+  table->AddRuleWithAttributes("na", "[NA]", "", NO_TABLE_ATTRIBUTE);
+  table->AddRuleWithAttributes("a", "[A]", "", NEW_CHUNK);
+  table->AddRuleWithAttributes("ni", "[NI]", "", NO_TABLE_ATTRIBUTE);
+  table->AddRuleWithAttributes("i", "[I]", "", NO_TABLE_ATTRIBUTE);
 
   CompositionInput input;
   CharChunk chunk(Transliterators::CONVERSION_STRING, table);
@@ -1003,9 +1004,9 @@ TEST(CharChunkTest, ShouldInsertNewChunk) {
 }
 
 TEST(CharChunkTest, AddInputCompositionWithConvertedChar) {
-  Table table;
-  table.AddRuleWithAttributes("na", "[NA]", "", NO_TABLE_ATTRIBUTE);
-  table.AddRuleWithAttributes("a", "[A]", "", NEW_CHUNK);
+  auto table = std::make_shared<Table>();
+  table->AddRuleWithAttributes("na", "[NA]", "", NO_TABLE_ATTRIBUTE);
+  table->AddRuleWithAttributes("a", "[A]", "", NEW_CHUNK);
 
   {
     CompositionInput input;
@@ -1091,8 +1092,8 @@ TEST(CharChunkTest, AddInputCompositionWithConvertedChar) {
 
 TEST(CharChunkTest, Issue2190364) {
   // This is a unittest against http://b/2190364
-  Table table;
-  table.AddRule("ち゛", "ぢ", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("ち゛", "ぢ", "");
 
   CharChunk chunk(Transliterators::FULL_ASCII, table);
   CompositionInput input;
@@ -1102,7 +1103,7 @@ TEST(CharChunkTest, Issue2190364) {
   EXPECT_TRUE(input.raw().empty());
   EXPECT_TRUE(input.conversion().empty());
   // "ち" can be "ぢ", so it should be appendable.
-  EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, table));
+  EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, *table));
 
   {  // The output should be "ａ".
     std::string output;
@@ -1114,7 +1115,7 @@ TEST(CharChunkTest, Issue2190364) {
   std::string key = " ";
   chunk.AddInput(&key);
   EXPECT_EQ(key, " ");
-  EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, table));
+  EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, *table));
 
   {  // The output should be still "ａ".
     std::string output;
@@ -1126,9 +1127,9 @@ TEST(CharChunkTest, Issue2190364) {
 TEST(CharChunkTest, Issue2209634) {
   // This is a unittest against http://b/2209634
   // "q@" becomes "qた@".
-  Table table;
-  table.AddRule("q", "", "た");
-  table.AddRule("た@", "だ", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("q", "", "た");
+  table->AddRule("た@", "だ", "");
 
   CharChunk chunk(Transliterators::HALF_ASCII, table);
 
@@ -1144,12 +1145,12 @@ TEST(CharChunkTest, Issue2209634) {
 TEST(CharChunkTest, Issue2819580) {
   // This is an unittest against http://b/2819580.
   // 'y' after 'n' disappears.
-  Table table;
-  table.AddRule("po", "ぽ", "");
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
-  table.AddRule("ya", "や", "");
-  table.AddRule("nya", "にゃ", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("po", "ぽ", "");
+  table->AddRule("n", "ん", "");
+  table->AddRule("na", "な", "");
+  table->AddRule("ya", "や", "");
+  table->AddRule("nya", "にゃ", "");
 
   // Test for reported situation ("ny").
   // AddInput ver.
@@ -1243,7 +1244,7 @@ TEST(CharChunkTest, Issue2819580) {
     }
   }
 
-  // The first input is not contained in the table.
+  // The first input is not contained in the table->
   {
     CharChunk chunk(Transliterators::HIRAGANA, table);
 
@@ -1271,11 +1272,11 @@ TEST(CharChunkTest, Issue2990253) {
   // http://b/2990253
   // SplitChunk fails.
   // Ambiguous text is left in rhs CharChunk invalidly.
-  Table table;
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
-  table.AddRule("ya", "や", "");
-  table.AddRule("nya", "にゃ", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("n", "ん", "");
+  table->AddRule("na", "な", "");
+  table->AddRule("ya", "や", "");
+  table->AddRule("nya", "にゃ", "");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, table);
 
@@ -1362,16 +1363,16 @@ TEST(CharChunkTest, Combine) {
 }
 
 TEST(CharChunkTest, IsConvertible) {
-  Table table;
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("n", "ん", "");
+  table->AddRule("na", "な", "");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, table);
   {
     // If pending is empty, returns false.
     chunk.Clear();
     EXPECT_EQ(chunk.pending(), "");
-    EXPECT_FALSE(chunk.IsConvertible(Transliterators::HIRAGANA, table, "n"));
+    EXPECT_FALSE(chunk.IsConvertible(Transliterators::HIRAGANA, *table, "n"));
   }
   {
     // If t12r is inconsistent, returns false.
@@ -1380,7 +1381,7 @@ TEST(CharChunkTest, IsConvertible) {
     std::string input("n");
     chunk.AddInput(&input);
     EXPECT_EQ(chunk.pending(), "n");
-    EXPECT_FALSE(chunk.IsConvertible(Transliterators::FULL_ASCII, table, "a"));
+    EXPECT_FALSE(chunk.IsConvertible(Transliterators::FULL_ASCII, *table, "a"));
   }
   {
     // If no entries are found from the table, returns false.
@@ -1389,7 +1390,7 @@ TEST(CharChunkTest, IsConvertible) {
     std::string input("n");
     chunk.AddInput(&input);
     EXPECT_EQ(chunk.pending(), "n");
-    EXPECT_FALSE(chunk.IsConvertible(Transliterators::HIRAGANA, table, "x"));
+    EXPECT_FALSE(chunk.IsConvertible(Transliterators::HIRAGANA, *table, "x"));
   }
   {
     // If found entry does not consume all of input, returns false.
@@ -1398,7 +1399,7 @@ TEST(CharChunkTest, IsConvertible) {
     std::string input("n");
     chunk.AddInput(&input);
     EXPECT_EQ(chunk.pending(), "n");
-    EXPECT_FALSE(chunk.IsConvertible(Transliterators::HIRAGANA, table, "y"));
+    EXPECT_FALSE(chunk.IsConvertible(Transliterators::HIRAGANA, *table, "y"));
   }
   {
     // [pending='n'] + [input='a'] is convertible (single combination).
@@ -1407,23 +1408,23 @@ TEST(CharChunkTest, IsConvertible) {
     std::string input("n");
     chunk.AddInput(&input);
     EXPECT_EQ(chunk.pending(), "n");
-    EXPECT_TRUE(chunk.IsConvertible(Transliterators::HIRAGANA, table, "a"));
+    EXPECT_TRUE(chunk.IsConvertible(Transliterators::HIRAGANA, *table, "a"));
   }
 }
 
 TEST(CharChunkTest, SpecialKeys) {
-  Table table;
-  table.AddRule("4", "", "[ta]");
-  table.AddRule("[to]4", "", "[x]{#1}");
-  table.AddRule("[x]{#1}4", "", "[ta]");
+  auto table = std::make_shared<Table>();
+  table->AddRule("4", "", "[ta]");
+  table->AddRule("[to]4", "", "[x]{#1}");
+  table->AddRule("[x]{#1}4", "", "[ta]");
 
-  table.AddRule("*", "", "");
-  table.AddRule("[tu]*", "", "[x]{#2}");
-  table.AddRule("[x]{#2}*", "", "[tu]");
+  table->AddRule("*", "", "");
+  table->AddRule("[tu]*", "", "[x]{#2}");
+  table->AddRule("[x]{#2}*", "", "[tu]");
 
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
-    chunk.set_raw(table.ParseSpecialKey("[x]{#1}4"));
+    chunk.set_raw(table->ParseSpecialKey("[x]{#1}4"));
     chunk.set_conversion("");
     chunk.set_pending("[ta]");
 
@@ -1461,7 +1462,7 @@ TEST(CharChunkTest, SpecialKeys) {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
     chunk.set_raw("[tu]*");
     chunk.set_conversion("");
-    chunk.set_pending(table.ParseSpecialKey("[x]{#2}"));
+    chunk.set_pending(table->ParseSpecialKey("[x]{#2}"));
 
     std::string result;
     chunk.AppendResult(Transliterators::RAW_STRING, &result);
@@ -1495,11 +1496,11 @@ TEST(CharChunkTest, SpecialKeys) {
 }
 
 TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
-  Table table;
+  auto table = std::make_shared<Table>();
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
     chunk.set_raw("a");
-    chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
+    chunk.set_conversion(table->ParseSpecialKey("ab{1}cd"));
 
     absl::StatusOr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 0);
@@ -1513,7 +1514,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
     chunk.set_raw("a");
-    chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
+    chunk.set_conversion(table->ParseSpecialKey("ab{1}cd"));
 
     absl::StatusOr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 1);
@@ -1525,7 +1526,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
     chunk.set_raw("a");
-    chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
+    chunk.set_conversion(table->ParseSpecialKey("ab{1}cd"));
 
     absl::StatusOr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 2);
@@ -1537,7 +1538,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
     chunk.set_raw("a");
-    chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
+    chunk.set_conversion(table->ParseSpecialKey("ab{1}cd"));
 
     absl::StatusOr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 3);
@@ -1548,11 +1549,11 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
 }
 
 TEST(CharChunkTest, NoTransliterationAttribute) {
-  Table table;
-  table.AddRule("ka", "KA", "");
-  table.AddRuleWithAttributes("sa", "SA", "", NO_TRANSLITERATION);
-  table.AddRuleWithAttributes("kk", "x", "k", NO_TRANSLITERATION);
-  table.AddRule("ss", "x", "s");
+  auto table = std::make_shared<Table>();
+  table->AddRule("ka", "KA", "");
+  table->AddRuleWithAttributes("sa", "SA", "", NO_TRANSLITERATION);
+  table->AddRuleWithAttributes("kk", "x", "k", NO_TRANSLITERATION);
+  table->AddRule("ss", "x", "s");
 
   {  // "ka" - Default normal behavior.
     CharChunk chunk(Transliterators::RAW_STRING, table);
@@ -1634,10 +1635,10 @@ TEST(CharChunkTest, NoTransliterationAttribute) {
 }
 
 TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
-  Table table;
-  table.AddRuleWithAttributes("[ka]@", "[ga]", "", NO_TRANSLITERATION);
-  table.AddRuleWithAttributes("[sa]", "[sa]", "", NO_TRANSLITERATION);
-  table.AddRule("[sa]@", "[za]", "");
+  auto table = std::make_shared<Table>();
+  table->AddRuleWithAttributes("[ka]@", "[ga]", "", NO_TRANSLITERATION);
+  table->AddRuleWithAttributes("[sa]", "[sa]", "", NO_TRANSLITERATION);
+  table->AddRule("[sa]@", "[za]", "");
 
   {  // "KA" - Default normal behavior.
     CharChunk chunk(Transliterators::RAW_STRING, table);
@@ -1700,18 +1701,18 @@ bool HasResult(const absl::btree_set<std::string> &results,
 }  // namespace
 
 TEST(CharChunkTest, RomanGetExpandedResults) {
-  Table table;
-  table.AddRule("kya", "きゃ", "");
-  table.AddRule("kyi", "きぃ", "");
-  table.AddRule("kyu", "きゅ", "");
-  table.AddRule("kye", "きぇ", "");
-  table.AddRule("kyo", "きょ", "");
-  table.AddRule("kk", "っ", "k");
-  table.AddRule("ka", "か", "");
-  table.AddRule("ki", "き", "");
-  table.AddRule("ku", "く", "");
-  table.AddRule("ke", "け", "");
-  table.AddRule("ko", "こ", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("kya", "きゃ", "");
+  table->AddRule("kyi", "きぃ", "");
+  table->AddRule("kyu", "きゅ", "");
+  table->AddRule("kye", "きぇ", "");
+  table->AddRule("kyo", "きょ", "");
+  table->AddRule("kk", "っ", "k");
+  table->AddRule("ka", "か", "");
+  table->AddRule("ki", "き", "");
+  table->AddRule("ku", "く", "");
+  table->AddRule("ke", "け", "");
+  table->AddRule("ko", "こ", "");
 
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
@@ -1789,10 +1790,10 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
 }
 
 TEST(CharChunkTest, KanaGetExpandedResults) {
-  Table table;
-  table.AddRule("か゛", "が", "");
-  table.AddRule("は゛", "ば", "");
-  table.AddRule("は゜", "ぱ", "");
+  auto table = std::make_shared<Table>();
+  table->AddRule("か゛", "が", "");
+  table->AddRule("は゛", "ば", "");
+  table->AddRule("は゜", "ぱ", "");
 
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
@@ -1824,10 +1825,10 @@ TEST(CharChunkTest, KanaGetExpandedResults) {
 }
 
 TEST(CharChunkTest, 12KeyGetExpandedResults) {
-  Table table;
+  auto table = std::make_shared<Table>();
   // It's not the test for the table, but use the real table file
   // for checking it's functionality.
-  table.LoadFromFile("system://12keys-hiragana.tsv");
+  table->LoadFromFile("system://12keys-hiragana.tsv");
 
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
@@ -1885,10 +1886,10 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
 }
 
 TEST(CharChunkTest, FlickGetExpandedResults) {
-  Table table;
+  auto table = std::make_shared<Table>();
   // It's not the test for the table, but use the real table file
   // for checking it's functionality.
-  table.LoadFromFile("system://flick-hiragana.tsv");
+  table->LoadFromFile("system://flick-hiragana.tsv");
 
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, table);
@@ -1946,10 +1947,10 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
 }
 
 TEST(CharChunkTest, NoTransliteration_Issue3497962) {
-  Table table;
-  table.AddRuleWithAttributes("2", "", "a", NEW_CHUNK | NO_TRANSLITERATION);
-  table.AddRuleWithAttributes("a2", "", "b", NO_TABLE_ATTRIBUTE);
-  table.AddRuleWithAttributes("b2", "", "c", NO_TABLE_ATTRIBUTE);
+  auto table = std::make_shared<Table>();
+  table->AddRuleWithAttributes("2", "", "a", NEW_CHUNK | NO_TRANSLITERATION);
+  table->AddRuleWithAttributes("a2", "", "b", NO_TABLE_ATTRIBUTE);
+  table->AddRuleWithAttributes("b2", "", "c", NO_TABLE_ATTRIBUTE);
 
   CharChunk chunk(Transliterators::HIRAGANA, table);
 
@@ -1973,7 +1974,7 @@ TEST(CharChunkTest, NoTransliteration_Issue3497962) {
 }
 
 TEST(CharChunkTest, Copy) {
-  const Table table;
+  const auto table = std::make_shared<Table>();
   CharChunk src(Transliterators::HIRAGANA, table);
   src.set_raw("raw");
   src.set_conversion("conversion");
@@ -1983,7 +1984,7 @@ TEST(CharChunkTest, Copy) {
 
   const CharChunk copy(src);
   EXPECT_EQ(copy.transliterator(), src.transliterator());
-  EXPECT_TRUE(src.table() == copy.table());
+  EXPECT_TRUE(src.table_for_testing() == copy.table_for_testing());
   EXPECT_EQ(copy.raw(), src.raw());
   EXPECT_EQ(copy.conversion(), src.conversion());
   EXPECT_EQ(copy.pending(), src.pending());
@@ -1993,7 +1994,7 @@ TEST(CharChunkTest, Copy) {
   CharChunk assigned(Transliterators::HALF_ASCII);
   assigned = src;
   EXPECT_EQ(assigned.transliterator(), src.transliterator());
-  EXPECT_TRUE(src.table() == assigned.table());
+  EXPECT_TRUE(src.table_for_testing() == assigned.table_for_testing());
   EXPECT_EQ(assigned.raw(), src.raw());
   EXPECT_EQ(assigned.conversion(), src.conversion());
   EXPECT_EQ(assigned.pending(), src.pending());
@@ -2002,7 +2003,7 @@ TEST(CharChunkTest, Copy) {
 }
 
 TEST(CharChunkTest, GetTransliterator) {
-  Table table;
+  auto table = std::make_shared<Table>();
 
   // Non-local vs non-local.
   // Given parametes should be returned.

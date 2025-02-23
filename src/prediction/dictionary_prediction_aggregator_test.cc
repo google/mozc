@@ -447,9 +447,9 @@ class DictionaryPredictionAggregatorTest
     request_ = std::make_unique<commands::Request>();
     config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
-    table_ = std::make_unique<composer::Table>();
+    table_ = std::make_shared<composer::Table>();
     composer_ =
-        std::make_unique<composer::Composer>(*table_, *request_, *config_);
+        std::make_unique<composer::Composer>(table_, *request_, *config_);
   }
 
   ConversionRequest CreateConversionRequest(
@@ -545,7 +545,7 @@ class DictionaryPredictionAggregatorTest
   }
 
   std::unique_ptr<composer::Composer> composer_;
-  std::unique_ptr<composer::Table> table_;
+  std::shared_ptr<composer::Table> table_;
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
 };
@@ -1093,7 +1093,6 @@ TEST_F(DictionaryPredictionAggregatorTest,
   config_->set_use_dictionary_suggest(true);
   config_->set_use_realtime_conversion(false);
   table_->LoadFromFile("system://12keys-hiragana.tsv");
-  composer_->SetTable(*table_);
 
   {
     // Test prediction from input あ.
@@ -2100,7 +2099,6 @@ TEST_P(AggregateEnglishPredictionTest, AggregateEnglishPrediction) {
 
   table_->LoadFromFile("system://romanji-hiragana.tsv");
   composer_->Reset();
-  composer_->SetTable(*table_);
   composer_->SetInputMode(entry.input_mode);
   InsertInputSequence(entry.key, composer_.get());
 

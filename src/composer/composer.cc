@@ -33,6 +33,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -569,14 +570,16 @@ void ComposerData::GetSubTransliterations(
 // Composer
 
 Composer::Composer()
-    : Composer(Table::GetDefaultTable(), commands::Request::default_instance(),
+    : Composer(Table::GetSharedDefaultTable(),
+               commands::Request::default_instance(),
                config::ConfigHandler::DefaultConfig()) {}
 
 Composer::Composer(const commands::Request &request,
                    const config::Config &config)
-    : Composer(Table::GetDefaultTable(), request, config) {}
+    : Composer(Table::GetSharedDefaultTable(), request, config) {}
 
-Composer::Composer(const Table &table, const commands::Request &request,
+Composer::Composer(std::shared_ptr<const Table> table,
+                   const commands::Request &request,
                    const config::Config &config)
     : position_(0),
       input_mode_(transliteration::HIRAGANA),
@@ -588,16 +591,17 @@ Composer::Composer(const Table &table, const commands::Request &request,
       max_length_(kMaxPreeditLength),
       request_(&request),
       config_(&config),
-      table_(&table),
+      table_(table),
       is_new_input_(true) {
   SetInputMode(transliteration::HIRAGANA);
+  DCHECK(table_);
   Reset();
 }
 
 // static
 ComposerData Composer::CreateEmptyComposerData() {
-  static const absl::NoDestructor<Table> table;
-  static const absl::NoDestructor<Composition> composition(*table);
+  static const absl::NoDestructor<Composition> composition(
+      Table::GetSharedDefaultTable());
   return ComposerData(*composition, 0, transliteration::HIRAGANA,
                       commands::Context::NORMAL, "", {});
 }
@@ -624,9 +628,10 @@ void Composer::ReloadConfig() {
 
 bool Composer::Empty() const { return (GetLength() == 0); }
 
-void Composer::SetTable(const Table &table) {
-  table_ = &table;
-  composition_.SetTable(*table_);
+void Composer::SetTable(std::shared_ptr<const Table> table) {
+  table_ = table;
+  DCHECK(table_);
+  composition_.SetTable(table_);
 }
 
 void Composer::SetRequest(const commands::Request &request) {

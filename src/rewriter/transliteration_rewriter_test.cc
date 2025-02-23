@@ -141,8 +141,8 @@ TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(table, default_request(), default_config());
   SetAkann(&composer);
 
@@ -189,8 +189,8 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(table, default_request(), default_config());
   InsertASCIISequence("ssh", &composer);
 
@@ -228,8 +228,8 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(table, default_request(), default_config());
 
   // Set kamabokoinbou to composer.
@@ -270,8 +270,8 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(table, default_request(), default_config());
 
   // Set kan to composer.
@@ -316,8 +316,8 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(default_request(), default_config());
 
   composer::Composer composer(table, default_request(), default_config());
   SetAkann(&composer);
@@ -433,8 +433,8 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(default_request(), default_config());
   composer::Composer composer(table, default_request(), default_config());
   InsertASCIISequence("a", &composer);
 
@@ -460,8 +460,8 @@ TEST_F(TransliterationRewriterTest, NoRewriteTest) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(default_request(), default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(default_request(), default_config());
 
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -498,8 +498,8 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(request, default_config());
   composer::Composer composer(table, request, default_config());
 
   {
@@ -545,8 +545,8 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
   commands::Request request;
   request_test_util::FillMobileRequest(&request);
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(request, default_config());
   composer::Composer composer(table, request, default_config());
 
   {
@@ -600,8 +600,8 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
   request.set_special_romanji_table(
       commands::Request::TOGGLE_FLICK_TO_HIRAGANA);
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(request, default_config());
   composer::Composer composer(table, request, default_config());
 
   {
@@ -652,8 +652,8 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
       commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
 
   const std::string kShi = "し";
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(client_request, default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(client_request, default_config());
 
   {
     composer::Composer composer(table, client_request, default_config());
@@ -703,8 +703,8 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
   request.set_mixed_conversion(true);
   request.set_special_romanji_table(commands::Request::GODAN_TO_HIRAGANA);
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(request, default_config());
   composer::Composer composer(table, request, default_config());
   {
     InsertASCIISequence("<'de", &composer);
@@ -755,8 +755,8 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
   request.set_mixed_conversion(true);
   request.set_special_romanji_table(commands::Request::GODAN_TO_HIRAGANA);
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(request, default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(request, default_config());
 
   // Expected t13n of Godan keyboard.
   std::vector<const char *> keycode_to_t13n_map(
@@ -831,8 +831,8 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
 
   const std::string kXtsu = "っ";
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(client_request, default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(client_request, default_config());
   {
     composer::Composer composer(table, client_request, default_config());
 
@@ -864,8 +864,8 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
 
   const std::string kXtsu = "っ";
 
-  composer::Table table;
-  table.InitializeWithRequestAndConfig(client_request, default_config());
+  auto table = std::make_shared<composer::Table>();
+  table->InitializeWithRequestAndConfig(client_request, default_config());
   {
     composer::Composer composer(table, client_request, default_config());
 

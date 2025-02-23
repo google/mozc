@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <iterator>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -416,7 +417,7 @@ void Composition::CombinePendingChunks(CharChunkList::iterator it,
 // Insert a chunk to the prev of it.
 CharChunkList::iterator Composition::InsertChunk(
     CharChunkList::const_iterator it) {
-  return chunks_.insert(it, CharChunk(input_t12r_, *table_));
+  return chunks_.insert(it, CharChunk(input_t12r_, table_));
 }
 
 const CharChunkList &Composition::GetCharChunkList() const { return chunks_; }
@@ -444,7 +445,10 @@ void Composition::SetInputMode(Transliterators::Transliterator transliterator) {
   input_t12r_ = transliterator;
 }
 
-void Composition::SetTable(const Table &table) { table_ = &table; }
+void Composition::SetTable(std::shared_ptr<const Table> table) {
+  table_ = table;
+  DCHECK(table_);
+}
 
 bool Composition::IsToggleable(size_t position) const {
   size_t inner_position = 0;

@@ -40,6 +40,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/no_destructor.h"
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -552,12 +553,12 @@ void Table::set_case_sensitive(const bool case_sensitive) {
 }
 
 // static
-const Table &Table::GetDefaultTable() {
-  static Table *default_table = nullptr;
-  if (!default_table) {
-    default_table = new Table();
-  }
-  return *default_table;
+const Table &Table::GetDefaultTable() { return *GetSharedDefaultTable(); }
+
+std::shared_ptr<const Table> Table::GetSharedDefaultTable() {
+  static absl::NoDestructor<std::shared_ptr<const Table>> kDefaultSharedTable(
+      new Table());
+  return *kDefaultSharedTable;
 }
 
 // ========================================
@@ -566,8 +567,9 @@ const Table &Table::GetDefaultTable() {
 TableManager::TableManager()
     : custom_roman_table_fingerprint_(Fingerprint32("")) {}
 
-const Table *TableManager::GetTable(const mozc::commands::Request &request,
-                                    const mozc::config::Config &config) {
+std::shared_ptr<const Table> TableManager::GetTable(
+    const mozc::commands::Request &request,
+    const mozc::config::Config &config) {
   // calculate the hash depending on the request and the config
   const uint32_t hash =
       absl::HashOf(request.special_romanji_table(), config.preedit_method(),
@@ -585,24 +587,23 @@ const Table *TableManager::GetTable(const mozc::commands::Request &request,
     }
   }
 
-  const auto iterator = table_map_.find(hash);
-  if (iterator != table_map_.end()) {
+  if (const auto iterator = table_map_.find(hash);
+      iterator != table_map_.end()) {
     if (update_custom_roman_table) {
       // Delete the previous table to update the table.
       table_map_.erase(iterator);
     } else {
-      return iterator->second.get();
+      return iterator->second;
     }
   }
 
-  auto table = std::make_unique<Table>();
+  auto table = std::make_shared<Table>();
   if (!table->InitializeWithRequestAndConfig(request, config)) {
     return nullptr;
   }
 
-  const Table *ret = table.get();
-  table_map_[hash] = std::move(table);
-  return ret;
+  table_map_.emplace(hash, table);
+  return table;
 }
 
 void TableManager::ClearCaches() { table_map_.clear(); }

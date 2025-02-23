@@ -1148,7 +1148,10 @@ bool Session::ResetContext(commands::Command *command) {
   return true;
 }
 
-void Session::SetTable(const composer::Table &table) {
+void Session::SetTable(std::shared_ptr<const composer::Table> table) {
+  if (!table) {
+    return;
+  }
   ClearUndoContext();
   context_->mutable_composer()->SetTable(table);
 }

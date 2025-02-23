@@ -236,7 +236,7 @@ class Session {
 
   void SetRequest(const mozc::commands::Request &request);
 
-  void SetTable(const mozc::composer::Table &table);
+  void SetTable(std::shared_ptr<const mozc::composer::Table> table);
 
   // Set client capability for this session.  Used by unittest.
   void set_client_capability(const mozc::commands::Capability &capability);

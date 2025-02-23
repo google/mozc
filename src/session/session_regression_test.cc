@@ -159,16 +159,15 @@ class SessionRegressionTest : public testing::TestWithTempUserProfile {
   void ResetSession() {
     session_ = handler_->NewSession();
     commands::Request request;
-    table_ = std::make_unique<composer::Table>();
-    table_->InitializeWithRequestAndConfig(request, config_);
-    session_->SetTable(*table_);
+    auto table = std::make_shared<composer::Table>();
+    table->InitializeWithRequestAndConfig(request, config_);
+    session_->SetTable(table);
   }
 
   const testing::MockDataManager data_manager_;
   bool orig_use_history_rewriter_;
   std::unique_ptr<SessionHandler> handler_;
   std::unique_ptr<session::Session> session_;
-  std::unique_ptr<composer::Table> table_;
   config::Config config_;
 };
 

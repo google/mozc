@@ -30,6 +30,7 @@
 #include "composer/table.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -989,7 +990,7 @@ TEST_F(TableTest, DeleteSpecialKey) {
 
 TEST_F(TableTest, TableManager) {
   TableManager table_manager;
-  absl::flat_hash_set<const Table *> table_set;
+  absl::flat_hash_set<std::shared_ptr<const Table>> table_set;
   constexpr commands::Request::SpecialRomanjiTable special_romanji_table[] = {
       commands::Request::DEFAULT_TABLE,
       commands::Request::TWELVE_KEYS_TO_HIRAGANA,
@@ -1025,7 +1026,8 @@ TEST_F(TableTest, TableManager) {
           config.set_preedit_method(preedit);
           config.set_punctuation_method(punctuation);
           config.set_symbol_method(symbol);
-          const Table *table = table_manager.GetTable(request, config);
+          std::shared_ptr<const Table> table =
+              table_manager.GetTable(request, config);
           EXPECT_NE(table, nullptr);
           EXPECT_EQ(table_manager.GetTable(request, config), table);
           EXPECT_FALSE(table_set.contains(table));
@@ -1046,7 +1048,8 @@ TEST_F(TableTest, TableManager) {
     config.set_punctuation_method(Config::KUTEN_TOUTEN);
     config.set_symbol_method(Config::CORNER_BRACKET_MIDDLE_DOT);
     config.set_custom_roman_table(kRule);
-    const Table *table = table_manager.GetTable(request, config);
+    std::shared_ptr<const Table> table =
+        table_manager.GetTable(request, config);
     EXPECT_NE(table, nullptr);
     EXPECT_EQ(table_manager.GetTable(request, config), table);
     EXPECT_NE(table->LookUp("a"), nullptr);
@@ -1056,7 +1059,8 @@ TEST_F(TableTest, TableManager) {
         "a\t[A]\n"       // 2 entry rule
         "kk\t[X]\tk\n";  // 3 entry rule
     config.set_custom_roman_table(kRule2);
-    const Table *table2 = table_manager.GetTable(request, config);
+    std::shared_ptr<const Table> table2 =
+        table_manager.GetTable(request, config);
     EXPECT_NE(table2, nullptr);
     EXPECT_EQ(table_manager.GetTable(request, config), table2);
     EXPECT_NE(table2->LookUp("a"), nullptr);

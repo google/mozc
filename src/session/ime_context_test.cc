@@ -105,10 +105,10 @@ TEST(ImeContextTest, BasicTest) {
 }
 
 TEST(ImeContextTest, CopyContext) {
-  composer::Table table;
-  table.AddRule("a", "あ", "");
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
+  auto table = std::make_shared<composer::Table>();
+  table->AddRule("a", "あ", "");
+  table->AddRule("n", "ん", "");
+  table->AddRule("na", "な", "");
   const commands::Request request;
   config::Config config;
   const keymap::KeyMapManager keymap;
