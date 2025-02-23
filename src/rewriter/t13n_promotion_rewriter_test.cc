@@ -80,7 +80,7 @@ class T13nPromotionRewriterTest : public testing::TestWithTempUserProfile {
     mobile_request_ = commands::Request();
 
     request_test_util::FillMobileRequest(&mobile_request_);
-    composer_.SetRequest(mobile_request_);
+    composer_.SetRequest(std::make_shared<commands::Request>(mobile_request_));
   }
 
   ConversionRequest CreateMobileConversionRequest() const {

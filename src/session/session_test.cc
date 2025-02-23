@@ -720,7 +720,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
 TEST_F(SessionTest, TestOfTestForSetup) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
-  keymap::KeyMapManager key_map_manager(config);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   EXPECT_FALSE(config.has_use_auto_conversion())
       << "Global config should be initialized for each test fixture.";
 
@@ -730,7 +730,7 @@ TEST_F(SessionTest, TestOfTestForSetup) {
     MockEngine engine;
     InitCreateEngineConverterMock(&engine, &converter);
 
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -746,7 +746,7 @@ TEST_F(SessionTest, TestSendKey) {
   MockConverter converter;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -785,7 +785,7 @@ TEST_F(SessionTest, UpdateComposition) {
   MockConverter converter;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -808,7 +808,7 @@ TEST_F(SessionTest, SendCommand) {
   MockConverter converter;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -861,7 +861,7 @@ TEST_F(SessionTest, SendCommand) {
     // InitSessionToPrecomposition() and then EchoBack() through
     // SendCommand().
     EXPECT_CALL(converter, ResetConversion(_)).Times(2);
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     SendCommand(commands::SessionCommand::RESET_CONTEXT, &session, &command);
     EXPECT_FALSE(command.output().consumed());
@@ -874,7 +874,7 @@ TEST_F(SessionTest, SwitchInputMode) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -896,7 +896,7 @@ TEST_F(SessionTest, SwitchInputMode) {
   {
     // Confirm that we can change the mode from DIRECT
     // to other modes directly (without IMEOn command).
-    Session session(&engine);
+    Session session(engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -930,7 +930,7 @@ TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     // Enable zero query suggest.
@@ -957,7 +957,7 @@ TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
   }
 
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     {
@@ -995,7 +995,7 @@ TEST_F(SessionTest, RevertComposition) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   // Issue#2237323
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -1026,7 +1026,7 @@ TEST_F(SessionTest, InputMode) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
@@ -1050,7 +1050,7 @@ TEST_F(SessionTest, SelectCandidate) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1083,7 +1083,7 @@ TEST_F(SessionTest, HighlightCandidate) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1118,7 +1118,7 @@ TEST_F(SessionTest, Conversion) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1152,7 +1152,7 @@ TEST_F(SessionTest, SegmentWidthShrink) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1179,7 +1179,7 @@ TEST_F(SessionTest, ConvertPrev) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1209,7 +1209,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1313,7 +1313,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1401,7 +1401,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   // Issue#1271099
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1482,7 +1482,7 @@ TEST_F(SessionTest, CommitSegment) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   // Issue#1560608
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1542,7 +1542,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1602,7 +1602,7 @@ TEST_F(SessionTest, Transliterations) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("jishin", &session, &command);
@@ -1648,7 +1648,7 @@ TEST_F(SessionTest, TransliterationOfNegativeNumber) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("-255", &session, &command);
@@ -1666,7 +1666,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("jishin", &session, &command);
@@ -1706,7 +1706,7 @@ TEST_F(SessionTest, ConvertToTransliterationOfNegativeNumber) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("-789", &session, &command);
@@ -1736,7 +1736,7 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1784,7 +1784,7 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("abc", &session, &command);
@@ -1818,7 +1818,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("dvd", &session, &command);
@@ -1858,7 +1858,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
 
   config::Config config;
   config.set_use_cascading_window(false);
@@ -1905,7 +1905,7 @@ TEST_F(SessionTest, SwitchKanaType) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {  // From composition mode.
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("abc", &session, &command);
@@ -1942,7 +1942,7 @@ TEST_F(SessionTest, SwitchKanaType) {
   }
 
   {  // From conversion mode.
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("kanji", &session, &command);
@@ -1989,7 +1989,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -2075,7 +2075,7 @@ TEST_F(SessionTest, TranslateHalfWidth) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("abc", &session, &command);
@@ -2098,7 +2098,7 @@ TEST_F(SessionTest, UpdatePreferences) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("aiueo", &session, &command);
@@ -2168,7 +2168,7 @@ TEST_F(SessionTest, RomajiInput) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   session.get_internal_composer_only_for_unittest()->SetTable(table);
   InitSessionToPrecomposition(&session);
 
@@ -2206,7 +2206,7 @@ TEST_F(SessionTest, KanaInput) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   session.get_internal_composer_only_for_unittest()->SetTable(table);
   InitSessionToPrecomposition(&session);
 
@@ -2254,7 +2254,7 @@ TEST_F(SessionTest, ExceededComposition) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -2295,7 +2295,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -2369,7 +2369,7 @@ TEST_F(SessionTest, UndoForComposition) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Enable zero query suggest.
@@ -2417,7 +2417,7 @@ TEST_F(SessionTest, RequestUndo) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
 
   // It is OK not to check ImeContext::DIRECT because you cannot
   // assign any key event to Undo command in DIRECT mode.
@@ -2449,7 +2449,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2582,7 +2582,7 @@ TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2621,7 +2621,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2791,7 +2791,7 @@ TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2864,7 +2864,7 @@ TEST_F(SessionTest, MultipleUndo) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2966,7 +2966,7 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3024,7 +3024,7 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   {  // Commit something. It's expected that Undo is not triggered later.
@@ -3083,7 +3083,7 @@ TEST_F(SessionTest, StopKeyToggling) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments;
@@ -3120,7 +3120,7 @@ TEST_F(SessionTest, CommitRawText) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {  // From composition mode.
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("abc", &session, &command);
@@ -3141,7 +3141,7 @@ TEST_F(SessionTest, CommitRawText) {
     Mock::VerifyAndClearExpectations(&converter);
   }
   {  // From conversion mode.
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("abc", &session, &command);
@@ -3180,7 +3180,7 @@ TEST_F(SessionTest, CommitRawTextKanaInput) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   session.get_internal_composer_only_for_unittest()->SetTable(table);
   InitSessionToPrecomposition(&session);
 
@@ -3219,7 +3219,7 @@ TEST_F(SessionTest, ConvertNextPagePrevPage) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   commands::Command command;
 
   InitSessionToPrecomposition(&session);
@@ -3328,7 +3328,7 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3407,7 +3407,7 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Prepare Numpad
@@ -3455,7 +3455,7 @@ TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   // This is a unittest against http://b/3423599.
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3526,7 +3526,7 @@ TEST_F(SessionTest, DCHECKFailureAfterUndo) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   // This is a unittest against http://b/3437358.
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Capability capability;
@@ -3561,7 +3561,7 @@ TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   // This is a unittest against http://b/3423592.
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3626,7 +3626,7 @@ TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
@@ -3662,11 +3662,11 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   {
     request.set_space_on_alphanumeric(commands::Request::COMMIT);
 
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session, request);
 
     SendKey("A", &session, &command);
@@ -3681,7 +3681,7 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
     request.set_space_on_alphanumeric(
         commands::Request::SPACE_OR_CONVERT_COMMITTING_COMPOSITION);
 
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session, request);
 
     SendKey("A", &session, &command);
@@ -3701,7 +3701,7 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
     request.set_space_on_alphanumeric(
         commands::Request::SPACE_OR_CONVERT_KEEPING_COMPOSITION);
 
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session, request);
 
     SendKey("A", &session, &command);
@@ -3724,7 +3724,7 @@ TEST_F(SessionTest, Issue1805239) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -3779,7 +3779,7 @@ TEST_F(SessionTest, Issue1816861) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -3839,7 +3839,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -3929,7 +3929,7 @@ TEST_F(SessionTest, Shortcut) {
     MockEngine engine;
     InitCreateEngineConverterMock(&engine, &converter);
 
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
@@ -3970,7 +3970,7 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
@@ -4015,7 +4015,7 @@ TEST_F(SessionTest, ShortcutFromVK) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   session.SetConfig(config);
   InitSessionToPrecomposition(&session, client_request);
 
@@ -4055,7 +4055,7 @@ TEST_F(SessionTest, NumpadKey) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4166,7 +4166,7 @@ TEST_F(SessionTest, KanaSymbols) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
@@ -4200,7 +4200,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {  // Basic behavior
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("a", &session, &command));
@@ -4216,7 +4216,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   }
 
   {  // Revert back to the previous input mode.
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     session.InputModeFullKatakana(&command);
@@ -4240,7 +4240,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion1) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   EXPECT_TRUE(SendKey("N", &session, &command));
@@ -4281,7 +4281,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   EXPECT_TRUE(SendKey("N", &session, &command));
@@ -4323,7 +4323,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion3) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   EXPECT_TRUE(SendKey("N", &session, &command));
@@ -4364,7 +4364,7 @@ TEST_F(SessionTest, StatusOutput) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {  // Basic behavior
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("a", &session, &command));  // "あ"
@@ -4421,7 +4421,7 @@ TEST_F(SessionTest, StatusOutput) {
   }
 
   {  // Katakana mode + Shift key
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     session.InputModeFullKatakana(&command);
@@ -4492,7 +4492,7 @@ TEST_F(SessionTest, Suggest) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("M", &session, &command);
@@ -4609,7 +4609,7 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session, request);
 
   commands::Command command;
@@ -4693,7 +4693,7 @@ TEST_F(SessionTest, MobilePartialPrediction) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session, request);
 
   commands::Command command;
@@ -4742,7 +4742,7 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4847,7 +4847,7 @@ TEST_F(SessionTest, InsertSpace) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4874,6 +4874,7 @@ TEST_F(SessionTest, InsertSpace) {
 
   // Change the setting to FULL_WIDTH.
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
+  session.SetConfig(config);
   command.Clear();
   *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session.InsertSpace(&command));
@@ -4887,7 +4888,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4915,6 +4916,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
 
   // Change the setting to FULL_WIDTH.
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
+  session.SetConfig(config);
   command.Clear();
   *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session.InsertSpaceToggled(&command));
@@ -4928,7 +4930,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4971,7 +4973,7 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5027,8 +5029,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_custom_keymap_table(kCustomKeymapTable);
   }
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -5044,8 +5046,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   }
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -5077,8 +5079,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_custom_keymap_table(kCustomKeymapTable);
   }
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -5095,8 +5097,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(command.output().mode(), commands::HALF_KATAKANA);
   }
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -5131,8 +5133,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
   }
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -5150,8 +5152,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
   }
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -5187,8 +5189,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
   }
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -5202,8 +5204,8 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_FALSE(command.output().consumed());
   }
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -5243,8 +5245,8 @@ TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
@@ -5291,8 +5293,8 @@ TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
@@ -5338,8 +5340,8 @@ TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
 
   session.SetKeyMapManager(key_map_manager);
@@ -5386,8 +5388,8 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
   InitSessionToDirect(&session);
@@ -5437,8 +5439,8 @@ TEST_F(SessionTest, InsertSpaceInDirectMode) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
   InitSessionToDirect(&session);
@@ -5503,8 +5505,8 @@ TEST_F(SessionTest, InsertSpaceInCompositionMode) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
@@ -5556,8 +5558,8 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
 
@@ -5627,7 +5629,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5659,7 +5661,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
   {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
@@ -5691,7 +5693,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
   {
     // Set config to 'half' -- all mode has to emit half-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
@@ -5725,7 +5727,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Set config to 'FULL' -- all mode except for DIRECT emits
     // full-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
@@ -5761,7 +5763,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
   {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
@@ -5830,7 +5832,7 @@ TEST_F(SessionTest, Issue1951385) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5862,7 +5864,7 @@ TEST_F(SessionTest, Issue1978201) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // This is a unittest against http://b/1978201
@@ -5895,7 +5897,7 @@ TEST_F(SessionTest, Issue1975771) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   // This is a unittest against http://b/1975771
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Trigger suggest by pressing "a".
@@ -5934,7 +5936,7 @@ TEST_F(SessionTest, Issue2029466) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -5972,7 +5974,7 @@ TEST_F(SessionTest, Issue2034943) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("mozu", &session, &command);
@@ -6008,7 +6010,7 @@ TEST_F(SessionTest, Issue2026354) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -6038,7 +6040,7 @@ TEST_F(SessionTest, Issue2066906) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   Segments segments;
@@ -6073,7 +6075,7 @@ TEST_F(SessionTest, Issue2187132) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -6106,7 +6108,7 @@ TEST_F(SessionTest, Issue2190364) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
@@ -6130,7 +6132,7 @@ TEST_F(SessionTest, Issue1556649) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("kudoudesu", &session, &command);
@@ -6157,7 +6159,7 @@ TEST_F(SessionTest, Issue1518994) {
 
   // - Can't input space in ascii mode.
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("a", &session, &command));
@@ -6171,7 +6173,7 @@ TEST_F(SessionTest, Issue1518994) {
   }
 
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("a", &session, &command));
@@ -6190,7 +6192,7 @@ TEST_F(SessionTest, Issue1571043) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("aiu", &session, &command);
@@ -6212,7 +6214,7 @@ TEST_F(SessionTest, Issue2217250) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("www.", &session, &command);
@@ -6232,7 +6234,7 @@ TEST_F(SessionTest, Issue2223823) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("G", &session, &command);
@@ -6251,7 +6253,7 @@ TEST_F(SessionTest, Issue2223762) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -6272,7 +6274,7 @@ TEST_F(SessionTest, Issue2223755) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {  // DisplayAsFullKatakana
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -6291,7 +6293,7 @@ TEST_F(SessionTest, Issue2223755) {
   }
 
   {  // ConvertToFullKatakana
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -6332,7 +6334,7 @@ TEST_F(SessionTest, Issue2269058) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -6354,7 +6356,7 @@ TEST_F(SessionTest, Issue2272745) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -6366,7 +6368,7 @@ TEST_F(SessionTest, Issue2272745) {
   }
 
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -6388,8 +6390,8 @@ TEST_F(SessionTest, Issue2282319) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   InitSessionToPrecomposition(&session);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
@@ -6424,8 +6426,8 @@ TEST_F(SessionTest, Issue2297060) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   InitSessionToPrecomposition(&session);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
@@ -6442,7 +6444,7 @@ TEST_F(SessionTest, Issue2379374) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -6490,7 +6492,7 @@ TEST_F(SessionTest, Issue2569789) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -6505,7 +6507,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -6519,7 +6521,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -6535,7 +6537,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -6556,7 +6558,7 @@ TEST_F(SessionTest, Issue2555503) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("a", &session, &command);
@@ -6579,7 +6581,7 @@ TEST_F(SessionTest, Issue2791640) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -6603,7 +6605,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 
   // Check "hankaku/zenkaku"
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -6621,7 +6623,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 
   // Check "kanji"
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -6653,8 +6655,8 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
   InitSessionToDirect(&session);
@@ -6676,7 +6678,7 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   session.get_internal_composer_only_for_unittest()->SetTable(table);
 
@@ -6702,7 +6704,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6716,7 +6718,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("あ", command);
   }
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6728,7 +6730,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("ア", command);
   }
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6741,7 +6743,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("ｱ", command);
   }
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6753,7 +6755,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("ａ", command);
   }
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6771,7 +6773,7 @@ TEST_F(SessionTest, InputModeConsumed) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   EXPECT_TRUE(session.InputModeHiragana(&command));
@@ -6806,8 +6808,8 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
@@ -6825,7 +6827,7 @@ TEST_F(SessionTest, InputModeOutputHasComposition) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("a", &session, &command);
@@ -6867,7 +6869,7 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   Segments segments;
@@ -6927,7 +6929,7 @@ TEST_F(SessionTest, PerformedCommand) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   {
@@ -6969,7 +6971,7 @@ TEST_F(SessionTest, ResetContext) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -6994,7 +6996,7 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -7047,7 +7049,7 @@ TEST_F(SessionTest, IssueResetConversion) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -7064,7 +7066,7 @@ TEST_F(SessionTest, IssueRevert) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -7083,7 +7085,7 @@ TEST_F(SessionTest, Issue3428520) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -7129,8 +7131,8 @@ TEST_F(SessionTest, Issue5742293) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
   InitSessionToPrecomposition(&session);
@@ -7170,7 +7172,7 @@ TEST_F(SessionTest, AutoConversion) {
   config::Config config;
   config.set_use_auto_conversion(false);
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -7181,7 +7183,7 @@ TEST_F(SessionTest, AutoConversion) {
     EXPECT_SINGLE_SEGMENT_AND_KEY("てすと。", "てすと。", command);
   }
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -7195,7 +7197,7 @@ TEST_F(SessionTest, AutoConversion) {
   // Auto On
   config.set_use_auto_conversion(true);
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
@@ -7207,7 +7209,7 @@ TEST_F(SessionTest, AutoConversion) {
     EXPECT_SINGLE_SEGMENT_AND_KEY("あいうえお", "あいうえお", command);
   }
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
@@ -7221,7 +7223,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the pattern number + "."
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -7234,7 +7236,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the ".."
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -7246,7 +7248,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -7259,7 +7261,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for "." only.
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -7271,7 +7273,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -7284,7 +7286,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Do auto conversion even if romanji-table is modified.
   {
-    Session session(&engine);
+    Session session(engine);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
@@ -7326,7 +7328,7 @@ TEST_F(SessionTest, AutoConversion) {
               config::Config::AUTO_CONVERSION_EXCLAMATION_MARK);
 
           for (int i = 0; i < 4; ++i) {
-            Session session(&engine);
+            Session session(engine);
             session.SetConfig(config);
             InitSessionToPrecomposition(&session);
             commands::Command command;
@@ -7367,7 +7369,7 @@ TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -7390,7 +7392,7 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -7423,8 +7425,8 @@ TEST_F(SessionTest, KeitaiInputToggle) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
-  keymap::KeyMapManager key_map_manager(config);
+  Session session(engine);
+  auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
   session.SetConfig(config);
   session.SetKeyMapManager(key_map_manager);
 
@@ -7563,8 +7565,8 @@ TEST_F(SessionTest, KeitaiInputFlick) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
@@ -7578,8 +7580,8 @@ TEST_F(SessionTest, KeitaiInputFlick) {
   }
 
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
@@ -7595,8 +7597,8 @@ TEST_F(SessionTest, KeitaiInputFlick) {
   }
 
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
@@ -7671,8 +7673,8 @@ TEST_F(SessionTest, ToggleFlick) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
@@ -7681,8 +7683,8 @@ TEST_F(SessionTest, ToggleFlick) {
     Mock::VerifyAndClearExpectations(&converter);
   }
   {
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
@@ -7761,7 +7763,7 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -7826,7 +7828,7 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -7877,7 +7879,7 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments_mo;
@@ -7946,7 +7948,7 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments;
@@ -7992,7 +7994,7 @@ TEST_F(SessionTest, RequestConvertReverse) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -8010,7 +8012,7 @@ TEST_F(SessionTest, ConvertReverseFails) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   constexpr absl::string_view kKanjiContainsNewline = "改行\n禁止";
   commands::Command command;
@@ -8027,7 +8029,7 @@ TEST_F(SessionTest, ConvertReverse) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
   commands::Command command;
@@ -8048,7 +8050,7 @@ TEST_F(SessionTest, EscapeFromConvertReverse) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
 
@@ -8077,7 +8079,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
   commands::Command command;
@@ -8110,7 +8112,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   constexpr absl::string_view kInput = "abcde";
   constexpr absl::string_view kReading = "abcde";
@@ -8140,7 +8142,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   constexpr absl::string_view kInput = "ゔ";
 
@@ -8167,7 +8169,7 @@ TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
 
@@ -8198,7 +8200,7 @@ TEST_F(SessionTest, ConvertReverseFromOffState) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   const std::string kanji_aiueo = "阿伊宇江於";
 
@@ -8218,7 +8220,7 @@ TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -8243,7 +8245,7 @@ TEST_F(SessionTest, LaunchTool) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
 
   {
     commands::Command command;
@@ -8275,7 +8277,7 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Disable zero query suggest.
@@ -8313,7 +8315,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
   {  // Commit
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
 
@@ -8332,7 +8334,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
   }
 
   {  // CommitSegment
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
 
@@ -8351,7 +8353,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
   }
 
   {  // CommitCandidate
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
 
@@ -8373,7 +8375,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
   }
 
   {  // CommitFirstSuggestion
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     // Enable zero query suggest.
@@ -8431,7 +8433,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {  // Cancel command should close the candidate window.
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
@@ -8446,7 +8448,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // PredictAndConvert should select the first candidate.
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
@@ -8461,7 +8463,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // CommitFirstSuggestion should insert the first candidate.
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
@@ -8480,7 +8482,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // Space should be inserted directly.
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
@@ -8494,7 +8496,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // 'a' should be inserted in the composition.
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
@@ -8509,7 +8511,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // Enter should be inserted directly.
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
@@ -8523,7 +8525,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // Right should be inserted directly.
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
@@ -8537,7 +8539,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // SelectCnadidate command should work with zero query suggestion.
-    Session session(&engine);
+    Session session(engine);
     commands::Request request;
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
@@ -8561,7 +8563,7 @@ TEST_F(SessionTest, Issue4437420) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   commands::Request request;
@@ -8613,7 +8615,7 @@ TEST_F(SessionTest, Issue5553298) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -8649,7 +8651,7 @@ TEST_F(SessionTest, UndoKeyAction) {
   overriding_config.set_session_keymap(config::Config::MOBILE);
   // Test in half width ascii mode.
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-halfascii mode.
@@ -8694,7 +8696,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test in Hiaragana-mode.
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -8736,7 +8738,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test to do nothing for voiced sounds.
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -8784,7 +8786,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test to make nothing newly in preedit for empty composition.
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -8810,7 +8812,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test of acting as UNDO key. Almost same as the first section in Undo test.
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     commands::Capability capability;
@@ -8863,7 +8865,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Do not UNDO even if UNDO stack is not empty if it is in COMPOSITE state.
   {
-    Session session(&engine);
+    Session session(engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -8910,7 +8912,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 TEST_F(SessionTest, DedupAfterUndo) {
   commands::Command command;
   {
-    Session session(mock_data_engine_.get());
+    Session session(*mock_data_engine_);
     InitSessionToPrecomposition(&session, *mobile_request_);
 
     // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -8975,7 +8977,7 @@ TEST_F(SessionTest, MoveCursor) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -8995,7 +8997,7 @@ TEST_F(SessionTest, MoveCursorPrecomposition) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -9010,7 +9012,7 @@ TEST_F(SessionTest, MoveCursorRightWithCommit) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(
@@ -9042,7 +9044,7 @@ TEST_F(SessionTest, MoveCursorLeftWithCommit) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(
@@ -9081,7 +9083,7 @@ TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   commands::Request request(*mobile_request_);
   request.set_special_romanji_table(
       commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
@@ -9109,7 +9111,7 @@ TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   commands::Request request(*mobile_request_);
   request.set_special_romanji_table(
       commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
@@ -9141,7 +9143,7 @@ TEST_F(SessionTest, CommitHead) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   auto table = std::make_shared<composer::Table>();
   table->AddRule("mo", "も", "");
   table->AddRule("zu", "ず", "");
@@ -9167,7 +9169,7 @@ TEST_F(SessionTest, PasswordWithToggleAlphabetInput) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
 
   commands::Request request;
   request = *mobile_request_;
@@ -9223,7 +9225,7 @@ TEST_F(SessionTest, SwitchInputFieldType) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // initial state is NORMAL
@@ -9245,7 +9247,7 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
 
   commands::Request request;
   request = *mobile_request_;
@@ -9296,7 +9298,7 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   commands::Request request;
@@ -9350,7 +9352,7 @@ TEST_F(SessionTest, EditCancel) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   Segments segments_mo;
@@ -9413,7 +9415,7 @@ TEST_F(SessionTest, ImeOff) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
 
   EXPECT_CALL(converter, ResetConversion(_));
   InitSessionToPrecomposition(&session);
@@ -9447,8 +9449,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {  // Cancel of Precomposition and deactivate IME
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9467,8 +9469,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Composition and deactivate IME
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9489,8 +9491,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Suggestion and deactivate IME
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9519,8 +9521,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Conversion and deactivate IME
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToConversionWithAiueo(&session, &converter);
@@ -9539,8 +9541,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Reverse conversion and deactivate IME
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9603,8 +9605,8 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   {  // Cancel of Precomposition in password field
      // Basically this is unusual because there is no character to be canceled
      // when Precomposition state.
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9623,8 +9625,8 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Composition in password field
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9643,8 +9645,8 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Conversion in password field
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToConversionWithAiueo(&session, &converter);
@@ -9663,8 +9665,8 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Reverse conversion in password field
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9724,8 +9726,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   InitCreateEngineConverterMock(&engine, &converter);
 
   {  // Cancel of Precomposition and deactivate IME in password field.
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9753,8 +9755,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Composition and deactivate IME in password field
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9782,8 +9784,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Conversion and deactivate IME in password field
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToConversionWithAiueo(&session, &converter);
@@ -9810,8 +9812,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Reverse conversion and deactivate IME in password field
-    Session session(&engine);
-    keymap::KeyMapManager key_map_manager(config);
+    Session session(engine);
+    auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
     InitSessionToPrecomposition(&session);
@@ -9846,7 +9848,7 @@ TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   Segments segments_mo;
@@ -9876,7 +9878,7 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   session.SetConfig(config);
   InitSessionToPrecomposition(&session);
 
@@ -9908,7 +9910,7 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
 }
 
 TEST_F(SessionTest, SuppressSuggestion) {
-  Session session(mock_data_engine_.get());
+  Session session(*mock_data_engine_);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -9944,7 +9946,7 @@ TEST_F(SessionTest, DeleteHistory) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   Segments segments;
@@ -9982,7 +9984,7 @@ TEST_F(SessionTest, SendKeyWithKeyStringDirect) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToDirect(&session);
 
   commands::Command command;
@@ -10000,7 +10002,7 @@ TEST_F(SessionTest, SendKeyWithKeyString) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -10035,7 +10037,7 @@ TEST_F(SessionTest, IndirectImeOnOff) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   {
@@ -10086,7 +10088,7 @@ TEST_F(SessionTest, MakeSureIMEOn) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToDirect(&session);
 
   {
@@ -10142,7 +10144,7 @@ TEST_F(SessionTest, MakeSureIMEOff) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session);
 
   {
@@ -10198,7 +10200,7 @@ TEST_F(SessionTest, MakeSureIMEOffWithCommitComposition) {
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
 
-  Session session(&engine);
+  Session session(engine);
   // Make sure SessionCommand::TURN_OFF_IME terminates the existing
   // composition.
 
@@ -10234,7 +10236,7 @@ TEST_F(SessionTest, DeleteCandidateFromHistory) {
   // 0:あいうえお, 1:アイウエオ, -3:aiueo, -4:AIUEO, ...
   {
     // A test case to delete focused candidate (i.e. without candidate ID).
-    Session session(&engine);
+    Session session(engine);
     InitSessionToConversionWithAiueo(&session, &converter);
 
     EXPECT_CALL(converter, DeleteCandidateFromHistory(_, 0, 0))
@@ -10247,7 +10249,7 @@ TEST_F(SessionTest, DeleteCandidateFromHistory) {
   }
   {
     // A test case to delete candidate by ID.
-    Session session(&engine);
+    Session session(engine);
     InitSessionToConversionWithAiueo(&session, &converter);
 
     EXPECT_CALL(converter, DeleteCandidateFromHistory(_, 0, 1))
@@ -10264,17 +10266,17 @@ TEST_F(SessionTest, DeleteCandidateFromHistory) {
 }
 
 TEST_F(SessionTest, SetConfig) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  config.set_session_keymap(config::Config::CUSTOM);
+  auto config =
+      std::make_shared<config::Config>(config::ConfigHandler::DefaultConfig());
+  config->set_session_keymap(config::Config::CUSTOM);
   MockConverter converter;
   MockEngine engine;
   InitCreateEngineConverterMock(&engine, &converter);
-  Session session(&engine);
+  Session session(engine);
   session.PushUndoContext();
   session.SetConfig(config);
 
-  EXPECT_EQ(&config, &session.context_->GetConfig());
+  EXPECT_EQ(config.get(), &session.context_->GetConfig());
   // SetConfig() resets undo context.
   EXPECT_TRUE(session.undo_contexts_.empty());
 }
@@ -10298,7 +10300,7 @@ TEST_F(SessionTest, ClearCompositionByBackspace) {
   EXPECT_CALL(converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
   commands::Command command;
 
@@ -10336,7 +10338,7 @@ TEST_F(SessionTest, ClearCompositionByEscape) {
   EXPECT_CALL(converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
-  Session session(&engine);
+  Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
   commands::Command command;
 

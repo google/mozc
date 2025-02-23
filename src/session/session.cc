@@ -219,11 +219,12 @@ ImeContext::State GetEffectiveStateForTestSendKey(const commands::KeyEvent &key,
 
 }  // namespace
 
-Session::Session(EngineInterface *engine)
-    : engine_(engine), context_(CreateContext()) {}
+Session::Session(const EngineInterface &engine)
+    : context_(CreateContext(engine)) {}
 
-std::unique_ptr<ImeContext> Session::CreateContext() const {
-  auto context = std::make_unique<ImeContext>(engine_->CreateEngineConverter());
+std::unique_ptr<ImeContext> Session::CreateContext(
+    const EngineInterface &engine) const {
+  auto context = std::make_unique<ImeContext>(engine.CreateEngineConverter());
   context->set_create_time(Clock::GetAbslTime());
 
 #ifdef _WIN32
@@ -1156,18 +1157,21 @@ void Session::SetTable(std::shared_ptr<const composer::Table> table) {
   context_->mutable_composer()->SetTable(table);
 }
 
-void Session::SetConfig(const config::Config &config) {
+void Session::SetConfig(std::shared_ptr<const config::Config> config) {
+  DCHECK(config);
   ClearUndoContext();
   context_->SetConfig(config);
 }
 
-void Session::SetRequest(const commands::Request &request) {
+void Session::SetRequest(std::shared_ptr<const commands::Request> request) {
+  DCHECK(request);
   ClearUndoContext();
   context_->SetRequest(request);
 }
 
 void Session::SetKeyMapManager(
-    const mozc::keymap::KeyMapManager &key_map_manager) {
+    std::shared_ptr<const mozc::keymap::KeyMapManager> key_map_manager) {
+  DCHECK(key_map_manager);
   context_->SetKeyMapManager(key_map_manager);
 }
 

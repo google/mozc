@@ -91,13 +91,14 @@ class ImeContext final {
   State state() const { return data_.state; }
   void set_state(State state) { data_.state = state; }
 
-  void SetRequest(const commands::Request &request);
+  void SetRequest(std::shared_ptr<const commands::Request> request);
   const commands::Request &GetRequest() const;
 
-  void SetConfig(const config::Config &config);
+  void SetConfig(std::shared_ptr<const config::Config> config);
   const config::Config &GetConfig() const;
 
-  void SetKeyMapManager(const keymap::KeyMapManager &key_map_manager);
+  void SetKeyMapManager(
+      std::shared_ptr<const keymap::KeyMapManager> key_map_manager);
   const keymap::KeyMapManager &GetKeyMapManager() const;
 
   const commands::Capability &client_capability() const {
@@ -138,12 +139,9 @@ class ImeContext final {
     absl::Time create_time;
     absl::Time last_command_time;
 
-    // TODO(team): We want to avoid using raw pointer to share
-    // frequently updated object with large footprint.
-    // Replace them with copy or std::shared_ptr to prevent dangling pointer.
-    const commands::Request *request;
-    const config::Config *config;
-    const keymap::KeyMapManager *key_map_manager;
+    std::shared_ptr<const commands::Request> request;
+    std::shared_ptr<const config::Config> config;
+    std::shared_ptr<const keymap::KeyMapManager> key_map_manager;
 
     composer::Composer composer;
     KeyEventTransformer key_event_transformer;

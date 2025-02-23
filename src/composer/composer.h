@@ -54,6 +54,8 @@
 namespace mozc {
 namespace composer {
 
+std::shared_ptr<const commands::Request> GetSharedDefaultRequest();
+
 // ComposerData is a data structure that represents the current state of the
 // composer. It is used by Converter, Predictor and Rewriters as a const
 // object.
@@ -156,11 +158,21 @@ class Composer final {
   };
 
   Composer();
-  Composer(std::shared_ptr<const Table> table, const commands::Request &request,
-           const config::Config &config);
+  Composer(std::shared_ptr<const Table> table,
+           std::shared_ptr<const commands::Request> request,
+           std::shared_ptr<const config::Config> config);
+
   // This constructor is for testing.
   ABSL_DEPRECATED("Use the constructor with Table")
-  Composer(const commands::Request &request, const config::Config &config);
+  Composer(std::shared_ptr<const commands::Request> request,
+           std::shared_ptr<const config::Config> config);
+
+  // Copies `request` and `config`.
+
+  ABSL_DEPRECATED("Use the constructor with Table")
+  Composer(commands::Request request, config::Config config);
+  Composer(std::shared_ptr<const Table> table, commands::Request request,
+           config::Config config);
 
   // Copyable and movable.
   Composer(const Composer &) = default;
@@ -191,8 +203,8 @@ class Composer final {
 
   void SetTable(std::shared_ptr<const Table> table);
 
-  void SetRequest(const commands::Request &request);
-  void SetConfig(const config::Config &config);
+  void SetRequest(std::shared_ptr<const commands::Request> request);
+  void SetConfig(std::shared_ptr<const config::Config> config);
 
   void SetInputMode(transliteration::TransliterationType mode);
   void SetTemporaryInputMode(transliteration::TransliterationType mode);
@@ -391,9 +403,8 @@ class Composer final {
 
   size_t max_length_;
 
-  // TODO(all): Stop using raw pointer to achieve shared ownership.
-  const commands::Request *request_ = nullptr;
-  const config::Config *config_ = nullptr;
+  std::shared_ptr<const commands::Request> request_;
+  std::shared_ptr<const config::Config> config_;
 
   // Though we would like to avoid shared object, Table is not copyable so
   // there is no other way to share them at this moment. The internal data

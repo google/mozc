@@ -139,16 +139,21 @@ class SessionHandler {
 
   std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<composer::TableManager> table_manager_;
-  std::unique_ptr<const commands::Request> request_;
 
   // Uses shared_ptr for the following reason.
   // 1. config_ is shared across multiple sub-components whose life cycle is
   //    mostly unpredictable and updated dynamically.
   // 2. Avoid copying of config from ConfigHandler to SessionHandler.
   // 3. Easily to identify whether the config_ is updated. Only a comparison of
-  // pointers is required, not a comparison of content.
+  //    pointers is required, not a comparison of content.
+  // config_, request_, and key_map_manager_ are not view-only objects but
+  // mutable pointers dynamically updated via setter methods. The current design
+  // is not recommended as it can easily lead to dangling pointers (e.g.,
+  // forgetting to call a setter method). The style guide recommends
+  // std::shared_ptr when implementing shared objects.
+  std::shared_ptr<const commands::Request> request_;
   std::shared_ptr<const config::Config> config_;
-  std::unique_ptr<keymap::KeyMapManager> key_map_manager_;
+  std::shared_ptr<keymap::KeyMapManager> key_map_manager_;
 
   absl::BitGen bitgen_;
 };

@@ -57,7 +57,7 @@ namespace {
 
 void Loop(std::istream *input, std::ostream *output) {
   std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
-  auto session = std::make_unique<session::Session>(engine.get());
+  auto session = std::make_unique<session::Session>(*engine);
 
   commands::Command command;
   std::string line;
@@ -67,7 +67,7 @@ void Loop(std::istream *input, std::ostream *output) {
       continue;
     }
     if (line.empty()) {
-      session = std::make_unique<session::Session>(engine.get());
+      session = std::make_unique<session::Session>(*engine);
       *output << std::endl << "## New session" << std::endl << std::endl;
       continue;
     }

@@ -54,7 +54,7 @@ namespace session {
 
 class Session {
  public:
-  explicit Session(EngineInterface *engine);
+  explicit Session(const EngineInterface &engine);
   Session(const Session &) = delete;
   Session &operator=(const Session &) = delete;
 
@@ -230,11 +230,21 @@ class Session {
 
   bool ReportBug(mozc::commands::Command *command);
 
-  void SetConfig(const mozc::config::Config &config);
+  void SetConfig(std::shared_ptr<const mozc::config::Config> config);
 
-  void SetKeyMapManager(const mozc::keymap::KeyMapManager &key_map_manager);
+  void SetKeyMapManager(
+      std::shared_ptr<const mozc::keymap::KeyMapManager> key_map_manager);
 
-  void SetRequest(const mozc::commands::Request &request);
+  void SetRequest(std::shared_ptr<const mozc::commands::Request> request);
+
+  void SetConfig(mozc::config::Config config) {
+    SetConfig(std::make_shared<const config::Config>(std::move(config)));
+  }
+
+  void SetRequest(mozc::commands::Request request) {
+    SetRequest(
+        std::make_shared<const mozc::commands::Request>(std::move(request)));
+  }
 
   void SetTable(std::shared_ptr<const mozc::composer::Table> table);
 
@@ -266,18 +276,13 @@ class Session {
   FRIEND_TEST(SessionTest, RequestUndo);
   FRIEND_TEST(SessionTest, SetConfig);
 
-  // Underlying conversion engine for this session. Please note that:
-  //   i) Session doesn't own the pointer.
-  //  ii) The state of underlying converter will change because it manages user
-  //      history, user dictionary, etc.
-  mozc::EngineInterface *engine_ = nullptr;
-
   std::unique_ptr<ImeContext> context_;
 
   // Undo stack. *begin is the oldest, and *back is the newest.
   std::deque<std::unique_ptr<ImeContext>> undo_contexts_;
 
-  std::unique_ptr<ImeContext> CreateContext() const;
+  std::unique_ptr<ImeContext> CreateContext(
+      const EngineInterface &engine) const;
 
   void PushUndoContext();
   void PopUndoContext();

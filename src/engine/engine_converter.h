@@ -57,8 +57,8 @@ namespace engine {
 class EngineConverter : public EngineConverterInterface {
  public:
   EngineConverter(const ConverterInterface &converter,
-                  const commands::Request &request,
-                  const config::Config &config);
+                  std::shared_ptr<const commands::Request> request,
+                  std::shared_ptr<const config::Config> config);
   explicit EngineConverter(const ConverterInterface &converter);
   EngineConverter(const EngineConverter &) = delete;
   EngineConverter &operator=(const EngineConverter &) = delete;
@@ -236,10 +236,10 @@ class EngineConverter : public EngineConverterInterface {
                   commands::Output *output) const override;
 
   // Sets setting by the request;
-  void SetRequest(const commands::Request &request) override;
+  void SetRequest(std::shared_ptr<const commands::Request> request) override;
 
   // Sets setting by the config;
-  void SetConfig(const config::Config &config) override;
+  void SetConfig(std::shared_ptr<const config::Config> config) override;
 
   // Set setting by the context.
   void OnStartComposition(const commands::Context &context) override;
@@ -378,8 +378,8 @@ class EngineConverter : public EngineConverterInterface {
   // Component of the candidate list converted from segments_to result_.
   CandidateList candidate_list_;
 
-  const commands::Request *request_ = nullptr;
-  const config::Config *config_ = nullptr;
+  std::shared_ptr<const commands::Request> request_;
+  std::shared_ptr<const config::Config> config_;
 
   EngineConverterInterface::State state_;
 

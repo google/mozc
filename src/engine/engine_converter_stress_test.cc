@@ -90,8 +90,8 @@ TEST_F(EngineConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   };
 
   const std::string kRomajiHiraganaTable = "system://romanji-hiragana.tsv";
-  const commands::Request request;
-  config::Config config;
+  auto request = std::make_shared<commands::Request>();
+  auto config = std::make_shared<config::Config>();
 
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   EngineConverter sconverter(*engine->GetConverter(), request, config);

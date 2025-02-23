@@ -456,6 +456,12 @@ void GetTransliterations(const Composition &composition,
 }  // namespace common
 }  // namespace
 
+std::shared_ptr<const commands::Request> GetSharedDefaultRequest() {
+  static const absl::NoDestructor<std::shared_ptr<const commands::Request>>
+      kRequest(new commands::Request);
+  return *kRequest;
+}
+
 // ComposerData
 
 ComposerData::ComposerData(
@@ -570,17 +576,26 @@ void ComposerData::GetSubTransliterations(
 // Composer
 
 Composer::Composer()
-    : Composer(Table::GetSharedDefaultTable(),
-               commands::Request::default_instance(),
-               config::ConfigHandler::DefaultConfig()) {}
+    : Composer(Table::GetSharedDefaultTable(), GetSharedDefaultRequest(),
+               config::ConfigHandler::GetSharedDefaultConfig()) {}
 
-Composer::Composer(const commands::Request &request,
-                   const config::Config &config)
+Composer::Composer(std::shared_ptr<const commands::Request> request,
+                   std::shared_ptr<const config::Config> config)
     : Composer(Table::GetSharedDefaultTable(), request, config) {}
 
+Composer::Composer(commands::Request request, config::Config config)
+    : Composer(Table::GetSharedDefaultTable(), std::move(request),
+               std::move(config)) {}
+
 Composer::Composer(std::shared_ptr<const Table> table,
-                   const commands::Request &request,
-                   const config::Config &config)
+                   commands::Request request, config::Config config)
+    : Composer(table,
+               std::make_shared<const commands::Request>(std::move(request)),
+               std::make_shared<const config::Config>(std::move(config))) {}
+
+Composer::Composer(std::shared_ptr<const Table> table,
+                   std::shared_ptr<const commands::Request> request,
+                   std::shared_ptr<const config::Config> config)
     : position_(0),
       input_mode_(transliteration::HIRAGANA),
       output_mode_(transliteration::HIRAGANA),
@@ -589,10 +604,12 @@ Composer::Composer(std::shared_ptr<const Table> table,
       shifted_sequence_count_(0),
       composition_(table),
       max_length_(kMaxPreeditLength),
-      request_(&request),
-      config_(&config),
+      request_(request),
+      config_(config),
       table_(table),
       is_new_input_(true) {
+  DCHECK(request_);
+  DCHECK(config_);
   SetInputMode(transliteration::HIRAGANA);
   DCHECK(table_);
   Reset();
@@ -634,11 +651,15 @@ void Composer::SetTable(std::shared_ptr<const Table> table) {
   composition_.SetTable(table_);
 }
 
-void Composer::SetRequest(const commands::Request &request) {
-  request_ = &request;
+void Composer::SetRequest(std::shared_ptr<const commands::Request> request) {
+  DCHECK(request);
+  request_ = request;
 }
 
-void Composer::SetConfig(const config::Config &config) { config_ = &config; }
+void Composer::SetConfig(std::shared_ptr<const config::Config> config) {
+  DCHECK(config);
+  config_ = config;
+}
 
 void Composer::SetInputMode(transliteration::TransliterationType mode) {
   comeback_input_mode_ = mode;

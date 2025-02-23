@@ -36,6 +36,7 @@
 #include <utility>
 
 #include "absl/base/no_destructor.h"
+#include "absl/log/check.h"
 #include "absl/memory/memory.h"
 #include "absl/time/time.h"
 #include "composer/composer.h"
@@ -49,8 +50,9 @@ namespace mozc {
 namespace session {
 namespace {
 
-const keymap::KeyMapManager &DefaultKeyMapManager() {
-  static const absl::NoDestructor<keymap::KeyMapManager> kDefaultKeyMapManager;
+std::shared_ptr<const keymap::KeyMapManager> GetSharedDefaultKeyMapManager() {
+  static const absl::NoDestructor<std::shared_ptr<const keymap::KeyMapManager>>
+      kDefaultKeyMapManager(new keymap::KeyMapManager);
   return *kDefaultKeyMapManager;
 }
 
@@ -59,11 +61,14 @@ const keymap::KeyMapManager &DefaultKeyMapManager() {
 ImeContext::CopyableData::CopyableData()
     : create_time(absl::InfinitePast()),
       last_command_time(absl::InfinitePast()),
-      request(&commands::Request::default_instance()),
-      config(&config::ConfigHandler::DefaultConfig()),
-      key_map_manager(&DefaultKeyMapManager()),
-      composer(composer::Table::GetSharedDefaultTable(), *request, *config),
+      request(composer::GetSharedDefaultRequest()),
+      config(config::ConfigHandler::GetSharedDefaultConfig()),
+      key_map_manager(GetSharedDefaultKeyMapManager()),
+      composer(composer::Table::GetSharedDefaultTable(), request, config),
       state(NONE) {
+  DCHECK(request);
+  DCHECK(config);
+  DCHECK(key_map_manager);
   key_event_transformer.ReloadConfig(*config);
 }
 
@@ -77,34 +82,37 @@ ImeContext::ImeContext(const ImeContext &src) : data_(src.data_) {
   }
 }
 
-void ImeContext::SetRequest(const commands::Request &request) {
-  data_.request = &request;
+void ImeContext::SetRequest(std::shared_ptr<const commands::Request> request) {
+  DCHECK(request);
+  data_.request = request;
   if (converter_) {
-    converter_->SetRequest(*data_.request);
+    converter_->SetRequest(data_.request);
   }
-  data_.composer.SetRequest(*data_.request);
+  data_.composer.SetRequest(data_.request);
 }
 
 const commands::Request &ImeContext::GetRequest() const {
   return *data_.request;
 }
 
-void ImeContext::SetConfig(const config::Config &config) {
-  data_.config = &config;
+void ImeContext::SetConfig(std::shared_ptr<const config::Config> config) {
+  DCHECK(config);
+  data_.config = config;
 
   if (converter_) {
-    converter_->SetConfig(*data_.config);
+    converter_->SetConfig(data_.config);
   }
 
-  data_.composer.SetConfig(*data_.config);
+  data_.composer.SetConfig(data_.config);
   data_.key_event_transformer.ReloadConfig(*data_.config);
 }
 
 const config::Config &ImeContext::GetConfig() const { return *data_.config; }
 
 void ImeContext::SetKeyMapManager(
-    const keymap::KeyMapManager &key_map_manager) {
-  data_.key_map_manager = &key_map_manager;
+    std::shared_ptr<const keymap::KeyMapManager> key_map_manager) {
+  DCHECK(key_map_manager);
+  data_.key_map_manager = key_map_manager;
 }
 
 const keymap::KeyMapManager &ImeContext::GetKeyMapManager() const {

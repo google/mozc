@@ -108,24 +108,22 @@ class ComposerTest : public ::testing::Test {
 
   void SetUp() override {
     table_ = std::make_shared<Table>();
-    config_ = std::make_unique<Config>();
-    request_ = std::make_unique<Request>();
-    composer_ = std::make_unique<Composer>(table_, *request_, *config_);
+    config_ = std::make_shared<Config>();
+    request_ = std::make_shared<Request>();
+    composer_ = std::make_unique<Composer>(table_, request_, config_);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
   void TearDown() override {
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
     composer_.reset();
-    request_.reset();
-    config_.reset();
     table_.reset();
   }
 
   std::unique_ptr<Composer> composer_;
   std::shared_ptr<Table> table_;
-  std::unique_ptr<Request> request_;
-  std::unique_ptr<Config> config_;
+  std::shared_ptr<Request> request_;
+  std::shared_ptr<Config> config_;
 };
 
 TEST_F(ComposerTest, Reset) {
@@ -854,7 +852,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
-  composer_ = std::make_unique<Composer>(table_, *request_, *config_);
+  composer_ = std::make_unique<Composer>(table_, request_, config_);
 
   {
     // "a" → "あ" (Hiragana)
@@ -1256,7 +1254,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
-  composer_ = std::make_unique<Composer>(table_, *request_, *config_);
+  composer_ = std::make_unique<Composer>(table_, request_, config_);
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1321,7 +1319,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   }
 
   config_->set_shift_key_mode_switch(Config::OFF);
-  composer_ = std::make_unique<Composer>(table_, *request_, *config_);
+  composer_ = std::make_unique<Composer>(table_, request_, config_);
 
   {  // Google
     InsertKey("G", composer_.get());
@@ -1551,8 +1549,8 @@ TEST_F(ComposerTest, UpdateInputMode) {
 
 TEST_F(ComposerTest, DisabledUpdateInputMode) {
   // Set the flag disable.
-  commands::Request request;
-  request.set_update_input_mode_from_surrounding_text(false);
+  auto request = std::make_shared<commands::Request>();
+  request->set_update_input_mode_from_surrounding_text(false);
   composer_->SetRequest(request);
 
   table_->AddRule("a", "あ", "");
@@ -2506,14 +2504,14 @@ TEST_F(ComposerTest, DeleteRange) {
 
 TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
   // http://b/5509480
-  commands::Request request;
-  request.set_zero_query_suggestion(true);
-  request.set_mixed_conversion(true);
-  request.set_special_romanji_table(
+  auto request = std::make_shared<commands::Request>();
+  request->set_zero_query_suggestion(true);
+  request->set_mixed_conversion(true);
+  request->set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   composer_->SetRequest(request);
   table_->InitializeWithRequestAndConfig(
-      request, config::ConfigHandler::DefaultConfig());
+      *request, config::ConfigHandler::DefaultConfig());
   composer_->InsertCharacter("2");
   EXPECT_EQ(composer_->GetStringForPreedit(), "a");
   EXPECT_EQ(composer_->GetQueryForConversion(), "a");

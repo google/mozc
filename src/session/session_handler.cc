@@ -132,9 +132,9 @@ SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine)
   last_cleanup_time_ = absl::InfinitePast();
   last_create_session_time_ = absl::InfinitePast();
   table_manager_ = std::make_unique<composer::TableManager>();
-  request_ = std::make_unique<commands::Request>();
+  request_ = std::make_shared<commands::Request>();
   config_ = config::ConfigHandler::GetSharedConfig();
-  key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
+  key_map_manager_ = std::make_shared<keymap::KeyMapManager>(*config_);
 
   if (absl::GetFlag(FLAGS_restricted)) {
     MOZC_VLOG(1) << "Server starts with restricted mode";
@@ -193,7 +193,7 @@ void SessionHandler::UpdateSessions(
   }
 
   if (is_key_manager_updated) {
-    key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
+    key_map_manager_ = std::make_shared<keymap::KeyMapManager>(*config_);
   }
 
   std::shared_ptr<const composer::Table> table =
@@ -204,9 +204,9 @@ void SessionHandler::UpdateSessions(
     if (!session) {
       continue;
     }
-    session->SetConfig(*config_);
-    session->SetKeyMapManager(*key_map_manager_);
-    session->SetRequest(*request_);
+    session->SetConfig(config_);
+    session->SetKeyMapManager(key_map_manager_);
+    session->SetRequest(request_);
     session->SetTable(table);
   }
 
@@ -394,7 +394,7 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
 
 std::unique_ptr<session::Session> SessionHandler::NewSession() {
   // Session doesn't take the ownership of engine.
-  return std::make_unique<session::Session>(engine_.get());
+  return std::make_unique<session::Session>(*engine_);
 }
 
 void SessionHandler::MaybeUpdateConfig(commands::Command *command) {

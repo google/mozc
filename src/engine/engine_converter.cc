@@ -107,11 +107,13 @@ int32_t CalculateCursorOffset(absl::string_view committed_text) {
 }  // namespace
 
 EngineConverter::EngineConverter(const ConverterInterface &converter)
-    : EngineConverter(converter, commands::Request::default_instance(),
-                      config::ConfigHandler::DefaultConfig()) {}
+    : EngineConverter(converter, composer::GetSharedDefaultRequest(),
+                      config::ConfigHandler::GetSharedDefaultConfig()) {}
 
-EngineConverter::EngineConverter(const ConverterInterface &converter,
-                                 const Request &request, const Config &config)
+EngineConverter::EngineConverter(
+    const ConverterInterface &converter,
+    std::shared_ptr<const commands::Request> request,
+    std::shared_ptr<const Config> config)
     : EngineConverterInterface(),
       converter_(&converter),
       segments_(),
@@ -119,14 +121,16 @@ EngineConverter::EngineConverter(const ConverterInterface &converter,
       segment_index_(0),
       result_(),
       candidate_list_(true),
-      request_(&request),
+      request_(request),
       state_(COMPOSITION),
       request_type_(ConversionRequest::CONVERSION),
       client_revision_(0),
       candidate_list_visible_(false) {
+  DCHECK(request);
+  DCHECK(config);
   conversion_preferences_.use_history = true;
   conversion_preferences_.request_suggestion = true;
-  candidate_list_.set_page_size(request.candidate_page_size());
+  candidate_list_.set_page_size(request->candidate_page_size());
   SetConfig(config);
 }
 
@@ -1144,7 +1148,7 @@ void EngineConverter::FillOutput(const composer::Composer &composer,
 
 EngineConverter *EngineConverter::Clone() const {
   EngineConverter *engine_converter =
-      new EngineConverter(*converter_, *request_, *config_);
+      new EngineConverter(*converter_, request_, config_);
 
   // Copy the members in order of their declarations.
   engine_converter->state_ = state_;
@@ -1632,16 +1636,19 @@ void EngineConverter::FillIncognitoCandidateWords(
   }
 }
 
-void EngineConverter::SetRequest(const commands::Request &request) {
-  request_ = &request;
-  candidate_list_.set_page_size(request.candidate_page_size());
+void EngineConverter::SetRequest(
+    std::shared_ptr<const commands::Request> request) {
+  DCHECK(request);
+  request_ = request;
+  candidate_list_.set_page_size(request_->candidate_page_size());
 }
 
-void EngineConverter::SetConfig(const config::Config &config) {
-  config_ = &config;
+void EngineConverter::SetConfig(std::shared_ptr<const config::Config> config) {
+  DCHECK(config);
+  config_ = config;
   updated_command_ = Segment::Candidate::DEFAULT_COMMAND;
-  selection_shortcut_ = config.selection_shortcut();
-  use_cascading_window_ = config.use_cascading_window();
+  selection_shortcut_ = config_->selection_shortcut();
+  use_cascading_window_ = config_->use_cascading_window();
 }
 
 void EngineConverter::OnStartComposition(const commands::Context &context) {
