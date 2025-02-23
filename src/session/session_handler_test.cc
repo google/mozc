@@ -449,8 +449,7 @@ TEST_F(SessionHandlerTest, ElapsedTimeTest) {
 }
 
 TEST_F(SessionHandlerTest, ConfigTest) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
+  config::Config config = config::ConfigHandler::GetCopiedConfig();
   SessionHandler handler(CreateMockDataEngine());
 
   {
@@ -461,7 +460,7 @@ TEST_F(SessionHandlerTest, ConfigTest) {
     config.set_session_keymap(config::Config::KOTOERI);
     *input->mutable_config() = config;
     EXPECT_TRUE(handler.EvalCommand(&command));
-    config::ConfigHandler::GetConfig(&config);
+    config = config::ConfigHandler::GetCopiedConfig();
     EXPECT_EQ(command.output().config().session_keymap(),
               config::Config::KOTOERI);
   }
@@ -502,7 +501,7 @@ TEST_F(SessionHandlerTest, ConfigTest) {
     *input->mutable_config() = config;
     EXPECT_TRUE(handler.EvalCommand(&command));
     EXPECT_EQ(command.output().id(), command.input().id());
-    config::ConfigHandler::GetConfig(&config);
+    config = config::ConfigHandler::GetCopiedConfig();
     EXPECT_EQ(command.output().config().session_keymap(), config::Config::ATOK);
   }
   {
@@ -521,8 +520,7 @@ TEST_F(SessionHandlerTest, ConfigTest) {
 }
 
 TEST_F(SessionHandlerTest, UpdateComposition) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
+  config::Config config = config::ConfigHandler::GetCopiedConfig();
   config::ConfigHandler::SetConfig(config);
   SessionHandler handler(CreateMockDataEngine());
 
@@ -556,9 +554,7 @@ TEST_F(SessionHandlerTest, UpdateComposition) {
 }
 
 TEST_F(SessionHandlerTest, KeyMapTest) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  config::ConfigHandler::SetConfig(config);
+  config::Config config = config::ConfigHandler::GetCopiedConfig();
   const keymap::KeyMapManager *msime_keymap;
 
   SessionHandler handler(CreateMockDataEngine());

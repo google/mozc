@@ -109,12 +109,10 @@ class SessionHandler {
   bool SetConfig(commands::Command *command);
   // Updates all the sessions by UpdateSessions() with given |request|.
   bool SetRequest(commands::Command *command);
-  // Sets the given config, request, and derivative information
-  // to all the sessions.
-  // Then updates config_ and request_.
-  // This method doesn't reload the sessions.
-  void UpdateSessions(const config::Config &config,
-                      const commands::Request &request);
+  // Update sessions if ConfigHandler::GetSharedConfig() is updated
+  // or `request` is not null. This method doesn't reload the sessions.
+  void UpdateSessions(
+      std::unique_ptr<const commands::Request> request = nullptr);
 
   bool Cleanup(commands::Command *command);
   bool SendUserDictionaryCommand(commands::Command *command);
@@ -142,7 +140,14 @@ class SessionHandler {
   std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<composer::TableManager> table_manager_;
   std::unique_ptr<const commands::Request> request_;
-  std::unique_ptr<const config::Config> config_;
+
+  // Uses shared_ptr for the following reason.
+  // 1. config_ is shared across multiple sub-components whose life cycle is
+  //    mostly unpredictable and updated dynamically.
+  // 2. Avoid copying of config from ConfigHandler to SessionHandler.
+  // 3. Easily to identify whether the config_ is updated. Only a comparison of
+  // pointers is required, not a comparison of content.
+  std::shared_ptr<const config::Config> config_;
   std::unique_ptr<keymap::KeyMapManager> key_map_manager_;
 
   absl::BitGen bitgen_;

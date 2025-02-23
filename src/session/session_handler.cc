@@ -133,7 +133,7 @@ SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine)
   last_create_session_time_ = absl::InfinitePast();
   table_manager_ = std::make_unique<composer::TableManager>();
   request_ = std::make_unique<commands::Request>();
-  config_ = config::ConfigHandler::GetConfig();
+  config_ = config::ConfigHandler::GetSharedConfig();
   key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
 
   if (absl::GetFlag(FLAGS_restricted)) {
@@ -173,25 +173,30 @@ void SessionHandler::StartWatchDog() {
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
-void SessionHandler::UpdateSessions(const config::Config &config,
-                                    const commands::Request &request) {
-  // Since sessions internally use config_, request_ and key_map_manager_,
-  // they are moved to prev_ variables to avoid releasing until sessions switch
-  // those values.
-  std::unique_ptr<const config::Config> prev_config = std::move(config_);
-  std::unique_ptr<const commands::Request> prev_request = std::move(request_);
-  std::unique_ptr<keymap::KeyMapManager> prev_key_map_manager;
+void SessionHandler::UpdateSessions(
+    std::unique_ptr<const commands::Request> request) {
+  std::shared_ptr<const config::Config> current_config =
+      config::ConfigHandler::GetSharedConfig();
 
-  config_ = std::make_unique<config::Config>(config);
-  request_ = std::make_unique<commands::Request>(request);
-  const composer::Table *table = nullptr;
-  table = table_manager_->GetTable(*request_, *config_);
+  const bool is_config_updated = current_config != config_;
+  const bool is_key_manager_updated =
+      is_config_updated &&
+      !keymap::KeyMapManager::IsSameKeyMapManagerApplicable(*config_,
+                                                            *current_config);
 
-  if (!keymap::KeyMapManager::IsSameKeyMapManagerApplicable(*prev_config,
-                                                            *config_)) {
-    prev_key_map_manager = std::move(key_map_manager_);
+  if (is_config_updated) {
+    config_ = current_config;
+  }
+
+  if (request) {
+    request_ = std::move(request);
+  }
+
+  if (is_key_manager_updated) {
     key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
   }
+
+  const composer::Table *table = table_manager_->GetTable(*request_, *config_);
 
   for (SessionElement &element : *session_map_) {
     std::unique_ptr<session::Session> &session = element.value;
@@ -205,8 +210,11 @@ void SessionHandler::UpdateSessions(const config::Config &config,
       session->SetTable(*table);
     }
   }
-  config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(
-      *config_);
+
+  if (is_config_updated) {
+    config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(
+        *config_);
+  }
 }
 
 bool SessionHandler::SyncData(commands::Command *command) {
@@ -225,14 +233,14 @@ bool SessionHandler::Shutdown(commands::Command *command) {
 
 bool SessionHandler::Reload(commands::Command *command) {
   MOZC_VLOG(1) << "Reloading server";
-  UpdateSessions(*config::ConfigHandler::GetConfig(), *request_);
+  UpdateSessions();
   engine_->Reload();
   return true;
 }
 
 bool SessionHandler::ReloadAndWait(commands::Command *command) {
   MOZC_VLOG(1) << "Reloading server and wait for reloader";
-  UpdateSessions(*config::ConfigHandler::GetConfig(), *request_);
+  UpdateSessions();
   engine_->ReloadAndWait();
   return true;
 }
@@ -257,10 +265,11 @@ bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
 
 bool SessionHandler::GetConfig(commands::Command *command) {
   MOZC_VLOG(1) << "Getting config";
-  config::ConfigHandler::GetConfig(command->mutable_output()->mutable_config());
+  *command->mutable_output()->mutable_config() =
+      config::ConfigHandler::GetCopiedConfig();
   // Ensure the on-memory config is same as the locally stored one
   // because the local data could be changed by sync.
-  UpdateSessions(command->output().config(), *request_);
+  UpdateSessions();
   return true;
 }
 
@@ -283,7 +292,9 @@ bool SessionHandler::SetRequest(commands::Command *command) {
     LOG(WARNING) << "request is empty";
     return false;
   }
-  UpdateSessions(*config_, command->input().request());
+  auto request =
+      std::make_unique<const commands::Request>(command->input().request());
+  UpdateSessions(std::move(request));
   return true;
 }
 
@@ -517,7 +528,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   // SetConfig() will complete the initialization by setting information
   // (e.g., config, request, keymap, ...) to all the sessions,
   // including the newly created one.
-  UpdateSessions(*config::ConfigHandler::GetConfig(), *request_);
+  UpdateSessions();
 
   // session is not empty.
   last_session_empty_time_ = absl::InfinitePast();

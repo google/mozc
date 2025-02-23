@@ -442,8 +442,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
     commands::Command command;
 
     InitSessionToPrecomposition(session_.get());
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
+    config::Config config = config::ConfigHandler::GetCopiedConfig();
     config.set_use_auto_conversion(true);
     session_->SetConfig(config);
 
@@ -508,8 +507,7 @@ TEST_F(SessionRegressionTest, TransliterationIssue6209563) {
     commands::Command command;
 
     InitSessionToPrecomposition(session_.get());
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
+    config::Config config = config::ConfigHandler::GetCopiedConfig();
     config.set_preedit_method(config::Config::KANA);
 
     // Inserts "ち" 5 times

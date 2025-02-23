@@ -111,7 +111,7 @@ void SessionHandlerTestBase::SetUp() {
       absl::GetFlag(FLAGS_last_create_session_timeout);
   flags_restricted_backup_ = absl::GetFlag(FLAGS_restricted);
 
-  ConfigHandler::GetConfig(&config_backup_);
+  config_backup_ = ConfigHandler::GetCopiedConfig();
   ClearState();
 }
 

@@ -306,11 +306,9 @@ SessionHandlerInterpreter::SessionHandlerInterpreter()
 SessionHandlerInterpreter::SessionHandlerInterpreter(
     std::unique_ptr<EngineInterface> engine) {
   client_ = std::make_unique<SessionHandlerTool>(std::move(engine));
-  config_ = std::make_unique<Config>();
   last_output_ = std::make_unique<Output>();
   request_ = std::make_unique<Request>();
-
-  ConfigHandler::GetConfig(config_.get());
+  config_ = ConfigHandler::GetCopiedConfig();
 
   // Set up session.
   CHECK(client_->CreateSession()) << "Client initialization is failed.";
@@ -324,8 +322,7 @@ SessionHandlerInterpreter::~SessionHandlerInterpreter() {
 }
 
 void SessionHandlerInterpreter::ClearState() {
-  Config config;
-  ConfigHandler::GetDefaultConfig(&config);
+  const Config &config = ConfigHandler::DefaultConfig();
   ConfigHandler::SetConfig(config);
 
   // CharacterFormManager is not automatically updated when the config is
@@ -706,8 +703,8 @@ absl::Status SessionHandlerInterpreter::Eval(
     MOZC_ASSERT_TRUE(args.size() >= 3);
     MOZC_ASSERT_TRUE(SetOrAddFieldValueFromString(
         std::vector<std::string>(args.begin() + 1, args.end() - 1),
-        *(args.end() - 1), config_.get()));
-    MOZC_ASSERT_TRUE(client_->SetConfig(*config_, last_output_.get()));
+        *(args.end() - 1), &config_));
+    MOZC_ASSERT_TRUE(client_->SetConfig(config_, last_output_.get()));
   } else if (command == "MERGE_DECODER_EXPERIMENT_PARAMS") {
     MOZC_ASSERT_EQ(2, args.size());
     if (const std::string &textproto = args[1]; !textproto.empty()) {
