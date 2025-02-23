@@ -97,6 +97,16 @@ selects.config_setting_group(
     visibility = ["//:__subpackages__"],
 )
 
+# Generic Windows platform with clang-cl that automatically matches host CPU.
+platform(
+    name = "host-windows-clang-cl",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@bazel_tools//tools/cpp:clang-cl",
+    ],
+    parents = ["@local_config_platform//:host"],
+)
+
 # Special target so as to define special macros for each platforms.
 # Don't depend on this directly. Use mozc_cc_(library|binary|test) rule instead.
 cc_library(
