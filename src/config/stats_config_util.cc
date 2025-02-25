@@ -221,9 +221,7 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   bool IsEnabled() override {
-    Config config;
-    ConfigHandler::GetConfig(&config);
-    return config.general_config().upload_usage_stats();
+    return ConfigHandler::GetSharedConfig()->upload_usage_stats();
   }
   bool SetEnabled(bool val) override {
     // TODO(horo): Implement this.

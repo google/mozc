@@ -66,14 +66,6 @@ class ConfigHandler {
   // updated asynchronously.
   static std::shared_ptr<const config::Config> GetSharedConfig();
 
-  // Legacy compatible interfaces.
-  // TODO(taku): Removes them. Uses GetCopiedConfig() and GetSharedConfig().
-  ABSL_DEPRECATED("Use GetCopiedConfig or GetSharedConfig")
-  static void GetConfig(config::Config *config);
-
-  ABSL_DEPRECATED("Use GetCopiedConfig or GetSharedConfig")
-  static std::unique_ptr<config::Config> GetConfig();
-
   // Sets config.
   static void SetConfig(const Config &config);
 

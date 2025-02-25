@@ -625,9 +625,7 @@ CharacterFormManager *CharacterFormManager::GetCharacterFormManager() {
 }
 
 CharacterFormManager::CharacterFormManager() : data_(std::make_unique<Data>()) {
-  Config config;
-  ConfigHandler::GetConfig(&config);
-  ReloadConfig(config);
+  ReloadConfig(*ConfigHandler::GetSharedConfig());
 }
 
 void CharacterFormManager::ReloadConfig(const Config &config) {

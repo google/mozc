@@ -30,9 +30,11 @@
 #include "win32/base/config_snapshot.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
+#include "session/key_info_util.h"
 
 namespace mozc {
 namespace win32 {
@@ -51,18 +53,17 @@ struct StaticConfigSnapshot {
 };
 
 StaticConfigSnapshot GetConfigSnapshotImpl() {
-  Config config;
-  // config1.db should be readable in this case.
-  config::ConfigHandler::GetConfig(&config);
+  std::shared_ptr<const Config> config =
+      config::ConfigHandler::GetSharedConfig();
 
   StaticConfigSnapshot snapshot = {};
-  snapshot.use_kana_input = (config.preedit_method() == Config::KANA);
+  snapshot.use_kana_input = (config->preedit_method() == Config::KANA);
   snapshot.use_keyboard_to_change_preedit_method =
-      config.use_keyboard_to_change_preedit_method();
-  snapshot.use_mode_indicator = config.use_mode_indicator();
+      config->use_keyboard_to_change_preedit_method();
+  snapshot.use_mode_indicator = config->use_mode_indicator();
 
   const auto &direct_mode_keys =
-      KeyInfoUtil::ExtractSortedDirectModeKeys(config);
+      KeyInfoUtil::ExtractSortedDirectModeKeys(*config);
   const size_t size_to_be_copied =
       std::min(direct_mode_keys.size(), kMaxDirectModeKeys);
   snapshot.num_direct_mode_keys = size_to_be_copied;

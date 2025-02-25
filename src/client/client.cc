@@ -109,9 +109,8 @@ Client::Client()
   client_factory_ = IPCClientFactory::GetIPCClientFactory();
 
   // Initialize direct_mode_keys_
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  direct_mode_keys_ = KeyInfoUtil::ExtractSortedDirectModeKeys(config);
+  direct_mode_keys_ = KeyInfoUtil::ExtractSortedDirectModeKeys(
+      *config::ConfigHandler::GetSharedConfig());
 
 #ifdef MOZC_USE_SVS_JAPANESE
   InitRequestForSvsJapanese(true);

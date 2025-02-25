@@ -287,12 +287,6 @@ std::string ConfigHandlerImpl::GetConfigFileName() const {
 }
 }  // namespace
 
-void ConfigHandler::GetConfig(Config *config) { *config = GetCopiedConfig(); }
-
-std::unique_ptr<Config> ConfigHandler::GetConfig() {
-  return std::make_unique<Config>(*GetSharedConfig());
-}
-
 Config ConfigHandler::GetCopiedConfig() { return *GetSharedConfig(); }
 
 std::shared_ptr<const Config> ConfigHandler::GetSharedConfig() {

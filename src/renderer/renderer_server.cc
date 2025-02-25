@@ -147,9 +147,8 @@ RendererServer::RendererServer()
   MOZC_VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef NDEBUG
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  mozc::internal::SetConfigVLogLevel(config.verbose_level());
+  mozc::internal::SetConfigVLogLevel(
+      config::ConfigHandler::GetSharedConfig()->verbose_level());
 #endif  // NDEBUG
 }
 

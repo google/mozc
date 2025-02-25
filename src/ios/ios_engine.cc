@@ -177,8 +177,7 @@ bool IosEngine::SetMobileRequest(const std::string &keyboard_layout,
 }
 
 void IosEngine::FillMobileConfig(config::Config *config) {
-  config->Clear();
-  config::ConfigHandler::GetConfig(config);
+  *config = config::ConfigHandler::GetCopiedConfig();
   config->set_session_keymap(config::Config::MOBILE);
   config->set_use_kana_modifier_insensitive_conversion(true);
   config->set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);

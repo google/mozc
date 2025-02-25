@@ -54,10 +54,10 @@ namespace {
 
 // Prints a greeting message when a process starts.
 void PrintGreetingMessage() {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
+  std::shared_ptr<const config::Config> config =
+      config::ConfigHandler::GetSharedConfig();
   absl::string_view preedit_method = "unknown";
-  switch (config.preedit_method()) {
+  switch (config->preedit_method()) {
     case config::Config::ROMAN:
       preedit_method = "roman";
       break;
