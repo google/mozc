@@ -543,7 +543,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 105
+// Next ID: 106
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -646,6 +646,9 @@ message DecoderExperimentParams {
   // history rewriter wheh the target segment contains proper noun candidate.
   optional bool user_segment_history_rewriter_replace_proper_noun = 103
       [default = false];
+
+  // Apply inner segment boundary information to the single segment candidate.
+  optional bool apply_single_inner_segment_boundary = 105 [default = true];
 }
 
 // Clients' request to the server.

@@ -740,11 +740,21 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
 // Returns segments for learning.
 // Inner segments boundary will be expanded.
 Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
-    const Segments &segments) {
+    const ConversionRequest &request, const Segments &segments) {
+  auto inner_segments_info_available = [&request](const Segment::Candidate &c) {
+    if (request.request()
+            .decoder_experiment_params()
+            .apply_single_inner_segment_boundary()) {
+      return !c.inner_segment_boundary.empty();
+    } else {
+      return c.inner_segment_boundary.size() > 1;
+    }
+  };
+
   Segments ret;
   for (const Segment &segment : segments) {
     const Segment::Candidate &candidate = segment.candidate(0);
-    if (candidate.inner_segment_boundary.empty()) {
+    if (!inner_segments_info_available(candidate)) {
       // No inner segment info
       Segment *seg = ret.add_segment();
       *seg = segment;
@@ -796,7 +806,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
 
   const Segments target_segments =
       UseInnerSegments(request)
-          ? MakeLearningSegmentsFromInnerSegments(*segments)
+          ? MakeLearningSegmentsFromInnerSegments(request, *segments)
           : *segments;
   std::vector<Segments::RevertEntry> revert_entries;
   for (size_t i = target_segments.history_segments_size();

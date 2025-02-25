@@ -90,7 +90,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   };
 
   static Segments MakeLearningSegmentsFromInnerSegments(
-      const Segments &segments);
+      const ConversionRequest &request, const Segments &segments);
 
   // Returns id for RevertEntry
   static uint16_t revert_id();
