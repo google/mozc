@@ -52,6 +52,7 @@ mozc_cc_library(
         "//base:japanese_util",
         "//base:util",
         "//base:vlog",
+        "//base/container:flat_multimap",
         "//base/strings:assign",
         "//base/strings:unicode",
         "//composer/internal:composition",

@@ -36,7 +36,6 @@
 #include <memory>
 #include <string>
 #include <tuple>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -51,6 +50,7 @@
 #include "absl/time/time.h"
 #include "absl/types/span.h"
 #include "base/clock.h"
+#include "base/container/flat_multimap.h"
 #include "base/japanese_util.h"
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
@@ -211,25 +211,19 @@ transliteration::TransliterationType GetTransliterationTypeFromCompositionMode(
 // whereby we can suppress prediction from unmodified key when one modified a
 // character explicitly (e.g., we don't want to suggest words starting with
 // "さ" when one typed "ざ" with modified key).
-using ModifierRemovalMap =
-    std::unordered_multimap<absl::string_view, absl::string_view,
-                            absl::Hash<absl::string_view>>;
-
-const ModifierRemovalMap *GetModifierRemovalMap() {
-  static const ModifierRemovalMap *const removal_map = new ModifierRemovalMap{
-      {"ぁ", "あ"}, {"ぃ", "い"}, {"ぅ", "う"}, {"ぅ", "ゔ"}, {"ゔ", "う"},
-      {"ゔ", "ぅ"}, {"ぇ", "え"}, {"ぉ", "お"}, {"が", "か"}, {"ぎ", "き"},
-      {"ぐ", "く"}, {"げ", "け"}, {"ご", "こ"}, {"ざ", "さ"}, {"じ", "し"},
-      {"ず", "す"}, {"ぜ", "せ"}, {"ぞ", "そ"}, {"だ", "た"}, {"ぢ", "ち"},
-      {"づ", "つ"}, {"づ", "っ"}, {"っ", "つ"}, {"っ", "づ"}, {"で", "て"},
-      {"ど", "と"}, {"ば", "は"}, {"ば", "ぱ"}, {"ぱ", "は"}, {"ぱ", "ば"},
-      {"び", "ひ"}, {"び", "ぴ"}, {"ぴ", "ひ"}, {"ぴ", "び"}, {"ぶ", "ふ"},
-      {"ぶ", "ぷ"}, {"ぷ", "ふ"}, {"ぷ", "ぶ"}, {"べ", "へ"}, {"べ", "ぺ"},
-      {"ぺ", "へ"}, {"ぺ", "べ"}, {"ぼ", "ほ"}, {"ぼ", "ぽ"}, {"ぽ", "ほ"},
-      {"ぽ", "ぼ"}, {"ゃ", "や"}, {"ゅ", "ゆ"}, {"ょ", "よ"}, {"ゎ", "わ"},
-  };
-  return removal_map;
-}
+constexpr auto kModifierRemovalMap =
+    CreateFlatMultimap<absl::string_view, absl::string_view>({
+        {"ぁ", "あ"}, {"ぃ", "い"}, {"ぅ", "う"}, {"ぅ", "ゔ"}, {"ゔ", "う"},
+        {"ゔ", "ぅ"}, {"ぇ", "え"}, {"ぉ", "お"}, {"が", "か"}, {"ぎ", "き"},
+        {"ぐ", "く"}, {"げ", "け"}, {"ご", "こ"}, {"ざ", "さ"}, {"じ", "し"},
+        {"ず", "す"}, {"ぜ", "せ"}, {"ぞ", "そ"}, {"だ", "た"}, {"ぢ", "ち"},
+        {"づ", "つ"}, {"づ", "っ"}, {"っ", "つ"}, {"っ", "づ"}, {"で", "て"},
+        {"ど", "と"}, {"ば", "は"}, {"ば", "ぱ"}, {"ぱ", "は"}, {"ぱ", "ば"},
+        {"び", "ひ"}, {"び", "ぴ"}, {"ぴ", "ひ"}, {"ぴ", "び"}, {"ぶ", "ふ"},
+        {"ぶ", "ぷ"}, {"ぷ", "ふ"}, {"ぷ", "ぶ"}, {"べ", "へ"}, {"べ", "ぺ"},
+        {"ぺ", "へ"}, {"ぺ", "べ"}, {"ぼ", "ほ"}, {"ぼ", "ぽ"}, {"ぽ", "ほ"},
+        {"ぽ", "ぼ"}, {"ゃ", "や"}, {"ゅ", "ゆ"}, {"ょ", "よ"}, {"ゎ", "わ"},
+    });
 
 void RemoveExpandedCharsForModifier(absl::string_view asis,
                                     absl::string_view base,
@@ -240,9 +234,8 @@ void RemoveExpandedCharsForModifier(absl::string_view asis,
   }
 
   const absl::string_view trailing(asis.substr(base.size()));
-  for (auto [iter, end] = GetModifierRemovalMap()->equal_range(trailing);
-       iter != end; ++iter) {
-    expanded->erase(std::string(iter->second));
+  for (auto [_, c] : kModifierRemovalMap.EqualSpan(trailing)) {
+    expanded->erase(c);
   }
 }
 
