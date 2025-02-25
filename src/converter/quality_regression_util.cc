@@ -185,7 +185,8 @@ absl::Status QualityRegressionUtil::TestItem::ParseFromTSV(
   return absl::OkStatus();
 }
 
-QualityRegressionUtil::QualityRegressionUtil(ConverterInterface *converter)
+QualityRegressionUtil::QualityRegressionUtil(
+    std::shared_ptr<const ConverterInterface> converter)
     : converter_(converter) {}
 
 namespace {

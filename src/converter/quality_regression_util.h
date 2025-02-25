@@ -73,7 +73,8 @@ class QualityRegressionUtil {
     absl::Status ParseFromTSV(const std::string &tsv_line);
   };
 
-  explicit QualityRegressionUtil(ConverterInterface *converter);
+  explicit QualityRegressionUtil(
+      std::shared_ptr<const ConverterInterface> converter);
   QualityRegressionUtil(const QualityRegressionUtil &) = delete;
   QualityRegressionUtil &operator=(const QualityRegressionUtil &) = delete;
   virtual ~QualityRegressionUtil() = default;
@@ -92,7 +93,7 @@ class QualityRegressionUtil {
   static std::string GetPlatformString(uint32_t platform_bitfiled);
 
  private:
-  ConverterInterface *converter_;
+  std::shared_ptr<const ConverterInterface> converter_;
   commands::Request request_;
   config::Config config_;
   Segments segments_;

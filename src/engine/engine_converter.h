@@ -56,10 +56,10 @@ namespace engine {
 // support stateful operations related with the converter.
 class EngineConverter : public EngineConverterInterface {
  public:
-  EngineConverter(const ConverterInterface &converter,
+  EngineConverter(std::shared_ptr<const ConverterInterface> converter,
                   std::shared_ptr<const commands::Request> request,
                   std::shared_ptr<const config::Config> config);
-  explicit EngineConverter(const ConverterInterface &converter);
+  explicit EngineConverter(std::shared_ptr<const ConverterInterface> converter);
   EngineConverter(const EngineConverter &) = delete;
   EngineConverter &operator=(const EngineConverter &) = delete;
 
@@ -358,7 +358,8 @@ class EngineConverter : public EngineConverterInterface {
   void SetRequestType(ConversionRequest::RequestType request_type,
                       ConversionRequest::Options &options);
 
-  const ConverterInterface *converter_ = nullptr;
+  std::shared_ptr<const ConverterInterface> converter_;
+
   // Conversion stats used by converter_.
   Segments segments_;
 

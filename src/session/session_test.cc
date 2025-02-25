@@ -497,12 +497,14 @@ class SessionTest : public testing::TestWithTempUserProfile {
     Mock::VerifyAndClearExpectations(converter);
   }
 
-  void InitCreateEngineConverterMock(MockEngine *mock_engine,
-                                     MockConverter *mock_converter) {
+  std::shared_ptr<MockConverter> CreateEngineConverterMock(
+      MockEngine *mock_engine) {
+    auto mock_converter = std::make_shared<MockConverter>();
     EXPECT_CALL(*mock_engine, CreateEngineConverter)
         .WillRepeatedly([mock_converter]() {
-          return std::make_unique<engine::EngineConverter>(*mock_converter);
+          return std::make_unique<engine::EngineConverter>(mock_converter);
         });
+    return mock_converter;
   }
 
   // TODO(matsuzakit): Set the session's state to PRECOMPOSITION.
@@ -726,9 +728,9 @@ TEST_F(SessionTest, TestOfTestForSetup) {
 
   // Make sure that the default roman table is initialized.
   {
-    MockConverter converter;
     MockEngine engine;
-    InitCreateEngineConverterMock(&engine, &converter);
+    std::shared_ptr<MockConverter> converter =
+        CreateEngineConverterMock(&engine);
 
     Session session(engine);
     session.SetConfig(config);
@@ -743,8 +745,7 @@ TEST_F(SessionTest, TestOfTestForSetup) {
 
 TEST_F(SessionTest, TestSendKey) {
   MockEngine engine;
-  MockConverter converter;
-  InitCreateEngineConverterMock(&engine, &converter);
+  auto converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -782,8 +783,7 @@ TEST_F(SessionTest, TestSendKey) {
 
 TEST_F(SessionTest, UpdateComposition) {
   MockEngine engine;
-  MockConverter converter;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -805,8 +805,7 @@ TEST_F(SessionTest, UpdateComposition) {
 
 TEST_F(SessionTest, SendCommand) {
   MockEngine engine;
-  MockConverter converter;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -855,12 +854,12 @@ TEST_F(SessionTest, SendCommand) {
   // test of resetting the history segements
   {
     MockEngine engine;
-    MockConverter converter;
-    InitCreateEngineConverterMock(&engine, &converter);
+    std::shared_ptr<MockConverter> converter =
+        CreateEngineConverterMock(&engine);
     // ResetConversion is called twice, first in IMEOff through
     // InitSessionToPrecomposition() and then EchoBack() through
     // SendCommand().
-    EXPECT_CALL(converter, ResetConversion(_)).Times(2);
+    EXPECT_CALL(*converter, ResetConversion(_)).Times(2);
     Session session(engine);
     InitSessionToPrecomposition(&session);
     SendCommand(commands::SessionCommand::RESET_CONTEXT, &session, &command);
@@ -869,9 +868,8 @@ TEST_F(SessionTest, SendCommand) {
 }
 
 TEST_F(SessionTest, SwitchInputMode) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {
     Session session(engine);
@@ -925,9 +923,8 @@ TEST_F(SessionTest, SwitchInputMode) {
 }
 
 TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {
     Session session(engine);
@@ -935,7 +932,7 @@ TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
 
     // Enable zero query suggest.
     commands::Request request;
-    SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
+    SetupZeroQuerySuggestionReady(true, &session, &request, converter.get());
 
     commands::Command command;
     session.Commit(&command);
@@ -967,7 +964,7 @@ TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
       segment = segments.add_segment();
       segment->set_key("");
       segment->add_candidate()->value = "google";
-      EXPECT_CALL(converter, StartPrediction(_, _))
+      EXPECT_CALL(*converter, StartPrediction(_, _))
           .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
     // Type "g".
@@ -990,9 +987,8 @@ TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
 }
 
 TEST_F(SessionTest, RevertComposition) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // Issue#2237323
   Session session(engine);
@@ -1004,7 +1000,7 @@ TEST_F(SessionTest, RevertComposition) {
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1022,9 +1018,8 @@ TEST_F(SessionTest, RevertComposition) {
 }
 
 TEST_F(SessionTest, InputMode) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1046,9 +1041,8 @@ TEST_F(SessionTest, InputMode) {
 }
 
 TEST_F(SessionTest, SelectCandidate) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1059,7 +1053,7 @@ TEST_F(SessionTest, SelectCandidate) {
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1079,9 +1073,8 @@ TEST_F(SessionTest, SelectCandidate) {
 }
 
 TEST_F(SessionTest, HighlightCandidate) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1092,7 +1085,7 @@ TEST_F(SessionTest, HighlightCandidate) {
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1114,9 +1107,8 @@ TEST_F(SessionTest, HighlightCandidate) {
 }
 
 TEST_F(SessionTest, Conversion) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1127,7 +1119,7 @@ TEST_F(SessionTest, Conversion) {
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   EXPECT_SINGLE_SEGMENT_AND_KEY("あいうえお", "あいうえお", command);
@@ -1148,9 +1140,8 @@ TEST_F(SessionTest, Conversion) {
 }
 
 TEST_F(SessionTest, SegmentWidthShrink) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1161,7 +1152,7 @@ TEST_F(SessionTest, SegmentWidthShrink) {
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1175,9 +1166,8 @@ TEST_F(SessionTest, SegmentWidthShrink) {
 }
 
 TEST_F(SessionTest, ConvertPrev) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1188,7 +1178,7 @@ TEST_F(SessionTest, ConvertPrev) {
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1205,9 +1195,8 @@ TEST_F(SessionTest, ConvertPrev) {
 }
 
 TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1241,7 +1230,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   candidate->value = "なかのです";
   const ConversionRequest request1 = CreateConversionRequest(session);
   FillT13Ns(request1, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1279,7 +1268,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_TRUE(command.output().has_result());
   // "私の名前はなかのです[]"
-  Mock::VerifyAndClearExpectations(&converter);
+  Mock::VerifyAndClearExpectations(converter.get());
 
   InsertCharacterChars("a", &session, &command);
 
@@ -1293,7 +1282,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
 
   const ConversionRequest request2 = CreateConversionRequest(session);
   FillT13Ns(request2, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // "あ[]"
@@ -1309,9 +1298,8 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
 }
 
 TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1328,14 +1316,14 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate->value = "相";
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   // "あい[]"
 
   command.Clear();
   session.Convert(&command);
   // "[愛]"
-  Mock::VerifyAndClearExpectations(&converter);
+  Mock::VerifyAndClearExpectations(converter.get());
 
   segments.Clear();
   segment = segments.add_segment();
@@ -1348,17 +1336,17 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate->value = "い";
   candidate = segment->add_candidate();
   candidate->value = "位";
-  EXPECT_CALL(converter, ResizeSegment(_, _, _, _))
+  EXPECT_CALL(*converter, ResizeSegment(_, _, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
   session.SegmentWidthShrink(&command);
   // "[あ]い"
-  Mock::VerifyAndClearExpectations(&converter);
+  Mock::VerifyAndClearExpectations(converter.get());
 
   segment = segments.mutable_segment(0);
   segment->set_segment_type(Segment::FIXED_VALUE);
-  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+  EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
@@ -1372,7 +1360,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   command.Clear();
   session.ConvertCancel(&command);
   // "あい[]"
-  Mock::VerifyAndClearExpectations(&converter);
+  Mock::VerifyAndClearExpectations(converter.get());
 
   segments.Clear();
   segment = segments.add_segment();
@@ -1382,7 +1370,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate = segment->add_candidate();
   candidate->value = "相";
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1396,9 +1384,8 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
 }
 
 TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // Issue#1271099
   Session session(engine);
@@ -1428,7 +1415,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1444,7 +1431,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   segment = segments.mutable_segment(0);
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(1, 0);
-  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+  EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
@@ -1464,7 +1451,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   candidate = segment->mutable_candidate(0);
   candidate->value = "った";
 
-  EXPECT_CALL(converter, ResizeSegment(_, _, _, _))
+  EXPECT_CALL(*converter, ResizeSegment(_, _, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
@@ -1477,9 +1464,8 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
 }
 
 TEST_F(SessionTest, CommitSegment) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // Issue#1560608
   Session session(engine);
@@ -1506,7 +1492,7 @@ TEST_F(SessionTest, CommitSegment) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1528,7 +1514,7 @@ TEST_F(SessionTest, CommitSegment) {
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(2, 0);
 
-  EXPECT_CALL(converter, CommitSegments(_, _))
+  EXPECT_CALL(*converter, CommitSegments(_, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
@@ -1538,9 +1524,8 @@ TEST_F(SessionTest, CommitSegment) {
 }
 
 TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1561,7 +1546,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1574,7 +1559,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
 
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(1, 0);
-  EXPECT_CALL(converter, CommitSegments(_, _))
+  EXPECT_CALL(*converter, CommitSegments(_, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
@@ -1588,7 +1573,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   candidate = segment->add_candidate();
   candidate->value = "は";
   segments.pop_front_segment();
-  EXPECT_CALL(converter, ResizeSegment(_, _, _, _))
+  EXPECT_CALL(*converter, ResizeSegment(_, _, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
@@ -1598,9 +1583,8 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
 }
 
 TEST_F(SessionTest, Transliterations) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1617,7 +1601,7 @@ TEST_F(SessionTest, Transliterations) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1644,9 +1628,8 @@ TEST_F(SessionTest, Transliterations) {
 }
 
 TEST_F(SessionTest, TransliterationOfNegativeNumber) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1662,9 +1645,8 @@ TEST_F(SessionTest, TransliterationOfNegativeNumber) {
 }
 
 TEST_F(SessionTest, ConvertToTransliteration) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1681,7 +1663,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1702,9 +1684,8 @@ TEST_F(SessionTest, ConvertToTransliteration) {
 }
 
 TEST_F(SessionTest, ConvertToTransliterationOfNegativeNumber) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1719,7 +1700,7 @@ TEST_F(SessionTest, ConvertToTransliterationOfNegativeNumber) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1732,9 +1713,8 @@ TEST_F(SessionTest, ConvertToTransliterationOfNegativeNumber) {
 }
 
 TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1746,7 +1726,7 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
   SetLike(&segments);
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // Convert
@@ -1780,9 +1760,9 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
 }
 
 TEST_F(SessionTest, ConvertToHalfWidth) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1797,7 +1777,7 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
   }
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1814,9 +1794,9 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
 }
 
 TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -1833,7 +1813,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1854,9 +1834,9 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
 }
 
 TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
 
@@ -1878,7 +1858,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -1900,9 +1880,9 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
 
 // Convert input string to Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, SwitchKanaType) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {  // From composition mode.
     Session session(engine);
@@ -1919,7 +1899,7 @@ TEST_F(SessionTest, SwitchKanaType) {
 
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
@@ -1938,7 +1918,7 @@ TEST_F(SessionTest, SwitchKanaType) {
     session.SwitchKanaType(&command);
     EXPECT_SINGLE_SEGMENT("アｂｃ", command);
 
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {  // From conversion mode.
@@ -1956,7 +1936,7 @@ TEST_F(SessionTest, SwitchKanaType) {
 
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
@@ -1979,15 +1959,15 @@ TEST_F(SessionTest, SwitchKanaType) {
     session.SwitchKanaType(&command);
     EXPECT_SINGLE_SEGMENT("かんじ", command);
 
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 }
 
 // Rotate input mode among Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, InputModeSwitchKanaType) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2071,9 +2051,9 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
 }
 
 TEST_F(SessionTest, TranslateHalfWidth) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2094,9 +2074,9 @@ TEST_F(SessionTest, TranslateHalfWidth) {
 }
 
 TEST_F(SessionTest, UpdatePreferences) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2107,7 +2087,7 @@ TEST_F(SessionTest, UpdatePreferences) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   SetSendKeyCommand("SPACE", &command);
@@ -2164,9 +2144,9 @@ TEST_F(SessionTest, RomajiInput) {
   table->AddRule("na", "な", "");
   // This rule makes the "n" rule ambiguous.
 
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   session.get_internal_composer_only_for_unittest()->SetTable(table);
@@ -2187,7 +2167,7 @@ TEST_F(SessionTest, RomajiInput) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   session.ConvertToHiragana(&command);
@@ -2202,9 +2182,9 @@ TEST_F(SessionTest, KanaInput) {
   auto table = std::make_shared<composer::Table>();
   table->AddRule("す゛", "ず", "");
 
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   session.get_internal_composer_only_for_unittest()->SetTable(table);
@@ -2241,7 +2221,7 @@ TEST_F(SessionTest, KanaInput) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -2250,9 +2230,9 @@ TEST_F(SessionTest, KanaInput) {
 }
 
 TEST_F(SessionTest, ExceededComposition) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2274,7 +2254,7 @@ TEST_F(SessionTest, ExceededComposition) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -2291,9 +2271,9 @@ TEST_F(SessionTest, ExceededComposition) {
 }
 
 TEST_F(SessionTest, OutputAllCandidateWords) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2305,7 +2285,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -2365,16 +2345,16 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 }
 
 TEST_F(SessionTest, UndoForComposition) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
 
   // Enable zero query suggest.
   commands::Request request;
-  SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
+  SetupZeroQuerySuggestionReady(true, &session, &request, converter.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
   commands::Capability capability;
@@ -2387,13 +2367,13 @@ TEST_F(SessionTest, UndoForComposition) {
 
   {  // Undo for CommitFirstSuggestion
     SetAiueo(&segments);
-    EXPECT_CALL(converter, StartPrediction(_, _))
+    EXPECT_CALL(*converter, StartPrediction(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
     InsertCharacterChars("ai", &session, &command);
     EXPECT_EQ(GetComposition(command), "あい");
 
     command.Clear();
-    // EXPECT_CALL(converter, FinishConversion(_, _))
+    // EXPECT_CALL(*converter, FinishConversion(_, _))
     //    .WillOnce(SetArgPointee<1>(empty_segments));
     session.CommitFirstSuggestion(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2413,9 +2393,9 @@ TEST_F(SessionTest, UndoForComposition) {
 }
 
 TEST_F(SessionTest, RequestUndo) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
 
@@ -2430,24 +2410,24 @@ TEST_F(SessionTest, RequestUndo) {
          "ignored. See b/5553298.";
 
   InitSessionToPrecomposition(&session);
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(TryUndoAndAssertSuccess(&session));
 
   InitSessionToPrecomposition(&session);
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   session.context_->set_state(ImeContext::COMPOSITION);
   EXPECT_TRUE(TryUndoAndAssertSuccess(&session));
 
   InitSessionToPrecomposition(&session);
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   session.context_->set_state(ImeContext::CONVERSION);
   EXPECT_TRUE(TryUndoAndAssertSuccess(&session));
 }
 
 TEST_F(SessionTest, UndoForSingleSegment) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2474,14 +2454,14 @@ TEST_F(SessionTest, UndoForSingleSegment) {
   }
 
   {  // Undo after commitment of composition
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("あいうえお", command);
 
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+    EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
@@ -2510,7 +2490,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("アイウエオ", command);
 
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+    EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
@@ -2539,7 +2519,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("aiueo", command);
 
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+    EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
@@ -2558,7 +2538,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
   {
     // If capability does not support DELETE_PRECEDIGN_TEXT, Undo is not
     // performed.
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+    EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
@@ -2578,9 +2558,9 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 }
 
 TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2590,7 +2570,7 @@ TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   session.set_client_capability(capability);
 
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
 
   commands::Command command;
 
@@ -2617,9 +2597,9 @@ TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
 }
 
 TEST_F(SessionTest, UndoForMultipleSegments) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2661,7 +2641,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
   }
 
   {  // Undo for CommitCandidate
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
@@ -2673,7 +2653,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
     segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
     segments.mutable_segment(1)->set_segment_type(Segment::FREE);
     segments.mutable_segment(2)->set_segment_type(Segment::FREE);
-    EXPECT_CALL(converter, CommitSegments(_, _))
+    EXPECT_CALL(*converter, CommitSegments(_, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     command.mutable_input()->mutable_command()->set_id(1);
@@ -2695,7 +2675,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
     segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
     segments.mutable_segment(1)->set_segment_type(Segment::SUBMITTED);
     segments.mutable_segment(2)->set_segment_type(Segment::FREE);
-    EXPECT_CALL(converter, CommitSegments(_, _))
+    EXPECT_CALL(*converter, CommitSegments(_, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.SegmentFocusRight(&command);
@@ -2721,7 +2701,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
     segments.mutable_segment(0)->set_segment_type(Segment::FREE);
     segments.mutable_segment(1)->set_segment_type(Segment::FREE);
     segments.mutable_segment(2)->set_segment_type(Segment::FREE);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
@@ -2736,7 +2716,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
     segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
     segments.mutable_segment(1)->set_segment_type(Segment::FREE);
     segments.mutable_segment(2)->set_segment_type(Segment::FREE);
-    EXPECT_CALL(converter, CommitSegments(_, _))
+    EXPECT_CALL(*converter, CommitSegments(_, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     session.CommitSegment(&command);
     EXPECT_PREEDIT("cand2-1cand3-1", command);
@@ -2764,7 +2744,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
     segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
     segments.mutable_segment(1)->set_segment_type(Segment::FREE);
     segments.mutable_segment(2)->set_segment_type(Segment::FREE);
-    EXPECT_CALL(converter, CommitSegments(_, _))
+    EXPECT_CALL(*converter, CommitSegments(_, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     // "cand3-2" is focused, but once CommitSegment() runs, which commits
     // the first segment (Ctrl + N on MS-IME),
@@ -2787,9 +2767,9 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
 }
 
 TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2822,7 +2802,7 @@ TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
   }
 
   {  // Commit 1st and 2nd segment
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
@@ -2831,7 +2811,7 @@ TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
     // CommitSegments() sets the first segment SUBMITTED.
     segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
     segments.mutable_segment(1)->set_segment_type(Segment::FREE);
-    EXPECT_CALL(converter, CommitSegments(_, _))
+    EXPECT_CALL(*converter, CommitSegments(_, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     command.mutable_input()->mutable_command()->set_id(1);
@@ -2860,9 +2840,9 @@ TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
 }
 
 TEST_F(SessionTest, MultipleUndo) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2903,7 +2883,7 @@ TEST_F(SessionTest, MultipleUndo) {
     candidate->value = "cand3-2";
   }
 
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   command.Clear();
   session.Convert(&command);
@@ -2915,7 +2895,7 @@ TEST_F(SessionTest, MultipleUndo) {
   segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
   segments.mutable_segment(1)->set_segment_type(Segment::FREE);
   segments.mutable_segment(2)->set_segment_type(Segment::FREE);
-  EXPECT_CALL(converter, CommitSegments(_, _))
+  EXPECT_CALL(*converter, CommitSegments(_, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
   command.Clear();
   command.mutable_input()->mutable_command()->set_id(1);
@@ -2925,7 +2905,7 @@ TEST_F(SessionTest, MultipleUndo) {
   segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
   segments.mutable_segment(1)->set_segment_type(Segment::SUBMITTED);
   segments.mutable_segment(2)->set_segment_type(Segment::FREE);
-  EXPECT_CALL(converter, CommitSegments(_, _))
+  EXPECT_CALL(*converter, CommitSegments(_, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
   command.Clear();
   command.mutable_input()->mutable_command()->set_id(1);
@@ -2962,9 +2942,9 @@ TEST_F(SessionTest, MultipleUndo) {
 }
 
 TEST_F(SessionTest, UndoOrRewindUndo) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -2988,14 +2968,14 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
       candidate->value = "AIUEO";
     }
     {
-      EXPECT_CALL(converter, StartConversion(_, _))
+      EXPECT_CALL(*converter, StartConversion(_, _))
           .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
       command.Clear();
       session.Convert(&command);
       EXPECT_FALSE(command.output().has_result());
       EXPECT_PREEDIT("あいうえお", command);
 
-      EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+      EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
           .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
       command.Clear();
       session.Commit(&command);
@@ -3020,9 +3000,9 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
 }
 
 TEST_F(SessionTest, UndoOrRewindRewind) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
@@ -3038,14 +3018,14 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "AIUEO";
 
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("あいうえお", command);
 
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+    EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
@@ -3060,7 +3040,7 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
     AddCandidate("e", "e", segment);
     AddCandidate("e", "E", segment);
   }
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
@@ -3079,9 +3059,9 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
 }
 
 TEST_F(SessionTest, StopKeyToggling) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
@@ -3095,7 +3075,7 @@ TEST_F(SessionTest, StopKeyToggling) {
 
   // StartPrediction() is called twice in InsertChararcterChars(),
   // but it is not called in StopKeyToggling().
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .Times(2)
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
@@ -3115,9 +3095,9 @@ TEST_F(SessionTest, StopKeyToggling) {
 }
 
 TEST_F(SessionTest, CommitRawText) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {  // From composition mode.
     Session session(engine);
@@ -3138,7 +3118,7 @@ TEST_F(SessionTest, CommitRawText) {
     session.SendCommand(&command);
     EXPECT_RESULT_AND_KEY("abc", "abc", command);
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
   {  // From conversion mode.
     Session session(engine);
@@ -3156,7 +3136,7 @@ TEST_F(SessionTest, CommitRawText) {
 
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
@@ -3168,7 +3148,7 @@ TEST_F(SessionTest, CommitRawText) {
     session.SendCommand(&command);
     EXPECT_RESULT_AND_KEY("abc", "abc", command);
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 }
 
@@ -3176,9 +3156,9 @@ TEST_F(SessionTest, CommitRawTextKanaInput) {
   auto table = std::make_shared<composer::Table>();
   table->AddRule("す゛", "ず", "");
 
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   session.get_internal_composer_only_for_unittest()->SetTable(table);
@@ -3215,9 +3195,9 @@ TEST_F(SessionTest, CommitRawTextKanaInput) {
 }
 
 TEST_F(SessionTest, ConvertNextPagePrevPage) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   commands::Command command;
@@ -3285,7 +3265,7 @@ TEST_F(SessionTest, ConvertNextPagePrevPage) {
             absl::StrFormat("page%d-cand%d", page_index, cand_index);
       }
     }
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
@@ -3324,9 +3304,9 @@ TEST_F(SessionTest, ConvertNextPagePrevPage) {
 
 TEST_F(SessionTest, NeedlessClearUndoContext) {
   // This is a unittest against http://b/3423910.
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -3344,14 +3324,14 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
 
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("あいうえお", command);
 
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+    EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
         .WillRepeatedly(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
@@ -3403,9 +3383,9 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
 }
 
 TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -3430,7 +3410,7 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   FillT13Ns(request, &segments);
 
   // Convert
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   command.Clear();
   session.Convert(&command);
@@ -3450,9 +3430,9 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
 }
 
 TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // This is a unittest against http://b/3423599.
   Session session(engine);
@@ -3521,9 +3501,9 @@ TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
 }
 
 TEST_F(SessionTest, DCHECKFailureAfterUndo) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // This is a unittest against http://b/3437358.
   Session session(engine);
@@ -3556,9 +3536,9 @@ TEST_F(SessionTest, DCHECKFailureAfterUndo) {
 }
 
 TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // This is a unittest against http://b/3423592.
   Session session(engine);
@@ -3585,14 +3565,14 @@ TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     ASSERT_TRUE(command.output().has_preedit());
     EXPECT_EQ(GetComposition(command), "あいうえお");
 
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.ConvertToHalfASCII(&command);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_preedit());
     EXPECT_EQ(GetComposition(command), "aiueo");
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {  // ConvertToFullASCII
@@ -3606,14 +3586,14 @@ TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     ASSERT_TRUE(command.output().has_preedit());
     EXPECT_EQ(GetComposition(command), "あいうえお");
 
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.ConvertToFullASCII(&command);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_preedit());
     EXPECT_EQ(GetComposition(command), "ａｉｕｅｏ");
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 }
 
@@ -3622,9 +3602,9 @@ TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
 
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   session.SetConfig(config);
@@ -3658,9 +3638,9 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
   commands::Request request;
   commands::Command command;
 
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   {
@@ -3674,7 +3654,7 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
 
     SendKey("Space", &session, &command);
     EXPECT_RESULT("A ", command);
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {
@@ -3694,7 +3674,7 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
     SendKey("a", &session, &command);
     EXPECT_RESULT("A ", command);
     EXPECT_EQ(GetComposition(command), "あ");
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {
@@ -3714,15 +3694,15 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
     SendKey("a", &session, &command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_EQ(GetComposition(command), "A a");
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 }
 
 TEST_F(SessionTest, Issue1805239) {
   // This is a unittest against http://b/1805239.
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -3746,7 +3726,7 @@ TEST_F(SessionTest, Issue1805239) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
@@ -3775,9 +3755,9 @@ TEST_F(SessionTest, Issue1805239) {
 
 TEST_F(SessionTest, Issue1816861) {
   // This is a unittest against http://b/1816861
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -3800,7 +3780,7 @@ TEST_F(SessionTest, Issue1816861) {
 
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
@@ -3827,7 +3807,7 @@ TEST_F(SessionTest, Issue1816861) {
   candidate = segment->add_candidate();
   candidate->value = "陰謀説";
 
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   SendSpecialKey(commands::KeyEvent::TAB, &session, &command);
@@ -3835,9 +3815,9 @@ TEST_F(SessionTest, Issue1816861) {
 
 TEST_F(SessionTest, T13NWithResegmentation) {
   // This is a unittest against http://b/3272827
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -3863,7 +3843,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     candidate->value = "印房";
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
   {
@@ -3891,7 +3871,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
 
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, ResizeSegment(_, _, _, _))
+    EXPECT_CALL(*converter, ResizeSegment(_, _, _, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
   }
 
@@ -3925,9 +3905,10 @@ TEST_F(SessionTest, Shortcut) {
     config::Config config;
     config.set_selection_shortcut(shortcut);
 
-    MockConverter converter;
+    ;
     MockEngine engine;
-    InitCreateEngineConverterMock(&engine, &converter);
+    std::shared_ptr<MockConverter> converter =
+        CreateEngineConverterMock(&engine);
 
     Session session(engine);
     session.SetConfig(config);
@@ -3940,7 +3921,7 @@ TEST_F(SessionTest, Shortcut) {
                                     context.client_context(),
                                     context.GetConfig(), {});
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     commands::Command command;
@@ -3966,9 +3947,9 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   config::Config config;
   config.set_selection_shortcut(config::Config::SHORTCUT_ASDFGHJKL);
 
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   session.SetConfig(config);
@@ -3978,7 +3959,7 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   SetAiueo(&segments);
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
@@ -4011,9 +3992,9 @@ TEST_F(SessionTest, ShortcutFromVK) {
   Request client_request;
   client_request.set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
 
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   session.SetConfig(config);
@@ -4023,7 +4004,7 @@ TEST_F(SessionTest, ShortcutFromVK) {
   SetAiueo(&segments);
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
@@ -4051,9 +4032,9 @@ TEST_F(SessionTest, ShortcutFromVK) {
 }
 
 TEST_F(SessionTest, NumpadKey) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -4162,9 +4143,9 @@ TEST_F(SessionTest, KanaSymbols) {
   config.set_punctuation_method(config::Config::COMMA_PERIOD);
   config.set_symbol_method(config::Config::CORNER_BRACKET_SLASH);
 
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   session.SetConfig(config);
@@ -4195,9 +4176,9 @@ TEST_F(SessionTest, KanaSymbols) {
 }
 
 TEST_F(SessionTest, InsertCharacterWithShiftKey) {
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {  // Basic behavior
     Session session(engine);
@@ -4236,9 +4217,9 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
 
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion1) {
   // This is a unittest against http://b/2977131.
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -4255,7 +4236,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion1) {
   segment->add_candidate()->value = "NFL";
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   EXPECT_TRUE(session.Convert(&command));
@@ -4277,9 +4258,9 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion1) {
 
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
   // This is a unittest against http://b/2977131.
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -4294,7 +4275,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
   Segment *segment = segments.add_segment();
   segment->set_key("NFL");
   segment->add_candidate()->value = "NFL";
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   EXPECT_TRUE(session.PredictAndConvert(&command));
@@ -4306,7 +4287,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
   EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
   EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
   EXPECT_TRUE(SendKey("a", &session, &command));
   EXPECT_FALSE(command.output().has_candidate_window());
@@ -4319,9 +4300,9 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
 
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion3) {
   // This is a unittest against http://b/2977131.
-  MockConverter converter;
+  ;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -4338,7 +4319,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion3) {
   segment->add_candidate()->value = "NFL";
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   EXPECT_TRUE(session.ConvertToHalfASCII(&command));
@@ -4359,9 +4340,8 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion3) {
 }
 
 TEST_F(SessionTest, StatusOutput) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {  // Basic behavior
     Session session(engine);
@@ -4488,16 +4468,15 @@ TEST_F(SessionTest, Suggest) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("M", &session, &command);
 
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("O", &session, &command);
   ASSERT_TRUE(command.output().has_candidate_window());
@@ -4505,7 +4484,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // moz|
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_moz), Return(true)));
   SendKey("Z", &session, &command);
   ASSERT_TRUE(command.output().has_candidate_window());
@@ -4513,7 +4492,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOZUKU");
 
   // mo|
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("Backspace", &session, &command);
   ASSERT_TRUE(command.output().has_candidate_window());
@@ -4521,7 +4500,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // m|o
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorLeft(&command));
@@ -4530,7 +4509,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // mo|
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorToEnd(&command));
@@ -4539,7 +4518,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // |mo
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorToBeginning(&command));
@@ -4548,7 +4527,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // m|o
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorRight(&command));
@@ -4557,7 +4536,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
   // m|
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_m), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.Delete(&command));
@@ -4575,12 +4554,12 @@ TEST_F(SessionTest, Suggest) {
   }
   const ConversionRequest request_m_conv = CreateConversionRequest(session);
   FillT13Ns(request_m_conv, &segments_m_conv);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_m_conv), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.Convert(&command));
 
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_m), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.ConvertCancel(&command));
@@ -4605,15 +4584,14 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
   candidate->consumed_key_size = strings::CharsLen(kJueri);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session, request);
 
   commands::Command command;
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments_jueri), Return(true)));
   InsertCharacterChars("jueri", &session, &command);
 
@@ -4624,14 +4602,14 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "クエリ");
 
   // commit partial prediction
-  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+  EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments_jueri), Return(true)));
   Segments empty_segments;
-  EXPECT_CALL(converter, FinishConversion(_, _))
+  EXPECT_CALL(*converter, FinishConversion(_, _))
       .WillOnce(SetArgPointee<1>(empty_segments));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_jueri), Return(true)));
   session.SendCommand(&command);
   EXPECT_TRUE(command.output().consumed());
@@ -4689,15 +4667,14 @@ TEST_F(SessionTest, MobilePartialPrediction) {
     candidate = AddCandidate(kShino, "shino", segment);
   }
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session, request);
 
   commands::Command command;
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(segments_watashino), Return(true)));
   InsertCharacterChars("watashino", &session, &command);
@@ -4706,7 +4683,7 @@ TEST_F(SessionTest, MobilePartialPrediction) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "私の");
 
   // partial suggestion for "わた|しの"
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments_wata), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorLeft(&command));
@@ -4718,11 +4695,11 @@ TEST_F(SessionTest, MobilePartialPrediction) {
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "綿");
 
   // commit partial prediction
-  EXPECT_CALL(converter, CommitPartialSuggestionSegmentValue(_, _, _, _, _))
+  EXPECT_CALL(*converter, CommitPartialSuggestionSegmentValue(_, _, _, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments_wata), Return(true)));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_shino), Return(true)));
   session.SendCommand(&command);
   EXPECT_TRUE(command.output().consumed());
@@ -4738,9 +4715,8 @@ TEST_F(SessionTest, MobilePartialPrediction) {
 }
 
 TEST_F(SessionTest, ToggleAlphanumericMode) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -4822,7 +4798,7 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
     SetAiueo(&segments);
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
@@ -4843,9 +4819,8 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
 }
 
 TEST_F(SessionTest, InsertSpace) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -4884,9 +4859,8 @@ TEST_F(SessionTest, InsertSpace) {
 }
 
 TEST_F(SessionTest, InsertSpaceToggled) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -4926,9 +4900,8 @@ TEST_F(SessionTest, InsertSpaceToggled) {
 }
 
 TEST_F(SessionTest, InsertSpaceHalfWidth) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -4955,7 +4928,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
     segments.add_segment()->add_candidate()->value = "亜 ";
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
@@ -4969,9 +4942,8 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidth) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -4999,7 +4971,7 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
     segments.add_segment()->add_candidate()->value = "亜　";
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
@@ -5014,9 +4986,8 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
 }
 
 TEST_F(SessionTest, InsertSpaceWithInputMode) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // First, test against http://b/6027559
   config::Config config;
@@ -5241,9 +5212,8 @@ TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
   config.set_custom_keymap_table(kCustomKeymapTable);
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -5253,19 +5223,19 @@ TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
   commands::Command command;
 
   // A plain space key event dispatched to InsertHalfSpace should be consumed.
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(TestSendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(SendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
   // A space key event with any modifier key dispatched to InsertHalfSpace
   // should be consumed.
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(TestSendKey("Shift Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -5289,9 +5259,8 @@ TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   config.set_custom_keymap_table(kCustomKeymapTable);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -5301,19 +5270,19 @@ TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   commands::Command command;
 
   // A plain space key event dispatched to InsertHalfSpace should be consumed.
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(TestSendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(SendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
   // A space key event with any modifier key dispatched to InsertHalfSpace
   // should be consumed.
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(TestSendKey("Shift Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -5336,9 +5305,8 @@ TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(kCustomKeymapTable);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -5349,19 +5317,19 @@ TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   commands::Command command;
 
   // A plain space key event assigned to InsertHalfSpace should be echoed back.
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(TestSendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(SendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
   // A space key event with any modifier key assigned to InsertHalfSpace should
   // be consumed.
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(TestSendKey("Shift Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -5384,9 +5352,8 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(kCustomKeymapTable);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -5397,7 +5364,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   commands::Command command;
 
   // A plain space key event assigned to InsertFullSpace should be consumed.
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(TestSendKey("Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -5411,7 +5378,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
 
   // A space key event with any modifier key assigned to InsertFullSpace should
   // be consumed.
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
   EXPECT_TRUE(TestSendKey("Shift Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -5435,9 +5402,8 @@ TEST_F(SessionTest, InsertSpaceInDirectMode) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(kCustomKeymapTable);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -5501,9 +5467,8 @@ TEST_F(SessionTest, InsertSpaceInCompositionMode) {
   config.set_custom_keymap_table(kCustomKeymapTable);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -5554,9 +5519,8 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
   config.set_custom_keymap_table(kCustomKeymapTable);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -5564,7 +5528,7 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
   session.SetKeyMapManager(key_map_manager);
 
   {
-    InitSessionToConversionWithAiueo(&session, &converter);
+    InitSessionToConversionWithAiueo(&session, converter.get());
     commands::Command command;
 
     EXPECT_TRUE(TestSendKey("Ctrl a", &session, &command));
@@ -5575,11 +5539,11 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
     ASSERT_TRUE(command.output().has_result());
     EXPECT_EQ(command.output().result().value(), "あいうえお　");
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {
-    InitSessionToConversionWithAiueo(&session, &converter);
+    InitSessionToConversionWithAiueo(&session, converter.get());
     commands::Command command;
 
     EXPECT_TRUE(TestSendKey("Ctrl b", &session, &command));
@@ -5590,11 +5554,11 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
     ASSERT_TRUE(command.output().has_result());
     EXPECT_EQ(command.output().result().value(), "あいうえお ");
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {
-    InitSessionToConversionWithAiueo(&session, &converter);
+    InitSessionToConversionWithAiueo(&session, converter.get());
     commands::Command command;
 
     EXPECT_TRUE(TestSendKey("Ctrl c", &session, &command));
@@ -5605,11 +5569,11 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
     ASSERT_TRUE(command.output().has_result());
     EXPECT_EQ(command.output().result().value(), "あいうえお ");
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {
-    InitSessionToConversionWithAiueo(&session, &converter);
+    InitSessionToConversionWithAiueo(&session, converter.get());
     commands::Command command;
 
     EXPECT_TRUE(TestSendKey("Ctrl d", &session, &command));
@@ -5620,14 +5584,13 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
     ASSERT_TRUE(command.output().has_result());
     EXPECT_EQ(command.output().result().value(), "あいうえお　");
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -5647,9 +5610,8 @@ TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
 }
 
 TEST_F(SessionTest, IsFullWidthInsertSpace) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   config::Config config;
   commands::Command command;
@@ -5828,9 +5790,9 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
 TEST_F(SessionTest, Issue1951385) {
   // This is a unittest against http://b/1951385
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -5843,7 +5805,7 @@ TEST_F(SessionTest, Issue1951385) {
   Segments segments;
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
 
   command.Clear();
@@ -5860,9 +5822,8 @@ TEST_F(SessionTest, Issue1951385) {
 }
 
 TEST_F(SessionTest, Issue1978201) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -5881,7 +5842,7 @@ TEST_F(SessionTest, Issue1978201) {
   command.Clear();
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   EXPECT_TRUE(session.Convert(&command));
 
@@ -5892,9 +5853,8 @@ TEST_F(SessionTest, Issue1978201) {
 }
 
 TEST_F(SessionTest, Issue1975771) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // This is a unittest against http://b/1975771
   Session session(engine);
@@ -5903,7 +5863,7 @@ TEST_F(SessionTest, Issue1975771) {
   // Trigger suggest by pressing "a".
   Segments segments;
   SetAiueo(&segments);
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
@@ -5932,9 +5892,9 @@ TEST_F(SessionTest, Issue2029466) {
   // "a<tab><ctrl-N>a" raised an exception because CommitFirstSegment
   // did not check if the current status is in conversion or
   // precomposition.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -5945,7 +5905,7 @@ TEST_F(SessionTest, Issue2029466) {
   // <tab>
   Segments segments;
   SetAiueo(&segments);
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.PredictAndConvert(&command));
@@ -5953,9 +5913,9 @@ TEST_F(SessionTest, Issue2029466) {
   // <ctrl-N>
   segments.Clear();
   // FinishConversion is expected to return empty Segments.
-  EXPECT_CALL(converter, FinishConversion(_, _))
+  EXPECT_CALL(*converter, FinishConversion(_, _))
       .WillOnce(SetArgPointee<1>(segments));
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
   command.Clear();
   EXPECT_TRUE(session.CommitSegment(&command));
@@ -5970,9 +5930,9 @@ TEST_F(SessionTest, Issue2034943) {
   //
   // The composition should have been reset if CommitSegment submitted
   // the all segments (e.g. the size of segments is one).
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -5988,7 +5948,7 @@ TEST_F(SessionTest, Issue2034943) {
     candidate->value = "MOZU";
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
   // Get conversion
@@ -6006,9 +5966,9 @@ TEST_F(SessionTest, Issue2034943) {
 
 TEST_F(SessionTest, Issue2026354) {
   // This is a unittest against http://b/2026354
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6021,7 +5981,7 @@ TEST_F(SessionTest, Issue2026354) {
   SetAiueo(&segments);
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -6036,9 +5996,9 @@ TEST_F(SessionTest, Issue2026354) {
 
 TEST_F(SessionTest, Issue2066906) {
   // This is a unittest against http://b/2066906
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6050,7 +6010,7 @@ TEST_F(SessionTest, Issue2066906) {
   candidate->value = "abc";
   candidate = segment->add_candidate();
   candidate->value = "abcdef";
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // Prediction with "a"
@@ -6063,7 +6023,7 @@ TEST_F(SessionTest, Issue2066906) {
   EXPECT_TRUE(session.Commit(&command));
   EXPECT_RESULT("abc", command);
 
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   InsertCharacterChars("a", &session, &command);
   EXPECT_FALSE(command.output().has_result());
@@ -6071,9 +6031,9 @@ TEST_F(SessionTest, Issue2066906) {
 
 TEST_F(SessionTest, Issue2187132) {
   // This is a unittest against http://b/2187132
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6104,9 +6064,8 @@ TEST_F(SessionTest, Issue2190364) {
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   session.SetConfig(config);
@@ -6128,9 +6087,9 @@ TEST_F(SessionTest, Issue2190364) {
 
 TEST_F(SessionTest, Issue1556649) {
   // This is a unittest against http://b/1556649
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6153,9 +6112,9 @@ TEST_F(SessionTest, Issue1556649) {
 
 TEST_F(SessionTest, Issue1518994) {
   // This is a unittest against http://b/1518994.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // - Can't input space in ascii mode.
   {
@@ -6188,9 +6147,9 @@ TEST_F(SessionTest, Issue1518994) {
 TEST_F(SessionTest, Issue1571043) {
   // This is a unittest against http://b/1571043.
   // - Underline of composition is separated.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6210,9 +6169,9 @@ TEST_F(SessionTest, Issue2217250) {
   // This is a unittest against http://b/2217250.
   // Temporary direct input mode through a special sequence such as
   // www. continues even after committing them
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6230,9 +6189,9 @@ TEST_F(SessionTest, Issue2223823) {
   // This is a unittest against http://b/2223823
   // Input mode does not recover like MS-IME by single shift key down
   // and up.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6249,9 +6208,9 @@ TEST_F(SessionTest, Issue2223823) {
 TEST_F(SessionTest, Issue2223762) {
   // This is a unittest against http://b/2223762.
   // - The first space in half-width alphanumeric mode is full-width.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6269,9 +6228,9 @@ TEST_F(SessionTest, Issue2223762) {
 TEST_F(SessionTest, Issue2223755) {
   // This is a unittest against http://b/2223755.
   // - F6 and F7 convert space to half-width.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {  // DisplayAsFullKatakana
     Session session(engine);
@@ -6315,7 +6274,7 @@ TEST_F(SessionTest, Issue2223755) {
       candidate->value = "あ い";
       const ConversionRequest request = CreateConversionRequest(session);
       FillT13Ns(request, &segments);
-      EXPECT_CALL(converter, StartConversion(_, _))
+      EXPECT_CALL(*converter, StartConversion(_, _))
           .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
 
@@ -6330,9 +6289,9 @@ TEST_F(SessionTest, Issue2269058) {
   // This is a unittest against http://b/2269058.
   // - Temporary input mode should not be overridden by a permanent
   //   input mode change.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6352,9 +6311,9 @@ TEST_F(SessionTest, Issue2269058) {
 TEST_F(SessionTest, Issue2272745) {
   // This is a unittest against http://b/2272745.
   // A temporary input mode remains when a composition is canceled.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
   {
     Session session(engine);
     InitSessionToPrecomposition(&session);
@@ -6386,9 +6345,8 @@ TEST_F(SessionTest, Issue2282319) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -6422,9 +6380,8 @@ TEST_F(SessionTest, Issue2297060) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -6440,9 +6397,9 @@ TEST_F(SessionTest, Issue2297060) {
 TEST_F(SessionTest, Issue2379374) {
   // This is a unittest against http://b/2379374.
   // Numpad ignores Direct input style when typing after conversion.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6464,7 +6421,7 @@ TEST_F(SessionTest, Issue2379374) {
     candidate->value = "亜";
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
@@ -6487,9 +6444,9 @@ TEST_F(SessionTest, Issue2569789) {
   // This is a unittest against http://b/2379374.
   // After typing "google", the input mode does not come back to the
   // previous input mode.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {
     Session session(engine);
@@ -6554,9 +6511,9 @@ TEST_F(SessionTest, Issue2569789) {
 TEST_F(SessionTest, Issue2555503) {
   // This is a unittest against http://b/2555503.
   // Mode respects the previous character too much.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6577,9 +6534,9 @@ TEST_F(SessionTest, Issue2555503) {
 TEST_F(SessionTest, Issue2791640) {
   // This is a unittest against http://b/2791640.
   // Existing preedit should be committed when IME is turned off.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6599,9 +6556,9 @@ TEST_F(SessionTest, Issue2791640) {
 
 TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
   // Existing preedit should be committed when IME is turned off.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // Check "hankaku/zenkaku"
   {
@@ -6651,9 +6608,8 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(kCustomKeymapTable);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -6674,9 +6630,8 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
   table->AddRuleWithAttributes("tt", "っ", "t", composer::DIRECT_INPUT);
   table->AddRuleWithAttributes("ta", "た", "", composer::NO_TABLE_ATTRIBUTE);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6700,9 +6655,8 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
 }
 
 TEST_F(SessionTest, IMEOnWithModeTest) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
   {
     Session session(engine);
     InitSessionToDirect(&session);
@@ -6769,9 +6723,8 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
 }
 
 TEST_F(SessionTest, InputModeConsumed) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6804,9 +6757,8 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -6823,9 +6775,8 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasComposition) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6865,9 +6816,8 @@ TEST_F(SessionTest, InputModeOutputHasComposition) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasCandidates) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6876,7 +6826,7 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   SetAiueo(&segments);
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
@@ -6925,9 +6875,8 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
 }
 
 TEST_F(SessionTest, PerformedCommand) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -6953,7 +6902,7 @@ TEST_F(SessionTest, PerformedCommand) {
     SetAiueo(&segments);
     const ConversionRequest request = CreateConversionRequest(session);
     FillT13Ns(request, &segments);
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     commands::Command command;
     // SPACE
@@ -6967,34 +6916,32 @@ TEST_F(SessionTest, PerformedCommand) {
 }
 
 TEST_F(SessionTest, ResetContext) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
-  EXPECT_CALL(converter, ResetConversion(_)).Times(2);
+  EXPECT_CALL(*converter, ResetConversion(_)).Times(2);
   session.ResetContext(&command);
   EXPECT_FALSE(command.output().consumed());
 
   Segments segments;
   segments.add_segment()->add_candidate();  // Stub candidate.
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   EXPECT_TRUE(SendKey("A", &session, &command));
   command.Clear();
 
-  EXPECT_CALL(converter, ResetConversion(_));
+  EXPECT_CALL(*converter, ResetConversion(_));
   session.ResetContext(&command);
   EXPECT_TRUE(command.output().consumed());
 }
 
 TEST_F(SessionTest, ClearUndoOnResetContext) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -7020,14 +6967,14 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
   }
 
   {
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_SINGLE_SEGMENT("あいうえお", command);
 
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+    EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
@@ -7045,26 +6992,24 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
 }
 
 TEST_F(SessionTest, IssueResetConversion) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
   // Any meaneangless key calls ResetConversion
-  EXPECT_CALL(converter, ResetConversion(_));
+  EXPECT_CALL(*converter, ResetConversion(_));
   EXPECT_TRUE(SendKey("enter", &session, &command));
 
-  EXPECT_CALL(converter, ResetConversion(_)).Times(2);
+  EXPECT_CALL(*converter, ResetConversion(_)).Times(2);
   EXPECT_TRUE(SendKey("space", &session, &command));
 }
 
 TEST_F(SessionTest, IssueRevert) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -7073,17 +7018,16 @@ TEST_F(SessionTest, IssueRevert) {
   // Changes the state to PRECOMPOSITION
   session.IMEOn(&command);
 
-  EXPECT_CALL(converter, RevertConversion(_));
-  EXPECT_CALL(converter, ResetConversion(_));
+  EXPECT_CALL(*converter, RevertConversion(_));
+  EXPECT_CALL(*converter, ResetConversion(_));
   session.Revert(&command);
   EXPECT_FALSE(command.output().consumed());
 }
 
 // Undo command must call RervertConversion
 TEST_F(SessionTest, Issue3428520) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -7097,27 +7041,27 @@ TEST_F(SessionTest, Issue3428520) {
   Segments segments;
   SetAiueo(&segments);
 
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
   InsertCharacterChars("aiueo", &session, &command);
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
 
-  EXPECT_CALL(converter, StartConversion(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*converter, StartConversion(_, _)).WillOnce(Return(true));
   command.Clear();
   session.Convert(&command);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_SINGLE_SEGMENT("あいうえお", command);
 
-  EXPECT_CALL(converter, CommitSegmentValue(_, _, _)).WillOnce(Return(true));
-  EXPECT_CALL(converter, FinishConversion(_, _));
+  EXPECT_CALL(*converter, CommitSegmentValue(_, _, _)).WillOnce(Return(true));
+  EXPECT_CALL(*converter, FinishConversion(_, _));
   command.Clear();
   session.Commit(&command);
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_RESULT("あいうえお", command);
 
   // RevertConversion must be called.
-  EXPECT_CALL(converter, RevertConversion(_));
+  EXPECT_CALL(*converter, RevertConversion(_));
   command.Clear();
   session.Undo(&command);
 }
@@ -7127,9 +7071,8 @@ TEST_F(SessionTest, Issue5742293) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -7142,7 +7085,7 @@ TEST_F(SessionTest, Issue5742293) {
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   session.set_client_capability(capability);
 
-  SetUndoContext(&session, &converter);
+  SetUndoContext(&session, converter.get());
 
   commands::Command command;
 
@@ -7157,15 +7100,14 @@ TEST_F(SessionTest, Issue5742293) {
 }
 
 TEST_F(SessionTest, AutoConversion) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Segments segments;
   SetAiueo(&segments);
   ConversionRequest default_request;
   FillT13Ns(default_request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // Auto Off
@@ -7365,9 +7307,9 @@ TEST_F(SessionTest, AutoConversion) {
 TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
   // This is a unittest against http://b/3203944.
   // Input mode should not be changed when a space key is typed.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -7388,9 +7330,9 @@ TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
 TEST_F(SessionTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -7410,7 +7352,7 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
   }
   const ConversionRequest request = CreateConversionRequest(session);
   FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
@@ -7421,9 +7363,9 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
 TEST_F(SessionTest, KeitaiInputToggle) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
-  MockConverter converter;
+
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -7561,9 +7503,8 @@ TEST_F(SessionTest, KeitaiInputFlick) {
   mobile_request_->set_special_romanji_table(Request::TWELVE_KEYS_TO_HIRAGANA);
   commands::Command command;
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
   {
     Session session(engine);
     auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -7576,7 +7517,7 @@ TEST_F(SessionTest, KeitaiInputFlick) {
     InsertCharacterCodeAndString('3', "ょ", &session, &command);
     InsertCharacterCodeAndString('1', "う", &session, &command);
     EXPECT_EQ(command.output().preedit().segment(0).value(), "はじょう");
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {
@@ -7593,7 +7534,7 @@ TEST_F(SessionTest, KeitaiInputFlick) {
     InsertCharacterCodeAndString('3', "ょ", &session, &command);
     InsertCharacterCodeAndString('1', "う", &session, &command);
     EXPECT_EQ(command.output().preedit().segment(0).value(), "はじょう");
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {
@@ -7659,7 +7600,7 @@ TEST_F(SessionTest, KeitaiInputFlick) {
     SendKey("6", &session, &command);
     EXPECT_EQ(command.output().preedit().segment(0).value(),
               "あるぱかしんのふくしゅう");
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 }
 
@@ -7669,9 +7610,8 @@ TEST_F(SessionTest, ToggleFlick) {
   mobile_request_->set_special_romanji_table(Request::TOGGLE_FLICK_TO_HIRAGANA);
   commands::Command command;
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
   {
     Session session(engine);
     auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
@@ -7680,7 +7620,7 @@ TEST_F(SessionTest, ToggleFlick) {
     InitSessionToPrecomposition(&session, *mobile_request_);
     InsertCharacterChars("6d*888888;", &session, &command);
     EXPECT_EQ(command.output().preedit().segment(0).value(), "はじょう");
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
   {
     Session session(engine);
@@ -7754,14 +7694,13 @@ TEST_F(SessionTest, ToggleFlick) {
     EXPECT_EQ(command.output().preedit().segment(0).value(),
               "あるぱかしんのふくしゅう");
     EXPECT_FALSE(command.output().preedit().is_toggleable());
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 }
 
 TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -7789,7 +7728,7 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
     candidate = segment->add_candidate();
     candidate->value = "抜いた";
 
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
@@ -7811,7 +7750,7 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
     candidate = segment->add_candidate();
     candidate->value = "抜いた";
 
-    EXPECT_CALL(converter, CommitSegments(_, _))
+    EXPECT_CALL(*converter, CommitSegments(_, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
   }
 
@@ -7824,9 +7763,8 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
 }
 
 TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -7854,7 +7792,7 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
     candidate = segment->add_candidate();
     candidate->value = "抜いた";
 
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
@@ -7875,9 +7813,8 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
 }
 
 TEST_F(SessionTest, CommitCandidateSuggestion) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
@@ -7894,16 +7831,16 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   commands::Command command;
   SendKey("M", &session, &command);
   command.Clear();
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("O", &session, &command);
   ASSERT_TRUE(command.output().has_candidate_window());
   EXPECT_EQ(command.output().candidate_window().candidate_size(), 2);
   EXPECT_EQ(command.output().candidate_window().candidate(0).value(), "MOCHA");
 
-  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+  EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments_mo), Return(true)));
-  EXPECT_CALL(converter, FinishConversion(_, _))
+  EXPECT_CALL(*converter, FinishConversion(_, _))
       .WillOnce(SetArgPointee<1>(Segments()));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(1);
@@ -7944,9 +7881,8 @@ void FindCandidateIDs(const commands::CandidateWindow &candidate_window,
 }
 
 TEST_F(SessionTest, CommitCandidateT13N) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
@@ -7962,7 +7898,7 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   EXPECT_EQ(segment->candidate(-2).value, "TOK");
   EXPECT_EQ(segment->candidate(-3).value, "Tok");
 
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
@@ -7975,9 +7911,9 @@ TEST_F(SessionTest, CommitCandidateT13N) {
       FindCandidateID(command.output().candidate_window(), "TOK", &id));
 #else   // _WIN32, __APPLE__
   EXPECT_TRUE(FindCandidateID(command.output().candidate_window(), "TOK", &id));
-  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+  EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
-  EXPECT_CALL(converter, FinishConversion(_, _))
+  EXPECT_CALL(*converter, FinishConversion(_, _))
       .WillOnce(SetArgPointee<1>(Segments()));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(id);
@@ -7990,9 +7926,8 @@ TEST_F(SessionTest, CommitCandidateT13N) {
 }
 
 TEST_F(SessionTest, RequestConvertReverse) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8008,9 +7943,8 @@ TEST_F(SessionTest, RequestConvertReverse) {
 }
 
 TEST_F(SessionTest, ConvertReverseFails) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8025,16 +7959,15 @@ TEST_F(SessionTest, ConvertReverseFails) {
 }
 
 TEST_F(SessionTest, ConvertReverse) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
   constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
-  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
+  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", converter.get());
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -8046,9 +7979,8 @@ TEST_F(SessionTest, ConvertReverse) {
 }
 
 TEST_F(SessionTest, EscapeFromConvertReverse) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8056,7 +7988,7 @@ TEST_F(SessionTest, EscapeFromConvertReverse) {
 
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
-  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
+  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", converter.get());
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -8075,16 +8007,15 @@ TEST_F(SessionTest, EscapeFromConvertReverse) {
 }
 
 TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
   constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
-  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
+  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", converter.get());
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -8108,9 +8039,8 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
 
 TEST_F(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
   // This is a unittest against http://b/5687022
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8119,7 +8049,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
 
   commands::Command command;
   SetupCommandForReverseConversion(kInput, command.mutable_input());
-  SetupMockForReverseConversion(kInput, kReading, &converter);
+  SetupMockForReverseConversion(kInput, kReading, converter.get());
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -8138,9 +8068,8 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
   // Second escape from ConvertReverse should restore the original text
   // without any text normalization even if the input text contains any
   // special characters which Mozc usually do normalization.
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8148,7 +8077,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
 
   commands::Command command;
   SetupCommandForReverseConversion(kInput, command.mutable_input());
-  SetupMockForReverseConversion(kInput, kInput, &converter);
+  SetupMockForReverseConversion(kInput, kInput, converter.get());
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -8165,9 +8094,8 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
 }
 
 TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8175,7 +8103,7 @@ TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
 
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
-  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
+  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", converter.get());
 
   // Conversion Reverse
   EXPECT_TRUE(session.SendCommand(&command));
@@ -8196,9 +8124,8 @@ TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
 }
 
 TEST_F(SessionTest, ConvertReverseFromOffState) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8209,23 +8136,22 @@ TEST_F(SessionTest, ConvertReverseFromOffState) {
   SendSpecialKey(commands::KeyEvent::OFF, &session, &command);
 
   SetupCommandForReverseConversion(kanji_aiueo, command.mutable_input());
-  SetupMockForReverseConversion(kanji_aiueo, "あいうえお", &converter);
+  SetupMockForReverseConversion(kanji_aiueo, "あいうえお", converter.get());
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
 }
 
 TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
   // This is a unittest against http://b/5145295.
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
   SetupCommandForReverseConversion("あいうえお", command.mutable_input());
-  SetupMockForReverseConversion("あいうえお", "あいうえお", &converter);
+  SetupMockForReverseConversion("あいうえお", "あいうえお", converter.get());
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(command.output().preedit().segment(0).value(), "あいうえお");
@@ -8241,9 +8167,8 @@ TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
 }
 
 TEST_F(SessionTest, LaunchTool) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
 
@@ -8273,9 +8198,8 @@ TEST_F(SessionTest, LaunchTool) {
 }
 
 TEST_F(SessionTest, NotZeroQuerySuggest) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8299,7 +8223,7 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
   segment->add_candidate()->value = "input";
 
   // Commit composition and zero query suggest should not be invoked.
-  EXPECT_CALL(converter, StartPrediction(_, _)).Times(0);
+  EXPECT_CALL(*converter, StartPrediction(_, _)).Times(0);
   command.Clear();
   session.Commit(&command);
   EXPECT_EQ(command.output().result().value(), "google");
@@ -8311,13 +8235,12 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
 }
 
 TEST_F(SessionTest, ZeroQuerySuggest) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
   {  // Commit
     Session session(engine);
     commands::Request request;
-    SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
+    SetupZeroQuerySuggestionReady(true, &session, &request, converter.get());
 
     commands::Command command;
     session.Commit(&command);
@@ -8330,13 +8253,13 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     EXPECT_EQ(command.output().candidate_window().candidate(1).value(),
               "input");
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {  // CommitSegment
     Session session(engine);
     commands::Request request;
-    SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
+    SetupZeroQuerySuggestionReady(true, &session, &request, converter.get());
 
     commands::Command command;
     session.CommitSegment(&command);
@@ -8349,13 +8272,13 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     EXPECT_EQ(command.output().candidate_window().candidate(1).value(),
               "input");
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {  // CommitCandidate
     Session session(engine);
     commands::Request request;
-    SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
+    SetupZeroQuerySuggestionReady(true, &session, &request, converter.get());
 
     commands::Command command;
     SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
@@ -8371,7 +8294,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     EXPECT_EQ(command.output().candidate_window().candidate(1).value(),
               "input");
     EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 
   {  // CommitFirstSuggestion
@@ -8394,7 +8317,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
       segment = segments.add_segment();
       segment->set_key("");
       segment->add_candidate()->value = "google";
-      EXPECT_CALL(converter, StartPrediction(_, _))
+      EXPECT_CALL(*converter, StartPrediction(_, _))
           .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
 
@@ -8409,7 +8332,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
       segment->set_key("");
       segment->add_candidate()->value = "search";
       segment->add_candidate()->value = "input";
-      EXPECT_CALL(converter, StartPrediction(_, _))
+      EXPECT_CALL(*converter, StartPrediction(_, _))
           .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
 
@@ -8428,15 +8351,14 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
 }
 
 TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {  // Cancel command should close the candidate window.
     Session session(engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
+    SetupZeroQuerySuggestion(&session, &request, &command, converter.get());
 
     command.Clear();
     session.EditCancel(&command);
@@ -8451,7 +8373,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     Session session(engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
+    SetupZeroQuerySuggestion(&session, &request, &command, converter.get());
 
     command.Clear();
     session.PredictAndConvert(&command);
@@ -8466,11 +8388,11 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     Session session(engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
+    SetupZeroQuerySuggestion(&session, &request, &command, converter.get());
 
     command.Clear();
     // FinishConversion is expected to return empty Segments.
-    EXPECT_CALL(converter, FinishConversion(_, _))
+    EXPECT_CALL(*converter, FinishConversion(_, _))
         .WillRepeatedly(SetArgPointee<1>(Segments()));
     session.CommitFirstSuggestion(&command);
     EXPECT_TRUE(command.output().consumed());
@@ -8485,7 +8407,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     Session session(engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
+    SetupZeroQuerySuggestion(&session, &request, &command, converter.get());
 
     SendKey("Space", &session, &command);
     EXPECT_TRUE(command.output().consumed());
@@ -8499,7 +8421,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     Session session(engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
+    SetupZeroQuerySuggestion(&session, &request, &command, converter.get());
     EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
     SendKey("a", &session, &command);
@@ -8514,7 +8436,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     Session session(engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
+    SetupZeroQuerySuggestion(&session, &request, &command, converter.get());
 
     SendKey("Enter", &session, &command);
     EXPECT_FALSE(command.output().consumed());
@@ -8528,7 +8450,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     Session session(engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
+    SetupZeroQuerySuggestion(&session, &request, &command, converter.get());
 
     SendKey("Right", &session, &command);
     EXPECT_FALSE(command.output().consumed());
@@ -8542,7 +8464,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     Session session(engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
+    SetupZeroQuerySuggestion(&session, &request, &command, converter.get());
 
     // Send SELECT_CANDIDATE command.
     const int first_id = command.output().candidate_window().candidate(0).id();
@@ -8559,9 +8481,8 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
 }
 
 TEST_F(SessionTest, Issue4437420) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8611,9 +8532,8 @@ TEST_F(SessionTest, Issue4437420) {
 
 // If undo context is empty, key event for UNDO should be echoed back. b/5553298
 TEST_F(SessionTest, Issue5553298) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8640,9 +8560,8 @@ TEST_F(SessionTest, Issue5553298) {
 }
 
 TEST_F(SessionTest, UndoKeyAction) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   commands::Command command;
   commands::Request request;
@@ -8828,14 +8747,14 @@ TEST_F(SessionTest, UndoKeyAction) {
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "AIUEO";
 
-    EXPECT_CALL(converter, StartConversion(_, _))
+    EXPECT_CALL(*converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("あいうえお", command);
 
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+    EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
@@ -8973,9 +8892,8 @@ TEST_F(SessionTest, DedupAfterUndo) {
 }
 
 TEST_F(SessionTest, MoveCursor) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -8993,9 +8911,8 @@ TEST_F(SessionTest, MoveCursor) {
 }
 
 TEST_F(SessionTest, MoveCursorPrecomposition) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -9008,9 +8925,8 @@ TEST_F(SessionTest, MoveCursorPrecomposition) {
 }
 
 TEST_F(SessionTest, MoveCursorRightWithCommit) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   commands::Request request;
@@ -9040,9 +8956,8 @@ TEST_F(SessionTest, MoveCursorRightWithCommit) {
 }
 
 TEST_F(SessionTest, MoveCursorLeftWithCommit) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   commands::Request request;
@@ -9079,9 +8994,8 @@ TEST_F(SessionTest, MoveCursorLeftWithCommit) {
 }
 
 TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   commands::Request request(*mobile_request_);
@@ -9089,7 +9003,7 @@ TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
       commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
   request.set_crossing_edge_behavior(
       commands::Request::COMMIT_WITHOUT_CONSUMING);
-  SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
+  SetupZeroQuerySuggestionReady(true, &session, &request, converter.get());
   commands::Command command;
 
   InsertCharacterChars("GOOGLE", &session, &command);
@@ -9107,9 +9021,8 @@ TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
 }
 
 TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   commands::Request request(*mobile_request_);
@@ -9117,7 +9030,7 @@ TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
       commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
   request.set_crossing_edge_behavior(
       commands::Request::COMMIT_WITHOUT_CONSUMING);
-  SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
+  SetupZeroQuerySuggestionReady(true, &session, &request, converter.get());
   commands::Command command;
 
   InsertCharacterChars("GOOGLE", &session, &command);
@@ -9139,9 +9052,8 @@ TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
 }
 
 TEST_F(SessionTest, CommitHead) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   auto table = std::make_shared<composer::Table>();
@@ -9165,9 +9077,8 @@ TEST_F(SessionTest, CommitHead) {
 }
 
 TEST_F(SessionTest, PasswordWithToggleAlphabetInput) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
 
@@ -9221,9 +9132,8 @@ TEST_F(SessionTest, PasswordWithToggleAlphabetInput) {
 }
 
 TEST_F(SessionTest, SwitchInputFieldType) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -9243,9 +9153,8 @@ TEST_F(SessionTest, SwitchInputFieldType) {
 }
 
 TEST_F(SessionTest, CursorKeysInPasswordMode) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
 
@@ -9294,9 +9203,8 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
 }
 
 TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -9348,9 +9256,8 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
 }
 
 TEST_F(SessionTest, EditCancel) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -9368,7 +9275,7 @@ TEST_F(SessionTest, EditCancel) {
     commands::Command command;
     SendKey("M", &session, &command);
 
-    EXPECT_CALL(converter, StartPrediction(_, _))
+    EXPECT_CALL(*converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     SendKey("O", &session, &command);
     ASSERT_TRUE(command.output().has_candidate_window());
@@ -9389,11 +9296,11 @@ TEST_F(SessionTest, EditCancel) {
     // "[MO]" is a converted string like Kanji.
     // "MO" is an input string like Hiragana.
     SetupCommandForReverseConversion("[MO]", command.mutable_input());
-    SetupMockForReverseConversion("[MO]", "MO", &converter);
+    SetupMockForReverseConversion("[MO]", "MO", converter.get());
     EXPECT_TRUE(session.SendCommand(&command));
 
     command.Clear();
-    EXPECT_CALL(converter, StartPrediction(_, _))
+    EXPECT_CALL(*converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     session.ConvertCancel(&command);
     ASSERT_TRUE(command.output().has_candidate_window());
@@ -9411,13 +9318,12 @@ TEST_F(SessionTest, EditCancel) {
 }
 
 TEST_F(SessionTest, ImeOff) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
 
-  EXPECT_CALL(converter, ResetConversion(_));
+  EXPECT_CALL(*converter, ResetConversion(_));
   InitSessionToPrecomposition(&session);
   commands::Command command;
   session.IMEOff(&command);
@@ -9444,9 +9350,8 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {  // Cancel of Precomposition and deactivate IME
     Session session(engine);
@@ -9500,7 +9405,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     commands::Command command;
     SendKey("M", &session, &command);
 
-    EXPECT_CALL(converter, StartPrediction(_, _))
+    EXPECT_CALL(*converter, StartPrediction(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     SendKey("O", &session, &command);
     ASSERT_TRUE(command.output().has_candidate_window());
@@ -9525,7 +9430,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
-    InitSessionToConversionWithAiueo(&session, &converter);
+    InitSessionToConversionWithAiueo(&session, converter.get());
 
     commands::Command command;
     EXPECT_TRUE(TestSendKey("hankaku/zenkaku", &session, &command));
@@ -9552,11 +9457,11 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     // "[MO]" is a converted string like Kanji.
     // "MO" is an input string like Hiragana.
     SetupCommandForReverseConversion("[MO]", command.mutable_input());
-    SetupMockForReverseConversion("[MO]", "MO", &converter);
+    SetupMockForReverseConversion("[MO]", "MO", converter.get());
     EXPECT_TRUE(session.SendCommand(&command));
 
     command.Clear();
-    EXPECT_CALL(converter, StartPrediction(_, _))
+    EXPECT_CALL(*converter, StartPrediction(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     session.ConvertCancel(&command);
     ASSERT_TRUE(command.output().has_candidate_window());
@@ -9598,9 +9503,8 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {  // Cancel of Precomposition in password field
      // Basically this is unusual because there is no character to be canceled
@@ -9649,7 +9553,7 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
     auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
-    InitSessionToConversionWithAiueo(&session, &converter);
+    InitSessionToConversionWithAiueo(&session, converter.get());
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
     // Actually this works well because Cancel command in conversion mode
@@ -9677,7 +9581,7 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
     // "[MO]" is a converted string like Kanji.
     // "MO" is an input string like Hiragana.
     SetupCommandForReverseConversion("[MO]", command.mutable_input());
-    SetupMockForReverseConversion("[MO]", "MO", &converter);
+    SetupMockForReverseConversion("[MO]", "MO", converter.get());
     EXPECT_TRUE(session.SendCommand(&command));
 
     // Actually this works well because Cancel command in conversion mode
@@ -9721,9 +9625,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   {  // Cancel of Precomposition and deactivate IME in password field.
     Session session(engine);
@@ -9788,7 +9691,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     auto key_map_manager = std::make_shared<keymap::KeyMapManager>(config);
     session.SetConfig(config);
     session.SetKeyMapManager(key_map_manager);
-    InitSessionToConversionWithAiueo(&session, &converter);
+    InitSessionToConversionWithAiueo(&session, converter.get());
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
     commands::Command command;
@@ -9824,7 +9727,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     // "[MO]" is a converted string like Kanji.
     // "MO" is an input string like Hiragana.
     SetupCommandForReverseConversion("[MO]", command.mutable_input());
-    SetupMockForReverseConversion("[MO]", "MO", &converter);
+    SetupMockForReverseConversion("[MO]", "MO", converter.get());
     EXPECT_TRUE(session.SendCommand(&command));
 
     EXPECT_TRUE(TestSendKey("hankaku/zenkaku", &session, &command));
@@ -9844,9 +9747,8 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
 }
 
 TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -9859,7 +9761,7 @@ TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
     segment->add_candidate()->value = "MOCHA";
     segment->add_candidate()->value = "MOZUKU";
   }
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
 
   commands::Command command;
@@ -9874,9 +9776,8 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
   config::Config config;
   config.set_use_auto_conversion(true);
 
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   session.SetConfig(config);
@@ -9889,7 +9790,7 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
     segment->set_key("あ");
     segment->add_candidate()->value = "あ";
   }
-  EXPECT_CALL(converter, StartConversion(_, _))
+  EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_a_conv), Return(true)));
 
   commands::Command command;
@@ -9942,9 +9843,8 @@ TEST_F(SessionTest, SuppressSuggestion) {
 }
 
 TEST_F(SessionTest, DeleteHistory) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -9953,7 +9853,7 @@ TEST_F(SessionTest, DeleteHistory) {
   Segment *segment = segments.add_segment();
   segment->set_key("delete");
   segment->add_candidate()->value = "DeleteHistory";
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // Type "del". Preedit = "でｌ".
@@ -9972,7 +9872,7 @@ TEST_F(SessionTest, DeleteHistory) {
 
   // Do DeleteHistory command. After that, the session should be back in
   // composition state and preedit gets back to "でｌ" again.
-  EXPECT_CALL(converter, DeleteCandidateFromHistory(_, 0, 0))
+  EXPECT_CALL(*converter, DeleteCandidateFromHistory(_, 0, 0))
       .WillOnce(Return(true));
   EXPECT_TRUE(SendKey("Ctrl Delete", &session, &command));
   EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
@@ -9980,9 +9880,8 @@ TEST_F(SessionTest, DeleteHistory) {
 }
 
 TEST_F(SessionTest, SendKeyWithKeyStringDirect) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToDirect(&session);
@@ -9998,9 +9897,8 @@ TEST_F(SessionTest, SendKeyWithKeyStringDirect) {
 }
 
 TEST_F(SessionTest, SendKeyWithKeyString) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -10033,9 +9931,8 @@ TEST_F(SessionTest, SendKeyWithKeyString) {
 }
 
 TEST_F(SessionTest, IndirectImeOnOff) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -10084,9 +9981,8 @@ TEST_F(SessionTest, IndirectImeOnOff) {
 }
 
 TEST_F(SessionTest, MakeSureIMEOn) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToDirect(&session);
@@ -10140,9 +10036,8 @@ TEST_F(SessionTest, MakeSureIMEOn) {
 }
 
 TEST_F(SessionTest, MakeSureIMEOff) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   InitSessionToPrecomposition(&session);
@@ -10196,9 +10091,8 @@ TEST_F(SessionTest, MakeSureIMEOff) {
 }
 
 TEST_F(SessionTest, MakeSureIMEOffWithCommitComposition) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
   // Make sure SessionCommand::TURN_OFF_IME terminates the existing
@@ -10228,31 +10122,30 @@ TEST_F(SessionTest, MakeSureIMEOffWithCommitComposition) {
 }
 
 TEST_F(SessionTest, DeleteCandidateFromHistory) {
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   // InitSessionToConversionWithAiueo initializes candidates as follows:
   // 0:あいうえお, 1:アイウエオ, -3:aiueo, -4:AIUEO, ...
   {
     // A test case to delete focused candidate (i.e. without candidate ID).
     Session session(engine);
-    InitSessionToConversionWithAiueo(&session, &converter);
+    InitSessionToConversionWithAiueo(&session, converter.get());
 
-    EXPECT_CALL(converter, DeleteCandidateFromHistory(_, 0, 0))
+    EXPECT_CALL(*converter, DeleteCandidateFromHistory(_, 0, 0))
         .WillOnce(Return(true));
 
     commands::Command command;
     session.DeleteCandidateFromHistory(&command);
 
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
   {
     // A test case to delete candidate by ID.
     Session session(engine);
-    InitSessionToConversionWithAiueo(&session, &converter);
+    InitSessionToConversionWithAiueo(&session, converter.get());
 
-    EXPECT_CALL(converter, DeleteCandidateFromHistory(_, 0, 1))
+    EXPECT_CALL(*converter, DeleteCandidateFromHistory(_, 0, 1))
         .WillOnce(Return(true));
 
     commands::Command command;
@@ -10261,7 +10154,7 @@ TEST_F(SessionTest, DeleteCandidateFromHistory) {
     command.mutable_input()->mutable_command()->set_id(1);
     session.DeleteCandidateFromHistory(&command);
 
-    Mock::VerifyAndClearExpectations(&converter);
+    Mock::VerifyAndClearExpectations(converter.get());
   }
 }
 
@@ -10269,9 +10162,8 @@ TEST_F(SessionTest, SetConfig) {
   auto config =
       std::make_shared<config::Config>(config::ConfigHandler::DefaultConfig());
   config->set_session_keymap(config::Config::CUSTOM);
-  MockConverter converter;
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
   Session session(engine);
   session.PushUndoContext();
   session.SetConfig(config);
@@ -10284,8 +10176,6 @@ TEST_F(SessionTest, SetConfig) {
 TEST_F(SessionTest, ClearCompositionByBackspace) {
   // The internal candidate list should be cleared when the composition is
   // cleared by backspace.
-  MockConverter converter;
-
   Segments segments;
   {
     // Set up a mock conversion result.
@@ -10296,8 +10186,8 @@ TEST_F(SessionTest, ClearCompositionByBackspace) {
   }
 
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   Session session(engine);
@@ -10322,8 +10212,6 @@ TEST_F(SessionTest, ClearCompositionByBackspace) {
 TEST_F(SessionTest, ClearCompositionByEscape) {
   // The internal candidate list should be cleared when the composition is
   // cleared by escape.
-  MockConverter converter;
-
   Segments segments;
   {
     // Set up a mock conversion result.
@@ -10334,8 +10222,8 @@ TEST_F(SessionTest, ClearCompositionByEscape) {
   }
 
   MockEngine engine;
-  InitCreateEngineConverterMock(&engine, &converter);
-  EXPECT_CALL(converter, StartPrediction(_, _))
+  std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
+  EXPECT_CALL(*converter, StartPrediction(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   Session session(engine);

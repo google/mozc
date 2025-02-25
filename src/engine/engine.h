@@ -87,15 +87,13 @@ class Engine : public EngineInterface {
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
 
-  // TODO(taku): Avoid returning pointer, as converter_ may be updated
-  // dynamically and return value will become a dangling pointer.
-  ConverterInterface *GetConverter() const {
-    return converter_ ? converter_.get() : minimal_converter_.get();
+  std::shared_ptr<const ConverterInterface> GetConverter() const {
+    return converter_ ? converter_ : minimal_converter_;
   }
 
   std::unique_ptr<engine::EngineConverterInterface> CreateEngineConverter()
       const override {
-    return std::make_unique<engine::EngineConverter>(*GetConverter());
+    return std::make_unique<engine::EngineConverter>(GetConverter());
   }
 
   // Functions for Reload, Sync, Wait return true if successfully operated
@@ -156,8 +154,8 @@ class Engine : public EngineInterface {
   DataLoader loader_;
 
   std::unique_ptr<engine::SupplementalModelInterface> supplemental_model_;
-  std::unique_ptr<Converter> converter_;
-  std::unique_ptr<ConverterInterface> minimal_converter_;
+  std::shared_ptr<Converter> converter_;
+  std::shared_ptr<ConverterInterface> minimal_converter_;
   std::unique_ptr<DataLoader::Response> loader_response_;
   // Do not initialized with Init() because the cost of initialization is
   // negligible.

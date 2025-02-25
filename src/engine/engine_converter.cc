@@ -106,16 +106,17 @@ int32_t CalculateCursorOffset(absl::string_view committed_text) {
 }
 }  // namespace
 
-EngineConverter::EngineConverter(const ConverterInterface &converter)
-    : EngineConverter(converter, composer::GetSharedDefaultRequest(),
+EngineConverter::EngineConverter(
+    std::shared_ptr<const ConverterInterface> converter)
+    : EngineConverter(std::move(converter), composer::GetSharedDefaultRequest(),
                       config::ConfigHandler::GetSharedDefaultConfig()) {}
 
 EngineConverter::EngineConverter(
-    const ConverterInterface &converter,
+    std::shared_ptr<const ConverterInterface> converter,
     std::shared_ptr<const commands::Request> request,
     std::shared_ptr<const Config> config)
     : EngineConverterInterface(),
-      converter_(&converter),
+      converter_(std::move(converter)),
       segments_(),
       incognito_segments_(),
       segment_index_(0),
@@ -127,6 +128,7 @@ EngineConverter::EngineConverter(
       client_revision_(0),
       candidate_list_visible_(false) {
   DCHECK(request_);
+  DCHECK(converter_);
   DCHECK(config);
   conversion_preferences_.use_history = true;
   conversion_preferences_.request_suggestion = true;
@@ -1148,7 +1150,7 @@ void EngineConverter::FillOutput(const composer::Composer &composer,
 
 EngineConverter *EngineConverter::Clone() const {
   EngineConverter *engine_converter =
-      new EngineConverter(*converter_, request_, config_);
+      new EngineConverter(converter_, request_, config_);
 
   // Copy the members in order of their declarations.
   engine_converter->state_ = state_;

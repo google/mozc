@@ -139,7 +139,7 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
     return std::make_unique<Rewriter>(modules);
   };
 
-  auto converter = std::make_unique<Converter>(
+  auto converter = std::make_shared<Converter>(
       std::move(modules), immutable_converter_factory, predictor_factory,
       rewriter_factory);
 

@@ -407,7 +407,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 // TODO(toshiyuki): make dictionary mock and test strictly.
 TEST_F(ConverterTest, CanConvertTest) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   {
     Segments segments;
@@ -426,7 +426,7 @@ std::string ContextAwareConvert(const std::string &first_key,
                                 const std::string &first_value,
                                 const std::string &second_key) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
 
   Segments segments;
@@ -494,7 +494,7 @@ TEST_F(ConverterTest, ContextAwareConversionTest) {
 
 TEST_F(ConverterTest, CommitSegmentValue) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
 
@@ -546,7 +546,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
 
 TEST_F(ConverterTest, CommitSegments) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
 
@@ -610,7 +610,7 @@ TEST_F(ConverterTest, CommitSegments) {
 
 TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
 
@@ -656,7 +656,7 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
 
 TEST_F(ConverterTest, CandidateKeyTest) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
   EXPECT_TRUE(converter->StartConversion(
@@ -668,7 +668,7 @@ TEST_F(ConverterTest, CandidateKeyTest) {
 
 TEST_F(ConverterTest, Regression3437022) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   Segments segments;
 
   const std::string kKey1 = "けいたい";
@@ -785,7 +785,7 @@ TEST_F(ConverterTest, CompletePosIds) {
 TEST_F(ConverterTest, Regression3046266) {
   // Shouldn't correct nodes at the beginning of a sentence.
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   Segments segments;
 
   // Can be any string that has "ん" at the end
@@ -817,7 +817,7 @@ TEST_F(ConverterTest, Regression3046266) {
 TEST_F(ConverterTest, Regression5502496) {
   // Make sure key correction works for the first word of a sentence.
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   Segments segments;
 
   constexpr char kKey[] = "みんあ";
@@ -841,7 +841,7 @@ TEST_F(ConverterTest, StartSuggestion) {
   client_request.set_mixed_conversion(true);
 
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
 
   const std::string kShi = "し";
@@ -896,7 +896,7 @@ TEST_F(ConverterTest, StartSuggestion) {
 
 TEST_F(ConverterTest, StartPartialPrediction) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
   EXPECT_TRUE(converter->StartPrediction(
@@ -908,7 +908,7 @@ TEST_F(ConverterTest, StartPartialPrediction) {
 
 TEST_F(ConverterTest, StartPartialSuggestion) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
   EXPECT_TRUE(converter->StartPrediction(
@@ -920,7 +920,7 @@ TEST_F(ConverterTest, StartPartialSuggestion) {
 
 TEST_F(ConverterTest, StartPartialPredictionMobile) {
   std::unique_ptr<Engine> engine = CreateEngineWithMobilePredictor();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
   EXPECT_TRUE(converter->StartPrediction(
@@ -932,7 +932,7 @@ TEST_F(ConverterTest, StartPartialPredictionMobile) {
 
 TEST_F(ConverterTest, StartPartialSuggestionMobile) {
   std::unique_ptr<Engine> engine = CreateEngineWithMobilePredictor();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
   EXPECT_TRUE(converter->StartPrediction(
@@ -1108,7 +1108,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
 
 TEST_F(ConverterTest, ComposerKeySelection) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   auto table = std::make_shared<composer::Table>();
   config::Config config;
   {
@@ -1181,7 +1181,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
 TEST_F(ConverterTest, EmptyConvertReverseIssue8661091) {
   // This is a test case against b/8661091.
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   Segments segments;
   EXPECT_FALSE(converter->StartReverseConversion(&segments, ""));
@@ -1189,7 +1189,8 @@ TEST_F(ConverterTest, EmptyConvertReverseIssue8661091) {
 
 TEST_F(ConverterTest, StartReverseConversion) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  const ConverterInterface *converter = engine->GetConverter();
+  const std::shared_ptr<const ConverterInterface> converter =
+      engine->GetConverter();
 
   const std::string kHonKanji = "本";
   const std::string kHonHiragana = "ほん";
@@ -1334,7 +1335,7 @@ TEST_F(ConverterTest, StartReverseConversion) {
 
 TEST_F(ConverterTest, ReconstructHistory) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   constexpr char kTen[] = "１０";
 
@@ -1357,7 +1358,7 @@ TEST_F(ConverterTest, ReconstructHistory) {
 
 TEST_F(ConverterTest, LimitCandidatesSize) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   auto table = std::make_shared<composer::Table>();
   const config::Config &config = config::ConfigHandler::DefaultConfig();
@@ -1620,7 +1621,7 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependentPrediction) {
 
 TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   std::unique_ptr<Engine> engine = CreateEngineWithMobilePredictor();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
 
   config::Config config;
@@ -1679,7 +1680,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
 TEST_F(ConverterTest,
        DoNotPromotePrefixOfSingleEntryForEnrichPartialCandidates) {
   std::unique_ptr<Engine> engine = CreateEngineWithMobilePredictor();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
 
   commands::Request request;
@@ -1708,7 +1709,7 @@ TEST_F(ConverterTest,
 
 TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   std::unique_ptr<Engine> engine = CreateEngineWithMobilePredictor();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
   commands::Request request;
   config::Config config;
@@ -1782,7 +1783,7 @@ TEST_F(ConverterTest, ResizeSegmentWithOffset) {
   constexpr Segment::SegmentType kFree = Segment::FREE;
 
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   {
     // Resize {"あいうえ"} to {"あいう", "え"}
@@ -1885,7 +1886,7 @@ TEST_F(ConverterTest, ResizeSegmentsWithArray) {
   constexpr Segment::SegmentType kFree = Segment::FREE;
 
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   {
     // Resize {"あいうえ"} to {"あいう", "え"}
@@ -2121,7 +2122,7 @@ TEST_F(ConverterTest, ResizeSegmentsRequest) {
 
 TEST_F(ConverterTest, IntegrationWithCalculatorRewriter) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   {
     Segments segments;
@@ -2162,7 +2163,7 @@ TEST_F(ConverterTest, IntegrationWithDateRewriter) {
 
 TEST_F(ConverterTest, IntegrationWithSymbolRewriter) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   {
     Segments segments;
@@ -2176,7 +2177,7 @@ TEST_F(ConverterTest, IntegrationWithSymbolRewriter) {
 
 TEST_F(ConverterTest, IntegrationWithUnicodeRewriter) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   {
     Segments segments;
@@ -2190,7 +2191,7 @@ TEST_F(ConverterTest, IntegrationWithUnicodeRewriter) {
 
 TEST_F(ConverterTest, IntegrationWithSmallLetterRewriter) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
   {
     Segments segments;

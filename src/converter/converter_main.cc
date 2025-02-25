@@ -469,7 +469,7 @@ bool IsConsistentEngineNameAndType(const std::string &engine_name,
 
 void RunLoop(std::unique_ptr<Engine> engine, commands::Request &&request,
              config::Config &&config) {
-  ConverterInterface *converter = engine->GetConverter();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   CHECK(converter);
 
   Segments segments;

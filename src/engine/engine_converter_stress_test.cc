@@ -94,7 +94,7 @@ TEST_F(EngineConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   auto config = std::make_shared<config::Config>();
 
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
-  EngineConverter sconverter(*engine->GetConverter(), request, config);
+  EngineConverter sconverter(engine->GetConverter(), request, config);
   auto table = std::make_shared<composer::Table>();
   table->LoadFromFile(kRomajiHiraganaTable.c_str());
   composer::Composer composer(table, request, config);
