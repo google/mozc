@@ -212,6 +212,7 @@ mozc_cc_library(
         "//base:system_util",
         "//base:util",
         "//base:vlog",
+        "//base/container:flat_map",
         "//client",
         "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",

@@ -29,17 +29,19 @@
 
 #include "unix/ibus/key_translator.h"
 
-#include <map>
-#include <set>
+#include <optional>
 #include <string>
+#include <tuple>
 
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
+#include "base/container/flat_map.h"
 #include "base/vlog.h"
 
 namespace mozc {
 namespace {
-static const auto kSpecialKeyMap =
-    new std::map<uint, commands::KeyEvent::SpecialKey>({
+constexpr auto kSpecialKeyMap =
+    CreateFlatMap<uint, commands::KeyEvent::SpecialKey>({
         {IBUS_space, commands::KeyEvent::SPACE},
         {IBUS_Return, commands::KeyEvent::ENTER},
         {IBUS_Left, commands::KeyEvent::LEFT},
@@ -138,7 +140,7 @@ static const auto kSpecialKeyMap =
         //   - IBUS_Kana_Lock? IBUS_KEY_Kana_Shift?
     });
 
-static const auto kIbusModifierMaskMap = new std::map<uint, uint>({
+constexpr auto kIbusModifierMaskMap = CreateFlatMap<uint, uint>({
     {IBUS_Shift_L, IBUS_SHIFT_MASK},
     {IBUS_Shift_R, IBUS_SHIFT_MASK},
     {IBUS_Control_L, IBUS_CONTROL_MASK},
@@ -147,12 +149,20 @@ static const auto kIbusModifierMaskMap = new std::map<uint, uint>({
     {IBUS_Alt_R, IBUS_MOD1_MASK},
 });
 
+struct Kana {
+  absl::string_view non_shift;
+  absl::string_view shift;
+
+  constexpr bool operator<(const Kana &other) const {
+    return std::tie(non_shift, shift) < std::tie(other.non_shift, other.shift);
+  }
+}
+
 // Stores a mapping from ASCII to Kana character. For example, ASCII character
 // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
 // 'Hiragana Letter Small U' (with Shift modifier).
 // TODO(team): Add kana_map_dv to support Dvoraklayout.
-typedef std::map<uint, std::pair<const char *, const char *>> KanaMap;
-static const KanaMap *kKanaJpMap = new KanaMap({
+constexpr KanaMap kKanaJpMap = CreateFlatMap<uint, Kana>({
     {'1', {"ぬ", "ぬ"}},
     {'!', {"ぬ", "ぬ"}},
     {'2', {"ふ", "ふ"}},
@@ -253,7 +263,7 @@ static const KanaMap *kKanaJpMap = new KanaMap({
     {U'¥', {"ー", "ー"}},  // U+00A5
 });
 
-static const KanaMap *kKanaUsMap = new KanaMap({
+constexpr auto kKanaUsMap = CreateFlatMap<uint, Kana>({
     {'`', {"ろ", "ろ"}},  {'~', {"ろ", "ろ"}},  {'1', {"ぬ", "ぬ"}},
     {'!', {"ぬ", "ぬ"}},  {'2', {"ふ", "ふ"}},  {'@', {"ふ", "ふ"}},
     {'3', {"あ", "ぁ"}},  {'#', {"あ", "ぁ"}},  {'4', {"う", "ぅ"}},
@@ -288,12 +298,15 @@ static const KanaMap *kKanaUsMap = new KanaMap({
     {'?', {"め", "・"}},
 });
 
-const char *GetKanaValue(const KanaMap &kana_map, uint keyval, bool is_shift) {
-  KanaMap::const_iterator iter = kana_map.find(keyval);
-  if (iter == kana_map.end()) {
-    return nullptr;
+std::optional<absl::string_view> GetKanaValue(uint keyval, bool layout_is_jp,
+                                              bool is_shift) {
+  const Kana *kana = layout_is_jp ? kKanaJpMap.FindOrNull(keyval)
+                                  : kKanaUsMap.FindOrNull(keyval);
+  if (kana == nullptr) {
+    return std::nullopt;
   }
-  return (is_shift) ? iter->second.second : iter->second.first;
+
+  return is_shift ? kana->shift : kana->non_shift;
 }
 
 }  // namespace
@@ -332,9 +345,9 @@ bool KeyTranslator::Translate(uint keyval, uint keycode, uint modifiers,
              it != kIbusModifierMaskMap->end()) {
     // Convert Ibus modifier key to mask (e.g. IBUS_Shift_L to IBUS_SHIFT_MASK)
     modifiers |= it->second;
-  } else if (auto it = kSpecialKeyMap->find(keyval);
-             it != kSpecialKeyMap->end()) {
-    out_event->set_special_key(it->second);
+  } else if (const absl::string_view *key = kSpecialKeyMap->FindOrNull(keyval);
+             key != nullptr) {
+    out_event->set_special_key(*key);
   } else {
     MOZC_VLOG(1) << "Unknown keyval: " << keyval;
     return false;
@@ -366,7 +379,6 @@ bool KeyTranslator::IsKanaAvailable(uint keyval, uint keycode, uint modifiers,
   if ((modifiers & IBUS_CONTROL_MASK) || (modifiers & IBUS_MOD1_MASK)) {
     return false;
   }
-  const KanaMap &kana_map = layout_is_jp ? *kKanaJpMap : *kKanaUsMap;
 
   // When a Japanese keyboard is in use, the yen-sign key and the backslash
   // key generate the same |keyval|. In this case, we have to check |keycode|
@@ -377,13 +389,14 @@ bool KeyTranslator::IsKanaAvailable(uint keyval, uint keycode, uint modifiers,
   }
 
   const bool is_shift = (modifiers & IBUS_SHIFT_MASK);
-  const char *kana = GetKanaValue(kana_map, keyval, is_shift);
+  std::optional<absl::string_view> kana =
+      GetKanaValue(keyval, layout_is_jp, is_shift);
 
-  if (kana == nullptr) {
+  if (!kana.has_value()) {
     return false;
   }
   if (out) {
-    out->assign(kana);
+    out->assign(*kana);
   }
   return true;
 }
