@@ -581,7 +581,8 @@ Composer::Composer()
 
 Composer::Composer(std::shared_ptr<const commands::Request> request,
                    std::shared_ptr<const config::Config> config)
-    : Composer(Table::GetSharedDefaultTable(), request, config) {}
+    : Composer(Table::GetSharedDefaultTable(), std::move(request),
+               std::move(config)) {}
 
 Composer::Composer(commands::Request request, config::Config config)
     : Composer(Table::GetSharedDefaultTable(), std::move(request),
@@ -589,7 +590,7 @@ Composer::Composer(commands::Request request, config::Config config)
 
 Composer::Composer(std::shared_ptr<const Table> table,
                    commands::Request request, config::Config config)
-    : Composer(table,
+    : Composer(std::move(table),
                std::make_shared<const commands::Request>(std::move(request)),
                std::make_shared<const config::Config>(std::move(config))) {}
 
@@ -602,16 +603,16 @@ Composer::Composer(std::shared_ptr<const Table> table,
       comeback_input_mode_(transliteration::HIRAGANA),
       input_field_type_(commands::Context::NORMAL),
       shifted_sequence_count_(0),
-      composition_(table),
       max_length_(kMaxPreeditLength),
-      request_(request),
-      config_(config),
-      table_(table),
+      request_(std::move(request)),
+      config_(std::move(config)),
+      table_(std::move(table)),
+      composition_(table_),
       is_new_input_(true) {
   DCHECK(request_);
   DCHECK(config_);
-  SetInputMode(transliteration::HIRAGANA);
   DCHECK(table_);
+  SetInputMode(transliteration::HIRAGANA);
   Reset();
 }
 
@@ -646,19 +647,19 @@ void Composer::ReloadConfig() {
 bool Composer::Empty() const { return (GetLength() == 0); }
 
 void Composer::SetTable(std::shared_ptr<const Table> table) {
-  table_ = table;
-  DCHECK(table_);
+  DCHECK(table);
+  table_ = std::move(table);
   composition_.SetTable(table_);
 }
 
 void Composer::SetRequest(std::shared_ptr<const commands::Request> request) {
   DCHECK(request);
-  request_ = request;
+  request_ = std::move(request);
 }
 
 void Composer::SetConfig(std::shared_ptr<const config::Config> config) {
   DCHECK(config);
-  config_ = config;
+  config_ = std::move(config);
 }
 
 void Composer::SetInputMode(transliteration::TransliterationType mode) {

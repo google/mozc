@@ -446,8 +446,8 @@ void Composition::SetInputMode(Transliterators::Transliterator transliterator) {
 }
 
 void Composition::SetTable(std::shared_ptr<const Table> table) {
-  table_ = table;
-  DCHECK(table_);
+  DCHECK(table);
+  table_ = std::move(table);
 }
 
 bool Composition::IsToggleable(size_t position) const {

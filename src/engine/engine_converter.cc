@@ -121,17 +121,17 @@ EngineConverter::EngineConverter(
       segment_index_(0),
       result_(),
       candidate_list_(true),
-      request_(request),
+      request_(std::move(request)),
       state_(COMPOSITION),
       request_type_(ConversionRequest::CONVERSION),
       client_revision_(0),
       candidate_list_visible_(false) {
-  DCHECK(request);
+  DCHECK(request_);
   DCHECK(config);
   conversion_preferences_.use_history = true;
   conversion_preferences_.request_suggestion = true;
-  candidate_list_.set_page_size(request->candidate_page_size());
-  SetConfig(config);
+  candidate_list_.set_page_size(request_->candidate_page_size());
+  SetConfig(std::move(config));
 }
 
 bool EngineConverter::CheckState(
@@ -1639,13 +1639,13 @@ void EngineConverter::FillIncognitoCandidateWords(
 void EngineConverter::SetRequest(
     std::shared_ptr<const commands::Request> request) {
   DCHECK(request);
-  request_ = request;
+  request_ = std::move(request);
   candidate_list_.set_page_size(request_->candidate_page_size());
 }
 
 void EngineConverter::SetConfig(std::shared_ptr<const config::Config> config) {
   DCHECK(config);
-  config_ = config;
+  config_ = std::move(config);
   updated_command_ = Segment::Candidate::DEFAULT_COMMAND;
   selection_shortcut_ = config_->selection_shortcut();
   use_cascading_window_ = config_->use_cascading_window();

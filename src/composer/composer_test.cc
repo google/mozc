@@ -116,8 +116,6 @@ class ComposerTest : public ::testing::Test {
 
   void TearDown() override {
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
-    composer_.reset();
-    table_.reset();
   }
 
   std::unique_ptr<Composer> composer_;

@@ -113,13 +113,13 @@ bool GetFromPending(const Table *table, const absl::string_view key,
 
 CharChunk::CharChunk(Transliterators::Transliterator transliterator,
                      std::shared_ptr<const Table> table)
-    : table_(table), transliterator_(transliterator) {
+    : table_(std::move(table)), transliterator_(transliterator) {
   DCHECK(table_);
   DCHECK_NE(transliterator, Transliterators::LOCAL);
 }
 
 CharChunk::CharChunk(Transliterators::Transliterator transliterator)
-    : table_(Table::GetSharedDefaultTable()), transliterator_(transliterator) {
+    : CharChunk(transliterator, Table::GetSharedDefaultTable()) {
   DCHECK_NE(transliterator, Transliterators::LOCAL);
 }
 

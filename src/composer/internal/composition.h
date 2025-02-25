@@ -58,7 +58,8 @@ enum TrimMode {
 class Composition final {
  public:
   Composition() = default;
-  explicit Composition(std::shared_ptr<const Table> table) : table_(table) {
+  explicit Composition(std::shared_ptr<const Table> table)
+      : table_(std::move(table)) {
     DCHECK(table_);
   }
 

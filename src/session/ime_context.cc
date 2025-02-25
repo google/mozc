@@ -84,7 +84,7 @@ ImeContext::ImeContext(const ImeContext &src) : data_(src.data_) {
 
 void ImeContext::SetRequest(std::shared_ptr<const commands::Request> request) {
   DCHECK(request);
-  data_.request = request;
+  data_.request = std::move(request);
   if (converter_) {
     converter_->SetRequest(data_.request);
   }
@@ -97,7 +97,7 @@ const commands::Request &ImeContext::GetRequest() const {
 
 void ImeContext::SetConfig(std::shared_ptr<const config::Config> config) {
   DCHECK(config);
-  data_.config = config;
+  data_.config = std::move(config);
 
   if (converter_) {
     converter_->SetConfig(data_.config);
@@ -112,7 +112,7 @@ const config::Config &ImeContext::GetConfig() const { return *data_.config; }
 void ImeContext::SetKeyMapManager(
     std::shared_ptr<const keymap::KeyMapManager> key_map_manager) {
   DCHECK(key_map_manager);
-  data_.key_map_manager = key_map_manager;
+  data_.key_map_manager = std::move(key_map_manager);
 }
 
 const keymap::KeyMapManager &ImeContext::GetKeyMapManager() const {

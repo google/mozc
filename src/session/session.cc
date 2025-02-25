@@ -1154,19 +1154,19 @@ void Session::SetTable(std::shared_ptr<const composer::Table> table) {
     return;
   }
   ClearUndoContext();
-  context_->mutable_composer()->SetTable(table);
+  context_->mutable_composer()->SetTable(std::move(table));
 }
 
 void Session::SetConfig(std::shared_ptr<const config::Config> config) {
   DCHECK(config);
   ClearUndoContext();
-  context_->SetConfig(config);
+  context_->SetConfig(std::move(config));
 }
 
 void Session::SetRequest(std::shared_ptr<const commands::Request> request) {
   DCHECK(request);
   ClearUndoContext();
-  context_->SetRequest(request);
+  context_->SetRequest(std::move(request));
 }
 
 void Session::SetKeyMapManager(

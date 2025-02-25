@@ -395,7 +395,6 @@ class Composer final {
   commands::Context::InputFieldType input_field_type_;
 
   size_t shifted_sequence_count_;
-  Composition composition_;
 
   // The original text for the composition.  The value is usually
   // empty, and used for reverse conversion.
@@ -413,6 +412,8 @@ class Composer final {
   // a significant performance degradation. Style guide says that we prefer
   // to use std::shared_ptr for shared object.
   std::shared_ptr<const Table> table_;
+
+  Composition composition_;
 
   // Timestamp of last modified.
   int64_t timestamp_msec_ = 0;
