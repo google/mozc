@@ -33,8 +33,8 @@
 #include <iostream>
 #include <memory>
 #include <ostream>
-#include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -47,6 +47,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/container/flat_set.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/init_mozc.h"
@@ -452,19 +453,28 @@ std::string SelectIdDefFromName(const std::string &mozc_runfiles_dir,
   return "";
 }
 
-bool IsConsistentEngineNameAndType(const std::string &engine_name,
-                                   const std::string &engine_type) {
-  using NameAndTypeSet = std::set<std::pair<std::string, std::string>>;
-  static const NameAndTypeSet *kConsistentPairs =
-      new NameAndTypeSet({
-                          {"oss", "desktop"},
-                          {"mock", "desktop"},
-                          {"mock", "mobile"},
-                          {"default", "desktop"},
-                          {"", "desktop"},
-                          {"", "mobile"}});
-  return kConsistentPairs->find(std::make_pair(engine_name, engine_type)) !=
-         kConsistentPairs->end();
+bool IsConsistentEngineNameAndType(absl::string_view engine_name,
+                                   absl::string_view engine_type) {
+  // `std::pair` doesn't have enough `constexpr` support (yet).
+  struct NameAndType {
+    absl::string_view name;
+    absl::string_view type;
+  };
+
+  constexpr auto kConsistentPairs = CreateFlatSet<NameAndType>(
+      {
+          {"oss", "desktop"},
+          {"mock", "desktop"},
+          {"mock", "mobile"},
+          {"default", "desktop"},
+          {"", "desktop"},
+          {"", "mobile"},
+      },
+      [](const NameAndType &l, const NameAndType &r) {
+        return std::tie(l.name, l.type) < std::tie(r.name, r.type);
+      });
+
+  return kConsistentPairs.contains(NameAndType{engine_name, engine_type});
 }
 
 void RunLoop(std::unique_ptr<Engine> engine, commands::Request &&request,

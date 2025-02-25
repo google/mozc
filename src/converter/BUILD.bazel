@@ -658,6 +658,7 @@ mozc_cc_binary(
         "//base:number_util",
         "//base:singleton",
         "//base:system_util",
+        "//base/container:flat_set",
         "//base/protobuf:text_format",
         "//composer",
         "//composer:table",
