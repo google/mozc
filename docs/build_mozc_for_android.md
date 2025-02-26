@@ -69,7 +69,7 @@ Using `mozc/src/python-venv` as the virtual environment location is not mandator
 ### Check out additional build dependencies
 
 ```
-python build_tools/update_deps.py
+python3 build_tools/update_deps.py
 ```
 
 In this step, additional build dependencies will be downloaded.
