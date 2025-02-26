@@ -35,6 +35,7 @@ build for OSS Mozc.
 """
 
 import argparse
+from collections.abc import Iterator
 import dataclasses
 import hashlib
 import os
@@ -42,6 +43,10 @@ import pathlib
 import shutil
 import stat
 import subprocess
+import sys
+import tarfile
+import time
+from typing import Union
 import zipfile
 
 import requests
@@ -109,6 +114,11 @@ NINJA_WIN = ArchiveInfo(
     sha256='d0ee3da143211aa447e750085876c9b9d7bcdd637ab5b2c5b41349c617f22f3b',
 )
 
+LLVM_WIN = ArchiveInfo(
+    url='https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.7/clang+llvm-19.1.7-x86_64-pc-windows-msvc.tar.xz',
+    size=845236708,
+    sha256='b4557b4f012161f56a2f5d9e877ab9635cafd7a08f7affe14829bd60c9d357f0',
+)
 
 def get_sha256(path: pathlib.Path) -> str:
   """Returns SHA-256 hash digest of the specified file.
@@ -180,6 +190,115 @@ def download(archive: ArchiveInfo, dryrun: bool = False) -> None:
         f'{archive.filename} sha256 mismatch.'
         f' expected={archive.sha256} actual={actual_sha256}'
     )
+
+
+def llvm_extract_filter(
+    members: Iterator[tarfile.TarInfo],
+) -> Iterator[tarfile.TarInfo]:
+  """Custom extract filter for the LLVM Tar file.
+
+  This custom filter can be used to adjust directory structure and drop
+  unnecessary files/directories to save disk space.
+
+  Args:
+    members: an iterator of TarInfo from the Tar file.
+
+  Yields:
+    An iterator of TarInfo to be extracted.
+  """
+  with ProgressPrinter() as printer:
+    for info in members:
+      paths = info.name.split('/')
+      if '..' in paths:
+        continue
+      if len(paths) < 1:
+        continue
+      skipping = True
+      if (
+          len(paths) == 3
+          and paths[1] == 'bin'
+          and paths[2] in ['clang-cl.exe', 'llvm-lib.exe', 'lld-link.exe']
+      ):
+        skipping = False
+      elif len(paths) >= 2 and paths[1] in ['include', 'lib']:
+        skipping = False
+      if skipping:
+        printer.print_line('skipping   ' + info.name)
+        continue
+      printer.print_line('extracting ' + info.name)
+      yield info
+
+
+class StatefulLLVMExtractionFilter:
+  """A stateful extraction filter for PEP 706.
+
+  See https://peps.python.org/pep-0706/ for details.
+  """
+
+  def __enter__(self):
+    self.printer = ProgressPrinter().__enter__()
+    return self
+
+  def __exit__(self, *exc):
+    self.printer.__exit__(exc)
+
+  def __call__(
+      self,
+      member: tarfile.TarInfo,
+      dest_path: Union[str, pathlib.Path],
+  ) -> Union[tarfile.TarInfo, None]:
+    data = tarfile.data_filter(member, dest_path)
+    if data is None:
+      return None
+
+    skipping = True
+    paths = member.name.split('/')
+    if (
+        len(paths) == 3
+        and paths[1] == 'bin'
+        and paths[2] in ['clang-cl.exe', 'llvm-lib.exe', 'lld-link.exe']
+    ):
+      skipping = False
+    elif len(paths) >= 2 and paths[1] in ['include', 'lib']:
+      skipping = False
+    if skipping:
+      self.printer.print_line('skipping   ' + member.name)
+      return None
+    self.printer.print_line('extracting ' + member.name)
+    return member
+
+
+def extract_llvm(dryrun: bool = False) -> None:
+  """Extract LLVM archive.
+
+  Args:
+    dryrun: True if this is a dry-run.
+  """
+  if not is_windows():
+    return
+
+  archive = LLVM_WIN
+  src = CACHE_DIR.joinpath(archive.filename)
+  dest = ABS_THIRD_PARTY_DIR.joinpath('llvm').absolute()
+
+  if dest.exists():
+    if dryrun:
+      print(f"dryrun: shutil.rmtree(r'{dest}')")
+    else:
+      shutil.rmtree(dest)
+
+  if dryrun:
+    print(f'dryrun: Extracting {src} into {dest}')
+  else:
+    dest.mkdir(parents=True)
+    with tarfile.open(src, mode='r|xz') as f:
+      # tarfile.data_filter is available in Python 3.12+.
+      # See https://peps.python.org/pep-0706/ for details.
+      if getattr(tarfile, 'data_filter', None):
+        with StatefulLLVMExtractionFilter() as filter:
+          f.extractall(path=dest, filter=filter)
+      else:
+        f.extractall(path=dest, members=llvm_extract_filter(f))
 
 
 def extract_ninja(dryrun: bool = False) -> None:
@@ -329,6 +448,7 @@ def main():
   parser.add_argument('--dryrun', action='store_true', default=False)
   parser.add_argument('--noninja', action='store_true', default=False)
   parser.add_argument('--noqt', action='store_true', default=False)
+  parser.add_argument('--nollvm', action='store_true', default=False)
   parser.add_argument('--nowix', action='store_true', default=False)
   parser.add_argument('--nondk', action='store_true', default=False)
   parser.add_argument('--nosubmodules', action='store_true', default=False)
@@ -349,12 +469,17 @@ def main():
       archives.append(NDK_LINUX)
     elif is_mac():
       archives.append(NDK_MAC)
+  if (not args.nollvm) and is_windows():
+    archives.append(LLVM_WIN)
 
   for archive in archives:
     download(archive, args.dryrun)
 
   if args.cache_only:
     return
+
+  if LLVM_WIN in archives:
+    extract_llvm(args.dryrun)
 
   if (not args.nowix) and is_windows():
     restore_dotnet_tools(args.dryrun)
