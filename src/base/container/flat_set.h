@@ -77,7 +77,8 @@ class FlatSet {
 // Declare the variable as auto and use `CreateFlatSet`. The actual type is
 // complex and explicitly declaring it would leak the number of elements, `N`.
 template <class T, class Compare = std::less<>, size_t N>
-constexpr auto CreateFlatSet(T (&&elements)[N], const Compare &cmp = {}) {
+constexpr auto CreateFlatSet(T (&&elements)[N],
+                             const Compare &cmp = Compare()) {
   return FlatSet<T, Compare, N>(internal::ToArray(std::move(elements)), cmp);
 }
 

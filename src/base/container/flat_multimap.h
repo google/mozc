@@ -97,7 +97,7 @@ class FlatMultimap {
 // complex and explicitly declaring it would leak the number of entries, `N`.
 template <class K, class V, class CompareKey = std::less<>, size_t N>
 constexpr auto CreateFlatMultimap(Entry<K, V> (&&entries)[N],
-                                  const CompareKey &cmp_key = {}) {
+                                  const CompareKey &cmp_key = CompareKey()) {
   return FlatMultimap<K, V, CompareKey, N>(
       internal::ToArray(std::move(entries)), cmp_key);
 }

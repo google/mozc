@@ -46,7 +46,7 @@ namespace mozc::internal {
 // Sorts the given span in place.
 // C++17 backport of constexpr `std::sort` from C++20.
 template <class T, class Compare = std::less<>>
-constexpr void Sort(absl::Span<T> span, const Compare &cmp = {}) {
+constexpr void Sort(absl::Span<T> span, const Compare &cmp = Compare()) {
   // Since we're dealing with compile-time constants, expected to be small,
   // we use insertion sort. It's faster for small inputs, and easier to
   // implement :)
@@ -114,7 +114,7 @@ inline void DuplicateEntryFound() { LOG(FATAL) << "Duplicate entry found"; }
 // according to `cmp`.
 template <class T, class Compare = std::less<>>
 constexpr void SortAndVerifyUnique(absl::Span<T> span,
-                                   const Compare &cmp = {}) {
+                                   const Compare &cmp = Compare()) {
   Sort(span, cmp);
   for (int i = 0; i + i < span.size(); ++i) {
     if (!cmp(span[i], span[i + 1]) && !cmp(span[i + 1], span[i])) {
