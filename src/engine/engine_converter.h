@@ -61,7 +61,6 @@ class EngineConverter : public EngineConverterInterface {
                   std::shared_ptr<const config::Config> config);
   explicit EngineConverter(std::shared_ptr<const ConverterInterface> converter);
   EngineConverter(const EngineConverter &) = delete;
-  EngineConverter &operator=(const EngineConverter &) = delete;
 
   // Checks if the current state is in the state bitmap.
   bool CheckState(States) const override;
@@ -245,8 +244,6 @@ class EngineConverter : public EngineConverterInterface {
   void OnStartComposition(const commands::Context &context) override;
 
   // Copies EngineConverter
-  // TODO(hsumita): Copy all member variables.
-  // Currently, converter_ is not copied.
   EngineConverter *Clone() const override;
 
   void set_selection_shortcut(
@@ -264,6 +261,9 @@ class EngineConverter : public EngineConverterInterface {
       std::numeric_limits<size_t>::max();
 
  private:
+  // Uses default copy operator to simply copy all members.
+  EngineConverter &operator=(const EngineConverter &) = default;
+
   friend class EngineConverterTest;
 
   // Resets the result value stored at the previous command.

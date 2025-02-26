@@ -66,10 +66,6 @@ struct ConversionPreferences {
 // support stateful operations related with the converter.
 class EngineConverterInterface {
  public:
-  EngineConverterInterface() = default;
-  EngineConverterInterface(const EngineConverterInterface &) = delete;
-  EngineConverterInterface &operator=(const EngineConverterInterface &) =
-      delete;
   virtual ~EngineConverterInterface() = default;
 
   typedef int States;

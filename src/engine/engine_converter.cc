@@ -1151,26 +1151,7 @@ void EngineConverter::FillOutput(const composer::Composer &composer,
 EngineConverter *EngineConverter::Clone() const {
   EngineConverter *engine_converter =
       new EngineConverter(converter_, request_, config_);
-
-  // Copy the members in order of their declarations.
-  engine_converter->state_ = state_;
-  // TODO(team): copy of |converter_| member.
-  // We cannot copy the member converter_ from EngineConverterInterface because
-  // it doesn't (and shouldn't) define a method like GetConverter(). At the
-  // moment it's ok because the current design guarantees that the converter is
-  // singleton. However, we should refactor such bad design; see also the
-  // comment right above.
-  engine_converter->segments_ = segments_;
-  engine_converter->incognito_segments_ = incognito_segments_;
-  engine_converter->segment_index_ = segment_index_;
-  engine_converter->previous_suggestions_ = previous_suggestions_;
-  engine_converter->conversion_preferences_ = conversion_preferences();
-  engine_converter->result_ = result_;
-  engine_converter->request_ = request_;
-  engine_converter->config_ = config_;
-  engine_converter->use_cascading_window_ = use_cascading_window_;
-  engine_converter->selected_candidate_indices_ = selected_candidate_indices_;
-  engine_converter->request_type_ = request_type_;
+  *engine_converter = *this;
 
   if (engine_converter->CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     // UpdateCandidateList() is not simple setter and it uses some members.

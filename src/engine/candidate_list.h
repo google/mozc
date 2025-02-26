@@ -113,6 +113,15 @@ class CandidateList final {
         rotate_(rotate),
         focused_(false) {}
 
+  // Minimum copy operator.
+  // TODO(all): Support full copy operation of CandidateList as EngineConverter
+  // is currently copyable. Since the CandidateList contractor is
+  // initialized with `rotate`, `rotate_` is copied in the copy operator.
+  CandidateList &operator=(const CandidateList &candidate_list) {
+    rotate_ = candidate_list.rotate_;
+    return *this;
+  }
+
   void Clear();
 
   const Candidate &GetDeepestFocusedCandidate() const;
