@@ -156,13 +156,13 @@ struct Kana {
   constexpr bool operator<(const Kana &other) const {
     return std::tie(non_shift, shift) < std::tie(other.non_shift, other.shift);
   }
-}
+};
 
 // Stores a mapping from ASCII to Kana character. For example, ASCII character
 // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
 // 'Hiragana Letter Small U' (with Shift modifier).
 // TODO(team): Add kana_map_dv to support Dvoraklayout.
-constexpr KanaMap kKanaJpMap = CreateFlatMap<uint, Kana>({
+constexpr auto kKanaJpMap = CreateFlatMap<uint, Kana>({
     {'1', {"ぬ", "ぬ"}},
     {'!', {"ぬ", "ぬ"}},
     {'2', {"ふ", "ふ"}},
@@ -341,11 +341,12 @@ bool KeyTranslator::Translate(uint keyval, uint keycode, uint modifiers,
       out_event->add_modifier_keys(commands::KeyEvent::CAPS);
     }
     out_event->set_key_code(keyval);
-  } else if (auto it = kIbusModifierMaskMap->find(keyval);
-             it != kIbusModifierMaskMap->end()) {
+  } else if (const uint *mask = kIbusModifierMaskMap.FindOrNull(keyval);
+             mask != nullptr) {
     // Convert Ibus modifier key to mask (e.g. IBUS_Shift_L to IBUS_SHIFT_MASK)
-    modifiers |= it->second;
-  } else if (const absl::string_view *key = kSpecialKeyMap->FindOrNull(keyval);
+    modifiers |= *mask;
+  } else if (const commands::KeyEvent::SpecialKey *key =
+                 kSpecialKeyMap.FindOrNull(keyval);
              key != nullptr) {
     out_event->set_special_key(*key);
   } else {
