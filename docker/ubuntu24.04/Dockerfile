@@ -27,8 +27,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Build instructions with this Dockerfile.
-# https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
+# This file is deprecated.
+# See the following pages for the latest build instructions.
+# - https://github.com/google/mozc/blob/master/docs/build_mozc_for_linux.md
+# - https://github.com/google/mozc/blob/master/docs/build_mozc_for_android.md
 
 FROM ubuntu:24.04
 
