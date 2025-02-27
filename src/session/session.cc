@@ -1435,13 +1435,12 @@ bool Session::MaybeSelectCandidate(commands::Command *command) {
   return context_->mutable_converter()->CandidateMoveToShortcut(shortcut);
 }
 
-void Session::set_client_capability(const commands::Capability &capability) {
-  *context_->mutable_client_capability() = capability;
+void Session::set_client_capability(commands::Capability capability) {
+  *context_->mutable_client_capability() = std::move(capability);
 }
 
-void Session::set_application_info(
-    const commands::ApplicationInfo &application_info) {
-  *context_->mutable_application_info() = application_info;
+void Session::set_application_info(commands::ApplicationInfo application_info) {
+  *context_->mutable_application_info() = std::move(application_info);
 }
 
 const commands::ApplicationInfo &Session::application_info() const {
