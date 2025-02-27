@@ -46,15 +46,7 @@ namespace engine {
 void Candidate::Clear() {
   id_ = 0;
   attributes_ = NO_ATTRIBUTES;
-  subcandidate_list_ = nullptr;
-  owned_subcandidate_list_.reset();
-}
-
-CandidateList *Candidate::allocate_subcandidate_list(bool rotate) {
-  DCHECK(!owned_subcandidate_list_);
-  owned_subcandidate_list_ = std::make_unique<CandidateList>(rotate);
-  subcandidate_list_ = owned_subcandidate_list_.get();
-  return subcandidate_list_;
+  subcandidate_list_.reset();
 }
 
 void CandidateList::Clear() {
@@ -106,12 +98,8 @@ void CandidateList::AddCandidateWithAttributes(const int id,
   new_candidate.set_attributes(attributes);
 }
 
-void CandidateList::AddSubCandidateList(CandidateList *subcandidate_list) {
-  candidates_.emplace_back().set_subcandidate_list(subcandidate_list);
-}
-
-CandidateList *CandidateList::AllocateSubCandidateList(const bool rotate) {
-  return candidates_.emplace_back().allocate_subcandidate_list(rotate);
+CandidateList *CandidateList::AddSubCandidateList() {
+  return candidates_.emplace_back().mutable_subcandidate_list();
 }
 
 int CandidateList::focused_id() const {

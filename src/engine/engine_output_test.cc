@@ -68,7 +68,6 @@ void FillDummySegment(const DummySegment *dummy_segments, const size_t num,
 TEST(EngineOutputTest, FillCandidate) {
   Segment segment;
   Candidate candidate;
-  CandidateList candidate_list(true);
   commands::CandidateWindow_Candidate candidate_proto;
 
   const std::string kValue13 = "Value only";
@@ -87,11 +86,6 @@ TEST(EngineOutputTest, FillCandidate) {
   segment.mutable_candidate(42)->prefix = kPrefix42;
   segment.mutable_candidate(42)->suffix = kSuffix42;
   segment.mutable_candidate(42)->description = kDescription42;
-  candidate_list.set_name(kSubcandidateList);
-  static constexpr int kFirstIdInSubList = -123;
-  candidate_list.AddCandidate(kFirstIdInSubList, "minus 123");
-  candidate_list.AddCandidate(-456, "minus 456");
-  candidate_list.AddCandidate(-789, "minus 789");
 
   candidate.set_id(13);
   output::FillCandidate(segment, candidate, &candidate_proto);
@@ -112,7 +106,13 @@ TEST(EngineOutputTest, FillCandidate) {
 
   candidate.Clear();
   candidate_proto.Clear();
-  candidate.set_subcandidate_list(&candidate_list);
+  CandidateList *candidate_list = candidate.mutable_subcandidate_list();
+  candidate_list->set_rotate(true);
+  candidate_list->set_name(kSubcandidateList);
+  static constexpr int kFirstIdInSubList = -123;
+  candidate_list->AddCandidate(kFirstIdInSubList, "minus 123");
+  candidate_list->AddCandidate(-456, "minus 456");
+  candidate_list->AddCandidate(-789, "minus 789");
   output::FillCandidate(segment, candidate, &candidate_proto);
   EXPECT_TRUE(candidate_proto.has_id());
   EXPECT_EQ(candidate_proto.id(), kFirstIdInSubList);
@@ -123,7 +123,6 @@ TEST(EngineOutputTest, FillCandidate) {
 TEST(EngineOutputTest, FillCandidateWindow) {
   Segment segment;
   CandidateList candidate_list(true);
-  CandidateList subcandidate_list(true);
   commands::CandidateWindow candidate_window_proto;
 
   const std::string kSubcandidateList = "Subcandidates";
@@ -138,12 +137,13 @@ TEST(EngineOutputTest, FillCandidateWindow) {
   candidate_list.set_page_size(9);
   candidate_list.AddCandidate(0, "0");
   candidate_list.AddCandidate(1, "1");
-  candidate_list.AddSubCandidateList(&subcandidate_list);
-  subcandidate_list.set_focused(true);
-  subcandidate_list.set_name(kSubcandidateList);
-  subcandidate_list.AddCandidate(2, "2");
-  subcandidate_list.AddCandidate(3, "3");
-  subcandidate_list.AddCandidate(4, "4");
+  CandidateList *subcandidate_list = candidate_list.AddSubCandidateList();
+  subcandidate_list->set_focused(true);
+  subcandidate_list->set_rotate(true);
+  subcandidate_list->set_name(kSubcandidateList);
+  subcandidate_list->AddCandidate(2, "2");
+  subcandidate_list->AddCandidate(3, "3");
+  subcandidate_list->AddCandidate(4, "4");
 
   // Focused index = 0. page_size = 9.
   output::FillCandidateWindow(segment, candidate_list, 0,
@@ -193,7 +193,7 @@ TEST(EngineOutputTest, FillCandidateWindow) {
   // Check focused_index.
   candidate_window_proto.Clear();
   candidate_list.set_focused(false);
-  subcandidate_list.set_focused(true);
+  subcandidate_list->set_focused(true);
   output::FillCandidateWindow(segment, candidate_list, 0,
                               &candidate_window_proto);
   EXPECT_FALSE(candidate_window_proto.has_focused_index());
@@ -202,7 +202,7 @@ TEST(EngineOutputTest, FillCandidateWindow) {
 
   candidate_window_proto.Clear();
   candidate_list.set_focused(false);
-  subcandidate_list.set_focused(false);
+  subcandidate_list->set_focused(false);
   output::FillCandidateWindow(segment, candidate_list, 0,
                               &candidate_window_proto);
   EXPECT_FALSE(candidate_window_proto.has_focused_index());
@@ -211,7 +211,7 @@ TEST(EngineOutputTest, FillCandidateWindow) {
 
   candidate_window_proto.Clear();
   candidate_list.set_focused(true);
-  subcandidate_list.set_focused(false);
+  subcandidate_list->set_focused(false);
   output::FillCandidateWindow(segment, candidate_list, 0,
                               &candidate_window_proto);
   EXPECT_TRUE(candidate_window_proto.has_focused_index());
@@ -231,9 +231,6 @@ TEST(EngineOutputTest, FillAllCandidateWords) {
   //   3| 5 |  3:[sub2_1,
   //   4| 6 |     sub2_2]]
   CandidateList main_list(true);
-  CandidateList sub1(true);
-  CandidateList sub2(true);
-  CandidateList subsub1(true);
   commands::CandidateList candidates_proto;
 
   // Initialize Segment
@@ -259,32 +256,35 @@ TEST(EngineOutputTest, FillAllCandidateWords) {
   segment.mutable_candidate(4)->content_key = kSpecialKey;
 
   // Main
-  main_list.AddSubCandidateList(&sub1);
+  CandidateList *sub1 = main_list.AddSubCandidateList();
+  sub1->set_rotate(true);
   main_list.AddCandidate(0, kValues[0]);
-  main_list.AddSubCandidateList(&sub2);
+  CandidateList *sub2 = main_list.AddSubCandidateList();
+  sub2->set_rotate(true);
 
   // Sub1
-  sub1.AddCandidate(1, kValues[1]);
-  sub1.AddSubCandidateList(&subsub1);
-  sub1.AddCandidate(2, kValues[2]);
+  sub1->AddCandidate(1, kValues[1]);
+  CandidateList *subsub1 = sub1->AddSubCandidateList();
+  subsub1->set_rotate(true);
+  sub1->AddCandidate(2, kValues[2]);
 
   // Sub2
-  sub2.AddCandidate(3, kValues[3]);
-  sub2.AddCandidate(4, kValues[4]);
+  sub2->AddCandidate(3, kValues[3]);
+  sub2->AddCandidate(4, kValues[4]);
 
   // SubSub1
-  subsub1.AddCandidate(5, kValues[5]);
-  subsub1.AddCandidate(6, kValues[6]);
+  subsub1->AddCandidate(5, kValues[5]);
+  subsub1->AddCandidate(6, kValues[6]);
 
   // Set focus to ID:5 / Index:1
   main_list.set_focused(true);
-  sub1.set_focused(true);
-  subsub1.set_focused(true);
+  sub1->set_focused(true);
+  subsub1->set_focused(true);
   main_list.MoveToId(5);
   EXPECT_EQ(main_list.focused_id(), 5);
   EXPECT_EQ(main_list.focused_index(), 0);
-  EXPECT_EQ(sub1.focused_index(), 1);
-  EXPECT_EQ(subsub1.focused_index(), 0);
+  EXPECT_EQ(sub1->focused_index(), 1);
+  EXPECT_EQ(subsub1->focused_index(), 0);
   // End of Initialization
 
   // Execute FillAllCandidateWords
@@ -418,13 +418,12 @@ TEST(EngineOutputTest, ShouldShowUsages) {
   {
     Segment segment;
     CandidateList candidate_list(true);
-    CandidateList sub(true);
     static const DummySegment dummy_segments[] = {
         {"val0", 0, "", ""}, {"val1", 0, "", ""}, {"val2", 0, "", ""},
         {"val3", 0, "", ""}, {"val4", 0, "", ""},
     };
     FillDummySegment(dummy_segments, 5, &segment, &candidate_list);
-    candidate_list.AddSubCandidateList(&sub);
+    candidate_list.AddSubCandidateList()->set_rotate(true);
     candidate_list.set_focused(true);
     ASSERT_TRUE(candidate_list.MoveToId(0));
     ASSERT_FALSE(output::ShouldShowUsages(segment, candidate_list));
@@ -432,13 +431,12 @@ TEST(EngineOutputTest, ShouldShowUsages) {
   {
     Segment segment;
     CandidateList candidate_list(true);
-    CandidateList sub(true);
     static const DummySegment dummy_segments[] = {
         {"val0", 0, "", ""}, {"val1", 10, "title1", ""}, {"val2", 0, "", ""},
         {"val3", 0, "", ""}, {"val4", 0, "", ""},
     };
     FillDummySegment(dummy_segments, 5, &segment, &candidate_list);
-    candidate_list.AddSubCandidateList(&sub);
+    candidate_list.AddSubCandidateList()->set_rotate(true);
     candidate_list.set_focused(true);
     ASSERT_TRUE(candidate_list.MoveToId(0));
     ASSERT_TRUE(output::ShouldShowUsages(segment, candidate_list));
@@ -446,7 +444,6 @@ TEST(EngineOutputTest, ShouldShowUsages) {
   {
     Segment segment;
     CandidateList candidate_list(true);
-    CandidateList sub(true);
     static const DummySegment dummy_segments[] = {
         {"val00", 10, "title00", ""}, {"val01", 0, "", ""},
         {"val02", 0, "", ""},         {"val03", 0, "", ""},
@@ -465,7 +462,7 @@ TEST(EngineOutputTest, ShouldShowUsages) {
         {"val28", 0, "", ""},         {"val29", 0, "", ""},
     };
     FillDummySegment(dummy_segments, 30, &segment, &candidate_list);
-    candidate_list.AddSubCandidateList(&sub);
+    candidate_list.AddSubCandidateList()->set_rotate(true);
     // pages of candidate_list:
     //  [00-08],[09-17],[18-26],[27-29]+subcandidate
     candidate_list.set_focused(true);
@@ -489,7 +486,6 @@ TEST(EngineOutputTest, ShouldShowUsages) {
 TEST(EngineOutputTest, FillUsages) {
   Segment segment;
   CandidateList candidate_list(true);
-  CandidateList sub(true);
   commands::CandidateWindow candidate_window_proto;
   static const DummySegment dummy_segments[] = {
       {"val00", 10, "title00", "desc00"},
@@ -524,7 +520,7 @@ TEST(EngineOutputTest, FillUsages) {
       {"val29", 0, "", ""},
   };
   FillDummySegment(dummy_segments, 30, &segment, &candidate_list);
-  candidate_list.AddSubCandidateList(&sub);
+  candidate_list.AddSubCandidateList()->set_rotate(true);
 
   // pages of candidate_list:
   //  [00-08],[09-17],[18-26],[27-29]+subcandidate

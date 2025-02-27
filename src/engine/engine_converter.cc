@@ -1445,8 +1445,8 @@ void EngineConverter::AppendCandidateList() {
   // Set transliteration candidates
   CandidateList *transliterations;
   if (use_cascading_window_) {
-    constexpr bool kNoRotate = false;
-    transliterations = candidate_list_.AllocateSubCandidateList(kNoRotate);
+    transliterations = candidate_list_.AddSubCandidateList();
+    transliterations->set_rotate(false);
     transliterations->set_focused(true);
 
     constexpr char kT13nLabel[] = "そのほかの文字種";

@@ -41,22 +41,20 @@ class CandidateListTest : public testing::Test {
  protected:
   void SetUp() override {
     main_list_ = std::make_unique<CandidateList>(true);
-    sub_list_2_ = std::make_unique<CandidateList>(true);
-    sub_sub_list_2_1_ = std::make_unique<CandidateList>(false);
 
-    main_list_->AddCandidate(0, "0");                           // main0
-    main_list_->AddCandidate(1, "1");                           // main1
-    sub_list_1_ = main_list_->AllocateSubCandidateList(false);  // main2
-    main_list_->AddCandidate(2, "2");                           // main3
-    main_list_->AddCandidate(3, "3");                           // main4
-    main_list_->AddCandidate(4, "4");                           // main5
-    main_list_->AddCandidate(5, "5");                           // main6
-    main_list_->AddSubCandidateList(sub_list_2_.get());         // main7
-    main_list_->AddCandidate(6, "6");                           // main8
-    main_list_->AddCandidate(7, "7");                           // main9
-    main_list_->AddCandidate(8, "8");                           // main10
-    main_list_->AddCandidate(9, "9");                           // main11
-    main_list_->AddCandidate(10, "10");                         // main12
+    main_list_->AddCandidate(0, "0");                 // main0
+    main_list_->AddCandidate(1, "1");                 // main1
+    sub_list_1_ = main_list_->AddSubCandidateList();  // main2
+    main_list_->AddCandidate(2, "2");                 // main3
+    main_list_->AddCandidate(3, "3");                 // main4
+    main_list_->AddCandidate(4, "4");                 // main5
+    main_list_->AddCandidate(5, "5");                 // main6
+    sub_list_2_ = main_list_->AddSubCandidateList();  // main7
+    main_list_->AddCandidate(6, "6");                 // main8
+    main_list_->AddCandidate(7, "7");                 // main9
+    main_list_->AddCandidate(8, "8");                 // main10
+    main_list_->AddCandidate(9, "9");                 // main11
+    main_list_->AddCandidate(10, "10");               // main12
 
     sub_list_1_->AddCandidate(-1, "-1");  // sub10
     sub_list_1_->AddCandidate(-2, "-2");  // sub11
@@ -64,12 +62,13 @@ class CandidateListTest : public testing::Test {
     sub_list_1_->AddCandidate(-4, "-4");  // sub13
     sub_list_1_->AddCandidate(-5, "-5");  // sub14
 
-    sub_list_2_->AddSubCandidateList(sub_sub_list_2_1_.get());  // sub20
-    sub_list_2_->AddCandidate(21, "21");                        // sub21
-    sub_list_2_->AddCandidate(22, "22");                        // sub22
-    sub_list_2_->AddCandidate(23, "23");                        // sub23
-    sub_list_2_->AddCandidate(24, "24");                        // sub24
-    sub_list_2_->AddCandidate(25, "25");                        // sub25
+    sub_sub_list_2_1_ = sub_list_2_->AddSubCandidateList();  // sub20
+    sub_list_2_->set_rotate(true);
+    sub_list_2_->AddCandidate(21, "21");  // sub21
+    sub_list_2_->AddCandidate(22, "22");  // sub22
+    sub_list_2_->AddCandidate(23, "23");  // sub23
+    sub_list_2_->AddCandidate(24, "24");  // sub24
+    sub_list_2_->AddCandidate(25, "25");  // sub25
 
     sub_sub_list_2_1_->AddCandidate(210, "210");  // subsub210
     sub_sub_list_2_1_->AddCandidate(211, "211");  // subsub211
@@ -78,9 +77,9 @@ class CandidateListTest : public testing::Test {
 
   std::unique_ptr<CandidateList> main_list_;
   // sub_list_1_ will be initialized on the fly.
-  CandidateList *sub_list_1_;
-  std::unique_ptr<CandidateList> sub_list_2_;
-  std::unique_ptr<CandidateList> sub_sub_list_2_1_;
+  CandidateList *sub_list_1_ = nullptr;
+  CandidateList *sub_list_2_ = nullptr;
+  CandidateList *sub_sub_list_2_1_ = nullptr;
 };
 
 TEST_F(CandidateListTest, MoveToId) {
@@ -249,7 +248,6 @@ TEST_F(CandidateListTest, Clear) {
 
 TEST_F(CandidateListTest, Duplication) {
   CandidateList main_list(true);
-  CandidateList sub_list(true);
 
   main_list.AddCandidate(0, "0");
   main_list.AddCandidate(1, "1");
@@ -257,13 +255,13 @@ TEST_F(CandidateListTest, Duplication) {
   main_list.AddCandidate(3, "0");  // dup
   main_list.AddCandidate(4, "0");  // dup
   main_list.AddCandidate(5, "1");  // dup
-  main_list.AddSubCandidateList(&sub_list);
-  sub_list.AddCandidate(6, "0");  // not dup
-  sub_list.AddCandidate(7, "7");
-  sub_list.AddCandidate(8, "7");  // dup
+  CandidateList *sub_list = main_list.AddSubCandidateList();
+  sub_list->AddCandidate(6, "0");  // not dup
+  sub_list->AddCandidate(7, "7");
+  sub_list->AddCandidate(8, "7");  // dup
 
   EXPECT_EQ(main_list.size(), 4);
-  EXPECT_EQ(sub_list.size(), 2);
+  EXPECT_EQ(sub_list->size(), 2);
 
   main_list.MoveToId(3);
   EXPECT_EQ(main_list.focused_id(), 0);
@@ -408,7 +406,7 @@ TEST_F(CandidateListTest, AttributesWithSubList) {
   CandidateList main_list(true);
   main_list.AddCandidate(0, "kanji");
 
-  CandidateList *sub_list = main_list.AllocateSubCandidateList(false);
+  CandidateList *sub_list = main_list.AddSubCandidateList();
   sub_list->AddCandidateWithAttributes(1, "hiragana", HIRAGANA);
   sub_list->AddCandidateWithAttributes(2, "f_katakana", FULL_WIDTH | KATAKANA);
   sub_list->AddCandidateWithAttributes(3, "h_ascii",

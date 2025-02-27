@@ -88,25 +88,22 @@ class Candidate final {
     DCHECK(subcandidate_list_);
     return *subcandidate_list_;
   }
-  CandidateList *mutable_subcandidate_list() { return subcandidate_list_; }
-  void set_subcandidate_list(CandidateList *subcandidate_list) {
-    DCHECK(!owned_subcandidate_list_);
-    subcandidate_list_ = subcandidate_list;
+  CandidateList *mutable_subcandidate_list() {
+    if (!subcandidate_list_) {
+      subcandidate_list_ = std::make_unique<CandidateList>();
+    }
+    return subcandidate_list_.get();
   }
-  // Allocate a subcandidate list and return it.
-  CandidateList *allocate_subcandidate_list(bool rotate);
 
  private:
   int id_ = 0;
   Attributes attributes_ = NO_ATTRIBUTES;
-  // Whether subcandidate_list_ should be released when destructed.
-  CandidateList *subcandidate_list_ = nullptr;
-  std::unique_ptr<CandidateList> owned_subcandidate_list_;
+  std::unique_ptr<CandidateList> subcandidate_list_;
 };
 
 class CandidateList final {
  public:
-  explicit CandidateList(bool rotate)
+  explicit CandidateList(bool rotate = false)
       : page_size_(kDefaultPageSize),
         focused_index_(0),
         next_available_id_(0),
@@ -130,8 +127,7 @@ class CandidateList final {
   }
   void AddCandidateWithAttributes(int id, absl::string_view value,
                                   Attributes attributes);
-  void AddSubCandidateList(CandidateList *subcandidate_list);
-  CandidateList *AllocateSubCandidateList(bool rotate);
+  CandidateList *AddSubCandidateList();
 
   void set_name(std::string name) { name_ = std::move(name); }
   const std::string &name() const { return name_; }
@@ -157,6 +153,8 @@ class CandidateList final {
 
   bool focused() const { return focused_; }
   void set_focused(bool focused) { focused_ = focused; }
+  bool rotate() const { return rotate_; }
+  void set_rotate(bool rotate) { rotate_ = rotate; }
 
   // Returns the page at index as a Span.
   absl::Span<const Candidate> page(size_t index) const {
