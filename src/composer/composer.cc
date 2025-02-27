@@ -609,12 +609,14 @@ Composer::Composer(std::shared_ptr<const Table> table,
   Reset();
 }
 
-// static
-ComposerData Composer::CreateEmptyComposerData() {
-  static const absl::NoDestructor<Composition> composition(
+const ComposerData &Composer::EmptyComposerData() {
+  static const absl::NoDestructor<Composition> kComposition(
       Table::GetSharedDefaultTable());
-  return ComposerData(*composition, 0, transliteration::HIRAGANA,
-                      commands::Context::NORMAL, "", {});
+  // Cannot use NoDestructor as it doesn't' accept > 6 params.
+  static const ComposerData *kComposerData =
+      new ComposerData(*kComposition, 0, transliteration::HIRAGANA,
+                       commands::Context::NORMAL, "", {});
+  return *kComposerData;
 }
 
 ComposerData Composer::CreateComposerData() const {

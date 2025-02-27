@@ -343,8 +343,13 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
 
   ConversionRequest CreateConversionRequestWithOptions(
       ConversionRequest::Options &&options) const {
-    return ConversionRequest(*composer_, *request_, context_, *config_,
-                             std::move(options));
+    return ConversionRequestBuilder()
+        .SetComposer(*composer_)
+        .SetRequestView(*request_)
+        .SetContextView(context_)
+        .SetConfigView(*config_)
+        .SetOptions(std::move(options))
+        .Build();
   }
 
   ConversionRequest CreateConversionRequest(

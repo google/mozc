@@ -509,9 +509,11 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("い、");
-  const commands::Context context;
-  const ConversionRequest rewrite_request(composer, request, context,
-                                          default_config(), {});
+  const ConversionRequest rewrite_request = ConversionRequestBuilder()
+                                                .SetComposer(composer)
+                                                .SetRequest(request)
+                                                .SetConfig(default_config())
+                                                .Build();
   EXPECT_TRUE(t13n_rewriter->Rewrite(rewrite_request, &segments));
 
   // Do not want to show raw keys for implementation

@@ -3217,7 +3217,7 @@ TEST_F(ComposerTest, CreateComposerOperators) {
 }
 
 TEST_F(ComposerTest, CreateEmptyComposerData) {
-  const ComposerData data = Composer::CreateEmptyComposerData();
+  const ComposerData &data = Composer::EmptyComposerData();
   EXPECT_EQ(data.GetInputMode(), transliteration::HIRAGANA);
   EXPECT_EQ(data.GetStringForPreedit(), "");
   EXPECT_EQ(data.GetQueryForConversion(), "");

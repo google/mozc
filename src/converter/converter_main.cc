@@ -293,7 +293,6 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
   CHECK_FIELDS_LENGTH(1);
 
   composer::Composer composer(request, *config);
-  commands::Context context;
   ConversionRequest::Options options = {
       .max_conversion_candidates_size =
           absl::GetFlag(FLAGS_max_conversion_candidates_size),
@@ -305,8 +304,13 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
     options.request_type = ConversionRequest::CONVERSION;
     CHECK_FIELDS_LENGTH(2);
     composer.SetPreeditTextForTestOnly(fields[1]);
-    const ConversionRequest conversion_request = ConversionRequest(
-        composer, request, context, *config, std::move(options));
+    const ConversionRequest conversion_request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(request)
+            .SetConfigView(*config)
+            .SetOptions(std::move(options))
+            .Build();
     return converter.StartConversion(conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
     CHECK_FIELDS_LENGTH(5);
@@ -329,21 +333,36 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
     if (fields.size() >= 2) {
       composer.SetPreeditTextForTestOnly(fields[1]);
     }
-    const ConversionRequest conversion_request = ConversionRequest(
-        composer, request, context, *config, std::move(options));
+    const ConversionRequest conversion_request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(request)
+            .SetConfig(*config)
+            .SetOptions(std::move(options))
+            .Build();
     return converter.StartPrediction(conversion_request, segments);
   } else if (func == "startsuggestion" || func == "suggest") {
     options.request_type = ConversionRequest::SUGGESTION;
     if (fields.size() >= 2) {
       composer.SetPreeditTextForTestOnly(fields[1]);
     }
-    const ConversionRequest conversion_request = ConversionRequest(
-        composer, request, context, *config, std::move(options));
+    const ConversionRequest conversion_request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(request)
+            .SetConfig(*config)
+            .SetOptions(std::move(options))
+            .Build();
     return converter.StartPrediction(conversion_request, segments);
   } else if (func == "finishconversion" || func == "finish") {
     options.request_type = ConversionRequest::CONVERSION;
-    const ConversionRequest conversion_request = ConversionRequest(
-        composer, request, context, *config, std::move(options));
+    const ConversionRequest conversion_request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(request)
+            .SetConfigView(*config)
+            .SetOptions(std::move(options))
+            .Build();
     converter.FinishConversion(conversion_request, segments);
     return true;
   } else if (func == "resetconversion" || func == "reset") {
@@ -365,8 +384,13 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
       }
     }
     options.request_type = ConversionRequest::CONVERSION;
-    const ConversionRequest conversion_request = ConversionRequest(
-        composer, request, context, *config, std::move(options));
+    const ConversionRequest conversion_request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(request)
+            .SetConfigView(*config)
+            .SetOptions(std::move(options))
+            .Build();
     converter.FinishConversion(conversion_request, segments);
     return true;
   } else if (func == "focussegmentvalue" || func == "focus") {
@@ -381,8 +405,13 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
     return converter.CommitSegments(segments, singleton_vector);
   } else if (func == "resizesegment" || func == "resize") {
     options.request_type = ConversionRequest::CONVERSION;
-    const ConversionRequest conversion_request = ConversionRequest(
-        composer, request, context, *config, std::move(options));
+    const ConversionRequest conversion_request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(request)
+            .SetConfigView(*config)
+            .SetOptions(std::move(options))
+            .Build();
     if (fields.size() == 3) {
       return converter.ResizeSegment(segments, conversion_request,
                                      NumberUtil::SimpleAtoi(fields[1]),
@@ -390,8 +419,13 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
     }
   } else if (func == "resizesegments" || func == "resizes") {
     options.request_type = ConversionRequest::CONVERSION;
-    const ConversionRequest conversion_request = ConversionRequest(
-        composer, request, context, *config, std::move(options));
+    const ConversionRequest conversion_request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(request)
+            .SetConfigView(*config)
+            .SetOptions(std::move(options))
+            .Build();
     if (fields.size() > 3) {
       std::vector<uint8_t> new_arrays;
       for (size_t i = 2; i < fields.size(); ++i) {

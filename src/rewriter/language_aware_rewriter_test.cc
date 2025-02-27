@@ -359,9 +359,12 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
     composer::Composer composer(table, request, config);
     InsertASCIISequence("query", &composer);
 
-    const commands::Context context;
-    const ConversionRequest conv_request(composer, request, context, config,
-                                         {});
+    const ConversionRequest conv_request = ConversionRequestBuilder()
+                                               .SetComposer(composer)
+                                               .SetRequest(request)
+                                               .SetConfig(config)
+                                               .Build();
+
     EXPECT_EQ(rewriter.capability(conv_request), param.type);
   }
 }

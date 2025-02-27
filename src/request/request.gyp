@@ -52,5 +52,15 @@
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
       ],
     },
+    {
+      'target_name': 'conversion_request_test',
+      'type': 'static_library',
+      'sources': [
+        'conversion_request_test.cc',
+      ],
+      'dependencies': [
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
+      ],
+    },
   ],
 }

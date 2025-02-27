@@ -856,11 +856,14 @@ TEST_F(ConverterTest, StartSuggestion) {
 
     composer.InsertCharacter("shi");
 
-    commands::Context context;
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::SUGGESTION};
-    const ConversionRequest request(composer, client_request, context, config,
-                                    std::move(options));
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetComposer(composer)
+                                          .SetRequestView(client_request)
+                                          .SetConfigView(config)
+                                          .SetOptions(std::move(options))
+                                          .Build();
 
     Segments segments;
     EXPECT_TRUE(converter->StartPrediction(request, &segments));
@@ -877,11 +880,14 @@ TEST_F(ConverterTest, StartSuggestion) {
 
     composer.InsertCharacter("si");
 
-    commands::Context context;
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::SUGGESTION};
-    const ConversionRequest request(composer, client_request, context, config,
-                                    std::move(options));
+    const ConversionRequest request = ConversionRequestBuilder()
+                                          .SetComposer(composer)
+                                          .SetRequestView(client_request)
+                                          .SetConfigView(config)
+                                          .SetOptions(std::move(options))
+                                          .Build();
 
     Segments segments;
     EXPECT_TRUE(converter->StartPrediction(request, &segments));
@@ -1445,12 +1451,16 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
 
   {
     composer.SetPreeditTextForTestOnly("てすとが");
-    commands::Context context;
     ConversionRequest::Options options = {
         .request_type = ConversionRequest::PREDICTION,
     };
-    const ConversionRequest conversion_request(composer, request, context,
-                                               config, std::move(options));
+    const ConversionRequest conversion_request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(request)
+            .SetConfigView(config)
+            .SetOptions(std::move(options))
+            .Build();
     Segments segments;
     EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
@@ -1631,13 +1641,17 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   auto table = std::make_shared<composer::Table>();
   composer::Composer composer(table, request, config);
   composer.SetPreeditTextForTestOnly("あい");
-  commands::Context context;
 
   ConversionRequest::Options options = {
       .request_type = ConversionRequest::PREDICTION,
   };
-  const ConversionRequest conversion_request(composer, request, context, config,
-                                             std::move(options));
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequestView(request)
+          .SetConfigView(config)
+          .SetOptions(std::move(options))
+          .Build();
   Segments segments;
 
   // Remember user history 3 times after getting the top candidate
@@ -1690,12 +1704,17 @@ TEST_F(ConverterTest,
   composer::Composer composer(table, request, config);
   request_test_util::FillMobileRequest(&request);
   composer.SetPreeditTextForTestOnly("おつかれ");
-  commands::Context context;
 
   ConversionRequest::Options options = {.request_type =
                                             ConversionRequest::PREDICTION};
-  const ConversionRequest conversion_request(composer, request, context, config,
-                                             std::move(options));
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequestView(request)
+          .SetConfigView(config)
+          .SetOptions(std::move(options))
+          .Build();
+
   Segments segments;
 
   EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
@@ -1719,13 +1738,18 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   request_test_util::FillMobileRequest(&request);
   const dictionary::PosMatcher pos_matcher(
       engine->GetModulesForTesting()->GetDataManager().GetPosMatcherData());
-  commands::Context context;
   ConversionRequest::Options options = {
       .request_type = ConversionRequest::PREDICTION,
       .create_partial_candidates = true,
   };
-  const ConversionRequest conversion_request(composer, request, context, config,
-                                             std::move(options));
+
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequestView(request)
+          .SetConfigView(config)
+          .SetOptions(std::move(options))
+          .Build();
 
   Segments segments;
   // History segment.

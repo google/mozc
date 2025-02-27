@@ -94,8 +94,12 @@ class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
     ConversionRequest::Options options = {
         .request_type = ConversionRequest::PREDICTION,
     };
-    return ConversionRequest(*composer_, *request_, context_, *config_,
-                             std::move(options));
+    return ConversionRequestBuilder()
+        .SetComposer(*composer_)
+        .SetRequestView(*request_)
+        .SetConfigView(*config_)
+        .SetOptions(std::move(options))
+        .Build();
   }
 
   std::unique_ptr<composer::Composer> composer_;

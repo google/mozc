@@ -208,7 +208,7 @@ ConversionRequest GetConversionRequestForRealtimeCandidates(
   ConversionRequest::Options options = request.options();
   options.max_conversion_candidates_size = realtime_candidates_size;
   return ConversionRequestBuilder()
-      .SetConversionRequest(request)
+      .SetConversionRequestView(request)
       .SetOptions(std::move(options))
       .Build();
 }
@@ -835,7 +835,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
   options.create_partial_candidates = false;
   options.request_type = ConversionRequest::CONVERSION;
   const ConversionRequest tmp_request = ConversionRequestBuilder()
-                                            .SetConversionRequest(request)
+                                            .SetConversionRequestView(request)
                                             .SetOptions(std::move(options))
                                             .Build();
   if (!converter_.StartConversion(tmp_request, &tmp_segments)) {
@@ -1014,7 +1014,7 @@ DictionaryPredictionAggregator::GenerateQueryForHandwriting(
   }
   const ConversionRequest request_for_realtime =
       ConversionRequestBuilder()
-          .SetConversionRequest(request)
+          .SetConversionRequestView(request)
           .SetRequestType(ConversionRequest::REVERSE_CONVERSION)
           .Build();
   if (!immutable_converter_.ConvertForRequest(request_for_realtime,
@@ -1745,7 +1745,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     options.key = key;
     const ConversionRequest corrected_request =
         ConversionRequestBuilder()
-            .SetConversionRequest(request)
+            .SetConversionRequestView(request)
             .SetOptions(std::move(options))
             .Build();
 

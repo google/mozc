@@ -158,14 +158,18 @@ bool EngineConverter::ConvertWithPreferences(
     const ConversionPreferences &preferences) {
   DCHECK(CheckState(COMPOSITION | SUGGESTION | CONVERSION));
 
-  const commands::Context context;
   DCHECK(request_);
   DCHECK(config_);
   ConversionRequest::Options options;
   options.enable_user_history_for_conversion = preferences.use_history;
   SetRequestType(ConversionRequest::CONVERSION, options);
-  const ConversionRequest conversion_request(composer, *request_, context,
-                                             *config_, std::move(options));
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequestView(*request_)
+          .SetConfigView(*config_)
+          .SetOptions(std::move(options))
+          .Build();
 
   if (!converter_->StartConversion(conversion_request, &segments_)) {
     LOG(WARNING) << "StartConversion() failed";
@@ -357,11 +361,15 @@ bool EngineConverter::SwitchKanaType(const composer::Composer &composer) {
     if (segments_.conversion_segments_size() != 1) {
       std::string composition;
       GetPreedit(0, segments_.conversion_segments_size(), &composition);
-      const commands::Context context;
       DCHECK(request_);
       DCHECK(config_);
-      const ConversionRequest conversion_request(composer, *request_, context,
-                                                 *config_, {});
+      const ConversionRequest conversion_request =
+          ConversionRequestBuilder()
+              .SetComposer(composer)
+              .SetRequestView(*request_)
+              .SetConfigView(*config_)
+              .Build();
+
       if (!converter_->ResizeSegment(&segments_, conversion_request, 0,
                                      Util::CharsLen(composition))) {
         LOG(WARNING) << "ResizeSegment failed for segments.";
@@ -451,8 +459,14 @@ bool EngineConverter::SuggestWithPreferences(
   }
 
   DCHECK(config_);
-  const ConversionRequest conversion_request(composer, *request_, context,
-                                             *config_, std::move(options));
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequestView(*request_)
+          .SetContextView(context)
+          .SetConfigView(*config_)
+          .SetOptions(std::move(options))
+          .Build();
 
   // Start actual suggestion/prediction.
   bool result = converter_->StartPrediction(conversion_request, &segments_);
@@ -477,8 +491,8 @@ bool EngineConverter::SuggestWithPreferences(
     incognito_options.incognito_mode = true;
     const ConversionRequest incognito_conversion_request =
         ConversionRequestBuilder()
-            .SetConversionRequest(conversion_request)
-            .SetConfig(*config_)
+            .SetConversionRequestView(conversion_request)
+            .SetConfigView(*config_)
             .SetOptions(std::move(incognito_options))
             .Build();
     incognito_segments_.Clear();
@@ -530,13 +544,17 @@ bool EngineConverter::PredictWithPreferences(
   // Initialize the segments and conversion_request for prediction
   ConversionRequest::Options options;
   options.enable_user_history_for_conversion = preferences.use_history;
-  const commands::Context context;
   DCHECK(request_);
   DCHECK(config_);
   SetRequestType(ConversionRequest::PREDICTION, options);
   options.use_actual_converter_for_realtime_conversion = true;
-  const ConversionRequest conversion_request(composer, *request_, context,
-                                             *config_, std::move(options));
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequestView(*request_)
+          .SetConfigView(*config_)
+          .SetOptions(std::move(options))
+          .Build();
 
   const bool predict_first =
       !CheckState(PREDICTION) && IsEmptySegment(previous_suggestions_);
@@ -643,8 +661,11 @@ void EngineConverter::Commit(const composer::Composer &composer,
   CommitSegmentsSize(state_, context);
   DCHECK(request_);
   DCHECK(config_);
-  const ConversionRequest conversion_request(composer, *request_, context,
-                                             *config_, {});
+  const ConversionRequest conversion_request = ConversionRequestBuilder()
+                                                   .SetComposer(composer)
+                                                   .SetRequestView(*request_)
+                                                   .SetContextView(context)
+                                                   .Build();
   converter_->FinishConversion(conversion_request, &segments_);
   ResetState();
 }
@@ -694,8 +715,11 @@ bool EngineConverter::CommitSuggestionInternal(
     }
     CommitSegmentsSize(EngineConverterInterface::SUGGESTION, context);
     DCHECK(config_);
-    const ConversionRequest conversion_request(composer, *request_, context,
-                                               *config_, {});
+    const ConversionRequest conversion_request = ConversionRequestBuilder()
+                                                     .SetComposer(composer)
+                                                     .SetRequestView(*request_)
+                                                     .SetContextView(context)
+                                                     .Build();
     converter_->FinishConversion(conversion_request, &segments_);
     DCHECK_EQ(0, segments_.conversion_segments_size());
     ResetState();
@@ -821,8 +845,13 @@ void EngineConverter::CommitPreedit(const composer::Composer &composer,
   // CONVERSION from SUGGESTION now.
   ConversionRequest::Options options;
   SetRequestType(ConversionRequest::CONVERSION, options);
-  const ConversionRequest conversion_request(composer, *request_, context,
-                                             *config_, std::move(options));
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequestView(*request_)
+          .SetContextView(context)
+          .SetOptions(std::move(options))
+          .Build();
   converter_->FinishConversion(conversion_request, &segments_);
   ResetState();
 }
@@ -918,11 +947,12 @@ void EngineConverter::ResizeSegmentWidth(const composer::Composer &composer,
   }
   ResetResult();
 
-  const commands::Context context;
   DCHECK(request_);
   DCHECK(config_);
-  const ConversionRequest conversion_request(composer, *request_, context,
-                                             *config_, {});
+  const ConversionRequest conversion_request = ConversionRequestBuilder()
+                                                   .SetComposer(composer)
+                                                   .SetRequestView(*request_)
+                                                   .Build();
   if (!converter_->ResizeSegment(&segments_, conversion_request, segment_index_,
                                  delta)) {
     return;

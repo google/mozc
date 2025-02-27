@@ -109,8 +109,13 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   ConversionRequest CreateConversionRequestWithOptions(
       const composer::Composer &composer,
       ConversionRequest::Options &&options) const {
-    return ConversionRequest(composer, request_, context_, config_,
-                             std::move(options));
+    return ConversionRequestBuilder()
+        .SetComposer(composer_)
+        .SetRequestView(request_)
+        .SetContextView(context_)
+        .SetConfigView(config_)
+        .SetOptions(std::move(options))
+        .Build();
   }
 
   ConversionRequest CreateConversionRequest(
@@ -119,8 +124,13 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
         .max_user_history_prediction_candidates_size = 10,
         .max_user_history_prediction_candidates_size_for_zero_query = 10,
     };
-    return ConversionRequest(composer, request_, context_, config_,
-                             std::move(options));
+    return ConversionRequestBuilder()
+        .SetComposer(composer_)
+        .SetRequestView(request_)
+        .SetContextView(context_)
+        .SetConfigView(config_)
+        .SetOptions(std::move(options))
+        .Build();
   }
 
   UserHistoryPredictor *GetUserHistoryPredictor() {
@@ -1363,8 +1373,13 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     SetUpInputForSuggestionWithHistory("", "たろうは", "太郎は", &composer_,
                                        &segments);
     // convreq5 is not zero query suggestion unlike other convreqs.
-    const ConversionRequest convreq5(composer_, non_zero_query_request, context,
-                                     config_, {});
+    const ConversionRequest convreq5 =
+        ConversionRequestBuilder()
+            .SetComposer(composer_)
+            .SetRequestView(non_zero_query_request)
+            .SetContextView(context)
+            .SetConfigView(config_)
+            .Build();
     EXPECT_FALSE(predictor->PredictForRequest(convreq5, &segments));
 
     const ConversionRequest convreq6 = SetUpInputForSuggestionWithHistory(
@@ -1404,8 +1419,14 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
 
     // Zero query suggestion is disabled.
-    const ConversionRequest non_zero_query_convreq(
-        composer_, non_zero_query_request, context, config_, {});
+    const ConversionRequest non_zero_query_convreq =
+        ConversionRequestBuilder()
+            .SetComposer(composer_)
+            .SetRequestView(non_zero_query_request)
+            .SetContextView(context)
+            .SetConfigView(config_)
+            .Build();
+
     AddSegment("", &segments);  // empty request
     EXPECT_FALSE(
         predictor->PredictForRequest(non_zero_query_convreq, &segments));

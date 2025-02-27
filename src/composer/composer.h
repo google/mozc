@@ -180,8 +180,8 @@ class Composer final {
   Composer(Composer &&) = default;
   Composer &operator=(Composer &&) = default;
 
-  // Return an empty ComposerData used for placeholder.
-  static ComposerData CreateEmptyComposerData();
+  // Returns a reference of empty ComposerData used for placeholder.
+  static const ComposerData &EmptyComposerData();
 
   // Return a ComposerData with the current state of the composer.
   ComposerData CreateComposerData() const;

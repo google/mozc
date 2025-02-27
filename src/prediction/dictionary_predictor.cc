@@ -1169,7 +1169,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   options.create_partial_candidates = false;
   options.kana_modifier_insensitive_conversion = false;
   const ConversionRequest req = ConversionRequestBuilder()
-                                    .SetConversionRequest(request)
+                                    .SetConversionRequestView(request)
                                     .SetOptions(std::move(options))
                                     .Build();
 

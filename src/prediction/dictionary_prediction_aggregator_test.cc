@@ -456,8 +456,8 @@ class DictionaryPredictionAggregatorTest
       ConversionRequest::Options &&options) const {
     return ConversionRequestBuilder()
         .SetComposer(*composer_)
-        .SetRequest(*request_)
-        .SetConfig(*config_)
+        .SetRequestView(*request_)
+        .SetConfigView(*config_)
         .SetOptions(std::move(options))
         .Build();
   }

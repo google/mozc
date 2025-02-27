@@ -240,10 +240,11 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
   ConversionRequest::Options options = request.options();
   options.max_user_history_prediction_candidates_size = size;
   options.max_user_history_prediction_candidates_size_for_zero_query = size;
-  ConversionRequest request_for_prediction = ConversionRequestBuilder()
-                                                 .SetConversionRequest(request)
-                                                 .SetOptions(std::move(options))
-                                                 .Build();
+  ConversionRequest request_for_prediction =
+      ConversionRequestBuilder()
+          .SetConversionRequestView(request)
+          .SetOptions(std::move(options))
+          .Build();
   result |= user_history_predictor_->PredictForRequest(request_for_prediction,
                                                        segments);
   remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
@@ -258,7 +259,7 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
   options2.max_dictionary_prediction_candidates_size = remained_size;
   const ConversionRequest request_for_prediction2 =
       ConversionRequestBuilder()
-          .SetConversionRequest(request_for_prediction)
+          .SetConversionRequestView(request_for_prediction)
           .SetOptions(std::move(options2))
           .Build();
   result |= dictionary_predictor_->PredictForRequest(request_for_prediction2,
@@ -317,7 +318,7 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
       DLOG(ERROR) << "Unexpected request type: " << request.request_type();
   }
   return ConversionRequestBuilder()
-      .SetConversionRequest(request)
+      .SetConversionRequestView(request)
       .SetOptions(std::move(options))
       .Build();
 }
