@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_CONNECTOR_H_
 #define MOZC_CONVERTER_CONNECTOR_H_
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -68,8 +69,9 @@ class Connector final {
   const uint16_t *default_cost_ = nullptr;
   int resolution_ = 0;
   uint32_t cache_hash_mask_ = 0;
-  mutable std::vector<uint32_t> cache_key_;
-  mutable std::vector<int> cache_value_;
+  // Cache for transition cost.
+  using cache_t = std::vector<std::atomic<uint64_t>>;
+  mutable std::unique_ptr<cache_t> cache_;
 };
 
 class Connector::Row final {

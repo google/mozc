@@ -29,9 +29,11 @@
 
 #include "converter/connector.h"
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <new>
 #include <optional>
 #include <string>
@@ -48,7 +50,6 @@
 #include "absl/strings/string_view.h"
 #include "data_manager/data_manager.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
-
 
 namespace mozc {
 namespace {
@@ -200,8 +201,7 @@ absl::Status Connector::Init(absl::string_view connection_data,
         "connector.cc: Cache size must be 2^n: size=", cache_size));
   }
   cache_hash_mask_ = cache_size - 1;
-  cache_key_.resize(cache_size);
-  cache_value_.resize(cache_size);
+  cache_ = std::make_unique<cache_t>(cache_size);
 
   absl::StatusOr<Metadata> metadata =
       ParseMetadata(connection_data.data(), connection_data.size());
@@ -304,20 +304,26 @@ absl::Status Connector::Init(absl::string_view connection_data,
 #undef VALIDATE_SIZE
 }
 
-
 int Connector::GetTransitionCost(uint16_t rid, uint16_t lid) const {
   const uint32_t index = EncodeKey(rid, lid);
   const uint32_t bucket = GetHashValue(rid, lid, cache_hash_mask_);
-  if (cache_key_[bucket] == index) {
-    return cache_value_[bucket];
+  // don't care the memory order. atomic access is only required.
+  // Upper 32bits stores the value-cost, lower 32 bits the index.
+  const uint64_t cv = (*cache_)[bucket].load(std::memory_order_relaxed);
+  if (static_cast<uint32_t>(cv) == index) {
+    return static_cast<int>(cv >> 32);
   }
   const int value = LookupCost(rid, lid);
-  cache_key_[bucket] = index;
-  cache_value_[bucket] = value;
+  (*cache_)[bucket].store(static_cast<uint64_t>(value) << 32 | index,
+                          std::memory_order_relaxed);
   return value;
 }
 
-void Connector::ClearCache() { absl::c_fill(cache_key_, kInvalidCacheKey); }
+void Connector::ClearCache() {
+  for (std::atomic<uint64_t> &x : *cache_) {
+    x.store(kInvalidCacheKey);
+  }
+}
 
 int Connector::LookupCost(uint16_t rid, uint16_t lid) const {
   std::optional<uint16_t> value = rows_[rid].GetValue(lid);
