@@ -110,23 +110,6 @@ mozc_cc_library(
     ),
 )
 
-mozc_cc_binary(
-    name = "mozc_rpc_server_main",
-    srcs = ["mozc_rpc_server_main.cc"],
-    deps = [
-        "//base:init_mozc",
-        "//base:singleton",
-        "//base:system_util",
-        "//engine:engine_factory",
-        "//protocol:commands_cc_proto",
-        "//session:random_keyevents_generator",
-        "//session:session_handler",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-    ],
-)
-
 mozc_macos_application(
     name = "mozc_server_macos",
     app_icons = ["//data/images/mac:product_icon.icns"],
