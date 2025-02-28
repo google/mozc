@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_COMPOSER_INTERNAL_COMPOSITION_H_
-#define MOZC_COMPOSER_INTERNAL_COMPOSITION_H_
+#ifndef MOZC_COMPOSER_COMPOSITION_H_
+#define MOZC_COMPOSER_COMPOSITION_H_
 
 #include <cstddef>
 #include <list>
@@ -39,9 +39,9 @@
 #include "absl/log/check.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
-#include "composer/internal/char_chunk.h"
-#include "composer/internal/composition_input.h"
-#include "composer/internal/transliterators.h"
+#include "composer/char_chunk.h"
+#include "composer/composition_input.h"
+#include "composer/transliterators.h"
 #include "composer/table.h"
 
 namespace mozc {
@@ -229,4 +229,4 @@ class Composition final {
 }  // namespace composer
 }  // namespace mozc
 
-#endif  // MOZC_COMPOSER_INTERNAL_COMPOSITION_H_
+#endif  // MOZC_COMPOSER_COMPOSITION_H_

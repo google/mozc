@@ -51,7 +51,7 @@
 #include "base/config_file_stream.h"
 #include "base/hash.h"
 #include "base/util.h"
-#include "composer/internal/special_key.h"
+#include "composer/special_key.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 

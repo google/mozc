@@ -27,39 +27,45 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
-#define MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
-
+#include <cstddef>
+#include <iostream>  // NOLINT
+#include <memory>
+#include <ostream>
+#include <sstream>
 #include <string>
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/strings/string_view.h"
+#include "absl/flags/flag.h"
+#include "base/init_mozc.h"
+#include "composer/composition.h"
+#include "composer/table.h"
 
-namespace mozc::composer::internal {
+ABSL_FLAG(std::string, table, "system://romanji-hiragana.tsv",
+          "preedit conversion table file.");
 
-class SpecialKeyMap {
- public:
-  // Parses special key strings escaped with the pair of "{" and "}"" and
-  // registers them to be used by Parse(). Also returns the parsed string.
-  std::string Register(absl::string_view input);
+int main(int argc, char **argv) {
+  mozc::InitMozc(argv[0], &argc, &argv);
 
-  // Parses special key strings escaped with the pair of "{" and "}" and returns
-  // the parsed string.
-  std::string Parse(absl::string_view input) const;
+  auto table = std::make_shared<mozc::composer::Table>();
+  table->LoadFromFile(absl::GetFlag(FLAGS_table).c_str());
 
- private:
-  absl::flat_hash_map<std::string, std::string> map_;
-};
+  mozc::composer::Composition composition(table);
 
-// Trims a special key from input and returns the rest.
-// If the input doesn't have any special keys at the beginning, it returns the
-// entire string.
-absl::string_view TrimLeadingSpecialKey(absl::string_view input);
+  std::string command;
+  size_t pos = 0;
 
-// Deletes invisible special keys wrapped with ("\x0F", "\x0E") and returns the
-// trimmed visible string.
-std::string DeleteSpecialKeys(absl::string_view input);
-
-}  // namespace mozc::composer::internal
-
-#endif  // MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
+  while (std::getline(std::cin, command)) {
+    char initial = command[0];
+    if (initial == '-' || (initial >= '0' && initial <= '9')) {
+      std::stringstream ss;
+      int delta;
+      ss << command;
+      ss >> delta;
+      pos += delta;
+    } else if (initial == '!') {
+      pos = composition.DeleteAt(pos);
+    } else {
+      pos = composition.InsertAt(pos, command);
+    }
+    std::cout << composition.GetString() << " : " << pos << std::endl;
+  }
+}

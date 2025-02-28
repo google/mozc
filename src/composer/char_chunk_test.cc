@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "composer/internal/char_chunk.h"
+#include "composer/char_chunk.h"
 
 #include <cstddef>
 #include <memory>
@@ -37,8 +37,8 @@
 #include "absl/container/btree_set.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "composer/internal/composition_input.h"
-#include "composer/internal/transliterators.h"
+#include "composer/composition_input.h"
+#include "composer/transliterators.h"
 #include "composer/table.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"

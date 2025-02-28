@@ -30,56 +30,59 @@
 // Simple word patterns matcher which will be used in composer objects
 // for auto swtiching input mode.
 
-#include "composer/internal/mode_switching_handler.h"
+#ifndef MOZC_COMPOSER_MODE_SWITCHING_HANDLER_H_
+#define MOZC_COMPOSER_MODE_SWITCHING_HANDLER_H_
+
+#include <string>
 
 #include "absl/container/flat_hash_map.h"
-#include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
-#include "base/singleton.h"
 
 namespace mozc {
 namespace composer {
 
-ModeSwitchingHandler::ModeSwitchingHandler() {
-  // Default patterns are fixed right now.
-  // AddRule(key, {display_mode, input_mode});
-  AddRule("google", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("Google", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("Chrome", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("chrome", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("Android", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("android", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
-  AddRule("http", {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC});
-  AddRule("www.", {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC});
-  AddRule("\\\\", {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC});
-}
+class ModeSwitchingHandler {
+ public:
+  ModeSwitchingHandler();
+  ~ModeSwitchingHandler() = default;
 
-ModeSwitchingHandler::Rule ModeSwitchingHandler::GetModeSwitchingRule(
-    absl::string_view key) const {
-  const auto it = patterns_.find(key);
-  if (it != patterns_.end()) {
-    return it->second;
-  }
+  enum ModeSwitching {
+    NO_CHANGE,
+    REVERT_TO_PREVIOUS_MODE,
+    PREFERRED_ALPHANUMERIC,
+    HALF_ALPHANUMERIC,
+    FULL_ALPHANUMERIC,
+  };
 
-  if (IsDriveLetter(key)) {
-    return {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC};
-  }
+  struct Rule {
+    // |display_mode| affects the existing composition the user typed.
+    ModeSwitching display_mode;
+    // |input_mode| affects current input mode to be used for the user's new
+    // typing.
+    ModeSwitching input_mode;
+  };
 
-  return {NO_CHANGE, NO_CHANGE};
-}
+  // Returns a Rule for the current preedit. |key| is the string which the user
+  // actually typed. display_mode and input_mode are stored rules controlling
+  // the composer. Returns NO_CHANGE if the key doesn't match the stored rules.
+  Rule GetModeSwitchingRule(absl::string_view key) const;
 
-bool ModeSwitchingHandler::IsDriveLetter(absl::string_view key) {
-  return key.size() == 3 && absl::ascii_isalpha(key[0]) && key[1] == ':' &&
-         key[2] == '\\';
-}
+  // Gets the singleton instance of this class.
+  static ModeSwitchingHandler *GetModeSwitchingHandler();
 
-void ModeSwitchingHandler::AddRule(absl::string_view key, const Rule rule) {
-  patterns_.emplace(key, rule);
-}
+  // Matcher to Windows drive letters like "C:\".
+  // TODO(team): This static method is internal use only.  It's public for
+  // testing purpose.
+  static bool IsDriveLetter(absl::string_view key);
 
-ModeSwitchingHandler *ModeSwitchingHandler::GetModeSwitchingHandler() {
-  return Singleton<ModeSwitchingHandler>::get();
-}
+ private:
+  // Adds a rule for mode switching. The rule is passed by value as it's small.
+  void AddRule(absl::string_view key, Rule rule);
+
+  absl::flat_hash_map<std::string, Rule> patterns_;
+};
 
 }  // namespace composer
 }  // namespace mozc
+
+#endif  // MOZC_COMPOSER_MODE_SWITCHING_HANDLER_H_

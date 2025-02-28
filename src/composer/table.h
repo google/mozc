@@ -43,7 +43,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "base/container/trie.h"
-#include "composer/internal/special_key.h"
+#include "composer/special_key.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 

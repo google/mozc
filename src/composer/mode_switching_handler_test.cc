@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "composer/internal/mode_switching_handler.h"
+#include "composer/mode_switching_handler.h"
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"

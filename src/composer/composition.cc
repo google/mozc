@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "composer/internal/composition.h"
+#include "composer/composition.h"
 
 #include <cstddef>
 #include <iterator>
@@ -46,9 +46,9 @@
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "base/vlog.h"
-#include "composer/internal/char_chunk.h"
-#include "composer/internal/composition_input.h"
-#include "composer/internal/transliterators.h"
+#include "composer/char_chunk.h"
+#include "composer/composition_input.h"
+#include "composer/transliterators.h"
 #include "composer/table.h"
 
 namespace mozc {

@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
-#define MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
+#ifndef MOZC_COMPOSER_CHAR_CHUNK_H_
+#define MOZC_COMPOSER_CHAR_CHUNK_H_
 
 #include <cstddef>
 #include <string>
@@ -41,8 +41,8 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
-#include "composer/internal/composition_input.h"
-#include "composer/internal/transliterators.h"
+#include "composer/composition_input.h"
+#include "composer/transliterators.h"
 #include "composer/table.h"
 
 namespace mozc {
@@ -242,4 +242,4 @@ class CharChunk final {
 }  // namespace composer
 }  // namespace mozc
 
-#endif  // MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
+#endif  // MOZC_COMPOSER_CHAR_CHUNK_H_
