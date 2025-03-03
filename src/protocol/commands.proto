@@ -958,6 +958,12 @@ message Request {
   // user selectable.
   repeated AdditionalRenderableCharacterGroup
       additional_renderable_character_groups = 21 [packed = true];
+
+  // Whether the request is from handwriting. Candidates can be optimized
+  // differently for handwriting.
+  // For example, we support 混ぜ書き conversion ("かん字" → "漢字") for
+  // handwriting.
+  optional bool is_handwriting = 22 [default = false];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.

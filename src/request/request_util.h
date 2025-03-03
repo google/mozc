@@ -38,7 +38,8 @@ namespace mozc {
 namespace request_util {
 
 inline bool IsHandwriting(const ConversionRequest &conversion_request) {
-  return !conversion_request.composer().GetHandwritingCompositions().empty();
+  return conversion_request.request().is_handwriting() ||
+         !conversion_request.composer().GetHandwritingCompositions().empty();
 }
 
 inline bool IsAutoPartialSuggestionEnabled(
