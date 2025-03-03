@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "rewriter/calculator/calculator.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -64,6 +65,8 @@ class CalculatorRewriter : public RewriterInterface {
   // insertion is failed.
   bool InsertCandidate(absl::string_view value, size_t insert_pos,
                        Segment *segment) const;
+
+  const Calculator calculator_;
 };
 
 }  // namespace mozc

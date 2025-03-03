@@ -46,7 +46,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/calculator/calculator_interface.h"
+#include "rewriter/calculator/calculator.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -65,8 +65,6 @@ CalculatorRewriter::CheckResizeSegmentsRequest(const ConversionRequest &request,
     return std::nullopt;
   }
 
-  const CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
-
   const size_t segments_size = segments.conversion_segments_size();
   if (segments_size <= 1) {
     return std::nullopt;
@@ -80,15 +78,15 @@ CalculatorRewriter::CheckResizeSegmentsRequest(const ConversionRequest &request,
   // The decision to calculate and calculation itself are both done by the
   // calculator.
   std::string result;
-  if (!calculator->CalculateString(merged_key, &result)) {
+  if (!calculator_.CalculateString(merged_key, &result)) {
     return std::nullopt;
   }
 
   // Merge all conversion segments.
   const uint8_t key_size = static_cast<uint8_t>(Util::CharsLen(merged_key));
   ResizeSegmentsRequest resize_request = {
-    .segment_index = 0,
-    .segment_sizes = { key_size, 0, 0, 0, 0, 0, 0, 0 },
+      .segment_index = 0,
+      .segment_sizes = {key_size, 0, 0, 0, 0, 0, 0, 0},
   };
   return resize_request;
 }
@@ -100,8 +98,6 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
   if (!request.config().use_calculator()) {
     return false;
   }
-
-  CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
 
   const size_t segments_size = segments->conversion_segments_size();
   if (segments_size != 1) {
@@ -116,7 +112,7 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
   }
 
   std::string result;
-  if (!calculator->CalculateString(key, &result)) {
+  if (!calculator_.CalculateString(key, &result)) {
     return false;
   }
 

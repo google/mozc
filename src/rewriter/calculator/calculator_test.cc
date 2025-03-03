@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/calculator/calculator.h"
+
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
@@ -37,7 +39,6 @@
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/string_view.h"
-#include "rewriter/calculator/calculator_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -45,11 +46,11 @@ namespace mozc {
 namespace {
 
 // Runs calculation with |expression| and compares the result and |expect|.
-void VerifyCalculation(const CalculatorInterface *calculator,
+void VerifyCalculation(const Calculator &calculator,
                        const absl::string_view expression,
                        const absl::string_view expected) {
   std::string result;
-  EXPECT_TRUE(calculator->CalculateString(expression, &result))
+  EXPECT_TRUE(calculator.CalculateString(expression, &result))
       << expression << "  expected = " << expected;
   double result_val;
   EXPECT_TRUE(absl::SimpleAtod(result, &result_val));
@@ -65,27 +66,27 @@ void VerifyCalculation(const CalculatorInterface *calculator,
 }
 
 // Runs calculation and compare results in PRINTED string.
-void VerifyCalculationInString(const CalculatorInterface *calculator,
+void VerifyCalculationInString(const Calculator &calculator,
                                const absl::string_view expression,
                                const absl::string_view expected) {
   std::string result;
-  EXPECT_TRUE(calculator->CalculateString(expression, &result))
+  EXPECT_TRUE(calculator.CalculateString(expression, &result))
       << expression << "  expected = " << expected;
   EXPECT_EQ(result, expected) << "expr = " << expression << std::endl;
 }
 
 // Tries to calculate |wrong_key| and returns true if it fails.
-void VerifyRejection(const CalculatorInterface *calculator,
+void VerifyRejection(const Calculator &calculator,
                      const absl::string_view wrong_key) {
   std::string result;
-  EXPECT_FALSE(calculator->CalculateString(wrong_key, &result))
+  EXPECT_FALSE(calculator.CalculateString(wrong_key, &result))
       << "expression: " << wrong_key << std::endl;
 }
 
 }  // namespace
 
 TEST(CalculatorTest, BasicTest) {
-  CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
+  Calculator calculator;
 
   // These are not expressions
   // apparently
@@ -140,7 +141,7 @@ TEST(CalculatorTest, BasicTest) {
 TEST(CalculatorTest, StressTest) {
   const std::string filename = testing::GetSourceFileOrDie(
       {MOZC_DICT_DIR_COMPONENTS, "test", "calculator", "testset.txt"});
-  CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
+  Calculator calculator;
 
   std::ifstream finput(filename);
   std::string line;
@@ -159,7 +160,7 @@ TEST(CalculatorTest, StressTest) {
     // because of floating point specification so on such environment
     // Following verification is skipped.
     std::string unused_result;
-    calculator->CalculateString(query, &unused_result);
+    calculator.CalculateString(query, &unused_result);
 #if !defined(__ANDROID__) || !defined(__i386__)
     if (line.size() == query_length) {
       // False test

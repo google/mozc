@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/calculator/calculator.h"
+
 #include <cassert>  // IWYU pragma: keep, used in parser.c
 #include <cmath>
 #include <cstdio>  // IWYU pragma: keep, used in parser.c
@@ -43,8 +45,6 @@
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/number_util.h"
-#include "base/singleton.h"
-#include "rewriter/calculator/calculator_interface.h"
 
 #ifdef _WIN32
 #include <cfloat>  // IWYU pragma: keep, used in parser.c
@@ -62,36 +62,8 @@ bool IsFinite(double x) { return std::isfinite(x); }
 }  // namespace
 
 namespace mozc {
-namespace {
 
-class CalculatorImpl : public CalculatorInterface {
- public:
-  CalculatorImpl();
-
-  bool CalculateString(absl::string_view key,
-                       std::string *result) const override;
-
- private:
-  typedef std::vector<std::pair<int, double> > TokenSequence;
-
-  // Max byte length of operator character
-  static constexpr size_t kMaxLengthOfOperator = 3;
-
-  // Tokenizes |expression_body| and sets the tokens into |tokens|.
-  // It returns false if |expression_body| includes an invalid token or
-  // does not include both of a number token and an operator token.
-  // Parenthesis is not considered as an operator.
-  bool Tokenize(absl::string_view expression_body, TokenSequence *tokens) const;
-
-  // Perform calculation with a given sequence of token.
-  bool CalculateTokens(const TokenSequence &tokens, double *result_value) const;
-
-  // Mapping from operator character such as '+' to the corresponding
-  // token type such as PLUS.
-  std::map<std::string, int> operator_map_;
-};
-
-CalculatorImpl::CalculatorImpl() {
+Calculator::Calculator() {
   operator_map_["+"] = PLUS;
   operator_map_["-"] = MINUS;
   // "ー". It is called cho-ompu, onbiki, bobiki, or "nobashi-bou" casually.
@@ -109,8 +81,8 @@ CalculatorImpl::CalculatorImpl() {
 
 // Basic arithmetic operations are available.
 // TODO(tok): Add more number of operators.
-bool CalculatorImpl::CalculateString(const absl::string_view key,
-                                     std::string *result) const {
+bool Calculator::CalculateString(const absl::string_view key,
+                                 std::string *result) const {
   DCHECK(result);
   if (key.empty()) {
     LOG(ERROR) << "Key is empty.";
@@ -152,8 +124,8 @@ bool CalculatorImpl::CalculateString(const absl::string_view key,
   return true;
 }
 
-bool CalculatorImpl::Tokenize(absl::string_view expression_body,
-                              TokenSequence *tokens) const {
+bool Calculator::Tokenize(absl::string_view expression_body,
+                          TokenSequence *tokens) const {
   const char *current = expression_body.data();
   const char *end = expression_body.data() + expression_body.size();
   int num_operator = 0;  // Number of operators appeared
@@ -179,7 +151,7 @@ bool CalculatorImpl::Tokenize(absl::string_view expression_body,
       if (!NumberUtil::SafeStrToDouble(number_token, &value)) {
         return false;
       }
-      tokens->push_back(std::make_pair(INTEGER, value));
+      tokens->emplace_back(INTEGER, value);
       ++num_value;
       continue;
     }
@@ -190,13 +162,12 @@ bool CalculatorImpl::Tokenize(absl::string_view expression_body,
         // Invalid token
         return false;
       }
-      std::string window(current, length);
-      std::map<std::string, int>::const_iterator op_it =
-          operator_map_.find(window);
+      absl::string_view window(current, length);
+      const auto op_it = operator_map_.find(window);
       if (op_it == operator_map_.end()) {
         continue;
       }
-      tokens->push_back(std::make_pair(op_it->second, 0.0));
+      tokens->emplace_back(op_it->second, 0.0);
       current += length;
       // Does not count parenthesis as an operator.
       if ((op_it->second != LP) && (op_it->second != RP)) {
@@ -219,8 +190,8 @@ bool CalculatorImpl::Tokenize(absl::string_view expression_body,
   return true;
 }
 
-bool CalculatorImpl::CalculateTokens(const TokenSequence &tokens,
-                                     double *result_value) const {
+bool Calculator::CalculateTokens(const TokenSequence &tokens,
+                                 double *result_value) const {
   DCHECK(result_value);
   void *parser = ParseAlloc(malloc);
   Result result;
@@ -235,20 +206,5 @@ bool CalculatorImpl::CalculateTokens(const TokenSequence &tokens,
   }
   *result_value = result.value;
   return true;
-}
-
-CalculatorInterface *g_calculator = nullptr;
-}  // namespace
-
-CalculatorInterface *CalculatorFactory::GetCalculator() {
-  if (g_calculator == nullptr) {
-    return Singleton<CalculatorImpl>::get();
-  } else {
-    return g_calculator;
-  }
-}
-
-void CalculatorFactory::SetCalculator(CalculatorInterface *calculator) {
-  g_calculator = calculator;
 }
 }  // namespace mozc

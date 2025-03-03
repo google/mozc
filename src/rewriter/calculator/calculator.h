@@ -27,34 +27,43 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "rewriter/calculator/calculator_mock.h"
+#ifndef MOZC_REWRITER_CALCULATOR_CALCULATOR_H_
+#define MOZC_REWRITER_CALCULATOR_CALCULATOR_H_
 
 #include <string>
-#include <utility>
+#include <vector>
 
-#include "absl/log/check.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 
-void CalculatorMock::SetCalculatePair(const absl::string_view key,
-                                      const absl::string_view value,
-                                      bool return_value) {
-  calculation_map_[key] = {std::string(value), return_value};
-}
+class Calculator {
+ public:
+  Calculator();
 
-int CalculatorMock::calculation_counter() const { return calculation_counter_; }
+  bool CalculateString(absl::string_view key, std::string *result) const;
 
-bool CalculatorMock::CalculateString(const absl::string_view key,
-                                     std::string *result) const {
-  ++calculation_counter_;
-  DCHECK(result);
-  CalculationMap::const_iterator iter = calculation_map_.find(key);
-  if (iter == calculation_map_.end()) {
-    result->clear();
-    return false;
-  }
-  *result = iter->second.first;
-  return iter->second.second;
-}
+ private:
+  using TokenSequence = std::vector<std::pair<int, double>>;
+
+  // Max byte length of operator character
+  static constexpr size_t kMaxLengthOfOperator = 3;
+
+  // Tokenizes |expression_body| and sets the tokens into |tokens|.
+  // It returns false if |expression_body| includes an invalid token or
+  // does not include both of a number token and an operator token.
+  // Parenthesis is not considered as an operator.
+  bool Tokenize(absl::string_view expression_body, TokenSequence *tokens) const;
+
+  // Perform calculation with a given sequence of token.
+  bool CalculateTokens(const TokenSequence &tokens, double *result_value) const;
+
+  // Mapping from operator character such as '+' to the corresponding
+  // token type such as PLUS.
+  absl::flat_hash_map<absl::string_view, int> operator_map_;
+};
+
 }  // namespace mozc
+
+#endif  // MOZC_REWRITER_CALCULATOR_CALCULATOR_H_

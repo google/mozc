@@ -773,7 +773,6 @@ mozc_cc_test(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//rewriter/calculator",
-        "//rewriter/calculator:calculator_mock",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/log:check",

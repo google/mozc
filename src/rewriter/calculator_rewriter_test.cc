@@ -42,8 +42,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/calculator/calculator_interface.h"
-#include "rewriter/calculator/calculator_mock.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -110,26 +108,14 @@ class CalculatorRewriterTest : public testing::TestWithTempUserProfile {
         .Build();
   }
 
-  CalculatorMock &calculator_mock() { return calculator_mock_; }
-
   void SetUp() override {
-    // use mock
-    CalculatorFactory::SetCalculator(&calculator_mock_);
     request_.Clear();
     config::ConfigHandler::GetDefaultConfig(&config_);
     config_.set_use_calculator(true);
   }
 
-  void TearDown() override {
-    // Clear the mock test calculator
-    CalculatorFactory::SetCalculator(nullptr);
-  }
-
   commands::Request request_;
   config::Config config_;
-
- private:
-  CalculatorMock calculator_mock_;
 };
 
 TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
@@ -163,34 +149,9 @@ TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
   }
 }
 
-TEST_F(CalculatorRewriterTest, BasicTest) {
-  // Pretend "key" is calculated to "value".
-  calculator_mock().SetCalculatePair("key", "value", true);
-
-  CalculatorRewriter calculator_rewriter;
-  const int counter_at_first = calculator_mock().calculation_counter();
-
-  Segments segments;
-  SetSegment("test", "test", &segments);
-  const ConversionRequest convreq = ConvReq(config_, request_);
-  calculator_rewriter.Rewrite(convreq, &segments);
-  EXPECT_EQ(GetIndexOfCalculatedCandidate(segments), -1);
-  EXPECT_EQ(calculator_mock().calculation_counter(), counter_at_first + 1);
-
-  SetSegment("key", "key", &segments);
-  calculator_rewriter.Rewrite(convreq, &segments);
-  int index = GetIndexOfCalculatedCandidate(segments);
-  EXPECT_NE(index, -1);
-  EXPECT_EQ(segments.segment(0).candidate(index).value, "value");
-  EXPECT_EQ(calculator_mock().calculation_counter(), counter_at_first + 2);
-}
-
 // CalculatorRewriter should convert an expression which is separated to
 // multiple conversion segments. This test verifies it.
 TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
-  // Pretend "1+1=" is calculated to "2".
-  calculator_mock().SetCalculatePair("1+1=", "2", true);
-
   CalculatorRewriter calculator_rewriter;
 
   // Push back separated segments.
@@ -212,9 +173,6 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
 
 // CalculatorRewriter should convert an expression starting with '='.
 TEST_F(CalculatorRewriterTest, ExpressionStartingWithEqualTest) {
-  // Pretend "=1+1" is calculated to "2".
-  calculator_mock().SetCalculatePair("=1+1", "2", true);
-
   CalculatorRewriter calculator_rewriter;
   const ConversionRequest request;
 
@@ -236,9 +194,6 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
   // Expected description
   const std::string description = kCalculationDescription;
 
-  // Pretend kExpression is calculated to "3"
-  calculator_mock().SetCalculatePair(kExpression, "3", true);
-
   CalculatorRewriter calculator_rewriter;
 
   Segments segments;
@@ -254,8 +209,6 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
 }
 
 TEST_F(CalculatorRewriterTest, ConfigTest) {
-  calculator_mock().SetCalculatePair("1+1=", "2", true);
-
   CalculatorRewriter calculator_rewriter;
   {
     Segments segments;

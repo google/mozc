@@ -84,10 +84,9 @@
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_pos',
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
-        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',	
+        '<(mozc_oss_src_dir)/request/request.gyp:request_test_util',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
-        'calculator/calculator.gyp:calculator_mock',
         'rewriter.gyp:rewriter',
       ],
       'variables': {

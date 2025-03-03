@@ -41,31 +41,18 @@ package(default_visibility = ["//:__subpackages__"])
 mozc_cc_library(
     name = "calculator",
     srcs = ["calculator.cc"],
-    hdrs = ["calculator_interface.h"],
+    hdrs = ["calculator.h"],
     textual_hdrs = ["parser.c.inc"],
     deps = [
         "//base:japanese_util",
         "//base:number_util",
-        "//base:singleton",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,
-)
-
-mozc_cc_library(
-    name = "calculator_mock",
-    testonly = True,
-    srcs = ["calculator_mock.cc"],
-    hdrs = ["calculator_mock.h"],
-    deps = [
-        ":calculator",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-    ],
 )
 
 mozc_cc_test(

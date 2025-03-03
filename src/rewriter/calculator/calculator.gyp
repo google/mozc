@@ -54,18 +54,6 @@
       ],
     },
     {
-      'target_name': 'calculator_mock',
-      'type': 'static_library',
-      'sources': [
-        'calculator_mock.cc',
-      ],
-      'dependencies': [
-        '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_oss_src_dir)/base/base.gyp:base',
-        'calculator',
-      ],
-    },
-    {
       'target_name': 'install_calculator_test_data',
       'type': 'none',
       'variables': {
