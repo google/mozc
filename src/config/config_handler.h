@@ -67,7 +67,7 @@ class ConfigHandler {
   static std::shared_ptr<const config::Config> GetSharedConfig();
 
   // Sets config.
-  static void SetConfig(const Config &config);
+  static void SetConfig(Config config);
 
   // Gets default config value.
   //

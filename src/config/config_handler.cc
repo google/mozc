@@ -166,7 +166,7 @@ class ConfigHandlerImpl final {
   std::shared_ptr<const Config> GetSharedConfig() const;
   std::shared_ptr<const Config> GetSharedDefaultConfig() const;
 
-  void SetConfig(const Config &config);
+  void SetConfig(Config config);
   void Reload();
 
   void SetConfigFileName(absl::string_view filename)
@@ -204,7 +204,7 @@ void ConfigHandlerImpl::SetConfigInternal(std::shared_ptr<Config> config) {
   std::atomic_store(&config_, std::move(config));
 }
 
-void ConfigHandlerImpl::SetConfig(const Config &config) {
+void ConfigHandlerImpl::SetConfig(Config config) {
   const uint64_t config_hash = Fingerprint(config.SerializeAsString());
 
   // If the wire format of config is identical to the one of the previously
@@ -213,7 +213,7 @@ void ConfigHandlerImpl::SetConfig(const Config &config) {
     return;
   }
 
-  auto output_config = std::make_shared<Config>(config);
+  auto output_config = std::make_shared<Config>(std::move(config));
 
   // Fix config because `config` may be broken.
   NormalizeConfig(output_config.get());
@@ -293,8 +293,8 @@ std::shared_ptr<const Config> ConfigHandler::GetSharedConfig() {
   return GetConfigHandlerImpl()->GetSharedConfig();
 }
 
-void ConfigHandler::SetConfig(const Config &config) {
-  GetConfigHandlerImpl()->SetConfig(config);
+void ConfigHandler::SetConfig(Config config) {
+  GetConfigHandlerImpl()->SetConfig(std::move(config));
 }
 
 // static
