@@ -37,7 +37,6 @@
 #include <memory>
 #include <string>
 
-#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/converter_interface.h"
@@ -78,13 +77,13 @@ class Converter final : public ConverterInterface {
             const PredictorFactory &predictor_factory,
             const RewriterFactory &rewriter_factory);
 
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool StartConversion(const ConversionRequest &request,
                        Segments *segments) const override;
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool StartReverseConversion(Segments *segments,
                               absl::string_view key) const override;
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool StartPrediction(const ConversionRequest &request,
                        Segments *segments) const override;
 
@@ -94,34 +93,34 @@ class Converter final : public ConverterInterface {
   void ResetConversion(Segments *segments) const override;
   void RevertConversion(Segments *segments) const override;
 
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool DeleteCandidateFromHistory(const Segments &segments,
                                   size_t segment_index,
                                   int candidate_index) const override;
 
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool ReconstructHistory(Segments *segments,
                           absl::string_view preceding_text) const override;
 
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool CommitSegmentValue(Segments *segments, size_t segment_index,
                           int candidate_index) const override;
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool CommitPartialSuggestionSegmentValue(
       Segments *segments, size_t segment_index, int candidate_index,
       absl::string_view current_segment_key,
       absl::string_view new_segment_key) const override;
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool FocusSegmentValue(Segments *segments, size_t segment_index,
                          int candidate_index) const override;
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool CommitSegments(Segments *segments,
                       absl::Span<const size_t> candidate_index) const override;
-  ABSL_MUST_USE_RESULT bool ResizeSegment(Segments *segments,
+  [[nodiscard]] bool ResizeSegment(Segments *segments,
                                           const ConversionRequest &request,
                                           size_t segment_index,
                                           int offset_length) const override;
-  ABSL_MUST_USE_RESULT bool ResizeSegments(
+  [[nodiscard]] bool ResizeSegments(
       Segments *segments, const ConversionRequest &request,
       size_t start_segment_index,
       absl::Span<const uint8_t> new_size_array) const override;

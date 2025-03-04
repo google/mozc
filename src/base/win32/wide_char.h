@@ -116,7 +116,7 @@ template <
     std::enable_if_t<
         std::conjunction_v<std::is_constructible<std::wstring_view, Ts &>...>,
         std::nullptr_t> = nullptr>
-ABSL_MUST_USE_RESULT std::wstring StrCatW(const Ts &...args) {
+[[nodiscard]] std::wstring StrCatW(const Ts &...args) {
   if constexpr (sizeof...(Ts) <= 1) {
     return std::wstring(args...);
   } else {

@@ -39,7 +39,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/attributes.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
@@ -167,7 +166,7 @@ bool Client::EnsureConnection() {
 #endif  // DEBUG
       // don't break here as SERVER_SHUTDOWN and SERVER_UNKNOWN
       // have basically the same treatment.
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case SERVER_UNKNOWN:
       if (StartServer()) {
         server_status_ = SERVER_INVALID_SESSION;

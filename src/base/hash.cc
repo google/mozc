@@ -32,7 +32,6 @@
 #include <cstdint>
 #include <limits>
 
-#include "absl/base/attributes.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 
@@ -104,34 +103,34 @@ uint32_t Fingerprint32WithSeed(absl::string_view str, uint32_t seed) {
   switch (str.size()) {
     case 11:
       c += uint32_t{str[10]} << 24;
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 10:
       c += uint32_t{str[9]} << 16;
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 9:
       c += uint32_t{str[8]} << 8;
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 8:
       b += uint32_t{str[7]} << 24;
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 7:
       b += uint32_t{str[6]} << 16;
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 6:
       b += uint32_t{str[5]} << 8;
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 5:
       b += uint32_t{str[4]};
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 4:
       a += uint32_t{str[3]} << 24;
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 3:
       a += uint32_t{str[2]} << 16;
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 2:
       a += uint32_t{str[1]} << 8;
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case 1:
       a += uint32_t{str[0]};
       break;

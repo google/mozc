@@ -30,7 +30,6 @@
 #ifndef MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_
 #define MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_
 
-#include "absl/base/attributes.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 
@@ -46,7 +45,7 @@ class ImmutableConverterInterface {
   // However, to keep the backward compatibility until the deprecation of
   // Conversion method, we provide the default implementation.
   // Please see the .cc file.
-  ABSL_MUST_USE_RESULT virtual bool ConvertForRequest(
+  [[nodiscard]] virtual bool ConvertForRequest(
       const ConversionRequest &request, Segments *segments) const = 0;
 
  protected:

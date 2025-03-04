@@ -33,7 +33,6 @@
 #include <memory>
 #include <string>
 
-#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
@@ -102,7 +101,7 @@ class DefaultPredictor : public BasePredictor {
                    const ConverterInterface &converter);
   ~DefaultPredictor() override;
 
-  ABSL_MUST_USE_RESULT bool PredictForRequest(
+  [[nodiscard]] bool PredictForRequest(
       const ConversionRequest &request, Segments *segments) const override;
 
   const std::string &GetPredictorName() const override {
@@ -125,7 +124,7 @@ class MobilePredictor : public BasePredictor {
                   const ConverterInterface &converter);
   ~MobilePredictor() override;
 
-  ABSL_MUST_USE_RESULT bool PredictForRequest(
+  [[nodiscard]] bool PredictForRequest(
       const ConversionRequest &request, Segments *segments) const override;
 
   const std::string &GetPredictorName() const override {

@@ -32,7 +32,6 @@
 
 #include <string>
 
-#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -49,7 +48,7 @@ class PredictorInterface {
   // SUGGESTION: automatic suggestions
   // PREDICTION: invoked only when user pushes "tab" key.
   // less aggressive than SUGGESTION mode.
-  ABSL_MUST_USE_RESULT virtual bool PredictForRequest(
+  [[nodiscard]] virtual bool PredictForRequest(
       const ConversionRequest &request, Segments *segments) const = 0;
 
   // Hook(s) for all mutable operations.

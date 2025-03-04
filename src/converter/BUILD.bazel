@@ -340,7 +340,6 @@ mozc_cc_library(
     deps = [
         ":segments",
         "//request:conversion_request",
-        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -379,8 +378,6 @@ mozc_cc_library(
         "//request:conversion_request",
         "//testing:friend_test",
         "@com_google_absl//absl/algorithm:container",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
@@ -422,7 +419,6 @@ mozc_cc_library(
     deps = [
         ":segments",
         "//request:conversion_request",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ],
@@ -547,7 +543,6 @@ mozc_cc_library(
         "//dictionary:pos_matcher",
         "//protocol:commands_cc_proto",
         "//testing:friend_test",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings:string_view",
     ],
 )

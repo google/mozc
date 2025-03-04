@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/connector.h"
@@ -63,7 +62,7 @@ class ImmutableConverter : public ImmutableConverterInterface {
   ImmutableConverter &operator=(const ImmutableConverter &) = delete;
   ~ImmutableConverter() override = default;
 
-  ABSL_MUST_USE_RESULT bool ConvertForRequest(
+  [[nodiscard]] bool ConvertForRequest(
       const ConversionRequest &request, Segments *segments) const override;
 
  private:

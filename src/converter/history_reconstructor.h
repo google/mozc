@@ -33,7 +33,6 @@
 #include <cstdint>
 #include <string>
 
-#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -46,7 +45,7 @@ class HistoryReconstructor {
  public:
   explicit HistoryReconstructor(const dictionary::PosMatcher &pos_matcher);
 
-  ABSL_MUST_USE_RESULT
+  [[nodiscard]]
   bool ReconstructHistory(absl::string_view preceding_text,
                           Segments *segments) const;
 
