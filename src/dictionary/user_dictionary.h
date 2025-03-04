@@ -36,7 +36,6 @@
 
 #include "absl/base/thread_annotations.h"
 #include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -113,15 +112,24 @@ class UserDictionary : public UserDictionaryInterface {
   class TokensIndex;
   class UserDictionaryReloader;
 
-  // Swaps internal tokens index to |new_tokens|.
-  void Swap(std::unique_ptr<TokensIndex> new_tokens);
+  // TODO(all): use std::atomic<std::shared_ptr> once it gets available.
+  std::shared_ptr<const TokensIndex> GetTokens() const {
+    return std::atomic_load(&tokens_);
+  }
+
+  void SetTokens(std::shared_ptr<TokensIndex> tokens) {
+    DCHECK(tokens);
+    return std::atomic_store(&tokens_, std::move(tokens));
+  }
 
   std::unique_ptr<UserDictionaryReloader> reloader_;
   std::unique_ptr<const UserPosInterface> user_pos_;
   const PosMatcher pos_matcher_;
   SuppressionDictionary *suppression_dictionary_;
-  std::unique_ptr<TokensIndex> tokens_ ABSL_GUARDED_BY(mutex_);
-  mutable absl::Mutex mutex_;
+
+  // Uses shared pointer to asynchronously update `tokens_`.
+  // `tokens_` are set in different thread.
+  std::shared_ptr<TokensIndex> tokens_;
 
   friend class UserDictionaryTest;
 };

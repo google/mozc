@@ -331,9 +331,10 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
       user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
-      tokens_(std::make_unique<TokensIndex>(user_pos_.get(),
+      tokens_(std::make_shared<TokensIndex>(user_pos_.get(),
                                             suppression_dictionary)) {
-  DCHECK(user_pos_.get());
+  DCHECK(user_pos_);
+  DCHECK(tokens_);
   DCHECK(suppression_dictionary_);
   Reload();
 }
@@ -358,13 +359,14 @@ bool UserDictionary::HasValue(absl::string_view value) const {
 void UserDictionary::LookupPredictive(
     absl::string_view key, const ConversionRequest &conversion_request,
     Callback *callback) const {
-  absl::ReaderMutexLock l(&mutex_);
-
   if (key.empty()) {
     MOZC_VLOG(2) << "string of length zero is passed.";
     return;
   }
-  if (tokens_->empty()) {
+
+  std::shared_ptr<const TokensIndex> tokens = GetTokens();
+
+  if (tokens->empty()) {
     return;
   }
   if (conversion_request.incognito_mode()) {
@@ -373,8 +375,8 @@ void UserDictionary::LookupPredictive(
 
   // Find the starting point of iteration over dictionary contents.
   Token token;
-  for (auto [begin, end] = std::equal_range(tokens_->begin(), tokens_->end(),
-                                            key, OrderByKeyPrefix());
+  for (auto [begin, end] = std::equal_range(tokens->begin(), tokens->end(), key,
+                                            OrderByKeyPrefix());
        begin != end; ++begin) {
     const UserPos::Token &user_pos_token = *begin;
     switch (callback->OnKey(user_pos_token.key)) {
@@ -404,25 +406,27 @@ void UserDictionary::LookupPredictive(
 void UserDictionary::LookupPrefix(absl::string_view key,
                                   const ConversionRequest &conversion_request,
                                   Callback *callback) const {
-  absl::ReaderMutexLock l(&mutex_);
-
   if (key.empty()) {
     LOG(WARNING) << "string of length zero is passed.";
     return;
   }
-  if (tokens_->empty()) {
+
+  if (conversion_request.incognito_mode()) {
     return;
   }
-  if (conversion_request.incognito_mode()) {
+
+  std::shared_ptr<const TokensIndex> tokens = GetTokens();
+
+  if (tokens->empty()) {
     return;
   }
 
   // Find the starting point for iteration over dictionary contents.
   const absl::string_view first_char = Utf8AsChars(key).front();
   Token token;
-  for (auto it = std::lower_bound(tokens_->begin(), tokens_->end(), first_char,
+  for (auto it = std::lower_bound(tokens->begin(), tokens->end(), first_char,
                                   OrderByKey());
-       it != tokens_->end(); ++it) {
+       it != tokens->end(); ++it) {
     const UserPos::Token &user_pos_token = *it;
     if (user_pos_token.key > key) {
       break;
@@ -465,12 +469,13 @@ void UserDictionary::LookupPrefix(absl::string_view key,
 void UserDictionary::LookupExact(absl::string_view key,
                                  const ConversionRequest &conversion_request,
                                  Callback *callback) const {
-  absl::ReaderMutexLock l(&mutex_);
-  if (key.empty() || tokens_->empty() || conversion_request.incognito_mode()) {
+  std::shared_ptr<const TokensIndex> tokens = GetTokens();
+
+  if (key.empty() || tokens->empty() || conversion_request.incognito_mode()) {
     return;
   }
   auto [begin, end] =
-      std::equal_range(tokens_->begin(), tokens_->end(), key, OrderByKey());
+      std::equal_range(tokens->begin(), tokens->end(), key, OrderByKey());
   if (begin == end) {
     return;
   }
@@ -507,14 +512,15 @@ bool UserDictionary::LookupComment(absl::string_view key,
     return false;
   }
 
-  absl::ReaderMutexLock l(&mutex_);
-  if (tokens_->empty()) {
+  std::shared_ptr<const TokensIndex> tokens = GetTokens();
+
+  if (tokens->empty()) {
     return false;
   }
 
   // Set the comment that was found first.
-  for (auto [begin, end] = std::equal_range(tokens_->begin(), tokens_->end(),
-                                            key, OrderByKey());
+  for (auto [begin, end] =
+           std::equal_range(tokens->begin(), tokens->end(), key, OrderByKey());
        begin != end; ++begin) {
     const UserPos::Token &token = *begin;
     if (token.value == value && !token.comment.empty()) {
@@ -533,7 +539,6 @@ bool UserDictionary::Reload() {
 }
 
 namespace {
-
 class FindValueCallback : public DictionaryInterface::Callback {
  public:
   explicit FindValueCallback(absl::string_view value)
@@ -560,19 +565,9 @@ class FindValueCallback : public DictionaryInterface::Callback {
 
 void UserDictionary::WaitForReloader() { reloader_->Wait(); }
 
-void UserDictionary::Swap(std::unique_ptr<TokensIndex> new_tokens) {
-  DCHECK(new_tokens);
-  absl::WriterMutexLock l(&mutex_);
-  tokens_ = std::move(new_tokens);
-}
-
 bool UserDictionary::Load(
     const user_dictionary::UserDictionaryStorage &storage) {
-  size_t size = 0;
-  {
-    absl::ReaderMutexLock l(&mutex_);
-    size = tokens_->size();
-  }
+  const size_t size = GetTokens()->size();
 
   // If UserDictionary is pretty big, we first remove the
   // current dictionary to save memory usage.
@@ -584,14 +579,15 @@ bool UserDictionary::Load(
 
   if (size >= kVeryBigUserDictionarySize) {
     auto placeholder_empty_tokens =
-        std::make_unique<TokensIndex>(user_pos_.get(), suppression_dictionary_);
-    Swap(std::move(placeholder_empty_tokens));
+        std::make_shared<TokensIndex>(user_pos_.get(), suppression_dictionary_);
+    SetTokens(placeholder_empty_tokens);
   }
 
   auto tokens =
-      std::make_unique<TokensIndex>(user_pos_.get(), suppression_dictionary_);
+      std::make_shared<TokensIndex>(user_pos_.get(), suppression_dictionary_);
   tokens->Load(storage);
-  Swap(std::move(tokens));
+
+  SetTokens(tokens);
   return true;
 }
 
