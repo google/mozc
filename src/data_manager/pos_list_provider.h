@@ -33,16 +33,14 @@
 #include <string>
 #include <vector>
 
-#include "dictionary/user_pos_interface.h"
-
 namespace mozc {
 
-class PosListProvider : public PosListProviderInterface {
+class PosListProvider {
  public:
   PosListProvider();
 
-  std::vector<std::string> GetPosList() const override;
-  int GetPosListDefaultIndex() const override;
+  std::vector<std::string> GetPosList() const;
+  int GetPosListDefaultIndex() const;
 
  private:
   std::vector<std::string> pos_list_;

@@ -274,7 +274,6 @@ mozc_cc_library(
     deps = [
         "//base:embedded_file",
         "//base/container:serialized_string_array",
-        "//dictionary:user_pos_interface",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
     ],

@@ -40,12 +40,11 @@
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/user_pos_interface.h"
+#include "dictionary/user_pos.h"
 #include "testing/gunit.h"
 
 namespace mozc {
 namespace dictionary {
-namespace {
 
 class UserPosTest : public ::testing::Test {
  protected:
@@ -56,7 +55,7 @@ class UserPosTest : public ::testing::Test {
     CHECK(user_pos_.get());
   }
 
-  std::unique_ptr<const UserPosInterface> user_pos_;
+  std::unique_ptr<const UserPos> user_pos_;
 
  private:
   const testing::MockDataManager mock_data_manager_;
@@ -215,6 +214,5 @@ TEST_F(UserPosTest, Attributes) {
   EXPECT_FALSE(token.has_attribute(UserPos::Token::ISOLATED_WORD));
 }
 
-}  // namespace
 }  // namespace dictionary
 }  // namespace mozc

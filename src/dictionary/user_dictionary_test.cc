@@ -58,7 +58,6 @@
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_pos.h"
-#include "dictionary/user_pos_interface.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
@@ -133,10 +132,8 @@ void PushBackToken(absl::string_view key, absl::string_view value, uint16_t id,
 // depends on POS. It accepts only two values for part-of-speech:
 // "noun" as words without inflection and "verb" as words with
 // inflection.
-class UserPosMock : public UserPosInterface {
+class UserPosMock : public UserPos {
  public:
-  UserPosMock() = default;
-
   // This method returns true if the given pos is "noun" or "verb".
   bool IsValidPos(absl::string_view pos) const override { return true; }
 
@@ -991,7 +988,7 @@ TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
   const dictionary::PosMatcher pos_matcher(
       mock_data_manager.GetPosMatcherData());
 
-  UserPosInterface::Token user_token{.key = "key", .value = "value", .id = 10};
+  UserPos::Token user_token{.key = "key", .value = "value", .id = 10};
 
   Token token;
 

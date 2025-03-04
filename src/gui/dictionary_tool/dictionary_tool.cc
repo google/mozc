@@ -57,7 +57,6 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "client/client.h"
-#include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
@@ -333,7 +332,6 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       import_default_ime_action_(nullptr),
       client_(client::ClientFactory::NewClient()),
       max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
-      pos_list_provider_(std::make_unique<PosListProvider>()),
       modified_(false),
       monitoring_user_edit_(false),
       is_available_(true) {
@@ -416,7 +414,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       GetTableHeight(dic_content_));
 
   // Get a list of POS and set a custom delagate that holds the list.
-  const std::vector<std::string> tmp_pos_vec = pos_list_provider_->GetPosList();
+  const std::vector<std::string> tmp_pos_vec = pos_list_provider_.GetPosList();
   QStringList pos_list;
   for (size_t i = 0; i < tmp_pos_vec.size(); ++i) {
     pos_list.append(QUtf8(tmp_pos_vec[i]));
@@ -426,7 +424,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   dic_content_->setItemDelegateForColumn(2, delegate);
 
   // Set the default POS. It should be "名詞".
-  default_pos_ = pos_list[pos_list_provider_->GetPosListDefaultIndex()];
+  default_pos_ = pos_list[pos_list_provider_.GetPosListDefaultIndex()];
   DCHECK(default_pos_ == "名詞") << "The default POS is not 名詞";
 
   // Set up the main table widget for dictionary contents.
@@ -1318,7 +1316,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
 
   menu->addSeparator();
   QMenu *change_category_to = menu->addMenu(tr("Change category to"));
-  const std::vector<std::string> pos_list = pos_list_provider_->GetPosList();
+  const std::vector<std::string> pos_list = pos_list_provider_.GetPosList();
   std::vector<QAction *> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
     change_pos_actions[i] = change_category_to->addAction(QUtf8(pos_list[i]));

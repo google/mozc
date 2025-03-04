@@ -46,7 +46,7 @@
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
 #include "base/vlog.h"
-#include "dictionary/user_pos_interface.h"
+#include "dictionary/user_pos.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -76,7 +76,7 @@ size_t UserDictionaryUtil::max_dictionary_size() { return kMaxDictionarySize; }
 size_t UserDictionaryUtil::max_entry_size() { return kMaxEntrySize; }
 
 bool UserDictionaryUtil::IsValidEntry(
-    const UserPosInterface &user_pos,
+    const dictionary::UserPos &user_pos,
     const user_dictionary::UserDictionary::Entry &entry) {
   return ValidateEntry(entry) ==
          UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
@@ -404,5 +404,4 @@ bool UserDictionaryUtil::DeleteDictionary(
 
   return true;
 }
-
 }  // namespace mozc

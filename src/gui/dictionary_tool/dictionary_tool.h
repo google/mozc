@@ -40,9 +40,10 @@
 
 #include "absl/strings/string_view.h"
 #include "client/client_interface.h"
+#include "data_manager/pos_list_provider.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_session.h"
-#include "dictionary/user_pos_interface.h"
+#include "dictionary/user_pos.h"
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
 #include "gui/dictionary_tool/ui_dictionary_tool.h"
@@ -222,7 +223,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // The maximum number of entries for a dictionary currently selected.
   int max_entry_size_;
 
-  std::unique_ptr<const PosListProviderInterface> pos_list_provider_;
+  const PosListProvider pos_list_provider_;
 
   // Whether any change has been made on the current dictionary and
   // not been saved.

@@ -74,8 +74,7 @@ bool operator<(const Token &lhs, const Token &rhs) {
          std::tie(rhs.key, rhs.sorting_key, rhs.value);
 }
 
-DictionaryGenerator::DictionaryGenerator(
-    const DataManager &data_manager) {
+DictionaryGenerator::DictionaryGenerator(const DataManager &data_manager) {
   const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
   open_bracket_id_ = pos_matcher.GetOpenBracketId();
   close_bracket_id_ = pos_matcher.GetCloseBracketId();

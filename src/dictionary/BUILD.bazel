@@ -142,7 +142,6 @@ mozc_cc_library(
         ":user_dictionary_storage",
         ":user_dictionary_util",
         ":user_pos",
-        ":user_pos_interface",
         "//base:file_util",
         "//base:hash",
         "//base:singleton",
@@ -181,7 +180,6 @@ mozc_cc_test(
         ":user_dictionary",
         ":user_dictionary_storage",
         ":user_pos",
-        ":user_pos_interface",
         "//base:file_util",
         "//base:random",
         "//base:singleton",
@@ -260,8 +258,10 @@ run_binary(
     ],
     outs = ["pos_map.inc"],
     args = [
-        "--user_pos_file=$(location //data/rules:user_pos.def)",
-        "--third_party_pos_map_file=$(location //data/rules:third_party_pos_map.def)",
+        "--user_pos_file=$(location" +
+        " //data/rules:user_pos.def)",
+        "--third_party_pos_map_file=$(location" +
+        " //data/rules:third_party_pos_map.def)",
         "--output=$(location pos_map.inc)",
     ],
     tool = ":gen_pos_map",
@@ -395,7 +395,7 @@ mozc_cc_library(
         "//:__subpackages__",
     ],
     deps = [
-        ":user_pos_interface",
+        ":user_pos",
         "//base:config_file_stream",
         "//base:vlog",
         "//base/protobuf:repeated_ptr_field",
@@ -508,7 +508,6 @@ mozc_cc_library(
     srcs = ["user_pos.cc"],
     hdrs = ["user_pos.h"],
     deps = [
-        ":user_pos_interface",
         "//base/container:serialized_string_array",
         "//base/strings:assign",
         "//data_manager",
@@ -524,7 +523,6 @@ mozc_cc_test(
     srcs = ["user_pos_test.cc"],
     deps = [
         ":user_pos",
-        ":user_pos_interface",
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
         "@com_google_absl//absl/log:check",
@@ -561,7 +559,8 @@ run_binary(
     srcs = ["//data/rules:pos_matcher_rule.def"],
     outs = ["pos_matcher_impl.inc"],
     args = [
-        "--pos_matcher_rule_file=$(location //data/rules:pos_matcher_rule.def)",
+        "--pos_matcher_rule_file=$(location" +
+        " //data/rules:pos_matcher_rule.def)",
         "--output_pos_matcher_h=$(location pos_matcher_impl.inc)",
     ],
     tool = ":gen_pos_matcher_code",
@@ -686,17 +685,6 @@ mozc_cc_library(
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
     ],
-)
-
-mozc_cc_library(
-    name = "user_pos_interface",
-    hdrs = ["user_pos_interface.h"],
-    visibility = [
-        "//data_manager:__subpackages__",
-        "//gui:__subpackages__",
-        "//rewriter:__subpackages__",
-    ],
-    deps = ["@com_google_absl//absl/strings"],
 )
 
 mozc_cc_library(

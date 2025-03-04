@@ -39,7 +39,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
-#include "dictionary/user_pos_interface.h"
+#include "dictionary/user_pos.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -69,7 +69,7 @@ class UserDictionaryUtil {
   // invalid character and so on. If the function returns false, we
   // shouldn't accept the data being passed into the dictionary.
   // TODO(hidehikoo): Replace this method by the following ValidateEntry.
-  static bool IsValidEntry(const UserPosInterface &user_pos,
+  static bool IsValidEntry(const dictionary::UserPos &user_pos,
                            const user_dictionary::UserDictionary::Entry &entry);
 
   // Returns the error status of the validity for the given entry.

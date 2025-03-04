@@ -163,7 +163,7 @@ mozc_cc_qt_library(
         "//dictionary:user_dictionary_session",
         "//dictionary:user_dictionary_storage",
         "//dictionary:user_dictionary_util",
-        "//dictionary:user_pos_interface",
+        "//dictionary:user_pos",
         "//gui/base:encoding_util",
         "//gui/base:gui_base",
         "//gui/base:msime_user_dictionary_importer",

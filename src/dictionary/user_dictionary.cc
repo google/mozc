@@ -65,7 +65,6 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
-#include "dictionary/user_pos_interface.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
@@ -133,7 +132,7 @@ class UserDictionaryFileManager {
 
 class UserDictionary::TokensIndex {
  public:
-  TokensIndex(const UserPosInterface *user_pos,
+  TokensIndex(const UserPos &user_pos,
               SuppressionDictionary *suppression_dictionary)
       : user_pos_(user_pos), suppression_dictionary_(suppression_dictionary) {}
 
@@ -167,7 +166,7 @@ class UserDictionary::TokensIndex {
 
       for (const UserDictionaryStorage::UserDictionaryEntry &entry :
            dic.entries()) {
-        if (!UserDictionaryUtil::IsValidEntry(*user_pos_, entry)) {
+        if (!UserDictionaryUtil::IsValidEntry(user_pos_, entry)) {
           continue;
         }
 
@@ -207,13 +206,13 @@ class UserDictionary::TokensIndex {
                                .attributes = UserPos::Token::SHORTCUT,
                                .comment = std::string(comment)};
           // NO_POS has '名詞サ変' id as in user_pos.def
-          user_pos_->GetPosIds("名詞サ変", &token.id);
+          user_pos_.GetPosIds("名詞サ変", &token.id);
           user_pos_tokens_.push_back(std::move(token));
         } else {
           tokens.clear();
-          user_pos_->GetTokens(
-              reading, entry.value(),
-              UserDictionaryUtil::GetStringPosType(entry.pos()), &tokens);
+          user_pos_.GetTokens(reading, entry.value(),
+                              UserDictionaryUtil::GetStringPosType(entry.pos()),
+                              &tokens);
           const absl::string_view comment =
               absl::StripAsciiWhitespace(entry.comment());
           for (auto &token : tokens) {
@@ -240,8 +239,8 @@ class UserDictionary::TokensIndex {
   }
 
  private:
-  const UserPosInterface *user_pos_;
-  SuppressionDictionary *suppression_dictionary_;
+  const UserPos &user_pos_;
+  SuppressionDictionary *suppression_dictionary_ = nullptr;
   std::vector<UserPos::Token> user_pos_tokens_;
 };
 
@@ -324,15 +323,15 @@ class UserDictionary::UserDictionaryReloader {
   std::string value_;
 };
 
-UserDictionary::UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
+UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
                                PosMatcher pos_matcher,
                                SuppressionDictionary *suppression_dictionary)
     : reloader_(std::make_unique<UserDictionaryReloader>(this)),
       user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
-      tokens_(std::make_shared<TokensIndex>(user_pos_.get(),
-                                            suppression_dictionary)) {
+      tokens_(
+          std::make_shared<TokensIndex>(*user_pos_, suppression_dictionary)) {
   DCHECK(user_pos_);
   DCHECK(tokens_);
   DCHECK(suppression_dictionary_);
@@ -579,12 +578,12 @@ bool UserDictionary::Load(
 
   if (size >= kVeryBigUserDictionarySize) {
     auto placeholder_empty_tokens =
-        std::make_shared<TokensIndex>(user_pos_.get(), suppression_dictionary_);
-    SetTokens(placeholder_empty_tokens);
+        std::make_shared<TokensIndex>(*user_pos_, suppression_dictionary_);
+    SetTokens(std::move(placeholder_empty_tokens));
   }
 
   auto tokens =
-      std::make_shared<TokensIndex>(user_pos_.get(), suppression_dictionary_);
+      std::make_shared<TokensIndex>(*user_pos_, suppression_dictionary_);
   tokens->Load(storage);
 
   SetTokens(tokens);
@@ -600,7 +599,7 @@ void UserDictionary::SetUserDictionaryName(const absl::string_view filename) {
 }
 
 void UserDictionary::PopulateTokenFromUserPosToken(
-    const UserPosInterface::Token &user_pos_token, RequestType request_type,
+    const UserPos::Token &user_pos_token, RequestType request_type,
     Token *token) const {
   token->key = user_pos_token.key;
   token->value = user_pos_token.value;

@@ -35,11 +35,10 @@
 #include <QtGui>
 #include <memory>
 
+#include "data_manager/pos_list_provider.h"
 #include "gui/word_register_dialog/ui_word_register_dialog.h"
 
 namespace mozc {
-
-class PosListProviderInterface;
 
 namespace client {
 class ClientInterface;
@@ -113,7 +112,7 @@ class WordRegisterDialog : public QDialog, private Ui::WordRegisterDialog {
   std::unique_ptr<mozc::user_dictionary::UserDictionarySession> session_;
   std::unique_ptr<client::ClientInterface> client_;
   QString window_title_;
-  std::unique_ptr<const PosListProviderInterface> pos_list_provider_;
+  const PosListProvider pos_list_provider_;
 };
 
 }  // namespace gui

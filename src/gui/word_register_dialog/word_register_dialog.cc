@@ -113,8 +113,7 @@ WordRegisterDialog::WordRegisterDialog()
       session_(new UserDictionarySession(
           UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
-      window_title_(GuiUtil::ProductName()),
-      pos_list_provider_(new PosListProvider()) {
+      window_title_(GuiUtil::ProductName()) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::WindowStaysOnTopHint);
@@ -156,7 +155,7 @@ WordRegisterDialog::WordRegisterDialog()
 #endif  // !ENABLE_CLOUD_SYNC
 
   // Initialize ComboBox
-  const std::vector<std::string> pos_set = pos_list_provider_->GetPosList();
+  const std::vector<std::string> pos_set = pos_list_provider_.GetPosList();
   CHECK(!pos_set.empty());
 
   for (const std::string &pos : pos_set) {
@@ -165,7 +164,7 @@ WordRegisterDialog::WordRegisterDialog()
   }
   // Set the default POS to "名詞" indexed with 1.
   PartOfSpeechcomboBox->setCurrentIndex(
-      pos_list_provider_->GetPosListDefaultIndex());
+      pos_list_provider_.GetPosListDefaultIndex());
   DCHECK(PartOfSpeechcomboBox->currentText() == "名詞")
       << "The default POS is not 名詞";
 
