@@ -543,7 +543,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 106
+// Next ID: 107
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -649,6 +649,21 @@ message DecoderExperimentParams {
 
   // Apply inner segment boundary information to the single segment candidate.
   optional bool apply_single_inner_segment_boundary = 105 [default = true];
+
+  enum BigramNwpFilteringMode {
+    // Control implementation is used. For example,
+    // - Kanji + Katakana will not be filtered.
+    // - If cost(prefix) > cost(original_entry), the candidate will be filtered.
+    // - The reading of the target candidate should be in the dictionary.
+    // - ,etc
+    DEFAULT = 0;
+    // In addition to the default filtering, filter entry if the character
+    // script type does not change from the prefix.
+    FILTER_SAME_CTYPE = 1;
+    // Filter all bigram candidates.
+    FILTER_ALL = 2;
+  }
+  optional int32 bigram_nwp_filtering_mode = 106 [default = 0];
 }
 
 // Clients' request to the server.

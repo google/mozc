@@ -688,6 +688,30 @@ TEST_F(DictionaryPredictionAggregatorTest, BigramTestWithZeroQuery) {
                            convreq, segments, &results));
 }
 
+TEST_F(DictionaryPredictionAggregatorTest, BigramTestWithZeroQueryFilterMode) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+
+  Segments segments;
+  config_->set_use_dictionary_suggest(true);
+  request_->set_zero_query_suggestion(true);
+  request_->mutable_decoder_experiment_params()->set_bigram_nwp_filtering_mode(
+      commands::DecoderExperimentParams::FILTER_ALL);
+
+  // current query is empty
+  InitSegmentsWithKey("", &segments);
+
+  // history is "グーグル"
+  PrependHistorySegments("ぐーぐる", "グーグル", &segments);
+
+  std::vector<Result> results;
+  const ConversionRequest convreq = CreateSuggestionConversionRequest();
+  EXPECT_FALSE(BIGRAM & aggregator.AggregatePredictionForRequest(
+                            convreq, segments, &results));
+}
+
 // Check that previous candidate never be shown at the current candidate.
 TEST_F(DictionaryPredictionAggregatorTest, Regression3042706) {
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
@@ -1436,6 +1460,56 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
         EXPECT_FALSE(result.removed);
       }
     }
+  }
+}
+
+TEST_F(DictionaryPredictionAggregatorTest,
+       AggregateZeroQueryBigramPredictionFilteringMode) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+  request_test_util::FillMobileRequest(request_.get());
+  request_->mutable_decoder_experiment_params()->set_bigram_nwp_filtering_mode(
+      commands::DecoderExperimentParams::FILTER_SAME_CTYPE);
+
+  Segments segments;
+
+  // Zero query
+  InitSegmentsWithKey("", &segments);
+
+  // history is "グーグル"
+  constexpr char kHistoryKey[] = "ぐーぐる";
+  constexpr char kHistoryValue[] = "グーグル";
+
+  PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
+
+  {
+    MockDictionary *mock = data_and_aggregator->mutable_dictionary();
+    EXPECT_CALL(*mock, LookupPrefix(_, _, _)).Times(AnyNumber());
+    EXPECT_CALL(*mock, LookupPredictive(_, _, _)).Times(AnyNumber());
+    EXPECT_CALL(*mock, LookupPrefix(StrEq(kHistoryKey), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues{{
+            {kHistoryKey, kHistoryValue},
+        }});
+    EXPECT_CALL(*mock, LookupPredictive(StrEq(kHistoryKey), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues{{
+            {"ぐーぐるじゃぱん", "グーグルジャパン"},
+            {"ぐーぐるごうどうがいしゃ", "グーグル合同会社"},
+        }});
+  }
+
+  {
+    std::vector<Result> results;
+
+    const ConversionRequest convreq = CreateSuggestionConversionRequest();
+    aggregator.AggregateBigramPrediction(
+        convreq, segments,
+        Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM, &results);
+    EXPECT_FALSE(results.empty());
+
+    EXPECT_FALSE(FindResultByValue(results, "グーグルジャパン"));
+    EXPECT_TRUE(FindResultByValue(results, "グーグル合同会社"));
   }
 }
 

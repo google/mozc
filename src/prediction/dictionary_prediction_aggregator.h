@@ -146,7 +146,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   void CheckBigramResult(const dictionary::Token &history_token,
                          Util::ScriptType history_ctype,
                          Util::ScriptType last_history_ctype,
-                         const ConversionRequest &request,
+                         const ConversionRequest &request, bool is_zero_query,
                          Result *result) const;
 
   static void GetPredictiveResults(
