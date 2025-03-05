@@ -40,7 +40,7 @@ load(
     "mozc_select",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "ipc",
@@ -51,6 +51,14 @@ mozc_cc_library(
         "win32_ipc.cc",
     ],
     hdrs = ["ipc.h"],
+    visibility = [
+        "//client:__pkg__",
+        "//gui:__subpackages__",
+        "//mac:__pkg__",
+        "//renderer:__subpackages__",
+        "//session:__pkg__",
+        "//win32:__subpackages__",
+    ],
     deps = [
         ":ipc_path_manager",
         "//base:const",
@@ -82,7 +90,6 @@ mozc_cc_library(
 proto_library(
     name = "ipc_proto",
     srcs = ["ipc.proto"],
-    visibility = ["//visibility:private"],
 )
 
 cc_proto_library(
@@ -164,6 +171,10 @@ mozc_cc_library(
     testonly = True,
     srcs = ["ipc_mock.cc"],
     hdrs = ["ipc_mock.h"],
+    visibility = [
+        "//client:__pkg__",
+        "//win32/base:__pkg__",
+    ],
     deps = [
         ":ipc",
         "//base:version",
@@ -175,6 +186,7 @@ mozc_cc_library(
     name = "ipc_test_util",
     srcs = ["ipc_test_util.cc"],
     hdrs = ["ipc_test_util.h"],
+    visibility = ["//renderer:__subpackages__"],
     deps = [
         ":ipc",
         "@com_google_absl//absl/log:check",
@@ -217,6 +229,11 @@ mozc_cc_library(
     name = "named_event",
     srcs = ["named_event.cc"],
     hdrs = ["named_event.h"],
+    visibility = [
+        "//client:__pkg__",
+        "//renderer:__subpackages__",
+        "//session:__pkg__",
+    ],
     deps = [
         "//base:const",
         "//base:hash",
@@ -265,6 +282,7 @@ mozc_cc_library(
     name = "process_watch_dog",
     srcs = ["process_watch_dog.cc"],
     hdrs = ["process_watch_dog.h"],
+    visibility = ["//renderer:__subpackages__"],
     deps = [
         "//base:port",
         "//base:thread",
@@ -290,7 +308,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "ipc_hdr",
     textual_hdrs = ["ipc.h"],
-    visibility = ["//visibility:private"],
     deps = [
         "//base:thread",
         "@com_google_absl//absl/strings",
@@ -320,10 +337,10 @@ mozc_cc_test(
 proto_library(
     name = "window_info_proto",
     srcs = ["window_info.proto"],
-    visibility = ["//visibility:private"],
 )
 
 cc_proto_library(
     name = "window_info_cc_proto",
+    visibility = ["//gui:__subpackages__"],
     deps = [":window_info_proto"],
 )

@@ -46,10 +46,13 @@ load(
     "MACOS_BUNDLE_ID_PREFIX",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_binary(
     name = "mozc_server",
+    visibility = [
+        "//unix:__pkg__",
+    ],
     deps = [
         ":mozc_server_lib",
     ] + mozc_select(
@@ -67,6 +70,9 @@ mozc_win32_cc_prod_binary(
     static_crt = False,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    visibility = [
+        "//win32:__subpackages__",
+    ],
     deps = [
         ":mozc_server_lib",
         ":mozc_server_resources",
@@ -116,6 +122,9 @@ mozc_macos_application(
     bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Converter",
     bundle_name = BRANDING + "Converter",
     infoplists = ["Info.plist"],
+    visibility = [
+        "//mac:__pkg__",
+    ],
     deps = [":mozc_server_lib"],
     # When we support Breakpad, uncomment the following block.
     # additional_contents = {

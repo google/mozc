@@ -40,7 +40,7 @@ load(
 )
 load("//bazel:stubs.bzl", "bzl_library")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "data_manager",
@@ -48,6 +48,18 @@ mozc_cc_library(
         "data_manager.cc",
     ],
     hdrs = ["data_manager.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//android/jni:__pkg__",
+        "//converter:__pkg__",
+        "//data_manager:__subpackages__",
+        "//dictionary:__pkg__",
+        "//engine:__pkg__",
+        "//ios:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+        "//session:__pkg__",
+    ],
     deps = [
         ":dataset_reader",
         ":serialized_dictionary",
@@ -73,6 +85,9 @@ mozc_cc_library(
         "data_manager_test_base.cc",
     ],
     hdrs = ["data_manager_test_base.h"],
+    visibility = [
+        "//data_manager:__subpackages__",
+    ],
     deps = [
         ":connection_file_reader",
         ":data_manager",
@@ -105,6 +120,10 @@ mozc_py_library(
 mozc_py_binary(
     name = "gen_connection_data",
     srcs = ["gen_connection_data.py"],
+    visibility = [
+        "//:__subpackages__",
+        "//data_manager:__subpackages__",
+    ],
     deps = [
         ":gen_connection_data_lib",
         "//build_tools:code_generator_util",
@@ -115,6 +134,10 @@ mozc_cc_library(
     name = "connection_file_reader",
     srcs = ["connection_file_reader.cc"],
     hdrs = ["connection_file_reader.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//converter:__subpackages__",
+    ],
     deps = [
         "//base:file_stream",
         "//base:number_util",
@@ -126,12 +149,10 @@ mozc_cc_library(
 proto_library(
     name = "dataset_proto",
     srcs = ["dataset.proto"],
-    visibility = ["//visibility:private"],
 )
 
 cc_proto_library(
     name = "dataset_cc_proto",
-    visibility = ["//visibility:private"],
     deps = [":dataset_proto"],
 )
 
@@ -173,6 +194,10 @@ mozc_cc_test(
 mozc_cc_binary(
     name = "dataset_writer_main",
     srcs = ["dataset_writer_main.cc"],
+    visibility = [
+        "//:__subpackages__",
+        "//data_manager:__subpackages__",
+    ],
     deps = [
         ":dataset_writer",
         "//base:file_stream",
@@ -237,6 +262,10 @@ mozc_cc_library(
     name = "serialized_dictionary",
     srcs = ["serialized_dictionary.cc"],
     hdrs = ["serialized_dictionary.h"],
+    visibility = [
+        "//dictionary:__pkg__",
+        "//rewriter:__pkg__",
+    ],
     deps = [
         "//base:bits",
         "//base:file_stream",
@@ -271,6 +300,7 @@ mozc_cc_library(
         default = [],
         oss = ["//data_manager/oss:pos_list.inc"],
     ),
+    visibility = ["//gui:__subpackages__"],
     deps = [
         "//base:embedded_file",
         "//base/container:serialized_string_array",
@@ -289,4 +319,8 @@ bzl_library(
 mozc_cc_library(
     name = "emoji_data",
     hdrs = ["emoji_data.h"],
+    visibility = [
+        "//dictionary:__pkg__",
+        "//rewriter:__pkg__",
+    ],
 )

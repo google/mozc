@@ -36,12 +36,13 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "dictionary_file",
     srcs = ["dictionary_file.cc"],
     hdrs = ["dictionary_file.h"],
+    visibility = ["//dictionary:__subpackages__"],
     deps = [
         ":codec_interface",
         ":section",
@@ -87,6 +88,7 @@ mozc_cc_test(
 mozc_cc_library(
     name = "codec_interface",
     hdrs = ["codec_interface.h"],
+    visibility = ["//dictionary:__subpackages__"],
     deps = [
         ":section",
         "@com_google_absl//absl/status",
@@ -127,11 +129,10 @@ mozc_cc_library(
     hdrs = [
         "codec_factory.h",
     ],
+    visibility = ["//dictionary:__subpackages__"],
     deps = [
         ":codec",
         ":codec_interface",
-        ":codec_util",
-        ":section",
         "//base:singleton",
     ],
 )

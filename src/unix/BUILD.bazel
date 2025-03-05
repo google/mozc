@@ -39,7 +39,7 @@ load(
     "LINUX_MOZC_SERVER_DIR",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 genrule(
     name = "icons",
@@ -76,6 +76,9 @@ genrule(
     outs = ["icons.zip"],
     cmd = "$(location :build_icons) --inputs $(SRCS) --output $@",
     tools = [":build_icons"],
+    visibility = [
+        "//unix:__subpackages__",
+    ],
 )
 
 mozc_py_binary(
@@ -98,13 +101,13 @@ genrule(
     outs = ["mozc.zip"],
     cmd = " ".join([
         "$(location :build_package) --inputs $(SRCS) --output $@",
-        "--mozc_dir \"" + LINUX_MOZC_SERVER_DIR + "\"",
-        "--mozc_icons_dir \"" + LINUX_MOZC_ICONS_DIR + "\"",
-        "--ibus_component_dir \"" + IBUS_COMPONENT_DIR + "\"",
-        "--ibus_mozc_path \"" + IBUS_MOZC_PATH + "\"",
-        "--ibus_mozc_install_dir \"" + IBUS_MOZC_INSTALL_DIR + "\"",
-        "--emacs_client_dir \"" + EMACS_MOZC_CLIENT_DIR + "\"",
-        "--emacs_helper_dir \"" + EMACS_MOZC_HELPER_DIR + "\"",
+        '--mozc_dir "' + LINUX_MOZC_SERVER_DIR + '"',
+        '--mozc_icons_dir "' + LINUX_MOZC_ICONS_DIR + '"',
+        '--ibus_component_dir "' + IBUS_COMPONENT_DIR + '"',
+        '--ibus_mozc_path "' + IBUS_MOZC_PATH + '"',
+        '--ibus_mozc_install_dir "' + IBUS_MOZC_INSTALL_DIR + '"',
+        '--emacs_client_dir "' + EMACS_MOZC_CLIENT_DIR + '"',
+        '--emacs_helper_dir "' + EMACS_MOZC_HELPER_DIR + '"',
     ]),
     tools = [":build_package"],
 )

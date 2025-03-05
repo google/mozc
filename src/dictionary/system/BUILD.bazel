@@ -36,10 +36,11 @@ load(
     "mozc_cc_test",
 )
 
+package(default_visibility = ["//visibility:private"])
+
 mozc_cc_library(
     name = "codec_interface",
     hdrs = ["codec_interface.h"],
-    visibility = ["//visibility:private"],
     deps = [
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
@@ -53,7 +54,6 @@ mozc_cc_library(
         "codec.h",
         "codec_interface.h",
     ],
-    visibility = ["//visibility:private"],
     deps = [
         ":words_info",
         "//base:singleton",
@@ -89,7 +89,6 @@ mozc_cc_test(
 mozc_cc_library(
     name = "token_decode_iterator",
     hdrs = ["token_decode_iterator.h"],
-    visibility = ["//visibility:private"],
     deps = [
         ":codec_interface",
         ":words_info",
@@ -189,7 +188,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "words_info",
     hdrs = ["words_info.h"],
-    visibility = ["//visibility:private"],
 )
 
 mozc_cc_test(

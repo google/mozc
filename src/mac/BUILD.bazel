@@ -43,7 +43,7 @@ load(
     "MACOS_CODESIGN_IDENTITY",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 # BUILD_TYPE_SELECT is treated as a function, but not a string. This cannot be a value of join().
 BUILD_TYPE_SELECT = select({
@@ -60,12 +60,24 @@ mozc_macos_application(
             "//server:mozc_server_macos": "Resources",
         },
         oss_macos = {
-            "//gui/about_dialog:about_dialog_macos": "Resources",
-            "//gui/config_dialog:config_dialog_macos": "Resources",
-            "//gui/dictionary_tool:dictionary_tool_macos": "Resources",
-            "//gui/error_message_dialog:error_message_dialog_macos": "Resources",
-            "//gui/tool:mozc_prelauncher_macos": "Resources",
-            "//gui/word_register_dialog:word_register_dialog_macos": "Resources",
+            "//gui/about_dialog:about_dialog_macos": (
+                "Resources"
+            ),
+            "//gui/config_dialog:config_dialog_macos": (
+                "Resources"
+            ),
+            "//gui/dictionary_tool:dictionary_tool_macos": (
+                "Resources"
+            ),
+            "//gui/error_message_dialog:error_message_dialog_macos": (
+                "Resources"
+            ),
+            "//gui/tool:mozc_prelauncher_macos": (
+                "Resources"
+            ),
+            "//gui/word_register_dialog:word_register_dialog_macos": (
+                "Resources"
+            ),
             "//renderer:mozc_renderer_macos": "Resources",
             "//server:mozc_server_macos": "Resources",
         },
@@ -94,6 +106,9 @@ mozc_objc_library(
     name = "common",
     hdrs = ["common.h"],
     sdk_frameworks = ["Foundation"],
+    visibility = [
+        "//renderer:__pkg__",
+    ],
     deps = ["//protocol:commands_cc_proto"],
 )
 
@@ -101,8 +116,8 @@ mozc_objc_library(
     name = "mozc_macos_main_lib",
     srcs = ["main.mm"],
     sdk_frameworks = [
-        "Carbon",
         "Cocoa",
+        "Foundation",
         "InputMethodKit",
     ],
     tags = ["manual"],
@@ -131,7 +146,6 @@ mozc_objc_library(
     sdk_frameworks = [
         "Carbon",
         "Cocoa",
-        "Foundation",
         "InputMethodKit",
     ],
     tags = ["manual"],
@@ -240,8 +254,10 @@ genrule(
     name = "init_kanamap",
     srcs = ["//data/preedit:mac-kana.tsv"],
     outs = ["init_kanamap.h"],
-    cmd = ("$(location :generate_mapping) --mapname=KanaMap" +
-           " --result_type='const char *' --filename $< > $@"),
+    cmd = (
+        "$(location :generate_mapping) --mapname=KanaMap" +
+        " --result_type='const char *' --filename $< > $@"
+    ),
     tools = [":generate_mapping"],
 )
 
@@ -249,8 +265,10 @@ genrule(
     name = "init_specialkeymap",
     srcs = ["//data/preedit:mac-specialkeys.tsv"],
     outs = ["init_specialkeymap.h"],
-    cmd = ("$(location :generate_mapping) --mapname=SpecialKeyMap" +
-           " --result_type=KeyEvent::SpecialKey --filename $< > $@"),
+    cmd = (
+        "$(location :generate_mapping) --mapname=SpecialKeyMap" +
+        " --result_type=KeyEvent::SpecialKey --filename $< > $@"
+    ),
     tools = [":generate_mapping"],
 )
 
@@ -258,9 +276,11 @@ genrule(
     name = "init_specialcharmap",
     srcs = ["//data/preedit:mac-specialchars.tsv"],
     outs = ["init_specialcharmap.h"],
-    cmd = ("$(location :generate_mapping) --mapname=SpecialCharMap" +
-           " --key_type=unichar --result_type=KeyEvent::SpecialKey" +
-           " --filename $< > $@"),
+    cmd = (
+        "$(location :generate_mapping) --mapname=SpecialCharMap" +
+        " --key_type=unichar --result_type=KeyEvent::SpecialKey" +
+        " --filename $< > $@"
+    ),
     tools = [":generate_mapping"],
 )
 
@@ -334,7 +354,6 @@ mozc_objc_library(
         "Uninstaller/Japanese.lproj/Dialogs.xib",
     ],
     sdk_frameworks = [
-        "Carbon",
         "Cocoa",
         "Security",
     ],
@@ -349,11 +368,12 @@ mozc_objc_library(
 
 mozc_macos_application(
     name = "uninstaller_macos",
-    bundle_name = "Uninstall" + mozc_select(
-        default = "GoogleJapaneseInput",
-        oss = "Mozc",
-        prod = "GoogleJapaneseInput",
-    ),
+    bundle_name = "Uninstall" +
+                  mozc_select(
+                      default = "GoogleJapaneseInput",
+                      oss = "Mozc",
+                      prod = "GoogleJapaneseInput",
+                  ),
     infoplists = ["Uninstaller/Info.plist"],
     strings = [
         "Uninstaller/English.lproj/InfoPlist.strings",
@@ -370,7 +390,8 @@ genrule(
     ),
     outs = ["preflight.sh"],
     cmd = " ".join([
-        "$(location //build_tools:tweak_macinstaller_script)",
+        "$(location" +
+        " //build_tools:tweak_macinstaller_script)",
         " --output $@",
         " --input $<",
         " --build_type ",
@@ -386,10 +407,12 @@ genrule(
     ),
     outs = ["postflight.sh"],
     cmd = " ".join([
-        "$(location //build_tools:tweak_macinstaller_script)",
+        "$(location" +
+        " //build_tools:tweak_macinstaller_script)",
         " --output $@",
         " --input $<",
-        " --version_file $(location //base:mozc_version_txt)",
+        " --version_file" +
+        " $(location //base:mozc_version_txt)" +
         " --build_type ",
     ]) + BUILD_TYPE_SELECT,  # "dev" or "stable".
     tools = [
@@ -458,11 +481,16 @@ genrule(
     name = "productbuild_files",
     srcs = [":zipped_installer_files"],
     outs = ["productbuild_files.zip"],
-    cmd = "$(location :tweak_installer_files) --productbuild --input $(SRCS) --output $@" + mozc_select(
-        default = " --noqt",
-        oss_macos = " --oss",
-        prod_macos = "",
-    ) + " --codesign_identity \"" + MACOS_CODESIGN_IDENTITY + "\"",
+    cmd = "$(location :tweak_installer_files) --productbuild --input $(SRCS)" +
+          " --output $@" +
+          mozc_select(
+              default = " --noqt",
+              oss_macos = " --oss",
+              prod_macos = "",
+          ) +
+          ' --codesign_identity "' +
+          MACOS_CODESIGN_IDENTITY +
+          '"',
     # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
     local = True,
     tags = ["manual"],
@@ -493,18 +521,21 @@ AUTO_UPDATER_DIR = "installer/client/mac_universal"  # Placeholder
 
 genrule(
     name = "installer_oss_macos",
-    srcs = [":tweaked_installer_files"] + mozc_select(
-        oss_macos = ["installer/Mozc_template.pkgproj"],
-        prod_macos = ["installer/Mozc_template.pkgproj"],
-    ),
+    srcs = [":tweaked_installer_files"] +
+           mozc_select(
+               oss_macos = ["installer/Mozc_template.pkgproj"],
+               prod_macos = ["installer/Mozc_template.pkgproj"],
+           ),
     outs = ["Mozc_Packages.pkg"],
     cmd = " ".join([
         "$(location :build_installer)",
         "--input $(location :tweaked_installer_files) --output $@" +
-        "--pkgproj_command $(location //build_tools:tweak_pkgproj)",
+        "--pkgproj_command" +
+        " $(location //build_tools:tweak_pkgproj)",
         "--pkgproj_input $(location installer/Mozc_template.pkgproj)",
         "--pkgproj_output installer.pkgproj",
-        "--version_file $(location //base:mozc_version_txt)",
+        "--version_file" +
+        " $(location //base:mozc_version_txt)",
         "--auto_updater_dir " + AUTO_UPDATER_DIR,
         "--build_type ",
     ]) + BUILD_TYPE_SELECT,  # "dev" or "stable"
@@ -522,7 +553,8 @@ genrule(
     srcs = ["installer/.keystone_install_template"],
     outs = [".keystone_install"],
     cmd = " ".join([
-        "$(location //build_tools:tweak_macinstaller_script)",
+        "$(location" +
+        " //build_tools:tweak_macinstaller_script)",
         "--output $@",
         "--input $(SRCS)",
         "--build_type ",
@@ -545,7 +577,8 @@ genrule(
     name = "package",
     srcs = [":productbuild_files"],
     outs = ["Mozc.pkg"],
-    cmd = "$(location :build_package) --input $(location :productbuild_files) --output $@" +
+    cmd = "$(location :build_package) --input $(location :productbuild_files)" +
+          " --output $@" +
           mozc_select(
               default = "",
               oss = " --oss",
@@ -555,6 +588,9 @@ genrule(
     # TODO(b/269007577): version_file, auto_updater_dir and build_type should be supported.
     tags = ["manual"],
     tools = [":build_package"],
+    visibility = [
+        "//:__pkg__",
+    ],
 )
 
 genrule(
@@ -586,7 +622,7 @@ genrule(
         "chmod u+w $@ &&",
         "/usr/bin/codesign",
         "--timestamp --options=runtime",  # For notarization
-        "--sign \"" + MACOS_CODESIGN_IDENTITY + "\"",
+        '--sign "' + MACOS_CODESIGN_IDENTITY + '"',
         "--keychain login.keychain",
         "$@",
     ]),

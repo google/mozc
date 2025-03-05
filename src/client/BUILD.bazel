@@ -37,12 +37,19 @@ load(
 )
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "client_interface",
     hdrs = ["client_interface.h"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//gui:__subpackages__",
+        "//mac:__pkg__",
+        "//renderer:__subpackages__",
+        "//session:__pkg__",
+        "//visibility:public",
+        "//win32:__subpackages__",
+    ],
     deps = [
         "//ipc",
         "//protocol:commands_cc_proto",
@@ -65,7 +72,14 @@ mozc_cc_library(
         linux = ["MOZC_USE_SVS_JAPANESE"],
         oss = ["MOZC_USE_SVS_JAPANESE"],
     ),
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//gui:__subpackages__",
+        "//mac:__pkg__",
+        "//session:__pkg__",
+        "//unix:__subpackages__",
+        "//visibility:public",
+        "//win32:__subpackages__",
+    ],
     deps = [
         ":client_interface",
         "//base:const",
@@ -133,7 +147,12 @@ mozc_cc_library(
     name = "client_mock",
     testonly = True,
     hdrs = ["client_mock.h"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//mac:__pkg__",
+        "//session:__pkg__",
+        "//unix:__subpackages__",
+        "//visibility:public",
+    ],
     deps = [
         ":client_interface",
         "//ipc",

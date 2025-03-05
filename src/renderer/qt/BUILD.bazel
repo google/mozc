@@ -39,7 +39,7 @@ load(
     "mozc_qt_moc",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 licenses(["notice"])
 
@@ -47,6 +47,7 @@ mozc_cc_binary(
     name = "mozc_renderer",
     srcs = ["qt_renderer_main.cc"],
     defines = ["ENABLE_QT_RENDERER"],
+    visibility = ["//unix:__subpackages__"],
     deps = [
         ":qt_server",
         "//renderer:init_mozc_renderer",

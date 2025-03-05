@@ -35,15 +35,12 @@ load(
     "mozc_select_enable_supplemental_model",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "data_loader",
     srcs = ["data_loader.cc"],
     hdrs = ["data_loader.h"],
-    visibility = [
-        "//engine:__subpackages__",
-    ],
     deps = [
         ":modules",
         "//base:file_util",
@@ -91,6 +88,12 @@ mozc_cc_test(
 mozc_cc_library(
     name = "engine_interface",
     hdrs = ["engine_interface.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//converter:__pkg__",
+        "//ios:__pkg__",
+        "//session:__pkg__",
+    ],
     deps = [
         ":engine_converter_interface",
         "//protocol:commands_cc_proto",
@@ -105,6 +108,10 @@ mozc_cc_library(
 mozc_cc_library(
     name = "supplemental_model_interface",
     hdrs = ["supplemental_model_interface.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//prediction:__pkg__",
+    ],
     deps = [
         "//composer:query",
         "//converter:segments",
@@ -122,6 +129,9 @@ mozc_cc_library(
     name = "supplemental_model_mock",
     testonly = 1,
     hdrs = ["supplemental_model_mock.h"],
+    visibility = [
+        "//prediction:__pkg__",
+    ],
     deps = [
         ":supplemental_model_interface",
         "//composer:query",
@@ -141,6 +151,10 @@ mozc_cc_library(
     name = "modules",
     srcs = ["modules.cc"],
     hdrs = ["modules.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//prediction:__pkg__",
+    ],
     deps = [
         ":supplemental_model_interface",
         "//converter:connector",
@@ -189,7 +203,9 @@ mozc_cc_library(
         "engine.cc",
     ],
     hdrs = ["engine.h"],
-    visibility = ["//:__subpackages__"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         ":data_loader",
         ":engine_converter",
@@ -251,6 +267,7 @@ mozc_cc_library(
     name = "engine_mock",
     testonly = 1,
     hdrs = ["engine_mock.h"],
+    visibility = ["//session:__pkg__"],
     deps = [
         ":engine_converter_interface",
         ":engine_interface",
@@ -265,6 +282,11 @@ mozc_cc_library(
 mozc_cc_library(
     name = "engine_factory",
     hdrs = ["engine_factory.h"],
+    visibility = [
+        "//converter:__pkg__",
+        "//server:__pkg__",
+        "//session:__pkg__",
+    ],
     deps = mozc_select(
         android = [":android_engine_factory"],
         default = [":google_engine_factory"],
@@ -276,6 +298,10 @@ mozc_cc_library(
     name = "eval_engine_factory",
     srcs = ["eval_engine_factory.cc"],
     hdrs = ["eval_engine_factory.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//converter:__pkg__",
+    ],
     deps = [
         ":engine",
         "//data_manager",
@@ -297,6 +323,7 @@ filegroup(
             "//data_manager/oss:mozc.data",
         ],
     ),
+    visibility = ["//converter:__pkg__"],
 )
 
 mozc_cc_library(
@@ -367,8 +394,6 @@ mozc_cc_library(
         "//engine:__subpackages__",
     ],
     deps = [
-        ":engine_converter",
-        ":engine_converter_interface",
         "//base/strings:assign",
         "//converter:converter_interface",
         "//converter:segments",
@@ -382,7 +407,7 @@ mozc_cc_library(
 mozc_cc_library(
     name = "engine_converter_interface",
     hdrs = ["engine_converter_interface.h"],
-    visibility = ["//session:__subpackages__"],
+    visibility = ["//session:__pkg__"],
     deps = [
         "//composer",
         "//protocol:commands_cc_proto",
@@ -396,6 +421,7 @@ mozc_cc_library(
     name = "engine_converter",
     srcs = ["engine_converter.cc"],
     hdrs = ["engine_converter.h"],
+    visibility = ["//session:__pkg__"],
     deps = [
         ":candidate_list",
         ":engine_converter_interface",
@@ -426,6 +452,7 @@ mozc_cc_test(
     srcs = ["engine_converter_test.cc"],
     shard_count = 8,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
+    visibility = ["//converter:__subpackages__"],
     deps = [
         ":candidate_list",
         ":engine_converter",
@@ -481,9 +508,6 @@ mozc_cc_library(
     name = "candidate_list",
     srcs = ["candidate_list.cc"],
     hdrs = ["candidate_list.h"],
-    visibility = [
-        "//engine:__subpackages__",
-    ],
     deps = [
         "//base:hash",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -497,9 +521,6 @@ mozc_cc_library(
     name = "engine_output",
     srcs = ["engine_output.cc"],
     hdrs = ["engine_output.h"],
-    visibility = [
-        "//engine:__subpackages__",
-    ],
     deps = [
         ":candidate_list",
         "//base:port",

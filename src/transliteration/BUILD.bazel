@@ -36,13 +36,20 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "transliteration",
     srcs = ["transliteration.cc"],
     hdrs = ["transliteration.h"],
-    deps = ["//base:port"],
+    visibility = [
+        "//composer:__pkg__",
+        "//converter:__pkg__",
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+        "//session:__pkg__",
+    ],
 )
 
 mozc_cc_test(

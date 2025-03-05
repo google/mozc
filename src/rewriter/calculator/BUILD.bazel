@@ -36,13 +36,14 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "calculator",
     srcs = ["calculator.cc"],
     hdrs = ["calculator.h"],
     textual_hdrs = ["parser.c.inc"],
+    visibility = ["//rewriter:__pkg__"],
     deps = [
         "//base:japanese_util",
         "//base:number_util",

@@ -45,7 +45,7 @@ load(
     "LINUX_MOZC_SERVER_DIR",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 licenses(["notice"])
 
@@ -67,6 +67,7 @@ genrule(
         "> $@",
     ]),
     tools = [":gen_mozc_xml_main"],
+    visibility = ["//unix:__subpackages__"],
 )
 
 genrule(
@@ -146,7 +147,7 @@ mozc_cc_library(
         "path_util.h",
     ],
     local_defines = [
-        "MOZC_IBUS_INSTALL_DIR=\\\"" + IBUS_MOZC_INSTALL_DIR + "\\\"",
+        'MOZC_IBUS_INSTALL_DIR=\\"' + IBUS_MOZC_INSTALL_DIR + '\\"',
     ],
     deps = [
         "//base:util",
@@ -285,6 +286,7 @@ mozc_cc_binary(
         ":gen_mozc_xml",
         "//unix:icons",
     ],
+    visibility = ["//unix:__subpackages__"],
     deps = [
         ":ibus_config",
         ":ibus_header",

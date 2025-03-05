@@ -42,12 +42,17 @@ load(
 )
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
+package(default_visibility = ["//visibility:private"])
+
 mozc_cc_library(
     name = "session",
     srcs = ["session.cc"],
     hdrs = ["session.h"],
     visibility = [
-        "//evaluation:__subpackages__",
+        "//android/jni:__pkg__",
+        "//evaluation/candidates_diff_checker:__pkg__",
+        "//ios:__pkg__",
+        "//server:__pkg__",
     ],
     deps = [
         ":ime_context",
@@ -104,7 +109,6 @@ mozc_cc_test(
         "//rewriter:transliteration_rewriter",
         "//testing:gunit_main",
         "//testing:mozctest",
-        "//testing:testing_util",
         "//transliteration",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
@@ -151,9 +155,9 @@ mozc_cc_library(
     ],
     hdrs = ["session_handler.h"],
     visibility = [
-        "//android:__subpackages__",
-        "//ios:__subpackages__",
-        "//server:__subpackages__",
+        "//android/jni:__pkg__",
+        "//ios:__pkg__",
+        "//server:__pkg__",
     ],
     deps = [
         ":keymap",
@@ -264,9 +268,7 @@ mozc_cc_library(
     ],
     hdrs = ["session_server.h"],
     tags = ["noandroid"],
-    visibility = [
-        "//server:__subpackages__",
-    ],
+    visibility = ["//server:__pkg__"],
     deps = [
         ":session_handler",
         "//base:vlog",
@@ -352,8 +354,8 @@ mozc_cc_library(
     srcs = ["key_info_util.cc"],
     hdrs = ["key_info_util.h"],
     visibility = [
-        "//client:__subpackages__",
-        "//win32:__subpackages__",
+        "//client:__pkg__",
+        "//win32/base:__pkg__",
     ],
     deps = [
         ":keymap",
@@ -411,8 +413,8 @@ mozc_cc_library(
     ],
     hdrs = ["random_keyevents_generator.h"],
     visibility = [
-        "//client:__subpackages__",
-        "//server:__subpackages__",
+        "//client:__pkg__",
+        "//server:__pkg__",
     ],
     deps = [
         ":keymap",
@@ -572,9 +574,6 @@ mozc_cc_library(
     name = "ime_context",
     srcs = ["ime_context.cc"],
     hdrs = ["ime_context.h"],
-    visibility = [
-        "//session:__subpackages__",
-    ],
     deps = [
         ":key_event_transformer",
         ":keymap",
@@ -595,10 +594,7 @@ mozc_cc_library(
     name = "keymap",
     srcs = ["keymap.cc"],
     hdrs = ["keymap.h"],
-    visibility = [
-        "//gui/config_dialog:__subpackages__",
-        "//session:__subpackages__",
-    ],
+    visibility = ["//gui/config_dialog:__pkg__"],
     deps = [
         "//base:config_file_stream",
         "//base:file_stream",
@@ -622,9 +618,6 @@ mozc_cc_library(
     name = "key_event_transformer",
     srcs = ["key_event_transformer.cc"],
     hdrs = ["key_event_transformer.h"],
-    visibility = [
-        "//session:__subpackages__",
-    ],
     deps = [
         "//base:japanese_util",
         "//composer:key_event_util",

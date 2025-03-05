@@ -36,12 +36,16 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "lru_storage",
     srcs = ["lru_storage.cc"],
     hdrs = ["lru_storage.h"],
+    visibility = [
+        "//config:__pkg__",
+        "//rewriter:__pkg__",
+    ],
     deps = [
         "//base:bits",
         "//base:clock",
@@ -65,6 +69,13 @@ mozc_cc_library(
 mozc_cc_library(
     name = "lru_cache",
     hdrs = ["lru_cache.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+        "//session:__pkg__",
+        "//unix/emacs:__pkg__",
+    ],
     deps = [
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:check",
@@ -84,6 +95,10 @@ mozc_cc_library(
     name = "existence_filter",
     srcs = ["existence_filter.cc"],
     hdrs = ["existence_filter.h"],
+    visibility = [
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+    ],
     deps = [
         "//base:bits",
         "//base:vlog",
@@ -136,6 +151,7 @@ mozc_cc_library(
     name = "encrypted_string_storage",
     srcs = ["encrypted_string_storage.cc"],
     hdrs = ["encrypted_string_storage.h"],
+    visibility = ["//prediction:__pkg__"],
     deps = [
         "//base:encryptor",
         "//base:file_stream",

@@ -34,12 +34,15 @@ load(
     "mozc_select",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "config_handler",
     srcs = ["config_handler.cc"],
     hdrs = ["config_handler.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         "//base:clock",
         "//base:config_file_stream",
@@ -88,6 +91,9 @@ mozc_cc_library(
     name = "stats_config_util",
     srcs = ["stats_config_util.cc"],
     hdrs = ["stats_config_util.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         "//base:singleton",
     ] + mozc_select(
@@ -146,6 +152,12 @@ mozc_cc_library(
     name = "character_form_manager",
     srcs = ["character_form_manager.cc"],
     hdrs = ["character_form_manager.h"],
+    visibility = [
+        "//composer:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+        "//session:__pkg__",
+    ],
     deps = [
         ":config_handler",
         "//base:config_file_stream",

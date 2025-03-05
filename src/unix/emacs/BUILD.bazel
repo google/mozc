@@ -34,7 +34,7 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 exports_files(["mozc.el"])
 
@@ -44,6 +44,7 @@ mozc_cc_binary(
     copts = [
         "$(STACK_FRAME_UNLIMITED)",  # mozc_emacs_helper.cc
     ],
+    visibility = ["//unix:__subpackages__"],
     deps = [
         ":mozc_emacs_helper_lib",
         "//base:init_mozc",

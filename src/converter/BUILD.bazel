@@ -37,7 +37,7 @@ load(
 )
 load("//bazel:stubs.bzl", "bzl_library")
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "segments",
@@ -51,6 +51,9 @@ mozc_cc_library(
     ],
     visibility = [
         "//:__subpackages__",
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
     ],
     deps = [
         ":lattice",
@@ -98,6 +101,11 @@ mozc_cc_library(
     testonly = 1,
     srcs = ["segments_matchers.h"],
     hdrs = ["segments_matchers.h"],
+    visibility = [
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+    ],
     deps = [
         ":segments",
         "//testing:gunit",
@@ -128,7 +136,7 @@ mozc_cc_library(
 mozc_cc_library(
     name = "node_allocator",
     hdrs = ["node_allocator.h"],
-    visibility = ["//dictionary:__subpackages__"],
+    visibility = ["//dictionary:__pkg__"],
     deps = [
         ":node",
         "//base/container:freelist",
@@ -139,13 +147,16 @@ mozc_cc_library(
 mozc_cc_library(
     name = "node_list_builder",
     hdrs = ["node_list_builder.h"],
+    visibility = [
+        "//prediction:__pkg__",
+        "//typing_correction:__pkg__",
+    ],
     deps = [
         ":node",
         ":node_allocator",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
         "//protocol:commands_cc_proto",
-        "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
@@ -155,6 +166,11 @@ mozc_cc_library(
     name = "connector",
     srcs = ["connector.cc"],
     hdrs = ["connector.h"],
+    visibility = [
+        "//data_manager:__pkg__",
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+    ],
     deps = [
         "//data_manager",
         "//storage/louds:simple_succinct_bit_vector_index",
@@ -163,8 +179,6 @@ mozc_cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
-        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -293,6 +307,11 @@ mozc_cc_library(
     name = "segmenter",
     srcs = ["segmenter.cc"],
     hdrs = ["segmenter.h"],
+    visibility = [
+        "//data_manager:__pkg__",
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+    ],
     deps = [
         ":node",
         "//base/container:bitarray",
@@ -308,7 +327,6 @@ mozc_cc_library(
         "lattice.cc",
     ],
     hdrs = ["lattice.h"],
-    visibility = ["//visibility:private"],
     deps = [
         ":node",
         ":node_allocator",
@@ -416,6 +434,13 @@ mozc_cc_test(
 mozc_cc_library(
     name = "converter_interface",
     hdrs = ["converter_interface.h"],
+    visibility = [
+        "//:__subpackages__",
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+        "//session:__pkg__",
+    ],
     deps = [
         ":segments",
         "//request:conversion_request",
@@ -431,6 +456,7 @@ mozc_cc_library(
     ],
     hdrs = ["converter.h"],
     visibility = [
+        "//converter:__pkg__",
         "//engine:__pkg__",
         "//rewriter:__pkg__",
     ],
@@ -517,6 +543,7 @@ mozc_cc_test(
     name = "converter_regression_test",
     size = "medium",
     srcs = ["converter_regression_test.cc"],
+    visibility = ["//engine:__subpackages__"],
     deps = [
         ":converter_interface",
         ":segments",
@@ -536,6 +563,7 @@ mozc_cc_library(
     name = "history_reconstructor",
     srcs = ["history_reconstructor.cc"],
     hdrs = ["history_reconstructor.h"],
+    visibility = ["//prediction:__pkg__"],
     deps = [
         ":segments",
         "//base:japanese_util",
@@ -550,6 +578,7 @@ mozc_cc_library(
 mozc_cc_test(
     name = "history_reconstructor_test",
     srcs = ["history_reconstructor_test.cc"],
+    visibility = ["//prediction:__pkg__"],
     deps = [
         ":history_reconstructor",
         ":segments",
@@ -569,6 +598,7 @@ mozc_cc_library(
     name = "reverse_converter",
     srcs = ["reverse_converter.cc"],
     hdrs = ["reverse_converter.h"],
+    visibility = ["//prediction:__pkg__"],
     deps = [
         ":immutable_converter_interface",
         ":segments",
@@ -585,6 +615,7 @@ mozc_cc_library(
 mozc_cc_test(
     name = "reverse_converter_test",
     srcs = ["reverse_converter_test.cc"],
+    visibility = ["//prediction:__pkg__"],
     deps = [
         ":immutable_converter_no_factory",
         ":reverse_converter",
@@ -709,7 +740,7 @@ mozc_py_binary(
     srcs = ["gen_boundary_data.py"],
     visibility = [
         "//data_manager:__subpackages__",
-        "//tools/periodical_update:__subpackages__",
+        "//tools/periodical_update:__pkg__",
     ],
 )
 
@@ -740,6 +771,12 @@ mozc_cc_library(
     name = "converter_mock",
     testonly = True,
     hdrs = ["converter_mock.h"],
+    visibility = [
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
+        "//session:__pkg__",
+    ],
     deps = [
         ":converter_interface",
         ":segments",
@@ -753,12 +790,19 @@ mozc_cc_library(
 mozc_py_binary(
     name = "gen_quality_regression_test_data",
     srcs = ["gen_quality_regression_test_data.py"],
+    visibility = [
+        "//:__subpackages__",
+        "//converter:__subpackages__",
+    ],
 )
 
 mozc_cc_library(
     name = "quality_regression_util",
     srcs = ["quality_regression_util.cc"],
     hdrs = ["quality_regression_util.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         ":converter_interface",
         ":segments",
@@ -784,6 +828,7 @@ mozc_cc_binary(
     name = "quality_regression_main",
     testonly = 1,
     srcs = ["quality_regression_main.cc"],
+    visibility = ["//data:__subpackages__"],
     deps = [
         ":quality_regression_util",
         "//base:init_mozc",
@@ -806,6 +851,7 @@ mozc_cc_binary(
 mozc_py_binary(
     name = "quality_regression",
     srcs = ["quality_regression.py"],
+    visibility = ["//data:__subpackages__"],
     deps = ["//build_tools:mozc_version_lib"],
 )
 
@@ -814,6 +860,9 @@ mozc_cc_library(
     testonly = True,
     srcs = ["quality_regression_test_lib.cc"],
     hdrs = ["quality_regression_test_lib.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         ":quality_regression_util",
         "//testing:gunit",
@@ -830,5 +879,4 @@ bzl_library(
     name = "evalution_bzl",
     srcs = ["evaluation.bzl"],
     test_size = "small",
-    visibility = ["//visibility:private"],
 )

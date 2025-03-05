@@ -39,11 +39,15 @@ load(
     "mozc_select_enable_usage_rewriter",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "rewriter_interface",
     textual_hdrs = ["rewriter_interface.h"],
+    visibility = [
+        "//converter:__pkg__",
+        "//engine:__pkg__",
+    ],
     deps = [
         "//converter:segments",
         "//request:conversion_request",
@@ -54,7 +58,6 @@ mozc_cc_test(
     name = "merger_rewriter_test",
     size = "small",
     srcs = ["merger_rewriter_test.cc"],
-    visibility = ["//visibility:private"],
     deps = [
         ":merger_rewriter",
         ":rewriter_interface",
@@ -183,7 +186,6 @@ mozc_cc_library(
         "//base:file_util",
         "//base:util",
         "//base:vlog",
-        "//converter:converter_interface",
         "//converter:segments",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
@@ -220,6 +222,7 @@ mozc_cc_library(
     name = "date_rewriter",
     srcs = ["date_rewriter.cc"],
     hdrs = ["date_rewriter.h"],
+    visibility = ["//converter:__pkg__"],
     deps = [
         ":rewriter_interface",
         "//base:clock",
@@ -229,7 +232,6 @@ mozc_cc_library(
         "//base:vlog",
         "//base/strings:unicode",
         "//composer",
-        "//converter:converter_interface",
         "//converter:segments",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
@@ -314,9 +316,7 @@ mozc_cc_test(
         ":rewriter_interface",
         "//base:number_util",
         "//base/strings:assign",
-        "//composer",
         "//config:character_form_manager",
-        "//config:config_handler",
         "//converter:segments",
         "//converter:segments_matchers",
         "//data_manager/testing:mock_data_manager",
@@ -339,7 +339,6 @@ mozc_cc_library(
     deps = [
         ":rewriter_interface",
         "//base:util",
-        "//converter:converter_interface",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
@@ -376,6 +375,9 @@ mozc_cc_library(
         "transliteration_rewriter.cc",
     ],
     hdrs = ["transliteration_rewriter.h"],
+    visibility = [
+        "//session:__pkg__",
+    ],
     deps = [
         ":rewriter_interface",
         "//base:japanese_util",
@@ -597,6 +599,7 @@ mozc_cc_library(
     name = "variants_rewriter",
     srcs = ["variants_rewriter.cc"],
     hdrs = ["variants_rewriter.h"],
+    visibility = ["//prediction:__pkg__"],
     deps = [
         ":rewriter_interface",
         "//base:japanese_util",
@@ -882,6 +885,10 @@ mozc_cc_test(
 mozc_cc_binary(
     name = "gen_symbol_rewriter_dictionary_main",
     srcs = ["gen_symbol_rewriter_dictionary_main.cc"],
+    visibility = [
+        "//:__subpackages__",
+        "//data_manager:__subpackages__",
+    ],
     deps = [
         ":dictionary_generator",
         "//base:file_stream",
@@ -906,6 +913,7 @@ mozc_cc_binary(
 mozc_cc_binary(
     name = "gen_emoticon_rewriter_data",
     srcs = ["gen_emoticon_rewriter_data.cc"],
+    visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//base:file_stream",
         "//base:init_mozc_buildtool",
@@ -922,6 +930,7 @@ mozc_cc_binary(
 mozc_py_binary(
     name = "gen_emoji_rewriter_data",
     srcs = ["gen_emoji_rewriter_data.py"],
+    visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
@@ -1005,6 +1014,7 @@ mozc_cc_library(
 mozc_py_binary(
     name = "gen_single_kanji_rewriter_data",
     srcs = ["gen_single_kanji_rewriter_data.py"],
+    visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
@@ -1014,6 +1024,7 @@ mozc_py_binary(
 mozc_cc_binary(
     name = "gen_single_kanji_noun_prefix_data",
     srcs = ["gen_single_kanji_noun_prefix_data.cc"],
+    visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//base:init_mozc_buildtool",
         "//data_manager:serialized_dictionary",
@@ -1044,6 +1055,10 @@ mozc_cc_test(
 mozc_py_binary(
     name = "gen_counter_suffix_array",
     srcs = ["gen_counter_suffix_array.py"],
+    visibility = [
+        "//:__subpackages__",
+        "//data_manager:__subpackages__",
+    ],
     deps = [
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
@@ -1278,6 +1293,7 @@ mozc_cc_test(
 mozc_cc_binary(
     name = "gen_usage_rewriter_dictionary_main",
     srcs = ["gen_usage_rewriter_dictionary_main.cc"],
+    visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//base:file_stream",
         "//base:init_mozc_buildtool",
@@ -1350,6 +1366,10 @@ mozc_cc_test(
 mozc_py_binary(
     name = "gen_reading_correction_data",
     srcs = ["gen_reading_correction_data.py"],
+    visibility = [
+        "//:__subpackages__",
+        "//data_manager:__subpackages__",
+    ],
     deps = [
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
@@ -1411,6 +1431,7 @@ mozc_cc_library(
 mozc_py_binary(
     name = "gen_a11y_description_rewriter_data",
     srcs = ["gen_a11y_description_rewriter_data.py"],
+    visibility = ["//data_manager:__subpackages__"],
     deps = [
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
@@ -1440,6 +1461,10 @@ mozc_cc_library(
         "rewriter.cc",
     ],
     hdrs = ["rewriter.h"],
+    visibility = [
+        "//converter:__pkg__",
+        "//engine:__pkg__",
+    ],
     deps = [
         ":a11y_description_rewriter",
         ":calculator_rewriter",
@@ -1493,7 +1518,6 @@ mozc_cc_test(
     deps = [
         "rewriter",
         ":rewriter_interface",
-        "//converter:converter_mock",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//engine:modules",
@@ -1541,6 +1565,10 @@ mozc_cc_library(
 mozc_cc_binary(
     name = "gen_collocation_data_main",
     srcs = ["gen_collocation_data_main.cc"],
+    visibility = [
+        "//:__subpackages__",
+        "//data_manager:__subpackages__",
+    ],
     deps = [
         ":gen_existence_data",
         "//base:file_stream",
@@ -1553,6 +1581,10 @@ mozc_cc_binary(
 mozc_cc_binary(
     name = "gen_collocation_suppression_data_main",
     srcs = ["gen_collocation_suppression_data_main.cc"],
+    visibility = [
+        "//:__subpackages__",
+        "//data_manager:__subpackages__",
+    ],
     deps = [
         ":gen_existence_data",
         "//base:file_stream",
@@ -1584,7 +1616,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "merger_rewriter",
     hdrs = ["merger_rewriter.h"],
-    visibility = ["//visibility:private"],
     deps = [
         ":rewriter_interface",
         "//converter:segments",

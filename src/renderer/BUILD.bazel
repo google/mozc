@@ -42,13 +42,21 @@ load(
 )
 load("//bazel/win32:build_defs.bzl", "features_gdi")
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = ["//visibility:private"])
 
 mozc_cc_library(
     name = "renderer_client",
     srcs = ["renderer_client.cc"],
     hdrs = ["renderer_client.h"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//client:__pkg__",
+        "//gui:__subpackages__",
+        "//mac:__pkg__",
+        "//renderer:__subpackages__",
+        "//unix:__subpackages__",
+        "//visibility:public",
+        "//win32:__subpackages__",
+    ],
     deps = [
         ":renderer_interface",
         "//base:clock",
@@ -100,6 +108,7 @@ mozc_cc_library(
     hdrs = ["renderer_server.h"],
     # TODO(b/180075250): IPC tests don't pass in forge
     tags = ["nowin"],
+    visibility = ["//renderer:__subpackages__"],
     deps = [
         ":renderer_interface",
         "//base:const",
@@ -147,6 +156,7 @@ mozc_cc_library(
         "table_layout_interface.h",
     ],
     hdrs = ["table_layout.h"],
+    visibility = ["//renderer:__subpackages__"],
     deps = [
         "//base:coordinates",
         "@com_google_absl//absl/log",
@@ -173,13 +183,19 @@ mozc_cc_library(
     name = "window_util",
     srcs = ["window_util.cc"],
     hdrs = ["window_util.h"],
+    visibility = ["//renderer:__subpackages__"],
     deps = ["//base:coordinates"],
 )
 
 mozc_cc_library(
     name = "renderer_interface",
     hdrs = ["renderer_interface.h"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//mac:__pkg__",
+        "//renderer:__subpackages__",
+        "//unix:__subpackages__",
+        "//visibility:public",
+    ],
     deps = [
         "//client:client_interface",
         "//protocol:renderer_cc_proto",
@@ -190,7 +206,10 @@ mozc_cc_library(
     name = "renderer_mock",
     testonly = True,
     hdrs = ["renderer_mock.h"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//unix:__subpackages__",
+        "//visibility:public",
+    ],
     deps = [
         ":renderer_interface",
         "//client:client_interface",
@@ -216,6 +235,7 @@ mozc_cc_library(
     srcs = ["renderer_style_handler.cc"],
     hdrs = ["renderer_style_handler.h"],
     features = features_gdi(),  # for Windows
+    visibility = ["//renderer:__subpackages__"],
     deps = [
         "//base:singleton",
         "//protocol:renderer_cc_proto",
@@ -246,7 +266,13 @@ mozc_macos_application(
     bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Renderer",
     bundle_name = BRANDING + "Renderer",
     infoplists = ["mac/Info.plist"],
-    resources = ["//data/images/mac:candidate_window_logo.tiff"],
+    resources = [
+        "//data/images/mac:candidate_window_logo.tiff",
+    ],
+    visibility = [
+        "//mac:__pkg__",
+        "//renderer:__subpackages__",
+    ],
     deps = [":mozc_renderer_main_macos"],
     # When we support Breakpad, uncomment the following block.
     # additional_contents = {
@@ -258,7 +284,7 @@ mozc_cc_library(
     name = "mozc_renderer_main_macos",
     srcs = mozc_select(macos = ["mac/mac_renderer_main.cc"]),
     deps = [
-        "//renderer:init_mozc_renderer",
+        ":init_mozc_renderer",
     ] + mozc_select(
         macos = [":mozc_renderer_lib_macos"],
     ),
