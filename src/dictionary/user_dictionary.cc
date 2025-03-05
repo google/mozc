@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -148,7 +149,9 @@ class UserDictionary::TokensIndex {
     return user_pos_tokens_.end();
   }
 
-  void Load(const user_dictionary::UserDictionaryStorage &storage) {
+  void Load(const user_dictionary::UserDictionaryStorage &storage,
+            std::atomic<bool> *canceled_signal) {
+    DCHECK(canceled_signal);
     user_pos_tokens_.clear();
     absl::flat_hash_set<uint64_t> seen;
     std::vector<UserPos::Token> tokens;
@@ -168,6 +171,10 @@ class UserDictionary::TokensIndex {
            dic.entries()) {
         if (!UserDictionaryUtil::IsValidEntry(user_pos_, entry)) {
           continue;
+        }
+        if (canceled_signal->load()) {
+          LOG(INFO) << "User dictionary loading is canceled";
+          return;
         }
 
         // We cannot call NormalizeVoiceSoundMark inside NormalizeReading,
@@ -318,9 +325,7 @@ class UserDictionary::UserDictionaryReloader {
 
   std::optional<BackgroundFuture<void>> reload_;
   FileTimeStamp modified_at_;
-  UserDictionary *dic_;
-  std::string key_;
-  std::string value_;
+  UserDictionary *dic_ = nullptr;
 };
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
@@ -335,10 +340,14 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
   DCHECK(user_pos_);
   DCHECK(tokens_);
   DCHECK(suppression_dictionary_);
+  DCHECK(!canceled_signal_);
   Reload();
 }
 
-UserDictionary::~UserDictionary() { WaitForReloader(); }
+UserDictionary::~UserDictionary() {
+  canceled_signal_.store(true);  // force to finish the thread.
+  WaitForReloader();
+}
 
 bool UserDictionary::HasKey(absl::string_view key) const {
   // TODO(noriyukit): Currently, we don't support HasKey() for user dictionary
@@ -584,7 +593,7 @@ bool UserDictionary::Load(
 
   auto tokens =
       std::make_shared<TokensIndex>(*user_pos_, suppression_dictionary_);
-  tokens->Load(storage);
+  tokens->Load(storage, &canceled_signal_);
 
   SetTokens(tokens);
   return true;

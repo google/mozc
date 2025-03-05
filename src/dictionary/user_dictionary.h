@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_H_
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <vector>
@@ -130,6 +131,12 @@ class UserDictionary : public UserDictionaryInterface {
   // Uses shared pointer to asynchronously update `tokens_`.
   // `tokens_` are set in different thread.
   std::shared_ptr<TokensIndex> tokens_;
+
+  // Signal variable to cancel the dictionary loading thread.
+  // We want to immediately cancel the loading thread in the detractor of
+  // UserDictionary. This variable is shared by the main thread and loader
+  // thread.
+  std::atomic<bool> canceled_signal_ = false;
 
   friend class UserDictionaryTest;
 };
