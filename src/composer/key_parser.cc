@@ -33,19 +33,18 @@
 
 #include <algorithm>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/container/btree_set.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/container/entry.h"
+#include "base/container/flat_map.h"
+#include "base/container/flat_multimap.h"
 #include "base/util.h"
-#include "base/vlog.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {
@@ -53,134 +52,125 @@ namespace {
 
 using ::mozc::commands::KeyEvent;
 
-using SpecialKeysMap = absl::flat_hash_map<std::string, KeyEvent::SpecialKey>;
-using ModifiersMap =
-    absl::flat_hash_map<std::string, std::vector<KeyEvent::ModifierKey>>;
+constexpr auto kModifierKeyMap =
+    CreateFlatMultimap<absl::string_view, KeyEvent::ModifierKey>({
+        {"ctrl", KeyEvent::CTRL},
+        {"control", KeyEvent::CTRL},
+        {"alt", KeyEvent::ALT},
+        {"option", KeyEvent::ALT},
+        {"meta", KeyEvent::ALT},
+        {"super", KeyEvent::ALT},
+        {"hyper", KeyEvent::ALT},
+        {"shift", KeyEvent::SHIFT},
+        {"caps", KeyEvent::CAPS},
+        {"keydown", KeyEvent::KEY_DOWN},
+        {"keyup", KeyEvent::KEY_UP},
+        {"leftctrl", KeyEvent::CTRL},
+        {"leftctrl", KeyEvent::LEFT_CTRL},
+        {"rightctrl", KeyEvent::CTRL},
+        {"rightctrl", KeyEvent::RIGHT_CTRL},
+        {"leftalt", KeyEvent::ALT},
+        {"leftalt", KeyEvent::LEFT_ALT},
+        {"rightalt", KeyEvent::ALT},
+        {"rightalt", KeyEvent::RIGHT_ALT},
+        {"leftshift", KeyEvent::SHIFT},
+        {"leftshift", KeyEvent::LEFT_SHIFT},
+        {"rightshift", KeyEvent::SHIFT},
+        {"rightshift", KeyEvent::RIGHT_SHIFT},
+    });
 
-class KeyParserData {
- public:
-  KeyParserData() { InitData(); }
+constexpr auto kSpecialKeyMap =
+    CreateFlatMap<absl::string_view, KeyEvent::SpecialKey>({
+        {"on", KeyEvent::ON},
+        {"off", KeyEvent::OFF},
+        {"left", KeyEvent::LEFT},
+        {"down", KeyEvent::DOWN},
+        {"up", KeyEvent::UP},
+        {"right", KeyEvent::RIGHT},
+        {"enter", KeyEvent::ENTER},
+        {"return", KeyEvent::ENTER},
+        {"esc", KeyEvent::ESCAPE},
+        {"escape", KeyEvent::ESCAPE},
+        {"delete", KeyEvent::DEL},
+        {"del", KeyEvent::DEL},
+        {"bs", KeyEvent::BACKSPACE},
+        {"backspace", KeyEvent::BACKSPACE},
+        {"henkan", KeyEvent::HENKAN},
+        {"muhenkan", KeyEvent::MUHENKAN},
+        {"kana", KeyEvent::KANA},
+        {"hiragana", KeyEvent::KANA},
+        {"katakana", KeyEvent::KATAKANA},
+        {"eisu", KeyEvent::EISU},
+        {"home", KeyEvent::HOME},
+        {"end", KeyEvent::END},
+        {"space", KeyEvent::SPACE},
+        {"ascii", KeyEvent::TEXT_INPUT},  // deprecated
+        {"textinput", KeyEvent::TEXT_INPUT},
+        {"tab", KeyEvent::TAB},
+        {"pageup", KeyEvent::PAGE_UP},
+        {"pagedown", KeyEvent::PAGE_DOWN},
+        {"insert", KeyEvent::INSERT},
+        {"hankaku", KeyEvent::HANKAKU},
+        {"zenkaku", KeyEvent::HANKAKU},
+        {"hankaku/zenkaku", KeyEvent::HANKAKU},
+        {"kanji", KeyEvent::KANJI},
 
-  const SpecialKeysMap &keycode_map() const { return keycode_map_; }
-  const ModifiersMap &modifiers_map() const { return modifiers_map_; }
+        {"f1", KeyEvent::F1},
+        {"f2", KeyEvent::F2},
+        {"f3", KeyEvent::F3},
+        {"f4", KeyEvent::F4},
+        {"f5", KeyEvent::F5},
+        {"f6", KeyEvent::F6},
+        {"f7", KeyEvent::F7},
+        {"f8", KeyEvent::F8},
+        {"f9", KeyEvent::F9},
+        {"f10", KeyEvent::F10},
+        {"f11", KeyEvent::F11},
+        {"f12", KeyEvent::F12},
+        {"f13", KeyEvent::F13},
+        {"f14", KeyEvent::F14},
+        {"f15", KeyEvent::F15},
+        {"f16", KeyEvent::F16},
+        {"f17", KeyEvent::F17},
+        {"f18", KeyEvent::F18},
+        {"f19", KeyEvent::F19},
+        {"f20", KeyEvent::F20},
+        {"f21", KeyEvent::F21},
+        {"f22", KeyEvent::F22},
+        {"f23", KeyEvent::F23},
+        {"f24", KeyEvent::F24},
 
- private:
-  void InitData() {
-    //  CHECK(keymap::KeyType::NUM_KEYTYPES < static_cast<int32_t>(' '));
-    MOZC_VLOG(1) << "Init KeyParser Data";
+        {"numpad0", KeyEvent::NUMPAD0},
+        {"numpad1", KeyEvent::NUMPAD1},
+        {"numpad2", KeyEvent::NUMPAD2},
+        {"numpad3", KeyEvent::NUMPAD3},
+        {"numpad4", KeyEvent::NUMPAD4},
+        {"numpad5", KeyEvent::NUMPAD5},
+        {"numpad6", KeyEvent::NUMPAD6},
+        {"numpad7", KeyEvent::NUMPAD7},
+        {"numpad8", KeyEvent::NUMPAD8},
+        {"numpad9", KeyEvent::NUMPAD9},
 
-    modifiers_map_["ctrl"] = {KeyEvent::CTRL};
-    modifiers_map_["control"] = {KeyEvent::CTRL};
-    modifiers_map_["alt"] = {KeyEvent::ALT};
-    modifiers_map_["option"] = {KeyEvent::ALT};
-    modifiers_map_["meta"] = {KeyEvent::ALT};
-    modifiers_map_["super"] = {KeyEvent::ALT};
-    modifiers_map_["hyper"] = {KeyEvent::ALT};
-    modifiers_map_["shift"] = {KeyEvent::SHIFT};
-    modifiers_map_["caps"] = {KeyEvent::CAPS};
-    modifiers_map_["keydown"] = {KeyEvent::KEY_DOWN};
-    modifiers_map_["keyup"] = {KeyEvent::KEY_UP};
+        {"multiply", KeyEvent::MULTIPLY},
+        {"add", KeyEvent::ADD},
+        {"separator", KeyEvent::SEPARATOR},
+        {"subtract", KeyEvent::SUBTRACT},
+        {"decimal", KeyEvent::DECIMAL},
+        {"divide", KeyEvent::DIVIDE},
+        {"equals", KeyEvent::EQUALS},
+        {"comma", KeyEvent::COMMA},
+        {"clear", KeyEvent::CLEAR},
 
-    modifiers_map_["leftctrl"] = {KeyEvent::CTRL, KeyEvent::LEFT_CTRL};
-    modifiers_map_["rightctrl"] = {KeyEvent::CTRL, KeyEvent::RIGHT_CTRL};
-    modifiers_map_["leftalt"] = {KeyEvent::ALT, KeyEvent::LEFT_ALT};
-    modifiers_map_["rightalt"] = {KeyEvent::ALT, KeyEvent::RIGHT_ALT};
-    modifiers_map_["leftshift"] = {KeyEvent::SHIFT, KeyEvent::LEFT_SHIFT};
-    modifiers_map_["rightshift"] = {KeyEvent::SHIFT, KeyEvent::RIGHT_SHIFT};
+        {"virtualleft", KeyEvent::VIRTUAL_LEFT},
+        {"virtualright", KeyEvent::VIRTUAL_RIGHT},
+        {"virtualenter", KeyEvent::VIRTUAL_ENTER},
+        {"virtualup", KeyEvent::VIRTUAL_UP},
+        {"virtualdown", KeyEvent::VIRTUAL_DOWN},
 
-    keycode_map_["on"] = KeyEvent::ON;
-    keycode_map_["off"] = KeyEvent::OFF;
-    keycode_map_["left"] = KeyEvent::LEFT;
-    keycode_map_["down"] = KeyEvent::DOWN;
-    keycode_map_["up"] = KeyEvent::UP;
-    keycode_map_["right"] = KeyEvent::RIGHT;
-    keycode_map_["enter"] = KeyEvent::ENTER;
-    keycode_map_["return"] = KeyEvent::ENTER;
-    keycode_map_["esc"] = KeyEvent::ESCAPE;
-    keycode_map_["escape"] = KeyEvent::ESCAPE;
-    keycode_map_["delete"] = KeyEvent::DEL;
-    keycode_map_["del"] = KeyEvent::DEL;
-    keycode_map_["bs"] = KeyEvent::BACKSPACE;
-    keycode_map_["backspace"] = KeyEvent::BACKSPACE;
-    keycode_map_["henkan"] = KeyEvent::HENKAN;
-    keycode_map_["muhenkan"] = KeyEvent::MUHENKAN;
-    keycode_map_["kana"] = KeyEvent::KANA;
-    keycode_map_["hiragana"] = KeyEvent::KANA;
-    keycode_map_["katakana"] = KeyEvent::KATAKANA;
-    keycode_map_["eisu"] = KeyEvent::EISU;
-    keycode_map_["home"] = KeyEvent::HOME;
-    keycode_map_["end"] = KeyEvent::END;
-    keycode_map_["space"] = KeyEvent::SPACE;
-    keycode_map_["ascii"] = KeyEvent::TEXT_INPUT;  // deprecated
-    keycode_map_["textinput"] = KeyEvent::TEXT_INPUT;
-    keycode_map_["tab"] = KeyEvent::TAB;
-    keycode_map_["pageup"] = KeyEvent::PAGE_UP;
-    keycode_map_["pagedown"] = KeyEvent::PAGE_DOWN;
-    keycode_map_["insert"] = KeyEvent::INSERT;
-    keycode_map_["hankaku"] = KeyEvent::HANKAKU;
-    keycode_map_["zenkaku"] = KeyEvent::HANKAKU;
-    keycode_map_["hankaku/zenkaku"] = KeyEvent::HANKAKU;
-    keycode_map_["kanji"] = KeyEvent::KANJI;
+        // Meant to be used for any other special keys.
+        {"undefinedkey", KeyEvent::UNDEFINED_KEY},
+    });
 
-    keycode_map_["f1"] = KeyEvent::F1;
-    keycode_map_["f2"] = KeyEvent::F2;
-    keycode_map_["f3"] = KeyEvent::F3;
-    keycode_map_["f4"] = KeyEvent::F4;
-    keycode_map_["f5"] = KeyEvent::F5;
-    keycode_map_["f6"] = KeyEvent::F6;
-    keycode_map_["f7"] = KeyEvent::F7;
-    keycode_map_["f8"] = KeyEvent::F8;
-    keycode_map_["f9"] = KeyEvent::F9;
-    keycode_map_["f10"] = KeyEvent::F10;
-    keycode_map_["f11"] = KeyEvent::F11;
-    keycode_map_["f12"] = KeyEvent::F12;
-    keycode_map_["f13"] = KeyEvent::F13;
-    keycode_map_["f14"] = KeyEvent::F14;
-    keycode_map_["f15"] = KeyEvent::F15;
-    keycode_map_["f16"] = KeyEvent::F16;
-    keycode_map_["f17"] = KeyEvent::F17;
-    keycode_map_["f18"] = KeyEvent::F18;
-    keycode_map_["f19"] = KeyEvent::F19;
-    keycode_map_["f20"] = KeyEvent::F20;
-    keycode_map_["f21"] = KeyEvent::F21;
-    keycode_map_["f22"] = KeyEvent::F22;
-    keycode_map_["f23"] = KeyEvent::F23;
-    keycode_map_["f24"] = KeyEvent::F24;
-
-    keycode_map_["numpad0"] = KeyEvent::NUMPAD0;
-    keycode_map_["numpad1"] = KeyEvent::NUMPAD1;
-    keycode_map_["numpad2"] = KeyEvent::NUMPAD2;
-    keycode_map_["numpad3"] = KeyEvent::NUMPAD3;
-    keycode_map_["numpad4"] = KeyEvent::NUMPAD4;
-    keycode_map_["numpad5"] = KeyEvent::NUMPAD5;
-    keycode_map_["numpad6"] = KeyEvent::NUMPAD6;
-    keycode_map_["numpad7"] = KeyEvent::NUMPAD7;
-    keycode_map_["numpad8"] = KeyEvent::NUMPAD8;
-    keycode_map_["numpad9"] = KeyEvent::NUMPAD9;
-
-    keycode_map_["multiply"] = KeyEvent::MULTIPLY;
-    keycode_map_["add"] = KeyEvent::ADD;
-    keycode_map_["separator"] = KeyEvent::SEPARATOR;
-    keycode_map_["subtract"] = KeyEvent::SUBTRACT;
-    keycode_map_["decimal"] = KeyEvent::DECIMAL;
-    keycode_map_["divide"] = KeyEvent::DIVIDE;
-    keycode_map_["equals"] = KeyEvent::EQUALS;
-    keycode_map_["comma"] = KeyEvent::COMMA;
-    keycode_map_["clear"] = KeyEvent::CLEAR;
-
-    keycode_map_["virtualleft"] = KeyEvent::VIRTUAL_LEFT;
-    keycode_map_["virtualright"] = KeyEvent::VIRTUAL_RIGHT;
-    keycode_map_["virtualenter"] = KeyEvent::VIRTUAL_ENTER;
-    keycode_map_["virtualup"] = KeyEvent::VIRTUAL_UP;
-    keycode_map_["virtualdown"] = KeyEvent::VIRTUAL_DOWN;
-
-    // Meant to be used for any other special keys.
-    keycode_map_["undefinedkey"] = KeyEvent::UNDEFINED_KEY;
-  }
-
-  SpecialKeysMap keycode_map_;
-  ModifiersMap modifiers_map_;
-};
 }  // namespace
 
 // static
@@ -199,9 +189,6 @@ bool KeyParser::ParseKey(const absl::string_view key_string,
 bool KeyParser::ParseKeyVector(const absl::Span<const std::string> keys,
                                KeyEvent *key_event) {
   CHECK(key_event);
-  static const KeyParserData *parser_data = new KeyParserData();
-  const ModifiersMap &modifiers = parser_data->modifiers_map();
-  const SpecialKeysMap &specials = parser_data->keycode_map();
 
   key_event->Clear();
   absl::btree_set<commands::KeyEvent::ModifierKey> modifiers_set;
@@ -219,16 +206,22 @@ bool KeyParser::ParseKeyVector(const absl::Span<const std::string> keys,
     std::string lower_key(key);
     Util::LowerString(&lower_key);
 
-    if (const auto it = modifiers.find(lower_key); it != modifiers.end()) {
-      modifiers_set.insert(it->second.begin(), it->second.end());
+    if (absl::Span<const Entry<absl::string_view, KeyEvent::ModifierKey>>
+            modifier_keys = kModifierKeyMap.EqualSpan(lower_key);
+        !modifier_keys.empty()) {
+      for (auto [_, modifier_key] : modifier_keys) {
+        modifiers_set.insert(modifier_key);
+      }
       continue;
     }
-    if (const auto it = specials.find(lower_key); it != specials.end()) {
+    if (const KeyEvent::SpecialKey *special_key =
+            kSpecialKeyMap.FindOrNull(lower_key);
+        special_key != nullptr) {
       if (key_event->has_special_key()) {
         // Multiple special keys are not supported.
         return false;
       }
-      key_event->set_special_key(it->second);
+      key_event->set_special_key(*special_key);
       continue;
     }
     LOG(ERROR) << "Unknown key: " << key;
