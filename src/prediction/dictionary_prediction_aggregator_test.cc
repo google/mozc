@@ -2150,6 +2150,14 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQuerySuffixPrediction) {
     aggregator.AggregateZeroQuerySuffixPrediction(convreq, segments, &results);
     EXPECT_EQ(results.size(), 1);
   }
+  {
+    // Suffix entries should be aggregated for handwriting
+    request_->set_is_handwriting(true);
+    std::vector<Result> results = {Result()};
+    const ConversionRequest convreq = CreateSuggestionConversionRequest();
+    aggregator.AggregateZeroQuerySuffixPrediction(convreq, segments, &results);
+    EXPECT_FALSE(results.empty());
+  }
 }
 
 struct EnglishPredictionTestEntry {

@@ -58,7 +58,7 @@ enum PredictionType {
   BIGRAM = 2,
   // suggests from immutable_converter
   REALTIME = 4,
-  // add suffixes like "さん", "が" which matches to the pevious context.
+  // add suffixes like "さん", "が" which matches to the previous context.
   SUFFIX = 8,
   // add English words.
   ENGLISH = 16,

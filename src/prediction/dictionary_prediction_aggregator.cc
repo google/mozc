@@ -1666,7 +1666,8 @@ void DictionaryPredictionAggregator::AggregateZeroQuerySuffixPrediction(
     // input mode. For example, we do not need "です", "。" just after "when".
     return;
   }
-  if (results->empty() || !IsZeroQuerySuffixPredictionDisabled(request)) {
+  if (results->empty() || !IsZeroQuerySuffixPredictionDisabled(request) ||
+      request_util::IsHandwriting(request)) {
     // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
     // all suffix entries.
     const size_t cutoff_threshold = kPredictionMaxResultsSize;
