@@ -1,5 +1,5 @@
 name: CI for Linux
-# https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
+# https://github.com/google/mozc/blob/master/docs/build_mozc_for_linux.md
 
 # Run on push.
 on: push
