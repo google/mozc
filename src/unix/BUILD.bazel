@@ -110,6 +110,7 @@ genrule(
         '--emacs_helper_dir "' + EMACS_MOZC_HELPER_DIR + '"',
     ]),
     tools = [":build_package"],
+    visibility = ["//:__pkg__"],
 )
 
 mozc_py_binary(
