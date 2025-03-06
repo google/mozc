@@ -76,6 +76,7 @@ mozc_cc_library(
     name = "request_util",
     hdrs = ["request_util.h"],
     visibility = [
+        "//:__subpackages__",
         "//converter:__pkg__",
         "//dictionary:__subpackages__",
         "//prediction:__pkg__",
