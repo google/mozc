@@ -67,12 +67,11 @@ class FlatMultimap {
   // will change once we switch to `std::sort`, which is not stable (and
   // `std::stable_sort` is not planned to receive constexpr support).
   constexpr absl::Span<const Entry<K, V>> EqualSpan(const K &key) const {
+    auto span = absl::MakeSpan(entries_);
     auto lb = internal::FindFirst(
-        absl::MakeSpan(entries_),
-        [&](const Entry<K, V> &e) { return !cmp_key_(e.key, key); });
+        span, [&](const Entry<K, V> &e) { return !cmp_key_(e.key, key); });
     auto ub = internal::FindFirst(
-        absl::MakeSpan(entries_),
-        [&](const Entry<K, V> &e) { return cmp_key_(key, e.key); });
+        span, [&](const Entry<K, V> &e) { return cmp_key_(key, e.key); });
     return absl::MakeConstSpan(lb, ub);
   }
 

@@ -55,9 +55,10 @@ class FlatSet {
 
   // Returns if the given element is in the set.
   constexpr bool contains(const T &x) const {
-    auto lb = internal::FindFirst(absl::MakeSpan(elements_),
-                                  [&](const T &e) { return !cmp_(e, x); });
-    return lb != elements_.end() && !cmp_(x, *lb);
+    auto span = absl::MakeSpan(elements_);
+    auto lb =
+        internal::FindFirst(span, [&](const T &e) { return !cmp_(e, x); });
+    return lb != span.end() && !cmp_(x, *lb);
   }
 
  private:
