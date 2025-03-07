@@ -217,6 +217,14 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
         Singleton<SuppressionDictionary>::get());
   }
 
+  std::unique_ptr<UserDictionary> CreateDictionaryWithFilename(
+      std::string filename) {
+    return std::make_unique<UserDictionary>(
+        UserPos::CreateFromDataManager(mock_data_manager_),
+        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()),
+        Singleton<SuppressionDictionary>::get(), std::move(filename));
+  }
+
   ConversionRequest ConvReq(const config::Config &config) {
     return ConversionRequestBuilder().SetConfig(config).Build();
   }
@@ -790,10 +798,9 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   }
 
   {
-    std::unique_ptr<UserDictionary> dic(CreateDictionary());
+    std::unique_ptr<UserDictionary> dic(CreateDictionaryWithFilename(filename));
     // Wait for async reload called from the constructor.
     dic->WaitForReloader();
-    dic->SetUserDictionaryName(filename);
 
     for (int i = 0; i < 32; ++i) {
       std::shuffle(keys.begin(), keys.end(), random);
@@ -802,6 +809,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
         CollectTokenCallback callback;
         const ConversionRequest convreq = ConvReq(config_);
         dic->LookupPrefix(keys[i], convreq, &callback);
+        EXPECT_FALSE(callback.tokens().empty());
       }
     }
     dic->WaitForReloader();
@@ -809,8 +817,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
 
   // Fix b//341758719. Waits the reload inside the destructor.
   {
-    std::unique_ptr<UserDictionary> dic(CreateDictionary());
-    dic->SetUserDictionaryName(filename);
+    std::unique_ptr<UserDictionary> dic(CreateDictionaryWithFilename(filename));
     dic->Reload();
   }
 }

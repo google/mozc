@@ -54,6 +54,12 @@ class UserDictionary : public UserDictionaryInterface {
                  PosMatcher pos_matcher,
                  SuppressionDictionary *suppression_dictionary);
 
+  // Specify dictionary filename for testing.
+  UserDictionary(std::unique_ptr<const UserPos> user_pos,
+                 PosMatcher pos_matcher,
+                 SuppressionDictionary *suppression_dictionary,
+                 std::string filename);
+
   UserDictionary(const UserDictionary &) = delete;
   UserDictionary &operator=(const UserDictionary &) = delete;
 
@@ -97,9 +103,6 @@ class UserDictionary : public UserDictionaryInterface {
   // Gets the user POS list.
   std::vector<std::string> GetPosList() const override;
 
-  // Sets user dictionary filename for unit testing
-  static void SetUserDictionaryName(absl::string_view filename);
-
   enum RequestType { PREFIX, PREDICTIVE, EXACT };
 
   // Populates Token from UserToken.
@@ -123,6 +126,8 @@ class UserDictionary : public UserDictionaryInterface {
     return std::atomic_store(&tokens_, std::move(tokens));
   }
 
+  std::string GetFileName() const;
+
   std::unique_ptr<UserDictionaryReloader> reloader_;
   std::unique_ptr<const UserPos> user_pos_;
   const PosMatcher pos_matcher_;
@@ -137,6 +142,9 @@ class UserDictionary : public UserDictionaryInterface {
   // UserDictionary. This variable is shared by the main thread and loader
   // thread.
   std::atomic<bool> canceled_signal_ = false;
+
+  // user dictionary filename.
+  const std::string filename_;
 
   friend class UserDictionaryTest;
 };

@@ -53,7 +53,6 @@
 #include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/hash.h"
-#include "base/singleton.h"
 #include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/strings/unicode.h"
@@ -99,34 +98,6 @@ struct OrderByKeyThenById {
     const int comp = lhs.key.compare(rhs.key);
     return comp == 0 ? (lhs.id < rhs.id) : (comp < 0);
   }
-};
-
-class UserDictionaryFileManager {
- public:
-  UserDictionaryFileManager() = default;
-
-  UserDictionaryFileManager(const UserDictionaryFileManager &) = delete;
-  UserDictionaryFileManager &operator=(const UserDictionaryFileManager &) =
-      delete;
-
-  std::string GetFileName() ABSL_LOCKS_EXCLUDED(mutex_) {
-    absl::MutexLock l(&mutex_);
-    if (filename_.empty()) {
-      return UserDictionaryUtil::GetUserDictionaryFileName();
-    } else {
-      return filename_;
-    }
-  }
-
-  void SetFileName(const absl::string_view filename)
-      ABSL_LOCKS_EXCLUDED(mutex_) {
-    absl::MutexLock l(&mutex_);
-    strings::Assign(filename_, filename);
-  }
-
- private:
-  std::string filename_ ABSL_GUARDED_BY(mutex_);
-  absl::Mutex mutex_;
 };
 
 }  // namespace
@@ -273,8 +244,7 @@ class UserDictionary::UserDictionaryReloader {
     }
 
     absl::StatusOr<FileTimeStamp> modification_time =
-        FileUtil::GetModificationTime(
-            Singleton<UserDictionaryFileManager>::get()->GetFileName());
+        FileUtil::GetModificationTime(dic_->GetFileName());
     if (!modification_time.ok()) {
       // If the file doesn't exist, return doing nothing.
       // Therefore if the file is deleted after first reload,
@@ -301,8 +271,7 @@ class UserDictionary::UserDictionaryReloader {
 
  private:
   void ThreadMain() {
-    UserDictionaryStorage storage(
-        Singleton<UserDictionaryFileManager>::get()->GetFileName());
+    UserDictionaryStorage storage(dic_->GetFileName());
 
     // Load from file
     if (absl::Status s = storage.Load(); !s.ok()) {
@@ -331,16 +300,26 @@ class UserDictionary::UserDictionaryReloader {
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
                                PosMatcher pos_matcher,
                                SuppressionDictionary *suppression_dictionary)
+    : UserDictionary::UserDictionary(
+          std::move(user_pos), std::move(pos_matcher), suppression_dictionary,
+          UserDictionaryUtil::GetUserDictionaryFileName()) {}
+
+UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
+                               PosMatcher pos_matcher,
+                               SuppressionDictionary *suppression_dictionary,
+                               std::string filename)
     : reloader_(std::make_unique<UserDictionaryReloader>(this)),
       user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
       tokens_(
-          std::make_shared<TokensIndex>(*user_pos_, suppression_dictionary)) {
+          std::make_shared<TokensIndex>(*user_pos_, suppression_dictionary)),
+      filename_(std::move(filename)) {
   DCHECK(user_pos_);
   DCHECK(tokens_);
   DCHECK(suppression_dictionary_);
   DCHECK(!canceled_signal_);
+  DCHECK(!filename_.empty());
   Reload();
 }
 
@@ -603,9 +582,7 @@ std::vector<std::string> UserDictionary::GetPosList() const {
   return user_pos_->GetPosList();
 }
 
-void UserDictionary::SetUserDictionaryName(const absl::string_view filename) {
-  Singleton<UserDictionaryFileManager>::get()->SetFileName(filename);
-}
+std::string UserDictionary::GetFileName() const { return filename_; }
 
 void UserDictionary::PopulateTokenFromUserPosToken(
     const UserPos::Token &user_pos_token, RequestType request_type,
