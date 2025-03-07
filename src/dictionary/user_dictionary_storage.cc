@@ -64,9 +64,6 @@ constexpr size_t kDefaultTotalBytesLimit = 512 << 20;
 // saved correctly. Please make the dictionary size smaller"
 constexpr size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
-constexpr char kDefaultSyncDictionaryName[] = "Sync Dictionary";
-constexpr char kDictionaryNameConvertedFromSyncableDictionary[] = "同期用辞書";
-
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 }  // namespace
@@ -363,71 +360,6 @@ UserDictionaryStorage::GetLastError() const {
   return last_error_type_;
 }
 
-bool UserDictionaryStorage::ConvertSyncDictionariesToNormalDictionaries() {
-  if (CountSyncableDictionaries(proto_) == 0) {
-    return false;
-  }
-
-  for (int dictionary_index = proto_.dictionaries_size() - 1;
-       dictionary_index >= 0; --dictionary_index) {
-    UserDictionary *dic = proto_.mutable_dictionaries(dictionary_index);
-    if (!dic->syncable()) {
-      continue;
-    }
-
-    // Delete removed entries.
-    for (int i = dic->entries_size() - 1; i >= 0; --i) {
-      if (dic->entries(i).removed()) {
-        for (int j = i + 1; j < dic->entries_size(); ++j) {
-          dic->mutable_entries()->SwapElements(j - 1, j);
-        }
-        dic->mutable_entries()->RemoveLast();
-      }
-    }
-
-    // Delete removed or unused sync dictionaries.
-    if (dic->removed() || dic->entries_size() == 0) {
-      for (int i = dictionary_index + 1; i < proto_.dictionaries_size(); ++i) {
-        proto_.mutable_dictionaries()->SwapElements(i - 1, i);
-      }
-      proto_.mutable_dictionaries()->RemoveLast();
-      continue;
-    }
-
-    if (dic->name() == default_sync_dictionary_name()) {
-      std::string new_dictionary_name =
-          kDictionaryNameConvertedFromSyncableDictionary;
-      int index = 0;
-      while (UserDictionaryUtil::ValidateDictionaryName(proto_,
-                                                        new_dictionary_name) !=
-             UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
-        ++index;
-        new_dictionary_name = absl::StrFormat(
-            "%s_%d", kDictionaryNameConvertedFromSyncableDictionary, index);
-      }
-      dic->set_name(new_dictionary_name);
-    }
-    dic->set_syncable(false);
-  }
-
-  DCHECK_EQ(0, CountSyncableDictionaries(proto_));
-
-  return true;
-}
-
-// static
-int UserDictionaryStorage::CountSyncableDictionaries(
-    const user_dictionary::UserDictionaryStorage &storage) {
-  int num_syncable_dictionaries = 0;
-  for (int i = 0; i < storage.dictionaries_size(); ++i) {
-    const UserDictionary &dict = storage.dictionaries(i);
-    if (dict.syncable()) {
-      ++num_syncable_dictionaries;
-    }
-  }
-  return num_syncable_dictionaries;
-}
-
 // static
 size_t UserDictionaryStorage::max_entry_size() {
   return UserDictionaryUtil::max_entry_size();
@@ -466,10 +398,6 @@ bool UserDictionaryStorage::IsValidDictionaryName(
       return false;
   }
   ABSL_UNREACHABLE();
-}
-
-std::string UserDictionaryStorage::default_sync_dictionary_name() {
-  return std::string(kDefaultSyncDictionaryName);
 }
 
 }  // namespace mozc

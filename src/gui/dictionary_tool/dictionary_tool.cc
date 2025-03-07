@@ -358,16 +358,6 @@ DictionaryTool::DictionaryTool(QWidget *parent)
     return;
   }
 
-#ifndef ENABLE_CLOUD_SYNC
-  if (session_->mutable_storage()
-          ->ConvertSyncDictionariesToNormalDictionaries()) {
-    LOG(INFO) << "Syncable dictionaries are converted to normal dictionaries";
-    if (absl::Status s = session_->mutable_storage()->Save(); !s.ok()) {
-      LOG(ERROR) << "Failed to save the storage: " << s;
-    }
-  }
-#endif  // !ENABLE_CLOUD_SYNC
-
   // main window
 #ifndef __linux__
   // For some reason setCentralWidget crashes the dictionary_tool on Linux

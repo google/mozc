@@ -128,7 +128,7 @@ class UserDictionaryStorage {
   bool UnLock();
 
   // Export a dictionary to a file in TSV format.
-  bool ExportDictionary(uint64_t dic_id, const std::string & file_name);
+  bool ExportDictionary(uint64_t dic_id, const std::string &file_name);
 
   // Create a new dictionary with a specified name. Returns the id of
   // the new instance via new_dic_id.
@@ -157,25 +157,11 @@ class UserDictionaryStorage {
   // You can obtain the reason of the error of dictionary operation.
   UserDictionaryStorageErrorType GetLastError() const;
 
-  // Converts syncable dictionaries to unsyncable dictionaries.
-  // The name of default sync dictionary is renamed to locale-independent name
-  // like other unsyncable dictionaries.
-  // This method deletes syncable dictionaries which are marked as removed or
-  // don't have any dictionary entries.
-  // Returns true if this method converts some dictionaries.
-  bool ConvertSyncDictionariesToNormalDictionaries();
-
-  // return the number of dictionaries with "synclbe" being true.
-  static int CountSyncableDictionaries(
-      const user_dictionary::UserDictionaryStorage &storage);
-
   // maximum number of dictionaries this storage can hold
   static size_t max_dictionary_size();
 
   // maximum number of entries one dictionary can hold
   static size_t max_entry_size();
-
-  static std::string default_sync_dictionary_name();
 
   user_dictionary::UserDictionaryStorage &GetProto() { return proto_; }
 

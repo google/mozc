@@ -128,11 +128,7 @@ message UserDictionary {
     // "名詞:ja".
     optional string locale = 12 [default = ""];
 
-    // set true if this entry is removed.
-    // This flag is used for cloud sync feature.
-    // Cloud sync feature is already deprecated and this flag is only
-    // used to convert sync dictionary to normal dictionary.
-    optional bool removed = 10 [default = false];
+    reserved 10;  // deprecated removed
 
     // set true if this entry is automatically registered
     // by converter.
@@ -141,16 +137,8 @@ message UserDictionary {
 
   repeated Entry entries = 4;
 
-  // set true if this dictionary is removed.
-  // This flag is used for cloud sync feature.
-  // Cloud sync feature is already deprecated and this flag is only
-  // used to convert sync dictionary to normal dictionary.
-  optional bool removed = 5 [default = false];
-
-  // This flag is used for cloud sync feature.
-  // Cloud sync feature is already deprecated and this flag is only
-  // used to convert sync dictionary to normal dictionary.
-  optional bool syncable = 6 [default = false];
+  reserved 5;  // deprecated removed
+  reserved 6;  // deprecated syncable
 }
 
 message UserDictionaryStorage {
@@ -160,12 +148,7 @@ message UserDictionaryStorage {
   // dictionary body
   repeated UserDictionary dictionaries = 2;
 
-  enum StorageType {
-    SNAPSHOT = 1;  // This storage is a snapshot.
-    UPDATE = 2;    // This storage is a diff of some snapshots.
-  }
-
-  optional StorageType storage_type = 10 [default = SNAPSHOT];
+  reserved 10;  // deprecated storage_type
 }
 
 message UserDictionaryCommand {

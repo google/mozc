@@ -144,16 +144,6 @@ WordRegisterDialog::WordRegisterDialog()
     return;
   }
 
-#ifndef ENABLE_CLOUD_SYNC
-  if (session_->mutable_storage()
-          ->ConvertSyncDictionariesToNormalDictionaries()) {
-    LOG(INFO) << "Syncable dictionaries are converted to normal dictionaries";
-    if (absl::Status s = session_->mutable_storage()->Save(); !s.ok()) {
-      LOG(ERROR) << "Failed to save the storage: " << s;
-    }
-  }
-#endif  // !ENABLE_CLOUD_SYNC
-
   // Initialize ComboBox
   const std::vector<std::string> pos_set = pos_list_provider_.GetPosList();
   CHECK(!pos_set.empty());
