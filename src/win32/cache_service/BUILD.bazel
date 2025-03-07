@@ -80,7 +80,10 @@ mozc_cc_library(
     hdrs = ["cache_service_manager.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    visibility = ["//win32/custom_action:__pkg__"],
+    visibility = [
+        "//gui/administration_dialog:__pkg__",
+        "//win32/custom_action:__pkg__",
+    ],
     deps = [
         ":win32_service_state_cc_proto",
         "//base:const",
