@@ -65,8 +65,9 @@ class FlatMap {
     auto lb = internal::FindFirst(
         absl::MakeSpan(entries_),
         [&](const Entry<K, V> &e) { return !cmp_key_(e.key, key); });
-    return lb == entries_.end() || cmp_key_(key, lb->key) ? nullptr
-                                                          : &lb->value;
+    return lb == absl::MakeSpan(entries_).end() || cmp_key_(key, lb->key)
+               ? nullptr
+               : &lb->value;
   }
 
  private:
