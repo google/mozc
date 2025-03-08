@@ -53,6 +53,9 @@ mozc_win32_cc_prod_binary(
     static_crt = False,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    visibility = [
+        "//win32/installer:__pkg__",
+    ],
     deps = [
         ":cache_service_manager",
         ":mozc_cache_service_resources",
