@@ -59,13 +59,6 @@ class SupplementalModelInterface {
     return EngineReloadResponse();
   }
 
-  // Performs spelling correction.
-  // `request.text` may contains multiple sentences.
-  virtual std::optional<commands::CheckSpellingResponse> CheckSpelling(
-      const commands::CheckSpellingRequest &request) const {
-    return std::nullopt;
-  }
-
   // Performs spelling correction for composition (pre-edit) Hiragana sequence.
   // Returns empty result when no correction is required.
   // Returns std::nullopt when the composition spellchecker is not

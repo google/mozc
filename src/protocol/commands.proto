@@ -989,41 +989,6 @@ message ApplicationInfo {
   reserved 3;  // deprecated timezone_offset
 }
 
-// Spellchecker request.
-message CheckSpellingRequest {
-  // spellchecker request.
-  optional string text = 1;
-  // Run spelling correction if
-  // score(suggestion) - score(original) >= score_threshold.
-  // Used to control the precision/recall trade-off.
-  optional float score_threshold = 2;
-
-  reserved 3;  // deprecated disable_model_bias
-
-  // arbitrary experimental flags populated to spellchecker::Options.
-  repeated string experimental_flags = 4;
-}
-
-// Spellchecker response.
-message CheckSpellingResponse {
-  message Correction {
-    // utf-8 byte offsets of the correction.
-    // Needs to convert them to Unicode char offset in Java layer.
-    optional uint32 begin = 1;
-    optional uint32 end = 2;
-
-    // The surface of the correction.
-    // We can verify the correct offsets are given with
-    // request.text().substr(begin, end) == surface.
-    optional string surface = 3;
-
-    // List of suggestions.
-    repeated string suggestions = 4;
-  }
-
-  repeated Correction corrections = 1;
-}
-
 message Input {
   enum CommandType {
     NONE = 0;
@@ -1100,17 +1065,19 @@ message Input {
     SEND_ENGINE_RELOAD_REQUEST = 27;
 
     // Send a spell checking request.
-    CHECK_SPELLING = 28;
+    reserved 28, 29;
+    reserved "CHECK_SPELLING";
+    reserved "RELOAD_SPELL_CHECKER";
 
-    // Sends reload spellchecker.
-    RELOAD_SPELL_CHECKER = 29;
+    // Sends reload supplemental model
+    RELOAD_SUPPLEMENTAL_MODEL = 30;
 
     GET_SERVER_VERSION = 19;
 
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
-    NUM_OF_COMMANDS = 30;
+    NUM_OF_COMMANDS = 31;
   }
   required CommandType type = 1;
 
@@ -1187,7 +1154,7 @@ message Input {
 
   optional mozc.EngineReloadRequest engine_reload_request = 15;
 
-  optional CheckSpellingRequest check_spelling_request = 16;
+  reserved 16; // deprecated check_spelling_request
 }
 
 // Detailed information of Result.
@@ -1408,8 +1375,7 @@ message Output {
   // For debug. Candidate words removed throuth the conversion process.
   optional CandidateList removed_candidate_words_for_debug = 23;
 
-  // Spellchecker response.
-  optional CheckSpellingResponse check_spelling_response = 24;
+  reserved 24;  // deprecated check_spelling_response
 
   // Candidate words stored in 1D array. The field should be filled without
   // using any personal data.

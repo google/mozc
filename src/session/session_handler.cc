@@ -365,7 +365,7 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
     case commands::Input::NO_OPERATION:
       eval_succeeded = NoOperation(command);
       break;
-    case commands::Input::RELOAD_SPELL_CHECKER:
+    case commands::Input::RELOAD_SUPPLEMENTAL_MODEL:
       eval_succeeded = ReloadSupplementalModel(command);
       break;
     case commands::Input::GET_SERVER_VERSION:

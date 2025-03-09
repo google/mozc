@@ -53,9 +53,6 @@ class MockSupplementalModel : public SupplementalModelInterface {
               (override));
   MOCK_METHOD(EngineReloadResponse, Load, (const EngineReloadRequest &request),
               (override));
-  MOCK_METHOD(std::optional<commands::CheckSpellingResponse>, CheckSpelling,
-              (const commands::CheckSpellingRequest &request),
-              (const, override));
   MOCK_METHOD(std::optional<std::vector<composer::TypeCorrectedQuery>>,
               CorrectComposition,
               (const ConversionRequest &request, const Segments &segments),

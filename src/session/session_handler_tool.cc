@@ -264,7 +264,7 @@ void SessionHandlerTool::SetCallbackText(const absl::string_view text) {
 bool SessionHandlerTool::ReloadSupplementalModel(absl::string_view model_path) {
   commands::Input input;
   input.mutable_engine_reload_request()->set_file_path(model_path);
-  input.set_type(commands::Input::RELOAD_SPELL_CHECKER);
+  input.set_type(commands::Input::RELOAD_SUPPLEMENTAL_MODEL);
   commands::Output output;
   return EvalCommand(&input, &output);
 }
