@@ -7,9 +7,8 @@
 #   bazel --bazelrc=windows.bazelrc build //protocol:commands_proto \
 #         --config oss_windows
 
-# There has been a long standing path-length issue on building protobuf on
-# Windows with bazel. See the following for details.
-# https://github.com/protocolbuffers/protobuf/issues/12947
-# https://github.com/bazelbuild/bazel/issues/18683
-# Here is an ugly workaround, which we really hope to get rid of.
-startup  --output_base=C:/x --windows_enable_symlinks
+startup  --windows_enable_symlinks
+
+build    --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
+build    --extra_toolchains=@local_config_cc//:cc-toolchain-x64_x86_windows-clang-cl
+build    --host_platform=//:host-windows-clang-cl
