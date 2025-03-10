@@ -29,11 +29,13 @@
 
 #include "dictionary/dictionary_impl.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
@@ -71,21 +73,15 @@ DictionaryImpl::DictionaryImpl(
 DictionaryImpl::~DictionaryImpl() { dics_.clear(); }
 
 bool DictionaryImpl::HasKey(absl::string_view key) const {
-  for (size_t i = 0; i < dics_.size(); ++i) {
-    if (dics_[i]->HasKey(key)) {
-      return true;
-    }
-  }
-  return false;
+  return absl::c_any_of(dics_, [&key](const DictionaryInterface *dic) {
+    return dic->HasKey(key);
+  });
 }
 
 bool DictionaryImpl::HasValue(absl::string_view value) const {
-  for (size_t i = 0; i < dics_.size(); ++i) {
-    if (dics_[i]->HasValue(value)) {
-      return true;
-    }
-  }
-  return false;
+  return absl::c_any_of(dics_, [&value](const DictionaryInterface *dic) {
+    return dic->HasKey(value);
+  });
 }
 
 namespace {
@@ -154,8 +150,8 @@ void DictionaryImpl::LookupPredictive(
       conversion_request.config().use_zip_code_conversion(),
       conversion_request.config().use_t13n_conversion(), pos_matcher_,
       suppression_dictionary_, callback);
-  for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->LookupPredictive(key, conversion_request, &callback_with_filter);
+  for (const DictionaryInterface *dic : dics_) {
+    dic->LookupPredictive(key, conversion_request, &callback_with_filter);
   }
 }
 
@@ -167,8 +163,8 @@ void DictionaryImpl::LookupPrefix(absl::string_view key,
       conversion_request.config().use_zip_code_conversion(),
       conversion_request.config().use_t13n_conversion(), pos_matcher_,
       suppression_dictionary_, callback);
-  for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->LookupPrefix(key, conversion_request, &callback_with_filter);
+  for (const DictionaryInterface *dic : dics_) {
+    dic->LookupPrefix(key, conversion_request, &callback_with_filter);
   }
 }
 
@@ -180,8 +176,8 @@ void DictionaryImpl::LookupExact(absl::string_view key,
       conversion_request.config().use_zip_code_conversion(),
       conversion_request.config().use_t13n_conversion(), pos_matcher_,
       suppression_dictionary_, callback);
-  for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->LookupExact(key, conversion_request, &callback_with_filter);
+  for (const DictionaryInterface *dic : dics_) {
+    dic->LookupExact(key, conversion_request, &callback_with_filter);
   }
 }
 
@@ -193,8 +189,8 @@ void DictionaryImpl::LookupReverse(absl::string_view str,
       conversion_request.config().use_zip_code_conversion(),
       conversion_request.config().use_t13n_conversion(), pos_matcher_,
       suppression_dictionary_, callback);
-  for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->LookupReverse(str, conversion_request, &callback_with_filter);
+  for (const DictionaryInterface *dic : dics_) {
+    dic->LookupReverse(str, conversion_request, &callback_with_filter);
   }
 }
 
@@ -202,28 +198,24 @@ bool DictionaryImpl::LookupComment(absl::string_view key,
                                    absl::string_view value,
                                    const ConversionRequest &conversion_request,
                                    std::string *comment) const {
-  // TODO(komatsu): UserDictionary should be treated as the highest priority.
-  // In the current implementation, UserDictionary is the last node of dics_,
-  // but the only dictionary which may return true.
-  for (size_t i = 0; i < dics_.size(); ++i) {
-    if (dics_[i]->LookupComment(key, value, conversion_request, comment)) {
-      return true;
-    }
-  }
-  return false;
+  // Access dics_ in reverse order to prefer UserDictionary
+  return std::any_of(
+      dics_.rbegin(), dics_.rend(), [&](const DictionaryInterface *dic) {
+        return dic->LookupComment(key, value, conversion_request, comment);
+      });
 }
 
 bool DictionaryImpl::Reload() { return user_dictionary_->Reload(); }
 
 void DictionaryImpl::PopulateReverseLookupCache(absl::string_view str) const {
-  for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->PopulateReverseLookupCache(str);
+  for (const DictionaryInterface *dic : dics_) {
+    dic->PopulateReverseLookupCache(str);
   }
 }
 
 void DictionaryImpl::ClearReverseLookupCache() const {
-  for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->ClearReverseLookupCache();
+  for (const DictionaryInterface *dic : dics_) {
+    dic->ClearReverseLookupCache();
   }
 }
 
