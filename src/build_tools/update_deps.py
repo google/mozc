@@ -408,6 +408,7 @@ def exec_command(
   process = subprocess.Popen(
       args,
       cwd=cwd,
+      encoding='utf-8',
       shell=False,
       stdout=subprocess.PIPE,
       text=True,
