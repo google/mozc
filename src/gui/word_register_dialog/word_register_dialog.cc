@@ -162,9 +162,9 @@ WordRegisterDialog::WordRegisterDialog()
   if (!session_->mutable_storage()->Exists().ok() ||
       session_->storage().dictionaries_size() == 0) {
     const QString name = tr("User Dictionary 1");
-    uint64_t dic_id = 0;
-    if (!session_->mutable_storage()->CreateDictionary(name.toStdString(),
-                                                       &dic_id)) {
+    if (!session_->mutable_storage()
+             ->CreateDictionary(name.toStdString())
+             .ok()) {
       LOG(ERROR) << "Failed to create a new dictionary.";
       is_available_ = false;
       return;
@@ -313,9 +313,7 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
   entry->set_value(value);
   entry->set_pos(pos);
 
-  if (absl::Status s = session_->mutable_storage()->Save();
-      !s.ok() && session_->mutable_storage()->GetLastError() ==
-                     mozc::UserDictionaryStorage::SYNC_FAILURE) {
+  if (absl::Status s = session_->mutable_storage()->Save(); !s.ok()) {
     LOG(ERROR) << "Cannot save dictionary: " << s;
     return SAVE_FAILURE;
   }

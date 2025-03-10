@@ -38,6 +38,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "client/client_interface.h"
 #include "data_manager/pos_list_provider.h"
@@ -121,9 +122,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // whenever a proper value for dictionary name is input.
   QString PromptForDictionaryName(const QString &text, const QString &label);
 
-  // Check storage_->GetLastError() and displays an
-  // appropriate error message.
-  void ReportError();
+  void ReportError(const absl::Status &status = absl::UnknownError("Unknown"));
 
   // These two functions are to start/stop monitoring data on the
   // table widget being changed. We validate the value on the widget
@@ -143,7 +142,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
 
   // Save storage contents into the disk and
   // send Reload command to the server.
-  void SaveAndReloadServer();
+  absl::Status SaveAndReloadServer();
 
   // 1. Shows a dialog box and get new |comment|.
   // 2. Changes the comemnt of all selected.

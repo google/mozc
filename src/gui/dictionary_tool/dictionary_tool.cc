@@ -549,10 +549,10 @@ void DictionaryTool::closeEvent(QCloseEvent *event) {
   dic_menu_button_->setFocus(Qt::MouseFocusReason);
 
   SyncToStorage();
-  SaveAndReloadServer();
 
-  if (session_->mutable_storage()->GetLastError() ==
-      mozc::UserDictionaryStorage::TOO_BIG_FILE_BYTES) {
+  absl::Status status = SaveAndReloadServer();
+
+  if (absl::IsResourceExhausted(status)) {
     QMessageBox::warning(
         this, window_title_,
         tr("Making dangerously large user dictionary file. "
@@ -564,7 +564,7 @@ void DictionaryTool::closeEvent(QCloseEvent *event) {
 
 void DictionaryTool::OnDeactivate() {
   SyncToStorage();
-  SaveAndReloadServer();
+  SaveAndReloadServer().IgnoreError();
 }
 
 bool DictionaryTool::eventFilter(QObject *obj, QEvent *event) {
@@ -702,9 +702,11 @@ void DictionaryTool::DeleteDictionary() {
     return;
   }
 
-  if (!session_->mutable_storage()->DeleteDictionary(dic_info.id)) {
-    LOG(ERROR) << "Failed to delete the dictionary.";
-    ReportError();
+  if (absl::Status s =
+          session_->mutable_storage()->DeleteDictionary(dic_info.id);
+      !s.ok()) {
+    LOG(ERROR) << "Failed to delete the dictionary. " << s;
+    ReportError(s);
     return;
   }
 
@@ -729,10 +731,11 @@ void DictionaryTool::RenameDictionary() {
     return;
   }
 
-  if (!session_->mutable_storage()->RenameDictionary(dic_info.id,
-                                                     dic_name.toStdString())) {
-    LOG(ERROR) << "Failed to rename the dictionary.";
-    ReportError();
+  if (absl::Status s = session_->mutable_storage()->RenameDictionary(
+          dic_info.id, dic_name.toStdString());
+      !s.ok()) {
+    LOG(ERROR) << "Failed to rename the dictionary. " << s;
+    ReportError(s);
     return;
   }
 
@@ -847,11 +850,15 @@ void DictionaryTool::ImportHelper(
   }
 
   const std::string dic_name_str = dic_name.toStdString();
-  if (dic_id == 0 &&
-      !session_->mutable_storage()->CreateDictionary(dic_name_str, &dic_id)) {
-    LOG(ERROR) << "Failed to create the dictionary.";
-    ReportError();
-    return;
+  if (dic_id == 0) {
+    absl::StatusOr<uint64_t> s =
+        session_->mutable_storage()->CreateDictionary(dic_name_str);
+    if (!s.status().ok()) {
+      LOG(ERROR) << "Failed to create the dictionary.";
+      ReportError(s.status());
+      return;
+    }
+    dic_id = s.value();
   }
 
   UserDictionary *dic = session_->mutable_storage()->GetUserDictionary(dic_id);
@@ -984,10 +991,11 @@ void DictionaryTool::ExportDictionary() {
 
   SyncToStorage();
 
-  if (!session_->mutable_storage()->ExportDictionary(dic_info.id,
-                                                     file_name.toStdString())) {
-    LOG(ERROR) << "Failed to export the dictionary.";
-    ReportError();
+  if (absl::Status s = session_->mutable_storage()->ExportDictionary(
+          dic_info.id, file_name.toStdString());
+      !s.ok()) {
+    LOG(ERROR) << "Failed to export the dictionary. " << s;
+    ReportError(s);
     return;
   }
 
@@ -1412,13 +1420,15 @@ void DictionaryTool::SyncToStorage() {
 }
 
 void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
-  uint64_t new_dic_id = 0;
-  if (!session_->mutable_storage()->CreateDictionary(dic_name.toStdString(),
-                                                     &new_dic_id)) {
-    LOG(ERROR) << "Failed to create a new dictionary.";
-    ReportError();
+  absl::StatusOr<uint64_t> s =
+      session_->mutable_storage()->CreateDictionary(dic_name.toStdString());
+  if (!s.status().ok()) {
+    LOG(ERROR) << "Failed to create a new dictionary. " << s;
+    ReportError(s.status());
     return;
   }
+
+  const uint64_t new_dic_id = s.value();
 
   QListWidgetItem *item = new QListWidgetItem(dic_list_);
   DCHECK(item);
@@ -1467,8 +1477,8 @@ QString DictionaryTool::PromptForDictionaryName(const QString &text,
   return dic_name;
 }
 
-void DictionaryTool::ReportError() {
-  switch (session_->mutable_storage()->GetLastError()) {
+void DictionaryTool::ReportError(const absl::Status &s) {
+  switch (s.raw_code()) {
     case mozc::UserDictionaryStorage::INVALID_CHARACTERS_IN_DICTIONARY_NAME:
       LOG(ERROR) << "Dictionary name contains an invalid character.";
       QMessageBox::critical(
@@ -1515,25 +1525,25 @@ void DictionaryTool::StopMonitoringUserEdit() {
   monitoring_user_edit_ = false;
 }
 
-void DictionaryTool::SaveAndReloadServer() {
-  if (absl::Status s = session_->mutable_storage()->Save();
-      !s.ok() && session_->mutable_storage()->GetLastError() ==
-                     mozc::UserDictionaryStorage::SYNC_FAILURE) {
-    LOG(ERROR) << "Cannot save dictionary: " << s;
-    return;
+absl::Status DictionaryTool::SaveAndReloadServer() {
+  absl::Status status = session_->mutable_storage()->Save();
+
+  if (!status.ok() && !absl::IsResourceExhausted(status)) {
+    LOG(ERROR) << "Cannot save dictionary: " << status;
+    return status;
   }
 
   // If server is not running, we don't need to
   // execute Reload command.
   if (!client_->PingServer()) {
     LOG(WARNING) << "Server is not running. Do nothing";
-    return;
+    return status;
   }
 
   // Update server version if need be.
   if (!client_->CheckVersionOrRestartServer()) {
     LOG(ERROR) << "CheckVersionOrRestartServer failed";
-    return;
+    return status;
   }
 
   // We don't show any dialog even when an error happens, since
@@ -1541,6 +1551,8 @@ void DictionaryTool::SaveAndReloadServer() {
   if (!client_->Reload()) {
     LOG(ERROR) << "Reload command failed";
   }
+
+  return status;
 }
 
 bool DictionaryTool::IsReadableToImport(const QString &file_name) {

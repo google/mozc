@@ -344,21 +344,18 @@ UserDictionarySession::LoadWithEnsuringNonEmptyStorage() {
 UserDictionaryCommandStatus::Status UserDictionarySession::LoadInternal(
     bool ensure_non_empty_storage) {
   UserDictionaryCommandStatus::Status status;
-  if (absl::Status s = storage_->Load(); s.ok()) {
+  absl::Status s = storage_->Load();
+
+  if (s.ok()) {
     status = UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
   } else {
-    LOG(ERROR) << "Load failed: " << s
-               << ": last error=" << storage_->GetLastError();
-    switch (storage_->GetLastError()) {
-      case mozc::UserDictionaryStorage::FILE_NOT_EXISTS:
-        status = UserDictionaryCommandStatus::FILE_NOT_FOUND;
-        break;
-      case mozc::UserDictionaryStorage::BROKEN_FILE:
-        status = UserDictionaryCommandStatus::INVALID_FILE_FORMAT;
-        break;
-      default:
-        status = UserDictionaryCommandStatus::UNKNOWN_ERROR;
-        break;
+    LOG(ERROR) << "Load failed: " << s;
+    if (absl::IsNotFound(s)) {
+      status = UserDictionaryCommandStatus::FILE_NOT_FOUND;
+    } else if (absl::IsDataLoss(s)) {
+      status = UserDictionaryCommandStatus::INVALID_FILE_FORMAT;
+    } else {
+      status = UserDictionaryCommandStatus::UNKNOWN_ERROR;
     }
   }
 
@@ -367,6 +364,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::LoadInternal(
     // If the storage is updated, clear the undo history.
     ClearUndoHistory();
   }
+
   return status;
 }
 
@@ -404,14 +402,10 @@ UserDictionaryCommandStatus::Status UserDictionarySession::Save() {
 
   if (absl::Status s = storage_->Save(); !s.ok()) {
     LOG(ERROR) << "Failed to save to storage: " << s;
-    switch (storage_->GetLastError()) {
-      case mozc::UserDictionaryStorage::TOO_BIG_FILE_BYTES:
-        return UserDictionaryCommandStatus::FILE_SIZE_LIMIT_EXCEEDED;
-        // TODO(hidehiko): Handle SYNC_FAILURE.
-      default:
-        return UserDictionaryCommandStatus::UNKNOWN_ERROR;
+    if (absl::IsResourceExhausted(s)) {
+      return UserDictionaryCommandStatus::FILE_SIZE_LIMIT_EXCEEDED;
     }
-    ABSL_UNREACHABLE();
+    return UserDictionaryCommandStatus::UNKNOWN_ERROR;
   }
 
   return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
@@ -490,8 +484,10 @@ UserDictionaryCommandStatus::Status UserDictionarySession::RenameDictionary(
     original_name = dictionary->name();
   }
 
-  if (!storage_->RenameDictionary(dictionary_id, dictionary_name)) {
-    switch (storage_->GetLastError()) {
+  if (absl::Status s =
+          storage_->RenameDictionary(dictionary_id, dictionary_name);
+      !s.ok()) {
+    switch (s.raw_code()) {
       case mozc::UserDictionaryStorage::EMPTY_DICTIONARY_NAME:
         return UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY;
       case mozc::UserDictionaryStorage::TOO_LONG_DICTIONARY_NAME:
@@ -504,7 +500,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::RenameDictionary(
       case mozc::UserDictionaryStorage::INVALID_DICTIONARY_ID:
         return UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID;
       default:
-        LOG(ERROR) << "Unknown error code: " << storage_->GetLastError();
+        LOG(ERROR) << "Unknown error code: " << s;
         return UserDictionaryCommandStatus::UNKNOWN_ERROR;
     }
     ABSL_UNREACHABLE();

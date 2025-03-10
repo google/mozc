@@ -56,6 +56,8 @@
 namespace mozc {
 namespace {
 
+#define EXPECT_NOT_OK(expr) EXPECT_FALSE((expr).ok())
+
 using ::mozc::user_dictionary::UserDictionary;
 
 class UserDictionaryStorageTest : public testing::TestWithTempUserProfile {
@@ -66,35 +68,35 @@ class UserDictionaryStorageTest : public testing::TestWithTempUserProfile {
 };
 
 TEST_F(UserDictionaryStorageTest, FileTest) {
-  UserDictionaryStorage storage(GetUserDictionaryFile());
+  const UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_EQ(GetUserDictionaryFile(), storage.filename());
-  EXPECT_FALSE(storage.Exists().ok());
+  EXPECT_NOT_OK(storage.Exists());
 }
 
 TEST_F(UserDictionaryStorageTest, LockTest) {
   UserDictionaryStorage storage1(GetUserDictionaryFile());
   UserDictionaryStorage storage2(GetUserDictionaryFile());
 
-  EXPECT_FALSE(storage1.Save().ok());
-  EXPECT_FALSE(storage2.Save().ok());
+  EXPECT_NOT_OK(storage1.Save());
+  EXPECT_NOT_OK(storage2.Save());
 
   EXPECT_TRUE(storage1.Lock());
   EXPECT_FALSE(storage2.Lock());
   EXPECT_OK(storage1.Save());
-  EXPECT_FALSE(storage2.Save().ok());
+  EXPECT_NOT_OK(storage2.Save());
 
   EXPECT_TRUE(storage1.UnLock());
-  EXPECT_FALSE(storage1.Save().ok());
-  EXPECT_FALSE(storage2.Save().ok());
+  EXPECT_NOT_OK(storage1.Save());
+  EXPECT_NOT_OK(storage2.Save());
 
   EXPECT_TRUE(storage2.Lock());
-  EXPECT_FALSE(storage1.Save().ok());
+  EXPECT_NOT_OK(storage1.Save());
   EXPECT_OK(storage2.Save());
 }
 
 TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load().ok());
+  EXPECT_NOT_OK(storage.Load());
 
   constexpr size_t kDictionariesSize = 3;
   uint64_t id[kDictionariesSize];
@@ -102,8 +104,10 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   const size_t dict_size = storage.GetProto().dictionaries_size();
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
-    EXPECT_TRUE(storage.CreateDictionary(
-        "test" + std::to_string(static_cast<uint32_t>(i)), &id[i]));
+    absl::StatusOr<uint64_t> s =
+        storage.CreateDictionary(absl::StrCat("test", i));
+    EXPECT_OK(s);
+    id[i] = s.value();
     EXPECT_EQ(storage.GetProto().dictionaries_size(), i + 1 + dict_size);
   }
 
@@ -119,39 +123,36 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   }
 
   // empty
-  EXPECT_FALSE(storage.RenameDictionary(id[0], ""));
+  EXPECT_NOT_OK(storage.RenameDictionary(id[0], ""));
 
   // duplicated
-  uint64_t tmp_id = 0;
-  EXPECT_FALSE(storage.CreateDictionary("test0", &tmp_id));
-  EXPECT_EQ(storage.GetLastError(),
+  EXPECT_EQ(storage.CreateDictionary("test0").status().raw_code(),
             UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME);
 
   // invalid id
-  EXPECT_FALSE(storage.RenameDictionary(0, ""));
+  EXPECT_NOT_OK(storage.RenameDictionary(0, ""));
 
   // duplicated
-  EXPECT_FALSE(storage.RenameDictionary(id[0], "test1"));
-  EXPECT_EQ(storage.GetLastError(),
+  EXPECT_EQ(storage.RenameDictionary(id[0], "test1").raw_code(),
             UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME);
 
   // no name
-  EXPECT_TRUE(storage.RenameDictionary(id[0], "test0"));
+  EXPECT_OK(storage.RenameDictionary(id[0], "test0"));
 
-  EXPECT_TRUE(storage.RenameDictionary(id[0], "renamed0"));
+  EXPECT_OK(storage.RenameDictionary(id[0], "renamed0"));
   EXPECT_EQ(storage.GetUserDictionary(id[0])->name(), "renamed0");
 
   // invalid id
-  EXPECT_FALSE(storage.DeleteDictionary(0));
+  EXPECT_NOT_OK(storage.DeleteDictionary(0));
 
-  EXPECT_TRUE(storage.DeleteDictionary(id[1]));
+  EXPECT_OK(storage.DeleteDictionary(id[1]));
   EXPECT_EQ(storage.GetProto().dictionaries_size(),
             kDictionariesSize + dict_size - 1);
 }
 
 TEST_F(UserDictionaryStorageTest, DeleteTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load().ok());
+  EXPECT_NOT_OK(storage.Load());
   absl::BitGen gen;
 
   // repeat 10 times
@@ -159,14 +160,13 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
     storage.GetProto().Clear();
     std::vector<uint64_t> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
-      EXPECT_TRUE(storage.CreateDictionary(
-          "test" + std::to_string(static_cast<uint32_t>(i)), &ids[i]));
+      ids[i] = storage.CreateDictionary(absl::StrCat("test", i)).value();
     }
 
     std::vector<uint64_t> alive;
     for (size_t i = 0; i < ids.size(); ++i) {
       if (absl::Bernoulli(gen, 1.0 / 3)) {  // 33%
-        EXPECT_TRUE(storage.DeleteDictionary(ids[i]));
+        EXPECT_OK(storage.DeleteDictionary(ids[i]));
         continue;
       }
       alive.push_back(ids[i]);
@@ -182,11 +182,10 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
 
 TEST_F(UserDictionaryStorageTest, ExportTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  uint64_t id = 0;
-
-  EXPECT_TRUE(storage.CreateDictionary("test", &id));
+  const uint64_t id = storage.CreateDictionary("test").value();
 
   UserDictionaryStorage::UserDictionary *dic = storage.GetUserDictionary(id);
+  EXPECT_TRUE(dic);
 
   for (size_t i = 0; i < 1000; ++i) {
     UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
@@ -203,8 +202,8 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
   const std::string export_file =
       FileUtil::JoinPath(temp_dir.path(), "export.txt");
 
-  EXPECT_FALSE(storage.ExportDictionary(id + 1, export_file));
-  EXPECT_TRUE(storage.ExportDictionary(id, export_file));
+  EXPECT_NOT_OK(storage.ExportDictionary(id + 1, export_file));
+  EXPECT_OK(storage.ExportDictionary(id, export_file));
 
   std::string file_string;
   // Copy whole contents of the file into |file_string|.
@@ -239,15 +238,12 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
     UserDictionaryStorage storage1(filepath);
 
     {
-      EXPECT_FALSE(storage1.Load().ok()) << "n = " << n;
+      EXPECT_NOT_OK(storage1.Load()) << "n = " << n;
       const size_t dic_size =
           absl::Uniform(absl::IntervalClosed, random, 1, 50);
 
       for (size_t i = 0; i < dic_size; ++i) {
-        uint64_t id = 0;
-        const std::string dic_name =
-            "test" + std::to_string(static_cast<uint32_t>(i));
-        EXPECT_TRUE(storage1.CreateDictionary(dic_name, &id)) << "n = " << n;
+        EXPECT_OK(storage1.CreateDictionary(absl::StrCat("test", i)));
         const size_t entry_size =
             absl::Uniform(absl::IntervalClosed, random, 1, 100);
         for (size_t j = 0; j < entry_size; ++j) {
@@ -279,17 +275,17 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
 
 TEST_F(UserDictionaryStorageTest, GetUserDictionaryIdTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load().ok());
+  EXPECT_NOT_OK(storage.Load());
 
   constexpr size_t kDictionariesSize = 3;
   uint64_t id[kDictionariesSize];
-  EXPECT_TRUE(storage.CreateDictionary("testA", &id[0]));
-  EXPECT_TRUE(storage.CreateDictionary("testB", &id[1]));
+  id[0] = storage.CreateDictionary("testA").value();
+  id[1] = storage.CreateDictionary("testB").value();
 
   uint64_t ret_id[kDictionariesSize];
-  EXPECT_TRUE(storage.GetUserDictionaryId("testA", &ret_id[0]));
-  EXPECT_TRUE(storage.GetUserDictionaryId("testB", &ret_id[1]));
-  EXPECT_FALSE(storage.GetUserDictionaryId("testC", &ret_id[2]));
+  ret_id[0] = storage.GetUserDictionaryId("testA").value();
+  ret_id[1] = storage.GetUserDictionaryId("testB").value();
+  EXPECT_NOT_OK(storage.GetUserDictionaryId("testC"));
 
   EXPECT_EQ(ret_id[0], id[0]);
   EXPECT_EQ(ret_id[1], id[1]);
@@ -312,7 +308,7 @@ TEST_F(UserDictionaryStorageTest, Export) {
       entry->set_pos(UserDictionary::NOUN);
       entry->set_comment("comment");
     }
-    storage.ExportDictionary(kDummyDictionaryId, kPath);
+    EXPECT_OK(storage.ExportDictionary(kDummyDictionaryId, kPath));
   }
 
   const absl::StatusOr<Mmap> mapped_data = Mmap::Map(kPath);

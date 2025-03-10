@@ -596,8 +596,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
       FileUtil::JoinPath(temp_dir.path(), "suggestion_only_test.db");
   UserDictionaryStorage storage(filename);
   {
-    uint64_t id = 0;
-    EXPECT_TRUE(storage.CreateDictionary("test", &id));
+    EXPECT_OK(storage.CreateDictionary("test"));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
 
@@ -635,10 +634,9 @@ TEST_F(UserDictionaryTest, TestLookupWithShortCut) {
       FileUtil::JoinPath(temp_dir.path(), "shortcut_test.db");
   UserDictionaryStorage storage(filename);
   {
-    uint64_t id = 0;
     // Creates the shortcut dictionary (from Gboard Android).
-    EXPECT_TRUE(storage.CreateDictionary(
-        "__auto_imported_android_shortcuts_dictionary", &id));
+    EXPECT_OK(storage.CreateDictionary(
+        "__auto_imported_android_shortcuts_dictionary"));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
 
@@ -698,8 +696,7 @@ TEST_F(UserDictionaryTest, TestKeyNormalization) {
       FileUtil::JoinPath(temp_dir.path(), "normalization_test.db");
   UserDictionaryStorage storage(filename);
   {
-    uint64_t id = 0;
-    EXPECT_TRUE(storage.CreateDictionary("normalization_test", &id));
+    EXPECT_OK(storage.CreateDictionary("normalization_test"));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
 
@@ -781,8 +778,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     EXPECT_FALSE(storage.Load().ok());
     EXPECT_TRUE(storage.Lock());
 
-    uint64_t id = 0;
-    EXPECT_TRUE(storage.CreateDictionary("test", &id));
+    EXPECT_OK(storage.CreateDictionary("test"));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
@@ -834,8 +830,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
   // Create dictionary
   {
-    uint64_t id = 0;
-    EXPECT_TRUE(storage.CreateDictionary("test", &id));
+    EXPECT_OK(storage.CreateDictionary("test"));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
@@ -864,8 +859,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   // Remove suppression entry
   {
     storage.GetProto().Clear();
-    uint64_t id = 0;
-    EXPECT_TRUE(storage.CreateDictionary("test", &id));
+    EXPECT_OK(storage.CreateDictionary("test"));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
@@ -896,8 +890,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
 
   // Create dictionary
   {
-    uint64_t id = 0;
-    EXPECT_TRUE(storage.CreateDictionary("test", &id));
+    EXPECT_OK(storage.CreateDictionary("test"));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
 

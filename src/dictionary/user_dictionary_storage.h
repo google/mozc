@@ -77,32 +77,32 @@ class ProcessMutex;
 
 class UserDictionaryStorage {
  public:
-  typedef user_dictionary::UserDictionary UserDictionary;
-  typedef user_dictionary::UserDictionary::Entry UserDictionaryEntry;
+  using UserDictionary = user_dictionary::UserDictionary;
+  using UserDictionaryEntry = user_dictionary::UserDictionary::Entry;
 
-  enum UserDictionaryStorageErrorType {
-    USER_DICTIONARY_STORAGE_NO_ERROR = 0,  // default
-    FILE_NOT_EXISTS,
-    BROKEN_FILE,
-    SYNC_FAILURE,
-    TOO_BIG_FILE_BYTES,
-    INVALID_DICTIONARY_ID,
+  // Extended error code stored in absl::Status. We use the absl's canonical
+  // error code (absl::StatusCode) for general resource management. Extended
+  // Error code is mainly used for the dictionary management. When
+  // absl::IsUnknown(status) is true, we can access the extended error code
+  // via status.raw_code(). Otherwise, canonical error code is used.
+  enum ExtendedErrorCode : int {
+    OK = 0,  // default (absl::StatusCode::kOk)
+    // Reasonably big offset not to overwerap with canonical error code.
+    INVALID_DICTIONARY_ID = 100,
     INVALID_CHARACTERS_IN_DICTIONARY_NAME,
     EMPTY_DICTIONARY_NAME,
     DUPLICATED_DICTIONARY_NAME,
     TOO_LONG_DICTIONARY_NAME,
     TOO_MANY_DICTIONARIES,
     TOO_MANY_ENTRIES,
-    EXPORT_FAILURE,
-    UNKNOWN_ERROR,
     ERROR_TYPE_SIZE
   };
 
-  explicit UserDictionaryStorage(const std::string &file_name);
+  explicit UserDictionaryStorage(std::string filename);
   virtual ~UserDictionaryStorage();
 
   // return the filename of user dictionary
-  const std::string &filename() const;
+  absl::string_view filename() const;
 
   // Return true if data tied with this object already
   // exists. Otherwise, it means that the space for the data is used
@@ -118,7 +118,7 @@ class UserDictionaryStorage {
 
   // Serialize user dictionary to local file.
   // Need to call Lock() the dictionary before calling Save().
-  absl::Status Save();
+  absl::Status Save() const;
 
   // Lock the dictionary so that other processes/threads cannot
   // execute mutable operations on this dictionary.
@@ -128,18 +128,19 @@ class UserDictionaryStorage {
   bool UnLock();
 
   // Export a dictionary to a file in TSV format.
-  bool ExportDictionary(uint64_t dic_id, const std::string &file_name);
+  absl::Status ExportDictionary(uint64_t dic_id,
+                                absl::string_view filename) const;
 
   // Create a new dictionary with a specified name. Returns the id of
-  // the new instance via new_dic_id.
-
-  bool CreateDictionary(absl::string_view dic_name, uint64_t *new_dic_id);
+  // the new instance. The returned status may return ExtendedErrorCode
+  // when the StatusCode is Unknown.
+  absl::StatusOr<uint64_t> CreateDictionary(absl::string_view dic_name);
 
   // Delete a dictionary.
-  bool DeleteDictionary(uint64_t dic_id);
+  absl::Status DeleteDictionary(uint64_t dic_id);
 
   // Rename a dictionary.
-  bool RenameDictionary(uint64_t dic_id, absl::string_view dic_name);
+  absl::Status RenameDictionary(uint64_t dic_id, absl::string_view dic_name);
 
   // return the index of "dic_id"
   // return -1 if no dictionary is found.
@@ -148,14 +149,9 @@ class UserDictionaryStorage {
   // return mutable UserDictionary corresponding to dic_id
   UserDictionary *GetUserDictionary(uint64_t dic_id);
 
-  // Searches a dictionary from a dictionary name, and the dictionary id is
-  // stored in "dic_id".
-  // Returns false if the name is not found.
-  bool GetUserDictionaryId(absl::string_view dic_name, uint64_t *dic_id);
-
-  // return last error type.
-  // You can obtain the reason of the error of dictionary operation.
-  UserDictionaryStorageErrorType GetLastError() const;
+  // returns the dictionary id associated with the "dic_name".
+  absl::StatusOr<uint64_t> GetUserDictionaryId(
+      absl::string_view dic_name) const;
 
   // maximum number of dictionaries this storage can hold
   static size_t max_dictionary_size();
@@ -177,18 +173,17 @@ class UserDictionaryStorage {
 
  private:
   // Return true if this object can accept the given dictionary name.
-  // This changes the internal state.
-  bool IsValidDictionaryName(absl::string_view name);
+  // This changes the internal state. The returned status may return
+  // ExtendedErrorCode when the StatusCode is Unknown.
+  absl::Status IsValidDictionaryName(absl::string_view name) const;
 
-  // Load the data from file_name actually.
+  // Load the data from filename actually.
   absl::Status LoadInternal();
 
   user_dictionary::UserDictionaryStorage proto_;
-  std::string file_name_;
-  bool locked_ = false;
-  UserDictionaryStorageErrorType last_error_type_ =
-      USER_DICTIONARY_STORAGE_NO_ERROR;
-  absl::Mutex local_mutex_;
+  mutable bool locked_ = false;
+  mutable absl::Mutex local_mutex_;
+  const std::string filename_;
   std::unique_ptr<ProcessMutex> process_mutex_;
 };
 
