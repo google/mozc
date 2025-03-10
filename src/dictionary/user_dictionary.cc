@@ -132,7 +132,7 @@ class UserDictionary::TokensIndex {
 
     for (const UserDictionaryStorage::UserDictionary &dic :
          storage.dictionaries()) {
-      if (!dic.enabled() || dic.entries_size() == 0) {
+      if (dic.entries_size() == 0) {
         continue;
       }
       const bool is_android_shortcuts =

@@ -96,10 +96,7 @@ message UserDictionary {
   // ID of this dictionary
   optional uint64 id = 1 [default = 0, jstype = JS_STRING];
 
-  // set false if this dictionary is not used.
-  // Even if |enabled| is false, the dictionary
-  // itself is visible to user.
-  optional bool enabled = 2 [default = true];
+  reserved 2;  // deprecated enabled
 
   // name of dictionary
   optional string name = 3 [default = ""];
@@ -129,10 +126,7 @@ message UserDictionary {
     optional string locale = 12 [default = ""];
 
     reserved 10;  // deprecated removed
-
-    // set true if this entry is automatically registered
-    // by converter.
-    optional bool auto_registered = 11 [default = false];
+    reserved 11;  // deprecated auto_registered
   }
 
   repeated Entry entries = 4;
