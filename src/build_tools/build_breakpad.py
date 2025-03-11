@@ -30,9 +30,13 @@
 
 """Script building Breakpad for Mozc/Mac.
 
-././tools/build_breakpad.py
+python3 ././build_tools/build_breakpad.py
   --bpdir ./third_party/breakpad --outdir /tmp/breakpad
+
+You can check available SDK versions with `xcodebuild -showsdks` and specify it
+to `--sdk`.
 """
+
 import optparse
 import os
 import subprocess
@@ -62,10 +66,13 @@ def ProcessCall(command):
 
 
 def Xcodebuild(projdir, target, arch, sdk, deployment_target, outdir):
+  # version_code takes 4 digit chars like "1203" converted from "12.3".
+  version_code = '{}{:>02}'.format(*deployment_target.split('.'))
   ProcessCall([
       'xcodebuild', '-project', projdir, '-configuration', 'Release',
       '-target', target, '-arch', arch, '-sdk', sdk,
       'GCC_VERSION=com.apple.compilers.llvm.clang.1_0',
+      'MAC_OS_X_VERSION_MAX_ALLOWED=%s' % version_code,
       'MACOSX_DEPLOYMENT_TARGET=%s' % deployment_target,
       'CONFIGURATION_BUILD_DIR=%s' % outdir,
       'OTHER_CFLAGS=-Wno-switch',  # For common/dwarf/dwarf2reader.cc
