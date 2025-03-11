@@ -66,16 +66,19 @@ def ProcessCall(command):
 
 
 def Xcodebuild(projdir, target, arch, sdk, deployment_target, outdir):
-  # version_code takes 4 digit chars like "1203" converted from "12.3".
-  version_code = '{}{:>02}'.format(*deployment_target.split('.'))
+  # version_code takes 6 digit chars like "120300" converted from "12.3".
+  version_code = '{}{:>02}00'.format(*deployment_target.split('.'))
+  cflags = ' '.join([
+      '-Wno-switch',  # For common/dwarf/dwarf2reader.cc
+      '-DMAC_OS_X_VERSION_MAX_ALLOWED=' + version_code,
+  ])
   ProcessCall([
       'xcodebuild', '-project', projdir, '-configuration', 'Release',
       '-target', target, '-arch', arch, '-sdk', sdk,
       'GCC_VERSION=com.apple.compilers.llvm.clang.1_0',
-      'MAC_OS_X_VERSION_MAX_ALLOWED=%s' % version_code,
       'MACOSX_DEPLOYMENT_TARGET=%s' % deployment_target,
       'CONFIGURATION_BUILD_DIR=%s' % outdir,
-      'OTHER_CFLAGS=-Wno-switch',  # For common/dwarf/dwarf2reader.cc
+      'OTHER_CFLAGS=%s' % cflags,  # No quotations are required for the value.
   ] + codesign_mac.GetCodeSignFlags())
 
 
