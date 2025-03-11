@@ -96,8 +96,7 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
   // create UserDictionary if the current user dictionary is empty
   if (!storage_->Exists().ok()) {
     const std::string kUserdictionaryName = "User Dictionary 1";
-    uint64_t dic_id = 0;
-    if (!storage_->CreateDictionary(kUserdictionaryName, &dic_id)) {
+    if (!storage_->CreateDictionary(kUserdictionaryName).ok()) {
       LOG(ERROR) << "Failed to create a new dictionary.";
       return false;
     }
@@ -115,10 +114,13 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
   }
 
   if (dic_id == 0) {
-    if (!storage_->CreateDictionary(kMsimeUserdictionaryName, &dic_id)) {
+    absl::StatusOr<uint64_t> dic_id_status =
+        storage_->CreateDictionary(kMsimeUserdictionaryName);
+    if (!dic_id_status.ok()) {
       LOG(ERROR) << "Failed to create a new dictionary.";
       return false;
     }
+    dic_id = *dic_id_status;
   }
 
   UserDictionaryStorage::UserDictionary *dic =
