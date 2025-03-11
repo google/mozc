@@ -2030,85 +2030,10 @@ void ImmutableConverter::InsertCandidatesForConversion(
   }
 }
 
-void ImmutableConverter::InsertCandidatesForRealtime(
-    const ConversionRequest &request, const Lattice &lattice,
-    absl::Span<const uint16_t> group, Segments *segments) const {
-  Segment *target_segment = segments->mutable_conversion_segment(0);
-
-  Segments tmp_segments = *segments;
-  {
-    // Candidates for the whole path
-    constexpr int kMaxSize = 3;
-    InsertCandidates(request, &tmp_segments, lattice, group, kMaxSize,
-                     SINGLE_SEGMENT);
-
-    // InsertCandidates for SINGLE_SEGMENT should insert at least one candidate.
-    DCHECK_GT(tmp_segments.conversion_segment(0).candidates_size(), 0);
-    const auto &top_cand = tmp_segments.conversion_segment(0).candidate(0);
-    const std::vector<absl::string_view> top_boundary =
-        GetBoundaryInfo(top_cand);
-    for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
-         ++i) {
-      const auto &c = tmp_segments.conversion_segment(0).candidate(i);
-      constexpr int kCostDiff = 2302;  // 500*log(100)
-      if (c.cost - top_cand.cost > kCostDiff) {
-        continue;
-      }
-      if (i != 0 && GetBoundaryInfo(c) == top_boundary) {
-        // Skip to add the similar candidates.
-        continue;
-      }
-      Segment::Candidate *candidate = target_segment->add_candidate();
-      *candidate = c;
-    }
-  }
-  tmp_segments.mutable_conversion_segment(0)->clear_candidates();
-
-  {
-    // Candidates for the first segment for each n-best path.
-    InsertCandidates(request, &tmp_segments, lattice, group,
-                     request.max_conversion_candidates_size() -
-                         target_segment->candidates_size(),
-                     FIRST_INNER_SEGMENT);
-    Trie<bool> added;
-    constexpr bool kPlaceholderValue = true;
-    constexpr int kMaxSingleSegmentCandidateSize = 5;
-    int single_segment_candidate_count = 0;
-    for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
-         ++i) {
-      const auto &c = tmp_segments.conversion_segment(0).candidate(i);
-      bool data;
-      size_t key_length;
-      if (added.LongestMatch(c.value, &data, &key_length)) {
-        // Prefix is already added
-        continue;
-      }
-      if (c.key.size() == target_segment->key().size() &&
-          c.key.size() != c.content_key.size() &&
-          single_segment_candidate_count++ >= kMaxSingleSegmentCandidateSize) {
-        // The key is for single segment (ex. きょうの, etc)
-        // Skip to add verbose candidates (凶の, 鏡の, 興の, etc)
-        continue;
-      }
-      Segment::Candidate *candidate = target_segment->add_candidate();
-      *candidate = c;
-      if (c.key.size() != target_segment->key().size()) {
-        // Suffix penalty is not added for the prefix path.
-        const int32_t suffix_penalty =
-            segmenter_->GetSuffixPenalty(candidate->rid);
-        candidate->wcost += suffix_penalty;
-        candidate->cost += suffix_penalty;
-      }
-      added.AddEntry(c.value, kPlaceholderValue);
-    }
-  }
-}
-
 void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
     const ConversionRequest &request, const Lattice &lattice,
     absl::Span<const uint16_t> group, Segments *segments) const {
-  const commands::DecoderExperimentParams params =
-      request.request().decoder_experiment_params();
+  constexpr int kSingleSegmentCharCoverage = 12;
   Segment *target_segment = segments->mutable_conversion_segment(0);
   absl::flat_hash_set<std::string> added;
   Segments tmp_segments = *segments;
@@ -2125,8 +2050,7 @@ void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
     const auto &top_cand = tmp_segments.conversion_segment(0).candidate(0);
     const std::vector<absl::string_view> top_boundary =
         GetBoundaryInfo(top_cand);
-    int remaining_char_coverage =
-        params.realtime_conversion_single_segment_char_coverage();
+    int remaining_char_coverage = kSingleSegmentCharCoverage;
     for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
          ++i) {
       const auto &c = tmp_segments.conversion_segment(0).candidate(i);
@@ -2154,9 +2078,9 @@ void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
                      request.max_conversion_candidates_size() -
                          target_segment->candidates_size(),
                      FIRST_INNER_SEGMENT);
-    FirstInnerSegmentCandidateChecker checker(
-        *target_segment,
-        params.realtime_conversion_candidate_checker_cost_max_diff());
+    constexpr int kMaxCostDiffForFirstInnerSegment = 3107;  // 500*log(500)
+    FirstInnerSegmentCandidateChecker checker(*target_segment,
+                                              kMaxCostDiffForFirstInnerSegment);
     for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
          ++i) {
       Segment::Candidate *c =
@@ -2196,14 +2120,8 @@ void ImmutableConverter::InsertCandidatesForPrediction(
   }
 
   // Mobile
-  if (request.request()
-          .decoder_experiment_params()
-          .enable_realtime_conversion_candidate_checker()) {
-    InsertCandidatesForRealtimeWithCandidateChecker(request, lattice, group,
-                                                    segments);
-  } else {
-    InsertCandidatesForRealtime(request, lattice, group, segments);
-  }
+  InsertCandidatesForRealtimeWithCandidateChecker(request, lattice, group,
+                                                  segments);
 }
 
 void ImmutableConverter::MakeGroup(const Segments &segments,

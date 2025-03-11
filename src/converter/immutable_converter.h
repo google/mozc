@@ -151,11 +151,6 @@ class ImmutableConverter : public ImmutableConverterInterface {
                         size_t max_candidates_size,
                         InsertCandidatesType type) const;
 
-  void InsertCandidatesForRealtime(const ConversionRequest &request,
-                                   const Lattice &lattice,
-                                   absl::Span<const uint16_t> group,
-                                   Segments *segments) const;
-
   void InsertCandidatesForRealtimeWithCandidateChecker(
       const ConversionRequest &request, const Lattice &lattice,
       absl::Span<const uint16_t> group, Segments *segments) const;

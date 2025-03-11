@@ -583,9 +583,6 @@ message DecoderExperimentParams {
 
   optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
-  optional bool enable_realtime_conversion_candidate_checker = 62
-      [default = false];
-
   optional bool enable_findability_oriented_order = 42 [default = false];
   optional int32 findability_oriented_order_top_size = 43 [default = 10];
 
@@ -622,20 +619,6 @@ message DecoderExperimentParams {
   // Offset to promote Katakana candidates in rewriter.
   // The promotion will be disabled if the value is negative.
   optional int32 katakana_promotion_offset = 83 [default = 5];
-
-  // Parameters for realtime conversion
-  // (go/mozc-src/converter/immutable_converter.cc for details)
-  //
-  // - Character coverage for single segment
-  // If the total length of the included candidates' value does not exceed this
-  // value, the target candidate will not be filtered even when the boundary is
-  // the same with the top candidate.
-  optional int32 realtime_conversion_single_segment_char_coverage = 98
-      [default = 0];
-  // Cost max diff for first segment to filter candidates.
-  // default_value: 500*log(500)
-  optional int32 realtime_conversion_candidate_checker_cost_max_diff = 99
-      [default = 3107];
 
   // Cost offset for handwriting conversion candidate.
   // default_value: 10*log(500)
