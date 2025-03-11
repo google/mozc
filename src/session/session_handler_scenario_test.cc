@@ -50,7 +50,6 @@
 #include "request/request_test_util.h"
 #include "session/session_handler_test_util.h"
 #include "session/session_handler_tool.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -265,12 +264,6 @@ INSTANTIATE_TEST_SUITE_P(
               auto request = GetMobileRequest();
               request.mutable_decoder_experiment_params()
                   ->set_enable_findability_oriented_order(true);
-              return request;
-            }(),
-            []() {
-              auto request = GetMobileRequest();
-              request.mutable_decoder_experiment_params()
-                  ->set_user_segment_history_rewriter_replace_proper_noun(true);
               return request;
             }())),
     SessionHandlerScenarioTestForRequest::GetTestName);

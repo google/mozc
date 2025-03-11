@@ -313,16 +313,6 @@ bool IsNumberSegment(const Segment &segment) {
   return is_number;
 }
 
-bool IsProperNounSegment(const Segment &segment,
-                         const PosMatcher &pos_matcher) {
-  for (const Segment::Candidate *candidate : segment.candidates()) {
-    if (pos_matcher.IsUniqueNoun(candidate->lid)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void GetValueByType(const Segment *segment,
                     NumberUtil::NumberString::Style style,
                     std::string *output) {
@@ -503,8 +493,7 @@ UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
 
 UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
     const ConversionRequest &request, const Segments &segments,
-    size_t segment_index, int candidate_index,
-    bool is_proper_noun_segment) const {
+    size_t segment_index, int candidate_index) const {
   const size_t segments_size = segments.conversion_segments_size();
   const Segment::Candidate &top_candidate =
       segments.segment(segment_index).candidate(0);
@@ -542,8 +531,7 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
   score.Update(Fetch(fkey.RightNumber(content_key, content_value),
                      bigram_number_weight));
 
-  const bool is_replaceable =
-      Replaceable(request, top_candidate, candidate, is_proper_noun_segment);
+  const bool is_replaceable = Replaceable(request, top_candidate, candidate);
   if (!context_sensitive && is_replaceable) {
     score.Update(Fetch(fkey.Current(all_key, all_value), unigram_weight));
   }
@@ -581,20 +569,14 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
 // personalization.
 bool UserSegmentHistoryRewriter::Replaceable(
     const ConversionRequest &request, const Segment::Candidate &best_candidate,
-    const Segment::Candidate &target_candidate,
-    bool is_proper_noun_segment) const {
-  const bool replace_proper_noun =
-      request.request()
-          .decoder_experiment_params()
-          .user_segment_history_rewriter_replace_proper_noun();
+    const Segment::Candidate &target_candidate) const {
   const bool same_functional_value = (best_candidate.functional_value() ==
                                       target_candidate.functional_value());
   const bool same_pos_group = (pos_group_->GetPosGroup(best_candidate.lid) ==
                                pos_group_->GetPosGroup(target_candidate.lid));
   return (same_functional_value &&
           (same_pos_group || IsT13NCandidate(best_candidate) ||
-           IsT13NCandidate(target_candidate) ||
-           (replace_proper_noun && is_proper_noun_segment)));
+           IsT13NCandidate(target_candidate)));
 }
 
 void UserSegmentHistoryRewriter::RememberNumberPreference(
@@ -650,13 +632,12 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
       ((candidate.attributes & Segment::Candidate::RERANKED) != 0);
 
   // Compare the POS group and Functional value.
-  // if "is_replaceable" is true, it means that  the target candidate can
-  // "SAFELY" be replaceable with the top candidate.
-  const bool is_proper_noun_segment = IsProperNounSegment(seg, *pos_matcher_);
+  // if "is_replaceable_with_top" is true, it means that  the target candidate
+  // can "SAFELY" be replaceable with the top candidate.
   const int top_index = GetDefaultCandidateIndex(seg);
   const bool is_replaceable_with_top =
-      ((top_index == 0) || Replaceable(request, seg.candidate(top_index),
-                                       candidate, is_proper_noun_segment));
+      ((top_index == 0) ||
+       Replaceable(request, seg.candidate(top_index), candidate));
   FeatureKey fkey(segments, *pos_matcher_, segment_index);
   Insert(fkey.LeftRight(all_key, all_value), force_insert, revert_entries);
   Insert(fkey.LeftLeft(all_key, all_value), force_insert, revert_entries);
@@ -1011,8 +992,6 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
           << "Cannot expand candidates. ignored. Rewrite may be failed";
     }
 
-    const bool is_proper_noun_segment =
-        IsProperNounSegment(*segment, *pos_matcher_);
     // for each all candidates expanded
     std::vector<ScoreCandidate> scores;
     for (size_t l = 0;
@@ -1024,8 +1003,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
                               transliteration::NUM_T13N_TYPES);
       }
 
-      const Score score =
-          GetScore(request, *segments, i, j, is_proper_noun_segment);
+      const Score score = GetScore(request, *segments, i, j);
       if (score.score > 0) {
         scores.emplace_back(score, &segment->candidate(j));
       }

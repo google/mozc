@@ -642,11 +642,6 @@ message DecoderExperimentParams {
   optional int32 handwriting_conversion_candidate_cost_offset = 102
       [default = 1151];
 
-  // Relax the replaceable condition to remember candidate in user segment
-  // history rewriter wheh the target segment contains proper noun candidate.
-  optional bool user_segment_history_rewriter_replace_proper_noun = 103
-      [default = false];
-
   // Apply inner segment boundary information to the single segment candidate.
   optional bool apply_single_inner_segment_boundary = 105 [default = true];
 
