@@ -142,10 +142,14 @@ new_local_repository = use_repo_rule(
 )
 
 # Japanese Usage Dictionary
-new_local_repository(
+bazel_dep(
     name = "ja_usage_dict",
-    build_file = "@//bazel:BUILD.ja_usage_dict.bazel",
-    path = "third_party/japanese_usage_dictionary",
+    repo_name = "ja_usage_dict",
+)
+git_override(
+    module_name = "ja_usage_dict",
+    remote = "https://github.com/hiroyuki-komatsu/japanese-usage-dictionary",
+    tag = "2025-01-25",
 )
 
 # Windows Implementation Library (WIL)
