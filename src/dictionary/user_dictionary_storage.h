@@ -68,7 +68,6 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -181,8 +180,6 @@ class UserDictionaryStorage {
   absl::Status LoadInternal();
 
   user_dictionary::UserDictionaryStorage proto_;
-  mutable bool locked_ = false;
-  mutable absl::Mutex local_mutex_;
   const std::string filename_;
   std::unique_ptr<ProcessMutex> process_mutex_;
 };

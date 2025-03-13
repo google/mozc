@@ -77,14 +77,31 @@ ProcessMutex::~ProcessMutex() { UnLock(); }
 
 bool ProcessMutex::Lock() { return LockAndWrite(""); }
 
-#ifdef _WIN32
-
-bool ProcessMutex::LockAndWrite(const absl::string_view message) {
+bool ProcessMutex::LockAndWrite(absl::string_view message) {
+  absl::MutexLock l(&mutex_);
   if (locked_) {
     MOZC_VLOG(1) << filename_ << " is already locked";
     return false;
   }
+  locked_ = LockAndWriteInternal(message);
+  return locked_;
+}
 
+// always return true at this moment.
+bool ProcessMutex::UnLock() {
+  absl::MutexLock l(&mutex_);
+  if (!locked_) {
+    MOZC_VLOG(1) << filename_ << " is not locked";
+    return true;
+  }
+  UnLockInternal();
+  locked_ = false;
+  return true;
+}
+
+#ifdef _WIN32
+
+bool ProcessMutex::LockAndWriteInternal(const absl::string_view message) {
   const std::wstring wfilename = win32::Utf8ToWide(filename_);
   constexpr DWORD kAttribute =
       FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY |
@@ -100,11 +117,9 @@ bool ProcessMutex::LockAndWrite(const absl::string_view message) {
                               nullptr));
   ::LocalFree(serucity_attributes.lpSecurityDescriptor);
 
-  locked_ = handle_.is_valid();
-
-  if (!locked_) {
+  if (!handle_.is_valid()) {
     MOZC_VLOG(1) << "already locked";
-    return locked_;
+    return false;
   }
 
   if (!message.empty()) {
@@ -114,19 +129,17 @@ bool ProcessMutex::LockAndWrite(const absl::string_view message) {
       const int last_error = ::GetLastError();
       LOG(ERROR) << "Cannot write message: " << message
                  << ", last_error:" << last_error;
-      UnLock();
+      UnLockInternal();
       return false;
     }
   }
 
-  return locked_;
+  return true;
 }
 
-bool ProcessMutex::UnLock() {
+void ProcessMutex::UnLockInternal() {
   handle_.reset();
   FileUtil::UnlinkOrLogError(filename_);
-  locked_ = false;
-  return true;
 }
 
 #else   // !_WIN32
@@ -218,7 +231,7 @@ class FileLockManager {
 
 }  // namespace
 
-bool ProcessMutex::LockAndWrite(const absl::string_view message) {
+bool ProcessMutex::LockAndWriteInternal(const absl::string_view message) {
   absl::StatusOr<int> status_or_fd =
       Singleton<FileLockManager>::get()->Lock(filename_);
   if (!status_or_fd.ok()) {
@@ -229,27 +242,22 @@ bool ProcessMutex::LockAndWrite(const absl::string_view message) {
     if (write(*status_or_fd, message.data(), message.size()) !=
         message.size()) {
       LOG(ERROR) << "Cannot write message: " << message;
-      UnLock();
+      UnLockInternal();
       return false;
     }
   }
 
   // changed it to read only mode.
   chmod(filename_.c_str(), 0400);
-  locked_ = true;
   return true;
 }
 
-bool ProcessMutex::UnLock() {
-  if (locked_) {
-    if (absl::Status status =
-            Singleton<FileLockManager>::get()->UnLock(filename_);
-        !status.ok()) {
-      LOG(WARNING) << status;
-    }
+void ProcessMutex::UnLockInternal() {
+  if (absl::Status status =
+          Singleton<FileLockManager>::get()->UnLock(filename_);
+      !status.ok()) {
+    LOG(WARNING) << status;
   }
-  locked_ = false;
-  return true;
 }
 #endif  // !_WIN32
 }  // namespace mozc

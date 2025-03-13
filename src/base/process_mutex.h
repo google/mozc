@@ -33,6 +33,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 
 #ifdef _WIN32
 #include <wil/resource.h>
@@ -75,18 +76,28 @@ class ProcessMutex {
   // filename: <user_profile>/.lock.<name>
   const std::string &lock_filename() const { return filename_; }
 
-  void set_lock_filename(const std::string &filename) { filename_ = filename; }
+  void set_lock_filename(std::string filename) {
+    filename_ = std::move(filename);
+  }
 
-  bool locked() const { return locked_; }
+  bool locked() const {
+    absl::ReaderMutexLock l(&mutex_);
+    return locked_;
+  }
 
  private:
 #ifdef _WIN32
   wil::unique_hfile handle_;
 #endif  // _WIN32
 
+  bool LockAndWriteInternal(absl::string_view message);
+  void UnLockInternal();
+
+  mutable absl::Mutex mutex_;
+
   // TODO(yukawa): Remove this flag as it can always be determined by other
   //     internal state.
-  bool locked_ = false;
+  bool locked_ ABSL_GUARDED_BY(mutex_) = false;
   std::string filename_;
 };
 

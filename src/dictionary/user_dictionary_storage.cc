@@ -36,20 +36,17 @@
 #include <string>
 #include <utility>
 
-#include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/process_mutex.h"
 #include "base/protobuf/coded_stream.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
-#include "base/vlog.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
@@ -127,12 +124,9 @@ absl::Status UserDictionaryStorage::Load() {
 }
 
 absl::Status UserDictionaryStorage::Save() const {
-  {
-    absl::MutexLock l(&local_mutex_);
-    if (!locked_) {
-      return absl::FailedPreconditionError(
-          "Must be locked before saving the dictionary (SYNC_FAILURE)");
-    }
+  if (!process_mutex_->locked()) {
+    return absl::FailedPreconditionError(
+        "Must be locked before saving the dictionary (SYNC_FAILURE)");
   }
 
   const std::string tmp_filename = absl::StrCat(filename_, ".tmp");
@@ -189,18 +183,12 @@ absl::Status UserDictionaryStorage::Save() const {
 }
 
 bool UserDictionaryStorage::Lock() {
-  absl::MutexLock l(&local_mutex_);
-  locked_ = process_mutex_->Lock();
-  LOG_IF(ERROR, !locked_) << "Lock() failed";
-  return locked_;
+  const bool locked = process_mutex_->Lock();
+  LOG_IF(ERROR, !locked) << "Lock() failed";
+  return locked;
 }
 
-bool UserDictionaryStorage::UnLock() {
-  absl::MutexLock l(&local_mutex_);
-  process_mutex_->UnLock();
-  locked_ = false;
-  return true;
-}
+bool UserDictionaryStorage::UnLock() { return process_mutex_->UnLock(); }
 
 absl::Status UserDictionaryStorage::ExportDictionary(
     uint64_t dic_id, absl::string_view filename) const {
