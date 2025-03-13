@@ -120,6 +120,13 @@ LLVM_WIN = ArchiveInfo(
     sha256='b4557b4f012161f56a2f5d9e877ab9635cafd7a08f7affe14829bd60c9d357f0',
 )
 
+MSYS2 = ArchiveInfo(
+    url='https://github.com/msys2/msys2-installer/releases/download/2025-02-21/msys2-base-x86_64-20250221.tar.xz',
+    size=50089256,
+    sha256='850589091e731d14b234447084737ca62aee1cc1e3c10be62fcdc12b8263d70b',
+)
+
+
 def get_sha256(path: pathlib.Path) -> str:
   """Returns SHA-256 hash digest of the specified file.
 
@@ -190,6 +197,20 @@ def download(archive: ArchiveInfo, dryrun: bool = False) -> None:
         f'{archive.filename} sha256 mismatch.'
         f' expected={archive.sha256} actual={actual_sha256}'
     )
+
+
+def _remove_readonly(func, path, _):
+  os.chmod(path, stat.S_IWRITE)
+  func(path)
+
+
+def remove_directory(path: os.PathLike[str]):
+  """Remove directory with ignoring read-only attribute.
+
+  Args:
+    path: the directory path to be deleted.
+  """
+  shutil.rmtree(path, onexc=_remove_readonly)
 
 
 def llvm_extract_filter(
@@ -283,9 +304,9 @@ def extract_llvm(dryrun: bool = False) -> None:
 
   if dest.exists():
     if dryrun:
-      print(f"dryrun: shutil.rmtree(r'{dest}')")
+      print(f"dryrun: remove_directory(r'{dest}')")
     else:
-      shutil.rmtree(dest)
+      remove_directory(dest)
 
   if dryrun:
     print(f'dryrun: Extracting {src} into {dest}')
@@ -299,6 +320,107 @@ def extract_llvm(dryrun: bool = False) -> None:
           f.extractall(path=dest, filter=filter)
       else:
         f.extractall(path=dest, members=llvm_extract_filter(f))
+
+
+def msys2_extract_filter(
+    members: Iterator[tarfile.TarInfo],
+) -> Iterator[tarfile.TarInfo]:
+  """Custom extract filter for the msys2 Tar file.
+
+  This custom filter can be used to adjust directory structure and drop
+  unnecessary files/directories to save disk space.
+
+  Args:
+    members: an iterator of TarInfo from the Tar file.
+
+  Yields:
+    An iterator of TarInfo to be extracted.
+  """
+  with ProgressPrinter() as printer:
+    for info in members:
+      paths = info.name.split('/')
+      if '..' in paths:
+        continue
+      if len(paths) < 2:
+        continue
+      paths = paths[1:]
+      new_path = '/'.join(paths)
+      skipping = paths[0] not in ['etc', 'home', 'opt', 'tmp', 'usr', 'var']
+      if skipping:
+        printer.print_line('skipping   ' + new_path)
+        continue
+      else:
+        printer.print_line('extracting ' + new_path)
+        info.name = new_path
+        yield info
+
+
+class StatefulMSYS2ExtractionFilter:
+  """A stateful extraction filter for PEP 706.
+
+  See https://peps.python.org/pep-0706/ for details.
+  """
+
+  def __enter__(self):
+    self.printer = ProgressPrinter().__enter__()
+    return self
+
+  def __exit__(self, *exc):
+    self.printer.__exit__(exc)
+
+  def __call__(
+      self,
+      member: tarfile.TarInfo,
+      dest_path: Union[str, pathlib.Path],
+  ) -> Union[tarfile.TarInfo, None]:
+    data = tarfile.data_filter(member, dest_path)
+    if data is None:
+      return None
+
+    paths = member.name.split('/')
+    if len(paths) < 2:
+      return None
+    paths = paths[1:]
+    new_path = '/'.join(paths)
+    skipping = paths[0] not in ['etc', 'home', 'opt', 'tmp', 'usr', 'var']
+    if skipping:
+      self.printer.print_line('skipping   ' + new_path)
+      return None
+    self.printer.print_line('extracting ' + new_path)
+    return member.replace(name=new_path, deep=False)
+
+
+def extract_msys2(archive: ArchiveInfo, dryrun: bool = False) -> None:
+  """Extract MSSY2 archive.
+
+  Args:
+    archive: MSYS2 archive.
+    dryrun: True if this is a dry-run.
+  """
+  if not is_windows():
+    return
+
+  src = CACHE_DIR.joinpath(archive.filename)
+  dest = ABS_THIRD_PARTY_DIR.joinpath('msys64').absolute()
+
+  if dest.exists():
+    if dryrun:
+      print(f"dryrun: remove_directory(r'{dest}')")
+    else:
+      remove_directory(dest)
+
+  if dryrun:
+    print(f'dryrun: Extracting {src} into {dest}')
+  else:
+    dest.mkdir(parents=True)
+    with tarfile.open(src, mode='r|xz') as f:
+      # tarfile.data_filter is available in Python 3.12+.
+      # See https://peps.python.org/pep-0706/ for details.
+      if getattr(tarfile, 'data_filter', None):
+        with StatefulMSYS2ExtractionFilter() as filter:
+          f.extractall(path=dest, filter=filter)
+      else:
+        f.extractall(path=dest, members=msys2_extract_filter(f))
 
 
 def extract_ninja(dryrun: bool = False) -> None:
@@ -319,8 +441,6 @@ def extract_ninja(dryrun: bool = False) -> None:
   src = CACHE_DIR.joinpath(archive.filename)
 
   if dryrun:
-    if dest.exists():
-      print(f"dryrun: shutil.rmtree(r'{dest}')")
     print(f'dryrun: Extracting {exe} from {src} into {dest}')
     return
 
@@ -344,9 +464,9 @@ def extract_ndk(archive: ArchiveInfo, dryrun: bool = False) -> None:
 
   if dest.exists():
     if dryrun:
-      print(f"dryrun: shutil.rmtree(r'{dest}')")
+      print(f"dryrun: remove_directory(r'{dest}')")
     else:
-      shutil.rmtree(dest)
+      remove_directory(dest)
 
   if dryrun:
     print(f"dryrun: mkdir -p '{dest}')")
@@ -450,6 +570,7 @@ def main():
   parser.add_argument('--noninja', action='store_true', default=False)
   parser.add_argument('--noqt', action='store_true', default=False)
   parser.add_argument('--nollvm', action='store_true', default=False)
+  parser.add_argument('--nomsys2', action='store_true', default=False)
   parser.add_argument('--nowix', action='store_true', default=False)
   parser.add_argument('--nondk', action='store_true', default=False)
   parser.add_argument('--nosubmodules', action='store_true', default=False)
@@ -470,8 +591,11 @@ def main():
       archives.append(NDK_LINUX)
     elif is_mac():
       archives.append(NDK_MAC)
-  if (not args.nollvm) and is_windows():
-    archives.append(LLVM_WIN)
+  if is_windows():
+    if not args.nollvm:
+      archives.append(LLVM_WIN)
+    if not args.nomsys2:
+      archives.append(MSYS2)
 
   for archive in archives:
     download(archive, args.dryrun)
@@ -481,6 +605,9 @@ def main():
 
   if LLVM_WIN in archives:
     extract_llvm(args.dryrun)
+
+  if MSYS2 in archives:
+    extract_msys2(MSYS2, args.dryrun)
 
   if (not args.nowix) and is_windows():
     restore_dotnet_tools(args.dryrun)

@@ -18,6 +18,7 @@ MODULE.bazel.lock
 
 # third_party dirs and cache dir checked out by update_deps.py
 /src/third_party/llvm/
+/src/third_party/msys64/
 /src/third_party/ndk/
 /src/third_party/ninja/
 /src/third_party/qt/
