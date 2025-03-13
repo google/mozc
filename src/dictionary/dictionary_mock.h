@@ -77,8 +77,6 @@ class MockDictionary : public DictionaryInterface {
   MOCK_METHOD(void, PopulateReverseLookupCache, (absl::string_view str),
               (const, override));
   MOCK_METHOD(void, ClearReverseLookupCache, (), (const, override));
-  MOCK_METHOD(bool, Sync, (), (override));
-  MOCK_METHOD(bool, Reload, (), (override));
 };
 
 class MockUserDictionary : public UserDictionaryInterface {
@@ -115,7 +113,6 @@ class MockUserDictionary : public UserDictionaryInterface {
   MOCK_METHOD(void, PopulateReverseLookupCache, (absl::string_view str),
               (const, override));
   MOCK_METHOD(void, ClearReverseLookupCache, (), (const, override));
-  MOCK_METHOD(bool, Sync, (), (override));
   MOCK_METHOD(bool, Reload, (), (override));
 
   MOCK_METHOD(void, WaitForReloader, (), (override));
@@ -123,6 +120,10 @@ class MockUserDictionary : public UserDictionaryInterface {
   MOCK_METHOD(std::vector<std::string>, GetPosList, (), (const, override));
   MOCK_METHOD(bool, Load, (const user_dictionary::UserDictionaryStorage &),
               (override));
+  MOCK_METHOD(bool, IsSuppressedEntry,
+              (absl::string_view key, absl::string_view value),
+              (const, override));
+  MOCK_METHOD(bool, HasSuppressedEntries, (), (const, override));
 };
 
 class MockCallback : public DictionaryInterface::Callback {

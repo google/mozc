@@ -62,9 +62,7 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary.h"
-#include "dictionary/user_dictionary_stub.h"
 #include "dictionary/user_pos.h"
 #include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
@@ -93,9 +91,8 @@ using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::MockUserDictionary;
 using ::mozc::dictionary::PosMatcher;
-using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::dictionary::Token;
-using ::mozc::dictionary::UserDictionaryStub;
+using ::mozc::dictionary::UserDictionary;
 using ::mozc::prediction::DefaultPredictor;
 using ::mozc::prediction::DictionaryPredictor;
 using ::mozc::prediction::MobilePredictor;
@@ -104,6 +101,8 @@ using ::mozc::prediction::UserHistoryPredictor;
 using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::StrEq;
+
+using UserEntry = user_dictionary::UserDictionary::Entry;
 
 Segment &AddSegment(absl::string_view key, Segment::SegmentType type,
                     Segments &segments) {
@@ -302,8 +301,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     return ret_predictor;
   }
 
-  // Initializes Converter with mock data set using given
-  // |user_dictionary| and |suppression_dictionary|.
+  // Initializes Converter with mock data set using given |user_dictionary|.
   std::unique_ptr<Converter> CreateConverter(
       std::unique_ptr<engine::Modules> modules,
       std::unique_ptr<RewriterInterface> rewriter,
@@ -325,7 +323,6 @@ class ConverterTest : public testing::TestWithTempUserProfile {
       std::unique_ptr<RewriterInterface> rewriter,
       PredictorType predictor_type) {
     auto modules = std::make_unique<engine::Modules>();
-    modules->PresetUserDictionary(std::make_unique<UserDictionaryStub>());
     CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
     return CreateConverter(std::move(modules), std::move(rewriter),
                            predictor_type);
@@ -342,13 +339,11 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 
     auto pos_matcher = std::make_unique<dictionary::PosMatcher>(
         data_manager->GetPosMatcherData());
-    auto suppression_dictionary = std::make_unique<SuppressionDictionary>();
     auto user_dictionary = std::make_unique<dictionary::UserDictionary>(
-        dictionary::UserPos::CreateFromDataManager(*data_manager), *pos_matcher,
-        suppression_dictionary.get());
+        dictionary::UserPos::CreateFromDataManager(*data_manager),
+        *pos_matcher);
     {
       user_dictionary::UserDictionaryStorage storage;
-      using UserEntry = user_dictionary::UserDictionary::Entry;
       user_dictionary::UserDictionary *dictionary = storage.add_dictionaries();
       for (const UserDefinedEntry &user_entry : user_defined_entries) {
         UserEntry *entry = dictionary->add_entries();
@@ -361,7 +356,6 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 
     auto modules = std::make_unique<engine::Modules>();
     modules->PresetPosMatcher(std::move(pos_matcher));
-    modules->PresetSuppressionDictionary(std::move(suppression_dictionary));
     modules->PresetUserDictionary(std::move(user_dictionary));
 
     CHECK_OK(modules->Init(std::move(data_manager)));
@@ -702,14 +696,20 @@ TEST_F(ConverterTest, Regression3437022) {
     EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, kValue2);
   }
 
-  // Add compound entry to suppression dictionary
   segments.Clear();
 
-  SuppressionDictionary *dic =
-      engine->GetModulesForTesting()->GetMutableSuppressionDictionary();
-  dic->Lock();
-  dic->AddEntry(kKey1 + kKey2, kValue1 + kValue2);
-  dic->UnLock();
+  // Add compound entry to suppression dictionary
+  {
+    user_dictionary::UserDictionaryStorage storage;
+    UserEntry *entry = storage.add_dictionaries()->add_entries();
+    entry->set_key(kKey1 + kKey2);
+    entry->set_value(kValue1 + kValue2);
+    entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
+    engine->GetModulesForTesting()->GetUserDictionary()->Load(storage);
+    EXPECT_TRUE(engine->GetModulesForTesting()
+                    ->GetUserDictionary()
+                    ->HasSuppressedEntries());
+  }
 
   EXPECT_TRUE(converter->StartConversion(
       ConvReq(kKey1 + kKey2, ConversionRequest::CONVERSION), &segments));
@@ -729,10 +729,6 @@ TEST_F(ConverterTest, Regression3437022) {
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_NE(segments.conversion_segment(0).candidate(0).value,
             kValue1 + kValue2);
-
-  dic->Lock();
-  dic->Clear();
-  dic->UnLock();
 }
 
 TEST_F(ConverterTest, CompletePosIds) {
@@ -1157,11 +1153,15 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   engine::Modules *modules = converter->modules();
 
   // Set up suppression dictionary
-  modules->GetMutableSuppressionDictionary()->Lock();
-  modules->GetMutableSuppressionDictionary()->AddEntry("tobefiltered",
-                                                       "ToBeFiltered");
-  modules->GetMutableSuppressionDictionary()->UnLock();
-  EXPECT_FALSE(modules->GetMutableSuppressionDictionary()->IsEmpty());
+  {
+    user_dictionary::UserDictionaryStorage storage;
+    UserEntry *entry = storage.add_dictionaries()->add_entries();
+    entry->set_key("tobefiltered");
+    entry->set_value("ToBeFiltered");
+    entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
+    modules->GetUserDictionary()->Load(storage);
+    EXPECT_TRUE(modules->GetUserDictionary()->HasSuppressedEntries());
+  }
 
   // Convert
   auto table = std::make_shared<composer::Table>();
@@ -1779,7 +1779,6 @@ TEST_F(ConverterTest, RevertConversion) {
   EXPECT_CALL(*mock_rewriter, Revert(_)).Times(1);
 
   auto modules = std::make_unique<engine::Modules>();
-  modules->PresetUserDictionary(std::make_unique<UserDictionaryStub>());
   CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
 
   std::unique_ptr<Converter> converter = std::make_unique<Converter>(

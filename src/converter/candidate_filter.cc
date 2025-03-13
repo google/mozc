@@ -47,8 +47,8 @@
 #include "base/vlog.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -60,7 +60,7 @@ namespace {
 
 using ::mozc::converter::candidate_filter_internal::CandidateId;
 using ::mozc::dictionary::PosMatcher;
-using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::dictionary::UserDictionaryInterface;
 
 constexpr size_t kSizeThresholdForWeakCompound = 10;
 
@@ -248,14 +248,14 @@ bool IsNoisyNumberCandidate(const dictionary::PosMatcher &pos_matcher,
 
 }  // namespace
 
-CandidateFilter::CandidateFilter(
-    const SuppressionDictionary *suppression_dictionary,
-    const PosMatcher *pos_matcher, const SuggestionFilter &suggestion_filter)
-    : suppression_dictionary_(suppression_dictionary),
+CandidateFilter::CandidateFilter(const UserDictionaryInterface *user_dictionary,
+                                 const PosMatcher *pos_matcher,
+                                 const SuggestionFilter &suggestion_filter)
+    : user_dictionary_(user_dictionary),
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
       top_candidate_(nullptr) {
-  CHECK(suppression_dictionary_);
+  CHECK(user_dictionary_);
   CHECK(pos_matcher_);
 }
 
@@ -373,12 +373,11 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // Remove "抑制単語" just in case.
-  if (suppression_dictionary_->SuppressEntry(candidate->key,
-                                             candidate->value) ||
+  if (user_dictionary_->IsSuppressedEntry(candidate->key, candidate->value) ||
       (candidate->key != candidate->content_key &&
        candidate->value != candidate->content_value &&
-       suppression_dictionary_->SuppressEntry(candidate->content_key,
-                                              candidate->content_value))) {
+       user_dictionary_->IsSuppressedEntry(candidate->content_key,
+                                           candidate->content_value))) {
     MOZC_CANDIDATE_LOG(candidate, "SuppressEntry");
     return CandidateFilter::BAD_CANDIDATE;
   }

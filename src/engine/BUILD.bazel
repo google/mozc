@@ -165,7 +165,6 @@ mozc_cc_library(
         "//dictionary:pos_group",
         "//dictionary:pos_matcher",
         "//dictionary:suffix_dictionary",
-        "//dictionary:suppression_dictionary",
         "//dictionary:user_dictionary",
         "//dictionary:user_pos",
         "//dictionary/system:system_dictionary",
@@ -191,8 +190,6 @@ mozc_cc_test(
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_mock",
         "//dictionary:pos_matcher",
-        "//dictionary:suppression_dictionary",
-        "//dictionary:user_dictionary_stub",
         "//testing:gunit_main",
     ],
 )

@@ -1349,7 +1349,6 @@ mozc_cc_test(
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher",
-        "//dictionary:suppression_dictionary",
         "//dictionary:user_dictionary",
         "//dictionary:user_dictionary_storage",
         "//dictionary:user_pos",

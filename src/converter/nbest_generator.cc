@@ -48,8 +48,8 @@
 #include "converter/node.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 
@@ -58,7 +58,7 @@ namespace {
 
 using ::mozc::converter::CandidateFilter;
 using ::mozc::dictionary::PosMatcher;
-using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::dictionary::UserDictionaryInterface;
 
 constexpr int kFreeListSize = 512;
 constexpr int kCostDiff = 3453;  // log prob of 1/1000
@@ -101,20 +101,20 @@ void NBestGenerator::Agenda::Pop() {
   priority_queue_.pop_back();
 }
 
-NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
+NBestGenerator::NBestGenerator(const UserDictionaryInterface *user_dictionary,
                                const Segmenter *segmenter,
                                const Connector &connector,
                                const PosMatcher *pos_matcher,
                                const Lattice *lattice,
                                const SuggestionFilter &suggestion_filter)
-    : suppression_dictionary_(suppression_dic),
+    : user_dictionary_(user_dictionary),
       segmenter_(segmenter),
       connector_(connector),
       pos_matcher_(pos_matcher),
       lattice_(lattice),
       freelist_(kFreeListSize),
-      filter_(suppression_dic, pos_matcher, suggestion_filter) {
-  DCHECK(suppression_dictionary_);
+      filter_(user_dictionary_, pos_matcher, suggestion_filter) {
+  DCHECK(user_dictionary_);
   DCHECK(segmenter);
   if (lattice_ == nullptr || !lattice_->has_lattice()) {
     LOG(ERROR) << "lattice is not available";

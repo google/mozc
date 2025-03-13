@@ -41,8 +41,8 @@
 #include "absl/types/span.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 
@@ -87,10 +87,9 @@ struct CandidateHasher {
 
 class CandidateFilter {
  public:
-  CandidateFilter(
-      const dictionary::SuppressionDictionary *suppression_dictionary,
-      const dictionary::PosMatcher *pos_matcher,
-      const SuggestionFilter &suggestion_filter);
+  CandidateFilter(const dictionary::UserDictionaryInterface *user_dictionary,
+                  const dictionary::PosMatcher *pos_matcher,
+                  const SuggestionFilter &suggestion_filter);
   CandidateFilter(const CandidateFilter &) = delete;
   CandidateFilter &operator=(const CandidateFilter &) = delete;
 
@@ -124,7 +123,7 @@ class CandidateFilter {
                                      absl::Span<const Node *const> top_nodes,
                                      absl::Span<const Node *const> nodes);
 
-  const dictionary::SuppressionDictionary *suppression_dictionary_;
+  const dictionary::UserDictionaryInterface *user_dictionary_;
   const dictionary::PosMatcher *pos_matcher_;
   const SuggestionFilter &suggestion_filter_;
 

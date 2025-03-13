@@ -48,7 +48,6 @@
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:segments',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
         '<(mozc_oss_src_dir)/engine/engine_base.gyp:modules',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',

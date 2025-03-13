@@ -349,7 +349,7 @@ class FirstInnerSegmentCandidateChecker {
 ImmutableConverter::ImmutableConverter(const engine::Modules &modules)
     : dictionary_(modules.GetDictionary()),
       suffix_dictionary_(modules.GetSuffixDictionary()),
-      suppression_dictionary_(modules.GetSuppressionDictionary()),
+      user_dictionary_(modules.GetUserDictionary()),
       connector_(modules.GetConnector()),
       segmenter_(modules.GetSegmenter()),
       pos_matcher_(modules.GetPosMatcher()),
@@ -363,7 +363,7 @@ ImmutableConverter::ImmutableConverter(const engine::Modules &modules)
           connector_.GetTransitionCost(last_name_id_, first_name_id_)) {
   DCHECK(dictionary_);
   DCHECK(suffix_dictionary_);
-  DCHECK(suppression_dictionary_);
+  DCHECK(user_dictionary_);
   DCHECK(segmenter_);
   DCHECK(pos_matcher_);
   DCHECK(pos_group_);
@@ -1925,9 +1925,8 @@ void ImmutableConverter::InsertCandidates(const ConversionRequest &request,
 
   const bool is_single_segment =
       (type == SINGLE_SEGMENT || type == FIRST_INNER_SEGMENT);
-  NBestGenerator nbest_generator(suppression_dictionary_, segmenter_,
-                                 connector_, pos_matcher_, &lattice,
-                                 suggestion_filter_);
+  NBestGenerator nbest_generator(user_dictionary_, segmenter_, connector_,
+                                 pos_matcher_, &lattice, suggestion_filter_);
 
   std::string original_key;
   for (const Segment &segment : segments->conversion_segments()) {

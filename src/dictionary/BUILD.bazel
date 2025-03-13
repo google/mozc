@@ -75,8 +75,8 @@ mozc_cc_test(
         ":dictionary_interface",
         ":dictionary_token",
         ":pos_matcher",
-        ":suppression_dictionary",
-        ":user_dictionary_stub",
+        ":user_dictionary",
+        ":user_pos",
         "//base:util",
         "//config:config_handler",
         "//data_manager/testing:mock_data_manager",
@@ -102,7 +102,6 @@ mozc_cc_library(
         ":dictionary_interface",
         ":dictionary_token",
         ":pos_matcher",
-        ":suppression_dictionary",
         "//base:util",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
@@ -145,7 +144,6 @@ mozc_cc_library(
         ":dictionary_interface",
         ":dictionary_token",
         ":pos_matcher",
-        ":suppression_dictionary",
         ":user_dictionary_storage",
         ":user_dictionary_util",
         ":user_pos",
@@ -162,6 +160,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/hash",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
@@ -183,7 +182,6 @@ mozc_cc_test(
         ":dictionary_test_util",
         ":dictionary_token",
         ":pos_matcher",
-        ":suppression_dictionary",
         ":user_dictionary",
         ":user_dictionary_storage",
         ":user_pos",
@@ -653,38 +651,6 @@ mozc_cc_binary(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_library(
-    name = "suppression_dictionary",
-    srcs = ["suppression_dictionary.cc"],
-    hdrs = ["suppression_dictionary.h"],
-    visibility = [
-        "//:__subpackages__",
-        "//converter:__pkg__",
-    ],
-    deps = [
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/container:flat_hash_set",
-        "@com_google_absl//absl/hash",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
-    ],
-)
-
-mozc_cc_test(
-    name = "suppression_dictionary_test",
-    size = "small",
-    srcs = ["suppression_dictionary_test.cc"],
-    visibility = ["//dictionary:__subpackages__"],
-    deps = [
-        ":suppression_dictionary",
-        "//base:thread",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
     ],
 )
 

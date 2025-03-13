@@ -151,17 +151,6 @@
       ],
     },
     {
-      'target_name': 'suppression_dictionary',
-      'type': 'static_library',
-      'sources': [
-        'suppression_dictionary.cc',
-      ],
-      'dependencies': [
-        '<(mozc_oss_src_dir)/base/absl.gyp:absl_synchronization',
-        '<(mozc_oss_src_dir)/base/base.gyp:base',
-      ],
-    },
-    {
       'target_name': 'user_dictionary',
       'type': 'static_library',
       'sources': [
@@ -186,7 +175,6 @@
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         'gen_pos_map#host',
         'pos_matcher',
-        'suppression_dictionary',
       ],
     },
   ],

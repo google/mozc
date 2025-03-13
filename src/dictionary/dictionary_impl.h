@@ -37,7 +37,6 @@
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
@@ -56,9 +55,8 @@ class DictionaryImpl : public DictionaryInterface {
   // the owner reloads it.
   DictionaryImpl(std::unique_ptr<const DictionaryInterface> system_dictionary,
                  std::unique_ptr<const DictionaryInterface> value_dictionary,
-                 DictionaryInterface *user_dictionary,
-                 const SuppressionDictionary *suppression_dictionary,
-                 const PosMatcher *pos_matcher);
+                 const UserDictionaryInterface &user_dictionary,
+                 const PosMatcher &pos_matcher);
 
   DictionaryImpl(const DictionaryImpl &) = delete;
   DictionaryImpl &operator=(const DictionaryImpl &) = delete;
@@ -85,7 +83,6 @@ class DictionaryImpl : public DictionaryInterface {
   bool LookupComment(absl::string_view key, absl::string_view value,
                      const ConversionRequest &conversion_request,
                      std::string *comment) const override;
-  bool Reload() override;
   void PopulateReverseLookupCache(absl::string_view str) const override;
   void ClearReverseLookupCache() const override;
 
@@ -98,19 +95,16 @@ class DictionaryImpl : public DictionaryInterface {
   };
 
   // Used to check POS IDs.
-  const PosMatcher *pos_matcher_;
+  const PosMatcher &pos_matcher_;
 
   // Main three dictionaries.
   std::unique_ptr<const DictionaryInterface> system_dictionary_;
   std::unique_ptr<const DictionaryInterface> value_dictionary_;
-  DictionaryInterface *user_dictionary_;
+  const UserDictionaryInterface &user_dictionary_;
 
   // Convenient container to handle the above three dictionaries as one
   // composite dictionary.
   std::vector<const DictionaryInterface *> dics_;
-
-  // Suppression dictionary is used to suppress entries.
-  const SuppressionDictionary *suppression_dictionary_;
 };
 
 }  // namespace dictionary

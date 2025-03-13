@@ -64,8 +64,8 @@
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "engine/supplemental_model_mock.h"
@@ -87,7 +87,7 @@ using ::mozc::commands::Request;
 using ::mozc::composer::TypeCorrectedQuery;
 using ::mozc::config::Config;
 using ::mozc::dictionary::MockDictionary;
-using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::dictionary::UserDictionaryInterface;
 using ::testing::_;
 using ::testing::Return;
 
@@ -149,8 +149,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     return predictor;
   }
 
-  SuppressionDictionary *GetSuppressionDictionary() {
-    return data_and_predictor_->modules.GetMutableSuppressionDictionary();
+  UserDictionaryInterface *GetUserDictionary() {
+    return data_and_predictor_->modules.GetUserDictionary();
   }
 
   bool IsSuggested(UserHistoryPredictor *predictor, const absl::string_view key,
@@ -2135,11 +2135,16 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_FALSE(predictor->IsValidEntry(entry));
   EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
-  SuppressionDictionary *d = GetSuppressionDictionary();
-  DCHECK(d);
-  d->Lock();
-  d->AddEntry("foo", "bar");
-  d->UnLock();
+  // Set up suppression dictionary
+  {
+    user_dictionary::UserDictionaryStorage storage;
+    auto *entry = storage.add_dictionaries()->add_entries();
+    entry->set_key("foo");
+    entry->set_value("bar");
+    entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
+    GetUserDictionary()->Load(storage);
+    GetUserDictionary()->WaitForReloader();
+  }
 
   entry.set_key("key");
   entry.set_value("value");
@@ -2150,10 +2155,6 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   entry.set_value("bar");
   EXPECT_FALSE(predictor->IsValidEntry(entry));
   EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
-
-  d->Lock();
-  d->Clear();
-  d->UnLock();
 }
 
 TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {

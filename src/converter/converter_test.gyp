@@ -53,7 +53,6 @@
         '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:suffix_dictionary',
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_pos',
         '<(mozc_oss_src_dir)/dictionary/system/system_dictionary.gyp:system_dictionary',

@@ -44,8 +44,8 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/reverse_converter.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
@@ -117,9 +117,9 @@ class Converter final : public ConverterInterface {
   bool CommitSegments(Segments *segments,
                       absl::Span<const size_t> candidate_index) const override;
   [[nodiscard]] bool ResizeSegment(Segments *segments,
-                                          const ConversionRequest &request,
-                                          size_t segment_index,
-                                          int offset_length) const override;
+                                   const ConversionRequest &request,
+                                   size_t segment_index,
+                                   int offset_length) const override;
   [[nodiscard]] bool ResizeSegments(
       Segments *segments, const ConversionRequest &request,
       size_t start_segment_index,
@@ -196,7 +196,7 @@ class Converter final : public ConverterInterface {
   std::unique_ptr<RewriterInterface> rewriter_;
 
   const dictionary::PosMatcher &pos_matcher_;
-  const dictionary::SuppressionDictionary &suppression_dictionary_;
+  const dictionary::UserDictionaryInterface &user_dictionary_;
   const converter::HistoryReconstructor history_reconstructor_;
   const converter::ReverseConverter reverse_converter_;
   const uint16_t general_noun_id_ = std::numeric_limits<uint16_t>::max();

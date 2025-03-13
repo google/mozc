@@ -50,7 +50,6 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
-#include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
@@ -61,7 +60,6 @@
 using ::mozc::dictionary::DictionaryImpl;
 using ::mozc::dictionary::PosGroup;
 using ::mozc::dictionary::SuffixDictionary;
-using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::dictionary::SystemDictionary;
 using ::mozc::dictionary::UserDictionary;
 using ::mozc::dictionary::UserPos;
@@ -82,11 +80,6 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   RETURN_IF_NULL(data_manager);
   data_manager_ = std::move(data_manager);
 
-  if (!suppression_dictionary_) {
-    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
-    RETURN_IF_NULL(suppression_dictionary_);
-  }
-
   if (!pos_matcher_) {
     pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
         data_manager_->GetPosMatcherData());
@@ -98,8 +91,8 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
         UserPos::CreateFromDataManager(*data_manager_);
     RETURN_IF_NULL(user_pos);
 
-    user_dictionary_ = std::make_unique<UserDictionary>(
-        std::move(user_pos), *pos_matcher_, suppression_dictionary_.get());
+    user_dictionary_ =
+        std::make_unique<UserDictionary>(std::move(user_pos), *pos_matcher_);
     RETURN_IF_NULL(user_dictionary_);
   }
 
@@ -116,9 +109,11 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
     }
     auto value_dic = std::make_unique<ValueDictionary>(
         *pos_matcher_, &(*sysdic)->value_trie());
+    RETURN_IF_NULL(user_dictionary_);
+    RETURN_IF_NULL(pos_matcher_);
     dictionary_ = std::make_unique<DictionaryImpl>(
-        *std::move(sysdic), std::move(value_dic), user_dictionary_.get(),
-        suppression_dictionary_.get(), pos_matcher_.get());
+        *std::move(sysdic), std::move(value_dic), *user_dictionary_,
+        *pos_matcher_);
     RETURN_IF_NULL(dictionary_);
   }
 
@@ -182,12 +177,6 @@ void Modules::PresetPosMatcher(
     std::unique_ptr<const dictionary::PosMatcher> pos_matcher) {
   DCHECK(!initialized_) << "Module is already initialized";
   pos_matcher_ = std::move(pos_matcher);
-}
-
-void Modules::PresetSuppressionDictionary(
-    std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary) {
-  DCHECK(!initialized_) << "Module is already initialized";
-  suppression_dictionary_ = std::move(suppression_dictionary);
 }
 
 void Modules::PresetUserDictionary(

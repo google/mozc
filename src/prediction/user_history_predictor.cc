@@ -65,8 +65,8 @@
 #include "base/vlog.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/modules.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "protocol/commands.pb.h"
@@ -341,7 +341,7 @@ UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules,
                                            bool enable_content_word_learning)
     : dictionary_(modules.GetDictionary()),
       pos_matcher_(modules.GetPosMatcher()),
-      suppression_dictionary_(modules.GetSuppressionDictionary()),
+      user_dictionary_(modules.GetUserDictionary()),
       predictor_name_("UserHistoryPredictor"),
       content_word_learning_enabled_(enable_content_word_learning),
       updated_(false),
@@ -1709,7 +1709,7 @@ bool UserHistoryPredictor::IsValidEntry(const Entry &entry) const {
 bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
     const Entry &entry) const {
   if (entry.entry_type() != Entry::DEFAULT_ENTRY ||
-      suppression_dictionary_->SuppressEntry(entry.key(), entry.value())) {
+      user_dictionary_->IsSuppressedEntry(entry.key(), entry.value())) {
     return false;
   }
 

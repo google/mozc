@@ -45,7 +45,6 @@
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/user_dictionary_stub.h"
 #include "engine/modules.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
@@ -54,13 +53,10 @@
 namespace mozc {
 namespace {
 
-using dictionary::UserDictionaryStub;
-
 class MockDataAndImmutableConverter {
  public:
   // Initializes data and immutable converter with given dictionaries.
   MockDataAndImmutableConverter() {
-    modules_.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
     absl::Status status =
         modules_.Init(std::make_unique<testing::MockDataManager>());
     CHECK(status.ok());
@@ -71,7 +67,7 @@ class MockDataAndImmutableConverter {
 
   std::unique_ptr<NBestGenerator> CreateNBestGenerator(const Lattice *lattice) {
     return std::make_unique<NBestGenerator>(
-        modules_.GetSuppressionDictionary(), modules_.GetSegmenter(),
+        modules_.GetUserDictionary(), modules_.GetSegmenter(),
         modules_.GetConnector(), modules_.GetPosMatcher(), lattice,
         modules_.GetSuggestionFilter());
   }

@@ -41,7 +41,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/suggestion_filter.h"
@@ -61,9 +60,6 @@ class Modules {
   // Preset functions must be called before Init.
   void PresetPosMatcher(
       std::unique_ptr<const dictionary::PosMatcher> pos_matcher);
-  void PresetSuppressionDictionary(
-      std::unique_ptr<dictionary::SuppressionDictionary>
-          suppression_dictionary);
   void PresetUserDictionary(
       std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary);
   void PresetSuffixDictionary(
@@ -82,12 +78,6 @@ class Modules {
 
   const dictionary::PosMatcher *GetPosMatcher() const {
     return pos_matcher_.get();
-  }
-  const dictionary::SuppressionDictionary *GetSuppressionDictionary() const {
-    return suppression_dictionary_.get();
-  }
-  dictionary::SuppressionDictionary *GetMutableSuppressionDictionary() {
-    return suppression_dictionary_.get();
   }
   const Connector &GetConnector() const { return connector_; }
   const Segmenter *GetSegmenter() const { return segmenter_.get(); }
@@ -130,7 +120,6 @@ class Modules {
   bool initialized_ = false;
   std::unique_ptr<const DataManager> data_manager_;
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
-  std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   Connector connector_;
   std::unique_ptr<const Segmenter> segmenter_;
   std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary_;

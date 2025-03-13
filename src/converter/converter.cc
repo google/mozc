@@ -52,7 +52,6 @@
 #include "converter/reverse_converter.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "protocol/commands.pb.h"
@@ -128,7 +127,7 @@ Converter::Converter(
     : modules_(std::move(modules)),
       immutable_converter_(immutable_converter_factory(*modules_)),
       pos_matcher_(*modules_->GetPosMatcher()),
-      suppression_dictionary_(*modules_->GetSuppressionDictionary()),
+      user_dictionary_(*modules_->GetUserDictionary()),
       history_reconstructor_(*modules_->GetPosMatcher()),
       reverse_converter_(*immutable_converter_),
       general_noun_id_(pos_matcher_.GetGeneralNounId()) {
@@ -551,7 +550,7 @@ void Converter::RewriteAndSuppressCandidates(const ConversionRequest &request,
   // 3. Suppress candidates in each segment.
   // Optimization for common use case: Since most of users don't use suppression
   // dictionary and we can skip the subsequent check.
-  if (suppression_dictionary_.IsEmpty()) {
+  if (!user_dictionary_.HasSuppressedEntries()) {
     return;
   }
   // Although the suppression dictionary is applied at node-level in dictionary
@@ -561,7 +560,7 @@ void Converter::RewriteAndSuppressCandidates(const ConversionRequest &request,
   for (Segment &segment : segments->conversion_segments()) {
     for (size_t j = 0; j < segment.candidates_size();) {
       const Segment::Candidate &cand = segment.candidate(j);
-      if (suppression_dictionary_.SuppressEntry(cand.key, cand.value)) {
+      if (user_dictionary_.IsSuppressedEntry(cand.key, cand.value)) {
         segment.erase_candidate(j);
       } else {
         ++j;

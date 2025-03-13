@@ -38,7 +38,6 @@
       'type': 'none',
       'dependencies': [
         '<(mozc_oss_src_dir)/base/base.gyp:base',
-        'dictionary_base.gyp:suppression_dictionary',
         'dictionary_base.gyp:user_dictionary',
         'dictionary_impl',
         'single_kanji_dictionary',
@@ -87,7 +86,6 @@
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:user_dictionary_storage_proto',
         'dictionary_base.gyp:pos_matcher',
-        'dictionary_base.gyp:suppression_dictionary',
       ],
     },
     {

@@ -40,7 +40,6 @@
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_pos.h"
@@ -56,7 +55,6 @@
 namespace mozc {
 namespace {
 
-using dictionary::SuppressionDictionary;
 using dictionary::UserDictionary;
 using dictionary::UserPos;
 using ::testing::_;
@@ -105,10 +103,8 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
     data_manager_ = std::make_unique<testing::MockDataManager>();
     test_data_manager_ = std::make_unique<TestDataManager>();
     pos_matcher_.Set(data_manager_->GetPosMatcherData());
-    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
     user_dictionary_ = std::make_unique<UserDictionary>(
-        UserPos::CreateFromDataManager(*data_manager_), pos_matcher_,
-        suppression_dictionary_.get());
+        UserPos::CreateFromDataManager(*data_manager_), pos_matcher_);
   }
 
   void TearDown() override {
@@ -135,7 +131,6 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
   commands::Request request_;
   config::Config config_;
 
-  std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<UserDictionary> user_dictionary_;
   std::unique_ptr<testing::MockDataManager> data_manager_;
   std::unique_ptr<TestDataManager> test_data_manager_;
@@ -147,8 +142,7 @@ TEST_F(UsageRewriterTest, ConstructorTest) {
       .WillOnce(SetArgPointee<4>(""));
   pos_matcher_.Set(test_data_manager_->GetPosMatcherData());
   user_dictionary_ = std::make_unique<UserDictionary>(
-      UserPos::CreateFromDataManager(*test_data_manager_), pos_matcher_,
-      suppression_dictionary_.get());
+      UserPos::CreateFromDataManager(*test_data_manager_), pos_matcher_);
 
   std::unique_ptr<UsageRewriter> rewriter(
       CreateUsageRewriterWithTestDataManager());
@@ -218,7 +212,7 @@ TEST_F(UsageRewriterTest, ConfigTest) {
     seg = segments.push_back_segment();
     seg->set_key("あおい");
     AddCandidate("あおい", "青い", "あおい", "青い", seg);
-  const ConversionRequest convreq = ConvReq(config_, request_);
+    const ConversionRequest convreq = ConvReq(config_, request_);
     EXPECT_TRUE(rewriter->Rewrite(convreq, &segments));
   }
 
@@ -230,7 +224,7 @@ TEST_F(UsageRewriterTest, ConfigTest) {
     seg = segments.push_back_segment();
     seg->set_key("あおい");
     AddCandidate("あおい", "青い", "あおい", "青い", seg);
-  const ConversionRequest convreq = ConvReq(config_, request_);
+    const ConversionRequest convreq = ConvReq(config_, request_);
     EXPECT_FALSE(rewriter->Rewrite(convreq, &segments));
   }
 
@@ -242,7 +236,7 @@ TEST_F(UsageRewriterTest, ConfigTest) {
     seg = segments.push_back_segment();
     seg->set_key("あおい");
     AddCandidate("あおい", "青い", "あおい", "青い", seg);
-  const ConversionRequest convreq = ConvReq(config_, request_);
+    const ConversionRequest convreq = ConvReq(config_, request_);
     EXPECT_TRUE(rewriter->Rewrite(convreq, &segments));
   }
 }

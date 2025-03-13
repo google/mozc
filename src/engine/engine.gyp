@@ -161,7 +161,6 @@
         '<(mozc_oss_src_dir)/converter/converter.gyp:converter',
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
       ],

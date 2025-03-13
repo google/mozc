@@ -47,7 +47,6 @@
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/random.h"
-#include "base/singleton.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -55,7 +54,6 @@
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_pos.h"
 #include "protocol/config.pb.h"
@@ -187,10 +185,7 @@ class UserPosMock : public UserPos {
 
 class UserDictionaryTest : public testing::TestWithTempUserProfile {
  protected:
-  UserDictionaryTest()
-      : suppression_dictionary_(std::make_unique<SuppressionDictionary>()) {
-    config::ConfigHandler::GetDefaultConfig(&config_);
-  }
+  UserDictionaryTest() { config::ConfigHandler::GetDefaultConfig(&config_); }
 
   ~UserDictionaryTest() override {
     // This config initialization will be removed once ConversionRequest can
@@ -205,16 +200,14 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<UserDictionary> CreateDictionaryWithMockPos() {
     return std::make_unique<UserDictionary>(
         std::make_unique<UserPosMock>(),
-        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()),
-        suppression_dictionary_.get());
+        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
   }
 
   // Creates a user dictionary with actual pos data.
   std::unique_ptr<UserDictionary> CreateDictionary() {
     return std::make_unique<UserDictionary>(
         UserPos::CreateFromDataManager(mock_data_manager_),
-        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()),
-        Singleton<SuppressionDictionary>::get());
+        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
   }
 
   std::unique_ptr<UserDictionary> CreateDictionaryWithFilename(
@@ -222,7 +215,7 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
     return std::make_unique<UserDictionary>(
         UserPos::CreateFromDataManager(mock_data_manager_),
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()),
-        Singleton<SuppressionDictionary>::get(), std::move(filename));
+        std::move(filename));
   }
 
   ConversionRequest ConvReq(const config::Config &config) {
@@ -334,7 +327,6 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
     return comment;
   }
 
-  std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
   config::Config config_;
 
  private:
@@ -851,7 +843,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
     user_dic->Load(storage.GetProto());
 
     for (size_t j = 0; j < 10; ++j) {
-      EXPECT_TRUE(suppression_dictionary_->SuppressEntry(
+      EXPECT_TRUE(user_dic->IsSuppressedEntry(
           absl::StrCat("suppress_key", j), absl::StrCat("suppress_value", j)));
     }
   }
@@ -872,7 +864,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
     user_dic->Load(storage.GetProto());
 
     for (size_t j = 0; j < 10; ++j) {
-      EXPECT_FALSE(suppression_dictionary_->SuppressEntry(
+      EXPECT_FALSE(user_dic->IsSuppressedEntry(
           absl::StrCat("suppress_key", j), absl::StrCat("suppress_value", j)));
     }
   }

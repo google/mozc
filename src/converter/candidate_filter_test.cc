@@ -43,20 +43,23 @@
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "request/request_test_util.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {
 namespace converter {
 namespace {
 
+using ::mozc::dictionary::MockUserDictionary;
 using ::mozc::dictionary::PosMatcher;
-using ::mozc::dictionary::SuppressionDictionary;
+using ::testing::_;
+using ::testing::Return;
 using ::testing::WithParamInterface;
 
 const ConversionRequest::RequestType kRequestTypes[] = {
@@ -98,6 +101,7 @@ class CandidateFilterTest : public ::testing::Test {
   }
 
   void TearDown() override {
+    ::testing::Mock::VerifyAndClearExpectations(&mock_user_dictionary_);
     candidate_freelist_->Free();
     node_freelist_->Free();
   }
@@ -133,14 +137,16 @@ class CandidateFilterTest : public ::testing::Test {
   const PosMatcher &pos_matcher() const { return pos_matcher_; }
 
   CandidateFilter *CreateCandidateFilter() const {
-    return new CandidateFilter(&suppression_dictionary_, &pos_matcher_,
+    EXPECT_CALL(mock_user_dictionary_, IsSuppressedEntry(_, _))
+        .WillRepeatedly(Return(false));
+    return new CandidateFilter(&mock_user_dictionary_, &pos_matcher_,
                                suggestion_filter_);
   }
 
   std::unique_ptr<FreeList<Segment::Candidate>> candidate_freelist_;
   std::unique_ptr<FreeList<Node>> node_freelist_;
   PosMatcher pos_matcher_;
-  SuppressionDictionary suppression_dictionary_;
+  MockUserDictionary mock_user_dictionary_;
   SuggestionFilter suggestion_filter_;
 
  private:
@@ -552,9 +558,11 @@ TEST_P(CandidateFilterTestWithParam, Regression3437022) {
   // "seen" rule.
   filter->Reset();
 
-  suppression_dictionary_.Lock();
-  suppression_dictionary_.AddEntry("test_key", "test_value");
-  suppression_dictionary_.UnLock();
+  EXPECT_CALL(mock_user_dictionary_, IsSuppressedEntry(_, _))
+      .WillRepeatedly(Return(false));
+  EXPECT_CALL(mock_user_dictionary_,
+              IsSuppressedEntry("test_key", "test_value"))
+      .WillRepeatedly(Return(true));
 
   EXPECT_EQ(filter->FilterCandidate(convreq, c1->key, c1, n, n),
             CandidateFilter::BAD_CANDIDATE);
@@ -567,9 +575,9 @@ TEST_P(CandidateFilterTestWithParam, Regression3437022) {
   EXPECT_EQ(filter->FilterCandidate(convreq, "test_key_suffix", c1, n, n),
             CandidateFilter::BAD_CANDIDATE);
 
-  suppression_dictionary_.Lock();
-  suppression_dictionary_.Clear();
-  suppression_dictionary_.UnLock();
+  ::testing::Mock::VerifyAndClearExpectations(&mock_user_dictionary_);
+  EXPECT_CALL(mock_user_dictionary_, IsSuppressedEntry(_, _))
+      .WillRepeatedly(Return(false));
 
   EXPECT_EQ(filter->FilterCandidate(convreq, "test_key_suffix", c1, n, n),
             CandidateFilter::GOOD_CANDIDATE);

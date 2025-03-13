@@ -41,6 +41,9 @@
 namespace mozc {
 namespace dictionary {
 
+// DictionaryInterface only defines pure immutable lookup operations.
+// mutable operations, e.g., Reload, Load are defined
+// in the subclass UserDictionaryInterface.
 class DictionaryInterface {
  public:
   // Callback interface for dictionary traversal (currently implemented only for
@@ -180,6 +183,15 @@ class UserDictionaryInterface : public DictionaryInterface {
   // Loads dictionary from UserDictionaryStorage.
   // mainly for unit testing
   virtual bool Load(const user_dictionary::UserDictionaryStorage &storage) = 0;
+
+  // Suppress `key` and `value` with suppression dictionary.
+  // Suppression entries are defined in the user dictionary with a special
+  // POS.
+  virtual bool IsSuppressedEntry(absl::string_view key,
+                                 absl::string_view value) const = 0;
+
+  // Return true if the dictionary has at least one suppression entry.
+  virtual bool HasSuppressedEntries() const = 0;
 };
 
 }  // namespace dictionary

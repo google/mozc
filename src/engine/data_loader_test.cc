@@ -169,7 +169,6 @@ TEST_P(DataLoaderTest, AsyncBuildRepeatedly) {
 
   // The request with highest priority should be loaded.
   EXPECT_GT(callback_called, 0);
-  EXPECT_NE(actual, 0);
   EXPECT_EQ(actual, expected);
 }
 

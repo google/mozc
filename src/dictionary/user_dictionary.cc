@@ -33,6 +33,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -42,6 +43,7 @@
 
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -61,7 +63,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
@@ -100,13 +101,55 @@ struct OrderByKeyThenById {
   }
 };
 
+class SuppressionDictionary {
+ public:
+  bool AddEntry(std::string key, std::string value) {
+    if (key.empty() && value.empty()) {
+      LOG(WARNING) << "Both key and value are empty";
+      return false;
+    }
+
+    if (key.empty()) {
+      values_only_.emplace(std::move(value));
+    } else if (value.empty()) {
+      keys_only_.emplace(std::move(key));
+    } else {
+      keys_values_.emplace(std::move(key), std::move(value));
+    }
+
+    return true;
+  }
+
+  bool IsEmpty() const {
+    return keys_only_.empty() && values_only_.empty() && keys_values_.empty();
+  }
+
+  bool IsSuppressedEntry(const absl::string_view key,
+                         const absl::string_view value) const {
+    return !IsEmpty() &&
+           (keys_values_.contains(std::make_pair(key, value)) ||
+            keys_only_.contains(key) || values_only_.contains(value));
+  }
+
+ private:
+  using KeyValue = std::pair<std::string, std::string>;
+  using KeyValueView = std::pair<absl::string_view, absl::string_view>;
+  struct KeyValueHash : public absl::Hash<KeyValueView> {
+    using is_transparent = void;
+  };
+  struct KeyValueEq : public std::equal_to<KeyValueView> {
+    using is_transparent = void;
+  };
+
+  absl::flat_hash_set<KeyValue, KeyValueHash, KeyValueEq> keys_values_;
+  absl::flat_hash_set<std::string> keys_only_;
+  absl::flat_hash_set<std::string> values_only_;
+};
 }  // namespace
 
 class UserDictionary::TokensIndex {
  public:
-  TokensIndex(const UserPos &user_pos,
-              SuppressionDictionary *suppression_dictionary)
-      : user_pos_(user_pos), suppression_dictionary_(suppression_dictionary) {}
+  TokensIndex(const UserPos &user_pos) : user_pos_(user_pos) {}
 
   ~TokensIndex() = default;
 
@@ -126,9 +169,6 @@ class UserDictionary::TokensIndex {
     user_pos_tokens_.clear();
     absl::flat_hash_set<uint64_t> seen;
     std::vector<UserPos::Token> tokens;
-
-    const SuppressionDictionaryLock l(suppression_dictionary_);
-    suppression_dictionary_->Clear();
 
     for (const UserDictionaryStorage::UserDictionary &dic :
          storage.dictionaries()) {
@@ -168,7 +208,7 @@ class UserDictionary::TokensIndex {
 
         if (entry.pos() == user_dictionary::UserDictionary::SUPPRESSION_WORD) {
           // "抑制単語"
-          suppression_dictionary_->AddEntry(std::move(reading), entry.value());
+          suppression_dictionary_.AddEntry(std::move(reading), entry.value());
         } else if (entry.pos() == user_dictionary::UserDictionary::NO_POS) {
           // In theory NO_POS works without this implementation, as it is
           // covered in the UserPos::GetTokens function. However, that function
@@ -216,9 +256,17 @@ class UserDictionary::TokensIndex {
     MOZC_VLOG(1) << user_pos_tokens_.size() << " user dic entries loaded";
   }
 
+  bool IsSuppressedEntry(absl::string_view key, absl::string_view value) const {
+    return suppression_dictionary_.IsSuppressedEntry(key, value);
+  }
+
+  bool HasSuppressedEntries() const {
+    return !suppression_dictionary_.IsEmpty();
+  }
+
  private:
   const UserPos &user_pos_;
-  SuppressionDictionary *suppression_dictionary_ = nullptr;
+  SuppressionDictionary suppression_dictionary_;
   std::vector<UserPos::Token> user_pos_tokens_;
 };
 
@@ -288,26 +336,20 @@ class UserDictionary::UserDictionaryReloader {
 };
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
-                               PosMatcher pos_matcher,
-                               SuppressionDictionary *suppression_dictionary)
+                               PosMatcher pos_matcher)
     : UserDictionary::UserDictionary(
-          std::move(user_pos), std::move(pos_matcher), suppression_dictionary,
+          std::move(user_pos), std::move(pos_matcher),
           UserDictionaryUtil::GetUserDictionaryFileName()) {}
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
-                               PosMatcher pos_matcher,
-                               SuppressionDictionary *suppression_dictionary,
-                               std::string filename)
+                               PosMatcher pos_matcher, std::string filename)
     : reloader_(std::make_unique<UserDictionaryReloader>(this)),
       user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
-      suppression_dictionary_(suppression_dictionary),
-      tokens_(
-          std::make_shared<TokensIndex>(*user_pos_, suppression_dictionary)),
+      tokens_(std::make_shared<TokensIndex>(*user_pos_)),
       filename_(std::move(filename)) {
   DCHECK(user_pos_);
   DCHECK(tokens_);
-  DCHECK(suppression_dictionary_);
   DCHECK(!canceled_signal_);
   DCHECK(!filename_.empty());
   Reload();
@@ -508,37 +550,21 @@ bool UserDictionary::LookupComment(absl::string_view key,
   return false;
 }
 
+bool UserDictionary::IsSuppressedEntry(absl::string_view key,
+                                       absl::string_view value) const {
+  return GetTokens()->IsSuppressedEntry(key, value);
+}
+
+bool UserDictionary::HasSuppressedEntries() const {
+  return GetTokens()->HasSuppressedEntries();
+}
+
 bool UserDictionary::Reload() {
   if (!reloader_->MaybeStartReload()) {
     LOG(INFO) << "MaybeStartReload() didn't start reloading";
   }
   return true;
 }
-
-namespace {
-class FindValueCallback : public DictionaryInterface::Callback {
- public:
-  explicit FindValueCallback(absl::string_view value)
-      : value_(value), found_(false) {}
-
-  ResultType OnToken(absl::string_view,  // key
-                     absl::string_view,  // actual_key
-                     const Token &token) override {
-    if (token.value == value_) {
-      found_ = true;
-      return TRAVERSE_DONE;
-    }
-    return TRAVERSE_CONTINUE;
-  }
-
-  bool found() const { return found_; }
-
- private:
-  const absl::string_view value_;
-  bool found_;
-};
-
-}  // namespace
 
 void UserDictionary::WaitForReloader() { reloader_->Wait(); }
 
@@ -555,13 +581,11 @@ bool UserDictionary::Load(
 #endif  // __ANDROID__
 
   if (size >= kVeryBigUserDictionarySize) {
-    auto placeholder_empty_tokens =
-        std::make_shared<TokensIndex>(*user_pos_, suppression_dictionary_);
+    auto placeholder_empty_tokens = std::make_shared<TokensIndex>(*user_pos_);
     SetTokens(std::move(placeholder_empty_tokens));
   }
 
-  auto tokens =
-      std::make_shared<TokensIndex>(*user_pos_, suppression_dictionary_);
+  auto tokens = std::make_shared<TokensIndex>(*user_pos_);
   tokens->Load(storage, &canceled_signal_);
 
   SetTokens(tokens);

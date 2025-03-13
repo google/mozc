@@ -36,8 +36,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
-#include "dictionary/user_dictionary_stub.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -48,8 +46,6 @@ TEST(ModulesTest, Init) {
   Modules modules;
 
   EXPECT_EQ(modules.GetPosMatcher(), nullptr);
-  EXPECT_EQ(modules.GetSuppressionDictionary(), nullptr);
-  EXPECT_EQ(modules.GetMutableSuppressionDictionary(), nullptr);
   EXPECT_EQ(modules.GetSegmenter(), nullptr);
   EXPECT_EQ(modules.GetUserDictionary(), nullptr);
   EXPECT_EQ(modules.GetPosGroup(), nullptr);
@@ -57,8 +53,6 @@ TEST(ModulesTest, Init) {
   ASSERT_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
 
   EXPECT_NE(modules.GetPosMatcher(), nullptr);
-  EXPECT_NE(modules.GetSuppressionDictionary(), nullptr);
-  EXPECT_NE(modules.GetMutableSuppressionDictionary(), nullptr);
   EXPECT_NE(modules.GetSegmenter(), nullptr);
   EXPECT_NE(modules.GetUserDictionary(), nullptr);
   EXPECT_NE(modules.GetPosGroup(), nullptr);
@@ -73,17 +67,9 @@ TEST(ModulesTest, Preset) {
   EXPECT_NE(pos_matcher_ptr, nullptr);
   modules.PresetPosMatcher(std::move(pos_matcher));
 
-  // SuppressionDictionary
-  auto suppression_dictionary =
-      std::make_unique<dictionary::SuppressionDictionary>();
-  const dictionary::SuppressionDictionary *suppression_dictionary_ptr =
-      suppression_dictionary.get();
-  EXPECT_NE(suppression_dictionary_ptr, nullptr);
-  modules.PresetSuppressionDictionary(std::move(suppression_dictionary));
-
   // UserDictionary
-  auto user_dictionary = std::make_unique<dictionary::UserDictionaryStub>();
-  const dictionary::UserDictionaryStub *user_dictionary_ptr =
+  auto user_dictionary = std::make_unique<dictionary::MockUserDictionary>();
+  const dictionary::MockUserDictionary *user_dictionary_ptr =
       user_dictionary.get();
   EXPECT_NE(user_dictionary_ptr, nullptr);
   modules.PresetUserDictionary(std::move(user_dictionary));
@@ -104,7 +90,6 @@ TEST(ModulesTest, Preset) {
   ASSERT_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
 
   EXPECT_EQ(modules.GetPosMatcher(), pos_matcher_ptr);
-  EXPECT_EQ(modules.GetSuppressionDictionary(), suppression_dictionary_ptr);
   EXPECT_EQ(modules.GetUserDictionary(), user_dictionary_ptr);
   EXPECT_EQ(modules.GetSuffixDictionary(), suffix_dictionary_ptr);
   EXPECT_EQ(modules.GetDictionary(), dictionary_ptr);

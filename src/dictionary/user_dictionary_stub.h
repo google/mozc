@@ -79,6 +79,13 @@ class UserDictionaryStub : public UserDictionaryInterface {
   bool Load(const user_dictionary::UserDictionaryStorage &storage) override {
     return true;
   }
+
+  bool IsSuppressedEntry(absl::string_view key,
+                         absl::string_view value) const override {
+    return false;
+  }
+
+  bool HasSuppressedEntries() const override { return false; }
 };
 
 }  // namespace dictionary

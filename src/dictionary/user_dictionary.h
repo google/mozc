@@ -40,7 +40,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_pos.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
@@ -51,14 +50,11 @@ namespace dictionary {
 class UserDictionary : public UserDictionaryInterface {
  public:
   UserDictionary(std::unique_ptr<const UserPos> user_pos,
-                 PosMatcher pos_matcher,
-                 SuppressionDictionary *suppression_dictionary);
+                 PosMatcher pos_matcher);
 
   // Specify dictionary filename for testing.
   UserDictionary(std::unique_ptr<const UserPos> user_pos,
-                 PosMatcher pos_matcher,
-                 SuppressionDictionary *suppression_dictionary,
-                 std::string filename);
+                 PosMatcher pos_matcher, std::string filename);
 
   UserDictionary(const UserDictionary &) = delete;
   UserDictionary &operator=(const UserDictionary &) = delete;
@@ -89,6 +85,12 @@ class UserDictionary : public UserDictionaryInterface {
   bool LookupComment(absl::string_view key, absl::string_view value,
                      const ConversionRequest &conversion_request,
                      std::string *comment) const override;
+
+  // Returns true if the word is registered as a suppression word.
+  bool IsSuppressedEntry(absl::string_view key,
+                         absl::string_view value) const override;
+
+  bool HasSuppressedEntries() const override;
 
   // Loads dictionary from UserDictionaryStorage.
   // mainly for unit testing
@@ -131,7 +133,6 @@ class UserDictionary : public UserDictionaryInterface {
   std::unique_ptr<UserDictionaryReloader> reloader_;
   std::unique_ptr<const UserPos> user_pos_;
   const PosMatcher pos_matcher_;
-  SuppressionDictionary *suppression_dictionary_;
 
   // Uses shared pointer to asynchronously update `tokens_`.
   // `tokens_` are set in different thread.

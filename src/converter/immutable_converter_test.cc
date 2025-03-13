@@ -47,7 +47,6 @@
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/user_dictionary_stub.h"
 #include "engine/modules.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -59,7 +58,6 @@ namespace mozc {
 namespace {
 
 using dictionary::DictionaryInterface;
-using dictionary::UserDictionaryStub;
 using ::testing::StrEq;
 
 void SetCandidate(absl::string_view key, absl::string_view value,
@@ -86,7 +84,6 @@ class MockDataAndImmutableConverter {
   // first argument dictionary but doesn't the second because the same
   // dictionary may be passed to the arguments.
   MockDataAndImmutableConverter() {
-    modules_.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
     CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
 
     immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
@@ -96,7 +93,6 @@ class MockDataAndImmutableConverter {
   MockDataAndImmutableConverter(
       std::unique_ptr<DictionaryInterface> dictionary,
       std::unique_ptr<DictionaryInterface> suffix_dictionary) {
-    modules_.PresetUserDictionary(std::make_unique<UserDictionaryStub>());
     modules_.PresetDictionary(std::move(dictionary));
     modules_.PresetSuffixDictionary(std::move(suffix_dictionary));
     CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));

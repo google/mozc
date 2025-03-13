@@ -42,10 +42,10 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
-#include "dictionary/user_dictionary_stub.h"
+#include "dictionary/user_dictionary.h"
+#include "dictionary/user_pos.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
@@ -54,9 +54,10 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
+using UserEntry = user_dictionary::UserDictionary::Entry;
+
 struct DictionaryData {
-  std::unique_ptr<DictionaryInterface> user_dictionary;
-  std::unique_ptr<SuppressionDictionary> suppression_dictionary;
+  std::unique_ptr<UserDictionaryInterface> user_dictionary;
   PosMatcher pos_matcher;
   std::unique_ptr<DictionaryInterface> dictionary;
 };
@@ -72,11 +73,14 @@ std::unique_ptr<DictionaryData> CreateDictionaryData() {
           .value();
   auto val_dict = std::make_unique<ValueDictionary>(ret->pos_matcher,
                                                     &sys_dict->value_trie());
-  ret->user_dictionary = std::make_unique<UserDictionaryStub>();
-  ret->suppression_dictionary = std::make_unique<SuppressionDictionary>();
-  ret->dictionary = std::make_unique<DictionaryImpl>(
-      std::move(sys_dict), std::move(val_dict), ret->user_dictionary.get(),
-      ret->suppression_dictionary.get(), &ret->pos_matcher);
+
+  std::unique_ptr<UserPos> user_pos =
+      UserPos::CreateFromDataManager(data_manager);
+  ret->user_dictionary = std::make_unique<dictionary::UserDictionary>(
+      std::move(user_pos), ret->pos_matcher);
+  ret->dictionary =
+      std::make_unique<DictionaryImpl>(std::move(sys_dict), std::move(val_dict),
+                                       *ret->user_dictionary, ret->pos_matcher);
   return ret;
 }
 
@@ -200,10 +204,9 @@ class DictionaryImplTest : public ::testing::Test {
 TEST_F(DictionaryImplTest, WordSuppressionTest) {
   std::unique_ptr<DictionaryData> data = CreateDictionaryData();
   DictionaryInterface *d = data->dictionary.get();
-  SuppressionDictionary *s = data->suppression_dictionary.get();
 
-  constexpr char kKey[] = "ぐーぐる";
-  constexpr char kValue[] = "グーグル";
+  constexpr absl::string_view kKey = "ぐーぐる";
+  constexpr absl::string_view kValue = "グーグル";
 
   const LookupMethodAndQuery kTestPair[] = {
       {&DictionaryInterface::LookupPrefix, "ぐーぐるは"},
@@ -212,10 +215,17 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
 
   // First add (kKey, kValue) to the suppression dictionary; thus it should not
   // be looked up.
-  s->Lock();
-  s->Clear();
-  s->AddEntry(kKey, kValue);
-  s->UnLock();
+
+  {
+    user_dictionary::UserDictionaryStorage storage;
+    UserEntry *entry = storage.add_dictionaries()->add_entries();
+    entry->set_key(kKey);
+    entry->set_value(kValue);
+    entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
+    data->user_dictionary->Load(storage);
+    EXPECT_TRUE(data->user_dictionary->HasSuppressedEntries());
+  }
+
   const ConversionRequest convreq1 = ConvReq(config_);
   for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
@@ -223,10 +233,12 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
     EXPECT_FALSE(callback.found());
   }
 
-  // Clear the suppression dictionary; thus it should now be looked up.
-  s->Lock();
-  s->Clear();
-  s->UnLock();
+  {
+    user_dictionary::UserDictionaryStorage storage;
+    data->user_dictionary->Load(storage);
+    EXPECT_FALSE(data->user_dictionary->HasSuppressedEntries());
+  }
+
   const ConversionRequest convreq2 = ConvReq(config_);
   for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
@@ -336,6 +348,16 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
 TEST_F(DictionaryImplTest, LookupComment) {
   std::unique_ptr<DictionaryData> data = CreateDictionaryData();
   DictionaryInterface *d = data->dictionary.get();
+
+  {
+    user_dictionary::UserDictionaryStorage storage;
+    UserEntry *entry = storage.add_dictionaries()->add_entries();
+    entry->set_key("key");
+    entry->set_value("comment");
+    entry->set_comment("UserDictionaryStub");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
+    data->user_dictionary->Load(storage);
+  }
 
   std::string comment;
   const ConversionRequest convreq = ConvReq(config_);

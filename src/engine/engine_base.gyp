@@ -49,7 +49,6 @@
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:dictionary_impl',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_pos',
         '<(mozc_oss_src_dir)/dictionary/system/system_dictionary.gyp:system_dictionary',

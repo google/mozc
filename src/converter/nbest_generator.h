@@ -44,8 +44,8 @@
 #include "converter/node.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 
@@ -98,11 +98,11 @@ class NBestGenerator {
   };
 
   // Try to enumerate N-best results between begin_node and end_node.
-  NBestGenerator(
-      const dictionary::SuppressionDictionary *suppression_dictionary,
-      const Segmenter *segmenter, const Connector &connector,
-      const dictionary::PosMatcher *pos_matcher, const Lattice *lattice,
-      const SuggestionFilter &suggestion_filter);
+  NBestGenerator(const dictionary::UserDictionaryInterface *user_dictionary,
+                 const Segmenter *segmenter, const Connector &connector,
+                 const dictionary::PosMatcher *pos_matcher,
+                 const Lattice *lattice,
+                 const SuggestionFilter &suggestion_filter);
   NBestGenerator(const NBestGenerator &) = delete;
   NBestGenerator &operator=(const NBestGenerator &) = delete;
   ~NBestGenerator() = default;
@@ -211,7 +211,7 @@ class NBestGenerator {
       int32_t structure_gx, int32_t w_gx);
 
   // References to relevant modules.
-  const dictionary::SuppressionDictionary *suppression_dictionary_;
+  const dictionary::UserDictionaryInterface *user_dictionary_;
   const Segmenter *segmenter_;
   const Connector &connector_;
   const dictionary::PosMatcher *pos_matcher_;
