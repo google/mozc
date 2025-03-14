@@ -205,12 +205,45 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
+def _append_if_absent(target_list, item):
+    """Append the given item only when it is absent in the target.
+
+    Args:
+      target_list: a String list to be checked.
+      item: a String item that is to be made sure to exist in the list.
+    Returns:
+      list: target_list itself or a new list, where the given item exists.
+    """
+    if item in target_list:
+        return target_list
+    return target_list + [item]
+
+def _remove_if_present(target_list, item):
+    """Remove the given item if exists.
+
+    Args:
+      target_list: a String list to be checked.
+      item: a String item that is to be made sure to not exist in the list.
+    Returns:
+      list: target_list itself or a new list, where the given item does not
+            exist.
+    """
+    return [x for x in target_list if x != item]
+
 def _win_executable_transition_impl(
-        settings,  # @unused
+        settings,
         attr):
-    features = ["generate_pdb_file"]
+    features = settings["//command_line_option:features"]
+
+    features = _append_if_absent(features, "generate_pdb_file")
+
     if attr.static_crt:
-        features.append("static_link_msvcrt")
+        features = _remove_if_present(features, "dynamic_link_msvcrt")
+        features = _append_if_absent(features, "static_link_msvcrt")
+    else:
+        features = _remove_if_present(features, "static_link_msvcrt")
+        features = _append_if_absent(features, "dynamic_link_msvcrt")
+
     return {
         "//command_line_option:features": features,
         "//command_line_option:platforms": [attr.platform],
@@ -218,7 +251,9 @@ def _win_executable_transition_impl(
 
 _win_executable_transition = transition(
     implementation = _win_executable_transition_impl,
-    inputs = [],
+    inputs = [
+        "//command_line_option:features",
+    ],
     outputs = [
         "//command_line_option:features",
         "//command_line_option:platforms",
