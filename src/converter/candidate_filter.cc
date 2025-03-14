@@ -94,7 +94,7 @@ constexpr int32_t kStopEnmerationCacheSize = 30;
 // Returns true if the given node sequence is noisy weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
 inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
-                                const dictionary::PosMatcher *pos_matcher) {
+                                const dictionary::PosMatcher &pos_matcher) {
   if (nodes.size() <= 1) {
     return false;
   }
@@ -102,7 +102,7 @@ inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
     // nodes[0] is COMPOUND entry in dictionary.
     return false;
   }
-  if (pos_matcher->IsWeakCompoundFillerPrefix(nodes[0]->lid)) {
+  if (pos_matcher.IsWeakCompoundFillerPrefix(nodes[0]->lid)) {
     // Word that starts with 'filler' is always noisy.
     return true;
   }
@@ -110,13 +110,13 @@ inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
     // Some node +  COMPOUND node may be noisy.
     return true;
   }
-  if (pos_matcher->IsWeakCompoundNounPrefix(nodes[0]->lid) &&
-      !pos_matcher->IsWeakCompoundNounSuffix(nodes[1]->lid)) {
+  if (pos_matcher.IsWeakCompoundNounPrefix(nodes[0]->lid) &&
+      !pos_matcher.IsWeakCompoundNounSuffix(nodes[1]->lid)) {
     // Noun prefix + not noun
     return true;
   }
-  if (pos_matcher->IsWeakCompoundVerbPrefix(nodes[0]->lid) &&
-      !pos_matcher->IsWeakCompoundVerbSuffix(nodes[1]->lid)) {
+  if (pos_matcher.IsWeakCompoundVerbPrefix(nodes[0]->lid) &&
+      !pos_matcher.IsWeakCompoundVerbSuffix(nodes[1]->lid)) {
     // Verb prefix + not verb
     return true;
   }
@@ -126,7 +126,7 @@ inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
 // Returns true if the given node sequence is connected weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
 inline bool IsConnectedWeakCompound(const absl::Span<const Node *const> nodes,
-                                    const dictionary::PosMatcher *pos_matcher) {
+                                    const dictionary::PosMatcher &pos_matcher) {
   if (nodes.size() <= 1) {
     return false;
   }
@@ -134,13 +134,13 @@ inline bool IsConnectedWeakCompound(const absl::Span<const Node *const> nodes,
     // nodes[0/1] is COMPOUND entry in dictionary.
     return false;
   }
-  if (pos_matcher->IsWeakCompoundNounPrefix(nodes[0]->lid) &&
-      pos_matcher->IsWeakCompoundNounSuffix(nodes[1]->lid)) {
+  if (pos_matcher.IsWeakCompoundNounPrefix(nodes[0]->lid) &&
+      pos_matcher.IsWeakCompoundNounSuffix(nodes[1]->lid)) {
     // Noun prefix + noun
     return true;
   }
-  if (pos_matcher->IsWeakCompoundVerbPrefix(nodes[0]->lid) &&
-      pos_matcher->IsWeakCompoundVerbSuffix(nodes[1]->lid)) {
+  if (pos_matcher.IsWeakCompoundVerbPrefix(nodes[0]->lid) &&
+      pos_matcher.IsWeakCompoundVerbSuffix(nodes[1]->lid)) {
     // Verb prefix + verb
     return true;
   }
@@ -248,16 +248,13 @@ bool IsNoisyNumberCandidate(const dictionary::PosMatcher &pos_matcher,
 
 }  // namespace
 
-CandidateFilter::CandidateFilter(const UserDictionaryInterface *user_dictionary,
-                                 const PosMatcher *pos_matcher,
+CandidateFilter::CandidateFilter(const UserDictionaryInterface &user_dictionary,
+                                 const PosMatcher &pos_matcher,
                                  const SuggestionFilter &suggestion_filter)
     : user_dictionary_(user_dictionary),
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
-      top_candidate_(nullptr) {
-  CHECK(user_dictionary_);
-  CHECK(pos_matcher_);
-}
+      top_candidate_(nullptr) {}
 
 void CandidateFilter::Reset() {
   seen_.clear();
@@ -344,7 +341,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   if (request_util::ShouldFilterNoisyNumberCandidate(request)) {
-    if (IsNoisyNumberCandidate(*pos_matcher_, nodes)) {
+    if (IsNoisyNumberCandidate(pos_matcher_, nodes)) {
       return CandidateFilter::BAD_CANDIDATE;
     }
   }
@@ -359,13 +356,13 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // "短縮よみ" or "記号,一般" must have only 1 node.  Note that "顔文字" POS
   // from user dictionary is converted to "記号,一般" in Mozc engine.
   if (nodes.size() > 1 &&
-      ContainsIsolatedWordOrGeneralSymbol(*pos_matcher_, nodes)) {
+      ContainsIsolatedWordOrGeneralSymbol(pos_matcher_, nodes)) {
     MOZC_CANDIDATE_LOG(candidate, "ContainsIsolatedWordOrGeneralSymbol");
     return CandidateFilter::BAD_CANDIDATE;
   }
   // This case tests the case where the isolated word or general symbol is in
   // content word.
-  if (IsIsolatedWordOrGeneralSymbol(*pos_matcher_, nodes[0]->lid) &&
+  if (IsIsolatedWordOrGeneralSymbol(pos_matcher_, nodes[0]->lid) &&
       (IsNormalOrConstrainedNode(nodes[0]->prev) ||
        IsNormalOrConstrainedNode(nodes[0]->next))) {
     MOZC_CANDIDATE_LOG(candidate, "IsIsolatedWordOrGeneralSymbol");
@@ -373,11 +370,11 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // Remove "抑制単語" just in case.
-  if (user_dictionary_->IsSuppressedEntry(candidate->key, candidate->value) ||
+  if (user_dictionary_.IsSuppressedEntry(candidate->key, candidate->value) ||
       (candidate->key != candidate->content_key &&
        candidate->value != candidate->content_value &&
-       user_dictionary_->IsSuppressedEntry(candidate->content_key,
-                                           candidate->content_value))) {
+       user_dictionary_.IsSuppressedEntry(candidate->content_key,
+                                          candidate->content_value))) {
     MOZC_CANDIDATE_LOG(candidate, "SuppressEntry");
     return CandidateFilter::BAD_CANDIDATE;
   }
@@ -411,15 +408,15 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   if (Util::GetScriptType(nodes[0]->value) != Util::HIRAGANA) {
     if (nodes.size() >= 2) {
       // For node sequence
-      if (pos_matcher_->IsKagyoTaConnectionVerb(nodes[0]->rid) &&
-          pos_matcher_->IsVerbSuffix(nodes[1]->lid) &&
-          !pos_matcher_->IsTeSuffix(nodes[1]->lid)) {
+      if (pos_matcher_.IsKagyoTaConnectionVerb(nodes[0]->rid) &&
+          pos_matcher_.IsVerbSuffix(nodes[1]->lid) &&
+          !pos_matcher_.IsTeSuffix(nodes[1]->lid)) {
         // "書い" | "ます", "過ぎ", etc
         MOZC_CANDIDATE_LOG(candidate, "IsKagyoTaConnectionVerb");
         return CandidateFilter::BAD_CANDIDATE;
       }
-      if (pos_matcher_->IsWagyoRenyoConnectionVerb(nodes[0]->rid) &&
-          pos_matcher_->IsTeSuffix(nodes[1]->lid)) {
+      if (pos_matcher_.IsWagyoRenyoConnectionVerb(nodes[0]->rid) &&
+          pos_matcher_.IsTeSuffix(nodes[1]->lid)) {
         // "買い" | "て"
         MOZC_CANDIDATE_LOG(candidate, "IsWagyoRenyoConnectionVerb");
         return CandidateFilter::BAD_CANDIDATE;
@@ -427,15 +424,15 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     }
     if (nodes[0]->lid != nodes[0]->rid) {
       // For compound
-      if (pos_matcher_->IsKagyoTaConnectionVerb(nodes[0]->lid) &&
-          pos_matcher_->IsVerbSuffix(nodes[0]->rid) &&
-          !pos_matcher_->IsTeSuffix(nodes[0]->rid)) {
+      if (pos_matcher_.IsKagyoTaConnectionVerb(nodes[0]->lid) &&
+          pos_matcher_.IsVerbSuffix(nodes[0]->rid) &&
+          !pos_matcher_.IsTeSuffix(nodes[0]->rid)) {
         // "書い" | "ます", "過ぎ", etc
         MOZC_CANDIDATE_LOG(candidate, "IsKagyoTaConnectionVerb");
         return CandidateFilter::BAD_CANDIDATE;
       }
-      if (pos_matcher_->IsWagyoRenyoConnectionVerb(nodes[0]->lid) &&
-          pos_matcher_->IsTeSuffix(nodes[0]->rid)) {
+      if (pos_matcher_.IsWagyoRenyoConnectionVerb(nodes[0]->lid) &&
+          pos_matcher_.IsTeSuffix(nodes[0]->rid)) {
         // "買い" | "て"
         MOZC_CANDIDATE_LOG(candidate, "IsWagyoRenyoConnectionVerb");
         return CandidateFilter::BAD_CANDIDATE;
@@ -527,7 +524,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       // nodes[1..] are non-functional candidates.
       // In other words, the node just after KatakanaT13n candidate should
       // be a functional word.
-      if (is_top_english_t13n && !pos_matcher_->IsFunctional(nodes[i]->lid)) {
+      if (is_top_english_t13n && !pos_matcher_.IsFunctional(nodes[i]->lid)) {
         MOZC_CANDIDATE_LOG(candidate, "!IsFunctional");
         return CandidateFilter::BAD_CANDIDATE;
       }
@@ -553,8 +550,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // We basically ignores the cost threadshould. Filter candidate
   // only by structure cost.
   int cost_offset = kCostOffset;
-  if (candidate->lid == pos_matcher_->GetLastNameId() ||
-      candidate->lid == pos_matcher_->GetFirstNameId()) {
+  if (candidate->lid == pos_matcher_.GetLastNameId() ||
+      candidate->lid == pos_matcher_.GetFirstNameId()) {
     cost_offset = INT_MAX - top_cost;
   }
 

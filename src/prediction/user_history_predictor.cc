@@ -339,9 +339,9 @@ UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
 
 UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules,
                                            bool enable_content_word_learning)
-    : dictionary_(modules.GetDictionary()),
-      pos_matcher_(modules.GetPosMatcher()),
-      user_dictionary_(modules.GetUserDictionary()),
+    : dictionary_(*modules.GetDictionary()),
+      pos_matcher_(*modules.GetPosMatcher()),
+      user_dictionary_(*modules.GetUserDictionary()),
       predictor_name_("UserHistoryPredictor"),
       content_word_learning_enabled_(enable_content_word_learning),
       updated_(false),
@@ -1640,7 +1640,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       candidate->description = description;
       candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
     } else {
-      VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, candidate);
+      VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, candidate);
     }
     MOZC_CANDIDATE_LOG(candidate,
                        "Added by UserHistoryPredictor::InsertCandidates");
@@ -1709,7 +1709,7 @@ bool UserHistoryPredictor::IsValidEntry(const Entry &entry) const {
 bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
     const Entry &entry) const {
   if (entry.entry_type() != Entry::DEFAULT_ENTRY ||
-      user_dictionary_->IsSuppressedEntry(entry.key(), entry.value())) {
+      user_dictionary_.IsSuppressedEntry(entry.key(), entry.value())) {
     return false;
   }
 

@@ -98,10 +98,10 @@ class NBestGenerator {
   };
 
   // Try to enumerate N-best results between begin_node and end_node.
-  NBestGenerator(const dictionary::UserDictionaryInterface *user_dictionary,
-                 const Segmenter *segmenter, const Connector &connector,
-                 const dictionary::PosMatcher *pos_matcher,
-                 const Lattice *lattice,
+  NBestGenerator(const dictionary::UserDictionaryInterface &user_dictionary,
+                 const Segmenter &segmenter, const Connector &connector,
+                 const dictionary::PosMatcher &pos_matcher,
+                 const Lattice &lattice,
                  const SuggestionFilter &suggestion_filter);
   NBestGenerator(const NBestGenerator &) = delete;
   NBestGenerator &operator=(const NBestGenerator &) = delete;
@@ -211,11 +211,11 @@ class NBestGenerator {
       int32_t structure_gx, int32_t w_gx);
 
   // References to relevant modules.
-  const dictionary::UserDictionaryInterface *user_dictionary_;
-  const Segmenter *segmenter_;
+  const dictionary::UserDictionaryInterface &user_dictionary_;
+  const Segmenter &segmenter_;
   const Connector &connector_;
-  const dictionary::PosMatcher *pos_matcher_;
-  const Lattice *lattice_;
+  const dictionary::PosMatcher &pos_matcher_;
+  const Lattice &lattice_;
 
   absl::Nullable<const Node *> begin_node_ = nullptr;
   absl::Nullable<const Node *> end_node_ = nullptr;

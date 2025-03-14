@@ -193,13 +193,13 @@ class ImmutableConverter : public ImmutableConverterInterface {
                                      absl::Span<const uint16_t> group,
                                      Segments *segments) const;
 
-  const dictionary::DictionaryInterface *dictionary_;
-  const dictionary::DictionaryInterface *suffix_dictionary_;
-  const dictionary::UserDictionaryInterface *user_dictionary_;
+  const dictionary::DictionaryInterface &dictionary_;
+  const dictionary::DictionaryInterface &suffix_dictionary_;
+  const dictionary::UserDictionaryInterface &user_dictionary_;
   const Connector &connector_;
-  const Segmenter *segmenter_;
-  const dictionary::PosMatcher *pos_matcher_;
-  const dictionary::PosGroup *pos_group_;
+  const Segmenter &segmenter_;
+  const dictionary::PosMatcher &pos_matcher_;
+  const dictionary::PosGroup &pos_group_;
   const SuggestionFilter &suggestion_filter_;
 
   // Cache for POS ids.

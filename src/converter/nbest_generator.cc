@@ -101,11 +101,11 @@ void NBestGenerator::Agenda::Pop() {
   priority_queue_.pop_back();
 }
 
-NBestGenerator::NBestGenerator(const UserDictionaryInterface *user_dictionary,
-                               const Segmenter *segmenter,
+NBestGenerator::NBestGenerator(const UserDictionaryInterface &user_dictionary,
+                               const Segmenter &segmenter,
                                const Connector &connector,
-                               const PosMatcher *pos_matcher,
-                               const Lattice *lattice,
+                               const PosMatcher &pos_matcher,
+                               const Lattice &lattice,
                                const SuggestionFilter &suggestion_filter)
     : user_dictionary_(user_dictionary),
       segmenter_(segmenter),
@@ -114,13 +114,10 @@ NBestGenerator::NBestGenerator(const UserDictionaryInterface *user_dictionary,
       lattice_(lattice),
       freelist_(kFreeListSize),
       filter_(user_dictionary_, pos_matcher, suggestion_filter) {
-  DCHECK(user_dictionary_);
-  DCHECK(segmenter);
-  if (lattice_ == nullptr || !lattice_->has_lattice()) {
+  if (!lattice_.has_lattice()) {
     LOG(ERROR) << "lattice is not available";
     return;
   }
-
   agenda_.Reserve(kFreeListSize);
 }
 
@@ -137,8 +134,8 @@ void NBestGenerator::Reset(absl::Nonnull<const Node *> begin_node,
   begin_node_ = begin_node;
   end_node_ = end_node;
 
-  for (Node *node = lattice_->begin_nodes(end_node_->begin_pos);
-       node != nullptr; node = node->bnext) {
+  for (Node *node = lattice_.begin_nodes(end_node_->begin_pos); node != nullptr;
+       node = node->bnext) {
     if (node == end_node_ ||
         (node->lid != end_node_->lid &&
          // node->cost can be smaller than end_node_->cost
@@ -168,7 +165,7 @@ void NBestGenerator::MakeCandidate(
   bool is_functional = false;
   for (size_t i = 0; i < nodes.size(); ++i) {
     absl::Nonnull<const Node *> node = nodes[i];
-    if (!is_functional && !pos_matcher_->IsFunctional(node->lid)) {
+    if (!is_functional && !pos_matcher_.IsFunctional(node->lid)) {
       candidate.content_key += node->key;
       candidate.content_value += node->value;
     } else {
@@ -220,7 +217,7 @@ void NBestGenerator::FillInnerSegmentInfo(
   size_t key_len = nodes[0]->key.size(), value_len = nodes[0]->value.size();
   size_t content_key_len = key_len, content_value_len = value_len;
   bool is_content_boundary = false;
-  if (pos_matcher_->IsFunctional(nodes[0]->rid)) {
+  if (pos_matcher_.IsFunctional(nodes[0]->rid)) {
     is_content_boundary = true;
     content_key_len = 0;
     content_value_len = 0;
@@ -229,7 +226,7 @@ void NBestGenerator::FillInnerSegmentInfo(
     absl::Nonnull<const Node *> lnode = nodes[i - 1];
     absl::Nonnull<const Node *> rnode = nodes[i];
     constexpr bool kMultipleSegments = false;
-    if (segmenter_->IsBoundary(*lnode, *rnode, kMultipleSegments)) {
+    if (segmenter_.IsBoundary(*lnode, *rnode, kMultipleSegments)) {
       // Keep the consistency with the above logic for candidate.content_*.
       if (content_key_len == 0 || content_value_len == 0) {
         content_key_len = key_len;
@@ -252,9 +249,9 @@ void NBestGenerator::FillInnerSegmentInfo(
     // "走った" is formed as
     //     "走っ" (content word) + "た" (functional).
     // Since the content word is incomplete, we don't want to learn "走っ".
-    if ((pos_matcher_->IsContentNoun(lnode->rid) ||
-         pos_matcher_->IsPronoun(lnode->rid)) &&
-        pos_matcher_->IsFunctional(rnode->lid)) {
+    if ((pos_matcher_.IsContentNoun(lnode->rid) ||
+         pos_matcher_.IsPronoun(lnode->rid)) &&
+        pos_matcher_.IsFunctional(rnode->lid)) {
       is_content_boundary = true;
     } else {
       content_key_len += rnode->key.size();
@@ -285,7 +282,7 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
       if (IsBetweenAlphabets(*elm->node, *elm->next->node)) {
         return CandidateFilter::BAD_CANDIDATE;
       }
-      if (segmenter_->IsBoundary(*elm->node, *elm->next->node, false)) {
+      if (segmenter_.IsBoundary(*elm->node, *elm->next->node, false)) {
         break;
       }
     }
@@ -324,7 +321,7 @@ void NBestGenerator::SetCandidates(const ConversionRequest &request,
   DCHECK(begin_node_);
   DCHECK(end_node_);
 
-  if (lattice_ == nullptr || !lattice_->has_lattice()) {
+  if (!lattice_.has_lattice()) {
     LOG(ERROR) << "Must create lattice in advance";
     return;
   }
@@ -446,7 +443,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
     // begin/end node regardless of its value.
     const bool is_edge = (is_right_edge || is_left_edge);
 
-    for (Node *lnode = lattice_->end_nodes(rnode->begin_pos); lnode != nullptr;
+    for (Node *lnode = lattice_.end_nodes(rnode->begin_pos); lnode != nullptr;
          lnode = lnode->enext) {
       // is_invalid_position is true if the lnode's location is invalid
       //  1.   |<-- begin_node_-->|
@@ -587,7 +584,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyMid(
   // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode.node_type == Node::HIS_NODE ||
-                            segmenter_->IsBoundary(lnode, rnode, false));
+                            segmenter_.IsBoundary(lnode, rnode, false));
   if (!is_edge && is_boundary) {
     // There is a boundary within the segment.
     return INVALID;
@@ -607,7 +604,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyEdge(
   // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode.node_type == Node::HIS_NODE ||
-                            segmenter_->IsBoundary(lnode, rnode, true));
+                            segmenter_.IsBoundary(lnode, rnode, true));
   if (is_edge != is_boundary) {
     // on the edge, have a boundary.
     // not on the edge, not the case.
@@ -622,7 +619,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
   // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode.node_type == Node::HIS_NODE ||
-                            segmenter_->IsBoundary(lnode, rnode, false));
+                            segmenter_.IsBoundary(lnode, rnode, false));
 
   if (is_edge != is_boundary) {
     // on the edge, have a boundary.
@@ -669,7 +666,7 @@ void NBestGenerator::MakePrefixCandidateFromBestPath(
   for (const Node *node = begin_node_->next; node != end_node_;
        node = node->next) {
     if (prev_node != begin_node_ &&
-        segmenter_->IsBoundary(*prev_node, *node, false)) {
+        segmenter_.IsBoundary(*prev_node, *node, false)) {
       break;
     }
     top_nodes_.push_back(node);

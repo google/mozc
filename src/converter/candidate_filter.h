@@ -87,8 +87,8 @@ struct CandidateHasher {
 
 class CandidateFilter {
  public:
-  CandidateFilter(const dictionary::UserDictionaryInterface *user_dictionary,
-                  const dictionary::PosMatcher *pos_matcher,
+  CandidateFilter(const dictionary::UserDictionaryInterface &user_dictionary,
+                  const dictionary::PosMatcher &pos_matcher,
                   const SuggestionFilter &suggestion_filter);
   CandidateFilter(const CandidateFilter &) = delete;
   CandidateFilter &operator=(const CandidateFilter &) = delete;
@@ -123,8 +123,8 @@ class CandidateFilter {
                                      absl::Span<const Node *const> top_nodes,
                                      absl::Span<const Node *const> nodes);
 
-  const dictionary::UserDictionaryInterface *user_dictionary_;
-  const dictionary::PosMatcher *pos_matcher_;
+  const dictionary::UserDictionaryInterface &user_dictionary_;
+  const dictionary::PosMatcher &pos_matcher_;
   const SuggestionFilter &suggestion_filter_;
 
   absl::flat_hash_set<candidate_filter_internal::CandidateId,

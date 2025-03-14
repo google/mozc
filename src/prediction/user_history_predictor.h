@@ -503,9 +503,9 @@ class UserHistoryPredictor : public PredictorInterface {
   //  (# of candidate committed) / (# of candidate shown on commit event)
   void MaybeRemoveUnselectedHistory(const Segments &segments);
 
-  const dictionary::DictionaryInterface *dictionary_;
-  const dictionary::PosMatcher *pos_matcher_;
-  const dictionary::UserDictionaryInterface *user_dictionary_;
+  const dictionary::DictionaryInterface &dictionary_;
+  const dictionary::PosMatcher &pos_matcher_;
+  const dictionary::UserDictionaryInterface &user_dictionary_;
   const std::string predictor_name_;
 
   bool content_word_learning_enabled_;

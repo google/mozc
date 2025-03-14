@@ -533,8 +533,8 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     : modules_(modules),
       converter_(converter),
       immutable_converter_(immutable_converter),
-      dictionary_(modules.GetDictionary()),
-      suffix_dictionary_(modules.GetSuffixDictionary()),
+      dictionary_(*modules.GetDictionary()),
+      suffix_dictionary_(*modules.GetSuffixDictionary()),
       counter_suffix_word_id_(
           modules.GetPosMatcher()->GetCounterSuffixWordId()),
       kanji_number_id_(modules.GetPosMatcher()->GetKanjiNumberId()),
@@ -976,14 +976,13 @@ PredictionType DictionaryPredictionAggregator::AggregateUnigramCandidate(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
   DCHECK(results);
-  DCHECK(dictionary_);
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION);
 
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
-  GetPredictiveResults(*dictionary_, "", request, segments, UNIGRAM,
+  GetPredictiveResults(dictionary_, "", request, segments, UNIGRAM,
                        cutoff_threshold, Segment::Candidate::SOURCE_INFO_NONE,
                        zip_code_id_, unknown_id_, results);
   const size_t unigram_results_size = results->size() - prev_results_size;
@@ -1071,7 +1070,6 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
   DCHECK(results);
-  DCHECK(dictionary_);
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION);
   const commands::DecoderExperimentParams &param =
@@ -1116,7 +1114,7 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
       HandwritingLookupCallback callback(
           cutoff_threshold, handwriting_cost_offset + recognition_cost,
           query_info->constraints, results);
-      dictionary_->LookupExact(query_info->query, request, &callback);
+      dictionary_.LookupExact(query_info->query, request, &callback);
       // Rewrite key with the look-up query.
       asis_result.key = query_info->query;
     }
@@ -1136,7 +1134,7 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForMixedConversion(
     std::vector<Result> *results) const {
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION);
-  LookupUnigramCandidateForMixedConversion(*dictionary_, request, segments,
+  LookupUnigramCandidateForMixedConversion(dictionary_, request, segments,
                                            zip_code_id_, unknown_id_, results);
   return UNIGRAM;
 }
@@ -1220,7 +1218,6 @@ void DictionaryPredictionAggregator::AggregateBigramPrediction(
     Segment::Candidate::SourceInfo source_info,
     std::vector<Result> *results) const {
   DCHECK(results);
-  DCHECK(dictionary_);
 
   if (segments.conversion_segment(0).key().empty() &&
       IsBigramNwpFilteringMode(request,
@@ -1245,7 +1242,7 @@ void DictionaryPredictionAggregator::AddBigramResultsFromHistory(
     std::vector<Result> *results) const {
   // Check that history_key/history_value are in the dictionary.
   FindValueCallback find_history_callback(history_value);
-  dictionary_->LookupPrefix(history_key, request, &find_history_callback);
+  dictionary_.LookupPrefix(history_key, request, &find_history_callback);
 
   // History value is not found in the dictionary.
   // User may create this the history candidate from T13N or segment
@@ -1257,7 +1254,7 @@ void DictionaryPredictionAggregator::AddBigramResultsFromHistory(
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
-  GetPredictiveResultsForBigram(*dictionary_, history_key, history_value,
+  GetPredictiveResultsForBigram(dictionary_, history_key, history_value,
                                 request, segments, BIGRAM, cutoff_threshold,
                                 source_info, unknown_id_, results);
   const size_t bigram_results_size = results->size() - prev_results_size;
@@ -1370,14 +1367,14 @@ void DictionaryPredictionAggregator::CheckBigramResult(
   // ありがとうございました is not in the dictionary, but
   // ありがとう御座いました is in the dictionary.
   if (ctype == Util::HIRAGANA) {
-    if (!dictionary_->HasKey(key)) {
+    if (!dictionary_.HasKey(key)) {
       result->removed = true;
       MOZC_WORD_LOG(*result, "Removed. No keys are found.");
       return;
     }
   } else {
     FindValueCallback callback(value);
-    dictionary_->LookupPrefix(key, request, &callback);
+    dictionary_.LookupPrefix(key, request, &callback);
     if (!callback.found()) {
       result->removed = true;
       MOZC_WORD_LOG(*result, "Removed. No prefix found.");
@@ -1644,7 +1641,7 @@ void DictionaryPredictionAggregator::AggregateSuffixPrediction(
   // all suffix entries.
   const size_t cutoff_threshold = kPredictionMaxResultsSize;
   const std::string kEmptyHistoryKey = "";
-  GetPredictiveResults(*suffix_dictionary_, kEmptyHistoryKey, request, segments,
+  GetPredictiveResults(suffix_dictionary_, kEmptyHistoryKey, request, segments,
                        SUFFIX, cutoff_threshold,
                        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_,
                        unknown_id_, results);
@@ -1673,7 +1670,7 @@ void DictionaryPredictionAggregator::AggregateZeroQuerySuffixPrediction(
     const size_t cutoff_threshold = kPredictionMaxResultsSize;
     const std::string kEmptyHistoryKey = "";
     GetPredictiveResults(
-        *suffix_dictionary_, kEmptyHistoryKey, request, segments, SUFFIX,
+        suffix_dictionary_, kEmptyHistoryKey, request, segments, SUFFIX,
         cutoff_threshold,
         Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX,
         zip_code_id_, unknown_id_, results);
@@ -1684,12 +1681,11 @@ void DictionaryPredictionAggregator::AggregateEnglishPrediction(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
   DCHECK(results);
-  DCHECK(dictionary_);
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
   const std::string &input_key = segments.conversion_segment(0).key();
-  GetPredictiveResultsForEnglishKey(*dictionary_, request, input_key, ENGLISH,
+  GetPredictiveResultsForEnglishKey(dictionary_, request, input_key, ENGLISH,
                                     cutoff_threshold, results);
 
   size_t unigram_results_size = results->size() - prev_results_size;
@@ -1703,14 +1699,13 @@ void DictionaryPredictionAggregator::AggregateEnglishPredictionUsingRawInput(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
   DCHECK(results);
-  DCHECK(dictionary_);
 
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
 
   const std::string input_key = request.composer().GetRawString();
-  GetPredictiveResultsForEnglishKey(*dictionary_, request, input_key, ENGLISH,
+  GetPredictiveResultsForEnglishKey(dictionary_, request, input_key, ENGLISH,
                                     cutoff_threshold, results);
 
   size_t unigram_results_size = results->size() - prev_results_size;
@@ -1724,7 +1719,6 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     const ConversionRequest &request, const Segments &segments,
     PredictionTypes base_selected_types, std::vector<Result> *results) const {
   DCHECK(results);
-  DCHECK(dictionary_);
 
   const size_t prev_results_size = results->size();
 
@@ -1896,7 +1890,6 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
   DCHECK(results);
-  DCHECK(dictionary_);
   const size_t prev_results_size = results->size();
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
@@ -1916,7 +1909,7 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
   constexpr int kMinValueCharsLen = 2;
   PrefixLookupCallback callback(cutoff_threshold, kanji_number_id_, unknown_id_,
                                 kMinValueCharsLen, input_key_len, results);
-  dictionary_->LookupPrefix(lookup_key, request, &callback);
+  dictionary_.LookupPrefix(lookup_key, request, &callback);
   const size_t prefix_results_size = results->size() - prev_results_size;
   if (prefix_results_size >= cutoff_threshold) {
     results->resize(prev_results_size);

@@ -219,7 +219,7 @@ DictionaryPredictor::DictionaryPredictor(
     : aggregator_(std::move(aggregator)),
       immutable_converter_(immutable_converter),
       connector_(modules.GetConnector()),
-      segmenter_(modules.GetSegmenter()),
+      segmenter_(*modules.GetSegmenter()),
       suggestion_filter_(modules.GetSuggestionFilter()),
       single_kanji_dictionary_(
           std::make_unique<dictionary::SingleKanjiDictionary>(
@@ -788,7 +788,7 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
     // Realtime conversion already adds prefix/suffix penalties to the result.
     // Note that we don't add prefix penalty the role of "bunsetsu" is
     // ambiguous on zero-query suggestion.
-    lm_cost += segmenter_->GetSuffixPenalty(result.rid);
+    lm_cost += segmenter_.GetSuffixPenalty(result.rid);
   }
 
   return lm_cost;
@@ -918,7 +918,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       // Suffix penalty is added in the above GetLMCost(), which is also used
       // for calculating non-mobile prediction cost. So we modify the cost
       // calculation here for now.
-      cost -= segmenter_->GetSuffixPenalty(result.rid);
+      cost -= segmenter_.GetSuffixPenalty(result.rid);
       MOZC_WORD_LOG(result, absl::StrCat("Cancel Suffix Penalty: ", cost));
     }
 

@@ -139,7 +139,7 @@ class CandidateFilterTest : public ::testing::Test {
   CandidateFilter *CreateCandidateFilter() const {
     EXPECT_CALL(mock_user_dictionary_, IsSuppressedEntry(_, _))
         .WillRepeatedly(Return(false));
-    return new CandidateFilter(&mock_user_dictionary_, &pos_matcher_,
+    return new CandidateFilter(mock_user_dictionary_, pos_matcher_,
                                suggestion_filter_);
   }
 

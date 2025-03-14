@@ -288,8 +288,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   const engine::Modules &modules_;
   const ConverterInterface &converter_;
   const ImmutableConverterInterface &immutable_converter_;
-  const dictionary::DictionaryInterface *dictionary_;
-  const dictionary::DictionaryInterface *suffix_dictionary_;
+  const dictionary::DictionaryInterface &dictionary_;
+  const dictionary::DictionaryInterface &suffix_dictionary_;
   const uint16_t counter_suffix_word_id_;
   const uint16_t kanji_number_id_;
   const uint16_t zip_code_id_;

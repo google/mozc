@@ -301,7 +301,7 @@ class DictionaryPredictor : public PredictorInterface {
 
   const ImmutableConverterInterface &immutable_converter_;
   const Connector &connector_;
-  const Segmenter *segmenter_;
+  const Segmenter &segmenter_;
   const SuggestionFilter &suggestion_filter_;
   std::unique_ptr<const dictionary::SingleKanjiDictionary>
       single_kanji_dictionary_;

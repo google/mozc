@@ -134,8 +134,8 @@ class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
 
 void InsertCorrectedNodes(size_t pos, const std::string &key,
                           const ConversionRequest &request,
-                          const KeyCorrector *key_corrector,
-                          const DictionaryInterface *dictionary,
+                          const KeyCorrector *key_corrector,  // nullable
+                          const DictionaryInterface &dictionary,
                           Lattice *lattice) {
   if (key_corrector == nullptr) {
     return;
@@ -147,7 +147,7 @@ void InsertCorrectedNodes(size_t pos, const std::string &key,
   }
   KeyCorrectedNodeListBuilder builder(pos, key, key_corrector,
                                       lattice->node_allocator());
-  dictionary->LookupPrefix(absl::string_view(str, length), request, &builder);
+  dictionary.LookupPrefix(absl::string_view(str, length), request, &builder);
   if (builder.tail() != nullptr) {
     builder.tail()->bnext = nullptr;
   }
@@ -347,27 +347,20 @@ class FirstInnerSegmentCandidateChecker {
 }  // namespace
 
 ImmutableConverter::ImmutableConverter(const engine::Modules &modules)
-    : dictionary_(modules.GetDictionary()),
-      suffix_dictionary_(modules.GetSuffixDictionary()),
-      user_dictionary_(modules.GetUserDictionary()),
+    : dictionary_(*modules.GetDictionary()),
+      suffix_dictionary_(*modules.GetSuffixDictionary()),
+      user_dictionary_(*modules.GetUserDictionary()),
       connector_(modules.GetConnector()),
-      segmenter_(modules.GetSegmenter()),
-      pos_matcher_(modules.GetPosMatcher()),
-      pos_group_(modules.GetPosGroup()),
+      segmenter_(*modules.GetSegmenter()),
+      pos_matcher_(*modules.GetPosMatcher()),
+      pos_group_(*modules.GetPosGroup()),
       suggestion_filter_(modules.GetSuggestionFilter()),
-      first_name_id_(pos_matcher_->GetFirstNameId()),
-      last_name_id_(pos_matcher_->GetLastNameId()),
-      number_id_(pos_matcher_->GetNumberId()),
-      unknown_id_(pos_matcher_->GetUnknownId()),
+      first_name_id_(pos_matcher_.GetFirstNameId()),
+      last_name_id_(pos_matcher_.GetLastNameId()),
+      number_id_(pos_matcher_.GetNumberId()),
+      unknown_id_(pos_matcher_.GetUnknownId()),
       last_to_first_name_transition_cost_(
-          connector_.GetTransitionCost(last_name_id_, first_name_id_)) {
-  DCHECK(dictionary_);
-  DCHECK(suffix_dictionary_);
-  DCHECK(user_dictionary_);
-  DCHECK(segmenter_);
-  DCHECK(pos_matcher_);
-  DCHECK(pos_group_);
-}
+          connector_.GetTransitionCost(last_name_id_, first_name_id_)) {}
 
 void ImmutableConverter::InsertDummyCandidates(Segment *segment,
                                                size_t expand_size) const {
@@ -499,8 +492,8 @@ bool ImmutableConverter::ResegmentArabicNumberAndSuffix(
   for (const Node *compound_node = bnode; compound_node != nullptr;
        compound_node = compound_node->bnext) {
     if (!compound_node->value.empty() && !compound_node->key.empty() &&
-        pos_matcher_->IsNumber(compound_node->lid) &&
-        !pos_matcher_->IsNumber(compound_node->rid) &&
+        pos_matcher_.IsNumber(compound_node->lid) &&
+        !pos_matcher_.IsNumber(compound_node->rid) &&
         IsNumber(compound_node->value[0]) && IsNumber(compound_node->key[0])) {
       std::string number_value, number_key;
       std::string suffix_value, suffix_key;
@@ -690,7 +683,7 @@ bool ImmutableConverter::ResegmentPersonalName(size_t pos,
           if ((lnode->value.size() + rnode->value.size()) ==
                   compound_node->value.size() &&
               (lnode->value + rnode->value) == compound_node->value &&
-              segmenter_->IsBoundary(*lnode, *rnode, false)) {  // Constraint 3.
+              segmenter_.IsBoundary(*lnode, *rnode, false)) {  // Constraint 3.
             const int32_t cost = lnode->wcost + GetCost(lnode, rnode);
             if (cost < best_cost) {  // choose the smallest ones
               best_last_name_node = lnode;
@@ -805,20 +798,20 @@ Node *ImmutableConverter::Lookup(const int begin_pos,
   if (is_reverse) {
     BaseNodeListBuilder builder(lattice->node_allocator(),
                                 lattice->node_allocator()->max_nodes_size());
-    dictionary_->LookupReverse(key_substr, request, &builder);
+    dictionary_.LookupReverse(key_substr, request, &builder);
     result_node = builder.result();
   } else {
     if (is_prediction) {
       NodeListBuilderWithCacheEnabled builder(
           lattice->node_allocator(), lattice->cache_info(begin_pos) + 1);
-      dictionary_->LookupPrefix(key_substr, request, &builder);
+      dictionary_.LookupPrefix(key_substr, request, &builder);
       result_node = builder.result();
       lattice->SetCacheInfo(begin_pos, key_substr.length());
     } else {
       // When cache feature is not used, look up normally
       BaseNodeListBuilder builder(lattice->node_allocator(),
                                   lattice->node_allocator()->max_nodes_size());
-      dictionary_->LookupPrefix(key_substr, request, &builder);
+      dictionary_.LookupPrefix(key_substr, request, &builder);
       result_node = builder.result();
     }
   }
@@ -1275,7 +1268,7 @@ namespace {
 class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
  public:
   NodeListBuilderForPredictiveNodes(NodeAllocator *allocator, int limit,
-                                    const PosMatcher *pos_matcher)
+                                    const PosMatcher &pos_matcher)
       : BaseNodeListBuilder(allocator, limit), pos_matcher_(pos_matcher) {}
 
   ~NodeListBuilderForPredictiveNodes() override = default;
@@ -1287,22 +1280,21 @@ class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
     int additional_cost = kPredictiveNodeDefaultPenalty;
 
     // Bonus for suffix word.
-    if (pos_matcher_->IsSuffixWord(node->rid) &&
-        pos_matcher_->IsSuffixWord(node->lid)) {
+    if (pos_matcher_.IsSuffixWord(node->rid) &&
+        pos_matcher_.IsSuffixWord(node->lid)) {
       constexpr int kSuffixWordBonus = 700;
       additional_cost -= kSuffixWordBonus;
     }
 
     // Penalty for unique noun word.
-    if (pos_matcher_->IsUniqueNoun(node->rid) ||
-        pos_matcher_->IsUniqueNoun(node->lid)) {
+    if (pos_matcher_.IsUniqueNoun(node->rid) ||
+        pos_matcher_.IsUniqueNoun(node->lid)) {
       constexpr int kUniqueNounPenalty = 500;
       additional_cost += kUniqueNounPenalty;
     }
 
     // Penalty for number.
-    if (pos_matcher_->IsNumber(node->rid) ||
-        pos_matcher_->IsNumber(node->lid)) {
+    if (pos_matcher_.IsNumber(node->rid) || pos_matcher_.IsNumber(node->lid)) {
       constexpr int kNumberPenalty = 4000;
       additional_cost += kNumberPenalty;
     }
@@ -1313,7 +1305,7 @@ class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
   }
 
  private:
-  const PosMatcher *pos_matcher_;
+  const PosMatcher &pos_matcher_;
 };
 
 }  // namespace
@@ -1355,7 +1347,7 @@ void ImmutableConverter::MakeLatticeNodesForPredictiveNodes(
       NodeListBuilderForPredictiveNodes builder(
           lattice->node_allocator(),
           lattice->node_allocator()->max_nodes_size(), pos_matcher_);
-      suffix_dictionary_->LookupPredictive(
+      suffix_dictionary_.LookupPredictive(
           absl::string_view(key.data() + pos, key.size() - pos), request,
           &builder);
       if (builder.result() != nullptr) {
@@ -1385,7 +1377,7 @@ void ImmutableConverter::MakeLatticeNodesForPredictiveNodes(
       NodeListBuilderForPredictiveNodes builder(
           lattice->node_allocator(),
           lattice->node_allocator()->max_nodes_size(), pos_matcher_);
-      dictionary_->LookupPredictive(
+      dictionary_.LookupPredictive(
           absl::string_view(key.data() + pos, key.size() - pos), request,
           &builder);
       if (builder.result() != nullptr) {
@@ -1469,7 +1461,7 @@ bool ImmutableConverter::MakeLattice(const ConversionRequest &request,
   if (is_reverse) {
     // Reverse lookup for each prefix string in key is slow with current
     // implementation, so run it for them at once and cache the result.
-    dictionary_->PopulateReverseLookupCache(key);
+    dictionary_.PopulateReverseLookupCache(key);
   }
 
   bool is_valid_lattice = true;
@@ -1487,7 +1479,7 @@ bool ImmutableConverter::MakeLattice(const ConversionRequest &request,
 
   if (is_reverse) {
     // No reverse look up will happen afterwards.
-    dictionary_->ClearReverseLookupCache();
+    dictionary_.ClearReverseLookupCache();
   }
 
   // Nodes look up for real time conversion for desktop.
@@ -1610,8 +1602,8 @@ bool ImmutableConverter::MakeLatticeNodesForHistorySegments(
 
         // Must be in the same POS group.
         // http://b/issue?id=2977618
-        if (pos_group_->GetPosGroup(candidate.lid) !=
-            pos_group_->GetPosGroup(compound_node->lid)) {
+        if (pos_group_.GetPosGroup(candidate.lid) !=
+            pos_group_.GetPosGroup(compound_node->lid)) {
           continue;
         }
 
@@ -1702,7 +1694,7 @@ void ImmutableConverter::MakeLatticeNodesForConversionSegments(
       // is assigned.
       if (!history_key.empty() && pos == history_key.size()) {
         for (Node *node = rnode; node != nullptr; node = node->bnext) {
-          if (pos_matcher_->IsAcceptableParticleAtBeginOfSegment(node->lid) &&
+          if (pos_matcher_.IsAcceptableParticleAtBeginOfSegment(node->lid) &&
               node->lid == node->rid) {  // not a compound.
             node->attributes |= Node::STARTS_WITH_PARTICLE;
           }
@@ -1728,12 +1720,12 @@ void ImmutableConverter::ApplyPrefixSuffixPenalty(
     // If history-segments is non-empty, we can make the
     // penalty smaller so that history context is more likely
     // selected.
-    node->wcost += segmenter_->GetPrefixPenalty(node->lid);
+    node->wcost += segmenter_.GetPrefixPenalty(node->lid);
   }
 
   for (Node *node = lattice->end_nodes(key.size()); node != nullptr;
        node = node->enext) {
-    node->wcost += segmenter_->GetSuffixPenalty(node->rid);
+    node->wcost += segmenter_.GetSuffixPenalty(node->rid);
   }
 }
 
@@ -1881,7 +1873,7 @@ bool ImmutableConverter::IsSegmentEndNode(const ConversionRequest &request,
   }
 
   // Grammatically segmented.
-  if (segmenter_->IsBoundary(*node, *node->next, is_single_segment)) {
+  if (segmenter_.IsBoundary(*node, *node->next, is_single_segment)) {
     return true;
   }
 
@@ -1926,7 +1918,7 @@ void ImmutableConverter::InsertCandidates(const ConversionRequest &request,
   const bool is_single_segment =
       (type == SINGLE_SEGMENT || type == FIRST_INNER_SEGMENT);
   NBestGenerator nbest_generator(user_dictionary_, segmenter_, connector_,
-                                 pos_matcher_, &lattice, suggestion_filter_);
+                                 pos_matcher_, lattice, suggestion_filter_);
 
   std::string original_key;
   for (const Segment &segment : segments->conversion_segments()) {
@@ -2090,7 +2082,7 @@ void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
       if (c->key.size() != target_segment->key().size()) {
         // Explicitly add suffix penalty, since the penalty is not added for non
         // end nodes.
-        const int32_t suffix_penalty = segmenter_->GetSuffixPenalty(c->rid);
+        const int32_t suffix_penalty = segmenter_.GetSuffixPenalty(c->rid);
         c->wcost += suffix_penalty;
         c->cost += suffix_penalty;
       }
