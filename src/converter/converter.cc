@@ -597,12 +597,7 @@ bool Converter::Reload() {
   return rewriter()->Reload() && predictor()->Reload();
 }
 
-bool Converter::Sync() {
-  if (modules()->GetUserDictionary()) {
-    modules()->GetUserDictionary()->Sync();
-  }
-  return rewriter()->Sync() && predictor()->Sync();
-}
+bool Converter::Sync() { return rewriter()->Sync() && predictor()->Sync(); }
 
 bool Converter::Wait() {
   if (modules()->GetUserDictionary()) {

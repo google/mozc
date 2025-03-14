@@ -159,12 +159,6 @@ class DictionaryInterface {
   virtual void PopulateReverseLookupCache(absl::string_view str) const {}
   virtual void ClearReverseLookupCache() const {}
 
-  // Sync mutable dictionary data into local disk.
-  virtual bool Sync() { return true; }
-
-  // Reload dictionary data from local disk.
-  virtual bool Reload() { return true; }
-
  protected:
   // Do not allow instantiation
   DictionaryInterface() = default;
@@ -192,6 +186,9 @@ class UserDictionaryInterface : public DictionaryInterface {
 
   // Return true if the dictionary has at least one suppression entry.
   virtual bool HasSuppressedEntries() const = 0;
+
+  // Reload dictionary data from local disk.
+  virtual bool Reload() { return true; }
 };
 
 }  // namespace dictionary
