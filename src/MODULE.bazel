@@ -10,8 +10,6 @@ module(name = "mozc")
 # References
 #   * https://github.com/bazelbuild/bazel/issues/24426
 #   * https://github.com/bazelbuild/bazel-central-registry/pull/3320
-# Also we cannot switch to 20250127.0 until the protobuf team fixes the following issue.
-#   * https://github.com/protocolbuffers/protobuf/issues/20331
 bazel_dep(
     name = "abseil-cpp",
     version = "20240722.0.bcr.2",
@@ -28,7 +26,7 @@ bazel_dep(
 # protobuf: 29.3 2025-01-09
 # https://github.com/protocolbuffers/protobuf
 # We cannot switch to 30.x until the protobuf team fixes the following issue.
-#   * https://github.com/protocolbuffers/protobuf/issues/20331
+#   * https://github.com/protocolbuffers/protobuf/issues/20645
 bazel_dep(
     name = "protobuf",
     version = "29.3",
@@ -37,8 +35,6 @@ bazel_dep(
 
 # googletest: 1.15.2 2024-07-31
 # https://github.com/google/googletest
-# We cannot switch to 1.16.0 until the protobuf team fixes the following issue.
-#   * https://github.com/protocolbuffers/protobuf/issues/20331
 bazel_dep(
     name = "googletest",
     version = "1.15.2",
