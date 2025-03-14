@@ -141,15 +141,21 @@ new_local_repository = use_repo_rule(
     "new_local_repository",
 )
 
-# Japanese Usage Dictionary
+# Japanese Usage Dictionary (2025-01-25)
 bazel_dep(
     name = "ja_usage_dict",
     repo_name = "ja_usage_dict",
 )
-git_override(
+
+JA_USAGE_DICT_TAG = "2025-01-25"
+
+# archive_override is used instead of git_override because bazelisk fetch does not work with
+# git_repository used by git_override. See: https://github.com/bazelbuild/bazel/issues/5116
+archive_override(
     module_name = "ja_usage_dict",
-    remote = "https://github.com/hiroyuki-komatsu/japanese-usage-dictionary",
-    tag = "2025-01-25",
+    sha256 = "140f24f71f7d78d5eb5b93a9c079f44f23728dca5ab16bf857fe8a3fa1bf20ed",
+    strip_prefix = "japanese-usage-dictionary-%s" % JA_USAGE_DICT_TAG,
+    url = "https://github.com/hiroyuki-komatsu/japanese-usage-dictionary/archive/refs/tags/%s.zip" % JA_USAGE_DICT_TAG,
 )
 
 # Windows Implementation Library (WIL)
