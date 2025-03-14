@@ -451,7 +451,7 @@ FAILED:	もどりちのかた	戻り値の方	Conversion Expected	戻り値の�
 OK:	あちらがわ	あちら側	Conversion Expected	あちら側	2.31.5712
 OK:	こちらがわ	こちら側	Conversion Expected	こちら側	2.31.5712
 FAILED:	さんじゅっぷん	三拾分	Conversion Expected	三十分	2.31.5712
-FAILED:	ぷらちなでびっと	プラチナでビット	Conversion Expected	プラチナデビット	2.31.5712
+OK:	ぷらちなでびっと	プラチナデビット	Conversion Expected	プラチナデビット	2.31.5712
 OK:	あいこんかえるか	アイコン変えるか	Conversion Expected	アイコン変えるか	2.31.5712
 FAILED:	だいせいか	第せいか	Conversion Expected	大成果	2.31.5712
 FAILED:	たな	店	Conversion Expected	棚	2.31.5712
