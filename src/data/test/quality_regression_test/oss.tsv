@@ -447,3 +447,20 @@ oss_issue	いちまんえんさつ	一万円札	Conversion Expected
 oss_issue	いちまん	一万	Conversion Expected
 oss_issue	ていせいぶん	訂正分	Conversion Expected 9
 oss_issue	ていせいぶん	訂正文	Conversion Expected 9
+oss_issue	もどりちのかた	戻り値の型	Conversion Expected
+oss_issue	あちらがわ	あちら側	Conversion Expected
+oss_issue	こちらがわ	こちら側	Conversion Expected
+oss_issue	さんじゅっぷん	三十分	Conversion Expected
+oss_issue	ぷらちなでびっと	プラチナデビット	Conversion Expected
+oss_issue	あいこんかえるか	アイコン変えるか	Conversion Expected
+oss_issue	だいせいか	大成果	Conversion Expected
+oss_issue	たな	棚	Conversion Expected
+oss_issue	びよういんだい	美容院代	Conversion Expected
+oss_issue	きしょう	起床	Conversion Expected 9
+oss_issue	おとまり	お泊まり	Conversion Expected 3
+oss_issue	ゆうどかんすう	尤度函数	Conversion Expected
+oss_issue	さんけん	産繭	Conversion Expected 9
+oss_issue	おんらいんしょっぴんぐ	オンラインショッピング	Conversion Expected
+oss_issue	おやどだい	お宿代	Conversion Expected
+oss_issue	あしたはなにする	明日は何する	Conversion Expected
+oss_issue	かねはらって	金払って	Conversion Expected
