@@ -1,14 +1,1 @@
-# Currently there seems to be no way to customize startup option based on the
-# host platform.
-# https://github.com/bazelbuild/bazel/issues/22763
-# Thus having our own file here.
-# To specify this file, use the "-bazelrc" option as follows.
-#
-#   bazel --bazelrc=windows.bazelrc build //protocol:commands_proto \
-#         --config oss_windows
-
-startup  --windows_enable_symlinks
-
-build    --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
-build    --extra_toolchains=@local_config_cc//:cc-toolchain-x64_x86_windows-clang-cl
-build    --host_platform=//:host-windows-clang-cl
+# This file is deprecated and to be removed.

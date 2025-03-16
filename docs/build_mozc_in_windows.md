@@ -175,7 +175,7 @@ Additional requirements:
 After running `build_tools/update_deps.py` and `build_tools/build_qt.py`, run the following command instead of `build_mozc.py`:
 
 ```
-bazelisk --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
+bazelisk build --config oss_windows --config release_build package
 ```
 
 You have release build binaries in `bazel-bin\win32\installer\Mozc64.msi`.

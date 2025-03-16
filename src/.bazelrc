@@ -1,3 +1,6 @@
+## Startup options
+startup  --windows_enable_symlinks  # ignored on non-Windows platforms
+
 ## Target platforms
 common:linux      --config=linux_env --define TARGET=oss_linux
 common:oss_linux  --config=linux_env --define TARGET=oss_linux
@@ -24,6 +27,11 @@ build:dev_channel --define CHANNEL=dev
 build:release_build --compilation_mode=opt
 # Temporarily disable this definition to work around the build failure on Linux.
 # build:release_build --copt=-DABSL_MIN_LOG_LEVEL=100
+
+## Clang-cl toolchain for Windows
+build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
+build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_x86_windows-clang-cl
+build:windows_env --host_platform=//:host-windows-clang-cl
 
 ## Compiler options
 common:linux_env   --config=compiler_gcc_like
