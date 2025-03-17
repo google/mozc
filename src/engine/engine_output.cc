@@ -381,7 +381,7 @@ bool FillFooter(const commands::Category category,
               "control+fn+deleteで履歴から削除";
 #elif defined(OS_CHROMEOS)
           constexpr absl::string_view kDeleteInstruction =
-              "ctrl+alt+backspaceで履歴から削除";
+              "ctrl+search+backspaceで履歴から削除";
 #else   // !__APPLE__ && !OS_CHROMEOS
           constexpr absl::string_view kDeleteInstruction =
               "Ctrl+Delで履歴から削除";
