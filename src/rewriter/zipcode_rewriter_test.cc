@@ -85,22 +85,22 @@ bool HasZipcodeAndAddress(const Segments &segments,
 
 class ZipcodeRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
-  }
+  ZipcodeRewriterTest()
+      : pos_matcher_(mock_data_manager_.GetPosMatcherData()) {}
 
   ZipcodeRewriter CreateZipcodeRewriter() const {
     return ZipcodeRewriter(pos_matcher_);
   }
 
-  dictionary::PosMatcher pos_matcher_;
-
  private:
   const testing::MockDataManager mock_data_manager_;
+
+ protected:
+  const dictionary::PosMatcher pos_matcher_;
 };
 
 TEST_F(ZipcodeRewriterTest, BasicTest) {
-  ZipcodeRewriter zipcode_rewriter = CreateZipcodeRewriter();
+  const ZipcodeRewriter zipcode_rewriter = CreateZipcodeRewriter();
 
   const std::string kZipcode = "107-0052";
   const std::string kAddress = "東京都港区赤坂";

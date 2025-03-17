@@ -61,8 +61,11 @@ TEST(ModulesTest, Init) {
 TEST(ModulesTest, Preset) {
   Modules modules;
 
+  testing::MockDataManager mock_data_manager;
+
   // PosMatcher
-  auto pos_matcher = std::make_unique<dictionary::PosMatcher>();
+  auto pos_matcher = std::make_unique<dictionary::PosMatcher>(
+      mock_data_manager.GetPosMatcherData());
   const dictionary::PosMatcher *pos_matcher_ptr = pos_matcher.get();
   EXPECT_NE(pos_matcher_ptr, nullptr);
   modules.PresetPosMatcher(std::move(pos_matcher));

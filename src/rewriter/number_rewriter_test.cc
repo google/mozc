@@ -122,9 +122,10 @@ bool FindCandidateId(const Segment &segment, const absl::string_view value,
 
 class NumberRewriterTest : public testing::TestWithTempUserProfile {
  protected:
+  NumberRewriterTest() : pos_matcher_(mock_data_manager_.GetPosMatcherData()) {}
+
   void SetUp() override {
     config::CharacterFormManager::GetCharacterFormManager()->ClearHistory();
-    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }
 
   void TearDown() override {
@@ -135,8 +136,11 @@ class NumberRewriterTest : public testing::TestWithTempUserProfile {
     return std::make_unique<NumberRewriter>(mock_data_manager_);
   }
 
+ private:
   const testing::MockDataManager mock_data_manager_;
-  PosMatcher pos_matcher_;
+
+ protected:
+  const PosMatcher pos_matcher_;
   const ConversionRequest default_request_;
 };
 
@@ -217,7 +221,8 @@ TEST_F(NumberRewriterTest, RequestType) {
     candidate->value = "012";
     candidate->content_value = "012";
     const ConversionRequest request =
-        ConversionRequestBuilder().SetRequestType(test_data.request_type_)
+        ConversionRequestBuilder()
+            .SetRequestType(test_data.request_type_)
             .Build();
     EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), test_data.expected_candidate_number_);
@@ -917,14 +922,14 @@ TEST_F(NumberRewriterTest, DuplicateCandidateTest) {
   {
     request.set_mixed_conversion(true);
     const ConversionRequest convreq =
-      ConversionRequestBuilder().SetRequest(request).Build();
+        ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
     const ConversionRequest convreq =
-      ConversionRequestBuilder().SetRequest(request).Build();
+        ConversionRequestBuilder().SetRequest(request).Build();
     EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
   }
 }

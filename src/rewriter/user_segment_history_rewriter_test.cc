@@ -129,6 +129,10 @@ void AppendCandidateSuffixWithLid(Segment *segment, size_t index,
 
 class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
  protected:
+  UserSegmentHistoryRewriterTest()
+      : pos_matcher_(mock_data_manager_.GetPosMatcherData()),
+        pos_group_(mock_data_manager_.GetPosGroupData()) {}
+
   void SetUp() override {
     request_ = std::make_unique<commands::Request>();
     config_ = std::make_unique<config::Config>();
@@ -145,11 +149,6 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
     CharacterFormManager::GetCharacterFormManager()->ReloadConfig(*config_);
 
     Clock::SetClockForUnitTest(nullptr);
-
-    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
-    pos_group_ =
-        std::make_unique<PosGroup>(mock_data_manager_.GetPosGroupData());
-    ASSERT_TRUE(pos_group_.get() != nullptr);
   }
 
   void TearDown() override {
@@ -160,14 +159,14 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   const PosMatcher &pos_matcher() const { return pos_matcher_; }
-  const PosGroup &pos_group() const { return *pos_group_; }
+  const PosGroup &pos_group() const { return pos_group_; }
 
   NumberRewriter *CreateNumberRewriter() const {
     return new NumberRewriter(mock_data_manager_);
   }
 
   UserSegmentHistoryRewriter *CreateUserSegmentHistoryRewriter() const {
-    return new UserSegmentHistoryRewriter(pos_matcher_, *pos_group_);
+    return new UserSegmentHistoryRewriter(pos_matcher_, pos_group_);
   }
 
   void SetNumberForm(Config::CharacterForm form) {
@@ -196,8 +195,8 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
 
  private:
   const testing::MockDataManager mock_data_manager_;
-  PosMatcher pos_matcher_;
-  std::unique_ptr<const PosGroup> pos_group_;
+  const PosMatcher pos_matcher_;
+  const PosGroup pos_group_;
 };
 
 TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {

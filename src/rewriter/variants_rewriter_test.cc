@@ -61,10 +61,10 @@ using ::mozc::dictionary::PosMatcher;
 
 class VariantsRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    Reset();
-    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
-  }
+  VariantsRewriterTest()
+      : pos_matcher_(mock_data_manager_.GetPosMatcherData()) {}
+
+  void SetUp() override { Reset(); }
 
   void TearDown() override { Reset(); }
 
@@ -90,10 +90,11 @@ class VariantsRewriterTest : public testing::TestWithTempUserProfile {
     return new VariantsRewriter(pos_matcher_);
   }
 
-  PosMatcher pos_matcher_;
-
  private:
   const testing::MockDataManager mock_data_manager_;
+
+ protected:
+  const PosMatcher pos_matcher_;
 };
 
 TEST_F(VariantsRewriterTest, RewriteTest) {

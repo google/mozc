@@ -97,15 +97,12 @@ class TestDataManager : public testing::MockDataManager {
 
 class UsageRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    config::ConfigHandler::GetDefaultConfig(&config_);
+  UsageRewriterTest()
+      : pos_matcher_(data_manager_.GetPosMatcherData()),
+        user_dictionary_(UserPos::CreateFromDataManager(data_manager_),
+                         pos_matcher_) {}
 
-    data_manager_ = std::make_unique<testing::MockDataManager>();
-    test_data_manager_ = std::make_unique<TestDataManager>();
-    pos_matcher_.Set(data_manager_->GetPosMatcherData());
-    user_dictionary_ = std::make_unique<UserDictionary>(
-        UserPos::CreateFromDataManager(*data_manager_), pos_matcher_);
-  }
+  void SetUp() override { config::ConfigHandler::GetDefaultConfig(&config_); }
 
   void TearDown() override {
     // just in case, reset the config
@@ -113,11 +110,11 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   UsageRewriter *CreateUsageRewriter() const {
-    return new UsageRewriter(*data_manager_, *user_dictionary_);
+    return new UsageRewriter(data_manager_, user_dictionary_);
   }
 
   UsageRewriter *CreateUsageRewriterWithTestDataManager() const {
-    return new UsageRewriter(*test_data_manager_, *user_dictionary_);
+    return new UsageRewriter(test_data_manager_, user_dictionary_);
   }
 
   static ConversionRequest ConvReq(const config::Config &config,
@@ -128,21 +125,21 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
         .Build();
   }
 
+ private:
+  const testing::MockDataManager data_manager_;
+
+ protected:
   commands::Request request_;
   config::Config config_;
 
-  std::unique_ptr<UserDictionary> user_dictionary_;
-  std::unique_ptr<testing::MockDataManager> data_manager_;
-  std::unique_ptr<TestDataManager> test_data_manager_;
+  TestDataManager test_data_manager_;
   dictionary::PosMatcher pos_matcher_;
+  UserDictionary user_dictionary_;
 };
 
 TEST_F(UsageRewriterTest, ConstructorTest) {
-  EXPECT_CALL(*test_data_manager_, GetUsageRewriterData(_, _, _, _, _))
+  EXPECT_CALL(test_data_manager_, GetUsageRewriterData(_, _, _, _, _))
       .WillOnce(SetArgPointee<4>(""));
-  pos_matcher_.Set(test_data_manager_->GetPosMatcherData());
-  user_dictionary_ = std::make_unique<UserDictionary>(
-      UserPos::CreateFromDataManager(*test_data_manager_), pos_matcher_);
 
   std::unique_ptr<UsageRewriter> rewriter(
       CreateUsageRewriterWithTestDataManager());
@@ -371,7 +368,7 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
     entry->set_comment("アルパカコメント");
 
-    user_dictionary_->Load(storage.GetProto());
+    user_dictionary_.Load(storage.GetProto());
   }
 
   // Emulates the conversion of key="うま".

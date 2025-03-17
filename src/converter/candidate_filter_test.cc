@@ -92,12 +92,14 @@ std::string RequestParamToString(
 
 class CandidateFilterTest : public ::testing::Test {
  protected:
+  CandidateFilterTest()
+      : pos_matcher_(mock_data_manager_.GetPosMatcherData()),
+        suggestion_filter_(SuggestionFilter::CreateOrDie(
+            mock_data_manager_.GetSuggestionFilterData())) {}
+
   void SetUp() override {
     candidate_freelist_ = std::make_unique<FreeList<Segment::Candidate>>(1024);
     node_freelist_ = std::make_unique<FreeList<Node>>(1024);
-    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
-    suggestion_filter_ = SuggestionFilter::CreateOrDie(
-        mock_data_manager_.GetSuggestionFilterData());
   }
 
   void TearDown() override {
@@ -143,14 +145,16 @@ class CandidateFilterTest : public ::testing::Test {
                                suggestion_filter_);
   }
 
-  std::unique_ptr<FreeList<Segment::Candidate>> candidate_freelist_;
-  std::unique_ptr<FreeList<Node>> node_freelist_;
-  PosMatcher pos_matcher_;
-  MockUserDictionary mock_user_dictionary_;
-  SuggestionFilter suggestion_filter_;
-
  private:
   testing::MockDataManager mock_data_manager_;
+
+ protected:
+  const PosMatcher pos_matcher_;
+  MockUserDictionary mock_user_dictionary_;
+  const SuggestionFilter suggestion_filter_;
+
+  std::unique_ptr<FreeList<Segment::Candidate>> candidate_freelist_;
+  std::unique_ptr<FreeList<Node>> node_freelist_;
 };
 
 class CandidateFilterTestWithParam

@@ -94,13 +94,11 @@ namespace mozc::dictionary {
 // |                                           |
 class PosMatcher {
  public:
-  PosMatcher() = default;
+  PosMatcher() = delete;
   explicit PosMatcher(absl::Span<const uint16_t> data) : data_(data) {}
 
   PosMatcher(const PosMatcher &) = default;
   PosMatcher &operator=(const PosMatcher &) = default;
-
-  void Set(absl::Span<const uint16_t> data) { data_ = data; }
 
  private:
   // Used in pos_matcher_impl.inc.

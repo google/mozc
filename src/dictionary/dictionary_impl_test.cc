@@ -58,29 +58,30 @@ using UserEntry = user_dictionary::UserDictionary::Entry;
 
 struct DictionaryData {
   std::unique_ptr<UserDictionaryInterface> user_dictionary;
-  PosMatcher pos_matcher;
+  std::unique_ptr<PosMatcher> pos_matcher;
   std::unique_ptr<DictionaryInterface> dictionary;
 };
 
 std::unique_ptr<DictionaryData> CreateDictionaryData() {
   auto ret = std::make_unique<DictionaryData>();
   testing::MockDataManager data_manager;
-  ret->pos_matcher.Set(data_manager.GetPosMatcherData());
+  ret->pos_matcher =
+      std::make_unique<PosMatcher>(data_manager.GetPosMatcherData());
   absl::string_view dictionary_data = data_manager.GetSystemDictionaryData();
   std::unique_ptr<SystemDictionary> sys_dict =
       SystemDictionary::Builder(dictionary_data.data(), dictionary_data.size())
           .Build()
           .value();
-  auto val_dict = std::make_unique<ValueDictionary>(ret->pos_matcher,
+  auto val_dict = std::make_unique<ValueDictionary>(*ret->pos_matcher,
                                                     &sys_dict->value_trie());
 
   std::unique_ptr<UserPos> user_pos =
       UserPos::CreateFromDataManager(data_manager);
   ret->user_dictionary = std::make_unique<dictionary::UserDictionary>(
-      std::move(user_pos), ret->pos_matcher);
-  ret->dictionary =
-      std::make_unique<DictionaryImpl>(std::move(sys_dict), std::move(val_dict),
-                                       *ret->user_dictionary, ret->pos_matcher);
+      std::move(user_pos), *ret->pos_matcher);
+  ret->dictionary = std::make_unique<DictionaryImpl>(
+      std::move(sys_dict), std::move(val_dict), *ret->user_dictionary,
+      *ret->pos_matcher);
   return ret;
 }
 
@@ -141,14 +142,14 @@ class DictionaryImplTest : public ::testing::Test {
    public:
     explicit CheckZipCodeExistenceCallback(absl::string_view key,
                                            absl::string_view value,
-                                           const PosMatcher *pos_matcher)
+                                           const PosMatcher &pos_matcher)
         : key_(key), value_(value), pos_matcher_(pos_matcher), found_(false) {}
 
     ResultType OnToken(absl::string_view /* key */,
                        absl::string_view /* actual_key */,
                        const Token &token) override {
       if (token.key == key_ && token.value == value_ &&
-          pos_matcher_->IsZipcode(token.lid)) {
+          pos_matcher_.IsZipcode(token.lid)) {
         found_ = true;
         return TRAVERSE_DONE;
       }
@@ -159,7 +160,7 @@ class DictionaryImplTest : public ::testing::Test {
 
    private:
     const absl::string_view key_, value_;
-    const PosMatcher *pos_matcher_;
+    const PosMatcher &pos_matcher_;
     bool found_;
   };
 
@@ -298,7 +299,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   config_.set_use_zip_code_conversion(true);
   const ConversionRequest convreq1 = ConvReq(config_);
   for (size_t i = 0; i < std::size(kTestPair); ++i) {
-    CheckZipCodeExistenceCallback callback(kKey, kValue, &data->pos_matcher);
+    CheckZipCodeExistenceCallback callback(kKey, kValue, *data->pos_matcher);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq1, &callback);
     EXPECT_TRUE(callback.found());
   }
@@ -307,7 +308,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   config_.set_use_zip_code_conversion(false);
   const ConversionRequest convreq2 = ConvReq(config_);
   for (size_t i = 0; i < std::size(kTestPair); ++i) {
-    CheckZipCodeExistenceCallback callback(kKey, kValue, &data->pos_matcher);
+    CheckZipCodeExistenceCallback callback(kKey, kValue, *data->pos_matcher);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq2, &callback);
     EXPECT_FALSE(callback.found());
   }

@@ -61,8 +61,10 @@ using ::testing::Return;
 
 class ValueDictionaryTest : public ::testing::Test {
  protected:
+  ValueDictionaryTest()
+      : pos_matcher_(mock_data_manager_.GetPosMatcherData()) {}
+
   void SetUp() override {
-    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
     louds_trie_builder_ = std::make_unique<LoudsTrieBuilder>();
     louds_trie_ = std::make_unique<LoudsTrie>();
   }
@@ -92,8 +94,11 @@ class ValueDictionaryTest : public ::testing::Test {
     token->attributes = Token::NONE;
   }
 
+ private:
   const testing::MockDataManager mock_data_manager_;
-  PosMatcher pos_matcher_;
+
+ protected:
+  const PosMatcher pos_matcher_;
   ConversionRequest convreq_;
   std::unique_ptr<LoudsTrieBuilder> louds_trie_builder_;
   std::unique_ptr<LoudsTrie> louds_trie_;

@@ -50,14 +50,11 @@ namespace mozc {
 using dictionary::PosMatcher;
 
 class SingleKanjiRewriterTest : public testing::TestWithTempUserProfile {
- protected:
-  SingleKanjiRewriterTest() {
-    data_manager_ = std::make_unique<testing::MockDataManager>();
-    pos_matcher_.Set(data_manager_->GetPosMatcherData());
-  }
+ public:
+  SingleKanjiRewriterTest() : pos_matcher_(data_manager_.GetPosMatcherData()) {}
 
   SingleKanjiRewriter *CreateSingleKanjiRewriter() const {
-    return new SingleKanjiRewriter(*data_manager_);
+    return new SingleKanjiRewriter(data_manager_);
   }
 
   const PosMatcher &pos_matcher() { return pos_matcher_; }
@@ -92,9 +89,9 @@ class SingleKanjiRewriterTest : public testing::TestWithTempUserProfile {
         .Build();
   }
 
+  const testing::MockDataManager data_manager_;
   const ConversionRequest default_request_;
-  std::unique_ptr<testing::MockDataManager> data_manager_;
-  PosMatcher pos_matcher_;
+  const PosMatcher pos_matcher_;
 };
 
 TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
@@ -149,7 +146,7 @@ TEST_F(SingleKanjiRewriterTest, MobileEnvironmentTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
-  SingleKanjiRewriter rewriter(*data_manager_);
+  const SingleKanjiRewriter rewriter(data_manager_);
   Segments segments;
   Segment *segment1 = segments.add_segment();
 
@@ -200,7 +197,7 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
-  SingleKanjiRewriter rewriter(*data_manager_);
+  const SingleKanjiRewriter rewriter(data_manager_);
   Segments segments;
   Segment *segment = segments.add_segment();
 
@@ -225,7 +222,7 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
-  SingleKanjiRewriter rewriter(*data_manager_);
+  const SingleKanjiRewriter rewriter(data_manager_);
   Segments segments;
   Segment *segment = segments.add_segment();
 
@@ -246,7 +243,7 @@ TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
-  SingleKanjiRewriter rewriter(*data_manager_);
+  const SingleKanjiRewriter rewriter(data_manager_);
 
   {
     Segments segments;
@@ -285,7 +282,7 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
 }
 
 TEST_F(SingleKanjiRewriterTest, NoVariationTest) {
-  SingleKanjiRewriter rewriter(*data_manager_);
+  const SingleKanjiRewriter rewriter(data_manager_);
 
   Segments segments;
   InitSegments("かみ", "神", &segments);  // U+795E
@@ -299,11 +296,11 @@ TEST_F(SingleKanjiRewriterTest, NoVariationTest) {
   EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_TRUE(rewriter.Rewrite(svs_convreq, &segments));
   EXPECT_FALSE(Contains(segments, "\u795E\uFE00"));  // 神︀ SVS character.
-  EXPECT_TRUE(Contains(segments, "\uFA19"));  // 神 CJK compat ideograph.
+  EXPECT_TRUE(Contains(segments, "\uFA19"));         // 神 CJK compat ideograph.
 }
 
 TEST_F(SingleKanjiRewriterTest, SvsVariationTest) {
-  SingleKanjiRewriter rewriter(*data_manager_);
+  const SingleKanjiRewriter rewriter(data_manager_);
 
   Segments segments;
   InitSegments("かみ", "神", &segments);  // U+795E
@@ -321,7 +318,7 @@ TEST_F(SingleKanjiRewriterTest, SvsVariationTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, EmptySegments) {
-  SingleKanjiRewriter rewriter(*data_manager_);
+  const SingleKanjiRewriter rewriter(data_manager_);
 
   Segments segments;
 
@@ -330,7 +327,7 @@ TEST_F(SingleKanjiRewriterTest, EmptySegments) {
 }
 
 TEST_F(SingleKanjiRewriterTest, EmptyCandidates) {
-  SingleKanjiRewriter rewriter(*data_manager_);
+  const SingleKanjiRewriter rewriter(data_manager_);
 
   Segments segments;
   Segment *segment = segments.add_segment();
