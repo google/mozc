@@ -25,8 +25,7 @@ build:dev_channel --define CHANNEL=dev
 
 ## Release build
 build:release_build --compilation_mode=opt
-# Temporarily disable this definition to work around the build failure on Linux.
-# build:release_build --copt=-DABSL_MIN_LOG_LEVEL=100
+build:release_build --copt=-DABSL_MIN_LOG_LEVEL=100
 
 ## Clang-cl toolchain for Windows
 build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
