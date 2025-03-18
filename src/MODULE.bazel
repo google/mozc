@@ -1,5 +1,3 @@
-# MODULE.bazel is the new dependency configuration system (Bzlmod), but not used yet by default.
-# To use Bzlmod, you need to specify --enable_bzlmod to the Bazel command or modify .bazelrc.
 module(name = "mozc")
 
 # absl-cpp: 2025-02-04
