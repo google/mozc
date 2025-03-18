@@ -123,7 +123,7 @@ jobs:
         env:
           ANDROID_NDK_HOME: ""
         run: |
-          bazelisk --bazelrc=windows.bazelrc build --config oss_windows --config release_build package
+          bazelisk build --config oss_windows --config release_build package
 
       - name: upload Mozc64_bazel.msi
         uses: actions/upload-artifact@v4
