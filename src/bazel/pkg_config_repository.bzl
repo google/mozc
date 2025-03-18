@@ -90,6 +90,41 @@ def _exec_pkg_config(repo_ctx, flags):
     uniq_items = sorted({key: None for key in items}.keys())
     return uniq_items
 
+def _get_possible_pc_files(repo_ctx):
+    """
+    Get all possible .pc file paths for the given packages in pkg-config search
+    paths.
+    """
+    binary = repo_ctx.which("pkg-config")
+    if not binary:
+        return []
+
+    pc_path_sep = ":"
+    dir_sep = "/"
+    if repo_ctx.os.name.lower().startswith("win"):
+        pc_path_sep = ";"
+        dir_sep = "\\"
+
+    pc_file_search_paths = []
+
+    pc_file_search_paths_env = repo_ctx.getenv("PKG_CONFIG_PATH")
+    if pc_file_search_paths_env:
+        pc_file_search_paths.extend(pc_file_search_paths_env.split(pc_path_sep))
+
+    result = repo_ctx.execute([binary, "--variable=pc_path", "pkg-config"])
+    if result.return_code == 0:
+        pc_path = result.stdout.strip()
+        pc_file_search_paths.extend(pc_path.split(pc_path_sep))
+
+    pc_files = []
+    for path in pc_file_search_paths:
+        if not path:
+            continue
+        for package in repo_ctx.attr.packages:
+            pc_file = path + dir_sep + package + ".pc"
+            pc_files.append(pc_file)
+    return pc_files
+
 def _make_strlist(list):
     return "\"" + "\",\n        \"".join(list) + "\""
 
@@ -100,6 +135,14 @@ def _symlinks(repo_ctx, paths):
         repo_ctx.symlink("/" + path, path)
 
 def _pkg_config_repository_impl(repo_ctx):
+    # Register all possible .pc files for watching to trigger repository
+    # reevaluation.
+    # This includes files that don't exist yet but might be created later
+    # (e.g., when a new package is installed).
+    pc_files = _get_possible_pc_files(repo_ctx)
+    for pc_file in pc_files:
+        repo_ctx.watch(pc_file)
+
     includes = _exec_pkg_config(repo_ctx, ["--cflags-only-I"])
 
     # If includes is empty, pkg-config will be re-executed with
