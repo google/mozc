@@ -776,8 +776,6 @@ TEST_F(SessionHandlerTest, ReloadFromMinimalEngine) {
   absl::string_view data_version = "ReloadFromMinimalEngine";
   EXPECT_CALL(*data_manager, GetDataVersion())
       .WillRepeatedly(Return(data_version));
-  auto modules = std::make_unique<engine::Modules>();
-  CHECK_OK(modules->Init(std::move(data_manager)));
 
   SessionHandler handler(std::move(engine));
   EXPECT_NE(handler.GetDataVersion(), mock_version_);

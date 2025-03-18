@@ -61,14 +61,15 @@ size_t CommandCandidatesSize(const Segment &segment) {
 class RewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    modules_ = std::make_unique<engine::Modules>();
-    CHECK_OK(modules_->Init(std::make_unique<testing::MockDataManager>()));
+    modules_ =
+        engine::Modules::Create(std::make_unique<testing::MockDataManager>())
+            .value();
     rewriter_ = std::make_unique<Rewriter>(*modules_);
   }
 
   const RewriterInterface *GetRewriter() const { return rewriter_.get(); }
 
-  std::unique_ptr<engine::Modules> modules_;
+  std::unique_ptr<const engine::Modules> modules_;
   std::unique_ptr<Rewriter> rewriter_;
 };
 

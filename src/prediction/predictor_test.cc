@@ -229,12 +229,14 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   MockConverter converter;
-  engine::Modules modules;
-  modules.PresetDictionary(std::make_unique<MockDictionary>());
-  CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
+  std::unique_ptr<engine::Modules> modules =
+      engine::ModulesPresetBuilder()
+          .PresetDictionary(std::make_unique<MockDictionary>())
+          .Build(std::make_unique<testing::MockDataManager>())
+          .value();
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<UserHistoryPredictor>(modules, true), converter);
+      std::make_unique<UserHistoryPredictor>(*modules, true), converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();

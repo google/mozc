@@ -175,19 +175,16 @@ std::unique_ptr<DataLoader::Response> DataLoader::BuildResponse(
     }
   }
 
-  auto modules = std::make_unique<engine::Modules>();
-  {
-    const absl::Status status = modules->Init(std::move(data_manager));
-    if (!status.ok()) {
-      LOG(ERROR) << "Failed to load modules [" << status << "] "
-                 << request_data;
-      result->response.set_status(EngineReloadResponse::DATA_BROKEN);
-      return result;
-    }
+  absl::StatusOr<std::unique_ptr<engine::Modules>> modules =
+      engine::Modules::Create(std::move(data_manager));
+  if (!modules.status().ok()) {
+    LOG(ERROR) << "Failed to load modules [" << modules << "] " << request_data;
+    result->response.set_status(EngineReloadResponse::DATA_BROKEN);
+    return result;
   }
 
   result->response.set_status(EngineReloadResponse::RELOAD_READY);
-  result->modules = std::move(modules);
+  result->modules = std::move(modules.value());
 
   return result;
 }

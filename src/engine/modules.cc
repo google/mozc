@@ -68,6 +68,12 @@ using ::mozc::dictionary::ValueDictionary;
 namespace mozc {
 namespace engine {
 
+// static
+absl::StatusOr<std::unique_ptr<Modules>> Modules::Create(
+    std::unique_ptr<const DataManager> data_manager) {
+  return ModulesPresetBuilder().Build(std::move(data_manager));
+}
+
 absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
 #define RETURN_IF_NULL(ptr)                                                \
   do {                                                                     \
@@ -75,7 +81,6 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
       return absl::ResourceExhaustedError("modules.cc: " #ptr " is null"); \
   } while (false)
 
-  DCHECK(!initialized_) << "Modules already initialized";
   DCHECK(data_manager) << "data_manager is null";
   RETURN_IF_NULL(data_manager);
   data_manager_ = std::move(data_manager);
@@ -168,41 +173,69 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   zero_query_number_dict_.Init(zero_query_number_token_array_data,
                                zero_query_number_string_array_data);
 
-  initialized_ = true;
+  // All modules must not be non-null.
+  RETURN_IF_NULL(pos_matcher_);
+  RETURN_IF_NULL(segmenter_);
+  RETURN_IF_NULL(user_dictionary_);
+  RETURN_IF_NULL(suffix_dictionary_);
+  RETURN_IF_NULL(pos_group_);
+  RETURN_IF_NULL(single_kanji_prediction_aggregator_);
+
   return absl::Status();
 #undef RETURN_IF_NULL
 }
 
-void Modules::PresetPosMatcher(
+// cannot use std::make_unique as the constractor is not public.
+ModulesPresetBuilder::ModulesPresetBuilder() : modules_(new Modules) {}
+
+ModulesPresetBuilder& ModulesPresetBuilder::PresetPosMatcher(
     std::unique_ptr<const dictionary::PosMatcher> pos_matcher) {
-  DCHECK(!initialized_) << "Module is already initialized";
-  pos_matcher_ = std::move(pos_matcher);
+  DCHECK(modules_) << "Module is already initialized";
+  modules_->pos_matcher_ = std::move(pos_matcher);
+  return *this;
 }
 
-void Modules::PresetUserDictionary(
+ModulesPresetBuilder& ModulesPresetBuilder::PresetUserDictionary(
     std::unique_ptr<dictionary::UserDictionaryInterface> user_dictionary) {
-  DCHECK(!initialized_) << "Module is already initialized";
-  user_dictionary_ = std::move(user_dictionary);
+  DCHECK(modules_) << "Module is already initialized";
+  modules_->user_dictionary_ = std::move(user_dictionary);
+  return *this;
 }
 
-void Modules::PresetSuffixDictionary(
+ModulesPresetBuilder& ModulesPresetBuilder::PresetSuffixDictionary(
     std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary) {
-  DCHECK(!initialized_) << "Module is already initialized";
-  suffix_dictionary_ = std::move(suffix_dictionary);
+  DCHECK(modules_) << "Module is already initialized";
+  modules_->suffix_dictionary_ = std::move(suffix_dictionary);
+  return *this;
 }
 
-void Modules::PresetDictionary(
+ModulesPresetBuilder& ModulesPresetBuilder::PresetDictionary(
     std::unique_ptr<dictionary::DictionaryInterface> dictionary) {
-  DCHECK(!initialized_) << "Module is already initialized";
-  dictionary_ = std::move(dictionary);
+  DCHECK(modules_) << "Module is already initialized";
+  modules_->dictionary_ = std::move(dictionary);
+  return *this;
 }
 
-void Modules::PresetSingleKanjiPredictionAggregator(
+ModulesPresetBuilder&
+ModulesPresetBuilder::PresetSingleKanjiPredictionAggregator(
     std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
         single_kanji_prediction_aggregator) {
-  DCHECK(!initialized_) << "Module is already initialized";
-  single_kanji_prediction_aggregator_ =
+  DCHECK(modules_) << "Module is already initialized";
+  modules_->single_kanji_prediction_aggregator_ =
       std::move(single_kanji_prediction_aggregator);
+  return *this;
+}
+
+absl::StatusOr<std::unique_ptr<Modules>> ModulesPresetBuilder::Build(
+    std::unique_ptr<const DataManager> data_manager) {
+  if (!modules_) {
+    return absl::UnavailableError("Build() must not be called twice");
+  }
+  absl::Status status = modules_->Init(std::move(data_manager));
+  if (!status.ok()) {
+    return status;
+  }
+  return std::move(modules_);
 }
 
 }  // namespace engine

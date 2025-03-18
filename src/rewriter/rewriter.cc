@@ -129,9 +129,9 @@ namespace mozc {
 
 Rewriter::Rewriter(const engine::Modules &modules) {
   const DataManager &data_manager = modules.GetDataManager();
-  const dictionary::DictionaryInterface &dictionary = *modules.GetDictionary();
-  const dictionary::PosMatcher &pos_matcher = *modules.GetPosMatcher();
-  const dictionary::PosGroup &pos_group = *modules.GetPosGroup();
+  const dictionary::DictionaryInterface &dictionary = modules.GetDictionary();
+  const dictionary::PosMatcher &pos_matcher = modules.GetPosMatcher();
+  const dictionary::PosGroup &pos_group = modules.GetPosGroup();
 
 #ifdef MOZC_USER_DICTIONARY_REWRITER
   AddRewriter(std::make_unique<UserDictionaryRewriter>());
@@ -177,8 +177,7 @@ Rewriter::Rewriter(const engine::Modules &modules) {
   AddRewriter(std::make_unique<UsageRewriter>(data_manager, dictionary));
 #endif  // MOZC_USAGE_REWRITER
 
-  AddRewriter(
-      std::make_unique<VersionRewriter>(data_manager.GetDataVersion()));
+  AddRewriter(std::make_unique<VersionRewriter>(data_manager.GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
   AddRewriter(std::make_unique<T13nPromotionRewriter>());
   AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(data_manager));

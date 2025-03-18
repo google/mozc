@@ -76,12 +76,12 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
     std::unique_ptr<const DataManager> data_manager, bool is_mobile) {
-  auto modules = std::make_unique<engine::Modules>();
-  absl::Status modules_status = modules->Init(std::move(data_manager));
+  absl::StatusOr<std::unique_ptr<engine::Modules>> modules_status =
+      engine::Modules::Create(std::move(data_manager));
   if (!modules_status.ok()) {
-    return modules_status;
+    return modules_status.status();
   }
-  return CreateEngine(std::move(modules), is_mobile);
+  return CreateEngine(std::move(modules_status.value()), is_mobile);
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(

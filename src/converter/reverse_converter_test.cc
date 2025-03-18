@@ -47,9 +47,10 @@
 namespace mozc {
 
 TEST(ReverseConverterTest, ReverseConvert) {
-  engine::Modules modules;
-  CHECK_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
-  const ImmutableConverter immutable_converter(modules);
+  std::unique_ptr<const engine::Modules> modules =
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>())
+          .value();
+  const ImmutableConverter immutable_converter(*modules);
   const converter::ReverseConverter reverse_converter(immutable_converter);
 
   constexpr absl::string_view kHonKanji = "本";

@@ -84,27 +84,29 @@ class MockDataAndImmutableConverter {
   // first argument dictionary but doesn't the second because the same
   // dictionary may be passed to the arguments.
   MockDataAndImmutableConverter() {
-    CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
-
-    immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
+    modules_ =
+        engine::Modules::Create(std::make_unique<testing::MockDataManager>())
+            .value();
+    immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
     CHECK(immutable_converter_);
   }
 
   MockDataAndImmutableConverter(
       std::unique_ptr<DictionaryInterface> dictionary,
       std::unique_ptr<DictionaryInterface> suffix_dictionary) {
-    modules_.PresetDictionary(std::move(dictionary));
-    modules_.PresetSuffixDictionary(std::move(suffix_dictionary));
-    CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
-
-    immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
+    modules_ = engine::ModulesPresetBuilder()
+                   .PresetDictionary(std::move(dictionary))
+                   .PresetSuffixDictionary(std::move(suffix_dictionary))
+                   .Build(std::make_unique<testing::MockDataManager>())
+                   .value();
+    immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
     CHECK(immutable_converter_);
   }
 
   ImmutableConverter *GetConverter() { return immutable_converter_.get(); }
 
  private:
-  engine::Modules modules_;
+  std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<ImmutableConverter> immutable_converter_;
 };
 

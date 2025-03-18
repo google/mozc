@@ -322,8 +322,9 @@ class ConverterTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<Converter> CreateConverter(
       std::unique_ptr<RewriterInterface> rewriter,
       PredictorType predictor_type) {
-    auto modules = std::make_unique<engine::Modules>();
-    CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
+    std::unique_ptr<engine::Modules> modules =
+        engine::Modules::Create(std::make_unique<testing::MockDataManager>())
+            .value();
     return CreateConverter(std::move(modules), std::move(rewriter),
                            predictor_type);
   }
@@ -354,11 +355,12 @@ class ConverterTest : public testing::TestWithTempUserProfile {
       user_dictionary->Load(storage);
     }
 
-    auto modules = std::make_unique<engine::Modules>();
-    modules->PresetPosMatcher(std::move(pos_matcher));
-    modules->PresetUserDictionary(std::move(user_dictionary));
-
-    CHECK_OK(modules->Init(std::move(data_manager)));
+    std::unique_ptr<engine::Modules> modules =
+        engine::ModulesPresetBuilder()
+            .PresetPosMatcher(std::move(pos_matcher))
+            .PresetUserDictionary(std::move(user_dictionary))
+            .Build(std::move(data_manager))
+            .value();
 
     return CreateConverter(std::move(modules), std::make_unique<StubRewriter>(),
                            predictor_type);
@@ -705,10 +707,10 @@ TEST_F(ConverterTest, Regression3437022) {
     entry->set_key(kKey1 + kKey2);
     entry->set_value(kValue1 + kValue2);
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
-    engine->GetModulesForTesting()->GetUserDictionary()->Load(storage);
+    engine->GetModulesForTesting()->GetUserDictionary().Load(storage);
     EXPECT_TRUE(engine->GetModulesForTesting()
                     ->GetUserDictionary()
-                    ->HasSuppressedEntries());
+                    .HasSuppressedEntries());
   }
 
   EXPECT_TRUE(converter->StartConversion(
@@ -1064,9 +1066,11 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   EXPECT_CALL(*mock_user_dictionary, LookupPrefix(StrEq("てすとの"), _, _))
       .WillRepeatedly(InvokeCallbackWithUserDictionaryToken{"てすと", "<>!?"});
 
-  auto modules = std::make_unique<engine::Modules>();
-  modules->PresetUserDictionary(std::move(mock_user_dictionary));
-  CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
+  std::unique_ptr<engine::Modules> modules =
+      engine::ModulesPresetBuilder()
+          .PresetUserDictionary(std::move(mock_user_dictionary))
+          .Build(std::make_unique<testing::MockDataManager>())
+          .value();
 
   Converter converter(
       std::move(modules),
@@ -1159,8 +1163,8 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
     entry->set_key("tobefiltered");
     entry->set_value("ToBeFiltered");
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
-    modules->GetUserDictionary()->Load(storage);
-    EXPECT_TRUE(modules->GetUserDictionary()->HasSuppressedEntries());
+    modules->GetUserDictionary().Load(storage);
+    EXPECT_TRUE(modules->GetUserDictionary().HasSuppressedEntries());
   }
 
   // Convert
@@ -1778,8 +1782,9 @@ TEST_F(ConverterTest, RevertConversion) {
   EXPECT_CALL(*mock_predictor, Revert(_)).Times(1);
   EXPECT_CALL(*mock_rewriter, Revert(_)).Times(1);
 
-  auto modules = std::make_unique<engine::Modules>();
-  CHECK_OK(modules->Init(std::make_unique<testing::MockDataManager>()));
+  std::unique_ptr<engine::Modules> modules =
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>())
+          .value();
 
   std::unique_ptr<Converter> converter = std::make_unique<Converter>(
       std::move(modules),

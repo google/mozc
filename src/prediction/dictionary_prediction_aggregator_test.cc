@@ -390,25 +390,26 @@ class MockDataAndAggregator {
   // Note that |suffix_dictionary| is owned by Modules.
   void Init(std::unique_ptr<DictionaryInterface> suffix_dictionary = nullptr) {
     auto dictionary = std::make_unique<MockDictionary>();
+    // TODO(taku): avoid sharing the pointer owned by std::unique_ptr.
     mock_dictionary_ = dictionary.get();
-    modules_.PresetDictionary(std::move(dictionary));
 
     auto data_manager = std::make_unique<testing::MockDataManager>();
 
     auto kanji_aggregator =
         std::make_unique<MockSingleKanjiPredictionAggregator>(*data_manager);
+    // TODO(taku): avoid sharing the pointer owned by std::unique_ptr.
     single_kanji_prediction_aggregator_ = kanji_aggregator.get();
-    modules_.PresetSingleKanjiPredictionAggregator(std::move(kanji_aggregator));
 
-    if (suffix_dictionary) {
-      modules_.PresetSuffixDictionary(std::move(suffix_dictionary));
-    }
-
-    CHECK_OK(modules_.Init(std::move(data_manager)));
-    CHECK_NE(modules_.GetSuffixDictionary(), nullptr);
+    modules_ =
+        engine::ModulesPresetBuilder()
+            .PresetDictionary(std::move(dictionary))
+            .PresetSingleKanjiPredictionAggregator(std::move(kanji_aggregator))
+            .PresetSuffixDictionary(std::move(suffix_dictionary))  // nullable
+            .Build(std::move(data_manager))
+            .value();
 
     aggregator_ = std::make_unique<DictionaryPredictionAggregatorTestPeer>(
-        converter_, mock_immutable_converter_, modules_);
+        converter_, mock_immutable_converter_, *modules_);
   }
 
   MockDictionary *mutable_dictionary() { return mock_dictionary_; }
@@ -420,19 +421,19 @@ class MockDataAndAggregator {
   mutable_single_kanji_prediction_aggregator() {
     return single_kanji_prediction_aggregator_;
   }
-  const PosMatcher &pos_matcher() const { return *modules_.GetPosMatcher(); }
+  const PosMatcher &pos_matcher() const { return modules_->GetPosMatcher(); }
   const DictionaryPredictionAggregatorTestPeer &aggregator() {
     return *aggregator_;
   }
   void set_supplemental_model(
       engine::SupplementalModelInterface *supplemental_model) {
-    modules_.SetSupplementalModel(supplemental_model);
+    modules_->SetSupplementalModel(supplemental_model);
   }
 
  private:
   MockConverter converter_;
   MockImmutableConverter mock_immutable_converter_;
-  engine::Modules modules_;
+  std::unique_ptr<engine::Modules> modules_;
 
   MockDictionary *mock_dictionary_;
   MockSingleKanjiPredictionAggregator *single_kanji_prediction_aggregator_;

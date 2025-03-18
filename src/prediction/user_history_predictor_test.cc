@@ -149,8 +149,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     return predictor;
   }
 
-  UserDictionaryInterface *GetUserDictionary() {
-    return data_and_predictor_->modules.GetUserDictionary();
+  UserDictionaryInterface &GetUserDictionary() {
+    return data_and_predictor_->modules->GetUserDictionary();
   }
 
   bool IsSuggested(UserHistoryPredictor *predictor, const absl::string_view key,
@@ -447,7 +447,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   void SetSupplementalModel(
       engine::SupplementalModelInterface *supplemental_model) {
-    data_and_predictor_->modules.SetSupplementalModel(supplemental_model);
+    data_and_predictor_->modules->SetSupplementalModel(supplemental_model);
   }
 
   composer::Composer composer_;
@@ -458,16 +458,18 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
  private:
   struct DataAndPredictor {
-    engine::Modules modules;
+    std::unique_ptr<engine::Modules> modules;
     std::unique_ptr<UserHistoryPredictor> predictor;
   };
 
   std::unique_ptr<DataAndPredictor> CreateDataAndPredictor() const {
     auto ret = std::make_unique<DataAndPredictor>();
-    ret->modules.PresetDictionary(std::make_unique<MockDictionary>());
-    CHECK_OK(ret->modules.Init(std::make_unique<testing::MockDataManager>()));
+    ret->modules = engine::ModulesPresetBuilder()
+                       .PresetDictionary(std::make_unique<MockDictionary>())
+                       .Build(std::make_unique<testing::MockDataManager>())
+                       .value();
     ret->predictor =
-        std::make_unique<UserHistoryPredictor>(ret->modules, false);
+        std::make_unique<UserHistoryPredictor>(*ret->modules, false);
     ret->predictor->WaitForSyncer();
     return ret;
   }
@@ -2142,8 +2144,8 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
     entry->set_key("foo");
     entry->set_value("bar");
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
-    GetUserDictionary()->Load(storage);
-    GetUserDictionary()->WaitForReloader();
+    GetUserDictionary().Load(storage);
+    GetUserDictionary().WaitForReloader();
   }
 
   entry.set_key("key");

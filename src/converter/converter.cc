@@ -126,9 +126,9 @@ Converter::Converter(
     const RewriterFactory &rewriter_factory)
     : modules_(std::move(modules)),
       immutable_converter_(immutable_converter_factory(*modules_)),
-      pos_matcher_(*modules_->GetPosMatcher()),
-      user_dictionary_(*modules_->GetUserDictionary()),
-      history_reconstructor_(*modules_->GetPosMatcher()),
+      pos_matcher_(modules_->GetPosMatcher()),
+      user_dictionary_(modules_->GetUserDictionary()),
+      history_reconstructor_(modules_->GetPosMatcher()),
       reverse_converter_(*immutable_converter_),
       general_noun_id_(pos_matcher_.GetGeneralNounId()) {
   DCHECK(immutable_converter_);
@@ -591,18 +591,14 @@ void Converter::TrimCandidates(const ConversionRequest &request,
 }
 
 bool Converter::Reload() {
-  if (modules()->GetUserDictionary()) {
-    modules()->GetUserDictionary()->Reload();
-  }
+  modules()->GetUserDictionary().Reload();
   return rewriter()->Reload() && predictor()->Reload();
 }
 
 bool Converter::Sync() { return rewriter()->Sync() && predictor()->Sync(); }
 
 bool Converter::Wait() {
-  if (modules()->GetUserDictionary()) {
-    modules()->GetUserDictionary()->WaitForReloader();
-  }
+  modules()->GetUserDictionary().WaitForReloader();
   return predictor()->Wait();
 }
 

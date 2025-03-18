@@ -347,13 +347,13 @@ class FirstInnerSegmentCandidateChecker {
 }  // namespace
 
 ImmutableConverter::ImmutableConverter(const engine::Modules &modules)
-    : dictionary_(*modules.GetDictionary()),
-      suffix_dictionary_(*modules.GetSuffixDictionary()),
-      user_dictionary_(*modules.GetUserDictionary()),
+    : dictionary_(modules.GetDictionary()),
+      suffix_dictionary_(modules.GetSuffixDictionary()),
+      user_dictionary_(modules.GetUserDictionary()),
       connector_(modules.GetConnector()),
-      segmenter_(*modules.GetSegmenter()),
-      pos_matcher_(*modules.GetPosMatcher()),
-      pos_group_(*modules.GetPosGroup()),
+      segmenter_(modules.GetSegmenter()),
+      pos_matcher_(modules.GetPosMatcher()),
+      pos_group_(modules.GetPosGroup()),
       suggestion_filter_(modules.GetSuggestionFilter()),
       first_name_id_(pos_matcher_.GetFirstNameId()),
       last_name_id_(pos_matcher_.GetLastNameId()),

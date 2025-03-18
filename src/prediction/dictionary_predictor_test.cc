@@ -302,11 +302,13 @@ class MockDataAndPredictor {
   explicit MockDataAndPredictor(
       engine::SupplementalModelInterface *supplemental_model)
       : mock_immutable_converter_(), mock_aggregator_(new MockAggregator()) {
-    CHECK_OK(modules_.Init(std::make_unique<testing::MockDataManager>()));
-    modules_.SetSupplementalModel(supplemental_model);
+    modules_ =
+        engine::Modules::Create(std::make_unique<testing::MockDataManager>())
+            .value();
+    modules_->SetSupplementalModel(supplemental_model);
 
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
-        modules_, absl::WrapUnique(mock_aggregator_),
+        *modules_, absl::WrapUnique(mock_aggregator_),
         mock_immutable_converter_);
   }
 
@@ -315,8 +317,8 @@ class MockDataAndPredictor {
   }
 
   MockAggregator *mutable_aggregator() { return mock_aggregator_; }
-  const Connector &connector() { return modules_.GetConnector(); }
-  const PosMatcher &pos_matcher() { return *modules_.GetPosMatcher(); }
+  const Connector &connector() { return modules_->GetConnector(); }
+  const PosMatcher &pos_matcher() { return modules_->GetPosMatcher(); }
 
   const DictionaryPredictorTestPeer &predictor() { return *predictor_; }
   DictionaryPredictorTestPeer *mutable_predictor() { return predictor_.get(); }
@@ -324,8 +326,7 @@ class MockDataAndPredictor {
  private:
   MockImmutableConverter mock_immutable_converter_;
   MockAggregator *mock_aggregator_;
-  engine::Modules modules_;
-
+  std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<DictionaryPredictorTestPeer> predictor_;
 };
 

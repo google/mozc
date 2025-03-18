@@ -339,9 +339,9 @@ UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
 
 UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules,
                                            bool enable_content_word_learning)
-    : dictionary_(*modules.GetDictionary()),
-      pos_matcher_(*modules.GetPosMatcher()),
-      user_dictionary_(*modules.GetUserDictionary()),
+    : dictionary_(modules.GetDictionary()),
+      pos_matcher_(modules.GetPosMatcher()),
+      user_dictionary_(modules.GetUserDictionary()),
       predictor_name_("UserHistoryPredictor"),
       content_word_learning_enabled_(enable_content_word_learning),
       updated_(false),

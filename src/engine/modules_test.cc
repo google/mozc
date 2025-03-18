@@ -42,60 +42,54 @@
 namespace mozc {
 namespace engine {
 
-TEST(ModulesTest, Init) {
-  Modules modules;
-
-  EXPECT_EQ(modules.GetPosMatcher(), nullptr);
-  EXPECT_EQ(modules.GetSegmenter(), nullptr);
-  EXPECT_EQ(modules.GetUserDictionary(), nullptr);
-  EXPECT_EQ(modules.GetPosGroup(), nullptr);
-
-  ASSERT_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
-
-  EXPECT_NE(modules.GetPosMatcher(), nullptr);
-  EXPECT_NE(modules.GetSegmenter(), nullptr);
-  EXPECT_NE(modules.GetUserDictionary(), nullptr);
-  EXPECT_NE(modules.GetPosGroup(), nullptr);
+TEST(ModulesTest, CreateTest) {
+  std::unique_ptr<const engine::Modules> modules =
+      Modules::Create(std::make_unique<testing::MockDataManager>()).value();
 }
 
-TEST(ModulesTest, Preset) {
-  Modules modules;
+TEST(ModulesTest, BuildTwiceTest) {
+  ModulesPresetBuilder builder;
 
+  EXPECT_TRUE(builder.Build(std::make_unique<testing::MockDataManager>()).ok());
+  EXPECT_FALSE(
+      builder.Build(std::make_unique<testing::MockDataManager>()).ok());
+}
+
+TEST(ModulesTest, PresetTest) {
   testing::MockDataManager mock_data_manager;
 
   // PosMatcher
   auto pos_matcher = std::make_unique<dictionary::PosMatcher>(
       mock_data_manager.GetPosMatcherData());
   const dictionary::PosMatcher *pos_matcher_ptr = pos_matcher.get();
-  EXPECT_NE(pos_matcher_ptr, nullptr);
-  modules.PresetPosMatcher(std::move(pos_matcher));
 
   // UserDictionary
   auto user_dictionary = std::make_unique<dictionary::MockUserDictionary>();
   const dictionary::MockUserDictionary *user_dictionary_ptr =
       user_dictionary.get();
-  EXPECT_NE(user_dictionary_ptr, nullptr);
-  modules.PresetUserDictionary(std::move(user_dictionary));
 
   // SuffixDictionary
   auto suffix_dictionary = std::make_unique<dictionary::MockDictionary>();
   const dictionary::DictionaryInterface *suffix_dictionary_ptr =
       suffix_dictionary.get();
-  EXPECT_NE(suffix_dictionary_ptr, nullptr);
-  modules.PresetSuffixDictionary(std::move(suffix_dictionary));
 
   // Dictionary
   auto dictionary = std::make_unique<dictionary::MockDictionary>();
   const dictionary::DictionaryInterface *dictionary_ptr = dictionary.get();
-  EXPECT_NE(dictionary_ptr, nullptr);
-  modules.PresetDictionary(std::move(dictionary));
 
-  ASSERT_OK(modules.Init(std::make_unique<testing::MockDataManager>()));
+  std::unique_ptr<const engine::Modules> modules =
+      ModulesPresetBuilder()
+          .PresetPosMatcher(std::move(pos_matcher))
+          .PresetUserDictionary(std::move(user_dictionary))
+          .PresetSuffixDictionary(std::move(suffix_dictionary))
+          .PresetDictionary(std::move(dictionary))
+          .Build(std::make_unique<testing::MockDataManager>())
+          .value();
 
-  EXPECT_EQ(modules.GetPosMatcher(), pos_matcher_ptr);
-  EXPECT_EQ(modules.GetUserDictionary(), user_dictionary_ptr);
-  EXPECT_EQ(modules.GetSuffixDictionary(), suffix_dictionary_ptr);
-  EXPECT_EQ(modules.GetDictionary(), dictionary_ptr);
+  EXPECT_EQ(&modules->GetPosMatcher(), pos_matcher_ptr);
+  EXPECT_EQ(&modules->GetUserDictionary(), user_dictionary_ptr);
+  EXPECT_EQ(&modules->GetSuffixDictionary(), suffix_dictionary_ptr);
+  EXPECT_EQ(&modules->GetDictionary(), dictionary_ptr);
 }
 
 }  // namespace engine

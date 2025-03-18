@@ -57,23 +57,23 @@ class MockDataAndImmutableConverter {
  public:
   // Initializes data and immutable converter with given dictionaries.
   MockDataAndImmutableConverter() {
-    absl::Status status =
-        modules_.Init(std::make_unique<testing::MockDataManager>());
-    CHECK(status.ok());
-    immutable_converter_ = std::make_unique<ImmutableConverter>(modules_);
+    modules_ =
+        engine::Modules::Create(std::make_unique<testing::MockDataManager>())
+            .value();
+    immutable_converter_ = std::make_unique<ImmutableConverter>(*modules_);
   }
 
   ImmutableConverter *GetConverter() { return immutable_converter_.get(); }
 
   std::unique_ptr<NBestGenerator> CreateNBestGenerator(const Lattice &lattice) {
     return std::make_unique<NBestGenerator>(
-        *modules_.GetUserDictionary(), *modules_.GetSegmenter(),
-        modules_.GetConnector(), *modules_.GetPosMatcher(), lattice,
-        modules_.GetSuggestionFilter());
+        modules_->GetUserDictionary(), modules_->GetSegmenter(),
+        modules_->GetConnector(), modules_->GetPosMatcher(), lattice,
+        modules_->GetSuggestionFilter());
   }
 
  private:
-  engine::Modules modules_;
+  std::unique_ptr<const engine::Modules> modules_;
   std::unique_ptr<ImmutableConverter> immutable_converter_;
 };
 

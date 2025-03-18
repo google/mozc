@@ -121,8 +121,8 @@ class Engine : public EngineInterface {
   // Since the POS set may differ per LM, this function returns
   // available POS items. In practice, the POS items are rarely changed.
   std::vector<std::string> GetPosList() const override {
-    if (converter_ && converter_->modules()->GetUserDictionary()) {
-      return converter_->modules()->GetUserDictionary()->GetPosList();
+    if (converter_) {
+      return converter_->modules()->GetUserDictionary().GetPosList();
     }
     return {};
   }

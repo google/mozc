@@ -219,12 +219,12 @@ DictionaryPredictor::DictionaryPredictor(
     : aggregator_(std::move(aggregator)),
       immutable_converter_(immutable_converter),
       connector_(modules.GetConnector()),
-      segmenter_(*modules.GetSegmenter()),
+      segmenter_(modules.GetSegmenter()),
       suggestion_filter_(modules.GetSuggestionFilter()),
       single_kanji_dictionary_(
           std::make_unique<dictionary::SingleKanjiDictionary>(
               modules.GetDataManager())),
-      pos_matcher_(*modules.GetPosMatcher()),
+      pos_matcher_(modules.GetPosMatcher()),
       general_symbol_id_(pos_matcher_.GetGeneralSymbolId()),
       predictor_name_(std::move(predictor_name)),
       modules_(modules) {}

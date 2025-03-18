@@ -533,14 +533,13 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     : modules_(modules),
       converter_(converter),
       immutable_converter_(immutable_converter),
-      dictionary_(*modules.GetDictionary()),
-      suffix_dictionary_(*modules.GetSuffixDictionary()),
-      counter_suffix_word_id_(
-          modules.GetPosMatcher()->GetCounterSuffixWordId()),
-      kanji_number_id_(modules.GetPosMatcher()->GetKanjiNumberId()),
-      zip_code_id_(modules.GetPosMatcher()->GetZipcodeId()),
-      number_id_(modules.GetPosMatcher()->GetNumberId()),
-      unknown_id_(modules.GetPosMatcher()->GetUnknownId()),
+      dictionary_(modules.GetDictionary()),
+      suffix_dictionary_(modules.GetSuffixDictionary()),
+      counter_suffix_word_id_(modules.GetPosMatcher().GetCounterSuffixWordId()),
+      kanji_number_id_(modules.GetPosMatcher().GetKanjiNumberId()),
+      zip_code_id_(modules.GetPosMatcher().GetZipcodeId()),
+      number_id_(modules.GetPosMatcher().GetNumberId()),
+      unknown_id_(modules.GetPosMatcher().GetUnknownId()),
       zero_query_dict_(modules.GetZeroQueryDict()),
       zero_query_number_dict_(modules.GetZeroQueryNumberDict()) {}
 
@@ -694,7 +693,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     // (i.e., Desktop, or Hardware Keyboard in Mobile), since they contain
     // partial results.
     const std::vector<Result> single_kanji_results =
-        modules_.GetSingleKanjiPredictionAggregator()->AggregateResults(
+        modules_.GetSingleKanjiPredictionAggregator().AggregateResults(
             request, segments);
     if (!single_kanji_results.empty()) {
       results->insert(results->end(), single_kanji_results.begin(),
