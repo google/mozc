@@ -19,4 +19,4 @@ set TMP_MOZC_SRC_DIR=
 %BAZEL_REAL% %* & call:myexit
 
 :myexit
-exit /b
+exit /b %ERRORLEVEL%
