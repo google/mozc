@@ -174,10 +174,10 @@ def OutputCpp(component, engine_common, engines):
     OutputCppVariable('Engine', key, value)
   print('const size_t kEngineArrayLen = %s;' % len(engines))
   print('const char kEnginesXml[] = R"#(', end='')
-  print(GetEnginesXml(engine_common, engines))
+  print(GetEnginesXml(engine_common, engines).encode('utf-8'))
   print(')#";')
   print('const char kIbusConfigTextProto[] = R"#(', end='')
-  print(GetIbusConfigTextProto(engines))
+  print(GetIbusConfigTextProto(engines).encode('utf-8'))
   print(')#";')
   print(CPP_FOOTER % guard_name)
 
