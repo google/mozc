@@ -8,6 +8,15 @@ bazel_dep(
     repo_name = "com_google_absl",
 )
 
+# This is a workaround for https://github.com/bazelbuild/bazel/issues/24426
+# Without this explicit rule, `bazelisk fetch` fails with the following error.
+#   @@bazel_tools//tools/cpp:cc_configure.bzl does not export
+#   a module extension called cc_configure_extension
+bazel_dep(
+    name = "re2",
+    version = "2024-07-02.bcr.1",
+)
+
 # protobuf: 29.3 2025-01-09
 # https://github.com/protocolbuffers/protobuf
 # We cannot switch to 30.x until the protobuf team fixes the following issue.
