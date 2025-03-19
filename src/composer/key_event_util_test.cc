@@ -179,9 +179,9 @@ TEST(KeyEventUtilTest, NormalizeModifiers) {
 
   {  // Removes caps
     KeyParser::ParseKey("CAPS H", &key_event);
-    ASSERT_EQ(1, key_event.modifier_keys_size());
-    ASSERT_EQ(KeyEvent::CAPS, KeyEventUtil::GetModifiers(key_event));
-    ASSERT_EQ('H', key_event.key_code());
+    ASSERT_EQ(key_event.modifier_keys_size(), 1);
+    ASSERT_EQ(KeyEventUtil::GetModifiers(key_event), KeyEvent::CAPS);
+    ASSERT_EQ(key_event.key_code(), 'H');
 
     KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
     EXPECT_EQ(normalized_key_event.modifier_keys_size(), 0);
@@ -190,23 +190,23 @@ TEST(KeyEventUtilTest, NormalizeModifiers) {
 
   {  // Removes left_shift
     KeyParser::ParseKey("LeftShift", &key_event);
-    ASSERT_EQ(2, key_event.modifier_keys_size());
-    ASSERT_EQ((KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT),
-              KeyEventUtil::GetModifiers(key_event));
+    ASSERT_EQ(key_event.modifier_keys_size(), 2);
+    ASSERT_EQ(KeyEventUtil::GetModifiers(key_event),
+              (KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT));
 
     KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
     EXPECT_EQ(normalized_key_event.modifier_keys_size(), 1);
-    ASSERT_EQ(KeyEvent::SHIFT,
-              KeyEventUtil::GetModifiers(normalized_key_event));
+    ASSERT_EQ(KeyEventUtil::GetModifiers(normalized_key_event),
+              KeyEvent::SHIFT);
   }
 
   {  // Removes caps and left_shift
     KeyParser::ParseKey("CAPS LeftShift H", &key_event);
-    ASSERT_EQ(3, key_event.modifier_keys_size());
-    ASSERT_EQ((KeyEvent::CAPS | KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT),
-              KeyEventUtil::GetModifiers(key_event));
+    ASSERT_EQ(key_event.modifier_keys_size(), 3);
+    ASSERT_EQ(KeyEventUtil::GetModifiers(key_event),
+              (KeyEvent::CAPS | KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT));
 
-    ASSERT_EQ('H', key_event.key_code());
+    ASSERT_EQ(key_event.key_code(), 'H');
 
     KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
     EXPECT_EQ(normalized_key_event.modifier_keys_size(), 1);
