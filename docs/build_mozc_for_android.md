@@ -11,11 +11,6 @@ and make sure the operations before running them.
 git clone https://github.com/google/mozc.git
 cd mozc/src
 
-export PYTHON_VENV_ROOT=${PWD}/python-venv
-python3 -m venv ${PYTHON_VENV_ROOT}
-source ${PYTHON_VENV_ROOT}/bin/activate
-python3 -m pip install requests
-
 python3 build_tools/update_deps.py
 
 bazelisk build package --config oss_android --config release_build
@@ -37,8 +32,7 @@ Building `libmozc.so` for Android requires the following software.
 
  * [bazelisk](https://github.com/bazelbuild/bazelisk)
  * C++ compiler (GCC or clang)
- * Python 3.9 or later with the following pip module.
-   * `requests`
+ * Python 3.9 or later
 
 ## Build instructions
 
@@ -52,19 +46,6 @@ cd mozc/src
 ```
 
 Hereafter you can do all the operations without changing directory.
-
-### Set up and enable Python virtual environment
-
-The following commands set up Python virtual environment under `mozc/src/python-venv`.
-
-```
-export PYTHON_VENV_ROOT=${PWD}/python-venv
-python3 -m venv ${PYTHON_VENV_ROOT}
-source ${PYTHON_VENV_ROOT}/bin/activate
-python3 -m pip install requests
-```
-
-Using `mozc/src/python-venv` as the virtual environment location is not mandatory. Any other location should also work.
 
 ### Check out additional build dependencies
 

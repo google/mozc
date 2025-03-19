@@ -8,7 +8,7 @@ How to build Mozc in Windows
 If you are not sure what the following commands do, please check the descriptions below and make sure the operations before running them.
 
 ```
-python -m pip install six requests
+python -m pip install six
 
 git clone https://github.com/google/mozc.git
 cd mozc\src
@@ -40,7 +40,6 @@ Building Mozc on Windows requires the following software.
     * [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) should also work
   * Python 3.9 or later with the following pip modules.
     * `six`
-    * `requests`
   * `.NET 6` or later (for `dotnet` command).
 
 For additional requirements for building Mozc with Bazel, please see below.
@@ -48,7 +47,7 @@ For additional requirements for building Mozc with Bazel, please see below.
 ### Install pip modules
 
 ```
-python3 -m pip install six requests
+python -m pip install six
 ```
 
 ### Download the repository from GitHub
