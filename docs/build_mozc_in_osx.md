@@ -12,11 +12,6 @@ and make sure the operations before running them.
 git clone https://github.com/google/mozc.git
 cd mozc/src
 
-export PYTHON_VENV_ROOT=${PWD}/python-venv
-python3 -m venv ${PYTHON_VENV_ROOT}
-source ${PYTHON_VENV_ROOT}/bin/activate
-python3 -m pip install requests
-
 python3 build_tools/update_deps.py
 
 # CMake is also required to build Qt.
@@ -52,8 +47,7 @@ Building on Mac requires the following software.
 * [Bazelisk](https://github.com/bazelbuild/bazelisk)
   * Bazelisk is a wrapper of [Bazel](https://bazel.build/) to use the specific version of Bazel.
   * [src/.bazeliskrc](../src/.bazeliskrc) controls which version of Bazel is used.
-* Python 3.9 or later with the following pip module.
-  * `requests`
+* Python 3.9 or later.
 * CMake 3.18.4 or later (to build Qt6)
 
 ## Get the Code
@@ -66,19 +60,6 @@ cd mozc/src
 ```
 
 Hereafter you can do all the operations without changing directory.
-
-### Set up and enable Python virtual environment
-
-The following commands set up Python virtual environment under `mozc/src/python-venv`.
-
-```
-export PYTHON_VENV_ROOT=${PWD}/python-venv
-python3 -m venv ${PYTHON_VENV_ROOT}
-source ${PYTHON_VENV_ROOT}/bin/activate
-python3 -m pip install requests
-```
-
-Using `mozc/src/python-venv` as the virtual environment location is not mandatory. Any other location should also work.
 
 ### Check out additional build dependencies
 
@@ -225,7 +206,6 @@ For GYP build, Ninja and Packages are also required.
 * [Ninja](https://github.com/ninja-build/ninja) for GYP build
 * [Packages](http://s.sudre.free.fr/Software/Packages/about.html) for installer
 * Python 3.9 or later with the following pip module.
-  * `requests`
   * `six`
 
 ### Build executables

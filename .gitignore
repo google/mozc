@@ -41,10 +41,6 @@ MODULE.bazel.lock
 /src-*
 /src_*
 
-# Python venv dir used to conform PEP 668
-# https://peps.python.org/pep-0668/
-/src/python-venv
-
 # Mozc build artifacts by Bazel (symbolic links)
 /src/bazel-bin
 /src/bazel-out

@@ -49,7 +49,8 @@ import time
 from typing import Union
 import zipfile
 
-import requests
+import urllib.request
+import urllib.error
 
 from progress_printer import ProgressPrinter
 
@@ -178,14 +179,24 @@ def download(archive: ArchiveInfo, dryrun: bool = False) -> None:
   CACHE_DIR.mkdir(parents=True, exist_ok=True)
   saved = 0
   hasher = hashlib.sha256()
-  with requests.get(archive.url, stream=True, timeout=TIMEOUT) as r:
-    with ProgressPrinter() as printer:
-      with open(path, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=8192):
-          f.write(chunk)
-          hasher.update(chunk)
-          saved += len(chunk)
-          printer.print_line(f'{archive.filename}: {saved}/{archive.size}')
+
+  try:
+    req = urllib.request.Request(archive.url)
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
+      with ProgressPrinter() as printer:
+        with open(path, 'wb') as f:
+          chunk_size = 8192
+          while True:
+            chunk = response.read(chunk_size)
+            if not chunk:
+              break
+            f.write(chunk)
+            hasher.update(chunk)
+            saved += len(chunk)
+            printer.print_line(f'{archive.filename}: {saved}/{archive.size}')
+  except urllib.error.URLError as e:
+    raise RuntimeError(f'Failed to download {archive.url}: {e}')
+
   if saved != archive.size:
     raise RuntimeError(
         f'{archive.filename} size mismatch.'
