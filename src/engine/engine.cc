@@ -86,8 +86,7 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
     std::unique_ptr<engine::Modules> modules, bool is_mobile) {
-  // Since Engine() is a private function, std::make_unique does not work.
-  auto engine = absl::WrapUnique(new Engine());
+  auto engine = std::make_unique<Engine>();
   absl::Status engine_status = engine->Init(std::move(modules), is_mobile);
   if (!engine_status.ok()) {
     return engine_status;
@@ -96,7 +95,7 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
 }
 
 std::unique_ptr<Engine> Engine::CreateEngine() {
-  return absl::WrapUnique(new Engine());
+  return std::make_unique<Engine>();
 }
 
 Engine::Engine() : minimal_converter_(CreateMinimalConverter()) {}

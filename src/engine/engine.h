@@ -147,6 +147,8 @@ class Engine : public EngineInterface {
 
  private:
   Engine();
+  // For the constructor.
+  friend std::unique_ptr<Engine> std::make_unique<Engine>();
 
   // Initializes the engine object by the given modules and is_mobile flag.
   // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.

@@ -185,8 +185,8 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
 #undef RETURN_IF_NULL
 }
 
-// cannot use std::make_unique as the constractor is not public.
-ModulesPresetBuilder::ModulesPresetBuilder() : modules_(new Modules) {}
+ModulesPresetBuilder::ModulesPresetBuilder()
+    : modules_(std::make_unique<Modules>()) {}
 
 ModulesPresetBuilder& ModulesPresetBuilder::PresetPosMatcher(
     std::unique_ptr<const dictionary::PosMatcher> pos_matcher) {

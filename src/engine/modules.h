@@ -127,6 +127,8 @@ class Modules {
 
  private:
   friend class ModulesPresetBuilder;
+  // For the constructor.
+  friend std::unique_ptr<Modules> std::make_unique<Modules>();
 
   Modules() = default;
 
