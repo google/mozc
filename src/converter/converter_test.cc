@@ -707,9 +707,9 @@ TEST_F(ConverterTest, Regression3437022) {
     entry->set_key(kKey1 + kKey2);
     entry->set_value(kValue1 + kValue2);
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
-    engine->GetModulesForTesting()->GetUserDictionary().Load(storage);
+    engine->GetModulesForTesting().GetUserDictionary().Load(storage);
     EXPECT_TRUE(engine->GetModulesForTesting()
-                    ->GetUserDictionary()
+                    .GetUserDictionary()
                     .HasSuppressedEntries());
   }
 
@@ -752,8 +752,8 @@ TEST_F(ConverterTest, CompletePosIds) {
                 .max_conversion_candidates_size = 20,
             })
             .Build();
-    CHECK(converter->immutable_converter()->ConvertForRequest(request,
-                                                              &segments));
+    CHECK(
+        converter->immutable_converter().ConvertForRequest(request, &segments));
     const int lid = segments.segment(0).candidate(0).lid;
     const int rid = segments.segment(0).candidate(0).rid;
     Segment::Candidate candidate;
@@ -1154,7 +1154,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   std::unique_ptr<Converter> converter = CreateConverter(
       std::make_unique<InsertPlaceholderWordsRewriter>(), STUB_PREDICTOR);
 
-  engine::Modules *modules = converter->modules();
+  engine::Modules &modules = converter->modules();
 
   // Set up suppression dictionary
   {
@@ -1163,8 +1163,8 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
     entry->set_key("tobefiltered");
     entry->set_value("ToBeFiltered");
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
-    modules->GetUserDictionary().Load(storage);
-    EXPECT_TRUE(modules->GetUserDictionary().HasSuppressedEntries());
+    modules.GetUserDictionary().Load(storage);
+    EXPECT_TRUE(modules.GetUserDictionary().HasSuppressedEntries());
   }
 
   // Convert
@@ -1741,7 +1741,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   composer::Composer composer(table, request, config);
   request_test_util::FillMobileRequest(&request);
   const dictionary::PosMatcher pos_matcher(
-      engine->GetModulesForTesting()->GetDataManager().GetPosMatcherData());
+      engine->GetModulesForTesting().GetDataManager().GetPosMatcherData());
   ConversionRequest::Options options = {
       .request_type = ConversionRequest::PREDICTION,
       .create_partial_candidates = true,

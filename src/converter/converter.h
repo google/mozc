@@ -139,17 +139,29 @@ class Converter final : public ConverterInterface {
   // Waits for pending operations executed in different threads.
   bool Wait();
 
-  prediction::PredictorInterface *predictor() const { return predictor_.get(); }
-
-  RewriterInterface *rewriter() const { return rewriter_.get(); }
-
-  const ImmutableConverterInterface *immutable_converter() const {
-    return immutable_converter_.get();
+  prediction::PredictorInterface &predictor() const {
+    DCHECK(predictor_);
+    return *predictor_;
   }
 
-  engine::Modules *modules() const { return modules_.get(); }
+  RewriterInterface &rewriter() const {
+    DCHECK(rewriter_);
+    return *rewriter_;
+  }
+
+  const ImmutableConverterInterface &immutable_converter() const {
+    DCHECK(immutable_converter_);
+    return *immutable_converter_;
+  }
+
+  engine::Modules &modules() const {
+    DCHECK(modules_);
+    return *modules_;
+  }
 
  private:
+  Converter() = default;
+
   FRIEND_TEST(ConverterTest, CompletePosIds);
   FRIEND_TEST(ConverterTest, DefaultPredictor);
   FRIEND_TEST(ConverterTest, MaybeSetConsumedKeySizeToSegment);

@@ -123,7 +123,7 @@ TEST_F(EngineTest, ReloadModulesTest) {
   const bool is_mobile = true;
   CHECK_OK(engine_->ReloadModules(std::move(modules), is_mobile));
 
-  EXPECT_EQ(engine_->GetModulesForTesting()->GetSupplementalModel(),
+  EXPECT_EQ(engine_->GetModulesForTesting().GetSupplementalModel(),
             &supplemental_model);
 }
 

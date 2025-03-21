@@ -591,15 +591,15 @@ void Converter::TrimCandidates(const ConversionRequest &request,
 }
 
 bool Converter::Reload() {
-  modules()->GetUserDictionary().Reload();
-  return rewriter()->Reload() && predictor()->Reload();
+  modules().GetUserDictionary().Reload();
+  return rewriter().Reload() && predictor().Reload();
 }
 
-bool Converter::Sync() { return rewriter()->Sync() && predictor()->Sync(); }
+bool Converter::Sync() { return rewriter().Sync() && predictor().Sync(); }
 
 bool Converter::Wait() {
-  modules()->GetUserDictionary().WaitForReloader();
-  return predictor()->Wait();
+  modules().GetUserDictionary().WaitForReloader();
+  return predictor().Wait();
 }
 
 }  // namespace mozc
