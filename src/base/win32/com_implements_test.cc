@@ -33,11 +33,11 @@
 #include <objbase.h>
 #include <shobjidl.h>
 #include <unknwn.h>
+#include <wil/com.h>
 #include <windows.h>
 
 #include "base/win32/com.h"
 #include "testing/gunit.h"
-#include "third_party/wil/include/wil/com.h"
 
 namespace mozc::win32 {
 namespace {
