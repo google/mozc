@@ -321,13 +321,14 @@ message SessionCommand {
     // Post-condition:
     // - Preedit text becomes empty.
     SUBMIT = 2;
-    // Select the specified candidate word by id.  This command is
+    // Select the specified candidate word by id. This command is
     // usually used with mouse clicking.
     SELECT_CANDIDATE = 3;
 
-    // Set the focus to the candidate by id.  This is usually used
-    // with mouse dragging.  The difference from SELECT_CANDIDATE is
-    // that HIGHLIGHT_CANDIDATE does not close the candidate window
+    // Set the focus to the candidate by id. This is usually used
+    // with mouse dragging or selection of word usage dictionary.
+    // The difference from SELECT_CANDIDATE is that
+    // HIGHLIGHT_CANDIDATE does not close the candidate window
     // while SELECT_CANDIDATE closes the candidate window.
     HIGHLIGHT_CANDIDATE = 4;
 
@@ -1132,7 +1133,7 @@ message Input {
 
   optional mozc.EngineReloadRequest engine_reload_request = 15;
 
-  reserved 16; // deprecated check_spelling_request
+  reserved 16;  // deprecated check_spelling_request
 }
 
 // Detailed information of Result.
