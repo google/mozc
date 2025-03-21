@@ -498,9 +498,10 @@ def mozc_cc_win32_library(
         name = cc_binary_target_name,
         srcs = srcs,
         deps = deps,
-        features = ["-generate_pdb_file"],
         win_def_file = win_def_file,
         linkshared = 1,
+        # Workaround for https://github.com/google/mozc/issues/1224
+        linkopts = ["/DEBUG"],
         tags = tags,
         target_compatible_with = target_compatible_with,
         visibility = ["//visibility:private"],
