@@ -76,7 +76,7 @@ class CheckCandSizeDictionaryPredictor : public PredictorInterface {
     return true;
   }
 
-  const std::string &GetPredictorName() const override {
+  absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }
 
@@ -103,7 +103,7 @@ class CheckCandSizeUserHistoryPredictor : public PredictorInterface {
     return true;
   }
 
-  const std::string &GetPredictorName() const override {
+  absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }
 
@@ -130,7 +130,7 @@ class NullPredictor : public PredictorInterface {
 
   void Clear() { predict_called_ = false; }
 
-  const std::string &GetPredictorName() const override {
+  absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }
 
@@ -147,7 +147,7 @@ class MockPredictor : public PredictorInterface {
   MOCK_METHOD(bool, PredictForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
-  MOCK_METHOD(const std::string &, GetPredictorName, (), (const, override));
+  MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
 };
 
 }  // namespace

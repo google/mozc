@@ -101,10 +101,10 @@ class DefaultPredictor : public BasePredictor {
                    const ConverterInterface &converter);
   ~DefaultPredictor() override;
 
-  [[nodiscard]] bool PredictForRequest(
-      const ConversionRequest &request, Segments *segments) const override;
+  [[nodiscard]] bool PredictForRequest(const ConversionRequest &request,
+                                       Segments *segments) const override;
 
-  const std::string &GetPredictorName() const override {
+  absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }
 
@@ -124,10 +124,10 @@ class MobilePredictor : public BasePredictor {
                   const ConverterInterface &converter);
   ~MobilePredictor() override;
 
-  [[nodiscard]] bool PredictForRequest(
-      const ConversionRequest &request, Segments *segments) const override;
+  [[nodiscard]] bool PredictForRequest(const ConversionRequest &request,
+                                       Segments *segments) const override;
 
-  const std::string &GetPredictorName() const override {
+  absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }
 

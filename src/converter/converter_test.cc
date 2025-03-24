@@ -137,7 +137,7 @@ class StubPredictor : public PredictorInterface {
     return true;
   }
 
-  const std::string &GetPredictorName() const override {
+  absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }
 
@@ -220,7 +220,7 @@ class MockPredictor : public mozc::prediction::PredictorInterface {
   MOCK_METHOD(bool, PredictForRequest, (const ConversionRequest &, Segments *),
               (const, override));
   MOCK_METHOD(void, Revert, (Segments *), (override));
-  MOCK_METHOD(const std::string &, GetPredictorName, (), (const, override));
+  MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
 };
 
 class MockRewriter : public RewriterInterface {

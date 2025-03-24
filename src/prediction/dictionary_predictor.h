@@ -91,7 +91,7 @@ class DictionaryPredictor : public PredictorInterface {
 
   void Finish(const ConversionRequest &request, Segments *segments) override;
 
-  const std::string &GetPredictorName() const override {
+  absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }
 

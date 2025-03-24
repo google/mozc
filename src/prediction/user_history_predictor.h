@@ -138,7 +138,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // Gets user history filename.
   static std::string GetUserHistoryFileName();
 
-  const std::string &GetPredictorName() const override {
+  absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }
 

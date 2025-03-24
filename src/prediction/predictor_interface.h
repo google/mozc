@@ -48,8 +48,8 @@ class PredictorInterface {
   // SUGGESTION: automatic suggestions
   // PREDICTION: invoked only when user pushes "tab" key.
   // less aggressive than SUGGESTION mode.
-  [[nodiscard]] virtual bool PredictForRequest(
-      const ConversionRequest &request, Segments *segments) const = 0;
+  [[nodiscard]] virtual bool PredictForRequest(const ConversionRequest &request,
+                                               Segments *segments) const = 0;
 
   // Hook(s) for all mutable operations.
   virtual void Finish(const ConversionRequest &request, Segments *segments) {}
@@ -78,7 +78,7 @@ class PredictorInterface {
   // Waits for syncer thread to complete.
   virtual bool Wait() { return true; }
 
-  virtual const std::string &GetPredictorName() const = 0;
+  virtual absl::string_view GetPredictorName() const = 0;
 };
 
 }  // namespace mozc::prediction
