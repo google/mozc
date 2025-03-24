@@ -117,14 +117,8 @@ TEST_F(EngineTest, ReloadModulesTest) {
       engine::Modules::Create(std::make_unique<testing::MockDataManager>())
           .value();
 
-  SupplementalModelForTesting supplemental_model;
-  modules->SetSupplementalModel(&supplemental_model);
-
   const bool is_mobile = true;
   CHECK_OK(engine_->ReloadModules(std::move(modules), is_mobile));
-
-  EXPECT_EQ(engine_->GetModulesForTesting().GetSupplementalModel(),
-            &supplemental_model);
 }
 
 // Tests the interaction with DataLoader for successful Engine

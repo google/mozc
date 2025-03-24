@@ -729,10 +729,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForZeroQuery(
     selected_types |= BIGRAM;
   }
   if (segments.history_segments_size() > 0) {
-    if (const engine::SupplementalModelInterface *const supplemental_model =
-            modules_.GetSupplementalModel();
-        supplemental_model != nullptr &&
-        supplemental_model->Predict(request, segments, *results)) {
+    if (modules_.GetSupplementalModel().Predict(request, segments, *results)) {
       selected_types |= SUPPLEMENTAL_MODEL;
     }
     AggregateZeroQuerySuffixPrediction(request, segments, results);
@@ -1725,14 +1722,8 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     return;
   }
 
-  const engine::SupplementalModelInterface *supplemental_model =
-      modules_.GetSupplementalModel();
-  if (supplemental_model == nullptr) {
-    return;
-  }
-
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      supplemental_model->CorrectComposition(request, segments);
+      modules_.GetSupplementalModel().CorrectComposition(request, segments);
   if (!corrected) {
     return;
   }
@@ -1948,12 +1939,8 @@ bool DictionaryPredictionAggregator::IsZipCodeRequest(
 void DictionaryPredictionAggregator::MaybePopulateTypingCorrectionPenalty(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
-  const engine::SupplementalModelInterface *supplemental_model =
-      modules_.GetSupplementalModel();
-  if (!supplemental_model) return;
-
-  supplemental_model->PopulateTypeCorrectedQuery(request, segments,
-                                                 absl::Span<Result>(*results));
+  modules_.GetSupplementalModel().PopulateTypeCorrectedQuery(
+      request, segments, absl::Span<Result>(*results));
 }
 
 }  // namespace prediction

@@ -54,8 +54,10 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
+#include "engine/supplemental_model_interface.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/suggestion_filter.h"
+
 
 using ::mozc::dictionary::DictionaryImpl;
 using ::mozc::dictionary::PosGroup;
@@ -173,6 +175,18 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   zero_query_number_dict_.Init(zero_query_number_token_array_data,
                                zero_query_number_string_array_data);
 
+  if (!supplemental_model_) {
+    // `g_supplemental_model` is static and initialized only once
+    // with the lambda function.
+    static std::shared_ptr<engine::SupplementalModelInterface>
+        g_supplemental_model =
+            []() -> std::unique_ptr<engine::SupplementalModelInterface> {
+      DLOG(INFO) << "Placeholder of supplemental model stub is loaded";
+      return std::make_unique<engine::SupplementalModelStub>();
+    }();
+    supplemental_model_ = g_supplemental_model;
+  }
+
   // All modules must not be non-null.
   RETURN_IF_NULL(pos_matcher_);
   RETURN_IF_NULL(segmenter_);
@@ -180,6 +194,7 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   RETURN_IF_NULL(suffix_dictionary_);
   RETURN_IF_NULL(pos_group_);
   RETURN_IF_NULL(single_kanji_prediction_aggregator_);
+  RETURN_IF_NULL(supplemental_model_);
 
   return absl::Status();
 #undef RETURN_IF_NULL
@@ -223,6 +238,13 @@ ModulesPresetBuilder::PresetSingleKanjiPredictionAggregator(
   DCHECK(modules_) << "Module is already initialized";
   modules_->single_kanji_prediction_aggregator_ =
       std::move(single_kanji_prediction_aggregator);
+  return *this;
+}
+
+ModulesPresetBuilder& ModulesPresetBuilder::PresetSupplementalModel(
+    std::unique_ptr<engine::SupplementalModelInterface> supplemental_model) {
+  DCHECK(modules_) << "Module is already initialized";
+  modules_->supplemental_model_ = std::move(supplemental_model);
   return *this;
 }
 

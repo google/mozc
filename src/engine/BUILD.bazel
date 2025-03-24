@@ -178,7 +178,9 @@ mozc_cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
-    ],
+    ] + mozc_select_enable_supplemental_model([
+        "//supplemental_model:supplemental_model_factory",
+    ]),
 )
 
 mozc_cc_test(
@@ -186,12 +188,16 @@ mozc_cc_test(
     srcs = ["modules_test.cc"],
     deps = [
         ":modules",
+        ":supplemental_model_interface",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_mock",
         "//dictionary:pos_matcher",
         "//testing:gunit_main",
-    ],
+    ] + mozc_select_enable_supplemental_model([
+        "//supplemental_model:supplemental_model_factory",
+        "//supplemental_model:supplemental_model_registration",
+    ]),
 )
 
 mozc_cc_library(
@@ -234,9 +240,7 @@ mozc_cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-    ] + mozc_select_enable_supplemental_model([
-        "//supplemental_model:supplemental_model_factory",
-    ]),
+    ],
 )
 
 mozc_cc_test(

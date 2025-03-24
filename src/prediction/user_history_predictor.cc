@@ -718,12 +718,8 @@ std::vector<TypeCorrectedQuery> UserHistoryPredictor::GetTypingCorrectedQueries(
                        .typing_correction_apply_user_history_size();
   if (size == 0 || !request.config().use_typing_correction()) return {};
 
-  const engine::SupplementalModelInterface *supplemental_model =
-      modules_.GetSupplementalModel();
-  if (supplemental_model == nullptr) return {};
-
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      supplemental_model->CorrectComposition(request, segments);
+      modules_.GetSupplementalModel().CorrectComposition(request, segments);
   if (!corrected) return {};
 
   std::vector<TypeCorrectedQuery> result = std::move(corrected.value());

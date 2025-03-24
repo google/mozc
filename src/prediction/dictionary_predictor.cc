@@ -409,7 +409,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
                   merged_types, segment->push_back_candidate());
   }
 
-  if (IsDebug(request) && modules_.GetSupplementalModel()) {
+  if (IsDebug(request)) {
     AddRescoringDebugDescription(segments);
   }
 
@@ -427,10 +427,7 @@ void DictionaryPredictor::MaybeApplyPostCorrection(
   if (!IsTypingCorrectionEnabled(request)) {
     return;
   }
-  const engine::SupplementalModelInterface *supplemental_model =
-      modules_.GetSupplementalModel();
-  if (supplemental_model == nullptr) return;
-  supplemental_model->PostCorrect(request, segments, results);
+  modules_.GetSupplementalModel().PostCorrect(request, segments, results);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(
@@ -1204,11 +1201,7 @@ void DictionaryPredictor::MaybeRescoreResults(
     for (Result &r : results) r.cost_before_rescoring = r.cost;
   }
 
-  if (const engine::SupplementalModelInterface *const supplemental_model =
-          modules_.GetSupplementalModel();
-      supplemental_model != nullptr) {
-    supplemental_model->RescoreResults(request, segments, results);
-  }
+  modules_.GetSupplementalModel().RescoreResults(request, segments, results);
 }
 
 void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
@@ -1227,8 +1220,15 @@ void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
   // This is just for debugging, so such difference won't matter.
   std::vector<const Segment::Candidate *> cands;
   cands.reserve(seg->candidates_size());
+  int diff = 0;
   for (int i = 0; i < seg->candidates_size(); ++i) {
+    diff += std::abs(seg->candidate(i).cost -
+                     seg->candidate(i).cost_before_rescoring);
     cands.push_back(&seg->candidate(i));
+  }
+  // No rescoring happened.
+  if (diff == 0) {
+    return;
   }
   std::sort(cands.begin(), cands.end(),
             [](const Segment::Candidate *l, const Segment::Candidate *r) {

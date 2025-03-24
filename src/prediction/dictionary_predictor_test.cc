@@ -300,13 +300,12 @@ class MockDataAndPredictor {
   MockDataAndPredictor() : MockDataAndPredictor(nullptr) {}
 
   explicit MockDataAndPredictor(
-      engine::SupplementalModelInterface *supplemental_model)
+      std::unique_ptr<engine::SupplementalModelInterface> supplemental_model)
       : mock_immutable_converter_(), mock_aggregator_(new MockAggregator()) {
-    modules_ =
-        engine::Modules::Create(std::make_unique<testing::MockDataManager>())
-            .value();
-    modules_->SetSupplementalModel(supplemental_model);
-
+    modules_ = engine::ModulesPresetBuilder()
+                   .PresetSupplementalModel(std::move(supplemental_model))
+                   .Build(std::make_unique<testing::MockDataManager>())
+                   .value();
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
         *modules_, absl::WrapUnique(mock_aggregator_),
         mock_immutable_converter_);
@@ -1689,8 +1688,8 @@ TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
 }
 
 TEST_F(DictionaryPredictorTest, Rescoring) {
-  engine::MockSupplementalModel supplemental_model;
-  EXPECT_CALL(supplemental_model, RescoreResults(_, _, _))
+  auto supplemental_model = std::make_unique<engine::MockSupplementalModel>();
+  EXPECT_CALL(*supplemental_model, RescoreResults(_, _, _))
       .WillRepeatedly(
           Invoke([](const ConversionRequest &request, const Segments &segments,
                     absl::Span<Result> results) {
@@ -1698,7 +1697,7 @@ TEST_F(DictionaryPredictorTest, Rescoring) {
           }));
 
   auto data_and_predictor =
-      std::make_unique<MockDataAndPredictor>(&supplemental_model);
+      std::make_unique<MockDataAndPredictor>(std::move(supplemental_model));
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
@@ -1757,9 +1756,10 @@ TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
 TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
   // Use StrictMock to make sure that RescoreResults(), PostCorrect() are not be
   // called
-  StrictMock<engine::MockSupplementalModel> supplemental_model;
+  auto supplemental_model =
+      std::make_unique<StrictMock<engine::MockSupplementalModel>>();
   auto data_and_predictor =
-      std::make_unique<MockDataAndPredictor>(&supplemental_model);
+      std::make_unique<MockDataAndPredictor>(std::move(supplemental_model));
 
   // Fill handwriting config, request and composer
   {
@@ -1797,9 +1797,9 @@ TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
 
 TEST_F(DictionaryPredictorTest, DoNotApplyPostCorrection) {
   // Use StrictMock to make sure that PostCorrect() is not be called
-  engine::MockSupplementalModel supplemental_model;
+  auto supplemental_model = std::make_unique<engine::MockSupplementalModel>();
   auto data_and_predictor =
-      std::make_unique<MockDataAndPredictor>(&supplemental_model);
+      std::make_unique<MockDataAndPredictor>(std::move(supplemental_model));
 
   config_->set_use_typing_correction(false);
 

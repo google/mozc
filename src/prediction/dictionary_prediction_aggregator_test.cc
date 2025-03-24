@@ -384,11 +384,13 @@ class MockSingleKanjiPredictionAggregator
 // Helper class to hold dictionary data and aggregator object.
 class MockDataAndAggregator {
  public:
-  // Initializes aggregator with the given suffix_dictionary.  When
-  // nullptr is passed to the |suffix_dictionary|, MockDataManager's suffix
-  // dictionary is used.
-  // Note that |suffix_dictionary| is owned by Modules.
-  void Init(std::unique_ptr<DictionaryInterface> suffix_dictionary = nullptr) {
+  // Initializes aggregator with the given suffix_dictionary and
+  // supplemental_model.  When nullptr is passed to the |suffix_dictionary|,
+  // MockDataManager's suffix dictionary is used. Note that |suffix_dictionary|
+  // is owned by Modules.
+  void Init(
+      std::unique_ptr<DictionaryInterface> suffix_dictionary,
+      std::unique_ptr<engine::SupplementalModelInterface> supplemental_model) {
     auto dictionary = std::make_unique<MockDictionary>();
     // TODO(taku): avoid sharing the pointer owned by std::unique_ptr.
     mock_dictionary_ = dictionary.get();
@@ -404,13 +406,16 @@ class MockDataAndAggregator {
         engine::ModulesPresetBuilder()
             .PresetDictionary(std::move(dictionary))
             .PresetSingleKanjiPredictionAggregator(std::move(kanji_aggregator))
-            .PresetSuffixDictionary(std::move(suffix_dictionary))  // nullable
+            .PresetSuffixDictionary(std::move(suffix_dictionary))    // nullable
+            .PresetSupplementalModel(std::move(supplemental_model))  // nullable
             .Build(std::move(data_manager))
             .value();
 
     aggregator_ = std::make_unique<DictionaryPredictionAggregatorTestPeer>(
         converter_, mock_immutable_converter_, *modules_);
   }
+
+  void Init() { return Init(nullptr, nullptr); }
 
   MockDictionary *mutable_dictionary() { return mock_dictionary_; }
   MockConverter *mutable_converter() { return &converter_; }
@@ -424,10 +429,6 @@ class MockDataAndAggregator {
   const PosMatcher &pos_matcher() const { return modules_->GetPosMatcher(); }
   const DictionaryPredictionAggregatorTestPeer &aggregator() {
     return *aggregator_;
-  }
-  void set_supplemental_model(
-      engine::SupplementalModelInterface *supplemental_model) {
-    modules_->SetSupplementalModel(supplemental_model);
   }
 
  private:
@@ -473,12 +474,19 @@ class DictionaryPredictionAggregatorTest
     return CreateConversionRequest(std::move(options));
   }
 
-  static std::unique_ptr<MockDataAndAggregator> CreateAggregatorWithMockData() {
+  static std::unique_ptr<MockDataAndAggregator> CreateAggregatorWithMockData(
+      std::unique_ptr<DictionaryInterface> suffix_dictionary,
+      std::unique_ptr<engine::SupplementalModelInterface> supplemental_model) {
     auto ret = std::make_unique<MockDataAndAggregator>();
-    ret->Init();
+    ret->Init(std::move(suffix_dictionary), std::move(supplemental_model));
     AddWordsToMockDic(ret->mutable_dictionary());
     AddDefaultImplToMockImmutableConverter(ret->mutable_immutable_converter());
     return ret;
+  }
+
+  static std::unique_ptr<MockDataAndAggregator> CreateAggregatorWithMockData() {
+    return CreateAggregatorWithMockData(/*suffix dictionary=*/nullptr,
+                                        /*supplemental_model=*/nullptr);
   }
 
   static void AddWordsToMockDic(MockDictionary *mock) {
@@ -2073,7 +2081,8 @@ class TestSuffixDictionary : public DictionaryInterface {
 
 TEST_F(DictionaryPredictionAggregatorTest, AggregateSuffixPrediction) {
   auto data_and_aggregator = std::make_unique<MockDataAndAggregator>();
-  data_and_aggregator->Init(std::make_unique<TestSuffixDictionary>());
+  data_and_aggregator->Init(std::make_unique<TestSuffixDictionary>(),
+                            nullptr /* supplemental model */);
 
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
@@ -2110,7 +2119,8 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateSuffixPrediction) {
 
 TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQuerySuffixPrediction) {
   auto data_and_aggregator = std::make_unique<MockDataAndAggregator>();
-  data_and_aggregator->Init(std::make_unique<TestSuffixDictionary>());
+  data_and_aggregator->Init(std::make_unique<TestSuffixDictionary>(),
+                            nullptr /* supplemental model */);
 
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
@@ -2247,16 +2257,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_F(DictionaryPredictionAggregatorTest,
        AggregateExtendedTypeCorrectingPrediction) {
-  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
-      CreateAggregatorWithMockData();
-  const DictionaryPredictionAggregatorTestPeer &aggregator =
-      data_and_aggregator->aggregator();
-
-  config_->set_use_typing_correction(true);
-
-  Segments segments;
-  SetUpInputForSuggestionWithHistory("よろさく", "ほんじつは", "本日は",
-                                     composer_.get(), &segments);
+  auto mock = std::make_unique<engine::MockSupplementalModel>();
 
   std::vector<TypeCorrectedQuery> expected;
 
@@ -2275,15 +2276,23 @@ TEST_F(DictionaryPredictionAggregatorTest,
                TypeCorrectedQuery::CORRECTION | TypeCorrectedQuery::COMPLETION |
                    TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
 
-  auto mock = std::make_unique<engine::MockSupplementalModel>();
   EXPECT_CALL(*mock, CorrectComposition(_, _)).WillOnce(Return(expected));
 
-  data_and_aggregator->set_supplemental_model(mock.get());
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData(/*suffix dictionary=*/nullptr,
+                                   std::move(mock));
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+
+  config_->set_use_typing_correction(true);
+
+  Segments segments;
+  SetUpInputForSuggestionWithHistory("よろさく", "ほんじつは", "本日は",
+                                     composer_.get(), &segments);
 
   std::vector<Result> results;
   ConversionRequest convreq = CreatePredictionConversionRequest();
   aggregator.AggregateTypingCorrectedPrediction(convreq, segments, &results);
-  data_and_aggregator->set_supplemental_model(nullptr);
 
   EXPECT_EQ(results.size(), 5);
   for (int i = 0; i < results.size(); ++i) {
@@ -2299,8 +2308,17 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
 TEST_F(DictionaryPredictionAggregatorTest,
        AggregateExtendedTypeCorrectingPredictionWithCharacterForm) {
+  auto mock = std::make_unique<engine::MockSupplementalModel>();
+
+  std::vector<TypeCorrectedQuery> expected;
+  expected.emplace_back(
+      TypeCorrectedQuery{"よろしく!", TypeCorrectedQuery::CORRECTION});
+
+  EXPECT_CALL(*mock, CorrectComposition(_, _)).WillOnce(Return(expected));
+
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
-      CreateAggregatorWithMockData();
+      CreateAggregatorWithMockData(nullptr /* suffix_dictionary */,
+                                   std::move(mock));
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
 
@@ -2310,19 +2328,9 @@ TEST_F(DictionaryPredictionAggregatorTest,
   SetUpInputForSuggestionWithHistory("よろさく!", "", "", composer_.get(),
                                      &segments);
 
-  std::vector<TypeCorrectedQuery> expected;
-  expected.emplace_back(
-      TypeCorrectedQuery{"よろしく!", TypeCorrectedQuery::CORRECTION});
-
-  auto mock = std::make_unique<engine::MockSupplementalModel>();
-  EXPECT_CALL(*mock, CorrectComposition(_, _)).WillOnce(Return(expected));
-
-  data_and_aggregator->set_supplemental_model(mock.get());
-
   std::vector<Result> results;
   ConversionRequest convreq = CreatePredictionConversionRequest();
   aggregator.AggregateTypingCorrectedPrediction(convreq, segments, &results);
-  data_and_aggregator->set_supplemental_model(nullptr);
 
   EXPECT_EQ(results.size(), 1);
 
@@ -2332,8 +2340,16 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
 TEST_F(DictionaryPredictionAggregatorTest,
        AggregateExtendedTypeCorrectingWithNumberDecoder) {
+  auto mock = std::make_unique<engine::MockSupplementalModel>();
+  std::vector<TypeCorrectedQuery> expected;
+  expected.emplace_back(
+      TypeCorrectedQuery{"にじゅうご", TypeCorrectedQuery::CORRECTION});
+
+  EXPECT_CALL(*mock, CorrectComposition(_, _)).WillRepeatedly(Return(expected));
+
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
-      CreateAggregatorWithMockData();
+      CreateAggregatorWithMockData(nullptr /* suffix_dictionary */,
+                                   std::move(mock));
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
 
@@ -2343,22 +2359,11 @@ TEST_F(DictionaryPredictionAggregatorTest,
   SetUpInputForSuggestionWithHistory("にしゆうこ", "", "", composer_.get(),
                                      &segments);
 
-  std::vector<TypeCorrectedQuery> expected;
-  expected.emplace_back(
-      TypeCorrectedQuery{"にじゅうご", TypeCorrectedQuery::CORRECTION});
-
-  auto mock = std::make_unique<engine::MockSupplementalModel>();
-  EXPECT_CALL(*mock, CorrectComposition(_, _)).WillRepeatedly(Return(expected));
-
-  data_and_aggregator->set_supplemental_model(mock.get());
-
   std::vector<Result> results;
   ConversionRequest convreq = CreatePredictionConversionRequest();
   aggregator.AggregateTypingCorrectedPrediction(convreq, segments, &results);
   EXPECT_EQ(results.size(), 2);
   EXPECT_EQ(results[1].value, "２５");  // default is full width.
-
-  data_and_aggregator->set_supplemental_model(nullptr);
 }
 
 TEST_F(DictionaryPredictionAggregatorTest, ZeroQuerySuggestionAfterNumbers) {

@@ -93,6 +93,8 @@ class SupplementalModelInterface {
   }
 };
 
+class SupplementalModelStub : public SupplementalModelInterface {};
+
 }  // namespace mozc::engine
 
 #endif  // MOZC_ENGINE_SUPPLEMENTAL_MODEL_INTERFACE_H_

@@ -445,11 +445,6 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     return std::nullopt;
   }
 
-  void SetSupplementalModel(
-      engine::SupplementalModelInterface *supplemental_model) {
-    data_and_predictor_->modules->SetSupplementalModel(supplemental_model);
-  }
-
   composer::Composer composer_;
   std::shared_ptr<composer::Table> table_;
   Config config_;
@@ -4584,7 +4579,19 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
 }
 
 TEST_F(UserHistoryPredictorTest, TypingCorrection) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  auto mock = std::make_unique<engine::MockSupplementalModel>();
+  // TODO(taku): Avoid sharing the pointer of std::unique_ptr.
+  engine::MockSupplementalModel *mock_ptr = mock.get();
+
+  std::unique_ptr<engine::Modules> modules =
+      engine::ModulesPresetBuilder()
+          .PresetDictionary(std::make_unique<MockDictionary>())
+          .PresetSupplementalModel(std::move(mock))
+          .Build(std::make_unique<testing::MockDataManager>())
+          .value();
+  auto predictor = std::make_unique<UserHistoryPredictor>(*modules, false);
+  predictor->WaitForSyncer();
+
   ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   Segments segments;
@@ -4633,9 +4640,8 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   // かつこ -> がっこ and かっこ
   add_expected("がっこ");
   add_expected("かっこ");
-  engine::MockSupplementalModel mock;
-  EXPECT_CALL(mock, CorrectComposition(_, _)).WillRepeatedly(Return(expected));
-  SetSupplementalModel(&mock);
+  EXPECT_CALL(*mock_ptr, CorrectComposition(_, _))
+      .WillRepeatedly(Return(expected));
 
   // set_typing_correction_apply_user_history_size=0
   request_.mutable_decoder_experiment_params()
@@ -4667,7 +4673,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   EXPECT_EQ(segments.segment(0).candidate(1).value, "ガッコウ");
   EXPECT_EQ(segments.segment(0).candidate(2).value, "学校");
 
-  SetSupplementalModel(nullptr);
+  ::testing::Mock::VerifyAndClearExpectations(mock_ptr);
   const ConversionRequest convreq6 =
       SetUpInputForSuggestion("かつこ", &composer_, &segments);
   EXPECT_FALSE(predictor->PredictForRequest(convreq6, &segments));

@@ -59,7 +59,6 @@
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 
-
 namespace mozc {
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
@@ -108,7 +107,6 @@ absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
 
 absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
                           bool is_mobile) {
-
   auto immutable_converter_factory = [](const engine::Modules &modules) {
     return std::make_unique<ImmutableConverter>(modules);
   };
@@ -207,8 +205,8 @@ bool Engine::SendEngineReloadRequest(const EngineReloadRequest &request) {
 
 bool Engine::SendSupplementalModelReloadRequest(
     const EngineReloadRequest &request) {
-  if (converter_ && converter_->modules().GetSupplementalModel()) {
-    converter_->modules().GetMutableSupplementalModel()->LoadAsync(request);
+  if (converter_) {
+    converter_->modules().GetSupplementalModel().LoadAsync(request);
   }
   return true;
 }

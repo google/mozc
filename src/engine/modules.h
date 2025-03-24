@@ -112,17 +112,9 @@ class Modules {
     return zero_query_number_dict_;
   }
 
-  const engine::SupplementalModelInterface *GetSupplementalModel() const {
-    return supplemental_model_;
-  }
-
-  engine::SupplementalModelInterface *GetMutableSupplementalModel() {
-    return supplemental_model_;
-  }
-
-  void SetSupplementalModel(
-      engine::SupplementalModelInterface *supplemental_model) {
-    supplemental_model_ = supplemental_model;
+  engine::SupplementalModelInterface &GetSupplementalModel() const {
+    DCHECK(supplemental_model_);
+    return *supplemental_model_;
   }
 
  private:
@@ -147,8 +139,12 @@ class Modules {
       single_kanji_prediction_aggregator_;
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;
-  // The owner of supplemental_model_ is Engine.
-  engine::SupplementalModelInterface *supplemental_model_ = nullptr;
+
+  // `supplemental_model_` is a class variable and initialized by
+  // a static singleton object. However, it can also be set to a different value
+  // by a PresetBuilder. Since singleton object cannot be deallocated,
+  // `supplemental_model_` is managed using a shared_ptr.
+  std::shared_ptr<engine::SupplementalModelInterface> supplemental_model_;
 };
 
 class ModulesPresetBuilder {
@@ -167,6 +163,8 @@ class ModulesPresetBuilder {
   ModulesPresetBuilder &PresetSingleKanjiPredictionAggregator(
       std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
           single_kanji_prediction_aggregator);
+  ModulesPresetBuilder &PresetSupplementalModel(
+      std::unique_ptr<engine::SupplementalModelInterface> supplemental_model);
   absl::StatusOr<std::unique_ptr<Modules>> Build(
       std::unique_ptr<const DataManager> data_manager);
 

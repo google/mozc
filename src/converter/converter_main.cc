@@ -100,7 +100,6 @@ ABSL_FLAG(std::string, decoder_experiment_params, "",
           "If nonempty, a DecoderExperimentParams is parsed from this text "
           "format and it is merged to the default value.");
 
-
 namespace mozc {
 namespace {
 
@@ -587,6 +586,7 @@ int main(int argc, char **argv) {
                << absl::GetFlag(FLAGS_engine_type);
     return 0;
   }
+
   if (const std::string &textproto =
           absl::GetFlag(FLAGS_decoder_experiment_params);
       !textproto.empty()) {

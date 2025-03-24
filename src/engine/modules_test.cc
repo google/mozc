@@ -36,6 +36,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
+#include "engine/supplemental_model_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -90,6 +91,38 @@ TEST(ModulesTest, PresetTest) {
   EXPECT_EQ(&modules->GetUserDictionary(), user_dictionary_ptr);
   EXPECT_EQ(&modules->GetSuffixDictionary(), suffix_dictionary_ptr);
   EXPECT_EQ(&modules->GetDictionary(), dictionary_ptr);
+}
+
+TEST(ModulesTest, SupplementalModelTest) {
+  std::unique_ptr<Modules> modules1 =
+      Modules::Create(std::make_unique<testing::MockDataManager>()).value();
+  std::unique_ptr<Modules> modules2 =
+      Modules::Create(std::make_unique<testing::MockDataManager>()).value();
+
+  // Returns the same non-null static instance by default.
+  EXPECT_TRUE(&modules1->GetSupplementalModel());
+  EXPECT_EQ(&modules1->GetSupplementalModel(),
+            &modules2->GetSupplementalModel());
+
+  auto supplemental_model = std::make_unique<SupplementalModelStub>();
+  // TODO(taku): Avoid sharing the pointer of std::unique_ptr.
+  const SupplementalModelInterface *supplemental_model_ptr =
+      supplemental_model.get();
+  std::unique_ptr<Modules> modules3 =
+      ModulesPresetBuilder()
+          .PresetSupplementalModel(std::move(supplemental_model))
+          .Build(std::make_unique<testing::MockDataManager>())
+          .value();
+
+  EXPECT_NE(&modules1->GetSupplementalModel(),
+            &modules3->GetSupplementalModel());
+  EXPECT_EQ(supplemental_model_ptr, &modules3->GetSupplementalModel());
+
+  // The default static instance is used again.
+  std::unique_ptr<Modules> modules4 =
+      Modules::Create(std::make_unique<testing::MockDataManager>()).value();
+  EXPECT_EQ(&modules1->GetSupplementalModel(),
+            &modules4->GetSupplementalModel());
 }
 
 }  // namespace engine

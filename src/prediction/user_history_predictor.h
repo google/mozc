@@ -224,6 +224,7 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest,
               ClearHistoryEntryTrigramDeleteSecondBigram);
   FRIEND_TEST(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync);
+  FRIEND_TEST(UserHistoryPredictorTest, TypingCorrection);
 
   enum MatchType {
     NO_MATCH,            // no match
