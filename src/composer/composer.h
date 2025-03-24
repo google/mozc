@@ -44,8 +44,8 @@
 #include "absl/types/span.h"
 #include "composer/composition.h"
 #include "composer/composition_input.h"
-#include "composer/transliterators.h"
 #include "composer/table.h"
+#include "composer/transliterators.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/friend_test.h"
@@ -61,11 +61,7 @@ std::shared_ptr<const commands::Request> GetSharedDefaultRequest();
 // object.
 class ComposerData {
  public:
-  // This constructor is temporary and should be removed, when
-  // ConverterRequest is updated to use a const ComposerData.
-  ABSL_DEPRECATED("Do not use this constructor except in converter_request.h")
-  ComposerData() = default;
-
+  ComposerData() = delete;
   ComposerData(Composition composition, size_t position,
                transliteration::TransliterationType input_mode,
                commands::Context::InputFieldType input_field_type,
