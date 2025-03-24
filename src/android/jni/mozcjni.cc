@@ -93,7 +93,7 @@ std::string JstringToCcString(JNIEnv *env, jstring j_string) {
 
 std::unique_ptr<EngineInterface> CreateMobileEngine(
     const std::string &data_file_path) {
-  absl::StatusOr<std::unique_ptr<DataManager>> data_manager =
+  absl::StatusOr<std::unique_ptr<const DataManager>> data_manager =
       DataManager::CreateFromFile(data_file_path);
   if (!data_manager.ok()) {
     LOG(ERROR)

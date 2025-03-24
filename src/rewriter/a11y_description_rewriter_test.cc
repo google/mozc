@@ -51,11 +51,22 @@ void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
   candidate->content_value = std::string(value);
 }
 
+// Mock data manager that returns empty a11y description data.
+class NoDataMockDataManager : public testing::MockDataManager {
+ public:
+  virtual void GetA11yDescriptionRewriterData(
+      absl::string_view *token_array_data,
+      absl::string_view *string_array_data) const override {
+    *token_array_data = "";
+    *string_array_data = "";
+  }
+};
+
 class A11yDescriptionRewriterTest : public ::testing::Test {
  protected:
   A11yDescriptionRewriterTest()
       : rewriter_(mock_data_manager_),
-        rewriter_without_data_(dummy_data_manager_) {}
+        rewriter_without_data_(no_data_mock_data_manager_) {}
 
   const RewriterInterface *GetRewriter() { return &rewriter_; }
   const RewriterInterface *GetRewriterWithoutData() {
@@ -64,7 +75,7 @@ class A11yDescriptionRewriterTest : public ::testing::Test {
 
  private:
   testing::MockDataManager mock_data_manager_;
-  DataManager dummy_data_manager_;
+  NoDataMockDataManager no_data_mock_data_manager_;
   A11yDescriptionRewriter rewriter_;
   A11yDescriptionRewriter rewriter_without_data_;
 };

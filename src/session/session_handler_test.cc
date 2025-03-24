@@ -153,15 +153,15 @@ class SessionHandlerTest : public SessionHandlerTestBase {
     invalid_data_request_.set_file_path(mock_path);
     invalid_data_request_.set_magic_number(kOssMagicNumber);
 
-    DataManager mock_data_manager;
-    mock_data_manager.InitFromFile(mock_request_.file_path(),
-                                   mock_request_.magic_number());
-    mock_version_ = mock_data_manager.GetDataVersion();
+    mock_version_ = DataManager::CreateFromFile(mock_request_.file_path(),
+                                                mock_request_.magic_number())
+                        .value()
+                        ->GetDataVersion();
 
-    DataManager oss_data_manager;
-    oss_data_manager.InitFromFile(oss_request_.file_path(),
-                                  oss_request_.magic_number());
-    oss_version_ = oss_data_manager.GetDataVersion();
+    oss_version_ = DataManager::CreateFromFile(oss_request_.file_path(),
+                                               oss_request_.magic_number())
+                       .value()
+                       ->GetDataVersion();
   }
 
   void SetUp() override {

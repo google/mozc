@@ -55,55 +55,31 @@ class DataSetReader;  // Forward-declare this as it is used privately.
 // oss/oss_data_manager.h, to this one.
 class DataManager {
  public:
-  // Return status for initialization.
-  enum class Status {
-    OK = 0,
-    ENGINE_VERSION_MISMATCH = 1,
-    DATA_MISSING = 2,
-    DATA_BROKEN = 3,
-    MMAP_FAILURE = 4,
-    UNKNOWN = 5,
-  };
-
-  static std::string StatusCodeToString(Status code);
   static absl::string_view GetDataSetMagicNumber(absl::string_view type);
 
-  // Creates an instance of DataManager from a data set file or returns error
-  // status on failure.
-  static absl::StatusOr<std::unique_ptr<DataManager>> CreateFromFile(
-      const std::string &path);
-  static absl::StatusOr<std::unique_ptr<DataManager>> CreateFromFile(
-      const std::string &path, absl::string_view magic);
+  // Creates an instance of *const* DataManager from a data set file or returns
+  // error status on failure.
+  using DMStatusOr = absl::StatusOr<std::unique_ptr<const DataManager>>;
 
-  DataManager() = default;
+  static DMStatusOr CreateFromFile(const std::string &path);
+  static DMStatusOr CreateFromFile(const std::string &path,
+                                   absl::string_view magic);
+
+  static DMStatusOr CreateFromArray(absl::string_view array);
+  static DMStatusOr CreateFromArray(absl::string_view array,
+                                    absl::string_view magic);
+  static DMStatusOr CreateFromArray(absl::string_view array,
+                                    size_t magic_length);
+
+  static DMStatusOr CreateUserPosManagerDataFromArray(absl::string_view array,
+                                                      absl::string_view magic);
+  static DMStatusOr CreateUserPosManagerDataFromFile(const std::string &path,
+                                                     absl::string_view magic);
+
   DataManager(const DataManager &) = delete;
   DataManager &operator=(const DataManager &) = delete;
   virtual ~DataManager() = default;
 
-  // Parses |array| and extracts byte blocks of data set.  The |array| must
-  // outlive this instance.  The second version specifies a custom magic number
-  // to expect (e.g., mock data set has a different magic number).
-  // The third version specifies the length of the magic number in bytes.
-  Status InitFromArray(absl::string_view array);
-  Status InitFromArray(absl::string_view array, absl::string_view magic);
-  Status InitFromArray(absl::string_view array, size_t magic_length);
-
-  // The same as above InitFromArray() but the data is loaded using mmap, which
-  // is owned in this instance.
-  Status InitFromFile(const std::string &path);
-  Status InitFromFile(const std::string &path, absl::string_view magic);
-
-  // The same as above InitFromArray() but only parses data set for user pos
-  // manager.  For mozc runtime modules, use InitFromArray() because this method
-  // is only for build tools, e.g., rewriter/dictionary_generator.cc (some build
-  // tools depend on user pos data to create outputs, so we need to handle
-  // partial data set).
-  Status InitUserPosManagerDataFromArray(absl::string_view array,
-                                         absl::string_view magic);
-  Status InitUserPosManagerDataFromFile(const std::string &path,
-                                        absl::string_view magic);
-
-  // Implementation of DataManagerInterface.
   virtual std::optional<std::string> GetFilename() const { return filename_; }
   virtual absl::Span<const uint16_t> GetPosMatcherData() const;
   virtual void GetUserPosData(absl::string_view *token_array_data,
@@ -164,8 +140,36 @@ class DataManager {
   virtual std::optional<std::pair<size_t, size_t>> GetOffsetAndSize(
       absl::string_view name) const;
 
+ protected:
+  DataManager() = default;
+  friend std::unique_ptr<DataManager> std::make_unique<DataManager>();
+
+  // Parses |array| and extracts byte blocks of data set.  The |array| must
+  // outlive this instance.  The second version specifies a custom magic number
+  // to expect (e.g., mock data set has a different magic number).
+  // The third version specifies the length of the magic number in bytes.
+
+  absl::Status InitFromArray(absl::string_view array);
+  absl::Status InitFromArray(absl::string_view array, absl::string_view magic);
+  absl::Status InitFromArray(absl::string_view array, size_t magic_length);
+
+  // The same as above InitFromArray() but the data is loaded using mmap, which
+  // is owned in this instance.
+  absl::Status InitFromFile(const std::string &path);
+  absl::Status InitFromFile(const std::string &path, absl::string_view magic);
+
+  // The same as above InitFromArray() but only parses data set for user pos
+  // manager.  For mozc runtime modules, use InitFromArray() because this method
+  // is only for build tools, e.g., rewriter/dictionary_generator.cc (some build
+  // tools depend on user pos data to create outputs, so we need to handle
+  // partial data set).
+  absl::Status InitUserPosManagerDataFromArray(absl::string_view array,
+                                               absl::string_view magic);
+  absl::Status InitUserPosManagerDataFromFile(const std::string &path,
+                                              absl::string_view magic);
+
  private:
-  Status InitFromReader(const DataSetReader &reader);
+  absl::Status InitFromReader(const DataSetReader &reader);
 
   std::optional<std::string> filename_ = std::nullopt;
   Mmap mmap_;
@@ -218,10 +222,6 @@ class DataManager {
   absl::string_view data_version_;
   absl::flat_hash_map<std::string, std::pair<size_t, size_t>> offset_and_size_;
 };
-
-// Print helper for DataManager::Status.  Logging, e.g., CHECK_EQ(), requires
-// arguments to be printable.
-std::ostream &operator<<(std::ostream &os, DataManager::Status status);
 
 }  // namespace mozc
 

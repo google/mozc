@@ -562,7 +562,7 @@ int main(int argc, char **argv) {
             << "\nData file: " << absl::GetFlag(FLAGS_engine_data_path)
             << "\nid.def: " << absl::GetFlag(FLAGS_id_def) << std::endl;
 
-  absl::StatusOr<std::unique_ptr<mozc::DataManager>> data_manager =
+  absl::StatusOr<std::unique_ptr<const mozc::DataManager>> data_manager =
       absl::GetFlag(FLAGS_magic).empty()
           ? mozc::DataManager::CreateFromFile(
                 absl::GetFlag(FLAGS_engine_data_path))

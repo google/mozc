@@ -102,17 +102,15 @@ int main(int argc, char **argv) {
       mozc::GetInputFileName(absl::GetFlag(FLAGS_input));
 
   // User POS manager data for build tools has no magic number.
-  const char *kMagicNumber = "";
-  mozc::DataManager data_manager;
-  const mozc::DataManager::Status status =
-      data_manager.InitUserPosManagerDataFromFile(
+  constexpr absl::string_view kMagicNumber = "";
+  absl::StatusOr<std::unique_ptr<const mozc::DataManager>> data_manager =
+      mozc::DataManager::CreateUserPosManagerDataFromFile(
           absl::GetFlag(FLAGS_user_pos_manager_data), kMagicNumber);
-  CHECK_EQ(status, mozc::DataManager::Status::OK)
-      << "Failed to initialize data manager from "
-      << absl::GetFlag(FLAGS_user_pos_manager_data);
+  CHECK_OK(data_manager) << "Failed to initialize data manager from "
+                         << absl::GetFlag(FLAGS_user_pos_manager_data);
 
   const mozc::dictionary::PosMatcher pos_matcher(
-      data_manager.GetPosMatcherData());
+      data_manager.value()->GetPosMatcherData());
 
   mozc::dictionary::TextDictionaryLoader loader(pos_matcher);
   loader.Load(system_dictionary_input, reading_correction_input);

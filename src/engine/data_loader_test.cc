@@ -102,10 +102,10 @@ TEST_P(DataLoaderTest, AsyncBuild) {
   request_.set_file_path(mock_data_path_);
   request_.set_magic_number(kMockMagicNumber);
 
-  DataManager data_manager;
-  data_manager.InitFromFile(mock_data_path_, kMockMagicNumber);
-  absl::string_view expected_version = data_manager.GetDataVersion();
-  const std::string expected_filename = data_manager.GetFilename().value();
+  std::unique_ptr<const DataManager> data_manager =
+      DataManager::CreateFromFile(mock_data_path_, kMockMagicNumber).value();
+  absl::string_view expected_version = data_manager->GetDataVersion();
+  const std::string expected_filename = data_manager->GetFilename().value();
 
   int callback_called = 0;
 

@@ -38,6 +38,7 @@
 
 #include <climits>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -225,13 +226,12 @@ int main(int argc, char **argv) {
 
   // User pos manager data for build tools has no magic number.
   constexpr absl::string_view kMagicNumber = "";
-  mozc::DataManager data_manager;
-  const mozc::DataManager::Status status =
-      data_manager.InitUserPosManagerDataFromFile(
+  absl::StatusOr<std::unique_ptr<const mozc::DataManager>> data_manager =
+      mozc::DataManager::CreateUserPosManagerDataFromFile(
           absl::GetFlag(FLAGS_user_pos_manager_data), kMagicNumber);
-  CHECK_EQ(status, mozc::DataManager::Status::OK);
+  CHECK_OK(data_manager);
 
-  mozc::rewriter::DictionaryGenerator dictionary(data_manager);
+  mozc::rewriter::DictionaryGenerator dictionary(*data_manager.value());
   mozc::MakeDictionary(absl::GetFlag(FLAGS_input),
                        absl::GetFlag(FLAGS_sorting_table),
                        absl::GetFlag(FLAGS_ordering_rule), dictionary);

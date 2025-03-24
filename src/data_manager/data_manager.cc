@@ -44,6 +44,7 @@
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -67,30 +68,27 @@ constexpr absl::string_view kDataSetMagicNumber = "\xEFMOZC\r\n";
 
 constexpr absl::string_view kDataSetMagicNumberOss = "\xEFMOZC\r\n";
 
-DataManager::Status InitUserPosManagerDataFromReader(
+absl::Status InitUserPosManagerDataFromReader(
     const DataSetReader &reader, absl::string_view *pos_matcher_data,
     absl::string_view *user_pos_token_array_data,
     absl::string_view *user_pos_string_array_data) {
   if (!reader.Get("pos_matcher", pos_matcher_data)) {
-    LOG(ERROR) << "Cannot find POS matcher rule ID table";
-    return DataManager::Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find POS matcher rule ID table");
   }
   if (!reader.Get("user_pos_token", user_pos_token_array_data)) {
-    LOG(ERROR) << "Cannot find a user POS token array";
-    return DataManager::Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a user POS token array");
   }
   if (!reader.Get("user_pos_string", user_pos_string_array_data)) {
-    LOG(ERROR) << "Cannot find a user POS string array";
-    return DataManager::Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a user POS string array");
   }
   if (user_pos_token_array_data->size() % 8 != 0 ||
       !SerializedStringArray::VerifyData(*user_pos_string_array_data)) {
-    LOG(ERROR) << "User POS data is broken: token array data size = "
-               << user_pos_token_array_data->size() << ", string array size = "
-               << user_pos_string_array_data->size();
-    return DataManager::Status::DATA_BROKEN;
+    return absl::DataLossError(absl::StrCat(
+        "User POS data is broken: token array data size = ",
+        user_pos_token_array_data->size(),
+        ", string array size = ", user_pos_string_array_data->size()));
   }
-  return DataManager::Status::OK;
+  return absl::OkStatus();
 }
 
 template <typename T>
@@ -102,33 +100,6 @@ absl::Span<const T> MakeSpanFromAlignedBuffer(const absl::string_view buf) {
 }  // namespace
 
 // static
-std::string DataManager::StatusCodeToString(Status code) {
-  std::string s;
-  switch (code) {
-    case Status::OK:
-      s.assign("Status::OK");
-      break;
-    case Status::ENGINE_VERSION_MISMATCH:
-      s.assign("Status::ENGINE_VERSION_MISMATCH");
-      break;
-    case Status::DATA_MISSING:
-      s.assign("Status::DATA_MISSING");
-      break;
-    case Status::DATA_BROKEN:
-      s.assign("Status::DATA_BROKEN");
-      break;
-    case Status::MMAP_FAILURE:
-      s.assign("Status::MMAP_FAILURE");
-      break;
-    default:
-      s.assign("Status::UNKNOWN");
-      break;
-  }
-  absl::StrAppendFormat(&s, "(%d)", static_cast<int>(code));
-  return s;
-}
-
-// static
 absl::string_view DataManager::GetDataSetMagicNumber(absl::string_view type) {
   if (type == "oss") {
     return kDataSetMagicNumberOss;
@@ -136,128 +107,170 @@ absl::string_view DataManager::GetDataSetMagicNumber(absl::string_view type) {
   return kDataSetMagicNumber;
 }
 
-absl::StatusOr<std::unique_ptr<DataManager>> DataManager::CreateFromFile(
+// static
+absl::StatusOr<std::unique_ptr<const DataManager>> DataManager::CreateFromFile(
     const std::string &path) {
   return CreateFromFile(path, kDataSetMagicNumber);
 }
 
-absl::StatusOr<std::unique_ptr<DataManager>> DataManager::CreateFromFile(
+// static
+absl::StatusOr<std::unique_ptr<const DataManager>> DataManager::CreateFromFile(
     const std::string &path, absl::string_view magic) {
   auto data_manager = std::make_unique<DataManager>();
-  const Status status = data_manager->InitFromFile(path, magic);
-  if (status != DataManager::Status::OK) {
-    return absl::InternalError(
-        absl::StrFormat("%s: Failed to initialize a data manager from %s",
-                        DataManager::StatusCodeToString(status), path));
+  absl::Status status = data_manager->InitFromFile(path, magic);
+  if (!status.ok()) {
+    LOG(ERROR) << status;
+    return status;
   }
   return data_manager;
 }
 
-DataManager::Status DataManager::InitFromArray(absl::string_view array) {
+// static
+absl::StatusOr<std::unique_ptr<const DataManager>> DataManager::CreateFromArray(
+    absl::string_view array) {
+  return CreateFromArray(array, kDataSetMagicNumber);
+}
+
+// static
+absl::StatusOr<std::unique_ptr<const DataManager>> DataManager::CreateFromArray(
+    absl::string_view array, absl::string_view magic) {
+  auto data_manager = std::make_unique<DataManager>();
+  absl::Status status = data_manager->InitFromArray(array, magic);
+  if (!status.ok()) {
+    LOG(ERROR) << status;
+    return status;
+  }
+  return data_manager;
+}
+
+// static
+absl::StatusOr<std::unique_ptr<const DataManager>> DataManager::CreateFromArray(
+    absl::string_view array, size_t magic_length) {
+  auto data_manager = std::make_unique<DataManager>();
+  absl::Status status = data_manager->InitFromArray(array, magic_length);
+  if (!status.ok()) {
+    LOG(ERROR) << status;
+    return status;
+  }
+  return data_manager;
+}
+
+// static
+absl::StatusOr<std::unique_ptr<const DataManager>>
+DataManager::CreateUserPosManagerDataFromArray(absl::string_view array,
+                                               absl::string_view magic) {
+  auto data_manager = std::make_unique<DataManager>();
+  absl::Status status =
+      data_manager->InitUserPosManagerDataFromArray(array, magic);
+  if (!status.ok()) {
+    LOG(ERROR) << status;
+    return status;
+  }
+  return data_manager;
+}
+
+// static
+absl::StatusOr<std::unique_ptr<const DataManager>>
+DataManager::CreateUserPosManagerDataFromFile(const std::string &path,
+                                              absl::string_view magic) {
+  auto data_manager = std::make_unique<DataManager>();
+  absl::Status status =
+      data_manager->InitUserPosManagerDataFromFile(path, magic);
+  if (!status.ok()) {
+    LOG(ERROR) << status;
+    return status;
+  }
+  return data_manager;
+}
+
+absl::Status DataManager::InitFromArray(absl::string_view array) {
   return InitFromArray(array, kDataSetMagicNumber);
 }
 
-DataManager::Status DataManager::InitFromArray(absl::string_view array,
-                                               absl::string_view magic) {
+absl::Status DataManager::InitFromArray(absl::string_view array,
+                                        absl::string_view magic) {
   DataSetReader reader;
   if (!reader.Init(array, magic)) {
-    LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
-    return DataManager::Status::DATA_BROKEN;
+    return absl::DataLossError(
+        absl::StrCat("Binary data of size ", array.size(), " is broken"));
   }
   return InitFromReader(reader);
 }
 
-DataManager::Status DataManager::InitFromArray(absl::string_view array,
-                                               size_t magic_length) {
+absl::Status DataManager::InitFromArray(absl::string_view array,
+                                        size_t magic_length) {
   DataSetReader reader;
   if (!reader.Init(array, magic_length)) {
-    LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
-    return DataManager::Status::DATA_BROKEN;
+    return absl::DataLossError(
+        absl::StrCat("Binary data of size ", array.size(), " is broken"));
   }
   return InitFromReader(reader);
 }
 
-DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
-  const Status status = InitUserPosManagerDataFromReader(
+absl::Status DataManager::InitFromReader(const DataSetReader &reader) {
+  const absl::Status status = InitUserPosManagerDataFromReader(
       reader, &pos_matcher_data_, &user_pos_token_array_data_,
       &user_pos_string_array_data_);
-  if (status != Status::OK) {
-    LOG(ERROR) << "User POS manager data is broken";
+
+  if (!status.ok()) {
     return status;
   }
   if (!reader.Get("conn", &connection_data_)) {
-    LOG(ERROR) << "Cannot find a connection data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a connection data");
   }
   if (!reader.Get("dict", &dictionary_data_)) {
-    LOG(ERROR) << "Cannot find a dictionary data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a dictionary data");
   }
   if (!reader.Get("sugg", &suggestion_filter_data_)) {
-    LOG(ERROR) << "Cannot find a suggestion filter data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a suggestion filter data");
   }
   if (!reader.Get("coll", &collocation_data_)) {
-    LOG(ERROR) << "Cannot find a collocation data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a collocation data");
   }
   if (!reader.Get("cols", &collocation_suppression_data_)) {
-    LOG(ERROR) << "Cannot find a collocation suprression data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a collocation suprression data");
   }
   if (!reader.Get("posg", &pos_group_data_)) {
-    LOG(ERROR) << "Cannot find a POS group data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a POS group data");
   }
   if (!reader.Get("bdry", &boundary_data_)) {
-    LOG(ERROR) << "Cannot find a boundary data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a boundary data");
   }
   {
     absl::string_view memblock;
     if (!reader.Get("segmenter_sizeinfo", &memblock)) {
-      LOG(ERROR) << "Cannot find a segmenter size info";
-      return Status::DATA_MISSING;
+      return absl::NotFoundError("Cannot find a segmenter size info");
     }
     converter::SegmenterDataSizeInfo sizeinfo;
     if (!sizeinfo.ParseFromArray(memblock.data(), memblock.size())) {
-      LOG(ERROR) << "Failed to parse SegmenterDataSizeInfo";
-      return Status::DATA_BROKEN;
+      return absl::DataLossError("Failed to parse SegmenterDataSizeInfo");
     }
     segmenter_compressed_lsize_ = sizeinfo.compressed_lsize();
     segmenter_compressed_rsize_ = sizeinfo.compressed_rsize();
   }
   if (!reader.Get("segmenter_ltable", &segmenter_ltable_)) {
-    LOG(ERROR) << "Cannot find a segmenter ltable";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a segmenter ltable");
   }
   if (!reader.Get("segmenter_rtable", &segmenter_rtable_)) {
-    LOG(ERROR) << "Cannot find a segmenter rtable";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a segmenter rtable");
   }
   if (!reader.Get("segmenter_bitarray", &segmenter_bitarray_)) {
-    LOG(ERROR) << "Cannot find a segmenter bit-array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a segmenter bit-array");
   }
   if (!reader.Get("counter_suffix", &counter_suffix_data_)) {
-    LOG(ERROR) << "Cannot find a counter suffix data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a counter suffix data");
   }
   if (!SerializedStringArray::VerifyData(counter_suffix_data_)) {
-    LOG(ERROR) << "Counter suffix string array is broken";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Counter suffix string array is broken");
   }
   if (!reader.Get("suffix_key", &suffix_key_array_data_)) {
-    LOG(ERROR) << "Cannot find a suffix key array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a suffix key array");
   }
   if (!reader.Get("suffix_value", &suffix_value_array_data_)) {
-    LOG(ERROR) << "Cannot find a suffix value array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a suffix value array");
   }
   if (!reader.Get("suffix_token", &suffix_token_array_data_)) {
-    LOG(ERROR) << "Cannot find a suffix token array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a suffix token array");
   }
   {
     SerializedStringArray suffix_keys, suffix_values;
@@ -268,24 +281,21 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
         // uint32_t, so it contains N = 3 * |suffix_keys.size()| uint32_t
         // elements. Therefore, its byte length must be 4 * N bytes.
         suffix_token_array_data_.size() != 4 * 3 * suffix_keys.size()) {
-      LOG(ERROR) << "Suffix dictionary data is broken";
-      return Status::DATA_BROKEN;
+      return absl::DataLossError("Suffix dictionary data is broken");
     }
   }
   if (!reader.Get("reading_correction_value",
                   &reading_correction_value_array_data_)) {
-    LOG(ERROR) << "Cannot find reading correction value array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find reading correction value array");
   }
   if (!reader.Get("reading_correction_error",
                   &reading_correction_error_array_data_)) {
-    LOG(ERROR) << "Cannot find reading correction error array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find reading correction error array");
   }
   if (!reader.Get("reading_correction_correction",
                   &reading_correction_correction_array_data_)) {
-    LOG(ERROR) << "Cannot find reading correction correction array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError(
+        "Cannot find reading correction correction array");
   }
   {
     SerializedStringArray value_array, error_array, correction_array;
@@ -294,47 +304,40 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
         !correction_array.Init(reading_correction_correction_array_data_) ||
         value_array.size() != error_array.size() ||
         value_array.size() != correction_array.size()) {
-      LOG(ERROR) << "Reading correction data is broken";
-      return Status::DATA_BROKEN;
+      return absl::DataLossError("Reading correction data is broken");
     }
   }
   if (!reader.Get("symbol_token", &symbol_token_array_data_)) {
-    LOG(ERROR) << "Cannot find a symbol token array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find a symbol token array");
   }
   if (!reader.Get("symbol_string", &symbol_string_array_data_)) {
-    LOG(ERROR) << "Cannot find a symbol string array or data is broken";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError(
+        "Cannot find a symbol string array or data is broken");
   }
   if (!SerializedDictionary::VerifyData(symbol_token_array_data_,
                                         symbol_string_array_data_)) {
-    LOG(ERROR) << "Symbol dictionary data is broken";
-    return Status::DATA_BROKEN;
+    return absl::DataLossError("Symbol dictionary data is broken");
   }
   if (!reader.Get("emoticon_token", &emoticon_token_array_data_)) {
-    LOG(ERROR) << "Cannot find an emoticon token array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find an emoticon token array");
   }
   if (!reader.Get("emoticon_string", &emoticon_string_array_data_)) {
-    LOG(ERROR) << "Cannot find an emoticon string array or data is broken";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError(
+        "Cannot find an emoticon string array or data is broken");
   }
   if (!SerializedDictionary::VerifyData(emoticon_token_array_data_,
                                         emoticon_string_array_data_)) {
-    LOG(ERROR) << "Emoticon dictionary data is broken";
-    return Status::DATA_BROKEN;
+    return absl::DataLossError("Emoticon dictionary data is broken");
   }
   if (!reader.Get("emoji_token", &emoji_token_array_data_)) {
-    LOG(ERROR) << "Cannot find an emoji token array";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find an emoji token array");
   }
   if (!reader.Get("emoji_string", &emoji_string_array_data_)) {
-    LOG(ERROR) << "Cannot find an emoji string array or data is broken";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError(
+        "Cannot find an emoji string array or data is broken");
   }
   if (!SerializedStringArray::VerifyData(emoji_string_array_data_)) {
-    LOG(ERROR) << "Emoji rewriter string array data is broken";
-    return Status::DATA_BROKEN;
+    return absl::DataLossError("Emoji rewriter string array data is broken");
   }
   if (!reader.Get("single_kanji_token", &single_kanji_token_array_data_) ||
       !reader.Get("single_kanji_string", &single_kanji_string_array_data_) ||
@@ -348,8 +351,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
                   &single_kanji_noun_prefix_token_array_data_) ||
       !reader.Get("single_kanji_noun_prefix_string",
                   &single_kanji_noun_prefix_string_array_data_)) {
-    LOG(ERROR) << "Cannot find single Kanji rewriter data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find single Kanji rewriter data");
   }
   if (!SerializedStringArray::VerifyData(single_kanji_string_array_data_) ||
       !SerializedStringArray::VerifyData(single_kanji_variant_type_data_) ||
@@ -358,8 +360,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
       !SerializedDictionary::VerifyData(
           single_kanji_noun_prefix_token_array_data_,
           single_kanji_noun_prefix_string_array_data_)) {
-    LOG(ERROR) << "Single Kanji data is broken";
-    return Status::DATA_BROKEN;
+    return absl::DataLossError("Single Kanji data is broken");
   }
   if (!reader.Get("a11y_description_token",
                   &a11y_description_token_array_data_)) {
@@ -378,8 +379,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
         a11y_description_string_array_data_.empty()) &&
       !SerializedDictionary::VerifyData(a11y_description_token_array_data_,
                                         a11y_description_string_array_data_)) {
-    LOG(ERROR) << "A11y description dictionary data is broken";
-    return Status::DATA_BROKEN;
+    return absl::DataLossError("A11y description dictionary data is broken");
   }
   if (!reader.Get("zero_query_token_array", &zero_query_token_array_data_) ||
       !reader.Get("zero_query_string_array", &zero_query_string_array_data_) ||
@@ -387,14 +387,12 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
                   &zero_query_number_token_array_data_) ||
       !reader.Get("zero_query_number_string_array",
                   &zero_query_number_string_array_data_)) {
-    LOG(ERROR) << "Cannot find zero query data";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find zero query data");
   }
   if (!SerializedStringArray::VerifyData(zero_query_string_array_data_) ||
       !SerializedStringArray::VerifyData(
           zero_query_number_string_array_data_)) {
-    LOG(ERROR) << "Zero query data is broken";
-    return Status::DATA_BROKEN;
+    return absl::DataLossError("Zero query data is broken");
   }
 
   if (!reader.Get("usage_item_array", &usage_items_data_)) {
@@ -408,76 +406,72 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
         !reader.Get("usage_conjugation_index",
                     &usage_conjugation_index_data_) ||
         !reader.Get("usage_string_array", &usage_string_array_data_)) {
-      LOG(ERROR) << "Cannot find some usage dictionary data components";
-      return Status::DATA_MISSING;
+      return absl::NotFoundError(
+          "Cannot find some usage dictionary data components");
     }
     if (!SerializedStringArray::VerifyData(usage_string_array_data_)) {
-      LOG(ERROR) << "Usage dictionary's string array is broken";
-      return Status::DATA_BROKEN;
+      return absl::DataLossError("Usage dictionary's string array is broken");
     }
   }
 
   if (!reader.Get("version", &data_version_)) {
-    LOG(ERROR) << "Cannot find data version";
-    return Status::DATA_MISSING;
+    return absl::NotFoundError("Cannot find data version");
   }
   {
     std::vector<absl::string_view> components =
         absl::StrSplit(data_version_, '.', absl::SkipEmpty());
     if (components.size() != 3) {
-      LOG(ERROR) << "Invalid version format: " << data_version_;
-      return Status::DATA_BROKEN;
+      return absl::DataLossError(
+          absl::StrCat("Invalid version format: ", data_version_));
     }
     if (components[0] != Version::GetMozcEngineVersion()) {
-      LOG(ERROR) << "Incompatible data. The required engine version is "
-                 << Version::GetMozcEngineVersion() << " but tried to load "
-                 << components[0] << " (" << data_version_ << ")";
-      return Status::ENGINE_VERSION_MISMATCH;
+      return absl::FailedPreconditionError(
+          absl::StrCat("Incompatible data. The required engine version is ",
+                       Version::GetMozcEngineVersion(), " but tried to load ",
+                       components[0], " (", data_version_, ")"));
     }
   }
-  return Status::OK;
+  return absl::OkStatus();
 }
 
-DataManager::Status DataManager::InitFromFile(const std::string &path) {
+absl::Status DataManager::InitFromFile(const std::string &path) {
   return InitFromFile(path, kDataSetMagicNumber);
 }
 
-DataManager::Status DataManager::InitFromFile(const std::string &path,
-                                              absl::string_view magic) {
+absl::Status DataManager::InitFromFile(const std::string &path,
+                                       absl::string_view magic) {
   absl::StatusOr<Mmap> mmap = Mmap::Map(path, Mmap::READ_ONLY);
   if (!mmap.ok()) {
-    LOG(ERROR) << mmap.status();
-    return Status::MMAP_FAILURE;
+    return absl::PermissionDeniedError(
+        absl::StrCat("Mmap failed ", mmap.status()));
   }
   filename_ = path;
   mmap_ = *std::move(mmap);
-  const absl::string_view data(mmap_.begin(), mmap_.size());
+  absl::string_view data(mmap_.begin(), mmap_.size());
   return InitFromArray(data, magic);
 }
 
-DataManager::Status DataManager::InitUserPosManagerDataFromArray(
+absl::Status DataManager::InitUserPosManagerDataFromArray(
     absl::string_view array, absl::string_view magic) {
   DataSetReader reader;
   if (!reader.Init(array, magic)) {
-    LOG(ERROR) << "Binary data of size " << array.size() << " is broken";
-    return Status::DATA_BROKEN;
+    return absl::DataLossError(
+        absl::StrCat("Binary data of size ", array.size(), " is broken"));
   }
-  const Status status = InitUserPosManagerDataFromReader(
-      reader, &pos_matcher_data_, &user_pos_token_array_data_,
-      &user_pos_string_array_data_);
-  LOG_IF(ERROR, status != Status::OK) << "User POS manager data is broken";
-  return status;
+  return InitUserPosManagerDataFromReader(reader, &pos_matcher_data_,
+                                          &user_pos_token_array_data_,
+                                          &user_pos_string_array_data_);
 }
 
-DataManager::Status DataManager::InitUserPosManagerDataFromFile(
+absl::Status DataManager::InitUserPosManagerDataFromFile(
     const std::string &path, absl::string_view magic) {
   absl::StatusOr<Mmap> mmap = Mmap::Map(path, Mmap::READ_ONLY);
   if (!mmap.ok()) {
-    LOG(ERROR) << mmap.status();
-    return Status::MMAP_FAILURE;
+    return absl::PermissionDeniedError(
+        absl::StrCat("Mmap failed ", mmap.status()));
   }
   mmap_ = *std::move(mmap);
-  const absl::string_view data(mmap_.begin(), mmap_.size());
+  absl::string_view data(mmap_.begin(), mmap_.size());
   return InitUserPosManagerDataFromArray(data, magic);
 }
 
@@ -627,10 +621,6 @@ std::optional<std::pair<size_t, size_t>> DataManager::GetOffsetAndSize(
     return iter->second;
   }
   return std::nullopt;
-}
-
-std::ostream &operator<<(std::ostream &os, DataManager::Status status) {
-  return os << DataManager::StatusCodeToString(status);
 }
 
 }  // namespace mozc

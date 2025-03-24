@@ -50,22 +50,20 @@
 
 namespace mozc {
 namespace {
-EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
-  switch (status) {
-    case DataManager::Status::OK:
+EngineReloadResponse::Status ConvertStatus(absl::Status status) {
+  switch (status.code()) {
+    case absl::StatusCode::kOk:
       return EngineReloadResponse::RELOAD_READY;
-    case DataManager::Status::ENGINE_VERSION_MISMATCH:
+    case absl::StatusCode::kFailedPrecondition:
       return EngineReloadResponse::ENGINE_VERSION_MISMATCH;
-    case DataManager::Status::DATA_MISSING:
+    case absl::StatusCode::kNotFound:
       return EngineReloadResponse::DATA_MISSING;
-    case DataManager::Status::DATA_BROKEN:
+    case absl::StatusCode::kDataLoss:
       return EngineReloadResponse::DATA_BROKEN;
-    case DataManager::Status::MMAP_FAILURE:
+    case absl::StatusCode::kPermissionDenied:
       return EngineReloadResponse::MMAP_FAILURE;
-    case DataManager::Status::UNKNOWN:
-      return EngineReloadResponse::UNKNOWN_ERROR;
     default:
-      LOG(DFATAL) << "Should not reach here";
+      break;
   }
   return EngineReloadResponse::UNKNOWN_ERROR;
 }
@@ -160,24 +158,22 @@ std::unique_ptr<DataLoader::Response> DataLoader::BuildResponse(
   *result->response.mutable_request() = request;
 
   // Initializes DataManager
-  auto data_manager = std::make_unique<DataManager>();
-  {
-    const DataManager::Status status =
-        request.has_magic_number()
-            ? data_manager->InitFromFile(request.file_path(),
-                                         request.magic_number())
-            : data_manager->InitFromFile(request.file_path());
-    if (status != DataManager::Status::OK) {
-      LOG(ERROR) << "Failed to load data [" << status << "] " << request_data;
-      result->response.set_status(ConvertStatus(status));
-      DCHECK_NE(result->response.status(), EngineReloadResponse::RELOAD_READY);
-      return result;
-    }
+  absl::StatusOr<std::unique_ptr<const DataManager>> data_manager =
+      request.has_magic_number()
+          ? DataManager::CreateFromFile(request.file_path(),
+                                        request.magic_number())
+          : DataManager::CreateFromFile(request.file_path());
+  if (!data_manager.ok()) {
+    LOG(ERROR) << "Failed to load data [" << data_manager << "] "
+               << request_data;
+    result->response.set_status(ConvertStatus(data_manager.status()));
+    DCHECK_NE(result->response.status(), EngineReloadResponse::RELOAD_READY);
+    return result;
   }
 
   absl::StatusOr<std::unique_ptr<engine::Modules>> modules =
-      engine::Modules::Create(std::move(data_manager));
-  if (!modules.status().ok()) {
+      engine::Modules::Create(std::move(data_manager.value()));
+  if (!modules.ok()) {
     LOG(ERROR) << "Failed to load modules [" << modules << "] " << request_data;
     result->response.set_status(EngineReloadResponse::DATA_BROKEN);
     return result;
