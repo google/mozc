@@ -164,9 +164,9 @@ void ImportDialog::SelectFile() {
   const QString initial_path = file_name_lineedit_->text().isEmpty()
                                    ? QDir::homePath()
                                    : file_name_lineedit_->text();
-  const QString filename =
-      QFileDialog::getOpenFileName(this, tr("Import dictionary"), initial_path,
-                                   tr("Text Files (*.txt);;All Files (*)"));
+  const QString filename = QFileDialog::getOpenFileName(
+      this, tr("Import dictionary"), initial_path,
+      tr("Text Files (*.txt *.tsv);;All Files (*)"));
   if (filename.isEmpty()) {
     return;
   }
