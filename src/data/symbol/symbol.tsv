@@ -359,10 +359,10 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 アルファベット	э	きりる ろしあ えー	キリル文字	小文字
 アルファベット	ю	きりる ろしあ ゆー	キリル文字	小文字
 アルファベット	я	きりる ろしあ やー	キリル文字	小文字
-句読点	·	てん なかてん なかぐろ 、 ・ /	中点	欧文		OTHER	U+00B7 MIDDLE DOT
-句読点	•	てん びゅれっと ぶれっと ばれっと ぶりっと 、 ・ /	ビュレット		OTHER	リストの点は本来これ・圏点に使われることあり https://developer.mozilla.org/en-US/docs/Web/CSS/text-emphasis#dot	U+2022 BULLET
-句読点	◦	てん びゅれっと ぶれっと ばれっと ぶりっと 、 ・ /	白ビュレット		OTHER		U+25E6 WHITE BULLET
-記号	⋅	てん ないせき かける ・	内積 乗算	ドット演算子	SYMBOL	TeXの\cdot https://medemanabu.net/latex/dots/	U+22C5 DOT OPERATOR
+句読点	·	てん なかてん なかぐろ ・	中点	欧文		OTHER	U+00B7 MIDDLE DOT
+句読点	•	てん びゅれっと ぶれっと ばれっと ぶりっと ・ * 	ビュレット		OTHER		U+2022 BULLET
+句読点	◦	てん びゅれっと ぶれっと ばれっと ぶりっと ・ *	白ビュレット		OTHER		U+25E6 WHITE BULLET
+記号	⋅	てん ないせき かける ・ *	内積 乗算	ドット演算子	SYMBOL		U+22C5 DOT OPERATOR
 記号	─	けいせん ほそわく よこ	罫線		OTHER
 記号	│	けいせん ほそわく たて	罫線		OTHER
 記号	┌	けいせん ほそわく ひだりうえ	罫線		OTHER
