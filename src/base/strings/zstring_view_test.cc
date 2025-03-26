@@ -112,7 +112,7 @@ TEST(ZStringViewTest, AbslHash) {
 
 TEST(ZStringViewTest, AbslStringFuncs) {
   constexpr zstring_view a = "あいう", b = "えお";
-  EXPECT_EQ(absl::StrCat(a.view(), b.view()), "あいうえお");
+  EXPECT_EQ(absl::StrCat(a, b), "あいうえお");
 
   EXPECT_EQ(absl::StrFormat("%s", a), "あいう");
 }

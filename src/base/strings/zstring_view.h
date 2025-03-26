@@ -38,7 +38,9 @@
 #include <type_traits>
 
 #include "absl/base/attributes.h"
+#include "absl/base/nullability.h"
 #include "absl/log/check.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/pfchar.h"
 
@@ -69,6 +71,7 @@ namespace mozc {
 template <typename StringViewT>
 class basic_zstring_view {
  public:
+  using traits_type = typename StringViewT::traits_type;
   using value_type = typename StringViewT::value_type;
   using reference = typename StringViewT::reference;
   using const_reference = typename StringViewT::const_reference;
@@ -76,8 +79,8 @@ class basic_zstring_view {
   using const_pointer = typename StringViewT::const_pointer;
   using iterator = typename StringViewT::iterator;
   using const_iterator = typename StringViewT::const_iterator;
-  using difference_type = typename StringViewT::difference_type;
   using size_type = typename StringViewT::size_type;
+  using difference_type = typename StringViewT::difference_type;
 
   // Default constructor initializes basic_zstring_view with nullptr.
   constexpr basic_zstring_view() noexcept = default;
@@ -90,7 +93,7 @@ class basic_zstring_view {
   //
   // NOLINTNEXTLINE(runtime/explicit)
   constexpr basic_zstring_view(
-      const const_pointer p ABSL_ATTRIBUTE_LIFETIME_BOUND)
+      const absl::Nonnull<const_pointer> p ABSL_ATTRIBUTE_LIFETIME_BOUND)
       // This std::basic_string_view constructor overload is not noexcept.
       : sv_(p) {}
 
@@ -98,8 +101,9 @@ class basic_zstring_view {
   // string, not including the null-terminated character.
   //
   // REQUIRES: p[n] is the null-terminated character.
-  constexpr basic_zstring_view(
-      const const_pointer p ABSL_ATTRIBUTE_LIFETIME_BOUND, const size_type n)
+  constexpr basic_zstring_view(const absl::Nonnull<const_pointer> p
+                                   ABSL_ATTRIBUTE_LIFETIME_BOUND,
+                               const size_type n)
       : sv_(p, n) {
     DCHECK_EQ(p[n], 0);
   }
@@ -140,13 +144,23 @@ class basic_zstring_view {
   // NOLINTNEXTLINE(runtime/explicit)
   constexpr operator StringViewT() const noexcept { return sv_; }
 
+  // Allow implicit conversion to absl::AlphaNum to use with absl::StrCat().
+  // This method only works for zstring_view (not zwstring_view) because
+  // absl::AlphaNum doesn't support wide characters.
+  // NOLINTNEXTLINE(runtime/explicit)
+  operator absl::AlphaNum() const noexcept { return sv_; }
+
   // c_str() and data() return a pointer to the null-terminated StringViewT.
   // The returned pointer is guaranteed to be null-terminated because this class
   // only constructs from null-terminated strings.
   // Use these functions instead of the underlying StringViewT when calling
   // C functions.
-  constexpr const_pointer c_str() const noexcept { return sv_.data(); }
-  constexpr const_pointer data() const noexcept { return sv_.data(); }
+  constexpr absl::Nonnull<const_pointer> c_str() const noexcept {
+    return sv_.data();
+  }
+  constexpr absl::Nonnull<const_pointer> data() const noexcept {
+    return sv_.data();
+  }
 
   // Returns true if the string is empty.
   constexpr bool empty() const noexcept { return sv_.empty(); }
