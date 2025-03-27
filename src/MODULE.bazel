@@ -17,13 +17,11 @@ bazel_dep(
     version = "2024-07-02.bcr.1",
 )
 
-# protobuf: 29.3 2025-01-09
+# protobuf: 30.2 2025-03-27
 # https://github.com/protocolbuffers/protobuf
-# We cannot switch to 30.x until the protobuf team fixes the following issue.
-#   * https://github.com/protocolbuffers/protobuf/issues/20645
 bazel_dep(
     name = "protobuf",
-    version = "29.3",
+    version = "30.2",
     repo_name = "com_google_protobuf",
 )
 
