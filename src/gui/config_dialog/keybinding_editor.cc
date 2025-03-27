@@ -34,10 +34,11 @@
 #include <QPushButton>
 #include <QString>
 #include <QTableWidget>
-#include <map>
 #include <memory>
 
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
+#include "/base/container/flat_map.h"
 #include "gui/base/util.h"
 
 #if defined(__ANDROID__) || defined(__wasm__)
@@ -57,8 +58,8 @@ namespace gui {
 
 namespace {
 // LINT.IfChange
-static const auto *kQtKeyModifierNonRequiredTable =
-    new std::map<const int, const char *>({
+constexpr auto kQtKeyModifierNonRequiredTable =
+    CreateFlatMap<int, absl::string_view>({
         {Qt::Key_Escape, "Escape"},
         {Qt::Key_Tab, "Tab"},
         {Qt::Key_Backtab, "Tab"},  // Qt handles Tab + Shift as a special key
@@ -124,12 +125,8 @@ static const auto *kQtKeyModifierNonRequiredTable =
 // LINT.ThenChange(//composer/key_parser_test.cc)
 
 #ifdef _WIN32
-struct WinVirtualKeyEntry {
-  DWORD virtual_key;
-  absl::string_view mozc_key_name;
-};
-
-constexpr WinVirtualKeyEntry kWinVirtualKeyModifierNonRequiredTable[] = {
+constexpr auto kWinVirtualKeyModifierNonRequiredTable = CreateFlatMap<
+    DWORD, absl::string_view>({
     //  { VK_DBE_HIRAGANA, "Kana" },       // Kana
     // "Hiragana" and "Kana" are the same key on Mozc
     {VK_DBE_HIRAGANA, "Hiragana"},  // Hiragana
@@ -151,7 +148,7 @@ constexpr WinVirtualKeyEntry kWinVirtualKeyModifierNonRequiredTable[] = {
     // Those variables may not be declared yet in sone build environments.
     {0x16, "ON"},   // 0x16 = VK_IME_ON
     {0x1A, "OFF"},  // 0x1A = VK_IME_OFF
-};
+});
 #endif  // _WIN32
 
 // On Windows Hiragana/Eisu keys only emits KEY_DOWN event.
@@ -343,23 +340,23 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
   }
 
   // non-printable command, which doesn't require modifier keys
-  const auto it = kQtKeyModifierNonRequiredTable->find(qt_key);
-  if (it != kQtKeyModifierNonRequiredTable->end()) {
-    modifier_non_required_key_ = QLatin1String(it->second);
+  if (const absl::string_view *key =
+          kQtKeyModifierNonRequiredTable.FindOrNull(qt_key);
+      key != nullptr) {
+    modifier_non_required_key_ = QLatin1String(key->data(), key->size());
     return Encode(result);
   }
 
 #ifdef _WIN32
   // Handle JP109's Muhenkan/Henkan/katakana-hiragana and Zenkaku/Hankaku
   const DWORD virtual_key = key_event.nativeVirtualKey();
-  for (size_t i = 0; i < std::size(kWinVirtualKeyModifierNonRequiredTable);
-       ++i) {
-    if (kWinVirtualKeyModifierNonRequiredTable[i].virtual_key == virtual_key) {
-      modifier_non_required_key_ = QLatin1String(
-          kWinVirtualKeyModifierNonRequiredTable[i].mozc_key_name);
-      return Encode(result);
-    }
+  if (const absl::string_view *key =
+          kWinVirtualKeyModifierNonRequiredTable.FindOrNull(virtual_key);
+      key != nullptr) {
+    modifier_non_required_key_ = QLatin1String(key->data(), key->size());
+    return Encode(result);
   }
+
 #elif __linux__
   // The XKB defines three types of logical key code: "xkb::Hiragana",
   // "xkb::Katakana" and "xkb::Hiragana_Katakana".
