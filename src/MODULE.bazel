@@ -1,10 +1,10 @@
 module(name = "mozc")
 
-# absl-cpp: 2025-02-04
+# absl-cpp: 2025-03-19
 # https://github.com/abseil/abseil-cpp
 bazel_dep(
     name = "abseil-cpp",
-    version = "20250127.0",
+    version = "20250127.1",
     repo_name = "com_google_absl",
 )
 
