@@ -54,7 +54,7 @@ class Lattice {
   void SetKey(std::string key);
 
   // return key.
-  const std::string &key() const { return key_; }
+  absl::string_view key() const { return key_; }
 
   // Set history end position.
   // For cache, we have to reset lattice when the history size is changed.

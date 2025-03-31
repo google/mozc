@@ -131,6 +131,41 @@ TEST(ImmutableConverterTest, KeepKeyForPrediction) {
   EXPECT_EQ(segments.segment(0).key(), kRequestKey);
 }
 
+TEST(ImmutableConverterTest, ResegmentTest) {
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter);
+  Segments segments;
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetOptions({.request_type = ConversionRequest::CONVERSION,
+                       .max_conversion_candidates_size = 10})
+          .Build();
+
+  {
+    segments.Clear();
+    Segment *segment = segments.add_segment();
+    const std::string kRequestKey = "1ねんせい";
+    segment->set_key(kRequestKey);
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        request, &segments));
+    EXPECT_EQ(segments.segments_size(), 2);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "1");
+    EXPECT_EQ(segments.segment(1).candidate(0).value, "年生");
+  }
+
+  {
+    segments.Clear();
+    Segment *segment = segments.add_segment();
+    const std::string kRequestKey = "ちゅう2";
+    segment->set_key(kRequestKey);
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        request, &segments));
+    EXPECT_EQ(segments.segments_size(), 2);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "中");
+    EXPECT_EQ(segments.segment(1).candidate(0).value, "2");
+  }
+}
+
 TEST(ImmutableConverterTest, DummyCandidatesCost) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
@@ -461,7 +496,7 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_LT(0, segments.segment(0).candidates_size());
   bool includes_only_first = false;
-  const std::string &segment_key = segments.segment(0).key();
+  absl::string_view segment_key = segments.segment(0).key();
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &cand = segments.segment(0).candidate(i);
     if (cand.key.size() < segment_key.size() &&

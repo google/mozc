@@ -34,6 +34,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 
 class KeyCorrector final {
@@ -44,7 +46,7 @@ class KeyCorrector final {
   };
 
   KeyCorrector() : available_(false), mode_(ROMAN) {}
-  KeyCorrector(const std::string &key, InputMode mode, size_t history_size)
+  KeyCorrector(absl::string_view key, InputMode mode, size_t history_size)
       : available_(false), mode_(mode) {
     CorrectKey(key, mode, history_size);
   }
@@ -55,13 +57,13 @@ class KeyCorrector final {
 
   InputMode mode() const { return mode_; }
 
-  bool CorrectKey(const std::string &key, InputMode mode, size_t history_size);
+  bool CorrectKey(absl::string_view key, InputMode mode, size_t history_size);
 
   // return corrected key;
-  const std::string &corrected_key() const { return corrected_key_; }
+  absl::string_view corrected_key() const { return corrected_key_; }
 
   // return original key;
-  const std::string &original_key() const { return original_key_; }
+  absl::string_view original_key() const { return original_key_; }
 
   // return true key correction was done successfully
   bool IsAvailable() const { return available_; }
@@ -149,7 +151,7 @@ class KeyCorrector final {
 
   // return the cost penalty for the corrected key.
   // The return value is added to the original cost as a penalty.
-  static int GetCorrectedCostPenalty(const std::string &key);
+  static int GetCorrectedCostPenalty(absl::string_view key);
 
   // clear internal data
   void Clear();

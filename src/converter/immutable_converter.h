@@ -91,7 +91,7 @@ class ImmutableConverter : public ImmutableConverterInterface {
   };
 
   void ExpandCandidates(const ConversionRequest &request,
-                        const std::string &original_key, NBestGenerator *nbest,
+                        absl::string_view original_key, NBestGenerator *nbest,
                         Segment *segment, size_t expand_size) const;
   void InsertDummyCandidates(Segment *segment, size_t expand_size) const;
   Node *Lookup(int begin_pos, const ConversionRequest &request, bool is_reverse,
@@ -99,8 +99,8 @@ class ImmutableConverter : public ImmutableConverterInterface {
   Node *AddCharacterTypeBasedNodes(absl::string_view key_substr,
                                    Lattice *lattice, Node *nodes) const;
 
-  void Resegment(const Segments &segments, const std::string &history_key,
-                 const std::string &conversion_key, Lattice *lattice) const;
+  void Resegment(const Segments &segments, absl::string_view history_key,
+                 absl::string_view conversion_key, Lattice *lattice) const;
 
   void ApplyResegmentRules(size_t pos, Lattice *lattice) const;
   // Returns true resegmentation happened
@@ -115,7 +115,7 @@ class ImmutableConverter : public ImmutableConverterInterface {
                                           Lattice *lattice) const;
   void MakeLatticeNodesForConversionSegments(const Segments &segments,
                                              const ConversionRequest &request,
-                                             const std::string &history_key,
+                                             absl::string_view history_key,
                                              Lattice *lattice) const;
   void MakeLatticeNodesForPredictiveNodes(const Segments &segments,
                                           const ConversionRequest &request,
@@ -124,7 +124,7 @@ class ImmutableConverter : public ImmutableConverterInterface {
   // If the last node ends with "prefix", give an extra
   // wcost penalty. In this case  "無" doesn't tend to appear at
   // user input.
-  void ApplyPrefixSuffixPenalty(const std::string &conversion_key,
+  void ApplyPrefixSuffixPenalty(absl::string_view conversion_key,
                                 Lattice *lattice) const;
 
   bool Viterbi(const Segments &segments, Lattice *lattice) const;

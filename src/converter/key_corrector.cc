@@ -37,6 +37,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "base/vlog.h"
 
@@ -382,7 +383,7 @@ void KeyCorrector::Clear() {
   rev_alignment_.clear();
 }
 
-bool KeyCorrector::CorrectKey(const std::string &key, InputMode mode,
+bool KeyCorrector::CorrectKey(absl::string_view key, InputMode mode,
                               size_t history_size) {
   Clear();
 
@@ -524,7 +525,7 @@ size_t KeyCorrector::GetOriginalOffset(const size_t original_key_pos,
 }
 
 // static
-int KeyCorrector::GetCorrectedCostPenalty(const std::string &key) {
+int KeyCorrector::GetCorrectedCostPenalty(absl::string_view key) {
   // "んん" and "っっ" must be mis-spelling.
   if (absl::StrContains(key, "んん") || absl::StrContains(key, "っっ")) {
     return 0;

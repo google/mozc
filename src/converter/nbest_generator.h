@@ -113,7 +113,7 @@ class NBestGenerator {
 
   // Set candidates.
   void SetCandidates(const ConversionRequest &request,
-                     const std::string &original_key, size_t expand_size,
+                     absl::string_view original_key, size_t expand_size,
                      absl::Nonnull<Segment *> segment);
 
  private:
@@ -170,11 +170,11 @@ class NBestGenerator {
 
   // Iterator:
   // Can obtain N-best results by calling Next() in sequence.
-  bool Next(const ConversionRequest &request, const std::string &original_key,
+  bool Next(const ConversionRequest &request, absl::string_view original_key,
             Segment::Candidate &candidate);
 
   int InsertTopResult(const ConversionRequest &request,
-                      const std::string &original_key,
+                      absl::string_view original_key,
                       Segment::Candidate &candidate);
 
   bool MakeCandidateFromBestPath(Segment::Candidate &candidate);
@@ -185,7 +185,7 @@ class NBestGenerator {
                      absl::Span<const absl::Nonnull<const Node *>> nodes) const;
 
   converter::CandidateFilter::ResultType MakeCandidateFromElement(
-      const ConversionRequest &request, const std::string &original_key,
+      const ConversionRequest &request, absl::string_view original_key,
       const QueueElement &element, Segment::Candidate &candidate);
 
   void FillInnerSegmentInfo(absl::Span<const absl::Nonnull<const Node *>> odes,

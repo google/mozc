@@ -132,7 +132,7 @@ class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
   Node *tail_;
 };
 
-void InsertCorrectedNodes(size_t pos, const std::string &key,
+void InsertCorrectedNodes(size_t pos, absl::string_view key,
                           const ConversionRequest &request,
                           const KeyCorrector *key_corrector,  // nullable
                           const DictionaryInterface &dictionary,
@@ -172,8 +172,9 @@ bool ContainsWhiteSpacesOnly(const absl::string_view s) {
   return true;
 }
 
-void DecomposeNumberAndSuffix(const std::string &input, std::string *number,
-                              std::string *suffix) {
+// <number, suffix>
+std::pair<absl::string_view, absl::string_view> DecomposeNumberAndSuffix(
+    absl::string_view input) {
   const char *begin = input.data();
   const char *end = input.data() + input.size();
   size_t pos = 0;
@@ -181,16 +182,16 @@ void DecomposeNumberAndSuffix(const std::string &input, std::string *number,
     if (IsNumber(*begin)) {
       ++pos;
       ++begin;
-      continue;
     }
     break;
   }
-  number->assign(input, 0, pos);
-  suffix->assign(input, pos, input.size() - pos);
+  return std::make_pair(input.substr(0, pos),
+                        input.substr(pos, input.size() - pos));
 }
 
-void DecomposePrefixAndNumber(const std::string &input, std::string *prefix,
-                              std::string *number) {
+// <prefix, number>
+std::pair<absl::string_view, absl::string_view> DecomposePrefixAndNumber(
+    absl::string_view input) {
   const char *begin = input.data();
   const char *end = input.data() + input.size() - 1;
   size_t pos = input.size();
@@ -202,8 +203,8 @@ void DecomposePrefixAndNumber(const std::string &input, std::string *prefix,
     }
     break;
   }
-  prefix->assign(input, 0, pos);
-  number->assign(input, pos, input.size() - pos);
+  return std::make_pair(input.substr(0, pos),
+                        input.substr(pos, input.size() - pos));
 }
 
 void NormalizeHistorySegments(Segments *segments) {
@@ -213,7 +214,7 @@ void NormalizeHistorySegments(Segments *segments) {
     }
 
     Segment::Candidate *c = segment.mutable_candidate(0);
-    const std::string &history_key =
+    absl::string_view history_key =
         (c->key.size() > segment.key().size()) ? c->key : segment.key();
     const std::string value = c->value;
     const std::string content_value = c->content_value;
@@ -495,11 +496,10 @@ bool ImmutableConverter::ResegmentArabicNumberAndSuffix(
         pos_matcher_.IsNumber(compound_node->lid) &&
         !pos_matcher_.IsNumber(compound_node->rid) &&
         IsNumber(compound_node->value[0]) && IsNumber(compound_node->key[0])) {
-      std::string number_value, number_key;
-      std::string suffix_value, suffix_key;
-      DecomposeNumberAndSuffix(compound_node->value, &number_value,
-                               &suffix_value);
-      DecomposeNumberAndSuffix(compound_node->key, &number_key, &suffix_key);
+      auto [number_value, suffix_value] =
+          DecomposeNumberAndSuffix(compound_node->value);
+      auto [number_key, suffix_key] =
+          DecomposeNumberAndSuffix(compound_node->key);
 
       if (suffix_value.empty() || suffix_key.empty()) {
         continue;
@@ -571,11 +571,10 @@ bool ImmutableConverter::ResegmentPrefixAndArabicNumber(
         !IsNumber(compound_node->key[0]) &&
         IsNumber(compound_node->value[compound_node->value.size() - 1]) &&
         IsNumber(compound_node->key[compound_node->key.size() - 1])) {
-      std::string number_value, number_key;
-      std::string prefix_value, prefix_key;
-      DecomposePrefixAndNumber(compound_node->value, &prefix_value,
-                               &number_value);
-      DecomposePrefixAndNumber(compound_node->key, &prefix_key, &number_key);
+      auto [prefix_value, number_value] =
+          DecomposePrefixAndNumber(compound_node->value);
+      auto [prefix_key, number_key] =
+          DecomposePrefixAndNumber(compound_node->key);
 
       if (prefix_value.empty() || prefix_key.empty()) {
         continue;
@@ -789,7 +788,7 @@ Node *ImmutableConverter::Lookup(const int begin_pos,
                                  const ConversionRequest &request,
                                  bool is_reverse, bool is_prediction,
                                  Lattice *lattice) const {
-  const std::string &key = lattice->key();
+  absl::string_view key = lattice->key();
   CHECK_LT(begin_pos, key.size());
   const absl::string_view key_substr = absl::string_view{key}.substr(begin_pos);
 
@@ -1014,7 +1013,7 @@ inline void ViterbiInternal(const Connector &connector, size_t pos,
 
 bool ImmutableConverter::Viterbi(const Segments &segments,
                                  Lattice *lattice) const {
-  const std::string &key = lattice->key();
+  absl::string_view key = lattice->key();
 
   // Process BOS.
   {
@@ -1314,7 +1313,7 @@ class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
 void ImmutableConverter::MakeLatticeNodesForPredictiveNodes(
     const Segments &segments, const ConversionRequest &request,
     Lattice *lattice) const {
-  const std::string &key = lattice->key();
+  absl::string_view key = lattice->key();
   std::string conversion_key;
   for (const Segment &segment : segments.conversion_segments()) {
     conversion_key += segment.key();
@@ -1664,8 +1663,8 @@ bool ImmutableConverter::MakeLatticeNodesForHistorySegments(
 
 void ImmutableConverter::MakeLatticeNodesForConversionSegments(
     const Segments &segments, const ConversionRequest &request,
-    const std::string &history_key, Lattice *lattice) const {
-  const std::string &key = lattice->key();
+    absl::string_view history_key, Lattice *lattice) const {
+  absl::string_view key = lattice->key();
   const bool is_conversion =
       (request.request_type() == ConversionRequest::CONVERSION);
   // Do not use KeyCorrector if user changes the boundary.
@@ -1709,8 +1708,8 @@ void ImmutableConverter::MakeLatticeNodesForConversionSegments(
 }
 
 void ImmutableConverter::ApplyPrefixSuffixPenalty(
-    const std::string &conversion_key, Lattice *lattice) const {
-  const std::string &key = lattice->key();
+    absl::string_view conversion_key, Lattice *lattice) const {
+  absl::string_view key = lattice->key();
   DCHECK_LE(conversion_key.size(), key.size());
   for (Node *node = lattice->begin_nodes(key.size() - conversion_key.size());
        node != nullptr; node = node->bnext) {
@@ -1730,8 +1729,8 @@ void ImmutableConverter::ApplyPrefixSuffixPenalty(
 }
 
 void ImmutableConverter::Resegment(const Segments &segments,
-                                   const std::string &history_key,
-                                   const std::string &conversion_key,
+                                   absl::string_view history_key,
+                                   absl::string_view conversion_key,
                                    Lattice *lattice) const {
   for (size_t pos = history_key.size();
        pos < history_key.size() + conversion_key.size(); ++pos) {

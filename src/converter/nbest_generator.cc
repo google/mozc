@@ -40,6 +40,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/vlog.h"
 #include "converter/candidate_filter.h"
@@ -269,7 +270,7 @@ void NBestGenerator::FillInnerSegmentInfo(
 }
 
 CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
-    const ConversionRequest &request, const std::string &original_key,
+    const ConversionRequest &request, absl::string_view original_key,
     const NBestGenerator::QueueElement &element,
     Segment::Candidate &candidate) {
   std::vector<absl::Nonnull<const Node *>> nodes;
@@ -315,7 +316,7 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
 
 // Set candidates.
 void NBestGenerator::SetCandidates(const ConversionRequest &request,
-                                   const std::string &original_key,
+                                   absl::string_view original_key,
                                    const size_t expand_size,
                                    absl::Nonnull<Segment *> segment) {
   DCHECK(begin_node_);
@@ -347,7 +348,7 @@ void NBestGenerator::SetCandidates(const ConversionRequest &request,
 }
 
 bool NBestGenerator::Next(const ConversionRequest &request,
-                          const std::string &original_key,
+                          absl::string_view original_key,
                           Segment::Candidate &candidate) {
   // |cost| and |structure_cost| are calculated as follows:
   //
@@ -692,7 +693,7 @@ void NBestGenerator::MakePrefixCandidateFromBestPath(
 }
 
 int NBestGenerator::InsertTopResult(const ConversionRequest &request,
-                                    const std::string &original_key,
+                                    absl::string_view original_key,
                                     Segment::Candidate &candidate) {
   if (options_.candidate_mode &
       CandidateMode::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT) {
