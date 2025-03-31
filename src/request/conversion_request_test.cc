@@ -138,4 +138,73 @@ TEST(ConversionRequestTest, SetKeyTest) {
   EXPECT_EQ("foo", conversion_request2.key());
 }
 
+TEST(ConversionRequestTest, IncognitoModeTest) {
+  {
+    const ConversionRequest convreq = ConversionRequestBuilder().Build();
+    EXPECT_FALSE(convreq.incognito_mode());
+  }
+  {
+    config::Config config;
+    config.set_incognito_mode(true);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetConfig(config).Build();
+    EXPECT_TRUE(convreq.incognito_mode());
+  }
+  {
+    commands::Request request;
+    request.set_is_incognito_mode(true);
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetRequest(request).Build();
+    EXPECT_TRUE(convreq.incognito_mode());
+  }
+  {
+    ConversionRequest::Options options;
+    options.incognito_mode = true;
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetOptions(std::move(options)).Build();
+    EXPECT_TRUE(convreq.incognito_mode());
+  }
+  {
+    config::Config config;
+    config.set_incognito_mode(true);
+    commands::Request request;
+    request.set_is_incognito_mode(false);
+    ConversionRequest::Options options;
+    options.incognito_mode = false;
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetConfig(config)
+                                          .SetRequest(request)
+                                          .SetOptions(std::move(options))
+                                          .Build();
+    EXPECT_TRUE(convreq.incognito_mode());
+  }
+  {
+    config::Config config;
+    config.set_incognito_mode(false);
+    commands::Request request;
+    request.set_is_incognito_mode(true);
+    ConversionRequest::Options options;
+    options.incognito_mode = false;
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetConfig(config)
+                                          .SetRequest(request)
+                                          .SetOptions(std::move(options))
+                                          .Build();
+    EXPECT_TRUE(convreq.incognito_mode());
+  }
+  {
+    config::Config config;
+    config.set_incognito_mode(false);
+    commands::Request request;
+    request.set_is_incognito_mode(false);
+    ConversionRequest::Options options;
+    options.incognito_mode = true;
+    const ConversionRequest convreq = ConversionRequestBuilder()
+                                          .SetConfig(config)
+                                          .SetRequest(request)
+                                          .SetOptions(std::move(options))
+                                          .Build();
+    EXPECT_TRUE(convreq.incognito_mode());
+  }
+}
 }  // namespace mozc

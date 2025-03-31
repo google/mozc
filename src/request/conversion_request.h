@@ -192,9 +192,9 @@ class ConversionRequest {
     // TODO(b/365909808): Create a new string field to store the key.
     bool use_already_typing_corrected_key = false;
 
-    // Enables incognito mode even when Config.incognito_mode() is false.
-    // Use this flag to dynamically change the incognito_mode per client
-    // request.
+    // Enables incognito mode even when Config.incognito_mode() or
+    // Request.is_incognito_mode() is false. Use this flag to dynamically change
+    // the incognito_mode per client request.
     bool incognito_mode = false;
   };
 
@@ -280,10 +280,11 @@ class ConversionRequest {
   }
 
   // Clients needs to check ConversionRequest::incognito_mode() instead
-  // of Config::incognito_mode(), as the incoginto mode can also set
-  // via Options.
+  // of Config::incognito_mode() or Request::is_incognito_mode(), as the
+  // incognito mode can also set via Options.
   bool incognito_mode() const {
-    return options_.incognito_mode || config_->incognito_mode();
+    return options_.incognito_mode || config_->incognito_mode() ||
+           request_->is_incognito_mode();
   }
 
   absl::string_view key() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
