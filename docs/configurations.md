@@ -155,7 +155,7 @@ Sample configuration:
 engines {
   name : "mozc-jp"
   longname : "Mozc"
-  layout : "ja"  # or "us"
+  layout : "jp"  # or "us"
   layout_variant : ""
   layout_option : ""
   rank : 80
@@ -190,7 +190,7 @@ active_on_launch: True  # default is False.
 engines {
   name : "mozc-jp"
   longname : "Mozc"
-  layout : "ja"
+  layout : "jp"
   layout_variant : ""
   layout_option : ""
   rank : 80
