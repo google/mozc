@@ -447,6 +447,8 @@ message SessionCommand {
   required CommandType type = 1;
 
   // Unique number specifying a candidate word.
+  // Note: This value is NOT an index of the candidate window or the candidate
+  // list. This value is a return value of CandidateWord::id().
   optional int32 id = 2;
 
   // This is used with SWITCH_INPUT_MODE, TURN_ON_IME and TURN_OFF_IME.
