@@ -163,6 +163,7 @@ mozc_cc_test(
         "message_translator_test.cc",
         "path_util_test.cc",
     ],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":ibus_utils",
         "//testing:gunit_main",
@@ -266,6 +267,7 @@ mozc_cc_test(
     name = "ibus_config_test",
     size = "small",
     srcs = ["ibus_config_test.cc"],
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":ibus_config",
         ":ibus_config_cc_proto",
@@ -311,6 +313,7 @@ mozc_cc_test(
             "surrounding_text_util_test.cc",
         ],
     ),
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":ibus_config",
         ":ibus_mozc_lib",
@@ -366,6 +369,7 @@ mozc_cc_library(
 mozc_cc_test(
     name = "candidate_window_handler_test",
     srcs = mozc_select(linux = ["candidate_window_handler_test.cc"]),
+    target_compatible_with = ["@platforms//os:linux"],
     deps = [
         ":candidate_window_handler",
         "//base:coordinates",
