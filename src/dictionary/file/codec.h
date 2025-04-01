@@ -32,6 +32,7 @@
 #ifndef MOZC_DICTIONARY_FILE_CODEC_H_
 #define MOZC_DICTIONARY_FILE_CODEC_H_
 
+#include <atomic>
 #include <cstdint>
 #include <iosfwd>
 #include <ostream>
@@ -66,8 +67,9 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
                     std::ostream *ofs) const;
 
   // Seed value for name string finger print
-  // Made it mutable for reading sections.
-  mutable int32_t seed_ = 2135654146;
+  // Made it mutable for reading sections. std::atomic is used to make it
+  // thread-safe.
+  mutable std::atomic<int32_t> seed_ = 2135654146;
   // Magic value for simple file validation
   const int32_t filemagic_ = 20110701;
 };
