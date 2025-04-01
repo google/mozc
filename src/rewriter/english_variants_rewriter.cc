@@ -139,7 +139,7 @@ bool EnglishVariantsRewriter::IsEnglishCandidate(
 }
 
 bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
-     bool need_space_prefix, Segment *seg) const {
+    bool need_space_prefix, Segment *seg) const {
   CHECK(seg);
 
   bool modified = false;

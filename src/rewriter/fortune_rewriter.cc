@@ -37,6 +37,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/random/random.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/civil_time.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
@@ -185,7 +186,7 @@ bool FortuneRewriter::Rewrite(const ConversionRequest &request,
   }
 
   const Segment &segment = segments->conversion_segment(0);
-  const std::string &key = segment.key();
+  absl::string_view key = segment.key();
   if (key.empty()) {
     LOG(ERROR) << "Key is empty";
     return false;

@@ -187,13 +187,13 @@ A11yDescriptionRewriter::A11yDescriptionRewriter(
 
 void A11yDescriptionRewriter::AddA11yDescription(
     Segment::Candidate *candidate) const {
-  const std::string &content_value = candidate->content_value;
+  absl::string_view content_value = candidate->content_value;
   std::string buf(content_value);
   CharacterType previous_type = INITIAL_STATE;
   CharacterType current_type = INITIAL_STATE;
   std::vector<std::string> graphemes;
   Util::SplitStringToUtf8Graphemes(content_value, &graphemes);
-  for (const std::string &grapheme : graphemes) {
+  for (absl::string_view grapheme : graphemes) {
     const std::u32string codepoints = Util::Utf8ToUtf32(grapheme);
     for (const char32_t codepoint : codepoints) {
       previous_type = current_type;

@@ -74,7 +74,7 @@ bool UCS4ExpressionToInteger(const absl::string_view input,
   return absl::SimpleHexAtoi(input.substr(2), codepoint);
 }
 
-void AddCandidate(std::string key, std::string value, int index,
+void AddCandidate(absl::string_view key, absl::string_view value, int index,
                   Segment *segment) {
   DCHECK(segment);
 
@@ -86,9 +86,9 @@ void AddCandidate(std::string key, std::string value, int index,
   DCHECK(candidate);
 
   segment->set_key(key);
-  candidate->key = std::move(key);
+  candidate->key = key;
   candidate->value = value;
-  candidate->content_value = std::move(value);
+  candidate->content_value = value;
   candidate->description = absl::StrCat("Unicode 変換 (", candidate->key, ")");
   // NO_MODIFICATION is required here, in order to escape
   // EnvironmentalFilterRewriter. Otherwise, some candidates from
@@ -119,9 +119,9 @@ bool UnicodeRewriter::RewriteToUnicodeCharFormat(
   const char32_t codepoint = Util::Utf8ToCodepoint(source_char);
   std::string value = absl::StrFormat("U+%04X", codepoint);
 
-  const std::string &key = segments->conversion_segment(0).key();
+  absl::string_view key = segments->conversion_segment(0).key();
   Segment *segment = segments->mutable_conversion_segment(0);
-  AddCandidate(key, std::move(value), 5, segment);
+  AddCandidate(key, value, 5, segment);
   return true;
 }
 
@@ -191,7 +191,7 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
   }
 
   Segment *segment = segments->mutable_conversion_segment(0);
-  AddCandidate(std::string(key), std::move(value.value()), 0, segment);
+  AddCandidate(key, value.value(), 0, segment);
   return true;
 }
 

@@ -124,9 +124,9 @@ void ModifyT13nsForGodan(const absl::string_view key,
       nullptr, nullptr, nullptr, "unn",   "yo",    "enn",   "onn",   nullptr,
   };
 
-  const std::string &src = (*t13ns)[transliteration::HALF_ASCII];
+  absl::string_view src = (*t13ns)[transliteration::HALF_ASCII];
   std::string dst;
-  for (std::string::const_iterator c = src.begin(); c != src.end(); ++c) {
+  for (auto c = src.begin(); c != src.end(); ++c) {
     using IsNonnegativeAndLessThanType = IsNonnegativeAndLessThan<
         std::is_unsigned<std::string::value_type>::type>;
     if (IsNonnegativeAndLessThanType()(*c, std::size(kKeycodeToT13nMap)) &&
@@ -273,7 +273,7 @@ bool TransliterationRewriter::FillT13nsFromKey(Segments *segments) const {
     if (segment.key().empty()) {
       continue;
     }
-    const std::string &hiragana = segment.key();
+    absl::string_view hiragana = segment.key();
     std::string full_katakana = japanese_util::HiraganaToKatakana(hiragana);
     std::string ascii = japanese_util::HiraganaToRomanji(hiragana);
     std::string half_ascii =

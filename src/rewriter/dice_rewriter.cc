@@ -36,6 +36,7 @@
 #include "absl/log/log.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 
@@ -93,7 +94,7 @@ bool DiceRewriter::Rewrite(const ConversionRequest &request,
   }
 
   const Segment &segment = segments->conversion_segment(0);
-  const std::string &key = segment.key();
+  absl::string_view key = segment.key();
   if (key.empty()) {
     LOG(ERROR) << "key is empty";
     return false;

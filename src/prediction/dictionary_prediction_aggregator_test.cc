@@ -361,7 +361,7 @@ class MockImmutableConverter : public ImmutableConverterInterface {
         segments->conversion_segment(0).key().empty()) {
       return false;
     }
-    const std::string key = segments->conversion_segment(0).key();
+    absl::string_view key = segments->conversion_segment(0).key();
     Segment *segment = segments->mutable_conversion_segment(0);
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->value = key;

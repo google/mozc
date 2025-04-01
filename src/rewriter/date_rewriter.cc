@@ -966,7 +966,7 @@ std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
 bool DateRewriter::RewriteDate(Segment *segment,
                                const absl::string_view extra_format,
                                size_t &num_done_out) {
-  const std::string &key = segment->key();
+  absl::string_view key = segment->key();
   auto rit = std::find_if(std::begin(kDateData), std::end(kDateData),
                           [&key](auto data) { return key == data.key; });
   if (rit == std::end(kDateData)) {
@@ -1075,7 +1075,7 @@ bool DateRewriter::RewriteAd(Segments::range segments_range,
   // * If the first segment ends with the `kNenKey`, or
   // * If the second segment starts with the `kNenKey`.
   Segment *segment = &segments_range.front();
-  const std::string &key = segment->key();
+  absl::string_view key = segment->key();
   const bool has_suffix = absl::EndsWith(key, kNenKey);
   if (!has_suffix) {
     if (segments_range.size() < 2 ||

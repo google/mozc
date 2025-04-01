@@ -179,7 +179,7 @@ void SymbolRewriter::InsertCandidates(
   // include the target symbols, do assign description to these candidates.
   AddDescForCurrentCandidates(range, segment);
 
-  const std::string &candidate_key =
+  absl::string_view candidate_key =
       ((!segment->key().empty()) ? segment->key() : segment->candidate(0).key);
   size_t offset = 0;
 
@@ -193,7 +193,7 @@ void SymbolRewriter::InsertCandidates(
     // We also skip transliterated key candidates.
     offset = RewriterUtil::CalculateInsertPosition(*segment, default_offset);
     for (size_t i = offset; i < segment->candidates_size(); ++i) {
-      const std::string &target_value = segment->candidate(i).value;
+      absl::string_view target_value = segment->candidate(i).value;
       if ((Util::CharsLen(target_value) == 1 &&
            Util::IsScriptType(target_value, Util::KANJI)) ||
           Util::IsScriptType(target_value, Util::HIRAGANA) ||
@@ -298,7 +298,7 @@ bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest &request,
                                           Segments *segments) const {
   bool modified = false;
   for (Segment &segment : segments->conversion_segments()) {
-    const std::string &key = segment.key();
+    absl::string_view key = segment.key();
     const SerializedDictionary::IterRange range = dictionary_->equal_range(key);
     if (range.first == range.second) {
       continue;

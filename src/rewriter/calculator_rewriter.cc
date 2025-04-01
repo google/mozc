@@ -106,7 +106,7 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
 
   // If |segments| has only one conversion segment, try calculation and insert
   // the result on success.
-  const std::string &key = segments->conversion_segment(0).key();
+  absl::string_view key = segments->conversion_segment(0).key();
   if (key.empty()) {
     return false;
   }

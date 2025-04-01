@@ -128,8 +128,7 @@ bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
 
 }  // namespace
 
-FocusCandidateRewriter::FocusCandidateRewriter(
-    const DataManager &data_manager)
+FocusCandidateRewriter::FocusCandidateRewriter(const DataManager &data_manager)
     : pos_matcher_(data_manager.GetPosMatcherData()) {
   absl::string_view data = data_manager.GetCounterSuffixSortedArray();
   // Data manager is responsible for providing a valid data.  Just verify data
@@ -171,8 +170,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
 
   // left to right
   {
-    const std::string &left_value =
-        seg.candidate(candidate_index).content_value;
+    absl::string_view left_value = seg.candidate(candidate_index).content_value;
     absl::string_view right_value;
 
     if (Util::IsOpenBracket(left_value, &right_value)) {
@@ -186,7 +184,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
         if (!IsValidSegment(target_right_seg)) {
           continue;
         }
-        const std::string &target_right_value =
+        absl::string_view target_right_value =
             target_right_seg.candidate(0).content_value;
         absl::string_view tmp;
         if (Util::IsOpenBracket(target_right_value, &tmp)) {
@@ -206,7 +204,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
 
   // right to left
   {
-    const std::string &right_value =
+    absl::string_view right_value =
         seg.candidate(candidate_index).content_value;
     absl::string_view left_value;
 
@@ -222,7 +220,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
         if (!IsValidSegment(*target_left_seg)) {
           continue;
         }
-        const std::string &target_left_value =
+        absl::string_view target_left_value =
             target_left_seg->candidate(0).content_value;
         absl::string_view tmp;
         if (Util::IsCloseBracket(target_left_value, &tmp)) {

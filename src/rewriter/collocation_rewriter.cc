@@ -201,10 +201,10 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
                           const Segment::Candidate &top_cand,
                           SegmentLookupType type,
                           std::vector<std::string> *output) {
-  const std::string &content = cand.content_value;
-  const std::string &value = cand.value;
-  const std::string &top_content = top_cand.content_value;
-  const std::string &top_value = top_cand.value;
+  absl::string_view content = cand.content_value;
+  absl::string_view value = cand.value;
+  absl::string_view top_content = top_cand.content_value;
+  absl::string_view top_value = top_cand.value;
 
   const size_t top_content_len = Util::CharsLen(top_content);
   const size_t content_len = Util::CharsLen(content);
@@ -224,7 +224,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
   if (type == LEFT) {
     push_back_normalized_string(value);
   } else {
-    output->push_back(content);
+    output->push_back(std::string(content));
     // "舞って" workaround
     // V+"て" is often treated as one compound.
     static constexpr absl::string_view pattern = "て";
@@ -585,7 +585,7 @@ bool CollocationRewriter::RewriteFromPrevSegment(
       continue;
     }
 
-    for (const std::string &cur : curs) {
+    for (absl::string_view cur : curs) {
       if (collocation_filter_.Exists(prev, cur)) {
         if (i != 0) {
           MOZC_VLOG(3) << prev << cur << " " << seg->candidate(0).value << "->"
@@ -644,7 +644,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
       continue;
     }
 
-    for (const std::string &cur : curs) {
+    for (absl::string_view cur : curs) {
       for (size_t j = 0; j < j_max; ++j) {
         if (next_seg->candidate(j).cost >
             next_seg->candidate(0).cost + kMaxCostDiff) {
@@ -654,7 +654,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
           continue;
         }
 
-        for (const std::string &next : nexts[j]) {
+        for (absl::string_view next : nexts[j]) {
           if (collocation_filter_.Exists(cur, next)) {
             DCHECK(VerifyNaturalContent(next_seg->candidate(j),
                                         next_seg->candidate(0), RIGHT))

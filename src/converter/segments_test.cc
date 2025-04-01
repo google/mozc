@@ -51,8 +51,8 @@ using converter::Candidate;
 using ::testing::ElementsAre;
 
 template <typename T>
-static std::vector<std::string> ToKeys(const T &segments) {
-  std::vector<std::string> keys;
+static std::vector<absl::string_view> ToKeys(const T &segments) {
+  std::vector<absl::string_view> keys;
   for (const Segment &segment : segments) {
     keys.push_back(segment.key());
   }

@@ -72,7 +72,7 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
     return;
   }
 
-  const std::string &candidate_key =
+  absl::string_view candidate_key =
       ((!segment->key().empty()) ? segment->key() : segment->candidate(0).key);
   for (auto iter = begin; iter != end; ++iter) {
     // Note:
@@ -99,8 +99,7 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
 
 }  // namespace
 
-SingleKanjiRewriter::SingleKanjiRewriter(
-    const DataManager &data_manager)
+SingleKanjiRewriter::SingleKanjiRewriter(const DataManager &data_manager)
     : pos_matcher_(data_manager.GetPosMatcherData()),
       single_kanji_dictionary_(
           new dictionary::SingleKanjiDictionary(data_manager)) {}
@@ -137,7 +136,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
   for (Segment &segment : conversion_segments) {
     AddDescriptionForExistingCandidates(&segment);
 
-    const std::string &key = segment.key();
+    absl::string_view key = segment.key();
     std::vector<std::string> kanji_list;
     if (!single_kanji_dictionary_->LookupKanjiEntries(key, use_svs,
                                                       &kanji_list)) {
@@ -168,7 +167,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
       continue;
     }
 
-    const std::string &key = segment.key();
+    absl::string_view key = segment.key();
     const auto range = single_kanji_dictionary_->LookupNounPrefixEntries(key);
     if (range.first == range.second) {
       continue;
@@ -209,7 +208,7 @@ bool SingleKanjiRewriter::InsertCandidate(
     return false;
   }
 
-  const std::string &candidate_key =
+  absl::string_view candidate_key =
       ((!segment->key().empty()) ? segment->key() : segment->candidate(0).key);
 
   // Adding 8000 to the single kanji cost

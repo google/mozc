@@ -38,6 +38,7 @@
 #include <utility>
 
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
@@ -96,7 +97,7 @@ bool DictionaryGenerator::Output(std::ostream &os) const {
   uint32_t num_same_keys = 0;
   std::string prev_key;
   for (const Token &token : tokens_) {
-    const std::string &pos = token.pos;
+    absl::string_view pos = token.pos;
 
     // Update the number of the sequence of the same keys
     if (prev_key == token.key) {

@@ -200,11 +200,11 @@ bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
 
   // Hereafter, we must have only one conversion segment.
   const Segment &conversion_segment = segments->conversion_segment(0);
-  const std::string &segment_key = conversion_segment.key();
+  absl::string_view segment_key = conversion_segment.key();
 
   // The top candidate, which is about to be committed.
   const Segment::Candidate &candidate = conversion_segment.candidate(0);
-  const std::string &candidate_value = candidate.value;
+  absl::string_view candidate_value = candidate.value;
 
   // If |candidate_value| contains any non-ASCII character, do not treat
   // it as privacy sensitive information.
@@ -699,7 +699,7 @@ std::string UserHistoryPredictor::GetRomanMisspelledKey(
     return "";
   }
 
-  const std::string &preedit = segments.conversion_segment(0).key();
+  absl::string_view preedit = segments.conversion_segment(0).key();
   // TODO(team): Use composer if it is available.
   // segments.composer()->GetQueryForConversion(&preedit);
   // Since ConverterInterface doesn't have StartPredictionWithComposer,
@@ -1259,7 +1259,7 @@ bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
     return false;
   }
 
-  const std::string &input_key = segments.conversion_segment(0).key();
+  absl::string_view input_key = segments.conversion_segment(0).key();
   if (IsPunctuation(Util::Utf8SubString(input_key, 0, 1))) {
     MOZC_VLOG(2) << "input_key starts with punctuations";
     return false;
@@ -1327,9 +1327,9 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
   // do linear-search over the LRU.
   if ((prev_entry == nullptr && history_segment.candidates_size() > 0) ||
       (prev_entry != nullptr && prev_entry->next_entries_size() == 0)) {
-    const std::string &prev_value = prev_entry == nullptr
-                                        ? history_segment.candidate(0).value
-                                        : prev_entry->value();
+    absl::string_view prev_value = prev_entry == nullptr
+                                       ? history_segment.candidate(0).value
+                                       : prev_entry->value();
     int trial = 0;
     for (const DicElement &elm : *dic_) {
       if (++trial > kMaxPrevValueTrial) {
@@ -1447,7 +1447,7 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
   *base = std::move(query_base);
   if (!expanded_set.empty()) {
     *expanded = std::make_unique<Trie<std::string>>();
-    for (const std::string &expanded_key : expanded_set) {
+    for (absl::string_view expanded_key : expanded_set) {
       // For getting matched key, insert values
       (*expanded)->AddEntry(expanded_key, expanded_key);
     }
@@ -1630,7 +1630,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
     if (result_entry->spelling_correction()) {
       candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
     }
-    const std::string &description = result_entry->description();
+    absl::string_view description = result_entry->description();
     // If we have stored description, set it exactly.
     if (!description.empty()) {
       candidate->description = description;
@@ -1932,7 +1932,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
           segments->history_segments().back().candidate(0))) {
     const Entry *entry = &(dic_->Head()->value);
     DCHECK(entry);
-    const std::string &last_value =
+    absl::string_view last_value =
         segments->history_segments().back().candidate(0).value;
     // Check if the head value in LRU ends with the candidate value in history
     // segments.
@@ -2023,8 +2023,8 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
                                      last_access_time, learning_segments,
                                      segments);
 
-  const std::string &all_key = learning_segments.conversion_segments_key;
-  const std::string &all_value = learning_segments.conversion_segments_value;
+  absl::string_view all_key = learning_segments.conversion_segments_key;
+  absl::string_view all_value = learning_segments.conversion_segments_value;
 
   // Inserts all_key/all_value.
   // We don't insert it for mobile.
@@ -2044,7 +2044,7 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
             .history_segments[segments->history_segments_size() - 1];
     const SegmentForLearning &conversion_segment =
         learning_segments.conversion_segments[0];
-    const std::string &history_value = history_segment.value;
+    absl::string_view history_value = history_segment.value;
     if (history_value.empty() || conversion_segment.value.empty()) {
       return;
     }

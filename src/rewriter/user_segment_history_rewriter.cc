@@ -499,10 +499,10 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
       segments.segment(segment_index).candidate(0);
   const Segment::Candidate &candidate =
       segments.segment(segment_index).candidate(candidate_index);
-  const std::string &all_value = candidate.value;
-  const std::string &content_value = candidate.content_value;
-  const std::string &all_key = segments.segment(segment_index).key();
-  const std::string &content_key = candidate.content_key;
+  absl::string_view all_value = candidate.value;
+  absl::string_view content_value = candidate.content_value;
+  absl::string_view all_key = segments.segment(segment_index).key();
+  absl::string_view content_key = candidate.content_key;
   // if the segments are resized by user OR
   // either top/target candidate has CONTEXT_SENSITIVE flags,
   // don't apply UNIGRAM model
@@ -621,10 +621,10 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   const bool context_sensitive =
       segments.resized() ||
       (candidate.attributes & Segment::Candidate::CONTEXT_SENSITIVE);
-  const std::string &all_value = candidate.value;
-  const std::string &content_value = candidate.content_value;
-  const std::string &all_key = seg.key();
-  const std::string &content_key = candidate.content_key;
+  absl::string_view all_value = candidate.value;
+  absl::string_view content_value = candidate.content_value;
+  absl::string_view all_key = seg.key();
+  absl::string_view content_key = candidate.content_key;
 
   // even if the candidate was the top (default) candidate,
   // ERANKED will be set when user changes the ranking
@@ -1037,7 +1037,7 @@ void UserSegmentHistoryRewriter::Revert(Segments *segments) {
     const Segments::RevertEntry &revert_entry = segments->revert_entry(i);
     if (revert_entry.id == revert_id() &&
         revert_entry.revert_entry_type == Segments::RevertEntry::CREATE_ENTRY) {
-      const std::string &key = revert_entry.key;
+      absl::string_view key = revert_entry.key;
       MOZC_VLOG(2) << "Erasing the key: " << key;
       storage_->Delete(key);
     }
@@ -1051,8 +1051,8 @@ bool UserSegmentHistoryRewriter::ClearHistoryEntry(const Segments &segments,
   const Segment &segment = segments.segment(segment_index);
   DCHECK(segment.is_valid_index(candidate_index));
   const Segment::Candidate &candidate = segment.candidate(0);
-  const std::string &key = candidate.key;
-  const std::string &value = candidate.value;
+  absl::string_view key = candidate.key;
+  absl::string_view value = candidate.value;
 
   FeatureKey fkey(segments, *pos_matcher_, segment_index);
   bool result = false;

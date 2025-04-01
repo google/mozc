@@ -78,7 +78,7 @@ class Segment final {
     segment_type_ = segment_type;
   }
 
-  const std::string &key() const { return key_; }
+  absl::string_view key() const { return key_; }
 
   // Returns the length of the key in Unicode characters. (e.g. 1 for "あ")
   size_t key_len() const { return key_len_; }

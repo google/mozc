@@ -145,7 +145,7 @@ bool CommandRewriter::RewriteSegment(const config::Config &config,
   DCHECK(segment);
 
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    const std::string &value = segment->candidate(i).value;
+    absl::string_view value = segment->candidate(i).value;
     if (FindString(value, kCommandValues)) {
       // insert command candidate at an fixed position.
       InsertDisableAllSuggestionToggleCommand(config, segment, i, 6);
@@ -173,7 +173,7 @@ bool CommandRewriter::Rewrite(const ConversionRequest &request,
 
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
-  const std::string &key = segment->key();
+  absl::string_view key = segment->key();
 
   // TODO(taku): we want to replace the linear search with STL map when
   // kTriggerKeys become bigger.

@@ -154,7 +154,7 @@ bool GetNumberHistory(const Segments &segments, std::string *number_key) {
 
   const Segment &last_segment = segments.history_segment(history_size - 1);
   DCHECK_GT(last_segment.candidates_size(), 0);
-  const std::string &history_value = last_segment.candidate(0).value;
+  absl::string_view history_value = last_segment.candidate(0).value;
   if (!NumberUtil::IsArabicNumber(history_value)) {
     return false;
   }
@@ -293,7 +293,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
     // TODO(noriyukit): std::vector<string> would be better than set<string>.
     // To this end, we need to fix Comopser as well.
     const absl::string_view rest = absl::ClippedSubstr(key, original_key_len_);
-    for (const std::string &chr : subsequent_chars_) {
+    for (absl::string_view chr : subsequent_chars_) {
       if (absl::StartsWith(rest, chr)) {
         return TRAVERSE_CONTINUE;
       }
@@ -505,7 +505,7 @@ class DictionaryPredictionAggregator::HandwritingLookupCallback
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
                      const Token &token) override {
     size_t next_pos = 0;
-    for (const std::string &constraint : constraints_) {
+    for (absl::string_view constraint : constraints_) {
       const size_t pos = token.value.find(constraint, next_pos);
       if (pos == std::string::npos) {
         return TRAVERSE_CONTINUE;
@@ -623,7 +623,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     return AggregatePredictionForZeroQuery(request, segments, results);
   }
 
-  const std::string &key = segments.conversion_segment(0).key();
+  absl::string_view key = segments.conversion_segment(0).key();
   const size_t key_len = segments.conversion_segment(0).key_len();
 
   // TODO(toshiyuki): Check if we can remove this SUGGESTION check.
@@ -1288,8 +1288,8 @@ void DictionaryPredictionAggregator::CheckBigramResult(
     bool is_zero_query, Result *result) const {
   DCHECK(result);
 
-  const std::string &history_key = history_token.key;
-  const std::string &history_value = history_token.value;
+  absl::string_view history_key = history_token.key;
+  absl::string_view history_value = history_token.value;
   const std::string key(result->key, history_key.size(),
                         result->key.size() - history_key.size());
   const std::string value(result->value, history_value.size(),
@@ -1422,7 +1422,7 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   // |expanded| is a very small set, so calling LookupPredictive multiple
   // times is not so expensive.  Also, the number of lookup results is limited
   // by |lookup_limit|.
-  for (const std::string &expanded_char : expanded) {
+  for (absl::string_view expanded_char : expanded) {
     const std::string input_key =
         absl::StrCat(history_key, base, expanded_char);
     PredictiveLookupCallback callback(
@@ -1613,7 +1613,7 @@ bool DictionaryPredictionAggregator::AggregateZeroQueryPrediction(
 
   const Segment &last_segment = segments.history_segment(history_size - 1);
   DCHECK_GT(last_segment.candidates_size(), 0);
-  const std::string &history_value = last_segment.candidate(0).value;
+  absl::string_view history_value = last_segment.candidate(0).value;
 
   std::vector<ZeroQueryResult> candidates;
   if (!GetZeroQueryCandidatesForKey(request, history_value, zero_query_dict_,
@@ -1680,7 +1680,7 @@ void DictionaryPredictionAggregator::AggregateEnglishPrediction(
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
-  const std::string &input_key = segments.conversion_segment(0).key();
+  absl::string_view input_key = segments.conversion_segment(0).key();
   GetPredictiveResultsForEnglishKey(dictionary_, request, input_key, ENGLISH,
                                     cutoff_threshold, results);
 
@@ -1909,7 +1909,7 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
 bool DictionaryPredictionAggregator::ShouldAggregateRealTimeConversionResults(
     const ConversionRequest &request, const Segments &segments) {
   constexpr size_t kMaxRealtimeKeySize = 300;  // 300 bytes in UTF8
-  const std::string &key = segments.conversion_segment(0).key();
+  absl::string_view key = segments.conversion_segment(0).key();
   if (key.empty() || key.size() >= kMaxRealtimeKeySize) {
     // 1) If key is empty, realtime conversion doesn't work.
     // 2) If the key is too long, we'll hit a performance issue.
