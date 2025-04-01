@@ -115,6 +115,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "commit_by_space.txt",
     DATA_DIR "composing_alphanumeric.txt",
     DATA_DIR "composition_display_as.txt",
+    DATA_DIR "composition_itchome.txt",
     DATA_DIR "conversion.txt",
     DATA_DIR "conversion_display_as.txt",
     DATA_DIR "conversion_with_history_segment.txt",

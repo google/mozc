@@ -1,0 +1,17 @@
+# Test scenario for session/session_handler_scenario_test
+#
+# This test confirms the romaji conversion from "itchome" to "いっちょめ"
+# as "tch" is a special case converted to "っch".
+
+# Initialze the composition mode to the Romaji Hiragana mode.
+SEND_KEY	ON
+SET_CONFIG	preedit_method	ROMAN
+
+RESET_CONTEXT
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Send itchome and confirm the preedit is "いっちょめ".
+# Note: The expected conversion of "itchome" is "いっちょめ" but not "いっちょうめ"
+# although "いっちょうめ" is written as "itchōme" and simplified to "itchome".
+SEND_KEYS	itchome
+EXPECT_PREEDIT	いっちょめ
