@@ -38,6 +38,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "base/file_util.h"
+#include "base/strings/zstring_view.h"
 
 namespace mozc {
 class FileUtilMock : public FileUtilInterface {
@@ -46,78 +47,75 @@ class FileUtilMock : public FileUtilInterface {
   ~FileUtilMock() override { FileUtil::SetMockForUnitTest(nullptr); }
 
   // This is not an override function.
-  void CreateFile(const std::string &path) {
-    files_[path] = base_id_;
+  void CreateFile(zstring_view path) {
+    files_[path.view()] = base_id_;
     base_id_ += 100'000;
   }
 
-  absl::Status CreateDirectory(const std::string &path) const override {
+  absl::Status CreateDirectory(zstring_view path) const override {
     if (FileExists(path).ok()) {
       return absl::AlreadyExistsError(path);
     }
-    dirs_[path] = true;
+    dirs_[path.view()] = true;
     return absl::OkStatus();
   }
 
-  absl::Status RemoveDirectory(const std::string &dirname) const override {
+  absl::Status RemoveDirectory(zstring_view dirname) const override {
     if (FileExists(dirname).ok()) {
       return absl::NotFoundError(dirname);
     }
-    dirs_[dirname] = false;
+    dirs_[dirname.view()] = false;
     return absl::OkStatus();
   }
 
-  absl::Status Unlink(const std::string &filename) const override {
+  absl::Status Unlink(zstring_view filename) const override {
     if (DirectoryExists(filename).ok()) {
       return absl::FailedPreconditionError(
-          absl::StrFormat("%s is a directory", filename));
+          absl::StrFormat("%s is a directory", filename.view()));
     }
-    files_[filename] = 0;
+    files_[filename.view()] = 0;
     return absl::OkStatus();
   }
 
-  absl::Status FileExists(const std::string &filename) const override {
+  absl::Status FileExists(zstring_view filename) const override {
     const auto it = files_.find(filename);
     return it != files_.end() && it->second > 0 ? absl::OkStatus()
                                                 : absl::NotFoundError(filename);
   }
 
-  absl::Status DirectoryExists(const std::string &dirname) const override {
+  absl::Status DirectoryExists(zstring_view dirname) const override {
     auto it = dirs_.find(dirname);
     return it != dirs_.end() && it->second ? absl::OkStatus()
                                            : absl::NotFoundError(dirname);
   }
 
-  absl::Status FileOrDirectoryExists(const std::string &path) const {
+  absl::Status FileOrDirectoryExists(zstring_view path) const {
     return FileExists(path).ok() || DirectoryExists(path).ok()
                ? absl::OkStatus()
                : absl::NotFoundError(path);
   }
 
-  absl::Status CopyFile(const std::string &from,
-                        const std::string &to) const override {
+  absl::Status CopyFile(zstring_view from, zstring_view to) const override {
     if (!FileExists(from).ok()) {
       return absl::NotFoundError(from);
     }
-    files_[to] = files_[from];
+    files_[to.view()] = files_[from.view()];
     return absl::OkStatus();
   }
 
-  absl::StatusOr<bool> IsEqualFile(
-      const std::string &filename1,
-      const std::string &filename2) const override {
+  absl::StatusOr<bool> IsEqualFile(zstring_view filename1,
+                                   zstring_view filename2) const override {
     if (absl::Status s = FileExists(filename1); !s.ok()) {
       return s;
     }
     if (absl::Status s = FileExists(filename2); !s.ok()) {
       return s;
     }
-    return files_[filename1] == files_[filename2];
+    return files_[filename1.view()] == files_[filename2.view()];
   }
 
-  absl::StatusOr<bool> IsEquivalent(
-      const std::string &filename1,
-      const std::string &filename2) const override {
+  absl::StatusOr<bool> IsEquivalent(zstring_view filename1,
+                                    zstring_view filename2) const override {
     const std::string canonical1 = At(canonical_paths_, filename1, filename1);
     const std::string canonical2 = At(canonical_paths_, filename2, filename2);
     // If either of files does not exist, an error is returned.
@@ -127,23 +125,22 @@ class FileUtilMock : public FileUtilInterface {
     return canonical1 == canonical2;
   }
 
-  absl::Status AtomicRename(const std::string &from,
-                            const std::string &to) const override {
+  absl::Status AtomicRename(zstring_view from, zstring_view to) const override {
     if (FileExists(from).ok()) {
-      files_[to] = files_[from];
-      files_[from] = 0;
+      files_[to.view()] = files_[from.view()];
+      files_[from.view()] = 0;
       return absl::OkStatus();
     }
     if (DirectoryExists(from).ok()) {
-      dirs_[to] = dirs_[from];
-      dirs_[from] = false;
+      dirs_[to.view()] = dirs_[from.view()];
+      dirs_[from.view()] = false;
       return absl::OkStatus();
     }
-    return absl::NotFoundError(absl::StrFormat("%s doesn't exist", from));
+    return absl::NotFoundError(
+        absl::StrFormat("%s doesn't exist", from.view()));
   }
 
-  absl::Status CreateHardLink(const std::string &from,
-                              const std::string &to) override {
+  absl::Status CreateHardLink(zstring_view from, zstring_view to) override {
     // Error if `from` doesn't exist.
     if (absl::Status s = FileOrDirectoryExists(from); !s.ok()) {
       return s;
@@ -152,7 +149,7 @@ class FileUtilMock : public FileUtilInterface {
     if (absl::Status s = FileOrDirectoryExists(to); s.ok()) {
       return absl::AlreadyExistsError(to);
     }
-    canonical_paths_[to] = from;
+    canonical_paths_[to.view()] = std::string(from.view());
     if (FileExists(from).ok()) {
       CreateFile(to);
       return absl::OkStatus();
@@ -161,26 +158,26 @@ class FileUtilMock : public FileUtilInterface {
   }
 
   absl::StatusOr<FileTimeStamp> GetModificationTime(
-      const std::string &filename) const override {
+      zstring_view filename) const override {
     if (absl::Status s = FileExists(filename); !s.ok()) {
       return s;
     }
-    return files_[filename];
+    return files_[filename.view()];
   }
 
   // Use FileTimeStamp as time stamp and also file id.
   // 0 means that the file is removed.
-  mutable std::map<std::string, FileTimeStamp> files_;
+  mutable absl::btree_map<std::string, FileTimeStamp> files_;
   FileTimeStamp base_id_{1'000'000'000};
-  mutable std::map<std::string, bool> dirs_;
+  mutable absl::btree_map<std::string, bool> dirs_;
   mutable absl::btree_map<std::string, std::string> canonical_paths_;
 
  private:
   template <typename T>
-  T At(const absl::btree_map<std::string, T> &map, const std::string &key,
-       const T &fallback_value) const {
+  T At(const absl::btree_map<std::string, T> &map, zstring_view key,
+       zstring_view fallback_value) const {
     auto it = map.find(key);
-    return it == map.end() ? fallback_value : it->second;
+    return it == map.end() ? std::string(fallback_value.view()) : it->second;
   }
 };
 }  // namespace mozc

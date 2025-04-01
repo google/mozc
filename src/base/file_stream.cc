@@ -34,26 +34,27 @@
 #include <string>
 
 #include "base/strings/pfchar.h"
+#include "base/strings/zstring_view.h"
 
 namespace mozc {
 
-InputFileStream::InputFileStream(const std::string &filename,
+InputFileStream::InputFileStream(zstring_view filename,
                                  std::ios_base::openmode mode) {
   open(filename, mode);
 }
 
-void InputFileStream::open(const std::string &filename,
+void InputFileStream::open(zstring_view filename,
                            std::ios_base::openmode mode) {
   // to_pfstring() changes encoding to utf-16 on Windows.
   std::ifstream::open(to_pfstring(filename), mode);
 }
 
-OutputFileStream::OutputFileStream(const std::string &filename,
+OutputFileStream::OutputFileStream(zstring_view filename,
                                    std::ios_base::openmode mode) {
   open(filename, mode);
 }
 
-void OutputFileStream::open(const std::string &filename,
+void OutputFileStream::open(zstring_view filename,
                             std::ios_base::openmode mode) {
   // to_pfstring() changes encoding to utf-16 on Windows.
   std::ofstream::open(to_pfstring(filename), mode);

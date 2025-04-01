@@ -34,6 +34,8 @@
 #include <ios>
 #include <string>
 
+#include "base/strings/zstring_view.h"
+
 namespace mozc {
 
 // Represents classes which encapsulates the std::ifstream class (or the
@@ -52,7 +54,7 @@ namespace mozc {
 class InputFileStream : public std::ifstream {
  public:
   InputFileStream() = default;
-  explicit InputFileStream(const std::string &filename,
+  explicit InputFileStream(zstring_view filename,
                            std::ios_base::openmode mode = std::ios_base::in);
 
   // Opens the specified file.
@@ -61,7 +63,7 @@ class InputFileStream : public std::ifstream {
   // one before calling the ifstream::open() function.  Alternatively, you can
   // pass a pfstring value if you already have the string in the native
   // encoding.
-  void open(const std::string &filename,
+  void open(zstring_view filename,
             std::ios_base::openmode mode = std::ios_base::in);
 
  private:
@@ -71,7 +73,7 @@ class InputFileStream : public std::ifstream {
 class OutputFileStream : public std::ofstream {
  public:
   OutputFileStream() = default;
-  explicit OutputFileStream(const std::string &filename,
+  explicit OutputFileStream(zstring_view filename,
                             std::ios_base::openmode mode = std::ios_base::out);
 
   // Opens the specified file.
@@ -80,7 +82,7 @@ class OutputFileStream : public std::ofstream {
   // one before calling the ofstream::open() function. Alternatively, you can
   // pass a pfstring value if you already have the string in the native
   // encoding.
-  void open(const std::string &filename,
+  void open(zstring_view filename,
             std::ios_base::openmode mode = std::ios_base::out);
 
  private:

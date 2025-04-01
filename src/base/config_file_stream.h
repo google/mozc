@@ -36,6 +36,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "base/strings/zstring_view.h"
 
 namespace mozc {
 
@@ -64,20 +65,18 @@ namespace mozc {
 class ConfigFileStream {
  public:
   // Open |filename| as a text file with read permission.
-  static std::unique_ptr<std::istream> OpenReadText(
-      const std::string &filename) {
+  static std::unique_ptr<std::istream> OpenReadText(zstring_view filename) {
     return Open(filename, std::ios_base::in);
   }
 
   // Open |filename| as a binary file with read permission.
-  static std::unique_ptr<std::istream> OpenReadBinary(
-      const std::string &filename) {
+  static std::unique_ptr<std::istream> OpenReadBinary(zstring_view filename) {
     return Open(filename, std::ios_base::in | std::ios_base::binary);
   }
 
   // Mozc 1.3 and prior had had a following method, which opens |filename|
   // as a text file with read permission.
-  //   static istream Open(const std::string &filename) {
+  //   static istream Open(zstring_view filename) {
   //     return Open(filename, ios_base::in);
   //   }
   // As of Mozc 1.3, a number of files had had depended on this method.
@@ -89,7 +88,7 @@ class ConfigFileStream {
   // You should not use this method in new code.
   // TODO(yukawa): Add unit tests and replace |LegacyOpen| with |OpenReadText|
   //     or |OpenReadBinary| where this method is used.
-  static std::unique_ptr<std::istream> LegacyOpen(const std::string &filename) {
+  static std::unique_ptr<std::istream> LegacyOpen(zstring_view filename) {
     return Open(filename, std::ios_base::in);
   }
 
@@ -98,8 +97,8 @@ class ConfigFileStream {
   // succeeds.
   // Note that this method uses binary mode to update |filename|.
   // TODO(yukawa): Consider to rename to |AtomicUpdateBinary|.
-  static bool AtomicUpdate(const std::string &filename,
-                           const std::string &new_binary_contens);
+  static bool AtomicUpdate(zstring_view filename,
+                           zstring_view new_binary_contens);
 
   // if prefix is system:// or memory:// return "";
   static std::string GetFileName(absl::string_view filename);
@@ -115,7 +114,7 @@ class ConfigFileStream {
   // This function is deprecated. Use OpenReadText or OpenReadBinary instead.
   // TODO(yukawa): Move this function to anonymous namespace in
   //     config_file_stream.cc.
-  static std::unique_ptr<std::istream> Open(const std::string &filename,
+  static std::unique_ptr<std::istream> Open(zstring_view filename,
                                             std::ios_base::openmode mode);
 };
 }  // namespace mozc

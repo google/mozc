@@ -38,6 +38,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/strings/zstring_view.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -64,23 +65,21 @@ class FileUtilInterface {
  public:
   virtual ~FileUtilInterface() = default;
 
-  virtual absl::Status CreateDirectory(const std::string &path) const = 0;
-  virtual absl::Status RemoveDirectory(const std::string &dirname) const = 0;
-  virtual absl::Status Unlink(const std::string &filename) const = 0;
-  virtual absl::Status FileExists(const std::string &filename) const = 0;
-  virtual absl::Status DirectoryExists(const std::string &dirname) const = 0;
-  virtual absl::Status CopyFile(const std::string &from,
-                                const std::string &to) const = 0;
-  virtual absl::StatusOr<bool> IsEqualFile(
-      const std::string &filename1, const std::string &filename2) const = 0;
-  virtual absl::StatusOr<bool> IsEquivalent(
-      const std::string &filename1, const std::string &filename2) const = 0;
-  virtual absl::Status AtomicRename(const std::string &from,
-                                    const std::string &to) const = 0;
-  virtual absl::Status CreateHardLink(const std::string &from,
-                                      const std::string &to) = 0;
+  virtual absl::Status CreateDirectory(zstring_view path) const = 0;
+  virtual absl::Status RemoveDirectory(zstring_view dirname) const = 0;
+  virtual absl::Status Unlink(zstring_view filename) const = 0;
+  virtual absl::Status FileExists(zstring_view filename) const = 0;
+  virtual absl::Status DirectoryExists(zstring_view dirname) const = 0;
+  virtual absl::Status CopyFile(zstring_view from, zstring_view to) const = 0;
+  virtual absl::StatusOr<bool> IsEqualFile(zstring_view filename1,
+                                           zstring_view filename2) const = 0;
+  virtual absl::StatusOr<bool> IsEquivalent(zstring_view filename1,
+                                            zstring_view filename2) const = 0;
+  virtual absl::Status AtomicRename(zstring_view from,
+                                    zstring_view to) const = 0;
+  virtual absl::Status CreateHardLink(zstring_view from, zstring_view to) = 0;
   virtual absl::StatusOr<FileTimeStamp> GetModificationTime(
-      const std::string &filename) const = 0;
+      zstring_view filename) const = 0;
 
  protected:
   FileUtilInterface() = default;
@@ -99,61 +98,59 @@ class FileUtil {
   // The above platform dependent behavior is a temporary solution to avoid
   // freeze of the host application.
   // https://github.com/google/mozc/issues/1076
-  static absl::Status CreateDirectory(const std::string &path);
+  static absl::Status CreateDirectory(zstring_view path);
 
   // Removes an empty directory.
-  static absl::Status RemoveDirectory(const std::string &dirname);
-  static absl::Status RemoveDirectoryIfExists(const std::string &dirname);
+  static absl::Status RemoveDirectory(zstring_view dirname);
+  static absl::Status RemoveDirectoryIfExists(zstring_view dirname);
 
   // Removes a file. The second version returns OK when `filename` doesn't
   // exist. The third version logs error message on failure (i.e., it ignores
   // any error and is not recommended).
-  static absl::Status Unlink(const std::string &filename);
-  static absl::Status UnlinkIfExists(const std::string &filename);
-  static void UnlinkOrLogError(const std::string &filename);
+  static absl::Status Unlink(zstring_view filename);
+  static absl::Status UnlinkIfExists(zstring_view filename);
+  static void UnlinkOrLogError(zstring_view filename);
 
   // Returns true if a file or a directory with the name exists.
-  static absl::Status FileExists(const std::string &filename);
+  static absl::Status FileExists(zstring_view filename);
 
   // Returns true if the directory exists.
-  static absl::Status DirectoryExists(const std::string &dirname);
+  static absl::Status DirectoryExists(zstring_view dirname);
 
 #ifdef _WIN32
   // Adds file attributes to the file to hide it.
   // FILE_ATTRIBUTE_NORMAL will be removed.
-  static bool HideFile(const std::string &filename);
-  static bool HideFileWithExtraAttributes(const std::string &filename,
+  static bool HideFile(zstring_view filename);
+  static bool HideFileWithExtraAttributes(zstring_view filename,
                                           DWORD extra_attributes);
 #endif  // _WIN32
 
   // Copies a file to another file, using mmap internally.
   // The destination file will be overwritten if exists.
   // Returns true if the file is copied successfully.
-  static absl::Status CopyFile(const std::string &from, const std::string &to);
+  static absl::Status CopyFile(zstring_view from, zstring_view to);
 
   // Compares the contents of two given files. Ignores the difference between
   // their path strings.
   // Returns true if both files have same contents.
-  static absl::StatusOr<bool> IsEqualFile(const std::string &filename1,
-                                          const std::string &filename2);
+  static absl::StatusOr<bool> IsEqualFile(zstring_view filename1,
+                                          zstring_view filename2);
 
   // Compares the two filenames point to the same file. Symbolic/hard links are
   // considered. This is a wrapper of std::filesystem::equivalent.
   // IsEqualFile reads the contents of the files, but IsEquivalent does not.
   // Returns an error, if either of files doesn't exist.
-  static absl::StatusOr<bool> IsEquivalent(const std::string &filename1,
-                                           const std::string &filename2);
+  static absl::StatusOr<bool> IsEquivalent(zstring_view filename1,
+                                           zstring_view filename2);
 
   // Moves/Renames a file atomically.
   // Returns OK if the file is renamed successfully.
-  static absl::Status AtomicRename(const std::string &from,
-                                   const std::string &to);
+  static absl::Status AtomicRename(zstring_view from, zstring_view to);
 
   // Creates a hard link. This returns false if the filesystem does not support
   // hard link or the target file already exists.
   // This is a wrapper of std::filesystem::create_hard_link.
-  static absl::Status CreateHardLink(const std::string &from,
-                                     const std::string &to);
+  static absl::Status CreateHardLink(zstring_view from, zstring_view to);
 
   // Joins the give path components using the OS-specific path delimiter.
   static std::string JoinPath(absl::Span<const absl::string_view> components);
@@ -164,27 +161,26 @@ class FileUtil {
     return JoinPath({path1, path2});
   }
 
-  static std::string Basename(const std::string &filename);
-  static std::string Dirname(const std::string &filename);
+  static std::string Basename(zstring_view filename);
+  static std::string Dirname(zstring_view filename);
 
   // Returns the normalized path by replacing '/' with '\\' on Windows.
   // Does nothing on other platforms.
-  static std::string NormalizeDirectorySeparator(const std::string &path);
+  static std::string NormalizeDirectorySeparator(zstring_view path);
 
   // Returns the modification time in `modified_at`.
   // Returns false if something went wrong.
   static absl::StatusOr<FileTimeStamp> GetModificationTime(
-      const std::string &filename);
+      zstring_view filename);
 
   // Reads the contents of the file `filename` and returns it.
   static absl::StatusOr<std::string> GetContents(
-      const std::string &filename,
-      std::ios_base::openmode mode = std::ios::binary);
+      zstring_view filename, std::ios_base::openmode mode = std::ios::binary);
 
   // Writes the data provided in `content` to the file `filename`, overwriting
   // any existing content.
   static absl::Status SetContents(
-      const std::string &filename, absl::string_view content,
+      zstring_view filename, absl::string_view content,
       std::ios_base::openmode mode = std::ios::binary);
 
   // Sets a mock for unittest.
@@ -195,7 +191,7 @@ class FileUtil {
 // scope.
 class FileUnlinker final {
  public:
-  explicit FileUnlinker(const std::string &filename) : filename_(filename) {}
+  explicit FileUnlinker(absl::string_view filename) : filename_(filename) {}
 
   FileUnlinker(const FileUnlinker &) = delete;
   FileUnlinker &operator=(const FileUnlinker &) = delete;
@@ -203,7 +199,7 @@ class FileUnlinker final {
   ~FileUnlinker() { FileUtil::UnlinkOrLogError(filename_); }
 
  private:
-  const std::string filename_;
+  std::string filename_;
 };
 
 }  // namespace mozc
