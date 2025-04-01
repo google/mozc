@@ -40,7 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -91,12 +90,6 @@ absl::string_view GetCandidateShortcuts(
       break;
   }
   return shortcut;
-}
-
-bool HasExperimentalFeature(const commands::Context &context,
-                            absl::string_view key) {
-  return absl::c_any_of(context.experimental_features(),
-                        [=](absl::string_view f) { return f == key; });
 }
 
 // Calculate cursor offset for committed text.
@@ -665,6 +658,7 @@ void EngineConverter::Commit(const composer::Composer &composer,
                                                    .SetComposer(composer)
                                                    .SetRequestView(*request_)
                                                    .SetContextView(context)
+                                                   .SetConfigView(*config_)
                                                    .Build();
   converter_->FinishConversion(conversion_request, &segments_);
   ResetState();
@@ -719,6 +713,7 @@ bool EngineConverter::CommitSuggestionInternal(
                                                      .SetComposer(composer)
                                                      .SetRequestView(*request_)
                                                      .SetContextView(context)
+                                                     .SetConfigView(*config_)
                                                      .Build();
     converter_->FinishConversion(conversion_request, &segments_);
     DCHECK_EQ(0, segments_.conversion_segments_size());
@@ -850,6 +845,7 @@ void EngineConverter::CommitPreedit(const composer::Composer &composer,
           .SetComposer(composer)
           .SetRequestView(*request_)
           .SetContextView(context)
+          .SetConfigView(*config_)
           .SetOptions(std::move(options))
           .Build();
   converter_->FinishConversion(conversion_request, &segments_);
@@ -952,6 +948,7 @@ void EngineConverter::ResizeSegmentWidth(const composer::Composer &composer,
   const ConversionRequest conversion_request = ConversionRequestBuilder()
                                                    .SetComposer(composer)
                                                    .SetRequestView(*request_)
+                                                   .SetConfigView(*config_)
                                                    .Build();
   if (!converter_->ResizeSegment(&segments_, conversion_request, segment_index_,
                                  delta)) {
