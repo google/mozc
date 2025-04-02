@@ -70,7 +70,7 @@ In this step, additional build dependencies will be downloaded.
   * [LLVM 20.1.0](https://github.com/llvm/llvm-project/releases/tag/llvmorg-20.1.0)
   * [MSYS2 2025-02-21](https://github.com/msys2/msys2-installer/releases/tag/2025-02-21)
   * [Ninja 1.11.0](https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-win.zip)
-  * [Qt 6.8.0](https://download.qt.io/archive/qt/6.8/6.8.0/submodules/qtbase-everywhere-src-6.8.0.tar.xz)
+  * [Qt 6.9.0](https://download.qt.io/archive/qt/6.9/6.9.0/submodules/qtbase-everywhere-src-6.9.0.tar.xz)
   * [.NET tools](../dotnet-tools.json)
   * [git submodules](../.gitmodules)
 
