@@ -539,8 +539,9 @@ UserDictionarySession *UserDictionarySessionHandler::GetSession(
 
 uint64_t UserDictionarySessionHandler::CreateNewSessionId() const {
   uint64_t id = kInvalidSessionId;
+  absl::BitGen bitgen;
   while (true) {
-    id = absl::Uniform<uint64_t>(bitgen_);
+    id = absl::Uniform<uint64_t>(bitgen);
 
     if (id != kInvalidSessionId && (session_ == nullptr || session_id_ != id)) {
       // New id is generated.

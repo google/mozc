@@ -34,7 +34,6 @@
 #include <memory>
 #include <string>
 
-#include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
 #include "dictionary/user_dictionary_session.h"
@@ -127,7 +126,6 @@ class UserDictionarySessionHandler {
   std::unique_ptr<UserDictionarySession> session_;
   std::string dictionary_path_ =
       UserDictionaryUtil::GetUserDictionaryFileName();
-  mutable absl::BitGen bitgen_;
 };
 
 }  // namespace user_dictionary
