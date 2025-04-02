@@ -267,6 +267,36 @@ inline bool BackgroundFuture<void>::Ready() const noexcept {
   return done_->HasBeenNotified();
 }
 
+// AtomicSharedPtr is a temporary implementation using mutex until
+// std::atomic<std::shared_ptr<T>> becomes available. std::atomic_load and
+// std::atomic_store will be deprecated in the future and the interface can be
+// unified to std::atomic<std::shared_ptr<T>>. Furthermore, std::atomic_load and
+// std::atomic_store use standard mutexes, which may cause performance problems
+// in some environments.
+template <typename T>
+class AtomicSharedPtr {
+ public:
+  AtomicSharedPtr() = default;
+  ~AtomicSharedPtr() = default;
+  explicit AtomicSharedPtr(std::shared_ptr<T> ptr) : ptr_(std::move(ptr)) {}
+  AtomicSharedPtr(const AtomicSharedPtr &) = delete;
+  AtomicSharedPtr &operator=(const AtomicSharedPtr &) = delete;
+
+  std::shared_ptr<T> load() const ABSL_LOCKS_EXCLUDED(mutex_) {
+    absl::MutexLock gurad(&mutex_);
+    return ptr_;
+  }
+
+  void store(std::shared_ptr<T> ptr) ABSL_LOCKS_EXCLUDED(mutex_) {
+    absl::MutexLock gurad(&mutex_);
+    ptr_ = std::move(ptr);
+  }
+
+ private:
+  std::shared_ptr<T> ptr_ ABSL_GUARDED_BY(mutex_);
+  mutable absl::Mutex mutex_;
+};
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_THREAD_H_

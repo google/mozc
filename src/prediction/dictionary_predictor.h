@@ -44,6 +44,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/thread.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -296,7 +297,7 @@ class DictionaryPredictor : public PredictorInterface {
   //          Decode(Decode(Decode("AB"), "C"), "D")) ...
   // These variables work as a cache of previous results to prevent recursive
   // and expensive functional calls.
-  mutable std::shared_ptr<Result> prev_top_result_;
+  mutable AtomicSharedPtr<Result> prev_top_result_;
   mutable std::atomic<int32_t> prev_top_key_length_ = 0;
 
   const ImmutableConverterInterface &immutable_converter_;

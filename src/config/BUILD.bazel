@@ -50,6 +50,7 @@ mozc_cc_library(
         "//base:port",
         "//base:singleton",
         "//base:system_util",
+        "//base:thread",
         "//base:version",
         "//base:vlog",
         "//base/strings:assign",

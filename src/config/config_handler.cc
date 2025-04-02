@@ -50,6 +50,7 @@
 #include "base/singleton.h"
 #include "base/strings/assign.h"
 #include "base/system_util.h"
+#include "base/thread.h"
 #include "base/version.h"
 #include "base/vlog.h"
 #include "protocol/config.pb.h"
@@ -180,7 +181,7 @@ class ConfigHandlerImpl final {
   std::string filename_ ABSL_GUARDED_BY(mutex_);
   std::atomic<uint64_t> config_hash_ = 0;   // hash of final config.
   std::atomic<uint64_t> content_hash_ = 0;  // hash w/o metadata.
-  std::shared_ptr<Config> config_;
+  AtomicSharedPtr<Config> config_;
   std::shared_ptr<const Config> default_config_;
   mutable absl::Mutex mutex_;
 };
@@ -191,7 +192,7 @@ ConfigHandlerImpl *GetConfigHandlerImpl() {
 
 std::shared_ptr<const Config> ConfigHandlerImpl::GetSharedConfig() const {
   // TODO(all): use std::atomic<std::shared_ptr<T>> once it is fully supported.
-  return std::atomic_load(&config_);
+  return config_.load();
 }
 
 std::shared_ptr<const Config> ConfigHandlerImpl::GetSharedDefaultConfig()
@@ -201,7 +202,7 @@ std::shared_ptr<const Config> ConfigHandlerImpl::GetSharedDefaultConfig()
 
 // update internal data
 void ConfigHandlerImpl::SetConfigInternal(std::shared_ptr<Config> config) {
-  std::atomic_store(&config_, std::move(config));
+  config_.store(std::move(config));
 }
 
 void ConfigHandlerImpl::SetConfig(Config config) {

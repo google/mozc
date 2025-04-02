@@ -1255,7 +1255,7 @@ std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
     return nullptr;
   }
 
-  auto prev_top_result = std::atomic_load(&prev_top_result_);
+  std::shared_ptr<Result> prev_top_result = prev_top_result_.load();
 
   // Updates the key length.
   const int cur_top_key_length = segments.conversion_segment(0).key().size();
@@ -1279,8 +1279,7 @@ std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
   }
 
   // Remembers the top result.
-  std::atomic_store(&prev_top_result_,
-                    std::make_shared<Result>(current_top_result));
+  prev_top_result_.store(std::make_shared<Result>(current_top_result));
 
   return nullptr;
 }

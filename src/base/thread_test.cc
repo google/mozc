@@ -195,5 +195,20 @@ TEST(BackgroundFutureTest, AssigningToPendingFutureDoesNotCrash) {
   g = BackgroundFuture<void>([] {});
 }
 
+TEST(AtomicSharedPtrTest, BasicTest) {
+  AtomicSharedPtr<const int> f1(std::make_shared<const int>(10));
+  AtomicSharedPtr<const int> f2(std::make_shared<const int>(20));
+
+  auto x = f1.load();
+  EXPECT_EQ(*x, 10);
+  EXPECT_EQ(*f1.load(), 10);
+  EXPECT_EQ(*f2.load(), 20);
+
+  f1.store(f2.load());
+  EXPECT_EQ(*x, 10);  // x is not deleted.
+  EXPECT_EQ(*f1.load(), 20);
+  EXPECT_EQ(f1.load(), f2.load());
+}
+
 }  // namespace
 }  // namespace mozc

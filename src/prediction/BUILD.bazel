@@ -177,6 +177,7 @@ mozc_cc_library(
         ":predictor_interface",
         ":result",
         ":suggestion_filter",
+        "//base:thread",
         "//base:util",
         "//base:vlog",
         "//base/strings:assign",
