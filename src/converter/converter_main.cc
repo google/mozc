@@ -295,12 +295,14 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
   ConversionRequest::Options options = {
       .max_conversion_candidates_size =
           absl::GetFlag(FLAGS_max_conversion_candidates_size),
+      .use_actual_converter_for_realtime_conversion = true,
       .create_partial_candidates = request.auto_partial_suggestion(),
   };
 
   const std::string &func = fields[0];
   if (func == "startconversion" || func == "start" || func == "s") {
     options.request_type = ConversionRequest::CONVERSION;
+    options.create_partial_candidates = false;
     CHECK_FIELDS_LENGTH(2);
     composer.SetPreeditTextForTestOnly(fields[1]);
     const ConversionRequest conversion_request =
