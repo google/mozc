@@ -41,9 +41,10 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
+#include "base/thread.h"
 #include "composer/composition_input.h"
-#include "composer/transliterators.h"
 #include "composer/table.h"
+#include "composer/transliterators.h"
 
 namespace mozc {
 namespace composer {
@@ -236,7 +237,8 @@ class CharChunk final {
   std::string ambiguous_;
   Transliterators::Transliterator transliterator_;
   TableAttributes attributes_ = NO_TABLE_ATTRIBUTE;
-  mutable size_t local_length_cache_ = std::string::npos;
+  // for thread safety.
+  mutable CopyableAtomic<std::size_t> local_length_cache_{std::string::npos};
 };
 
 }  // namespace composer

@@ -210,5 +210,22 @@ TEST(AtomicSharedPtrTest, BasicTest) {
   EXPECT_EQ(f1.load(), f2.load());
 }
 
+TEST(CopyableAtomicTest, BasicTest) {
+  CopyableAtomic<int> f1(10);
+  CopyableAtomic<int> f2(20);
+
+  EXPECT_EQ(f1, 10);
+  EXPECT_EQ(f2, 20);
+
+  f2 = f1;  // copy
+  EXPECT_EQ(f2, 10);
+
+  f2 = 30;
+  EXPECT_EQ(f2, 30);
+
+  const CopyableAtomic<int> f3(f1);
+  EXPECT_EQ(f3, 10);
+}
+
 }  // namespace
 }  // namespace mozc

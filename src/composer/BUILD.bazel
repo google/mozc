@@ -252,6 +252,7 @@ mozc_cc_library(
         ":special_key",
         ":table",
         ":transliterators",
+        "//base:thread",
         "//base:util",
         "//base/strings:assign",
         "//base/strings:unicode",

@@ -30,6 +30,7 @@
 #ifndef MOZC_BASE_THREAD_H_
 #define MOZC_BASE_THREAD_H_
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -295,6 +296,27 @@ class AtomicSharedPtr {
  private:
   std::shared_ptr<T> ptr_ ABSL_GUARDED_BY(mutex_);
   mutable absl::Mutex mutex_;
+};
+
+// Wraps an atomic to make it copyable.
+template <class T>
+class CopyableAtomic : public std::atomic<T> {
+ public:
+  CopyableAtomic() = default;
+  explicit CopyableAtomic(T val) : std::atomic<T>(val) {}
+  CopyableAtomic(const CopyableAtomic<T> &other) {
+    std::atomic<T>::store(other.load(std::memory_order_relaxed),
+                          std::memory_order_relaxed);
+  }
+  CopyableAtomic &operator=(const CopyableAtomic<T> &other) {
+    std::atomic<T>::store(other.load(std::memory_order_relaxed),
+                          std::memory_order_relaxed);
+    return *this;
+  }
+  CopyableAtomic &operator=(T val) {
+    std::atomic<T>::store(val, std::memory_order_relaxed);
+    return *this;
+  }
 };
 
 }  // namespace mozc
