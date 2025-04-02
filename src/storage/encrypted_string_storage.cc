@@ -42,6 +42,7 @@
 #include "base/file_util.h"
 #include "base/mmap.h"
 #include "base/password_manager.h"
+#include "base/random.h"
 #include "base/vlog.h"
 
 #ifdef _WIN32
@@ -124,7 +125,7 @@ bool EncryptedStringStorage::Decrypt(const std::string &salt,
 
 bool EncryptedStringStorage::Save(const std::string &input) const {
   // Generate salt.
-  const std::string salt = random_.ByteString(kSaltSize);
+  const std::string salt = mozc::Random().ByteString(kSaltSize);
 
   std::string output(input);
   if (!Encrypt(salt, &output)) {
