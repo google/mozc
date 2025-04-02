@@ -33,6 +33,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "base/strings/zstring_view.h"
 
 #ifdef __APPLE__
 namespace mozc {
@@ -45,10 +46,10 @@ class MacProcess {
   static bool OpenApplication(absl::string_view path);
 
   // Open GoogleJapaneseInputTool.app as the specified tool name.
-  static bool LaunchMozcTool(const std::string &tool_name);
+  static bool LaunchMozcTool(zstring_view tool_name);
 
   // Open GoogleJapaneseInputTool.app as the error message dialog.
-  static bool LaunchErrorMessageDialog(const std::string &error_type);
+  static bool LaunchErrorMessageDialog(zstring_view error_type);
 };
 }  // namespace mozc
 #endif  // __APPLE__

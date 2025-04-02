@@ -48,6 +48,7 @@ mozc_objc_library(
         ":mac_util",
         "//base:const",
         "//base:util",
+        "//base/strings:zstring_view",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
     ],

@@ -33,8 +33,8 @@
 #define MOZC_IPC_IPC_TEST_UTIL_H_
 
 #include <memory>
-#include <string>
 
+#include "base/strings/zstring_view.h"
 #include "ipc/ipc.h"
 
 namespace mozc {
@@ -65,10 +65,9 @@ class IPCClientFactoryOnMemory : public IPCClientFactoryInterface {
       delete;
 
   std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &name, const std::string &path_name) override;
+      zstring_view name, zstring_view path_name) override;
 
-  std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &name) override;
+  std::unique_ptr<IPCClientInterface> NewClient(zstring_view name) override;
 
 #ifdef __APPLE__
   // Returns MachPortManager to share the mach port between client and server.

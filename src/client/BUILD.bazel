@@ -51,6 +51,7 @@ mozc_cc_library(
         "//win32:__subpackages__",
     ],
     deps = [
+        "//base/strings:zstring_view",
         "//ipc",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
@@ -92,6 +93,7 @@ mozc_cc_library(
         "//base:version",
         "//base:vlog",
         "//base/strings:assign",
+        "//base/strings:zstring_view",
         "//composer:key_event_util",
         "//config:config_handler",
         "//ipc",
@@ -130,6 +132,7 @@ mozc_cc_test(
         "//base:number_util",
         "//base:version",
         "//base/strings:assign",
+        "//base/strings:zstring_view",
         "//composer:key_parser",
         "//config:config_handler",
         "//ipc",

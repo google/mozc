@@ -44,6 +44,7 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/zstring_view.h"
 #include "base/version.h"
 #include "client/client.h"
 #include "client/client_interface.h"
@@ -142,10 +143,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
 
   void set_server_program(const absl::string_view server_path) override {}
 
-  const std::string &server_program() const override {
-    static const std::string path;
-    return path;
-  }
+  zstring_view server_program() const override { return ""; }
 
   void set_start_server_result(const bool result) {
     start_server_result_ = result;

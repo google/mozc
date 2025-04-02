@@ -43,6 +43,7 @@
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
+#include "base/strings/zstring_view.h"
 #include "base/version.h"
 #include "client/client_interface.h"
 #include "composer/key_parser.h"
@@ -129,7 +130,7 @@ class TestServerLauncher : public ServerLauncherInterface {
 
   void set_server_program(const absl::string_view server_path) override {}
 
-  const std::string &server_program() const override {
+  zstring_view server_program() const override {
     return placeholder_server_program_path_;
   }
 
@@ -935,10 +936,7 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
     start_server_result_ = result;
   }
 
-  const std::string &server_program() const override {
-    static std::string *path = new std::string();
-    return *path;
-  }
+  zstring_view server_program() const override { return ""; }
 
  private:
   IPCClientFactoryMock *factory_;

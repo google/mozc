@@ -40,6 +40,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/time/time.h"
 #include "base/number_util.h"
+#include "base/strings/zstring_view.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
@@ -100,12 +101,11 @@ class TestIPCClientFactory : public IPCClientFactoryInterface {
       : client_params_(client_params) {}
 
   std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &name, const std::string &path_name) override {
+      zstring_view name, zstring_view path_name) override {
     return std::make_unique<TestIPCClient>(client_params_);
   }
 
-  std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &name) override {
+  std::unique_ptr<IPCClientInterface> NewClient(zstring_view name) override {
     return std::make_unique<TestIPCClient>(client_params_);
   }
 

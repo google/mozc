@@ -31,7 +31,8 @@
 #define MOZC_BASE_PROCESS_H_
 
 #include <cstddef>
-#include <string>
+
+#include "base/strings/zstring_view.h"
 
 namespace mozc {
 
@@ -43,7 +44,7 @@ class Process {
 
   // Opens the URL with the default browser.  If this function is not
   // supported on the OS or failed, false is returned.
-  static bool OpenBrowser(const std::string &url);
+  static bool OpenBrowser(zstring_view url);
 
   // Spawns a process specified by path using arg as options.
   // On Windows Vista the process is spawned as the same level as the parent
@@ -55,13 +56,13 @@ class Process {
   // On Mac OSX, if the path does not specify the binary itself but
   // specifies a directory ending with ".app", an application is
   // spawned in the OSX way.
-  static bool SpawnProcess(const std::string &path, const std::string &arg,
+  static bool SpawnProcess(zstring_view path, zstring_view arg,
                            size_t *pid = nullptr);
 
   // A SpawnProcess wrapper to run an executable which is installed in
   // the Mozc server directory.
-  static bool SpawnMozcProcess(const std::string &filename,
-                               const std::string &arg, size_t *pid = nullptr);
+  static bool SpawnMozcProcess(zstring_view filename, zstring_view arg,
+                               size_t *pid = nullptr);
 
   // Waits for process |pid| to terminate up to |timeout|.
   // If |timeout| is negative, waits forever.
@@ -89,7 +90,7 @@ class Process {
   static bool IsThreadAlive(size_t thread_id, bool default_result);
 
   // Launches an error message dialog.
-  static bool LaunchErrorMessageDialog(const std::string &type);
+  static bool LaunchErrorMessageDialog(zstring_view type);
 };
 
 }  // namespace mozc

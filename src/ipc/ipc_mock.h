@@ -35,6 +35,7 @@
 #include <string>
 
 #include "absl/time/time.h"
+#include "base/strings/zstring_view.h"
 #include "ipc/ipc.h"
 
 namespace mozc {
@@ -85,10 +86,10 @@ class IPCClientFactoryMock : public IPCClientFactoryInterface {
   IPCClientFactoryMock &operator=(const IPCClientFactoryMock &) = delete;
 
   std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &unused_name, const std::string &path_name) override;
+      zstring_view unused_name, zstring_view path_name) override;
 
   std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &unused_name) override;
+      zstring_view unused_name) override;
 
   // This function is for unit tests.
   const std::string &GetGeneratedRequest() const;

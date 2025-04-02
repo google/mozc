@@ -37,6 +37,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/singleton.h"
+#include "base/strings/zstring_view.h"
 #include "base/thread.h"
 #include "ipc/ipc_path_manager.h"
 
@@ -69,12 +70,12 @@ void IPCServer::Wait() {
 }
 
 std::unique_ptr<IPCClientInterface> IPCClientFactory::NewClient(
-    const std::string &name, const std::string &path_name) {
+    zstring_view name, zstring_view path_name) {
   return std::make_unique<IPCClient>(name, path_name);
 }
 
 std::unique_ptr<IPCClientInterface> IPCClientFactory::NewClient(
-    const std::string &name) {
+    zstring_view name) {
   return std::make_unique<IPCClient>(name);
 }
 

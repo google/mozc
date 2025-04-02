@@ -42,6 +42,7 @@
 #include "absl/time/time.h"
 #include "base/run_level.h"
 #include "base/strings/assign.h"
+#include "base/strings/zstring_view.h"
 #include "client/client_interface.h"
 #include "composer/key_event_util.h"
 #include "ipc/ipc.h"
@@ -75,7 +76,7 @@ class ServerLauncher : public ServerLauncherInterface {
   }
 
   // return server program
-  const std::string &server_program() const override { return server_program_; }
+  zstring_view server_program() const override { return server_program_; }
 
   void set_restricted(bool restricted) override { restricted_ = restricted; }
 

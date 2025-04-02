@@ -69,6 +69,7 @@ mozc_cc_library(
         "//base:thread",
         "//base:util",
         "//base:vlog",
+        "//base/strings:zstring_view",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
@@ -178,6 +179,7 @@ mozc_cc_library(
     deps = [
         ":ipc",
         "//base:version",
+        "//base/strings:zstring_view",
         "@com_google_absl//absl/time",
     ],
 )
@@ -189,6 +191,7 @@ mozc_cc_library(
     visibility = ["//renderer:__subpackages__"],
     deps = [
         ":ipc",
+        "//base/strings:zstring_view",
         "@com_google_absl//absl/log:check",
     ],
 )
@@ -310,6 +313,7 @@ mozc_cc_library(
     textual_hdrs = ["ipc.h"],
     deps = [
         "//base:thread",
+        "//base/strings:zstring_view",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",

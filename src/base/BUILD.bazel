@@ -622,6 +622,7 @@ mozc_cc_library(
         ":file_util",
         ":system_util",
         ":vlog",
+        "//base/strings:zstring_view",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",

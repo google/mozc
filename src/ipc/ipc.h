@@ -38,6 +38,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
+#include "base/strings/zstring_view.h"
 #include "base/thread.h"
 
 #ifdef __APPLE__
@@ -180,12 +181,11 @@ class IPCClientFactoryInterface {
  public:
   virtual ~IPCClientFactoryInterface() = default;
   virtual std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &name, const std::string &path_name) = 0;
+      zstring_view name, zstring_view path_name) = 0;
 
   // old interface for backward compatibility.
   // same as NewClient(name, "");
-  virtual std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &name) = 0;
+  virtual std::unique_ptr<IPCClientInterface> NewClient(zstring_view name) = 0;
 };
 
 // Creates IPCClient object.
@@ -193,12 +193,11 @@ class IPCClientFactory : public IPCClientFactoryInterface {
  public:
   // new interface
   std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &name, const std::string &path_name) override;
+      zstring_view name, zstring_view path_name) override;
 
   // old interface for backward compatibility.
   // same as NewClient(name, "");
-  std::unique_ptr<IPCClientInterface> NewClient(
-      const std::string &name) override;
+  std::unique_ptr<IPCClientInterface> NewClient(zstring_view name) override;
 
   // Return a singleton instance.
   static IPCClientFactory *GetIPCClientFactory();

@@ -38,6 +38,7 @@
 #include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/mac/mac_util.h"
+#include "base/strings/zstring_view.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -78,7 +79,7 @@ bool MacProcess::OpenApplication(const absl::string_view path) {
 }
 
 namespace {
-bool LaunchMozcToolInternal(const std::string &tool_name, const std::string &error_type) {
+bool LaunchMozcToolInternal(zstring_view tool_name, zstring_view error_type) {
   // FLAGS_error_type is used where FLAGS_mode is "error_message_dialog".
   setenv("FLAGS_error_type", error_type.c_str(), 1);
 
@@ -117,11 +118,11 @@ bool LaunchMozcToolInternal(const std::string &tool_name, const std::string &err
 }
 }  // namespace
 
-bool MacProcess::LaunchMozcTool(const std::string &tool_name) {
+bool MacProcess::LaunchMozcTool(zstring_view tool_name) {
   return LaunchMozcToolInternal(tool_name, "");
 }
 
-bool MacProcess::LaunchErrorMessageDialog(const std::string &error_type) {
+bool MacProcess::LaunchErrorMessageDialog(zstring_view error_type) {
   return LaunchMozcToolInternal("error_message_dialog", error_type);
 }
 

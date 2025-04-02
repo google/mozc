@@ -92,6 +92,7 @@ mozc_cc_test(
         ":renderer_client",
         "//base:number_util",
         "//base:version",
+        "//base/strings:zstring_view",
         "//ipc",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
