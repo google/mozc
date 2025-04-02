@@ -39,6 +39,7 @@
 #include "absl/container/btree_set.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "base/thread.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/dictionary_file.h"
@@ -195,7 +196,7 @@ class SystemDictionary : public DictionaryInterface {
   const SystemDictionaryCodecInterface *codec_;
   KeyExpansionTable hiragana_expansion_table_;
   std::unique_ptr<DictionaryFile> dictionary_file_;
-  mutable std::unique_ptr<ReverseLookupCache> reverse_lookup_cache_;
+  mutable AtomicSharedPtr<ReverseLookupCache> reverse_lookup_cache_;
   std::unique_ptr<ReverseLookupIndex> reverse_lookup_index_;
 };
 

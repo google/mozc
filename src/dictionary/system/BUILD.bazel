@@ -113,6 +113,7 @@ mozc_cc_library(
         ":words_info",
         "//base:japanese_util",
         "//base:mmap",
+        "//base:thread",
         "//base:util",
         "//base/strings:unicode",
         "//dictionary:dictionary_interface",

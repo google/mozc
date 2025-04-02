@@ -57,6 +57,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -261,16 +262,13 @@ class SystemDictionary::ReverseLookupCache {
   ReverseLookupCache &operator=(const ReverseLookupCache &) = delete;
 
   bool IsAvailable(const absl::btree_set<int> &id_set) const {
-    for (absl::btree_set<int>::const_iterator itr = id_set.begin();
-         itr != id_set.end(); ++itr) {
-      if (results.find(*itr) == results.end()) {
-        return false;
-      }
-    }
-    return true;
+    // std::all_of(x.begin(), x.end(), .. ) returns true if x is empty
+    // regardless of the condition.
+    return std::all_of(id_set.begin(), id_set.end(),
+                       [&](const int id) { return results.contains(id); });
   }
 
-  std::multimap<int, ReverseLookupResult> results;
+  absl::btree_multimap<int, ReverseLookupResult> results;
 };
 
 class SystemDictionary::ReverseLookupIndex {
@@ -338,13 +336,13 @@ class SystemDictionary::ReverseLookupIndex {
 
   ~ReverseLookupIndex() = default;
 
-  void FillResultMap(const absl::btree_set<int> &id_set,
-                     std::multimap<int, ReverseLookupResult> *result_map) {
-    for (absl::btree_set<int>::const_iterator id_itr = id_set.begin();
-         id_itr != id_set.end(); ++id_itr) {
-      const ReverseLookupResultArray &result_array = index_[*id_itr];
+  void FillResultMap(
+      const absl::btree_set<int> &id_set,
+      absl::btree_multimap<int, ReverseLookupResult> *result_map) const {
+    for (const int id : id_set) {
+      const ReverseLookupResultArray &result_array = index_[id];
       for (size_t i = 0; i < result_array.size; ++i) {
-        result_map->insert(std::make_pair(*id_itr, result_array.results[i]));
+        result_map->emplace(id, result_array.results[i]);
       }
     }
   }
@@ -1015,8 +1013,8 @@ void SystemDictionary::PopulateReverseLookupCache(absl::string_view str) const {
     // as we have already built the index for reverse lookup.
     return;
   }
-  reverse_lookup_cache_ = std::make_unique<ReverseLookupCache>();
-  DCHECK(reverse_lookup_cache_.get());
+
+  auto reverse_lookup_cache = std::make_shared<ReverseLookupCache>();
 
   // Iterate each suffix and collect IDs of all substrings.
   absl::btree_set<int> id_set;
@@ -1031,11 +1029,13 @@ void SystemDictionary::PopulateReverseLookupCache(absl::string_view str) const {
     pos += strings::OneCharLen(suffix.data());
   }
   // Collect tokens for all IDs.
-  ScanTokens(id_set, reverse_lookup_cache_.get());
+  ScanTokens(id_set, reverse_lookup_cache.get());
+
+  reverse_lookup_cache_.store(std::move(reverse_lookup_cache));
 }
 
 void SystemDictionary::ClearReverseLookupCache() const {
-  reverse_lookup_cache_.reset();
+  reverse_lookup_cache_.store(nullptr);
 }
 
 namespace {
@@ -1087,14 +1087,15 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
   absl::btree_set<int> id_set;
   AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
 
-  ReverseLookupCache *results = nullptr;
+  const ReverseLookupCache *results = nullptr;
   ReverseLookupCache non_cached_results;
+  std::shared_ptr<ReverseLookupCache> cached_results;
   if (reverse_lookup_index_ != nullptr) {
     reverse_lookup_index_->FillResultMap(id_set, &non_cached_results.results);
     results = &non_cached_results;
-  } else if (reverse_lookup_cache_ != nullptr &&
-             reverse_lookup_cache_->IsAvailable(id_set)) {
-    results = reverse_lookup_cache_.get();
+  } else if (cached_results = reverse_lookup_cache_.load();
+             (cached_results && cached_results->IsAvailable(id_set))) {
+    results = cached_results.get();
   } else {
     // Cache is not available. Get token for each ID.
     ScanTokens(id_set, &non_cached_results);
@@ -1110,11 +1111,11 @@ void SystemDictionary::ScanTokens(const absl::btree_set<int> &id_set,
   for (TokenScanIterator iter(codec_, token_array_); !iter.Done();
        iter.Next()) {
     const TokenScanIterator::Result &result = iter.Get();
-    if (result.value_id != -1 && id_set.find(result.value_id) != id_set.end()) {
+    if (result.value_id != -1 && id_set.contains(result.value_id)) {
       ReverseLookupResult lookup_result;
       lookup_result.tokens_offset = result.tokens_offset;
       lookup_result.id_in_key_trie = result.index;
-      cache->results.insert(std::make_pair(result.value_id, lookup_result));
+      cache->results.emplace(result.value_id, lookup_result);
     }
   }
 }
@@ -1124,12 +1125,9 @@ void SystemDictionary::RegisterReverseLookupResults(
     Callback *callback) const {
   const uint8_t *encoded_tokens_ptr = GetTokenArrayPtr(token_array_, 0);
   char buffer[LoudsTrie::kMaxDepth + 1];
-  for (absl::btree_set<int>::const_iterator set_itr = id_set.begin();
-       set_itr != id_set.end(); ++set_itr) {
-    const int value_id = *set_itr;
-    typedef std::multimap<int, ReverseLookupResult>::const_iterator ResultItr;
-    std::pair<ResultItr, ResultItr> range = cache.results.equal_range(*set_itr);
-    for (ResultItr result_itr = range.first; result_itr != range.second;
+  for (const int value_id : id_set) {
+    const auto range = cache.results.equal_range(value_id);
+    for (auto result_itr = range.first; result_itr != range.second;
          ++result_itr) {
       const ReverseLookupResult &reverse_result = result_itr->second;
 
