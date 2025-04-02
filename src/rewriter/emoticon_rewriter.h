@@ -59,7 +59,6 @@ class EmoticonRewriter : public RewriterInterface {
   bool RewriteCandidate(Segments *segments) const;
 
   SerializedDictionary dic_;
-  mutable absl::BitGen bitgen_;
 };
 
 }  // namespace mozc

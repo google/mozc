@@ -110,8 +110,9 @@ bool DiceRewriter::Rewrite(const ConversionRequest &request,
 
   // Get a random number whose range is [1, kDiceFaces]
   // Insert the number at |insert_pos|
+  absl::BitGen bitgen;
   return InsertCandidate(
-      absl::Uniform(absl::IntervalClosed, bitgen_, 1, kDiceFaces), insert_pos,
+      absl::Uniform(absl::IntervalClosed, bitgen, 1, kDiceFaces), insert_pos,
       segments->mutable_conversion_segment(0));
 }
 

@@ -45,9 +45,6 @@ class DiceRewriter : public RewriterInterface {
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
-
- private:
-  mutable absl::BitGen bitgen_;
 };
 
 }  // namespace mozc

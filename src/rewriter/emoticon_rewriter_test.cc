@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <set>
 #include <string>
 
 #include "absl/log/check.h"
@@ -134,6 +135,26 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
     emoticon_rewriter->Rewrite(request, &segments);
     EXPECT_FALSE(HasEmoticon(segments));
   }
+}
+
+TEST_F(EmoticonRewriterTest, RandomTest) {
+  std::unique_ptr<EmoticonRewriter> emoticon_rewriter =
+      EmoticonRewriter::CreateFromDataManager(mock_data_manager_);
+
+  config::Config config = config::ConfigHandler::DefaultConfig();
+  config.set_use_emoticon_conversion(true);
+  const ConversionRequest request =
+      ConversionRequestBuilder().SetConfig(config).Build();
+
+  std::set<std::string> variants;
+  for (int i = 0; i < 100; ++i) {
+    Segments segments;
+    AddSegment("ふくわらい", "test", &segments);
+    emoticon_rewriter->Rewrite(request, &segments);
+    EXPECT_TRUE(HasEmoticon(segments));
+    variants.emplace(segments.segment(0).candidate(1).value);
+  }
+  EXPECT_GT(variants.size(), 1);
 }
 
 TEST_F(EmoticonRewriterTest, MobileEnvironmentTest) {
