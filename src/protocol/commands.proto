@@ -1283,7 +1283,7 @@ message DeletionRange {
 message Output {
   optional uint64 id = 1 [jstype = JS_STRING];
 
-  // This variable is going to be obsolete.
+  // This variable is going to be obsolete. Please use status(13) instead.
   optional CompositionMode mode = 2;
 
   optional bool consumed = 3;
