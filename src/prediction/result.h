@@ -211,7 +211,7 @@ struct ResultCostLess {
 // TODO(taku): rename `query` as it is not a query.
 void PopulateTypeCorrectedQuery(
     const composer::TypeCorrectedQuery &typing_corrected_result,
-    absl::Nonnull<Result *> result);
+    Result *absl_nonnull result);
 
 #ifndef NDEBUG
 #define MOZC_WORD_LOG_MESSAGE(message) \

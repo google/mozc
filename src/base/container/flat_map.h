@@ -61,7 +61,7 @@ class FlatMap {
   }
 
   // Finds the value associated with the given key, or `nullptr` if not found.
-  constexpr absl::Nullable<const V *> FindOrNull(const K &key) const {
+  constexpr const V *absl_nullable FindOrNull(const K &key) const {
     auto span = absl::MakeSpan(entries_);
     auto lb = internal::FindFirst(
         span, [&](const Entry<K, V> &e) { return !cmp_key_(e.key, key); });

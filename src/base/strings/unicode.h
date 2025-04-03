@@ -125,8 +125,7 @@ std::string Utf32ToUtf8(std::u32string_view sv);
 
 // Appends a single Unicode character represented by a char32_t code point to
 // dest.
-inline void StrAppendChar32(absl::Nonnull<std::string*> dest,
-                            const char32_t cp) {
+inline void StrAppendChar32(std::string* absl_nonnull dest, const char32_t cp) {
   const utf8_internal::EncodeResult ec = utf8_internal::Encode(cp);
   // basic_string::append() is faster than absl::StrAppend() here.
   dest->append(ec.data(), ec.size());
