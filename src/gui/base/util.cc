@@ -29,7 +29,10 @@
 
 #include "gui/base/util.h"
 
+#include "absl/base/no_destructor.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 
 // Show the build number on the title for debugging when the build
 // configuration is official dev channel.
@@ -44,7 +47,6 @@
 #include <QObject>
 #include <QStyleFactory>
 #include <QtGui>
-#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -60,7 +62,7 @@ namespace {
 void InstallEventFilter() {
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
   static WindowTitleModifier window_title_modifier;
-  // Install WindowTilteModifier for official dev channel
+  // Install WindowTitleModifier for official dev channel
   // append a special footer (Dev x.x.x) to the all Windows.
   qApp->installEventFilter(&window_title_modifier);
 #endif  // MOZC_SHOW_BUILD_NUMBER_ON_TITLE
@@ -69,7 +71,7 @@ void InstallEventFilter() {
 void InstallDefaultTranslator() {
   // qApplication must be loaded first
   CHECK(qApp);
-  static QTranslator *translator = new QTranslator;
+  static absl::NoDestructor<QTranslator> translator;
 
   // Load "<translation_path>/qt_<lang>.qm" from a qrc file.
   bool loaded = translator->load(
@@ -77,7 +79,7 @@ void InstallDefaultTranslator() {
       QLibraryInfo::location(QLibraryInfo::TranslationsPath),
       QLatin1String(".qm"));
   if (loaded) {
-    qApp->installTranslator(translator);
+    qApp->installTranslator(translator.get());
   } else {
     // Load ":/qt_<lang>.qm" from a qrc file.
     GuiUtil::InstallTranslator("qt");
@@ -108,25 +110,27 @@ std::unique_ptr<QApplication> GuiUtil::InitQt(int &argc, char *argv[]) {
 }
 
 // static
-void GuiUtil::InstallTranslator(const char *resource_name) {
-  static std::map<std::string, std::unique_ptr<QTranslator>> *translators =
-      new std::map<std::string, std::unique_ptr<QTranslator>>();
-  if (translators->find(resource_name) != translators->end()) {
+void GuiUtil::InstallTranslator(absl::string_view resource_name) {
+  static absl::NoDestructor<
+      absl::flat_hash_map<std::string, std::unique_ptr<QTranslator>>>
+      translators;
+  if (translators->contains(resource_name)) {
     return;
   }
-  std::unique_ptr<QTranslator> translator(new QTranslator);
+  std::unique_ptr<QTranslator> translator;
 
   // Load ":/<resource_name>_<lang>.qm" from a qrc file.
-  if (translator->load(QLocale::system(), QLatin1String(resource_name),
-                       QLatin1String("_"), QLatin1String(":/"),
-                       QLatin1String(".qm"))) {
+  if (translator->load(
+          QLocale::system(),
+          QLatin1String(resource_name.data(), resource_name.size()),
+          QLatin1String("_"), QLatin1String(":/"), QLatin1String(".qm"))) {
     qApp->installTranslator(translator.get());
     translators->emplace(resource_name, std::move(translator));
   }
 }
 
 // static
-const QString GuiUtil::ProductName() {
+QString GuiUtil::ProductName() {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   const QString name = QObject::tr("Google Japanese Input");
 #else   // GOOGLE_JAPANESE_INPUT_BUILD

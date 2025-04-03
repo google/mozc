@@ -35,22 +35,24 @@
 #include <QString>
 #include <memory>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 namespace gui {
 
 class GuiUtil {
  public:
-  // Initializes the common Qt cofiguration such as High DPI, font, and theme.
+  // Initializes the common Qt configuration such as High DPI, font, and theme.
   // The type of argc is a reference.
   static std::unique_ptr<QApplication> InitQt(int &argc, char *argv[]);
 
   // Installs the translation message.
   // Resource name is the prefix of Qt resource.
   // For instance, |resource_name| == "foo", foo_ja.qm or foo_en.qm is loaded.
-  static void InstallTranslator(const char *resource_name);
+  static void InstallTranslator(absl::string_view resource_name);
 
   // Returns the product name.
-  static const QString ProductName();
+  static QString ProductName();
 
   // Replace placeholders in all labels under the widget.
   static void ReplaceWidgetLabels(QWidget *widget);
