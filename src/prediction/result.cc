@@ -142,7 +142,7 @@ void Result::SetSourceInfoForZeroQuery(ZeroQueryType type) {
 
 void PopulateTypeCorrectedQuery(
     const composer::TypeCorrectedQuery &typing_corrected_result,
-    Result *absl_nonnull result) {
+    absl::Nonnull<Result *> result) {
   if (typing_corrected_result.type & composer::TypeCorrectedQuery::CORRECTION) {
     result->types |= TYPING_CORRECTION;
   }
