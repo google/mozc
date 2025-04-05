@@ -145,6 +145,7 @@ mozc_cc_qt_library(
 
 build_test(
     name = "qt_build_test",
+    target_compatible_with = ["@platforms//os:linux"],
     targets = [
         ":qt_ipc_server",
         ":qt_ipc_thread",
