@@ -31,6 +31,7 @@ build:release_build --copt=-DABSL_MIN_LOG_LEVEL=100
 build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
 build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_x86_windows-clang-cl
 build:windows_env --host_platform=//:host-windows-clang-cl
+build:windows_env --copt "/D_WIN32_WINNT=0x0A00" --host_copt "/D_WIN32_WINNT=0x0A00"
 
 ## Compiler options
 common:linux_env   --config=compiler_gcc_like

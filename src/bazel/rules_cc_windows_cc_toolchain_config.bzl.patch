@@ -9,7 +9,15 @@
  
  def _impl(ctx):
      if _use_msvc_toolchain(ctx):
-@@ -763,7 +763,7 @@ def _impl(ctx):
+@@ -753,7 +753,6 @@ def _impl(ctx):
+                             flags = [
+                                 "/DCOMPILER_MSVC",
+                                 "/DNOMINMAX",
+-                                "/D_WIN32_WINNT=0x0601",
+                                 "/D_CRT_SECURE_NO_DEPRECATE",
+                                 "/D_CRT_SECURE_NO_WARNINGS",
+                                 "/bigobj",
+@@ -763,7 +762,7 @@ def _impl(ctx):
                                  "/wd4291",
                                  "/wd4250",
                                  "/wd4996",
