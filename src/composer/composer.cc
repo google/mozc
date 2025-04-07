@@ -35,13 +35,11 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
 #include "absl/base/no_destructor.h"
 #include "absl/container/btree_set.h"
-#include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -58,10 +56,10 @@
 #include "base/vlog.h"
 #include "composer/composition.h"
 #include "composer/composition_input.h"
-#include "composer/mode_switching_handler.h"
-#include "composer/transliterators.h"
 #include "composer/key_event_util.h"
+#include "composer/mode_switching_handler.h"
 #include "composer/table.h"
+#include "composer/transliterators.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
@@ -610,12 +608,10 @@ Composer::Composer(std::shared_ptr<const Table> table,
 }
 
 const ComposerData &Composer::EmptyComposerData() {
-  static const absl::NoDestructor<Composition> kComposition(
-      Table::GetSharedDefaultTable());
-  // Cannot use NoDestructor as it doesn't' accept > 6 params.
-  static const ComposerData *kComposerData =
-      new ComposerData(*kComposition, 0, transliteration::HIRAGANA,
-                       commands::Context::NORMAL, "", {});
+  static const absl::NoDestructor<ComposerData> kComposerData(
+      Composition(Table::GetSharedDefaultTable()), 0, transliteration::HIRAGANA,
+      commands::Context::NORMAL, "",
+      std::vector<commands::SessionCommand::CompositionEvent>());
   return *kComposerData;
 }
 
