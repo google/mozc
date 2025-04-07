@@ -221,7 +221,11 @@ def remove_directory(path: os.PathLike[str]):
   Args:
     path: the directory path to be deleted.
   """
-  shutil.rmtree(path, onexc=_remove_readonly)
+  # 'onexc' is added in Python 3.12.
+  if 'onexc' in shutil.rmtree.__code__.co_varnames:
+    shutil.rmtree(path, onexc=_remove_readonly)
+  else:
+    shutil.rmtree(path, onerror=_remove_readonly)
 
 
 def llvm_extract_filter(
