@@ -37,6 +37,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/no_destructor.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -381,7 +382,7 @@ const CandidateWord &SessionHandlerInterpreter::GetCandidateByValue(
     }
   }
 
-  static CandidateWord *fallback_candidate = new CandidateWord;
+  static absl::NoDestructor<CandidateWord> fallback_candidate;
   return *fallback_candidate;
 }
 
