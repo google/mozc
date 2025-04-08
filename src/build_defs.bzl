@@ -625,7 +625,7 @@ def mozc_objc_library(
         deps = deps + [
             "//:macro",
         ],
-        copts = copts + ["-funsigned-char", "-std=c++17"],
+        copts = copts + ["-funsigned-char", "-std=c++20"],
         target_compatible_with = select({
             "@platforms//os:macos": [],
             "@platforms//os:ios": [],
