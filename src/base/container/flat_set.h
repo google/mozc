@@ -80,7 +80,7 @@ class FlatSet {
 template <class T, class Compare = std::less<>, size_t N>
 constexpr auto CreateFlatSet(T (&&elements)[N],
                              const Compare &cmp = Compare()) {
-  return FlatSet<T, Compare, N>(internal::ToArray(std::move(elements)), cmp);
+  return FlatSet<T, Compare, N>(std::to_array(std::move(elements)), cmp);
 }
 
 }  // namespace mozc

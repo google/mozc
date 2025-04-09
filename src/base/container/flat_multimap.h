@@ -38,7 +38,6 @@
 #include <utility>
 
 #include "absl/types/span.h"
-#include "base/container/entry.h"
 #include "base/container/flat_internal.h"
 
 namespace mozc {
@@ -49,38 +48,35 @@ class FlatMultimap {
  public:
   // Consider calling `CreateFlatMultimap` instead, so you don't have to
   // manually specify the number of entries, `N`.
-  constexpr FlatMultimap(std::array<Entry<K, V>, N> entries,
+  constexpr FlatMultimap(std::array<std::pair<K, V>, N> entries,
                          const CompareKey &cmp_key = {})
       : entries_(std::move(entries)), cmp_key_(cmp_key) {
-    internal::Sort(absl::MakeSpan(entries_),
-                   [&](const Entry<K, V> &a, const Entry<K, V> &b) {
-                     return cmp_key_(a.key, b.key);
-                   });
+    std::sort(entries_.begin(), entries_.end(),
+              [&](const std::pair<K, V> &a, const std::pair<K, V> &b) {
+                return cmp_key_(a.first, b.first);
+              });
   }
 
   // Returns a span of entries with the given key.
   //
   // IMPORTANT: The order of the returned span is not guaranteed to be the
   // same as the order of the entries given when the map was created.
-  //
-  // NOTE: The current implementation actually preserves the order, but this
-  // will change once we switch to `std::sort`, which is not stable (and
-  // `std::stable_sort` is not planned to receive constexpr support).
-  constexpr absl::Span<const Entry<K, V>> EqualSpan(const K &key) const {
+  constexpr absl::Span<const std::pair<K, V>> EqualSpan(const K &key) const {
     auto span = absl::MakeSpan(entries_);
-    auto lb = internal::FindFirst(
-        span, [&](const Entry<K, V> &e) { return !cmp_key_(e.key, key); });
+    auto lb = internal::FindFirst(span, [&](const std::pair<K, V> &e) {
+      return !cmp_key_(e.first, key);
+    });
     auto ub = internal::FindFirst(
-        span, [&](const Entry<K, V> &e) { return cmp_key_(key, e.key); });
+        span, [&](const std::pair<K, V> &e) { return cmp_key_(key, e.first); });
     return absl::MakeConstSpan(lb, ub);
   }
 
  private:
-  std::array<Entry<K, V>, N> entries_;
+  std::array<std::pair<K, V>, N> entries_;
   CompareKey cmp_key_;
 };
 
-// Creates a `FlatMultimap` from a C-style array of `Entry`s.
+// Creates a `FlatMultimap` from a C-style array of `std::pair`s.
 //
 // Example:
 //
@@ -95,10 +91,10 @@ class FlatMultimap {
 // Declare the variable as auto and use `CreateFlatMultimap`. The actual type is
 // complex and explicitly declaring it would leak the number of entries, `N`.
 template <class K, class V, class CompareKey = std::less<>, size_t N>
-constexpr auto CreateFlatMultimap(Entry<K, V> (&&entries)[N],
+constexpr auto CreateFlatMultimap(std::pair<K, V> (&&entries)[N],
                                   const CompareKey &cmp_key = CompareKey()) {
-  return FlatMultimap<K, V, CompareKey, N>(
-      internal::ToArray(std::move(entries)), cmp_key);
+  return FlatMultimap<K, V, CompareKey, N>(std::to_array(std::move(entries)),
+                                           cmp_key);
 }
 
 }  // namespace mozc

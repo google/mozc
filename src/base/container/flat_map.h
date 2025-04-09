@@ -39,7 +39,6 @@
 
 #include "absl/base/nullability.h"
 #include "absl/types/span.h"
-#include "base/container/entry.h"
 #include "base/container/flat_internal.h"
 
 namespace mozc {
@@ -50,30 +49,31 @@ class FlatMap {
  public:
   // Consider calling `CreateFlatMap` instead, so you don't have to manually
   // specify the number of entries, `N`.
-  constexpr FlatMap(std::array<Entry<K, V>, N> entries,
+  constexpr FlatMap(std::array<std::pair<K, V>, N> entries,
                     const CompareKey &cmp_key = {})
       : entries_(std::move(entries)), cmp_key_(cmp_key) {
     internal::SortAndVerifyUnique(
         absl::MakeSpan(entries_),
-        [&](const Entry<K, V> &a, const Entry<K, V> &b) {
-          return cmp_key_(a.key, b.key);
+        [&](const std::pair<K, V> &a, const std::pair<K, V> &b) {
+          return cmp_key_(a.first, b.first);
         });
   }
 
   // Finds the value associated with the given key, or `nullptr` if not found.
   constexpr absl::Nullable<const V *> FindOrNull(const K &key) const {
     auto span = absl::MakeSpan(entries_);
-    auto lb = internal::FindFirst(
-        span, [&](const Entry<K, V> &e) { return !cmp_key_(e.key, key); });
-    return lb == span.end() || cmp_key_(key, lb->key) ? nullptr : &lb->value;
+    auto lb = internal::FindFirst(span, [&](const std::pair<K, V> &e) {
+      return !cmp_key_(e.first, key);
+    });
+    return lb == span.end() || cmp_key_(key, lb->first) ? nullptr : &lb->second;
   }
 
  private:
-  std::array<Entry<K, V>, N> entries_;
+  std::array<std::pair<K, V>, N> entries_;
   CompareKey cmp_key_;
 };
 
-// Creates a `FlatMap` from a C-style array of `Entry`s.
+// Creates a `FlatMap` from a C-style array of `std::pair`s.
 //
 // Example:
 //
@@ -86,9 +86,9 @@ class FlatMap {
 // Declare the variable as auto and use `CreateFlatMap`. The actual type is
 // complex and explicitly declaring it would leak the number of entries, `N`.
 template <class K, class V, class CompareKey = std::less<>, size_t N>
-constexpr auto CreateFlatMap(Entry<K, V> (&&entries)[N],
+constexpr auto CreateFlatMap(std::pair<K, V> (&&entries)[N],
                              const CompareKey &cmp_key = CompareKey()) {
-  return FlatMap<K, V, CompareKey, N>(internal::ToArray(std::move(entries)),
+  return FlatMap<K, V, CompareKey, N>(std::to_array(std::move(entries)),
                                       cmp_key);
 }
 

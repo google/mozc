@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/container/btree_set.h"
@@ -41,7 +42,6 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/container/entry.h"
 #include "base/container/flat_map.h"
 #include "base/container/flat_multimap.h"
 #include "base/util.h"
@@ -206,7 +206,7 @@ bool KeyParser::ParseKeyVector(const absl::Span<const std::string> keys,
     std::string lower_key(key);
     Util::LowerString(&lower_key);
 
-    if (absl::Span<const Entry<absl::string_view, KeyEvent::ModifierKey>>
+    if (absl::Span<const std::pair<absl::string_view, KeyEvent::ModifierKey>>
             modifier_keys = kModifierKeyMap.EqualSpan(lower_key);
         !modifier_keys.empty()) {
       for (auto [_, modifier_key] : modifier_keys) {

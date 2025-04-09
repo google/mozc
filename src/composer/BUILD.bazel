@@ -215,7 +215,6 @@ mozc_cc_library(
     ],
     deps = [
         "//base:util",
-        "//base/container:entry",
         "//base/container:flat_map",
         "//base/container:flat_multimap",
         "//protocol:commands_cc_proto",

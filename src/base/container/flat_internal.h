@@ -33,48 +33,12 @@
 #include <stddef.h>
 
 #include <algorithm>
-#include <array>
 #include <functional>
-#include <type_traits>
-#include <utility>
 
 #include "absl/log/log.h"
 #include "absl/types/span.h"
 
 namespace mozc::internal {
-
-// Sorts the given span in place.
-// C++17 backport of constexpr `std::sort` from C++20.
-template <class T, class Compare = std::less<>>
-constexpr void Sort(absl::Span<T> span, const Compare &cmp = Compare()) {
-  // Since we're dealing with compile-time constants, expected to be small,
-  // we use insertion sort. It's faster for small inputs, and easier to
-  // implement :)
-  for (int i = 1; i < span.size(); ++i) {
-    if (!cmp(span[i], span[i - 1])) continue;
-
-    T tmp = std::move(span[i]);
-    int j = i;
-    do {
-      span[j] = std::move(span[j - 1]);
-      --j;
-    } while (j > 0 && cmp(tmp, span[j - 1]));
-    span[j] = std::move(tmp);
-  }
-}
-
-template <class T, size_t N, size_t... I>
-constexpr std::array<std::remove_cv_t<T>, N> ToArrayImpl(
-    T (&&a)[N], std::index_sequence<I...>) {
-  return {std::move(a[I])...};
-}
-
-// Converts a C-style array to a `std::array`.
-// C++17 backport of `std::to_array` from C++20.
-template <class T, size_t N>
-constexpr std::array<std::remove_cv_t<T>, N> ToArray(T (&&a)[N]) {
-  return ToArrayImpl(std::move(a), std::make_index_sequence<N>());
-}
 
 // Finds the first element satisfying the given predicate, or `span.end()` if
 // none exists.
@@ -115,7 +79,7 @@ inline void DuplicateEntryFound() { LOG(FATAL) << "Duplicate entry found"; }
 template <class T, class Compare = std::less<>>
 constexpr void SortAndVerifyUnique(absl::Span<T> span,
                                    const Compare &cmp = Compare()) {
-  Sort(span, cmp);
+  std::sort(span.begin(), span.end(), cmp);
   for (int i = 0; i + i < span.size(); ++i) {
     if (!cmp(span[i], span[i + 1]) && !cmp(span[i + 1], span[i])) {
       DuplicateEntryFound();

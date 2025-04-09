@@ -39,8 +39,8 @@ namespace mozc {
 namespace {
 
 using ::testing::Eq;
-using ::testing::FieldsAre;
 using ::testing::IsEmpty;
+using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
 
 TEST(FlatMultimapTest, EqualSpan) {
@@ -54,17 +54,17 @@ TEST(FlatMultimapTest, EqualSpan) {
   });
 
   EXPECT_THAT(kMultimap.EqualSpan(0), IsEmpty());
-  EXPECT_THAT(kMultimap.EqualSpan(1),
-              UnorderedElementsAre(FieldsAre(Eq(1), Eq("one")),
-                                   FieldsAre(Eq(1), Eq("ichi"))));
+  EXPECT_THAT(
+      kMultimap.EqualSpan(1),
+      UnorderedElementsAre(Pair(Eq(1), Eq("one")), Pair(Eq(1), Eq("ichi"))));
   EXPECT_THAT(kMultimap.EqualSpan(2), IsEmpty());
-  EXPECT_THAT(kMultimap.EqualSpan(3),
-              UnorderedElementsAre(FieldsAre(Eq(3), Eq("three")),
-                                   FieldsAre(Eq(3), Eq("san"))));
+  EXPECT_THAT(
+      kMultimap.EqualSpan(3),
+      UnorderedElementsAre(Pair(Eq(3), Eq("three")), Pair(Eq(3), Eq("san"))));
   EXPECT_THAT(kMultimap.EqualSpan(4), IsEmpty());
-  EXPECT_THAT(kMultimap.EqualSpan(5),
-              UnorderedElementsAre(FieldsAre(Eq(5), Eq("five")),
-                                   FieldsAre(Eq(5), Eq("go"))));
+  EXPECT_THAT(
+      kMultimap.EqualSpan(5),
+      UnorderedElementsAre(Pair(Eq(5), Eq("five")), Pair(Eq(5), Eq("go"))));
   EXPECT_THAT(kMultimap.EqualSpan(6), IsEmpty());
 }
 
@@ -80,17 +80,17 @@ TEST(FlatMultimapTest, CustomerCompare) {
       });
 
   EXPECT_THAT(kMultimap.EqualSpan(0), IsEmpty());
-  EXPECT_THAT(kMultimap.EqualSpan(1),
-              UnorderedElementsAre(FieldsAre(Eq(1), Eq("one")),
-                                   FieldsAre(Eq(1), Eq("ichi"))));
+  EXPECT_THAT(
+      kMultimap.EqualSpan(1),
+      UnorderedElementsAre(Pair(Eq(1), Eq("one")), Pair(Eq(1), Eq("ichi"))));
   EXPECT_THAT(kMultimap.EqualSpan(2), IsEmpty());
-  EXPECT_THAT(kMultimap.EqualSpan(3),
-              UnorderedElementsAre(FieldsAre(Eq(3), Eq("three")),
-                                   FieldsAre(Eq(3), Eq("san"))));
+  EXPECT_THAT(
+      kMultimap.EqualSpan(3),
+      UnorderedElementsAre(Pair(Eq(3), Eq("three")), Pair(Eq(3), Eq("san"))));
   EXPECT_THAT(kMultimap.EqualSpan(4), IsEmpty());
-  EXPECT_THAT(kMultimap.EqualSpan(5),
-              UnorderedElementsAre(FieldsAre(Eq(5), Eq("five")),
-                                   FieldsAre(Eq(5), Eq("go"))));
+  EXPECT_THAT(
+      kMultimap.EqualSpan(5),
+      UnorderedElementsAre(Pair(Eq(5), Eq("five")), Pair(Eq(5), Eq("go"))));
   EXPECT_THAT(kMultimap.EqualSpan(6), IsEmpty());
 }
 
