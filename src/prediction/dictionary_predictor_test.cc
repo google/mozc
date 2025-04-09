@@ -1964,5 +1964,64 @@ TEST_F(DictionaryPredictorTest, MaybeGetPreviousTopResultTest) {
   }
 }
 
+TEST_F(DictionaryPredictorTest, FilterNwpSuffixCandidates) {
+  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  const Connector &connector = data_and_predictor->connector();
+  request_test_util::FillMobileRequest(request_.get());
+  constexpr int kThreshold = 1000;
+  request_->mutable_decoder_experiment_params()
+      ->set_suffix_nwp_transition_cost_threshold(kThreshold);
+
+  {
+    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+
+    std::vector<Result> results;
+    {
+      Result result;
+      strings::Assign(result.key, "てすと");
+      strings::Assign(result.value, "テスト");
+      result.types = prediction::SUFFIX;
+      result.cost = 1000;
+      result.lid = data_and_predictor->pos_matcher().GetGeneralNounId();
+      result.rid = data_and_predictor->pos_matcher().GetGeneralNounId();
+      results.push_back(result);
+    }
+
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(results));
+  }
+
+  const ConversionRequest convreq = CreateConversionRequestWithOptions({
+      .request_type = ConversionRequest::PREDICTION,
+      .max_dictionary_prediction_candidates_size = 100,
+  });
+
+  const std::vector<int> test_ids = {
+      data_and_predictor->pos_matcher().GetGeneralNounId(),
+      data_and_predictor->pos_matcher().GetGeneralSymbolId(),
+      data_and_predictor->pos_matcher().GetFunctionalId(),
+      data_and_predictor->pos_matcher().GetAdverbId(),
+      data_and_predictor->pos_matcher().GetCounterSuffixWordId(),
+  };
+
+  for (int id : test_ids) {
+    Segments segments;
+    InitSegmentsWithKey("", &segments);
+    PrependHistorySegments("こみっと", "コミット", &segments);
+    segments.mutable_segment(0)->mutable_candidate(0)->rid = id;
+    if (connector.GetTransitionCost(
+            id, data_and_predictor->pos_matcher().GetGeneralNounId()) >
+        kThreshold) {
+      EXPECT_FALSE(predictor.PredictForRequest(convreq, &segments));
+    } else {
+      EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
+      EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 1);
+      EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "テスト");
+    }
+  }
+}
+
 }  // namespace
 }  // namespace mozc::prediction

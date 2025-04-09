@@ -546,7 +546,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 107
+// Next ID: 108
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -645,6 +645,12 @@ message DecoderExperimentParams {
     FILTER_ALL = 2;
   }
   optional int32 bigram_nwp_filtering_mode = 106 [default = 0];
+
+  // Threshold for suffix NWP transition cost.
+  // If the transition cost is greater than this value, the candidate will be
+  // filtered.
+  // The candidate will not be filtered if this value is zero.
+  optional int32 suffix_nwp_transition_cost_threshold = 107 [default = 0];
 }
 
 // Clients' request to the server.

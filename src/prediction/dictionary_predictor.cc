@@ -201,6 +201,20 @@ void MaybeFixRealtimeTopCost(absl::string_view input_key,
   }
 }
 
+// Returns rid of the last history candidate.
+// 0 (BOS) is returned if there's no history candidate.
+int GetHistoryRid(const Segments &segments) {
+  if (segments.history_segments_size() == 0) {
+    return 0;
+  }
+  const Segment &history_segment =
+      segments.history_segment(segments.history_segments_size() - 1);
+  if (history_segment.candidates_size() == 0) {
+    return 0;
+  }
+  return history_segment.candidate(0).rid;
+}
+
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor(
@@ -342,7 +356,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   const size_t max_candidates_size = std::min(
       request.max_dictionary_prediction_candidates_size(), results.size());
 
-  ResultFilter filter(request, *segments, pos_matcher_, suggestion_filter_);
+  ResultFilter filter(request, *segments, pos_matcher_, connector_,
+                      suggestion_filter_);
 
   // TODO(taku): Sets more advanced debug info depending on the verbose_level.
   absl::flat_hash_map<std::string, int32_t> merged_types;
@@ -496,17 +511,23 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
 
 DictionaryPredictor::ResultFilter::ResultFilter(
     const ConversionRequest &request, const Segments &segments,
-    dictionary::PosMatcher pos_matcher,
+    dictionary::PosMatcher pos_matcher, const Connector &connector,
     const SuggestionFilter &suggestion_filter)
     : input_key_(segments.conversion_segment(0).key()),
       input_key_len_(Util::CharsLen(input_key_)),
       pos_matcher_(pos_matcher),
+      connector_(connector),
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
       auto_partial_suggestion_(
           request_util::IsAutoPartialSuggestionEnabled(request)),
       include_exact_key_(IsMixedConversionEnabled(request.request())),
-      is_handwriting_(request_util::IsHandwriting(request)) {
+      is_handwriting_(request_util::IsHandwriting(request)),
+      suffix_nwp_transition_cost_threshold_(
+          request.request()
+              .decoder_experiment_params()
+              .suffix_nwp_transition_cost_threshold()),
+      history_rid_(GetHistoryRid(segments)) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);
   strings::Assign(history_value_, history.value);
@@ -583,6 +604,17 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
 
+  const size_t lookup_key_len = Util::CharsLen(
+      GetCandidateOriginalLookupKey(input_key_, result, history_key_));
+
+  if (suffix_nwp_transition_cost_threshold_ > 0 && lookup_key_len == 0 &&
+      result.types & PredictionType::SUFFIX &&
+      connector_.GetTransitionCost(history_rid_, result.lid) >
+          suffix_nwp_transition_cost_threshold_) {
+    *log_message = "Suffix NWP transition cost is too high";
+    return true;
+  }
+
   if ((result.types & PredictionType::SUFFIX) && suffix_count_++ >= 20) {
     // TODO(toshiyuki): Need refactoring for controlling suffix
     // prediction number after we will fix the appropriate number.
@@ -595,8 +627,6 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   }
 
   // Suppress long candidates to show more candidates in the candidate view.
-  const size_t lookup_key_len = Util::CharsLen(
-      GetCandidateOriginalLookupKey(input_key_, result, history_key_));
   const size_t candidate_key_len = Util::CharsLen(candidate.key);
   if (lookup_key_len > 0 &&  // Do not filter for zero query
       lookup_key_len < candidate_key_len &&
@@ -795,17 +825,10 @@ void DictionaryPredictor::SetPredictionCost(
     ConversionRequest::RequestType request_type, const Segments &segments,
     std::vector<Result> *results) const {
   DCHECK(results);
-  int rid = 0;  // 0 (BOS) is default
-  if (segments.history_segments_size() > 0) {
-    const Segment &history_segment =
-        segments.history_segment(segments.history_segments_size() - 1);
-    if (history_segment.candidates_size() > 0) {
-      rid = history_segment.candidate(0).rid;  // use history segment's id
-    }
-  }
 
   absl::string_view input_key = segments.conversion_segment(0).key();
   const KeyValueView history = GetHistoryKeyAndValue(segments);
+  const int history_rid = GetHistoryRid(segments);
   const std::string bigram_key = absl::StrCat(history.key, history.key);
   const bool is_suggestion = (request_type == ConversionRequest::SUGGESTION);
 
@@ -817,7 +840,7 @@ void DictionaryPredictor::SetPredictionCost(
 
   for (size_t i = 0; i < results->size(); ++i) {
     const Result &result = (*results)[i];
-    const int cost = GetLMCost(result, rid);
+    const int cost = GetLMCost(result, history_rid);
     const size_t query_len = (result.types & PredictionType::BIGRAM)
                                  ? bigram_key_len
                                  : unigram_key_len;
@@ -880,14 +903,13 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   DCHECK(results);
 
   // ranking for mobile
-  int rid = 0;        // 0 (BOS) is default
+  const int history_rid = GetHistoryRid(segments);  // 0 (BOS) is default
   int prev_cost = 0;  // cost of the last history candidate.
 
   if (segments.history_segments_size() > 0) {
     const Segment &history_segment =
         segments.history_segment(segments.history_segments_size() - 1);
     if (history_segment.candidates_size() > 0) {
-      rid = history_segment.candidate(0).rid;  // use history segment's id
       prev_cost = history_segment.candidate(0).cost;
       if (prev_cost == 0) {
         // if prev_cost is set to be 0 for some reason, use default cost.
@@ -899,12 +921,12 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
   absl::string_view input_key = segments.conversion_segment(0).key();
   const int single_kanji_offset = CalculateSingleKanjiCostOffset(
-      request, rid, input_key, *results, &prefix_penalty_cache);
+      request, history_rid, input_key, *results, &prefix_penalty_cache);
 
   const KeyValueView history = GetHistoryKeyAndValue(segments);
 
   for (Result &result : *results) {
-    int cost = GetLMCost(result, rid);
+    int cost = GetLMCost(result, history_rid);
     MOZC_WORD_LOG(result, absl::StrCat("GetLMCost: ", cost));
     if (result.lid == result.rid && !pos_matcher_.IsSuffixWord(result.rid) &&
         !pos_matcher_.IsFunctional(result.rid) &&
