@@ -21,7 +21,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
+          submodules: recursive
 
       - name: setup
         run: |
@@ -60,7 +60,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
+          submodules: recursive
 
       - name: Try to restore update_deps cache
         uses: actions/cache@v4

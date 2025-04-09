@@ -22,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'false'
+          submodules: false
 
       - name: Run
         working-directory: ./src
