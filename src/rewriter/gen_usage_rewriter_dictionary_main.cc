@@ -275,7 +275,8 @@ void Convert() {
   LoadUsage(absl::GetFlag(FLAGS_usage_data_file), &usage_entries,
             &conjugation_list);
   RemoveBaseformConjugationSuffix(baseform_map, &usage_entries);
-  std::sort(usage_entries.begin(), usage_entries.end(), UsageItemKeynameCmp);
+  std::stable_sort(
+      usage_entries.begin(), usage_entries.end(), UsageItemKeynameCmp);
 
   // Assign unique index to every string data.  The same string share the same
   // index, so the data is slightly compressed.
