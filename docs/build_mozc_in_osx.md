@@ -42,7 +42,7 @@ Check [Build with GitHub Actions](#build-with-github-actions) for details.
 Building on Mac requires the following software.
 
 * [Xcode](https://apps.apple.com/us/app/xcode/id497799835)
-  * Xcode 13 (macOS 13 SDK) or later
+  * Xcode 16.0 or later
   * ⚠️Xcode Command Line Tools aren't sufficient.
 * [Bazelisk](https://github.com/bazelbuild/bazelisk)
   * Bazelisk is a wrapper of [Bazel](https://bazel.build/) to use the specific version of Bazel.
