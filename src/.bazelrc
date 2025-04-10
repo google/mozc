@@ -61,6 +61,7 @@ build:macos_env --build_tag_filters=-nomac --objccopt "-fsigned-char"
 test:macos_env   --test_tag_filters=-nomac
 
 ## Windows specific options
+common:windows_env --enable_runfiles
 build:windows_env --build_tag_filters=-nowin
 test:windows_env   --test_tag_filters=-nowin
 
