@@ -82,7 +82,7 @@ class Dictionary():
     return False
 
   def WriteFile(self, output):
-    with open(output, 'w', encoding='utf-8') as file:
+    with open(output, 'w', encoding='utf-8', newline='\n') as file:
       for line in self.lines:
         file.write(line)
 
