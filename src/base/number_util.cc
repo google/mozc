@@ -31,12 +31,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <limits>
 #include <string>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -556,16 +556,8 @@ constexpr bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2,
   return true;
 }
 
-// Avoid implicit casts.
-template <
-    typename SrcType, typename DestType,
-    std::enable_if_t<!std::is_integral_v<SrcType>, std::nullptr_t> = nullptr>
-bool SafeCast(SrcType src, DestType *dest) = delete;
-
-template <typename SrcType, typename DestType,
-          std::enable_if_t<std::is_integral_v<SrcType> &&
-                               std::is_integral_v<DestType>,
-                           std::nullptr_t> = nullptr>
+template <typename SrcType, typename DestType>
+  requires(std::integral<SrcType> && std::integral<DestType>)
 constexpr bool SafeCast(SrcType src, DestType *dest) {
   if (std::numeric_limits<SrcType>::is_signed &&
       !std::numeric_limits<DestType>::is_signed && src < 0) {

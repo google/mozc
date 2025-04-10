@@ -30,9 +30,8 @@
 #ifndef MOZC_BASE_STRINGS_PFCHAR_H_
 #define MOZC_BASE_STRINGS_PFCHAR_H_
 
-#include <cstddef>
+#include <concepts>
 #include <string>
-#include <type_traits>
 #include <utility>
 
 #include "absl/strings/string_view.h"
@@ -71,9 +70,8 @@ inline pfstring to_pfstring(std::string &&str) {
 }
 
 // Zero overhead overload for cases where pfstring == std::string.
-template <
-    typename T = pfstring,
-    std::enable_if_t<std::is_same_v<T, std::string>, std::nullptr_t> = nullptr>
+template <typename T = pfstring>
+  requires(std::same_as<T, std::string>)
 inline const pfstring &to_pfstring(const std::string &str) {
   return static_cast<const T &>(str);
 }
@@ -99,9 +97,8 @@ inline std::string to_string(pfstring &&str) {
 }
 
 // Zero overhead overload for cases where pfstring == std::string.
-template <
-    typename T = pfstring,
-    std::enable_if_t<std::is_same_v<T, std::string>, std::nullptr_t> = nullptr>
+template <typename T = pfstring>
+  requires(std::same_as<T, std::string>)
 inline const std::string &to_string(const T &str) {
   return str;
 }

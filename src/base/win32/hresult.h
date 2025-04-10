@@ -32,11 +32,11 @@
 
 #include <windows.h>
 
+#include <concepts>
 #include <ostream>
 #include <string>
 #include <utility>
 
-#include "absl/base/attributes.h"
 #include "absl/base/optimization.h"
 
 namespace mozc::win32 {
@@ -92,9 +92,8 @@ class [[nodiscard]] HResult {
   //    // return hr;  // compile error
   //    return hr.Succeeded();
   // }
-  template <typename T,
-            std::enable_if_t<!std::is_same_v<T, HRESULT> && std::is_scalar_v<T>,
-                             std::nullptr_t> = nullptr>
+  template <typename T>
+    requires(!std::same_as<T, HRESULT> && std::convertible_to<T, bool>)
   operator T() = delete;
 
   // Returns the result of the SUCCEEDED macro.

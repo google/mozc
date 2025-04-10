@@ -128,23 +128,19 @@ class [[nodiscard]] HResultOr {
   //  3. HResultOk<U> is not directly constructible or convertible to T.
   //
   // This constructor is implicit if std::is_convertible_v<U> is true.
-  template <typename U,
-            std::enable_if_t<
-                !std::is_same_v<T, U> && std::is_constructible_v<T, const U&> &&
-                    !hresultor_internal::
-                        IsConstructibleOrConvertibleFromHResultOrV<T, U>,
-                std::nullptr_t> = nullptr>
+  template <typename U>
+    requires(
+        !std::same_as<T, U> && std::constructible_from<T, U> &&
+        !hresultor_internal::IsConstructibleOrConvertibleFromHResultOrV<T, U>)
   constexpr explicit(!std::is_convertible_v<const U&, T>)
       HResultOr(const HResultOr<U>& other) {
     Assign(other);
   }
 
-  template <
-      typename U,
-      std::enable_if_t<!std::is_same_v<T, U> && std::is_constructible_v<T, U> &&
-                           !hresultor_internal::
-                               IsConstructibleOrConvertibleFromHResultOrV<T, U>,
-                       std::nullptr_t> = nullptr>
+  template <typename U>
+    requires(
+        !std::same_as<T, U> && std::constructible_from<T, U> &&
+        !hresultor_internal::IsConstructibleOrConvertibleFromHResultOrV<T, U>)
   constexpr explicit(!std::is_convertible_v<U&&, T>)
       HResultOr(HResultOr<U>&& other) {
     Assign(std::move(other));
@@ -162,27 +158,23 @@ class [[nodiscard]] HResultOr {
   //  HResultOk<int64_t> foo;
   //  // ...
   //  foo = HResultOk(42);
-  template <typename U,
-            std::enable_if_t<
-                !std::is_same_v<T, U> && std::is_constructible_v<T, const U&> &&
-                    std::is_assignable_v<T&, const U&> &&
-                    !(hresultor_internal::
-                          IsConstructibleOrConvertibleFromHResultOrV<T, U> ||
-                      hresultor_internal::IsAssignableFromHResultOrV<T, U>),
-                std::nullptr_t> = nullptr>
+  template <typename U>
+    requires(!std::same_as<T, U> && std::constructible_from<T, const U&> &&
+             std::assignable_from<T&, const U&> &&
+             !(hresultor_internal::IsConstructibleOrConvertibleFromHResultOrV<
+                   T, U> ||
+               hresultor_internal::IsAssignableFromHResultOrV<T, U>))
   constexpr HResultOr& operator=(const HResultOr<U>& other) {
     Assign(other);
     return *this;
   }
 
-  template <typename U,
-            std::enable_if_t<
-                !std::is_same_v<T, U> && std::is_constructible_v<T, U> &&
-                    std::is_assignable_v<T&, U> &&
-                    !(hresultor_internal::
-                          IsConstructibleOrConvertibleFromHResultOrV<T, U> ||
-                      hresultor_internal::IsAssignableFromHResultOrV<T, U>),
-                std::nullptr_t> = nullptr>
+  template <typename U>
+    requires(!std::same_as<T, U> && std::constructible_from<T, U> &&
+             std::assignable_from<T&, U> &&
+             !(hresultor_internal::IsConstructibleOrConvertibleFromHResultOrV<
+                   T, U> ||
+               hresultor_internal::IsAssignableFromHResultOrV<T, U>))
   constexpr HResultOr& operator=(HResultOr<U>&& other) {
     Assign(std::move(other));
     return *this;
@@ -216,15 +208,12 @@ class [[nodiscard]] HResultOr {
   //   HResultOr<int> i(HResultOk(42));
   // instead of
   //   HResultOr<int> i(42);
-  template <typename U,
-            std::enable_if_t<
-                std::is_constructible_v<T, U> &&
-                    !std::is_same_v<std::remove_cvref_t<U>, std::in_place_t> &&
-                    !std::is_same_v<std::remove_cvref_t<U>, HResultOr> &&
-                    !std::is_same_v<std::remove_cvref_t<U>, HResult> &&
-                    !std::is_convertible_v<U, HResultOr> &&
-                    !hresultor_internal::IsConvertibleToHResultLikeV<U>,
-                std::nullptr_t> = nullptr>
+  template <typename U>
+    requires(std::constructible_from<T, U> &&
+             !std::same_as<std::remove_cvref_t<U>, std::in_place_t> &&
+             !std::same_as<std::remove_cvref_t<U>, HResultOr> &&
+             !std::same_as<std::remove_cvref_t<U>, HResult> &&
+             !hresultor_internal::IsConvertibleToHResultLikeV<U>)
   constexpr explicit(!std::is_convertible_v<U, T>) HResultOr(U&& value)
       : HResultOr(std::in_place, std::forward<U>(value)) {}
 
@@ -233,13 +222,10 @@ class [[nodiscard]] HResultOr {
   //  1. remove_cvref<U> is not HResultOr<T>,
   //  2. T is constructible and assignable from U, and
   //  3. U is not convertible to HResult or HRESULT.
-  template <
-      typename U,
-      std::enable_if_t<!std::is_same_v<std::remove_cvref_t<U>, HResultOr> &&
-                           std::is_constructible_v<T, U> &&
-                           std::is_assignable_v<T&, U> &&
-                           !hresultor_internal::IsConvertibleToHResultLikeV<T>,
-                       std::nullptr_t> = nullptr>
+  template <typename U>
+    requires(!std::same_as<std::remove_cvref_t<U>, HResultOr> &&
+             std::convertible_to<T, U> && std::assignable_from<T&, U> &&
+             !hresultor_internal::IsConvertibleToHResultLikeV<T>)
   constexpr HResultOr& operator=(U&& value) {
     if (has_value()) {
       value_ = std::forward<U>(value);

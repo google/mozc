@@ -36,6 +36,7 @@
 #include <wil/com.h>
 #include <wil/resource.h>
 
+#include <concepts>
 #include <new>
 #include <string_view>
 #include <type_traits>
@@ -73,10 +74,8 @@ wil::com_ptr_nothrow<Interface> ComCreateInstance() {
 
 namespace com_internal {
 
-template <typename Ptr, typename Interface,
-          std::enable_if_t<std::is_pointer_v<Ptr> &&
-                               std::is_base_of_v<IUnknown, Interface>,
-                           std::nullptr_t> = nullptr>
+template <typename Ptr, typename Interface>
+  requires(std::is_pointer_v<Ptr> && std::derived_from<Interface, IUnknown>)
 using is_convertible =
     std::is_convertible<absl::remove_cvref_t<Ptr>, Interface *>;
 

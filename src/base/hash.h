@@ -30,9 +30,8 @@
 #ifndef MOZC_BASE_HASH_H_
 #define MOZC_BASE_HASH_H_
 
-#include <cstddef>
+#include <concepts>
 #include <cstdint>
-#include <type_traits>
 
 #include "absl/strings/string_view.h"
 
@@ -46,30 +45,30 @@ uint64_t FingerprintWithSeed(absl::string_view str, uint32_t seed);
 uint32_t Fingerprint32(absl::string_view str);
 uint32_t Fingerprint32WithSeed(absl::string_view str, uint32_t seed);
 
-template <class T,
-          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
+template <class T>
+  requires(std::integral<T>)
 uint64_t Fingerprint(T num) {
   return Fingerprint(
       absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)));
 }
 
-template <class T,
-          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
+template <class T>
+  requires(std::integral<T>)
 uint64_t FingerprintWithSeed(T num, uint32_t seed) {
   return FingerprintWithSeed(
       absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)),
       seed);
 }
 
-template <class T,
-          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
+template <class T>
+  requires(std::integral<T>)
 uint32_t Fingerprint32(T num) {
   return Fingerprint32(
       absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)));
 }
 
-template <class T,
-          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
+template <class T>
+  requires(std::integral<T>)
 uint32_t Fingerprint32WithSeed(T num, uint32_t seed) {
   return Fingerprint32WithSeed(
       absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)),
