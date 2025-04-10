@@ -622,6 +622,53 @@ TEST(EngineOutputTest, FillUsages) {
   ASSERT_FALSE(candidate_window_proto.has_usages());
 }
 
+TEST(EngineOutputTest, FillCandidateWindowRange) {
+  Segment segment;
+  CandidateList candidate_list(true);
+  commands::CandidateWindow candidate_window_proto;
+  static const DummySegment dummy_segments[] = {
+      {"val00", 10, "title00", "desc00"}, {"val01", 11, "title01", "desc01"},
+      {"val02", 12, "title02", "desc02"}, {"val03", 13, "title03", "desc03"},
+      {"val04", 14, "title04", "desc04"}, {"val05", 15, "title05", "desc05"},
+      {"val06", 16, "title06", "desc06"}, {"val07", 17, "title07", "desc07"},
+      {"val08", 18, "title08", "desc08"}, {"val09", 19, "title09", "desc09"},
+      {"val10", 20, "title10", "desc10"}, {"val11", 21, "title11", "desc11"},
+  };
+  FillDummySegment(dummy_segments, std::size(dummy_segments), &segment,
+                   &candidate_list);
+  candidate_list.set_focused(true);
+
+  output::FillCandidateWindow(segment, candidate_list, 0,
+                              &candidate_window_proto);
+  ASSERT_EQ(candidate_window_proto.focused_index(), 0);
+  ASSERT_EQ(candidate_window_proto.size(), 12);
+  ASSERT_EQ(candidate_window_proto.candidate_size(), 9);
+  ASSERT_EQ(candidate_window_proto.candidate(0).index(), 0);
+  ASSERT_EQ(candidate_window_proto.candidate(0).id(), 0);
+  ASSERT_EQ(candidate_window_proto.candidate(0).information_id(), 10);
+  ASSERT_TRUE(candidate_window_proto.has_usages());
+  ASSERT_EQ(candidate_window_proto.usages().information_size(),
+            candidate_window_proto.candidate_size());
+  ASSERT_EQ(candidate_window_proto.usages().information(0).id(), 10);
+  ASSERT_EQ(candidate_window_proto.usages().information(0).candidate_id(0), 0);
+
+  candidate_list.MoveToId(11);
+  candidate_window_proto.Clear();
+  output::FillCandidateWindow(segment, candidate_list, 0,
+                              &candidate_window_proto);
+  ASSERT_EQ(candidate_window_proto.focused_index(), 11);
+  ASSERT_EQ(candidate_window_proto.size(), 12);
+  ASSERT_EQ(candidate_window_proto.candidate_size(), 3);
+  ASSERT_EQ(candidate_window_proto.candidate(0).index(), 9);
+  ASSERT_EQ(candidate_window_proto.candidate(0).id(), 9);
+  ASSERT_EQ(candidate_window_proto.candidate(0).information_id(), 19);
+  ASSERT_TRUE(candidate_window_proto.has_usages());
+  ASSERT_EQ(candidate_window_proto.usages().information_size(),
+            candidate_window_proto.candidate_size());
+  ASSERT_EQ(candidate_window_proto.usages().information(0).id(), 19);
+  ASSERT_EQ(candidate_window_proto.usages().information(0).candidate_id(0), 9);
+}
+
 TEST(EngineOutputTest, FillShortcuts) {
   const std::string kDigits = "123456789";
 

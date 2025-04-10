@@ -148,7 +148,7 @@ class CandidateList final {
   // Returns a pair of the page index as [begin, end).
   std::pair<size_t, size_t> GetPageRange(size_t index) const {
     const size_t begin = index - (index % page_size_);
-    return {begin, std::min(last_index(), begin + page_size_ - 1)};
+    return {begin, std::min(size(), begin + page_size_)};
   }
 
   bool focused() const { return focused_; }
@@ -187,7 +187,7 @@ class CandidateList final {
   bool IsFirstPage(size_t index) const { return index < page_size_; }
   bool IsLastPage(size_t index) const {
     auto [begin, end] = GetPageRange(index);
-    return end == last_index();
+    return end == size();
   }
 
   static constexpr size_t kDefaultPageSize = 9;

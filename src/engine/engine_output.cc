@@ -206,7 +206,7 @@ void FillCandidateWindow(const Segment &segment,
       candidate_list.GetPageRange(candidate_list.focused_index());
 
   // Store candidates.
-  for (size_t i = c_begin; i <= c_end; ++i) {
+  for (size_t i = c_begin; i < c_end; ++i) {
     const Candidate &candidate = candidate_list.candidate(i);
     if (!segment.is_valid_index(candidate.id())) {
       LOG(ERROR) << "Inconsistency between segment and candidate_list was "

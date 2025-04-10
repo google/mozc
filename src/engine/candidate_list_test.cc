@@ -292,9 +292,10 @@ TEST_F(CandidateListTest, SetPageSize) {
   // Make sure the default values.
   EXPECT_EQ(main_list_->focused_id(), 7);
   EXPECT_EQ(main_list_->focused_index(), 9);
+  // [begin, end)
   auto [begin, end] = main_list_->GetPageRange(main_list_->focused_index());
   EXPECT_EQ(begin, 9);
-  EXPECT_EQ(end, 12);  // The last index.
+  EXPECT_EQ(end, 13);
 
   // Change the page size.
   main_list_->set_page_size(11);
@@ -305,7 +306,7 @@ TEST_F(CandidateListTest, SetPageSize) {
   // The begin and end should be changed.
   std::tie(begin, end) = main_list_->GetPageRange(main_list_->focused_index());
   EXPECT_EQ(begin, 0);
-  EXPECT_EQ(end, 10);
+  EXPECT_EQ(end, 11);
 }
 
 TEST_F(CandidateListTest, Attributes) {
