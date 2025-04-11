@@ -50,6 +50,10 @@
 #include "protocol/config.pb.h"
 #include "testing/friend_test.h"
 
+// The obsolete and unmaintained *main.cc files (server_launcher_main.cc and
+// ping_server_main.cc) were removed to decrease maintenance costs and
+// accelerate build times.
+
 namespace mozc {
 namespace client {
 

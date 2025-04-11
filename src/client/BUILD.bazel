@@ -168,17 +168,6 @@ mozc_cc_library(
 )
 
 mozc_cc_binary(
-    name = "server_launcher_main",
-    srcs = ["server_launcher_main.cc"],
-    deps = [
-        ":client",
-        "//base:init_mozc",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-    ],
-)
-
-mozc_cc_binary(
     name = "client_stress_test_main",
     srcs = ["client_stress_test_main.cc"],
     deps = [
@@ -242,16 +231,6 @@ mozc_cc_binary(
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:span",
-    ],
-)
-
-mozc_cc_binary(
-    name = "ping_server_main",
-    srcs = ["ping_server_main.cc"],
-    deps = [
-        ":client",
-        "//base:init_mozc",
-        "@com_google_absl//absl/log",
     ],
 )
 

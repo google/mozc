@@ -34,7 +34,6 @@ load("@com_google_protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load(
     "//:build_defs.bzl",
-    "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_select",
@@ -134,19 +133,6 @@ mozc_cc_library(
     ),
 )
 
-mozc_cc_binary(
-    name = "ipc_path_manager_main",
-    srcs = ["ipc_path_manager_main.cc"],
-    deps = [
-        ":ipc_path_manager",
-        "//base:init_mozc_buildtool",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/time",
-    ],
-)
-
 mozc_cc_test(
     name = "ipc_path_manager_test",
     size = "small",
@@ -212,22 +198,6 @@ mozc_cc_test(
     ],
 )
 
-mozc_cc_binary(
-    name = "ipc_main",
-    srcs = ["ipc_main.cc"],
-    copts = ["$(STACK_FRAME_UNLIMITED)"],  # ipc_main.cc
-    deps = [
-        ":ipc",
-        "//base:init_mozc_buildtool",
-        "//base:thread",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
-    ],
-)
-
 mozc_cc_library(
     name = "named_event",
     srcs = ["named_event.cc"],
@@ -252,19 +222,6 @@ mozc_cc_library(
             "//base/win32:wide_char",
         ],
     ),
-)
-
-mozc_cc_binary(
-    name = "named_event_main",
-    srcs = ["named_event_main.cc"],
-    deps = [
-        ":named_event",
-        "//base:init_mozc_buildtool",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/time",
-    ],
 )
 
 mozc_cc_test(

@@ -49,6 +49,9 @@
 #include <wil/resource.h>
 #endif  // _WIN32
 
+// The obsolete and unmaintained ipc_main.cc file was removed to decrease
+// maintenance costs and accelerate build times.
+
 namespace mozc {
 
 class IPCPathManager;

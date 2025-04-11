@@ -29,6 +29,14 @@
 
 #include "base/cpu_stats.h"
 
+#include <cstdint>
+#include <vector>
+
+#include "absl/synchronization/notification.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
+#include "base/cpu_stats.h"
+#include "base/thread.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -41,6 +49,40 @@ TEST(CPUStats, CPUStatsTest) {
   EXPECT_GE(stats.GetCurrentProcessCPULoad(), 0.0);
 
   EXPECT_GE(stats.GetNumberOfProcessors(), 1);
+}
+
+TEST(CPUStats, MultiThreadTest) {
+  absl::Notification cancel;
+
+  constexpr int kDummyThreadsSize = 32;
+
+  std::vector<mozc::Thread> threads;
+  threads.reserve(kDummyThreadsSize);
+  for (int i = 0; i < kDummyThreadsSize; ++i) {
+    threads.push_back(mozc::Thread([&cancel] {
+      volatile uint64_t n = 0;
+      // Makes busy loop.
+      while (!cancel.HasBeenNotified()) {
+        ++n;
+        --n;
+      }
+    }));
+  }
+
+  mozc::CPUStats stats;
+  constexpr int kNumIterations = 10;
+  for (int i = 0; i < kNumIterations; ++i) {
+    EXPECT_GE(stats.GetSystemCPULoad(), 0.0);
+    EXPECT_GE(stats.GetCurrentProcessCPULoad(), 0.0);
+    EXPECT_GE(stats.GetNumberOfProcessors(), 1);
+    absl::SleepFor(absl::Milliseconds(10));
+  }
+
+  cancel.Notify();
+
+  for (auto &thread : threads) {
+    thread.Join();
+  }
 }
 }  // namespace
 }  // namespace mozc

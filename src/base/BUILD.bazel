@@ -29,7 +29,6 @@
 
 load(
     "//:build_defs.bzl",
-    "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
@@ -666,18 +665,6 @@ mozc_cc_library(
     ),
 )
 
-mozc_cc_binary(
-    name = "process_mutex_main",
-    srcs = ["process_mutex_main.cc"],
-    deps = [
-        ":init_mozc",
-        ":process_mutex",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/time",
-    ],
-)
-
 mozc_cc_test(
     name = "process_mutex_test",
     size = "small",
@@ -948,19 +935,8 @@ mozc_cc_test(
     srcs = ["cpu_stats_test.cc"],
     deps = [
         ":cpu_stats",
-        "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_binary(
-    name = "cpu_stats_main",
-    srcs = ["cpu_stats_main.cc"],
-    deps = [
-        ":cpu_stats",
-        ":init_mozc",
         ":thread",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
+        "//testing:gunit_main",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ],
@@ -986,17 +962,6 @@ mozc_cc_test(
         ":clock_mock",
         ":stopwatch",
         "//testing:gunit_main",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_binary(
-    name = "stopwatch_main",
-    srcs = ["stopwatch_main.cc"],
-    deps = [
-        ":init_mozc",
-        ":stopwatch",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/time",
     ],
 )
