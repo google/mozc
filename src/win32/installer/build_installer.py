@@ -88,9 +88,6 @@ def run_wix4(args) -> None:
   icon_path = pathlib.Path(args.icon_path).resolve()
   mozc_tip32 = pathlib.Path(args.mozc_tip32).resolve()
   mozc_tip64 = pathlib.Path(args.mozc_tip64).resolve()
-  mozc_tip64_pdb = mozc_tip64.with_suffix('.pdb')
-  if args.mozc_tip64_pdb:
-    mozc_tip64_pdb = pathlib.Path(args.mozc_tip64_pdb).resolve()
   mozc_broker = pathlib.Path(args.mozc_broker).resolve()
   mozc_server = pathlib.Path(args.mozc_server).resolve()
   mozc_cache_service = pathlib.Path(args.mozc_cache_service).resolve()
@@ -134,7 +131,6 @@ def run_wix4(args) -> None:
       '-define', f'AddRemoveProgramIconPath={icon_path}',
       '-define', f'MozcTIP32Path={mozc_tip32}',
       '-define', f'MozcTIP64Path={mozc_tip64}',
-      '-define', f'MozcTIP64PdbPath={mozc_tip64_pdb}',
       '-define', f'MozcBroker64Path={mozc_broker}',
       '-define', f'MozcServer64Path={mozc_server}',
       '-define', f'MozcCacheService64Path={mozc_cache_service}',

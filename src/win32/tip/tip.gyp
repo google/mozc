@@ -170,10 +170,6 @@
             'VCManifestTool': {
               'EmbedManifest': 'true',
             },
-            'VCLinkerTool': {
-              # Generate stripped symbol.
-              'AdditionalOptions': ['/PDBSTRIPPED:<(tipfile_product_name_win)64.dll.stripped.pdb'],
-            },
           },
         },
       ],

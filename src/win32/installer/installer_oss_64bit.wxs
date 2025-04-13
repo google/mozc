@@ -93,7 +93,6 @@
     <Feature Id="MozcInstall" Title="Mozc" Level="1">
       <ComponentRef Id="MozcTIP32" />
       <ComponentRef Id="MozcTIP64" />
-      <ComponentRef Id="MozcTIP64Pdb" />
       <ComponentRef Id="MozcBroker" />
       <ComponentRef Id="MozcConverter" />
       <ComponentRef Id="MozcCacheService" />
@@ -227,9 +226,6 @@
           <File Id="mozc_tip64.dll" Name="mozc_tip64.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64Path)" Vital="yes">
             <Class Context="InprocServer32" ThreadingModel="apartment" Description="Mozc" Id="10A67BC8-22FA-4A59-90DC-2546652C56BF" />
           </File>
-        </Component>
-        <Component Id="MozcTIP64Pdb" Permanent="no" Bitness="always64">
-          <File Id="mozc_tip64.dll.pdb" Name="mozc_tip64.dll.pdb" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64PdbPath)" Vital="yes" />
         </Component>
         <Component Id="MozcBroker" Permanent="no">
           <File Id="mozc_broker.exe" Name="mozc_broker.exe" DiskId="1" Checksum="yes" Source="$(var.MozcBroker64Path)" Vital="yes" />

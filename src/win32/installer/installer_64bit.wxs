@@ -109,7 +109,6 @@
     <Feature Id="GIMEJaInstall" Title="Google 日本語入力" Level="1">
       <ComponentRef Id="GIMEJaTIP32" />
       <ComponentRef Id="GIMEJaTIP64" />
-      <ComponentRef Id="GIMEJaTIP64Pdb" />
       <ComponentRef Id="GIMEJaBroker" />
       <ComponentRef Id="GIMEJaConverter" />
       <ComponentRef Id="GIMEJaCacheService" />
@@ -252,9 +251,6 @@
             <File Id="GoogleIMEJaTIP64.dll" Name="GoogleIMEJaTIP64.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64Path)" Vital="yes">
               <Class Context="InprocServer32" ThreadingModel="apartment" Description="Google Japanese Input" Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
             </File>
-          </Component>
-          <Component Id="GIMEJaTIP64Pdb" Permanent="no" Bitness="always64">
-            <File Id="GoogleIMEJaTIP64.dll.pdb" Name="GoogleIMEJaTIP64.dll.pdb" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64PdbPath)" Vital="yes" />
           </Component>
           <Component Id="GIMEJaBroker" Permanent="no">
             <File Id="GoogleIMEJaBroker.exe" Name="GoogleIMEJaBroker.exe" DiskId="1" Checksum="yes" Source="$(var.MozcBroker64Path)" Vital="yes" />
