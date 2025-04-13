@@ -117,7 +117,7 @@ void GuiUtil::InstallTranslator(absl::string_view resource_name) {
   if (translators->contains(resource_name)) {
     return;
   }
-  std::unique_ptr<QTranslator> translator;
+  auto translator = std::make_unique<QTranslator>();
 
   // Load ":/<resource_name>_<lang>.qm" from a qrc file.
   if (translator->load(
