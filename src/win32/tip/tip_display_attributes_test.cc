@@ -36,7 +36,6 @@
 #include <string>
 
 #include "testing/gunit.h"
-#include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
 namespace win32 {
@@ -84,11 +83,6 @@ bool IsSameColor(const TF_DA_COLOR &color1, const TF_DA_COLOR &color2) {
 }
 
 }  // namespace
-
-class TipDisplayAttributesTest : public testing::Test {
- protected:
-  static void SetUpTestCase() { TipDllModule::InitForUnitTest(); }
-};
 
 TEST(TipDisplayAttributesTest, BasicTest) {
   TestableTipDisplayAttribute attribute(kTestGuid, kTestAttribute,
