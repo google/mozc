@@ -33,8 +33,11 @@
 #include <string>
 #include <utility>
 
+#include "absl/strings/str_cat.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/candidate.h"
+#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
@@ -136,6 +139,47 @@ TEST(ConversionRequestTest, SetKeyTest) {
                                               .SetKey("foo")
                                               .Build();
   EXPECT_EQ("foo", conversion_request2.key());
+}
+
+TEST(ConversionRequestTest, SetHistorySegmentsTest) {
+  Segments segments;
+  for (int i = 0; i < 3; ++i) {
+    Segment *seg = segments.push_back_segment();
+    seg->set_segment_type(Segment::HISTORY);
+    converter::Candidate *c = seg->add_candidate();
+    c->key = absl::StrCat("k", i);
+    c->value = absl::StrCat("v", i);
+  }
+
+  {
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetHistorySegmentsView(segments).Build();
+
+    EXPECT_EQ(convreq.converter_history_key(), "k0k1k2");
+    EXPECT_EQ(convreq.converter_history_value(), "v0v1v2");
+    EXPECT_EQ(convreq.converter_history_key(10), "k0k1k2");
+    EXPECT_EQ(convreq.converter_history_value(10), "v0v1v2");
+    EXPECT_EQ(convreq.converter_history_key(0), "");
+    EXPECT_EQ(convreq.converter_history_value(0), "");
+    EXPECT_EQ(convreq.converter_history_key(2), "k1k2");
+    EXPECT_EQ(convreq.converter_history_value(2), "v1v2");
+    EXPECT_EQ(convreq.converter_history_key(1), "k2");
+    EXPECT_EQ(convreq.converter_history_value(1), "v2");
+  }
+
+  {
+    const ConversionRequest convreq = ConversionRequestBuilder().Build();
+    EXPECT_EQ(convreq.converter_history_key(), "");
+    EXPECT_EQ(convreq.converter_history_value(), "");
+    EXPECT_EQ(convreq.converter_history_key(10), "");
+    EXPECT_EQ(convreq.converter_history_value(10), "");
+    EXPECT_EQ(convreq.converter_history_key(0), "");
+    EXPECT_EQ(convreq.converter_history_value(0), "");
+    EXPECT_EQ(convreq.converter_history_key(2), "");
+    EXPECT_EQ(convreq.converter_history_value(2), "");
+    EXPECT_EQ(convreq.converter_history_key(1), "");
+    EXPECT_EQ(convreq.converter_history_value(1), "");
+  }
 }
 
 TEST(ConversionRequestTest, IncognitoModeTest) {

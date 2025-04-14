@@ -41,6 +41,7 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
+#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 
@@ -291,6 +292,16 @@ class ConversionRequest {
     return options_.key;
   }
 
+  // Takes the last `size` history key. return all key when size = -1.
+  std::string converter_history_key(int size = -1) const {
+    return segments_ ? segments_->history_key(size) : "";
+  }
+
+  // Takes the last `size` history value. return all value when size = -1.
+  std::string converter_history_value(int size = -1) const {
+    return segments_ ? segments_->history_value(size) : "";
+  }
+
   // Builder can access the private member for construction.
   friend class ConversionRequestBuilder;
 
@@ -307,6 +318,13 @@ class ConversionRequest {
 
   // Input config.
   internal::copy_or_view_ptr<const config::Config> config_;
+
+  // Stores segments to access legacy context key/value stored in Segments.
+  // Actual segments is NOT exposed to users to get rid of the dependency from
+  // supplemental model to Segments. See converter_history_(key|value) methods.
+  // TODO(taku): Migrate them to context proto to feed the context information
+  // from the client to decoder.
+  internal::copy_or_view_ptr<const Segments> segments_;
 
   // Options for conversion request.
   Options options_;
@@ -404,6 +422,24 @@ class ConversionRequestBuilder {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.config_.set_view(config);
+    return *this;
+  }
+  // `segments` contain both conversion segments and history segments,
+  // but we only populate the information in history segments.
+  // Generally ConversionRequest only stores the request to the
+  // converter, while segments both contain request and result.
+  ConversionRequestBuilder &SetHistorySegments(
+      const Segments &segments ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+    DCHECK_LE(stage_, 2);
+    stage_ = 2;
+    request_.segments_.copy_from(segments);
+    return *this;
+  }
+  ConversionRequestBuilder &SetHistorySegmentsView(
+      const Segments &segments ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+    DCHECK_LE(stage_, 2);
+    stage_ = 2;
+    request_.segments_.set_view(segments);
     return *this;
   }
   ConversionRequestBuilder &SetOptions(ConversionRequest::Options &&options) {
