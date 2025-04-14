@@ -37,7 +37,6 @@
 #include <utility>
 
 #include "absl/base/thread_annotations.h"
-#include "absl/functional/bind_front.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
 
@@ -45,22 +44,14 @@
 
 namespace mozc {
 
-// Represents a thread, exposing a subset of `std::thread` APIs.
+// Represents a thread, exposing a minimal subset of `std::jthread` APIs.
 //
-// Most notably, threads are undetachable unlike `std::thread`, thus must be
-// `Join()`ed before destruction if `Joinable()`. This means that the
-// `mozc::Thread` instance must be retained even for a long-running one, though
-// which may be until the end of the process.
+// The notable differences are:
+// - Detaching is not available.
+// - Trying to join a thread that is not joinable may result in undefined
+//   behavior.
 //
-// The semantics of the present APIs are mostly the same as `std::thread`
-// counterpart of the same (but lowercase) name, except that the behavior of
-// situations where `std::thread` would throw an exception (e.g. destruction
-// before `join()`) is unspecified. It's guaranteed to be either the same
-// exception as `std::thread`, silently ignored or process termination, but
-// since there isn't really a way to robustly handle all of them you should
-// avoid such a situation as if they're UB.
-//
-// NOTE: This serves as a compatibility layer for Google where we use a
+// NOTE: This serves as a compatibility layer for Google, where we use a
 // different threading implementation internally.
 class Thread {
  public:
@@ -70,19 +61,31 @@ class Thread {
   explicit Thread(Function &&f, Args &&...args)
       : thread_(std::forward<Function>(f), std::forward<Args>(args)...) {}
 
-  ~Thread() = default;
+  ~Thread() {
+    if (Joinable()) {
+      Join();
+    }
+  }
 
   Thread(const Thread &) = delete;
   Thread &operator=(const Thread &) = delete;
 
   Thread(Thread &&) noexcept = default;
-  Thread &operator=(Thread &&) noexcept = default;
+  Thread &operator=(Thread &&other) noexcept {
+    if (Joinable()) {
+      Join();
+    }
+    thread_ = std::move(other.thread_);
+    return *this;
+  }
 
   bool Joinable() const noexcept { return thread_.joinable(); }
 
   void Join() { thread_.join(); }
 
  private:
+  // Some toolchains do not support `std::jthread` yet, so we use `std::thread`
+  // for now.
   std::thread thread_;
 };
 
@@ -107,7 +110,7 @@ class BackgroundFuture {
   BackgroundFuture(BackgroundFuture &&) = default;
   BackgroundFuture &operator=(BackgroundFuture &&);
 
-  ~BackgroundFuture();
+  ~BackgroundFuture() = default;
 
   // Blocks until the future becomes ready, and returns the computed value by
   // reference.
@@ -153,7 +156,7 @@ class BackgroundFuture<void> {
   BackgroundFuture(BackgroundFuture &&) = default;
   BackgroundFuture &operator=(BackgroundFuture &&);
 
-  ~BackgroundFuture();
+  ~BackgroundFuture() = default;
 
   // Returns whether the future is ready.
   bool Ready() const noexcept;
@@ -175,8 +178,8 @@ template <class F, class... Args>
 BackgroundFuture<R>::BackgroundFuture(F &&f, Args &&...args)
     : state_(std::make_unique<State>()),
       thread_([&state = *state_,
-               f = absl::bind_front(std::forward<F>(f),
-                                    std::forward<Args>(args)...)]() mutable {
+               f = std::bind_front(std::forward<F>(f),
+                                   std::forward<Args>(args)...)]() mutable {
         R r = std::invoke(std::move(f));
 
         absl::MutexLock lock(&state.mutex);
@@ -185,19 +188,11 @@ BackgroundFuture<R>::BackgroundFuture(F &&f, Args &&...args)
 
 template <class R>
 BackgroundFuture<R> &BackgroundFuture<R>::operator=(BackgroundFuture &&other) {
-  if (thread_.Joinable()) {
-    thread_.Join();
-  }
-  state_ = std::move(other.state_);
+  // Move `thread_` first to ensure its associated thread (if any) is stopped
+  // and joined.
   thread_ = std::move(other.thread_);
+  state_ = std::move(other.state_);
   return *this;
-}
-
-template <class R>
-BackgroundFuture<R>::~BackgroundFuture() {
-  if (thread_.Joinable()) {
-    thread_.Join();
-  }
 }
 
 template <class R>
@@ -238,26 +233,19 @@ template <class F, class... Args>
 BackgroundFuture<void>::BackgroundFuture(F &&f, Args &&...args)
     : done_(std::make_unique<absl::Notification>()),
       thread_([&done = *done_,
-               f = absl::bind_front(std::forward<F>(f),
-                                    std::forward<Args>(args)...)]() mutable {
+               f = std::bind_front(std::forward<F>(f),
+                                   std::forward<Args>(args)...)]() mutable {
         std::invoke(std::move(f));
         done.Notify();
       }) {}
 
 inline BackgroundFuture<void> &BackgroundFuture<void>::operator=(
     BackgroundFuture &&other) {
-  if (thread_.Joinable()) {
-    thread_.Join();
-  }
-  done_ = std::move(other.done_);
+  // Move `thread_` first to ensure its associated thread (if any) is stopped
+  // and joined.
   thread_ = std::move(other.thread_);
+  done_ = std::move(other.done_);
   return *this;
-}
-
-inline BackgroundFuture<void>::~BackgroundFuture() {
-  if (thread_.Joinable()) {
-    thread_.Join();
-  }
 }
 
 inline void BackgroundFuture<void>::Wait() const {
