@@ -4640,7 +4640,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   // かつこ -> がっこ and かっこ
   add_expected("がっこ");
   add_expected("かっこ");
-  EXPECT_CALL(*mock_ptr, CorrectComposition(_, _))
+  EXPECT_CALL(*mock_ptr, CorrectComposition(_))
       .WillRepeatedly(Return(expected));
 
   // set_typing_correction_apply_user_history_size=0

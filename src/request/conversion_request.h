@@ -260,6 +260,16 @@ class ConversionRequest {
            options_.kana_modifier_insensitive_conversion;
   }
 
+  bool IsZeroQuerySuggestion() const {
+    // Checks segments_ first for compatibility.
+    if (segments_) {
+      return segments_->conversion_segments_size() == 0 ||
+             (segments_->conversion_segments_size() > 0 &&
+              segments_->conversion_segment(0).key().empty());
+    }
+    return key().empty();
+  }
+
   size_t max_conversion_candidates_size() const {
     return options_.max_conversion_candidates_size;
   }
@@ -465,8 +475,8 @@ class ConversionRequestBuilder {
   }
 
  private:
-  // Remove unnecessary but potentially large options for ConversionRequest from
-  // Config and return it.
+  // Remove unnecessary but potentially large options for ConversionRequest
+  // from Config and return it.
   // TODO(b/365909808): Move this method to Session after updating the
   // ConversionRequest constructor.
   static config::Config TrimConfig(const config::Config &base_config) {

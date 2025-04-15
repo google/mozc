@@ -2276,7 +2276,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
                TypeCorrectedQuery::CORRECTION | TypeCorrectedQuery::COMPLETION |
                    TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY);
 
-  EXPECT_CALL(*mock, CorrectComposition(_, _)).WillOnce(Return(expected));
+  EXPECT_CALL(*mock, CorrectComposition(_)).WillOnce(Return(expected));
 
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
       CreateAggregatorWithMockData(/*suffix dictionary=*/nullptr,
@@ -2314,7 +2314,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   expected.emplace_back(
       TypeCorrectedQuery{"よろしく!", TypeCorrectedQuery::CORRECTION});
 
-  EXPECT_CALL(*mock, CorrectComposition(_, _)).WillOnce(Return(expected));
+  EXPECT_CALL(*mock, CorrectComposition(_)).WillOnce(Return(expected));
 
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
       CreateAggregatorWithMockData(nullptr /* suffix_dictionary */,
@@ -2345,7 +2345,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   expected.emplace_back(
       TypeCorrectedQuery{"にじゅうご", TypeCorrectedQuery::CORRECTION});
 
-  EXPECT_CALL(*mock, CorrectComposition(_, _)).WillRepeatedly(Return(expected));
+  EXPECT_CALL(*mock, CorrectComposition(_)).WillRepeatedly(Return(expected));
 
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
       CreateAggregatorWithMockData(nullptr /* suffix_dictionary */,

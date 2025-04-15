@@ -729,7 +729,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForZeroQuery(
     selected_types |= BIGRAM;
   }
   if (segments.history_segments_size() > 0) {
-    if (modules_.GetSupplementalModel().Predict(request, segments, *results)) {
+    if (modules_.GetSupplementalModel().Predict(request, *results)) {
       selected_types |= SUPPLEMENTAL_MODEL;
     }
     AggregateZeroQuerySuffixPrediction(request, segments, results);
@@ -1723,7 +1723,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
   }
 
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      modules_.GetSupplementalModel().CorrectComposition(request, segments);
+      modules_.GetSupplementalModel().CorrectComposition(request);
   if (!corrected) {
     return;
   }
@@ -1940,7 +1940,7 @@ void DictionaryPredictionAggregator::MaybePopulateTypingCorrectionPenalty(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
   modules_.GetSupplementalModel().PopulateTypeCorrectedQuery(
-      request, segments, absl::Span<Result>(*results));
+      request, absl::Span<Result>(*results));
 }
 
 }  // namespace prediction

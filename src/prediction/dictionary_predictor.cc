@@ -442,7 +442,7 @@ void DictionaryPredictor::MaybeApplyPostCorrection(
   if (!IsTypingCorrectionEnabled(request)) {
     return;
   }
-  modules_.GetSupplementalModel().PostCorrect(request, segments, results);
+  modules_.GetSupplementalModel().PostCorrect(request, results);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(
@@ -1223,7 +1223,7 @@ void DictionaryPredictor::MaybeRescoreResults(
     for (Result &r : results) r.cost_before_rescoring = r.cost;
   }
 
-  modules_.GetSupplementalModel().RescoreResults(request, segments, results);
+  modules_.GetSupplementalModel().RescoreResults(request, results);
 }
 
 void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {

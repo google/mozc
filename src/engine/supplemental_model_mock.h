@@ -37,7 +37,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/query.h"
-#include "converter/segments.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
@@ -54,23 +53,22 @@ class MockSupplementalModel : public SupplementalModelInterface {
   MOCK_METHOD(EngineReloadResponse, Load, (const EngineReloadRequest &request),
               (override));
   MOCK_METHOD(std::optional<std::vector<composer::TypeCorrectedQuery>>,
-              CorrectComposition,
-              (const ConversionRequest &request, const Segments &segments),
+              CorrectComposition, (const ConversionRequest &request),
               (const, override));
   MOCK_METHOD(void, PopulateTypeCorrectedQuery,
-              (const ConversionRequest &request, const Segments &segments,
+              (const ConversionRequest &request,
                absl::Span<prediction::Result> results),
               (const, override));
   MOCK_METHOD(void, PostCorrect,
-              (const ConversionRequest &, const Segments &egments,
+              (const ConversionRequest &request,
                std::vector<prediction::Result> &results),
               (const, override));
   MOCK_METHOD(void, RescoreResults,
-              (const ConversionRequest &request, const Segments &segments,
+              (const ConversionRequest &request,
                absl::Span<prediction::Result> results),
               (const, override));
   MOCK_METHOD(bool, Predict,
-              (const ConversionRequest &request, const Segments &segments,
+              (const ConversionRequest &request,
                std::vector<prediction::Result> &results),
               (const, override));
 };

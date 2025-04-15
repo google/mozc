@@ -244,6 +244,7 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
       ConversionRequestBuilder()
           .SetConversionRequestView(request)
           .SetOptions(std::move(options))
+          .SetHistorySegmentsView(*segments)
           .Build();
   result |= user_history_predictor_->PredictForRequest(request_for_prediction,
                                                        segments);
@@ -261,6 +262,7 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
       ConversionRequestBuilder()
           .SetConversionRequestView(request_for_prediction)
           .SetOptions(std::move(options2))
+          .SetHistorySegmentsView(*segments)
           .Build();
   result |= dictionary_predictor_->PredictForRequest(request_for_prediction2,
                                                      segments);
@@ -320,6 +322,7 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
   return ConversionRequestBuilder()
       .SetConversionRequestView(request)
       .SetOptions(std::move(options))
+      .SetHistorySegmentsView(segments)
       .Build();
 }
 

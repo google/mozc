@@ -719,7 +719,7 @@ std::vector<TypeCorrectedQuery> UserHistoryPredictor::GetTypingCorrectedQueries(
   if (size == 0 || !request.config().use_typing_correction()) return {};
 
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
-      modules_.GetSupplementalModel().CorrectComposition(request, segments);
+      modules_.GetSupplementalModel().CorrectComposition(request);
   if (!corrected) return {};
 
   std::vector<TypeCorrectedQuery> result = std::move(corrected.value());

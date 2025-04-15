@@ -182,6 +182,40 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
   }
 }
 
+TEST(ConversionRequestTest, IsZeroQuerySuggestionTest) {
+  // Segments are not set => use key().
+  EXPECT_TRUE(ConversionRequestBuilder().Build().IsZeroQuerySuggestion());
+  EXPECT_FALSE(
+      ConversionRequestBuilder().SetKey("key").Build().IsZeroQuerySuggestion());
+
+  // Segments are specified => use segments.key()
+  Segments segments;
+  segments.InitForConvert("");
+  EXPECT_TRUE(ConversionRequestBuilder()
+                  .SetHistorySegmentsView(segments)
+                  .Build()
+                  .IsZeroQuerySuggestion());
+
+  EXPECT_TRUE(ConversionRequestBuilder()
+                  .SetHistorySegmentsView(segments)
+                  .SetKey("key")
+                  .Build()
+                  .IsZeroQuerySuggestion());
+
+  segments.InitForConvert("key");
+  EXPECT_FALSE(ConversionRequestBuilder()
+                   .SetHistorySegmentsView(segments)
+                   .SetKey("")
+                   .Build()
+                   .IsZeroQuerySuggestion());
+
+  EXPECT_FALSE(ConversionRequestBuilder()
+                   .SetHistorySegmentsView(segments)
+                   .SetKey("key")
+                   .Build()
+                   .IsZeroQuerySuggestion());
+}
+
 TEST(ConversionRequestTest, IncognitoModeTest) {
   {
     const ConversionRequest convreq = ConversionRequestBuilder().Build();

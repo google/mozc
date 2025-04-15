@@ -1689,10 +1689,9 @@ TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
 
 TEST_F(DictionaryPredictorTest, Rescoring) {
   auto supplemental_model = std::make_unique<engine::MockSupplementalModel>();
-  EXPECT_CALL(*supplemental_model, RescoreResults(_, _, _))
-      .WillRepeatedly(
-          Invoke([](const ConversionRequest &request, const Segments &segments,
-                    absl::Span<Result> results) {
+  EXPECT_CALL(*supplemental_model, RescoreResults(_, _))
+      .WillRepeatedly(Invoke(
+          [](const ConversionRequest &request, absl::Span<Result> results) {
             for (Result &r : results) r.cost = 100;
           }));
 
