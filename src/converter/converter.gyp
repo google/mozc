@@ -52,6 +52,7 @@
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
+        'converter_base.gyp:nbest_generator',
         'converter_base.gyp:segmenter',
         'converter_base.gyp:segments',
         'immutable_converter.gyp:immutable_converter',
