@@ -302,6 +302,18 @@ class ConversionRequest {
     return options_.key;
   }
 
+  // Temporal API to return conversion key (conversion_segment(0).key()).
+  // Since converter sets request.key() to conversion_segment.key(),
+  // conversion_key() must be the same as key().
+  // TODO(taku): remove this API. Uses always key().
+  absl::string_view converter_key() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    if (segments_ && segments_->conversion_segments_size() > 0) {
+      DCHECK_EQ(key(), segments_->conversion_segment(0).key());
+      return segments_->conversion_segment(0).key();
+    }
+    return key();
+  }
+
   // Takes the last `size` history key. return all key when size = -1.
   std::string converter_history_key(int size = -1) const {
     return segments_ ? segments_->history_key(size) : "";

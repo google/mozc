@@ -216,6 +216,29 @@ TEST(ConversionRequestTest, IsZeroQuerySuggestionTest) {
                    .IsZeroQuerySuggestion());
 }
 
+TEST(ConversionRequestTest, ConverterKeyTest) {
+  EXPECT_EQ(ConversionRequestBuilder().SetKey("foo").Build().converter_key(),
+            "foo");
+  EXPECT_EQ(ConversionRequestBuilder().Build().converter_key(), "");
+
+  Segments segments;
+  segments.InitForConvert("bar");
+  EXPECT_EQ(ConversionRequestBuilder()
+                .SetHistorySegmentsView(segments)
+                .SetKey("bar")  // key must be the same as Segment key.
+                .Build()
+                .converter_key(),
+            "bar");
+
+#ifdef NDEBUG
+  EXPECT_EQ(ConversionRequestBuilder()
+                .SetHistorySegmentsView(segments)
+                .Build()
+                .converter_key(),
+            "bar");
+#endif  // NDEBUG
+}
+
 TEST(ConversionRequestTest, IncognitoModeTest) {
   {
     const ConversionRequest convreq = ConversionRequestBuilder().Build();
