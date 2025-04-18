@@ -32,7 +32,6 @@
 
 #include <atomic>
 
-#include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
 #include "absl/base/no_destructor.h"
 #include "absl/base/thread_annotations.h"
@@ -91,9 +90,9 @@ class Singleton {
   }
 
  private:
-  ABSL_CONST_INIT static inline absl::Mutex mutex_ =
+  constinit static inline absl::Mutex mutex_ =
       absl::Mutex(absl::kConstInit);
-  ABSL_CONST_INIT static inline T *instance_ ABSL_GUARDED_BY(mutex_) = nullptr;
+  constinit static inline T *instance_ ABSL_GUARDED_BY(mutex_) = nullptr;
 };
 
 // SingletonMockable class.
@@ -125,7 +124,7 @@ class SingletonMockable {
   }
 
  private:
-  ABSL_CONST_INIT static inline std::atomic<Interface *> mock_ = nullptr;
+  constinit static inline std::atomic<Interface *> mock_ = nullptr;
 };
 
 }  // namespace mozc

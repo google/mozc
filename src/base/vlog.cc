@@ -32,7 +32,6 @@
 #include <algorithm>
 #include <atomic>
 
-#include "absl/base/attributes.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/log/flags.h"  // IWYU pragma: keep
@@ -43,7 +42,7 @@ ABSL_DECLARE_FLAG(int, v);
 
 namespace mozc::internal {
 
-ABSL_CONST_INIT std::atomic<int> config_vlog_level = 0;
+constinit std::atomic<int> config_vlog_level = 0;
 
 int GetVLogLevel() {
   return std::max(absl::GetFlag(FLAGS_v),

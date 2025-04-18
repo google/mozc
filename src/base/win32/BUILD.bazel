@@ -323,10 +323,7 @@ mozc_cc_library(
     hdrs = ["com_implements.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        "@com_google_absl//absl/base",
-        "@com_google_absl//absl/base:core_headers",
-    ],
+    deps = ["@com_google_absl//absl/base"],
 )
 
 mozc_cc_test(

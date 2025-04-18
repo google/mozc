@@ -32,13 +32,14 @@
 #include <fstream>
 #include <utility>
 
+#include "absl/base/const_init.h"
 #include "absl/log/check.h"
 #include "absl/synchronization/mutex.h"
 #include "base/util.h"
 
 namespace {
 constexpr char kBuildPropPath[] = "/system/build.prop";
-ABSL_CONST_INIT absl::Mutex sys_prop_mutex(absl::kConstInit);
+constinit absl::Mutex sys_prop_mutex(absl::kConstInit);
 }  // namespace
 
 namespace mozc {

@@ -143,7 +143,6 @@ mozc_cc_library(
     srcs = ["vlog.cc"],
     hdrs = ["vlog.h"],
     deps = [
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:flags",
@@ -573,6 +572,7 @@ mozc_cc_library(
         "//bazel/win32:aux_ulib",  # win_util
         "//bazel/win32:imm32",
         "@com_google_absl//absl/base",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",

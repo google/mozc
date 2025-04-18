@@ -31,7 +31,6 @@
 
 #include <array>
 
-#include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/log/log.h"
@@ -41,10 +40,10 @@ namespace mozc {
 namespace internal {
 namespace {
 
-ABSL_CONST_INIT absl::Mutex mu(absl::kConstInit);
-ABSL_CONST_INIT std::array<void (*)(void), 256> finalizers
+constinit absl::Mutex mu(absl::kConstInit);
+constinit std::array<void (*)(void), 256> finalizers
     ABSL_GUARDED_BY(mu) = {};
-ABSL_CONST_INIT int size ABSL_GUARDED_BY(mu) = 0;
+constinit int size ABSL_GUARDED_BY(mu) = 0;
 
 }  // namespace
 

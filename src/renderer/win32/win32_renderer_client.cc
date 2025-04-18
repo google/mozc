@@ -36,7 +36,6 @@
 #include <memory>
 #include <utility>
 
-#include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
 #include "absl/log/log.h"
 #include "absl/synchronization/mutex.h"
@@ -55,7 +54,7 @@ class SenderThread;
 SenderThread *g_sender_thread = nullptr;
 
 // Used to lock |g_sender_thread|.
-ABSL_CONST_INIT absl::Mutex g_mutex(absl::kConstInit);
+constinit absl::Mutex g_mutex(absl::kConstInit);
 
 // Represents the module handle of this module.
 volatile HMODULE g_module = nullptr;

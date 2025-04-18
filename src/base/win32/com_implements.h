@@ -38,7 +38,6 @@
 #include <atomic>
 #include <type_traits>
 
-#include "absl/base/attributes.h"
 #include "absl/base/casts.h"
 
 namespace mozc::win32 {
@@ -46,7 +45,7 @@ namespace com_implements_internal {
 
 // Reference counter for the COM module. Use CanComModuleUnloadNow() to
 // determine if the COM module can unload safely.
-ABSL_CONST_INIT extern std::atomic<int> com_module_ref_count;
+constinit extern std::atomic<int> com_module_ref_count;
 
 // Placeholder to prevent classes from deriving another ComImplement.
 struct ComImplementsBaseTag {};
