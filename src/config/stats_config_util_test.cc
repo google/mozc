@@ -39,7 +39,8 @@
 #endif  // __ANDROID__
 
 #ifdef _WIN32
-#include "absl/base/casts.h"
+#include <bit>
+
 #include "absl/container/flat_hash_map.h"
 #include "base/singleton.h"
 #include "base/win32/win_api_test_helper.h"
@@ -61,8 +62,7 @@ constexpr wchar_t kOmahaUsageKeyForEveryone[] =
     L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
 constexpr wchar_t kSendStatsName[] = L"usagestats";
 
-// TODO(yuryu): absl::bit_cast is not constexpr with VC++2017.
-HKEY DefineHKey(const uintptr_t value) { return absl::bit_cast<HKEY>(value); }
+HKEY DefineHKey(const uintptr_t value) { return std::bit_cast<HKEY>(value); }
 
 const HKEY kHKCU_ClientState = DefineHKey(1);
 const HKEY kHKLM_ClientState = DefineHKey(2);

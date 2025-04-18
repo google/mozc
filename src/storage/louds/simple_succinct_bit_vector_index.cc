@@ -30,13 +30,13 @@
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 #include <algorithm>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <vector>
 
 #include "absl/log/check.h"
-#include "absl/numeric/bits.h"
 #include "absl/types/span.h"
 #include "base/bits.h"
 
@@ -85,14 +85,14 @@ class ZeroBitIndexIterator {
 
 inline int BitCount0(uint32_t x) {
   // Flip all bits, and count 1-bits.
-  return absl::popcount(~x);
+  return std::popcount(~x);
 }
 
 // Returns 1-bits in the data to length words.
 int Count1Bits(const uint8_t *data, int length) {
   int num_bits = 0;
   for (; length > 0; --length) {
-    num_bits += absl::popcount(LoadUnalignedAdvance<uint32_t>(data));
+    num_bits += std::popcount(LoadUnalignedAdvance<uint32_t>(data));
   }
   return num_bits;
 }
@@ -101,7 +101,7 @@ int Count1Bits(const uint8_t *data, int length) {
 void InitIndex(const uint8_t *data, int length, int chunk_size,
                std::vector<int> *index) {
   DCHECK_GE(chunk_size, 4);
-  DCHECK(absl::has_single_bit<uint32_t>(chunk_size)) << chunk_size;
+  DCHECK(std::has_single_bit<uint32_t>(chunk_size)) << chunk_size;
   DCHECK_EQ(length % 4, 0);
 
   index->clear();
@@ -210,7 +210,7 @@ int SimpleSuccinctBitVectorIndex::Rank1(int n) const {
   if (n % 32 > 0) {
     const int offset = 4 * (n / 32);
     const int shift = 32 - n % 32;
-    result += absl::popcount(LoadUnaligned<uint32_t>(data_ + offset) << shift);
+    result += std::popcount(LoadUnaligned<uint32_t>(data_ + offset) << shift);
   }
 
   return result;
@@ -282,7 +282,7 @@ int SimpleSuccinctBitVectorIndex::Select1(int n) const {
   const int offset = (chunk_index * chunk_size_) & ~int{3};
   const uint8_t *ptr = data_ + offset;
   while (true) {
-    const int bit_count = absl::popcount(LoadUnaligned<uint32_t>(ptr));
+    const int bit_count = std::popcount(LoadUnaligned<uint32_t>(ptr));
     if (bit_count >= n) {
       break;
     }

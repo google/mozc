@@ -302,7 +302,6 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/base",
     ],
 )
 

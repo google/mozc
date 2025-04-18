@@ -32,10 +32,10 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include <bit>
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
-#include "absl/numeric/bits.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "base/file_util.h"
@@ -49,7 +49,7 @@ namespace {
 
 // Checks if `a` is a power of 2 greater than or equal to 8.
 bool IsValidAlignment(int a) {
-  return a >= 8 && absl::has_single_bit<unsigned int>(a);
+  return a >= 8 && std::has_single_bit<unsigned int>(a);
 }
 
 }  // namespace

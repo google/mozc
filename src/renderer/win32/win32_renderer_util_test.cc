@@ -35,10 +35,10 @@
 
 #undef StrCat  // b/328804050
 
+#include <bit>
 #include <cstdint>
 #include <memory>
 
-#include "absl/base/casts.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "testing/gunit.h"
@@ -70,7 +70,7 @@ namespace {
 // uint32_t as 64-bit Windows still uses 32-bit handles.
 // https://learn.microsoft.com/en-us/windows/win32/winprog64/interprocess-communication
 inline uint32_t HwndToUint32(HWND hwnd) {
-  return static_cast<uint32_t>(absl::bit_cast<uintptr_t>(hwnd));
+  return static_cast<uint32_t>(std::bit_cast<uintptr_t>(hwnd));
 }
 
 #define EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(                     \
@@ -84,7 +84,6 @@ inline uint32_t HwndToUint32(HWND hwnd) {
               (layout).exclude_region());                           \
   } while (false)
 
-static CPoint ToCPoint(const POINT &point) { return CPoint(point.x, point.y); }
 static CRect ToCRect(const RECT &rect) {
   return CRect(rect.left, rect.top, rect.right, rect.bottom);
 }

@@ -29,9 +29,9 @@
 
 #include "win32/base/keyboard.h"
 
+#include <bit>
 #include <cstddef>
 
-#include "absl/base/casts.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -50,7 +50,7 @@ class ImeKeyboardTest : public testing::Test {
 
     // In 32-bit Windows, |hkl| is like 04110411.
     // In 64-bit Windows, |hkl| is like 0000000004110411.
-    const ptrdiff_t dword_hkl = absl::bit_cast<ptrdiff_t>(hkl);
+    const ptrdiff_t dword_hkl = std::bit_cast<ptrdiff_t>(hkl);
     constexpr ptrdiff_t kExpectedHKL = 0x04110411;
     if (dword_hkl != kExpectedHKL) {
       // seems to fall back to non-Japanese keyboard layout.

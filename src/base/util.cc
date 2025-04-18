@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <bitset>
 #include <cstddef>
 #include <cstdint>
@@ -46,7 +47,6 @@
 #include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/numeric/bits.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -979,7 +979,7 @@ Util::ScriptType GetScriptTypeInternal(absl::string_view str,
   }
 
   const uint32_t onehot = static_cast<uint32_t>(bs.to_ulong());
-  return static_cast<Util::ScriptType>(absl::countr_zero(onehot));
+  return static_cast<Util::ScriptType>(std::countr_zero(onehot));
 }
 }  // namespace
 
@@ -1055,7 +1055,7 @@ bool IsJisX0208Char(char32_t codepoint) {
     }
     // Note, the return value of 1 << 64 is not zero. It's undefined.
     const int bitmap_index =
-        absl::popcount(kJisX0208BitmapIndex << (63 - index)) - 1;
+        std::popcount(kJisX0208BitmapIndex << (63 - index)) - 1;
     const uint32_t *bitmap = kJisX0208Bitmap[bitmap_index];
     if ((bitmap[(codepoint % 1024) / 32] >> (codepoint % 32)) & 0b1) {
       return true;  // JISX0208

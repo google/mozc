@@ -30,6 +30,7 @@
 #include "storage/existence_filter.h"
 
 #include <algorithm>
+#include <bit>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -41,7 +42,6 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/numeric/bits.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
@@ -156,7 +156,7 @@ std::ostream& operator<<(std::ostream& os,
 
 bool ExistenceFilter::Exists(uint64_t hash) const {
   for (int i = 0; i < params_.num_hashes; ++i) {
-    hash = absl::rotl(hash, 8);
+    hash = std::rotl(hash, 8);
     const uint32_t index = hash % params_.size;
     if (!rep_.Get(index)) {
       return false;
@@ -208,7 +208,7 @@ ExistenceFilterBuilder ExistenceFilterBuilder::CreateOptimal(
 
 void ExistenceFilterBuilder::Insert(uint64_t hash) {
   for (int i = 0; i < params_.num_hashes; ++i) {
-    hash = absl::rotl(hash, 8);
+    hash = std::rotl(hash, 8);
     const uint32_t index = hash % params_.size;
     rep_.Set(index);
   }

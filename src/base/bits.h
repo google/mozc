@@ -28,19 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Functions to manipulate bits and bytes.
-//
-// Use absl for the following C++20 functions:
-// - std::countl_one;
-// - std::countl_zero;
-// - std::countr_one;
-// - std::countr_zero;
-// - std::popcount;
-// - std::rotl;
-// - std::rotr;
-// - std::bit_ceil;
-// - std::bit_floor;
-// - std::bit_width;
-// - std::has_single_bit;
 
 #ifndef MOZC_BASE_BITS_H_
 #define MOZC_BASE_BITS_H_

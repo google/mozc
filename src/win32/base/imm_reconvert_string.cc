@@ -31,6 +31,7 @@
 
 #include <safeint.h>
 
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
@@ -41,7 +42,6 @@
 #include <utility>
 
 #include "absl/algorithm/container.h"
-#include "absl/base/casts.h"
 #include "absl/log/check.h"
 #include "base/util.h"
 
@@ -56,7 +56,7 @@ using ::msl::utilities::SafeCast;
 using ::msl::utilities::SafeMultiply;
 
 bool CheckAddressSpace(const void *ptr, size_t size) {
-  const uintptr_t addr = absl::bit_cast<uintptr_t>(ptr);
+  const uintptr_t addr = std::bit_cast<uintptr_t>(ptr);
   uintptr_t addr_last = 0;
   // buffer exceeds process address space if overflows.
   return SafeAdd(addr, size, addr_last);

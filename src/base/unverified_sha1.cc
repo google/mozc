@@ -30,6 +30,7 @@
 #include "base/unverified_sha1.h"
 
 #include <algorithm>
+#include <bit>
 #include <climits>  // for CHAR_BIT
 #include <cstddef>
 #include <cstdint>
@@ -37,7 +38,6 @@
 #include <string>
 
 #include "absl/log/check.h"
-#include "absl/numeric/bits.h"
 #include "absl/strings/string_view.h"
 #include "base/bits.h"
 
@@ -73,7 +73,7 @@ template <size_t N>
 uint32_t ROTL(uint32_t x) {
   static_assert(N < std::numeric_limits<uint32_t>::digits,
                 "Too large rotation sise.");
-  return absl::rotl(x, N);
+  return std::rotl(x, N);
 }
 
 // See 4.2.1 SHA-1 Constants
