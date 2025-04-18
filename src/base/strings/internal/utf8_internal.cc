@@ -34,8 +34,6 @@
 #include <iterator>
 #include <type_traits>
 
-#include "absl/base/optimization.h"
-
 namespace mozc::utf8_internal {
 namespace {
 
@@ -202,15 +200,15 @@ DecodeResult Decode(const char* ptr, const char* last) {
     return DecodeResult::Continue(*ptr, 1);
   }
   const int needed = OneCharLen(*ptr);
-  if (ABSL_PREDICT_FALSE(std::distance(ptr, last) < needed)) {
+  if (std::distance(ptr, last) < needed) [[unlikely]] {
     return HandleBufferTooShort(ptr, last, needed);
   }
-  if (ABSL_PREDICT_TRUE(needed == 3)) {
+  if (needed == 3) [[likely]] {
     // The overwhelming majority of UTF-8 characters in Mozc are three bytes
     // long. All full-width romaji alphabets, half- and full-width hiragana,
     // and katakana letters are three bytes. Almost all kanji are three bytes,
     // too, except additional characters defined in JIS X 0213:2004, but they're
-    // extremely rare. Using ABSL_PREDICT_TRUE reduces cpu time by about 2%-2.5%
+    // extremely rare. Using [[likely]] reduces cpu time by about 2%-2.5%
     // with clang (as of June 2023). Practically, it puts this branch in the
     // first non-taken branch and fully unrolls the loops inside. It
     // additionally stops unrolling the other branches so it helps reduce the

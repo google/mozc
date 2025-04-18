@@ -86,7 +86,6 @@ mozc_cc_library(
     name = "utf8_internal",
     srcs = ["utf8_internal.cc"],
     hdrs = ["utf8_internal.h"],
-    deps = ["@com_google_absl//absl/base:core_headers"],
 )
 
 mozc_cc_test(

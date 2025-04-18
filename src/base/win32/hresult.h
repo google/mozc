@@ -37,8 +37,6 @@
 #include <string>
 #include <utility>
 
-#include "absl/base/optimization.h"
-
 namespace mozc::win32 {
 
 // HResult is a wrapper for HRESULT. Prefer this class to a raw HRESULT value as
@@ -171,12 +169,12 @@ constexpr HResult HResultWin32(const DWORD code) {
 
 // RETURN_IF_FAILED_HRESULT Runs the statement and returns from the current
 // function if FAILED(statement) is true.
-#define RETURN_IF_FAILED_HRESULT(...)                                   \
-  do {                                                                  \
-    const HResult hresultor_macro_impl_tmp_hr(__VA_ARGS__);             \
-    if (ABSL_PREDICT_FALSE(!hresultor_macro_impl_tmp_hr.Succeeded())) { \
-      return hresultor_macro_impl_tmp_hr;                               \
-    }                                                                   \
+#define RETURN_IF_FAILED_HRESULT(...)                            \
+  do {                                                           \
+    const HResult hresultor_macro_impl_tmp_hr(__VA_ARGS__);      \
+    if (!hresultor_macro_impl_tmp_hr.Succeeded()) [[unlikely]] { \
+      return hresultor_macro_impl_tmp_hr;                        \
+    }                                                            \
   } while (0)
 
 }  // namespace mozc::win32

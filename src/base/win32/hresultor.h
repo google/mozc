@@ -40,7 +40,6 @@
 #include <utility>
 
 #include "absl/base/attributes.h"
-#include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "base/port.h"
 #include "base/win32/hresult.h"
@@ -473,7 +472,7 @@ std::ostream& operator<<(std::ostream& os, const HResultOr<T>& v) {
 
 #define HRESULTOR_MACRO_IMPL_ASSIGN_OR_RETURN_HRESULT_(tmp, lhs, expr) \
   auto tmp = expr;                                                     \
-  if (ABSL_PREDICT_FALSE(!tmp.has_value())) {                          \
+  if (!tmp.has_value()) [[unlikely]] {                                 \
     return tmp.error();                                                \
   }                                                                    \
   lhs = *std::move(tmp)
