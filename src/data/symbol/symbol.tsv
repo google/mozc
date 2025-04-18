@@ -460,12 +460,6 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	♼	りさいくる	リサイクル記号
 記号	♽	りさいくる	リサイクル記号
 記号	♿	くるまいす	車椅子記号				メイリオx
-記号	⚀	さいころ さいころ1 1	サイコロ	1	OTHER		メイリオx
-記号	⚁	さいころ さいころ2 2	サイコロ	2	OTHER		メイリオx
-記号	⚂	さいころ さいころ3 3	サイコロ	3	OTHER		メイリオx
-記号	⚃	さいころ さいころ4 4	サイコロ	4	OTHER		メイリオx
-記号	⚄	さいころ さいころ5 5	サイコロ	5	OTHER		メイリオx
-記号	⚅	さいころ さいころ6 6	サイコロ	6	OTHER		メイリオx
 記号	⚖	てんびん	天秤				メイリオx
 記号	⚙	はぐるま ぎあ	歯車				メイリオx
 記号	⚠	ちゅうい けいこく	警告記号				メイリオx
@@ -1413,6 +1407,12 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	➼	きごう やじるし みぎ	右矢印			WEDGE-TAILED RIGHTWARDS ARROW (U+27BC)	U+27BC
 記号	➽	きごう やじるし みぎ	右矢印			HEAVY WEDGE-TAILED RIGHTWARDS ARROW (U+27BD)	U+27BD
 記号	➾	きごう やじるし みぎ	右矢印			OPEN-OUTLINED RIGHTWARDS ARROW (U+27BE)	U+27BE
+記号	⚀	さいころ さいころ1 1	サイコロ	1	OTHER		メイリオx
+記号	⚁	さいころ さいころ2 2	サイコロ	2	OTHER		メイリオx
+記号	⚂	さいころ さいころ3 3	サイコロ	3	OTHER		メイリオx
+記号	⚃	さいころ さいころ4 4	サイコロ	4	OTHER		メイリオx
+記号	⚄	さいころ さいころ5 5	サイコロ	5	OTHER		メイリオx
+記号	⚅	さいころ さいころ6 6	サイコロ	6	OTHER		メイリオx
 記号	(笑)	わら	笑
 記号	w	わら	笑
 記号	www	わら くさ	笑
