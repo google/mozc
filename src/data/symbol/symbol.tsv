@@ -591,7 +591,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 数	ⅷ	きごう ろーま	ローマ数字	小文字	SYMBOL	number rewriter
 数	ⅸ	きごう ろーま	ローマ数字	小文字	SYMBOL	number rewriter
 数	ⅹ	きごう ろーま	ローマ数字	小文字	SYMBOL	number rewriter
-記号	∑	すうがく しぐま けいさん	シグマ		SYMBOL
+記号	∑	すうがく しぐま そうわ けいさん	総和記号		SYMBOL	N-Ary Summation	U+2211
 記号	∟	すうがく ちょっかく	直角		SYMBOL
 記号	∮	すうがく いんてぐらる せきぶん へいろせきぶん けいさん ふぁい けいろせきぶん しゅうかいせきぶん	閉路積分記号		SYMBOL
 記号	ℵ	あれふ			SYMBOL		U+2135
