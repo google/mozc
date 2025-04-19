@@ -92,11 +92,6 @@ mozc_win32_cc_prod_binary(
         "Mozc": "mozc_tip64.dll",
         "GoogleJapaneseInput": "GoogleIMEJaTIP64.dll",
     },
-    features = ["generate_pdb_file"],
-    linkopts = [
-        "/DEBUG:FULL",
-        "/PDBALTPATH:%_PDB%",
-    ],
     linkshared = True,
     static_crt = True,
     tags = MOZC_TAGS.WIN_ONLY,
