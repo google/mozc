@@ -93,6 +93,7 @@
 // suffix array.
 
 #include <algorithm>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <ios>
@@ -103,7 +104,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/config.h"
 #include "absl/container/btree_map.h"
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
@@ -261,7 +261,7 @@ uint32_t Lookup(const absl::btree_map<std::string, uint32_t> &m,
 }
 
 void Convert() {
-  static_assert(ABSL_IS_LITTLE_ENDIAN);
+  static_assert(std::endian::native == std::endian::little);
 
   // Load cforms_file
   absl::btree_map<std::string, std::vector<ConjugationType>> inflection_map;
@@ -275,8 +275,8 @@ void Convert() {
   LoadUsage(absl::GetFlag(FLAGS_usage_data_file), &usage_entries,
             &conjugation_list);
   RemoveBaseformConjugationSuffix(baseform_map, &usage_entries);
-  std::stable_sort(
-      usage_entries.begin(), usage_entries.end(), UsageItemKeynameCmp);
+  std::stable_sort(usage_entries.begin(), usage_entries.end(),
+                   UsageItemKeynameCmp);
 
   // Assign unique index to every string data.  The same string share the same
   // index, so the data is slightly compressed.

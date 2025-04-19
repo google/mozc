@@ -32,6 +32,7 @@
 #ifndef MOZC_BASE_BITS_H_
 #define MOZC_BASE_BITS_H_
 
+#include <bit>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -67,17 +68,6 @@ inline MOZC_BITS_BYTESWAP_CONSTEXPR uint32_t ByteSwap32(uint32_t n);
 inline MOZC_BITS_BYTESWAP_CONSTEXPR uint64_t ByteSwap64(uint64_t n);
 #endif  // !__cpp_lib_byteswap
 }  // namespace bits_internal
-
-// Endian is a replicate of C++23 std::endian.
-enum class Endian : int8_t {
-  kLittle = 0,
-  kBig = 1,
-#ifdef ABSL_IS_LITTLE_ENDIAN
-  kNative = kLittle,
-#else   // ABSL_IS_LITTLE_ENDIAN
-  kNative = kBig,
-#endif  // !ABSL_IS_LITTLE_ENDIAN
-};
 
 // byteswap is a limited implementation of std::byteswap in C++23.
 // Reverses the byte order of the given integer value.
@@ -174,7 +164,7 @@ inline Iterator StoreUnaligned(const T value, Iterator iter) {
 template <typename T>
   requires(std::integral<T>)
 inline T HostToNet(const T n) {
-  if constexpr (Endian::kNative == Endian::kLittle) {
+  if constexpr (std::endian::native == std::endian::little) {
     return byteswap(n);
   } else {
     return n;
@@ -192,7 +182,7 @@ inline T NetToHost(const T n) {
 template <typename T>
   requires(std::integral<T>)
 inline T HostToLittle(const T n) {
-  if constexpr (Endian::kNative == Endian::kLittle) {
+  if constexpr (std::endian::native == std::endian::little) {
     return n;
   } else {
     return byteswap(n);

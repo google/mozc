@@ -34,6 +34,7 @@
 
 #include "converter/gen_segmenter_bitarray.h"
 
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <ios>
@@ -42,7 +43,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/config.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
 #include "base/container/bitarray.h"
@@ -196,7 +196,8 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   CHECK(barray.array());
   CHECK_GT(barray.size(), 0);
 
-  static_assert(ABSL_IS_LITTLE_ENDIAN, "Architecture must be little endian");
+  static_assert(std::endian::native == std::endian::little,
+                "Architecture must be little endian");
   {
     converter::SegmenterDataSizeInfo pb;
     pb.set_compressed_lsize(kCompressedLSize);

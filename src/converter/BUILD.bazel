@@ -718,7 +718,6 @@ mozc_cc_library(
         "//base:file_stream",
         "//base/container:bitarray",
         "//protocol:segmenter_data_cc_proto",
-        "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log:check",

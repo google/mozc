@@ -30,6 +30,7 @@
 #include "data_manager/serialized_dictionary.h"
 
 #include <algorithm>
+#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <istream>
@@ -39,7 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/config.h"
 #include "absl/container/btree_map.h"
 #include "absl/log/check.h"
 #include "absl/strings/str_split.h"
@@ -114,7 +114,7 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
     const std::map<std::string, TokenList> &dic,
     std::unique_ptr<uint32_t[]> *output_token_array_buf,
     std::unique_ptr<uint32_t[]> *output_string_array_buf) {
-  static_assert(ABSL_IS_LITTLE_ENDIAN);
+  static_assert(std::endian::native == std::endian::little);
 
   // Build a mapping from string to its index in a serialized string array.
   // Note that duplicate keys share the same index, so data is slightly

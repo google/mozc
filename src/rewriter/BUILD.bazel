@@ -1301,7 +1301,6 @@ mozc_cc_binary(
         "//base:file_stream",
         "//base:init_mozc_buildtool",
         "//base/container:serialized_string_array",
-        "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",

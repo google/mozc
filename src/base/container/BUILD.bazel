@@ -146,7 +146,6 @@ mozc_cc_library(
     hdrs = ["serialized_string_array.h"],
     deps = [
         "//base:file_util",
-        "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",

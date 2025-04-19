@@ -29,12 +29,12 @@
 
 #include "base/container/serialized_string_array.h"
 
+#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
 
-#include "absl/base/config.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
@@ -43,7 +43,8 @@
 
 namespace mozc {
 
-static_assert(ABSL_IS_LITTLE_ENDIAN, "Little endian is assumed");
+static_assert(std::endian::native == std::endian::little,
+              "Little endian is assumed");
 
 bool SerializedStringArray::Init(
     absl::string_view data_aligned_at_4byte_boundary) {
