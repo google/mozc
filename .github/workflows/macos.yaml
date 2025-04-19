@@ -158,12 +158,6 @@ jobs:
         run: |
           python3 build_tools/update_deps.py
 
-      - name: Build Qt
-        working-directory: ./src
-        run: |
-          python3 build_tools/build_qt.py --release --confirm_license
-          echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
-
       - name: bazel test
         working-directory: ./src
         run: |
