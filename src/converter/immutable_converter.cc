@@ -45,7 +45,6 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -675,7 +674,7 @@ bool ImmutableConverter::ResegmentPersonalName(size_t pos,
       // lnode(last_name) is a prefix of compound, Constraint 1.
       if (compound_node->value.size() > lnode->value.size() &&
           compound_node->key.size() > lnode->key.size() &&
-          absl::StartsWith(compound_node->value, lnode->value)) {
+          compound_node->value.starts_with(lnode->value)) {
         // rnode(first_name) is a suffix of compound, Constraint 1.
         for (const Node *rnode = lattice->begin_nodes(pos + lnode->key.size());
              rnode != nullptr; rnode = rnode->bnext) {
@@ -1593,8 +1592,8 @@ bool ImmutableConverter::MakeLatticeNodesForHistorySegments(
         // No overlaps
         if (compound_node->key.size() <= rnode->key.size() ||
             compound_node->value.size() <= rnode->value.size() ||
-            !absl::StartsWith(compound_node->key, rnode->key) ||
-            !absl::StartsWith(compound_node->value, rnode->value)) {
+            !compound_node->key.starts_with(rnode->key) ||
+            !compound_node->value.starts_with(rnode->value)) {
           // not a prefix
           continue;
         }

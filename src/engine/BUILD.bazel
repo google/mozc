@@ -437,7 +437,6 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//transliteration",
-        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",

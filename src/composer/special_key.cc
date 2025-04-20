@@ -37,7 +37,6 @@
 
 #include "absl/functional/any_invocable.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
@@ -151,7 +150,7 @@ absl::string_view TrimLeadingSpecialKey(absl::string_view input) {
   }
 
   // Check if the input starts from open and close of a special key.
-  if (!absl::StartsWith(input, kSpecialKeyOpen)) {
+  if (!input.starts_with(kSpecialKeyOpen)) {
     return input;
   }
   size_t close_pos = input.find(kSpecialKeyClose, 1);

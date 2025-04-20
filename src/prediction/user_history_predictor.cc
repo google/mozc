@@ -662,8 +662,8 @@ bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
     // key value pair..
     for (DicElement &elm : *dic_) {
       Entry *entry = &elm.value;
-      if (!absl::StartsWith(key, entry->key()) ||
-          !absl::StartsWith(value, entry->value())) {
+      if (!key.starts_with(entry->key()) ||
+          !value.starts_with(entry->value())) {
         continue;
       }
       std::vector<absl::string_view> key_ngrams, value_ngrams;
@@ -776,7 +776,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
       if (!isalnum(prefix[i])) {
         std::string replaced_prefix(prefix);
         replaced_prefix[i] = str[i];
-        if (absl::StartsWith(str, replaced_prefix)) {
+        if (str.starts_with(replaced_prefix)) {
           return true;
         }
       }
@@ -784,7 +784,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
       // deletion.
       std::string inserted_prefix(prefix);
       inserted_prefix.insert(i, 1, str[i]);
-      if (absl::StartsWith(str, inserted_prefix)) {
+      if (str.starts_with(inserted_prefix)) {
         return true;
       }
 
@@ -793,7 +793,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
         using std::swap;
         std::string swapped_prefix(prefix);
         swap(swapped_prefix[i], swapped_prefix[i + 1]);
-        if (absl::StartsWith(str, swapped_prefix)) {
+        if (str.starts_with(swapped_prefix)) {
           return true;
         }
       }
@@ -823,8 +823,8 @@ bool UserHistoryPredictor::ZeroQueryLookupEntry(
       request_type == ZERO_QUERY_SUGGESTION && input_key.empty() &&
       entry->key().size() > prev_entry->key().size() &&
       entry->value().size() > prev_entry->value().size() &&
-      absl::StartsWith(entry->key(), prev_entry->key()) &&
-      absl::StartsWith(entry->value(), prev_entry->value())) {
+      entry->key().starts_with(prev_entry->key()) &&
+      entry->value().starts_with(prev_entry->value())) {
     // suffix must starts with Japanese characters.
     std::string key = entry->key().substr(prev_entry->key().size());
     std::string value = entry->value().substr(prev_entry->value().size());
@@ -1344,7 +1344,7 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
           entry->next_entries_size() > 0 &&
           Util::CharsLen(entry->value()) >= 2 &&
           (entry->value() == prev_value ||
-           absl::EndsWith(prev_value, entry->value()))) {
+           prev_value.ends_with(entry->value()))) {
         prev_entry = entry;
         break;
       }
@@ -1543,9 +1543,9 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
   auto starts_with = [&filter_mode](absl::string_view text,
                                     absl::string_view prefix) {
     if (filter_mode & SUFFIX_IS_ALL_CHAR_TYPE) {
-      return absl::StartsWith(text, prefix);
+      return text.starts_with(prefix);
     }
-    return absl::StartsWith(text, prefix) &&
+    return text.starts_with(prefix) &&
            Util::IsScriptType(text.substr(prefix.size()), Util::HIRAGANA);
   };
 
@@ -1713,7 +1713,7 @@ bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
     return false;
   }
 
-  if (absl::EndsWith(entry.key(), " ")) {
+  if (entry.key().ends_with(" ")) {
     // Invalid user history entry from alphanumeric input.
     return false;
   }
@@ -1936,7 +1936,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
         segments->history_segments().back().candidate(0).value;
     // Check if the head value in LRU ends with the candidate value in history
     // segments.
-    if (absl::EndsWith(entry->value(), last_value)) {
+    if (entry->value().ends_with(last_value)) {
       const Segment::Candidate &candidate =
           segments->conversion_segment(0).candidate(0);
       // Uses the same last_access_time stored in the top element

@@ -104,7 +104,7 @@ constexpr size_t kPredictionMaxResultsSize = 100000;
 // Returns true if the |target| may be redundant result.
 bool MaybeRedundant(const absl::string_view reference,
                     const absl::string_view target) {
-  if (!absl::StartsWith(target, reference)) {
+  if (!target.starts_with(reference)) {
     return false;
   }
   const absl::string_view suffix = target.substr(reference.size());
@@ -285,7 +285,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
     // set.  For example, if original key is "he" and "hello" was found,
     // continue traversing only when one of "l", "ll", or "llo" is in
     // |subsequent_chars_|.
-    // Implementation note: Although absl::StartsWith is called at most N times
+    // Implementation note: Although starts_with() is called at most N times
     // where N = subsequent_chars_.size(), N is very small in practice, less
     // than 10.  Thus, this linear order algorithm is fast enough.
     // Theoretically, we can construct a trie of strings in |subsequent_chars_|
@@ -294,7 +294,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
     // To this end, we need to fix Comopser as well.
     const absl::string_view rest = absl::ClippedSubstr(key, original_key_len_);
     for (absl::string_view chr : subsequent_chars_) {
-      if (absl::StartsWith(rest, chr)) {
+      if (rest.starts_with(chr)) {
         return TRAVERSE_CONTINUE;
       }
     }
@@ -371,7 +371,7 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
       return true;
     }
 
-    if (!absl::StartsWith(token.value, orig_key)) {
+    if (!token.value.starts_with(orig_key)) {
       return false;
     }
 
@@ -411,7 +411,7 @@ class DictionaryPredictionAggregator::PredictiveBigramLookupCallback
                      const Token &token) override {
     // Skip the token if its value doesn't start with the previous user input,
     // |history_value_|.
-    if (!absl::StartsWith(token.value, history_value_) ||
+    if (!token.value.starts_with(history_value_) ||
         token.value.size() <= history_value_.size()) {
       return TRAVERSE_CONTINUE;
     }

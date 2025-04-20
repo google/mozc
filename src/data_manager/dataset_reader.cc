@@ -38,7 +38,6 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/log.h"
 #include "absl/strings/escaping.h"
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
@@ -60,7 +59,7 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   // see dataset.proto.
 
   // Check the file magic string.
-  if (!absl::StartsWith(memblock, magic)) {
+  if (!memblock.starts_with(magic)) {
     LOG(ERROR) << "Invalid format: magic number doesn't match: "
                << absl::CHexEscape(memblock.substr(0, magic.size())) << " vs "
                << absl::CHexEscape(magic);

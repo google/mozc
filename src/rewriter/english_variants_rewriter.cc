@@ -59,7 +59,7 @@ bool EnglishVariantsRewriter::ExpandSpacePrefixedVariants(
   if (input.empty()) {
     return false;
   }
-  if (absl::StartsWith(input, " ")) {
+  if (input.starts_with(" ")) {
     return false;
   }
   std::vector<std::string> space_prefixed_variants;
@@ -68,7 +68,7 @@ bool EnglishVariantsRewriter::ExpandSpacePrefixedVariants(
     if (word.empty()) {
       continue;
     }
-    if (!absl::StartsWith(word, " ")) {
+    if (!word.starts_with(" ")) {
       space_prefixed_variants.push_back(word);
       space_prefixed_variants.push_back(absl::StrCat(" ", word));
     } else {

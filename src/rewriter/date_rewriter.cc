@@ -52,7 +52,6 @@
 #include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -567,12 +566,12 @@ bool ExtractYearFromKey(const YearData &year_data, const absl::string_view key,
   constexpr absl::string_view kGanKey = "がん";
   constexpr absl::string_view kGanValue = "元";
 
-  if (!absl::StartsWith(key, year_data.key)) {
+  if (!key.starts_with(year_data.key)) {
     return false;
   }
 
   // Append the `kNenValue` if the `key` has the `kNenKey` suffix.
-  const bool has_suffix = absl::EndsWith(key, kNenKey);
+  const bool has_suffix = key.ends_with(kNenKey);
   *has_suffix_out = has_suffix;
 
   // key="しょうわ59ねん" -> era_year_str="59"
@@ -607,7 +606,7 @@ void EraToAdForCourt(const YearData *data, size_t size,
                          &results_and_descriptions) {
   for (size_t i = 0; i < size; ++i) {
     const YearData &year_data = data[i];
-    if (!absl::StartsWith(key, year_data.key)) {
+    if (!key.starts_with(year_data.key)) {
       continue;
     }
 
@@ -1018,11 +1017,11 @@ bool DateRewriter::RewriteEra(Segments::range segments_range,
   // * If the second segment starts with the `kNenKey`.
   Segment &segment = segments_range.front();
   absl::string_view key = segment.key();
-  const bool has_suffix = absl::EndsWith(key, kNenKey);
+  const bool has_suffix = key.ends_with(kNenKey);
   if (has_suffix) {
     key.remove_suffix(kNenKey.size());
   } else if (segments_range.size() < 2 ||
-             !absl::StartsWith(segments_range[1].key(), kNenKey)) {
+             !segments_range[1].key().starts_with(kNenKey)) {
     return false;
   }
 
@@ -1076,10 +1075,10 @@ bool DateRewriter::RewriteAd(Segments::range segments_range,
   // * If the second segment starts with the `kNenKey`.
   Segment *segment = &segments_range.front();
   absl::string_view key = segment->key();
-  const bool has_suffix = absl::EndsWith(key, kNenKey);
+  const bool has_suffix = key.ends_with(kNenKey);
   if (!has_suffix) {
     if (segments_range.size() < 2 ||
-        !absl::StartsWith(segments_range[1].key(), kNenKey)) {
+        !segments_range[1].key().starts_with(kNenKey)) {
       return false;
     }
   }
@@ -1175,8 +1174,8 @@ DateRewriter::CheckResizeSegmentsForAd(const ConversionRequest &request,
   }
 
   ResizeSegmentsRequest resize_request = {
-    .segment_index = segment_index,
-    .segment_sizes = { segment_size, 0, 0, 0, 0, 0, 0, 0 },
+      .segment_index = segment_index,
+      .segment_sizes = {segment_size, 0, 0, 0, 0, 0, 0, 0},
   };
   return resize_request;
 }

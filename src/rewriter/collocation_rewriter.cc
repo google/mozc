@@ -42,7 +42,6 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -149,7 +148,7 @@ bool ParseCompound(const absl::string_view value,
   // Check if the middle part matches |pattern|.
   const absl::string_view remaining_value =
       absl::ClippedSubstr(value, first_content->size());
-  if (!absl::StartsWith(remaining_value, pattern)) {
+  if (!remaining_value.starts_with(pattern)) {
     return false;
   }
 
@@ -228,7 +227,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
     // "舞って" workaround
     // V+"て" is often treated as one compound.
     static constexpr absl::string_view pattern = "て";
-    if (absl::EndsWith(content, pattern)) {
+    if (content.starts_with(pattern)) {
       push_back_normalized_string(
           Util::Utf8SubString(content, 0, content_len - 1));
     }
@@ -294,8 +293,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
   {
     static constexpr absl::string_view kSuffix = "いる";
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
-        absl::EndsWith(top_value, kSuffix) &&
-        absl::EndsWith(aux_value, kSuffix)) {
+        top_value.ends_with(kSuffix) && aux_value.ends_with(kSuffix)) {
       if (type == RIGHT) {
         // "YYいる" in addition to "YY"
         push_back_normalized_string(value);
@@ -303,8 +301,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
       return true;
     }
     if (aux_value_len == 0 && top_aux_value_len == 2 &&
-        absl::EndsWith(value, kSuffix) &&
-        absl::EndsWith(top_aux_value, kSuffix)) {
+        value.ends_with(kSuffix) && top_aux_value.ends_with(kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYいる"
         push_back_normalized_string(
@@ -318,8 +315,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
   {
     static constexpr absl::string_view kSuffix = "せる";
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
-        absl::EndsWith(top_value, kSuffix) &&
-        absl::EndsWith(aux_value, kSuffix)) {
+        top_value.ends_with(kSuffix) && aux_value.ends_with(kSuffix)) {
       if (type == RIGHT) {
         // "YYせる" in addition to "YY"
         push_back_normalized_string(value);
@@ -327,8 +323,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
       return true;
     }
     if (aux_value_len == 0 && top_aux_value_len == 2 &&
-        absl::EndsWith(value, kSuffix) &&
-        absl::EndsWith(top_aux_value, kSuffix)) {
+        value.ends_with(kSuffix) && top_aux_value.ends_with(kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYせる"
         push_back_normalized_string(
@@ -344,7 +339,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
   // in "<XX|する>", XX must be single script type
   {
     static constexpr absl::string_view kSuffix = "する";
-    if (aux_value_len == 2 && absl::EndsWith(aux_value, kSuffix)) {
+    if (aux_value_len == 2 && aux_value.ends_with(kSuffix)) {
       if (content_script_type != Util::KATAKANA &&
           content_script_type != Util::HIRAGANA &&
           content_script_type != Util::KANJI &&
@@ -364,7 +359,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
   // "まとめる", "衰える"
   {
     static constexpr absl::string_view kSuffix = "る";
-    if (aux_value_len == 0 && absl::EndsWith(value, kSuffix)) {
+    if (aux_value_len == 0 && value.ends_with(kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYる"
         push_back_normalized_string(
@@ -377,7 +372,7 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
   // "<XXす>" can be rewrote using "XXする"
   {
     static constexpr absl::string_view kSuffix = "す";
-    if (absl::EndsWith(value, kSuffix) &&
+    if (value.ends_with(kSuffix) &&
         Util::IsScriptType(Util::Utf8SubString(value, 0, value_len - 1),
                            Util::KANJI)) {
       if (type == RIGHT) {
@@ -393,8 +388,8 @@ bool GenerateLookupTokens(const Segment::Candidate &cand,
   {
     static constexpr absl::string_view kShi = "し";
     static constexpr absl::string_view kTa = "た";
-    if (absl::EndsWith(content, kShi) && aux_value == kTa &&
-        absl::EndsWith(top_content, kShi) && top_aux_value == kTa) {
+    if (content.ends_with(kShi) && aux_value == kTa &&
+        top_content.ends_with(kShi) && top_aux_value == kTa) {
       if (type == RIGHT) {
         const absl::string_view val =
             Util::Utf8SubString(content, 0, content_len - 1);

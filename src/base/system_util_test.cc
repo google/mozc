@@ -37,10 +37,6 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
-#ifdef __ANDROID__
-#include "absl/strings/match.h"
-#endif  // __ANDROID__
-
 namespace mozc {
 
 class SystemUtilTest : public testing::Test {};
@@ -111,7 +107,7 @@ TEST_F(SystemUtilTest, GetTotalPhysicalMemoryTest) {
 TEST_F(SystemUtilTest, GetOSVersionStringTestForAndroid) {
   std::string result = SystemUtil::GetOSVersionString();
   // |result| must start with "Android ".
-  EXPECT_TRUE(absl::StartsWith(result, "Android "));
+  EXPECT_TRUE(result.starts_with("Android "));
 }
 #endif  // __ANDROID__
 

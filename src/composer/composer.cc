@@ -42,7 +42,6 @@
 #include "absl/container/btree_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
@@ -226,7 +225,7 @@ constexpr auto kModifierRemovalMap =
 void RemoveExpandedCharsForModifier(absl::string_view asis,
                                     absl::string_view base,
                                     absl::btree_set<std::string> *expanded) {
-  if (!absl::StartsWith(asis, base)) {
+  if (!asis.starts_with(base)) {
     LOG(DFATAL) << "base is not a prefix of asis.";
     return;
   }

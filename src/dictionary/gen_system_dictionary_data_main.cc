@@ -44,7 +44,6 @@
 
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -81,7 +80,7 @@ std::pair<std::string, std::string> GetInputFileName(
   std::vector<absl::string_view> system_dictionary_inputs,
       reading_correction_inputs;
   for (const absl::string_view &field : fields) {
-    if (absl::EndsWith(field, kReadingCorrectionFile)) {
+    if (field.ends_with(kReadingCorrectionFile)) {
       reading_correction_inputs.push_back(field);
     } else {
       system_dictionary_inputs.push_back(field);

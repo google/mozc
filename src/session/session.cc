@@ -41,7 +41,6 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/clock.h"
@@ -1508,7 +1507,7 @@ bool Session::InsertCharacter(commands::Command *command) {
           commands::Request::SPACE_OR_CONVERT_COMMITTING_COMPOSITION &&
       context_->state() == ImeContext::COMPOSITION &&
       // TODO(komatsu): Support FullWidthSpace
-      absl::EndsWith(composition, " ")) {
+      composition.ends_with(" ")) {
     should_commit = true;
   }
 
@@ -2323,7 +2322,7 @@ bool Session::Convert(commands::Command *command) {
       command->input().key().has_special_key() &&
       command->input().key().special_key() == commands::KeyEvent::SPACE) {
     // TODO(komatsu): Consider FullWidth Space too.
-    if (!absl::EndsWith(composition, " ") ||
+    if (!composition.ends_with(" ") ||
         context_->composer().GetLength() != context_->composer().GetCursor()) {
       if (context_->GetRequest().space_on_alphanumeric() ==
           commands::Request::COMMIT) {

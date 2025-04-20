@@ -46,7 +46,6 @@
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -128,16 +127,16 @@ bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
   if (label.empty()) {
     return true;
   }
-  if (absl::StartsWith(label, "SPELLING_CORRECTION")) {
+  if (label.starts_with("SPELLING_CORRECTION")) {
     token->attributes = Token::SPELLING_CORRECTION;
     return true;
   }
-  if (absl::StartsWith(label, "ZIP_CODE")) {
+  if (label.starts_with("ZIP_CODE")) {
     token->lid = zipcode_id_;
     token->rid = zipcode_id_;
     return true;
   }
-  if (absl::StartsWith(label, "ENGLISH")) {
+  if (label.starts_with("ENGLISH")) {
     // TODO(noriyukit): Might be better to use special POS for english words.
     token->lid = isolated_word_id_;
     token->rid = isolated_word_id_;

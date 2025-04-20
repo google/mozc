@@ -40,12 +40,10 @@
 #include <vector>
 
 #include "absl/base/attributes.h"
-#include "absl/base/nullability.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -1294,7 +1292,7 @@ std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
       std::abs(current_top_result.cost - prev_top_result->cost) < max_diff &&
       current_top_result.key.size() < prev_top_result->key.size() &&
       !(current_top_result.types & PREFIX) &&
-      absl::StartsWith(prev_top_result->key, current_top_result.key)) {
+      prev_top_result->key.starts_with(current_top_result.key)) {
     // Do not need to remember the previous key as `prev_top_result` is still
     // top result.
     return prev_top_result;

@@ -42,7 +42,6 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/text_normalizer.h"
@@ -1702,12 +1701,12 @@ void EngineConverter::OnStartComposition(const commands::Context &context) {
     DCHECK(!preceding_text.empty());
     DCHECK(!history_text.empty());
     if (preceding_text.size() > history_text.size()) {
-      if (absl::EndsWith(preceding_text, history_text)) {
+      if (preceding_text.ends_with(history_text)) {
         // History segments seem to be consistent with preceding text.
         return;
       }
     } else {
-      if (absl::EndsWith(history_text, preceding_text)) {
+      if (history_text.ends_with(preceding_text)) {
         // History segments seem to be consistent with preceding text.
         return;
       }

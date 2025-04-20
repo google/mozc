@@ -33,7 +33,6 @@
 #include <string>
 #include <utility>
 
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -68,7 +67,7 @@ class VersionRewriterTest : public testing::TestWithTempUserProfile {
                                       const Segments &segments) {
     for (const Segment &segment : segments) {
       for (size_t j = 0; j < segment.candidates_size(); ++j) {
-        if (absl::StartsWith(segment.candidate(j).value, prefix)) {
+        if (segment.candidate(j).value.starts_with(prefix)) {
           return true;
         }
       }

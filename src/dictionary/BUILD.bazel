@@ -149,7 +149,6 @@ mozc_cc_library(
         ":user_pos",
         "//base:file_util",
         "//base:hash",
-        "//base:singleton",
         "//base:thread",
         "//base:vlog",
         "//base/strings:assign",
@@ -166,7 +165,6 @@ mozc_cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
     ],
 )
 

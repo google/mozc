@@ -34,7 +34,6 @@
 #include <memory>
 #include <string>
 
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -118,7 +117,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
     EXPECT_FALSE(callback.tokens().empty());
     for (size_t i = 0; i < callback.tokens().size(); ++i) {
       const Token &token = callback.tokens()[i];
-      EXPECT_TRUE(absl::StartsWith(token.key, kPrefix));
+      EXPECT_TRUE(token.key.starts_with(kPrefix));
       EXPECT_FALSE(token.value.empty());
       EXPECT_LT(0, token.lid);
       EXPECT_LT(0, token.rid);

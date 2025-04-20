@@ -48,7 +48,6 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
@@ -101,7 +100,7 @@ class OnMemoryFileMap {
 std::unique_ptr<std::istream> ConfigFileStream::Open(
     zstring_view filename, std::ios_base::openmode mode) {
   // system://foo.bar.txt
-  if (absl::StartsWith(filename, kSystemPrefix)) {
+  if (filename.view().starts_with(kSystemPrefix)) {
     absl::string_view new_filename = absl::StripPrefix(filename, kSystemPrefix);
     for (size_t i = 0; i < std::size(kFileData); ++i) {
       if (new_filename == kFileData[i].name) {
@@ -115,7 +114,7 @@ std::unique_ptr<std::istream> ConfigFileStream::Open(
       }
     }
     // user://foo.bar.txt
-  } else if (absl::StartsWith(filename, kUserPrefix)) {
+  } else if (filename.view().starts_with(kUserPrefix)) {
     const std::string new_filename =
         FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                            absl::StripPrefix(filename, kUserPrefix));
@@ -126,7 +125,7 @@ std::unique_ptr<std::istream> ConfigFileStream::Open(
     }
     return nullptr;
     // file:///foo.map
-  } else if (absl::StartsWith(filename, kFilePrefix)) {
+  } else if (filename.view().starts_with(kFilePrefix)) {
     absl::string_view new_filename = absl::StripPrefix(filename, kFilePrefix);
     auto ifs =
         std::make_unique<InputFileStream>(std::string(new_filename), mode);
@@ -135,7 +134,7 @@ std::unique_ptr<std::istream> ConfigFileStream::Open(
       return ifs;
     }
     return nullptr;
-  } else if (absl::StartsWith(filename, kMemoryPrefix)) {
+  } else if (filename.view().starts_with(kMemoryPrefix)) {
     auto ifs = std::make_unique<std::istringstream>(
         Singleton<OnMemoryFileMap>::get()->get(filename), mode);
     CHECK(ifs);
@@ -158,10 +157,10 @@ std::unique_ptr<std::istream> ConfigFileStream::Open(
 
 bool ConfigFileStream::AtomicUpdate(zstring_view filename,
                                     zstring_view new_binary_contens) {
-  if (absl::StartsWith(filename, kMemoryPrefix)) {
+  if (filename.view().starts_with(kMemoryPrefix)) {
     Singleton<OnMemoryFileMap>::get()->set(filename, new_binary_contens);
     return true;
-  } else if (absl::StartsWith(filename, kSystemPrefix)) {
+  } else if (filename->starts_with(kSystemPrefix)) {
     LOG(ERROR) << "Cannot update system:// files.";
     return false;
   }
@@ -190,7 +189,7 @@ bool ConfigFileStream::AtomicUpdate(zstring_view filename,
 #ifdef _WIN32
   // If file name doesn't end with ".db", the file
   // is more likely a temporary file.
-  if (!absl::EndsWith(real_filename, ".db")) {
+  if (!real_filename.ends_with(".db")) {
     // TODO(yukawa): Provide a way to
     // integrate ::SetFileAttributesTransacted with
     // AtomicRename.
@@ -204,13 +203,13 @@ bool ConfigFileStream::AtomicUpdate(zstring_view filename,
 }
 
 std::string ConfigFileStream::GetFileName(absl::string_view filename) {
-  if (absl::StartsWith(filename, kSystemPrefix) ||
-      absl::StartsWith(filename, kMemoryPrefix)) {
+  if (filename.starts_with(kSystemPrefix) ||
+      filename.starts_with(kMemoryPrefix)) {
     return "";
-  } else if (absl::StartsWith(filename, kUserPrefix)) {
+  } else if (filename.starts_with(kUserPrefix)) {
     return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                               absl::StripPrefix(filename, kUserPrefix));
-  } else if (absl::StartsWith(filename, kFilePrefix)) {
+  } else if (filename.starts_with(kFilePrefix)) {
     return std::string(absl::StripPrefix(filename, kUserPrefix));
   } else {
     LOG(WARNING) << filename << " has no prefix. open from localfile";

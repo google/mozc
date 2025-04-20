@@ -43,7 +43,6 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "base/const.h"
@@ -184,10 +183,10 @@ class FallbackClientMutex : public IPCClientMutexBase {
 // "renderer" are expected.
 const wil::unique_mutex_nothrow &GetClientMutex(
     const absl::string_view ipc_name) {
-  if (absl::StartsWith(ipc_name, "session")) {
+  if (ipc_name.starts_with("session")) {
     return Singleton<ConverterClientMutex>::get()->mutex();
   }
-  if (absl::StartsWith(ipc_name, "renderer")) {
+  if (ipc_name.starts_with("renderer")) {
     return Singleton<RendererClientMutex>::get()->mutex();
   }
   LOG(WARNING) << "unexpected IPC name: " << ipc_name;

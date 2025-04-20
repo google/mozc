@@ -44,7 +44,6 @@
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -324,7 +323,7 @@ bool Table::IsLoopingEntry(const absl::string_view input,
   do {
     // If input is a prefix of key, it should be looping.
     // (ex. input="a", pending="abc").
-    if (absl::StartsWith(key, input)) {
+    if (key.starts_with(input)) {
       return true;
     }
 

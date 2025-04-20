@@ -34,7 +34,6 @@
 #include <string>
 
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/mac/mac_util.h"
@@ -49,7 +48,7 @@ const char kFileSchema[] = "file://";
 bool MacProcess::OpenBrowserForMac(const absl::string_view url) {
   bool success = false;
   NSURL *nsURL = nil;
-  if (absl::StartsWith(url, kFileSchema)) {
+  if (url.starts_with(kFileSchema)) {
     // for making URL from "file://...", use fileURLWithPath
     const std::string filepath(url.substr(strlen(kFileSchema)));
     NSString *nsStr = [[NSString alloc] initWithBytes:filepath.data()

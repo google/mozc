@@ -41,7 +41,6 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -741,8 +740,8 @@ TEST_F(DictionaryPredictionAggregatorTest, Regression3042706) {
   EXPECT_TRUE(REALTIME | aggregator.AggregatePredictionForRequest(
                              convreq, segments, &results));
   for (auto r : results) {
-    EXPECT_FALSE(absl::StartsWith(r.value, "京都"));
-    EXPECT_TRUE(absl::StartsWith(r.key, "だい"));
+    EXPECT_FALSE(r.value.starts_with("京都"));
+    EXPECT_TRUE(r.key.starts_with("だい"));
   }
 }
 
@@ -1079,7 +1078,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateUnigramCandidate) {
 
   for (const auto &result : results) {
     EXPECT_EQ(result.types, UNIGRAM);
-    EXPECT_TRUE(absl::StartsWith(result.key, kKey));
+    EXPECT_TRUE(result.key.starts_with(kKey));
   }
 }
 
@@ -1237,7 +1236,7 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileUnigram) {
 
   int prefix_count = 0;
   for (const auto &result : results) {
-    if (absl::StartsWith(result.value, "東京")) {
+    if (result.value.starts_with("東京")) {
       ++prefix_count;
     }
   }
@@ -1336,8 +1335,8 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateBigramPrediction) {
         EXPECT_TRUE(results[i].removed);
       }
       EXPECT_EQ(results[i].types, BIGRAM);
-      EXPECT_TRUE(absl::StartsWith(results[i].key, kHistoryKey));
-      EXPECT_TRUE(absl::StartsWith(results[i].value, kHistoryValue));
+      EXPECT_TRUE(results[i].key.starts_with(kHistoryKey));
+      EXPECT_TRUE(results[i].value.starts_with(kHistoryValue));
       // Not zero query
       EXPECT_FALSE(results[i].source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
@@ -1393,8 +1392,8 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
     EXPECT_FALSE(results.empty());
 
     for (const auto &result : results) {
-      EXPECT_TRUE(absl::StartsWith(result.key, kHistoryKey));
-      EXPECT_TRUE(absl::StartsWith(result.value, kHistoryValue));
+      EXPECT_TRUE(result.key.starts_with(kHistoryKey));
+      EXPECT_TRUE(result.value.starts_with(kHistoryValue));
       // Zero query
       EXPECT_FALSE(result.source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
@@ -1458,8 +1457,8 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
     EXPECT_FALSE(FindResultByValue(results, "ありがとうね"));
 
     for (const auto &result : results) {
-      EXPECT_TRUE(absl::StartsWith(result.key, kHistory));
-      EXPECT_TRUE(absl::StartsWith(result.value, kHistory));
+      EXPECT_TRUE(result.key.starts_with(kHistory));
+      EXPECT_TRUE(result.value.starts_with(kHistory));
       // Zero query
       EXPECT_FALSE(result.source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
@@ -2018,8 +2017,8 @@ TEST_F(DictionaryPredictionAggregatorTest, GetCandidateCutoffThreshold) {
 
 namespace {
 struct SimpleSuffixToken {
-  const char *key;
-  const char *value;
+  absl::string_view key;
+  absl::string_view value;
 };
 
 const SimpleSuffixToken kSuffixTokens[] = {{"いか", "以下"}};
@@ -2039,7 +2038,7 @@ class TestSuffixDictionary : public DictionaryInterface {
     Token token;
     for (size_t i = 0; i < std::size(kSuffixTokens); ++i) {
       const SimpleSuffixToken &suffix_token = kSuffixTokens[i];
-      if (!key.empty() && !absl::StartsWith(suffix_token.key, key)) {
+      if (!key.empty() && !suffix_token.key.starts_with(key)) {
         continue;
       }
       switch (callback->OnKey(suffix_token.key)) {
@@ -2206,7 +2205,7 @@ TEST_P(AggregateEnglishPredictionTest, AggregateEnglishPrediction) {
   std::set<std::string> values;
   for (const auto &result : results) {
     EXPECT_EQ(result.types, ENGLISH);
-    EXPECT_TRUE(absl::StartsWith(result.value, entry.expected_prefix))
+    EXPECT_TRUE(result.value.starts_with(entry.expected_prefix))
         << result.value << " doesn't start with " << entry.expected_prefix;
     values.insert(result.value);
   }

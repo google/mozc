@@ -264,7 +264,7 @@ bool UserDictionaryImporter::StringTextLineIterator::Next(std::string *line) {
       line->assign(next_line.data(), next_line.size());
       // Handles CR/LF issue.
       const absl::string_view possible_crlf = absl::ClippedSubstr(data_, i, 2);
-      position_ = possible_crlf.compare(crlf) == 0 ? (i + 2) : (i + 1);
+      position_ = possible_crlf == crlf ? (i + 2) : (i + 1);
       return true;
     }
   }
@@ -329,7 +329,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
     // TODO(yukawa): Use string::front once C++11 is enabled on Mac.
     if (((ime_type_ == MSIME || ime_type_ == ATOK) && line[0] == '!') ||
         ((ime_type_ == MOZC || ime_type_ == GBOARD_V1) && line[0] == '#') ||
-        (ime_type_ == KOTOERI && absl::StartsWith(line, "//"))) {
+        (ime_type_ == KOTOERI && line.starts_with("//"))) {
       continue;
     }
 
@@ -393,13 +393,13 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
   std::string lower = std::string(line);
   Util::LowerString(&lower);
 
-  if (absl::StartsWith(lower, "!microsoft ime")) {
+  if (lower.starts_with("!microsoft ime")) {
     return MSIME;
   }
 
   // Old ATOK format (!!DICUT10) is not supported for now
   // http://b/2455897
-  if (absl::StartsWith(lower, "!!dicut") && lower.size() > 7) {
+  if (lower.starts_with("!!dicut") && lower.size() > 7) {
     const std::string version(lower, 7, lower.size() - 7);
     if (NumberUtil::SimpleAtoi(version) >= 11) {
       return ATOK;
@@ -408,7 +408,7 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
     }
   }
 
-  if (absl::StartsWith(lower, "!!atok_tango_text_header")) {
+  if (lower.starts_with("!!atok_tango_text_header")) {
     return ATOK;
   }
 
@@ -417,7 +417,7 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
     return KOTOERI;
   }
 
-  if (absl::StartsWith(lower, "# gboard dictionary version:1")) {
+  if (lower.starts_with("# gboard dictionary version:1")) {
     return GBOARD_V1;
   }
 

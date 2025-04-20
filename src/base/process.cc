@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -91,8 +90,9 @@ namespace mozc {
 
 bool Process::OpenBrowser(zstring_view url) {
   // url must start with http:// or https:// or file://
-  if (!absl::StartsWith(url, "http://") && !absl::StartsWith(url, "https://") &&
-      !absl::StartsWith(url, "file://")) {
+  if (!url.view().starts_with("http://") &&
+      !url.view().starts_with("https://") &&
+      !url.view().starts_with("file://")) {
     return false;
   }
 
@@ -183,7 +183,7 @@ bool Process::SpawnProcess(zstring_view path, zstring_view arg, size_t *pid) {
   // Check if the "path" is an application or not.  If it's an
   // application, do a special process using mac_process.mm.
   if (S_ISDIR(statbuf.st_mode) && path.size() > 4 &&
-      absl::EndsWith(path, ".app")) {
+      path.view().starts_with(".app")) {
     // In mac launchApplication cannot accept any arguments.
     return MacProcess::OpenApplication(path);
   }

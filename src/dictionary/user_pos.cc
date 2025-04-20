@@ -39,7 +39,6 @@
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
@@ -118,8 +117,7 @@ bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
   tokens->resize(size);
 
   // TODO(taku)  Change the cost by seeing cost_type
-  const bool is_non_ja_locale =
-      !locale.empty() && !absl::StartsWith(locale, "ja");
+  const bool is_non_ja_locale = !locale.empty() && !locale.starts_with("ja");
 
   constexpr absl::string_view kIsolatedWordPos = "短縮よみ";
   constexpr absl::string_view kSuggestionOnlyPos = "サジェストのみ";
@@ -154,8 +152,7 @@ bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
 
     if (base_key_suffix.size() < key.size() &&
         base_value_suffix.size() < value.size() &&
-        absl::EndsWith(key, base_key_suffix) &&
-        absl::EndsWith(value, base_value_suffix)) {
+        key.ends_with(base_key_suffix) && value.ends_with(base_value_suffix)) {
       key_stem.remove_suffix(base_key_suffix.size());
       value_stem.remove_suffix(base_value_suffix.size());
     }

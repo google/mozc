@@ -36,7 +36,6 @@
 #include <utility>
 
 #include "absl/log/check.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
@@ -164,7 +163,7 @@ UsageRewriter::LookupUnmatchedUsageHeuristically(
   }
   // Check result key part is a prefix of the content_key.
   const absl::string_view key = string_array_[itr->second.key_index()];
-  if (absl::StartsWith(candidate.content_key, key)) {
+  if (candidate.content_key.starts_with(key)) {
     return itr->second;
   }
 

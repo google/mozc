@@ -35,7 +35,6 @@
 #include <string>
 
 #include "absl/log/check.h"
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -65,7 +64,7 @@ bool HasEmoticon(const Segments &segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
-    if (absl::StartsWith(candidate.description, "顔文字")) {
+    if (candidate.description.starts_with("顔文字")) {
       return true;
     }
   }

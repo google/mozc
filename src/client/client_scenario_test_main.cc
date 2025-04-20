@@ -44,7 +44,6 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
-#include "absl/strings/match.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "base/file_stream.h"
@@ -82,7 +81,7 @@ bool ReadKeys(std::istream *input, std::vector<commands::KeyEvent> *keys,
     if (line.size() > 1 && line[0] == '#' && line[1] == '#') {
       continue;
     }
-    if (absl::StartsWith(line, ">> ")) {
+    if (line.starts_with(">> ")) {
       // Answer line
       answer->assign(line, 3, line.size() - 3);
       continue;

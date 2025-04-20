@@ -33,7 +33,6 @@
 #include <iterator>
 #include <memory>
 #include <string>
-#include <tuple>
 #include <utility>
 
 #include "absl/algorithm/container.h"
@@ -41,15 +40,14 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/char_chunk.h"
 #include "composer/composition_input.h"
-#include "composer/transliterators.h"
 #include "composer/table.h"
+#include "composer/transliterators.h"
 
 namespace mozc {
 namespace composer {
@@ -456,7 +454,7 @@ bool Composition::IsToggleable(size_t position) const {
   if (it == chunks_.end()) {
     return false;
   }
-  return absl::StartsWith(it->pending(), table_->ParseSpecialKey("{?}"));
+  return it->pending().starts_with(table_->ParseSpecialKey("{?}"));
 }
 
 }  // namespace composer

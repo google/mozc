@@ -41,7 +41,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
@@ -49,10 +48,8 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/strings/assign.h"
@@ -453,7 +450,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
     if (user_pos_token.has_attribute(UserPos::Token::SUGGESTION_ONLY)) {
       continue;
     }
-    if (!absl::StartsWith(key, user_pos_token.key)) {
+    if (!key.starts_with(user_pos_token.key)) {
       continue;
     }
     switch (callback->OnKey(user_pos_token.key)) {

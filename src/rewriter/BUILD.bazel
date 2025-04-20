@@ -793,7 +793,6 @@ mozc_cc_library(
         ":rewriter_interface",
         "//base:util",
         "//composer",
-        "//converter:converter_interface",
         "//converter:segments",
         "//request:conversion_request",
         "@com_google_absl//absl/algorithm:container",

@@ -142,7 +142,6 @@ mozc_cc_test(
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_mock",
         "//engine:modules",
-        "//engine:supplemental_model_interface",
         "//engine:supplemental_model_mock",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",

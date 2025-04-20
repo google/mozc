@@ -602,11 +602,7 @@ mozc_cc_test(
         ":file_util_mock",
         ":system_util",
         "//testing:gunit_main",
-    ] + mozc_select(
-        android = [
-            "@com_google_absl//absl/strings",
-        ],
-    ),
+    ],
 )
 
 mozc_cc_library(

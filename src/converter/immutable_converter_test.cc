@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "absl/log/check.h"
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "converter/lattice.h"
@@ -500,7 +499,7 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &cand = segments.segment(0).candidate(i);
     if (cand.key.size() < segment_key.size() &&
-        absl::StartsWith(segment_key, cand.key)) {
+        segment_key.starts_with(cand.key)) {
       includes_only_first = true;
       break;
     }
