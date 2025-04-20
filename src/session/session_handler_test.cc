@@ -75,7 +75,6 @@ namespace mozc {
 namespace {
 
 using ::mozc::session::testing::SessionHandlerTestBase;
-using ::testing::_;
 using ::testing::Return;
 
 EngineReloadResponse::Status SendMockEngineReloadRequest(

@@ -50,7 +50,6 @@
 namespace mozc {
 namespace session {
 
-using ::mozc::composer::Composer;
 using ::mozc::engine::EngineConverter;
 using ::testing::_;
 using ::testing::DoAll;
