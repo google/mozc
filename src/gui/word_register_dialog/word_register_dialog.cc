@@ -273,7 +273,7 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
   const std::string key = ReadinglineEdit->text().toStdString();
   const std::string value = WordlineEdit->text().toStdString();
   UserDictionary::PosType pos = UserDictionaryUtil::ToPosType(
-      PartOfSpeechcomboBox->currentText().toStdString().c_str());
+      PartOfSpeechcomboBox->currentText().toStdString());
 
   if (key.empty()) {
     return EMPTY_KEY;
