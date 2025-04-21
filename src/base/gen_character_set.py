@@ -35,13 +35,12 @@ import re
 import sys
 
 
-# We use 2-bits bitmap data for JISX0208, JISX0212 and JISX0213 clustering.
+# We use 2-bits bitmap data for JISX0208 and JISX0212 clustering.
 # For remaining categories (i.e. ASCII, CP932, JISX0201 and UNICODE_ONLY),
 # we introduce heuristics to check them and use '00' bits for all of them.
 CATEGORY_BITMAP = {
     'JISX0208': 1,
     'JISX0212': 2,
-    'JISX0213': 3,
 }
 
 
@@ -59,11 +58,6 @@ class CodePointCategorizer:
   """Categorizer of ucs4 code points."""
 
   _UCS2_PATTERN = re.compile(r'^0x([0-9A-F]{4})')
-
-  # UCS4 pattern supports only JIS X 0213.
-  # Note that Some JIS X 0213 characters are described as 'U+xxxx+xxxx',
-  # and this pattern ignores latter +xxxx part intentionally.
-  _UCS4_PATTERN = re.compile(r'^U\+([0-9A-F]+)')
 
   def __init__(self, jisx0201file, jisx0208file):
     self._jisx0201 = self._LoadJISX0201(jisx0201file)

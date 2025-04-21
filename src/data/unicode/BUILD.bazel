@@ -30,5 +30,4 @@
 exports_files([
     "JIS0201.TXT",
     "JIS0208.TXT",
-    "jisx0213-2004-std.txt",
 ])
