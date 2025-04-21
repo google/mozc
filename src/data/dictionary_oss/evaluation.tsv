@@ -320,7 +320,7 @@ OK:	よねずけんし	米津玄師	Conversion Expected	米津玄師	2.30.5490
 OK:	そきゃく	阻却	Conversion Expected 99	阻却	2.30.5520
 FAILED:	そきゃく	阻却	Conversion Expected 999	阻卻	2.30.5520
 OK:	いほうせいがそきゃくされる	違法性が阻却される	Conversion Expected	違法性が阻却される	2.30.5520
-FAILED:	かいほう	解放	Conversion Expected 99	開封	2.30.5618
+OK:	かいほう	解放	Conversion Expected 99	開封	2.31.5712
 OK:	いんきゃ	陰キャ	Conversion Expected 9	陰キャ	2.30.5618
 OK:	あおぞらぎんこう	あおぞら銀行	Conversion Expected	あおぞら銀行	2.30.5520
 OK:	ゆうちょぎんこう	ゆうちょ銀行	Conversion Expected	ゆうちょ銀行	2.30.5618
