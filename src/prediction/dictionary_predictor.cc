@@ -241,26 +241,6 @@ DictionaryPredictor::DictionaryPredictor(
       predictor_name_(std::move(predictor_name)),
       modules_(modules) {}
 
-void DictionaryPredictor::Finish(const ConversionRequest &request,
-                                 Segments *segments) {
-  if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
-    // Do nothing for REVERSE_CONVERSION.
-    return;
-  }
-
-  const Segment &segment = segments->conversion_segment(0);
-  if (segment.candidates_size() < 1) {
-    MOZC_VLOG(2) << "candidates size < 1";
-    return;
-  }
-
-  const Segment::Candidate &candidate = segment.candidate(0);
-  if (segment.segment_type() != Segment::FIXED_VALUE) {
-    MOZC_VLOG(2) << "segment is not FIXED_VALUE" << candidate.value;
-    return;
-  }
-}
-
 bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
                                             Segments *segments) const {
   if (segments == nullptr) {

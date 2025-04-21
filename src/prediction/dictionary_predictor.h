@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "absl/base/attributes.h"
-#include "absl/base/nullability.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
@@ -90,7 +89,7 @@ class DictionaryPredictor : public PredictorInterface {
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override;
 
-  void Finish(const ConversionRequest &request, Segments *segments) override;
+  void Finish(const ConversionRequest &request, Segments *segments) override {}
 
   absl::string_view GetPredictorName() const override {
     return predictor_name_;
