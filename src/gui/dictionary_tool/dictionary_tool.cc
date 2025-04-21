@@ -1178,7 +1178,7 @@ void DictionaryTool::MoveTo(int dictionary_row) {
         // TODO(yuryu): remove c_str() after changing ToPosType to take
         // absl::string_view.
         entry->set_pos(UserDictionaryUtil::ToPosType(
-            dic_content_->item(row, 2)->text().toStdString().c_str()));
+            dic_content_->item(row, 2)->text().toStdString()));
         entry->set_comment(dic_content_->item(row, 3)->text().toStdString());
         UserDictionaryUtil::SanitizeEntry(entry);
         progress->setValue(progress_index);
@@ -1411,7 +1411,7 @@ void DictionaryTool::SyncToStorage() {
     // TODO(yuryu): remove c_str() after changing ToPosType to take
     // absl::string_view.
     entry->set_pos(UserDictionaryUtil::ToPosType(
-        dic_content_->item(i, 2)->text().toStdString().c_str()));
+        dic_content_->item(i, 2)->text().toStdString()));
     entry->set_comment(dic_content_->item(i, 3)->text().toStdString());
     UserDictionaryUtil::SanitizeEntry(entry);
   }
