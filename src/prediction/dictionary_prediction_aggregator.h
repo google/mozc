@@ -67,12 +67,11 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const engine::Modules &modules, const ConverterInterface &converter,
       const ImmutableConverterInterface &immutable_converter);
 
-  std::vector<Result> AggregateResults(const ConversionRequest &request,
-                                       const Segments &segments) const override;
+  std::vector<Result> AggregateResults(
+      const ConversionRequest &request) const override;
 
   std::vector<Result> AggregateTypingCorrectedResults(
-      const ConversionRequest &request,
-      const Segments &segments) const override;
+      const ConversionRequest &request) const override;
 
  private:
   class PredictiveLookupCallback;
@@ -81,8 +80,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   class HandwritingLookupCallback;
 
   using AggregateUnigramFn = PredictionType (DictionaryPredictionAggregator::*)(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const;
+      const ConversionRequest &request, std::vector<Result> *results) const;
 
   struct UnigramConfig {
     AggregateUnigramFn unigram_fn;
@@ -102,13 +100,11 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // Returns the bitfield that indicates what prediction subroutines
   // were used.  NO_PREDICTION means that no prediction was made.
   PredictionTypes AggregatePredictionForTesting(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const;
+      const ConversionRequest &request, std::vector<Result> *results) const;
 
   PredictionTypes AggregatePrediction(const ConversionRequest &request,
                                       size_t realtime_max_size,
                                       const UnigramConfig &unigram_config,
-                                      const Segments &segments,
                                       std::vector<Result> *results) const;
 
   // Looks up the given range and appends zero query candidate list for |key|
@@ -123,22 +119,18 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       std::vector<Result> *results);
 
   PredictionTypes AggregatePredictionForZeroQuery(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const;
+      const ConversionRequest &request, std::vector<Result> *results) const;
 
   bool AggregateNumberZeroQueryPrediction(const ConversionRequest &request,
-                                          const Segments &segments,
                                           std::vector<Result> *results) const;
 
   bool AggregateZeroQueryPrediction(const ConversionRequest &request,
-                                    const Segments &segments,
                                     std::vector<Result> *results) const;
 
   // Adds prediction results from history key and value.
   void AddBigramResultsFromHistory(absl::string_view history_key,
                                    absl::string_view history_value,
                                    const ConversionRequest &request,
-                                   const Segments &segments,
                                    Segment::Candidate::SourceInfo source_info,
                                    std::vector<Result> *results) const;
 
@@ -152,17 +144,16 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   static void GetPredictiveResults(
       const dictionary::DictionaryInterface &dictionary,
       absl::string_view history_key, const ConversionRequest &request,
-      const Segments &segments, PredictionTypes types, size_t lookup_limit,
+      PredictionTypes types, size_t lookup_limit,
       Segment::Candidate::SourceInfo source_info, int zip_code_id,
       int unknown_id, std::vector<Result> *results);
 
   void GetPredictiveResultsForBigram(
       const dictionary::DictionaryInterface &dictionary,
       absl::string_view history_key, absl::string_view history_value,
-      const ConversionRequest &request, const Segments &segments,
-      PredictionTypes types, size_t lookup_limit,
-      Segment::Candidate::SourceInfo source_info, int unknown_id,
-      std::vector<Result> *results) const;
+      const ConversionRequest &request, PredictionTypes types,
+      size_t lookup_limit, Segment::Candidate::SourceInfo source_info,
+      int unknown_id, std::vector<Result> *results) const;
 
   // Performs a custom look up for English words where case-conversion might be
   // applied to lookup key and/or output results.
@@ -176,14 +167,13 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // TODO(hidehiko): add Config and Request instances into the arguments
   //   to represent the dependency explicitly.
   static bool ShouldAggregateRealTimeConversionResults(
-      const ConversionRequest &request, const Segments &segments);
+      const ConversionRequest &request);
 
   // Returns true if key consistes of '0'-'9' or '-'
   static bool IsZipCodeRequest(absl::string_view key);
 
   // Returns max size of realtime candidates.
   size_t GetRealtimeCandidateMaxSize(const ConversionRequest &request,
-                                     const Segments &segments,
                                      bool mixed_conversion) const;
 
   // Returns config to gather unigram candidates.
@@ -200,39 +190,32 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // Generates a top conversion result from |converter_| and adds its result to
   // |results|.
   bool PushBackTopConversionResult(const ConversionRequest &request,
-                                   const Segments &segments,
                                    std::vector<Result> *results) const;
 
   // Aggregate* methods aggregate the candidates with different resources
   // and algorithms.
   void AggregateRealtimeConversion(
       const ConversionRequest &request, size_t realtime_candidates_size,
-      bool insert_realtime_top_from_actual_converter, const Segments &segments,
+      bool insert_realtime_top_from_actual_converter,
       std::vector<Result> *results) const;
 
   void AggregateBigramPrediction(const ConversionRequest &request,
-                                 const Segments &segments,
                                  Segment::Candidate::SourceInfo source_info,
                                  std::vector<Result> *results) const;
 
   void AggregateSuffixPrediction(const ConversionRequest &request,
-                                 const Segments &segments,
                                  std::vector<Result> *results) const;
 
   void AggregateZeroQuerySuffixPrediction(const ConversionRequest &request,
-                                          const Segments &segments,
                                           std::vector<Result> *results) const;
 
   void AggregateEnglishPrediction(const ConversionRequest &request,
-                                  const Segments &segments,
                                   std::vector<Result> *results) const;
 
   void AggregatePrefixCandidates(const ConversionRequest &request,
-                                 const Segments &segments,
                                  std::vector<Result> *results) const;
 
   bool AggregateNumberCandidates(const ConversionRequest &request,
-                                 const Segments &segments,
                                  std::vector<Result> *results) const;
 
   bool AggregateNumberCandidates(absl::string_view input_key,
@@ -241,25 +224,20 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // Note that this look up is done with raw input string rather than query
   // string from composer.  This is helpful to implement language aware input.
   void AggregateEnglishPredictionUsingRawInput(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const;
+      const ConversionRequest &request, std::vector<Result> *results) const;
 
   void AggregateTypingCorrectedPrediction(const ConversionRequest &request,
-                                          const Segments &segments,
                                           PredictionTypes base_selected_types,
                                           std::vector<Result> *results) const;
 
   PredictionType AggregateUnigramCandidate(const ConversionRequest &request,
-                                           const Segments &segments,
                                            std::vector<Result> *results) const;
 
   PredictionType AggregateUnigramCandidateForMixedConversion(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const;
+      const ConversionRequest &request, std::vector<Result> *results) const;
 
   PredictionType AggregateUnigramCandidateForLatinInput(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const;
+      const ConversionRequest &request, std::vector<Result> *results) const;
 
   // Generates `HandwritingQueryInfo` for the given composition event.
   std::optional<HandwritingQueryInfo> GenerateQueryForHandwriting(
@@ -270,16 +248,14 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // Generates prediction candidates using composition events in composer and
   // appends to `results`.
   PredictionType AggregateUnigramCandidateForHandwriting(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const;
+      const ConversionRequest &request, std::vector<Result> *results) const;
 
   static void LookupUnigramCandidateForMixedConversion(
       const dictionary::DictionaryInterface &dictionary,
-      const ConversionRequest &request, const Segments &segments,
-      int zip_code_id, int unknown_id, std::vector<Result> *results);
+      const ConversionRequest &request, int zip_code_id, int unknown_id,
+      std::vector<Result> *results);
 
   void MaybePopulateTypingCorrectionPenalty(const ConversionRequest &request,
-                                            const Segments &segments,
                                             std::vector<Result> *results) const;
 
   // Test peer to access private methods

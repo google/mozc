@@ -35,6 +35,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -146,23 +147,6 @@ absl::string_view GetCandidateKey(const Result &result
   return candidate_key;
 }
 
-// Gets history key/value.
-// Returns empty strings if there's no history segment in the segments.
-KeyValueView GetHistoryKeyAndValue(
-    const Segments &segments ABSL_ATTRIBUTE_LIFETIME_BOUND) {
-  if (segments.history_segments_size() == 0) {
-    return {};
-  }
-
-  const Segment &history_segment =
-      segments.history_segment(segments.history_segments_size() - 1);
-  if (history_segment.candidates_size() == 0) {
-    return {};
-  }
-
-  return {history_segment.candidate(0).key, history_segment.candidate(0).value};
-}
-
 template <typename... Args>
 void AppendDescription(Segment::Candidate &candidate, Args &&...args) {
   absl::StrAppend(&candidate.description,
@@ -197,20 +181,6 @@ void MaybeFixRealtimeTopCost(absl::string_view input_key,
   if (realtime_top_result != nullptr && realtime_cost_min != kInfinity) {
     realtime_top_result->cost = std::max(0, realtime_cost_min - 10);
   }
-}
-
-// Returns rid of the last history candidate.
-// 0 (BOS) is returned if there's no history candidate.
-int GetHistoryRid(const Segments &segments) {
-  if (segments.history_segments_size() == 0) {
-    return 0;
-  }
-  const Segment &history_segment =
-      segments.history_segment(segments.history_segments_size() - 1);
-  if (history_segment.candidates_size() == 0) {
-    return 0;
-  }
-  return history_segment.candidate(0).rid;
 }
 
 }  // namespace
@@ -255,22 +225,20 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  std::vector<Result> results =
-      aggregator_->AggregateResults(request, *segments);
-  RewriteResultsForPrediction(request, *segments, &results);
+  std::vector<Result> results = aggregator_->AggregateResults(request);
+  RewriteResultsForPrediction(request, &results);
 
   // Explicitly populate the typing corrected results.
-  MaybePopulateTypingCorrectedResults(request, *segments, &results);
+  MaybePopulateTypingCorrectedResults(request, &results);
 
-  MaybeRescoreResults(request, *segments, absl::MakeSpan(results));
+  MaybeRescoreResults(request, absl::MakeSpan(results));
 
   // `results` are no longer used.
   return AddPredictionToCandidates(request, segments, std::move(results));
 }
 
 void DictionaryPredictor::RewriteResultsForPrediction(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   if (results->empty()) {
     return;
   }
@@ -281,32 +249,31 @@ void DictionaryPredictor::RewriteResultsForPrediction(
   const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
 
   if (is_mixed_conversion) {
-    SetPredictionCostForMixedConversion(request, segments, results);
+    SetPredictionCostForMixedConversion(request, results);
   } else {
-    SetPredictionCost(request.request_type(), segments, results);
+    SetPredictionCost(request, results);
   }
 
   if (!is_mixed_conversion) {
-    const size_t input_key_len = segments.conversion_segment(0).key_len();
+    const size_t input_key_len = Util::CharsLen(request.converter_key());
     RemoveMissSpelledCandidates(input_key_len, results);
   }
 }
 
 void DictionaryPredictor::MaybePopulateTypingCorrectedResults(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   if (!IsTypingCorrectionEnabled(request) || results->empty()) {
     return;
   }
 
   constexpr int kMinTypingCorrectionKeyLen = 3;
-  if (segments.conversion_segment(0).key_len() < kMinTypingCorrectionKeyLen) {
+  if (Util::CharsLen(request.converter_key()) < kMinTypingCorrectionKeyLen) {
     return;
   }
 
   std::vector<Result> typing_corrected_results =
-      aggregator_->AggregateTypingCorrectedResults(request, segments);
-  RewriteResultsForPrediction(request, segments, &typing_corrected_results);
+      aggregator_->AggregateTypingCorrectedResults(request);
+  RewriteResultsForPrediction(request, &typing_corrected_results);
 
   for (auto &result : typing_corrected_results) {
     results->emplace_back(std::move(result));
@@ -318,7 +285,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     std::vector<Result> results) const {
   DCHECK(segments);
 
-  const KeyValueView history = GetHistoryKeyAndValue(*segments);
+  const std::string history_key = request.converter_history_key(1);
+  const std::string history_value = request.converter_history_value(1);
 
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
@@ -334,8 +302,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   const size_t max_candidates_size = std::min(
       request.max_dictionary_prediction_candidates_size(), results.size());
 
-  ResultFilter filter(request, *segments, pos_matcher_, connector_,
-                      suggestion_filter_);
+  ResultFilter filter(request, pos_matcher_, connector_, suggestion_filter_);
 
   // TODO(taku): Sets more advanced debug info depending on the verbose_level.
   absl::flat_hash_map<std::string, int32_t> merged_types;
@@ -351,7 +318,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   auto add_debug_candidate = [&](Result result, const absl::string_view log) {
     absl::StrAppend(&result.log, log);
     Segment::Candidate candidate;
-    FillCandidate(request, result, GetCandidateKeyAndValue(result, history),
+    FillCandidate(request, result,
+                  GetCandidateKeyAndValue(result, {history_key, history_value}),
                   merged_types, &candidate);
     segment->removed_candidates_for_debug_.push_back(std::move(candidate));
   };
@@ -380,8 +348,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
       break;
     }
 
-    if (i == 0 && (prev_top_result = MaybeGetPreviousTopResult(
-                       result, request, *segments)) != nullptr) {
+    if (i == 0 && (prev_top_result =
+                       MaybeGetPreviousTopResult(result, request)) != nullptr) {
       final_results.emplace_back(*prev_top_result);
     }
 
@@ -394,11 +362,12 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     final_results.emplace_back(std::move(result));
   }
 
-  MaybeApplyPostCorrection(request, *segments, final_results);
+  MaybeApplyPostCorrection(request, final_results);
 
   // Fill segments from final_results_ptrs.
   for (const Result &result : final_results) {
-    FillCandidate(request, result, GetCandidateKeyAndValue(result, history),
+    FillCandidate(request, result,
+                  GetCandidateKeyAndValue(result, {history_key, history_value}),
                   merged_types, segment->push_back_candidate());
   }
 
@@ -411,8 +380,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 }
 
 void DictionaryPredictor::MaybeApplyPostCorrection(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> &results) const {
+    const ConversionRequest &request, std::vector<Result> &results) const {
   // b/363902660:
   // Stop applying post correction when typing correction is disabled.
   // We may want to use other conditions if we want to enable post correction
@@ -488,10 +456,11 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
 }
 
 DictionaryPredictor::ResultFilter::ResultFilter(
-    const ConversionRequest &request, const Segments &segments,
-    dictionary::PosMatcher pos_matcher, const Connector &connector,
-    const SuggestionFilter &suggestion_filter)
-    : input_key_(segments.conversion_segment(0).key()),
+    const ConversionRequest &request, dictionary::PosMatcher pos_matcher,
+    const Connector &connector, const SuggestionFilter &suggestion_filter)
+    : input_key_(request.converter_key()),
+      history_key_(request.converter_history_key(1)),
+      history_value_(request.converter_history_value(1)),
       input_key_len_(Util::CharsLen(input_key_)),
       pos_matcher_(pos_matcher),
       connector_(connector),
@@ -505,17 +474,8 @@ DictionaryPredictor::ResultFilter::ResultFilter(
           request.request()
               .decoder_experiment_params()
               .suffix_nwp_transition_cost_threshold()),
-      history_rid_(GetHistoryRid(segments)) {
-  const KeyValueView history = GetHistoryKeyAndValue(segments);
-  strings::Assign(history_key_, history.key);
-  strings::Assign(history_value_, history.value);
-  exact_bigram_key_ = absl::StrCat(history.key, input_key_);
-
-  suffix_count_ = 0;
-  predictive_count_ = 0;
-  realtime_count_ = 0;
-  prefix_tc_count_ = 0;
-  tc_count_ = 0;
+      history_rid_(request.converter_history_rid()) {
+  exact_bigram_key_ = absl::StrCat(history_key_, input_key_);
 }
 
 bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
@@ -800,15 +760,15 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
 }
 
 void DictionaryPredictor::SetPredictionCost(
-    ConversionRequest::RequestType request_type, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
 
-  absl::string_view input_key = segments.conversion_segment(0).key();
-  const KeyValueView history = GetHistoryKeyAndValue(segments);
-  const int history_rid = GetHistoryRid(segments);
-  const std::string bigram_key = absl::StrCat(history.key, history.key);
-  const bool is_suggestion = (request_type == ConversionRequest::SUGGESTION);
+  absl::string_view input_key = request.converter_key();
+  const int history_rid = request.converter_history_rid();
+  const std::string bigram_key =
+      absl::StrCat(request.converter_history_key(1), input_key);
+  const bool is_suggestion =
+      (request.request_type() == ConversionRequest::SUGGESTION);
 
   // use the same scoring function for both unigram/bigram.
   // Bigram will be boosted because we pass the previous
@@ -876,32 +836,29 @@ void DictionaryPredictor::SetPredictionCost(
 }
 
 void DictionaryPredictor::SetPredictionCostForMixedConversion(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
 
   // ranking for mobile
-  const int history_rid = GetHistoryRid(segments);  // 0 (BOS) is default
-  int prev_cost = 0;  // cost of the last history candidate.
+  const int history_rid =
+      request.converter_history_rid();  // 0 (BOS) is default
 
-  if (segments.history_segments_size() > 0) {
-    const Segment &history_segment =
-        segments.history_segment(segments.history_segments_size() - 1);
-    if (history_segment.candidates_size() > 0) {
-      prev_cost = history_segment.candidate(0).cost;
-      if (prev_cost == 0) {
-        // if prev_cost is set to be 0 for some reason, use default cost.
-        prev_cost = 5000;
-      }
+  int prev_cost = 0;  // cost of the last history candidate.
+  if (std::optional<int> prev_cost_opt = request.converter_history_cost();
+      prev_cost_opt) {
+    prev_cost = *prev_cost_opt;
+    if (prev_cost == 0) {
+      // if prev_cost is set to be 0 for some reason, use default cost.
+      prev_cost = 5000;
     }
   }
 
   absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
-  absl::string_view input_key = segments.conversion_segment(0).key();
+  absl::string_view input_key = request.converter_key();
   const int single_kanji_offset = CalculateSingleKanjiCostOffset(
       request, history_rid, input_key, *results, &prefix_penalty_cache);
 
-  const KeyValueView history = GetHistoryKeyAndValue(segments);
+  const std::string history_key = request.converter_history_key(1);
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, history_rid);
@@ -984,9 +941,9 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // - We want to show candidates as many as possible in the limited
     //   candidates area.
     const size_t candidate_lookup_key_len = Util::CharsLen(
-        GetCandidateOriginalLookupKey(input_key, result, history.key));
+        GetCandidateOriginalLookupKey(input_key, result, history_key));
     const size_t candidate_key_len =
-        Util::CharsLen(GetCandidateKey(result, history.key));
+        Util::CharsLen(GetCandidateKey(result, history_key));
     if (!(result.types & PredictionType::SUFFIX) &&
         candidate_key_len > candidate_lookup_key_len) {
       const size_t predicted_key_len =
@@ -1168,6 +1125,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   const ConversionRequest req = ConversionRequestBuilder()
                                     .SetConversionRequestView(request)
                                     .SetOptions(std::move(options))
+                                    .SetHistorySegmentsView(tmp_segments)
                                     .Build();
 
   if (immutable_converter.ConvertForRequest(req, &tmp_segments) &&
@@ -1190,8 +1148,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
 }
 
 void DictionaryPredictor::MaybeRescoreResults(
-    const ConversionRequest &request, const Segments &segments,
-    absl::Span<Result> results) const {
+    const ConversionRequest &request, absl::Span<Result> results) const {
   if (request_util::IsHandwriting(request)) {
     // We want to fix the first candidate for handwriting request.
     return;
@@ -1246,19 +1203,18 @@ void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
 }
 
 std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
-    const Result &current_top_result, const ConversionRequest &request,
-    const Segments &segments) const {
+    const Result &current_top_result, const ConversionRequest &request) const {
   const int32_t max_diff = request.request()
                                .decoder_experiment_params()
                                .candidate_consistency_cost_max_diff();
-  if (max_diff == 0 || segments.conversion_segments_size() <= 0) {
+  if (max_diff == 0) {
     return nullptr;
   }
 
   std::shared_ptr<Result> prev_top_result = prev_top_result_.load();
 
   // Updates the key length.
-  const int cur_top_key_length = segments.conversion_segment(0).key().size();
+  const int cur_top_key_length = request.converter_key().size();
   const int prev_top_key_length = prev_top_key_length_.exchange(
       cur_top_key_length);  // returns the old value.
 

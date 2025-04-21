@@ -98,7 +98,7 @@ class DictionaryPredictor : public PredictorInterface {
  private:
   class ResultFilter {
    public:
-    ResultFilter(const ConversionRequest &request, const Segments &segments,
+    ResultFilter(const ConversionRequest &request,
                  dictionary::PosMatcher pos_matcher,
                  const Connector &connector ABSL_ATTRIBUTE_LIFETIME_BOUND,
                  const SuggestionFilter &suggestion_filter
@@ -111,6 +111,8 @@ class DictionaryPredictor : public PredictorInterface {
                            std::string *log_message);
 
     const std::string input_key_;
+    const std::string history_key_;
+    const std::string history_value_;
     const size_t input_key_len_;
     const dictionary::PosMatcher pos_matcher_;
     const Connector &connector_;
@@ -122,15 +124,13 @@ class DictionaryPredictor : public PredictorInterface {
     const int suffix_nwp_transition_cost_threshold_;
     const int history_rid_ = 0;
 
-    std::string history_key_;
-    std::string history_value_;
     std::string exact_bigram_key_;
 
-    int suffix_count_;
-    int predictive_count_;
-    int realtime_count_;
-    int prefix_tc_count_;
-    int tc_count_;
+    int suffix_count_ = 0;
+    int predictive_count_ = 0;
+    int realtime_count_ = 0;
+    int prefix_tc_count_ = 0;
+    int tc_count_ = 0;
 
     // Seen set for dup value check.
     absl::flat_hash_set<std::string> seen_;
@@ -222,21 +222,18 @@ class DictionaryPredictor : public PredictorInterface {
 
   // Populate conversion costs to `results`.
   void RewriteResultsForPrediction(const ConversionRequest &request,
-                                   const Segments &segments,
                                    std::vector<Result> *results) const;
 
   // Scoring function which takes prediction bounus into account.
   // It basically reranks the candidate by lang_prob * (1 + remain_len).
   // This algorithm is mainly used for desktop.
-  void SetPredictionCost(ConversionRequest::RequestType request_type,
-                         const Segments &segments,
+  void SetPredictionCost(const ConversionRequest &request,
                          std::vector<Result> *results) const;
 
   // Scoring function for mixed conversion.
   // In the mixed conversion we basically use the pure language model-based
   // scoring function. This algorithm is mainly used for mobile.
   void SetPredictionCostForMixedConversion(const ConversionRequest &request,
-                                           const Segments &segments,
                                            std::vector<Result> *results) const;
 
   // Returns the cost offset for SINGLE_KANJI results.
@@ -270,21 +267,17 @@ class DictionaryPredictor : public PredictorInterface {
 
   // Populates typing corrected results to `results`.
   void MaybePopulateTypingCorrectedResults(const ConversionRequest &request,
-                                           const Segments &segments,
                                            std::vector<Result> *results) const;
 
   void MaybeApplyPostCorrection(const ConversionRequest &request,
-                                const Segments &segments,
                                 std::vector<Result> &results) const;
 
   void MaybeRescoreResults(const ConversionRequest &request,
-                           const Segments &segments,
                            absl::Span<Result> results) const;
   static void AddRescoringDebugDescription(Segments *segments);
 
   std::shared_ptr<Result> MaybeGetPreviousTopResult(
-      const Result &current_top_result, const ConversionRequest &request,
-      const Segments &segments) const;
+      const Result &current_top_result, const ConversionRequest &request) const;
 
   // Test peer to access private methods
   friend class DictionaryPredictorTestPeer;

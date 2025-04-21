@@ -81,7 +81,7 @@ SingleKanjiPredictionAggregator::SingleKanjiPredictionAggregator(
 SingleKanjiPredictionAggregator::~SingleKanjiPredictionAggregator() = default;
 
 std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
-    const ConversionRequest &request, const Segments &segments) const {
+    const ConversionRequest &request) const {
   std::vector<Result> results;
   constexpr int kMinSingleKanjiSize = 5;
 

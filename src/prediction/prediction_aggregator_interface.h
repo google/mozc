@@ -32,7 +32,6 @@
 
 #include <vector>
 
-#include "converter/segments.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 
@@ -49,12 +48,12 @@ class PredictionAggregatorInterface {
 
   // Returns the prediction result entries for the `request` and `segments`.
   virtual std::vector<Result> AggregateResults(
-      const ConversionRequest &request, const Segments &segments) const = 0;
+      const ConversionRequest &request) const = 0;
 
   // Returns the typing corrected result entries for the `request` and
   // `segments`.
   virtual std::vector<Result> AggregateTypingCorrectedResults(
-      const ConversionRequest &request, const Segments &segments) const {
+      const ConversionRequest &request) const {
     return {};
   }
 

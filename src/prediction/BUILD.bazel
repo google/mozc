@@ -232,7 +232,6 @@ mozc_cc_library(
     hdrs = ["prediction_aggregator_interface.h"],
     deps = [
         ":result",
-        "//converter:segments",
         "//request:conversion_request",
     ],
 )

@@ -149,6 +149,8 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
     converter::Candidate *c = seg->add_candidate();
     c->key = absl::StrCat("k", i);
     c->value = absl::StrCat("v", i);
+    c->rid = i + 10;
+    c->cost = i + 100;
   }
 
   {
@@ -165,6 +167,9 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
     EXPECT_EQ(convreq.converter_history_value(2), "v1v2");
     EXPECT_EQ(convreq.converter_history_key(1), "k2");
     EXPECT_EQ(convreq.converter_history_value(1), "v2");
+
+    EXPECT_EQ(convreq.converter_history_rid(), 12);
+    EXPECT_EQ(*convreq.converter_history_cost(), 102);
   }
 
   {
@@ -179,6 +184,9 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
     EXPECT_EQ(convreq.converter_history_value(2), "");
     EXPECT_EQ(convreq.converter_history_key(1), "");
     EXPECT_EQ(convreq.converter_history_value(1), "");
+
+    EXPECT_EQ(convreq.converter_history_rid(), 0);
+    EXPECT_FALSE(convreq.converter_history_cost());
   }
 }
 

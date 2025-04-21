@@ -38,7 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/nullability.h"
 #include "absl/log/check.h"
 #include "absl/memory/memory.h"
 #include "absl/random/random.h"
@@ -121,10 +120,8 @@ class DictionaryPredictorTestPeer {
   }
 
   void SetPredictionCostForMixedConversion(const ConversionRequest &request,
-                                           const Segments &segments,
                                            std::vector<Result> *results) const {
-    return predictor_.SetPredictionCostForMixedConversion(request, segments,
-                                                          results);
+    return predictor_.SetPredictionCostForMixedConversion(request, results);
   }
 
   bool AddPredictionToCandidates(const ConversionRequest &request,
@@ -134,10 +131,8 @@ class DictionaryPredictorTestPeer {
   }
 
   void MaybePopulateTypingCorrectedResults(const ConversionRequest &request,
-                                           const Segments &segments,
                                            std::vector<Result> *results) const {
-    return predictor_.MaybePopulateTypingCorrectedResults(request, segments,
-                                                          results);
+    return predictor_.MaybePopulateTypingCorrectedResults(request, results);
   }
 
   static void AddRescoringDebugDescription(Segments *segments) {
@@ -145,10 +140,9 @@ class DictionaryPredictorTestPeer {
   }
 
   std::shared_ptr<Result> MaybeGetPreviousTopResult(
-      const Result &current_top_result, const ConversionRequest &request,
-      const Segments &segments) const {
-    return predictor_.MaybeGetPreviousTopResult(current_top_result, request,
-                                                segments);
+      const Result &current_top_result,
+      const ConversionRequest &request) const {
+    return predictor_.MaybeGetPreviousTopResult(current_top_result, request);
   }
 
  private:
@@ -221,20 +215,6 @@ void PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
   result->inner_segment_boundary.push_back(encoded);
 }
 
-void SetSegmentForCommit(absl::string_view candidate_value,
-                         int candidate_source_info, Segments *segments) {
-  segments->Clear();
-  Segment *segment = segments->add_segment();
-  segment->set_key("");
-  segment->set_segment_type(Segment::FIXED_VALUE);
-  Segment::Candidate *candidate = segment->add_candidate();
-  strings::Assign(candidate->key, candidate_value);
-  strings::Assign(candidate->content_key, candidate_value);
-  strings::Assign(candidate->value, candidate_value);
-  strings::Assign(candidate->content_value, candidate_value);
-  candidate->source_info = candidate_source_info;
-}
-
 void InitSegmentsWithKey(absl::string_view key, Segments *segments) {
   segments->Clear();
 
@@ -287,11 +267,9 @@ class MockImmutableConverter : public ImmutableConverterInterface {
 class MockAggregator : public prediction::PredictionAggregatorInterface {
  public:
   MOCK_METHOD(std::vector<prediction::Result>, AggregateResults,
-              (const ConversionRequest &request, const Segments &segments),
-              (const, override));
+              (const ConversionRequest &request), (const, override));
   MOCK_METHOD(std::vector<prediction::Result>, AggregateTypingCorrectedResults,
-              (const ConversionRequest &request, const Segments &segments),
-              (const, override));
+              (const ConversionRequest &request), (const, override));
 };
 
 // Helper class to hold predictor objects.
@@ -342,21 +320,24 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
   void TearDown() override {}
 
   ConversionRequest CreateConversionRequestWithOptions(
-      ConversionRequest::Options &&options) const {
+      ConversionRequest::Options &&options, const Segments &segments) const {
     return ConversionRequestBuilder()
         .SetComposer(*composer_)
         .SetRequestView(*request_)
         .SetContextView(context_)
         .SetConfigView(*config_)
         .SetOptions(std::move(options))
+        .SetHistorySegmentsView(segments)
+        .SetKey(segments.conversion_segment(0).key())
         .Build();
   }
 
   ConversionRequest CreateConversionRequest(
-      ConversionRequest::RequestType request_type) const {
+      ConversionRequest::RequestType request_type,
+      const Segments &segments) const {
     ConversionRequest::Options options;
     options.request_type = request_type;
-    return CreateConversionRequestWithOptions(std::move(options));
+    return CreateConversionRequestWithOptions(std::move(options), segments);
   }
 
   std::unique_ptr<composer::Composer> composer_;
@@ -520,8 +501,8 @@ TEST_F(DictionaryPredictorTest, SetPredictionCostForMixedConversion) {
   };
 
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
-  predictor.SetPredictionCostForMixedConversion(convreq, segments, &results);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
+  predictor.SetPredictionCostForMixedConversion(convreq, &results);
 
   EXPECT_EQ(results.size(), 3);
   EXPECT_EQ(results[0].value, "てすと");
@@ -551,8 +532,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
     };
 
     const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::PREDICTION);
-    predictor.SetPredictionCostForMixedConversion(convreq, segments, &results);
+        CreateConversionRequest(ConversionRequest::PREDICTION, segments);
+    predictor.SetPredictionCostForMixedConversion(convreq, &results);
 
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].value, kAikaKanji);
@@ -569,8 +550,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
     };
 
     const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::PREDICTION);
-    predictor.SetPredictionCostForMixedConversion(convreq, segments, &results);
+        CreateConversionRequest(ConversionRequest::PREDICTION, segments);
+    predictor.SetPredictionCostForMixedConversion(convreq, &results);
 
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].value, kAikaKanji);
@@ -590,8 +571,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
     results[0].rid = results[0].lid;
 
     const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::PREDICTION);
-    predictor.SetPredictionCostForMixedConversion(convreq, segments, &results);
+        CreateConversionRequest(ConversionRequest::PREDICTION, segments);
+    predictor.SetPredictionCostForMixedConversion(convreq, &results);
 
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].value, kAikaKanji);
@@ -607,8 +588,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
     };
 
     const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::PREDICTION);
-    predictor.SetPredictionCostForMixedConversion(convreq, segments, &results);
+        CreateConversionRequest(ConversionRequest::PREDICTION, segments);
+    predictor.SetPredictionCostForMixedConversion(convreq, &results);
 
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].value, kAikaKanji);
@@ -621,7 +602,7 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
-  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+  EXPECT_CALL(*aggregator, AggregateResults(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
                         Token::SPELLING_CORRECTION),
@@ -632,7 +613,7 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   InitSegmentsWithKey("あぼがど", &segments);
 
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.PredictForRequest(convreq, &segments);
 
   EXPECT_TRUE(FindCandidateByValue(segments.conversion_segment(0), "アボカド"));
@@ -644,7 +625,7 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+  EXPECT_CALL(*aggregator, AggregateResults(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
                         Token::SPELLING_CORRECTION),
@@ -656,7 +637,7 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
   InitSegmentsWithKey("あぼが", &segments);
 
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.PredictForRequest(convreq, &segments);
 
   EXPECT_FALSE(
@@ -669,7 +650,7 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuery) {
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+  EXPECT_CALL(*aggregator, AggregateResults(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("だいがく", "大学", 500, prediction::BIGRAM,
                         Token::NONE),
@@ -691,10 +672,11 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuery) {
   InitSegmentsWithKey("", &segments);
 
   PrependHistorySegments("だいがく", "大学", &segments);
+  PrependHistorySegments("とうきょう", "東京", &segments);  // not used
 
   request_test_util::FillMobileRequest(request_.get());
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.PredictForRequest(convreq, &segments);
 
   EXPECT_TRUE(FindCandidateByKeyValue(segments.conversion_segment(0),
@@ -709,7 +691,7 @@ TEST_F(DictionaryPredictorTest, PredictivePenaltyForBigramResults) {
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+  EXPECT_CALL(*aggregator, AggregateResults(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("だいがくにゅうし", "大学入試", 3000,
                         prediction::BIGRAM, Token::NONE),
@@ -723,11 +705,13 @@ TEST_F(DictionaryPredictorTest, PredictivePenaltyForBigramResults) {
 
   Segments segments;
   InitSegmentsWithKey("にゅうし", &segments);
+
   PrependHistorySegments("だいがく", "大学", &segments);
+  PrependHistorySegments("とうきょう", "東京", &segments);  // not used
 
   request_test_util::FillMobileRequest(request_.get());
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.PredictForRequest(convreq, &segments);
 
   auto get_rank_by_value = [&](absl::string_view value) {
@@ -768,12 +752,12 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
                                const Result &aggregator_result,
                                PredictionTypes prediction_types,
                                Segment::Candidate *candidate) {
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillOnce(Return(std::vector<Result>({aggregator_result})));
     Segments segments;
     InitSegmentsWithKey("てすと", &segments);
     const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::PREDICTION);
+        CreateConversionRequest(ConversionRequest::PREDICTION, segments);
     if (!predictor.PredictForRequest(convreq, &segments) ||
         segments.conversion_segments_size() != 1 ||
         segments.conversion_segment(0).candidates_size() != 1) {
@@ -913,7 +897,7 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
   // Enables debug mode.
   config_->set_verbose_level(1);
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::SUGGESTION);
+      CreateConversionRequest(ConversionRequest::SUGGESTION, segments);
   predictor.AddPredictionToCandidates(convreq, &segments, results);
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
@@ -939,7 +923,7 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
   InitSegmentsWithKey("test", &segments);
 
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.AddPredictionToCandidates(convreq, &segments, results);
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
@@ -975,10 +959,12 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
 
   Segments segments;
   InitSegmentsWithKey("test", &segments);
-  const ConversionRequest convreq = CreateConversionRequestWithOptions({
-      .request_type = ConversionRequest::SUGGESTION,
-      .max_dictionary_prediction_candidates_size = kTestSize,
-  });
+  const ConversionRequest convreq = CreateConversionRequestWithOptions(
+      {
+          .request_type = ConversionRequest::SUGGESTION,
+          .max_dictionary_prediction_candidates_size = kTestSize,
+      },
+      segments);
 
   predictor.AddPredictionToCandidates(convreq, &segments, results);
 
@@ -1015,10 +1001,13 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
 
   Segments segments;
   InitSegmentsWithKey("test", &segments);
-  const ConversionRequest convreq = CreateConversionRequestWithOptions({
-      .request_type = ConversionRequest::SUGGESTION,
-      .max_dictionary_prediction_candidates_size = kLowCostCandidateSize + 1,
-  });
+  const ConversionRequest convreq = CreateConversionRequestWithOptions(
+      {
+          .request_type = ConversionRequest::SUGGESTION,
+          .max_dictionary_prediction_candidates_size =
+              kLowCostCandidateSize + 1,
+      },
+      segments);
 
   predictor.AddPredictionToCandidates(convreq, &segments, results);
 
@@ -1041,7 +1030,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillRepeatedly(Return(std::vector<Result>{
             CreateResult5("ふぃるたーたいしょう", "フィルター対象", 100,
                           prediction::UNIGRAM, Token::NONE),
@@ -1058,7 +1047,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
   InitSegmentsWithKey("ふぃるたーたいしょう", &segments);
 
   const ConversionRequest convreq1 =
-      CreateConversionRequest(ConversionRequest::SUGGESTION);
+      CreateConversionRequest(ConversionRequest::SUGGESTION, segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq1, &segments));
   EXPECT_TRUE(
       FindCandidateByValue(segments.conversion_segment(0), "フィルター対象"));
@@ -1072,7 +1061,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
   // Should not be there for non-exact suggestion.
   InitSegmentsWithKey("ふぃるたーたいし", &segments);
   const ConversionRequest convreq2 =
-      CreateConversionRequest(ConversionRequest::SUGGESTION);
+      CreateConversionRequest(ConversionRequest::SUGGESTION, segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq2, &segments));
   EXPECT_FALSE(
       FindCandidateByValue(segments.conversion_segment(0), "フィルター対象"));
@@ -1086,7 +1075,7 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillRepeatedly(Return(std::vector<Result>{
             CreateResult5("ふぃるたーたいしょう", "フィルター対象", 100,
                           prediction::UNIGRAM, Token::NONE),
@@ -1103,7 +1092,7 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
   InitSegmentsWithKey("ふぃるたーたいしょう", &segments);
 
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::SUGGESTION);
+      CreateConversionRequest(ConversionRequest::SUGGESTION, segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
   EXPECT_FALSE(
       FindCandidateByValue(segments.conversion_segment(0), "フィルター対象"));
@@ -1130,16 +1119,18 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigramOnMobile) {
                                       Token::NONE));
     }
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _)).WillOnce(Return(results));
+    EXPECT_CALL(*aggregator, AggregateResults(_)).WillOnce(Return(results));
   }
 
   Segments segments;
   InitSegmentsWithKey("てすと", &segments);
 
-  const ConversionRequest convreq = CreateConversionRequestWithOptions({
-      .request_type = ConversionRequest::PREDICTION,
-      .max_dictionary_prediction_candidates_size = 100,
-  });
+  const ConversionRequest convreq = CreateConversionRequestWithOptions(
+      {
+          .request_type = ConversionRequest::PREDICTION,
+          .max_dictionary_prediction_candidates_size = 100,
+      },
+      segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
   int exact_count = 0;
   for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
@@ -1187,17 +1178,19 @@ TEST_F(DictionaryPredictorTest, DoNotFilterUnigrmsForHandwriting) {
                                       Token::NONE));
     }
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _)).WillOnce(Return(results));
+    EXPECT_CALL(*aggregator, AggregateResults(_)).WillOnce(Return(results));
   }
 
   Segments segments;
   InitSegmentsWithKey("かん字", &segments);
 
   const ConversionRequest convreq_for_prediction =
-      CreateConversionRequestWithOptions({
-          .request_type = ConversionRequest::PREDICTION,
-          .max_dictionary_prediction_candidates_size = 100,
-      });
+      CreateConversionRequestWithOptions(
+          {
+              .request_type = ConversionRequest::PREDICTION,
+              .max_dictionary_prediction_candidates_size = 100,
+          },
+          segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq_for_prediction, &segments));
   int exact_count = 0;
   for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
@@ -1225,7 +1218,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterZeroQueryCandidatesOnMobile) {
                                       prediction::SUFFIX, Token::NONE));
     }
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillRepeatedly(Return(results));
   }
 
@@ -1233,7 +1226,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterZeroQueryCandidatesOnMobile) {
   InitSegmentsWithKey("", &segments);
   PrependHistorySegments("わたし", "私", &segments);
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
   EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 10);
 }
@@ -1275,14 +1268,14 @@ TEST_F(DictionaryPredictorTest,
                                     prediction::REALTIME, Token::NONE));
     PushBackInnerSegmentBoundary(9, 9, 9, 9, &results.back());
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillRepeatedly(Return(results));
   }
 
   Segments segments;
   InitSegmentsWithKey("かつた", &segments);
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
   EXPECT_GE(segments.conversion_segment(0).candidates_size(), 8);
 }
@@ -1307,14 +1300,14 @@ TEST_F(DictionaryPredictorTest, FixSRealtimeTopCandidatesCostOnMobile) {
     results.push_back(CreateResult5("かつた", "勝田", 1001,
                                     prediction::REALTIME, Token::NONE));
     PushBackInnerSegmentBoundary(9, 6, 9, 6, &results.back());
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillRepeatedly(Return(results));
   }
 
   Segments segments;
   InitSegmentsWithKey("かった", &segments);
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "買った");
 }
@@ -1371,7 +1364,7 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
       }
     }
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillRepeatedly(Return(results));
   }
 
@@ -1389,7 +1382,7 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
   {
     InitSegmentsWithKey("さか", &segments);
     const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::PREDICTION);
+        CreateConversionRequest(ConversionRequest::PREDICTION, segments);
     EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_NE(get_rank_by_value("佐"), -1);
@@ -1436,14 +1429,14 @@ TEST_F(DictionaryPredictorTest, SingleKanjiFallbackOffsetCost) {
       }
     }
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillRepeatedly(Return(results));
   }
 
   Segments segments;
   InitSegmentsWithKey("ああ", &segments);
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   ASSERT_EQ(segments.conversion_segment(0).candidates_size(), 7);
@@ -1478,7 +1471,7 @@ TEST_F(DictionaryPredictorTest, Dedup) {
     Segments segments;
     InitSegmentsWithKey("test", &segments);
     const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::PREDICTION);
+        CreateConversionRequest(ConversionRequest::PREDICTION, segments);
     predictor.AddPredictionToCandidates(convreq, &segments, results);
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1516,7 +1509,7 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
   Segments segments;
   InitSegmentsWithKey("original_key", &segments);
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.AddPredictionToCandidates(convreq, &segments, results);
 
   ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1551,7 +1544,7 @@ TEST_F(DictionaryPredictorTest, SortResult) {
   Segments segments;
   InitSegmentsWithKey("test", &segments);
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.AddPredictionToCandidates(convreq, &segments, results);
 
   ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1574,7 +1567,7 @@ TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillOnce(Return(std::vector<Result>{
             CreateResult5("あいう", "会いう", 100,
                           prediction::REALTIME_TOP | prediction::REALTIME,
@@ -1584,11 +1577,13 @@ TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
   }
 
   Segments segments;
+  InitSegmentsWithKey("あいう", &segments);
+
   request_->set_mixed_conversion(false);
   const ConversionRequest convreq = CreateConversionRequestWithOptions(
       {.request_type = ConversionRequest::SUGGESTION,
-       .use_actual_converter_for_realtime_conversion = true});
-  InitSegmentsWithKey("あいう", &segments);
+       .use_actual_converter_for_realtime_conversion = true},
+      segments);
 
   EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
   EXPECT_EQ(segments.segments_size(), 1);
@@ -1621,7 +1616,7 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   }
 
   {
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillRepeatedly(Return(std::vector<Result>{
             CreateResult6("こ", "子", 0, 10, prediction::PREFIX, Token::NONE),
             CreateResult6("こーひー", "コーヒー", 0, 100, prediction::UNIGRAM,
@@ -1635,7 +1630,7 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   Segments segments;
   InitSegmentsWithKey("こーひー", &segments);
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   EXPECT_TRUE(predictor.PredictForRequest(convreq, &segments));
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "子"));
 }
@@ -1643,7 +1638,7 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
 TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
-  EXPECT_CALL(*aggregator, AggregateTypingCorrectedResults(_, _))
+  EXPECT_CALL(*aggregator, AggregateTypingCorrectedResults(_))
       .WillRepeatedly(Return(std::vector<Result>{
           CreateResult7("とうきょう", "東京", 100, 0,
                         prediction::UNIGRAM | prediction::TYPING_CORRECTION,
@@ -1671,8 +1666,8 @@ TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
   {
     auto results = base_results;
     const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::PREDICTION);
-    predictor.MaybePopulateTypingCorrectedResults(convreq, segments, &results);
+        CreateConversionRequest(ConversionRequest::PREDICTION, segments);
+    predictor.MaybePopulateTypingCorrectedResults(convreq, &results);
     EXPECT_EQ(results.size(), 4);
   }
 
@@ -1681,8 +1676,8 @@ TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
     config_->set_use_typing_correction(false);
     auto results = base_results;
     const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::PREDICTION);
-    predictor.MaybePopulateTypingCorrectedResults(convreq, segments, &results);
+        CreateConversionRequest(ConversionRequest::PREDICTION, segments);
+    predictor.MaybePopulateTypingCorrectedResults(convreq, &results);
     EXPECT_EQ(results.size(), 2);
   }
 }
@@ -1700,7 +1695,7 @@ TEST_F(DictionaryPredictorTest, Rescoring) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
-  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+  EXPECT_CALL(*aggregator, AggregateResults(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("こーひー", "コーヒー", 500, prediction::UNIGRAM,
                         Token::NONE),
@@ -1714,7 +1709,7 @@ TEST_F(DictionaryPredictorTest, Rescoring) {
   InitSegmentsWithKey("こーひー", &segments);
 
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.PredictForRequest(convreq, &segments);
 
   ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1779,7 +1774,7 @@ TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
-  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+  EXPECT_CALL(*aggregator, AggregateResults(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("かんじ", "かん字", 0, prediction::UNIGRAM,
                         Token::NONE),
@@ -1790,7 +1785,7 @@ TEST_F(DictionaryPredictorTest, DoNotRescoreHandwriting) {
   InitSegmentsWithKey("かんじ", &segments);
 
   ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.PredictForRequest(convreq, &segments);
 }
 
@@ -1805,7 +1800,7 @@ TEST_F(DictionaryPredictorTest, DoNotApplyPostCorrection) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
-  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+  EXPECT_CALL(*aggregator, AggregateResults(_))
       .WillOnce(Return(std::vector<Result>{
           CreateResult5("かんじ", "かん字", 0, prediction::UNIGRAM,
                         Token::NONE),
@@ -1816,7 +1811,7 @@ TEST_F(DictionaryPredictorTest, DoNotApplyPostCorrection) {
   InitSegmentsWithKey("かんじ", &segments);
 
   const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION);
+      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
   predictor.PredictForRequest(convreq, &segments);
 }
 
@@ -1848,118 +1843,111 @@ TEST_F(DictionaryPredictorTest, MaybeGetPreviousTopResultTest) {
   Segments segments;
   auto *params = request_->mutable_decoder_experiment_params();
 
+  auto create_request = [&]() {
+    return CreateConversionRequest(ConversionRequest::SUGGESTION, segments);
+  };
+
   // max diff is zero. No insertion happens.
   {
     params->set_candidate_consistency_cost_max_diff(0);
 
-    const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::SUGGESTION);
     InitSegmentsWithKey("しが", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(init_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(init_top, create_request()));
 
     InitSegmentsWithKey("しがこう", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(pre_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(pre_top, create_request()));
 
     InitSegmentsWithKey("しがこうげ", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(pre_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(pre_top, create_request()));
   }
 
   // max diff is 2000.
   {
     params->set_candidate_consistency_cost_max_diff(2000);
 
-    const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::SUGGESTION);
     InitSegmentsWithKey("しが", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(init_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(init_top, create_request()));
 
     InitSegmentsWithKey("しがこう", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(pre_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(pre_top, create_request()));
 
     InitSegmentsWithKey("しがこうげ", &segments);
     auto result =
-        predictor.MaybeGetPreviousTopResult(cur_top, convreq, segments);
+        predictor.MaybeGetPreviousTopResult(cur_top, create_request());
     EXPECT_TRUE(result);
     EXPECT_EQ(result->value, "志賀高原");
   }
 
   // top is partial
   {
-    const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::SUGGESTION);
     InitSegmentsWithKey("しが", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(init_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(init_top, create_request()));
 
     InitSegmentsWithKey("しがこう", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(pre_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(pre_top, create_request()));
 
     InitSegmentsWithKey("しがこうげ", &segments);
+
     auto cur_top_prefix = cur_top;
     cur_top_prefix.types |= PREFIX;
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(cur_top_prefix, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(cur_top_prefix, create_request()));
   }
 
   // Already consistent.
   {
-    const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::SUGGESTION);
     InitSegmentsWithKey("しが", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(init_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(init_top, create_request()));
 
     InitSegmentsWithKey("しがこう", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(pre_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(pre_top, create_request()));
 
     InitSegmentsWithKey("しがこうげ", &segments);
     EXPECT_FALSE(predictor.MaybeGetPreviousTopResult(cur_already_consintent_top,
-                                                     convreq, segments));
+                                                     create_request()));
   }
 
   // max diff is 200 -> not inserted
   {
     params->set_candidate_consistency_cost_max_diff(200);
 
-    const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::SUGGESTION);
     InitSegmentsWithKey("しが", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(init_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(init_top, create_request()));
 
     InitSegmentsWithKey("しがこう", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(pre_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(pre_top, create_request()));
 
     InitSegmentsWithKey("しがこうげ", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(cur_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(cur_top, create_request()));
   }
 
   // No insertion happens when typing backspaces.
   {
     params->set_candidate_consistency_cost_max_diff(2000);
 
-    const ConversionRequest convreq =
-        CreateConversionRequest(ConversionRequest::SUGGESTION);
     InitSegmentsWithKey("しがこうげ", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(cur_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(cur_top, create_request()));
 
     InitSegmentsWithKey("しがこう", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(pre_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(pre_top, create_request()));
 
     InitSegmentsWithKey("しが", &segments);
     EXPECT_FALSE(
-        predictor.MaybeGetPreviousTopResult(init_top, convreq, segments));
+        predictor.MaybeGetPreviousTopResult(init_top, create_request()));
   }
 }
 
@@ -1988,14 +1976,9 @@ TEST_F(DictionaryPredictorTest, FilterNwpSuffixCandidates) {
       results.push_back(result);
     }
 
-    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+    EXPECT_CALL(*aggregator, AggregateResults(_))
         .WillRepeatedly(Return(results));
   }
-
-  const ConversionRequest convreq = CreateConversionRequestWithOptions({
-      .request_type = ConversionRequest::PREDICTION,
-      .max_dictionary_prediction_candidates_size = 100,
-  });
 
   const std::vector<int> test_ids = {
       data_and_predictor->pos_matcher().GetGeneralNounId(),
@@ -2010,6 +1993,12 @@ TEST_F(DictionaryPredictorTest, FilterNwpSuffixCandidates) {
     InitSegmentsWithKey("", &segments);
     PrependHistorySegments("こみっと", "コミット", &segments);
     segments.mutable_segment(0)->mutable_candidate(0)->rid = id;
+    const ConversionRequest convreq = CreateConversionRequestWithOptions(
+        {
+            .request_type = ConversionRequest::PREDICTION,
+            .max_dictionary_prediction_candidates_size = 100,
+        },
+        segments);
     if (connector.GetTransitionCost(
             id, data_and_predictor->pos_matcher().GetGeneralNounId()) >
         kThreshold) {

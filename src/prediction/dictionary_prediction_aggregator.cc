@@ -145,17 +145,10 @@ bool IsZeroQuerySuffixPredictionDisabled(const ConversionRequest &request) {
 //  This is because We have several kanji number styles, for example,
 //  "一二", "十二", "壱拾弐", etc for 12.
 // TODO(toshiyuki): Define the spec and support Kanji.
-bool GetNumberHistory(const Segments &segments, std::string *number_key) {
-  DCHECK(number_key);
-  const size_t history_size = segments.history_segments_size();
-  if (history_size <= 0) {
-    return false;
-  }
-
-  const Segment &last_segment = segments.history_segment(history_size - 1);
-  DCHECK_GT(last_segment.candidates_size(), 0);
-  absl::string_view history_value = last_segment.candidate(0).value;
-  if (!NumberUtil::IsArabicNumber(history_value)) {
+bool GetNumberHistory(const ConversionRequest &request,
+                      std::string *number_key) {
+  const std::string history_value = request.converter_history_value(1);
+  if (history_value.empty() || !NumberUtil::IsArabicNumber(history_value)) {
     return false;
   }
 
@@ -167,32 +160,19 @@ bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
 
-bool HasHistoryKeyLongerThanOrEqualTo(const Segments &segments,
+bool HasHistoryKeyLongerThanOrEqualTo(const ConversionRequest &request,
                                       size_t utf8_len) {
-  const size_t history_segments_size = segments.history_segments_size();
-  if (history_segments_size == 0) {
-    return false;
-  }
-  const Segment &history_segment =
-      segments.history_segment(history_segments_size - 1);
-  if (history_segment.candidates_size() == 0) {
-    return false;
-  }
-  return Util::CharsLen(history_segment.candidate(0).key) >= utf8_len;
+  return Util::CharsLen(request.converter_history_key(1)) >= utf8_len;
 }
 
-bool IsLongKeyForRealtimeCandidates(const Segments &segments) {
+bool IsLongKeyForRealtimeCandidates(const ConversionRequest &request) {
   constexpr int kFewResultThreshold = 8;
-  return (segments.segments_size() > 0 &&
-          segments.segment(0).key_len() >= kFewResultThreshold);
+  return Util::CharsLen(request.converter_key()) >= kFewResultThreshold;
 }
 
 size_t GetMaxSizeForRealtimeCandidates(const ConversionRequest &request,
-                                       const Segments &segments,
                                        bool is_long_key) {
-  const auto &segment = segments.conversion_segment(0);
-  const size_t size = (request.max_dictionary_prediction_candidates_size() -
-                       segment.candidates_size());
+  const size_t size = request.max_dictionary_prediction_candidates_size();
   if (request.create_partial_candidates()) {
     return std::min<size_t>(size, 20);
   }
@@ -211,34 +191,6 @@ ConversionRequest GetConversionRequestForRealtimeCandidates(
       .SetConversionRequestView(request)
       .SetOptions(std::move(options))
       .Build();
-}
-
-Segments GetSegmentsForRealtimeCandidatesGeneration(
-    const Segments &original_segments) {
-  Segments segments = original_segments;
-  // Other predictors (i.e. user_history_predictor) can add candidates
-  // before this predictor.
-  segments.mutable_conversion_segment(0)->clear_candidates();
-  return segments;
-}
-
-bool GetHistoryKeyAndValue(const Segments &segments, std::string *key,
-                           std::string *value) {
-  DCHECK(key);
-  DCHECK(value);
-  if (segments.history_segments_size() == 0) {
-    return false;
-  }
-
-  const Segment &history_segment =
-      segments.history_segment(segments.history_segments_size() - 1);
-  if (history_segment.candidates_size() == 0) {
-    return false;
-  }
-
-  key->assign(history_segment.candidate(0).key);
-  value->assign(history_segment.candidate(0).value);
-  return true;
 }
 
 bool IsBigramNwpFilteringMode(
@@ -544,32 +496,31 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       zero_query_number_dict_(modules.GetZeroQueryNumberDict()) {}
 
 std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
-    const ConversionRequest &request, const Segments &segments) const {
+    const ConversionRequest &request) const {
   std::vector<Result> results;
-  AggregatePredictionForTesting(request, segments, &results);
+  AggregatePredictionForTesting(request, &results);
   return results;
 }
 
 std::vector<Result>
 DictionaryPredictionAggregator::AggregateTypingCorrectedResults(
-    const ConversionRequest &request, const Segments &segments) const {
+    const ConversionRequest &request) const {
   std::vector<Result> results;
-  AggregateTypingCorrectedPrediction(request, segments,
-                                     (UNIGRAM | BIGRAM | REALTIME), &results);
+  AggregateTypingCorrectedPrediction(request, (UNIGRAM | BIGRAM | REALTIME),
+                                     &results);
   return results;
 }
 
 PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForTesting(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
   // In mixed conversion mode, the number of real time candidates is increased.
   const size_t realtime_max_size =
-      GetRealtimeCandidateMaxSize(request, segments, is_mixed_conversion);
+      GetRealtimeCandidateMaxSize(request, is_mixed_conversion);
   const auto &unigram_config = GetUnigramConfig(request);
 
   return AggregatePrediction(request, realtime_max_size, unigram_config,
-                             segments, results);
+                             results);
 }
 
 DictionaryPredictionAggregator::UnigramConfig
@@ -614,17 +565,16 @@ DictionaryPredictionAggregator::GetUnigramConfig(
 
 PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     const ConversionRequest &request, size_t realtime_max_size,
-    const UnigramConfig &unigram_config, const Segments &segments,
-    std::vector<Result> *results) const {
+    const UnigramConfig &unigram_config, std::vector<Result> *results) const {
   DCHECK(results);
 
   // Zero query prediction.
-  if (segments.conversion_segment(0).key().empty()) {
-    return AggregatePredictionForZeroQuery(request, segments, results);
+  if (request.IsZeroQuerySuggestion()) {
+    return AggregatePredictionForZeroQuery(request, results);
   }
 
-  absl::string_view key = segments.conversion_segment(0).key();
-  const size_t key_len = segments.conversion_segment(0).key_len();
+  absl::string_view key = request.converter_key();
+  const size_t key_len = Util::CharsLen(key);
 
   // TODO(toshiyuki): Check if we can remove this SUGGESTION check.
   // i.e. can we return NO_PREDICTION here for both of SUGGESTION and
@@ -640,12 +590,11 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     }
   }
   PredictionTypes selected_types = NO_PREDICTION;
-  if (ShouldAggregateRealTimeConversionResults(request, segments)) {
+  if (ShouldAggregateRealTimeConversionResults(request)) {
     AggregateRealtimeConversion(
         request, realtime_max_size,
         /* insert_realtime_top_from_actual_converter= */
-        request.use_actual_converter_for_realtime_conversion(), segments,
-        results);
+        request.use_actual_converter_for_realtime_conversion(), results);
     selected_types |= REALTIME;
   }
 
@@ -659,32 +608,32 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
   const size_t min_unigram_key_len = unigram_config.min_key_len;
   if (key_len >= min_unigram_key_len) {
     const auto &unigram_fn = unigram_config.unigram_fn;
-    PredictionType type = (this->*unigram_fn)(request, segments, results);
+    PredictionType type = (this->*unigram_fn)(request, results);
     selected_types |= type;
   }
 
   if (IsMixedConversionEnabled(request.request()) && key_len > 0 &&
-      AggregateNumberCandidates(request, segments, results)) {
+      AggregateNumberCandidates(request, results)) {
     selected_types |= NUMBER;
   }
 
   // Add bigram candidates.
   constexpr int kMinHistoryKeyLen = 3;
-  if (HasHistoryKeyLongerThanOrEqualTo(segments, kMinHistoryKeyLen)) {
-    AggregateBigramPrediction(request, segments,
-                              Segment::Candidate::SOURCE_INFO_NONE, results);
+  if (HasHistoryKeyLongerThanOrEqualTo(request, kMinHistoryKeyLen)) {
+    AggregateBigramPrediction(request, Segment::Candidate::SOURCE_INFO_NONE,
+                              results);
     selected_types |= BIGRAM;
   }
 
   // Add english candidates.
   if (IsLanguageAwareInputEnabled(request) && IsQwertyMobileTable(request) &&
       key_len >= min_unigram_key_len) {
-    AggregateEnglishPredictionUsingRawInput(request, segments, results);
+    AggregateEnglishPredictionUsingRawInput(request, results);
     selected_types |= ENGLISH;
   }
 
   if (request_util::IsAutoPartialSuggestionEnabled(request)) {
-    AggregatePrefixCandidates(request, segments, results);
+    AggregatePrefixCandidates(request, results);
     selected_types |= PREFIX;
   }
 
@@ -693,8 +642,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     // (i.e., Desktop, or Hardware Keyboard in Mobile), since they contain
     // partial results.
     const std::vector<Result> single_kanji_results =
-        modules_.GetSingleKanjiPredictionAggregator().AggregateResults(
-            request, segments);
+        modules_.GetSingleKanjiPredictionAggregator().AggregateResults(request);
     if (!single_kanji_results.empty()) {
       results->insert(results->end(), single_kanji_results.begin(),
                       single_kanji_results.end());
@@ -702,14 +650,13 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     }
   }
 
-  MaybePopulateTypingCorrectionPenalty(request, segments, results);
+  MaybePopulateTypingCorrectionPenalty(request, results);
 
   return selected_types;
 }
 
 PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForZeroQuery(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
 
   if (!request.request().zero_query_suggestion()) {
@@ -719,20 +666,20 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForZeroQuery(
 
   PredictionTypes selected_types = NO_PREDICTION;
   constexpr int kMinHistoryKeyLenForZeroQuery = 2;
-  if (HasHistoryKeyLongerThanOrEqualTo(segments,
+  if (HasHistoryKeyLongerThanOrEqualTo(request,
                                        kMinHistoryKeyLenForZeroQuery) &&
       !IsBigramNwpFilteringMode(
           request, commands::DecoderExperimentParams::FILTER_ALL)) {
     AggregateBigramPrediction(
-        request, segments,
-        Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM, results);
+        request, Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM,
+        results);
     selected_types |= BIGRAM;
   }
-  if (segments.history_segments_size() > 0) {
+  if (!request.converter_history_key().empty()) {
     if (modules_.GetSupplementalModel().Predict(request, *results)) {
       selected_types |= SUPPLEMENTAL_MODEL;
     }
-    AggregateZeroQuerySuffixPrediction(request, segments, results);
+    AggregateZeroQuerySuffixPrediction(request, results);
     selected_types |= SUFFIX;
   }
   return selected_types;
@@ -740,9 +687,8 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForZeroQuery(
 
 PredictionType
 DictionaryPredictionAggregator::AggregateUnigramCandidateForLatinInput(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
-  AggregateEnglishPrediction(request, segments, results);
+    const ConversionRequest &request, std::vector<Result> *results) const {
+  AggregateEnglishPrediction(request, results);
   return ENGLISH;
 }
 
@@ -779,14 +725,13 @@ class FindValueCallback : public DictionaryInterface::Callback {
 }  // namespace
 
 size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
-    const ConversionRequest &request, const Segments &segments,
-    bool mixed_conversion) const {
+    const ConversionRequest &request, bool mixed_conversion) const {
   const ConversionRequest::RequestType request_type = request.request_type();
   DCHECK(request_type == ConversionRequest::PREDICTION ||
          request_type == ConversionRequest::SUGGESTION ||
          request_type == ConversionRequest::PARTIAL_PREDICTION ||
          request_type == ConversionRequest::PARTIAL_SUGGESTION);
-  if (segments.conversion_segments_size() == 0) {
+  if (request.converter_key().empty()) {
     return 0;
   }
   if (request_util::IsHandwriting(request)) {
@@ -794,9 +739,8 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
     return kRealtimeCandidatesSizeForHandwriting;
   }
 
-  const bool is_long_key = IsLongKeyForRealtimeCandidates(segments);
-  const size_t max_size =
-      GetMaxSizeForRealtimeCandidates(request, segments, is_long_key);
+  const bool is_long_key = IsLongKeyForRealtimeCandidates(request);
+  const size_t max_size = GetMaxSizeForRealtimeCandidates(request, is_long_key);
   const size_t default_size = GetDefaultSizeForRealtimeCandidates(is_long_key);
   size_t size = 0;
   switch (request_type) {
@@ -826,11 +770,9 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
 }
 
 bool DictionaryPredictionAggregator::PushBackTopConversionResult(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
-  DCHECK_EQ(1, segments.conversion_segments_size());
+    const ConversionRequest &request, std::vector<Result> *results) const {
+  Segments tmp_segments = request.MakeRequestSegments();
 
-  Segments tmp_segments = GetSegmentsForRealtimeCandidatesGeneration(segments);
   ConversionRequest::Options options;
   options.max_conversion_candidates_size = 20;
   options.composer_key_selection = ConversionRequest::PREDICTION_KEY;
@@ -895,7 +837,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
 
 void DictionaryPredictionAggregator::AggregateRealtimeConversion(
     const ConversionRequest &request, size_t realtime_candidates_size,
-    bool insert_realtime_top_from_actual_converter, const Segments &segments,
+    bool insert_realtime_top_from_actual_converter,
     std::vector<Result> *results) const {
   DCHECK(results);
   if (realtime_candidates_size == 0) {
@@ -909,7 +851,7 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
   if (insert_realtime_top_from_actual_converter &&
       request.request_type() != ConversionRequest::PARTIAL_SUGGESTION &&
       request.request_type() != ConversionRequest::PARTIAL_PREDICTION) {
-    if (!PushBackTopConversionResult(request, segments, results)) {
+    if (!PushBackTopConversionResult(request, results)) {
       LOG(WARNING) << "Realtime conversion with converter failed";
     }
   }
@@ -917,7 +859,7 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
   const ConversionRequest request_for_realtime =
       GetConversionRequestForRealtimeCandidates(request,
                                                 realtime_candidates_size);
-  Segments tmp_segments = GetSegmentsForRealtimeCandidatesGeneration(segments);
+  Segments tmp_segments = request.MakeRequestSegments();
 
   if (!immutable_converter_.ConvertForRequest(request_for_realtime,
                                               &tmp_segments) ||
@@ -928,7 +870,7 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
   }
 
   // Copy candidates into the array of Results.
-  const Segment segment = tmp_segments.conversion_segment(0);
+  const Segment &segment = tmp_segments.conversion_segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     const Segment::Candidate &candidate = segment.candidate(i);
     results->push_back(Result());
@@ -969,8 +911,7 @@ size_t DictionaryPredictionAggregator::GetCandidateCutoffThreshold(
 }
 
 PredictionType DictionaryPredictionAggregator::AggregateUnigramCandidate(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION);
@@ -978,9 +919,9 @@ PredictionType DictionaryPredictionAggregator::AggregateUnigramCandidate(
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
-  GetPredictiveResults(dictionary_, "", request, segments, UNIGRAM,
-                       cutoff_threshold, Segment::Candidate::SOURCE_INFO_NONE,
-                       zip_code_id_, unknown_id_, results);
+  GetPredictiveResults(dictionary_, "", request, UNIGRAM, cutoff_threshold,
+                       Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_,
+                       unknown_id_, results);
   const size_t unigram_results_size = results->size() - prev_results_size;
 
   // If size reaches max_results_size (== cutoff_threshold).
@@ -990,6 +931,7 @@ PredictionType DictionaryPredictionAggregator::AggregateUnigramCandidate(
   if (unigram_results_size >= cutoff_threshold) {
     results->resize(prev_results_size);
   }
+
   return UNIGRAM;
 }
 
@@ -1063,8 +1005,7 @@ DictionaryPredictionAggregator::GenerateQueryForHandwriting(
 
 PredictionType
 DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION);
@@ -1126,26 +1067,25 @@ DictionaryPredictionAggregator::AggregateUnigramCandidateForHandwriting(
 
 PredictionType
 DictionaryPredictionAggregator::AggregateUnigramCandidateForMixedConversion(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION);
-  LookupUnigramCandidateForMixedConversion(dictionary_, request, segments,
-                                           zip_code_id_, unknown_id_, results);
+  LookupUnigramCandidateForMixedConversion(dictionary_, request, zip_code_id_,
+                                           unknown_id_, results);
   return UNIGRAM;
 }
 
 void DictionaryPredictionAggregator::LookupUnigramCandidateForMixedConversion(
     const dictionary::DictionaryInterface &dictionary,
-    const ConversionRequest &request, const Segments &segments, int zip_code_id,
-    int unknown_id, std::vector<Result> *results) {
+    const ConversionRequest &request, int zip_code_id, int unknown_id,
+    std::vector<Result> *results) {
   const size_t cutoff_threshold = kPredictionMaxResultsSize;
 
   std::vector<Result> raw_result;
   // No history key
-  GetPredictiveResults(dictionary, "", request, segments, UNIGRAM,
-                       cutoff_threshold, Segment::Candidate::SOURCE_INFO_NONE,
-                       zip_code_id, unknown_id, &raw_result);
+  GetPredictiveResults(dictionary, "", request, UNIGRAM, cutoff_threshold,
+                       Segment::Candidate::SOURCE_INFO_NONE, zip_code_id,
+                       unknown_id, &raw_result);
 
   // Hereafter, we split "Needed Results" and "(maybe) Unneeded Results."
   // The algorithm is:
@@ -1210,12 +1150,12 @@ void DictionaryPredictionAggregator::LookupUnigramCandidateForMixedConversion(
 }
 
 void DictionaryPredictionAggregator::AggregateBigramPrediction(
-    const ConversionRequest &request, const Segments &segments,
+    const ConversionRequest &request,
     Segment::Candidate::SourceInfo source_info,
     std::vector<Result> *results) const {
   DCHECK(results);
 
-  if (segments.conversion_segment(0).key().empty() &&
+  if (request.IsZeroQuerySuggestion() &&
       IsBigramNwpFilteringMode(request,
                                commands::DecoderExperimentParams::FILTER_ALL)) {
     return;
@@ -1223,17 +1163,18 @@ void DictionaryPredictionAggregator::AggregateBigramPrediction(
 
   // TODO(toshiyuki): Support suggestion from the last 2 histories.
   //  ex) "六本木"+"ヒルズ"->"レジデンス"
-  std::string history_key, history_value;
-  if (!GetHistoryKeyAndValue(segments, &history_key, &history_value)) {
+  const std::string history_key = request.converter_history_key(1);
+  const std::string history_value = request.converter_history_value(1);
+  if (history_key.empty() || history_value.empty()) {
     return;
   }
-  AddBigramResultsFromHistory(history_key, history_value, request, segments,
-                              source_info, results);
+  AddBigramResultsFromHistory(history_key, history_value, request, source_info,
+                              results);
 }
 
 void DictionaryPredictionAggregator::AddBigramResultsFromHistory(
     const absl::string_view history_key, const absl::string_view history_value,
-    const ConversionRequest &request, const Segments &segments,
+    const ConversionRequest &request,
     Segment::Candidate::SourceInfo source_info,
     std::vector<Result> *results) const {
   // Check that history_key/history_value are in the dictionary.
@@ -1251,8 +1192,8 @@ void DictionaryPredictionAggregator::AddBigramResultsFromHistory(
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
   GetPredictiveResultsForBigram(dictionary_, history_key, history_value,
-                                request, segments, BIGRAM, cutoff_threshold,
-                                source_info, unknown_id_, results);
+                                request, BIGRAM, cutoff_threshold, source_info,
+                                unknown_id_, results);
   const size_t bigram_results_size = results->size() - prev_results_size;
 
   // if size reaches max_results_size,
@@ -1274,9 +1215,9 @@ void DictionaryPredictionAggregator::AddBigramResultsFromHistory(
   const Util::ScriptType last_history_ctype = Util::GetScriptType(
       Util::Utf8SubString(history_value, history_value_size - 1, 1));
   for (size_t i = prev_results_size; i < results->size(); ++i) {
-    CheckBigramResult(
-        find_history_callback.token(), history_ctype, last_history_ctype,
-        request, segments.conversion_segment(0).key().empty(), &(*results)[i]);
+    CheckBigramResult(find_history_callback.token(), history_ctype,
+                      last_history_ctype, request,
+                      request.IsZeroQuerySuggestion(), &(*results)[i]);
   }
 }
 
@@ -1383,13 +1324,13 @@ void DictionaryPredictionAggregator::CheckBigramResult(
 
 void DictionaryPredictionAggregator::GetPredictiveResults(
     const DictionaryInterface &dictionary, const absl::string_view history_key,
-    const ConversionRequest &request, const Segments &segments,
-    PredictionTypes types, size_t lookup_limit,
-    Segment::Candidate::SourceInfo source_info, int zip_code_id, int unknown_id,
-    std::vector<Result> *results) {
+    const ConversionRequest &request, PredictionTypes types,
+    size_t lookup_limit, Segment::Candidate::SourceInfo source_info,
+    int zip_code_id, int unknown_id, std::vector<Result> *results) {
   const absl::btree_set<std::string> empty_expanded;
   if (request.use_already_typing_corrected_key()) {
-    const std::string input_key = absl::StrCat(history_key, request.key());
+    const std::string input_key =
+        absl::StrCat(history_key, request.converter_key());
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
                                       empty_expanded, source_info, zip_code_id,
                                       unknown_id, "", results);
@@ -1417,7 +1358,7 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   // key expansions. This key is passed to the callback so that it can
   // identify whether the key is actually expanded or not.
   const std::string non_expanded_original_key =
-      absl::StrCat(history_key, segments.conversion_segment(0).key());
+      absl::StrCat(history_key, request.converter_key());
 
   // |expanded| is a very small set, so calling LookupPredictive multiple
   // times is not so expensive.  Also, the number of lookup results is limited
@@ -1435,7 +1376,7 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
 void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
     const DictionaryInterface &dictionary, const absl::string_view history_key,
     const absl::string_view history_value, const ConversionRequest &request,
-    const Segments &segments, PredictionTypes types, size_t lookup_limit,
+    PredictionTypes types, size_t lookup_limit,
     Segment::Candidate::SourceInfo source_info, int unknown_id_,
     std::vector<Result> *results) const {
   absl::btree_set<std::string> expanded;
@@ -1459,7 +1400,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
   std::tie(base, expanded) = request.composer().GetQueriesForPrediction();
   const std::string input_key = absl::StrCat(history_key, base);
   const std::string non_expanded_original_key =
-      absl::StrCat(history_key, segments.conversion_segment(0).key());
+      absl::StrCat(history_key, request.converter_key());
 
   PredictiveBigramLookupCallback callback(types, lookup_limit, input_key.size(),
                                           expanded, history_value, source_info,
@@ -1578,10 +1519,9 @@ void DictionaryPredictionAggregator::AppendZeroQueryToResults(
 
 // Returns true if we add zero query result.
 bool DictionaryPredictionAggregator::AggregateNumberZeroQueryPrediction(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   std::string number_key;
-  if (!GetNumberHistory(segments, &number_key)) {
+  if (!GetNumberHistory(request, &number_key)) {
     return false;
   }
 
@@ -1604,16 +1544,11 @@ bool DictionaryPredictionAggregator::AggregateNumberZeroQueryPrediction(
 
 // Returns true if we add zero query result.
 bool DictionaryPredictionAggregator::AggregateZeroQueryPrediction(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
-  const size_t history_size = segments.history_segments_size();
-  if (history_size <= 0) {
+    const ConversionRequest &request, std::vector<Result> *results) const {
+  const std::string history_value = request.converter_history_value(1);
+  if (history_value.empty()) {
     return false;
   }
-
-  const Segment &last_segment = segments.history_segment(history_size - 1);
-  DCHECK_GT(last_segment.candidates_size(), 0);
-  absl::string_view history_value = last_segment.candidate(0).value;
 
   std::vector<ZeroQueryResult> candidates;
   if (!GetZeroQueryCandidatesForKey(request, history_value, zero_query_dict_,
@@ -1629,30 +1564,28 @@ bool DictionaryPredictionAggregator::AggregateZeroQueryPrediction(
 // TODO(toshiyuki): Confirm whether this produces useful candidates.
 // Now this is not called from anywhere.
 void DictionaryPredictionAggregator::AggregateSuffixPrediction(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
-  DCHECK_GT(segments.conversion_segments_size(), 0);
-  DCHECK(!segments.conversion_segment(0).key().empty());  // Not zero query
+    const ConversionRequest &request, std::vector<Result> *results) const {
+  DCHECK(!request.IsZeroQuerySuggestion());
+
   // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
   // all suffix entries.
-  const size_t cutoff_threshold = kPredictionMaxResultsSize;
-  const std::string kEmptyHistoryKey = "";
-  GetPredictiveResults(suffix_dictionary_, kEmptyHistoryKey, request, segments,
-                       SUFFIX, cutoff_threshold,
+  GetPredictiveResults(suffix_dictionary_, "" /* input key */, request, SUFFIX,
+                       kPredictionMaxResultsSize,
                        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_,
                        unknown_id_, results);
 }
 
 void DictionaryPredictionAggregator::AggregateZeroQuerySuffixPrediction(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
-  DCHECK_GT(segments.conversion_segments_size(), 0);
-  DCHECK(segments.conversion_segment(0).key().empty());
-
-  if (AggregateNumberZeroQueryPrediction(request, segments, results)) {
+    const ConversionRequest &request, std::vector<Result> *results) const {
+  if (!request.IsZeroQuerySuggestion()) {
     return;
   }
-  AggregateZeroQueryPrediction(request, segments, results);
+
+  if (AggregateNumberZeroQueryPrediction(request, results)) {
+    return;
+  }
+
+  AggregateZeroQueryPrediction(request, results);
 
   if (IsLatinInputMode(request)) {
     // We do not want zero query results from suffix dictionary for Latin
@@ -1663,28 +1596,27 @@ void DictionaryPredictionAggregator::AggregateZeroQuerySuffixPrediction(
       request_util::IsHandwriting(request)) {
     // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
     // all suffix entries.
-    const size_t cutoff_threshold = kPredictionMaxResultsSize;
-    const std::string kEmptyHistoryKey = "";
     GetPredictiveResults(
-        suffix_dictionary_, kEmptyHistoryKey, request, segments, SUFFIX,
-        cutoff_threshold,
+        suffix_dictionary_, "" /* input key */, request, SUFFIX,
+        kPredictionMaxResultsSize,
         Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX,
         zip_code_id_, unknown_id_, results);
   }
 }
 
 void DictionaryPredictionAggregator::AggregateEnglishPrediction(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
+
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
-  absl::string_view input_key = segments.conversion_segment(0).key();
-  GetPredictiveResultsForEnglishKey(dictionary_, request, input_key, ENGLISH,
+
+  GetPredictiveResultsForEnglishKey(dictionary_, request,
+                                    request.converter_key(), ENGLISH,
                                     cutoff_threshold, results);
 
-  size_t unigram_results_size = results->size() - prev_results_size;
+  const size_t unigram_results_size = results->size() - prev_results_size;
   if (unigram_results_size >= cutoff_threshold) {
     results->resize(prev_results_size);
     return;
@@ -1692,19 +1624,18 @@ void DictionaryPredictionAggregator::AggregateEnglishPrediction(
 }
 
 void DictionaryPredictionAggregator::AggregateEnglishPredictionUsingRawInput(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
 
   const size_t cutoff_threshold =
       GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
 
-  const std::string input_key = request.composer().GetRawString();
-  GetPredictiveResultsForEnglishKey(dictionary_, request, input_key, ENGLISH,
+  GetPredictiveResultsForEnglishKey(dictionary_, request,
+                                    request.composer().GetRawString(), ENGLISH,
                                     cutoff_threshold, results);
 
-  size_t unigram_results_size = results->size() - prev_results_size;
+  const size_t unigram_results_size = results->size() - prev_results_size;
   if (unigram_results_size >= cutoff_threshold) {
     results->resize(prev_results_size);
     return;
@@ -1712,13 +1643,12 @@ void DictionaryPredictionAggregator::AggregateEnglishPredictionUsingRawInput(
 }
 
 void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
-    const ConversionRequest &request, const Segments &segments,
-    PredictionTypes base_selected_types, std::vector<Result> *results) const {
+    const ConversionRequest &request, PredictionTypes base_selected_types,
+    std::vector<Result> *results) const {
   DCHECK(results);
 
   const size_t prev_results_size = results->size();
-
-  if (segments.conversion_segments_size() == 0 || prev_results_size > 10000) {
+  if (prev_results_size > 10000) {
     return;
   }
 
@@ -1741,8 +1671,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     absl::string_view key = query.correction;
     const size_t key_len = Util::CharsLen(key);
 
-    // Makes dummy segments with corrected query.
-    Segments corrected_segments = segments;
+    Segments corrected_segments = request.MakeRequestSegments();
     corrected_segments.mutable_conversion_segment(0)->set_key(key);
 
     // Make ConversionRequest that uses conversion_segment(0).key() as typing
@@ -1758,6 +1687,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
         ConversionRequestBuilder()
             .SetConversionRequestView(request)
             .SetOptions(std::move(options))
+            .SetHistorySegmentsView(corrected_segments)
             .Build();
 
     std::vector<Result> corrected_results;
@@ -1774,13 +1704,12 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
       AggregateRealtimeConversion(
           corrected_request, kRealtimeSize,
           /* insert_realtime_top_from_actual_converter= */ false,
-          corrected_segments, &corrected_results);
+          &corrected_results);
     } else {
       const UnigramConfig &unigram_config = GetUnigramConfig(request);
       if (key_len >= unigram_config.min_key_len) {
         const AggregateUnigramFn &unigram_fn = unigram_config.unigram_fn;
-        (this->*unigram_fn)(corrected_request, corrected_segments,
-                            &corrected_results);
+        (this->*unigram_fn)(corrected_request, &corrected_results);
       }
 
       if (base_selected_types & REALTIME) {
@@ -1788,11 +1717,11 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
         AggregateRealtimeConversion(
             corrected_request, kRealtimeSize,
             /* insert_realtime_top_from_actual_converter= */ false,
-            corrected_segments, &corrected_results);
+            &corrected_results);
       }
 
       if (base_selected_types & BIGRAM) {
-        AggregateBigramPrediction(corrected_request, corrected_segments,
+        AggregateBigramPrediction(corrected_request,
                                   Segment::Candidate::SOURCE_INFO_NONE,
                                   &corrected_results);
       }
@@ -1826,8 +1755,7 @@ void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
 }
 
 bool DictionaryPredictionAggregator::AggregateNumberCandidates(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
 
   if (!IsMixedConversionEnabled(request.request())) {
@@ -1877,8 +1805,7 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
 }
 
 void DictionaryPredictionAggregator::AggregatePrefixCandidates(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
   const size_t prev_results_size = results->size();
   const size_t cutoff_threshold =
@@ -1907,9 +1834,9 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
 }
 
 bool DictionaryPredictionAggregator::ShouldAggregateRealTimeConversionResults(
-    const ConversionRequest &request, const Segments &segments) {
+    const ConversionRequest &request) {
   constexpr size_t kMaxRealtimeKeySize = 300;  // 300 bytes in UTF8
-  absl::string_view key = segments.conversion_segment(0).key();
+  absl::string_view key = request.converter_key();
   if (key.empty() || key.size() >= kMaxRealtimeKeySize) {
     // 1) If key is empty, realtime conversion doesn't work.
     // 2) If the key is too long, we'll hit a performance issue.
@@ -1937,8 +1864,7 @@ bool DictionaryPredictionAggregator::IsZipCodeRequest(
 }
 
 void DictionaryPredictionAggregator::MaybePopulateTypingCorrectionPenalty(
-    const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    const ConversionRequest &request, std::vector<Result> *results) const {
   modules_.GetSupplementalModel().PopulateTypeCorrectedQuery(
       request, absl::Span<Result>(*results));
 }

@@ -37,7 +37,6 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
@@ -52,8 +51,8 @@ class SingleKanjiPredictionAggregator : public PredictionAggregatorInterface {
   explicit SingleKanjiPredictionAggregator(const DataManager &data_manager);
   ~SingleKanjiPredictionAggregator() override;
 
-  std::vector<Result> AggregateResults(const ConversionRequest &request,
-                                       const Segments &Segments) const override;
+  std::vector<Result> AggregateResults(
+      const ConversionRequest &request) const override;
 
  private:
   void AppendResults(absl::string_view kanji_key,

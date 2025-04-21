@@ -31,6 +31,7 @@
 #define MOZC_REQUEST_CONVERSION_REQUEST_H_
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -41,6 +42,7 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -305,7 +307,7 @@ class ConversionRequest {
   // Temporal API to return conversion key (conversion_segment(0).key()).
   // Since converter sets request.key() to conversion_segment.key(),
   // conversion_key() must be the same as key().
-  // TODO(taku): remove this API. Uses always key().
+  // TODO(b/409183257): remove this API. Uses always key().
   absl::string_view converter_key() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
     if (segments_ && segments_->conversion_segments_size() > 0) {
       DCHECK_EQ(key(), segments_->conversion_segment(0).key());
@@ -324,10 +326,56 @@ class ConversionRequest {
     return segments_ ? segments_->history_value(size) : "";
   }
 
+  // Returns the right context id of the history.
+  int converter_history_rid() const {
+    if (const converter::Candidate *candidate = last_history_candidate();
+        candidate) {
+      return candidate->rid;
+    }
+    return 0;
+  }
+
+  // Returns the cost of the history if defined.
+  std::optional<int> converter_history_cost() const {
+    if (const converter::Candidate *candidate = last_history_candidate();
+        candidate) {
+      return candidate->cost;
+    }
+    return std::nullopt;
+  }
+
+  // Temporal API to make legacy Segments from request.
+  // This API is used in the components (e.g.. immutable converter) that
+  // use Segments as the decoder request.
+  // TODO(b/409183257): remove this API after removing the dependency
+  // from ConverterRequest to Segments.
+  Segments MakeRequestSegments() const {
+    // Needs to call SetHistorySegmentsView to use this method.
+    DCHECK(segments_);
+    Segments segments = segments_ ? *segments_ : Segments();
+    if (segments.conversion_segments_size() == 0) {
+      segments.add_segment()->set_key(key());
+    }
+    segments.mutable_conversion_segment(0)->clear_candidates();
+    return segments;
+  }
+
   // Builder can access the private member for construction.
   friend class ConversionRequestBuilder;
 
  private:
+  const converter::Candidate *last_history_candidate() const {
+    if (!segments_ || segments_->history_segments_size() == 0) {
+      return nullptr;
+    }
+    const Segment &history_segment =
+        segments_->history_segment(segments_->history_segments_size() - 1);
+    if (history_segment.candidates_size() == 0) {
+      return nullptr;
+    }
+    return &history_segment.candidate(0);
+  }
+
   // Required options
   // Input composer to generate a key for conversion, suggestion, etc.
   internal::copy_or_view_ptr<const composer::ComposerData> composer_data_;
@@ -364,7 +412,6 @@ class ConversionRequestBuilder {
           GetKey(*request_.composer_data_, request_.options_.request_type,
                  request_.options_.composer_key_selection);
     }
-
     return request_;
   }
 
