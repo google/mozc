@@ -67,7 +67,7 @@ mozc_cc_library(
     hdrs = ["flat_map.h"],
     deps = [
         ":flat_internal",
-        "@com_google_absl//absl/base:nullability",
+        "//base:absl_nullability",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -125,8 +125,8 @@ mozc_cc_library(
     hdrs = ["freelist.h"],
     visibility = ["//:__subpackages__"],
     deps = [
+        "//base:absl_nullability",
         "//testing:friend_test",
-        "@com_google_absl//absl/base:nullability",
     ],
 )
 

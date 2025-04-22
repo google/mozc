@@ -31,9 +31,9 @@
 
 #include <tuple>
 
-#include "absl/base/nullability.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
+#include "base/absl_nullability.h"
 #include "base/strings/unicode.h"
 #include "composer/query.h"
 #include "converter/segments.h"
@@ -142,7 +142,7 @@ void Result::SetSourceInfoForZeroQuery(ZeroQueryType type) {
 
 void PopulateTypeCorrectedQuery(
     const composer::TypeCorrectedQuery &typing_corrected_result,
-    absl::Nonnull<Result *> result) {
+    Result *absl_nonnull result) {
   if (typing_corrected_result.type & composer::TypeCorrectedQuery::CORRECTION) {
     result->types |= TYPING_CORRECTION;
   }

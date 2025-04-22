@@ -38,10 +38,10 @@
 #include <type_traits>
 
 #include "absl/base/attributes.h"
-#include "absl/base/nullability.h"
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/absl_nullability.h"
 #include "base/strings/pfchar.h"
 
 namespace mozc {
@@ -93,7 +93,7 @@ class basic_zstring_view {
   //
   // NOLINTNEXTLINE(runtime/explicit)
   constexpr basic_zstring_view(
-      const absl::Nonnull<const_pointer> p ABSL_ATTRIBUTE_LIFETIME_BOUND)
+      const absl_nonnull const_pointer p ABSL_ATTRIBUTE_LIFETIME_BOUND)
       // This std::basic_string_view constructor overload is not noexcept.
       : sv_(p) {}
 
@@ -101,7 +101,7 @@ class basic_zstring_view {
   // string, not including the null-terminated character.
   //
   // REQUIRES: p[n] is the null-terminated character.
-  constexpr basic_zstring_view(const absl::Nonnull<const_pointer> p
+  constexpr basic_zstring_view(const absl_nonnull const_pointer p
                                    ABSL_ATTRIBUTE_LIFETIME_BOUND,
                                const size_type n)
       : sv_(p, n) {
@@ -155,10 +155,10 @@ class basic_zstring_view {
   // only constructs from null-terminated strings.
   // Use these functions instead of the underlying StringViewT when calling
   // C functions.
-  constexpr absl::Nonnull<const_pointer> c_str() const noexcept {
+  constexpr absl_nonnull const_pointer c_str() const noexcept {
     return sv_.data();
   }
-  constexpr absl::Nonnull<const_pointer> data() const noexcept {
+  constexpr absl_nonnull const_pointer data() const noexcept {
     return sv_.data();
   }
 

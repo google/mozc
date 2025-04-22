@@ -1144,3 +1144,10 @@ mozc_cc_test(
         "@com_google_absl//absl/strings:string_view",
     ],
 )
+
+# TODO(b/397718233): Remove this library once Abseil LTS supports absl_nullable.
+mozc_cc_library(
+    name = "absl_nullability",
+    hdrs = ["absl_nullability.h"],
+    deps = ["@com_google_absl//absl/base:nullability"],
+)

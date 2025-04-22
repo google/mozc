@@ -40,10 +40,10 @@
 #include <utility>
 
 #include "absl/base/attributes.h"
-#include "absl/base/nullability.h"
 #include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "base/absl_nullability.h"
 #include "base/strings/internal/utf8_internal.h"
 
 namespace mozc {
@@ -125,8 +125,7 @@ std::string Utf32ToUtf8(std::u32string_view sv);
 
 // Appends a single Unicode character represented by a char32_t code point to
 // dest.
-inline void StrAppendChar32(absl::Nonnull<std::string*> dest,
-                            const char32_t cp) {
+inline void StrAppendChar32(std::string* absl_nonnull dest, const char32_t cp) {
   const utf8_internal::EncodeResult ec = utf8_internal::Encode(cp);
   // basic_string::append() is faster than absl::StrAppend() here.
   dest->append(ec.data(), ec.size());

@@ -36,11 +36,11 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/nullability.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "base/absl_nullability.h"
 #include "composer/query.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
@@ -211,7 +211,7 @@ struct ResultCostLess {
 // TODO(taku): rename `query` as it is not a query.
 void PopulateTypeCorrectedQuery(
     const composer::TypeCorrectedQuery &typing_corrected_result,
-    absl::Nonnull<Result *> result);
+    Result *absl_nonnull result);
 
 #ifndef NDEBUG
 #define MOZC_WORD_LOG_MESSAGE(message) \

@@ -36,12 +36,12 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/nullability.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/absl_nullability.h"
 #include "base/vlog.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
@@ -73,12 +73,12 @@ bool IsBetweenAlphabets(const Node &left, const Node &right) {
 
 }  // namespace
 
-absl::Nonnull<const NBestGenerator::QueueElement *>
-NBestGenerator::CreateNewElement(absl::Nonnull<const Node *> node,
-                                 absl::Nullable<const QueueElement *> next,
+const NBestGenerator::QueueElement *absl_nonnull
+NBestGenerator::CreateNewElement(const Node *absl_nonnull node,
+                                 const QueueElement *absl_nullable next,
                                  int32_t fx, int32_t gx, int32_t structure_gx,
                                  int32_t w_gx) {
-  absl::Nonnull<QueueElement *> elm = freelist_.Alloc();
+  QueueElement *absl_nonnull elm = freelist_.Alloc();
   elm->node = node;
   elm->next = next;
   elm->fx = fx;
@@ -89,7 +89,7 @@ NBestGenerator::CreateNewElement(absl::Nonnull<const Node *> node,
 }
 
 void NBestGenerator::Agenda::Push(
-    absl::Nonnull<const NBestGenerator::QueueElement *> element) {
+    const NBestGenerator::QueueElement *absl_nonnull element) {
   priority_queue_.push_back(element);
   std::push_heap(priority_queue_.begin(), priority_queue_.end(),
                  QueueElement::Comparator);
@@ -122,8 +122,8 @@ NBestGenerator::NBestGenerator(const UserDictionaryInterface &user_dictionary,
   agenda_.Reserve(kFreeListSize);
 }
 
-void NBestGenerator::Reset(absl::Nonnull<const Node *> begin_node,
-                           absl::Nonnull<const Node *> end_node,
+void NBestGenerator::Reset(const Node *absl_nonnull begin_node,
+                           const Node *absl_nonnull end_node,
                            const Options options) {
   agenda_.Clear();
   freelist_.Free();
@@ -153,7 +153,7 @@ void NBestGenerator::Reset(absl::Nonnull<const Node *> begin_node,
 
 void NBestGenerator::MakeCandidate(
     Segment::Candidate &candidate, int32_t cost, int32_t structure_cost,
-    int32_t wcost, absl::Span<const absl::Nonnull<const Node *>> nodes) const {
+    int32_t wcost, absl::Span<const Node *absl_nonnull const> nodes) const {
   DCHECK(!nodes.empty());
 
   candidate.Clear();
@@ -165,7 +165,7 @@ void NBestGenerator::MakeCandidate(
 
   bool is_functional = false;
   for (size_t i = 0; i < nodes.size(); ++i) {
-    absl::Nonnull<const Node *> node = nodes[i];
+    const Node *absl_nonnull node = nodes[i];
     if (!is_functional && !pos_matcher_.IsFunctional(node->lid)) {
       candidate.content_key += node->key;
       candidate.content_value += node->value;
@@ -213,7 +213,7 @@ void NBestGenerator::MakeCandidate(
 }
 
 void NBestGenerator::FillInnerSegmentInfo(
-    absl::Span<const absl::Nonnull<const Node *>> nodes,
+    absl::Span<const Node *absl_nonnull const> nodes,
     Segment::Candidate &candidate) const {
   size_t key_len = nodes[0]->key.size(), value_len = nodes[0]->value.size();
   size_t content_key_len = key_len, content_value_len = value_len;
@@ -224,8 +224,8 @@ void NBestGenerator::FillInnerSegmentInfo(
     content_value_len = 0;
   }
   for (size_t i = 1; i < nodes.size(); ++i) {
-    absl::Nonnull<const Node *> lnode = nodes[i - 1];
-    absl::Nonnull<const Node *> rnode = nodes[i];
+    const Node *absl_nonnull lnode = nodes[i - 1];
+    const Node *absl_nonnull rnode = nodes[i];
     constexpr bool kMultipleSegments = false;
     if (segmenter_.IsBoundary(*lnode, *rnode, kMultipleSegments)) {
       // Keep the consistency with the above logic for candidate.content_*.
@@ -273,11 +273,11 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
     const ConversionRequest &request, absl::string_view original_key,
     const NBestGenerator::QueueElement &element,
     Segment::Candidate &candidate) {
-  std::vector<absl::Nonnull<const Node *>> nodes;
+  std::vector<const Node *absl_nonnull> nodes;
 
   if (options_.candidate_mode &
       CandidateMode::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT) {
-    absl::Nullable<const QueueElement *> elm = element.next;
+    const QueueElement *absl_nullable elm = element.next;
     for (; elm->next != nullptr; elm = elm->next) {
       nodes.push_back(elm->node);
       if (IsBetweenAlphabets(*elm->node, *elm->next->node)) {
@@ -298,7 +298,7 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
     const int wcost = element.w_gx - elm->w_gx;
     MakeCandidate(candidate, cost, structure_cost, wcost, nodes);
   } else {
-    for (absl::Nullable<const QueueElement *> elm = element.next;
+    for (const QueueElement *absl_nullable elm = element.next;
          elm->next != nullptr; elm = elm->next) {
       nodes.push_back(elm->node);
     }
@@ -318,7 +318,7 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
 void NBestGenerator::SetCandidates(const ConversionRequest &request,
                                    absl::string_view original_key,
                                    const size_t expand_size,
-                                   absl::Nonnull<Segment *> segment) {
+                                   Segment *absl_nonnull segment) {
   DCHECK(begin_node_);
   DCHECK(end_node_);
 
@@ -402,9 +402,9 @@ bool NBestGenerator::Next(const ConversionRequest &request,
   int num_trials = 0;
 
   while (!agenda_.IsEmpty()) {
-    absl::Nonnull<const QueueElement *> top = agenda_.Top();
+    const QueueElement *absl_nonnull top = agenda_.Top();
     agenda_.Pop();
-    absl::Nonnull<const Node *> rnode = top->node;
+    const Node *absl_nonnull rnode = top->node;
 
     if (num_trials++ > KMaxTrial) {  // too many trials
       MOZC_VLOG(2) << "too many trials: " << num_trials;

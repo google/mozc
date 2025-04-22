@@ -33,8 +33,6 @@
 #include <optional>
 #include <vector>
 
-#include "absl/base/nullability.h"
-#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/query.h"
 #include "prediction/result.h"

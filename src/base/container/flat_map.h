@@ -37,8 +37,8 @@
 #include <functional>
 #include <utility>
 
-#include "absl/base/nullability.h"
 #include "absl/types/span.h"
+#include "base/absl_nullability.h"
 #include "base/container/flat_internal.h"
 
 namespace mozc {
@@ -60,7 +60,7 @@ class FlatMap {
   }
 
   // Finds the value associated with the given key, or `nullptr` if not found.
-  constexpr absl::Nullable<const V *> FindOrNull(const K &key) const {
+  constexpr const V *absl_nullable FindOrNull(const K &key) const {
     auto span = absl::MakeSpan(entries_);
     auto lb = internal::FindFirst(span, [&](const std::pair<K, V> &e) {
       return !cmp_key_(e.first, key);

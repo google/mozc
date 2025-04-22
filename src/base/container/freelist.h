@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/nullability.h"
+#include "base/absl_nullability.h"
 #include "testing/friend_test.h"
 
 namespace mozc {
@@ -97,7 +97,7 @@ class FreeList {
     next_in_chunk_ = std::numeric_limits<size_type>::max();
   }
 
-  absl::Nonnull<T*> Alloc() {
+  T* absl_nonnull Alloc() {
     if (next_in_chunk_ >= chunk_size_) {
       next_in_chunk_ = 0;
       // Allocate the chunk with the allocate and delay the constructions until
@@ -106,7 +106,7 @@ class FreeList {
     }
 
     // Default construct T.
-    absl::Nonnull<T*> ptr = pool_.back() + next_in_chunk_++;
+    T* absl_nonnull ptr = pool_.back() + next_in_chunk_++;
     allocator_traits::construct(allocator_, ptr);
     return ptr;
   }
