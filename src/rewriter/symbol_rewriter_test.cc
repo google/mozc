@@ -53,10 +53,6 @@
 namespace mozc {
 namespace {
 
-using ::testing::_;
-using ::testing::Ref;
-using ::testing::Return;
-
 void AddSegment(const absl::string_view key, const absl::string_view value,
                 Segments *segments) {
   Segment *seg = segments->push_back_segment();
