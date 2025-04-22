@@ -54,7 +54,7 @@ void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
 // Mock data manager that returns empty a11y description data.
 class NoDataMockDataManager : public testing::MockDataManager {
  public:
-  virtual void GetA11yDescriptionRewriterData(
+  void GetA11yDescriptionRewriterData(
       absl::string_view *token_array_data,
       absl::string_view *string_array_data) const override {
     *token_array_data = "";
