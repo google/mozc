@@ -30,6 +30,8 @@
 #ifndef MOZC_BASE_STRINGS_ZSTRING_VIEW_H_
 #define MOZC_BASE_STRINGS_ZSTRING_VIEW_H_
 
+#include <compare>
+#include <concepts>
 #include <cstddef>
 #include <memory>
 #include <ostream>
@@ -182,20 +184,22 @@ class basic_zstring_view {
     sv_.swap(other.sv_);
   }
 
-  // Comparison operators for basic_zstring_view. Currently only ==, !=, <
-  // are implemented because the other comparisons are not very common.
-  // TODO(yuryu): use operator <=> when C++20 is allowed.
+  // Comparison operators for basic_zstring_view and anything that converts
+  // to StringViewT.
+  template <typename StringViewLike>
   friend constexpr bool operator==(const basic_zstring_view lhs,
-                                   const basic_zstring_view rhs) noexcept {
-    return lhs.sv_ == rhs.sv_;
+                                   const StringViewLike &rhs) {
+    return lhs.view() == rhs;
   }
-  friend constexpr bool operator!=(const basic_zstring_view lhs,
-                                   const basic_zstring_view rhs) noexcept {
-    return lhs.sv_ != rhs.sv_;
-  }
-  friend constexpr bool operator<(const basic_zstring_view lhs,
-                                  const basic_zstring_view rhs) noexcept {
-    return lhs.sv_ < rhs.sv_;
+  template <typename StringViewLike>
+    requires std::same_as<
+        typename StringViewLike::traits_type::comparison_category,
+        std::strong_ordering>
+  friend constexpr std::strong_ordering operator<=>(
+      const basic_zstring_view lhs, const StringViewLike &rhs) {
+    // In some environments, absl::string_view isn't an alias of
+    // std::string_view and doesn't implement operator <=> .
+    return lhs.view().compare(rhs) <=> 0;
   }
 
   template <typename H>
@@ -206,45 +210,6 @@ class basic_zstring_view {
  private:
   StringViewT sv_;
 };
-
-// Comparison operators for basic_zstring_view and anything that converts
-// to StringViewT.
-// TODO(yuryu): use operator <=> when C++20 is allowed.
-template <typename StringViewT, typename StringViewLike>
-constexpr bool operator==(const basic_zstring_view<StringViewT> lhs,
-                          const StringViewLike &rhs) {
-  return lhs.view() == rhs;
-}
-
-template <typename StringViewT, typename StringViewLike>
-constexpr bool operator==(const StringViewLike &lhs,
-                          const basic_zstring_view<StringViewT> rhs) {
-  return lhs == rhs.view();
-}
-
-template <typename StringViewT, typename StringViewLike>
-constexpr bool operator!=(const basic_zstring_view<StringViewT> lhs,
-                          const StringViewLike &rhs) {
-  return lhs.view() != rhs;
-}
-
-template <typename StringViewT, typename StringViewLike>
-constexpr bool operator!=(const StringViewLike &lhs,
-                          const basic_zstring_view<StringViewT> rhs) {
-  return lhs != rhs.view();
-}
-
-template <typename StringViewT, typename StringViewLike>
-constexpr bool operator<(const basic_zstring_view<StringViewT> lhs,
-                         const StringViewLike &rhs) {
-  return lhs.view() < rhs;
-}
-
-template <typename StringViewT, typename StringViewLike>
-constexpr bool operator<(const StringViewLike &lhs,
-                         const basic_zstring_view<StringViewT> rhs) {
-  return lhs < rhs.view();
-}
 
 // Outputs the value of the underlying StringViewT.
 template <typename StringViewT>
