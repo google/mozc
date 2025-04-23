@@ -51,7 +51,9 @@
 #include "testing/friend_test.h"
 
 // The obsolete and unmaintained *main.cc files (server_launcher_main.cc and
-// ping_server_main.cc) were removed to decrease maintenance costs and
+// ping_server_main.cc, client_performance_test_main.cc,
+// client_quality_test_main.cc, client_scenario_test_main.cc,
+// client_stress_test_main.cc were removed to decrease maintenance costs and
 // accelerate build times.
 
 namespace mozc {

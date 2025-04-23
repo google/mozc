@@ -29,13 +29,10 @@
 
 load(
     "//:build_defs.bzl",
-    "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
-    "mozc_py_binary",
     "mozc_select",
 )
-load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -164,113 +161,5 @@ mozc_cc_library(
         "//testing:gunit",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_binary(
-    name = "client_stress_test_main",
-    srcs = ["client_stress_test_main.cc"],
-    deps = [
-        ":client",
-        "//base:init_mozc",
-        "//base:vlog",
-        "//protocol:commands_cc_proto",
-        "//protocol:renderer_cc_proto",
-        "//renderer:renderer_client",
-        "//session:random_keyevents_generator",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_binary(
-    name = "client_scenario_test_main",
-    srcs = ["client_scenario_test_main.cc"],
-    deps = [
-        ":client",
-        "//base:file_stream",
-        "//base:file_util",
-        "//base:init_mozc",
-        "//base:system_util",
-        "//base:util",
-        "//base:vlog",
-        "//composer:key_parser",
-        "//protocol:commands_cc_proto",
-        "//protocol:renderer_cc_proto",
-        "//renderer:renderer_client",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_binary(
-    name = "client_performance_test_main",
-    srcs = ["client_performance_test_main.cc"],
-    deps = [
-        ":client",
-        "//base:file_stream",
-        "//base:init_mozc",
-        "//base:japanese_util",
-        "//base:singleton",
-        "//base:stopwatch",
-        "//base:util",
-        "//config:config_handler",
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "//session:random_keyevents_generator",
-        "@com_google_absl//absl/algorithm:container",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/time",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
-mozc_py_binary(
-    name = "gen_client_quality_test_data",
-    srcs = ["gen_client_quality_test_data.py"],
-)
-
-mozc_run_build_tool(
-    name = "client_quality_test_data",
-    outs = {
-        "--output": "client_quality_test_data.inc",
-    },
-    positional_srcs = [
-        # TSV files formatted as "label <tab> expected <tab> query"
-    ],
-    tool = ":gen_client_quality_test_data",
-)
-
-mozc_cc_binary(
-    name = "client_quality_test_main",
-    srcs = [
-        "client_quality_test_main.cc",
-        ":client_quality_test_data",
-    ],
-    tags = ["manual"],
-    deps = [
-        ":client",
-        "//base:file_stream",
-        "//base:init_mozc",
-        "//base:japanese_util",
-        "//base:util",
-        "//base:vlog",
-        "//base/protobuf:message",
-        "//evaluation:scorer",
-        "//protocol:commands_cc_proto",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
     ],
 )
