@@ -501,8 +501,6 @@ class UserHistoryPredictor : public PredictorInterface {
   std::unique_ptr<DicCache> dic_;
   mutable std::optional<BackgroundFuture<void>> sync_;
   const engine::Modules &modules_;
-
-  mutable std::atomic<bool> aggressive_bigram_enabled_ = false;
 };
 
 }  // namespace mozc::prediction

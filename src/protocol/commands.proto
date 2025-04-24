@@ -592,14 +592,6 @@ message DecoderExperimentParams {
   // Changes the size of history with character coverage.
   optional int32 user_history_prediction_max_char_coverage = 82 [default = 0];
 
-  // Remove redundant candidates.
-  optional int32 user_history_prediction_filter_redundant_candidates_mode = 84
-      [default = 0];
-
-  // Enables more aggressive bigram triggering for UX v2.
-  optional bool user_history_prediction_aggressive_bigram = 86
-      [default = false];
-
   // Parameter for space-insertion for English compounds
   // value 0: no insertion. Candidates will be like this.
   // - "Google"
@@ -1141,7 +1133,7 @@ message Input {
   // This is set to true by default.
   // Note that even if this flag is set to false, when a suggestion is shown
   // in the previous phase, it is possible from the client to submit it.
-  // This works only for suggestions for the key insersion, but not for
+  // This works only for suggestions for the key insertion, but not for
   // others commands, such as predictions or conversions.
   // This flag is used for the performance improvement in terms of the
   // latency.  If you want to suppress the suggestions for the UX improment,

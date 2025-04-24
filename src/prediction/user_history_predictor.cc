@@ -102,7 +102,7 @@ constexpr size_t kLruCacheSize = 10000;
 constexpr size_t kMaxStringLength = 256;
 
 // Maximum size of next_entries
-constexpr size_t kMaxNextEntriesSize = 4;
+constexpr size_t kMaxNextEntriesSize = 6;
 
 // Revert id for user_history_predictor
 const uint16_t kRevertId = 1;
@@ -820,9 +820,8 @@ bool UserHistoryPredictor::ZeroQueryLookupEntry(
 
   // when `perv_entry` is not null, it is guaranteed that
   // the history segment is in the LRU cache.
-  if (prev_entry && aggressive_bigram_enabled_ &&
-      request.request().zero_query_suggestion() && input_key.empty() &&
-      entry->key().size() > prev_entry->key().size() &&
+  if (prev_entry && request.request().zero_query_suggestion() &&
+      input_key.empty() && entry->key().size() > prev_entry->key().size() &&
       entry->value().size() > prev_entry->value().size() &&
       entry->key().starts_with(prev_entry->key()) &&
       entry->value().starts_with(prev_entry->value())) {
@@ -1195,9 +1194,6 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     max_prediction_size = 3;
   }
 
-  aggressive_bigram_enabled_ =
-      params.user_history_prediction_aggressive_bigram();
-
   EntryPriorityQueue results = GetResultsFromHistoryDictionary(
       request, prev_entry, max_prediction_size * 5);
 
@@ -1271,32 +1267,28 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
 
   const Segment &history_segment = history_segments.back();
 
-  if (aggressive_bigram_enabled_) {
-    // Finds the prev_entry from the longest context.
-    // Even when the original value is split into content_value and suffix,
-    // longest context information is used.
-    std::string all_history_key, all_history_value;
-    for (const auto &segment : history_segments) {
-      if (segment.candidates_size() == 0) {
-        all_history_value.clear();
-        all_history_key.clear();
-        break;
-      }
-      absl::StrAppend(&all_history_value, segment.candidate(0).value);
-      absl::StrAppend(&all_history_key, segment.candidate(0).key);
+  // Finds the prev_entry from the longest context.
+  // Even when the original value is split into content_value and suffix,
+  // longest context information is used.
+  std::string all_history_key, all_history_value;
+  for (const auto &segment : history_segments) {
+    if (segment.candidates_size() == 0) {
+      all_history_value.clear();
+      all_history_key.clear();
+      break;
     }
-    absl::string_view suffix_key = all_history_key;
-    absl::string_view suffix_value = all_history_value;
-    for (const auto &segment : history_segments) {
-      if (suffix_key.empty() || suffix_value.empty()) break;
-      prev_entry =
-          dic_->LookupWithoutInsert(Fingerprint(suffix_key, suffix_value));
-      if (prev_entry) break;
-      suffix_value.remove_prefix(segment.candidate(0).value.size());
-      suffix_key.remove_prefix(segment.candidate(0).key.size());
-    }
-  } else {
-    prev_entry = dic_->LookupWithoutInsert(SegmentFingerprint(history_segment));
+    absl::StrAppend(&all_history_value, segment.candidate(0).value);
+    absl::StrAppend(&all_history_key, segment.candidate(0).key);
+  }
+  absl::string_view suffix_key = all_history_key;
+  absl::string_view suffix_value = all_history_value;
+  for (const auto &segment : history_segments) {
+    if (suffix_key.empty() || suffix_value.empty()) break;
+    prev_entry =
+        dic_->LookupWithoutInsert(Fingerprint(suffix_key, suffix_value));
+    if (prev_entry) break;
+    suffix_value.remove_prefix(segment.candidate(0).value.size());
+    suffix_key.remove_prefix(segment.candidate(0).key.size());
   }
 
   // Check the timestamp of prev_entry.
@@ -1489,56 +1481,26 @@ bool UserHistoryPredictor::InsertCandidates(const ConversionRequest &request,
   }
   const uint32_t input_key_len = segment->key_len();
 
-  const int filter_mode =
-      request.request()
-          .decoder_experiment_params()
-          .user_history_prediction_filter_redundant_candidates_mode();
-
   size_t inserted_num = 0;
   size_t inserted_char_coverage = 0;
 
   std::vector<const UserHistoryPredictor::Entry *> entries;
   entries.reserve(results->size());
 
-  // Bit fields to specify the filtering mode.
-  enum FilterMode {
-    // Current LRU-based candidates = ["東京"]
-    //  target="東京は" -> Remove.   (target is longer)
-    //  target="東"     -> Keep.     (target is shorter)
-    FILTER_LONG_ENTRY = 1,
+  // Current LRU-based candidates = ["東京"]
+  //  target="東京は" -> Remove.   (target is longer)
+  //  target="東"     -> Keep.     (target is shorter)
+  // Current LRU-based candidates = ["東京は"]
+  //   target="東京" -> Replace "東京は" and "東京"
 
-    // Current LRU-based candidates = ["東京は"]
-    //  target="東京"     -> Remove. (target is shorter)
-    //  target="東京はが" -> Keep.   (target is longer)
-    FILTER_SHORT_ENTRY = 2,
-
-    // Current LRU-based candidates = ["東京は"]
-    //   target="東京" -> Replace "東京は" and "東京"
-    // FILTER_SHORT_ENTRY and REPLACE_SHORT_ENTRY are exclusive.
-    REPLACE_SHORT_ENTRY = 4,
-
-    // - Non-shared suffix can be any script type.
-    //   Note that this flag is for prefix match.
-    //  Current LRU-based candidates = ["東京"]
-    //   target="東京タワー" -> Remove. (suffix can be any type)
-    SUFFIX_IS_ALL_CHAR_TYPE = 8,
-  };
-
-  auto starts_with = [&filter_mode](absl::string_view text,
-                                    absl::string_view prefix) {
-    if (filter_mode & SUFFIX_IS_ALL_CHAR_TYPE) {
-      return text.starts_with(prefix);
-    }
+  auto starts_with = [](absl::string_view text, absl::string_view prefix) {
     return text.starts_with(prefix) &&
            Util::IsScriptType(text.substr(prefix.size()), Util::HIRAGANA);
   };
 
   auto is_redandant = [&](absl::string_view target,
                           absl::string_view inserted) {
-    return ((filter_mode & FILTER_LONG_ENTRY) &&
-            starts_with(target, inserted)) ||
-           ((filter_mode & FILTER_SHORT_ENTRY) &&
-            starts_with(inserted, target));
+    return starts_with(target, inserted);
   };
 
   auto is_redandant_entry = [&](const Entry &entry) {
@@ -1549,13 +1511,12 @@ bool UserHistoryPredictor::InsertCandidates(const ConversionRequest &request,
 
   // Replace `entry` with the one entry in `entries`.
   auto maybe_replace_entry = [&](const Entry *entry) {
-    if (!(filter_mode & REPLACE_SHORT_ENTRY)) return false;
-
     auto it = absl::c_find_if(entries, [&](const Entry *inserted_entry) {
       return starts_with(inserted_entry->value(), entry->value());
     });
-    if (it == entries.end()) return false;
-
+    if (it == entries.end()) {
+      return false;
+    }
     inserted_char_coverage -= Util::CharsLen((*it)->value());
     inserted_char_coverage += Util::CharsLen(entry->value());
     *it = entry;
@@ -1581,8 +1542,8 @@ bool UserHistoryPredictor::InsertCandidates(const ConversionRequest &request,
     }
 
     // Check candidate redundancy.
-    if (filter_mode > 0 && (is_redandant_entry(*result_entry) ||
-                            maybe_replace_entry(result_entry))) {
+    if (is_redandant_entry(*result_entry) ||
+        maybe_replace_entry(result_entry)) {
       continue;
     }
 
@@ -1878,10 +1839,6 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     MOZC_VLOG(2) << "no history suggest";
     return;
   }
-
-  aggressive_bigram_enabled_ = request.request()
-                                   .decoder_experiment_params()
-                                   .user_history_prediction_aggressive_bigram();
 
   if (!CheckSyncerAndDelete()) {
     LOG(WARNING) << "Syncer is running";
@@ -2254,7 +2211,7 @@ std::vector<uint32_t> UserHistoryPredictor::LearningSegmentFingerprints(
   std::vector<uint32_t> fps;
   fps.reserve(2);
   fps.push_back(Fingerprint(segment.key, segment.value));
-  if (aggressive_bigram_enabled_ && segment.key != segment.content_key) {
+  if (segment.key != segment.content_key) {
     fps.push_back(Fingerprint(segment.content_key, segment.content_value));
   }
   return fps;
@@ -2318,7 +2275,7 @@ uint32_t UserHistoryPredictor::cache_size() { return kLruCacheSize; }
 
 // Returns the size of next entries.
 uint32_t UserHistoryPredictor::max_next_entries_size() const {
-  return aggressive_bigram_enabled_ ? 6 : kMaxNextEntriesSize;
+  return kMaxNextEntriesSize;
 }
 
 }  // namespace mozc::prediction

@@ -3954,14 +3954,14 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
       SetUpInputForPrediction("と", &composer_, &segments);
   EXPECT_TRUE(predictor->PredictForRequest(convreq2, &segments));
   EXPECT_TRUE(FindCandidateByValue("東京", segments));
-  EXPECT_TRUE(FindCandidateByValue("東京か", segments));
+  EXPECT_FALSE(FindCandidateByValue("東京か", segments));
 
   segments.Clear();
   const ConversionRequest convreq3 =
       SetUpInputForPrediction("な", &composer_, &segments);
   EXPECT_TRUE(predictor->PredictForRequest(convreq3, &segments));
   EXPECT_TRUE(FindCandidateByValue("名古屋", segments));
-  EXPECT_TRUE(FindCandidateByValue("名古屋に", segments));
+  EXPECT_FALSE(FindCandidateByValue("名古屋に", segments));
 
   segments.Clear();
   const ConversionRequest convreq4 =
@@ -4738,8 +4738,7 @@ TEST_F(UserHistoryPredictorTest, MaxCharCoverage) {
 
 TEST_F(UserHistoryPredictorTest, RemoveRedundantCandidates) {
   // pass the input candidates and expected (filtered) candidates.
-  auto run_test = [this](int filter_mode,
-                         absl::Span<const absl::string_view> candidates,
+  auto run_test = [this](absl::Span<const absl::string_view> candidates,
                          absl::Span<const absl::string_view> expected) {
     ScopedClockMock clock(absl::FromUnixSeconds(1));
     UserHistoryPredictor *predictor =
@@ -4753,9 +4752,6 @@ TEST_F(UserHistoryPredictorTest, RemoveRedundantCandidates) {
       AddCandidate(0, *it, &segments);
       predictor->Finish(convreq, &segments);
     }
-    request_.mutable_decoder_experiment_params()
-        ->set_user_history_prediction_filter_redundant_candidates_mode(
-            filter_mode);
     MakeSegments("とうき", &segments);
     ConversionRequest::Options options = {
         .request_type = ConversionRequest::SUGGESTION,
@@ -4771,78 +4767,19 @@ TEST_F(UserHistoryPredictorTest, RemoveRedundantCandidates) {
     }
   };
 
-  // filter long entries.
-  run_test(1, {"東京", "東京は"}, {"東京"});
-  run_test(1, {"東京", "東京は", "東京で"}, {"東京"});
-  run_test(1, {"東京は", "東京で", "東京"}, {"東京は", "東京で", "東京"});
-
-  // filter short entries.
-  run_test(2, {"東京", "東京は"}, {"東京", "東京は"});
-  run_test(2, {"東京", "東京は", "東京で"}, {"東京", "東京は", "東京で"});
-  run_test(2, {"東京は", "東京で", "東京"}, {"東京は", "東京で"});
-
-  // replace short entries.
-  run_test(4, {"東京", "東京は"}, {"東京", "東京は"});
-  run_test(4, {"東京は", "東京"}, {"東京"});
-  // only replace the first entry.
-  run_test(4, {"東京は", "東京で", "東京"}, {"東京", "東京で"});
-
-  // filter long and short entries.
-  run_test(1 + 2, {"東京は", "東京", "大阪", "大阪は"}, {"東京は", "大阪"});
-  run_test(1 + 2, {"東京", "東京は", "大阪は", "大阪"}, {"東京", "大阪は"});
-
   // filter long and replace short entries.
-  run_test(1 + 4, {"東京は", "東京", "大阪", "大阪は"}, {"東京", "大阪"});
-  run_test(1 + 4, {"東京", "東京は", "大阪は", "大阪"}, {"東京", "大阪"});
-
-  // Suffix is non hiragana
-  // Default setting doesn't allow non-hiragana suffix.
-  run_test(1 + 2, {"東京駅", "東京", "大阪", "大阪駅"},
+  run_test({"東京は", "東京", "大阪", "大阪は"}, {"東京", "大阪"});
+  run_test({"東京", "東京は", "大阪は", "大阪"}, {"東京", "大阪"});
+  run_test({"東京駅", "東京", "大阪", "大阪駅"},
            {"東京駅", "東京", "大阪", "大阪駅"});
-  run_test(1 + 2, {"東京", "東京駅", "大阪駅", "大阪"},
+  run_test({"東京", "東京駅", "大阪駅", "大阪"},
            {"東京", "東京駅", "大阪駅", "大阪"});
-
-  // filter long and replace short entries.
-  run_test(1 + 4, {"東京駅", "東京", "大阪", "大阪駅"},
-           {"東京駅", "東京", "大阪", "大阪駅"});
-  run_test(1 + 4, {"東京", "東京駅", "大阪駅", "大阪"},
-           {"東京", "東京駅", "大阪駅", "大阪"});
-
-  // filter long and short entries.
-  run_test(1 + 2, {"東京は", "東京", "大阪", "大阪駅"},
-           {"東京は", "大阪", "大阪駅"});
-  run_test(1 + 2, {"東京", "東京は", "大阪駅", "大阪"},
-           {"東京", "大阪駅", "大阪"});
-
-  // filter long and replace short entries.
-  run_test(1 + 4, {"東京は", "東京", "大阪", "大阪駅"},
-           {"東京", "大阪", "大阪駅"});
-  run_test(1 + 4, {"東京", "東京は", "大阪駅", "大阪"},
-           {"東京", "大阪駅", "大阪"});
-
-  // Allows non-hiragana suffix.
-  // filter long and short entries.
-  run_test(1 + 2 + 8, {"東京駅", "東京", "大阪", "大阪駅"}, {"東京駅", "大阪"});
-  run_test(1 + 2 + 8, {"東京", "東京駅", "大阪駅", "大阪"}, {"東京", "大阪駅"});
-
-  // filter long and replace short entries.
-  run_test(1 + 4 + 8, {"東京駅", "東京", "大阪", "大阪駅"}, {"東京", "大阪"});
-  run_test(1 + 4 + 8, {"東京", "東京駅", "大阪駅", "大阪"}, {"東京", "大阪"});
-
-  // filter long and short entries.
-  run_test(1 + 2 + 8, {"東京は", "東京", "大阪", "大阪駅"}, {"東京は", "大阪"});
-  run_test(1 + 2 + 8, {"東京", "東京は", "大阪駅", "大阪"}, {"東京", "大阪駅"});
-
-  // filter long and replace short entries.
-  run_test(1 + 4 + 8, {"東京は", "東京", "大阪", "大阪駅"}, {"東京", "大阪"});
-  run_test(1 + 4 + 8, {"東京", "東京は", "大阪駅", "大阪"}, {"東京", "大阪"});
+  run_test({"東京は", "東京", "大阪", "大阪駅"}, {"東京", "大阪", "大阪駅"});
+  run_test({"東京", "東京は", "大阪駅", "大阪"}, {"東京", "大阪駅", "大阪"});
 }
 
 TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-
-  request_.mutable_decoder_experiment_params()
-      ->set_user_history_prediction_aggressive_bigram(true);
 
   // Remember 私の名前は中野です
   Segments segments;
