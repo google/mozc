@@ -104,7 +104,6 @@ class UserHistoryPredictor : public PredictorInterface {
     content_word_learning_enabled_ = value;
   }
 
-  bool Predict(Segments *segments) const;
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override;
 
@@ -234,11 +233,6 @@ class UserHistoryPredictor : public PredictorInterface {
     EXACT_MATCH,         // right string == left string
   };
 
-  enum RequestType {
-    DEFAULT,
-    ZERO_QUERY_SUGGESTION,
-  };
-
   // Returns value of RemoveNgramChain() method. See the comments in
   // implementation.
   enum RemoveNgramChainResult {
@@ -255,8 +249,7 @@ class UserHistoryPredictor : public PredictorInterface {
   };
 
   // Returns true if this predictor should return results for the input.
-  bool ShouldPredict(RequestType request_type, const ConversionRequest &request,
-                     const Segments &segments) const;
+  bool ShouldPredict(const ConversionRequest &request) const;
 
   // Loads user history data to an on-memory LRU from the local file.
   bool Load();
@@ -297,8 +290,8 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Returns true |result_entry| can be handled as
   // a valid result if the length of user input is |prefix_len|.
-  static bool IsValidSuggestion(RequestType request_type, uint32_t prefix_len,
-                                const Entry &entry);
+  static bool IsValidSuggestion(const ConversionRequest &request,
+                                uint32_t prefix_len, const Entry &entry);
 
   // IsValidSuggestion used in mixed conversion (mobile).
   static bool IsValidSuggestionForMixedConversion(
@@ -306,7 +299,6 @@ class UserHistoryPredictor : public PredictorInterface {
       const Entry &entry);
 
   static ResultType GetResultType(const ConversionRequest &request,
-                                  RequestType request_type,
                                   bool is_top_candidate, uint32_t input_key_len,
                                   const Entry &entry);
 
@@ -358,8 +350,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // |prev_entry| is an optional field. If set nullptr, this field is just
   // ignored. This method adds a new result entry with score,
   // pair<score, entry>, to |results|.
-  bool LookupEntry(RequestType request_type, absl::string_view input_key,
-                   absl::string_view key_base,
+  bool LookupEntry(const ConversionRequest &request,
+                   absl::string_view input_key, absl::string_view key_base,
                    const Trie<std::string> *key_expanded, const Entry *entry,
                    const Entry *prev_entry, EntryPriorityQueue *results) const;
 
@@ -387,22 +379,17 @@ class UserHistoryPredictor : public PredictorInterface {
                                  Entry entry,
                                  EntryPriorityQueue *results) const;
 
-  void GetResultsFromHistoryDictionary(RequestType request_type,
-                                       const ConversionRequest &request,
-                                       const Segments &segments,
-                                       const Entry *prev_entry,
-                                       size_t max_results_size,
-                                       EntryPriorityQueue *results) const;
+  EntryPriorityQueue GetResultsFromHistoryDictionary(
+      const ConversionRequest &request, const Entry *prev_entry,
+      size_t max_results_size) const;
 
   // Gets input data from segments.
   // These input data include ambiguities.
-  static void GetInputKeyFromSegments(
-      const ConversionRequest &request, const Segments &segments,
-      std::string *input_key, std::string *base,
-      std::unique_ptr<Trie<std::string>> *expanded);
+  static void GetInputKeyFromRequest(
+      const ConversionRequest &request, std::string *input_key,
+      std::string *base, std::unique_ptr<Trie<std::string>> *expanded);
 
-  bool InsertCandidates(RequestType request_type,
-                        const ConversionRequest &request,
+  bool InsertCandidates(const ConversionRequest &request,
                         size_t max_prediction_size,
                         size_t max_prediction_char_coverage, Segments *segments,
                         EntryPriorityQueue *results) const;
@@ -421,12 +408,11 @@ class UserHistoryPredictor : public PredictorInterface {
   // composer() if composer is available. If not, use the key
   // directory. It also use MaybeRomanMisspelledKey() defined
   // below to check the preedit looks misspelled or not.
-  static std::string GetRomanMisspelledKey(const ConversionRequest &request,
-                                           const Segments &segments);
+  static std::string GetRomanMisspelledKey(const ConversionRequest &request);
 
   // Returns the typing corrected queries.
   std::vector<::mozc::composer::TypeCorrectedQuery> GetTypingCorrectedQueries(
-      const ConversionRequest &request, const Segments &segments) const;
+      const ConversionRequest &request) const;
 
   // Returns true if |key| may contain miss spelling.
   // Currently, this function returns true if
@@ -444,16 +430,17 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // if `prev_entry` is the prefix of `entry`, add the suffix part as
   // zero-query suggestion.
-  bool ZeroQueryLookupEntry(RequestType request_type,
+  bool ZeroQueryLookupEntry(const ConversionRequest &request,
                             absl::string_view input_key, const Entry *entry,
                             const Entry *prev_entry,
                             EntryPriorityQueue *results) const;
 
-  void InsertHistory(RequestType request_type, bool is_suggestion_selected,
-                     uint64_t last_access_time, Segments *segments);
+  void InsertHistory(const ConversionRequest &request,
+                     bool is_suggestion_selected, uint64_t last_access_time,
+                     Segments *segments);
 
   void InsertHistoryForConversionSegments(
-      RequestType request_type, bool is_suggestion_selected,
+      const ConversionRequest &request, bool is_suggestion_selected,
       uint64_t last_access_time, const SegmentsForLearning &learning_segments,
       Segments *segments);
 
@@ -466,13 +453,13 @@ class UserHistoryPredictor : public PredictorInterface {
               uint64_t last_access_time, Segments *segments);
 
   // Called by TryInsert to check the Entry to insert.
-  bool ShouldInsert(RequestType request_type, absl::string_view key,
+  bool ShouldInsert(const ConversionRequest &request, absl::string_view key,
                     absl::string_view value,
                     absl::string_view description) const;
 
   // Tries to insert entry.
   // Entry's contents and request_type will be checked before insertion.
-  void TryInsert(RequestType request_type, absl::string_view key,
+  void TryInsert(const ConversionRequest &request, absl::string_view key,
                  absl::string_view value, absl::string_view description,
                  bool is_suggestion_selected,
                  absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
@@ -497,7 +484,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Returns true if the input first candidate seems to be a privacy sensitive
   // such like password.
-  bool IsPrivacySensitive(const Segments *segments) const;
+  bool IsPrivacySensitive(const Segments &segments) const;
 
   // Removes history entries when the selected ratio is under the threshold.
   // Selected ratio:
