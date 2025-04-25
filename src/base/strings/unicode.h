@@ -282,7 +282,7 @@ class Utf8CharIterator {
   template <typename RBaseIterator, typename RValueType>
   constexpr bool operator==(
       const Utf8CharIterator<RBaseIterator, RValueType> rhs) const {
-    return iter_ == rhs.iter_;
+    return std::to_address(iter_) == std::to_address(rhs.iter_);
   }
 
  private:
