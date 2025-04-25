@@ -503,3 +503,23 @@ FAILED:	おきてねがおみてた	起きて音がお見てた	Conversion Expec
 FAILED:	ほかのようじもできた	他の幼児もできた	Conversion Expected	他の用事もできた	2.30.5544
 OK:	きょうきゅうりょうび！	今日給料日！	Conversion Expected	今日給料日！	2.30.5618
 OK:	みたことないとりいる	見たことない鳥いる	Conversion Expected	見たことない鳥いる	2.30.5544
+FAILED:	れいしょう	冷笑	Conversion Expected 99	0勝	2.31.5810
+OK:	れいしょう	冷笑	Conversion Expected 99	冷笑	2.31.5810
+OK:	いっかい	一回	Conversion Expected 99	1階	2.31.5810
+OK:	いっかい	一回	Conversion Expected 99	一介	2.31.5810
+OK:	にじ	二時	Conversion Expected 99	2時	2.31.5810
+FAILED:	にじ	二時	Conversion Expected 99	虹	2.31.5810
+OK:	さんしゅう	三周	Conversion Expected 99	3週	2.31.5810
+OK:	さんしゅう	三周	Conversion Expected 99	参集	2.31.5810
+OK:	よじ	よじ	Conversion Expected 99	4時	2.31.5810
+OK:	よじ	よじ	Conversion Expected 99	余事	2.31.5810
+OK:	ごかい	五回	Conversion Expected 99	5階	2.31.5810
+OK:	ごかい	五回	Conversion Expected 99	誤解	2.31.5810
+OK:	ろくが	録画	Conversion Expected 99	6が	2.31.5810
+OK:	ろくが	録画	Conversion Expected 99	録画	2.31.5810
+FAILED:	ななちゃん	無無ちゃん	Conversion Expected 99	7チャン	2.31.5810
+OK:	ななちゃん	無無ちゃん	Conversion Expected 99	ナナちゃん	2.31.5810
+FAILED:	はってん	発展	Conversion Expected 99	8点	2.31.5810
+OK:	はってん	発展	Conversion Expected 99	発展	2.31.5810
+FAILED:	きゅうしゅう	吸収	Conversion Expected 99	9週	2.31.5810
+OK:	きゅうしゅう	吸収	Conversion Expected 99	吸収	2.31.5810
