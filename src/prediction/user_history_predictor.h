@@ -369,7 +369,7 @@ class UserHistoryPredictor : public PredictorInterface {
       uint64_t *left_most_last_access_time, std::string *result_key,
       std::string *result_value) const;
 
-  const Entry *LookupPrevEntry(const Segments &segments) const;
+  const Entry *LookupPrevEntry(const ConversionRequest &request) const;
 
   // Adds an entry to a priority queue.
   Entry *AddEntry(const Entry &entry, EntryPriorityQueue *results) const;

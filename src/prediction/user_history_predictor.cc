@@ -1170,7 +1170,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
   }
 
   const bool is_empty_input = request.converter_key().empty();
-  const Entry *prev_entry = LookupPrevEntry(*segments);
+  const Entry *prev_entry = LookupPrevEntry(request);
   if (is_empty_input && prev_entry == nullptr) {
     MOZC_VLOG(1) << "If input_key_len is 0, prev_entry must be set";
     return false;
@@ -1255,40 +1255,24 @@ bool UserHistoryPredictor::ShouldPredict(
 }
 
 const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
-    const Segments &segments) const {
-  const Segments::const_range history_segments = segments.history_segments();
-  const Entry *prev_entry = nullptr;
+    const ConversionRequest &request) const {
   // When there are non-zero history segments, lookup an entry
   // from the LRU dictionary, which is corresponding to the last
   // history segment.
-  if (history_segments.empty()) {
+  if (request.converter_history_size() == 0) {
     return nullptr;
   }
-
-  const Segment &history_segment = history_segments.back();
 
   // Finds the prev_entry from the longest context.
   // Even when the original value is split into content_value and suffix,
   // longest context information is used.
-  std::string all_history_key, all_history_value;
-  for (const auto &segment : history_segments) {
-    if (segment.candidates_size() == 0) {
-      all_history_value.clear();
-      all_history_key.clear();
-      break;
-    }
-    absl::StrAppend(&all_history_value, segment.candidate(0).value);
-    absl::StrAppend(&all_history_key, segment.candidate(0).key);
-  }
-  absl::string_view suffix_key = all_history_key;
-  absl::string_view suffix_value = all_history_value;
-  for (const auto &segment : history_segments) {
-    if (suffix_key.empty() || suffix_value.empty()) break;
+  const Entry *prev_entry = nullptr;
+  for (int size = request.converter_history_size(); size >= 1; --size) {
+    const std::string suffix_key = request.converter_history_key(size);
+    const std::string suffix_value = request.converter_history_value(size);
     prev_entry =
         dic_->LookupWithoutInsert(Fingerprint(suffix_key, suffix_value));
     if (prev_entry) break;
-    suffix_value.remove_prefix(segment.candidate(0).value.size());
-    suffix_key.remove_prefix(segment.candidate(0).key.size());
   }
 
   // Check the timestamp of prev_entry.
@@ -1301,10 +1285,10 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
 
   // When |prev_entry| is nullptr or |prev_entry| has no valid next_entries,
   // do linear-search over the LRU.
-  if ((prev_entry == nullptr && history_segment.candidates_size() > 0) ||
+  if (prev_entry == nullptr ||
       (prev_entry != nullptr && prev_entry->next_entries_size() == 0)) {
-    absl::string_view prev_value = prev_entry == nullptr
-                                       ? history_segment.candidate(0).value
+    const std::string prev_value = prev_entry == nullptr
+                                       ? request.converter_history_value(1)
                                        : prev_entry->value();
     int trial = 0;
     for (const DicElement &elm : *dic_) {

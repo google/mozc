@@ -326,6 +326,10 @@ class ConversionRequest {
     return segments_ ? segments_->history_value(size) : "";
   }
 
+  size_t converter_history_size() const {
+    return segments_ ? segments_->history_segments_size() : 0;
+  }
+
   // Returns the right context id of the history.
   int converter_history_rid() const {
     if (const converter::Candidate *candidate = last_history_candidate();

@@ -157,6 +157,8 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
     const ConversionRequest convreq =
         ConversionRequestBuilder().SetHistorySegmentsView(segments).Build();
 
+    EXPECT_EQ(convreq.converter_history_size(), 3);
+
     EXPECT_EQ(convreq.converter_history_key(), "k0k1k2");
     EXPECT_EQ(convreq.converter_history_value(), "v0v1v2");
     EXPECT_EQ(convreq.converter_history_key(10), "k0k1k2");
@@ -174,6 +176,8 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
 
   {
     const ConversionRequest convreq = ConversionRequestBuilder().Build();
+
+    EXPECT_EQ(convreq.converter_history_size(), 0);
     EXPECT_EQ(convreq.converter_history_key(), "");
     EXPECT_EQ(convreq.converter_history_value(), "");
     EXPECT_EQ(convreq.converter_history_key(10), "");
