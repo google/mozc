@@ -86,6 +86,7 @@ bool IsValidUtf8(absl::string_view sv);
 // leading byte of each character and doesn't check if it's well-formed.
 // Complexity: linear
 template <typename InputIterator>
+  requires std::input_iterator<InputIterator>
 size_t CharsLen(InputIterator first, InputIterator last);
 inline size_t CharsLen(const absl::string_view sv) {
   return CharsLen(sv.begin(), sv.end());
@@ -107,6 +108,7 @@ inline size_t CharsLen(const absl::string_view sv) {
 //      // len is shorter than 9
 //    }
 template <typename InputIterator>
+  requires std::input_iterator<InputIterator>
 size_t AtLeastCharsLen(InputIterator first, InputIterator last, size_t n);
 inline size_t AtLeastCharsLen(absl::string_view sv, size_t n) {
   return AtLeastCharsLen(sv.begin(), sv.end(), n);
@@ -126,18 +128,13 @@ std::u32string Utf8ToUtf32(absl::string_view sv);
 std::string Utf32ToUtf8(std::u32string_view sv);
 
 // Appends a single Unicode character represented by a char32_t code point to
-// dest.
-inline void StrAppendChar32(std::string* absl_nonnull dest, const char32_t cp) {
-  const utf8_internal::EncodeResult ec = utf8_internal::Encode(cp);
-  // basic_string::append() is faster than absl::StrAppend() here.
-  dest->append(ec.data(), ec.size());
-}
+// dest. It ignores a null character.
+inline void StrAppendChar32(std::string* absl_nonnull dest, char32_t cp);
 
 // Converts a single Unicode character by a char32_t code point to UTF-8.
 inline std::string Char32ToUtf8(const char32_t cp) {
-  std::string result;
-  StrAppendChar32(&result, cp);
-  return result;
+  const utf8_internal::EncodeResult ec = utf8_internal::Encode(cp);
+  return std::string(ec.data(), ec.size());
 }
 
 // Returns a substring of the UTF-8 string sv [pos, pos + count), or [pos,
@@ -483,6 +480,7 @@ using Utf8AsUnicodeChar = Utf8AsCharsBase<UnicodeChar>;
 namespace strings {
 
 template <typename InputIterator>
+  requires std::input_iterator<InputIterator>
 size_t CharsLen(InputIterator first, const InputIterator last) {
   size_t result = 0;
   while (first != last) {
@@ -493,6 +491,7 @@ size_t CharsLen(InputIterator first, const InputIterator last) {
 }
 
 template <typename InputIterator>
+  requires std::input_iterator<InputIterator>
 size_t AtLeastCharsLen(InputIterator first, const InputIterator last,
                        const size_t n) {
   size_t i = 0;
@@ -510,6 +509,17 @@ constexpr std::pair<absl::string_view, absl::string_view> FrontChar(
   }
   const uint8_t len = OneCharLen(s.front());
   return {absl::ClippedSubstr(s, 0, len), absl::ClippedSubstr(s, len)};
+}
+
+inline void StrAppendChar32(std::string* absl_nonnull dest, const char32_t cp) {
+  if (cp == 0) [[unlikely]] {
+    // Do nothing if |cp| is `\0`. Keeping the the legacy behavior of
+    // CodepointToUtf8Append as some code may rely on it.
+    return;
+  }
+  const utf8_internal::EncodeResult ec = utf8_internal::Encode(cp);
+  // basic_string::append() is faster than absl::StrAppend() here.
+  dest->append(ec.data(), ec.size());
 }
 
 }  // namespace strings

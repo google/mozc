@@ -42,6 +42,7 @@
 namespace mozc::strings {
 namespace {
 
+using ::testing::IsEmpty;
 using ::testing::Pair;
 
 TEST(UnicodeTest, OneCharLen) {
@@ -114,6 +115,8 @@ TEST(UnicodeTest, Utf32ToUtf8) {
 
 TEST(UnicodeTest, StrAppendChar32) {
   std::string result;
+  StrAppendChar32(&result, 0);
+  EXPECT_THAT(result, IsEmpty());
   StrAppendChar32(&result, 'A');
   EXPECT_EQ(result, "A");
   StrAppendChar32(&result, U'あ');
@@ -123,6 +126,7 @@ TEST(UnicodeTest, StrAppendChar32) {
 }
 
 TEST(UnicodeTest, Char32ToUtf8) {
+  EXPECT_EQ(Char32ToUtf8(0), absl::string_view("\0", 1));
   EXPECT_EQ(Char32ToUtf8('A'), "A");
   EXPECT_EQ(Char32ToUtf8(U'あ'), "あ");
   EXPECT_EQ(Char32ToUtf8(0x110000), "\uFFFD");
