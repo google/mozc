@@ -554,7 +554,7 @@ Utf8AsCharsBase<ValueType>::back() const {
         if constexpr (std::is_same_v<ValueType, char32_t>) {
           return dr.code_point();
         } else if constexpr (std::is_same_v<ValueType, absl::string_view>) {
-          return value_type(it, dr.bytes_seen());
+          return value_type(std::to_address(it), dr.bytes_seen());
         } else if constexpr (std::is_same_v<ValueType, UnicodeChar>) {
           return value_type{std::to_address(it), dr.bytes_seen(),
                             dr.code_point()};
