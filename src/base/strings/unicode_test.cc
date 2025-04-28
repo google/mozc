@@ -42,6 +42,7 @@
 namespace mozc::strings {
 namespace {
 
+using ::testing::ElementsAreArray;
 using ::testing::IsEmpty;
 using ::testing::Pair;
 
@@ -399,8 +400,7 @@ TEST_P(Utf8AsCharsTest, Substring) {
   }
 
   const Utf8AsChars32 substr2(first.SubstringTo(sv.end()));
-  EXPECT_EQ(substr2.begin(), first);
-  EXPECT_EQ(substr2.end(), sv.end());
+  EXPECT_THAT(substr2, ElementsAreArray(first, sv.end()));
 }
 
 // Tests if the `DCHECK` fo reading the `end` iterator hits.
