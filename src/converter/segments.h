@@ -198,22 +198,6 @@ class Segment final {
 //  segment(i + history_segments_size()) == conversion_segment(i)
 class Segments final {
  public:
-  // Client of segments can remember any string which can be used
-  // to revert the last Finish operation.
-  // "id" can be used for identifying the purpose of the key;
-  struct RevertEntry {
-    enum RevertEntryType {
-      CREATE_ENTRY,
-      UPDATE_ENTRY,
-    };
-    uint16_t revert_entry_type = 0;
-    // UserHitoryPredictor uses '1', UserSegmentHistoryRewriter uses '2' for
-    // now. Do not use duplicate keys.
-    uint16_t id = 0;
-    uint32_t timestamp = 0;
-    std::string key;
-  };
-
   // This class wraps an iterator as is, except that `operator*` dereferences
   // twice. For example, if `InnerIterator` is the iterator of
   // `std::deque<Segment *>`, `operator*` dereferences to `Segment&`.
@@ -462,12 +446,11 @@ class Segments final {
     return os << segments.DebugString();
   }
 
-  // Revert entries
-  void clear_revert_entries() { revert_entries_.clear(); }
-  size_t revert_entries_size() const { return revert_entries_.size(); }
-  RevertEntry *push_back_revert_entry();
-  const RevertEntry &revert_entry(size_t i) const { return revert_entries_[i]; }
-  RevertEntry *mutable_revert_entry(size_t i) { return &revert_entries_[i]; }
+  // Revert id.
+  // Client remembers the last finish operation with `revert_id`.
+  // TODO(taku): support multiple revert ids to support undo/redo.
+  void set_revert_id(uint64_t revert_id) { revert_id_ = revert_id; }
+  uint64_t revert_id() const { return revert_id_; }
 
   // setter
   Lattice *mutable_cached_lattice() { return &cached_lattice_; }
@@ -484,7 +467,7 @@ class Segments final {
 
   ObjectPool<Segment> pool_;
   std::deque<Segment *> segments_;
-  std::vector<RevertEntry> revert_entries_;
+  uint64_t revert_id_ = 0;
   Lattice cached_lattice_;
   // LINT.ThenChange(//converter/segments_matchers.h)
 };

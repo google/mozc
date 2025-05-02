@@ -42,6 +42,8 @@
 #include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/random/random.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/util.h"
@@ -264,9 +266,24 @@ void Converter::FinishConversion(const ConversionRequest &request,
     }
   }
 
-  segments->clear_revert_entries();
-  rewriter_->Finish(request, segments);
-  predictor_->Finish(request, segments);
+  PopulateReadingOfCommittedCandidateIfMissing(segments);
+
+  // Sets unique revert id.
+  // Clients store the last commit operations with this id.
+  absl::BitGen bitgen;
+  const uint64_t revert_id = absl::Uniform<uint64_t>(
+      absl::IntervalClosed, bitgen, 1, std::numeric_limits<uint64_t>::max());
+  segments->set_revert_id(revert_id);
+
+  rewriter_->Finish(request, *segments);
+  predictor_->Finish(request, *segments);
+
+  if (request.request_type() != ConversionRequest::CONVERSION &&
+      segments->conversion_segments_size() >= 1 &&
+      segments->conversion_segment(0).candidates_size() >= 1) {
+    Segment *segment = segments->mutable_conversion_segment(0);
+    segment->set_key(segment->candidate(0).key);
+  }
 
   // Remove the front segments except for some segments which will be
   // used as history segments.
@@ -289,12 +306,12 @@ void Converter::CancelConversion(Segments *segments) const {
 void Converter::ResetConversion(Segments *segments) const { segments->Clear(); }
 
 void Converter::RevertConversion(Segments *segments) const {
-  if (segments->revert_entries_size() == 0) {
+  if (segments->revert_id() == 0) {
     return;
   }
-  rewriter_->Revert(segments);
-  predictor_->Revert(segments);
-  segments->clear_revert_entries();
+  rewriter_->Revert(*segments);
+  predictor_->Revert(*segments);
+  segments->set_revert_id(0);
 }
 
 bool Converter::DeleteCandidateFromHistory(const Segments &segments,
@@ -600,6 +617,57 @@ bool Converter::Sync() { return rewriter().Sync() && predictor().Sync(); }
 bool Converter::Wait() {
   modules().GetUserDictionary().WaitForReloader();
   return predictor().Wait();
+}
+
+std::optional<std::string> Converter::GetReading(absl::string_view text) const {
+  Segments segments;
+  if (!StartReverseConversion(&segments, text)) {
+    LOG(ERROR) << "Reverse conversion failed to get the reading of " << text;
+    return std::nullopt;
+  }
+  if (segments.conversion_segments_size() != 1 ||
+      segments.conversion_segment(0).candidates_size() == 0) {
+    LOG(ERROR) << "Reverse conversion returned an invalid result for " << text;
+    return std::nullopt;
+  }
+  return std::move(
+      segments.mutable_conversion_segment(0)->mutable_candidate(0)->value);
+}
+
+void Converter::PopulateReadingOfCommittedCandidateIfMissing(
+    Segments *segments) const {
+  if (segments->conversion_segments_size() == 0) return;
+
+  Segment *segment = segments->mutable_conversion_segment(0);
+  if (segment->candidates_size() == 0) return;
+
+  Segment::Candidate *cand = segment->mutable_candidate(0);
+  if (!cand->key.empty() || cand->value.empty()) return;
+
+  if (cand->content_value == cand->value) {
+    if (std::optional<std::string> key = GetReading(cand->value);
+        key.has_value()) {
+      cand->key = *key;
+      cand->content_key = *std::move(key);
+    }
+    return;
+  }
+
+  if (cand->content_value.empty()) {
+    LOG(ERROR) << "Content value is empty: " << *cand;
+    return;
+  }
+
+  const absl::string_view functional_value = cand->functional_value();
+  if (Util::GetScriptType(functional_value) != Util::HIRAGANA) {
+    LOG(ERROR) << "The functional value is not hiragana: " << *cand;
+    return;
+  }
+  if (std::optional<std::string> content_key = GetReading(cand->content_value);
+      content_key.has_value()) {
+    cand->key = absl::StrCat(*content_key, functional_value);
+    cand->content_key = *std::move(content_key);
+  }
 }
 
 }  // namespace mozc

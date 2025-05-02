@@ -88,7 +88,7 @@ class DictionaryPredictorTestPeer {
     return predictor_.PredictForRequest(request, segments);
   }
 
-  void Finish(const ConversionRequest &request, Segments *segments) {
+  void Finish(const ConversionRequest &request, const Segments &segments) {
     return predictor_.Finish(request, segments);
   }
 

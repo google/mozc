@@ -132,13 +132,14 @@ class MergerRewriter : public RewriterInterface {
   }
 
   // Hook(s) for all mutable operations
-  void Finish(const ConversionRequest &request, Segments *segments) override {
+  void Finish(const ConversionRequest &request,
+              const Segments &segments) override {
     for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
       rewriter->Finish(request, segments);
     }
   }
 
-  void Revert(Segments *segments) override {
+  void Revert(const Segments &segments) override {
     for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
       rewriter->Revert(segments);
     }

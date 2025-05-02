@@ -215,7 +215,7 @@ TEST_F(UserSegmentHistoryRewriterTest, InvalidInputsTest) {
 
   const ConversionRequest convreq = CreateConversionRequest();
   EXPECT_FALSE(rewriter->Rewrite(convreq, &segments));
-  rewriter->Finish(convreq, &segments);
+  rewriter->Finish(convreq, segments);
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
@@ -231,7 +231,7 @@ TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq1, &segments);
+    rewriter->Finish(convreq1, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq1, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
@@ -252,7 +252,7 @@ TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
@@ -272,7 +272,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq1, &segments);
+    rewriter->Finish(convreq1, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq1, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
@@ -298,7 +298,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
@@ -328,7 +328,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DisableTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq_hist_true, &segments);
+    rewriter->Finish(convreq_hist_true, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq_hist_true, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
@@ -348,7 +348,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DisableTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq_hist_false, &segments);
+    rewriter->Finish(convreq_hist_false, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq_hist_false, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
@@ -370,7 +370,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 2);
     rewriter->Rewrite(convreq, &segments);
 
@@ -390,7 +390,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
@@ -411,7 +411,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     segments.mutable_segment(1)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(1)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     InitSegments(&segments, 2);
     rewriter->Rewrite(convreq, &segments);
@@ -432,7 +432,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 2);
     rewriter->Rewrite(convreq, &segments);
 
@@ -454,7 +454,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
@@ -484,7 +484,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
-    rewriter->Finish(convreq, &segments);  // learn "candidate2"
+    rewriter->Finish(convreq, segments);  // learn "candidate2"
 
     // Next timestamp of learning should be newer than previous learning.
     clock.Advance(absl::Seconds(1));
@@ -505,7 +505,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(1)->set_segment_type(Segment::FIXED_VALUE);
     EXPECT_EQ(segments.segment(1).candidate(0).value, "candidate3");
-    rewriter->Finish(convreq, &segments);  // learn "candidate3"
+    rewriter->Finish(convreq, segments);  // learn "candidate3"
 
     clock.Advance(absl::Seconds(1));
 
@@ -529,7 +529,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(2)->set_segment_type(Segment::FIXED_VALUE);
     EXPECT_EQ(segments.segment(2).candidate(0).value, "candidate2");
-    rewriter->Finish(convreq, &segments);  // learn "candidate2"
+    rewriter->Finish(convreq, segments);  // learn "candidate2"
 
     clock.Advance(absl::Seconds(1));
 
@@ -573,7 +573,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
 
@@ -585,7 +585,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     clock.Advance(absl::Seconds(1));
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
 
@@ -597,7 +597,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     clock.Advance(absl::Seconds(1));
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
 
@@ -624,7 +624,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::NO_LEARNING;
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
@@ -640,7 +640,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::NO_HISTORY_LEARNING;
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
@@ -656,7 +656,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::NO_SUGGEST_LEARNING;
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
@@ -678,7 +678,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContextSensitive) {
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::CONTEXT_SENSITIVE;
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 2);
     rewriter->Rewrite(convreq, &segments);
 
@@ -700,7 +700,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContextSensitive) {
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::CONTEXT_SENSITIVE;
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     // fire if even in single segment
     InitSegments(&segments, 1);
@@ -730,7 +730,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
 
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
@@ -769,7 +769,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
@@ -786,7 +786,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate0");
@@ -803,7 +803,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":other", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":other", 1);
@@ -822,7 +822,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, "", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":other", 0);
@@ -847,7 +847,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
 
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
@@ -872,7 +872,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
 
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     InitSegments(&segments, 2);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
@@ -896,7 +896,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
@@ -914,7 +914,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
@@ -932,7 +932,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 2);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
@@ -950,7 +950,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 2);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
     AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
@@ -975,7 +975,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NotReplaceableForDifferentId) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
 
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     InitSegments(&segments, 2);
     AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
@@ -1005,7 +1005,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableForSameId) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
 
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     InitSegments(&segments, 2);
     AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
@@ -1036,7 +1036,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
 
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     InitSegments(&segments, 2);
     AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
@@ -1072,7 +1072,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
 
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
 
     set_up_segments();
     segments.mutable_segment(1)->mutable_candidate(0)->value =
@@ -1102,7 +1102,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
     segments.mutable_segment(1)->mutable_candidate(0)->attributes |=
         Segment::Candidate::CONTEXT_SENSITIVE;
     segments.mutable_segment(1)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "1234");
     EXPECT_EQ(segments.segment(1).candidate(0).value, "candidate2");
 
@@ -1125,7 +1125,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::CONTEXT_SENSITIVE;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2");
     EXPECT_EQ(segments.segment(1).candidate(0).value, "1234");
 
@@ -1157,7 +1157,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
   }
 
   {
@@ -1196,7 +1196,7 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
   }
 
   {
@@ -1212,7 +1212,7 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
   }
 
   {
@@ -1259,7 +1259,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
   }
 
   {
@@ -1307,7 +1307,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
     candidate->style =
         NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);  // full-width for separated number
+    rewriter->Finish(convreq, segments);  // full-width for separated number
   }
 
   {
@@ -1356,7 +1356,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
     candidate->style =
         NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);  // half-width for separated number
+    rewriter->Finish(convreq, segments);  // half-width for separated number
   }
 
   {
@@ -1427,7 +1427,7 @@ TEST_P(UserSegmentHistoryNumberTest, UserSegmentHistoryRewriterTest) {
     candidate->style =
         NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);  // half-width for separated number
+    rewriter->Finish(convreq, segments);  // half-width for separated number
   }
 
   {
@@ -1474,7 +1474,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     candidate->rid = pos_matcher().GetNumberId();
     candidate->style = NumberUtil::NumberString::NUMBER_KANJI;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);  // learn kanji
+    rewriter->Finish(convreq, segments);  // learn kanji
   }
   {
     const ConversionRequest convreq = CreateConversionRequest();
@@ -1491,7 +1491,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     candidate->style =
         NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);  // learn kanji
+    rewriter->Finish(convreq, segments);  // learn kanji
   }
 
   {
@@ -1531,7 +1531,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
       Segment::Candidate::RERANKED;
   segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-  rewriter->Finish(convreq, &segments);
+  rewriter->Finish(convreq, segments);
 
   InitSegments(&segments, 1);
   rewriter->Rewrite(convreq, &segments);
@@ -1543,7 +1543,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
       Segment::Candidate::RERANKED;
   segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
   clock.Advance(absl::Seconds(1));
-  rewriter->Finish(convreq, &segments);
+  rewriter->Finish(convreq, segments);
 
   InitSegments(&segments, 1);
   rewriter->Rewrite(convreq, &segments);
@@ -1555,7 +1555,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
       Segment::Candidate::RERANKED;
   segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
   clock.Advance(absl::Seconds(1));
-  rewriter->Finish(convreq, &segments);
+  rewriter->Finish(convreq, segments);
 
   InitSegments(&segments, 1);
   rewriter->Rewrite(convreq, &segments);
@@ -1583,7 +1583,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459520) {
   segments.mutable_segment(1)->mutable_candidate(0)->attributes |=
       Segment::Candidate::RERANKED;
   segments.mutable_segment(1)->set_segment_type(Segment::FIXED_VALUE);
-  rewriter->Finish(convreq, &segments);
+  rewriter->Finish(convreq, segments);
 
   InitSegments(&segments, 2);
   rewriter->Rewrite(convreq, &segments);
@@ -1612,7 +1612,7 @@ TEST_F(UserSegmentHistoryRewriterTest, PuntuationsTest) {
   segments.mutable_segment(1)->mutable_candidate(0)->attributes |=
       Segment::Candidate::RERANKED;
   segments.mutable_segment(1)->set_segment_type(Segment::FIXED_VALUE);
-  rewriter->Finish(convreq, &segments);
+  rewriter->Finish(convreq, segments);
 
   InitSegments(&segments, 2);
   segments.mutable_segment(1)->set_key(".");
@@ -1639,7 +1639,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression3264619) {
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
       Segment::Candidate::RERANKED;
   segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-  rewriter->Finish(convreq, &segments);
+  rewriter->Finish(convreq, segments);
   InitSegments(&segments, 2, 1024);
   rewriter->Rewrite(convreq, &segments);
 
@@ -1667,7 +1667,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     EXPECT_EQ(segments.segment(0).candidate(0).value, expected);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(convreq, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, expected);
@@ -1697,7 +1697,7 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
   }
 
   {
@@ -1717,7 +1717,7 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     // "アルファベット"
     EXPECT_EQ(VariantsRewriter::kAlphabet,
               segments.segment(0).candidate(0).description);
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
   }
 }
 
@@ -1796,7 +1796,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
                 Segment::FIXED_VALUE);
     }
 
-    rewriter->Finish(default_mobile_convreq, &segments);
+    rewriter->Finish(default_mobile_convreq, segments);
   }
 
   {
@@ -1841,7 +1841,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
                 Segment::FIXED_VALUE);
     }
 
-    rewriter->Finish(default_mobile_convreq, &segments);
+    rewriter->Finish(default_mobile_convreq, segments);
   }
 
   {
@@ -1912,7 +1912,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
                 Segment::FIXED_VALUE);
     }
 
-    rewriter->Finish(convreq, &segments);
+    rewriter->Finish(convreq, segments);
   }
 }
 
@@ -1934,10 +1934,11 @@ TEST_F(UserSegmentHistoryRewriterTest, Revert) {
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     const ConversionRequest convreq = CreateConversionRequest();
-    rewriter->Finish(convreq, &segments);
+    segments.set_revert_id(10);
+    rewriter->Finish(convreq, segments);
   }
 
-  rewriter->Revert(&segments);
+  rewriter->Revert(segments);
 
   {
     segments.Clear();

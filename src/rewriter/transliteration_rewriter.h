@@ -54,8 +54,6 @@ class TransliterationRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
-  void Finish(const ConversionRequest &request, Segments *segments) override {}
-
  private:
   void InitT13nCandidate(absl::string_view key, absl::string_view value,
                          uint16_t lid, uint16_t rid,

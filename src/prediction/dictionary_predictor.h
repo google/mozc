@@ -89,8 +89,6 @@ class DictionaryPredictor : public PredictorInterface {
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override;
 
-  void Finish(const ConversionRequest &request, Segments *segments) override {}
-
   absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }

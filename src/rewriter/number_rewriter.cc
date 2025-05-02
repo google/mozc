@@ -646,7 +646,7 @@ void NumberRewriter::RerankCandidates(
 }
 
 void NumberRewriter::Finish(const ConversionRequest &request,
-                            Segments *segments) {
+                            const Segments &segments) {
   if (!IsNumberStyleLearningEnabled(request)) {
     MOZC_VLOG(2) << "number style learning is not enabled.";
     return;
@@ -663,7 +663,7 @@ void NumberRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  for (const Segment &segment : segments->conversion_segments()) {
+  for (const Segment &segment : segments.conversion_segments()) {
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &

@@ -51,11 +51,14 @@ class PredictorInterface {
   [[nodiscard]] virtual bool PredictForRequest(const ConversionRequest &request,
                                                Segments *segments) const = 0;
 
-  // Hook(s) for all mutable operations.
-  virtual void Finish(const ConversionRequest &request, Segments *segments) {}
+  // Finish the conversion. Stores the history for penalization.
+  // Uses segments.revert_id() as the key of the last operation.
+  virtual void Finish(const ConversionRequest &request,
+                      const Segments &segments) {}
 
   // Reverts the last Finish operation.
-  virtual void Revert(Segments *segments) {}
+  // Uses segments.revert_id() as the key to restore the last operation.
+  virtual void Revert(const Segments &segments) {}
 
   // Clears all history data of UserHistoryPredictor.
   virtual bool ClearAllHistory() { return true; }

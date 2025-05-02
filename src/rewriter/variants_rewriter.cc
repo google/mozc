@@ -606,7 +606,7 @@ bool VariantsRewriter::GenerateAlternatives(
 }
 
 void VariantsRewriter::Finish(const ConversionRequest &request,
-                              Segments *segments) {
+                              const Segments &segments) {
   if (request.config().history_learning_level() !=
       config::Config::DEFAULT_HISTORY) {
     MOZC_VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
@@ -618,7 +618,7 @@ void VariantsRewriter::Finish(const ConversionRequest &request,
   }
 
   // save character form
-  for (const Segment &segment : segments->conversion_segments()) {
+  for (const Segment &segment : segments.conversion_segments()) {
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes & Candidate::NO_HISTORY_LEARNING) {

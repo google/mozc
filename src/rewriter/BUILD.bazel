@@ -131,6 +131,7 @@ mozc_cc_library(
         "//dictionary:pos_matcher",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
+        "//storage:lru_cache",
         "//storage:lru_storage",
         "//transliteration",
         "@com_google_absl//absl/container:btree",

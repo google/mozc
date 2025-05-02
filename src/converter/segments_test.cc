@@ -288,44 +288,13 @@ TEST(SegmentTest, CandidateTest) {
 
 TEST(SegmentsTest, RevertEntryTest) {
   Segments segments;
-  EXPECT_EQ(segments.revert_entries_size(), 0);
+  EXPECT_EQ(segments.revert_id(), 0);
 
-  constexpr int kSize = 10;
-  for (int i = 0; i < kSize; ++i) {
-    Segments::RevertEntry *e = segments.push_back_revert_entry();
-    e->key = "test" + std::to_string(i);
-    e->id = i;
-  }
+  segments.set_revert_id(123);
+  EXPECT_EQ(segments.revert_id(), 123);
 
-  EXPECT_EQ(segments.revert_entries_size(), kSize);
-
-  for (int i = 0; i < kSize; ++i) {
-    {
-      const Segments::RevertEntry &e = segments.revert_entry(i);
-      EXPECT_EQ(e.key, std::string("test") + std::to_string(i));
-      EXPECT_EQ(e.id, i);
-    }
-    {
-      Segments::RevertEntry *e = segments.mutable_revert_entry(i);
-      EXPECT_EQ(e->key, std::string("test") + std::to_string(i));
-      EXPECT_EQ(e->id, i);
-    }
-  }
-
-  for (int i = 0; i < kSize; ++i) {
-    Segments::RevertEntry *e = segments.mutable_revert_entry(i);
-    e->id = kSize - i;
-    e->key = "test2" + std::to_string(i);
-  }
-
-  for (int i = 0; i < kSize; ++i) {
-    const Segments::RevertEntry &e = segments.revert_entry(i);
-    EXPECT_EQ(e.key, std::string("test2") + std::to_string(i));
-    EXPECT_EQ(e.id, kSize - i);
-  }
-
-  segments.clear_revert_entries();
-  EXPECT_EQ(segments.revert_entries_size(), 0);
+  segments.Clear();
+  EXPECT_EQ(segments.revert_id(), 0);
 }
 
 TEST(SegmentsTest, CopyTest) {

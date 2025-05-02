@@ -89,10 +89,11 @@ class RewriterInterface {
   }
 
   // Hook(s) for all mutable operations
-  virtual void Finish(const ConversionRequest &request, Segments *segments) {}
+  virtual void Finish(const ConversionRequest &request,
+                      const Segments &segments) {}
 
   // Reverts the last Finish operation.
-  virtual void Revert(Segments *segments) {}
+  virtual void Revert(const Segments &segments) {}
 
   // Delete the user history based entry corresponding to the specified
   // candidate.

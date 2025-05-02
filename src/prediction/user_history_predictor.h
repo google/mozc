@@ -108,10 +108,11 @@ class UserHistoryPredictor : public PredictorInterface {
                          Segments *segments) const override;
 
   // Hook(s) for all mutable operations.
-  void Finish(const ConversionRequest &request, Segments *segments) override;
+  void Finish(const ConversionRequest &request,
+              const Segments &segments) override;
 
   // Revert last Finish operation.
-  void Revert(Segments *segments) override;
+  void Revert(const Segments &segments) override;
 
   // Sync user history data to local file.
   // You can call either Save() or AsyncSave().
@@ -269,9 +270,6 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Waits until syncer finishes.
   void WaitForSyncer();
-
-  // Returns id for RevertEntry
-  static uint16_t revert_id();
 
   // Gets match type from two strings
   static MatchType GetMatchType(absl::string_view lstr, absl::string_view rstr);
@@ -435,22 +433,27 @@ class UserHistoryPredictor : public PredictorInterface {
                             const Entry *prev_entry,
                             EntryPriorityQueue *results) const;
 
+  // vector of [dic_key, revert_entry]
+  // When entry is nullptr, remove entry[dic_key].
+  // otherwise, revert the entry[dic_key] to revert_entry.
+  using RevertEntries =
+      std::vector<std::pair<uint32_t, std::unique_ptr<Entry>>>;
+
   void InsertHistory(const ConversionRequest &request,
                      bool is_suggestion_selected, uint64_t last_access_time,
-                     Segments *segments);
+                     const Segments &segments, RevertEntries *revert_entries);
 
   void InsertHistoryForConversionSegments(
       const ConversionRequest &request, bool is_suggestion_selected,
       uint64_t last_access_time, const SegmentsForLearning &learning_segments,
-      Segments *segments);
-
+      RevertEntries *revert_entries);
   // Inserts |key,value,description| to the internal dictionary database.
   // |is_suggestion_selected|: key/value is suggestion or conversion.
   // |next_fp|: fingerprints of the next segment.
   // |last_access_time|: the time when this entry was created
   void Insert(std::string key, std::string value, std::string description,
               bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
-              uint64_t last_access_time, Segments *segments);
+              uint64_t last_access_time, RevertEntries *revert_entries);
 
   // Called by TryInsert to check the Entry to insert.
   bool ShouldInsert(const ConversionRequest &request, absl::string_view key,
@@ -463,7 +466,7 @@ class UserHistoryPredictor : public PredictorInterface {
                  absl::string_view value, absl::string_view description,
                  bool is_suggestion_selected,
                  absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
-                 Segments *segments);
+                 RevertEntries *revert_entries);
 
   // Inserts event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
   void InsertEvent(EntryType type);
@@ -501,6 +504,9 @@ class UserHistoryPredictor : public PredictorInterface {
   std::unique_ptr<DicCache> dic_;
   mutable std::optional<BackgroundFuture<void>> sync_;
   const engine::Modules &modules_;
+
+  // Internal LRU cache to store dic_key/Entry to be reverted.
+  storage::LruCache<uint64_t, RevertEntries> revert_cache_;
 };
 
 }  // namespace mozc::prediction

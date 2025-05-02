@@ -56,7 +56,8 @@ class NumberRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
-  void Finish(const ConversionRequest &request, Segments *segments) override;
+  void Finish(const ConversionRequest &request,
+              const Segments &segments) override;
 
  private:
   bool RewriteOneSegment(const ConversionRequest &request, Segment *segment,

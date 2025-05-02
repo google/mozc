@@ -82,8 +82,7 @@ constexpr size_t kMaxRerankSize = 5;
 
 constexpr char kFileName[] = "user://segment.db";
 
-// Revert id for user_segment_history_rewriter
-constexpr uint16_t kRevertId = 2;
+constexpr size_t kRevertCacheSize = 16;
 
 bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
   // Enabled in mobile (software keyboard & hardware keyboard)
@@ -484,7 +483,8 @@ UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
     const PosMatcher &pos_matcher, const PosGroup &pos_group)
     : storage_(std::make_unique<LruStorage>()),
       pos_matcher_(&pos_matcher),
-      pos_group_(&pos_group) {
+      pos_group_(&pos_group),
+      revert_cache_(kRevertCacheSize) {
   Reload();
 
   CHECK_EQ(sizeof(uint32_t), sizeof(FeatureValue));
@@ -580,8 +580,7 @@ bool UserSegmentHistoryRewriter::Replaceable(
 }
 
 void UserSegmentHistoryRewriter::RememberNumberPreference(
-    const Segment &segment,
-    std::vector<Segments::RevertEntry> &revert_entries) {
+    const Segment &segment, std::vector<std::string> &revert_entries) {
   const Segment::Candidate &candidate = segment.candidate(0);
 
   if ((candidate.style ==
@@ -608,7 +607,7 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
 
 void UserSegmentHistoryRewriter::RememberFirstCandidate(
     const ConversionRequest &request, const Segments &segments,
-    size_t segment_index, std::vector<Segments::RevertEntry> &revert_entries) {
+    size_t segment_index, std::vector<std::string> &revert_entries) {
   const Segment &seg = segments.segment(segment_index);
   const Segment::Candidate &candidate = seg.candidate(0);
 
@@ -771,12 +770,12 @@ Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
 }
 
 void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
-                                        Segments *segments) {
+                                        const Segments &segments) {
   if (request.request_type() != ConversionRequest::CONVERSION) {
     return;
   }
 
-  if (!IsAvailable(request, *segments)) {
+  if (!IsAvailable(request, segments)) {
     return;
   }
 
@@ -787,9 +786,9 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
 
   const Segments target_segments =
       UseInnerSegments(request)
-          ? MakeLearningSegmentsFromInnerSegments(request, *segments)
-          : *segments;
-  std::vector<Segments::RevertEntry> revert_entries;
+          ? MakeLearningSegmentsFromInnerSegments(request, segments)
+          : segments;
+  std::vector<std::string> revert_entries;
   for (size_t i = target_segments.history_segments_size();
        i < target_segments.segments_size(); ++i) {
     const Segment &segment = target_segments.segment(i);
@@ -807,11 +806,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
     RememberFirstCandidate(request, target_segments, i, revert_entries);
   }
 
-  // Note: We may want to create Segments::AddRevertEntries()
-  for (const Segments::RevertEntry &entry : revert_entries) {
-    Segments::RevertEntry *new_entry = segments->push_back_revert_entry();
-    *new_entry = entry;
-  }
+  revert_cache_.Insert(segments.revert_id(), revert_entries);
 }
 
 bool UserSegmentHistoryRewriter::Sync() {
@@ -843,10 +838,6 @@ bool UserSegmentHistoryRewriter::Reload() {
 
   return true;
 }
-
-// Returns revert id
-// static
-uint16_t UserSegmentHistoryRewriter::revert_id() { return kRevertId; }
 
 bool UserSegmentHistoryRewriter::ShouldRewrite(
     const Segment &segment, size_t *max_candidates_size) const {
@@ -1032,15 +1023,15 @@ void UserSegmentHistoryRewriter::Clear() {
   }
 }
 
-void UserSegmentHistoryRewriter::Revert(Segments *segments) {
-  for (size_t i = 0; i < segments->revert_entries_size(); ++i) {
-    const Segments::RevertEntry &revert_entry = segments->revert_entry(i);
-    if (revert_entry.id == revert_id() &&
-        revert_entry.revert_entry_type == Segments::RevertEntry::CREATE_ENTRY) {
-      absl::string_view key = revert_entry.key;
-      MOZC_VLOG(2) << "Erasing the key: " << key;
-      storage_->Delete(key);
-    }
+void UserSegmentHistoryRewriter::Revert(const Segments &segments) {
+  const std::vector<std::string> *revert_entries =
+      revert_cache_.LookupWithoutInsert(segments.revert_id());
+  if (!revert_entries) {
+    return;
+  }
+  for (const auto &key : *revert_entries) {
+    MOZC_VLOG(2) << "Erasing the key: " << key;
+    storage_->Delete(key);
   }
 }
 
@@ -1090,7 +1081,7 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::Fetch(
 
 void UserSegmentHistoryRewriter::Insert(
     absl::string_view key, bool force,
-    std::vector<Segments::RevertEntry> &revert_entries) {
+    std::vector<std::string> &revert_entries) {
   if (key.empty()) {
     return;
   }
@@ -1107,16 +1098,12 @@ void UserSegmentHistoryRewriter::Insert(
 }
 
 void UserSegmentHistoryRewriter::MaybeInsertRevertEntry(
-    absl::string_view key, std::vector<Segments::RevertEntry> &revert_entries) {
+    absl::string_view key, std::vector<std::string> &revert_entries) {
   if (storage_->Lookup(key) != nullptr) {
     return;
   }
 
-  revert_entries.resize(revert_entries.size() + 1);
-  Segments::RevertEntry *entry = &revert_entries.back();
-  entry->revert_entry_type = Segments::RevertEntry::CREATE_ENTRY;
-  entry->key = key;
-  entry->id = revert_id();
+  revert_entries.emplace_back(key);
 }
 
 bool UserSegmentHistoryRewriter::DeleteEntry(absl::string_view key) {

@@ -1009,7 +1009,7 @@ TEST_F(VariantsRewriterTest, LearningLevel) {
   cand->content_value = cand->value;
   cand->style = NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
   EXPECT_NE(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
-  rewriter->Finish(request, &segments);
+  rewriter->Finish(request, segments);
   EXPECT_NE(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
 }
 
@@ -1032,14 +1032,14 @@ TEST_F(VariantsRewriterTest, Finish) {
   cand->value = "123";
   cand->content_value = cand->value;
   cand->style = NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
-  rewriter->Finish(request, &segments);
+  rewriter->Finish(request, segments);
   EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
 
   // Full-width number with style.
   cand->value = "１２３";
   cand->content_value = cand->value;
   cand->style = NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
-  rewriter->Finish(request, &segments);
+  rewriter->Finish(request, segments);
   EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
 
   // Half-width number expression with description.
@@ -1047,7 +1047,7 @@ TEST_F(VariantsRewriterTest, Finish) {
   cand->content_value = cand->value;
   cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
   cand->description = std::string(VariantsRewriter::kHalfWidth);
-  rewriter->Finish(request, &segments);
+  rewriter->Finish(request, segments);
   EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
 
   // Full-width number expression with description.
@@ -1055,7 +1055,7 @@ TEST_F(VariantsRewriterTest, Finish) {
   cand->content_value = cand->value;
   cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
   cand->description = std::string(VariantsRewriter::kFullWidth);
-  rewriter->Finish(request, &segments);
+  rewriter->Finish(request, segments);
   EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
 }
 

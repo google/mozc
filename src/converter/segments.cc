@@ -272,7 +272,7 @@ Segments::Segments(const Segments &x)
     : max_history_segments_size_(x.max_history_segments_size_),
       resized_(x.resized_),
       pool_(32),
-      revert_entries_(x.revert_entries_),
+      revert_id_(x.revert_id_),
       cached_lattice_() {
   // Deep-copy segments.
   for (const Segment *segment : x.segments_) {
@@ -292,7 +292,7 @@ Segments &Segments::operator=(const Segments &x) {
   for (const Segment *segment : x.segments_) {
     *add_segment() = *segment;
   }
-  revert_entries_ = x.revert_entries_;
+  revert_id_ = x.revert_id_;
   // Note: cached_lattice_ is not copied; see the comment for the copy
   // constructor.
   return *this;
@@ -436,7 +436,7 @@ void Segments::InitForCommit(absl::string_view key, absl::string_view value) {
 
 void Segments::Clear() {
   clear_segments();
-  clear_revert_entries();
+  revert_id_ = 0;
 }
 
 void Segments::PrependCandidates(const Segment &previous_segment) {
@@ -548,16 +548,6 @@ void Segments::set_max_history_segments_size(size_t max_history_segments_size) {
   max_history_segments_size_ =
       std::max(static_cast<size_t>(0),
                std::min(max_history_segments_size, kMaxHistorySize));
-}
-
-Segments::RevertEntry *Segments::push_back_revert_entry() {
-  revert_entries_.resize(revert_entries_.size() + 1);
-  Segments::RevertEntry *entry = &revert_entries_.back();
-  entry->revert_entry_type = Segments::RevertEntry::CREATE_ENTRY;
-  entry->id = 0;
-  entry->timestamp = 0;
-  entry->key.clear();
-  return entry;
 }
 
 std::string Segments::history_key(int size) const {

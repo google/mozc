@@ -49,10 +49,11 @@ class BasePredictor : public PredictorInterface {
                 const ConverterInterface &converter);
 
   // Hook(s) for all mutable operations.
-  void Finish(const ConversionRequest &request, Segments *segments) override;
+  void Finish(const ConversionRequest &request,
+              const Segments &segments) override;
 
   // Reverts the last Finish operation.
-  void Revert(Segments *segments) override;
+  void Revert(const Segments &segments) override;
 
   // Clears all history data of UserHistoryPredictor.
   bool ClearAllHistory() override;

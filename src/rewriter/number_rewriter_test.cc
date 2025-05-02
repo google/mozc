@@ -1165,7 +1165,7 @@ void LearnNumberStyle(const ConversionRequest &request,
   segments.mutable_conversion_segment(0)->move_candidate(6, 0);
   segments.mutable_conversion_segment(0)->set_segment_type(
       Segment::FIXED_VALUE);
-  rewriter.Finish(request, &segments);
+  rewriter.Finish(request, segments);
 }
 
 TEST_F(NumberRewriterTest, NumberStyleLearningNotEnabled) {

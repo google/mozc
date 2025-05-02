@@ -43,6 +43,7 @@
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "storage/lru_cache.h"
 #include "storage/lru_storage.h"
 
 namespace mozc {
@@ -55,11 +56,12 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
-  void Finish(const ConversionRequest &request, Segments *segments) override;
+  void Finish(const ConversionRequest &request,
+              const Segments &segments) override;
   bool Sync() override;
   bool Reload() override;
   void Clear() override;
-  void Revert(Segments *segments) override;
+  void Revert(const Segments &segments) override;
   bool ClearHistoryEntry(const Segments &segments, size_t segment_index,
                          int candidate_index) override;
 
@@ -92,9 +94,6 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   static Segments MakeLearningSegmentsFromInnerSegments(
       const ConversionRequest &request, const Segments &segments);
 
-  // Returns id for RevertEntry
-  static uint16_t revert_id();
-
   bool IsAvailable(const ConversionRequest &request,
                    const Segments &segments) const;
   Score GetScore(const ConversionRequest &request, const Segments &segments,
@@ -104,12 +103,11 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
                    const Segment::Candidate &target_candidate) const;
   // |revert_entries| will be stored to Segments and used to revert last
   // Finish() operation in Revert().
-  void RememberFirstCandidate(
-      const ConversionRequest &request, const Segments &segments,
-      size_t segment_index, std::vector<Segments::RevertEntry> &revert_entries);
-  void RememberNumberPreference(
-      const Segment &segment,
-      std::vector<Segments::RevertEntry> &revert_entries);
+  void RememberFirstCandidate(const ConversionRequest &request,
+                              const Segments &segments, size_t segment_index,
+                              std::vector<std::string> &revert_entries);
+  void RememberNumberPreference(const Segment &segment,
+                                std::vector<std::string> &revert_entries);
   bool RewriteNumber(Segment *segment) const;
   bool ShouldRewrite(const Segment &segment, size_t *max_candidates_size) const;
   void InsertTriggerKey(const Segment &segment);
@@ -119,16 +117,18 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
                       Segment *segment) const;
   Score Fetch(absl::string_view key, uint32_t weight) const;
   void Insert(absl::string_view key, bool force,
-              std::vector<Segments::RevertEntry> &revert_entries);
-  void MaybeInsertRevertEntry(
-      absl::string_view key,
-      std::vector<Segments::RevertEntry> &revert_entries);
+              std::vector<std::string> &revert_entries);
+  void MaybeInsertRevertEntry(absl::string_view key,
+                              std::vector<std::string> &revert_entries);
   // Returns true if deletion succeeded.
   bool DeleteEntry(absl::string_view key);
 
   std::unique_ptr<storage::LruStorage> storage_;
   const dictionary::PosMatcher *pos_matcher_;
   const dictionary::PosGroup *pos_group_;
+
+  // Internal LRU cache to store reverted key.
+  storage::LruCache<uint64_t, std::vector<std::string>> revert_cache_;
 };
 
 }  // namespace mozc

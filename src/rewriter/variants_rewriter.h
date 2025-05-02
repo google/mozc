@@ -72,7 +72,8 @@ class VariantsRewriter : public RewriterInterface {
   int capability(const ConversionRequest &request) const override;
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
-  void Finish(const ConversionRequest &request, Segments *segments) override;
+  void Finish(const ConversionRequest &request,
+              const Segments &segments) override;
   void Clear() override;
 
   // Used by UserSegmentHistoryRewriter.

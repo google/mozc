@@ -81,11 +81,12 @@ class TestRewriter : public RewriterInterface {
     return return_value_;
   }
 
-  void Finish(const ConversionRequest &request, Segments *segments) override {
+  void Finish(const ConversionRequest &request,
+              const Segments &segments) override {
     buffer_->append(name_ + ".Finish();");
   }
 
-  void Revert(Segments *segments) override {
+  void Revert(const Segments &segments) override {
     buffer_->append(name_ + ".Revert();");
   }
 
@@ -288,11 +289,12 @@ TEST_F(MergerRewriterTest, Focus) {
 TEST_F(MergerRewriterTest, Finish) {
   std::string call_result;
   const ConversionRequest request;
+  const Segments segments;
   MergerRewriter merger;
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "a", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
-  merger.Finish(request, nullptr);
+  merger.Finish(request, segments);
   EXPECT_EQ(call_result,
             "a.Finish();"
             "b.Finish();"
@@ -302,11 +304,12 @@ TEST_F(MergerRewriterTest, Finish) {
 TEST_F(MergerRewriterTest, Revert) {
   std::string call_result;
   const ConversionRequest request;
+  const Segments segments;
   MergerRewriter merger;
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "a", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
-  merger.Revert(nullptr);
+  merger.Revert(segments);
   EXPECT_EQ(call_result,
             "a.Revert();"
             "b.Revert();"

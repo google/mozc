@@ -104,9 +104,6 @@ constexpr size_t kMaxStringLength = 256;
 // Maximum size of next_entries
 constexpr size_t kMaxNextEntriesSize = 6;
 
-// Revert id for user_history_predictor
-const uint16_t kRevertId = 1;
-
 // File name for the history
 #ifdef _WIN32
 constexpr char kFileName[] = "user://history.db";
@@ -117,6 +114,8 @@ constexpr char kFileName[] = "user://.history.db";
 // Uses '\t' as a key/value delimiter
 constexpr absl::string_view kDelimiter = "\t";
 constexpr absl::string_view kEmojiDescription = "絵文字";
+
+constexpr size_t kRevertCacheSize = 16;
 
 constexpr absl::Duration k62Days = absl::Hours(62 * 24);
 
@@ -346,7 +345,8 @@ UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules,
       content_word_learning_enabled_(enable_content_word_learning),
       updated_(false),
       dic_(new DicCache(UserHistoryPredictor::cache_size())),
-      modules_(modules) {
+      modules_(modules),
+      revert_cache_(kRevertCacheSize) {
   AsyncLoad();  // non-blocking
   // Load()  blocking version can be used if any
 }
@@ -360,10 +360,6 @@ UserHistoryPredictor::~UserHistoryPredictor() {
 std::string UserHistoryPredictor::GetUserHistoryFileName() {
   return ConfigFileStream::GetFileName(kFileName);
 }
-
-// Returns revert id
-// static
-uint16_t UserHistoryPredictor::revert_id() { return kRevertId; }
 
 void UserHistoryPredictor::WaitForSyncer() {
   if (sync_.has_value()) {
@@ -1692,33 +1688,29 @@ void UserHistoryPredictor::TryInsert(
     const ConversionRequest &request, absl::string_view key,
     absl::string_view value, absl::string_view description,
     bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
-    uint64_t last_access_time, Segments *segments) {
+    uint64_t last_access_time,
+    UserHistoryPredictor::RevertEntries *revert_entries) {
   // b/279560433: Preprocess key value
   key = absl::StripTrailingAsciiWhitespace(key);
   value = absl::StripTrailingAsciiWhitespace(value);
   if (ShouldInsert(request, key, value, description)) {
     Insert(std::string(key), std::string(value), std::string(description),
-           is_suggestion_selected, next_fps, last_access_time, segments);
+           is_suggestion_selected, next_fps, last_access_time, revert_entries);
   }
 }
 
-void UserHistoryPredictor::Insert(std::string key, std::string value,
-                                  std::string description,
-                                  bool is_suggestion_selected,
-                                  absl::Span<const uint32_t> next_fps,
-                                  uint64_t last_access_time,
-                                  Segments *segments) {
+void UserHistoryPredictor::Insert(
+    std::string key, std::string value, std::string description,
+    bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
+    uint64_t last_access_time,
+    UserHistoryPredictor::RevertEntries *revert_entries) {
   const uint32_t dic_key = Fingerprint(key, value);
 
   if (!dic_->HasKey(dic_key)) {
     // The key is a new key inserted in the last Finish method.
     // Here we push a new RevertEntry so that the new "key" can be
     // removed when Revert() method is called.
-    Segments::RevertEntry *revert_entry = segments->push_back_revert_entry();
-    DCHECK(revert_entry);
-    revert_entry->key = Uint32ToString(dic_key);
-    revert_entry->id = UserHistoryPredictor::revert_id();
-    revert_entry->revert_entry_type = Segments::RevertEntry::CREATE_ENTRY;
+    revert_entries->emplace_back(dic_key, nullptr);
   } else {
     // The key is a old key not inserted in the last Finish method
     // TODO(taku):
@@ -1790,6 +1782,7 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
     const float selected_ratio =
         1.0 * std::max(entry->suggestion_freq(), entry->conversion_freq()) /
         entry->shown_freq();
+    // TODO(taku): support to restore the entry when reverted.
     if (selected_ratio < kMinSelectedRatio) {
       entry->set_suggestion_freq(0);
       entry->set_conversion_freq(0);
@@ -1801,7 +1794,7 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
 }
 
 void UserHistoryPredictor::Finish(const ConversionRequest &request,
-                                  Segments *segments) {
+                                  const Segments &segments) {
   if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
     // Do nothing for REVERSE_CONVERSION.
     return;
@@ -1829,48 +1822,8 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     return;
   }
 
-  const bool is_suggestion =
-      request.request_type() != ConversionRequest::CONVERSION;
-  const uint64_t last_access_time = absl::ToUnixSeconds(Clock::GetAbslTime());
-
-  // If user inputs a punctuation just after some long sentence,
-  // we make a new candidate by concatenating the top element in LRU and
-  // the punctuation user input. The top element in LRU is supposed to be
-  // the long sentence user input before.
-  // This is a fix for http://b/issue?id=2216838
-  //
-  // Note: We don't make such candidates for mobile.
-  if (!request.request().zero_query_suggestion() && !dic_->empty() &&
-      dic_->Head()->value.last_access_time() + 5 > last_access_time &&
-      // Check if the current value is a punctuation.
-      segments->conversion_segments_size() == 1 &&
-      segments->conversion_segment(0).candidates_size() > 0 &&
-      IsPunctuation(segments->conversion_segment(0).candidate(0).value) &&
-      // Check if the previous value looks like a sentence.
-      !segments->history_segments().empty() &&
-      segments->history_segments().back().candidates_size() > 0 &&
-      IsSentenceLikeCandidate(
-          segments->history_segments().back().candidate(0))) {
-    const Entry *entry = &(dic_->Head()->value);
-    DCHECK(entry);
-    absl::string_view last_value =
-        segments->history_segments().back().candidate(0).value;
-    // Check if the head value in LRU ends with the candidate value in history
-    // segments.
-    if (entry->value().ends_with(last_value)) {
-      const Segment::Candidate &candidate =
-          segments->conversion_segment(0).candidate(0);
-      // Uses the same last_access_time stored in the top element
-      // so that this item can be grouped together.
-      TryInsert(request, absl::StrCat(entry->key(), candidate.key),
-                absl::StrCat(entry->value(), candidate.value),
-                entry->description(), is_suggestion, {},
-                entry->last_access_time(), segments);
-    }
-  }
-
   // Checks every segment is valid.
-  for (const Segment &segment : segments->conversion_segments()) {
+  for (const Segment &segment : segments.conversion_segments()) {
     if (segment.candidates_size() < 1) {
       MOZC_VLOG(2) << "candidates size < 1";
       return;
@@ -1886,14 +1839,64 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     }
   }
 
-  if (IsPrivacySensitive(*segments)) {
+  if (IsPrivacySensitive(segments)) {
     MOZC_VLOG(2) << "do not remember privacy sensitive input";
     return;
   }
 
-  InsertHistory(request, is_suggestion, last_access_time, segments);
+  const bool is_suggestion =
+      request.request_type() != ConversionRequest::CONVERSION;
+  const uint64_t last_access_time = absl::ToUnixSeconds(Clock::GetAbslTime());
 
-  MaybeRemoveUnselectedHistory(*segments);
+  RevertEntries revert_entries;
+
+  // If user inputs a punctuation just after some long sentence,
+  // we make a new candidate by concatenating the top element in LRU and
+  // the punctuation user input. The top element in LRU is supposed to be
+  // the long sentence user input before.
+  // This is a fix for http://b/issue?id=2216838
+  //
+  // Note: We don't make such candidates for mobile.
+  if (!request.request().zero_query_suggestion() && !dic_->empty() &&
+      dic_->Head()->value.last_access_time() + 5 > last_access_time &&
+      // Check if the current value is a punctuation.
+      segments.conversion_segments_size() == 1 &&
+      segments.conversion_segment(0).candidates_size() > 0 &&
+      IsPunctuation(segments.conversion_segment(0).candidate(0).value) &&
+      // Check if the previous value looks like a sentence.
+      !segments.history_segments().empty() &&
+      segments.history_segments().back().candidates_size() > 0 &&
+      IsSentenceLikeCandidate(
+          segments.history_segments().back().candidate(0))) {
+    const Entry *entry = &(dic_->Head()->value);
+    DCHECK(entry);
+    absl::string_view last_value =
+        segments.history_segments().back().candidate(0).value;
+    // Check if the head value in LRU ends with the candidate value in history
+    // segments.
+    if (entry->value().ends_with(last_value)) {
+      const Segment::Candidate &candidate =
+          segments.conversion_segment(0).candidate(0);
+      // Uses the same last_access_time stored in the top element
+      // so that this item can be grouped together.
+      TryInsert(request, absl::StrCat(entry->key(), candidate.key),
+                absl::StrCat(entry->value(), candidate.value),
+                entry->description(), is_suggestion, {},
+                entry->last_access_time(), &revert_entries);
+    }
+  }
+
+  InsertHistory(request, is_suggestion, last_access_time, segments,
+                &revert_entries);
+
+  // TODO(taku): Support to restore the un-selected history when reverted.
+  MaybeRemoveUnselectedHistory(segments);
+
+  if (!revert_entries.empty()) {
+    if (auto *element = revert_cache_.Insert(segments.revert_id()); element) {
+      element->value = std::move(revert_entries);
+    }
+  }
 }
 
 UserHistoryPredictor::SegmentsForLearning
@@ -1934,15 +1937,15 @@ UserHistoryPredictor::MakeLearningSegments(const Segments &segments) const {
   return learning_segments;
 }
 
-void UserHistoryPredictor::InsertHistory(const ConversionRequest &request,
-                                         bool is_suggestion_selected,
-                                         uint64_t last_access_time,
-                                         Segments *segments) {
-  const SegmentsForLearning learning_segments = MakeLearningSegments(*segments);
+void UserHistoryPredictor::InsertHistory(
+    const ConversionRequest &request, bool is_suggestion_selected,
+    uint64_t last_access_time, const Segments &segments,
+    UserHistoryPredictor::RevertEntries *revert_entries) {
+  const SegmentsForLearning learning_segments = MakeLearningSegments(segments);
 
   InsertHistoryForConversionSegments(request, is_suggestion_selected,
                                      last_access_time, learning_segments,
-                                     segments);
+                                     revert_entries);
 
   absl::string_view all_key = learning_segments.conversion_segments_key;
   absl::string_view all_value = learning_segments.conversion_segments_value;
@@ -1953,7 +1956,7 @@ void UserHistoryPredictor::InsertHistory(const ConversionRequest &request,
       learning_segments.conversion_segments.size() > 1 && !all_key.empty() &&
       !all_value.empty()) {
     TryInsert(request, all_key, all_value, "", is_suggestion_selected, {},
-              last_access_time, segments);
+              last_access_time, revert_entries);
   }
 
   // Makes a link from the last history_segment to the first conversion segment
@@ -1962,7 +1965,7 @@ void UserHistoryPredictor::InsertHistory(const ConversionRequest &request,
       !learning_segments.conversion_segments.empty()) {
     const SegmentForLearning &history_segment =
         learning_segments
-            .history_segments[segments->history_segments_size() - 1];
+            .history_segments[segments.history_segments_size() - 1];
     const SegmentForLearning &conversion_segment =
         learning_segments.conversion_segments[0];
     absl::string_view history_value = history_segment.value;
@@ -2012,7 +2015,7 @@ void UserHistoryPredictor::InsertHistory(const ConversionRequest &request,
 void UserHistoryPredictor::InsertHistoryForConversionSegments(
     const ConversionRequest &request, bool is_suggestion_selected,
     uint64_t last_access_time, const SegmentsForLearning &learning_segments,
-    Segments *segments) {
+    UserHistoryPredictor::RevertEntries *revert_entries) {
   absl::flat_hash_set<std::vector<uint32_t>> seen;
   bool this_was_seen = false;
 
@@ -2045,29 +2048,35 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     }
     TryInsert(request, segment.key, segment.value, segment.description,
               is_suggestion_selected, next_fps_to_set, last_access_time,
-              segments);
+              revert_entries);
     if (content_word_learning_enabled_ && segment.content_key != segment.key &&
         segment.content_value != segment.value) {
       TryInsert(request, segment.content_key, segment.content_value,
                 segment.description, is_suggestion_selected, {},
-                last_access_time, segments);
+                last_access_time, revert_entries);
     }
   }
 }
 
-void UserHistoryPredictor::Revert(Segments *segments) {
+void UserHistoryPredictor::Revert(const Segments &segments) {
   if (!CheckSyncerAndDelete()) {
     LOG(WARNING) << "Syncer is running";
     return;
   }
 
-  for (size_t i = 0; i < segments->revert_entries_size(); ++i) {
-    const Segments::RevertEntry &revert_entry = segments->revert_entry(i);
-    if (revert_entry.id == UserHistoryPredictor::revert_id() &&
-        revert_entry.revert_entry_type == Segments::RevertEntry::CREATE_ENTRY) {
-      const uint32_t key = LoadUnaligned<uint32_t>(revert_entry.key.data());
-      MOZC_VLOG(2) << "Erasing the key: " << key;
-      dic_->Erase(key);
+  const RevertEntries *revert_entries =
+      revert_cache_.LookupWithoutInsert(segments.revert_id());
+  if (!revert_entries) {
+    return;
+  }
+
+  for (auto &[dic_key, revert_entry] : *revert_entries) {
+    if (!revert_entry) {
+      MOZC_VLOG(2) << "Erasing the key: " << dic_key;
+      dic_->Erase(dic_key);
+    } else if (Entry *entry = dic_->MutableLookupWithoutInsert(dic_key);
+               entry) {
+      *entry = *revert_entry;
     }
   }
 }
@@ -2199,12 +2208,6 @@ std::vector<uint32_t> UserHistoryPredictor::LearningSegmentFingerprints(
     fps.push_back(Fingerprint(segment.content_key, segment.content_value));
   }
   return fps;
-}
-
-// static
-std::string UserHistoryPredictor::Uint32ToString(uint32_t fp) {
-  std::string buf(reinterpret_cast<const char *>(&fp), sizeof(fp));
-  return buf;
 }
 
 bool UserHistoryPredictor::IsValidSuggestionForMixedConversion(

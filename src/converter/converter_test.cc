@@ -219,7 +219,7 @@ class MockPredictor : public mozc::prediction::PredictorInterface {
 
   MOCK_METHOD(bool, PredictForRequest, (const ConversionRequest &, Segments *),
               (const, override));
-  MOCK_METHOD(void, Revert, (Segments *), (override));
+  MOCK_METHOD(void, Revert, (const Segments &), (override));
   MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
 };
 
@@ -230,7 +230,7 @@ class MockRewriter : public RewriterInterface {
 
   MOCK_METHOD(bool, Rewrite, (const ConversionRequest &, Segments *),
               (const, override));
-  MOCK_METHOD(void, Revert, (Segments *), (override));
+  MOCK_METHOD(void, Revert, (const Segments &), (override));
 };
 
 class ConverterTest : public testing::TestWithTempUserProfile {
@@ -1801,7 +1801,7 @@ TEST_F(ConverterTest, RevertConversion) {
       });
 
   Segments segments;
-  segments.push_back_revert_entry();
+  segments.set_revert_id(10);
 
   converter->RevertConversion(&segments);
 }
@@ -2230,4 +2230,105 @@ TEST_F(ConverterTest, IntegrationWithSmallLetterRewriter) {
     EXPECT_TRUE(FindCandidateByValue("¹²³", segments.conversion_segment(0)));
   }
 }
+
+TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
+  const std::shared_ptr<const ConverterInterface> converter =
+      engine->GetConverter();
+
+  // Test the case where value == content_value.
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+
+    Segment::Candidate *cand1 = segment->add_candidate();
+    cand1->value = "東京";
+    cand1->content_value = "東京";
+
+    Segment::Candidate *cand2 = segment->add_candidate();
+    cand2->value = "大阪";
+    cand2->content_value = "大阪";
+
+    Segment::Candidate *cand3 = segment->add_candidate();
+    cand3->value = "群馬";
+    cand3->content_value = "群馬";
+
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetRequestType(ConversionRequest::CONVERSION)
+            .Build();
+    converter->FinishConversion(convreq, &segments);
+    EXPECT_EQ(cand1->key, "とうきょう");
+    EXPECT_EQ(cand1->content_key, "とうきょう");
+    EXPECT_TRUE(cand2->key.empty());
+    EXPECT_TRUE(cand2->content_key.empty());
+    EXPECT_TRUE(cand3->key.empty());
+    EXPECT_TRUE(cand3->content_key.empty());
+  }
+  // Test the case where value != content_value.
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+
+    Segment::Candidate *cand1 = segment->add_candidate();
+    cand1->value = "東京に";
+    cand1->content_value = "東京";
+
+    Segment::Candidate *cand2 = segment->add_candidate();
+    cand2->value = "大阪に";
+    cand2->content_value = "大阪";
+
+    Segment::Candidate *cand3 = segment->add_candidate();
+    cand3->value = "群馬に";
+    cand3->content_value = "群馬";
+
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetRequestType(ConversionRequest::CONVERSION)
+            .Build();
+    converter->FinishConversion(convreq, &segments);
+    EXPECT_EQ(cand1->key, "とうきょうに");
+    EXPECT_EQ(cand1->content_key, "とうきょう");
+    EXPECT_TRUE(cand2->key.empty());
+    EXPECT_TRUE(cand2->content_key.empty());
+    EXPECT_TRUE(cand3->key.empty());
+    EXPECT_TRUE(cand3->content_key.empty());
+  }
+  // Test the case where value != content_value and the functional value is not
+  // Hiragana. We cannot add the reading in this case.
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+
+    Segment::Candidate *cand1 = segment->add_candidate();
+    cand1->value = "東京便";
+    cand1->content_value = "東京";
+
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetRequestType(ConversionRequest::CONVERSION)
+            .Build();
+    converter->FinishConversion(convreq, &segments);
+    EXPECT_TRUE(cand1->key.empty());
+    EXPECT_TRUE(cand1->content_key.empty());
+  }
+  // Test the case where value != content_value and content_value is empty.
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+
+    Segment::Candidate *cand1 = segment->add_candidate();
+    cand1->value = "東京";
+    cand1->content_value.clear();
+
+    const ConversionRequest convreq =
+        ConversionRequestBuilder()
+            .SetRequestType(ConversionRequest::CONVERSION)
+            .Build();
+    converter->FinishConversion(convreq, &segments);
+    EXPECT_TRUE(cand1->key.empty());
+    EXPECT_TRUE(cand1->content_key.empty());
+  }
+}
+
 }  // namespace mozc

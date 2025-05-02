@@ -202,6 +202,10 @@ class Converter final : public ConverterInterface {
   bool GetLastConnectivePart(absl::string_view preceding_text, std::string *key,
                              std::string *value, uint16_t *id) const;
 
+  std::optional<std::string> GetReading(absl::string_view text) const;
+
+  void PopulateReadingOfCommittedCandidateIfMissing(Segments *segments) const;
+
   std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<const ImmutableConverterInterface> immutable_converter_;
   std::unique_ptr<prediction::PredictorInterface> predictor_;
