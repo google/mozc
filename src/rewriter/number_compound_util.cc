@@ -144,6 +144,10 @@ bool IsNumber(const SerializedStringArray &suffix_array,
           {"ろくどう", "六道"},
           {"しちりん", "七輪"},
           {"やえ", "八重"},
+          {"ももとせ", "百歳"},
+          {"ゆり", "百合"},
+          {"ちとせ", "千年"},
+          {"ちとせ", "千歳"},
       });
   if (kExceptions->contains(std::make_pair(cand.key, cand.value))) {
     return false;
