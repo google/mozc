@@ -1764,7 +1764,6 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
 }
 
 TEST_F(SessionTest, ConvertToHalfWidth) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -1798,7 +1797,6 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
 }
 
 TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -1838,7 +1836,6 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
 }
 
 TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -1884,7 +1881,6 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
 
 // Convert input string to Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, SwitchKanaType) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -1969,7 +1965,6 @@ TEST_F(SessionTest, SwitchKanaType) {
 
 // Rotate input mode among Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, InputModeSwitchKanaType) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2055,7 +2050,6 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
 }
 
 TEST_F(SessionTest, TranslateHalfWidth) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2078,7 +2072,6 @@ TEST_F(SessionTest, TranslateHalfWidth) {
 }
 
 TEST_F(SessionTest, UpdatePreferences) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2148,7 +2141,6 @@ TEST_F(SessionTest, RomajiInput) {
   table->AddRule("na", "な", "");
   // This rule makes the "n" rule ambiguous.
 
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2186,7 +2178,6 @@ TEST_F(SessionTest, KanaInput) {
   auto table = std::make_shared<composer::Table>();
   table->AddRule("す゛", "ず", "");
 
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2234,7 +2225,6 @@ TEST_F(SessionTest, KanaInput) {
 }
 
 TEST_F(SessionTest, ExceededComposition) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2275,7 +2265,6 @@ TEST_F(SessionTest, ExceededComposition) {
 }
 
 TEST_F(SessionTest, OutputAllCandidateWords) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2349,7 +2338,6 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 }
 
 TEST_F(SessionTest, UndoForComposition) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2397,7 +2385,6 @@ TEST_F(SessionTest, UndoForComposition) {
 }
 
 TEST_F(SessionTest, RequestUndo) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2429,7 +2416,6 @@ TEST_F(SessionTest, RequestUndo) {
 }
 
 TEST_F(SessionTest, UndoForSingleSegment) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2562,7 +2548,6 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 }
 
 TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2601,7 +2586,6 @@ TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
 }
 
 TEST_F(SessionTest, UndoForMultipleSegments) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2771,7 +2755,6 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
 }
 
 TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2844,7 +2827,6 @@ TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
 }
 
 TEST_F(SessionTest, MultipleUndo) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -2946,7 +2928,6 @@ TEST_F(SessionTest, MultipleUndo) {
 }
 
 TEST_F(SessionTest, UndoOrRewindUndo) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3004,7 +2985,6 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
 }
 
 TEST_F(SessionTest, UndoOrRewindRewind) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3063,7 +3043,6 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
 }
 
 TEST_F(SessionTest, StopKeyToggling) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3099,7 +3078,6 @@ TEST_F(SessionTest, StopKeyToggling) {
 }
 
 TEST_F(SessionTest, CommitRawText) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3160,7 +3138,6 @@ TEST_F(SessionTest, CommitRawTextKanaInput) {
   auto table = std::make_shared<composer::Table>();
   table->AddRule("す゛", "ず", "");
 
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3199,7 +3176,6 @@ TEST_F(SessionTest, CommitRawTextKanaInput) {
 }
 
 TEST_F(SessionTest, ConvertNextPagePrevPage) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3308,7 +3284,6 @@ TEST_F(SessionTest, ConvertNextPagePrevPage) {
 
 TEST_F(SessionTest, NeedlessClearUndoContext) {
   // This is a unittest against http://b/3423910.
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3387,7 +3362,6 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
 }
 
 TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3434,7 +3408,6 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
 }
 
 TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3505,7 +3478,6 @@ TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
 }
 
 TEST_F(SessionTest, DCHECKFailureAfterUndo) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3540,7 +3512,6 @@ TEST_F(SessionTest, DCHECKFailureAfterUndo) {
 }
 
 TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3606,7 +3577,6 @@ TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
 
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3642,7 +3612,6 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
   commands::Request request;
   commands::Command command;
 
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3704,7 +3673,6 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
 
 TEST_F(SessionTest, Issue1805239) {
   // This is a unittest against http://b/1805239.
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3759,7 +3727,6 @@ TEST_F(SessionTest, Issue1805239) {
 
 TEST_F(SessionTest, Issue1816861) {
   // This is a unittest against http://b/1816861
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3819,7 +3786,6 @@ TEST_F(SessionTest, Issue1816861) {
 
 TEST_F(SessionTest, T13NWithResegmentation) {
   // This is a unittest against http://b/3272827
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -3909,7 +3875,6 @@ TEST_F(SessionTest, Shortcut) {
     config::Config config;
     config.set_selection_shortcut(shortcut);
 
-    ;
     MockEngine engine;
     std::shared_ptr<MockConverter> converter =
         CreateEngineConverterMock(&engine);
@@ -3955,7 +3920,6 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   config::Config config;
   config.set_selection_shortcut(config::Config::SHORTCUT_ASDFGHJKL);
 
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -4000,7 +3964,6 @@ TEST_F(SessionTest, ShortcutFromVK) {
   Request client_request;
   client_request.set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
 
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -4040,7 +4003,6 @@ TEST_F(SessionTest, ShortcutFromVK) {
 }
 
 TEST_F(SessionTest, NumpadKey) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -4151,7 +4113,6 @@ TEST_F(SessionTest, KanaSymbols) {
   config.set_punctuation_method(config::Config::COMMA_PERIOD);
   config.set_symbol_method(config::Config::CORNER_BRACKET_SLASH);
 
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -4184,7 +4145,6 @@ TEST_F(SessionTest, KanaSymbols) {
 }
 
 TEST_F(SessionTest, InsertCharacterWithShiftKey) {
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -4225,7 +4185,6 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
 
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion1) {
   // This is a unittest against http://b/2977131.
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -4266,7 +4225,6 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion1) {
 
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
   // This is a unittest against http://b/2977131.
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
@@ -4308,7 +4266,6 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
 
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion3) {
   // This is a unittest against http://b/2977131.
-  ;
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
