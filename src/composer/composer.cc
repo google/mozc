@@ -460,54 +460,12 @@ ComposerData::ComposerData(
     commands::Context::InputFieldType input_field_type, std::string source_text,
     std::vector<commands::SessionCommand::CompositionEvent>
         compositions_for_handwriting)
-    : composition_(composition),
+    : composition_(std::move(composition)),
       position_(position),
       input_mode_(input_mode),
       input_field_type_(input_field_type),
-      source_text_(source_text),
-      compositions_for_handwriting_(compositions_for_handwriting) {}
-
-ComposerData::ComposerData(const ComposerData &other)
-    : composition_(other.composition_),
-      position_(other.position_),
-      input_mode_(other.input_mode_),
-      input_field_type_(other.input_field_type_),
-      source_text_(other.source_text_),
-      compositions_for_handwriting_(other.compositions_for_handwriting_) {}
-
-ComposerData &ComposerData::operator=(const ComposerData &other) {
-  if (this != &other) {
-    composition_ = other.composition_;
-    position_ = other.position_;
-    input_mode_ = other.input_mode_;
-    input_field_type_ = other.input_field_type_;
-    source_text_ = other.source_text_;
-    compositions_for_handwriting_ = other.compositions_for_handwriting_;
-  }
-  return *this;
-}
-
-ComposerData::ComposerData(ComposerData &&other) noexcept
-    : composition_(std::move(other.composition_)),
-      position_(other.position_),
-      input_mode_(other.input_mode_),
-      input_field_type_(other.input_field_type_),
-      source_text_(std::move(other.source_text_)),
-      compositions_for_handwriting_(
-          std::move(other.compositions_for_handwriting_)) {}
-
-ComposerData &ComposerData::operator=(ComposerData &&other) noexcept {
-  if (this != &other) {
-    composition_ = std::move(other.composition_);
-    position_ = other.position_;
-    input_mode_ = other.input_mode_;
-    input_field_type_ = other.input_field_type_;
-    source_text_ = std::move(other.source_text_);
-    compositions_for_handwriting_ =
-        std::move(other.compositions_for_handwriting_);
-  }
-  return *this;
-}
+      source_text_(std::move(source_text)),
+      compositions_for_handwriting_(std::move(compositions_for_handwriting)) {}
 
 transliteration::TransliterationType ComposerData::GetInputMode() const {
   return input_mode_;

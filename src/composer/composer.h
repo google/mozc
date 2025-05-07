@@ -71,10 +71,10 @@ class ComposerData {
                    compositions_for_handwriting);
 
   // Copyable and movable.
-  ComposerData(const ComposerData &other);
-  ComposerData &operator=(const ComposerData &);
-  ComposerData(ComposerData &&other) noexcept;
-  ComposerData &operator=(ComposerData &&) noexcept;
+  ComposerData(const ComposerData &other) = default;
+  ComposerData &operator=(const ComposerData &) = default;
+  ComposerData(ComposerData &&other) = default;
+  ComposerData &operator=(ComposerData &&) = default;
 
   transliteration::TransliterationType GetInputMode() const;
 
