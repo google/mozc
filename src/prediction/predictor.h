@@ -84,8 +84,6 @@ class BasePredictor : public PredictorInterface {
   std::unique_ptr<PredictorInterface> user_history_predictor_;
 
  private:
-  void PopulateReadingOfCommittedCandidateIfMissing(Segments *segments) const;
-
   const ConverterInterface &converter_;
 };
 
