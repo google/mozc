@@ -769,6 +769,10 @@ TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
     }
     // select: 2, shown: 1+19+1+20, ratio: 2/41 < 0.05
     EXPECT_FALSE(find_target());
+
+    Segments segments;
+    predictor->Revert(segments);
+    EXPECT_TRUE(find_target());
   }
 }
 
@@ -1077,9 +1081,52 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
 
   EXPECT_FALSE(predictor->PredictForRequest(convreq3, &segments));
   EXPECT_EQ(segments.segment(0).candidates_size(), 0);
+}
 
-  EXPECT_FALSE(predictor->PredictForRequest(convreq3, &segments));
-  EXPECT_EQ(segments.segment(0).candidates_size(), 0);
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  Segments segments;
+  const ConversionRequest convreq1 = SetUpInputForConversion(
+      "わたしのなまえはなかのです", &composer_, &segments);
+  AddCandidate("私の名前は中野です", &segments);
+
+  auto freq_eq = [&](int expected_freq) {
+    auto *entry = predictor->dic_->MutableLookupWithoutInsert(
+        UserHistoryPredictor::SegmentFingerprint(segments.segment(0)));
+    if (expected_freq == 0) {
+      ASSERT_FALSE(entry);
+    } else {
+      ASSERT_TRUE(entry);
+      EXPECT_EQ(entry->conversion_freq(), expected_freq);
+    }
+  };
+
+  freq_eq(0);
+
+  segments.set_revert_id(1);
+  predictor->Finish(convreq1, segments);
+  freq_eq(1);
+
+  segments.set_revert_id(2);
+  predictor->Finish(convreq1, segments);
+  freq_eq(2);
+
+  segments.set_revert_id(3);
+  predictor->Finish(convreq1, segments);
+  freq_eq(3);
+
+  segments.set_revert_id(3);
+  predictor->Revert(segments);
+  freq_eq(2);
+
+  segments.set_revert_id(2);
+  predictor->Revert(segments);
+  freq_eq(1);
+
+  segments.set_revert_id(1);
+  predictor->Revert(segments);
+  freq_eq(0);
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {

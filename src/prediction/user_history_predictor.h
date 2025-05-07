@@ -209,6 +209,7 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN);
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN);
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana);
+  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest);
   FRIEND_TEST(UserHistoryPredictorTest, EraseNextEntries);
   FRIEND_TEST(UserHistoryPredictorTest, RemoveNgramChain);
   FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryUnigram);
@@ -492,7 +493,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // Removes history entries when the selected ratio is under the threshold.
   // Selected ratio:
   //  (# of candidate committed) / (# of candidate shown on commit event)
-  void MaybeRemoveUnselectedHistory(const Segments &segments);
+  void MaybeRemoveUnselectedHistory(const Segments &segments,
+                                    RevertEntries *revert_entries);
 
   const dictionary::DictionaryInterface &dictionary_;
   const dictionary::PosMatcher &pos_matcher_;

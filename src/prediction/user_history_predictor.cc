@@ -1706,16 +1706,7 @@ void UserHistoryPredictor::Insert(
     UserHistoryPredictor::RevertEntries *revert_entries) {
   const uint32_t dic_key = Fingerprint(key, value);
 
-  if (!dic_->HasKey(dic_key)) {
-    // The key is a new key inserted in the last Finish method.
-    // Here we push a new RevertEntry so that the new "key" can be
-    // removed when Revert() method is called.
-    revert_entries->emplace_back(dic_key, nullptr);
-  } else {
-    // The key is a old key not inserted in the last Finish method
-    // TODO(taku):
-    // add a treatment for UPDATE_ENTRY mode
-  }
+  const bool has_dic_key = dic_->HasKey(dic_key);
 
   DicElement *e = dic_->Insert(dic_key);
   if (e == nullptr) {
@@ -1725,6 +1716,14 @@ void UserHistoryPredictor::Insert(
 
   Entry *entry = &(e->value);
   DCHECK(entry);
+
+  if (has_dic_key) {
+    // revert to previous `*entry` when reverted.
+    revert_entries->emplace_back(dic_key, std::make_unique<Entry>(*entry));
+  } else {
+    // `dic_key` is removed when reverted.
+    revert_entries->emplace_back(dic_key, nullptr);
+  }
 
   entry->set_key(std::move(key));
   entry->set_value(std::move(value));
@@ -1758,7 +1757,8 @@ void UserHistoryPredictor::Insert(
 }
 
 void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
-    const Segments &segments) {
+    const Segments &segments,
+    UserHistoryPredictor::RevertEntries *revert_entries) {
   const Segment &segment = segments.conversion_segment(0);
   if (segment.candidates_size() < 1 ||
       segment.segment_type() != Segment::FIXED_VALUE) {
@@ -1770,8 +1770,8 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
   for (size_t i = 0; i < std::min(segment.candidates_size(), kMaxHistorySize);
        ++i) {
     const Segment::Candidate &candidate = segment.candidate(i);
-    Entry *entry = dic_->MutableLookupWithoutInsert(
-        Fingerprint(candidate.key, candidate.value));
+    const uint64_t dic_key = Fingerprint(candidate.key, candidate.value);
+    Entry *entry = dic_->MutableLookupWithoutInsert(dic_key);
     if (entry == nullptr) {
       continue;
     }
@@ -1782,8 +1782,12 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
     const float selected_ratio =
         1.0 * std::max(entry->suggestion_freq(), entry->conversion_freq()) /
         entry->shown_freq();
-    // TODO(taku): support to restore the entry when reverted.
+
     if (selected_ratio < kMinSelectedRatio) {
+      auto revert_entry = std::make_unique<Entry>(*entry);
+      revert_entry->set_shown_freq(std::max<int>(0, entry->shown_freq() - 1));
+      revert_entries->emplace_back(dic_key, std::move(revert_entry));
+
       entry->set_suggestion_freq(0);
       entry->set_conversion_freq(0);
       entry->set_shown_freq(0);
@@ -1889,8 +1893,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   InsertHistory(request, is_suggestion, last_access_time, segments,
                 &revert_entries);
 
-  // TODO(taku): Support to restore the un-selected history when reverted.
-  MaybeRemoveUnselectedHistory(segments);
+  MaybeRemoveUnselectedHistory(segments, &revert_entries);
 
   if (!revert_entries.empty()) {
     if (auto *element = revert_cache_.Insert(segments.revert_id()); element) {
