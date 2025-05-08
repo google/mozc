@@ -587,7 +587,7 @@ std::string FileUtil::Dirname(zstring_view filename) {
 }
 
 std::string FileUtil::Basename(zstring_view filename) {
-  const std::string filename_str(filename.c_str());
+  std::string filename_str(filename.c_str());
   const std::string::size_type p = filename_str.find_last_of(kFileDelimiter);
   if (p == std::string::npos) {
     return filename_str;

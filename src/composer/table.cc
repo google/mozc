@@ -552,7 +552,10 @@ void Table::set_case_sensitive(const bool case_sensitive) {
 }
 
 // static
-const Table &Table::GetDefaultTable() { return *GetSharedDefaultTable(); }
+const Table &Table::GetDefaultTable() {
+  return *GetSharedDefaultTable();  // NOLINT: The referenced object has static
+                                    // lifetime.
+}
 
 std::shared_ptr<const Table> Table::GetSharedDefaultTable() {
   static absl::NoDestructor<std::shared_ptr<const Table>> kDefaultSharedTable(

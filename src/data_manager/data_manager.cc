@@ -34,9 +34,7 @@
 #include <memory>
 #include <new>
 #include <optional>
-#include <ostream>
 #include <string>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -45,7 +43,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -208,7 +205,7 @@ absl::Status DataManager::InitFromArray(absl::string_view array,
 }
 
 absl::Status DataManager::InitFromReader(const DataSetReader &reader) {
-  const absl::Status status = InitUserPosManagerDataFromReader(
+  absl::Status status = InitUserPosManagerDataFromReader(
       reader, &pos_matcher_data_, &user_pos_token_array_data_,
       &user_pos_string_array_data_);
 

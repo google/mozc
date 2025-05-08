@@ -309,7 +309,8 @@ std::shared_ptr<const Config> ConfigHandler::GetSharedDefaultConfig() {
 
 // static
 const Config &ConfigHandler::DefaultConfig() {
-  return *GetSharedDefaultConfig();
+  return *GetSharedDefaultConfig();  // NOLINT: The referenced object has static
+                                     // lifetime.
 }
 
 // Reload from file

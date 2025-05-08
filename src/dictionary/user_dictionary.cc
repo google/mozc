@@ -146,7 +146,7 @@ class SuppressionDictionary {
 
 class UserDictionary::TokensIndex {
  public:
-  TokensIndex(const UserPos &user_pos) : user_pos_(user_pos) {}
+  explicit TokensIndex(const UserPos &user_pos) : user_pos_(user_pos) {}
 
   ~TokensIndex() = default;
 

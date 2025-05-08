@@ -61,7 +61,10 @@ mozc_cc_library(
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
-    ],
+    ] + mozc_select(windows = [
+        "//base/win32:wide_char",
+        "//base/win32:win_sandbox",
+    ]),
 )
 
 mozc_cc_test(

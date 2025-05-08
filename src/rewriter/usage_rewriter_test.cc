@@ -74,9 +74,8 @@ void AddCandidate(const absl::string_view key, const absl::string_view value,
 
 class UsageRewriterPeer {
  public:
-  UsageRewriterPeer(std::unique_ptr<UsageRewriter> rewriter) {
-    rewriter_ = std::move(rewriter);
-  }
+  explicit UsageRewriterPeer(std::unique_ptr<UsageRewriter> rewriter)
+      : rewriter_(std::move(rewriter)) {}
 
   SerializedStringArray get_string_array() { return rewriter_->string_array_; }
 
