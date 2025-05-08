@@ -42,7 +42,6 @@
 
 #include "absl/strings/string_view.h"
 #include "testing/gunit.h"
-#include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
 namespace win32 {
@@ -52,11 +51,6 @@ namespace {
 using ::testing::AssertionFailure;
 using ::testing::AssertionResult;
 using ::testing::AssertionSuccess;
-
-class TipCandidateListTest : public testing::Test {
- protected:
-  static void SetUpTestCase() { TipDllModule::InitForUnitTest(); }
-};
 
 class MockCallbackResult {
  public:

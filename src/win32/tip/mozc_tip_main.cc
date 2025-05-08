@@ -34,11 +34,9 @@
 
 #include "google/protobuf/stubs/common.h"
 #include "absl/base/call_once.h"
-#include "base/crash_report_handler.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/protobuf.h"
 #include "base/win32/com_implements.h"
-#include "config/stats_config_util.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/tip/tip_class_factory.h"
 #include "win32/tip/tip_dll_module.h"
@@ -47,8 +45,6 @@
 
 namespace {
 
-using mozc::CrashReportHandler;
-using mozc::config::StatsConfigUtil;
 using mozc::win32::TsfProfile;
 using mozc::win32::tsf::TipDllModule;
 using mozc::win32::tsf::TipTextServiceFactory;
@@ -60,9 +56,6 @@ absl::once_flag initialize_once;
 // True if the boot mode is safe mode.
 bool in_safe_mode = true;
 
-// Critical section for breakpad.
-CRITICAL_SECTION critical_section_for_breakpad;
-
 // Creates the global resources shared among all the ImeTextService objects.
 void TipBuildGlobalObjects() {
   // Cache the boot mode here so that we need not call user32.dll functions
@@ -72,19 +65,10 @@ void TipBuildGlobalObjects() {
   if (in_safe_mode) {
     return;
   }
-
-  if (StatsConfigUtil::IsEnabled()) {
-    CrashReportHandler::Initialize(true);
-  }
 }
 
 BOOL OnDllProcessAttach(HINSTANCE instance, bool static_loading) {
   TipDllModule::set_module_handle(instance);
-  if (!::InitializeCriticalSectionAndSpinCount(&critical_section_for_breakpad,
-                                               0)) {
-    return FALSE;
-  }
-  CrashReportHandler::SetCriticalSection(&critical_section_for_breakpad);
   TipTextServiceFactory::OnDllProcessAttach(instance, static_loading);
   TipUiHandler::OnDllProcessAttach(instance, static_loading);
   return TRUE;
@@ -102,7 +86,6 @@ BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
     ::mozc::protobuf::ShutdownProtobufLibrary();
   }
 
-  ::DeleteCriticalSection(&critical_section_for_breakpad);
   TipDllModule::set_module_handle(nullptr);
   TipDllModule::Unload();
   return TRUE;
