@@ -56,11 +56,9 @@ mozc_win32_cc_prod_binary(
     deps = [
         ":mozc_broker_resource",
         ":prelauncher",
-        "//base:crash_report_handler",
         "//base:init_mozc",
         "//base:system_util",
         "//base/win32:winmain",
-        "//config:stats_config_util",
         "@com_google_absl//absl/flags:flag",
     ],
 )

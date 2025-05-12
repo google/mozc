@@ -348,11 +348,9 @@ mozc_cc_library(
     hdrs = ["init_mozc_renderer.h"],
     visibility = ["//renderer:__subpackages__"],
     deps = [
-        "//base:crash_report_handler",
         "//base:init_mozc",
         "//base:run_level",
         "//base:system_util",
-        "//config:stats_config_util",
         "@com_google_absl//absl/flags:flag",
     ],
 )

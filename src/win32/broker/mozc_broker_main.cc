@@ -28,10 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "absl/flags/flag.h"
-#include "base/crash_report_handler.h"
 #include "base/init_mozc.h"
 #include "base/system_util.h"
-#include "config/stats_config_util.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -48,9 +46,6 @@ int main(int argc, char *argv[]) {
 
   mozc::SystemUtil::DisableIME();
 
-  if (mozc::config::StatsConfigUtil::IsEnabled()) {
-    mozc::CrashReportHandler::Initialize(false);
-  }
   mozc::InitMozc(argv[0], &argc, &argv);
 
   int result = 0;
