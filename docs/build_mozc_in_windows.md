@@ -177,7 +177,11 @@ After running `build_tools/update_deps.py` and `build_tools/build_qt.py`, run th
 bazelisk build --config oss_windows --config release_build package
 ```
 
-You have release build binaries in `bazel-bin\win32\installer\Mozc64.msi`.
+To install `bazel-bin/win32/installer/Mozc64.msi` built with the above command,
+run the following command.
+```
+python build_tools/open.py bazel-bin/win32/installer/Mozc64.msi
+```
 
 ### Tips for Bazel setup
 
