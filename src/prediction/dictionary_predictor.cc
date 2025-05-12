@@ -79,7 +79,6 @@ namespace mozc::prediction {
 namespace {
 
 using ::mozc::commands::Request;
-using ::mozc::prediction::dictionary_predictor_internal::KeyValueView;
 
 // Used to emulate positive infinity for cost. This value is set for those
 // candidates that are thought to be aggressive; thus we can eliminate such
@@ -108,43 +107,6 @@ bool IsMixedConversionEnabled(const Request &request) {
 
 bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
-}
-
-KeyValueView GetCandidateKeyAndValue(const Result &result
-                                         ABSL_ATTRIBUTE_LIFETIME_BOUND,
-                                     const KeyValueView history) {
-  if (result.types & PredictionType::BIGRAM) {
-    // remove the prefix of history key and history value.
-    return {absl::string_view(result.key).substr(history.key.size()),
-            absl::string_view(result.value).substr(history.value.size())};
-  }
-  return {result.key, result.value};
-}
-
-// Returns the non-expanded lookup key for the result
-absl::string_view GetCandidateOriginalLookupKey(
-    absl::string_view input_key ABSL_ATTRIBUTE_LIFETIME_BOUND,
-    const Result &result ABSL_ATTRIBUTE_LIFETIME_BOUND,
-    absl::string_view history_key) {
-  if (result.non_expanded_original_key.empty()) {
-    return input_key;
-  }
-
-  absl::string_view lookup_key = result.non_expanded_original_key;
-  if (result.types & PredictionType::BIGRAM) {
-    lookup_key.remove_prefix(history_key.size());
-  }
-  return lookup_key;
-}
-
-absl::string_view GetCandidateKey(const Result &result
-                                      ABSL_ATTRIBUTE_LIFETIME_BOUND,
-                                  absl::string_view history_key) {
-  absl::string_view candidate_key = result.key;
-  if (result.types & PredictionType::BIGRAM) {
-    candidate_key.remove_prefix(history_key.size());
-  }
-  return candidate_key;
 }
 
 template <typename... Args>
@@ -318,9 +280,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   auto add_debug_candidate = [&](Result result, const absl::string_view log) {
     absl::StrAppend(&result.log, log);
     Segment::Candidate candidate;
-    FillCandidate(request, result,
-                  GetCandidateKeyAndValue(result, {history_key, history_value}),
-                  merged_types, &candidate);
+    FillCandidate(request, result, merged_types, &candidate);
     segment->removed_candidates_for_debug_.push_back(std::move(candidate));
   };
 #define MOZC_ADD_DEBUG_CANDIDATE(result, log) \
@@ -366,9 +326,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
   // Fill segments from final_results_ptrs.
   for (const Result &result : final_results) {
-    FillCandidate(request, result,
-                  GetCandidateKeyAndValue(result, {history_key, history_value}),
-                  merged_types, segment->push_back_candidate());
+    FillCandidate(request, result, merged_types,
+                  segment->push_back_candidate());
   }
 
   if (IsDebug(request)) {
@@ -474,9 +433,7 @@ DictionaryPredictor::ResultFilter::ResultFilter(
           request.request()
               .decoder_experiment_params()
               .suffix_nwp_transition_cost_threshold()),
-      history_rid_(request.converter_history_rid()) {
-  exact_bigram_key_ = absl::StrCat(history_key_, input_key_);
-}
+      history_rid_(request.converter_history_rid()) {}
 
 bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
                                                      int added_num,
@@ -501,7 +458,7 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   // When |include_exact_key| is true, we don't filter the results
   // which have the exactly same key as the input even if it's a bad
   // suggestion.
-  if (!(include_exact_key_ && (result.key == input_key_)) &&
+  if (!(include_exact_key_ && result.key == input_key_) &&
       suggestion_filter_.IsBadSuggestion(result.value)) {
     *log_message = "Bad suggestion";
     return true;
@@ -516,18 +473,12 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   // Don't suggest exactly the same candidate as key.
   // if |include_exact_key| is true, that's not the case.
   if (!include_exact_key_ && !(result.types & PredictionType::REALTIME) &&
-      (((result.types & PredictionType::BIGRAM) &&
-        exact_bigram_key_ == result.value) ||
-       (!(result.types & PredictionType::BIGRAM) &&
-        input_key_ == result.value))) {
+      input_key_ == result.value) {
     *log_message = "Key == candidate";
     return true;
   }
 
-  const KeyValueView candidate =
-      GetCandidateKeyAndValue(result, {history_key_, history_value_});
-
-  if (seen_.contains(candidate.value)) {
+  if (seen_.contains(result.value)) {
     *log_message = "Duplicated";
     return true;
   }
@@ -535,15 +486,13 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   // User input: "おーすとり" (len = 5)
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
   if ((result.candidate_attributes & Segment::Candidate::SPELLING_CORRECTION) &&
-      candidate.key != input_key_ &&
-      input_key_len_ <=
-          GetMissSpelledPosition(candidate.key, candidate.value) + 1) {
+      result.key != input_key_ &&
+      input_key_len_ <= GetMissSpelledPosition(result.key, result.value) + 1) {
     *log_message = "Spelling correction";
     return true;
   }
 
-  const size_t lookup_key_len = Util::CharsLen(
-      GetCandidateOriginalLookupKey(input_key_, result, history_key_));
+  const size_t lookup_key_len = Util::CharsLen(input_key_);
 
   if (suffix_nwp_transition_cost_threshold_ > 0 && lookup_key_len == 0 &&
       result.types & PredictionType::SUFFIX &&
@@ -561,11 +510,11 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   }
 
   if (!is_mixed_conversion_) {
-    return CheckDupAndReturn(candidate.value, result, log_message);
+    return CheckDupAndReturn(result.value, result, log_message);
   }
 
   // Suppress long candidates to show more candidates in the candidate view.
-  const size_t candidate_key_len = Util::CharsLen(candidate.key);
+  const size_t candidate_key_len = Util::CharsLen(result.key);
   if (lookup_key_len > 0 &&  // Do not filter for zero query
       lookup_key_len < candidate_key_len &&
       (predictive_count_++ >= 3 || added_num >= 10)) {
@@ -602,7 +551,7 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
 
-  return CheckDupAndReturn(candidate.value, result, log_message);
+  return CheckDupAndReturn(result.value, result, log_message);
 }
 
 bool DictionaryPredictor::ResultFilter::CheckDupAndReturn(
@@ -618,7 +567,6 @@ bool DictionaryPredictor::ResultFilter::CheckDupAndReturn(
 
 void DictionaryPredictor::FillCandidate(
     const ConversionRequest &request, const Result &result,
-    const KeyValueView key_value,
     const absl::flat_hash_map<std::string, int32_t> &merged_types,
     Segment::Candidate *candidate) const {
   DCHECK(candidate);
@@ -626,10 +574,10 @@ void DictionaryPredictor::FillCandidate(
   const bool cursor_at_tail =
       request.composer().GetCursor() == request.composer().GetLength();
 
-  strings::Assign(candidate->content_key, key_value.key);
-  strings::Assign(candidate->content_value, key_value.value);
-  strings::Assign(candidate->key, key_value.key);
-  strings::Assign(candidate->value, key_value.value);
+  strings::Assign(candidate->content_key, result.key);
+  strings::Assign(candidate->content_value, result.value);
+  strings::Assign(candidate->key, result.key);
+  strings::Assign(candidate->value, result.value);
   candidate->lid = result.lid;
   candidate->rid = result.rid;
   candidate->wcost = result.wcost;
@@ -765,28 +713,29 @@ void DictionaryPredictor::SetPredictionCost(
 
   absl::string_view input_key = request.converter_key();
   const int history_rid = request.converter_history_rid();
-  const std::string bigram_key =
-      absl::StrCat(request.converter_history_key(1), input_key);
+
   const bool is_suggestion =
       (request.request_type() == ConversionRequest::SUGGESTION);
 
   // use the same scoring function for both unigram/bigram.
   // Bigram will be boosted because we pass the previous
   // key as a context information.
-  const size_t bigram_key_len = Util::CharsLen(bigram_key);
-  const size_t unigram_key_len = Util::CharsLen(input_key);
+  const size_t history_key_len =
+      Util::CharsLen(request.converter_history_key(1));
+  const size_t input_key_len = Util::CharsLen(input_key);
 
-  for (size_t i = 0; i < results->size(); ++i) {
-    const Result &result = (*results)[i];
+  for (Result &result : *results) {
     const int cost = GetLMCost(result, history_rid);
-    const size_t query_len = (result.types & PredictionType::BIGRAM)
-                                 ? bigram_key_len
-                                 : unigram_key_len;
-    const size_t key_len = Util::CharsLen(result.key);
+    size_t query_len = input_key_len;
+    size_t key_len = Util::CharsLen(result.key);
+    if (result.types & PredictionType::BIGRAM) {
+      query_len += history_key_len;
+      key_len += history_key_len;
+    }
 
     if (IsAggressiveSuggestion(query_len, key_len, cost, is_suggestion,
                                results->size())) {
-      (*results)[i].cost = kInfinity;
+      result.cost = kInfinity;
       continue;
     }
 
@@ -828,7 +777,7 @@ void DictionaryPredictor::SetPredictionCost(
     //
     // TODO(team): want find the best parameter instead of kCostFactor.
     constexpr int kCostFactor = 500;
-    (*results)[i].cost =
+    result.cost =
         cost - kCostFactor * log(1.0 + std::max<int>(0, key_len - query_len));
   }
 
@@ -857,8 +806,6 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   absl::string_view input_key = request.converter_key();
   const int single_kanji_offset = CalculateSingleKanjiCostOffset(
       request, history_rid, input_key, *results, &prefix_penalty_cache);
-
-  const std::string history_key = request.converter_history_key(1);
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, history_rid);
@@ -940,10 +887,8 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // - Users expect the candidates for the input key on the candidates.
     // - We want to show candidates as many as possible in the limited
     //   candidates area.
-    const size_t candidate_lookup_key_len = Util::CharsLen(
-        GetCandidateOriginalLookupKey(input_key, result, history_key));
-    const size_t candidate_key_len =
-        Util::CharsLen(GetCandidateKey(result, history_key));
+    const size_t candidate_lookup_key_len = Util::CharsLen(input_key);
+    const size_t candidate_key_len = Util::CharsLen(result.key);
     if (!(result.types & PredictionType::SUFFIX) &&
         candidate_key_len > candidate_lookup_key_len) {
       const size_t predicted_key_len =

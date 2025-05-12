@@ -652,19 +652,16 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuery) {
 
   EXPECT_CALL(*aggregator, AggregateResults(_))
       .WillOnce(Return(std::vector<Result>{
-          CreateResult5("だいがく", "大学", 500, prediction::BIGRAM,
+          CreateResult5("", "", 500, prediction::BIGRAM, Token::NONE),
+          CreateResult5("いん", "院", 600, prediction::BIGRAM, Token::NONE),
+          CreateResult5("せい", "生", 600, prediction::BIGRAM, Token::NONE),
+          CreateResult5("やきゅう", "野球", 1000, prediction::BIGRAM,
                         Token::NONE),
-          CreateResult5("だいがくいん", "大学院", 600, prediction::BIGRAM,
+          CreateResult5("じゅけん", "受験", 1000, prediction::BIGRAM,
                         Token::NONE),
-          CreateResult5("だいがくせい", "大学生", 600, prediction::BIGRAM,
+          CreateResult5("にゅうし", "入試", 1000, prediction::BIGRAM,
                         Token::NONE),
-          CreateResult5("だいがくやきゅう", "大学野球", 1000,
-                        prediction::BIGRAM, Token::NONE),
-          CreateResult5("だいがくじゅけん", "大学受験", 1000,
-                        prediction::BIGRAM, Token::NONE),
-          CreateResult5("だいがくにゅうし", "大学入試", 1000,
-                        prediction::BIGRAM, Token::NONE),
-          CreateResult5("だいがくにゅうしせんたー", "大学入試センター", 2000,
+          CreateResult5("にゅうしせんたー", "入試センター", 2000,
                         prediction::BIGRAM, Token::NONE),
       }));
 
@@ -693,12 +690,12 @@ TEST_F(DictionaryPredictorTest, PredictivePenaltyForBigramResults) {
 
   EXPECT_CALL(*aggregator, AggregateResults(_))
       .WillOnce(Return(std::vector<Result>{
-          CreateResult5("だいがくにゅうし", "大学入試", 3000,
+          CreateResult5("にゅうし", "入試", 3000, prediction::BIGRAM,
+                        Token::NONE),
+          CreateResult5("にゅうしせんたー", "入試センター", 4000,
                         prediction::BIGRAM, Token::NONE),
-          CreateResult5("だいがくにゅうしせんたー", "大学入試センター", 4000,
-                        prediction::BIGRAM, Token::NONE),
-          CreateResult5("だいがくにゅうしせんたーしけんたいさく",
-                        "大学入試センター試験対策", 5000, prediction::BIGRAM,
+          CreateResult5("にゅうしせんたーしけんたいさく",
+                        "入試センター試験対策", 5000, prediction::BIGRAM,
                         Token::NONE),
           CreateResult5("にゅうし", "乳歯", 2000, prediction::UNIGRAM,
                         Token::NONE)}));
@@ -1502,9 +1499,6 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
       CreateResult6("tc_key1", "tc_value6", 0, 6, prediction::TYPING_CORRECTION,
                     Token::NONE),
   };
-  for (auto &result : results) {
-    result.non_expanded_original_key = result.key;
-  }
 
   Segments segments;
   InitSegmentsWithKey("original_key", &segments);

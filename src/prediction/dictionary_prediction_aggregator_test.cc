@@ -1325,14 +1325,16 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateBigramPrediction) {
     for (size_t i = 0; i < results.size(); ++i) {
       // "グーグルアドセンス", "グーグル", "アドセンス"
       // are in the dictionary.
-      if (results[i].value == "グーグルアドセンス") {
+      if (results[i].value == "アドセンス") {
         EXPECT_FALSE(results[i].removed);
       } else {
         EXPECT_TRUE(results[i].removed);
       }
       EXPECT_EQ(results[i].types, BIGRAM);
-      EXPECT_TRUE(results[i].key.starts_with(kHistoryKey));
-      EXPECT_TRUE(results[i].value.starts_with(kHistoryValue));
+      EXPECT_FALSE(results[i].key.starts_with(kHistoryKey));
+      EXPECT_FALSE(results[i].value.starts_with(kHistoryValue));
+      EXPECT_TRUE(results[i].key.starts_with("あ"));
+      EXPECT_TRUE(results[i].value.starts_with("ア"));
       // Not zero query
       EXPECT_FALSE(results[i].source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
@@ -1390,8 +1392,9 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
     EXPECT_FALSE(results.empty());
 
     for (const auto &result : results) {
-      EXPECT_TRUE(result.key.starts_with(kHistoryKey));
-      EXPECT_TRUE(result.value.starts_with(kHistoryValue));
+      // history must be removed from key/value.
+      EXPECT_FALSE(result.key.starts_with(kHistoryKey));
+      EXPECT_FALSE(result.value.starts_with(kHistoryValue));
       // Zero query
       EXPECT_FALSE(result.source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
@@ -1446,22 +1449,22 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results.size(), 5);
 
-    EXPECT_TRUE(FindResultByValue(results, "ありがとうございます"));
-    EXPECT_TRUE(FindResultByValue(results, "ありがとう御座います"));
-    EXPECT_TRUE(FindResultByValue(results, "ありがとう御座いました"));
+    EXPECT_TRUE(FindResultByValue(results, "ございます"));
+    EXPECT_TRUE(FindResultByValue(results, "御座います"));
+    EXPECT_TRUE(FindResultByValue(results, "御座いました"));
     // "ございました" is not in the dictionary, but suggested
     // because it is used as the key of other words (i.e. 御座いました).
-    EXPECT_TRUE(FindResultByValue(results, "ありがとうございました"));
+    EXPECT_TRUE(FindResultByValue(results, "ございました"));
     // "ね" is in the dictionary, but filtered due to the word length.
-    EXPECT_FALSE(FindResultByValue(results, "ありがとうね"));
+    EXPECT_FALSE(FindResultByValue(results, "ね"));
 
     for (const auto &result : results) {
-      EXPECT_TRUE(result.key.starts_with(kHistory));
-      EXPECT_TRUE(result.value.starts_with(kHistory));
+      EXPECT_FALSE(result.key.starts_with(kHistory));
+      EXPECT_FALSE(result.value.starts_with(kHistory));
       // Zero query
       EXPECT_FALSE(result.source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
-      if (result.key == "ありがとうね") {
+      if (result.key == "ね") {
         EXPECT_TRUE(result.removed);
       } else {
         EXPECT_FALSE(result.removed);
@@ -1516,8 +1519,8 @@ TEST_F(DictionaryPredictionAggregatorTest,
         &results);
     EXPECT_FALSE(results.empty());
 
-    EXPECT_FALSE(FindResultByValue(results, "グーグルジャパン"));
-    EXPECT_TRUE(FindResultByValue(results, "グーグル合同会社"));
+    EXPECT_FALSE(FindResultByValue(results, "ジャパン"));
+    EXPECT_TRUE(FindResultByValue(results, "合同会社"));
   }
 }
 

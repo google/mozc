@@ -132,9 +132,6 @@ struct Result {
   // Segment::Candidate::SourceInfo.
   // Will be used for usage stats.
   uint32_t source_info = 0;
-  // Lookup key without expansion.
-  // Please refer to Composer for query expansion.
-  std::string non_expanded_original_key;
   size_t consumed_key_size = 0;
   // The total penalty added to this result.
   int penalty = 0;
@@ -157,13 +154,13 @@ struct Result {
         &sink,
         "key: %s, value: %s, types: %d, wcost: %d, cost: %d, cost_before: %d, "
         "lid: %d, "
-        "rid: %d, attrs: %d, bdd: %s, srcinfo: %d, origkey: %s, "
+        "rid: %d, attrs: %d, bdd: %s, srcinfo: %d, "
         "consumed_key_size: %d, penalty: %d, tc_adjustment: %d, removed: %v",
         r.key, r.value, r.types, r.wcost, r.cost, r.cost_before_rescoring,
         r.lid, r.rid, r.candidate_attributes,
         absl::StrJoin(r.inner_segment_boundary, ","), r.source_info,
-        r.non_expanded_original_key, r.consumed_key_size, r.penalty,
-        r.typing_correction_adjustment, r.removed);
+        r.consumed_key_size, r.penalty, r.typing_correction_adjustment,
+        r.removed);
 #ifndef NDEBUG
     sink.Append(", log:\n");
     for (absl::string_view line : absl::StrSplit(r.log, '\n')) {

@@ -61,11 +61,6 @@
 namespace mozc::prediction {
 namespace dictionary_predictor_internal {
 
-// Views for a key and a value. Pass by value.
-struct KeyValueView {
-  absl::string_view key, value;
-};
-
 }  // namespace dictionary_predictor_internal
 
 // Dictionary-based predictor
@@ -122,8 +117,6 @@ class DictionaryPredictor : public PredictorInterface {
     const int suffix_nwp_transition_cost_threshold_;
     const int history_rid_ = 0;
 
-    std::string exact_bigram_key_;
-
     int suffix_count_ = 0;
     int predictive_count_ = 0;
     int realtime_count_ = 0;
@@ -152,7 +145,6 @@ class DictionaryPredictor : public PredictorInterface {
 
   void FillCandidate(
       const ConversionRequest &request, const Result &result,
-      dictionary_predictor_internal::KeyValueView key_value,
       const absl::flat_hash_map<std::string, int32_t> &merged_types,
       Segment::Candidate *candidate) const;
 

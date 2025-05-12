@@ -208,7 +208,6 @@ class PredictiveLookupCallback : public DictionaryInterface::Callback {
                            const absl::btree_set<std::string> &subsequent_chars,
                            Segment::Candidate::SourceInfo source_info,
                            int zip_code_id, int unknown_id,
-                           absl::string_view non_expanded_original_key,
                            std::vector<Result> *results)
       : penalty_(0),
         types_(types),
@@ -218,12 +217,13 @@ class PredictiveLookupCallback : public DictionaryInterface::Callback {
         source_info_(source_info),
         zip_code_id_(zip_code_id),
         unknown_id_(unknown_id),
-        non_expanded_original_key_(non_expanded_original_key),
         results_(results) {}
 
   PredictiveLookupCallback(const PredictiveLookupCallback &) = delete;
   PredictiveLookupCallback &operator=(const PredictiveLookupCallback &) =
       delete;
+
+  virtual void RewriteResult(Result &result) const {}
 
   ResultType OnKey(absl::string_view key) override {
     if (subsequent_chars_.empty()) {
@@ -281,8 +281,8 @@ class PredictiveLookupCallback : public DictionaryInterface::Callback {
     result.InitializeByTokenAndTypes(token, types_);
     result.wcost += penalty_;
     result.source_info |= source_info_;
-    result.non_expanded_original_key = std::string(non_expanded_original_key_);
     if (penalty_ > 0) result.types |= KEY_EXPANDED_IN_DICTIONARY;
+    RewriteResult(result);
     results_->emplace_back(std::move(result));
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
   }
@@ -296,7 +296,6 @@ class PredictiveLookupCallback : public DictionaryInterface::Callback {
   const Segment::Candidate::SourceInfo source_info_;
   const int zip_code_id_;
   const int unknown_id_;
-  absl::string_view non_expanded_original_key_;
   std::vector<Result> *results_ = nullptr;
 
  private:
@@ -341,13 +340,13 @@ class PredictiveBigramLookupCallback : public PredictiveLookupCallback {
   PredictiveBigramLookupCallback(
       PredictionTypes types, size_t limit, size_t original_key_len,
       const absl::btree_set<std::string> &subsequent_chars,
-      absl::string_view history_value,
+      absl::string_view history_key, absl::string_view history_value,
       Segment::Candidate::SourceInfo source_info, int zip_code_id,
-      int unknown_id, absl::string_view non_expanded_original_key,
-      std::vector<Result> *results)
-      : PredictiveLookupCallback(
-            types, limit, original_key_len, subsequent_chars, source_info,
-            zip_code_id, unknown_id, non_expanded_original_key, results),
+      int unknown_id, std::vector<Result> *results)
+      : PredictiveLookupCallback(types, limit, original_key_len,
+                                 subsequent_chars, source_info, zip_code_id,
+                                 unknown_id, results),
+        history_key_(history_key),
         history_value_(history_value) {}
 
   PredictiveBigramLookupCallback(const PredictiveBigramLookupCallback &) =
@@ -368,7 +367,14 @@ class PredictiveBigramLookupCallback : public PredictiveLookupCallback {
     return result_type;
   }
 
+  // Removes the history key/values in the result.
+  void RewriteResult(Result &result) const override {
+    result.key.erase(0, history_key_.size());
+    result.value.erase(0, history_value_.size());
+  }
+
  private:
+  absl::string_view history_key_;
   absl::string_view history_value_;
 };
 
@@ -1206,9 +1212,9 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForUnigram(
   const absl::btree_set<std::string> empty_expanded;
   if (request.use_already_typing_corrected_key()) {
     absl::string_view input_key = request.converter_key();
-    PredictiveLookupCallback callback(
-        types, lookup_limit, input_key.size(), empty_expanded, source_info,
-        zip_code_id_, unknown_id_, "" /* non_expanded_original_key */, results);
+    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
+                                      empty_expanded, source_info, zip_code_id_,
+                                      unknown_id_, results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1222,26 +1228,21 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForUnigram(
   const auto [base, expanded] = request.composer().GetQueriesForPrediction();
   if (expanded.empty()) {
     absl::string_view input_key = base;
-    PredictiveLookupCallback callback(
-        types, lookup_limit, input_key.size(), expanded, source_info,
-        zip_code_id_, unknown_id_, "" /* non_expanded_original_key */, results);
+    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
+                                      expanded, source_info, zip_code_id_,
+                                      unknown_id_, results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
-
-  // `non_expanded_original_key` keeps the original key request before
-  // key expansions. This key is passed to the callback so that it can
-  // identify whether the key is actually expanded or not.
-  absl::string_view non_expanded_original_key = request.converter_key();
 
   // |expanded| is a very small set, so calling LookupPredictive multiple
   // times is not so expensive.  Also, the number of lookup results is limited
   // by |lookup_limit|.
   for (absl::string_view expanded_char : expanded) {
     const std::string input_key = absl::StrCat(base, expanded_char);
-    PredictiveLookupCallback callback(
-        types, lookup_limit, input_key.size(), empty_expanded, source_info,
-        zip_code_id_, unknown_id_, non_expanded_original_key, results);
+    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
+                                      empty_expanded, source_info, zip_code_id_,
+                                      unknown_id_, results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
 }
@@ -1253,12 +1254,13 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
     Segment::Candidate::SourceInfo source_info,
     std::vector<Result> *results) const {
   absl::btree_set<std::string> expanded;
+
   if (request.use_already_typing_corrected_key()) {
     std::string input_key(history_key);
     input_key.append(request.key());
     PredictiveBigramLookupCallback callback(
-        types, lookup_limit, input_key.size(), expanded, history_value,
-        source_info, zip_code_id_, unknown_id_, "", results);
+        types, lookup_limit, input_key.size(), expanded, history_key,
+        history_value, source_info, zip_code_id_, unknown_id_, results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1272,13 +1274,10 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
   std::string base;
   std::tie(base, expanded) = request.composer().GetQueriesForPrediction();
   const std::string input_key = absl::StrCat(history_key, base);
-  const std::string non_expanded_original_key =
-      absl::StrCat(history_key, request.converter_key());
 
-  PredictiveBigramLookupCallback callback(types, lookup_limit, input_key.size(),
-                                          expanded, history_value, source_info,
-                                          zip_code_id_, unknown_id_,
-                                          non_expanded_original_key, results);
+  PredictiveBigramLookupCallback callback(
+      types, lookup_limit, input_key.size(), expanded, history_key,
+      history_value, source_info, zip_code_id_, unknown_id_, results);
   dictionary.LookupPredictive(input_key, request, &callback);
 }
 
@@ -1293,10 +1292,10 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
     // the results to upper case.
     std::string key(input_key);
     Util::LowerString(&key);
-    PredictiveLookupCallback callback(
-        types, lookup_limit, key.size(), empty_expanded,
-        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_,
-        "" /* non_expanded_original_key */, results);
+    PredictiveLookupCallback callback(types, lookup_limit, key.size(),
+                                      empty_expanded,
+                                      Segment::Candidate::SOURCE_INFO_NONE,
+                                      zip_code_id_, unknown_id_, results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::UpperString(&(*results)[i].value);
@@ -1306,20 +1305,20 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
     // the results to capital.
     std::string key(input_key);
     Util::LowerString(&key);
-    PredictiveLookupCallback callback(
-        types, lookup_limit, key.size(), empty_expanded,
-        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_,
-        "" /* non_expanded_original_key */, results);
+    PredictiveLookupCallback callback(types, lookup_limit, key.size(),
+                                      empty_expanded,
+                                      Segment::Candidate::SOURCE_INFO_NONE,
+                                      zip_code_id_, unknown_id_, results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::CapitalizeString(&(*results)[i].value);
     }
   } else {
     // For other cases (lower and as-is), just look up directly.
-    PredictiveLookupCallback callback(
-        types, lookup_limit, input_key.size(), empty_expanded,
-        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_,
-        "" /* non_expanded_original_key */, results);
+    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
+                                      empty_expanded,
+                                      Segment::Candidate::SOURCE_INFO_NONE,
+                                      zip_code_id_, unknown_id_, results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
   // If input mode is FULL_ASCII, then convert the results to full-width.
@@ -1585,12 +1584,8 @@ void DictionaryPredictionAggregator::CheckBigramResult(
 
   const bool is_zero_query = request.IsZeroQuerySuggestion();
 
-  absl::string_view history_key = history_token.key;
-  absl::string_view history_value = history_token.value;
-  const std::string key(result->key, history_key.size(),
-                        result->key.size() - history_key.size());
-  const std::string value(result->value, history_value.size(),
-                          result->value.size() - history_value.size());
+  absl::string_view key = result->key;
+  absl::string_view value = result->value;
 
   // Don't suggest 0-length key/value.
   if (key.empty() || value.empty()) {
@@ -1630,7 +1625,8 @@ void DictionaryPredictionAggregator::CheckBigramResult(
 
   // If character type doesn't change, this boundary might NOT
   // be a word boundary. Only use iif the entire key is reasonably long.
-  const size_t key_len = Util::CharsLen(result->key);
+  const size_t key_len =
+      Util::CharsLen(result->key) + Util::CharsLen(history_token.key);
   if (ctype == last_history_ctype &&
       ((ctype == Util::HIRAGANA && key_len <= 9) ||
        (ctype == Util::KATAKANA && key_len <= 5))) {
