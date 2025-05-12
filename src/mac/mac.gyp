@@ -275,9 +275,7 @@
           'product_name': '<(branding)',
           'dependencies': [
             '<(mozc_oss_src_dir)/base/absl.gyp:absl_base',
-            '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
             '<(mozc_oss_src_dir)/client/client.gyp:client',
-            '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
             '<(mozc_oss_src_dir)/gui/gui.gyp:about_dialog_mac',
             '<(mozc_oss_src_dir)/gui/gui.gyp:config_dialog_mac',
             '<(mozc_oss_src_dir)/gui/gui.gyp:dictionary_tool_mac',

@@ -648,8 +648,6 @@
         'tool/mozc_tool_libmain.cc',
       ],
       'dependencies': [
-        '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
-        '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
         'about_dialog_lib',
         'administration_dialog_lib',
         'config_dialog_lib',

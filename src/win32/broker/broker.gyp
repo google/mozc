@@ -80,9 +80,7 @@
                 'prelauncher.cc',
               ],
               'dependencies': [
-                '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
                 '<(mozc_oss_src_dir)/client/client.gyp:client',
-                '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
                 '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
                 '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
                 '../base/win32_base.gyp:ime_base',

@@ -48,7 +48,6 @@
       ],
       'dependencies': [
         '<(mozc_oss_src_dir)/base/base.gyp:base',
-        '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/session/session.gyp:session',
         'mozc_server_lib',
@@ -101,7 +100,6 @@
         'mozc_server.cc',
       ],
       'dependencies': [
-        '<(mozc_oss_src_dir)/base/base.gyp:crash_report_handler',
         '<(mozc_oss_src_dir)/session/session.gyp:session_server',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:state_proto',
       ],

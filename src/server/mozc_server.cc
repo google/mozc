@@ -37,14 +37,12 @@
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "base/crash_report_handler.h"
 #include "base/init_mozc.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/vlog.h"
-#include "config/stats_config_util.h"
 #include "session/session_server.h"
 
 #ifdef _WIN32
@@ -86,9 +84,6 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
     return;
   }
 
-  if (mozc::config::StatsConfigUtil::IsEnabled()) {
-    mozc::CrashReportHandler::Initialize(false);
-  }
   mozc::InitMozc(arg0, argc, argv);
 
   if (run_level == mozc::RunLevel::RESTRICTED) {
