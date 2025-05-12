@@ -55,11 +55,9 @@ mozc_cc_library(
         ":tip_text_service_impl",
         ":tip_ui_handler",
         ":tip_ui_handler_impl",
-        "//base:crash_report_handler",
         "//base/protobuf",
         "//base/protobuf:message",
         "//base/win32:com_implements",
-        "//config:stats_config_util",
         "//win32/base:tsf_profile",
         "@com_google_absl//absl/base",
     ],
@@ -122,9 +120,7 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        "//base:crash_report_handler",
         "//base/win32:com_implements",
-        "@com_google_absl//absl/base",
     ],
 )
 
@@ -721,7 +717,6 @@ mozc_cc_test(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":tip_display_attributes",
-        ":tip_dll_module",
         "//testing:gunit_main",
         "@com_microsoft_wil//:wil",
     ],
@@ -734,7 +729,6 @@ mozc_cc_test(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":tip_dll_module",
         ":tip_enum_display_attributes",
         "//testing:gunit_main",
         "@com_microsoft_wil//:wil",

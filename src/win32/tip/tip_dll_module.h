@@ -32,7 +32,6 @@
 
 #include <windows.h>
 
-#include "absl/base/call_once.h"
 #include "base/win32/com_implements.h"
 
 namespace mozc {
@@ -57,12 +56,9 @@ class TipDllModule {
   static void set_module_handle(HMODULE handle) { module_handle_ = handle; }
   static HMODULE module_handle() { return module_handle_; }
 
-  static void InitForUnitTest();
-
  private:
   static HMODULE module_handle_;
   static bool unloaded_;
-  static absl::once_flag uninitialize_once_;
 };
 
 template <typename... Interfaces>

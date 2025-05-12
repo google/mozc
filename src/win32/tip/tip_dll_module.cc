@@ -31,24 +31,10 @@
 
 #include <windows.h>
 
-#include "absl/base/call_once.h"
-#include "base/crash_report_handler.h"
-
 namespace mozc::win32::tsf {
-namespace {
-
-void TipShutdownCrashReportHandler() {
-  if (CrashReportHandler::IsInitialized()) {
-    // Uninitialize the breakpad.
-    CrashReportHandler::Uninitialize();
-  }
-}
-
-}  // namespace
 
 HMODULE TipDllModule::module_handle_ = nullptr;
 bool TipDllModule::unloaded_ = false;
-absl::once_flag TipDllModule::uninitialize_once_;
 
 void TipComTraits::OnObjectRelease(ULONG ref) {
   if (ref == 0) {
@@ -68,11 +54,6 @@ void TipDllModule::PrepareForShutdown() {
   // here.
   // - mozc::FinalizeSingletons()                - b/10233768
   // - mozc::protobuf::ShutdownProtobufLibrary() - b/2126375
-  absl::call_once(uninitialize_once_, &TipShutdownCrashReportHandler);
-}
-
-void TipDllModule::InitForUnitTest() {
-  absl::call_once(uninitialize_once_, []() {});
 }
 
 }  // namespace mozc::win32::tsf

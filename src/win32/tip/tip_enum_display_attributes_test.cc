@@ -35,19 +35,13 @@
 #include <iterator>
 
 #include "testing/gunit.h"
-#include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 namespace {
 
-class TipEnumDisplayAttributesTest : public testing::Test {
- protected:
-  TipEnumDisplayAttributesTest() { TipDllModule::InitForUnitTest(); }
-};
-
-TEST_F(TipEnumDisplayAttributesTest, BasicTest) {
+TEST(TipEnumDisplayAttributesTest, BasicTest) {
   TipEnumDisplayAttributes enum_display_attribute;
   ASSERT_TRUE(SUCCEEDED(enum_display_attribute.Reset()));
 
@@ -68,7 +62,7 @@ TEST_F(TipEnumDisplayAttributesTest, BasicTest) {
   }
 }
 
-TEST_F(TipEnumDisplayAttributesTest, NextTest) {
+TEST(TipEnumDisplayAttributesTest, NextTest) {
   TipEnumDisplayAttributes enum_display_attribute;
 
   ITfDisplayAttributeInfo *infolist[4] = {};
