@@ -275,9 +275,17 @@ void IbusEngineWrapper::CommitText(absl::string_view text) {
 
 void IbusEngineWrapper::UpdatePreeditTextWithMode(IbusTextWrapper *text,
                                                   int cursor) {
-  constexpr bool visible = true;
+  constexpr bool kVisible = true;
   ibus_engine_update_preedit_text_with_mode(
-      engine_, text->GetText(), cursor, visible, IBUS_ENGINE_PREEDIT_COMMIT);
+      engine_, text->GetText(), cursor, kVisible, IBUS_ENGINE_PREEDIT_COMMIT);
+}
+
+void IbusEngineWrapper::ClearPreeditText() {
+  constexpr int kCursor = 0;
+  constexpr bool kVisible = false;
+  IBusText *empty_text = ibus_text_new_from_string("");
+  ibus_engine_update_preedit_text_with_mode(
+      engine_, empty_text, kCursor, kVisible, IBUS_ENGINE_PREEDIT_CLEAR);
 }
 
 void IbusEngineWrapper::HidePreeditText() {

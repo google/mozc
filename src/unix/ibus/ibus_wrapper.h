@@ -194,6 +194,7 @@ class IbusEngineWrapper {
   void CommitText(absl::string_view text);
 
   void UpdatePreeditTextWithMode(IbusTextWrapper *text, int cursor);
+  void ClearPreeditText();
   void HidePreeditText();
 
   void RegisterProperties(IbusPropListWrapper *properties);
