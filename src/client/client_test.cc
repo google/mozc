@@ -53,6 +53,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace client {
@@ -171,7 +172,7 @@ class TestServerLauncher : public ServerLauncherInterface {
   absl::flat_hash_map<int, int> error_map_;
 };
 
-class ClientTest : public testing::Test {
+class ClientTest : public testing::TestWithTempUserProfile {
  protected:
   ClientTest() : version_diff_(0) {}
   ClientTest(const ClientTest &) = delete;
@@ -950,7 +951,7 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
   absl::flat_hash_map<int, int> error_map_;
 };
 
-class SessionPlaybackTest : public testing::Test {
+class SessionPlaybackTest : public ::testing::Test {
  protected:
   void SetUp() override {
     ipc_client_factory_ = std::make_unique<IPCClientFactoryMock>();
