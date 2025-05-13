@@ -33,6 +33,8 @@
 // session_handler_main --input input.txt --profile /tmp/mozc
 //                      --dictionary oss --engine desktop
 //
+// session_handler_main --test --input input.txt --profile /tmp/mozc
+//
 /* Example of input.txt (tsv format)
 # Enable IME
 SEND_KEY        ON
@@ -60,14 +62,15 @@ SHOW_LOG_BY_VALUE       ございました
 #include <utility>
 #include <vector>
 
-#include "absl/strings/str_cat.h"
-#include "base/file_stream.h"
-#include "base/init_mozc.h"
-#include "base/system_util.h"
+#include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
+#include "base/file_stream.h"
+#include "base/init_mozc.h"
+#include "base/system_util.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"
@@ -75,10 +78,13 @@ SHOW_LOG_BY_VALUE       ございました
 #include "protocol/commands.pb.h"
 #include "session/session_handler_tool.h"
 
-ABSL_FLAG(std::string, input, "", "Input file");
+ABSL_DECLARE_FLAG(bool, use_history_rewriter);
+
+ABSL_FLAG(std::string, input, "", "Input file. ");
 ABSL_FLAG(std::string, profile, "", "User profile directory");
 ABSL_FLAG(std::string, engine, "", "Conversion engine: 'mobile' or 'desktop'");
 ABSL_FLAG(std::string, dictionary, "", "Dictionary: 'oss' or 'test'");
+ABSL_FLAG(bool, test, false, "Run as a test and quit.");
 
 namespace mozc {
 void Show(const commands::Output &output) {
@@ -110,44 +116,44 @@ void ShowLog(const commands::Output &output, const int cand_id) {
   }
 }
 
-void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
+bool ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   std::vector<std::string> args = handler.Parse(line);
   if (args.empty()) {
-    return;
+    return true;
   }
   const std::string &command = args[0];
 
   if (command == "SHOW_ALL") {
     std::cout << absl::StrCat(handler.LastOutput()) << std::endl;
-    return;
+    return true;
   }
   if (command == "SHOW_OUTPUT") {
     commands::Output output = handler.LastOutput();
     output.mutable_removed_candidate_words_for_debug()->Clear();
     std::cout << absl::StrCat(output.Utf8DebugString()) << std::endl;
-    return;
+    return true;
   }
   if (command == "SHOW_RESULT") {
     const commands::Output &output = handler.LastOutput();
     std::cout << absl::StrCat(output.result().Utf8DebugString()) << std::endl;
-    return;
+    return true;
   }
   if (command == "SHOW_CANDIDATES") {
     std::cout << absl::StrCat(
                      handler.LastOutput().candidate_window().Utf8DebugString())
               << std::endl;
-    return;
+    return true;
   }
   if (command == "SHOW_REMOVED_CANDIDATES") {
     std::cout << absl::StrCat(handler.LastOutput()
                                   .removed_candidate_words_for_debug()
                                   .Utf8DebugString())
               << std::endl;
-    return;
+    return true;
   }
   if (command == "SHOW") {
     Show(handler.LastOutput());
-    return;
+    return true;
   }
   if (command == "SHOW_LOG") {
     uint32_t id;
@@ -156,12 +162,12 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     } else {
       std::cout << "ERROR: " << line << std::endl;
     }
-    return;
+    return false;
   }
   if (command == "SHOW_LOG_BY_VALUE") {
     if (args.size() != 2) {
       std::cout << "ERROR: " << line << std::endl;
-      return;
+      return false;
     }
     for (const uint32_t id : handler.GetCandidateIdsByValue(args[1])) {
       ShowLog(handler.LastOutput(), id);
@@ -169,14 +175,16 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     for (const uint32_t id : handler.GetRemovedCandidateIdsByValue(args[1])) {
       ShowLog(handler.LastOutput(), id);
     }
-    return;
+    return true;
   }
 
   const absl::Status status = handler.Eval(args);
   if (!status.ok()) {
     std::cout << "ERROR: " << line << std::endl;
     std::cout << "ERROR: " << status.message() << std::endl;
+    return false;
   }
+  return true;
 }
 
 std::unique_ptr<const DataManager> CreateDataManager(
@@ -215,8 +223,21 @@ int main(int argc, char **argv) {
   if (!absl::GetFlag(FLAGS_profile).empty()) {
     mozc::SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_profile));
   }
-  auto engine = mozc::CreateEngine(absl::GetFlag(FLAGS_engine),
-                                   absl::GetFlag(FLAGS_dictionary));
+
+  std::string engine_name = absl::GetFlag(FLAGS_engine);
+  std::string dictionary_name = absl::GetFlag(FLAGS_dictionary);
+  const bool is_test = absl::GetFlag(FLAGS_test);
+  if (is_test) {
+    absl::SetFlag(&FLAGS_use_history_rewriter, true);
+    if (engine_name.empty()) {
+      engine_name = "desktop";
+    }
+    if (dictionary_name.empty()) {
+      dictionary_name = "mock";
+    }
+  }
+
+  auto engine = mozc::CreateEngine(engine_name, dictionary_name);
   if (!engine.ok()) {
     std::cout << "engine init error" << std::endl;
     return 1;
@@ -224,10 +245,22 @@ int main(int argc, char **argv) {
   mozc::session::SessionHandlerInterpreter handler(*std::move(engine));
 
   std::string line;
-  if (!absl::GetFlag(FLAGS_input).empty()) {
-    mozc::InputFileStream input(absl::GetFlag(FLAGS_input));
+  if (const std::string filepath = absl::GetFlag(FLAGS_input);
+      !filepath.empty()) {
+    mozc::InputFileStream input(filepath);
+    bool is_passed = true;
     while (std::getline(input, line)) {
-      mozc::ParseLine(handler, line);
+      is_passed &= mozc::ParseLine(handler, line);
+    }
+
+    if (is_test) {
+      if (is_passed) {
+        std::cout << "[ PASSED ] " << filepath << std::endl;
+        return 0;
+      } else {
+        std::cout << "[ FAILED ] " << filepath << std::endl;
+        return 1;
+      }
     }
   }
 
