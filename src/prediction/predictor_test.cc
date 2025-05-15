@@ -60,7 +60,6 @@ using ::testing::AtMost;
 using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::SetArgPointee;
-using ::testing::StrEq;
 using ::testing::Unused;
 
 class CheckCandSizeDictionaryPredictor : public PredictorInterface {
