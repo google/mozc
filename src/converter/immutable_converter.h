@@ -117,9 +117,6 @@ class ImmutableConverter : public ImmutableConverterInterface {
                                              const ConversionRequest &request,
                                              absl::string_view history_key,
                                              Lattice *lattice) const;
-  void MakeLatticeNodesForPredictiveNodes(const Segments &segments,
-                                          const ConversionRequest &request,
-                                          Lattice *lattice) const;
   // Fixes for "好む" vs "この|無", "大|代" vs "代々" preferences.
   // If the last node ends with "prefix", give an extra
   // wcost penalty. In this case  "無" doesn't tend to appear at
