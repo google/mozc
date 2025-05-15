@@ -129,27 +129,6 @@ class Candidate {
     DISABLE_PRESENTATION_MODE,  // disables "presentation mode".
   };
 
-  // Bit field indicating candidate source info.
-  // This should be used for usage stats.
-  // TODO(mozc-team): Move Attribute fields for source info
-  // to SourceInfo.
-  enum SourceInfo {
-    SOURCE_INFO_NONE = 0,
-    // Attributes for zero query suggestion.
-    // These are used for usage stats.
-    // For DICTIONARY_PREDICTOR_ZERO_QUERY_XX, XX stands for the
-    // types defined at zero_query_list.h.
-    DICTIONARY_PREDICTOR_ZERO_QUERY_NONE = 1 << 0,
-    DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX = 1 << 1,
-    DICTIONARY_PREDICTOR_ZERO_QUERY_EMOTICON = 1 << 2,
-    DICTIONARY_PREDICTOR_ZERO_QUERY_EMOJI = 1 << 3,
-    DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM = 1 << 4,
-    DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX = 1 << 5,
-    DICTIONARY_PREDICTOR_ZERO_QUERY_SUPPLEMENTAL_MODEL = 1 << 7,
-
-    USER_HISTORY_PREDICTOR = 1 << 6,
-  };
-
   enum Category {
     DEFAULT_CATEGORY,  // Realtime conversion, history prediction, etc
     SYMBOL,            // Symbol, emoji
@@ -198,9 +177,6 @@ class Candidate {
   // Attributes of this candidate. Can set multiple attributes
   // defined in enum |Attribute|.
   uint32_t attributes = 0;
-
-  // Candidate's source info which will be used for usage stats.
-  uint32_t source_info = SOURCE_INFO_NONE;
 
   Category category = DEFAULT_CATEGORY;
 

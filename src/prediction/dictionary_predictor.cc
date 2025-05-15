@@ -603,7 +603,6 @@ void DictionaryPredictor::FillCandidate(
       candidate->attributes |= Segment::Candidate::AUTO_PARTIAL_SUGGESTION;
     }
   }
-  candidate->source_info = result.source_info;
   if (result.types & PredictionType::REALTIME) {
     candidate->inner_segment_boundary = result.inner_segment_boundary;
   }

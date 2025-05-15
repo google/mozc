@@ -42,7 +42,6 @@
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
@@ -100,7 +99,6 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // Aggregate bigram candidates from dictionary.
   // This aggregator uses the history (context).
   void AggregateBigram(const ConversionRequest &request,
-                       Segment::Candidate::SourceInfo source_info,
                        std::vector<Result> *results) const;
 
   // Aggregate results from the converter.
@@ -154,15 +152,13 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   void GetPredictiveResultsForUnigram(
       const dictionary::DictionaryInterface &dictionary,
       const ConversionRequest &request, PredictionTypes types,
-      size_t lookup_limit, Segment::Candidate::SourceInfo source_info,
-      std::vector<Result> *results) const;
+      size_t lookup_limit, std::vector<Result> *results) const;
 
   void GetPredictiveResultsForBigram(
       const dictionary::DictionaryInterface &dictionary,
       absl::string_view history_key, absl::string_view history_value,
       const ConversionRequest &request, PredictionTypes types,
-      size_t lookup_limit, Segment::Candidate::SourceInfo source_info,
-      std::vector<Result> *results) const;
+      size_t lookup_limit, std::vector<Result> *results) const;
 
   // Performs a custom look up for English words where case-conversion might be
   // applied to lookup key and/or output results.

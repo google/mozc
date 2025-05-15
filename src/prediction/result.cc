@@ -112,34 +112,6 @@ void Result::SetTypesAndTokenAttributes(PredictionTypes prediction_types,
   }
 }
 
-void Result::SetSourceInfoForZeroQuery(ZeroQueryType type) {
-  switch (type) {
-    case ZERO_QUERY_NONE:
-      source_info |= Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NONE;
-      return;
-    case ZERO_QUERY_NUMBER_SUFFIX:
-      source_info |=
-          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX;
-      return;
-    case ZERO_QUERY_EMOTICON:
-      source_info |=
-          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOTICON;
-      return;
-    case ZERO_QUERY_EMOJI:
-      source_info |= Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_EMOJI;
-      return;
-    case ZERO_QUERY_BIGRAM:
-      source_info |= Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM;
-      return;
-    case ZERO_QUERY_SUFFIX:
-      source_info |= Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX;
-      return;
-    default:
-      LOG(ERROR) << "Should not come here";
-      return;
-  }
-}
-
 void PopulateTypeCorrectedQuery(
     const composer::TypeCorrectedQuery &typing_corrected_result,
     Result *absl_nonnull result) {

@@ -514,16 +514,12 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
           SetUpInputForSuggestion("わたしの", &composer_, &segments);
       EXPECT_TRUE(predictor->PredictForRequest(convreq2, &segments));
       EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
-      EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-                  Segment::Candidate::USER_HISTORY_PREDICTOR);
 
       segments.Clear();
       const ConversionRequest convreq3 =
           SetUpInputForSuggestion("わたしの", &composer_, &segments);
       EXPECT_TRUE(predictor->PredictForRequest(convreq3, &segments));
       EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
-      EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-                  Segment::Candidate::USER_HISTORY_PREDICTOR);
     }
 
     // Insert without learning (nothing happen).
@@ -1439,8 +1435,6 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     // last-pushed segment is "大阪"
     EXPECT_EQ(segments.segment(1).candidate(0).value, "大阪");
     EXPECT_EQ(segments.segment(1).candidate(0).key, "おおさか");
-    EXPECT_TRUE(segments.segment(1).candidate(0).source_info &
-                Segment::Candidate::USER_HISTORY_PREDICTOR);
 
     for (const char *key : {"は", "た", "き", "お"}) {
       const ConversionRequest convreq = SetUpInputForSuggestionWithHistory(
@@ -1598,8 +1592,6 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
       SetUpInputForSuggestion("たろうは", &composer_, &segments);
   EXPECT_TRUE(predictor->PredictForRequest(convreq11, &segments));
   EXPECT_EQ(segments.segment(0).candidate(0).value, "太郎は良子に");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
@@ -1685,8 +1677,6 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
       SetUpInputForSuggestion("たろうは", &composer_, &segments);
   EXPECT_TRUE(predictor->PredictForRequest(convreq11, &segments));
   EXPECT_EQ(segments.segment(0).candidate(0).value, "太郎は良子に");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
@@ -1735,8 +1725,6 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
   EXPECT_TRUE(predictor->PredictForRequest(convreq3, &segments));
 
   EXPECT_EQ(segments.segment(0).candidate(0).value, "東京は、日本です");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371Case2) {
@@ -1786,14 +1774,10 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case2) {
       SetUpInputForSuggestion("えど(", &composer_, &segments);
   EXPECT_TRUE(predictor->PredictForRequest(convreq2, &segments));
   EXPECT_EQ(segments.segment(0).candidate(0).value, "江戸(東京");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
 
   EXPECT_TRUE(predictor->PredictForRequest(convreq2, &segments));
 
   EXPECT_EQ(segments.segment(0).candidate(0).value, "江戸(東京");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843371Case3) {
@@ -1854,8 +1838,6 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case3) {
   EXPECT_TRUE(predictor->PredictForRequest(convreq3, &segments));
 
   EXPECT_EQ(segments.segment(0).candidate(0).value, "「山」は高い");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, Regression2843775) {
@@ -1880,8 +1862,6 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
 
   EXPECT_EQ(segments.segment(0).candidate(0).value,
             "そうです。よろしくお願いします");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
 TEST_F(UserHistoryPredictorTest, DuplicateString) {
@@ -4037,8 +4017,6 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestMobile) {
   EXPECT_TRUE(predictor->PredictForRequest(convreq2, &segments));
   EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).value, "私の");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   const ConversionRequest convreq3 =
@@ -4046,8 +4024,6 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestMobile) {
   EXPECT_TRUE(predictor->PredictForRequest(convreq3, &segments));
   EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).value, "私の");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   const ConversionRequest convreq4 =
@@ -4055,8 +4031,6 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestMobile) {
   EXPECT_TRUE(predictor->PredictForRequest(convreq4, &segments));
   EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 }
 
@@ -4081,11 +4055,7 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   EXPECT_TRUE(predictor->PredictForRequest(convreq2, &segments));
   EXPECT_EQ(segments.segment(0).candidates_size(), 2);
   EXPECT_EQ(segments.segment(0).candidate(0).value, "私の");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
   EXPECT_EQ(segments.segment(0).candidate(1).value, "私の名前は");
-  EXPECT_TRUE(segments.segment(0).candidate(1).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   const ConversionRequest convreq3 =
@@ -4093,8 +4063,6 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   EXPECT_TRUE(predictor->PredictForRequest(convreq3, &segments));
   EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   const ConversionRequest convreq4 =
@@ -4102,8 +4070,6 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   EXPECT_TRUE(predictor->PredictForRequest(convreq4, &segments));
   EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は");
-  EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
-              Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 }
 

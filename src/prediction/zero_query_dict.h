@@ -41,7 +41,7 @@
 
 namespace mozc {
 
-enum ZeroQueryType {
+enum ZeroQueryType : uint16_t {
   ZERO_QUERY_NONE = 0,  // "☁" (symbol, non-unicode 6.0 emoji), and rule based.
   ZERO_QUERY_NUMBER_SUFFIX,  // "階" from "2"
   ZERO_QUERY_EMOTICON,       // "(>ω<)" from "うれしい"
@@ -55,6 +55,8 @@ enum ZeroQueryType {
   // - "に" from "六本木".
   // These candidates will be generated from suffix dictionary.
   ZERO_QUERY_SUFFIX,
+  // These candidates will be generated from supplemental model.
+  ZERO_QUERY_SUPPLEMENTAL_MODEL,
 };
 
 // Zero query dictionary is a multimap from string to a list of zero query

@@ -1318,8 +1318,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateBigramPrediction) {
 
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    aggregator.AggregateBigram(convreq, Segment::Candidate::SOURCE_INFO_NONE,
-                               &results);
+    aggregator.AggregateBigram(convreq, &results);
     EXPECT_FALSE(results.empty());
 
     for (size_t i = 0; i < results.size(); ++i) {
@@ -1336,8 +1335,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateBigramPrediction) {
       EXPECT_TRUE(results[i].key.starts_with("あ"));
       EXPECT_TRUE(results[i].value.starts_with("ア"));
       // Not zero query
-      EXPECT_FALSE(results[i].source_info &
-                   Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
+      EXPECT_EQ(results[i].zero_query_type, 0);
     }
 
     EXPECT_EQ(segments.conversion_segments_size(), 1);
@@ -1357,8 +1355,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateBigramPrediction) {
 
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    aggregator.AggregateBigram(convreq, Segment::Candidate::SOURCE_INFO_NONE,
-                               &results);
+    aggregator.AggregateBigram(convreq, &results);
     EXPECT_TRUE(results.empty());
   }
 }
@@ -1386,9 +1383,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
 
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    aggregator.AggregateBigram(
-        convreq, Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM,
-        &results);
+    aggregator.AggregateBigram(convreq, &results);
     EXPECT_FALSE(results.empty());
 
     for (const auto &result : results) {
@@ -1396,8 +1391,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
       EXPECT_FALSE(result.key.starts_with(kHistoryKey));
       EXPECT_FALSE(result.value.starts_with(kHistoryValue));
       // Zero query
-      EXPECT_FALSE(result.source_info &
-                   Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
+      EXPECT_EQ(result.zero_query_type, ZERO_QUERY_BIGRAM);
     }
   }
 
@@ -1443,9 +1437,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
 
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    aggregator.AggregateBigram(
-        convreq, Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM,
-        &results);
+    aggregator.AggregateBigram(convreq, &results);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results.size(), 5);
 
@@ -1462,8 +1454,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
       EXPECT_FALSE(result.key.starts_with(kHistory));
       EXPECT_FALSE(result.value.starts_with(kHistory));
       // Zero query
-      EXPECT_FALSE(result.source_info &
-                   Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
+      EXPECT_NE(result.zero_query_type, ZERO_QUERY_SUFFIX);
       if (result.key == "ね") {
         EXPECT_TRUE(result.removed);
       } else {
@@ -1514,9 +1505,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    aggregator.AggregateBigram(
-        convreq, Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM,
-        &results);
+    aggregator.AggregateBigram(convreq, &results);
     EXPECT_FALSE(results.empty());
 
     EXPECT_FALSE(FindResultByValue(results, "ジャパン"));
@@ -2133,8 +2122,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateSuffixPrediction) {
   EXPECT_TRUE(GetMergedTypes(results) & SUFFIX);
   for (const auto &result : results) {
     EXPECT_EQ(result.types, SUFFIX);
-    EXPECT_TRUE(Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX &
-                result.source_info);
+    EXPECT_EQ(result.zero_query_type, ZERO_QUERY_SUFFIX);
   }
 }
 
@@ -2168,8 +2156,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQuerySuffixPrediction) {
     for (size_t i = 0; i < results.size(); ++i) {
       EXPECT_EQ(results[i].types, SUFFIX);
       // Zero query
-      EXPECT_TRUE(Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX &
-                  results[i].source_info);
+      EXPECT_EQ(results[i].zero_query_type, ZERO_QUERY_SUFFIX);
     }
   }
   {
@@ -2415,10 +2402,7 @@ TEST_F(DictionaryPredictionAggregatorTest, ZeroQuerySuggestionAfterNumbers) {
     auto target = results.end();
     for (auto it = results.begin(); it != results.end(); ++it) {
       EXPECT_EQ(it->types, SUFFIX);
-
-      EXPECT_TRUE(
-          Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX &
-          it->source_info);
+      EXPECT_EQ(it->zero_query_type, ZERO_QUERY_NUMBER_SUFFIX);
 
       if (it->value == kExpectedValue) {
         target = it;
@@ -2448,9 +2432,7 @@ TEST_F(DictionaryPredictionAggregatorTest, ZeroQuerySuggestionAfterNumbers) {
     for (auto it = results.begin(); it != results.end(); ++it) {
       EXPECT_EQ(it->types, SUFFIX);
       if (it->value == kExpectedValue) {
-        EXPECT_TRUE(
-            Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX &
-            it->source_info);
+        EXPECT_EQ(it->zero_query_type, ZERO_QUERY_NUMBER_SUFFIX);
         found = true;
         break;
       }
@@ -2499,9 +2481,7 @@ TEST_F(DictionaryPredictionAggregatorTest, TriggerNumberZeroQuerySuggestion) {
       EXPECT_EQ(it->types, SUFFIX);
       if (it->value == test_case.find_suffix_value &&
           it->lid == pos_matcher.GetCounterSuffixWordId()) {
-        EXPECT_TRUE(
-            Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_NUMBER_SUFFIX &
-            it->source_info);
+        EXPECT_EQ(it->zero_query_type, ZERO_QUERY_NUMBER_SUFFIX);
         found = true;
         break;
       }
@@ -3007,9 +2987,7 @@ TEST_F(DictionaryPredictionAggregatorTest, GetZeroQueryCandidates) {
     EXPECT_EQ(results.size(), test_case.expected_candidates.size());
     for (size_t i = 0; i < test_case.expected_candidates.size(); ++i) {
       EXPECT_EQ(results[i].value, test_case.expected_candidates[i]);
-      Result tmp_result;
-      tmp_result.SetSourceInfoForZeroQuery(test_case.expected_types[i]);
-      EXPECT_EQ(tmp_result.source_info, results[i].source_info);
+      EXPECT_EQ(results[i].zero_query_type, test_case.expected_types[i]);
     }
   }
 }

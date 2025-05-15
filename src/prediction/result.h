@@ -98,7 +98,6 @@ struct Result {
   void SetTypesAndTokenAttributes(
       PredictionTypes prediction_types,
       dictionary::Token::AttributesBitfield token_attr);
-  void SetSourceInfoForZeroQuery(ZeroQueryType zero_query_type);
   bool IsUserDictionaryResult() const {
     return (candidate_attributes & Segment::Candidate::USER_DICTIONARY) != 0;
   }
@@ -129,9 +128,7 @@ struct Result {
   // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
   // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
   std::vector<uint32_t> inner_segment_boundary;
-  // Segment::Candidate::SourceInfo.
-  // Will be used for usage stats.
-  uint32_t source_info = 0;
+  uint16_t zero_query_type = 0;
   size_t consumed_key_size = 0;
   // The total penalty added to this result.
   int penalty = 0;
@@ -158,7 +155,7 @@ struct Result {
         "consumed_key_size: %d, penalty: %d, tc_adjustment: %d, removed: %v",
         r.key, r.value, r.types, r.wcost, r.cost, r.cost_before_rescoring,
         r.lid, r.rid, r.candidate_attributes,
-        absl::StrJoin(r.inner_segment_boundary, ","), r.source_info,
+        absl::StrJoin(r.inner_segment_boundary, ","), r.zero_query_type,
         r.consumed_key_size, r.penalty, r.typing_correction_adjustment,
         r.removed);
 #ifndef NDEBUG

@@ -69,7 +69,6 @@ void Candidate::Clear() {
   rid = 0;
   usage_id = 0;
   attributes = 0;
-  source_info = SOURCE_INFO_NONE;
   style = NumberUtil::NumberString::DEFAULT_STYLE;
   command = DEFAULT_COMMAND;
   inner_segment_boundary.clear();
@@ -80,7 +79,7 @@ void Candidate::Clear() {
 
 #ifdef MOZC_CANDIDATE_DEBUG
 void Candidate::Dlog(absl::string_view filename, int line,
-                              absl::string_view message) const {
+                     absl::string_view message) const {
   absl::StrAppend(&log, filename, ":", line, " ", message, "\n");
 }
 #endif  // MOZC_CANDIDATE_DEBUG
@@ -100,9 +99,8 @@ bool Candidate::IsValid() const {
 }
 
 bool Candidate::EncodeLengths(size_t key_len, size_t value_len,
-                                       size_t content_key_len,
-                                       size_t content_value_len,
-                                       uint32_t *result) {
+                              size_t content_key_len, size_t content_value_len,
+                              uint32_t *result) {
   if (key_len > std::numeric_limits<uint8_t>::max() ||
       value_len > std::numeric_limits<uint8_t>::max() ||
       content_key_len > std::numeric_limits<uint8_t>::max() ||
@@ -116,9 +114,9 @@ bool Candidate::EncodeLengths(size_t key_len, size_t value_len,
   return true;
 }
 
-bool Candidate::PushBackInnerSegmentBoundary(
-    size_t key_len, size_t value_len, size_t content_key_len,
-    size_t content_value_len) {
+bool Candidate::PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
+                                             size_t content_key_len,
+                                             size_t content_value_len) {
   uint32_t encoded;
   if (EncodeLengths(key_len, value_len, content_key_len, content_value_len,
                     &encoded)) {
@@ -179,22 +177,19 @@ absl::string_view Candidate::InnerSegmentIterator::GetValue() const {
   return absl::string_view(value_offset_, (encoded_lengths >> 16) & 0xff);
 }
 
-absl::string_view Candidate::InnerSegmentIterator::GetContentKey()
-    const {
+absl::string_view Candidate::InnerSegmentIterator::GetContentKey() const {
   DCHECK_LT(index_, inner_segment_boundary_.size());
   const uint32_t encoded_lengths = inner_segment_boundary_[index_];
   return absl::string_view(key_offset_, (encoded_lengths >> 8) & 0xff);
 }
 
-absl::string_view Candidate::InnerSegmentIterator::GetContentValue()
-    const {
+absl::string_view Candidate::InnerSegmentIterator::GetContentValue() const {
   DCHECK_LT(index_, inner_segment_boundary_.size());
   const uint32_t encoded_lengths = inner_segment_boundary_[index_];
   return absl::string_view(value_offset_, encoded_lengths & 0xff);
 }
 
-absl::string_view Candidate::InnerSegmentIterator::GetFunctionalKey()
-    const {
+absl::string_view Candidate::InnerSegmentIterator::GetFunctionalKey() const {
   DCHECK_LT(index_, inner_segment_boundary_.size());
   const uint32_t encoded_lengths = inner_segment_boundary_[index_];
   const int key_len = encoded_lengths >> 24;
@@ -205,8 +200,7 @@ absl::string_view Candidate::InnerSegmentIterator::GetFunctionalKey()
   return absl::string_view();
 }
 
-absl::string_view Candidate::InnerSegmentIterator::GetFunctionalValue()
-    const {
+absl::string_view Candidate::InnerSegmentIterator::GetFunctionalValue() const {
   DCHECK_LT(index_, inner_segment_boundary_.size());
   const uint32_t encoded_lengths = inner_segment_boundary_[index_];
   const int value_len = (encoded_lengths >> 16) & 0xff;

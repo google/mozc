@@ -1550,7 +1550,6 @@ bool UserHistoryPredictor::InsertCandidates(const ConversionRequest &request,
     candidate->content_value = result_entry->value();
     candidate->attributes |= Segment::Candidate::USER_HISTORY_PREDICTION |
                              Segment::Candidate::NO_VARIANTS_EXPANSION;
-    candidate->source_info |= Segment::Candidate::USER_HISTORY_PREDICTOR;
     if (result_entry->spelling_correction()) {
       candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
     }
