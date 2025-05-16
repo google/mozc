@@ -52,9 +52,10 @@ class SingleKanjiDictionary {
 
   ~SingleKanjiDictionary() = default;
 
-  // Looks up single kanji list from key (reading).  Returns false if not found.
-  bool LookupKanjiEntries(absl::string_view key, bool use_svs,
-                          std::vector<std::string> *kanji_list) const;
+  // Looks up single kanji list from key (reading).  Returns empty list if not
+  // found.
+  std::vector<std::string> LookupKanjiEntries(absl::string_view key,
+                                              bool use_svs) const;
 
   // Returns the iterator range for noun prefix kanji entries
   // whose keys match the given key.

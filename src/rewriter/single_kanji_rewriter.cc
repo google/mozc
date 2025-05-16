@@ -136,10 +136,9 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
   for (Segment &segment : conversion_segments) {
     AddDescriptionForExistingCandidates(&segment);
 
-    absl::string_view key = segment.key();
-    std::vector<std::string> kanji_list;
-    if (!single_kanji_dictionary_->LookupKanjiEntries(key, use_svs,
-                                                      &kanji_list)) {
+    const std::vector<std::string> kanji_list =
+        single_kanji_dictionary_->LookupKanjiEntries(segment.key(), use_svs);
+    if (kanji_list.empty()) {
       continue;
     }
     modified |=

@@ -158,7 +158,7 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   if (!single_kanji_prediction_aggregator_) {
     single_kanji_prediction_aggregator_ =
         std::make_unique<prediction::SingleKanjiPredictionAggregator>(
-            *data_manager_);
+            *data_manager_, *pos_matcher_);
     RETURN_IF_NULL(single_kanji_prediction_aggregator_);
   }
 

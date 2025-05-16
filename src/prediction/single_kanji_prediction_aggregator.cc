@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -71,12 +72,10 @@ void StripLastChar(std::string *key) {
 }  // namespace
 
 SingleKanjiPredictionAggregator::SingleKanjiPredictionAggregator(
-    const DataManager &data_manager)
+    const DataManager &data_manager, const dictionary::PosMatcher &pos_matcher)
     : single_kanji_dictionary_(
           new dictionary::SingleKanjiDictionary(data_manager)),
-      pos_matcher_(std::make_unique<dictionary::PosMatcher>(
-          data_manager.GetPosMatcherData())),
-      general_symbol_id_(pos_matcher_->GetGeneralSymbolId()) {}
+      general_symbol_id_(pos_matcher.GetGeneralSymbolId()) {}
 
 SingleKanjiPredictionAggregator::~SingleKanjiPredictionAggregator() = default;
 
@@ -97,9 +96,9 @@ std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
       // Do not include partial results
       break;
     }
-    std::vector<std::string> kanji_list;
-    if (!single_kanji_dictionary_->LookupKanjiEntries(key, use_svs,
-                                                      &kanji_list)) {
+    const std::vector<std::string> kanji_list =
+        single_kanji_dictionary_->LookupKanjiEntries(key, use_svs);
+    if (kanji_list.empty()) {
       continue;
     }
     AppendResults(key, original_input_key, kanji_list, offset, &results);
@@ -132,7 +131,7 @@ void SingleKanjiPredictionAggregator::AppendResults(
       result.consumed_key_size = Util::CharsLen(kanji_key);
     }
 
-    results->push_back(result);
+    results->emplace_back(std::move(result));
   }
 }
 

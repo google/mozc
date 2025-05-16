@@ -209,10 +209,9 @@ SingleKanjiDictionary::SingleKanjiDictionary(const DataManager &data_manager) {
 //
 // Here, each element is of uint32_t type.  Each of actual string values are
 // stored in |single_kanji_string_array_| at its index.
-bool SingleKanjiDictionary::LookupKanjiEntries(
-    absl::string_view key, bool use_svs,
-    std::vector<std::string> *kanji_list) const {
-  DCHECK(kanji_list);
+std::vector<std::string> SingleKanjiDictionary::LookupKanjiEntries(
+    absl::string_view key, bool use_svs) const {
+  std::vector<std::string> kanji_list;
   const uint32_t *token_array =
       reinterpret_cast<const uint32_t *>(single_kanji_token_array_.data());
   const size_t token_array_size =
@@ -225,19 +224,20 @@ bool SingleKanjiDictionary::LookupKanjiEntries(
         return this->single_kanji_string_array_[index] < target_key;
       });
   if (iter == end || single_kanji_string_array_[iter[0]] != key) {
-    return false;
+    return kanji_list;
   }
   const absl::string_view values = single_kanji_string_array_[iter[1]];
   if (use_svs) {
     std::string svs_values;
     if (TextNormalizer::NormalizeTextToSvs(values, &svs_values)) {
-      Util::SplitStringToUtf8Graphemes(svs_values, kanji_list);
-      return true;
+      Util::SplitStringToUtf8Graphemes(svs_values, &kanji_list);
+      return kanji_list;
     }
   }
 
-  Util::SplitStringToUtf8Graphemes(values, kanji_list);
-  return true;
+  Util::SplitStringToUtf8Graphemes(values, &kanji_list);
+
+  return kanji_list;
 }
 
 // The underlying token array, |variant_token_array_|, has the following

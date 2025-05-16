@@ -308,8 +308,9 @@ class MockImmutableConverter : public ImmutableConverterInterface {
 class MockSingleKanjiPredictionAggregator
     : public SingleKanjiPredictionAggregator {
  public:
-  explicit MockSingleKanjiPredictionAggregator(const DataManager &data_manager)
-      : SingleKanjiPredictionAggregator(data_manager) {}
+  explicit MockSingleKanjiPredictionAggregator(const DataManager &data_manager,
+                                               const PosMatcher &pos_matcher)
+      : SingleKanjiPredictionAggregator(data_manager, pos_matcher) {}
   ~MockSingleKanjiPredictionAggregator() override = default;
   MOCK_METHOD(std::vector<Result>, AggregateResults,
               (const ConversionRequest &request), (const, override));
@@ -331,8 +332,11 @@ class MockDataAndAggregator {
 
     auto data_manager = std::make_unique<testing::MockDataManager>();
 
+    const PosMatcher pos_matcher(data_manager->GetPosMatcherData());
+
     auto kanji_aggregator =
-        std::make_unique<MockSingleKanjiPredictionAggregator>(*data_manager);
+        std::make_unique<MockSingleKanjiPredictionAggregator>(*data_manager,
+                                                              pos_matcher);
     // TODO(taku): avoid sharing the pointer owned by std::unique_ptr.
     single_kanji_prediction_aggregator_ = kanji_aggregator.get();
 

@@ -48,7 +48,8 @@ namespace mozc::prediction {
 
 class SingleKanjiPredictionAggregator : public PredictionAggregatorInterface {
  public:
-  explicit SingleKanjiPredictionAggregator(const DataManager &data_manager);
+  SingleKanjiPredictionAggregator(const DataManager &data_manager,
+                                  const dictionary::PosMatcher &pos_matcher);
   ~SingleKanjiPredictionAggregator() override;
 
   std::vector<Result> AggregateResults(
@@ -61,8 +62,7 @@ class SingleKanjiPredictionAggregator : public PredictionAggregatorInterface {
                      std::vector<Result> *results) const;
 
   std::unique_ptr<dictionary::SingleKanjiDictionary> single_kanji_dictionary_;
-  std::unique_ptr<dictionary::PosMatcher> pos_matcher_;
-  const uint16_t general_symbol_id_;
+  const uint16_t general_symbol_id_ = 0;
 };
 
 }  // namespace mozc::prediction

@@ -93,10 +93,10 @@ TEST_F(SingleKanjiDictionaryTest, LookupKanjiEntries) {
     return it != entries.end();
   };
 
+  std::vector<std::string> entries;
   {
-    std::vector<std::string> entries;
-    dictionary.LookupKanjiEntries("かみ",
-                                  /* use_svs = */ true, &entries);
+    entries = dictionary.LookupKanjiEntries("かみ",
+                                            /* use_svs = */ true);
     EXPECT_FALSE(entries.empty());
     EXPECT_TRUE(contains(entries, "神"));
     // 神︀ SVS character.
@@ -105,9 +105,8 @@ TEST_F(SingleKanjiDictionaryTest, LookupKanjiEntries) {
     EXPECT_FALSE(contains(entries, "\uFA19"));
   }
   {
-    std::vector<std::string> entries;
-    dictionary.LookupKanjiEntries("かみ",
-                                  /* use_svs = */ false, &entries);
+    entries = dictionary.LookupKanjiEntries("かみ",
+                                            /* use_svs = */ false);
     EXPECT_FALSE(entries.empty());
     EXPECT_TRUE(contains(entries, "神"));
     // 神︀ SVS character.
@@ -116,12 +115,11 @@ TEST_F(SingleKanjiDictionaryTest, LookupKanjiEntries) {
     EXPECT_TRUE(contains(entries, "\uFA19"));
   }
   {
-    std::vector<std::string> entries;
-    dictionary.LookupKanjiEntries("",
-                                  /* use_svs = */ false, &entries);
+    entries = dictionary.LookupKanjiEntries("",
+                                            /* use_svs = */ false);
     EXPECT_TRUE(entries.empty());
     dictionary.LookupKanjiEntries("unknown reading",
-                                  /* use_svs = */ false, &entries);
+                                  /* use_svs = */ false);
     EXPECT_TRUE(entries.empty());
   }
 }

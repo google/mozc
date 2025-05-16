@@ -108,7 +108,8 @@ class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, NoResult) {
   SetUpInputWithKey("ん", composer_.get());
-  SingleKanjiPredictionAggregator aggregator(*data_manager_);
+  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
+                                                   *pos_matcher_);
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_TRUE(results.empty());
@@ -116,7 +117,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, NoResult) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, NoResultForHardwareKeyboard) {
   SetUpInputWithKey("あけぼのの", composer_.get());
-  SingleKanjiPredictionAggregator aggregator(*data_manager_);
+  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
+                                                   *pos_matcher_);
   request_test_util::FillMobileRequestWithHardwareKeyboard(request_.get());
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
@@ -125,7 +127,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, NoResultForHardwareKeyboard) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, ResultsFromPrefix) {
   SetUpInputWithKey("あけぼのの", composer_.get());
-  SingleKanjiPredictionAggregator aggregator(*data_manager_);
+  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
+                                                   *pos_matcher_);
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_GT(results.size(), 1);
@@ -142,7 +145,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, ResultsFromPrefix) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, Result) {
   SetUpInputWithKey("あけぼの", composer_.get());
-  SingleKanjiPredictionAggregator aggregator(*data_manager_);
+  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
+                                                   *pos_matcher_);
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_GT(results.size(), 1);
@@ -158,7 +162,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, Result) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, PrefixResult) {
   SetUpInputWithKey("あけぼのの", composer_.get());
-  SingleKanjiPredictionAggregator aggregator(*data_manager_);
+  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
+                                                   *pos_matcher_);
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_GT(results.size(), 1);
@@ -175,7 +180,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, PrefixResult) {
 TEST_F(SingleKanjiPredictionAggregatorTest, NoPrefixResult) {
   request_->set_auto_partial_suggestion(false);
   SetUpInputWithKey("あけぼのの", composer_.get());
-  SingleKanjiPredictionAggregator aggregator(*data_manager_);
+  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
+                                                   *pos_matcher_);
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_EQ(results.size(), 0);  // No "あけぼの"
@@ -183,7 +189,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, NoPrefixResult) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, SvsVariation) {
   SetUpInputWithKey("かみ", composer_.get());
-  SingleKanjiPredictionAggregator aggregator(*data_manager_);
+  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
+                                                   *pos_matcher_);
   request_->mutable_decoder_experiment_params()->set_variation_character_types(
       commands::DecoderExperimentParams::SVS_JAPANESE);
   const ConversionRequest convreq = CreateConversionRequest();
