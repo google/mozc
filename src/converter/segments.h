@@ -49,7 +49,6 @@
 #include "base/util.h"
 #include "converter/candidate.h"
 #include "converter/lattice.h"
-#include "testing/friend_test.h"
 
 namespace mozc {
 
@@ -456,7 +455,7 @@ class Segments final {
   Lattice *mutable_cached_lattice() { return &cached_lattice_; }
 
  private:
-  FRIEND_TEST(SegmentsTest, BasicTest);
+  friend class SegmentsPoolAccessorTestPeer;
 
   iterator history_segments_end();
   const_iterator history_segments_end() const;

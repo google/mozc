@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "base/absl_nullability.h"
-#include "testing/friend_test.h"
 
 namespace mozc {
 
@@ -195,6 +194,7 @@ class ObjectPool {
   constexpr size_t size() const { return freelist_.size() - released_.size(); }
   constexpr size_t capacity() const { return freelist_.capacity(); }
   constexpr size_t chunk_size() const { return freelist_.chunk_size(); }
+  constexpr size_t released_size() const { return released_.size(); }
 
   void swap(ObjectPool& other) noexcept {
     static_assert(std::is_nothrow_swappable_v<decltype(released_)>);
@@ -207,8 +207,6 @@ class ObjectPool {
   friend void swap(ObjectPool& lhs, ObjectPool& rhs) noexcept { lhs.swap(rhs); }
 
  private:
-  FRIEND_TEST(SegmentsTest, BasicTest);
-
   std::vector<T*> released_;
   FreeList<T> freelist_;
 };

@@ -82,9 +82,20 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
+
+class ConverterTestPeer : public testing::TestPeer<Converter> {
+ public:
+  explicit ConverterTestPeer(Converter &converter)
+      : testing::TestPeer<Converter>(converter) {}
+
+  PEER_METHOD(CompletePosIds);
+  PEER_STATIC_METHOD(MaybeSetConsumedKeySizeToSegment);
+};
+
 namespace {
 
 using ::mozc::dictionary::DictionaryInterface;
@@ -740,6 +751,7 @@ TEST_F(ConverterTest, CompletePosIds) {
   };
 
   std::unique_ptr<Converter> converter = CreateStubbedConverter();
+  ConverterTestPeer converter_peer(*converter);
   for (size_t i = 0; i < std::size(kTestKeys); ++i) {
     Segments segments;
     Segment *seg = segments.add_segment();
@@ -761,7 +773,7 @@ TEST_F(ConverterTest, CompletePosIds) {
     candidate.key = segments.segment(0).candidate(0).key;
     candidate.lid = 0;
     candidate.rid = 0;
-    converter->CompletePosIds(&candidate);
+    converter_peer.CompletePosIds(&candidate);
     EXPECT_EQ(candidate.lid, lid);
     EXPECT_EQ(candidate.rid, rid);
     EXPECT_NE(candidate.lid, 0);
@@ -774,7 +786,7 @@ TEST_F(ConverterTest, CompletePosIds) {
     candidate.value = "test";
     candidate.lid = 10;
     candidate.rid = 11;
-    converter->CompletePosIds(&candidate);
+    converter_peer.CompletePosIds(&candidate);
     EXPECT_EQ(candidate.lid, 10);
     EXPECT_EQ(candidate.rid, 11);
   }
@@ -964,7 +976,8 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
   meta_candidate2->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
   meta_candidate2->consumed_key_size = original_consumed_key_size;
 
-  Converter::MaybeSetConsumedKeySizeToSegment(consumed_key_size, &segment);
+  ConverterTestPeer::MaybeSetConsumedKeySizeToSegment(consumed_key_size,
+                                                      &segment);
   EXPECT_NE((segment.candidate(0).attributes &
              Segment::Candidate::PARTIALLY_KEY_CONSUMED),
             0);

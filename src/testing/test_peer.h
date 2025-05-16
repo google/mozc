@@ -27,39 +27,53 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_HISTORY_RECONSTRUCTOR_H_
-#define MOZC_CONVERTER_HISTORY_RECONSTRUCTOR_H_
-
-#include <cstdint>
-#include <string>
-
-#include "absl/strings/string_view.h"
-#include "converter/segments.h"
-#include "dictionary/pos_matcher.h"
+#ifndef MOZC_TESTING_TEST_PEER_H_
+#define MOZC_TESTING_TEST_PEER_H_
 
 namespace mozc {
-namespace converter {
+namespace testing {
 
-class HistoryReconstructor {
+// Helper class  to define TestPeer class.
+//
+// Usage:
+//  Here FooTestPeer allows to access `CallPrivateMethod` and
+//   `CallStaticPrivateMethod` of class `Foo`.
+//
+// class FooTestPeer : testing::TestPeer<Foo> {
+//   public:
+//     FooTestPeer(Foo &foo) : testing:TestPeer<Foo>(foo) {}
+//
+//   PEER_METHOD(CallPrivateMethod);
+//   PEER_STATIC_METHOD(CallStaticPrivateMethod);
+// };
+//
+//  Foo foo;
+//  EXPECT_TRUE(FooTestPeer(foo).CallPrivateMethod(arg1, arg2, ...));
+//  EXPECT_TRUE(FooTestPeer::CallStaticPrivateMethod(arg1, arg2, ...));
+
+#define PEER_METHOD(func_name)                            \
+  template <typename... Args>                             \
+  auto func_name(Args &&...args) {                        \
+    return value_.func_name(std::forward<Args>(args)...); \
+  }
+
+#define PEER_STATIC_METHOD(func_name)                        \
+  template <typename... Args>                                \
+  static auto func_name(Args &&...args) {                    \
+    return TypeName::func_name(std::forward<Args>(args)...); \
+  }
+
+template <typename T>
+class TestPeer {
  public:
-  explicit HistoryReconstructor(const dictionary::PosMatcher &pos_matcher);
+  explicit TestPeer(T &value) : value_(value) {}
 
-  [[nodiscard]]
-  bool ReconstructHistory(absl::string_view preceding_text,
-                          Segments *segments) const;
+  using TypeName = T;
 
- private:
-  friend class HistoryReconstructorTestPeer;
-
-  // Returns the substring of |str|. This substring consists of similar script
-  // type and you can use it as preceding text for conversion.
-  bool GetLastConnectivePart(absl::string_view preceding_text, std::string *key,
-                             std::string *value, uint16_t *id) const;
-
-  const dictionary::PosMatcher &pos_matcher_;
+ protected:
+  TypeName &value_;
 };
-
-}  // namespace converter
+}  // namespace testing
 }  // namespace mozc
 
-#endif  // MOZC_CONVERTER_HISTORY_RECONSTRUCTOR_H_
+#endif  // MOZC_TESTING_TEST_PEER_H_

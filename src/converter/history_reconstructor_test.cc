@@ -39,48 +39,67 @@
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gunit.h"
+#include "testing/test_peer.h"
 
 namespace mozc {
 namespace converter {
 
+class HistoryReconstructorTestPeer : testing::TestPeer<HistoryReconstructor> {
+ public:
+  explicit HistoryReconstructorTestPeer(HistoryReconstructor &reconstructor)
+      : testing::TestPeer<HistoryReconstructor>(reconstructor) {}
+
+  PEER_METHOD(GetLastConnectivePart);
+};
+
 TEST(HistoryReconstructorTest, GetLastConnectivePart) {
   const testing::MockDataManager data_manager;
   const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
-  const converter::HistoryReconstructor reconstructor(pos_matcher);
+  converter::HistoryReconstructor reconstructor(pos_matcher);
+  HistoryReconstructorTestPeer reconstructor_peer(reconstructor);
 
   {
     std::string key;
     std::string value;
     uint16_t id = 0;
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart("", &key, &value, &id));
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart(" ", &key, &value, &id));
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart("  ", &key, &value, &id));
+    EXPECT_FALSE(
+        reconstructor_peer.GetLastConnectivePart("", &key, &value, &id));
+    EXPECT_FALSE(
+        reconstructor_peer.GetLastConnectivePart(" ", &key, &value, &id));
+    EXPECT_FALSE(
+        reconstructor_peer.GetLastConnectivePart("  ", &key, &value, &id));
   }
 
   {
     std::string key;
     std::string value;
     uint16_t id = 0;
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a", &key, &value, &id));
+    EXPECT_TRUE(
+        reconstructor_peer.GetLastConnectivePart("a", &key, &value, &id));
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "a");
     EXPECT_EQ(id, pos_matcher.GetUniqueNounId());
 
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a ", &key, &value, &id));
+    EXPECT_TRUE(
+        reconstructor_peer.GetLastConnectivePart("a ", &key, &value, &id));
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "a");
 
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart("a  ", &key, &value, &id));
+    EXPECT_FALSE(
+        reconstructor_peer.GetLastConnectivePart("a  ", &key, &value, &id));
 
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a ", &key, &value, &id));
+    EXPECT_TRUE(
+        reconstructor_peer.GetLastConnectivePart("a ", &key, &value, &id));
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "a");
 
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("a10a", &key, &value, &id));
+    EXPECT_TRUE(
+        reconstructor_peer.GetLastConnectivePart("a10a", &key, &value, &id));
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "a");
 
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("ａ", &key, &value, &id));
+    EXPECT_TRUE(
+        reconstructor_peer.GetLastConnectivePart("ａ", &key, &value, &id));
     EXPECT_EQ(key, "a");
     EXPECT_EQ(value, "ａ");
   }
@@ -89,17 +108,19 @@ TEST(HistoryReconstructorTest, GetLastConnectivePart) {
     std::string key;
     std::string value;
     uint16_t id = 0;
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("10", &key, &value, &id));
+    EXPECT_TRUE(
+        reconstructor_peer.GetLastConnectivePart("10", &key, &value, &id));
     EXPECT_EQ(key, "10");
     EXPECT_EQ(value, "10");
     EXPECT_EQ(id, pos_matcher.GetNumberId());
 
     EXPECT_TRUE(
-        reconstructor.GetLastConnectivePart("10a10", &key, &value, &id));
+        reconstructor_peer.GetLastConnectivePart("10a10", &key, &value, &id));
     EXPECT_EQ(key, "10");
     EXPECT_EQ(value, "10");
 
-    EXPECT_TRUE(reconstructor.GetLastConnectivePart("１０", &key, &value, &id));
+    EXPECT_TRUE(
+        reconstructor_peer.GetLastConnectivePart("１０", &key, &value, &id));
     EXPECT_EQ(key, "10");
     EXPECT_EQ(value, "１０");
   }
@@ -108,7 +129,8 @@ TEST(HistoryReconstructorTest, GetLastConnectivePart) {
     std::string key;
     std::string value;
     uint16_t id = 0;
-    EXPECT_FALSE(reconstructor.GetLastConnectivePart("あ", &key, &value, &id));
+    EXPECT_FALSE(
+        reconstructor_peer.GetLastConnectivePart("あ", &key, &value, &id));
   }
 }
 

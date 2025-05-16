@@ -50,7 +50,6 @@
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/friend_test.h"
 
 namespace mozc {
 
@@ -162,10 +161,7 @@ class Converter final : public ConverterInterface {
  private:
   Converter() = default;
 
-  FRIEND_TEST(ConverterTest, CompletePosIds);
-  FRIEND_TEST(ConverterTest, DefaultPredictor);
-  FRIEND_TEST(ConverterTest, MaybeSetConsumedKeySizeToSegment);
-  FRIEND_TEST(ConverterTest, PredictSetKey);
+  friend class ConverterTestPeer;
 
   // Complete Left id/Right id if they are not defined.
   // Some users don't push conversion button but directly

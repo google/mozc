@@ -116,6 +116,11 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
+    name = "test_peer",
+    hdrs = ["test_peer.h"],
+)
+
+mozc_cc_library(
     name = "testing_util",
     testonly = True,
     srcs = ["testing_util.cc"],
@@ -157,7 +162,9 @@ mozc_objc_library(
     sdk_frameworks = [
         "XCTest",  # fixdeps: keep
     ],
-    tags = ["avoid_dep"],  # The overwhelming majority of the build targets in mozc are C++.
+    tags = [
+        "avoid_dep",
+    ],  # The overwhelming majority of the build targets in mozc are C++.
     deps = [
         "@com_google_absl//absl/flags:flag",
         "@com_google_googletest//:gtest",
