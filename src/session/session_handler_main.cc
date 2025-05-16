@@ -116,7 +116,8 @@ void ShowLog(const commands::Output &output, const int cand_id) {
   }
 }
 
-bool ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
+bool ParseLine(session::SessionHandlerInterpreter &handler, std::string line,
+               int line_number) {
   std::vector<std::string> args = handler.Parse(line);
   if (args.empty()) {
     return true;
@@ -160,13 +161,15 @@ bool ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     if (args.size() == 2 && absl::SimpleAtoi(args[1], &id)) {
       ShowLog(handler.LastOutput(), id);
     } else {
-      std::cout << "ERROR: " << line << std::endl;
+      std::cout << "#" << line_number << ": " << line << std::endl;
+      std::cout << "ERROR: syntax error" << std::endl;
     }
     return false;
   }
   if (command == "SHOW_LOG_BY_VALUE") {
     if (args.size() != 2) {
-      std::cout << "ERROR: " << line << std::endl;
+      std::cout << "#" << line_number << ": " << line << std::endl;
+      std::cout << "ERROR: syntax error" << std::endl;
       return false;
     }
     for (const uint32_t id : handler.GetCandidateIdsByValue(args[1])) {
@@ -180,7 +183,7 @@ bool ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
 
   const absl::Status status = handler.Eval(args);
   if (!status.ok()) {
-    std::cout << "ERROR: " << line << std::endl;
+    std::cout << "#" << line_number << ": " << line << std::endl;
     std::cout << "ERROR: " << status.message() << std::endl;
     return false;
   }
@@ -245,12 +248,13 @@ int main(int argc, char **argv) {
   mozc::session::SessionHandlerInterpreter handler(*std::move(engine));
 
   std::string line;
+  int line_number = 1;
   if (const std::string filepath = absl::GetFlag(FLAGS_input);
       !filepath.empty()) {
     mozc::InputFileStream input(filepath);
     bool is_passed = true;
     while (std::getline(input, line)) {
-      is_passed &= mozc::ParseLine(handler, line);
+      is_passed &= mozc::ParseLine(handler, line, line_number++);
     }
 
     if (is_test) {
@@ -265,7 +269,7 @@ int main(int argc, char **argv) {
   }
 
   while (std::getline(std::cin, line)) {
-    mozc::ParseLine(handler, line);
+    mozc::ParseLine(handler, line, line_number++);
   }
   return 0;
 }
