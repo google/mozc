@@ -29,6 +29,7 @@
 
 #include "renderer/renderer_server.h"
 
+#include <atomic>
 #include <memory>
 #include <string>
 
@@ -50,29 +51,27 @@ namespace {
 
 class TestRenderer : public RendererInterface {
  public:
-  TestRenderer() : counter_(0), finished_(false) {}
-
   bool Activate() override { return true; }
 
   bool IsAvailable() const override { return true; }
 
   bool ExecCommand(const commands::RendererCommand &command) override {
-    if (finished_) {
+    if (finished_.load(std::memory_order_acquire)) {
       return false;
     }
-    counter_++;
+    counter_.fetch_add(1, std::memory_order_relaxed);
     return true;
   }
 
-  void Reset() { counter_ = 0; }
+  void Reset() { counter_.store(0, std::memory_order_relaxed); }
 
-  int counter() const { return counter_; }
+  int counter() const { return counter_.load(std::memory_order_relaxed); }
 
-  void Shutdown() { finished_ = true; }
+  void Shutdown() { finished_.store(true, std::memory_order_release); }
 
  private:
-  int counter_;
-  bool finished_;
+  std::atomic<int> counter_ = 0;
+  std::atomic<bool> finished_ = false;
 };
 
 class TestRendererServer : public RendererServer {
@@ -117,7 +116,7 @@ class RendererServerTest : public testing::TestWithTempUserProfile {};
 TEST_F(RendererServerTest, IPCTest) {
   mozc::IPCClientFactoryOnMemory on_memory_client_factory;
 
-  std::unique_ptr<TestRendererServer> server(new TestRendererServer);
+  auto server = std::make_unique<TestRendererServer>();
   TestRenderer renderer;
   server->SetRendererInterface(&renderer);
 #ifdef __APPLE__
@@ -125,7 +124,7 @@ TEST_F(RendererServerTest, IPCTest) {
 #endif  // __APPLE__
   renderer.Reset();
 
-  // listning event
+  // listening event
   server->StartServer();
   absl::SleepFor(absl::Seconds(1));
 
