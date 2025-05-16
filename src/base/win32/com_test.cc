@@ -66,7 +66,6 @@ IMock2 : public IUnknown {
 
 MIDL_INTERFACE("7CC0C082-8CA5-4A87-97C4-4FC14FBCE0B3")
 IDerived : public IMock1 {
-  virtual ~IDerived() = default;
   STDMETHOD(Derived()) = 0;
 };
 

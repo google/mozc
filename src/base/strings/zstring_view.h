@@ -37,7 +37,6 @@
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <type_traits>
 
 #include "absl/base/attributes.h"
 #include "absl/log/check.h"
@@ -226,7 +225,7 @@ using zstring_view = basic_zstring_view<absl::string_view>;
 using zwstring_view = basic_zstring_view<std::wstring_view>;
 using zpfstring_view = basic_zstring_view<pfstring_view>;
 
-static_assert(std::is_convertible_v<zstring_view, absl::string_view>);
+static_assert(std::convertible_to<zstring_view, absl::string_view>);
 
 }  // namespace mozc
 

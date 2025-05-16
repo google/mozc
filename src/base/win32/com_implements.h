@@ -36,9 +36,9 @@
 #include <windows.h>
 
 #include <atomic>
-#include <type_traits>
 
 #include "absl/base/casts.h"
+#include "base/win32/com.h"
 
 namespace mozc::win32 {
 namespace com_implements_internal {
@@ -46,9 +46,6 @@ namespace com_implements_internal {
 // Reference counter for the COM module. Use CanComModuleUnloadNow() to
 // determine if the COM module can unload safely.
 constinit extern std::atomic<int> com_module_ref_count;
-
-// Placeholder to prevent classes from deriving another ComImplement.
-struct ComImplementsBaseTag {};
 
 }  // namespace com_implements_internal
 
@@ -65,15 +62,17 @@ struct ComImplementsTraits {
 };
 
 // This is the default implementation of IsIIDOf. If the COM interface derives
-// another COM interface (not IUnknown), explicitly define an overload of
-// IsIIDOf.
+// from another COM interface (not IUnknown), explicitly define an overload of
+// IsIIDOf in the ::mozc::win32 namespace.
 // For example, ITfLangBarItemButton derives from ITfLangBarItem. In order to
 // answer QueryInterface() for IID_ITfLangBarItem, define:
 //
+// namespace mozc::win32 {
 // template<>
 // IsIIDOf<ITfLangBarItemButton>(REFIID riid) {
 //   return IsIIDOf<ITfLangBarItemButton, ITfLangBarItem>(riid);
 // }
+// }  // namespace mozc::win32
 //
 // This way, IsIIDOf<ITfLangBarItemButton>() will check if
 // `riid` is for one of the specified interface types (ITfLangBarItemButton and
@@ -93,16 +92,10 @@ bool IsIIDOf(REFIID riid) {
 // Note that you need to define a specialization of IsIIDOf<IFoo>() if IFoo
 // is not an immediate derived interface of IUnknown.
 template <typename Traits, typename... Interfaces>
-class ComImplements : public com_implements_internal::ComImplementsBaseTag,
-                      public Interfaces... {
+class ComImplements : public Interfaces... {
  public:
-  static_assert(
-      std::conjunction_v<std::is_convertible<Interfaces *, IUnknown *>...>,
-      "COM interfaces must derive from IUnknown.");
-  static_assert(
-      !std::disjunction_v<std::is_base_of<
-          Interfaces, com_implements_internal::ComImplementsBaseTag>...>,
-      "Do not derive from ComImplements multiple times.");
+  static_assert((ComInterface<Interfaces> && ...),
+                "Interfaces must be abstract COM interfaces.");
 
   ComImplements() { ++com_implements_internal::com_module_ref_count; }
   // Disallow copies and movies.

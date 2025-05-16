@@ -38,7 +38,6 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <utility>
 
 #include "absl/base/attributes.h"
@@ -70,8 +69,8 @@ template <typename InputIterator>
   requires(!std::convertible_to<InputIterator, char>)
 constexpr uint8_t OneCharLen(const InputIterator it) {
   static_assert(
-      std::is_same_v<typename std::iterator_traits<InputIterator>::value_type,
-                     char>,
+      std::same_as<typename std::iterator_traits<InputIterator>::value_type,
+                   char>,
       "The iterator value_type must be char.");
   return OneCharLen(*it);
 }
@@ -529,11 +528,11 @@ template <typename BaseIterator, typename ValueType>
 typename Utf8CharIterator<BaseIterator, ValueType>::reference
 Utf8CharIterator<BaseIterator, ValueType>::operator*() const {
   DCHECK(!dr_.IsSentinel());
-  if constexpr (std::is_same_v<ValueType, char32_t>) {
+  if constexpr (std::same_as<ValueType, char32_t>) {
     return char32();
-  } else if constexpr (std::is_same_v<ValueType, absl::string_view>) {
+  } else if constexpr (std::same_as<ValueType, absl::string_view>) {
     return view();
-  } else if constexpr (std::is_same_v<ValueType, UnicodeChar>) {
+  } else if constexpr (std::same_as<ValueType, UnicodeChar>) {
     return ValueType{std::to_address(iter_), dr_.ok(), dr_.bytes_seen(),
                      dr_.code_point()};
   }
@@ -544,11 +543,11 @@ typename Utf8AsCharsBase<ValueType>::value_type
 Utf8AsCharsBase<ValueType>::back() const {
   if (sv_.back() <= 0x7f) {
     // ASCII
-    if constexpr (std::is_same_v<ValueType, char32_t>) {
+    if constexpr (std::same_as<ValueType, char32_t>) {
       return sv_.back();
-    } else if constexpr (std::is_same_v<ValueType, absl::string_view>) {
+    } else if constexpr (std::same_as<ValueType, absl::string_view>) {
       return sv_.substr(sv_.size() - 1);
-    } else if constexpr (std::is_same_v<ValueType, UnicodeChar>) {
+    } else if constexpr (std::same_as<ValueType, UnicodeChar>) {
       return value_type{EndPtr() - 1, 1, sv_.back()};
     }
   }
@@ -561,11 +560,11 @@ Utf8AsCharsBase<ValueType>::back() const {
       const utf8_internal::DecodeResult dr =
           utf8_internal::Decode(std::to_address(it), EndPtr());
       if (dr.bytes_seen() == size) {
-        if constexpr (std::is_same_v<ValueType, char32_t>) {
+        if constexpr (std::same_as<ValueType, char32_t>) {
           return dr.code_point();
-        } else if constexpr (std::is_same_v<ValueType, absl::string_view>) {
+        } else if constexpr (std::same_as<ValueType, absl::string_view>) {
           return value_type(std::to_address(it), dr.bytes_seen());
-        } else if constexpr (std::is_same_v<ValueType, UnicodeChar>) {
+        } else if constexpr (std::same_as<ValueType, UnicodeChar>) {
           return value_type{std::to_address(it), dr.bytes_seen(),
                             dr.code_point()};
         }
