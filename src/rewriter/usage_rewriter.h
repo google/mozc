@@ -47,7 +47,6 @@
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/friend_test.h"
 
 namespace mozc {
 
@@ -65,7 +64,7 @@ class UsageRewriter : public RewriterInterface {
   }
 
  private:
-  FRIEND_TEST(UsageRewriterTest, GetKanjiPrefixAndOneHiragana);
+  friend class UsageRewriterTestPeer;
 
   static constexpr size_t kUsageItemSize = 5;
 

@@ -43,10 +43,21 @@
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 namespace mozc {
 
 using ::mozc::dictionary::PosMatcher;
+
+class EnglishVariantsRewriterTestPeer
+    : testing::TestPeer<EnglishVariantsRewriter> {
+ public:
+  explicit EnglishVariantsRewriterTestPeer(EnglishVariantsRewriter &rewriter)
+      : testing::TestPeer<EnglishVariantsRewriter>(rewriter) {}
+
+  PEER_METHOD(ExpandEnglishVariants);
+  PEER_METHOD(ExpandSpacePrefixedVariants);
+};
 
 class EnglishVariantsRewriterTest : public testing::TestWithTempUserProfile {
  protected:
@@ -68,6 +79,10 @@ class EnglishVariantsRewriterTest : public testing::TestWithTempUserProfile {
     return false;
   }
 
+  EnglishVariantsRewriterTestPeer rewriter_peer() {
+    return EnglishVariantsRewriterTestPeer(*rewriter_);
+  }
+
  private:
   const testing::MockDataManager mock_data_manager_;
 
@@ -79,48 +94,52 @@ class EnglishVariantsRewriterTest : public testing::TestWithTempUserProfile {
 TEST_F(EnglishVariantsRewriterTest, ExpandEnglishVariants) {
   std::vector<std::string> variants;
 
-  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("foo", &variants));
+  EXPECT_TRUE(rewriter_peer().ExpandEnglishVariants("foo", &variants));
   EXPECT_EQ(variants.size(), 2);
   EXPECT_EQ(variants[0], "Foo");
   EXPECT_EQ(variants[1], "FOO");
 
-  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("Bar", &variants));
+  EXPECT_TRUE(rewriter_peer().ExpandEnglishVariants("Bar", &variants));
   EXPECT_EQ(variants.size(), 2);
   EXPECT_EQ(variants[0], "bar");
   EXPECT_EQ(variants[1], "BAR");
 
-  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("HOGE", &variants));
+  EXPECT_TRUE(rewriter_peer().ExpandEnglishVariants("HOGE", &variants));
   EXPECT_EQ(variants.size(), 2);
   EXPECT_EQ(variants[0], "hoge");
   EXPECT_EQ(variants[1], "Hoge");
 
-  EXPECT_FALSE(rewriter_->ExpandEnglishVariants("Foo Bar", &variants));
+  EXPECT_FALSE(rewriter_peer().ExpandEnglishVariants("Foo Bar", &variants));
 
-  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("iPhone", &variants));
+  EXPECT_TRUE(rewriter_peer().ExpandEnglishVariants("iPhone", &variants));
   EXPECT_EQ(variants.size(), 1);
   EXPECT_EQ(variants[0], "iphone");
 
-  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("MeCab", &variants));
+  EXPECT_TRUE(rewriter_peer().ExpandEnglishVariants("MeCab", &variants));
   EXPECT_EQ(variants.size(), 1);
   EXPECT_EQ(variants[0], "mecab");
 
-  EXPECT_FALSE(rewriter_->ExpandEnglishVariants("グーグル", &variants));
+  EXPECT_FALSE(rewriter_peer().ExpandEnglishVariants("グーグル", &variants));
 }
 
 TEST_F(EnglishVariantsRewriterTest, ExpandSpacePrefixedVariants) {
+  const EnglishVariantsRewriterTestPeer rewriter(*rewriter_);
+
   {
     std::vector<std::string> variants;
 
-    EXPECT_TRUE(rewriter_->ExpandSpacePrefixedVariants("Watch", &variants));
+    EXPECT_TRUE(
+        rewriter_peer().ExpandSpacePrefixedVariants("Watch", &variants));
     EXPECT_EQ(variants.size(), 1);
     EXPECT_EQ(variants[0], " Watch");
 
     variants.clear();
-    EXPECT_FALSE(rewriter_->ExpandSpacePrefixedVariants(" Watch", &variants));
+    EXPECT_FALSE(
+        rewriter_peer().ExpandSpacePrefixedVariants(" Watch", &variants));
     EXPECT_EQ(variants.size(), 0);
 
     variants.clear();
-    EXPECT_FALSE(rewriter_->ExpandSpacePrefixedVariants("", &variants));
+    EXPECT_FALSE(rewriter_peer().ExpandSpacePrefixedVariants("", &variants));
     EXPECT_EQ(variants.size(), 0);
   }
   {
@@ -128,7 +147,8 @@ TEST_F(EnglishVariantsRewriterTest, ExpandSpacePrefixedVariants) {
     variants.push_back("PIXEL");
     variants.push_back("pixel");
 
-    EXPECT_TRUE(rewriter_->ExpandSpacePrefixedVariants("Pixel", &variants));
+    EXPECT_TRUE(
+        rewriter_peer().ExpandSpacePrefixedVariants("Pixel", &variants));
     EXPECT_EQ(variants.size(), 5);
     EXPECT_EQ(variants[0], " Pixel");
     EXPECT_EQ(variants[1], "PIXEL");

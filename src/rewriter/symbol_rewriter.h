@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "data_manager/serialized_dictionary.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/friend_test.h"
 
 namespace mozc {
 
@@ -63,11 +62,7 @@ class SymbolRewriter : public RewriterInterface {
                Segments *segments) const override;
 
  private:
-  FRIEND_TEST(SymbolRewriterTest, TriggerRewriteEntireTest);
-  FRIEND_TEST(SymbolRewriterTest, TriggerRewriteEachTest);
-  FRIEND_TEST(SymbolRewriterTest, TriggerRewriteDescriptionTest);
-  FRIEND_TEST(SymbolRewriterTest, SplitDescriptionTest);
-  FRIEND_TEST(SymbolRewriterTest, ResizeSegmentFailureIsNotFatal);
+  friend class SymbolRewriterTestPeer;
 
   // Some characters may have different description for full/half width forms.
   // Here we just change the description in this function.

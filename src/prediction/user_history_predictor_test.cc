@@ -77,6 +77,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 namespace mozc::prediction {
 namespace {
@@ -90,6 +91,34 @@ using ::testing::_;
 using ::testing::Return;
 
 }  // namespace
+
+class UserHistoryPredictorTestPeer
+    : public testing::TestPeer<UserHistoryPredictor> {
+ public:
+  explicit UserHistoryPredictorTestPeer(UserHistoryPredictor &predictor)
+      : testing::TestPeer<UserHistoryPredictor>(predictor) {}
+
+  PEER_STATIC_METHOD(GetScore);
+  PEER_STATIC_METHOD(GetMatchType);
+  PEER_STATIC_METHOD(IsValidSuggestion);
+  PEER_STATIC_METHOD(IsValidSuggestionForMixedConversion);
+  PEER_STATIC_METHOD(RomanFuzzyPrefixMatch);
+  PEER_STATIC_METHOD(MaybeRomanMisspelledKey);
+  PEER_STATIC_METHOD(GetRomanMisspelledKey);
+  PEER_STATIC_METHOD(GetMatchTypeFromInput);
+  PEER_STATIC_METHOD(GetInputKeyFromRequest);
+  PEER_STATIC_METHOD(EraseNextEntries);
+  PEER_METHOD(IsValidEntry);
+  PEER_METHOD(IsValidEntryIgnoringRemovedField);
+  PEER_METHOD(RomanFuzzyLookupEntry);
+  PEER_METHOD(LookupEntry);
+  PEER_METHOD(RemoveNgramChain);
+  PEER_METHOD(WaitForSyncer);
+  PEER_VARIABLE(dic_);
+  PEER_DECLARE(MatchType);
+  PEER_DECLARE(RemoveNgramChainResult);
+  PEER_DECLARE(EntryPriorityQueue);
+};
 
 class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
  protected:
@@ -777,6 +806,7 @@ TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
 // To support such Segments, this test case is created separately.
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   // Register input histories via Finish method.
   {
@@ -789,8 +819,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
     predictor->Finish(convreq, segments);
 
     // All added items must be suggestion entries.
-    for (const UserHistoryPredictor::DicCache::Element &element :
-         *predictor->dic_) {
+    for (const auto &element : *predictor_peer.dic_()) {
       if (!element.next) {
         break;  // Except the last one.
       }
@@ -1081,6 +1110,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   Segments segments;
   const ConversionRequest convreq1 = SetUpInputForConversion(
@@ -1088,7 +1118,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest) {
   AddCandidate("私の名前は中野です", &segments);
 
   auto freq_eq = [&](int expected_freq) {
-    auto *entry = predictor->dic_->MutableLookupWithoutInsert(
+    auto *entry = predictor_peer.dic_()->MutableLookupWithoutInsert(
         UserHistoryPredictor::SegmentFingerprint(segments.segment(0)));
     if (expected_freq == 0) {
       ASSERT_FALSE(entry);
@@ -1985,26 +2015,27 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, GetMatchTypeTest) {
-  EXPECT_EQ(UserHistoryPredictor::GetMatchType("test", ""),
-            UserHistoryPredictor::NO_MATCH);
+  using MatchType = UserHistoryPredictorTestPeer::MatchType;
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchType("test", ""),
+            MatchType::NO_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::GetMatchType("", ""),
-            UserHistoryPredictor::NO_MATCH);
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchType("", ""),
+            MatchType::NO_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::GetMatchType("", "test"),
-            UserHistoryPredictor::LEFT_EMPTY_MATCH);
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchType("", "test"),
+            MatchType::LEFT_EMPTY_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::GetMatchType("foo", "bar"),
-            UserHistoryPredictor::NO_MATCH);
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchType("foo", "bar"),
+            MatchType::NO_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::GetMatchType("foo", "foo"),
-            UserHistoryPredictor::EXACT_MATCH);
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchType("foo", "foo"),
+            MatchType::EXACT_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::GetMatchType("foo", "foobar"),
-            UserHistoryPredictor::LEFT_PREFIX_MATCH);
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchType("foo", "foobar"),
+            MatchType::LEFT_PREFIX_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::GetMatchType("foobar", "foo"),
-            UserHistoryPredictor::RIGHT_PREFIX_MATCH);
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchType("foobar", "foo"),
+            MatchType::RIGHT_PREFIX_MATCH);
 }
 
 TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
@@ -2071,8 +2102,8 @@ TEST_F(UserHistoryPredictorTest, GetScore) {
     entry2.set_value("ABC");
     entry2.set_last_access_time(20);
 
-    EXPECT_GT(UserHistoryPredictor::GetScore(entry2),
-              UserHistoryPredictor::GetScore(entry1));
+    EXPECT_GT(UserHistoryPredictorTestPeer::GetScore(entry2),
+              UserHistoryPredictorTestPeer::GetScore(entry1));
   }
 
   // shorter value has higher score.
@@ -2087,8 +2118,8 @@ TEST_F(UserHistoryPredictorTest, GetScore) {
     entry2.set_value("ABCD");
     entry2.set_last_access_time(10);
 
-    EXPECT_GT(UserHistoryPredictor::GetScore(entry1),
-              UserHistoryPredictor::GetScore(entry2));
+    EXPECT_GT(UserHistoryPredictorTestPeer::GetScore(entry1),
+              UserHistoryPredictorTestPeer::GetScore(entry2));
   }
 
   // bigram boost makes the entry stronger
@@ -2104,8 +2135,8 @@ TEST_F(UserHistoryPredictorTest, GetScore) {
     entry2.set_last_access_time(10);
     entry2.set_bigram_boost(true);
 
-    EXPECT_GT(UserHistoryPredictor::GetScore(entry2),
-              UserHistoryPredictor::GetScore(entry1));
+    EXPECT_GT(UserHistoryPredictorTestPeer::GetScore(entry2),
+              UserHistoryPredictorTestPeer::GetScore(entry1));
   }
 
   // bigram boost makes the entry stronger
@@ -2121,59 +2152,60 @@ TEST_F(UserHistoryPredictorTest, GetScore) {
     entry2.set_value("ABC");
     entry2.set_last_access_time(50);
 
-    EXPECT_GT(UserHistoryPredictor::GetScore(entry1),
-              UserHistoryPredictor::GetScore(entry2));
+    EXPECT_GT(UserHistoryPredictorTestPeer::GetScore(entry1),
+              UserHistoryPredictorTestPeer::GetScore(entry2));
   }
 }
 
 TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   UserHistoryPredictor::Entry entry;
 
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntry(entry));
 
   entry.set_key("key");
   entry.set_value("value");
 
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntry(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_removed(true);
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_removed(false);
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntry(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_ALL_EVENT);
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_UNUSED_EVENT);
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_removed(true);
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   entry.Clear();
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntry(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   entry.Clear();
   entry.set_key("key");
   entry.set_value("value");
   entry.set_description("絵文字");
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntry(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   // An android pua emoji. It is obsolete and should return false.
   *entry.mutable_value() = Util::CodepointToUtf8(0xFE000);
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   // Set up suppression dictionary
   {
@@ -2188,13 +2220,13 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
 
   entry.set_key("key");
   entry.set_value("value");
-  EXPECT_TRUE(predictor->IsValidEntry(entry));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntry(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_key("foo");
   entry.set_value("bar");
-  EXPECT_FALSE(predictor->IsValidEntry(entry));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
+  EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 }
 
 TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
@@ -2205,18 +2237,22 @@ TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
   const ConversionRequest convreq =
       ConversionRequestBuilder().SetRequestView(request).Build();
 
-  EXPECT_FALSE(UserHistoryPredictor::IsValidSuggestion(convreq, 1, entry));
+  EXPECT_FALSE(
+      UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
 
   entry.set_bigram_boost(true);
-  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(convreq, 1, entry));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
 
   entry.set_bigram_boost(false);
   entry.set_conversion_freq(10);
-  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(convreq, 1, entry));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
 
   entry.set_bigram_boost(false);
   request.set_zero_query_suggestion(true);
-  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(convreq, 1, entry));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
 }
 
 TEST_F(UserHistoryPredictorTest, IsValidSuggestionForMixedConversion) {
@@ -2224,26 +2260,27 @@ TEST_F(UserHistoryPredictorTest, IsValidSuggestionForMixedConversion) {
   const ConversionRequest conversion_request;
 
   entry.set_suggestion_freq(1);
-  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestionForMixedConversion(
+  EXPECT_TRUE(UserHistoryPredictorTestPeer::IsValidSuggestionForMixedConversion(
       conversion_request, 1, entry));
 
   entry.set_value("よろしくおねがいします。");  // too long
-  EXPECT_FALSE(UserHistoryPredictor::IsValidSuggestionForMixedConversion(
-      conversion_request, 1, entry));
+  EXPECT_FALSE(
+      UserHistoryPredictorTestPeer::IsValidSuggestionForMixedConversion(
+          conversion_request, 1, entry));
 }
 
 TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
   // removed automatically
   constexpr int kSize = 10000;
   {
-    UserHistoryPredictor::EntryPriorityQueue queue;
+    UserHistoryPredictorTestPeer::EntryPriorityQueue queue;
     for (int i = 0; i < 10000; ++i) {
       EXPECT_NE(nullptr, queue.NewEntry());
     }
   }
 
   {
-    UserHistoryPredictor::EntryPriorityQueue queue;
+    UserHistoryPredictorTestPeer::EntryPriorityQueue queue;
     std::vector<UserHistoryPredictor::Entry *> expected;
     for (int i = 0; i < kSize; ++i) {
       UserHistoryPredictor::Entry *entry = queue.NewEntry();
@@ -2267,7 +2304,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
   }
 
   {
-    UserHistoryPredictor::EntryPriorityQueue queue;
+    UserHistoryPredictorTestPeer::EntryPriorityQueue queue;
     for (int i = 0; i < 5; ++i) {
       UserHistoryPredictor::Entry *entry = queue.NewEntry();
       entry->set_key("test");
@@ -2637,66 +2674,85 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
 
 TEST_F(UserHistoryPredictorTest, RomanFuzzyPrefixMatch) {
   // same
-  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abc", "abc"));
-  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("a", "a"));
+  EXPECT_FALSE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abc", "abc"));
+  EXPECT_FALSE(UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("a", "a"));
 
   // exact prefix
-  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abc", "a"));
-  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abc", "ab"));
-  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abc", ""));
+  EXPECT_FALSE(UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abc", "a"));
+  EXPECT_FALSE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abc", "ab"));
+  EXPECT_FALSE(UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abc", ""));
 
   // swap
-  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("ab", "ba"));
-  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abfoo", "bafoo"));
-  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("fooab", "fooba"));
+  EXPECT_TRUE(UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("ab", "ba"));
   EXPECT_TRUE(
-      UserHistoryPredictor::RomanFuzzyPrefixMatch("fooabfoo", "foobafoo"));
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abfoo", "bafoo"));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("fooab", "fooba"));
+  EXPECT_TRUE(UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("fooabfoo",
+                                                                  "foobafoo"));
 
   // swap + prefix
-  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("fooabfoo", "fooba"));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("fooabfoo", "fooba"));
 
   // deletion
-  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcd", "acd"));
-  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcd", "bcd"));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abcd", "acd"));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abcd", "bcd"));
 
   // deletion + prefix
-  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcdf", "acd"));
-  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcdfoo", "bcd"));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abcdf", "acd"));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abcdfoo", "bcd"));
 
   // voice sound mark
+  EXPECT_TRUE(UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("gu-guru",
+                                                                  "gu^guru"));
+  EXPECT_TRUE(UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("gu-guru",
+                                                                  "gu=guru"));
   EXPECT_TRUE(
-      UserHistoryPredictor::RomanFuzzyPrefixMatch("gu-guru", "gu^guru"));
-  EXPECT_TRUE(
-      UserHistoryPredictor::RomanFuzzyPrefixMatch("gu-guru", "gu=guru"));
-  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("gu-guru", "gu^gu"));
-  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("gu-guru", "gugu"));
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("gu-guru", "gu^gu"));
+  EXPECT_FALSE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("gu-guru", "gugu"));
 
   // Invalid
-  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("", ""));
-  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("", "a"));
-  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcde", "defe"));
+  EXPECT_FALSE(UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("", ""));
+  EXPECT_FALSE(UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("", "a"));
+  EXPECT_FALSE(
+      UserHistoryPredictorTestPeer::RomanFuzzyPrefixMatch("abcde", "defe"));
 }
 
 TEST_F(UserHistoryPredictorTest, MaybeRomanMisspelledKey) {
-  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey("こんぴゅーｔ"));
-  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey("こんぴゅーt"));
-  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey("こんぴゅーた"));
-  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey("ぱｓこん"));
-  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey("ぱそこん"));
   EXPECT_TRUE(
-      UserHistoryPredictor::MaybeRomanMisspelledKey("おねがいしまうｓ"));
-  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey("おねがいします"));
-  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey("いんた=ねっと"));
-  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey("ｔ"));
-  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey("ーｔ"));
+      UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey("こんぴゅーｔ"));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey("こんぴゅーt"));
   EXPECT_FALSE(
-      UserHistoryPredictor::MaybeRomanMisspelledKey("おｎがいしまうｓ"));
+      UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey("こんぴゅーた"));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey("ぱｓこん"));
+  EXPECT_FALSE(
+      UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey("ぱそこん"));
+  EXPECT_TRUE(UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey(
+      "おねがいしまうｓ"));
+  EXPECT_FALSE(
+      UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey("おねがいします"));
+  EXPECT_TRUE(
+      UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey("いんた=ねっと"));
+  EXPECT_FALSE(UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey("ｔ"));
+  EXPECT_TRUE(UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey("ーｔ"));
+  EXPECT_FALSE(UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey(
+      "おｎがいしまうｓ"));
   // Two unknowns
-  EXPECT_FALSE(
-      UserHistoryPredictor::MaybeRomanMisspelledKey("お＆がい＄しまう"));
+  EXPECT_FALSE(UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey(
+      "お＆がい＄しまう"));
   // One alpha and one unknown
-  EXPECT_FALSE(
-      UserHistoryPredictor::MaybeRomanMisspelledKey("お＆がいしまうｓ"));
+  EXPECT_FALSE(UserHistoryPredictorTestPeer::MaybeRomanMisspelledKey(
+      "お＆がいしまうｓ"));
 }
 
 TEST_F(UserHistoryPredictorTest, GetRomanMisspelledKey) {
@@ -2706,43 +2762,51 @@ TEST_F(UserHistoryPredictorTest, GetRomanMisspelledKey) {
   auto convreq = [&]() { return CreateConversionRequest(composer_, segments); };
 
   segments.InitForConvert("");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq()), "");
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()), "");
 
   segments.InitForConvert("おねがいしまうs");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq()),
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()),
             "onegaisimaus");
 
   segments.InitForConvert("おねがいします");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq()), "");
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()), "");
 
   config_.set_preedit_method(config::Config::KANA);
 
   segments.InitForConvert("おねがいしまうs");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq()), "");
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()), "");
 
   segments.InitForConvert("おねがいします");
-  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(convreq()), "");
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()), "");
 }
 
 TEST_F(UserHistoryPredictorTest, RomanFuzzyLookupEntry) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
   UserHistoryPredictor::Entry entry;
-  UserHistoryPredictor::EntryPriorityQueue results;
+  UserHistoryPredictorTestPeer::EntryPriorityQueue results;
 
   entry.set_key("");
-  EXPECT_FALSE(predictor->RomanFuzzyLookupEntry("", &entry, &results));
+  EXPECT_FALSE(predictor_peer.RomanFuzzyLookupEntry("", &entry, &results));
 
   entry.set_key("よろしく");
-  EXPECT_TRUE(predictor->RomanFuzzyLookupEntry("yorosku", &entry, &results));
-  EXPECT_TRUE(predictor->RomanFuzzyLookupEntry("yrosiku", &entry, &results));
-  EXPECT_TRUE(predictor->RomanFuzzyLookupEntry("yorsiku", &entry, &results));
-  EXPECT_FALSE(predictor->RomanFuzzyLookupEntry("yrsk", &entry, &results));
-  EXPECT_FALSE(predictor->RomanFuzzyLookupEntry("yorosiku", &entry, &results));
+  EXPECT_TRUE(
+      predictor_peer.RomanFuzzyLookupEntry("yorosku", &entry, &results));
+  EXPECT_TRUE(
+      predictor_peer.RomanFuzzyLookupEntry("yrosiku", &entry, &results));
+  EXPECT_TRUE(
+      predictor_peer.RomanFuzzyLookupEntry("yorsiku", &entry, &results));
+  EXPECT_FALSE(predictor_peer.RomanFuzzyLookupEntry("yrsk", &entry, &results));
+  EXPECT_FALSE(
+      predictor_peer.RomanFuzzyLookupEntry("yorosiku", &entry, &results));
 
   entry.set_key("ぐーぐる");
-  EXPECT_TRUE(predictor->RomanFuzzyLookupEntry("gu=guru", &entry, &results));
-  EXPECT_FALSE(predictor->RomanFuzzyLookupEntry("gu-guru", &entry, &results));
-  EXPECT_FALSE(predictor->RomanFuzzyLookupEntry("g=guru", &entry, &results));
+  EXPECT_TRUE(
+      predictor_peer.RomanFuzzyLookupEntry("gu=guru", &entry, &results));
+  EXPECT_FALSE(
+      predictor_peer.RomanFuzzyLookupEntry("gu-guru", &entry, &results));
+  EXPECT_FALSE(
+      predictor_peer.RomanFuzzyLookupEntry("g=guru", &entry, &results));
 }
 
 namespace {
@@ -2754,8 +2818,9 @@ struct LookupTestData {
 
 TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
   UserHistoryPredictor::Entry entry;
-  UserHistoryPredictor::EntryPriorityQueue results;
+  UserHistoryPredictorTestPeer::EntryPriorityQueue results;
 
   // Roman
   // preedit: "あｋ"
@@ -2780,8 +2845,8 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   // with expanded
   for (size_t i = 0; i < std::size(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
-    EXPECT_EQ(predictor->LookupEntry(convreq, "あｋ", "あ", expanded.get(),
-                                     &entry, nullptr, &results),
+    EXPECT_EQ(predictor_peer.LookupEntry(convreq, "あｋ", "あ", expanded.get(),
+                                         &entry, nullptr, &results),
               kTests1[i].expect_result)
         << kTests1[i].entry_key;
   }
@@ -2799,8 +2864,8 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
 
   for (size_t i = 0; i < std::size(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
-    EXPECT_EQ(predictor->LookupEntry(convreq, "", "", expanded.get(), &entry,
-                                     nullptr, &results),
+    EXPECT_EQ(predictor_peer.LookupEntry(convreq, "", "", expanded.get(),
+                                         &entry, nullptr, &results),
               kTests2[i].expect_result)
         << kTests2[i].entry_key;
   }
@@ -2808,8 +2873,9 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
 
 TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
   UserHistoryPredictor::Entry entry;
-  UserHistoryPredictor::EntryPriorityQueue results;
+  UserHistoryPredictorTestPeer::EntryPriorityQueue results;
 
   // Kana
   // preedit: "あし"
@@ -2833,8 +2899,8 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   // with expanded
   for (size_t i = 0; i < std::size(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
-    EXPECT_EQ(predictor->LookupEntry(convreq, "あし", "あ", expanded.get(),
-                                     &entry, nullptr, &results),
+    EXPECT_EQ(predictor_peer.LookupEntry(convreq, "あし", "あ", expanded.get(),
+                                         &entry, nullptr, &results),
               kTests1[i].expect_result)
         << kTests1[i].entry_key;
   }
@@ -2851,8 +2917,8 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
 
   for (size_t i = 0; i < std::size(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
-    EXPECT_EQ(predictor->LookupEntry(convreq, "し", "", expanded.get(), &entry,
-                                     nullptr, &results),
+    EXPECT_EQ(predictor_peer.LookupEntry(convreq, "し", "", expanded.get(),
+                                         &entry, nullptr, &results),
               kTests2[i].expect_result)
         << kTests2[i].entry_key;
   }
@@ -2860,10 +2926,11 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
 
 TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   // We have to define this here,
-  // because UserHistoryPredictor::MatchType is private
+  using MatchType = UserHistoryPredictorTestPeer::MatchType;
+
   struct MatchTypeTestData {
     absl::string_view target;
-    UserHistoryPredictor::MatchType expect_type;
+    MatchType expect_type;
   };
 
   // Roman
@@ -2879,16 +2946,16 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   expanded->AddEntry("こ", "こ");
 
   constexpr MatchTypeTestData kTests1[] = {
-      {"", UserHistoryPredictor::NO_MATCH},
-      {"い", UserHistoryPredictor::NO_MATCH},
-      {"あ", UserHistoryPredictor::RIGHT_PREFIX_MATCH},
-      {"あい", UserHistoryPredictor::NO_MATCH},
-      {"あか", UserHistoryPredictor::LEFT_PREFIX_MATCH},
-      {"あかい", UserHistoryPredictor::LEFT_PREFIX_MATCH},
+      {"", MatchType::NO_MATCH},
+      {"い", MatchType::NO_MATCH},
+      {"あ", MatchType::RIGHT_PREFIX_MATCH},
+      {"あい", MatchType::NO_MATCH},
+      {"あか", MatchType::LEFT_PREFIX_MATCH},
+      {"あかい", MatchType::LEFT_PREFIX_MATCH},
   };
 
   for (size_t i = 0; i < std::size(kTests1); ++i) {
-    EXPECT_EQ(UserHistoryPredictor::GetMatchTypeFromInput(
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchTypeFromInput(
                   "あ", "あ", expanded.get(), kTests1[i].target),
               kTests1[i].expect_type)
         << kTests1[i].target;
@@ -2900,15 +2967,15 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   // key_base: ""
   // key_expanded: "か","き","く","け", "こ"
   constexpr MatchTypeTestData kTests2[] = {
-      {"", UserHistoryPredictor::NO_MATCH},
-      {"い", UserHistoryPredictor::NO_MATCH},
-      {"いか", UserHistoryPredictor::NO_MATCH},
-      {"か", UserHistoryPredictor::LEFT_PREFIX_MATCH},
-      {"かいがい", UserHistoryPredictor::LEFT_PREFIX_MATCH},
+      {"", MatchType::NO_MATCH},
+      {"い", MatchType::NO_MATCH},
+      {"いか", MatchType::NO_MATCH},
+      {"か", MatchType::LEFT_PREFIX_MATCH},
+      {"かいがい", MatchType::LEFT_PREFIX_MATCH},
   };
 
   for (size_t i = 0; i < std::size(kTests2); ++i) {
-    EXPECT_EQ(UserHistoryPredictor::GetMatchTypeFromInput(
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchTypeFromInput(
                   "", "", expanded.get(), kTests2[i].target),
               kTests2[i].expect_type)
         << kTests2[i].target;
@@ -2916,11 +2983,13 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
 }
 
 TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
+  using MatchType = UserHistoryPredictorTestPeer::MatchType;
+
   // We have to define this here,
   // because UserHistoryPredictor::MatchType is private
   struct MatchTypeTestData {
     absl::string_view target;
-    UserHistoryPredictor::MatchType expect_type;
+    MatchType expect_type;
   };
 
   // Kana
@@ -2933,18 +3002,18 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   expanded->AddEntry("じ", "じ");
 
   constexpr MatchTypeTestData kTests1[] = {
-      {"", UserHistoryPredictor::NO_MATCH},
-      {"い", UserHistoryPredictor::NO_MATCH},
-      {"いし", UserHistoryPredictor::NO_MATCH},
-      {"あ", UserHistoryPredictor::RIGHT_PREFIX_MATCH},
-      {"あし", UserHistoryPredictor::EXACT_MATCH},
-      {"あじ", UserHistoryPredictor::LEFT_PREFIX_MATCH},
-      {"あした", UserHistoryPredictor::LEFT_PREFIX_MATCH},
-      {"あじしお", UserHistoryPredictor::LEFT_PREFIX_MATCH},
+      {"", MatchType::NO_MATCH},
+      {"い", MatchType::NO_MATCH},
+      {"いし", MatchType::NO_MATCH},
+      {"あ", MatchType::RIGHT_PREFIX_MATCH},
+      {"あし", MatchType::EXACT_MATCH},
+      {"あじ", MatchType::LEFT_PREFIX_MATCH},
+      {"あした", MatchType::LEFT_PREFIX_MATCH},
+      {"あじしお", MatchType::LEFT_PREFIX_MATCH},
   };
 
   for (size_t i = 0; i < std::size(kTests1); ++i) {
-    EXPECT_EQ(UserHistoryPredictor::GetMatchTypeFromInput(
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchTypeFromInput(
                   "あし", "あ", expanded.get(), kTests1[i].target),
               kTests1[i].expect_type)
         << kTests1[i].target;
@@ -2956,16 +3025,16 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   // key_base: ""
   // key_expanded: "し","じ"
   constexpr MatchTypeTestData kTests2[] = {
-      {"", UserHistoryPredictor::NO_MATCH},
-      {"い", UserHistoryPredictor::NO_MATCH},
-      {"し", UserHistoryPredictor::EXACT_MATCH},
-      {"じ", UserHistoryPredictor::LEFT_PREFIX_MATCH},
-      {"しじみ", UserHistoryPredictor::LEFT_PREFIX_MATCH},
-      {"じかん", UserHistoryPredictor::LEFT_PREFIX_MATCH},
+      {"", MatchType::NO_MATCH},
+      {"い", MatchType::NO_MATCH},
+      {"し", MatchType::EXACT_MATCH},
+      {"じ", MatchType::LEFT_PREFIX_MATCH},
+      {"しじみ", MatchType::LEFT_PREFIX_MATCH},
+      {"じかん", MatchType::LEFT_PREFIX_MATCH},
   };
 
   for (size_t i = 0; i < std::size(kTests2); ++i) {
-    EXPECT_EQ(UserHistoryPredictor::GetMatchTypeFromInput(
+    EXPECT_EQ(UserHistoryPredictorTestPeer::GetMatchTypeFromInput(
                   "し", "", expanded.get(), kTests2[i].target),
               kTests2[i].expect_type)
         << kTests2[i].target;
@@ -2981,8 +3050,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
   std::string input_key;
   std::string base;
   std::unique_ptr<Trie<std::string>> expanded;
-  UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                               &expanded);
+  UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                       &base, &expanded);
   EXPECT_EQ(input_key, "ぐーｇ");
   EXPECT_EQ(base, "ぐー");
   EXPECT_TRUE(expanded != nullptr);
@@ -3006,8 +3075,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                                 &expanded);
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                         &base, &expanded);
   }
 }
 
@@ -3023,8 +3092,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                                 &expanded);
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                         &base, &expanded);
   }
 }
 
@@ -3038,8 +3107,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                                 &expanded);
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                         &base, &expanded);
     EXPECT_EQ(input_key, "ｎ");
     EXPECT_EQ(base, "");
     EXPECT_TRUE(expanded != nullptr);
@@ -3059,8 +3128,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                                 &expanded);
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                         &base, &expanded);
     EXPECT_EQ(input_key, "ん");
     EXPECT_EQ(base, "ん");
     EXPECT_TRUE(expanded == nullptr);
@@ -3074,8 +3143,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                                 &expanded);
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                         &base, &expanded);
     EXPECT_EQ(input_key, "ん");
     EXPECT_EQ(base, "ん");
     EXPECT_TRUE(expanded == nullptr);
@@ -3089,8 +3158,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                                 &expanded);
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                         &base, &expanded);
     EXPECT_EQ(input_key, "んｎ");
     EXPECT_EQ(base, "ん");
     EXPECT_TRUE(expanded != nullptr);
@@ -3113,8 +3182,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                                 &expanded);
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                         &base, &expanded);
     EXPECT_EQ(input_key, "ん");
     EXPECT_EQ(base, "");
     EXPECT_TRUE(expanded != nullptr);
@@ -3137,8 +3206,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                                 &expanded);
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                         &base, &expanded);
     EXPECT_EQ(input_key, "ん");
     EXPECT_EQ(base, "");
     EXPECT_TRUE(expanded != nullptr);
@@ -3162,8 +3231,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictor::GetInputKeyFromRequest(convreq, &input_key, &base,
-                                                 &expanded);
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+                                                         &base, &expanded);
     EXPECT_EQ(input_key, "あか");
     EXPECT_EQ(base, "あ");
     EXPECT_TRUE(expanded != nullptr);
@@ -3292,27 +3361,28 @@ TEST_F(UserHistoryPredictorTest, EraseNextEntries) {
   e.add_next_entries()->set_entry_fp(10);
   e.add_next_entries()->set_entry_fp(100);
 
-  UserHistoryPredictor::EraseNextEntries(1234, &e);
+  UserHistoryPredictorTestPeer::EraseNextEntries(1234, &e);
   EXPECT_EQ(e.next_entries_size(), 5);
 
-  UserHistoryPredictor::EraseNextEntries(30, &e);
+  UserHistoryPredictorTestPeer::EraseNextEntries(30, &e);
   ASSERT_EQ(e.next_entries_size(), 4);
   for (size_t i = 0; i < 4; ++i) {
     EXPECT_NE(e.next_entries(i).entry_fp(), 30);
   }
 
-  UserHistoryPredictor::EraseNextEntries(10, &e);
+  UserHistoryPredictorTestPeer::EraseNextEntries(10, &e);
   ASSERT_EQ(e.next_entries_size(), 2);
   for (size_t i = 0; i < 2; ++i) {
     EXPECT_NE(e.next_entries(i).entry_fp(), 10);
   }
 
-  UserHistoryPredictor::EraseNextEntries(100, &e);
+  UserHistoryPredictorTestPeer::EraseNextEntries(100, &e);
   EXPECT_EQ(e.next_entries_size(), 0);
 }
 
 TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   // Set up the following chain of next entries:
   // ("abc", "ABC")
@@ -3328,12 +3398,15 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   entries.push_back(b);
   entries.push_back(c);
 
+  using RemoveNgramChainResult =
+      UserHistoryPredictorTestPeer::RemoveNgramChainResult;
+
   // The method should return NOT_FOUND for key-value pairs not in the chain.
   for (size_t i = 0; i < entries.size(); ++i) {
     std::vector<absl::string_view> dummy1, dummy2;
-    EXPECT_EQ(predictor->RemoveNgramChain("hoge", "HOGE", entries[i], &dummy1,
-                                          0, &dummy2, 0),
-              UserHistoryPredictor::NOT_FOUND);
+    EXPECT_EQ(predictor_peer.RemoveNgramChain("hoge", "HOGE", entries[i],
+                                              &dummy1, 0, &dummy2, 0),
+              RemoveNgramChainResult::NOT_FOUND);
   }
   // Moreover, all nodes and links should be kept.
   for (size_t i = 0; i < entries.size(); ++i) {
@@ -3346,9 +3419,9 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
     // Try deleting the chain for "abc". Only the link from "b" to "c" should be
     // removed.
     std::vector<absl::string_view> dummy1, dummy2;
-    EXPECT_EQ(
-        predictor->RemoveNgramChain("abc", "ABC", a, &dummy1, 0, &dummy2, 0),
-        UserHistoryPredictor::DONE);
+    EXPECT_EQ(predictor_peer.RemoveNgramChain("abc", "ABC", a, &dummy1, 0,
+                                              &dummy2, 0),
+              RemoveNgramChainResult::DONE);
     for (size_t i = 0; i < entries.size(); ++i) {
       EXPECT_FALSE(entries[i]->removed());
     }
@@ -3359,8 +3432,9 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
     // Try deleting the chain for "a". Since this is the head of the chain, the
     // function returns TAIL and nothing should be removed.
     std::vector<absl::string_view> dummy1, dummy2;
-    EXPECT_EQ(predictor->RemoveNgramChain("a", "A", a, &dummy1, 0, &dummy2, 0),
-              UserHistoryPredictor::TAIL);
+    EXPECT_EQ(
+        predictor_peer.RemoveNgramChain("a", "A", a, &dummy1, 0, &dummy2, 0),
+        RemoveNgramChainResult::TAIL);
     for (size_t i = 0; i < entries.size(); ++i) {
       EXPECT_FALSE(entries[i]->removed());
     }
@@ -3371,8 +3445,8 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
     // Further delete the chain for "ab".  Now all the links should be removed.
     std::vector<absl::string_view> dummy1, dummy2;
     EXPECT_EQ(
-        predictor->RemoveNgramChain("ab", "AB", a, &dummy1, 0, &dummy2, 0),
-        UserHistoryPredictor::DONE);
+        predictor_peer.RemoveNgramChain("ab", "AB", a, &dummy1, 0, &dummy2, 0),
+        RemoveNgramChainResult::DONE);
     for (size_t i = 0; i < entries.size(); ++i) {
       EXPECT_FALSE(entries[i]->removed());
     }
@@ -4331,6 +4405,7 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
   ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
 
   // Let the predictor learn "私の名前は中野です".
   Segments segments;
@@ -4381,7 +4456,7 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
 
   // Verify also that on-memory data structure doesn't contain node for 中野.
   bool found_takahashi = false;
-  for (const auto &elem : *predictor->dic_) {
+  for (const auto &elem : *predictor_peer.dic_()) {
     EXPECT_EQ(elem.value.value().find("中野"), std::string::npos);
     if (elem.value.value().find("高橋")) {
       found_takahashi = true;
@@ -4617,7 +4692,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
           .Build(std::make_unique<testing::MockDataManager>())
           .value();
   auto predictor = std::make_unique<UserHistoryPredictor>(*modules, false);
-  predictor->WaitForSyncer();
+  UserHistoryPredictorTestPeer(*predictor).WaitForSyncer();
 
   ScopedClockMock clock(absl::FromUnixSeconds(1));
 

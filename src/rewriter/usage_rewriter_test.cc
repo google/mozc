@@ -51,6 +51,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 namespace mozc {
 namespace {
@@ -72,15 +73,13 @@ void AddCandidate(const absl::string_view key, const absl::string_view value,
 
 }  // namespace
 
-class UsageRewriterPeer {
+class UsageRewriterTestPeer : public testing::TestPeer<UsageRewriter> {
  public:
-  explicit UsageRewriterPeer(std::unique_ptr<UsageRewriter> rewriter)
-      : rewriter_(std::move(rewriter)) {}
+  explicit UsageRewriterTestPeer(UsageRewriter &rewriter)
+      : testing::TestPeer<UsageRewriter>(rewriter) {}
 
-  SerializedStringArray get_string_array() { return rewriter_->string_array_; }
-
- private:
-  std::unique_ptr<UsageRewriter> rewriter_;
+  PEER_STATIC_METHOD(GetKanjiPrefixAndOneHiragana);
+  PEER_VARIABLE(string_array_);
 };
 
 class TestDataManager : public testing::MockDataManager {
@@ -143,10 +142,10 @@ TEST_F(UsageRewriterTest, ConstructorTest) {
   std::unique_ptr<UsageRewriter> rewriter(
       CreateUsageRewriterWithTestDataManager());
 
-  UsageRewriterPeer rewriter_peer(std::move(rewriter));
-  EXPECT_TRUE(rewriter_peer.get_string_array().empty());
-  EXPECT_TRUE(SerializedStringArray::VerifyData(
-      rewriter_peer.get_string_array().data()));
+  UsageRewriterTestPeer rewriter_peer(*rewriter);
+  EXPECT_TRUE(rewriter_peer.string_array_().empty());
+  EXPECT_TRUE(
+      SerializedStringArray::VerifyData(rewriter_peer.string_array_().data()));
 }
 
 TEST_F(UsageRewriterTest, CapabilityTest) {
@@ -342,16 +341,21 @@ TEST_F(UsageRewriterTest, SameUsageTest) {
 }
 
 TEST_F(UsageRewriterTest, GetKanjiPrefixAndOneHiragana) {
-  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合わせる"), "合わ");
-  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合う"), "合う");
-  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合合わせる"),
+  EXPECT_EQ(UsageRewriterTestPeer::GetKanjiPrefixAndOneHiragana("合わせる"),
+            "合わ");
+  EXPECT_EQ(UsageRewriterTestPeer::GetKanjiPrefixAndOneHiragana("合う"),
+            "合う");
+  EXPECT_EQ(UsageRewriterTestPeer::GetKanjiPrefixAndOneHiragana("合合わせる"),
             "合合わ");
-  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合"), "");
-  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("京都"), "");
-  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合合合わせる"), "");
-  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("カタカナ"), "");
-  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("abc"), "");
-  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("あ合わせる"), "");
+  EXPECT_EQ(UsageRewriterTestPeer::GetKanjiPrefixAndOneHiragana("合"), "");
+  EXPECT_EQ(UsageRewriterTestPeer::GetKanjiPrefixAndOneHiragana("京都"), "");
+  EXPECT_EQ(UsageRewriterTestPeer::GetKanjiPrefixAndOneHiragana("合合合わせる"),
+            "");
+  EXPECT_EQ(UsageRewriterTestPeer::GetKanjiPrefixAndOneHiragana("カタカナ"),
+            "");
+  EXPECT_EQ(UsageRewriterTestPeer::GetKanjiPrefixAndOneHiragana("abc"), "");
+  EXPECT_EQ(UsageRewriterTestPeer::GetKanjiPrefixAndOneHiragana("あ合わせる"),
+            "");
 }
 
 TEST_F(UsageRewriterTest, CommentFromUserDictionary) {

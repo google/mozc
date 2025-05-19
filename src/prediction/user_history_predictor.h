@@ -55,7 +55,6 @@
 #include "request/conversion_request.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
-#include "testing/friend_test.h"  // IWYU pragma: keep
 
 namespace mozc::prediction {
 
@@ -184,50 +183,10 @@ class UserHistoryPredictor : public PredictorInterface {
     std::vector<SegmentForLearning> conversion_segments;
   };
 
+  friend class UserHistoryPredictorTestPeer;
   friend class UserHistoryPredictorTest;
 
-  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion);
-  FRIEND_TEST(UserHistoryPredictorTest, GetMatchTypeTest);
-  FRIEND_TEST(UserHistoryPredictorTest, Uint32ToStringTest);
-  FRIEND_TEST(UserHistoryPredictorTest, GetScore);
-  FRIEND_TEST(UserHistoryPredictorTest, IsValidEntry);
-  FRIEND_TEST(UserHistoryPredictorTest, IsValidSuggestion);
-  FRIEND_TEST(UserHistoryPredictorTest, IsValidSuggestionForMixedConversion);
-  FRIEND_TEST(UserHistoryPredictorTest, EntryPriorityQueueTest);
-  FRIEND_TEST(UserHistoryPredictorTest, RomanFuzzyPrefixMatch);
-  FRIEND_TEST(UserHistoryPredictorTest, MaybeRomanMisspelledKey);
-  FRIEND_TEST(UserHistoryPredictorTest, GetRomanMisspelledKey);
-  FRIEND_TEST(UserHistoryPredictorTest, RomanFuzzyLookupEntry);
-  FRIEND_TEST(UserHistoryPredictorTest, ExpandedLookupRoman);
-  FRIEND_TEST(UserHistoryPredictorTest, ExpandedLookupKana);
-  FRIEND_TEST(UserHistoryPredictorTest, GetMatchTypeFromInputRoman);
-  FRIEND_TEST(UserHistoryPredictorTest, GetMatchTypeFromInputKana);
-  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman);
-  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom);
-  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash);
-  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN);
-  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN);
-  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN);
-  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana);
-  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest);
-  FRIEND_TEST(UserHistoryPredictorTest, EraseNextEntries);
-  FRIEND_TEST(UserHistoryPredictorTest, RemoveNgramChain);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryUnigram);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteWhole);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteFirst);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteSecond);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteWhole);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirst);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecond);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteThird);
-  FRIEND_TEST(UserHistoryPredictorTest,
-              ClearHistoryEntryTrigramDeleteFirstBigram);
-  FRIEND_TEST(UserHistoryPredictorTest,
-              ClearHistoryEntryTrigramDeleteSecondBigram);
-  FRIEND_TEST(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync);
-  FRIEND_TEST(UserHistoryPredictorTest, TypingCorrection);
-
-  enum MatchType {
+  enum class MatchType {
     NO_MATCH,            // no match
     LEFT_PREFIX_MATCH,   // left string is a prefix of right string
     RIGHT_PREFIX_MATCH,  // right string is a prefix of left string
@@ -237,14 +196,14 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Returns value of RemoveNgramChain() method. See the comments in
   // implementation.
-  enum RemoveNgramChainResult {
+  enum class RemoveNgramChainResult {
     DONE,
     TAIL,
     NOT_FOUND,
   };
 
   // Result type for IsValidCandidate() check.
-  enum ResultType {
+  enum class ResultType {
     GOOD_RESULT,
     BAD_RESULT,
     STOP_ENUMERATION,  // Do not insert and stop enumerations

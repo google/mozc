@@ -37,7 +37,6 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/friend_test.h"
 
 namespace mozc {
 class ConversionRequest;
@@ -54,8 +53,8 @@ class EnglishVariantsRewriter : public RewriterInterface {
                Segments *segments) const override;
 
  private:
-  FRIEND_TEST(EnglishVariantsRewriterTest, ExpandEnglishVariants);
-  FRIEND_TEST(EnglishVariantsRewriterTest, ExpandSpacePrefixedVariants);
+  friend class EnglishVariantsRewriterTestPeer;
+
   bool IsT13NCandidate(Segment::Candidate *candidate) const;
   bool IsEnglishCandidate(Segment::Candidate *candidate) const;
   bool ExpandEnglishVariants(absl::string_view input,

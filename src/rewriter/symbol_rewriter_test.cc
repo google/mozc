@@ -49,8 +49,18 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 namespace mozc {
+
+class SymbolRewriterTestPeer : testing::TestPeer<SymbolRewriter> {
+ public:
+  explicit SymbolRewriterTestPeer(SymbolRewriter &rewriter)
+      : testing::TestPeer<SymbolRewriter>(rewriter) {}
+
+  PEER_METHOD(RewriteEachCandidate);
+};
+
 namespace {
 
 void AddSegment(const absl::string_view key, const absl::string_view value,
@@ -146,12 +156,14 @@ TEST_F(SymbolRewriterTest, CheckResizeSegmentsRequestTest) {
 
 TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
   SymbolRewriter symbol_rewriter(*data_manager_);
+  SymbolRewriterTestPeer symbol_rewriter_peer(symbol_rewriter);
+
   const ConversionRequest request;
   {
     Segments segments;
     AddSegment("ー", "test", &segments);
     AddSegment(">", "test", &segments);
-    EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(request, &segments));
+    EXPECT_TRUE(symbol_rewriter_peer.RewriteEachCandidate(request, &segments));
     EXPECT_EQ(segments.segments_size(), 2);
     EXPECT_TRUE(HasCandidate(segments, 0, "―"));
     EXPECT_FALSE(HasCandidate(segments, 0, "→"));
@@ -186,11 +198,12 @@ TEST_F(SymbolRewriterTest, HentaiganaSymbolTest) {
 
 TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
   SymbolRewriter symbol_rewriter(*data_manager_);
+  SymbolRewriterTestPeer symbol_rewriter_peer(symbol_rewriter);
   const ConversionRequest request;
   {
     Segments segments;
     AddSegment("したつき", "test", &segments);
-    EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(request, &segments));
+    EXPECT_TRUE(symbol_rewriter_peer.RewriteEachCandidate(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_TRUE(
         HasCandidateAndDescription(segments, 0, "₍", "下付き文字(始め丸括弧)"));

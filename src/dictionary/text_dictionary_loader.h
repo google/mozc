@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "dictionary/dictionary_token.h"
-#include "testing/friend_test.h"
 
 namespace mozc {
 namespace dictionary {
@@ -86,6 +85,8 @@ class TextDictionaryLoader {
   void CollectTokens(std::vector<Token *> *res) const;
 
  private:
+  friend class TextDictionaryLoaderTestPeer;
+
   static std::vector<std::unique_ptr<Token>> LoadReadingCorrectionTokens(
       absl::string_view reading_correction_filename,
       absl::Span<const std::unique_ptr<Token>> ref_sorted_tokens, int *limit);
@@ -106,8 +107,6 @@ class TextDictionaryLoader {
   const uint16_t zipcode_id_;
   const uint16_t isolated_word_id_;
   std::vector<std::unique_ptr<Token>> tokens_;
-
-  FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);
 };
 
 }  // namespace dictionary

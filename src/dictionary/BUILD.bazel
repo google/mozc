@@ -507,7 +507,6 @@ mozc_cc_library(
         "//base:multifile",
         "//base:util",
         "//base:vlog",
-        "//testing:friend_test",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
@@ -532,6 +531,7 @@ mozc_cc_test(
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "//testing:test_peer",
         "@com_google_absl//absl/types:span",
     ],
 )

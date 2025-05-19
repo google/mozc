@@ -59,18 +59,14 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 namespace mozc {
 
-class UserSegmentHistoryRewriterTestPeer {
+class UserSegmentHistoryRewriterTestPeer
+    : public testing::TestPeer<UserSegmentHistoryRewriter> {
  public:
-  UserSegmentHistoryRewriterTestPeer() = delete;
-
-  static Segments MakeLearningSegmentsFromInnerSegments(
-      const ConversionRequest &request, const Segments &segments) {
-    return UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
-        request, segments);
-  }
+  PEER_STATIC_METHOD(MakeLearningSegmentsFromInnerSegments);
 };
 
 namespace {

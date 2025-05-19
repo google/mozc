@@ -597,13 +597,13 @@ UserHistoryPredictor::RemoveNgramChain(
           RemoveNgramChain(target_key, target_value, e, key_ngrams,
                            key_ngrams_len, value_ngrams, value_ngrams_len);
       switch (r) {
-        case DONE:
-          return DONE;
-        case TAIL:
+        case RemoveNgramChainResult::DONE:
+          return RemoveNgramChainResult::DONE;
+        case RemoveNgramChainResult::TAIL:
           // |entry| is the second-to-the-last node. So cut the link to the
           // child entry.
           EraseNextEntries(fp, entry);
-          return DONE;
+          return RemoveNgramChainResult::DONE;
         default:
           break;
       }
@@ -611,7 +611,7 @@ UserHistoryPredictor::RemoveNgramChain(
     // Recovers the state.
     key_ngrams->pop_back();
     value_ngrams->pop_back();
-    return NOT_FOUND;
+    return RemoveNgramChainResult::NOT_FOUND;
   }
 
   // This is the case where the current ngram key and value have the same
@@ -625,14 +625,14 @@ UserHistoryPredictor::RemoveNgramChain(
     if (ngram_key == target_key && ngram_value == target_value) {
       // |entry| is the last node. So return TAIL to tell the caller so
       // that it can remove the link to this last node.
-      return TAIL;
+      return RemoveNgramChainResult::TAIL;
     }
     key_ngrams->pop_back();
     value_ngrams->pop_back();
-    return NOT_FOUND;
+    return RemoveNgramChainResult::NOT_FOUND;
   }
 
-  return NOT_FOUND;
+  return RemoveNgramChainResult::NOT_FOUND;
 }
 
 bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
@@ -664,7 +664,7 @@ bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
       }
       std::vector<absl::string_view> key_ngrams, value_ngrams;
       if (RemoveNgramChain(key, value, entry, &key_ngrams, 0, &value_ngrams,
-                           0) == DONE) {
+                           0) == RemoveNgramChainResult::DONE) {
         deleted = true;
       }
     }
@@ -918,7 +918,8 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
       }
       const MatchType mtype_joined =
           GetMatchType(absl::StrCat(key, tmp_next_entry->key()), input_key);
-      if (mtype_joined == NO_MATCH || mtype_joined == LEFT_EMPTY_MATCH) {
+      if (mtype_joined == MatchType::NO_MATCH ||
+          mtype_joined == MatchType::LEFT_EMPTY_MATCH) {
         continue;
       }
       if (latest_entry == nullptr || latest_entry->last_access_time() <
@@ -1027,9 +1028,9 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
 
   const MatchType mtype =
       GetMatchTypeFromInput(input_key, key_base, key_expanded, entry->key());
-  if (mtype == NO_MATCH) {
+  if (mtype == MatchType::NO_MATCH) {
     return false;
-  } else if (mtype == LEFT_EMPTY_MATCH) {  // zero-query-suggestion
+  } else if (mtype == MatchType::LEFT_EMPTY_MATCH) {  // zero-query-suggestion
     // if |input_key| is empty, the |prev_entry| and |entry| must
     // have bigram relation.
     if (prev_entry != nullptr && HasBigramEntry(*entry, *prev_entry)) {
@@ -1043,7 +1044,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
     } else {
       return false;
     }
-  } else if (mtype == LEFT_PREFIX_MATCH) {
+  } else if (mtype == MatchType::LEFT_PREFIX_MATCH) {
     // |input_key| is shorter than |entry->key()|
     // This scenario is a simple prefix match.
     // e.g., |input_key|="foo", |entry->key()|="foobar"
@@ -1054,12 +1055,14 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
       left_most_last_access_time =
           IsContentWord(entry->value()) ? left_last_access_time : 0;
     }
-  } else if (mtype == RIGHT_PREFIX_MATCH || mtype == EXACT_MATCH) {
+  } else if (mtype == MatchType::RIGHT_PREFIX_MATCH ||
+             mtype == MatchType::EXACT_MATCH) {
     // |input_key| is longer than or the same as |entry->key()|.
     // In this case, recursively traverse "next_entries" until
     // target entry gets longer than input_key.
     // e.g., |input_key|="foobar", |entry->key()|="foo"
-    if (request.request().zero_query_suggestion() && mtype == EXACT_MATCH) {
+    if (request.request().zero_query_suggestion() &&
+        mtype == MatchType::EXACT_MATCH) {
       // For mobile, we don't generate joined result.
       result = AddEntry(*entry, results);
       if (result) {
@@ -1082,7 +1085,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
                                        results);
     }
   } else {
-    LOG(ERROR) << "Unknown match mode: " << mtype;
+    LOG(ERROR) << "Unknown match mode: " << static_cast<int>(mtype);
     return false;
   }
 
@@ -1416,9 +1419,9 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     uint32_t input_key_len, const Entry &entry) {
   if (request.request().mixed_conversion()) {
     if (IsValidSuggestionForMixedConversion(request, input_key_len, entry)) {
-      return GOOD_RESULT;
+      return ResultType::GOOD_RESULT;
     }
-    return BAD_RESULT;
+    return ResultType::BAD_RESULT;
   }
 
   if (request.request_type() == ConversionRequest::SUGGESTION) {
@@ -1431,16 +1434,16 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     // In this situation, "です" is in the LRU, but SuggestionTriggerFunc
     // returns false for "です", since it is short.
     if (IsValidSuggestion(request, input_key_len, entry)) {
-      return GOOD_RESULT;
+      return ResultType::GOOD_RESULT;
     }
     if (is_top_candidate) {
       MOZC_VLOG(2) << "candidates size is 0";
-      return STOP_ENUMERATION;
+      return ResultType::STOP_ENUMERATION;
     }
-    return BAD_RESULT;
+    return ResultType::BAD_RESULT;
   }
 
-  return GOOD_RESULT;
+  return ResultType::GOOD_RESULT;
 }
 
 bool UserHistoryPredictor::InsertCandidates(const ConversionRequest &request,
@@ -1515,9 +1518,9 @@ bool UserHistoryPredictor::InsertCandidates(const ConversionRequest &request,
 
     const ResultType result = GetResultType(
         request, segment->candidates_size() == 0, input_key_len, *result_entry);
-    if (result == STOP_ENUMERATION) {
+    if (result == ResultType::STOP_ENUMERATION) {
       break;
-    } else if (result == BAD_RESULT) {
+    } else if (result == ResultType::BAD_RESULT) {
       continue;
     }
 
@@ -2087,27 +2090,27 @@ void UserHistoryPredictor::Revert(const Segments &segments) {
 UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchType(
     const absl::string_view lstr, const absl::string_view rstr) {
   if (lstr.empty() && !rstr.empty()) {
-    return LEFT_EMPTY_MATCH;
+    return MatchType::LEFT_EMPTY_MATCH;
   }
 
   const size_t size = std::min(lstr.size(), rstr.size());
   if (size == 0) {
-    return NO_MATCH;
+    return MatchType::NO_MATCH;
   }
 
   if (lstr.substr(0, size) != rstr.substr(0, size)) {
-    return NO_MATCH;
+    return MatchType::NO_MATCH;
   }
 
   if (lstr.size() == rstr.size()) {
-    return EXACT_MATCH;
+    return MatchType::EXACT_MATCH;
   } else if (lstr.size() < rstr.size()) {
-    return LEFT_PREFIX_MATCH;
+    return MatchType::LEFT_PREFIX_MATCH;
   } else {
-    return RIGHT_PREFIX_MATCH;
+    return MatchType::RIGHT_PREFIX_MATCH;
   }
 
-  return NO_MATCH;
+  return MatchType::NO_MATCH;
 }
 
 // static
@@ -2127,40 +2130,40 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
     bool has_subtrie = false;
     if (!key_expanded->LookUpPrefix(target, &value, &key_length,
                                     &has_subtrie)) {
-      return NO_MATCH;
+      return MatchType::NO_MATCH;
     } else if (value == target && value == input_key) {
-      return EXACT_MATCH;
+      return MatchType::EXACT_MATCH;
     } else {
-      return LEFT_PREFIX_MATCH;
+      return MatchType::LEFT_PREFIX_MATCH;
     }
   } else {
     const size_t size = std::min(key_base.size(), target.size());
     if (size == 0) {
-      return NO_MATCH;
+      return MatchType::NO_MATCH;
     }
     if (key_base.substr(0, size) != target.substr(0, size)) {
-      return NO_MATCH;
+      return MatchType::NO_MATCH;
     }
     if (target.size() <= key_base.size()) {
-      return RIGHT_PREFIX_MATCH;
+      return MatchType::RIGHT_PREFIX_MATCH;
     }
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
     if (!key_expanded->LookUpPrefix(target.data() + key_base.size(), &value,
                                     &key_length, &has_subtrie)) {
-      return NO_MATCH;
+      return MatchType::NO_MATCH;
     }
     const std::string matched = absl::StrCat(key_base, value);
     if (matched == target && matched == input_key) {
-      return EXACT_MATCH;
+      return MatchType::EXACT_MATCH;
     } else {
-      return LEFT_PREFIX_MATCH;
+      return MatchType::LEFT_PREFIX_MATCH;
     }
   }
 
   DCHECK(false) << "Should not come here";
-  return NO_MATCH;
+  return MatchType::NO_MATCH;
 }
 
 // static

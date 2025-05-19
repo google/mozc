@@ -59,9 +59,6 @@
 #include "request/conversion_request.h"
 
 namespace mozc::prediction {
-namespace dictionary_predictor_internal {
-
-}  // namespace dictionary_predictor_internal
 
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
@@ -89,6 +86,10 @@ class DictionaryPredictor : public PredictorInterface {
   }
 
  private:
+  // Test peer to access private methods
+  friend class DictionaryPredictorTestPeer;
+  friend class MockDataAndPredictor;
+
   class ResultFilter {
    public:
     ResultFilter(const ConversionRequest &request,
@@ -268,9 +269,6 @@ class DictionaryPredictor : public PredictorInterface {
 
   std::shared_ptr<Result> MaybeGetPreviousTopResult(
       const Result &current_top_result, const ConversionRequest &request) const;
-
-  // Test peer to access private methods
-  friend class DictionaryPredictorTestPeer;
 
   std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator_;
 
