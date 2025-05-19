@@ -212,7 +212,7 @@ Attributes GetT13nAttributes(const transliteration::TransliterationType type) {
       attributes = (FULL_WIDTH | KATAKANA);
       break;
     case transliteration::HALF_ASCII:  // "ascII"
-      attributes = (HALF_WIDTH | ASCII);
+      attributes = (HALF_WIDTH | ASCII | ASIS);
       break;
     case transliteration::HALF_ASCII_UPPER:  // "ASCII"
       attributes = (HALF_WIDTH | ASCII | UPPER);
@@ -224,7 +224,7 @@ Attributes GetT13nAttributes(const transliteration::TransliterationType type) {
       attributes = (HALF_WIDTH | ASCII | CAPITALIZED);
       break;
     case transliteration::FULL_ASCII:  // "ａｓｃＩＩ"
-      attributes = (FULL_WIDTH | ASCII);
+      attributes = (FULL_WIDTH | ASCII | ASIS);
       break;
     case transliteration::FULL_ASCII_UPPER:  // "ＡＳＣＩＩ"
       attributes = (FULL_WIDTH | ASCII | UPPER);
@@ -243,6 +243,79 @@ Attributes GetT13nAttributes(const transliteration::TransliterationType type) {
       break;
   }
   return attributes;
+}
+
+// Cycles ASCII (= Alphanumeric) cases to ASIS → UPPER → LOWER → CAPITALIZED.
+// example:
+//   "moZc": moZc (ASIS) → MOZC (UPPER) → mozc (LOWER) → Mozc (CAPITALIZED) →
+//           moZc (ASIS) → ...
+//
+// If UPPER, LOWER, or CAPITALIZED is the same as ASIS, skip it and cycle to the
+// next case.
+// example:
+//   "mozc": mozc (ASIS | LOWER) → MOZC (UPPER) → Mozc (CAPITALIZED) →
+//           mozc (ASIS | LOWER) →
+//   "MOZC": MOZC (ASIS | UPPER) → mozc (LOWER) → Mozc (CAPITALIZED) →
+//           MOZC (ASIS | UPPER) →
+//   "m": m (ASIS | LOWER) → M (UPPER | CAPACALIZED) → m (ASIS | LOWER) →
+//   "M": M (ASIS | UPPER | CAPACALIZED) → m (LOWER) →
+//        M (ASIS | UPPER | CAPACALIZED) →
+void CycleAlphaCase(Attributes query_attr, CandidateList &candidate_list) {
+  Attributes current_attr =
+      candidate_list.GetDeepestFocusedCandidate().attributes();
+
+  // If the current case is same as the user typed, move to the next case.
+  if (current_attr & ASIS) {
+    // The next case is basically UPPER.
+    // However, if the ASIS is also UPPER, skip it and move to the LOWER case.
+    query_attr |= ((current_attr & UPPER) ? LOWER : UPPER);
+    candidate_list.MoveNextAttributes(query_attr);
+    return;
+  }
+
+  // Move to the next case. If the next case is also ASIS, skip it as it's
+  // already cycled before.
+  // Try up to 3 times as there are 4 cases and avoid infinite loop.
+  const Attributes base_query_attr = query_attr;
+  for (int i = 0; i < 3; ++i) {
+    // Set query_attr to the next case and move it.
+    if (current_attr & UPPER) {
+      query_attr = base_query_attr | LOWER;
+    } else if (current_attr & LOWER) {
+      query_attr = base_query_attr | CAPITALIZED;
+    } else if (current_attr & CAPITALIZED) {
+      query_attr = base_query_attr | ASIS;
+    } else {  // nothing.
+      query_attr = base_query_attr | UPPER;
+    }
+    candidate_list.MoveNextAttributes(query_attr);
+
+    // If the next case is intentional ASIS, no need to skip it.
+    if (query_attr & ASIS) {
+      break;
+    }
+
+    const Attributes new_attr =
+        candidate_list.GetDeepestFocusedCandidate().attributes();
+
+    // If the next case is not ASIS, no need to skip it.
+    if (!(new_attr & ASIS)) {
+      break;
+    }
+
+    // This checks an edge case. Even if the next case is also ASIS,
+    // but the next case is only available case, we should not skip it.
+    // If all possible attributes are covered by the current and next cases,
+    // it means the next case is only available case.
+    const Attributes sum_attr = new_attr | current_attr;
+    if ((sum_attr & ASIS) && (sum_attr & UPPER) && (sum_attr & LOWER) &&
+        (sum_attr & CAPITALIZED)) {
+      break;
+    }
+
+    // The new case also contains ASIS, skip it and get the next case.
+    current_attr = new_attr;
+  }
 }
 }  // namespace
 
@@ -281,19 +354,33 @@ bool EngineConverter::ConvertToTransliteration(
     }
 
     DCHECK(CheckState(CONVERSION));
+
+    // The initial transliteration to ASCII is always as-is case.
+    // e.g. もZc → moZc
+    if (query_attr & ASCII) {
+      query_attr |= ASIS;
+    }
     candidate_list_.MoveToAttributes(query_attr);
   } else {
     DCHECK(CheckState(CONVERSION));
-    const Attributes current_attr =
+    Attributes current_attr =
         candidate_list_.GetDeepestFocusedCandidate().attributes();
+    const Attributes common_attr = current_attr & query_attr;
 
-    if ((query_attr & current_attr & ASCII) &&
+    // Transliterations among half-width and full-width will keep the case.
+    // e.g. Mozc → Ｍｏｚｃ
+    if ((common_attr & ASCII) &&
         ((((query_attr & HALF_WIDTH) && (current_attr & FULL_WIDTH))) ||
          (((query_attr & FULL_WIDTH) && (current_attr & HALF_WIDTH))))) {
-      query_attr |= (current_attr & (UPPER | LOWER | CAPITALIZED));
+      query_attr |= (current_attr & (UPPER | LOWER | CAPITALIZED | ASIS));
     }
 
-    candidate_list_.MoveNextAttributes(query_attr);
+    if ((common_attr & ASCII) &&
+        ((common_attr & HALF_WIDTH) || (common_attr & FULL_WIDTH))) {
+      CycleAlphaCase(query_attr, candidate_list_);
+    } else {
+      candidate_list_.MoveNextAttributes(query_attr);
+    }
   }
   candidate_list_visible_ = false;
   // Treat as top conversion candidate on usage stats.

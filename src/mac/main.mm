@@ -39,15 +39,22 @@
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "base/const.h"
+#include "base/crash_report_handler.h"
 #include "base/init_mozc.h"
 #include "base/run_level.h"
 #include "client/client.h"
+#include "config/stats_config_util.h"
 
 int main(int argc, char *argv[]) {
   if (!mozc::RunLevel::IsValidClientRunLevel()) {
     return -1;
   }
 
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+  if (mozc::config::StatsConfigUtil::IsEnabled()) {
+    mozc::CrashReportHandler::Initialize(false);
+  }
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   mozc::InitMozc(argv[0], &argc, &argv);
 
   // Initialize imkServer

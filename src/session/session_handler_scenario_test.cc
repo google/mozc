@@ -158,6 +158,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "toggle_flick_hiragana_preedit_ra.txt",
     DATA_DIR "toggle_flick_hiragana_preedit_wa.txt",
     DATA_DIR "toggle_flick_hiragana_preedit_symbol.txt",
+    DATA_DIR "transliterations_f10.txt",
     DATA_DIR "twelvekeys_switch_inputmode_scenario.txt",
     DATA_DIR "twelvekeys_toggle_flick_alphabet_scenario.txt",
     DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_a.txt",

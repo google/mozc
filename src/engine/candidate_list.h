@@ -64,6 +64,7 @@ enum Attribute {
   UPPER = 32,
   LOWER = 64,
   CAPITALIZED = 128,
+  ASIS = 256,
 };
 
 using Attributes = uint32_t;
