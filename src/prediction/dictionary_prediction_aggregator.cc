@@ -1011,7 +1011,8 @@ void DictionaryPredictionAggregator::AggregateUnigramForMixedConversion(
     // Traverse all remaining elements and check if each result is redundant.
     for (Iter iter = min_iter; iter != max_iter;) {
       // - We do not filter user dictionary word.
-      const bool should_check_redundant = !iter->IsUserDictionaryResult();
+      const bool should_check_redundant =
+          !(iter->candidate_attributes & Segment::Candidate::USER_DICTIONARY);
       if (should_check_redundant &&
           MaybeRedundant(reference_result.value, iter->value)) {
         // Swap out the redundant result.
@@ -1320,6 +1321,7 @@ void DictionaryPredictionAggregator::GetZeroQueryCandidatesForKey(
     std::vector<Result> *results) const {
   DCHECK(results);
 
+  using ZeroQueryResult = std::pair<std::string, ZeroQueryType>;
   std::vector<ZeroQueryResult> zero_query_results;
 
   auto range = dict.equal_range(key);

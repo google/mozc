@@ -42,7 +42,6 @@
 #include "absl/strings/string_view.h"
 #include "base/absl_nullability.h"
 #include "composer/query.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
 
@@ -90,7 +89,6 @@ enum PredictionType {
 };
 // Bitfield to store a set of PredictionType.
 using PredictionTypes = int32_t;
-using ZeroQueryResult = std::pair<std::string, ZeroQueryType>;
 
 struct Result {
   void InitializeByTokenAndTypes(const dictionary::Token &token,
@@ -98,9 +96,6 @@ struct Result {
   void SetTypesAndTokenAttributes(
       PredictionTypes prediction_types,
       dictionary::Token::AttributesBitfield token_attr);
-  bool IsUserDictionaryResult() const {
-    return (candidate_attributes & Segment::Candidate::USER_DICTIONARY) != 0;
-  }
 
   std::string key;
   std::string value;
@@ -118,8 +113,8 @@ struct Result {
   // separately from the original LM cost to perform rescoring in a rigorous
   // manner.
   int cost = 0;
-  int lid = 0;
-  int rid = 0;
+  uint16_t lid = 0;
+  uint16_t rid = 0;
   uint32_t candidate_attributes = 0;
   // Boundary information for realtime conversion.
   // This will be set only for realtime conversion result candidates.

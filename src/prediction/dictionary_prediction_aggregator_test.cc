@@ -1128,6 +1128,11 @@ TEST_F(DictionaryPredictionAggregatorTest,
   config_->set_use_realtime_conversion(false);
   table_->LoadFromFile("system://12keys-hiragana.tsv");
 
+  auto is_user_dictionary_result = [](const Result &res) {
+    return (res.candidate_attributes & Segment::Candidate::USER_DICTIONARY) !=
+           0;
+  };
+
   {
     // Test prediction from input あ.
     InsertInputSequence(kHiraganaA, composer_.get());
@@ -1141,20 +1146,19 @@ TEST_F(DictionaryPredictionAggregatorTest,
     aggregator.AggregateUnigramForMixedConversion(convreq, &results);
 
     // Check if "aaa" is not filtered.
-    auto iter = std::find_if(
-        results.begin(), results.end(), [&kHiraganaA](const Result &res) {
+    auto iter =
+        std::find_if(results.begin(), results.end(), [&](const Result &res) {
           return res.key == kHiraganaA && res.value == "aaa" &&
-                 res.IsUserDictionaryResult();
+                 is_user_dictionary_result(res);
         });
     EXPECT_NE(results.end(), iter);
 
     // "bbb" is looked up from input "あ" but it will be filtered because it is
     // from user dictionary with unknown POS ID.
-    iter = std::find_if(results.begin(), results.end(),
-                        [&kHiraganaAA](const Result &res) {
-                          return res.key == kHiraganaAA && res.value == "bbb" &&
-                                 res.IsUserDictionaryResult();
-                        });
+    iter = std::find_if(results.begin(), results.end(), [&](const Result &res) {
+      return res.key == kHiraganaAA && res.value == "bbb" &&
+             is_user_dictionary_result(res);
+    });
     EXPECT_EQ(iter, results.end());
   }
 
@@ -1172,20 +1176,19 @@ TEST_F(DictionaryPredictionAggregatorTest,
     aggregator.AggregateUnigramForMixedConversion(convreq, &results);
 
     // Check if "aaa" is not found as its key is あ.
-    auto iter = std::find_if(
-        results.begin(), results.end(), [&kHiraganaA](const Result &res) {
+    auto iter =
+        std::find_if(results.begin(), results.end(), [&](const Result &res) {
           return res.key == kHiraganaA && res.value == "aaa" &&
-                 res.IsUserDictionaryResult();
+                 is_user_dictionary_result(res);
         });
     EXPECT_EQ(iter, results.end());
 
     // Unlike the above case for "あ", "bbb" is now found because input key is
     // exactly "ああ".
-    iter = std::find_if(results.begin(), results.end(),
-                        [&kHiraganaAA](const Result &res) {
-                          return res.key == kHiraganaAA && res.value == "bbb" &&
-                                 res.IsUserDictionaryResult();
-                        });
+    iter = std::find_if(results.begin(), results.end(), [&](const Result &res) {
+      return res.key == kHiraganaAA && res.value == "bbb" &&
+             is_user_dictionary_result(res);
+    });
     EXPECT_NE(results.end(), iter);
   }
 }

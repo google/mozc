@@ -40,7 +40,7 @@
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "converter/segments.h"
+#include "converter/candidate.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
@@ -127,7 +127,8 @@ void SingleKanjiPredictionAggregator::AppendResults(
     result.lid = general_symbol_id_;
     result.rid = general_symbol_id_;
     if (kanji_key.size() < original_input_key.size()) {
-      result.candidate_attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      result.candidate_attributes =
+          converter::Candidate::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = Util::CharsLen(kanji_key);
     }
 

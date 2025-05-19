@@ -39,6 +39,7 @@
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/result.h"
@@ -156,7 +157,7 @@ TEST_F(SingleKanjiPredictionAggregatorTest, Result) {
   EXPECT_EQ(result.lid, pos_matcher_->GetGeneralSymbolId());
   EXPECT_EQ(result.rid, pos_matcher_->GetGeneralSymbolId());
   EXPECT_FALSE(result.candidate_attributes &
-               Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+               converter::Candidate::PARTIALLY_KEY_CONSUMED);
   EXPECT_EQ(result.consumed_key_size, 0);
 }
 
@@ -173,7 +174,7 @@ TEST_F(SingleKanjiPredictionAggregatorTest, PrefixResult) {
   EXPECT_EQ(result.lid, pos_matcher_->GetGeneralSymbolId());
   EXPECT_EQ(result.rid, pos_matcher_->GetGeneralSymbolId());
   EXPECT_TRUE(result.candidate_attributes &
-              Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+              converter::Candidate::PARTIALLY_KEY_CONSUMED);
   EXPECT_EQ(result.consumed_key_size, strings::CharsLen("あけぼの"));
 }
 
