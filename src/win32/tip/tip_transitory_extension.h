@@ -38,30 +38,30 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-// This class provides utility methods to access parent object provided by
-// Transitory Extensions.
-// Starting with Windows Vista, CUAS provides Transitory Extensions with which
-// full text store support is available for edit control, rich edit control,
-// and Trident edit control. You can use these text stores mainly for one-shot
-// read/read-write access. For keyboard input, which may require text
-// composition, should use the original (transitory) text store.
-// See the following article for the details about Transitory Extensions.
-// http://blogs.msdn.com/b/tsfaware/archive/2007/05/21/transitory-extensions.aspx
+// This class provides a utility method to derive an ITfContext object that is
+// expected to support surrounding text TSF APIs, or get a nullptr if it is
+// supposed to be unavailable.
+//
+// This class can be used to get a supplimental ITfContext object that supports
+// full text store operations when the target ITfContext is actually an EditText
+// or RichEdit controls. This mechanism is called Transitory Extensions.
+// https://learn.microsoft.com/en-us/archive/blogs/tsfaware/transitory-extensions-or-how-to-get-full-text-store-support-in-tsf-unaware-controls
+// https://web.archive.org/web/20140518145404/http://blogs.msdn.com/b/tsfaware/archive/2007/05/21/transitory-extensions.aspx
+//
+// Another important use case of this class is to filter out mulfunctioning
+// ITfContext objects by returning a nullpter when there is no way to get
+// surrounding text through TSF APIs. This is because CUAS (Cicero Unaware
+// Application Support) does not try to fully support surrounding text APIs
+// through IMM32 APIs such as IMR_DOCUMENTFEED. Such an ITfContext object needs
+// to be filtered out before trying to get surrounding text through TSF APIs.
 class TipTransitoryExtension {
  public:
   TipTransitoryExtension() = delete;
   TipTransitoryExtension(const TipTransitoryExtension &) = delete;
   TipTransitoryExtension &operator=(const TipTransitoryExtension &) = delete;
 
-  // Returns the parent (full-text-store) document manager if exists.
-  // Returns |document_manager| otherwise.
-  static wil::com_ptr_nothrow<ITfDocumentMgr> ToParentDocumentIfExists(
-      ITfDocumentMgr *document_manager);
-
-  // Returns the parent (full-text-store) context if exists.
-  // Returns |context| otherwise.
-  static wil::com_ptr_nothrow<ITfContext> ToParentContextIfExists(
-      ITfContext *context);
+  // Returns full-text-store context if available, otherwise returns |nullptr|.
+  static wil::com_ptr_nothrow<ITfContext> AsFullContext(ITfContext *context);
 };
 
 }  // namespace tsf

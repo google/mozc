@@ -285,11 +285,6 @@ void FillMozcContextForOnKey(TipTextService *text_service, ITfContext *context,
   if (!TipSurroundingText::Get(text_service, context, &info)) {
     return;
   }
-  if (info.is_transitory) {
-    // Ignore transitory context as it may not contain correct
-    // surrounding text info.
-    return;
-  }
   if (info.has_preceding_text) {
     mozc_context->set_preceding_text(WideToUtf8(info.preceding_text));
   }
