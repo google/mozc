@@ -39,7 +39,6 @@
 #include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/friend_test.h"
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/engine_interface.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
@@ -152,8 +151,7 @@ class MozcEngine : public EngineInterface {
   std::vector<int32_t> unique_candidate_ids_;
   IbusConfig ibus_config_;
 
-  friend class LaunchToolTest;
-  FRIEND_TEST(LaunchToolTest, LaunchToolTest);
+  friend class MozcEngineTestPeer;
 };
 
 bool CanUseMozcCandidateWindow(

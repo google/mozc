@@ -138,6 +138,7 @@ mozc_cc_test(
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "//testing:test_peer",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",

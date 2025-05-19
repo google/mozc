@@ -44,6 +44,7 @@
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 namespace mozc {
 namespace keymap {
@@ -54,6 +55,16 @@ config::Config GetDefaultConfig(config::Config::SessionKeymap keymap) {
   return config;
 }
 }  // namespace
+
+class KeyMapManagerTestPeer : public testing::TestPeer<KeyMapManager> {
+ public:
+  explicit KeyMapManagerTestPeer(KeyMapManager &manager)
+      : testing::TestPeer<KeyMapManager>(manager) {}
+
+  PEER_METHOD(AddCommand);
+  PEER_METHOD(LoadStream);
+  PEER_METHOD(LoadStreamWithErrors);
+};
 
 class KeyMapTest : public testing::TestWithTempUserProfile {
  protected:
@@ -294,7 +305,7 @@ TEST_F(KeyMapTest, DefaultKeyBindings) {
   KeyMapManager manager;
 
   std::istringstream iss("", std::istringstream::in);
-  EXPECT_TRUE(manager.LoadStream(&iss));
+  EXPECT_TRUE(KeyMapManagerTestPeer(manager).LoadStream(&iss));
 
   {  // Check key bindings of TextInput.
     commands::KeyEvent key_event;
@@ -331,25 +342,27 @@ TEST_F(KeyMapTest, DefaultKeyBindings) {
 
 TEST_F(KeyMapTest, LoadStreamWithErrors) {
   KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
+
   std::vector<std::string> errors;
   std::unique_ptr<std::istream> is(
       ConfigFileStream::OpenReadText("system://atok.tsv"));
-  EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
+  EXPECT_TRUE(manager_peer.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
   errors.clear();
   is = ConfigFileStream::OpenReadText("system://ms-ime.tsv");
-  EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
+  EXPECT_TRUE(manager_peer.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
   errors.clear();
   is = ConfigFileStream::OpenReadText("system://kotoeri.tsv");
-  EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
+  EXPECT_TRUE(manager_peer.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
   errors.clear();
   is = ConfigFileStream::OpenReadText("system://mobile.tsv");
-  EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
+  EXPECT_TRUE(manager_peer.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 }
 
@@ -564,6 +577,7 @@ TEST_F(KeyMapTest, Initialize) {
 
 TEST_F(KeyMapTest, AddCommand) {
   KeyMapManager manager;
+  KeyMapManagerTestPeer manager_peer(manager);
   commands::KeyEvent key_event;
   constexpr char kKeyEvent[] = "Ctrl Shift Insert";
 
@@ -573,28 +587,30 @@ TEST_F(KeyMapTest, AddCommand) {
     CompositionState::Commands command;
     EXPECT_FALSE(manager.GetCommandComposition(key_event, &command));
 
-    EXPECT_TRUE(manager.AddCommand("Composition", kKeyEvent, "Cancel"));
+    EXPECT_TRUE(manager_peer.AddCommand("Composition", kKeyEvent, "Cancel"));
 
     EXPECT_TRUE(manager.GetCommandComposition(key_event, &command));
     EXPECT_EQ(command, CompositionState::CANCEL);
   }
 
   {  // Error detections
-    EXPECT_FALSE(manager.AddCommand("void", kKeyEvent, "Cancel"));
-    EXPECT_FALSE(manager.AddCommand("Composition", kKeyEvent, "Unknown"));
-    EXPECT_FALSE(manager.AddCommand("Composition", "INVALID", "Cancel"));
+    EXPECT_FALSE(manager_peer.AddCommand("void", kKeyEvent, "Cancel"));
+    EXPECT_FALSE(manager_peer.AddCommand("Composition", kKeyEvent, "Unknown"));
+    EXPECT_FALSE(manager_peer.AddCommand("Composition", "INVALID", "Cancel"));
   }
 }
 
 TEST_F(KeyMapTest, ZeroQuerySuggestion) {
   KeyMapManager manager;
-  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion", "ESC", "Cancel"));
-  EXPECT_TRUE(
-      manager.AddCommand("ZeroQuerySuggestion", "Tab", "PredictAndConvert"));
-  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion", "Shift Enter",
-                                 "CommitFirstSuggestion"));
+  KeyMapManagerTestPeer manager_peer(manager);
+  EXPECT_TRUE(manager_peer.AddCommand("ZeroQuerySuggestion", "ESC", "Cancel"));
+  EXPECT_TRUE(manager_peer.AddCommand("ZeroQuerySuggestion", "Tab",
+                                      "PredictAndConvert"));
+  EXPECT_TRUE(manager_peer.AddCommand("ZeroQuerySuggestion", "Shift Enter",
+                                      "CommitFirstSuggestion"));
   // For fallback testing
-  EXPECT_TRUE(manager.AddCommand("Precomposition", "Ctrl Backspace", "Revert"));
+  EXPECT_TRUE(
+      manager_peer.AddCommand("Precomposition", "Ctrl Backspace", "Revert"));
 
   commands::KeyEvent key_event;
   PrecompositionState::Commands command;

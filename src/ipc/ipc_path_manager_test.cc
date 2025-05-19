@@ -46,12 +46,23 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 #if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
 #endif  // __ANDROID__ || __wasm__
 
 namespace mozc {
+
+class IPCPathManagerTestPeer : public testing::TestPeer<IPCPathManager> {
+ public:
+  explicit IPCPathManagerTestPeer(IPCPathManager &manager)
+      : testing::TestPeer<IPCPathManager>(manager) {}
+
+  PEER_METHOD(ShouldReload);
+  PEER_VARIABLE(path_mutex_);
+  PEER_VARIABLE(ipc_path_info_);
+};
 
 class IPCPathManagerTest : public testing::TestWithTempUserProfile {};
 
@@ -106,29 +117,31 @@ TEST_F(IPCPathManagerTest, ReloadTest) {
   // We have only mock implementations for Windows, so no test should be run.
 #ifndef _WIN32
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager("reload_test");
+  IPCPathManagerTestPeer manager_peer(*manager);
 
   EXPECT_TRUE(manager->CreateNewPathName());
   EXPECT_TRUE(manager->SavePathName());
 
   // Just after the save, there are no need to reload.
-  EXPECT_FALSE(manager->ShouldReload());
+  EXPECT_FALSE(manager_peer.ShouldReload());
 
   // Modify the saved file explicitly.
-  EXPECT_TRUE(manager->path_mutex_->UnLock());
+  EXPECT_TRUE(manager_peer.path_mutex_()->UnLock());
   absl::SleepFor(absl::Seconds(1));
   std::string filename = FileUtil::JoinPath(
       SystemUtil::GetUserProfileDirectory(), ".reload_test.ipc");
   ASSERT_OK(FileUtil::SetContents(filename, "foobar"));
-  EXPECT_TRUE(manager->ShouldReload());
+  EXPECT_TRUE(manager_peer.ShouldReload());
 #endif  // _WIN32
 }
 
 TEST_F(IPCPathManagerTest, PathNameTest) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager("path_name_test");
+  IPCPathManagerTestPeer manager_peer(*manager);
 
   EXPECT_TRUE(manager->CreateNewPathName());
   EXPECT_TRUE(manager->SavePathName());
-  const ipc::IPCPathInfo original_path = manager->ipc_path_info_;
+  const ipc::IPCPathInfo original_path = manager_peer.ipc_path_info_();
   EXPECT_EQ(original_path.protocol_version(), IPC_PROTOCOL_VERSION);
   // Checks that versions are same.
   EXPECT_EQ(original_path.product_version(), Version::GetMozcVersion());
@@ -136,10 +149,10 @@ TEST_F(IPCPathManagerTest, PathNameTest) {
   EXPECT_TRUE(original_path.has_process_id());
   EXPECT_TRUE(original_path.has_thread_id());
 
-  manager->ipc_path_info_.Clear();
+  manager_peer.ipc_path_info_().Clear();
   EXPECT_TRUE(manager->LoadPathName());
 
-  const ipc::IPCPathInfo loaded_path = manager->ipc_path_info_;
+  const ipc::IPCPathInfo loaded_path = manager_peer.ipc_path_info_();
   EXPECT_EQ(loaded_path.protocol_version(), original_path.protocol_version());
   EXPECT_EQ(loaded_path.product_version(), original_path.product_version());
   EXPECT_EQ(loaded_path.key(), original_path.key());

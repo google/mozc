@@ -31,11 +31,10 @@
 #define MOZC_BASE_ANDROID_UTIL_H_
 
 #include <jni.h>
+
 #include <map>
 #include <set>
 #include <string>
-
-#include "testing/friend_test.h"
 
 namespace mozc {
 
@@ -65,8 +64,7 @@ class AndroidUtil {
                                        const std::string &default_value);
 
  private:
-  FRIEND_TEST(AndroidUtilTest, ParseLine_valid);
-  FRIEND_TEST(AndroidUtilTest, ParseLine_invalid);
+  friend class AndroidUtilTestPeer;
 
   // Gets the property's value, which is read from file system.
   // If successfully done, the result will be stored in |output| and

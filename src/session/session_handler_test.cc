@@ -65,6 +65,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
@@ -72,6 +73,15 @@ ABSL_DECLARE_FLAG(int32_t, last_command_timeout);
 ABSL_DECLARE_FLAG(int32_t, last_create_session_timeout);
 
 namespace mozc {
+
+class KeyMapManagerAccessorTestPeer : public testing::TestPeer<SessionHandler> {
+ public:
+  explicit KeyMapManagerAccessorTestPeer(SessionHandler &handler)
+      : testing::TestPeer<SessionHandler>(handler) {}
+
+  PEER_VARIABLE(key_map_manager_);
+};
+
 namespace {
 
 using ::mozc::session::testing::SessionHandlerTestBase;
@@ -568,7 +578,8 @@ TEST_F(SessionHandlerTest, KeyMapTest) {
     input->set_type(commands::Input::SET_CONFIG);
     input->mutable_config()->set_session_keymap(config::Config::MSIME);
     EXPECT_TRUE(handler.EvalCommand(&command));
-    msime_keymap = handler.key_map_manager_.get();
+    msime_keymap =
+        KeyMapManagerAccessorTestPeer(handler).key_map_manager_().get();
   }
   {
     commands::Command command;
@@ -579,7 +590,8 @@ TEST_F(SessionHandlerTest, KeyMapTest) {
     EXPECT_TRUE(handler.EvalCommand(&command));
     // As different keymap is set, the handler's keymap manager should be
     // updated.
-    EXPECT_NE(handler.key_map_manager_.get(), msime_keymap);
+    EXPECT_NE(KeyMapManagerAccessorTestPeer(handler).key_map_manager_().get(),
+              msime_keymap);
   }
 }
 

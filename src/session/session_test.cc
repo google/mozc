@@ -68,13 +68,26 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
 
 namespace session {
-namespace {
 
+class SessionTestPeer : testing::TestPeer<Session> {
+ public:
+  explicit SessionTestPeer(Session &session)
+      : testing::TestPeer<Session>(session) {}
+
+  PEER_METHOD(IsFullWidthInsertSpace);
+  PEER_METHOD(PushUndoContext);
+
+  PEER_VARIABLE(context_);
+  PEER_VARIABLE(undo_contexts_);
+};
+
+namespace {
 using ::mozc::commands::Request;
 using ::testing::_;
 using ::testing::DoAll;
@@ -2389,6 +2402,7 @@ TEST_F(SessionTest, RequestUndo) {
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
 
   Session session(engine);
+  SessionTestPeer session_peer(session);
 
   // It is OK not to check ImeContext::DIRECT because you cannot
   // assign any key event to Undo command in DIRECT mode.
@@ -2406,12 +2420,12 @@ TEST_F(SessionTest, RequestUndo) {
 
   InitSessionToPrecomposition(&session);
   SetUndoContext(&session, converter.get());
-  session.context_->set_state(ImeContext::COMPOSITION);
+  session_peer.context_()->set_state(ImeContext::COMPOSITION);
   EXPECT_TRUE(TryUndoAndAssertSuccess(&session));
 
   InitSessionToPrecomposition(&session);
   SetUndoContext(&session, converter.get());
-  session.context_->set_state(ImeContext::CONVERSION);
+  session_peer.context_()->set_state(ImeContext::CONVERSION);
   EXPECT_TRUE(TryUndoAndAssertSuccess(&session));
 }
 
@@ -5589,65 +5603,67 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
     Session session(engine);
+    SessionTestPeer session_peer(session);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     // Hiragana
     session.InputModeHiragana(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-Katakana
     command.Clear();
     session.InputModeFullKatakana(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-Katakana
     command.Clear();
     session.InputModeHalfKatakana(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-ASCII
     command.Clear();
     session.InputModeFullASCII(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-ASCII
     command.Clear();
     session.InputModeHalfASCII(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Direct
     command.Clear();
     session.IMEOff(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
   }
 
   {
     // Set config to 'half' -- all mode has to emit half-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
     Session session(engine);
+    SessionTestPeer session_peer(session);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     // Hiragana
     command.Clear();
     session.InputModeHiragana(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-Katakana
     command.Clear();
     session.InputModeFullKatakana(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-Katakana
     command.Clear();
     session.InputModeHalfKatakana(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-ASCII
     command.Clear();
     session.InputModeFullASCII(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-ASCII
     command.Clear();
     session.InputModeHalfASCII(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Direct
     command.Clear();
     session.IMEOff(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
   }
 
   {
@@ -5655,33 +5671,34 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // full-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
     Session session(engine);
+    SessionTestPeer session_peer(session);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
     // Hiragana
     command.Clear();
     session.InputModeHiragana(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-Katakana
     command.Clear();
     session.InputModeFullKatakana(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(command.input()));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(command.input()));
     // Half-Katakana
     command.Clear();
     session.InputModeHalfKatakana(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Full-ASCII
     command.Clear();
     session.InputModeFullASCII(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Half-ASCII
     command.Clear();
     session.InputModeHalfASCII(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(empty_input));
     // Direct
     command.Clear();
     session.IMEOff(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(empty_input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(empty_input));
   }
 
   // When |input| has |input.key().mode()| field,
@@ -5691,6 +5708,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
     Session session(engine);
+    SessionTestPeer session_peer(session);
     session.SetConfig(config);
     InitSessionToPrecomposition(&session);
 
@@ -5701,27 +5719,27 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Hiragana
     commands::Command command;
     session.InputModeHiragana(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Full-Katakana
     command.Clear();
     session.InputModeFullKatakana(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Half-Katakana
     command.Clear();
     session.InputModeHalfKatakana(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Full-ASCII
     command.Clear();
     session.InputModeFullASCII(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Half-ASCII
     command.Clear();
     session.InputModeHalfASCII(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
     // Direct
     command.Clear();
     session.IMEOff(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
 
     // Use FULL_ASCII for the new input mode
     input.mutable_key()->set_mode(commands::FULL_ASCII);
@@ -5729,27 +5747,27 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Hiragana
     command.Clear();
     session.InputModeHiragana(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Full-Katakana
     command.Clear();
     session.InputModeFullKatakana(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Half-Katakana
     command.Clear();
     session.InputModeHalfKatakana(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Full-ASCII
     command.Clear();
     session.InputModeFullASCII(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Half-ASCII
     command.Clear();
     session.InputModeHalfASCII(&command);
-    EXPECT_TRUE(session.IsFullWidthInsertSpace(input));
+    EXPECT_TRUE(session_peer.IsFullWidthInsertSpace(input));
     // Direct
     command.Clear();
     session.IMEOff(&command);
-    EXPECT_FALSE(session.IsFullWidthInsertSpace(input));
+    EXPECT_FALSE(session_peer.IsFullWidthInsertSpace(input));
   }
 }
 
@@ -10130,12 +10148,13 @@ TEST_F(SessionTest, SetConfig) {
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
   Session session(engine);
-  session.PushUndoContext();
+  SessionTestPeer session_peer(session);
+  session_peer.PushUndoContext();
   session.SetConfig(config);
 
-  EXPECT_EQ(config.get(), &session.context_->GetConfig());
+  EXPECT_EQ(config.get(), &session_peer.context_()->GetConfig());
   // SetConfig() resets undo context.
-  EXPECT_TRUE(session.undo_contexts_.empty());
+  EXPECT_TRUE(session_peer.undo_contexts_().empty());
 }
 
 TEST_F(SessionTest, ClearCompositionByBackspace) {

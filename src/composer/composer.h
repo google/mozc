@@ -49,7 +49,6 @@
 #include "composer/transliterators.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/friend_test.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -368,7 +367,7 @@ class Composer final {
   }
 
  private:
-  FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);
+  friend class ComposerTestPeer;
 
   bool ProcessCompositionInput(CompositionInput input);
 

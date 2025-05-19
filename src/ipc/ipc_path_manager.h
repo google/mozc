@@ -40,7 +40,6 @@
 #include "absl/synchronization/mutex.h"
 #include "base/process_mutex.h"
 #include "ipc/ipc.pb.h"
-#include "testing/friend_test.h"
 
 #ifdef _WIN32
 #include "absl/container/flat_hash_map.h"
@@ -113,8 +112,7 @@ class IPCPathManager {
   void Clear();
 
  private:
-  FRIEND_TEST(IPCPathManagerTest, ReloadTest);
-  FRIEND_TEST(IPCPathManagerTest, PathNameTest);
+  friend class IPCPathManagerTestPeer;
 
   bool LoadPathNameInternal();
 

@@ -42,7 +42,6 @@
 #include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/friend_test.h"
 
 namespace mozc {
 namespace keymap {
@@ -283,12 +282,7 @@ class KeyMapManager {
 
  private:
   friend class KeyMapTest;
-  FRIEND_TEST(KeyMapTest, AddRule);
-  FRIEND_TEST(KeyMapTest, DefaultKeyBindings);
-  FRIEND_TEST(KeyMapTest, LoadStreamWithErrors);
-  FRIEND_TEST(KeyMapTest, AddCommand);
-  FRIEND_TEST(KeyMapTest, ZeroQuerySuggestion);
-  FRIEND_TEST(KeyMapTest, IsReloadConfigRequired);
+  friend class KeyMapManagerTestPeer;
 
   void Reset();
   void InitCommandData();

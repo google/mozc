@@ -47,7 +47,6 @@
 #include "session/keymap.h"
 #include "session/session.h"
 #include "storage/lru_cache.h"
-#include "testing/friend_test.h"
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
@@ -78,9 +77,7 @@ class SessionHandler {
   const EngineInterface &engine() const { return *engine_; }
 
  private:
-  FRIEND_TEST(SessionHandlerTest, KeyMapTest);
-  FRIEND_TEST(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest);
-  FRIEND_TEST(SessionHandlerTest, EngineRollbackDataTest);
+  friend class KeyMapManagerAccessorTestPeer;
 
   using SessionMap =
       mozc::storage::LruCache<SessionID, std::unique_ptr<session::Session>>;

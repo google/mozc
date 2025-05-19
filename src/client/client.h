@@ -48,7 +48,6 @@
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/friend_test.h"
 
 // The obsolete and unmaintained *main.cc files (server_launcher_main.cc and
 // ping_server_main.cc, client_performance_test_main.cc,
@@ -175,12 +174,7 @@ class Client : public ClientInterface {
   bool OpenBrowser(const std::string &url) override;
 
  private:
-  FRIEND_TEST(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest);
-  FRIEND_TEST(SessionPlaybackTest, PushAndResetHistoryWithModeTest);
-  FRIEND_TEST(SessionPlaybackTest, PushAndResetHistoryWithDirectTest);
-  FRIEND_TEST(SessionPlaybackTest, PlaybackHistoryTest);
-  FRIEND_TEST(SessionPlaybackTest, SetModeInitializerTest);
-  FRIEND_TEST(SessionPlaybackTest, ConsumedTest);
+  friend class ClientTestPeer;
 
   enum ServerStatus {
     SERVER_UNKNOWN,           // initial status

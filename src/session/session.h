@@ -46,7 +46,6 @@
 #include "protocol/config.pb.h"
 #include "session/ime_context.h"
 #include "session/keymap.h"
-#include "testing/friend_test.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -270,10 +269,7 @@ class Session {
   const ImeContext &context() const;
 
  private:
-  FRIEND_TEST(SessionTest, OutputInitialComposition);
-  FRIEND_TEST(SessionTest, IsFullWidthInsertSpace);
-  FRIEND_TEST(SessionTest, RequestUndo);
-  FRIEND_TEST(SessionTest, SetConfig);
+  friend class SessionTestPeer;
 
   std::unique_ptr<ImeContext> context_;
 

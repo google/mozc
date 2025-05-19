@@ -149,6 +149,7 @@ mozc_cc_test(
         "//base:version",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "//testing:test_peer",
         "@com_google_absl//absl/time",
     ],
 )

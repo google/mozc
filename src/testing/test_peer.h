@@ -36,20 +36,22 @@ namespace testing {
 // Helper class  to define TestPeer class.
 //
 // Usage:
-//  Here FooTestPeer allows to access `CallPrivateMethod` and
-//   `CallStaticPrivateMethod` of class `Foo`.
+//  Here FooTestPeer allows to access private `CallPrivateMethod`,
+//   `CallStaticPrivateMethod`, and `private_variable_` of class `Foo`.
 //
-// class FooTestPeer : testing::TestPeer<Foo> {
+// class FooTestPeer : public testing::TestPeer<Foo> {
 //   public:
-//     FooTestPeer(Foo &foo) : testing:TestPeer<Foo>(foo) {}
+//     explicit FooTestPeer(Foo &foo) : testing:TestPeer<Foo>(foo) {}
 //
 //   PEER_METHOD(CallPrivateMethod);
 //   PEER_STATIC_METHOD(CallStaticPrivateMethod);
+//   PEER_VARIABLE(private_variable_);
 // };
 //
 //  Foo foo;
 //  EXPECT_TRUE(FooTestPeer(foo).CallPrivateMethod(arg1, arg2, ...));
 //  EXPECT_TRUE(FooTestPeer::CallStaticPrivateMethod(arg1, arg2, ...));
+//  EXPECT_EQ(FooTestPeer(foo).private_variable_(), 10);
 
 #define PEER_METHOD(func_name)                            \
   template <typename... Args>                             \
@@ -62,6 +64,13 @@ namespace testing {
   static auto func_name(Args &&...args) {                    \
     return TypeName::func_name(std::forward<Args>(args)...); \
   }
+
+#define PEER_VARIABLE(variable_name)                \
+  decltype(value_.variable_name) &variable_name() { \
+    return value_.variable_name;                    \
+  }
+
+#define PEER_DECLARE(type_name) using type_name = TypeName::type_name;
 
 template <typename T>
 class TestPeer {

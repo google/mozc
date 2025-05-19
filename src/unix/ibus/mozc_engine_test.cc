@@ -39,10 +39,20 @@
 #include "protocol/commands.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "testing/test_peer.h"
 #include "unix/ibus/ibus_config.h"
 
 namespace mozc {
 namespace ibus {
+
+class MozcEngineTestPeer : testing::TestPeer<MozcEngine> {
+ public:
+  explicit MozcEngineTestPeer(const MozcEngine &engine)
+      : testing::TestPeer<MozcEngine>(engine) {}
+
+  PEER_METHOD(LaunchTool);
+};
+
 namespace {
 
 bool CallCanUseMozcCandidateWindow(
@@ -61,8 +71,8 @@ using ::testing::Return;
 class LaunchToolTest : public testing::Test {
  public:
   LaunchToolTest() = default;
-  LaunchToolTest(const LaunchToolTest&) = delete;
-  LaunchToolTest& operator=(const LaunchToolTest&) = delete;
+  LaunchToolTest(const LaunchToolTest &) = delete;
+  LaunchToolTest &operator=(const LaunchToolTest &) = delete;
 
  protected:
   virtual void SetUp() {
@@ -74,7 +84,11 @@ class LaunchToolTest : public testing::Test {
 
   virtual void TearDown() { mozc_engine_.reset(); }
 
-  client::ClientMock* mock_;
+  MozcEngineTestPeer mozc_engine_peer() {
+    return MozcEngineTestPeer(*mozc_engine_);
+  }
+
+  client::ClientMock *mock_;
   std::unique_ptr<MozcEngine> mozc_engine_;
 };
 
@@ -84,29 +98,30 @@ TEST_F(LaunchToolTest, LaunchToolTest) {
   // Launch config dialog
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
   EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(true));
-  EXPECT_TRUE(mozc_engine_->LaunchTool(output));
+  EXPECT_TRUE(mozc_engine_peer().LaunchTool(output));
 
   // Launch dictionary tool
   output.set_launch_tool_mode(commands::Output::DICTIONARY_TOOL);
   EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(true));
-  EXPECT_TRUE(mozc_engine_->LaunchTool(output));
+  EXPECT_TRUE(mozc_engine_peer().LaunchTool(output));
 
   // Launch word register dialog
   output.set_launch_tool_mode(commands::Output::WORD_REGISTER_DIALOG);
   EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(true));
-  EXPECT_TRUE(mozc_engine_->LaunchTool(output));
+  EXPECT_TRUE(mozc_engine_peer().LaunchTool(output));
 
   // Launch no tool(means do nothing)
   output.set_launch_tool_mode(commands::Output::NO_TOOL);
   EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(false));
-  EXPECT_FALSE(mozc_engine_->LaunchTool(output));
+  EXPECT_FALSE(mozc_engine_peer().LaunchTool(output));
 
   // Something occurring in client::Client::LaunchTool
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
   EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(false));
-  EXPECT_FALSE(mozc_engine_->LaunchTool(output));
+  EXPECT_FALSE(mozc_engine_peer().LaunchTool(output));
 }
 
+// clang-format off
 TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_X11) {
   // Default enabled
   EXPECT_TRUE(CallCanUseMozcCandidateWindow(R"(
@@ -203,6 +218,7 @@ TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_Wayland) {
     {"XDG_CURRENT_DESKTOP", "KDE"}
   }));
 }
+// clang-format on
 
 }  // namespace ibus
 }  // namespace mozc

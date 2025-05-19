@@ -54,9 +54,18 @@
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/test_peer.h"
 
 namespace mozc {
 namespace client {
+
+class ClientTestPeer : public testing::TestPeer<Client> {
+ public:
+  explicit ClientTestPeer(Client &client) : testing::TestPeer<Client>(client) {}
+
+  PEER_METHOD(GetHistoryInputs);
+};
+
 namespace {
 
 constexpr char kPrecedingText[] = "preceding_text";
@@ -990,6 +999,8 @@ class SessionPlaybackTest : public ::testing::Test {
     ipc_client_factory_->SetMockResponse(response);
   }
 
+  ClientTestPeer client_peer() { return ClientTestPeer(*client_); }
+
   std::unique_ptr<IPCClientFactoryMock> ipc_client_factory_;
   std::unique_ptr<IPCClientInterface> ipc_client_;
   std::unique_ptr<Client> client_;
@@ -1014,7 +1025,7 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest) {
   EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   std::vector<commands::Input> history;
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 1);
 
   mock_output.Clear();
@@ -1028,7 +1039,7 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest) {
   EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   // history should be reset.
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 0);
 }
 
@@ -1060,7 +1071,7 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
   EXPECT_EQ(output.mode(), commands::HIRAGANA);
 
   std::vector<commands::Input> history;
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 2);
 
   mock_output.Clear();
@@ -1071,7 +1082,7 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
   EXPECT_EQ(output.consumed(), mock_output.consumed());
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
 #ifdef __APPLE__
   // history is reset, but initializer should be added because the last mode
   // is not DIRECT.
@@ -1114,7 +1125,7 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithDirectTest) {
   EXPECT_EQ(output.mode(), commands::DIRECT);
 
   std::vector<commands::Input> history;
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 2);
 
   mock_output.Clear();
@@ -1127,7 +1138,7 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithDirectTest) {
   EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   // history is reset, and initializer should not be added.
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 0);
 }
 
@@ -1152,7 +1163,7 @@ TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
   EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   std::vector<commands::Input> history;
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 2);
 
   // Invalid id
@@ -1163,11 +1174,11 @@ TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
 
 #ifndef DEBUG
   // PlaybackHistory and push history
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 3);
 #else   // DEBUG
   // PlaybackHistory, dump history(including reset), and add last input
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 1);
 #endif  // DEBUG
 }
@@ -1207,7 +1218,7 @@ TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
   EXPECT_EQ(output.mode(), commands::FULL_KATAKANA);
 
   std::vector<commands::Input> history;
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 3);
 
   mock_output.Clear();
@@ -1218,7 +1229,7 @@ TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
   EXPECT_EQ(output.consumed(), mock_output.consumed());
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
 #ifdef __APPLE__
   // history is reset, but initializer should be added.
   // TODO(team): fix b/10250883 to remove this special treatment.
@@ -1252,7 +1263,7 @@ TEST_F(SessionPlaybackTest, ConsumedTest) {
   EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   std::vector<commands::Input> history;
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 2);
 
   mock_output.set_consumed(false);
@@ -1262,7 +1273,7 @@ TEST_F(SessionPlaybackTest, ConsumedTest) {
   EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   // Do not push unconsumed input
-  client_->GetHistoryInputs(&history);
+  client_peer().GetHistoryInputs(&history);
   EXPECT_EQ(history.size(), 2);
 }
 }  // namespace client

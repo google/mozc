@@ -50,10 +50,20 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
+#include "testing/test_peer.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace composer {
+
+class ComposerTestPeer : public testing::TestPeer<Composer> {
+ public:
+  explicit ComposerTestPeer(Composer &composer)
+      : testing::TestPeer<Composer>(composer) {}
+
+  PEER_METHOD(ApplyTemporaryInputMode);
+};
+
 namespace {
 
 using ::mozc::commands::KeyEvent;
@@ -891,6 +901,8 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   constexpr bool kCapsLocked = true;
   constexpr bool kCapsUnlocked = false;
 
+  ComposerTestPeer composer_peer(*composer_);
+
   table_->AddRule("a", "あ", "");
   composer_->SetInputMode(transliteration::HIRAGANA);
 
@@ -915,8 +927,8 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     };
 
     for (int i = 0; i < std::size(kTestDataAscii); ++i) {
-      composer_->ApplyTemporaryInputMode(kTestDataAscii[i].first,
-                                         kCapsUnlocked);
+      composer_peer.ApplyTemporaryInputMode(kTestDataAscii[i].first,
+                                            kCapsUnlocked);
 
       const transliteration::TransliterationType expected =
           kTestDataAscii[i].second ? transliteration::HALF_ASCII
@@ -946,7 +958,8 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     };
 
     for (int i = 0; i < std::size(kTestDataAscii); ++i) {
-      composer_->ApplyTemporaryInputMode(kTestDataAscii[i].first, kCapsLocked);
+      composer_peer.ApplyTemporaryInputMode(kTestDataAscii[i].first,
+                                            kCapsLocked);
 
       const transliteration::TransliterationType expected =
           kTestDataAscii[i].second ? transliteration::HALF_ASCII
@@ -976,8 +989,8 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     };
 
     for (int i = 0; i < std::size(kTestDataKatakana); ++i) {
-      composer_->ApplyTemporaryInputMode(kTestDataKatakana[i].first,
-                                         kCapsUnlocked);
+      composer_peer.ApplyTemporaryInputMode(kTestDataKatakana[i].first,
+                                            kCapsUnlocked);
 
       const transliteration::TransliterationType expected =
           kTestDataKatakana[i].second ? transliteration::FULL_KATAKANA
@@ -1007,8 +1020,8 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     };
 
     for (int i = 0; i < std::size(kTestDataKatakana); ++i) {
-      composer_->ApplyTemporaryInputMode(kTestDataKatakana[i].first,
-                                         kCapsLocked);
+      composer_peer.ApplyTemporaryInputMode(kTestDataKatakana[i].first,
+                                            kCapsLocked);
 
       const transliteration::TransliterationType expected =
           kTestDataKatakana[i].second ? transliteration::FULL_KATAKANA

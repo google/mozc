@@ -33,8 +33,14 @@
 
 #include "base/util.h"
 #include "testing/gunit.h"
+#include "testing/test_peer.h"
 
 namespace mozc {
+
+class AndroidUtilTestPeer : public testing::TestPeer<AndroidUtil> {
+ public:
+  PEER_STATIC_METHOD(ParseLine);
+};
 
 TEST(AndroidUtilTest, GetSystemProperty) {
   // Valid cases
@@ -78,7 +84,7 @@ TEST(AndroidUtilTest, ParseLine_valid) {
     SCOPED_TRACE(testcase.line);
     SCOPED_TRACE(testcase.lhs);
     SCOPED_TRACE(testcase.rhs);
-    EXPECT_TRUE(AndroidUtil::ParseLine(testcase.line, &lhs, &rhs));
+    EXPECT_TRUE(AndroidUtilTestPeer::ParseLine(testcase.line, &lhs, &rhs));
     EXPECT_EQ(lhs, testcase.lhs);
     EXPECT_EQ(rhs, testcase.rhs);
   }
@@ -93,7 +99,7 @@ TEST(AndroidUtilTest, ParseLine_invalid) {
   for (size_t i = 0; i < std::size(testcases); ++i) {
     const char *testcase = testcases[i];
     SCOPED_TRACE(testcase);
-    EXPECT_FALSE(AndroidUtil::ParseLine(testcase, &lhs, &rhs));
+    EXPECT_FALSE(AndroidUtilTestPeer::ParseLine(testcase, &lhs, &rhs));
   }
 }
 
