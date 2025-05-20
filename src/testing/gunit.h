@@ -33,7 +33,5 @@
 
 #include <gtest/gtest.h>  // IWYU pragma: export
 
-#include "testing/googletest.h"
-
 
 #endif  // MOZC_TESTING_GUNIT_H_

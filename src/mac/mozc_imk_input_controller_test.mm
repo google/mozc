@@ -49,7 +49,6 @@
 #include "protocol/candidate_window.pb.h"
 #include "renderer/renderer_interface.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 @interface MockIMKServer : IMKServer <ServerCallback> {

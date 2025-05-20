@@ -125,15 +125,22 @@ def _ExecuteTest(command_and_gtest_report_dir):
   binary_filename = os.path.basename(binary)
   tmp_dir = tempfile.mkdtemp()
   with PathDeleter(tmp_dir):
+    env = os.environ.copy()
+    env['TEST_TMPDIR'] = tmp_dir
     tmp_xml_path = os.path.join(tmp_dir, '%s.xml' % binary_filename)
     # Due to incompatibility between the prefixes of internal and external,
     # testing libraries.
-    test_command = command + ['--test_tmpdir=%s' % tmp_dir,
-                              '--gunit_output=xml:%s' % tmp_xml_path,
-                              '--gtest_output=xml:%s' % tmp_xml_path]
+    test_command = command + [
+        '--gunit_output=xml:%s' % tmp_xml_path,
+        '--gtest_output=xml:%s' % tmp_xml_path,
+    ]
     try:
-      proc = subprocess.Popen(test_command, stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT)
+      proc = subprocess.Popen(
+          test_command,
+          env=env,
+          stdout=subprocess.PIPE,
+          stderr=subprocess.STDOUT,
+      )
       (output, _) = proc.communicate()
       result = proc.poll() == 0 and os.path.isfile(tmp_xml_path)
       if os.path.isfile(tmp_xml_path) and gtest_report_dir:

@@ -30,6 +30,7 @@
 #include "win32/base/imm_reconvert_string.h"
 
 #include <safeint.h>
+#include <windows.h>
 
 #include <bit>
 #include <cstddef>
