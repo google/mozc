@@ -127,7 +127,7 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
         return is_mobile ? prediction::MobilePredictor::CreateMobilePredictor(
                                std::move(dictionary_predictor),
                                std::move(user_history_predictor), converter)
-                         : prediction::DefaultPredictor::CreateDefaultPredictor(
+                         : prediction::DesktopPredictor::CreateDesktopPredictor(
                                std::move(dictionary_predictor),
                                std::move(user_history_predictor), converter);
       };

@@ -299,7 +299,7 @@ class PredictorTest : public ::testing::Test {
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
   MockConverter converter;
-  auto predictor = std::make_unique<DefaultPredictor>(
+  auto predictor = std::make_unique<DesktopPredictor>(
       std::make_unique<NullPredictor>(true),
       std::make_unique<NullPredictor>(true), converter);
   Segments segments;
@@ -313,7 +313,7 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
 
 TEST_F(PredictorTest, MixedReturnValue) {
   MockConverter converter;
-  auto predictor = std::make_unique<DefaultPredictor>(
+  auto predictor = std::make_unique<DesktopPredictor>(
       std::make_unique<NullPredictor>(true),
       std::make_unique<NullPredictor>(false), converter);
   Segments segments;
@@ -328,7 +328,7 @@ TEST_F(PredictorTest, MixedReturnValue) {
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
   MockConverter converter;
-  auto predictor = std::make_unique<DefaultPredictor>(
+  auto predictor = std::make_unique<DesktopPredictor>(
       std::make_unique<NullPredictor>(false),
       std::make_unique<NullPredictor>(false), converter);
   Segments segments;
@@ -345,7 +345,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
   MockConverter converter;
   const int suggestions_size =
       config::ConfigHandler::DefaultConfig().suggestions_size();
-  auto predictor = std::make_unique<DefaultPredictor>(
+  auto predictor = std::make_unique<DesktopPredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
                                                           suggestions_size),
@@ -363,7 +363,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
   MockConverter converter;
   constexpr int kPredictionSize = 100;
-  auto predictor = std::make_unique<DefaultPredictor>(
+  auto predictor = std::make_unique<DesktopPredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
                                                           kPredictionSize),
@@ -389,7 +389,7 @@ TEST_F(PredictorTest, CallPredictForRequest) {
       .WillOnce(Return(true));
 
   MockConverter converter;
-  auto predictor = std::make_unique<DefaultPredictor>(
+  auto predictor = std::make_unique<DesktopPredictor>(
       std::move(predictor1), std::move(predictor2), converter);
   Segments segments;
   {
@@ -407,7 +407,7 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   const auto *pred1 = predictor1.get();  // Keep the reference
   const auto *pred2 = predictor2.get();  // Keep the reference
   MockConverter converter;
-  auto predictor = std::make_unique<DefaultPredictor>(
+  auto predictor = std::make_unique<DesktopPredictor>(
       std::move(predictor1), std::move(predictor2), converter);
   Segments segments;
   {

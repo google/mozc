@@ -104,7 +104,7 @@ using ::mozc::dictionary::MockUserDictionary;
 using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::Token;
 using ::mozc::dictionary::UserDictionary;
-using ::mozc::prediction::DefaultPredictor;
+using ::mozc::prediction::DesktopPredictor;
 using ::mozc::prediction::DictionaryPredictor;
 using ::mozc::prediction::MobilePredictor;
 using ::mozc::prediction::PredictorInterface;
@@ -281,7 +281,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
 
     switch (predictor_type) {
       case DEFAULT_PREDICTOR:
-        predictor_factory = DefaultPredictor::CreateDefaultPredictor;
+        predictor_factory = DesktopPredictor::CreateDesktopPredictor;
         enable_content_word_learning = false;
         break;
       case MOBILE_PREDICTOR:
@@ -290,7 +290,7 @@ class ConverterTest : public testing::TestWithTempUserProfile {
         break;
       default:
         LOG(ERROR) << "Should not come here: Invalid predictor type.";
-        predictor_factory = DefaultPredictor::CreateDefaultPredictor;
+        predictor_factory = DesktopPredictor::CreateDesktopPredictor;
         enable_content_word_learning = false;
         break;
     }
@@ -1092,7 +1092,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       },
       [](const engine::Modules &modules, const ConverterInterface &converter,
          const ImmutableConverterInterface &immutable_converter) {
-        return DefaultPredictor::CreateDefaultPredictor(
+        return DesktopPredictor::CreateDesktopPredictor(
             std::make_unique<DictionaryPredictor>(modules, converter,
                                                   immutable_converter),
             std::make_unique<UserHistoryPredictor>(modules, false), converter);

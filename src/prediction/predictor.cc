@@ -131,26 +131,26 @@ bool BasePredictor::Sync() { return user_history_predictor_->Sync(); }
 bool BasePredictor::Reload() { return user_history_predictor_->Reload(); }
 
 // static
-std::unique_ptr<PredictorInterface> DefaultPredictor::CreateDefaultPredictor(
+std::unique_ptr<PredictorInterface> DesktopPredictor::CreateDesktopPredictor(
     std::unique_ptr<PredictorInterface> dictionary_predictor,
     std::unique_ptr<PredictorInterface> user_history_predictor,
     const ConverterInterface &converter) {
-  return std::make_unique<DefaultPredictor>(std::move(dictionary_predictor),
+  return std::make_unique<DesktopPredictor>(std::move(dictionary_predictor),
                                             std::move(user_history_predictor),
                                             converter);
 }
 
-DefaultPredictor::DefaultPredictor(
+DesktopPredictor::DesktopPredictor(
     std::unique_ptr<PredictorInterface> dictionary_predictor,
     std::unique_ptr<PredictorInterface> user_history_predictor,
     const ConverterInterface &converter)
     : BasePredictor(std::move(dictionary_predictor),
                     std::move(user_history_predictor), converter),
-      predictor_name_("DefaultPredictor") {}
+      predictor_name_("DesktopPredictor") {}
 
-DefaultPredictor::~DefaultPredictor() = default;
+DesktopPredictor::~DesktopPredictor() = default;
 
-bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
+bool DesktopPredictor::PredictForRequest(const ConversionRequest &request,
                                          Segments *segments) const {
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION ||

@@ -87,18 +87,17 @@ class BasePredictor : public PredictorInterface {
   const ConverterInterface &converter_;
 };
 
-// TODO(team): The name should be DesktopPredictor
-class DefaultPredictor : public BasePredictor {
+class DesktopPredictor : public BasePredictor {
  public:
-  static std::unique_ptr<PredictorInterface> CreateDefaultPredictor(
+  static std::unique_ptr<PredictorInterface> CreateDesktopPredictor(
       std::unique_ptr<PredictorInterface> dictionary_predictor,
       std::unique_ptr<PredictorInterface> user_history_predictor,
       const ConverterInterface &converter);
 
-  DefaultPredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
+  DesktopPredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
                    std::unique_ptr<PredictorInterface> user_history_predictor,
                    const ConverterInterface &converter);
-  ~DefaultPredictor() override;
+  ~DesktopPredictor() override;
 
   [[nodiscard]] bool PredictForRequest(const ConversionRequest &request,
                                        Segments *segments) const override;
@@ -111,6 +110,9 @@ class DefaultPredictor : public BasePredictor {
   const std::string predictor_name_;
 };
 
+// TODO(taku): Renamed it to more general name, e.g. UnifiedDecoer
+// as we would like to use the same and unified decoder for desktop and
+// mobile.
 class MobilePredictor : public BasePredictor {
  public:
   static std::unique_ptr<PredictorInterface> CreateMobilePredictor(
