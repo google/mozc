@@ -580,13 +580,11 @@ mozc_cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
-        android = ["//testing:friend_test"],
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
         windows = [
             ":vlog",
             "//base/win32:wide_char",
-            "//testing:friend_test",
             "@com_microsoft_wil//:wil",
         ],
     ),

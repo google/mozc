@@ -37,10 +37,9 @@
 #include <string>
 #include <string_view>
 
-#include "base/strings/zstring_view.h"
-#include "testing/friend_test.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/zstring_view.h"
 
 namespace mozc {
 class WinUtil {
@@ -63,8 +62,8 @@ class WinUtil {
   // result.  If |ignore_case| is true, this function uses system upper-case
   // table for case-insensitive equality like Win32 path names or registry
   // names.
-  static bool SystemEqualString(std::wstring_view lhs,
-                                std::wstring_view rhs, bool ignore_case);
+  static bool SystemEqualString(std::wstring_view lhs, std::wstring_view rhs,
+                                bool ignore_case);
 
   // Returns true if succeeds to determine whether the current process has
   // a process token which seems to be one for service process.  Otherwise,

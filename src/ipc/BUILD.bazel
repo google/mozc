@@ -116,7 +116,6 @@ mozc_cc_library(
         "//base:util",
         "//base:version",
         "//base:vlog",
-        "//testing:friend_test",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",

@@ -109,13 +109,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "friend_test",
-    hdrs = ["friend_test.h"],
-    deps = [
-    ],
-)
-
-mozc_cc_library(
     name = "test_peer",
     hdrs = ["test_peer.h"],
 )

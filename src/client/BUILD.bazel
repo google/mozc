@@ -98,7 +98,6 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session:key_info_util",
-        "//testing:friend_test",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",

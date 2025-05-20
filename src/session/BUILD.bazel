@@ -182,7 +182,6 @@ mozc_cc_library(
         "//protocol:engine_builder_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
         "//storage:lru_cache",
-        "//testing:friend_test",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/random",
