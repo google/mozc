@@ -75,7 +75,6 @@ namespace mozc {
 namespace {
 
 using ::mozc::dictionary::DictionaryInterface;
-using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::Token;
 
 constexpr size_t kMaxSegmentsSize = 256;
