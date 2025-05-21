@@ -32,11 +32,10 @@
 
 #include <cstdint>
 #include <memory>
-#include <set>
+#include <string>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
-#include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "unix/ibus/candidate_window_handler.h"
