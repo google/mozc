@@ -34,37 +34,41 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include "base/absl_nullability.h"
 #include "base/win32/com.h"
+#include "base/win32/hresultor.h"
+#include "win32/tip/tip_compartment_util.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
+namespace {
 
-wil::com_ptr_nothrow<ITfDocumentMgr>
-TipTransitoryExtension::ToParentDocumentIfExists(
-    ITfDocumentMgr *document_manager) {
-  if (document_manager == nullptr) {
-    return nullptr;
+// An undocumented GUID found with ITfCompartmentMgr::EnumGuid().
+// Looks like if its value is VT_I4 and 0x01 bit is set, then the correspinding
+// ITfDocumentMgr is implemented by CUAS and its ITfContext does not return an
+// actual surrounding text.
+// {A94C5FD2-C471-4031-9546-709C17300CB9}
+constinit static const GUID kTsfEmulatedDocumentMgrGuid = {
+    0xa94c5fd2,
+    0xc471,
+    0x4031,
+    {0x95, 0x46, 0x70, 0x9c, 0x17, 0x30, 0x0c, 0xb9}};
+
+bool IsTsfEmulatedDocumentMgr(ITfDocumentMgr *absl_nonnull document_mgr) {
+  HResultOr<wil::unique_variant> var =
+      TipCompartmentUtil::Get(document_mgr, kTsfEmulatedDocumentMgrGuid);
+  if (!var.has_value()) {
+    return false;
   }
+  // If the variant is VT_I4 and 0x01 bit is set, then the app is likely to be
+  // a legacy IMM32-based app and the focused field is not a EditText/RichEdit
+  // common control.
+  return var->vt == VT_I4 ? (var->intVal & 0x01) == 0x01 : false;
+}
 
-  wil::com_ptr_nothrow<ITfContext> context;
-  if (FAILED(document_manager->GetTop(&context))) {
-    return document_manager;
-  }
-
-  if (!context) {
-    return document_manager;
-  }
-
-  TF_STATUS status = {};
-  if (FAILED(context->GetStatus(&status))) {
-    return document_manager;
-  }
-
-  if ((status.dwStaticFlags & TF_SS_TRANSITORY) != TF_SS_TRANSITORY) {
-    return document_manager;
-  }
-
+wil::com_ptr_nothrow<ITfDocumentMgr> GetTransitoryExtensionDocumentMgrOrSelf(
+    ITfDocumentMgr *absl_nonnull document_manager) {
   auto compartment_mgr = ComQuery<ITfCompartmentMgr>(document_manager);
   if (!compartment_mgr) {
     return document_manager;
@@ -85,34 +89,89 @@ TipTransitoryExtension::ToParentDocumentIfExists(
     return document_manager;
   }
 
-  auto parent_document_mgr = ComQuery<ITfDocumentMgr>(var.punkVal);
-  if (!parent_document_mgr) {
-    return document_manager;
-  }
-
-  return parent_document_mgr;
+  wil::com_ptr_nothrow<ITfDocumentMgr> result =
+      ComQuery<ITfDocumentMgr>(var.punkVal);
+  return result == nullptr ? document_manager : result;
 }
 
+}  // namespace
+
 wil::com_ptr_nothrow<ITfContext>
-TipTransitoryExtension::ToParentContextIfExists(ITfContext *context) {
+TipTransitoryExtension::AsFullContext(ITfContext *context) {
   if (context == nullptr) {
     return nullptr;
   }
 
-  wil::com_ptr_nothrow<ITfDocumentMgr> document_mgr;
-  if (FAILED(context->GetDocumentMgr(&document_mgr))) {
+  TF_STATUS status = {};
+  if (FAILED(context->GetStatus(&status))) {
+    return nullptr;
+  }
+
+  if ((status.dwStaticFlags & TF_SS_TRANSITORY) == 0) {
+    // Non trantitory context is expected to be a full context.
+    // Fully TSF-aware apps such as Microsoft Word, WPF-based apps, and Firefox
+    // fall into this path.
     return context;
   }
 
-  wil::com_ptr_nothrow<ITfContext> parent_context;
-  if (FAILED(ToParentDocumentIfExists(document_mgr.get())
-                 ->GetTop(&parent_context))) {
-    return context;
+  wil::com_ptr_nothrow<ITfDocumentMgr> document_mgr;
+  if (FAILED(context->GetDocumentMgr(&document_mgr))) {
+    return nullptr;
   }
-  if (!parent_context) {
-    return context;
+
+  if (document_mgr == nullptr) {
+    return nullptr;
   }
-  return parent_context;
+
+  // Here after we want to distinguish the following three cases:
+  // 1. Fully TSF-aware cases through Transitory Extension.
+  // 2. Legacy IMM32-based apps where CUAS does not fully provide TSF
+  //    surrounding text APIs.
+  // 3. TSF-based apps that explicitly specify TF_SS_TRANSITORY.
+
+  if (wil::com_ptr_nothrow<ITfDocumentMgr> target_document_mgr =
+          GetTransitoryExtensionDocumentMgrOrSelf(document_mgr.get());
+      target_document_mgr != document_mgr) {
+    // When Transitory Extension is available, there should exist another
+    // ITfContext object that is expected to support full text store operations.
+    wil::com_ptr_nothrow<ITfContext> target_context;
+    if (FAILED(target_document_mgr->GetTop(&target_context))) {
+      return nullptr;
+    }
+    if (target_context == nullptr) {
+      return nullptr;
+    }
+
+    TF_STATUS target_status = {};
+    if (FAILED(target_context->GetStatus(&target_status))) {
+      return nullptr;
+    }
+
+    if ((target_status.dwStaticFlags & TF_SS_TRANSITORY) == 0) {
+      // Case 1: Fully TSF-aware cases through Transitory Extension.
+      // EditControl and RichEdit fall into this path on Vista.
+      // https://learn.microsoft.com/en-us/archive/blogs/tsfaware/transitory-extensions-or-how-to-get-full-text-store-support-in-tsf-unaware-controls
+      // https://web.archive.org/web/20140518145404/http://blogs.msdn.com/b/tsfaware/archive/2007/05/21/transitory-extensions.aspx
+      return target_context;
+    }
+
+    return nullptr;
+  }
+
+  if (IsTsfEmulatedDocumentMgr(document_mgr.get())) {
+    // Case 2: Legacy IMM32-based apps that are running through CUAS.
+    // IMM32-based legacy apps such as Sakura Editor fall into this path.
+    return nullptr;
+  }
+
+  // Case 3: TSF-based apps that explicitly specify TF_SS_TRANSITORY.
+  // Chromium-based apps fall into this path.
+  // To support surrunding text on Chromium-based apps, here we assume that
+  // surrounding text TSF APIs are fully available in this case.
+  // https://github.com/google/mozc/issues/1289
+  // https://issues.chromium.org/issues/40724714#comment38
+  // https://issues.chromium.org/issues/417529154
+  return context;
 }
 
 }  // namespace tsf
