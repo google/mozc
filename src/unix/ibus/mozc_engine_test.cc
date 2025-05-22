@@ -45,12 +45,13 @@
 namespace mozc {
 namespace ibus {
 
-class MozcEngineTestPeer : testing::TestPeer<MozcEngine> {
+class MozcEngineTestPeer : public ::mozc::testing::TestPeer<MozcEngine> {
  public:
-  explicit MozcEngineTestPeer(const MozcEngine &engine)
+  explicit MozcEngineTestPeer(MozcEngine &engine)
       : testing::TestPeer<MozcEngine>(engine) {}
 
   PEER_METHOD(LaunchTool);
+  PEER_VARIABLE(client_);
 };
 
 namespace {
@@ -68,7 +69,7 @@ bool CallCanUseMozcCandidateWindow(
 using ::testing::_;
 using ::testing::Return;
 
-class LaunchToolTest : public testing::Test {
+class LaunchToolTest : public ::testing::Test {
  public:
   LaunchToolTest() = default;
   LaunchToolTest(const LaunchToolTest &) = delete;
@@ -79,7 +80,7 @@ class LaunchToolTest : public testing::Test {
     mozc_engine_.reset(new MozcEngine());
 
     mock_ = new client::ClientMock();
-    mozc_engine_->client_.reset(mock_);
+    mozc_engine_peer().client_().reset(mock_);
   }
 
   virtual void TearDown() { mozc_engine_.reset(); }
