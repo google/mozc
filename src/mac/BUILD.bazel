@@ -125,7 +125,6 @@ mozc_objc_library(
         ":mozc_imk_input_controller",
         ":renderer_receiver",
         "//base:const",
-        "//base:crash_report_handler",
         "//base:init_mozc",
         "//base:run_level",
         "//client",
