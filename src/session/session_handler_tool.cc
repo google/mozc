@@ -87,9 +87,7 @@ using ::mozc::protobuf::TextFormat;
 using ::mozc::session::SessionHandlerTool;
 
 std::string ToTextFormat(const Message &proto) {
-  std::string str;
-  TextFormat::PrintToString(proto, &str);
-  return str;
+  return ::mozc::protobuf::Utf8Format(proto);
 }
 
 }  // namespace
