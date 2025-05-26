@@ -69,15 +69,6 @@ class SurroudingTextUpdater final : public TipComImplements<ITfEditSession> {
   STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) override {
     HRESULT result = S_OK;
     {
-      TF_STATUS status = {};
-      result = context_->GetStatus(&status);
-      if (FAILED(result)) {
-        return result;
-      }
-      result_.is_transitory =
-          ((status.dwStaticFlags & TF_SS_TRANSITORY) == TF_SS_TRANSITORY);
-    }
-    {
       wil::com_ptr_nothrow<ITfCompositionView> composition_view =
           TipCompositionUtil::GetCompositionView(context_.get(), edit_cookie);
       result_.in_composition = !!composition_view;
@@ -244,7 +235,6 @@ bool PrepareForReconversionIMM32(ITfContext *context,
     return false;
   }
   info->in_composition = false;
-  info->is_transitory = false;
   info->has_preceding_text = true;
   info->preceding_text.assign(ss->preceding_text.begin(),
                               ss->preceding_text.end());
@@ -267,18 +257,22 @@ bool TipSurroundingText::Get(TipTextService *text_service, ITfContext *context,
   }
   *info = TipSurroundingTextInfo();
 
-  // Use Transitory Extensions when supported. Common controls provides
-  // surrounding text via Transitory Extensions.
-  wil::com_ptr_nothrow<ITfContext> target_context(
-      TipTransitoryExtension::ToParentContextIfExists(context));
+  // Surrounding text retrieval through TSF APIs should be performed only with
+  // the full context.
+  wil::com_ptr_nothrow<ITfContext> full_context(
+      TipTransitoryExtension::AsFullContext(context));
+  if (full_context == nullptr) {
+    // TODO: Use IMR_DOCUMENTFEED to get surrounding text for legacy apps.
+    return false;
+  }
 
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  auto updater = MakeComPtr<SurroudingTextUpdater>(target_context, false);
+  auto updater = MakeComPtr<SurroudingTextUpdater>(full_context, false);
 
   HRESULT edit_session_result = S_OK;
-  const HRESULT hr = target_context->RequestEditSession(
+  const HRESULT hr = full_context->RequestEditSession(
       text_service->GetClientID(), updater.get(), TF_ES_SYNC | TF_ES_READ,
       &edit_session_result);
   if (FAILED(hr)) {
@@ -296,18 +290,21 @@ bool TipSurroundingText::Get(TipTextService *text_service, ITfContext *context,
 bool PrepareForReconversionTSF(TipTextService *text_service,
                                ITfContext *context,
                                TipSurroundingTextInfo *info) {
-  // Use Transitory Extensions when supported. Common controls provides
-  // surrounding text via Transitory Extensions.
-  wil::com_ptr_nothrow<ITfContext> target_context(
-      TipTransitoryExtension::ToParentContextIfExists(context));
+  // Reconversion through TSF APIs should be performed only with the full
+  // context.
+  wil::com_ptr_nothrow<ITfContext> full_context(
+      TipTransitoryExtension::AsFullContext(context));
+  if (full_context == nullptr) {
+    return false;
+  }
 
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  auto updater = MakeComPtr<SurroudingTextUpdater>(target_context, true);
+  auto updater = MakeComPtr<SurroudingTextUpdater>(full_context, true);
 
   HRESULT edit_session_result = S_OK;
-  const HRESULT hr = target_context->RequestEditSession(
+  const HRESULT hr = full_context->RequestEditSession(
       text_service->GetClientID(), updater.get(), TF_ES_SYNC | TF_ES_READWRITE,
       &edit_session_result);
   if (FAILED(hr)) {
@@ -333,12 +330,7 @@ bool TipSurroundingText::PrepareForReconversionFromIme(
   *info = TipSurroundingTextInfo();
   *need_async_reconversion = false;
   if (PrepareForReconversionTSF(text_service, context, info)) {
-    // Here we assume selection text info is valid iff |info->is_transitory| is
-    // false.
-    // TODO(yukawa): Investigate more reliable method to determine this.
-    if (!info->is_transitory) {
-      return true;
-    }
+    return true;
   }
   if (!PrepareForReconversionIMM32(context, info)) {
     return false;
@@ -351,19 +343,22 @@ bool TipSurroundingText::PrepareForReconversionFromIme(
 bool TipSurroundingText::DeletePrecedingText(
     TipTextService *text_service, ITfContext *context,
     size_t num_characters_to_be_deleted_in_codepoint) {
-  // Use Transitory Extensions when supported. Common controls provides
-  // surrounding text via Transitory Extensions.
-  wil::com_ptr_nothrow<ITfContext> target_context(
-      TipTransitoryExtension::ToParentContextIfExists(context));
+  // Surrounding text deletion through TSF APIs should be performed only with
+  // the full context.
+  wil::com_ptr_nothrow<ITfContext> full_context(
+      TipTransitoryExtension::AsFullContext(context));
+  if (full_context == nullptr) {
+    return false;
+  }
 
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
   auto edit_session = MakeComPtr<PrecedingTextDeleter>(
-      target_context, num_characters_to_be_deleted_in_codepoint);
+      full_context, num_characters_to_be_deleted_in_codepoint);
 
   HRESULT edit_session_result = S_OK;
-  const HRESULT hr = target_context->RequestEditSession(
+  const HRESULT hr = full_context->RequestEditSession(
       text_service->GetClientID(), edit_session.get(),
       TF_ES_SYNC | TF_ES_READWRITE, &edit_session_result);
   if (FAILED(hr)) {
