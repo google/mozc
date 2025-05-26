@@ -31,10 +31,9 @@
 
 #include <memory>
 #include <string>
-#include <vector>
+#include <utility>
 
 #include "absl/container/flat_hash_map.h"
-#include "base/port.h"
 #include "client/client_mock.h"
 #include "protocol/commands.pb.h"
 #include "testing/gmock.h"
@@ -76,14 +75,18 @@ class LaunchToolTest : public ::testing::Test {
   LaunchToolTest &operator=(const LaunchToolTest &) = delete;
 
  protected:
-  virtual void SetUp() {
-    mozc_engine_.reset(new MozcEngine());
+  void SetUp() override {
+    mozc_engine_ = std::make_unique<MozcEngine>();
 
-    mock_ = new client::ClientMock();
-    mozc_engine_peer().client_().reset(mock_);
+    // Keep the reference to `mock` to access the mock methods.
+    // It's safe because `mozc_engine_` owns `mock`.
+    // This is a test-only usage.
+    auto mock = std::make_unique<client::ClientMock>();
+    mock_ = mock.get();
+    mozc_engine_peer().client_() = std::move(mock);
   }
 
-  virtual void TearDown() { mozc_engine_.reset(); }
+  void TearDown() override { mozc_engine_.reset(); }
 
   MozcEngineTestPeer mozc_engine_peer() {
     return MozcEngineTestPeer(*mozc_engine_);
