@@ -35,6 +35,7 @@
 
 #include "engine/engine_converter.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -1370,20 +1371,22 @@ TEST_F(EngineConverterTest, SwitchKanaTypeFromConversionMode) {
   }
 }
 
-TEST_F(EngineConverterTest, ResizeSegmentFailedInSwitchKanaType) {
+TEST_F(EngineConverterTest, ResizeSegmentsFailedInSwitchKanaType) {
   const auto mock_converter = std::make_shared<MockConverter>();
   EngineConverter converter(mock_converter, request_, config_);
 
-  // ResizeSegment() is called when the conversion result has multiple segments.
-  // Let the underlying converter return the result with two segments.
+  // ResizeSegments() is called when the conversion result has multiple
+  // segments. Let the underlying converter return the result with two segments.
   Segments segments;
   AddSegmentWithSingleCandidate(&segments, "かな", "カナ");
   AddSegmentWithSingleCandidate(&segments, "たいぷ", "タイプ");
   EXPECT_CALL(*mock_converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
-  // Suppose that ResizeSegment() fails for "かな|たいぷ" (UTF8-length is 5).
-  EXPECT_CALL(*mock_converter, ResizeSegment(_, _, 0, 5))
+  // Suppose that ResizeSegments() fails for "かな|たいぷ" (UTF8-length is 5).
+  static constexpr std::array<const uint8_t, 1> new_sizes_array = {5};
+  static constexpr absl::Span<const uint8_t> new_sizes = new_sizes_array;
+  EXPECT_CALL(*mock_converter, ResizeSegments(_, _, 0, new_sizes))
       .WillOnce(Return(false));
 
   // FocusSegmentValue() is called in the last step.

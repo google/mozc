@@ -1,0 +1,13 @@
+# Make sure SwitchKanaType (Muhenka key) works with multiple segments.
+# https://github.com/google/mozc/issues/1188
+
+# Set the keymap to MSIME to use the Muhenkan key for SwitchKanaType.
+SET_CONFIG	session_keymap	MSIME
+
+RESET_CONTEXT
+SEND_KEYS	kyouhaiitennkidesu
+EXPECT_PREEDIT	きょうはいいてんきです
+
+# Muhenkan (SwitchKanaType) should merge multiple segments to a single segment.
+SEND_KEY	MUHENKAN
+EXPECT_PREEDIT	キョウハイイテンキデス

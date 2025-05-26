@@ -438,8 +438,10 @@ bool EngineConverter::SwitchKanaType(const composer::Composer &composer) {
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
     // from the session layer.
     if (segments_.conversion_segments_size() != 1) {
-      std::string composition;
-      GetPreedit(0, segments_.conversion_segments_size(), &composition);
+      uint8_t offset = 0;
+      for (size_t i = 0; i < segments_.conversion_segments_size(); ++i) {
+        offset += segments_.conversion_segment(i).key_len();
+      }
       DCHECK(request_);
       DCHECK(config_);
       const ConversionRequest conversion_request =
@@ -448,9 +450,8 @@ bool EngineConverter::SwitchKanaType(const composer::Composer &composer) {
               .SetRequestView(*request_)
               .SetConfigView(*config_)
               .Build();
-
-      if (!converter_->ResizeSegment(&segments_, conversion_request, 0,
-                                     Util::CharsLen(composition))) {
+      if (!converter_->ResizeSegments(&segments_, conversion_request, 0,
+                                      {offset})) {
         LOG(WARNING) << "ResizeSegment failed for segments.";
         DLOG(WARNING) << segments_.DebugString();
       }
