@@ -97,7 +97,7 @@ class DictionaryPredictorTestPeer
   PEER_STATIC_METHOD(SetDebugDescription);
   PEER_METHOD(GetLMCost);
   PEER_METHOD(AddPredictionToCandidates);
-  PEER_METHOD(MaybePopulateTypingCorrectedResults);
+  PEER_METHOD(AggregateTypingCorrectedResults);
   PEER_METHOD(SetPredictionCostForMixedConversion);
   PEER_METHOD(MaybeGetPreviousTopResult);
 };
@@ -350,6 +350,11 @@ TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
 }
 
 TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
+  const ConversionRequest req_len1 =
+      ConversionRequestBuilder().SetKey("1").Build();
+  const ConversionRequest req_len3 =
+      ConversionRequestBuilder().SetKey("111").Build();
+
   {
     std::vector<Result> results = {
         CreateResult4("ばっく", "バッグ", prediction::UNIGRAM,
@@ -357,7 +362,8 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
         CreateResult4("ばっぐ", "バッグ", prediction::UNIGRAM, Token::NONE),
         CreateResult4("ばっく", "バッく", prediction::UNIGRAM, Token::NONE),
     };
-    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(1, &results);
+    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(req_len1,
+                                                             &results);
 
     ASSERT_EQ(3, results.size());
     EXPECT_TRUE(results[0].removed);
@@ -373,7 +379,8 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
                       Token::SPELLING_CORRECTION),
         CreateResult4("てすと", "テスト", prediction::UNIGRAM, Token::NONE),
     };
-    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(1, &results);
+    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(req_len1,
+                                                             &results);
 
     CHECK_EQ(2, results.size());
     EXPECT_FALSE(results[0].removed);
@@ -387,7 +394,8 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
                       Token::SPELLING_CORRECTION),
         CreateResult4("ばっく", "バック", prediction::UNIGRAM, Token::NONE),
     };
-    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(1, &results);
+    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(req_len1,
+                                                             &results);
 
     CHECK_EQ(2, results.size());
     EXPECT_TRUE(results[0].removed);
@@ -399,7 +407,8 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
                       Token::SPELLING_CORRECTION),
         CreateResult4("ばっく", "バック", prediction::UNIGRAM, Token::NONE),
     };
-    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(3, &results);
+    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(req_len3,
+                                                             &results);
 
     CHECK_EQ(2, results.size());
     EXPECT_FALSE(results[0].removed);
@@ -1562,7 +1571,7 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "子"));
 }
 
-TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
+TEST_F(DictionaryPredictorTest, AggregateTypingCorrectedResultsTest) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
   EXPECT_CALL(*aggregator, AggregateTypingCorrectedResults(_))
@@ -1575,12 +1584,6 @@ TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
                         Token::NONE, 0.4),
       }));
 
-  auto base_results =
-      std::vector<Result>{CreateResult6("とあきよう", "東亜起用", 1000, 1000,
-                                        prediction::UNIGRAM, Token::NONE),
-                          CreateResult6("とあきよう", "と秋用", 2000, 2000,
-                                        prediction::UNIGRAM, Token::NONE)};
-
   config_->set_use_typing_correction(true);
 
   Segments segments;
@@ -1591,21 +1594,21 @@ TEST_F(DictionaryPredictorTest, MaybePopulateTypingCorrectedResultsTest) {
 
   // 0.8 900
   {
-    auto results = base_results;
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::PREDICTION, segments);
-    predictor_peer.MaybePopulateTypingCorrectedResults(convreq, &results);
-    EXPECT_EQ(results.size(), 4);
+    const std::vector<Result> results =
+        predictor_peer.AggregateTypingCorrectedResults(convreq);
+    EXPECT_EQ(results.size(), 2);
   }
 
   // disable typing correction.
   {
     config_->set_use_typing_correction(false);
-    auto results = base_results;
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::PREDICTION, segments);
-    predictor_peer.MaybePopulateTypingCorrectedResults(convreq, &results);
-    EXPECT_EQ(results.size(), 2);
+    const std::vector<Result> results =
+        predictor_peer.AggregateTypingCorrectedResults(convreq);
+    EXPECT_TRUE(results.empty());
   }
 }
 

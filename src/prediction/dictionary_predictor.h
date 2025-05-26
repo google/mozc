@@ -208,24 +208,24 @@ class DictionaryPredictor : public PredictorInterface {
   // } else {
   //   do nothing.
   // }
-  static void RemoveMissSpelledCandidates(size_t request_key_len,
-                                          std::vector<Result> *results);
+  static void RemoveMissSpelledCandidates(const ConversionRequest &request,
+                                          absl::Span<Result> results);
 
   // Populate conversion costs to `results`.
   void RewriteResultsForPrediction(const ConversionRequest &request,
-                                   std::vector<Result> *results) const;
+                                   absl::Span<Result> results) const;
 
   // Scoring function which takes prediction bounus into account.
   // It basically reranks the candidate by lang_prob * (1 + remain_len).
   // This algorithm is mainly used for desktop.
   void SetPredictionCost(const ConversionRequest &request,
-                         std::vector<Result> *results) const;
+                         absl::Span<Result> results) const;
 
   // Scoring function for mixed conversion.
   // In the mixed conversion we basically use the pure language model-based
   // scoring function. This algorithm is mainly used for mobile.
   void SetPredictionCostForMixedConversion(const ConversionRequest &request,
-                                           std::vector<Result> *results) const;
+                                           absl::Span<Result> results) const;
 
   // Returns the cost offset for SINGLE_KANJI results.
   // Aggregated SINGLE_KANJI results does not have LM based wcost(word cost),
@@ -256,9 +256,8 @@ class DictionaryPredictor : public PredictorInterface {
       const ImmutableConverterInterface &immutable_converter,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
-  // Populates typing corrected results to `results`.
-  void MaybePopulateTypingCorrectedResults(const ConversionRequest &request,
-                                           std::vector<Result> *results) const;
+  std::vector<Result> AggregateTypingCorrectedResults(
+      const ConversionRequest &request) const;
 
   void MaybeApplyPostCorrection(const ConversionRequest &request,
                                 std::vector<Result> &results) const;

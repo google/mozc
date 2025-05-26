@@ -34,12 +34,14 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
@@ -116,17 +118,18 @@ void AppendDescription(Segment::Candidate &candidate, Args &&...args) {
                   std::forward<Args>(args)...);
 }
 
-void MaybeFixRealtimeTopCost(absl::string_view input_key,
-                             std::vector<Result> &results) {
+void MaybeFixRealtimeTopCost(const ConversionRequest &request,
+                             absl::Span<Result> results) {
+  absl::string_view input_key = request.converter_key();
+
   // Remember the minimum cost among those REALTIME
   // candidates that have the same key length as |input_key| so that we can set
   // a slightly smaller cost to REALTIME_TOP than these.
   int realtime_cost_min = kInfinity;
   Result *realtime_top_result = nullptr;
-  for (size_t i = 0; i < results.size(); ++i) {
-    const Result &result = results[i];
+  for (Result &result : results) {
     if (result.types & PredictionType::REALTIME_TOP) {
-      realtime_top_result = &results[i];
+      realtime_top_result = &result;
     }
 
     // Update the minimum cost for REALTIME candidates that have the same key
@@ -187,11 +190,16 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  std::vector<Result> results = aggregator_->AggregateResults(request);
-  RewriteResultsForPrediction(request, &results);
+  std::vector<Result> literal_results = aggregator_->AggregateResults(request);
+  std::vector<Result> tc_results = AggregateTypingCorrectedResults(request);
 
-  // Explicitly populate the typing corrected results.
-  MaybePopulateTypingCorrectedResults(request, &results);
+  // TODO(taku): Moves the rewriting/rescoring logic to mixer component.
+  RewriteResultsForPrediction(request, absl::MakeSpan(literal_results));
+  RewriteResultsForPrediction(request, absl::MakeSpan(tc_results));
+
+  std::vector<Result> results;
+  absl::c_move(literal_results, std::back_inserter(results));
+  absl::c_move(tc_results, std::back_inserter(results));
 
   MaybeRescoreResults(request, absl::MakeSpan(results));
 
@@ -200,11 +208,7 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
 }
 
 void DictionaryPredictor::RewriteResultsForPrediction(
-    const ConversionRequest &request, std::vector<Result> *results) const {
-  if (results->empty()) {
-    return;
-  }
-
+    const ConversionRequest &request, absl::Span<Result> results) const {
   // Mixed conversion is the feature that mixes prediction and
   // conversion, meaning that results may include the candidates whose
   // key is exactly the same as the composition.  This mode is used in mobile.
@@ -216,30 +220,22 @@ void DictionaryPredictor::RewriteResultsForPrediction(
     SetPredictionCost(request, results);
   }
 
+  MaybeFixRealtimeTopCost(request, results);
+
   if (!is_mixed_conversion) {
-    const size_t input_key_len = Util::CharsLen(request.converter_key());
-    RemoveMissSpelledCandidates(input_key_len, results);
+    RemoveMissSpelledCandidates(request, results);
   }
 }
 
-void DictionaryPredictor::MaybePopulateTypingCorrectedResults(
-    const ConversionRequest &request, std::vector<Result> *results) const {
-  if (!IsTypingCorrectionEnabled(request) || results->empty()) {
-    return;
-  }
-
+std::vector<Result> DictionaryPredictor::AggregateTypingCorrectedResults(
+    const ConversionRequest &request) const {
   constexpr int kMinTypingCorrectionKeyLen = 3;
-  if (Util::CharsLen(request.converter_key()) < kMinTypingCorrectionKeyLen) {
-    return;
+  if (!IsTypingCorrectionEnabled(request) ||
+      Util::CharsLen(request.converter_key()) < kMinTypingCorrectionKeyLen) {
+    return {};
   }
 
-  std::vector<Result> typing_corrected_results =
-      aggregator_->AggregateTypingCorrectedResults(request);
-  RewriteResultsForPrediction(request, &typing_corrected_results);
-
-  for (auto &result : typing_corrected_results) {
-    results->emplace_back(std::move(result));
-  }
+  return aggregator_->AggregateTypingCorrectedResults(request);
 }
 
 bool DictionaryPredictor::AddPredictionToCandidates(
@@ -706,10 +702,8 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
   return lm_cost;
 }
 
-void DictionaryPredictor::SetPredictionCost(
-    const ConversionRequest &request, std::vector<Result> *results) const {
-  DCHECK(results);
-
+void DictionaryPredictor::SetPredictionCost(const ConversionRequest &request,
+                                            absl::Span<Result> results) const {
   absl::string_view input_key = request.converter_key();
   const int history_rid = request.converter_history_rid();
 
@@ -723,7 +717,7 @@ void DictionaryPredictor::SetPredictionCost(
       Util::CharsLen(request.converter_history_key(1));
   const size_t input_key_len = Util::CharsLen(input_key);
 
-  for (Result &result : *results) {
+  for (Result &result : results) {
     const int cost = GetLMCost(result, history_rid);
     size_t query_len = input_key_len;
     size_t key_len = Util::CharsLen(result.key);
@@ -733,7 +727,7 @@ void DictionaryPredictor::SetPredictionCost(
     }
 
     if (IsAggressiveSuggestion(query_len, key_len, cost, is_suggestion,
-                               results->size())) {
+                               results.size())) {
       result.cost = kInfinity;
       continue;
     }
@@ -779,14 +773,10 @@ void DictionaryPredictor::SetPredictionCost(
     result.cost =
         cost - kCostFactor * log(1.0 + std::max<int>(0, key_len - query_len));
   }
-
-  MaybeFixRealtimeTopCost(input_key, *results);
 }
 
 void DictionaryPredictor::SetPredictionCostForMixedConversion(
-    const ConversionRequest &request, std::vector<Result> *results) const {
-  DCHECK(results);
-
+    const ConversionRequest &request, absl::Span<Result> results) const {
   // ranking for mobile
   const int history_rid =
       request.converter_history_rid();  // 0 (BOS) is default
@@ -804,9 +794,9 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
   absl::string_view input_key = request.converter_key();
   const int single_kanji_offset = CalculateSingleKanjiCostOffset(
-      request, history_rid, input_key, *results, &prefix_penalty_cache);
+      request, history_rid, input_key, results, &prefix_penalty_cache);
 
-  for (Result &result : *results) {
+  for (Result &result : results) {
     int cost = GetLMCost(result, history_rid);
     MOZC_WORD_LOG(result, absl::StrCat("GetLMCost: ", cost));
     if (result.lid == result.rid && !pos_matcher_.IsSuffixWord(result.rid) &&
@@ -915,8 +905,6 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     result.cost = std::max(1, cost);
     MOZC_WORD_LOG(result, absl::StrCat("SetPredictionCost: ", result.cost));
   }
-
-  MaybeFixRealtimeTopCost(input_key, *results);
 }
 
 // static
@@ -950,16 +938,16 @@ size_t DictionaryPredictor::GetMissSpelledPosition(
 
 // static
 void DictionaryPredictor::RemoveMissSpelledCandidates(
-    size_t request_key_len, std::vector<Result> *results) {
-  DCHECK(results);
+    const ConversionRequest &request, absl::Span<Result> results) {
+  const size_t request_key_len = Util::CharsLen(request.converter_key());
 
-  if (results->size() <= 1) {
+  if (results.size() <= 1) {
     return;
   }
 
   int spelling_correction_size = 5;
-  for (size_t i = 0; i < results->size(); ++i) {
-    const Result &result = (*results)[i];
+  for (size_t i = 0; i < results.size(); ++i) {
+    const Result &result = results[i];
     if (!(result.candidate_attributes &
           Segment::Candidate::SPELLING_CORRECTION)) {
       continue;
@@ -972,11 +960,11 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
     }
 
     std::vector<size_t> same_key_index, same_value_index;
-    for (size_t j = 0; j < results->size(); ++j) {
+    for (size_t j = 0; j < results.size(); ++j) {
       if (i == j) {
         continue;
       }
-      const Result &target_result = (*results)[j];
+      const Result &target_result = results[j];
       if (target_result.candidate_attributes &
           Segment::Candidate::SPELLING_CORRECTION) {
         continue;
@@ -991,23 +979,23 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
 
     // delete same_key_index and same_value_index
     if (!same_key_index.empty() && !same_value_index.empty()) {
-      (*results)[i].removed = true;
-      MOZC_WORD_LOG((*results)[i], "Removed. same_(key|value)_index.");
+      results[i].removed = true;
+      MOZC_WORD_LOG(results[i], "Removed. same_(key|value)_index.");
       for (const size_t k : same_key_index) {
-        (*results)[k].removed = true;
-        MOZC_WORD_LOG((*results)[k], "Removed. same_(key|value)_index.");
+        results[k].removed = true;
+        MOZC_WORD_LOG(results[k], "Removed. same_(key|value)_index.");
       }
     } else if (same_key_index.empty() && !same_value_index.empty()) {
-      (*results)[i].removed = true;
-      MOZC_WORD_LOG((*results)[i], "Removed. same_value_index.");
+      results[i].removed = true;
+      MOZC_WORD_LOG(results[i], "Removed. same_value_index.");
     } else if (!same_key_index.empty() && same_value_index.empty()) {
       for (const size_t k : same_key_index) {
-        (*results)[k].removed = true;
-        MOZC_WORD_LOG((*results)[k], "Removed. same_key_index.");
+        results[k].removed = true;
+        MOZC_WORD_LOG(results[k], "Removed. same_key_index.");
       }
       if (request_key_len <= GetMissSpelledPosition(result.key, result.value)) {
-        (*results)[i].removed = true;
-        MOZC_WORD_LOG((*results)[i], "Removed. Invalid MissSpelledPosition.");
+        results[i].removed = true;
+        MOZC_WORD_LOG(results[i], "Removed. Invalid MissSpelledPosition.");
       }
     }
   }
