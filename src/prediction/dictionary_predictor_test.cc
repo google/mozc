@@ -362,8 +362,8 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
         CreateResult4("ばっぐ", "バッグ", prediction::UNIGRAM, Token::NONE),
         CreateResult4("ばっく", "バッく", prediction::UNIGRAM, Token::NONE),
     };
-    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(req_len1,
-                                                             &results);
+    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(
+        req_len1, absl::MakeSpan(results));
 
     ASSERT_EQ(3, results.size());
     EXPECT_TRUE(results[0].removed);
@@ -379,8 +379,8 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
                       Token::SPELLING_CORRECTION),
         CreateResult4("てすと", "テスト", prediction::UNIGRAM, Token::NONE),
     };
-    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(req_len1,
-                                                             &results);
+    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(
+        req_len1, absl::MakeSpan(results));
 
     CHECK_EQ(2, results.size());
     EXPECT_FALSE(results[0].removed);
@@ -394,8 +394,8 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
                       Token::SPELLING_CORRECTION),
         CreateResult4("ばっく", "バック", prediction::UNIGRAM, Token::NONE),
     };
-    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(req_len1,
-                                                             &results);
+    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(
+        req_len1, absl::MakeSpan(results));
 
     CHECK_EQ(2, results.size());
     EXPECT_TRUE(results[0].removed);
@@ -407,8 +407,8 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
                       Token::SPELLING_CORRECTION),
         CreateResult4("ばっく", "バック", prediction::UNIGRAM, Token::NONE),
     };
-    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(req_len3,
-                                                             &results);
+    DictionaryPredictorTestPeer::RemoveMissSpelledCandidates(
+        req_len3, absl::MakeSpan(results));
 
     CHECK_EQ(2, results.size());
     EXPECT_FALSE(results[0].removed);
@@ -459,7 +459,8 @@ TEST_F(DictionaryPredictorTest, SetPredictionCostForMixedConversion) {
 
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION, segments);
-  predictor_peer.SetPredictionCostForMixedConversion(convreq, &results);
+  predictor_peer.SetPredictionCostForMixedConversion(convreq,
+                                                     absl::MakeSpan(results));
 
   EXPECT_EQ(results.size(), 3);
   EXPECT_EQ(results[0].value, "てすと");
@@ -490,7 +491,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::PREDICTION, segments);
-    predictor_peer.SetPredictionCostForMixedConversion(convreq, &results);
+    predictor_peer.SetPredictionCostForMixedConversion(convreq,
+                                                       absl::MakeSpan(results));
 
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].value, kAikaKanji);
@@ -508,7 +510,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::PREDICTION, segments);
-    predictor_peer.SetPredictionCostForMixedConversion(convreq, &results);
+    predictor_peer.SetPredictionCostForMixedConversion(convreq,
+                                                       absl::MakeSpan(results));
 
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].value, kAikaKanji);
@@ -529,7 +532,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::PREDICTION, segments);
-    predictor_peer.SetPredictionCostForMixedConversion(convreq, &results);
+    predictor_peer.SetPredictionCostForMixedConversion(convreq,
+                                                       absl::MakeSpan(results));
 
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].value, kAikaKanji);
@@ -546,7 +550,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
     const ConversionRequest convreq =
         CreateConversionRequest(ConversionRequest::PREDICTION, segments);
-    predictor_peer.SetPredictionCostForMixedConversion(convreq, &results);
+    predictor_peer.SetPredictionCostForMixedConversion(convreq,
+                                                       absl::MakeSpan(results));
 
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].value, kAikaKanji);
