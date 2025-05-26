@@ -141,8 +141,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   const ConversionRequest request = ConvReq(ConversionRequest::CONVERSION);
   converter.MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16_t> group;
-  converter.MakeGroup(segments, &group);
+  const std::vector<uint16_t> group = converter.MakeGroup(segments);
   converter.Viterbi(segments, &lattice);
 
   std::unique_ptr<NBestGenerator> nbest_generator =
@@ -198,8 +197,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   const ConversionRequest request = ConvReq(ConversionRequest::CONVERSION);
   converter.MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16_t> group;
-  converter.MakeGroup(segments, &group);
+  const std::vector<uint16_t> group = converter.MakeGroup(segments);
   converter.Viterbi(segments, &lattice);
 
   std::unique_ptr<NBestGenerator> nbest_generator =
@@ -250,8 +248,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   const ConversionRequest request = ConvReq(ConversionRequest::PREDICTION);
   converter.MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16_t> group;
-  converter.MakeGroup(segments, &group);
+  const std::vector<uint16_t> group = converter.MakeGroup(segments);
   converter.Viterbi(segments, &lattice);
 
   std::unique_ptr<NBestGenerator> nbest_generator =
@@ -326,8 +323,7 @@ TEST_F(NBestGeneratorTest, NoPartialCandidateBetweenAlphabets) {
   const ConversionRequest request = ConvReq(ConversionRequest::PREDICTION);
   converter.MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16_t> group;
-  converter.MakeGroup(segments, &group);
+  const std::vector<uint16_t> group = converter.MakeGroup(segments);
   converter.Viterbi(segments, &lattice);
 
   std::unique_ptr<NBestGenerator> nbest_generator =
@@ -371,8 +367,7 @@ TEST_F(NBestGeneratorTest, NoAlphabetsConnection2Nodes) {
   const ConversionRequest request = ConvReq(ConversionRequest::CONVERSION);
   converter.MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16_t> group;
-  converter.MakeGroup(segments, &group);
+  const std::vector<uint16_t> group = converter.MakeGroup(segments);
   converter.Viterbi(segments, &lattice);
 
   std::unique_ptr<NBestGenerator> nbest_generator =
@@ -413,8 +408,7 @@ TEST_F(NBestGeneratorTest, NoAlphabetsConnection3Nodes) {
   const ConversionRequest request = ConvReq(ConversionRequest::CONVERSION);
   converter.MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16_t> group;
-  converter.MakeGroup(segments, &group);
+  const std::vector<uint16_t> group = converter.MakeGroup(segments);
   converter.Viterbi(segments, &lattice);
 
   std::unique_ptr<NBestGenerator> nbest_generator =

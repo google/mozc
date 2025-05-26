@@ -153,10 +153,9 @@ class ImmutableConverter : public ImmutableConverterInterface {
                                   const Node *node, Segments *segments) const;
 
   bool MakeSegments(const ConversionRequest &request, const Lattice &lattice,
-                    absl::Span<const uint16_t> group, Segments *segments) const;
+                    Segments *segments) const;
 
-  // |group| will be used to specify the segmentation.
-  void MakeGroup(const Segments &segments, std::vector<uint16_t> *group) const;
+  std::vector<uint16_t> MakeGroup(const Segments &segments) const;
 
   inline int GetCost(const Node *lnode, const Node *rnode) const {
     const int kInvalidPenaltyCost = 100000;

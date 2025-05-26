@@ -64,7 +64,6 @@ class ImmutableConverterTestPeer : testing::TestPeer<ImmutableConverter> {
   // Make them public via peer class.
   PEER_METHOD(MakeLattice);
   PEER_METHOD(Viterbi);
-  PEER_METHOD(MakeGroup);
   PEER_METHOD(InsertDummyCandidates);
 };
 
@@ -370,8 +369,6 @@ TEST(ImmutableConverterTest, NotConnectedTest) {
   const ConversionRequest request;
   converter.MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16_t> group;
-  converter.MakeGroup(segments, &group);
   converter.Viterbi(segments, &lattice);
 
   // Intentionally segmented position - 1

@@ -1839,13 +1839,13 @@ void ImmutableConverter::InsertCandidates(const ConversionRequest &request,
 
 bool ImmutableConverter::MakeSegments(const ConversionRequest &request,
                                       const Lattice &lattice,
-                                      absl::Span<const uint16_t> group,
                                       Segments *segments) const {
   if (segments == nullptr) {
     LOG(WARNING) << "Segments is nullptr";
     return false;
   }
 
+  const std::vector<uint16_t> group = MakeGroup(*segments);
   const ConversionRequest::RequestType type = request.request_type();
 
   if (type == ConversionRequest::CONVERSION ||
@@ -1979,15 +1979,16 @@ void ImmutableConverter::InsertCandidatesForPrediction(
                                                   segments);
 }
 
-void ImmutableConverter::MakeGroup(const Segments &segments,
-                                   std::vector<uint16_t> *group) const {
-  group->clear();
+std::vector<uint16_t> ImmutableConverter::MakeGroup(
+    const Segments &segments) const {
+  std::vector<uint16_t> group;
   for (size_t i = 0; i < segments.segments_size(); ++i) {
     for (size_t j = 0; j < segments.segment(i).key().size(); ++j) {
-      group->push_back(static_cast<uint16_t>(i));
+      group.push_back(static_cast<uint16_t>(i));
     }
   }
-  group->push_back(static_cast<uint16_t>(segments.segments_size()));
+  group.push_back(static_cast<uint16_t>(segments.segments_size()));
+  return group;
 }
 
 bool ImmutableConverter::ConvertForRequest(const ConversionRequest &request,
@@ -2003,9 +2004,6 @@ bool ImmutableConverter::ConvertForRequest(const ConversionRequest &request,
     return false;
   }
 
-  std::vector<uint16_t> group;
-  MakeGroup(*segments, &group);
-
   if (is_prediction) {
     if (!PredictionViterbi(*segments, lattice)) {
       LOG(WARNING) << "prediction_viterbi failed";
@@ -2019,7 +2017,7 @@ bool ImmutableConverter::ConvertForRequest(const ConversionRequest &request,
   }
 
   MOZC_VLOG(2) << lattice->DebugString();
-  if (!MakeSegments(request, *lattice, group, segments)) {
+  if (!MakeSegments(request, *lattice, segments)) {
     LOG(WARNING) << "make segments failed";
     return false;
   }
