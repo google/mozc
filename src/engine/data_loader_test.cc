@@ -71,18 +71,17 @@ class DataLoaderTest : public testing::TestWithTempUserProfile,
                        public ::testing::WithParamInterface<Param> {
  protected:
   DataLoaderTest()
-      : mock_data_path_(
-            testing::GetSourcePath({MOZC_SRC_COMPONENTS("data_manager"),
-                                    "testing", "mock_mozc.data"})) {
-    const std::string mock_path = testing::GetSourcePath(
-        {MOZC_SRC_COMPONENTS("data_manager"), "testing", "mock_mozc.data"});
+      : mock_data_path_(testing::GetSourcePath(
+            {"data_manager", "testing", "mock_mozc.data"})) {
+    const std::string mock_path =
+        testing::GetSourcePath({"data_manager", "testing", "mock_mozc.data"});
     mock_request_.set_engine_type(EngineReloadRequest::MOBILE);
     mock_request_.set_file_path(mock_path);
     mock_request_.set_magic_number(kMockMagicNumber);
     mock_request_.set_priority(50);
 
-    const std::string oss_path = testing::GetSourcePath(
-        {MOZC_SRC_COMPONENTS("data_manager"), "oss", "mozc.data"});
+    const std::string oss_path =
+        testing::GetSourcePath({"data_manager", "oss", "mozc.data"});
     oss_request_.set_engine_type(EngineReloadRequest::MOBILE);
     oss_request_.set_file_path(oss_path);
     oss_request_.set_magic_number(kOssMagicNumber);
@@ -197,8 +196,8 @@ TEST_P(DataLoaderTest, AsyncBuildWithSamePriorityRepeatedly) {
 TEST_P(DataLoaderTest, FailureCaseDataBroken) {
   // Test the case where input file is invalid.
   request_.set_engine_type(GetParam().type);
-  request_.set_file_path(testing::GetSourceFileOrDie(
-      {MOZC_SRC_COMPONENTS("engine"), "data_loader_test.cc"}));
+  request_.set_file_path(
+      testing::GetSourceFileOrDie({"engine", "data_loader_test.cc"}));
   request_.set_magic_number(kMockMagicNumber);
 
   DataLoader loader;

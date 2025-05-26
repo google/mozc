@@ -140,7 +140,7 @@ TEST(CalculatorTest, BasicTest) {
 // i.e. it is a false test.
 TEST(CalculatorTest, StressTest) {
   const std::string filename = testing::GetSourceFileOrDie(
-      {MOZC_DICT_DIR_COMPONENTS, "test", "calculator", "testset.txt"});
+      {"data", "test", "calculator", "testset.txt"});
   Calculator calculator;
 
   std::ifstream finput(filename);

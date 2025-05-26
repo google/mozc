@@ -200,7 +200,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
 TEST_P(SessionHandlerScenarioTest, TestImplBase) {
   // Open the scenario file.
   const absl::StatusOr<std::string> scenario_path =
-      mozc::testing::GetSourceFile({MOZC_DICT_DIR_COMPONENTS, GetParam()});
+      mozc::testing::GetSourceFile({"data", GetParam()});
   ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
   handler_->ClearAll();
   LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);
@@ -268,8 +268,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
   // Open the scenario file.
   const absl::StatusOr<std::string> scenario_path =
-      mozc::testing::GetSourceFile(
-          {MOZC_DICT_DIR_COMPONENTS, std::get<0>(GetParam())});
+      mozc::testing::GetSourceFile({"data", std::get<0>(GetParam())});
   ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
   handler_->ClearAll();
   handler_->SetRequest(std::get<1>(GetParam()));

@@ -140,20 +140,20 @@ constexpr absl::string_view kOssMagicNumber = "\xEFMOZC\x0D\x0A";
 class SessionHandlerTest : public SessionHandlerTestBase {
  protected:
   SessionHandlerTest() {
-    const std::string mock_path = testing::GetSourcePath(
-        {MOZC_SRC_COMPONENTS("data_manager"), "testing", "mock_mozc.data"});
+    const std::string mock_path =
+        testing::GetSourcePath({"data_manager", "testing", "mock_mozc.data"});
     mock_request_.set_engine_type(EngineReloadRequest::MOBILE);
     mock_request_.set_file_path(mock_path);
     mock_request_.set_magic_number(kMockMagicNumber);
 
-    const std::string oss_path = testing::GetSourcePath(
-        {MOZC_SRC_COMPONENTS("data_manager"), "oss", "mozc.data"});
+    const std::string oss_path =
+        testing::GetSourcePath({"data_manager", "oss", "mozc.data"});
     oss_request_.set_engine_type(EngineReloadRequest::MOBILE);
     oss_request_.set_file_path(oss_path);
     oss_request_.set_magic_number(kOssMagicNumber);
 
-    const std::string invalid_path = testing::GetSourcePath(
-        {MOZC_SRC_COMPONENTS("data_manager"), "invalid", "mozc.data"});
+    const std::string invalid_path =
+        testing::GetSourcePath({"data_manager", "invalid", "mozc.data"});
     invalid_path_request_.set_engine_type(EngineReloadRequest::MOBILE);
     invalid_path_request_.set_file_path(invalid_path);
     invalid_path_request_.set_magic_number(kOssMagicNumber);

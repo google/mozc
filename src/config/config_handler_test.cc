@@ -236,7 +236,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
   for (absl::string_view file_name : kDataFiles) {
     const std::string src_path = mozc::testing::GetSourceFileOrDie(
-        {MOZC_DICT_DIR_COMPONENTS, "test", "config", file_name});
+        {"data", "test", "config", file_name});
     const std::string dest_path =
         FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), file_name);
     ASSERT_OK(FileUtil::CopyFile(src_path, dest_path))

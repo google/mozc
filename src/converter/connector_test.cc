@@ -56,7 +56,7 @@ struct ConnectionDataEntry {
 
 TEST(ConnectorTest, CompareWithRawData) {
   const std::string path = testing::GetSourceFileOrDie(
-      {MOZC_SRC_COMPONENTS("data_manager"), "testing", "connection.data"});
+      {"data_manager", "testing", "connection.data"});
   absl::StatusOr<Mmap> cmmap = Mmap::Map(path);
   ASSERT_OK(cmmap) << cmmap.status();
   auto status_or_connector = Connector::Create(cmmap->string_view(), 256);
@@ -65,8 +65,7 @@ TEST(ConnectorTest, CompareWithRawData) {
   ASSERT_EQ(1, connector.GetResolution());
 
   const std::string connection_text_path = testing::GetSourceFileOrDie(
-      {MOZC_DICT_DIR_COMPONENTS, "test", "dictionary",
-       "connection_single_column.txt"});
+      {"data", "test", "dictionary", "connection_single_column.txt"});
   std::vector<ConnectionDataEntry> data;
   for (ConnectionFileReader reader(connection_text_path); !reader.done();
        reader.Next()) {
@@ -94,7 +93,7 @@ TEST(ConnectorTest, CompareWithRawData) {
 
 TEST(ConnectorTest, BrokenData) {
   const std::string path = testing::GetSourceFileOrDie(
-      {MOZC_SRC_COMPONENTS("data_manager"), "testing", "connection.data"});
+      {"data_manager", "testing", "connection.data"});
   absl::StatusOr<Mmap> cmmap = Mmap::Map(path);
   ASSERT_OK(cmmap) << cmmap.status();
 

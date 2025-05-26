@@ -91,8 +91,7 @@ HANDLE LoadPrivateFont(const wchar_t *font_name) {
 bool WinFontTestHelper::Initialize() {
   if (g_font_handle_ == nullptr) {
     const std::string path = testing::GetSourceFileOrDie(
-        {MOZC_DICT_DIR_COMPONENTS, "test", "renderer", "win32",
-         "mozc_test_font.ttf"});
+        {"data", "test", "renderer", "win32", "mozc_test_font.ttf"});
     g_font_handle_ = LoadPrivateFont(win32::Utf8ToWide(path).c_str());
     if (g_font_handle_ == nullptr) {
       return false;

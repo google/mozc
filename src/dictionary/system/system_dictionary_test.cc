@@ -88,7 +88,7 @@ class SystemDictionaryTest : public testing::TestWithTempUserProfile {
         temp_dir_(testing::MakeTempDirectoryOrDie()),
         dic_fn_(FileUtil::JoinPath(temp_dir_.path(), "mozc.dic")) {
     const std::string dic_path = mozc::testing::GetSourceFileOrDie(
-        {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss", "dictionary00.txt"});
+        {"data", "dictionary_oss", "dictionary00.txt"});
     text_dict_.LoadWithLineLimit(dic_path, "",
                                  absl::GetFlag(FLAGS_dictionary_test_size));
   }

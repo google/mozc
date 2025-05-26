@@ -37,8 +37,8 @@ namespace mozc {
 namespace internal {
 
 TEST(PosIdPrinterTest, BasicIdTest) {
-  PosIdPrinter printer(InputFileStream(testing::GetSourceFileOrDie(
-      {MOZC_DICT_DIR_COMPONENTS, "test", "dictionary", "id.def"})));
+  PosIdPrinter printer(InputFileStream(
+      testing::GetSourceFileOrDie({"data", "test", "dictionary", "id.def"})));
 
   EXPECT_EQ(printer.IdToString(1934), "名詞,サ変接続,*,*,*,*,*");
   EXPECT_EQ(printer.IdToString(1935), "名詞,サ変接続,*,*,*,*,*,使用");
