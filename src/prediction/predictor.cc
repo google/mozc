@@ -31,20 +31,25 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -57,22 +62,8 @@ constexpr int kPredictionSize = 100;
 // conversion so the limit is same as conversion's one.
 constexpr int kMobilePredictionSize = 200;
 
-size_t GetCandidatesSize(const Segments &segments) {
-  if (segments.conversion_segments_size() <= 0) {
-    LOG(ERROR) << "No conversion segments found";
-    return 0;
-  }
-  return segments.conversion_segment(0).candidates_size();
-}
-
-// TODO(taku): Is it OK to check only |zero_query_suggestion| and
-// |mixed_conversion|?
-bool IsZeroQuery(const ConversionRequest &request) {
-  return request.request().zero_query_suggestion();
-}
-
 size_t GetHistoryPredictionSizeFromRequest(const ConversionRequest &request) {
-  if (!IsZeroQuery(request)) {
+  if (!request.request().zero_query_suggestion()) {
     return 2;
   }
   if (request.request().has_decoder_experiment_params() &&
@@ -150,54 +141,61 @@ DesktopPredictor::DesktopPredictor(
 
 DesktopPredictor::~DesktopPredictor() = default;
 
-bool DesktopPredictor::PredictForRequest(const ConversionRequest &request,
-                                         Segments *segments) const {
+std::vector<Result> DesktopPredictor::Predict(
+    const ConversionRequest &request) const {
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION ||
          request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
          request.request_type() == ConversionRequest::PARTIAL_SUGGESTION);
+  DCHECK(request.HasHistorySegments());
 
   if (request.config().presentation_mode()) {
-    return false;
+    return {};
   }
 
-  int size = kPredictionSize;
+  int prediction_size = kPredictionSize;
   if (request.request_type() == ConversionRequest::SUGGESTION) {
-    size = std::clamp<int>(request.config().suggestions_size(), 1, 9);
+    prediction_size =
+        std::clamp<int>(request.config().suggestions_size(), 1, 9);
   }
 
-  bool result = false;
-  int remained_size = size;
+  std::vector<Result> user_history_results, dictionary_results;
+
   ConversionRequest::Options options = request.options();
-  options.max_user_history_prediction_candidates_size = size;
-  options.max_user_history_prediction_candidates_size_for_zero_query = size;
+  options.max_user_history_prediction_candidates_size = prediction_size;
+  options.max_user_history_prediction_candidates_size_for_zero_query =
+      prediction_size;
   ConversionRequest request_for_prediction =
       ConversionRequestBuilder()
           .SetConversionRequestView(request)
           .SetOptions(std::move(options))
-          .SetHistorySegmentsView(*segments)
           .Build();
-  result |= user_history_predictor_->PredictForRequest(request_for_prediction,
-                                                       segments);
-  remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
+
+  user_history_results =
+      user_history_predictor_->Predict(request_for_prediction);
 
   // Do not call dictionary_predictor if the size of candidates get
   // >= suggestions_size.
-  if (remained_size <= 0) {
-    return result;
+  if (user_history_results.size() < prediction_size) {
+    ConversionRequest::Options options2 = request_for_prediction.options();
+    options2.max_dictionary_prediction_candidates_size =
+        prediction_size - user_history_results.size();
+    const ConversionRequest request_for_prediction2 =
+        ConversionRequestBuilder()
+            .SetConversionRequestView(request_for_prediction)
+            .SetOptions(std::move(options2))
+            .Build();
+    DCHECK(request_for_prediction2.HasHistorySegments());
+    dictionary_results =
+        dictionary_predictor_->Predict(request_for_prediction2);
   }
 
-  ConversionRequest::Options options2 = request_for_prediction.options();
-  options2.max_dictionary_prediction_candidates_size = remained_size;
-  const ConversionRequest request_for_prediction2 =
-      ConversionRequestBuilder()
-          .SetConversionRequestView(request_for_prediction)
-          .SetOptions(std::move(options2))
-          .SetHistorySegmentsView(*segments)
-          .Build();
-  result |= dictionary_predictor_->PredictForRequest(request_for_prediction2,
-                                                     segments);
-  return result;
+  std::vector<Result> results;
+
+  absl::c_move(user_history_results, std::back_inserter(results));
+  absl::c_move(dictionary_results, std::back_inserter(results));
+
+  return results;
 }
 
 // static
@@ -221,7 +219,8 @@ MobilePredictor::MobilePredictor(
 MobilePredictor::~MobilePredictor() = default;
 
 ConversionRequest MobilePredictor::GetRequestForPredict(
-    const ConversionRequest &request, const Segments &segments) {
+    const ConversionRequest &request) {
+  DCHECK(request.HasHistorySegments());
   ConversionRequest::Options options = request.options();
   size_t history_prediction_size = GetHistoryPredictionSizeFromRequest(request);
   switch (request.request_type()) {
@@ -253,95 +252,80 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
   return ConversionRequestBuilder()
       .SetConversionRequestView(request)
       .SetOptions(std::move(options))
-      .SetHistorySegmentsView(segments)
       .Build();
 }
 
 namespace {
 // Fills empty lid and rid of candidates with the candidates of the same value.
-void MaybeFillFallbackPos(Segments *segments) {
-  for (Segment &segment : segments->conversion_segments()) {
-    absl::flat_hash_map<absl::string_view, Segment::Candidate *> posless_cands;
-    for (size_t ci = 0; ci < segment.candidates_size(); ++ci) {
-      Segment::Candidate *cand = segment.mutable_candidate(ci);
-      // Candidates with empty POS come before candidates with filled POS.
-      if (cand->lid == 0 || cand->rid == 0) {
-        posless_cands[cand->value] = cand;
-        continue;
-      }
-      if (!posless_cands.contains(cand->value)) {
-        continue;
-      }
-
-      Segment::Candidate *posless_cand = posless_cands[cand->value];
-      if (posless_cand->lid == 0) {
-        posless_cand->lid = cand->lid;
-      }
-      if (posless_cand->rid == 0) {
-        posless_cand->rid = cand->rid;
-      }
-      if (posless_cand->lid != 0 && posless_cand->rid != 0) {
-        posless_cands.erase(cand->value);
-      }
-      MOZC_CANDIDATE_LOG(cand, "Fallback POSes were filled.");
+void MaybeFillFallbackPos(absl::Span<Result> results) {
+  absl::flat_hash_map<absl::string_view, Result *> posless_results;
+  for (Result &result : results) {
+    // Candidates with empty POS come before candidates with filled POS.
+    if (result.lid == 0 || result.rid == 0) {
+      posless_results[result.value] = &result;
+      continue;
+    }
+    if (!posless_results.contains(result.value)) {
+      continue;
+    }
+    Result *posless_result = posless_results[result.value];
+    if (posless_result->lid == 0) {
+      posless_result->lid = result.lid;
+    }
+    if (posless_result->rid == 0) {
+      posless_result->rid = result.rid;
+    }
+    if (posless_result->lid != 0 && posless_result->rid != 0) {
+      posless_results.erase(result.value);
     }
   }
 }
 }  // namespace
 
-bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
-                                        Segments *segments) const {
+std::vector<Result> MobilePredictor::Predict(
+    const ConversionRequest &request) const {
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION ||
          request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
          request.request_type() == ConversionRequest::PARTIAL_SUGGESTION);
+  DCHECK(request.HasHistorySegments());
 
   if (request.config().presentation_mode()) {
-    return false;
+    return {};
   }
 
-  DCHECK(segments);
+  const ConversionRequest request_for_predict = GetRequestForPredict(request);
 
-  bool result = false;
-  const ConversionRequest request_for_predict =
-      GetRequestForPredict(request, *segments);
+  DCHECK(request_for_predict.HasHistorySegments());
 
-  // TODO(taku,toshiyuki): Must rewrite the logic.
+  std::vector<Result> user_history_results, dictionary_results;
+
   switch (request.request_type()) {
-    case ConversionRequest::SUGGESTION: {
+    case ConversionRequest::SUGGESTION:
+    case ConversionRequest::PREDICTION:
       // Suggestion is triggered at every character insertion.
       // So here we should use slow predictors.
-      result |= user_history_predictor_->PredictForRequest(request_for_predict,
-                                                           segments);
-      result |= dictionary_predictor_->PredictForRequest(request_for_predict,
-                                                         segments);
+      user_history_results =
+          user_history_predictor_->Predict(request_for_predict);
+      dictionary_results = dictionary_predictor_->Predict(request_for_predict);
       break;
-    }
-    case ConversionRequest::PARTIAL_SUGGESTION: {
+    case ConversionRequest::PARTIAL_SUGGESTION:
+    case ConversionRequest::PARTIAL_PREDICTION:
       // PARTIAL SUGGESTION can be triggered in a similar manner to that of
       // SUGGESTION. We don't call slow predictors by the same reason.
-      result |= dictionary_predictor_->PredictForRequest(request_for_predict,
-                                                         segments);
+      dictionary_results = dictionary_predictor_->Predict(request_for_predict);
       break;
-    }
-    case ConversionRequest::PARTIAL_PREDICTION: {
-      result |= dictionary_predictor_->PredictForRequest(request_for_predict,
-                                                         segments);
-      break;
-    }
-    case ConversionRequest::PREDICTION: {
-      result |= user_history_predictor_->PredictForRequest(request_for_predict,
-                                                           segments);
-      result |= dictionary_predictor_->PredictForRequest(request_for_predict,
-                                                         segments);
-      break;
-    }
     default:
-      DLOG(FATAL) << "Unexpected request type: " << request.request_type();
+      break;
   }
 
-  MaybeFillFallbackPos(segments);
-  return result;
+  std::vector<Result> results;
+  absl::c_move(user_history_results, std::back_inserter(results));
+  absl::c_move(dictionary_results, std::back_inserter(results));
+
+  MaybeFillFallbackPos(absl::MakeSpan(results));
+
+  return results;
 }
 
 }  // namespace mozc::prediction

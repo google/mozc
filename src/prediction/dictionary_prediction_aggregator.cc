@@ -72,20 +72,6 @@
 #include "request/request_util.h"
 #include "transliteration/transliteration.h"
 
-#ifndef NDEBUG
-#define MOZC_DEBUG
-#define MOZC_WORD_LOG_MESSAGE(message) \
-  absl::StrCat(__FILE__, ":", __LINE__, " ", message, "\n")
-#define MOZC_WORD_LOG(result, message) \
-  (result).log.append(MOZC_WORD_LOG_MESSAGE(message))
-
-#else  // NDEBUG
-#define MOZC_WORD_LOG(result, message) \
-  {                                    \
-  }
-
-#endif  // NDEBUG
-
 namespace mozc {
 namespace prediction {
 namespace {
@@ -1701,6 +1687,3 @@ void DictionaryPredictionAggregator::MaybePopulateTypingCorrectionPenalty(
 
 }  // namespace prediction
 }  // namespace mozc
-
-#undef MOZC_WORD_LOG_MESSAGE
-#undef MOZC_WORD_LOG

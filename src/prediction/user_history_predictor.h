@@ -48,7 +48,6 @@
 #include "composer/query.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
@@ -103,8 +102,7 @@ class UserHistoryPredictor : public PredictorInterface {
     content_word_learning_enabled_ = value;
   }
 
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const override;
+  std::vector<Result> Predict(const ConversionRequest &request) const override;
 
   // Hook(s) for all mutable operations.
   void Finish(const ConversionRequest &request,
@@ -303,15 +301,16 @@ class UserHistoryPredictor : public PredictorInterface {
   bool CheckSyncerAndDelete() const;
 
   // If |entry| is the target of prediction,
-  // create a new result and insert it to |results|.
+  // create a new result and insert it to |entry_queue|.
   // Can set |prev_entry| if there is a history segment just before |input_key|.
   // |prev_entry| is an optional field. If set nullptr, this field is just
   // ignored. This method adds a new result entry with score,
-  // pair<score, entry>, to |results|.
+  // pair<score, entry>, to |entry_queue|.
   bool LookupEntry(const ConversionRequest &request,
                    absl::string_view input_key, absl::string_view key_base,
                    const Trie<std::string> *key_expanded, const Entry *entry,
-                   const Entry *prev_entry, EntryPriorityQueue *results) const;
+                   const Entry *prev_entry,
+                   EntryPriorityQueue *entry_queue) const;
 
   // For the EXACT and RIGHT_PREFIX match, we will generate joined
   // candidates by looking up the history link.
@@ -330,16 +329,16 @@ class UserHistoryPredictor : public PredictorInterface {
   const Entry *LookupPrevEntry(const ConversionRequest &request) const;
 
   // Adds an entry to a priority queue.
-  Entry *AddEntry(const Entry &entry, EntryPriorityQueue *results) const;
+  Entry *AddEntry(const Entry &entry, EntryPriorityQueue *entry_queue) const;
 
   // Adds the entry whose key and value are modified to a priority queue.
   Entry *AddEntryWithNewKeyValue(std::string key, std::string value,
                                  Entry entry,
-                                 EntryPriorityQueue *results) const;
+                                 EntryPriorityQueue *entry_queue) const;
 
-  EntryPriorityQueue GetResultsFromHistoryDictionary(
+  EntryPriorityQueue GetEntry_QueueFromHistoryDictionary(
       const ConversionRequest &request, const Entry *prev_entry,
-      size_t max_results_size) const;
+      size_t max_entry_queue_size) const;
 
   // Gets input data from segments.
   // These input data include ambiguities.
@@ -347,10 +346,10 @@ class UserHistoryPredictor : public PredictorInterface {
       const ConversionRequest &request, std::string *input_key,
       std::string *base, std::unique_ptr<Trie<std::string>> *expanded);
 
-  bool InsertCandidates(const ConversionRequest &request,
-                        size_t max_prediction_size,
-                        size_t max_prediction_char_coverage, Segments *segments,
-                        EntryPriorityQueue *results) const;
+  std::vector<Result> MakeResults(const ConversionRequest &request,
+                                  size_t max_prediction_size,
+                                  size_t max_prediction_char_coverage,
+                                  EntryPriorityQueue *entry_queue) const;
 
   SegmentsForLearning MakeLearningSegments(const Segments &segments) const;
 
@@ -379,19 +378,19 @@ class UserHistoryPredictor : public PredictorInterface {
   static bool MaybeRomanMisspelledKey(absl::string_view key);
 
   // If roman_input_key can be a target key of entry->key(), creat a new
-  // result and insert it to |results|.
+  // result and insert it to |entry_queue|.
   // This method adds a new result entry with score, pair<score, entry>, to
-  // |results|.
+  // |entry_queue|.
   bool RomanFuzzyLookupEntry(absl::string_view roman_input_key,
                              const Entry *entry,
-                             EntryPriorityQueue *results) const;
+                             EntryPriorityQueue *entry_queue) const;
 
   // if `prev_entry` is the prefix of `entry`, add the suffix part as
   // zero-query suggestion.
   bool ZeroQueryLookupEntry(const ConversionRequest &request,
                             absl::string_view input_key, const Entry *entry,
                             const Entry *prev_entry,
-                            EntryPriorityQueue *results) const;
+                            EntryPriorityQueue *entry_queue) const;
 
   // vector of [dic_key, revert_entry]
   // When entry is nullptr, remove entry[dic_key].
@@ -456,7 +455,6 @@ class UserHistoryPredictor : public PredictorInterface {
                                     RevertEntries *revert_entries);
 
   const dictionary::DictionaryInterface &dictionary_;
-  const dictionary::PosMatcher &pos_matcher_;
   const dictionary::UserDictionaryInterface &user_dictionary_;
   const std::string predictor_name_;
 

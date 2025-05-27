@@ -99,6 +99,7 @@ struct Result {
 
   std::string key;
   std::string value;
+  std::string description;
   // Indicating which PredictionType creates this instance.
   // UNIGRAM, BIGRAM, REALTIME, SUFFIX, ENGLISH or TYPING_CORRECTION
   // is set exclusively.
@@ -203,13 +204,15 @@ void PopulateTypeCorrectedQuery(
     Result *absl_nonnull result);
 
 #ifndef NDEBUG
-#define MOZC_WORD_LOG_MESSAGE(message) \
-  absl::StrCat(__FILE__, ":", __LINE__, " ", message, "\n")
-#define MOZC_WORD_LOG(result, message) \
-  (result).log.append(MOZC_WORD_LOG_MESSAGE(message))
+#define MOZC_WORD_LOG(result, ...)                                  \
+  {                                                                 \
+    if (!(result).log.empty()) absl::StrAppend(&(result).log, " "); \
+    absl::StrAppend(&(result).log, __FILE__, ":", __LINE__, " ",    \
+                    ##__VA_ARGS__);                                 \
+  }
 #else  // NDEBUG
-#define MOZC_WORD_LOG(result, message) \
-  {                                    \
+#define MOZC_WORD_LOG(result, ...) \
+  {                                \
   }
 #endif  // NDEBUG
 

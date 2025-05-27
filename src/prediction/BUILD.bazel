@@ -61,6 +61,7 @@ mozc_cc_library(
         "//engine:__pkg__",
     ],
     deps = [
+        ":result",
         "//converter:segments",
         "//request:conversion_request",
         "@com_google_absl//absl/strings",
@@ -78,6 +79,7 @@ mozc_cc_library(
     ],
     deps = [
         ":predictor_interface",
+        ":result",
         ":user_history_predictor_cc_proto",
         "//base:bits",
         "//base:clock",
@@ -93,12 +95,10 @@ mozc_cc_library(
         "//composer:query",
         "//converter:segments",
         "//dictionary:dictionary_interface",
-        "//dictionary:pos_matcher",
         "//engine:modules",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
-        "//rewriter:variants_rewriter",
         "//storage:encrypted_string_storage",
         "//storage:lru_cache",
         "@com_google_absl//absl/algorithm:container",
@@ -122,6 +122,7 @@ mozc_cc_test(
         "nowin",
     ],  # TODO(yuryu): depends on //base:encryptor
     deps = [
+        ":result",
         ":user_history_predictor",
         ":user_history_predictor_cc_proto",
         "//base:clock_mock",
@@ -212,6 +213,7 @@ mozc_cc_library(
     srcs = ["result.cc"],
     hdrs = ["result.h"],
     visibility = [
+        "//converter:__subpackages__",
         "//engine:__subpackages__",
     ],
     deps = [
@@ -355,6 +357,7 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:mozctest",
         "//testing:test_peer",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/random",
@@ -423,16 +426,19 @@ mozc_cc_library(
     ],
     deps = [
         ":predictor_interface",
+        ":result",
         "//base:util",
         "//converter:converter_interface",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
     alwayslink = 1,
 )
@@ -444,6 +450,7 @@ mozc_cc_test(
         ":dictionary_predictor",
         ":predictor",
         ":predictor_interface",
+        ":result",
         ":user_history_predictor",
         "//composer",
         "//config:config_handler",

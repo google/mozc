@@ -364,6 +364,10 @@ class ConversionRequest {
     return segments;
   }
 
+  // Returns true if request has the legacy segments structure.
+  // This method is only used in the segments to request migration.
+  bool HasHistorySegments() const { return static_cast<bool>(segments_); }
+
   // Builder can access the private member for construction.
   friend class ConversionRequestBuilder;
 
@@ -430,6 +434,7 @@ class ConversionRequestBuilder {
     request_.request_ = base_convreq.request_;
     request_.context_ = base_convreq.context_;
     request_.config_ = base_convreq.config_;
+    request_.segments_ = base_convreq.segments_;
     request_.options_ = base_convreq.options_;
     return *this;
   }
@@ -443,6 +448,9 @@ class ConversionRequestBuilder {
     request_.context_.set_view(*base_convreq.context_);
     request_.config_.set_view(*base_convreq.config_);
     request_.options_ = base_convreq.options_;
+    if (base_convreq.segments_) {
+      request_.segments_.set_view(*base_convreq.segments_);
+    }
     return *this;
   }
   ConversionRequestBuilder &SetComposerData(

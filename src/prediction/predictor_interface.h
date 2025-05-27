@@ -31,9 +31,11 @@
 #define MOZC_PREDICTION_PREDICTOR_INTERFACE_H_
 
 #include <string>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "prediction/result.h"
 #include "request/conversion_request.h"
 
 namespace mozc::prediction {
@@ -48,8 +50,8 @@ class PredictorInterface {
   // SUGGESTION: automatic suggestions
   // PREDICTION: invoked only when user pushes "tab" key.
   // less aggressive than SUGGESTION mode.
-  [[nodiscard]] virtual bool PredictForRequest(const ConversionRequest &request,
-                                               Segments *segments) const = 0;
+  virtual std::vector<Result> Predict(
+      const ConversionRequest &request) const = 0;
 
   // Finish the conversion. Stores the history for penalization.
   // Uses segments.revert_id() as the key of the last operation.

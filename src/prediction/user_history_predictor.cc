@@ -66,13 +66,12 @@
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
+#include "prediction/result.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/variants_rewriter.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 
@@ -339,7 +338,6 @@ UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
 UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules,
                                            bool enable_content_word_learning)
     : dictionary_(modules.GetDictionary()),
-      pos_matcher_(modules.GetPosMatcher()),
       user_dictionary_(modules.GetUserDictionary()),
       predictor_name_("UserHistoryPredictor"),
       content_word_learning_enabled_(enable_content_word_learning),
@@ -805,9 +803,9 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
 bool UserHistoryPredictor::ZeroQueryLookupEntry(
     const ConversionRequest &request, absl::string_view input_key,
     const Entry *entry, const Entry *prev_entry,
-    EntryPriorityQueue *results) const {
+    EntryPriorityQueue *entry_queue) const {
   DCHECK(entry);
-  DCHECK(results);
+  DCHECK(entry_queue);
 
   // - input_key is empty,
   // - prev_entry(history) = 東京
@@ -829,14 +827,14 @@ bool UserHistoryPredictor::ZeroQueryLookupEntry(
         type != Util::KATAKANA) {
       return false;
     }
-    Entry *result = results->NewEntry();
+    Entry *result = entry_queue->NewEntry();
     DCHECK(result);
     // Copy timestamp from `entry`
     *result = *entry;
     result->set_key(std::move(key));
     result->set_value(std::move(value));
     result->set_bigram_boost(true);
-    results->Push(result);
+    entry_queue->Push(result);
     return true;
   }
 
@@ -845,44 +843,44 @@ bool UserHistoryPredictor::ZeroQueryLookupEntry(
 
 bool UserHistoryPredictor::RomanFuzzyLookupEntry(
     const absl::string_view roman_input_key, const Entry *entry,
-    EntryPriorityQueue *results) const {
+    EntryPriorityQueue *entry_queue) const {
   if (roman_input_key.empty()) {
     return false;
   }
 
   DCHECK(entry);
-  DCHECK(results);
+  DCHECK(entry_queue);
 
   if (!RomanFuzzyPrefixMatch(ToRoman(entry->key()), roman_input_key)) {
     return false;
   }
 
-  Entry *result = results->NewEntry();
+  Entry *result = entry_queue->NewEntry();
   DCHECK(result);
   *result = *entry;
   result->set_spelling_correction(true);
-  results->Push(result);
+  entry_queue->Push(result);
 
   return true;
 }
 
 UserHistoryPredictor::Entry *UserHistoryPredictor::AddEntry(
-    const Entry &entry, EntryPriorityQueue *results) const {
+    const Entry &entry, EntryPriorityQueue *entry_queue) const {
   // We add an entry even if it was marked as removed so that it can be used to
   // generate prediction by entry chaining. The deleted entry itself is never
   // shown in the final prediction result as it is filtered finally.
-  Entry *new_entry = results->NewEntry();
+  Entry *new_entry = entry_queue->NewEntry();
   *new_entry = entry;
   return new_entry;
 }
 
 UserHistoryPredictor::Entry *UserHistoryPredictor::AddEntryWithNewKeyValue(
     std::string key, std::string value, Entry entry,
-    EntryPriorityQueue *results) const {
+    EntryPriorityQueue *entry_queue) const {
   // We add an entry even if it was marked as removed so that it can be used to
   // generate prediction by entry chaining. The deleted entry itself is never
   // shown in the final prediction result as it is filtered finally.
-  Entry *new_entry = results->NewEntry();
+  Entry *new_entry = entry_queue->NewEntry();
   *new_entry = std::move(entry);
   new_entry->set_key(std::move(key));
   new_entry->set_value(std::move(value));
@@ -1002,9 +1000,9 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
                                        const Trie<std::string> *key_expanded,
                                        const Entry *entry,
                                        const Entry *prev_entry,
-                                       EntryPriorityQueue *results) const {
-  CHECK(entry);
-  CHECK(results);
+                                       EntryPriorityQueue *entry_queue) const {
+  DCHECK(entry);
+  DCHECK(entry_queue);
 
   Entry *result = nullptr;
 
@@ -1034,7 +1032,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
     // if |input_key| is empty, the |prev_entry| and |entry| must
     // have bigram relation.
     if (prev_entry != nullptr && HasBigramEntry(*entry, *prev_entry)) {
-      result = AddEntry(*entry, results);
+      result = AddEntry(*entry, entry_queue);
       if (result) {
         last_entry = entry;
         left_last_access_time = entry->last_access_time();
@@ -1048,7 +1046,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
     // |input_key| is shorter than |entry->key()|
     // This scenario is a simple prefix match.
     // e.g., |input_key|="foo", |entry->key()|="foobar"
-    result = AddEntry(*entry, results);
+    result = AddEntry(*entry, entry_queue);
     if (result) {
       last_entry = entry;
       left_last_access_time = entry->last_access_time();
@@ -1064,7 +1062,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
     if (request.request().zero_query_suggestion() &&
         mtype == MatchType::EXACT_MATCH) {
       // For mobile, we don't generate joined result.
-      result = AddEntry(*entry, results);
+      result = AddEntry(*entry, entry_queue);
       if (result) {
         last_entry = entry;
         left_last_access_time = entry->last_access_time();
@@ -1082,7 +1080,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
         return false;
       }
       result = AddEntryWithNewKeyValue(std::move(key), std::move(value), *entry,
-                                       results);
+                                       entry_queue);
     }
   } else {
     LOG(ERROR) << "Unknown match mode: " << static_cast<int>(mtype);
@@ -1104,7 +1102,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
   }
 
   if (!result->removed()) {
-    results->Push(result);
+    entry_queue->Push(result);
   }
 
   if (request.request().zero_query_suggestion()) {
@@ -1152,9 +1150,10 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
         IsContentWord(next_entry->value())) {
       Entry *result2 = AddEntryWithNewKeyValue(
           absl::StrCat(result->key(), next_entry->key()),
-          absl::StrCat(result->value(), next_entry->value()), *result, results);
+          absl::StrCat(result->value(), next_entry->value()), *result,
+          entry_queue);
       if (!result2->removed()) {
-        results->Push(result2);
+        entry_queue->Push(result2);
       }
     }
   }
@@ -1162,17 +1161,17 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
   return true;
 }
 
-bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
-                                             Segments *segments) const {
+std::vector<Result> UserHistoryPredictor::Predict(
+    const ConversionRequest &request) const {
   if (!ShouldPredict(request)) {
-    return false;
+    return {};
   }
 
   const bool is_empty_input = request.converter_key().empty();
   const Entry *prev_entry = LookupPrevEntry(request);
   if (is_empty_input && prev_entry == nullptr) {
     MOZC_VLOG(1) << "If input_key_len is 0, prev_entry must be set";
-    return false;
+    return {};
   }
 
   const auto &params = request.request().decoder_experiment_params();
@@ -1193,16 +1192,16 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     max_prediction_size = 3;
   }
 
-  EntryPriorityQueue results = GetResultsFromHistoryDictionary(
+  EntryPriorityQueue entry_queue = GetEntry_QueueFromHistoryDictionary(
       request, prev_entry, max_prediction_size * 5);
 
-  if (results.size() == 0) {
+  if (entry_queue.size() == 0) {
     MOZC_VLOG(2) << "no prefix match candidate is found.";
-    return false;
+    return {};
   }
 
-  return InsertCandidates(request, max_prediction_size,
-                          max_prediction_char_coverage, segments, &results);
+  return MakeResults(request, max_prediction_size, max_prediction_char_coverage,
+                     &entry_queue);
 }
 
 bool UserHistoryPredictor::ShouldPredict(
@@ -1313,9 +1312,9 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
 }
 
 UserHistoryPredictor::EntryPriorityQueue
-UserHistoryPredictor::GetResultsFromHistoryDictionary(
+UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
     const ConversionRequest &request, const Entry *prev_entry,
-    size_t max_results_size) const {
+    size_t max_entry_queue_size) const {
   // Gets romanized input key if the given preedit looks misspelled.
   const std::string roman_input_key = GetRomanMisspelledKey(request);
 
@@ -1344,12 +1343,12 @@ UserHistoryPredictor::GetResultsFromHistoryDictionary(
   std::unique_ptr<Trie<std::string>> expanded;
   GetInputKeyFromRequest(request, &input_key, &base_key, &expanded);
 
-  EntryPriorityQueue results;
+  EntryPriorityQueue entry_queue;
   const absl::Time now = Clock::GetAbslTime();
   int trial = 0;
   for (const DicElement &elm : *dic_) {
-    // already found enough results.
-    if (results.size() >= max_results_size) {
+    // already found enough entry_queue.
+    if (entry_queue.size() >= max_entry_queue_size) {
       break;
     }
 
@@ -1367,12 +1366,12 @@ UserHistoryPredictor::GetResultsFromHistoryDictionary(
     }
 
     // Lookup key from elm_value and prev_entry.
-    // If a new entry is found, the entry is pushed to the results.
+    // If a new entry is found, the entry is pushed to the entry_queue.
     if (LookupEntry(request, input_key, base_key, expanded.get(), &(elm.value),
-                    prev_entry, &results) ||
-        RomanFuzzyLookupEntry(roman_input_key, &(elm.value), &results) ||
+                    prev_entry, &entry_queue) ||
+        RomanFuzzyLookupEntry(roman_input_key, &(elm.value), &entry_queue) ||
         ZeroQueryLookupEntry(request, input_key, &(elm.value), prev_entry,
-                             &results)) {
+                             &entry_queue)) {
       continue;
     }
 
@@ -1384,13 +1383,13 @@ UserHistoryPredictor::GetResultsFromHistoryDictionary(
       // in dictionary predictor.
       if (c.score > 0.0 &&
           LookupEntry(request, c.correction, c.correction, nullptr,
-                      &(elm.value), prev_entry, &results)) {
+                      &(elm.value), prev_entry, &entry_queue)) {
         break;
       }
     }
   }
 
-  return results;
+  return entry_queue;
 }
 
 // static
@@ -1446,29 +1445,23 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
   return ResultType::GOOD_RESULT;
 }
 
-bool UserHistoryPredictor::InsertCandidates(const ConversionRequest &request,
-                                            size_t max_prediction_size,
-                                            size_t max_prediction_char_coverage,
-                                            Segments *segments,
-                                            EntryPriorityQueue *results) const {
-  DCHECK(results);
-  Segment *segment = segments->mutable_conversion_segment(0);
-  if (segment == nullptr) {
-    LOG(ERROR) << "segment is nullptr";
-    return false;
-  }
+std::vector<Result> UserHistoryPredictor::MakeResults(
+    const ConversionRequest &request, size_t max_prediction_size,
+    size_t max_prediction_char_coverage,
+    EntryPriorityQueue *entry_queue) const {
+  DCHECK(entry_queue);
   if (request.request_type() != ConversionRequest::SUGGESTION &&
       request.request_type() != ConversionRequest::PREDICTION) {
     LOG(ERROR) << "Unknown mode";
-    return false;
+    return {};
   }
-  const uint32_t input_key_len = segment->key_len();
+  const uint32_t input_key_len = Util::CharsLen(request.converter_key());
 
   size_t inserted_num = 0;
   size_t inserted_char_coverage = 0;
 
   std::vector<const UserHistoryPredictor::Entry *> entries;
-  entries.reserve(results->size());
+  entries.reserve(entry_queue->size());
 
   // Current LRU-based candidates = ["東京"]
   //  target="東京は" -> Remove.   (target is longer)
@@ -1508,16 +1501,16 @@ bool UserHistoryPredictor::InsertCandidates(const ConversionRequest &request,
   };
 
   while (inserted_num < max_prediction_size) {
-    // |results| is a priority queue where the element
+    // |entry_queue| is a priority queue where the element
     // in the queue is sorted by the score defined in GetScore().
-    const Entry *result_entry = results->Pop();
+    const Entry *result_entry = entry_queue->Pop();
     if (result_entry == nullptr) {
       // Pop() returns nullptr when no more valid entry exists.
       break;
     }
 
-    const ResultType result = GetResultType(
-        request, segment->candidates_size() == 0, input_key_len, *result_entry);
+    const ResultType result =
+        GetResultType(request, entries.empty(), input_key_len, *result_entry);
     if (result == ResultType::STOP_ENUMERATION) {
       break;
     } else if (result == ResultType::BAD_RESULT) {
@@ -1544,36 +1537,34 @@ bool UserHistoryPredictor::InsertCandidates(const ConversionRequest &request,
     inserted_char_coverage += value_len;
   }
 
+  std::vector<Result> results;
+
   for (const auto *result_entry : entries) {
-    Segment::Candidate *candidate = segment->push_back_candidate();
-    DCHECK(candidate);
-    candidate->key = result_entry->key();
-    candidate->content_key = result_entry->key();
-    candidate->value = result_entry->value();
-    candidate->content_value = result_entry->value();
-    candidate->attributes |= Segment::Candidate::USER_HISTORY_PREDICTION |
-                             Segment::Candidate::NO_VARIANTS_EXPANSION;
+    Result result;
+    result.key = result_entry->key();
+    result.value = result_entry->value();
+    result.candidate_attributes |= Segment::Candidate::USER_HISTORY_PREDICTION |
+                                   Segment::Candidate::NO_VARIANTS_EXPANSION;
     if (result_entry->spelling_correction()) {
-      candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
+      result.candidate_attributes |= Segment::Candidate::SPELLING_CORRECTION;
     }
     absl::string_view description = result_entry->description();
     // If we have stored description, set it exactly.
     if (!description.empty()) {
-      candidate->description = description;
-      candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
-    } else {
-      VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, candidate);
+      result.description = description;
+      result.candidate_attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
     }
-    MOZC_CANDIDATE_LOG(candidate,
-                       "Added by UserHistoryPredictor::InsertCandidates");
+    MOZC_WORD_LOG(result, "Added by UserHistoryPredictor::InsertCandidates");
 #if DEBUG
-    if (!absl::StrContains(candidate->description, "History")) {
-      candidate->description += " History";
+    if (!absl::StrContains(result.description, "History")) {
+      result.description += " History";
     }
 #endif  // DEBUG
+
+    results.emplace_back(std::move(result));
   }
 
-  return !entries.empty();
+  return results;
 }
 
 void UserHistoryPredictor::InsertNextEntry(const NextEntry &next_entry,

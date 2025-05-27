@@ -157,6 +157,8 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
     const ConversionRequest convreq =
         ConversionRequestBuilder().SetHistorySegmentsView(segments).Build();
 
+    EXPECT_TRUE(convreq.HasHistorySegments());
+
     EXPECT_EQ(convreq.converter_history_size(), 3);
 
     EXPECT_EQ(convreq.converter_history_key(), "k0k1k2");
@@ -176,6 +178,7 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
 
   {
     const ConversionRequest convreq = ConversionRequestBuilder().Build();
+    EXPECT_FALSE(convreq.HasHistorySegments());
 
     EXPECT_EQ(convreq.converter_history_size(), 0);
     EXPECT_EQ(convreq.converter_history_key(), "");
@@ -191,6 +194,19 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
 
     EXPECT_EQ(convreq.converter_history_rid(), 0);
     EXPECT_FALSE(convreq.converter_history_cost());
+  }
+
+  {
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetHistorySegmentsView(segments).Build();
+    const ConversionRequest convreq2 =
+        ConversionRequestBuilder().SetConversionRequestView(convreq).Build();
+    const ConversionRequest convreq3 =
+        ConversionRequestBuilder().SetConversionRequest(convreq).Build();
+
+    EXPECT_TRUE(convreq.HasHistorySegments());
+    EXPECT_TRUE(convreq2.HasHistorySegments());
+    EXPECT_TRUE(convreq3.HasHistorySegments());
   }
 }
 

@@ -70,6 +70,7 @@
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/result.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -108,6 +109,7 @@ using ::mozc::prediction::DesktopPredictor;
 using ::mozc::prediction::DictionaryPredictor;
 using ::mozc::prediction::MobilePredictor;
 using ::mozc::prediction::PredictorInterface;
+using ::mozc::prediction::Result;
 using ::mozc::prediction::UserHistoryPredictor;
 using ::testing::_;
 using ::testing::AnyNumber;
@@ -135,17 +137,15 @@ class StubPredictor : public PredictorInterface {
  public:
   StubPredictor() : predictor_name_("StubPredictor") {}
 
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const override {
-    if (segments->conversion_segments_size() == 0) {
-      return false;
+  std::vector<Result> Predict(const ConversionRequest &request) const override {
+    absl::string_view key = request.converter_key();
+    if (key.empty()) {
+      return {};
     }
-    Segment *seg = segments->mutable_conversion_segment(0);
-    if (seg->key().empty()) {
-      return false;
-    }
-    PushBackCandidate(seg->key(), *seg);
-    return true;
+    Result result;
+    result.key = key;
+    result.value = key;
+    return {result};
   }
 
   absl::string_view GetPredictorName() const override {
@@ -228,7 +228,7 @@ class MockPredictor : public mozc::prediction::PredictorInterface {
   MockPredictor() = default;
   ~MockPredictor() override = default;
 
-  MOCK_METHOD(bool, PredictForRequest, (const ConversionRequest &, Segments *),
+  MOCK_METHOD(std::vector<Result>, Predict, (const ConversionRequest &),
               (const, override));
   MOCK_METHOD(void, Revert, (const Segments &), (override));
   MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
@@ -868,14 +868,15 @@ TEST_F(ConverterTest, StartSuggestion) {
 
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::SUGGESTION};
+    Segments segments;
     const ConversionRequest request = ConversionRequestBuilder()
                                           .SetComposer(composer)
                                           .SetRequestView(client_request)
                                           .SetConfigView(config)
+                                          .SetHistorySegmentsView(segments)
                                           .SetOptions(std::move(options))
                                           .Build();
 
-    Segments segments;
     EXPECT_TRUE(converter->StartPrediction(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
@@ -892,14 +893,15 @@ TEST_F(ConverterTest, StartSuggestion) {
 
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::SUGGESTION};
+    Segments segments;
     const ConversionRequest request = ConversionRequestBuilder()
                                           .SetComposer(composer)
                                           .SetRequestView(client_request)
                                           .SetConfigView(config)
+                                          .SetHistorySegmentsView(segments)
                                           .SetOptions(std::move(options))
                                           .Build();
 
-    Segments segments;
     EXPECT_TRUE(converter->StartPrediction(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
@@ -1032,6 +1034,7 @@ TEST_F(ConverterTest, PredictSetKey) {
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(composer)
+            .SetHistorySegmentsView(segments)
             .SetRequestType(ConversionRequest::PREDICTION)
             .Build();
     ASSERT_TRUE(converter->StartPrediction(request, &segments));
@@ -1138,6 +1141,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(composer)
+            .SetHistorySegmentsView(segments)
             .SetOptions(
                 {.composer_key_selection = ConversionRequest::CONVERSION_KEY})
             .Build();
@@ -1154,6 +1158,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(composer)
+            .SetHistorySegmentsView(segments)
             .SetOptions(
                 {.composer_key_selection = ConversionRequest::PREDICTION_KEY})
             .Build();
@@ -1186,11 +1191,12 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   composer::Composer composer(table, default_request(), config);
   composer.InsertCharacter("placeholder");
   commands::Context context;
+  Segments segments;
   const ConversionRequest request = ConversionRequestBuilder()
                                         .SetComposer(composer)
+                                        .SetHistorySegmentsView(segments)
                                         .SetConfig(config)
                                         .Build();
-  Segments segments;
   EXPECT_TRUE(converter->StartConversion(request, &segments));
 
   // Verify that words inserted by the rewriter is suppressed if its in the
@@ -1388,11 +1394,12 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   mozc::commands::Request request_proto;
   mozc::composer::Composer composer(table, request_proto, config);
   composer.InsertCharacterPreedit("あ");
+  Segments segments;
   const ConversionRequest request1 = ConversionRequestBuilder()
                                          .SetComposer(composer)
+                                         .SetHistorySegmentsView(segments)
                                          .SetRequest(request_proto)
                                          .Build();
-  Segments segments;
   ASSERT_TRUE(converter->StartConversion(request1, &segments));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const int original_candidates_size = segments.segment(0).candidates_size();
@@ -1407,6 +1414,7 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   const ConversionRequest request2 = ConversionRequestBuilder()
                                          .SetComposer(composer)
                                          .SetRequest(request_proto)
+                                         .SetHistorySegmentsView(segments)
                                          .Build();
   ASSERT_TRUE(converter->StartConversion(request2, &segments));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1422,6 +1430,7 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   const ConversionRequest request3 = ConversionRequestBuilder()
                                          .SetComposer(composer)
                                          .SetRequest(request_proto)
+                                         .SetHistorySegmentsView(segments)
                                          .Build();
   ASSERT_TRUE(converter->StartConversion(request3, &segments));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -1471,14 +1480,15 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
     ConversionRequest::Options options = {
         .request_type = ConversionRequest::PREDICTION,
     };
+    Segments segments;
     const ConversionRequest conversion_request =
         ConversionRequestBuilder()
             .SetComposer(composer)
             .SetRequestView(request)
             .SetConfigView(config)
+            .SetHistorySegmentsView(segments)
             .SetOptions(std::move(options))
             .Build();
-    Segments segments;
     EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0),
@@ -1658,6 +1668,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   auto table = std::make_shared<composer::Table>();
   composer::Composer composer(table, request, config);
   composer.SetPreeditTextForTestOnly("あい");
+  Segments segments;
 
   ConversionRequest::Options options = {
       .request_type = ConversionRequest::PREDICTION,
@@ -1667,9 +1678,9 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
           .SetComposer(composer)
           .SetRequestView(request)
           .SetConfigView(config)
+          .SetHistorySegmentsView(segments)
           .SetOptions(std::move(options))
           .Build();
-  Segments segments;
 
   // Remember user history 3 times after getting the top candidate
   std::string top_candidate;
@@ -1760,14 +1771,6 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
       .create_partial_candidates = true,
   };
 
-  const ConversionRequest conversion_request =
-      ConversionRequestBuilder()
-          .SetComposer(composer)
-          .SetRequestView(request)
-          .SetConfigView(config)
-          .SetOptions(std::move(options))
-          .Build();
-
   Segments segments;
   // History segment.
   {
@@ -1783,6 +1786,15 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
     candidate->lid = pos_matcher.GetAcceptableParticleAtBeginOfSegmentId();
   }
   composer.SetPreeditTextForTestOnly("てはい");
+
+  const ConversionRequest conversion_request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequestView(request)
+          .SetConfigView(config)
+          .SetHistorySegmentsView(segments)
+          .SetOptions(std::move(options))
+          .Build();
 
   EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
   EXPECT_FALSE(FindCandidateByValue("て廃", segments.conversion_segment(0)));

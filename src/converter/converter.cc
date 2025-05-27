@@ -38,6 +38,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/base/optimization.h"
 #include "absl/log/check.h"
@@ -46,6 +47,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "base/strings/assign.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
@@ -56,9 +58,11 @@
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "rewriter/variants_rewriter.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -224,7 +228,7 @@ bool Converter::StartPrediction(const ConversionRequest &request,
   DCHECK_EQ(segments->conversion_segments_size(), 1);
   DCHECK_EQ(segments->conversion_segment(0).key(), key);
 
-  if (!predictor_->PredictForRequest(request, segments)) {
+  if (!PredictForRequestWithSegments(request, segments)) {
     // Prediction can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
@@ -668,6 +672,52 @@ void Converter::PopulateReadingOfCommittedCandidateIfMissing(
     cand->key = absl::StrCat(*content_key, functional_value);
     cand->content_key = *std::move(content_key);
   }
+}
+
+bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
+                                              Segments *segments) const {
+  DCHECK(segments);
+  DCHECK(predictor_);
+
+  const ConversionRequest conv_req = ConversionRequestBuilder()
+                                         .SetConversionRequestView(request)
+                                         .SetHistorySegmentsView(*segments)
+                                         .Build();
+  DCHECK(conv_req.HasHistorySegments());
+
+  const std::vector<prediction::Result> results = predictor_->Predict(conv_req);
+
+  Segment *segment = segments->mutable_conversion_segment(0);
+  DCHECK(segment);
+
+  for (const prediction::Result &result : results) {
+    converter::Candidate *candidate = segment->add_candidate();
+
+    strings::Assign(candidate->content_key, result.key);
+    strings::Assign(candidate->content_value, result.value);
+    strings::Assign(candidate->key, result.key);
+    strings::Assign(candidate->value, result.value);
+    strings::Assign(candidate->description, result.description);
+    candidate->lid = result.lid;
+    candidate->rid = result.rid;
+    candidate->wcost = result.wcost;
+    candidate->cost = result.cost;
+    candidate->attributes = result.candidate_attributes;
+    candidate->consumed_key_size = result.consumed_key_size;
+    candidate->inner_segment_boundary = result.inner_segment_boundary;
+
+    // This block has been moved from user_history_predictor.
+    // TODO(taku): Reconsider  more appropriate place to put this block.
+    if (candidate->description.empty() &&
+        candidate->attributes & Segment::Candidate::USER_HISTORY_PREDICTION) {
+      VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, candidate);
+    }
+#ifndef NDEBUG
+    absl::StrAppend(&candidate->log, "\n", result.log);
+#endif  // NDEBUG
+  }
+
+  return !results.empty();
 }
 
 }  // namespace mozc

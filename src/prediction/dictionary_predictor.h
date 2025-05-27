@@ -48,7 +48,6 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
-#include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "engine/modules.h"
@@ -78,8 +77,7 @@ class DictionaryPredictor : public PredictorInterface {
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
 
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const override;
+  std::vector<Result> Predict(const ConversionRequest &request) const override;
 
   absl::string_view GetPredictorName() const override {
     return predictor_name_;
@@ -138,16 +136,8 @@ class DictionaryPredictor : public PredictorInterface {
           aggregator,
       const ImmutableConverterInterface &immutable_converter);
 
-  // It is better to pass the rvalue of `results` if the
-  // caller doesn't use the results after calling this method.
-  bool AddPredictionToCandidates(const ConversionRequest &request,
-                                 Segments *segments,
-                                 std::vector<Result> results) const;
-
-  void FillCandidate(
-      const ConversionRequest &request, const Result &result,
-      const absl::flat_hash_map<std::string, int32_t> &merged_types,
-      Segment::Candidate *candidate) const;
+  std::vector<Result> RerankAndFilterResults(const ConversionRequest &request,
+                                             std::vector<Result> result) const;
 
   // Returns the position of misspelled character position.
   //
@@ -241,13 +231,6 @@ class DictionaryPredictor : public PredictorInterface {
                                      bool is_suggestion,
                                      size_t total_candidates_size);
 
-  // Sets candidate description.
-  void SetDescription(PredictionTypes types,
-                      Segment::Candidate *candidate) const;
-  // Description for DEBUG mode.
-  static void SetDebugDescription(PredictionTypes types,
-                                  Segment::Candidate *candidate);
-
   static std::string GetPredictionTypeDebugString(PredictionTypes types);
 
   int CalculatePrefixPenalty(
@@ -264,7 +247,8 @@ class DictionaryPredictor : public PredictorInterface {
 
   void MaybeRescoreResults(const ConversionRequest &request,
                            absl::Span<Result> results) const;
-  static void AddRescoringDebugDescription(Segments *segments);
+
+  static void AddRescoringDebugDescription(absl::Span<Result> results);
 
   std::shared_ptr<Result> MaybeGetPreviousTopResult(
       const Result &current_top_result, const ConversionRequest &request) const;

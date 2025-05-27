@@ -74,11 +74,6 @@ class BasePredictor : public PredictorInterface {
   // Waits for syncer to complete.
   bool Wait() override;
 
-  // The following interfaces are implemented in derived classes.
-  // const string &GetPredictorName() const = 0;
-  // bool PredictForRequest(const ConversionRequest &request,
-  //                        Segments *segments) const = 0;
-
  protected:
   std::unique_ptr<PredictorInterface> dictionary_predictor_;
   std::unique_ptr<PredictorInterface> user_history_predictor_;
@@ -99,8 +94,7 @@ class DesktopPredictor : public BasePredictor {
                    const ConverterInterface &converter);
   ~DesktopPredictor() override;
 
-  [[nodiscard]] bool PredictForRequest(const ConversionRequest &request,
-                                       Segments *segments) const override;
+  std::vector<Result> Predict(const ConversionRequest &request) const override;
 
   absl::string_view GetPredictorName() const override {
     return predictor_name_;
@@ -125,15 +119,14 @@ class MobilePredictor : public BasePredictor {
                   const ConverterInterface &converter);
   ~MobilePredictor() override;
 
-  [[nodiscard]] bool PredictForRequest(const ConversionRequest &request,
-                                       Segments *segments) const override;
+  std::vector<Result> Predict(const ConversionRequest &request) const override;
 
   absl::string_view GetPredictorName() const override {
     return predictor_name_;
   }
 
   static ConversionRequest GetRequestForPredict(
-      const ConversionRequest &request, const Segments &segments);
+      const ConversionRequest &request);
 
  private:
   const std::string predictor_name_;

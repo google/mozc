@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
@@ -43,6 +44,7 @@
 #include "dictionary/dictionary_mock.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/result.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -68,11 +70,10 @@ class CheckCandSizeDictionaryPredictor : public PredictorInterface {
       : expected_cand_size_(expected_cand_size),
         predictor_name_("CheckCandSizeDictionaryPredictor") {}
 
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const override {
+  std::vector<Result> Predict(const ConversionRequest &request) const override {
     EXPECT_EQ(request.max_dictionary_prediction_candidates_size(),
               expected_cand_size_);
-    return true;
+    return std::vector<Result>(1);
   }
 
   absl::string_view GetPredictorName() const override {
@@ -92,14 +93,13 @@ class CheckCandSizeUserHistoryPredictor : public PredictorInterface {
         expected_cand_size_for_zero_query_(expected_cand_size_for_zero_query),
         predictor_name_("CheckCandSizeUserHistoryPredictor") {}
 
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const override {
+  std::vector<Result> Predict(const ConversionRequest &request) const override {
     EXPECT_EQ(request.max_user_history_prediction_candidates_size(),
               expected_cand_size_);
     EXPECT_EQ(
         request.max_user_history_prediction_candidates_size_for_zero_query(),
         expected_cand_size_for_zero_query_);
-    return true;
+    return std::vector<Result>(1);
   }
 
   absl::string_view GetPredictorName() const override {
@@ -119,10 +119,10 @@ class NullPredictor : public PredictorInterface {
         predict_called_(false),
         predictor_name_("NullPredictor") {}
 
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const override {
+  std::vector<Result> Predict(const ConversionRequest &request) const override {
     predict_called_ = true;
-    return return_value_;
+    std::vector<Result> results(return_value_ ? 1 : 0);
+    return results;
   }
 
   bool predict_called() const { return predict_called_; }
@@ -143,8 +143,7 @@ class MockPredictor : public PredictorInterface {
  public:
   MockPredictor() = default;
   ~MockPredictor() override = default;
-  MOCK_METHOD(bool, PredictForRequest,
-              (const ConversionRequest &request, Segments *segments),
+  MOCK_METHOD(std::vector<Result>, Predict, (const ConversionRequest &request),
               (const, override));
   MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
 };
@@ -170,6 +169,7 @@ class MobilePredictorTest : public ::testing::Test {
         .SetRequestView(*request_)
         .SetContextView(context_)
         .SetConfigView(*config_)
+        .SetHistorySegmentsView(segments_)
         .SetOptions(std::move(options))
         .Build();
   }
@@ -177,6 +177,7 @@ class MobilePredictorTest : public ::testing::Test {
   std::unique_ptr<mozc::composer::Composer> composer_;
   std::unique_ptr<commands::Request> request_;
   std::unique_ptr<config::Config> config_;
+  Segments segments_;
   commands::Context context_;
 };
 
@@ -185,14 +186,9 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
@@ -201,14 +197,9 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
       // We don't call history predictor
       std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PARTIAL_SUGGESTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
@@ -216,14 +207,9 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
@@ -236,37 +222,28 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       std::make_unique<UserHistoryPredictor>(*modules, true), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PARTIAL_PREDICTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
   auto predictor1 = std::make_unique<MockPredictor>();
   auto predictor2 = std::make_unique<MockPredictor>();
-  EXPECT_CALL(*predictor1, PredictForRequest(_, _))
+  const std::vector<Result> results(2);
+  EXPECT_CALL(*predictor1, Predict(_))
       .Times(AtMost(1))
-      .WillOnce(Return(true));
-  EXPECT_CALL(*predictor2, PredictForRequest(_, _))
+      .WillOnce(Return(results));
+  EXPECT_CALL(*predictor2, Predict(_))
       .Times(AtMost(1))
-      .WillOnce(Return(true));
+      .WillOnce(Return(results));
 
   MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::move(predictor1), std::move(predictor2), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 class PredictorTest : public ::testing::Test {
@@ -287,6 +264,7 @@ class PredictorTest : public ::testing::Test {
         .SetRequestView(*request_)
         .SetContextView(context_)
         .SetConfigView(*config_)
+        .SetHistorySegmentsView(segments_)
         .SetOptions(std::move(options))
         .Build();
   }
@@ -295,6 +273,7 @@ class PredictorTest : public ::testing::Test {
   std::unique_ptr<commands::Request> request_;
   std::unique_ptr<config::Config> config_;
   commands::Context context_;
+  Segments segments_;
 };
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
@@ -302,11 +281,6 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
   auto predictor = std::make_unique<DesktopPredictor>(
       std::make_unique<NullPredictor>(true),
       std::make_unique<NullPredictor>(true), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
 }
@@ -316,14 +290,9 @@ TEST_F(PredictorTest, MixedReturnValue) {
   auto predictor = std::make_unique<DesktopPredictor>(
       std::make_unique<NullPredictor>(true),
       std::make_unique<NullPredictor>(false), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
@@ -331,14 +300,9 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
   auto predictor = std::make_unique<DesktopPredictor>(
       std::make_unique<NullPredictor>(false),
       std::make_unique<NullPredictor>(false), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  EXPECT_FALSE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_TRUE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(PredictorTest, CallPredictorsForSuggestion) {
@@ -346,59 +310,47 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
   const int suggestions_size =
       config::ConfigHandler::DefaultConfig().suggestions_size();
   auto predictor = std::make_unique<DesktopPredictor>(
-      std::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size),
+      // -1 as UserHistoryPredictor returns 1 result.
+      std::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size - 1),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
                                                           suggestions_size),
       converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
   MockConverter converter;
   constexpr int kPredictionSize = 100;
   auto predictor = std::make_unique<DesktopPredictor>(
-      std::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize),
+      // -1 as UserHistoryPredictor returns 1 result.
+      std::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize - 1),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
                                                           kPredictionSize),
       converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(PredictorTest, CallPredictForRequest) {
   auto predictor1 = std::make_unique<MockPredictor>();
   auto predictor2 = std::make_unique<MockPredictor>();
-  EXPECT_CALL(*predictor1, PredictForRequest(_, _))
+  std::vector<Result> results(1);
+  EXPECT_CALL(*predictor1, Predict(_))
       .Times(AtMost(1))
-      .WillOnce(Return(true));
-  EXPECT_CALL(*predictor2, PredictForRequest(_, _))
+      .WillOnce(Return(results));
+  EXPECT_CALL(*predictor2, Predict(_))
       .Times(AtMost(1))
-      .WillOnce(Return(true));
+      .WillOnce(Return(results));
 
   MockConverter converter;
   auto predictor = std::make_unique<DesktopPredictor>(
       std::move(predictor1), std::move(predictor2), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(PredictorTest, DisableAllSuggestion) {
@@ -409,23 +361,18 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   MockConverter converter;
   auto predictor = std::make_unique<DesktopPredictor>(
       std::move(predictor1), std::move(predictor2), converter);
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-  }
   config_->set_presentation_mode(true);
   const ConversionRequest convreq1 =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
 
-  EXPECT_FALSE(predictor->PredictForRequest(convreq1, &segments));
+  EXPECT_TRUE(predictor->Predict(convreq1).empty());
   EXPECT_FALSE(pred1->predict_called());
   EXPECT_FALSE(pred2->predict_called());
 
   config_->set_presentation_mode(false);
   const ConversionRequest convreq2 =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  EXPECT_TRUE(predictor->PredictForRequest(convreq2, &segments));
+  EXPECT_FALSE(predictor->Predict(convreq2).empty());
   EXPECT_TRUE(pred1->predict_called());
   EXPECT_TRUE(pred2->predict_called());
 }
@@ -434,33 +381,27 @@ TEST_F(MobilePredictorTest, FillPos) {
   auto mock_dictionary_predictor = std::make_unique<MockPredictor>();
   auto mock_history_predictor = std::make_unique<MockPredictor>();
   auto add_candidate = [](absl::string_view key, absl::string_view value,
-                          int lid, int rid, int cost, Segment *segment) {
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->key = key;
-    candidate->value = value;
-    candidate->lid = lid;
-    candidate->rid = rid;
-    candidate->cost = cost;
-    candidate->wcost = cost;
+                          int lid, int rid, int cost,
+                          std::vector<Result> &results) {
+    Result result;
+    result.key = key;
+    result.value = value;
+    result.lid = lid;
+    result.rid = rid;
+    result.cost = cost;
+    result.wcost = cost;
+    results.emplace_back(std::move(result));
   };
 
-  Segments history_segments;
+  std::vector<Result> predictor_results, history_results;
   {
-    Segment *segment = history_segments.add_segment();
-    add_candidate("key", "value", 0, 0, 1, segment);
+    add_candidate("key", "value", 0, 0, 1, predictor_results);
+    add_candidate("key", "value", 2, 3, 100, predictor_results);
   }
-  // Mock results of dictionary_predictor. This contains the results from
-  // history_predictor as history_predictor is called before.
-  Segments dictionary_segments;
-  {
-    Segment *segment = dictionary_segments.add_segment();
-    add_candidate("key", "value", 0, 0, 1, segment);
-    add_candidate("key", "value", 2, 3, 100, segment);
-  }
-  EXPECT_CALL(*mock_history_predictor, PredictForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(history_segments), Return(true)));
-  EXPECT_CALL(*mock_dictionary_predictor, PredictForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(dictionary_segments), Return(true)));
+  EXPECT_CALL(*mock_history_predictor, Predict(_))
+      .WillOnce(Return(history_results));
+  EXPECT_CALL(*mock_dictionary_predictor, Predict(_))
+      .WillOnce(Return(predictor_results));
 
   MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
@@ -469,20 +410,17 @@ TEST_F(MobilePredictorTest, FillPos) {
 
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
-  Segments segments;
-  EXPECT_TRUE(predictor->PredictForRequest(convreq, &segments));
+  const std::vector<Result> results = predictor->Predict(convreq);
 
-  EXPECT_EQ(segments.conversion_segments_size(), 1);
-  EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 2);
-  const Segment::Candidate &candidate =
-      segments.conversion_segment(0).candidate(0);
-  EXPECT_EQ(candidate.key, "key");
-  EXPECT_EQ(candidate.value, "value");
-  // lid and rid are filled from another candidate.
-  EXPECT_EQ(candidate.lid, 2);
-  EXPECT_EQ(candidate.rid, 3);
+  EXPECT_EQ(results.size(), 2);
+  const Result &result = results[0];
+  EXPECT_EQ(result.key, "key");
+  EXPECT_EQ(result.value, "value");
+  // lid and rid are filled from another result.
+  EXPECT_EQ(result.lid, 2);
+  EXPECT_EQ(result.rid, 3);
   // cost is not changed.
-  EXPECT_EQ(candidate.cost, 1);
+  EXPECT_EQ(result.cost, 1);
 }
 
 }  // namespace mozc::prediction

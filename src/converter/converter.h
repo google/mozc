@@ -202,6 +202,9 @@ class Converter final : public ConverterInterface {
 
   void PopulateReadingOfCommittedCandidateIfMissing(Segments *segments) const;
 
+  bool PredictForRequestWithSegments(const ConversionRequest &request,
+                                     Segments *segments) const;
+
   std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<const ImmutableConverterInterface> immutable_converter_;
   std::unique_ptr<prediction::PredictorInterface> predictor_;
