@@ -30,15 +30,20 @@
 #include "unix/ibus/candidate_window_handler.h"
 
 #include <unistd.h>  // for getpid()
+#include <memory>
+#include <string>
+#include <utility>
 
 #include "base/coordinates.h"
 #include "base/protobuf/text_format.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
+#include "renderer/renderer_interface.h"
 #include "renderer/renderer_mock.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "unix/ibus/ibus_wrapper.h"
 
 using mozc::commands::CandidateWindow;
 using mozc::commands::Command;
@@ -57,8 +62,9 @@ namespace ibus {
 
 class TestableCandidateWindowHandler : public CandidateWindowHandler {
  public:
-  explicit TestableCandidateWindowHandler(RendererInterface *renderer)
-      : CandidateWindowHandler(renderer) {}
+  explicit TestableCandidateWindowHandler(
+      std::unique_ptr<RendererInterface> renderer)
+      : CandidateWindowHandler(std::move(renderer)) {}
   virtual ~TestableCandidateWindowHandler() {}
 
   // Change access rights.
@@ -183,27 +189,33 @@ TEST(CandidateWindowHandlerTest, SendUpdateCommandTest) {
   {
     SCOPED_TRACE("visibility check. false case");
     Output output;
-    RendererMock *renderer_mock = new RendererMock();
-    TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(false),
+    auto renderer_mock = std::make_unique<RendererMock>();
+    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    TestableCandidateWindowHandler candidate_window_handler(
+        std::move(renderer_mock));
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(false),
                              PreeditRectangleEq(kExpectedCursorArea));
     candidate_window_handler.SendUpdateCommand(&engine, output, false);
   }
   {
     SCOPED_TRACE("visibility check. true case");
     Output output;
-    RendererMock *renderer_mock = new RendererMock();
-    TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
+    auto renderer_mock = std::make_unique<RendererMock>();
+    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    TestableCandidateWindowHandler candidate_window_handler(
+        std::move(renderer_mock));
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),
                              PreeditRectangleEq(kExpectedCursorArea));
     candidate_window_handler.SendUpdateCommand(&engine, output, true);
   }
   {
     SCOPED_TRACE("return value check. false case.");
     Output output;
-    RendererMock *renderer_mock = new RendererMock();
-    TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
+    auto renderer_mock = std::make_unique<RendererMock>();
+    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    TestableCandidateWindowHandler candidate_window_handler(
+        std::move(renderer_mock));
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),
                              PreeditRectangleEq(kExpectedCursorArea))
         .WillOnce(Return(false));
     EXPECT_FALSE(
@@ -212,9 +224,11 @@ TEST(CandidateWindowHandlerTest, SendUpdateCommandTest) {
   {
     SCOPED_TRACE("return value check. true case.");
     Output output;
-    RendererMock *renderer_mock = new RendererMock();
-    TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
+    auto renderer_mock = std::make_unique<RendererMock>();
+    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    TestableCandidateWindowHandler candidate_window_handler(
+        std::move(renderer_mock));
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),
                              PreeditRectangleEq(kExpectedCursorArea))
         .WillOnce(Return(true));
     EXPECT_TRUE(
@@ -239,9 +253,11 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
   {
     SCOPED_TRACE("If there are no candidates, visibility expects false");
     Output output;
-    RendererMock *renderer_mock = new RendererMock();
-    TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(false),
+    auto renderer_mock = std::make_unique<RendererMock>();
+    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    TestableCandidateWindowHandler candidate_window_handler(
+        std::move(renderer_mock));
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(false),
                              PreeditRectangleEq(kExpectedCursorArea));
     candidate_window_handler.Update(&engine, output);
   }
@@ -254,9 +270,11 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
     Candidate *candidate = candidate_window->add_candidate();
     candidate->set_index(sample_idx1);
     candidate->set_value(sample_candidate1);
-    RendererMock *renderer_mock = new RendererMock();
-    TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
+    auto renderer_mock = std::make_unique<RendererMock>();
+    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    TestableCandidateWindowHandler candidate_window_handler(
+        std::move(renderer_mock));
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),
                              PreeditRectangleEq(kExpectedCursorArea));
     candidate_window_handler.Update(&engine, output);
   }
@@ -273,13 +291,17 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
     candidate2->set_value(sample_candidate1);
     candidate2->set_value(sample_candidate2);
 
-    RendererMock *renderer_mock = new RendererMock();
-    TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
+    auto renderer_mock = std::make_unique<RendererMock>();
+    RendererMock *renderer_mock_ptr = renderer_mock.get();
+    TestableCandidateWindowHandler candidate_window_handler(
+        std::move(renderer_mock));
     EXPECT_CALL_EXEC_COMMAND(
-        *renderer_mock, Property(&RendererCommand::output, OutputEq(output1)))
+        *renderer_mock_ptr,
+        Property(&RendererCommand::output, OutputEq(output1)))
         .WillOnce(Return(true));
     EXPECT_CALL_EXEC_COMMAND(
-        *renderer_mock, Property(&RendererCommand::output, OutputEq(output2)))
+        *renderer_mock_ptr,
+        Property(&RendererCommand::output, OutputEq(output2)))
         .WillOnce(Return(true));
     candidate_window_handler.Update(&engine, output1);
     EXPECT_THAT(*(candidate_window_handler.last_update_output_.get()),
@@ -300,9 +322,11 @@ TEST(CandidateWindowHandlerTest, HideTest) {
   ibus_engine.cursor_area.height = kExpectedCursorArea.Height();
   IbusEngineWrapper engine(&ibus_engine);
 
-  RendererMock *renderer_mock = new RendererMock();
-  TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
-  EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(false),
+  auto renderer_mock = std::make_unique<RendererMock>();
+  RendererMock *renderer_mock_ptr = renderer_mock.get();
+  TestableCandidateWindowHandler candidate_window_handler(
+      std::move(renderer_mock));
+  EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(false),
                            PreeditRectangleEq(kExpectedCursorArea));
   candidate_window_handler.Hide(&engine);
 }
@@ -317,9 +341,11 @@ TEST(CandidateWindowHandlerTest, ShowTest) {
   ibus_engine.cursor_area.height = kExpectedCursorArea.Height();
   IbusEngineWrapper engine(&ibus_engine);
 
-  RendererMock *renderer_mock = new RendererMock();
-  TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
-  EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
+  auto renderer_mock = std::make_unique<RendererMock>();
+  RendererMock *renderer_mock_ptr = renderer_mock.get();
+  TestableCandidateWindowHandler candidate_window_handler(
+      std::move(renderer_mock));
+  EXPECT_CALL_EXEC_COMMAND(*renderer_mock_ptr, VisibilityEq(true),
                            PreeditRectangleEq(kExpectedCursorArea));
   candidate_window_handler.Show(&engine);
 }

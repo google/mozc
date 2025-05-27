@@ -98,8 +98,8 @@ class GsettingsObserver {
 };
 
 CandidateWindowHandler::CandidateWindowHandler(
-    renderer::RendererInterface *renderer)
-    : renderer_(renderer),
+    std::unique_ptr<renderer::RendererInterface> renderer)
+    : renderer_(std::move(renderer)),
       last_update_output_(new commands::Output()),
       use_custom_font_description_(false) {}
 

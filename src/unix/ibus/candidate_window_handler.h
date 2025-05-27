@@ -50,8 +50,8 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
  public:
   CandidateWindowHandler(const CandidateWindowHandler &) = delete;
   CandidateWindowHandler &operator=(const CandidateWindowHandler &) = delete;
-  // CandidateWindowHandler takes ownership of renderer_ pointer.
-  explicit CandidateWindowHandler(renderer::RendererInterface *renderer);
+  explicit CandidateWindowHandler(
+      std::unique_ptr<renderer::RendererInterface> renderer);
   virtual ~CandidateWindowHandler();
 
   virtual void Update(IbusEngineWrapper *engine,
