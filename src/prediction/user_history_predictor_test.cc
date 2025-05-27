@@ -1394,9 +1394,8 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   const ConversionRequest convreq6 =
       SetUpInputForPrediction("おつかれ", &composer_, &segments);
   results = predictor->Predict(convreq6);
-  ASSERT_FALSE(results.empty());
+  ASSERT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "お疲れ様です");
-  EXPECT_EQ(results[1].value, "お疲れ様です。");
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPrecedingPunctuation) {
@@ -4559,8 +4558,6 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
   WaitForSyncer(predictor);
 
   {
-    // Note that "よろしくお願いします:よろしくおねがいします" is the sentence
-    // like candidate. Please refer to user_history_predictor.cc
     const ConversionRequest convreq1 = SetUpInputForConversion(
         "よろしくおねがいします", &composer_, &segments);
     AddCandidate(0, "よろしくお願いします", &segments);
@@ -4577,7 +4574,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
         "よろしくおねがいします", &composer_, &segments);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
-    EXPECT_TRUE(FindCandidateByValue("よろしくお願いします！", results));
+    EXPECT_TRUE(FindCandidateByValue("よろしくお願いします", results));
   }
 }
 

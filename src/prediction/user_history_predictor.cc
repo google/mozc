@@ -1847,42 +1847,6 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
 
   RevertEntries revert_entries;
 
-  // If user inputs a punctuation just after some long sentence,
-  // we make a new candidate by concatenating the top element in LRU and
-  // the punctuation user input. The top element in LRU is supposed to be
-  // the long sentence user input before.
-  // This is a fix for http://b/issue?id=2216838
-  //
-  // Note: We don't make such candidates for mobile.
-  if (!request.request().zero_query_suggestion() && !dic_->empty() &&
-      dic_->Head()->value.last_access_time() + 5 > last_access_time &&
-      // Check if the current value is a punctuation.
-      segments.conversion_segments_size() == 1 &&
-      segments.conversion_segment(0).candidates_size() > 0 &&
-      IsPunctuation(segments.conversion_segment(0).candidate(0).value) &&
-      // Check if the previous value looks like a sentence.
-      !segments.history_segments().empty() &&
-      segments.history_segments().back().candidates_size() > 0 &&
-      IsSentenceLikeCandidate(
-          segments.history_segments().back().candidate(0))) {
-    const Entry *entry = &(dic_->Head()->value);
-    DCHECK(entry);
-    absl::string_view last_value =
-        segments.history_segments().back().candidate(0).value;
-    // Check if the head value in LRU ends with the candidate value in history
-    // segments.
-    if (entry->value().ends_with(last_value)) {
-      const Segment::Candidate &candidate =
-          segments.conversion_segment(0).candidate(0);
-      // Uses the same last_access_time stored in the top element
-      // so that this item can be grouped together.
-      TryInsert(request, absl::StrCat(entry->key(), candidate.key),
-                absl::StrCat(entry->value(), candidate.value),
-                entry->description(), is_suggestion, {},
-                entry->last_access_time(), &revert_entries);
-    }
-  }
-
   InsertHistory(request, is_suggestion, last_access_time, segments,
                 &revert_entries);
 
