@@ -30,10 +30,9 @@
 #ifndef MOZC_UNIX_IBUS_SURROUNDING_TEXT_UTIL_H_
 #define MOZC_UNIX_IBUS_SURROUNDING_TEXT_UTIL_H_
 
-#include <string>
+#include <cstdint>
 
 #include "absl/strings/string_view.h"
-#include "base/port.h"
 #include "unix/ibus/ibus_header.h"
 
 namespace mozc {

@@ -32,7 +32,6 @@
 
 #include <string>
 
-#include "base/port.h"
 #include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {

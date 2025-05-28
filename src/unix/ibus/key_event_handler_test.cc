@@ -34,9 +34,6 @@
 
 #include "absl/random/random.h"
 #include "absl/strings/str_format.h"
-#include "base/clock.h"
-#include "base/port.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"

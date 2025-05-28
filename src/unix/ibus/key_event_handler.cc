@@ -28,11 +28,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "unix/ibus/key_event_handler.h"
+#include <cstddef>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "base/port.h"
-#include "base/singleton.h"
 
 namespace mozc {
 namespace ibus {

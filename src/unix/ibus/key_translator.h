@@ -32,7 +32,6 @@
 
 #include <map>
 
-#include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "unix/ibus/ibus_header.h"
