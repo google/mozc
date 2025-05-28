@@ -45,7 +45,7 @@
 #include "base/win32/wide_char.h"
 #endif  // _WIN32
 
-// Ad-hoc workadound against macro problem on Windows.
+// Ad-hoc workaround against macro problem on Windows.
 // On Windows, following macros, defined when you include <windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.

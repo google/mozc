@@ -33,11 +33,13 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
-#include <filesystem>
+// Use <filesystem> for multi-platform compatibility.
+#include <filesystem>  // NOLINT(build/c++17)
 #include <ios>
 #include <iterator>
 #include <string>
-#include <system_error>
+// Use <system_error> for std::filesystem::equivalent.
+#include <system_error>  // NOLINT(build/c++11)
 #include <utility>
 
 #include "absl/log/log.h"
@@ -476,8 +478,8 @@ absl::StatusOr<bool> FileUtilImpl::IsEquivalent(zstring_view filename1,
 #else   // __APPLE__
 
   // u8path is deprecated in C++20. The current target is C++17.
-  const std::filesystem::path src = std::filesystem::u8path(filename1.c_str());
-  const std::filesystem::path dst = std::filesystem::u8path(filename2.c_str());
+  const std::filesystem::path src = filename1.c_str();
+  const std::filesystem::path dst = filename2.c_str();
 
   std::error_code error_code;
   if (bool is_equiv = std::filesystem::equivalent(src, dst, error_code);
