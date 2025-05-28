@@ -549,9 +549,10 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
 TEST_F(DateRewriterTest, NumberRewriterTest) {
   Segments segments;
   DateRewriter rewriter;
+  auto table = std::make_shared<composer::Table>();
   const commands::Request request;
   const config::Config config;
-  const composer::Composer composer(request, config);
+  const composer::Composer composer(table, request, config);
   const ConversionRequest conversion_request =
       ConversionRequestBuilder().SetComposer(composer).Build();
 
@@ -981,9 +982,10 @@ TEST_F(DateRewriterTest, MobileEnvironmentTest) {
 }
 
 TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
+  auto table = std::make_shared<composer::Table>();
   commands::Request request;
   const config::Config config;
-  const composer::Composer composer(request, config);
+  const composer::Composer composer(table, request, config);
 
   // Init an instance of Segments for this test.
   Segments test_segments;
@@ -1038,9 +1040,10 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
 }
 
 TEST_F(DateRewriterTest, ConsecutiveDigitsFromMetaCandidates) {
-  commands::Request request;
+  auto table = std::make_shared<composer::Table>();
+  const commands::Request request;
   const config::Config config;
-  const composer::Composer composer(request, config);
+  const composer::Composer composer(table, request, config);
   const ConversionRequest conversion_request =
       ConversionRequestBuilder().SetComposer(composer).Build();
 
@@ -1056,9 +1059,10 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsFromMetaCandidates) {
 }
 
 TEST_F(DateRewriterTest, ConsecutiveDigitsWithMinusSign) {
-  commands::Request request;
+  auto table = std::make_shared<composer::Table>();
+  const commands::Request request;
   const config::Config config;
-  const composer::Composer composer(request, config);
+  const composer::Composer composer(table, request, config);
   const ConversionRequest conversion_request =
       ConversionRequestBuilder().SetComposer(composer).Build();
 
@@ -1082,9 +1086,10 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsWithMinusSign) {
 }
 
 TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionWithHistory) {
-  commands::Request request;
+  auto table = std::make_shared<composer::Table>();
+  const commands::Request request;
   const config::Config config;
-  const composer::Composer composer(request, config);
+  const composer::Composer composer(table, request, config);
   const ConversionRequest conversion_request =
       ConversionRequestBuilder().SetComposer(composer).Build();
 
