@@ -29,6 +29,7 @@
 
 #include "renderer/renderer_client.h"
 
+#include <atomic>
 #include <climits>
 #include <cstddef>
 #include <cstdint>
@@ -324,12 +325,12 @@ class RendererLauncher : public RendererLauncherInterface {
   std::string name_;
   std::string path_;
   absl::Time last_launch_time_ = absl::UnixEpoch();
-  volatile size_t error_times_ = 0;
+  std::atomic<size_t> error_times_ = 0;
   IPCClientFactoryInterface *ipc_client_factory_interface_ = nullptr;
   mutable absl::Mutex mu_;
   std::optional<commands::RendererCommand> pending_command_
       ABSL_GUARDED_BY(mu_);
-  volatile RendererStatus renderer_status_ ABSL_GUARDED_BY(mu_) =
+  RendererStatus renderer_status_ ABSL_GUARDED_BY(mu_) =
       RendererStatus::RENDERER_UNKNOWN;
   bool disable_renderer_path_check_ = false;
   bool suppress_error_dialog_ = false;
