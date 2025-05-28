@@ -65,3 +65,9 @@ bazelisk build package --config oss_android --config release_build
 ```
 
 `package` is an alias to build `android/jni:native_libs`.
+
+## Add your own physical keyboard layout
+
+You could refer to this removed
+[KCM](https://github.com/google/mozc/blob/2.31.5712.102/src/data/android/keyboard_layout_japanese109a.kcm)
+file to write your own physical keyboard layout.
