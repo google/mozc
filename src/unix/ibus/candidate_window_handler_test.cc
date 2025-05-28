@@ -35,7 +35,7 @@
 #include <utility>
 
 #include "base/coordinates.h"
-#include "base/protobuf/text_format.h"
+#include "base/protobuf/message.h"
 #include "protocol/candidate_window.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
@@ -154,10 +154,8 @@ MATCHER_P(PreeditRectangleEq, rect, "") {
 }
 
 MATCHER_P(OutputEq, expected, "") {
-  std::string arg_str;
-  std::string expected_str;
-  protobuf::TextFormat::PrintToString(expected, &expected_str);
-  protobuf::TextFormat::PrintToString(arg, &arg_str);
+  const std::string arg_str = ::mozc::protobuf::Utf8Format(arg);
+  const std::string expected_str = ::mozc::protobuf::Utf8Format(expected);
   if (arg_str != expected_str) {
     *result_listener << "The output does not match\n"
                      << "  expected: \n"

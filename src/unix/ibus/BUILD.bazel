@@ -373,7 +373,7 @@ mozc_cc_test(
     deps = [
         ":candidate_window_handler",
         "//base:coordinates",
-        "//base/protobuf:text_format",
+        "//base/protobuf:message",
         "//protocol:candidate_window_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",

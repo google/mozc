@@ -39,7 +39,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/init_mozc.h"
-#include "base/protobuf/text_format.h"
+#include "base/protobuf/message.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
@@ -83,9 +83,7 @@ void Loop(std::istream *input, std::ostream *output) {
       LOG(ERROR) << "Command failure";
     }
 
-    std::string textpb;
-    protobuf::TextFormat::PrintToString(command, &textpb);
-    *output << textpb;
+    *output << ::mozc::protobuf::Utf8Format(command);
     LOG(INFO) << command;
   }
 }

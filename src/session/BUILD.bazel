@@ -296,7 +296,7 @@ mozc_cc_binary(
         "//base:init_mozc",
         "//base:system_util",
         "//base:util",
-        "//base/protobuf:text_format",
+        "//base/protobuf:message",
         "//composer:key_parser",
         "//engine:engine_factory",
         "//engine:engine_interface",
