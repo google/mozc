@@ -477,7 +477,6 @@ absl::StatusOr<bool> FileUtilImpl::IsEquivalent(zstring_view filename1,
       "std::filesystem is only available on macOS 10.15, iOS 13.0, or later");
 #else   // __APPLE__
 
-  // u8path is deprecated in C++20. The current target is C++17.
   const std::filesystem::path src = filename1.c_str();
   const std::filesystem::path dst = filename2.c_str();
 
@@ -549,9 +548,8 @@ absl::Status FileUtilImpl::CreateHardLink(zstring_view from, zstring_view to) {
       "std::filesystem is only available on macOS 10.15, iOS 13.0, or later.");
 #else   // __APPLE__
 
-  // u8path is deprecated in C++20. The current target is C++17.
-  const std::filesystem::path src = std::filesystem::u8path(from.c_str());
-  const std::filesystem::path dst = std::filesystem::u8path(to.c_str());
+  const std::filesystem::path src = from.c_str();
+  const std::filesystem::path dst = to.c_str();
 
   std::error_code error_code;
   std::filesystem::create_hard_link(src, dst, error_code);
