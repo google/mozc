@@ -85,9 +85,14 @@ class ReconvertString : public RECONVERTSTRING {
     std::wstring_view following_text;
   };
 
-  // Sends WM_IME_REQUEST for IMR_RECONVERTSTRING to the windows specified by
-  // hwnd and returns the result. The result is nullptr if it fails.
-  static UniqueReconvertString Request(HWND hwnd);
+  enum class RequestType {
+    kReconvertString,  // IMR_RECONVERTSTRING
+    kDocumentFeed,     // IMR_DOCUMENTFEED
+  };
+
+  // Sends WM_IME_REQUEST to the windows specified by hwnd and returns the
+  // result. The result is nullptr if it fails.
+  static UniqueReconvertString Request(HWND hwnd, RequestType request_type);
   // Constructs and returns a UniqueReconvertString with the substrings copied
   // into the buffer.
   static UniqueReconvertString Compose(Strings ss);
