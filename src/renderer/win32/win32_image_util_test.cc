@@ -49,6 +49,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/protobuf/message.h"
+#include "base/protobuf/text_format.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_font_test_helper.h"
 #include "data/test/renderer/win32/test_spec.pb.h"

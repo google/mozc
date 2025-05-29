@@ -318,6 +318,7 @@ mozc_cc_test(
         "//base:file_stream",
         "//base:file_util",
         "//base/protobuf:message",
+        "//base/protobuf:text_format",
         "//base/win32:wide_char",
         "//base/win32:win_font_test_helper",
         "//bazel/win32:gdiplus",
