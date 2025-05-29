@@ -66,12 +66,12 @@ mozc_cc_library(
 mozc_win32_cc_prod_binary(
     name = "mozc_tip32",
     srcs = ["mozc_tip_main.cc"],
-    cpu = "@platforms//cpu:x86_32",
     executable_name_map = {
         "Mozc": "mozc_tip32.dll",
         "GoogleJapaneseInput": "GoogleIMEJaTIP32.dll",
     },
     linkshared = True,
+    platform = "//:windows-x86_32",
     static_crt = True,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
@@ -85,12 +85,12 @@ mozc_win32_cc_prod_binary(
 mozc_win32_cc_prod_binary(
     name = "mozc_tip64",
     srcs = ["mozc_tip_main.cc"],
-    cpu = "@platforms//cpu:x86_64",
     executable_name_map = {
         "Mozc": "mozc_tip64.dll",
         "GoogleJapaneseInput": "GoogleIMEJaTIP64.dll",
     },
     linkshared = True,
+    platform = "//:windows-x86_64",
     static_crt = True,
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],

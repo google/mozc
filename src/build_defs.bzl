@@ -234,6 +234,7 @@ def _win_executable_transition_impl(
         settings,
         attr):
     features = settings["//command_line_option:features"]
+    platforms = settings["//command_line_option:platforms"]
 
     features = _append_if_absent(features, "generate_pdb_file")
 
@@ -244,15 +245,19 @@ def _win_executable_transition_impl(
         features = _remove_if_present(features, "static_link_msvcrt")
         features = _append_if_absent(features, "dynamic_link_msvcrt")
 
+    if attr.platform:
+        platforms = [attr.platform]
+
     return {
         "//command_line_option:features": features,
-        "//command_line_option:platforms": [attr.platform],
+        "//command_line_option:platforms": platforms,
     }
 
 _win_executable_transition = transition(
     implementation = _win_executable_transition_impl,
     inputs = [
         "//command_line_option:features",
+        "//command_line_option:platforms",
     ],
     outputs = [
         "//command_line_option:features",
@@ -284,12 +289,6 @@ def _mozc_win_build_rule_impl(ctx):
         ),
     ]
 
-CPU = struct(
-    ARM64 = "@platforms//cpu:arm64",  # aarch64 (64-bit) environment
-    X64 = "@platforms//cpu:x86_64",  # x86-64 (64-bit) environment
-    X86 = "@platforms//cpu:x86_32",  # x86 (32-bit) environment
-)
-
 _mozc_win_build_rule = rule(
     implementation = _mozc_win_build_rule_impl,
     cfg = _win_executable_transition,
@@ -319,7 +318,7 @@ def mozc_win32_cc_prod_binary(
         features = None,
         linkopts = [],
         linkshared = False,
-        cpu = CPU.X64,
+        platform = None,
         static_crt = False,
         tags = MOZC_TAGS.WIN_ONLY,
         win_def_file = None,
@@ -343,7 +342,7 @@ def mozc_win32_cc_prod_binary(
       features: features to be passed to mozc_cc_binary.
       linkopts: linker options to build the executable.
       linkshared: True if the target is a shared library (DLL).
-      cpu: optional. The target CPU architecture.
+      platform: optional. The platform to be overriden.
       static_crt: optional. True if the target should be built with static CRT.
       tags: optional. Tags for both the library and unit test targets.
       win_def_file: optional. win32 def file to define exported functions.
@@ -376,10 +375,6 @@ def mozc_win32_cc_prod_binary(
         "/PDBALTPATH:%_PDB%",
     ])
 
-    # '/CETCOMPAT' is available only on x86/x64 architectures.
-    if cpu in ["@platforms//cpu:x86_32", "@platforms//cpu:x86_64"]:
-        modified_linkopts.append("/CETCOMPAT")
-
     LOAD_LIBRARY_SEARCH_APPLICATION_DIR = 0x200
     LOAD_LIBRARY_SEARCH_SYSTEM32 = 0x800
     load_flags = LOAD_LIBRARY_SEARCH_SYSTEM32
@@ -395,7 +390,11 @@ def mozc_win32_cc_prod_binary(
         srcs = srcs,
         deps = deps,
         features = features,
-        linkopts = modified_linkopts,
+        # '/CETCOMPAT' is available only on x86/x64 architectures.
+        linkopts = modified_linkopts + select({
+            "//:intel_cpu": ["/CETCOMPAT"],
+            "//conditions:default": [],
+        }),
         linkshared = linkshared,
         tags = tags,
         target_compatible_with = target_compatible_with,
@@ -405,7 +404,6 @@ def mozc_win32_cc_prod_binary(
     )
 
     mandatory_target_compatible_with = [
-        cpu,
         "@platforms//os:windows",
     ]
     for item in mandatory_target_compatible_with:
@@ -424,20 +422,10 @@ def mozc_win32_cc_prod_binary(
         visibility = ["//visibility:private"],
     )
 
-    platform_name = "_" + name + "_platform"
-    native.platform(
-        name = platform_name,
-        constraint_values = [
-            cpu,
-            "@platforms//os:windows",
-        ],
-        visibility = ["//visibility:private"],
-    )
-
     _mozc_win_build_rule(
         name = name,
         pdb_file = intermediate_name + "_pdb_file",
-        platform = platform_name,
+        platform = platform,
         static_crt = static_crt,
         tags = tags,
         target = intermediate_name,
