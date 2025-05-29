@@ -210,8 +210,9 @@ class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
   size_t num_characters_in_codepoint_;
 };
 
-bool PrepareForReconversionIMM32(ITfContext *context,
-                                 TipSurroundingTextInfo *info) {
+bool GetSurroundingTextImm32(ITfContext *context,
+                             ReconvertString::RequestType request_type,
+                             TipSurroundingTextInfo *info) {
   wil::com_ptr_nothrow<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view))) {
     return false;
@@ -225,7 +226,7 @@ bool PrepareForReconversionIMM32(ITfContext *context,
   }
 
   UniqueReconvertString reconvert_string =
-      ReconvertString::Request(attached_window);
+      ReconvertString::Request(attached_window, request_type);
   if (!reconvert_string) {
     return false;
   }
@@ -262,8 +263,10 @@ bool TipSurroundingText::Get(TipTextService *text_service, ITfContext *context,
   wil::com_ptr_nothrow<ITfContext> full_context(
       TipTransitoryExtension::AsFullContext(context));
   if (full_context == nullptr) {
-    // TODO: Use IMR_DOCUMENTFEED to get surrounding text for legacy apps.
-    return false;
+    // Legacy IMM32-based editors fall into this category.
+    // Try to retrieve surrounding text through IMR_DOCUMENTFEED as a fallback.
+    return GetSurroundingTextImm32(
+        context, ReconvertString::RequestType::kDocumentFeed, info);
   }
 
   // When RequestEditSession fails, it does not maintain the reference count.
@@ -332,7 +335,9 @@ bool TipSurroundingText::PrepareForReconversionFromIme(
   if (PrepareForReconversionTSF(text_service, context, info)) {
     return true;
   }
-  if (!PrepareForReconversionIMM32(context, info)) {
+  if (!GetSurroundingTextImm32(context,
+                               ReconvertString::RequestType::kReconvertString,
+                               info)) {
     return false;
   }
   // IMM32-like reconversion requires async edit session.

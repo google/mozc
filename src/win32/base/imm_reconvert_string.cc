@@ -101,9 +101,21 @@ std::wstring_view WStringView(const wchar_t *begin, const wchar_t *end) {
 
 }  // namespace
 
-UniqueReconvertString ReconvertString::Request(const HWND hwnd) {
+UniqueReconvertString
+ReconvertString::Request(HWND hwnd, RequestType request_type) {
   UniqueReconvertString result(nullptr, &Deleter);
-  LPARAM l_result = SendMessageW(hwnd, WM_IME_REQUEST, IMR_RECONVERTSTRING, 0);
+  WPARAM wparam;
+  switch (request_type) {
+    case RequestType::kReconvertString:
+      wparam = IMR_RECONVERTSTRING;
+      break;
+    case RequestType::kDocumentFeed:
+      wparam = IMR_DOCUMENTFEED;
+      break;
+    default:
+      return result;
+  }
+  LPARAM l_result = SendMessageW(hwnd, WM_IME_REQUEST, wparam, 0);
   if (l_result == 0) {
     // IMR_RECONVERTSTRING is not supported.
     return result;
@@ -115,7 +127,7 @@ UniqueReconvertString ReconvertString::Request(const HWND hwnd) {
   result = Allocate(buffer_size);
   result->dwSize = buffer_size;
   result->dwVersion = 0;
-  l_result = SendMessageW(hwnd, WM_IME_REQUEST, IMR_RECONVERTSTRING,
+  l_result = SendMessageW(hwnd, WM_IME_REQUEST, wparam,
                           reinterpret_cast<LPARAM>(result.get()));
   if (l_result == 0) {
     result.release();
