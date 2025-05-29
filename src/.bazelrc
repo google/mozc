@@ -28,6 +28,7 @@ build:release_build --compilation_mode=opt
 build:release_build --copt=-DABSL_MIN_LOG_LEVEL=100
 
 ## Clang-cl toolchain for Windows
+build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-arm64_windows-clang-cl
 build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
 build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_x86_windows-clang-cl
 build:windows_env --host_platform=//:host-windows-clang-cl

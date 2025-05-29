@@ -84,3 +84,11 @@
  cc_toolchain(
      name = "cc-compiler-arm64_windows-clang-cl",
      toolchain_identifier = "clang_cl_arm64",
+@@ -668,6 +738,7 @@
+         "strip": "wrapper/bin/msvc_nop.bat",
+     },
+     archiver_flags = ["/MACHINE:ARM64"],
++    default_compile_flags = ["--target=aarch64-pc-windows-msvc"],
+     default_link_flags = ["/MACHINE:ARM64"],
+     dbg_mode_debug_flag = "%{clang_cl_dbg_mode_debug_flag_arm64}",
+     fastbuild_mode_debug_flag = "%{clang_cl_fastbuild_mode_debug_flag_arm64}",
