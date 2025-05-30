@@ -448,16 +448,13 @@ UINT __stdcall WriteApValueRollback(MSIHANDLE msi_handle) {
 UINT __stdcall RegisterTIP(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
   mozc::ScopedCOMInitializer com_initializer;
+  HRESULT result = S_OK;
 
-#if defined(_M_X64)
-  const std::wstring &path = GetMozcComponentPath(mozc::kMozcTIP64);
-#elif defined(_M_IX86)
-  const std::wstring &path = GetMozcComponentPath(mozc::kMozcTIP32);
-#else  // _M_X64, _M_IX86
-#error "Unsupported CPU architecture"
-#endif  // _M_X64, _M_IX86, and others
-  HRESULT result =
-      mozc::win32::TsfRegistrar::RegisterProfiles(path.c_str(), path.length());
+  // The path here is to retrieve Win32 resources such as icon and product name,
+  // which does not need to match the native CPU architecture. Here we use
+  // 32-bit TIP DLL as it is always installed even on an ARM64 target.
+  const std::wstring resource_dll_path = GetMozcComponentPath(mozc::kMozcTIP32);
+  mozc::win32::TsfRegistrar::RegisterProfiles(resource_dll_path);
   if (FAILED(result)) {
     LOG_ERROR_FOR_OMAHA();
     UnregisterTIP(msi_handle);
