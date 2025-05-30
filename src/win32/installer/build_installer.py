@@ -157,7 +157,6 @@ def main():
   parser.add_argument('--mozc_cache_service', type=str)
   parser.add_argument('--mozc_tip32', type=str)
   parser.add_argument('--mozc_tip64', type=str)
-  parser.add_argument('--mozc_tip64_pdb', type=str)
   parser.add_argument('--custom_action', type=str)
   parser.add_argument('--icon_path', type=str)
   parser.add_argument('--credit_file', type=str)
