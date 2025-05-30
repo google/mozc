@@ -30,12 +30,16 @@
 #ifndef MOZC_PREDICTION_PREDICTOR_H_
 #define MOZC_PREDICTION_PREDICTOR_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "converter/converter_interface.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/result.h"
 #include "request/conversion_request.h"
 
 namespace mozc::prediction {
@@ -49,10 +53,10 @@ class BasePredictor : public PredictorInterface {
 
   // Hook(s) for all mutable operations.
   void Finish(const ConversionRequest &request,
-              absl::Span<const Result> results, uint32 revert_id) override;
+              absl::Span<const Result> results, uint32_t revert_id) override;
 
   // Reverts the last Finish operation.
-  void Revert(uint32 revert_id) override;
+  void Revert(uint32_t revert_id) override;
 
   // Clears all history data of UserHistoryPredictor.
   bool ClearAllHistory() override;
