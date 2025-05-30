@@ -36,6 +36,7 @@
 #include <ostream>
 #include <sstream>  // For DebugString()
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "absl/log/check.h"
@@ -114,6 +115,12 @@ bool Candidate::EncodeLengths(size_t key_len, size_t value_len,
   return true;
 }
 
+std::tuple<size_t, size_t, size_t, size_t> Candidate::DecodeLengths(
+    uint32_t encoded) {
+  return std::make_tuple(encoded >> 24, (encoded >> 16) & 0xff,
+                         (encoded >> 8) & 0xff, (encoded & 0xff));
+}
+
 bool Candidate::PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
                                              size_t content_key_len,
                                              size_t content_value_len) {
@@ -146,10 +153,8 @@ std::string Candidate::DebugString() const {
     os << " segbdd=";
     for (size_t i = 0; i < inner_segment_boundary.size(); ++i) {
       const uint32_t encoded_lengths = inner_segment_boundary[i];
-      const int key_len = encoded_lengths >> 24;
-      const int value_len = (encoded_lengths >> 16) & 0xff;
-      const int content_key_len = (encoded_lengths >> 8) & 0xff;
-      const int content_value_len = encoded_lengths & 0xff;
+      const auto [key_len, value_len, content_key_len, content_value_len] =
+          DecodeLengths(encoded_lengths);
       os << absl::StreamFormat("<%d,%d,%d,%d>", key_len, value_len,
                                content_key_len, content_value_len);
     }

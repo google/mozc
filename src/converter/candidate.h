@@ -217,6 +217,10 @@ class Candidate {
     return result;
   }
 
+  // returns [key_len, value_len, content_value_len, content_value_len]
+  static std::tuple<size_t, size_t, size_t, size_t> DecodeLengths(
+      uint32_t encoded);
+
   // Inserts a new element to |inner_segment_boundary|.  If one of four
   // lengths is longer than 255, this method returns false.
   bool PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,

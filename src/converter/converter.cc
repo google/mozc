@@ -699,11 +699,10 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
 
   for (const prediction::Result &result : results) {
     converter::Candidate *candidate = segment->add_candidate();
-
-    strings::Assign(candidate->content_key, result.key);
-    strings::Assign(candidate->content_value, result.value);
     strings::Assign(candidate->key, result.key);
     strings::Assign(candidate->value, result.value);
+    strings::Assign(candidate->content_key, result.key);
+    strings::Assign(candidate->content_value, result.value);
     strings::Assign(candidate->description, result.description);
     candidate->lid = result.lid;
     candidate->rid = result.rid;
@@ -712,6 +711,25 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
     candidate->attributes = result.candidate_attributes;
     candidate->consumed_key_size = result.consumed_key_size;
     candidate->inner_segment_boundary = result.inner_segment_boundary;
+
+    // When inner_segment_boundary is available, generate
+    // content_key and content_value from the boundary info.
+    if (!result.inner_segment_boundary.empty()) {
+      // Gets the last key/value and content_key/content_value.
+      const auto [key_len, value_len, content_key_len, content_value_len] =
+          converter::Candidate::DecodeLengths(
+              result.inner_segment_boundary.back());
+      const int function_key_len = key_len - content_key_len;
+      const int function_value_len = value_len - content_value_len;
+      if (function_key_len > 0 &&
+          function_key_len <= candidate->content_key.size()) {
+        candidate->content_key.erase(content_key_len, function_key_len);
+      }
+      if (function_value_len > 0 &&
+          function_value_len <= candidate->content_value.size()) {
+        candidate->content_value.erase(content_value_len, function_value_len);
+      }
+    }
 
     // This block has been moved from user_history_predictor.
     // TODO(taku): Reconsider  more appropriate place to put this block.

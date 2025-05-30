@@ -920,8 +920,10 @@ TEST_F(ConverterTest, StartPartialPrediction) {
   EXPECT_TRUE(converter->StartPrediction(
       ConvReq("わたしは", ConversionRequest::PARTIAL_PREDICTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私は");
+  EXPECT_EQ(segments.segment(0).candidate(0).content_value, "私");
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
-  EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたしは");
+  EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたし");
 }
 
 TEST_F(ConverterTest, StartPartialSuggestion) {
@@ -932,8 +934,10 @@ TEST_F(ConverterTest, StartPartialSuggestion) {
   EXPECT_TRUE(converter->StartPrediction(
       ConvReq("わたしは", ConversionRequest::PARTIAL_SUGGESTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私は");
+  EXPECT_EQ(segments.segment(0).candidate(0).content_value, "私");
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
-  EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたしは");
+  EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたし");
 }
 
 TEST_F(ConverterTest, StartPartialPredictionMobile) {
@@ -944,8 +948,10 @@ TEST_F(ConverterTest, StartPartialPredictionMobile) {
   EXPECT_TRUE(converter->StartPrediction(
       ConvReq("わたしは", ConversionRequest::PARTIAL_PREDICTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私は");
+  EXPECT_EQ(segments.segment(0).candidate(0).content_value, "私");
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
-  EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたしは");
+  EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたし");
 }
 
 TEST_F(ConverterTest, StartPartialSuggestionMobile) {
@@ -956,8 +962,10 @@ TEST_F(ConverterTest, StartPartialSuggestionMobile) {
   EXPECT_TRUE(converter->StartPrediction(
       ConvReq("わたしは", ConversionRequest::PARTIAL_SUGGESTION), &segments));
   EXPECT_EQ(segments.segments_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私は");
+  EXPECT_EQ(segments.segment(0).candidate(0).content_value, "私");
   EXPECT_EQ(segments.segment(0).candidate(0).key, "わたしは");
-  EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたしは");
+  EXPECT_EQ(segments.segment(0).candidate(0).content_key, "わたし");
 }
 
 TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
