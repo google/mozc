@@ -48,7 +48,6 @@ package(
 mozc_win32_cc_prod_binary(
     name = "win32_renderer_main",
     srcs = ["win32_renderer_main.cc"],
-    cpu = "@platforms//cpu:x86_64",
     executable_name_map = {
         "Mozc": "mozc_renderer.exe",
         "GoogleJapaneseInput": "GoogleIMEJaRenderer.exe",
