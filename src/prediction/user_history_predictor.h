@@ -142,12 +142,9 @@ class UserHistoryPredictor : public PredictorInterface {
   // From user_history_predictor.proto
   using Entry = user_history_predictor::UserHistory::Entry;
   using NextEntry = user_history_predictor::UserHistory::NextEntry;
-  using EntryType = user_history_predictor::UserHistory::Entry::EntryType;
 
   // Returns fingerprints from various object.
   static uint32_t Fingerprint(absl::string_view key, absl::string_view value);
-  static uint32_t Fingerprint(absl::string_view key, absl::string_view value,
-                              EntryType type);
   static uint32_t EntryFingerprint(const Entry &entry);
   static uint32_t SegmentFingerprint(const Segment &segment);
 
@@ -426,9 +423,6 @@ class UserHistoryPredictor : public PredictorInterface {
                  bool is_suggestion_selected,
                  absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
                  RevertEntries *revert_entries);
-
-  // Inserts event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
-  void InsertEvent(EntryType type);
 
   // Inserts a new |next_entry| into |entry|.
   // it makes a bigram connection from entry to next_entry.

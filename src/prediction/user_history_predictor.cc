@@ -59,6 +59,7 @@
 #include "base/config_file_stream.h"
 #include "base/container/freelist.h"
 #include "base/container/trie.h"
+#include "base/file_util.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
 #include "base/util.h"
@@ -252,11 +253,6 @@ bool UserHistoryStorage::Load() {
 }
 
 bool UserHistoryStorage::Save() {
-  if (proto_.entries_size() == 0) {
-    LOG(WARNING) << "etries size is 0. Not saved";
-    return false;
-  }
-
   const int num_deleted = DeleteEntriesUntouchedFor62Days();
   LOG_IF(INFO, num_deleted > 0)
       << num_deleted << " old entries were removed before save";
@@ -265,6 +261,13 @@ bool UserHistoryStorage::Save() {
   if (!proto_.AppendToString(&output)) {
     LOG(ERROR) << "AppendToString failed";
     return false;
+  }
+
+  // Remove the storage file when proto is empty because
+  // storing empty file causes an error.
+  if (output.empty()) {
+    FileUtil::UnlinkIfExists(storage_.filename()).IgnoreError();
+    return true;
   }
 
   if (!storage_.Save(output)) {
@@ -281,9 +284,7 @@ int UserHistoryStorage::DeleteEntriesBefore(uint64_t timestamp) {
   int i = 0;
   int new_size = proto_.entries_size();
   while (i < new_size) {
-    if (proto_.entries(i).entry_type() !=
-            UserHistoryPredictor::Entry::DEFAULT_ENTRY ||
-        proto_.entries(i).last_access_time() >= timestamp) {
+    if (proto_.entries(i).last_access_time() >= timestamp) {
       ++i;
       continue;
     }
@@ -438,7 +439,8 @@ bool UserHistoryPredictor::Load(const UserHistoryStorage &history) {
   for (const Entry &entry : history.GetProto().entries()) {
     // Workaround for b/116826494: Some garbled characters are suggested
     // from user history. This filters such entries.
-    if (!Util::IsValidUtf8(entry.value())) {
+    if (entry.value().empty() || entry.key().empty() ||
+        !Util::IsValidUtf8(entry.value())) {
       LOG(ERROR) << "Invalid UTF8 found in user history: " << entry;
       continue;
     }
@@ -456,18 +458,11 @@ bool UserHistoryPredictor::Save() {
     return true;
   }
 
-  // Do not check incognito_mode or use_history_suggest in Config here.
-  // The input data should not have been inserted when those flags are on.
-
-  const DicElement *tail = dic_->Tail();
-  if (tail == nullptr) {
-    return true;
-  }
-
   const std::string filename = GetUserHistoryFileName();
 
   UserHistoryStorage history(filename);
-  for (const DicElement *elm = tail; elm != nullptr; elm = elm->prev) {
+
+  for (const DicElement *elm = dic_->Tail(); elm != nullptr; elm = elm->prev) {
     *history.GetProto().add_entries() = elm->value;
   }
 
@@ -475,6 +470,7 @@ bool UserHistoryPredictor::Save() {
     LOG(ERROR) << "UserHistoryStorage::Save() failed";
     return false;
   }
+
   Load(history);
 
   updated_ = false;
@@ -490,9 +486,6 @@ bool UserHistoryPredictor::ClearAllHistory() {
   // Renews DicCache as LruCache tries to reuse the internal value by
   // using FreeList
   dic_ = std::make_unique<DicCache>(UserHistoryPredictor::cache_size());
-
-  // insert a dummy event entry.
-  InsertEvent(Entry::CLEAN_ALL_EVENT);
 
   updated_ = true;
 
@@ -525,9 +518,6 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
       LOG(ERROR) << "cannot erase " << key;
     }
   }
-
-  // Inserts a dummy event entry.
-  InsertEvent(Entry::CLEAN_UNUSED_EVENT);
 
   updated_ = true;
 
@@ -1621,8 +1611,7 @@ bool UserHistoryPredictor::IsValidEntry(const Entry &entry) const {
 
 bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
     const Entry &entry) const {
-  if (entry.entry_type() != Entry::DEFAULT_ENTRY ||
-      user_dictionary_.IsSuppressedEntry(entry.key(), entry.value())) {
+  if (user_dictionary_.IsSuppressedEntry(entry.key(), entry.value())) {
     return false;
   }
 
@@ -1636,28 +1625,6 @@ bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
   }
 
   return true;
-}
-
-void UserHistoryPredictor::InsertEvent(EntryType type) {
-  if (type == Entry::DEFAULT_ENTRY) {
-    return;
-  }
-
-  const uint64_t last_access_time = absl::ToUnixSeconds(Clock::GetAbslTime());
-  const uint32_t dic_key = Fingerprint("", "", type);
-
-  DCHECK(dic_.get());
-  DicElement *e = dic_->Insert(dic_key);
-  if (e == nullptr) {
-    MOZC_VLOG(2) << "insert failed";
-    return;
-  }
-
-  Entry *entry = &(e->value);
-  DCHECK(entry);
-  entry->Clear();
-  entry->set_entry_type(type);
-  entry->set_last_access_time(last_access_time);
 }
 
 bool UserHistoryPredictor::ShouldInsert(
@@ -2123,22 +2090,8 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
 
 // static
 uint32_t UserHistoryPredictor::Fingerprint(const absl::string_view key,
-                                           const absl::string_view value,
-                                           EntryType type) {
-  if (type == Entry::DEFAULT_ENTRY) {
-    // Since we have already used the fingerprint function for next entries and
-    // next entries are saved in user's local machine, we are not able
-    // to change the Fingerprint function for the old key/value type.
-    return Fingerprint32(absl::StrCat(key, kDelimiter, value));
-  } else {
-    return Fingerprint32(static_cast<uint8_t>(type));
-  }
-}
-
-// static
-uint32_t UserHistoryPredictor::Fingerprint(const absl::string_view key,
                                            const absl::string_view value) {
-  return Fingerprint(key, value, Entry::DEFAULT_ENTRY);
+  return Fingerprint32(absl::StrCat(key, kDelimiter, value));
 }
 
 uint32_t UserHistoryPredictor::EntryFingerprint(const Entry &entry) {

@@ -66,13 +66,7 @@ message UserHistory {
     // This entry is removed.
     optional bool removed = 8 [default = false];
 
-    enum EntryType {
-      DEFAULT_ENTRY = 0;
-      CLEAN_ALL_EVENT = 1;
-      CLEAN_UNUSED_EVENT = 2;
-    }
-
-    optional EntryType entry_type = 9 [default = DEFAULT_ENTRY];
+    reserved 9;  // Deprecated entry_type
   }
 
   repeated Entry entries = 6;

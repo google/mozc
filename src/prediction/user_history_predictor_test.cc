@@ -2178,15 +2178,6 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
   const uint32_t entry_fp1 = UserHistoryPredictor::Fingerprint(kKey, kValue);
   const uint32_t entry_fp2 = UserHistoryPredictor::EntryFingerprint(entry);
 
-  const uint32_t entry_fp3 = UserHistoryPredictor::Fingerprint(
-      kKey, kValue, UserHistoryPredictor::Entry::DEFAULT_ENTRY);
-
-  const uint32_t entry_fp4 = UserHistoryPredictor::Fingerprint(
-      kKey, kValue, UserHistoryPredictor::Entry::CLEAN_ALL_EVENT);
-
-  const uint32_t entry_fp5 = UserHistoryPredictor::Fingerprint(
-      kKey, kValue, UserHistoryPredictor::Entry::CLEAN_UNUSED_EVENT);
-
   Segment segment;
   segment.set_key(kKey);
   Segment::Candidate *c = segment.add_candidate();
@@ -2209,10 +2200,6 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
       UserHistoryPredictor::SegmentFingerprint(segment2);
 
   EXPECT_EQ(entry_fp1, entry_fp2);
-  EXPECT_EQ(entry_fp1, entry_fp3);
-  EXPECT_NE(entry_fp1, entry_fp4);
-  EXPECT_NE(entry_fp1, entry_fp5);
-  EXPECT_NE(entry_fp4, entry_fp5);
   EXPECT_EQ(segment_fp, entry_fp2);
   EXPECT_EQ(segment_fp, entry_fp1);
   EXPECT_EQ(segment_fp, segment_fp2);
@@ -2308,17 +2295,9 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_TRUE(predictor_peer.IsValidEntry(entry));
   EXPECT_TRUE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
-  entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_ALL_EVENT);
-  EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
-  EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
-
-  entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_UNUSED_EVENT);
-  EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
-  EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
-
   entry.set_removed(true);
   EXPECT_FALSE(predictor_peer.IsValidEntry(entry));
-  EXPECT_FALSE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
+  EXPECT_TRUE(predictor_peer.IsValidEntryIgnoringRemovedField(entry));
 
   entry.Clear();
   EXPECT_TRUE(predictor_peer.IsValidEntry(entry));
