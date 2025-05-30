@@ -35,7 +35,6 @@
 
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 
@@ -50,10 +49,10 @@ class BasePredictor : public PredictorInterface {
 
   // Hook(s) for all mutable operations.
   void Finish(const ConversionRequest &request,
-              const Segments &segments) override;
+              absl::Span<const Result> results, uint32 revert_id) override;
 
   // Reverts the last Finish operation.
-  void Revert(const Segments &segments) override;
+  void Revert(uint32 revert_id) override;
 
   // Clears all history data of UserHistoryPredictor.
   bool ClearAllHistory() override;

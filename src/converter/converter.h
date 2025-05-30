@@ -48,6 +48,7 @@
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/result.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -157,6 +158,10 @@ class Converter final : public ConverterInterface {
     DCHECK(modules_);
     return *modules_;
   }
+
+  // Utility method to results for Predictor::Finish().
+  static std::vector<prediction::Result> MakeLearningResults(
+      const Segments &segments);
 
  private:
   Converter() = default;

@@ -148,7 +148,9 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
     seg->set_segment_type(Segment::HISTORY);
     converter::Candidate *c = seg->add_candidate();
     c->key = absl::StrCat("k", i);
+    c->content_key = "k";
     c->value = absl::StrCat("v", i);
+    c->content_value = "v";
     c->rid = i + 10;
     c->cost = i + 100;
   }
@@ -157,7 +159,7 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
     const ConversionRequest convreq =
         ConversionRequestBuilder().SetHistorySegmentsView(segments).Build();
 
-    EXPECT_TRUE(convreq.HasHistorySegments());
+    EXPECT_TRUE(convreq.HasConverterHistorySegments());
 
     EXPECT_EQ(convreq.converter_history_size(), 3);
 
@@ -174,11 +176,21 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
 
     EXPECT_EQ(convreq.converter_history_rid(), 12);
     EXPECT_EQ(*convreq.converter_history_cost(), 102);
+
+    int n = 0;
+    for (const auto &cand : convreq.GetConverterHistorySegments()) {
+      const converter::Candidate &c = segments.history_segment(n).candidate(0);
+      EXPECT_EQ(cand.key, c.key);
+      EXPECT_EQ(cand.value, c.value);
+      EXPECT_EQ(cand.content_key, c.content_key);
+      EXPECT_EQ(cand.content_value, c.content_value);
+      ++n;
+    }
   }
 
   {
     const ConversionRequest convreq = ConversionRequestBuilder().Build();
-    EXPECT_FALSE(convreq.HasHistorySegments());
+    EXPECT_FALSE(convreq.HasConverterHistorySegments());
 
     EXPECT_EQ(convreq.converter_history_size(), 0);
     EXPECT_EQ(convreq.converter_history_key(), "");
@@ -204,9 +216,9 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
     const ConversionRequest convreq3 =
         ConversionRequestBuilder().SetConversionRequest(convreq).Build();
 
-    EXPECT_TRUE(convreq.HasHistorySegments());
-    EXPECT_TRUE(convreq2.HasHistorySegments());
-    EXPECT_TRUE(convreq3.HasHistorySegments());
+    EXPECT_TRUE(convreq.HasConverterHistorySegments());
+    EXPECT_TRUE(convreq2.HasConverterHistorySegments());
+    EXPECT_TRUE(convreq3.HasConverterHistorySegments());
   }
 }
 

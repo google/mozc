@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -47,7 +48,6 @@
 #include "absl/types/span.h"
 #include "base/util.h"
 #include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
@@ -91,15 +91,15 @@ BasePredictor::BasePredictor(
 }
 
 void BasePredictor::Finish(const ConversionRequest &request,
-                           const Segments &segments) {
-  user_history_predictor_->Finish(request, segments);
-  dictionary_predictor_->Finish(request, segments);
+                           absl::Span<const Result> results,
+                           uint32_t revert_id) {
+  user_history_predictor_->Finish(request, results, revert_id);
 }
 
 // Since DictionaryPredictor is immutable, no need
 // to call DictionaryPredictor::Revert/Clear*/Finish methods.
-void BasePredictor::Revert(const Segments &segments) {
-  user_history_predictor_->Revert(segments);
+void BasePredictor::Revert(uint32_t revert_id) {
+  user_history_predictor_->Revert(revert_id);
 }
 
 bool BasePredictor::ClearAllHistory() {
@@ -147,7 +147,7 @@ std::vector<Result> DesktopPredictor::Predict(
          request.request_type() == ConversionRequest::SUGGESTION ||
          request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
          request.request_type() == ConversionRequest::PARTIAL_SUGGESTION);
-  DCHECK(request.HasHistorySegments());
+  DCHECK(request.HasConverterHistorySegments());
 
   if (request.config().presentation_mode()) {
     return {};
@@ -185,7 +185,7 @@ std::vector<Result> DesktopPredictor::Predict(
             .SetConversionRequestView(request_for_prediction)
             .SetOptions(std::move(options2))
             .Build();
-    DCHECK(request_for_prediction2.HasHistorySegments());
+    DCHECK(request_for_prediction2.HasConverterHistorySegments());
     dictionary_results =
         dictionary_predictor_->Predict(request_for_prediction2);
   }
@@ -220,7 +220,7 @@ MobilePredictor::~MobilePredictor() = default;
 
 ConversionRequest MobilePredictor::GetRequestForPredict(
     const ConversionRequest &request) {
-  DCHECK(request.HasHistorySegments());
+  DCHECK(request.HasConverterHistorySegments());
   ConversionRequest::Options options = request.options();
   size_t history_prediction_size = GetHistoryPredictionSizeFromRequest(request);
   switch (request.request_type()) {
@@ -288,7 +288,7 @@ std::vector<Result> MobilePredictor::Predict(
          request.request_type() == ConversionRequest::SUGGESTION ||
          request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
          request.request_type() == ConversionRequest::PARTIAL_SUGGESTION);
-  DCHECK(request.HasHistorySegments());
+  DCHECK(request.HasConverterHistorySegments());
 
   if (request.config().presentation_mode()) {
     return {};
@@ -296,7 +296,7 @@ std::vector<Result> MobilePredictor::Predict(
 
   const ConversionRequest request_for_predict = GetRequestForPredict(request);
 
-  DCHECK(request_for_predict.HasHistorySegments());
+  DCHECK(request_for_predict.HasConverterHistorySegments());
 
   std::vector<Result> user_history_results, dictionary_results;
 

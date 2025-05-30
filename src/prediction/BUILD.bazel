@@ -62,9 +62,9 @@ mozc_cc_library(
     ],
     deps = [
         ":result",
-        "//converter:segments",
         "//request:conversion_request",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -138,6 +138,7 @@ mozc_cc_test(
         "//composer:query",
         "//composer:table",
         "//config:config_handler",
+        "//converter",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_interface",
@@ -153,6 +154,7 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:mozctest",
         "//testing:test_peer",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
@@ -430,7 +432,6 @@ mozc_cc_library(
         ":result",
         "//base:util",
         "//converter:converter_interface",
-        "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",

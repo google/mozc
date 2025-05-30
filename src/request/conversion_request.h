@@ -34,6 +34,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/base/attributes.h"
 #include "absl/log/check.h"
@@ -366,7 +367,30 @@ class ConversionRequest {
 
   // Returns true if request has the legacy segments structure.
   // This method is only used in the segments to request migration.
-  bool HasHistorySegments() const { return static_cast<bool>(segments_); }
+  bool HasConverterHistorySegments() const {
+    return static_cast<bool>(segments_);
+  }
+
+  // Temporal API to acesses raw history segments.
+  // TODO(b/409183257): Better to return 'Result' instead.
+  struct HistorySegment {
+    absl::string_view key;
+    absl::string_view value;
+    absl::string_view content_key;
+    absl::string_view content_value;
+  };
+
+  std::vector<HistorySegment> GetConverterHistorySegments() const {
+    if (!segments_) return {};
+    std::vector<HistorySegment> results;
+    for (const Segment &segment : segments_->history_segments()) {
+      DCHECK_LE(1, segment.candidates_size());
+      const auto &candidate = segment.candidate(0);
+      results.push_back({candidate.key, candidate.value, candidate.content_key,
+                         candidate.content_value});
+    }
+    return results;
+  }
 
   // Builder can access the private member for construction.
   friend class ConversionRequestBuilder;

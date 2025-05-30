@@ -279,8 +279,15 @@ void Converter::FinishConversion(const ConversionRequest &request,
       absl::IntervalClosed, bitgen, 1, std::numeric_limits<uint64_t>::max());
   segments->set_revert_id(revert_id);
 
-  rewriter_->Finish(request, *segments);
-  predictor_->Finish(request, *segments);
+  const ConversionRequest finish_req = ConversionRequestBuilder()
+                                           .SetConversionRequestView(request)
+                                           .SetHistorySegmentsView(*segments)
+                                           .Build();
+  DCHECK(finish_req.HasConverterHistorySegments());
+
+  rewriter_->Finish(finish_req, *segments);
+  predictor_->Finish(finish_req, MakeLearningResults(*segments),
+                     segments->revert_id());
 
   if (request.request_type() != ConversionRequest::CONVERSION &&
       segments->conversion_segments_size() >= 1 &&
@@ -314,7 +321,7 @@ void Converter::RevertConversion(Segments *segments) const {
     return;
   }
   rewriter_->Revert(*segments);
-  predictor_->Revert(*segments);
+  predictor_->Revert(segments->revert_id());
   segments->set_revert_id(0);
 }
 
@@ -683,7 +690,7 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
                                          .SetConversionRequestView(request)
                                          .SetHistorySegmentsView(*segments)
                                          .Build();
-  DCHECK(conv_req.HasHistorySegments());
+  DCHECK(conv_req.HasConverterHistorySegments());
 
   const std::vector<prediction::Result> results = predictor_->Predict(conv_req);
 
@@ -720,4 +727,80 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
   return !results.empty();
 }
 
+// static
+std::vector<prediction::Result> Converter::MakeLearningResults(
+    const Segments &segments) {
+  std::vector<prediction::Result> results;
+
+  if (segments.conversion_segments_size() == 0) {
+    return results;
+  }
+
+  // - segments_size = 1: Populates the nbest candidates to result.
+  if (segments.conversion_segments_size() == 1) {
+    // Populates only top 5 results.
+    // See UserHistoryPredictor::MaybeRemoveUnselectedHistory
+    constexpr int kMaxHistorySize = 5;
+    for (const auto &candidate : segments.conversion_segment(0).candidates()) {
+      prediction::Result result;
+      strings::Assign(result.key, candidate->key);
+      strings::Assign(result.value, candidate->value);
+      strings::Assign(result.description, candidate->description);
+      result.lid = candidate->lid;
+      result.rid = candidate->rid;
+      result.wcost = candidate->wcost;
+      result.cost = candidate->cost;
+      result.candidate_attributes = candidate->attributes;
+      result.consumed_key_size = candidate->consumed_key_size;
+      result.inner_segment_boundary = candidate->inner_segment_boundary;
+      // Force to set inner_segment_boundary from key/content_key.
+      uint32_t encoded = 0;
+      if (result.inner_segment_boundary.empty() &&
+          converter::Candidate::EncodeLengths(
+              candidate->key.size(), candidate->value.size(),
+              candidate->content_key.size(), candidate->content_value.size(),
+              &encoded)) {
+        result.inner_segment_boundary.emplace_back(encoded);
+      }
+      results.emplace_back(std::move(result));
+      if (results.size() >= kMaxHistorySize) break;
+    }
+
+    return results;
+  }
+
+  // segments_size > 1: Populates the top candidate to result by
+  //                    concatenating the segments.
+  {
+    bool inner_segment_boundary_failed = false;
+    prediction::Result result;
+    for (const auto &segment : segments.conversion_segments()) {
+      if (segment.candidates_size() == 0) return {};
+      const converter::Candidate &candidate = segment.candidate(0);
+      absl::StrAppend(&result.key, candidate.key);
+      absl::StrAppend(&result.value, candidate.value);
+      result.candidate_attributes |= candidate.attributes;
+      result.wcost += candidate.wcost;
+      result.cost += candidate.cost;
+      uint32_t encoded = 0;
+      if (!converter::Candidate::EncodeLengths(
+              candidate.key.size(), candidate.value.size(),
+              candidate.content_key.size(), candidate.content_value.size(),
+              &encoded)) {
+        inner_segment_boundary_failed = true;
+      }
+      result.inner_segment_boundary.emplace_back(encoded);
+    }
+
+    if (inner_segment_boundary_failed) result.inner_segment_boundary.clear();
+
+    const int size = segments.conversion_segments_size();
+    result.lid = segments.conversion_segment(0).candidate(0).lid;
+    result.rid = segments.conversion_segment(size - 1).candidate(0).rid;
+
+    results.emplace_back(std::move(result));
+  }
+
+  return results;
+}
 }  // namespace mozc

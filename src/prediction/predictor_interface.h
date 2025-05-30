@@ -30,11 +30,12 @@
 #ifndef MOZC_PREDICTION_PREDICTOR_INTERFACE_H_
 #define MOZC_PREDICTION_PREDICTOR_INTERFACE_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "converter/segments.h"
+#include "absl/types/span.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 
@@ -54,13 +55,13 @@ class PredictorInterface {
       const ConversionRequest &request) const = 0;
 
   // Finish the conversion. Stores the history for penalization.
-  // Uses segments.revert_id() as the key of the last operation.
+  // results[0] stores the committed result.
+  // We can revert the Finish operation with the revert_id and Revert method.
   virtual void Finish(const ConversionRequest &request,
-                      const Segments &segments) {}
+                      absl::Span<const Result> results, uint32_t revert_id) {}
 
   // Reverts the last Finish operation.
-  // Uses segments.revert_id() as the key to restore the last operation.
-  virtual void Revert(const Segments &segments) {}
+  virtual void Revert(uint32_t revert_id) {}
 
   // Clears all history data of UserHistoryPredictor.
   virtual bool ClearAllHistory() { return true; }

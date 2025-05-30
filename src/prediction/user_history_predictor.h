@@ -46,7 +46,6 @@
 #include "base/container/trie.h"
 #include "base/thread.h"
 #include "composer/query.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "engine/modules.h"
 #include "prediction/predictor_interface.h"
@@ -106,10 +105,10 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Hook(s) for all mutable operations.
   void Finish(const ConversionRequest &request,
-              const Segments &segments) override;
+              absl::Span<const Result> results, uint32_t revert_id) override;
 
   // Revert last Finish operation.
-  void Revert(const Segments &segments) override;
+  void Revert(uint32_t revert_id) override;
 
   // Sync user history data to local file.
   // You can call either Save() or AsyncSave().
@@ -146,7 +145,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // Returns fingerprints from various object.
   static uint32_t Fingerprint(absl::string_view key, absl::string_view value);
   static uint32_t EntryFingerprint(const Entry &entry);
-  static uint32_t SegmentFingerprint(const Segment &segment);
+  static uint32_t ResultFingerprint(const Result &result);
 
   // Returns the size of cache.
   static uint32_t cache_size();
@@ -156,19 +155,20 @@ class UserHistoryPredictor : public PredictorInterface {
 
  private:
   struct SegmentForLearning {
-    std::string key;
-    std::string value;
-    std::string content_key;
-    std::string content_value;
-    std::string description;
+    absl::string_view key;
+    absl::string_view value;
+    absl::string_view content_key;
+    absl::string_view content_value;
+    absl::string_view description;
   };
 
   // Fingerprint of key/value.
-  static uint32_t LearningSegmentFingerprint(const SegmentForLearning &segment);
+  static uint32_t LearningSegmentFingerprint(
+      const SegmentForLearning &learning_segment);
 
   // Fingerprints of key/value and content_key/content_value.
   std::vector<uint32_t> LearningSegmentFingerprints(
-      const SegmentForLearning &segment) const;
+      const SegmentForLearning &learning_segment) const;
 
   struct SegmentsForLearning {
     std::string conversion_segments_key;
@@ -348,7 +348,8 @@ class UserHistoryPredictor : public PredictorInterface {
                                   size_t max_prediction_char_coverage,
                                   EntryPriorityQueue *entry_queue) const;
 
-  SegmentsForLearning MakeLearningSegments(const Segments &segments) const;
+  SegmentsForLearning MakeLearningSegments(
+      const ConversionRequest &request, absl::Span<const Result> results) const;
 
   // Returns true if |prefix| is a fuzzy-prefix of |str|.
   // 'Fuzzy' means that
@@ -396,13 +397,19 @@ class UserHistoryPredictor : public PredictorInterface {
       std::vector<std::pair<uint32_t, std::unique_ptr<Entry>>>;
 
   void InsertHistory(const ConversionRequest &request,
-                     bool is_suggestion_selected, uint64_t last_access_time,
-                     const Segments &segments, RevertEntries *revert_entries);
+                     const SegmentsForLearning &learning_segments,
+                     RevertEntries *revert_entries);
+
+  void InsertHistoryForHistorySegments(
+      const ConversionRequest &request, bool is_suggestion_selected,
+      uint64_t last_access_time, const SegmentsForLearning &learning_segments,
+      RevertEntries *revert_entries);
 
   void InsertHistoryForConversionSegments(
       const ConversionRequest &request, bool is_suggestion_selected,
       uint64_t last_access_time, const SegmentsForLearning &learning_segments,
       RevertEntries *revert_entries);
+
   // Inserts |key,value,description| to the internal dictionary database.
   // |is_suggestion_selected|: key/value is suggestion or conversion.
   // |next_fp|: fingerprints of the next segment.
@@ -440,12 +447,12 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Returns true if the input first candidate seems to be a privacy sensitive
   // such like password.
-  bool IsPrivacySensitive(const Segments &segments) const;
+  bool IsPrivacySensitive(absl::Span<const Result> results) const;
 
   // Removes history entries when the selected ratio is under the threshold.
   // Selected ratio:
   //  (# of candidate committed) / (# of candidate shown on commit event)
-  void MaybeRemoveUnselectedHistory(const Segments &segments,
+  void MaybeRemoveUnselectedHistory(absl::Span<const Result> results,
                                     RevertEntries *revert_entries);
 
   const dictionary::DictionaryInterface &dictionary_;

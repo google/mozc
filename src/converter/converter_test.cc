@@ -230,7 +230,7 @@ class MockPredictor : public mozc::prediction::PredictorInterface {
 
   MOCK_METHOD(std::vector<Result>, Predict, (const ConversionRequest &),
               (const, override));
-  MOCK_METHOD(void, Revert, (const Segments &), (override));
+  MOCK_METHOD(void, Revert, (uint32_t), (override));
   MOCK_METHOD(absl::string_view, GetPredictorName, (), (const, override));
 };
 
@@ -2353,6 +2353,97 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     converter->FinishConversion(convreq, &segments);
     EXPECT_TRUE(cand1->key.empty());
     EXPECT_TRUE(cand1->content_key.empty());
+  }
+}
+
+TEST_F(ConverterTest, MakeLearningResultsTest) {
+  // Empty segments.
+  {
+    const Segments segments;
+    EXPECT_TRUE(Converter::MakeLearningResults(segments).empty());
+  }
+
+  // Single segment and multiple candidates.
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    for (int i = 0; i < 10; ++i) {
+      converter::Candidate *c = segment->add_candidate();
+      c->key = absl::StrCat("k", i);
+      c->content_key = "k";
+      c->value = absl::StrCat("v", i);
+      c->content_value = "v";
+      c->description = "description";
+      c->lid = i;
+      c->rid = i + 1;
+      c->cost = i + 2;
+      c->wcost = 10 * i;
+    }
+
+    const std::vector<prediction::Result> results =
+        Converter::MakeLearningResults(segments);
+    EXPECT_EQ(results.size(), 5);
+    for (int i = 0; i < results.size(); ++i) {
+      const converter::Candidate &c = segment->candidate(i);
+      const prediction::Result &result = results[i];
+      EXPECT_EQ(c.key, result.key);
+      EXPECT_EQ(c.value, result.value);
+      EXPECT_EQ(c.description, result.description);
+      EXPECT_EQ(c.lid, result.lid);
+      EXPECT_EQ(c.rid, result.rid);
+      EXPECT_EQ(c.cost, result.cost);
+      EXPECT_EQ(c.wcost, result.wcost);
+
+      converter::Candidate::InnerSegmentIterator iter(
+          result.inner_segment_boundary, result.key, result.value);
+      ASSERT_FALSE(iter.Done());
+      EXPECT_EQ(iter.GetKey(), c.key);
+      EXPECT_EQ(iter.GetContentKey(), c.content_key);
+      EXPECT_EQ(iter.GetValue(), c.value);
+      EXPECT_EQ(iter.GetContentValue(), c.content_value);
+    }
+  }
+
+  // multiple segments
+  {
+    Segments segments;
+    for (int i = 0; i < 3; ++i) {
+      Segment *segment = segments.add_segment();
+      converter::Candidate *c = segment->add_candidate();
+      c->key = absl::StrCat("k", i);
+      c->content_key = "k";
+      c->value = absl::StrCat("v", i);
+      c->content_value = "v";
+      c->lid = i;
+      c->rid = i + 1;
+      c->cost = i;
+      c->wcost = 10 * i;
+    };
+
+    const std::vector<prediction::Result> results =
+        Converter::MakeLearningResults(segments);
+    EXPECT_EQ(results.size(), 1);
+
+    const prediction::Result &result = results.front();
+    EXPECT_EQ(result.key, "k0k1k2");
+    EXPECT_EQ(result.value, "v0v1v2");
+    EXPECT_EQ(result.lid, segments.segment(0).candidate(0).lid);
+    EXPECT_EQ(result.rid, segments.segment(2).candidate(0).rid);
+    EXPECT_EQ(result.cost, 0 + 1 + 2);
+    EXPECT_EQ(result.wcost, 0 + 10 + 20);
+
+    int n = 0;
+    for (converter::Candidate::InnerSegmentIterator iter(
+             result.inner_segment_boundary, result.key, result.value);
+         !iter.Done(); iter.Next()) {
+      const converter::Candidate &c = segments.segment(n).candidate(0);
+      EXPECT_EQ(iter.GetKey(), c.key);
+      EXPECT_EQ(iter.GetContentKey(), c.content_key);
+      EXPECT_EQ(iter.GetValue(), c.value);
+      EXPECT_EQ(iter.GetContentValue(), c.content_value);
+      ++n;
+    }
+    EXPECT_EQ(n, 3);
   }
 }
 

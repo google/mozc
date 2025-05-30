@@ -457,6 +457,7 @@ mozc_cc_library(
     visibility = [
         "//converter:__pkg__",
         "//engine:__pkg__",
+        "//prediction:__pkg__",
         "//rewriter:__pkg__",
     ],
     deps = [
