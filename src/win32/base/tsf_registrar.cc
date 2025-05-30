@@ -36,6 +36,7 @@
 #include <windows.h>
 
 #include <string>
+#include <string_view>
 
 #include "absl/log/log.h"
 #include "base/const.h"
@@ -73,7 +74,7 @@ const GUID kCategories[] = {
 //  5. Click "Details" in the "Text services and input languages" frame, and;
 //  6. All installed prossors are enumerated in the "Installed services"
 //     frame.
-HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path, DWORD path_length) {
+HRESULT TsfRegistrar::RegisterProfiles(std::wstring_view resource_dll_path) {
   // Retrieve the profile store for input processors.
   // If you might want to create the manager object w/o calling the pair of
   // CoInitialize/CoUninitialize, there is a helper function to retrieve the
@@ -96,7 +97,8 @@ HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path, DWORD path_length) {
     result = profiles->AddLanguageProfile(
         TsfProfile::GetTextServiceGuid(), TsfProfile::GetLangId(),
         TsfProfile::GetProfileGuid(), description.c_str(), description.size(),
-        path, path_length, TsfProfile::GetIconIndex());
+        resource_dll_path.data(), resource_dll_path.length(),
+        TsfProfile::GetIconIndex());
 
     auto profiles_ex = ComQuery<ITfInputProcessorProfilesEx>(profiles);
     if (profiles_ex) {
@@ -123,7 +125,8 @@ HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path, DWORD path_length) {
       HRESULT set_display_name_result =
           profiles_ex->SetLanguageProfileDisplayName(
               TsfProfile::GetTextServiceGuid(), TsfProfile::GetLangId(),
-              TsfProfile::GetProfileGuid(), path, path_length,
+              TsfProfile::GetProfileGuid(), resource_dll_path.data(),
+              resource_dll_path.length(),
               TsfProfile::GetDescriptionTextIndex());
       if (FAILED(set_display_name_result)) {
         LOG(ERROR) << "SetLanguageProfileDisplayName failed."
