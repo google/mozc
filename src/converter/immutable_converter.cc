@@ -53,6 +53,7 @@
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
+#include "converter/candidate.h"
 #include "converter/connector.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
@@ -74,6 +75,7 @@
 namespace mozc {
 namespace {
 
+using ::mozc::converter::Candidate;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::Token;
 
@@ -211,7 +213,7 @@ void NormalizeHistorySegments(Segments *segments) {
       continue;
     }
 
-    Segment::Candidate *c = segment.mutable_candidate(0);
+    Candidate *c = segment.mutable_candidate(0);
     absl::string_view history_key =
         (c->key.size() > segment.key().size()) ? c->key : segment.key();
     const std::string value = c->value;
@@ -275,9 +277,9 @@ Lattice *GetLattice(Segments *segments, bool is_prediction) {
 }
 
 // Returns the vector of the inner segment's key.
-std::vector<absl::string_view> GetBoundaryInfo(const Segment::Candidate &c) {
+std::vector<absl::string_view> GetBoundaryInfo(const Candidate &c) {
   std::vector<absl::string_view> ret;
-  for (Segment::Candidate::InnerSegmentIterator iter(&c); !iter.Done();
+  for (Candidate::InnerSegmentIterator iter(&c); !iter.Done();
        iter.Next()) {
     ret.emplace_back(iter.GetKey());
   }
@@ -300,7 +302,7 @@ class FirstInnerSegmentCandidateChecker {
                                              int cost_max_diff)
       : target_segment_(target_segment), cost_max_diff_(cost_max_diff) {}
 
-  bool IsGoodCandidate(const Segment::Candidate &c) {
+  bool IsGoodCandidate(const Candidate &c) {
     if (c.key.size() != target_segment_.key().size() &&
         IsPrefixAdded(c.value)) {
       // Filter a candidate if its prefix is already added unless it is the
@@ -315,7 +317,7 @@ class FirstInnerSegmentCandidateChecker {
     return true;
   }
 
-  void AddEntry(const Segment::Candidate &c) {
+  void AddEntry(const Candidate &c) {
     constexpr bool kPlaceholderValue = true;
     trie_.AddEntry(c.value, kPlaceholderValue);
 
@@ -363,9 +365,9 @@ ImmutableConverter::ImmutableConverter(const engine::Modules &modules)
 
 void ImmutableConverter::InsertDummyCandidates(Segment *segment,
                                                size_t expand_size) const {
-  const Segment::Candidate *top_candidate =
+  const Candidate *top_candidate =
       segment->candidates_size() == 0 ? nullptr : segment->mutable_candidate(0);
-  const Segment::Candidate *last_candidate =
+  const Candidate *last_candidate =
       segment->candidates_size() == 0
           ? nullptr
           : segment->mutable_candidate(segment->candidates_size() - 1);
@@ -381,7 +383,7 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
     // Use top_candidate as a refarence of lid/rid and key/value.
     DCHECK(top_candidate);
     DCHECK(last_candidate);
-    Segment::Candidate *new_candidate = segment->add_candidate();
+    Candidate *new_candidate = segment->add_candidate();
     DCHECK(new_candidate);
 
     *new_candidate = *top_candidate;
@@ -404,7 +406,7 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
   if (segment->candidates_size() == 0 ||
       (segment->candidates_size() < expand_size &&
        Util::GetScriptType(segment->key()) == Util::HIRAGANA)) {
-    Segment::Candidate *new_candidate = segment->add_candidate();
+    Candidate *new_candidate = segment->add_candidate();
     DCHECK(new_candidate);
 
     if (last_candidate != nullptr) {
@@ -426,7 +428,7 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
     // One character hiragana/katakana will cause side effect.
     // Type "し" and choose "シ". After that, "しました" will become "シました".
     if (Util::CharsLen(new_candidate->key) <= 1) {
-      new_candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
+      new_candidate->attributes |= Candidate::CONTEXT_SENSITIVE;
     }
     DCHECK(new_candidate->IsValid());
   }
@@ -437,7 +439,7 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
   if (segment->candidates_size() > 0 &&
       segment->candidates_size() < expand_size &&
       Util::GetScriptType(katakana_value) == Util::KATAKANA) {
-    Segment::Candidate *new_candidate = segment->add_candidate();
+    Candidate *new_candidate = segment->add_candidate();
     DCHECK(new_candidate);
     DCHECK(last_candidate);
     new_candidate->key = segment->key();
@@ -450,7 +452,7 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
     new_candidate->lid = last_candidate->lid;
     new_candidate->rid = last_candidate->rid;
     if (Util::CharsLen(new_candidate->key) <= 1) {
-      new_candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
+      new_candidate->attributes |= Candidate::CONTEXT_SENSITIVE;
     }
     DCHECK(new_candidate->IsValid());
   }
@@ -1395,7 +1397,7 @@ bool ImmutableConverter::MakeLatticeNodesForHistorySegments(
       LOG(WARNING) << "invalid history: key is empty";
       return false;
     }
-    const Segment::Candidate &candidate = segment.candidate(0);
+    const Candidate &candidate = segment.candidate(0);
 
     // Add a virtual nodes corresponding to HISTORY segments.
     Node *rnode = lattice->NewNode();
@@ -1488,7 +1490,7 @@ bool ImmutableConverter::MakeLatticeNodesForHistorySegments(
         new_node->lid = compound_node->lid;
         new_node->bnext = nullptr;
         new_node->node_type = Node::NOR_NODE;
-        new_node->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
+        new_node->attributes |= Candidate::CONTEXT_SENSITIVE;
 
         // New cost recalcuration:
         //
@@ -1606,7 +1608,7 @@ void ImmutableConverter::Resegment(const Segments &segments,
   size_t segments_pos = 0;
   for (const Segment &segment : segments) {
     if (segment.segment_type() == Segment::FIXED_VALUE) {
-      const Segment::Candidate &candidate = segment.candidate(0);
+      const Candidate &candidate = segment.candidate(0);
       Node *rnode = lattice->NewNode();
       CHECK(rnode);
       rnode->lid = candidate.lid;
@@ -1657,21 +1659,21 @@ void ImmutableConverter::InsertFirstSegmentToCandidates(
   if (allow_exact) {
     for (size_t i = only_first_segment_candidate_pos;
          i < first_segment.candidates_size(); ++i) {
-      Segment::Candidate *candidate =
+      Candidate *candidate =
           segments->mutable_conversion_segment(0)->mutable_candidate(i);
       if (candidate->key.size() < first_segment.key().size()) {
         candidate->cost += (base_cost_diff + kOnlyFirstSegmentOffset);
         candidate->wcost += (base_wcost_diff + kOnlyFirstSegmentOffset);
         DCHECK(!(candidate->attributes &
-                 Segment::Candidate::PARTIALLY_KEY_CONSUMED));
-        candidate->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+                 Candidate::PARTIALLY_KEY_CONSUMED));
+        candidate->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
       }
       candidate->consumed_key_size = Util::CharsLen(candidate->key);
     }
   } else {
     for (size_t i = only_first_segment_candidate_pos;
          i < first_segment.candidates_size();) {
-      Segment::Candidate *candidate =
+      Candidate *candidate =
           segments->mutable_conversion_segment(0)->mutable_candidate(i);
       if (candidate->key.size() >= first_segment.key().size()) {
         segments->mutable_conversion_segment(0)->erase_candidate(i);
@@ -1685,8 +1687,8 @@ void ImmutableConverter::InsertFirstSegmentToCandidates(
       candidate->cost += (base_cost_diff + kOnlyFirstSegmentOffset);
       candidate->wcost += (base_wcost_diff + kOnlyFirstSegmentOffset);
       DCHECK(!(candidate->attributes &
-               Segment::Candidate::PARTIALLY_KEY_CONSUMED));
-      candidate->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+               Candidate::PARTIALLY_KEY_CONSUMED));
+      candidate->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
       candidate->consumed_key_size = Util::CharsLen(candidate->key);
       ++i;
     }
@@ -1919,7 +1921,7 @@ void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
         // coverage.
         continue;
       }
-      Segment::Candidate *candidate = target_segment->add_candidate();
+      Candidate *candidate = target_segment->add_candidate();
       *candidate = c;
       added.insert(c.value);
       remaining_char_coverage -= Util::CharsLen(c.value);
@@ -1938,7 +1940,7 @@ void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
                                               kMaxCostDiffForFirstInnerSegment);
     for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
          ++i) {
-      Segment::Candidate *c =
+      Candidate *c =
           tmp_segments.mutable_conversion_segment(0)->mutable_candidate(i);
       if (added.contains(c->value)) {
         continue;
@@ -1954,7 +1956,7 @@ void ImmutableConverter::InsertCandidatesForRealtimeWithCandidateChecker(
       if (!checker.IsGoodCandidate(*c)) {
         continue;
       }
-      Segment::Candidate *candidate = target_segment->add_candidate();
+      Candidate *candidate = target_segment->add_candidate();
       *candidate = *c;
       checker.AddEntry(*c);
       added.insert(c->value);

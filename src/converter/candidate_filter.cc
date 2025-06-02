@@ -45,6 +45,7 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "base/vlog.h"
+#include "converter/candidate.h"
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -263,7 +264,7 @@ void CandidateFilter::Reset() {
 
 CandidateFilter::ResultType CandidateFilter::CheckRequestType(
     const ConversionRequest &request, const absl::string_view original_key,
-    const Segment::Candidate &candidate,
+    const Candidate &candidate,
     const absl::Span<const Node *const> nodes) const {
   // Filtering by the suggestion filter, which is applied only for the
   // PREDICTION and SUGGESTION modes.
@@ -321,8 +322,7 @@ CandidateFilter::ResultType CandidateFilter::CheckRequestType(
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     const ConversionRequest &request, const absl::string_view original_key,
-    const Segment::Candidate *candidate,
-    const absl::Span<const Node *const> top_nodes,
+    const Candidate *candidate, const absl::Span<const Node *const> top_nodes,
     const absl::Span<const Node *const> nodes) {
   DCHECK(candidate);
 
@@ -336,7 +336,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // If the top candidate has constrained node, we skip the main body
   // of CandidateFilter, meaning that the node is not treated as the top
   // node for CandidateFilter.
-  if (candidate->attributes & Segment::Candidate::CONTEXT_SENSITIVE) {
+  if (candidate->attributes & Candidate::CONTEXT_SENSITIVE) {
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
@@ -380,7 +380,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // Don't remove duplications if USER_DICTIONARY.
-  if (candidate->attributes & Segment::Candidate::USER_DICTIONARY) {
+  if (candidate->attributes & Candidate::USER_DICTIONARY) {
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
@@ -510,7 +510,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // Skip this check when the conversion mode is real-time;
   // otherwise this ruins the whole sentence
   // that starts with alphabets.
-  if (!(candidate->attributes & Segment::Candidate::REALTIME_CONVERSION)) {
+  if (!(candidate->attributes & Candidate::REALTIME_CONVERSION)) {
     const bool is_top_english_t13n =
         (Util::GetScriptType(nodes[0]->key) == Util::HIRAGANA &&
          Util::IsEnglishTransliteration(nodes[0]->value));
@@ -638,8 +638,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     const ConversionRequest &request, const absl::string_view original_key,
-    const Segment::Candidate *candidate,
-    const absl::Span<const Node *const> top_nodes,
+    const Candidate *candidate, const absl::Span<const Node *const> top_nodes,
     const absl::Span<const Node *const> nodes) {
   if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
     // In reverse conversion, only remove duplicates because the filtering

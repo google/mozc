@@ -36,9 +36,9 @@
 #include <vector>
 
 #include "absl/log/check.h"
-#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/candidate.h"
 #include "converter/immutable_converter.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
@@ -52,6 +52,8 @@
 #include "testing/test_peer.h"
 
 namespace mozc {
+
+using ::mozc::converter::Candidate;
 
 class ImmutableConverterTestPeer : testing::TestPeer<ImmutableConverter> {
  public:
@@ -266,12 +268,12 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   nbest_generator->SetCandidates(request, "", 10, &result_segment);
   ASSERT_LE(1, result_segment.candidates_size());
 
-  const Segment::Candidate &top_cand = result_segment.candidate(0);
+  const Candidate &top_cand = result_segment.candidate(0);
   EXPECT_EQ(top_cand.key, kInput);
   EXPECT_EQ(top_cand.value, "東京か名古屋に行きたい");
 
   std::vector<absl::string_view> keys, values, content_keys, content_values;
-  for (Segment::Candidate::InnerSegmentIterator iter(&top_cand); !iter.Done();
+  for (Candidate::InnerSegmentIterator iter(&top_cand); !iter.Done();
        iter.Next()) {
     keys.push_back(iter.GetKey());
     values.push_back(iter.GetValue());
@@ -346,7 +348,7 @@ TEST_F(NBestGeneratorTest, NoPartialCandidateBetweenAlphabets) {
   Segment result_segment;
   nbest_generator->SetCandidates(request, "", 10, &result_segment);
   EXPECT_THAT(result_segment, HasSingleCandidate(::testing::Field(
-                                  "value", &Segment::Candidate::value, "AAA")));
+                                  "value", &Candidate::value, "AAA")));
 }
 
 TEST_F(NBestGeneratorTest, NoAlphabetsConnection2Nodes) {
@@ -387,7 +389,7 @@ TEST_F(NBestGeneratorTest, NoAlphabetsConnection2Nodes) {
   // words. The only expected candidate is (eupho, eupho).
   EXPECT_THAT(result_segment,
               HasSingleCandidate(::testing::Field(
-                  "value", &Segment::Candidate::value, "eupho")));
+                  "value", &Candidate::value, "eupho")));
 }
 
 TEST_F(NBestGeneratorTest, NoAlphabetsConnection3Nodes) {

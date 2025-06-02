@@ -40,6 +40,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
 #include "converter/segments.h"
@@ -69,13 +70,14 @@ class ImmutableConverterTestPeer : testing::TestPeer<ImmutableConverter> {
 
 namespace {
 
+using converter::Candidate;
 using dictionary::DictionaryInterface;
 using ::testing::StrEq;
 
 void SetCandidate(absl::string_view key, absl::string_view value,
                   Segment *segment) {
   segment->set_key(key);
-  Segment::Candidate *candidate = segment->add_candidate();
+  Candidate *candidate = segment->add_candidate();
 #ifdef ABSL_USES_STD_STRING_VIEW
   candidate->key = key;
   candidate->value = value;
@@ -198,7 +200,7 @@ TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
       new MockDataAndImmutableConverter);
   Segment segment;
   SetCandidate("てすと", "test", &segment);
-  Segment::Candidate *c = segment.mutable_candidate(0);
+  Candidate *c = segment.mutable_candidate(0);
   c->PushBackInnerSegmentBoundary(3, 2, 3, 2);
   c->PushBackInnerSegmentBoundary(6, 2, 6, 2);
   EXPECT_TRUE(c->IsValid());
@@ -272,10 +274,10 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
   ASSERT_EQ(1, segments.segment(0).candidates_size());
 
   // Result will be, "私の|名前は|中ノです" with mock dictionary.
-  const Segment::Candidate &cand = segments.segment(0).candidate(0);
+  const Candidate &cand = segments.segment(0).candidate(0);
   EXPECT_TRUE(cand.IsValid());
   std::vector<absl::string_view> keys, values, content_keys, content_values;
-  for (Segment::Candidate::InnerSegmentIterator iter(&cand); !iter.Done();
+  for (Candidate::InnerSegmentIterator iter(&cand); !iter.Done();
        iter.Next()) {
     keys.push_back(iter.GetKey());
     values.push_back(iter.GetValue());
@@ -319,7 +321,7 @@ TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
   EXPECT_LE(1, segments.segments_size());
   EXPECT_LT(0, segments.segment(0).candidates_size());
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    const Segment::Candidate &cand = segments.segment(0).candidate(i);
+    const Candidate &cand = segments.segment(0).candidate(i);
     EXPECT_TRUE(cand.inner_segment_boundary.empty());
   }
 }
@@ -400,7 +402,7 @@ TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
     Segment *segment = segments.add_segment();
     segment->set_key(kA100);
     segment->set_segment_type(Segment::HISTORY);
-    Segment::Candidate *candidate = segment->add_candidate();
+    Candidate *candidate = segment->add_candidate();
     candidate->key = kA100;
     candidate->value = kA100;
   }
@@ -449,7 +451,7 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
   bool includes_only_first = false;
   absl::string_view segment_key = segments.segment(0).key();
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    const Segment::Candidate &cand = segments.segment(0).candidate(i);
+    const Candidate &cand = segments.segment(0).candidate(i);
     if (cand.key.size() < segment_key.size() &&
         segment_key.starts_with(cand.key)) {
       includes_only_first = true;
@@ -504,7 +506,7 @@ TEST(ImmutableConverterTest, FirstInnerSegment) {
       conversion_request, &segments));
 
   constexpr auto KeyIs = [](const auto &key) {
-    return Field(&Segment::Candidate::key, StrEq(key));
+    return Field(&Candidate::key, StrEq(key));
   };
 
   EXPECT_THAT(*segment, ContainsCandidate(KeyIs("くるまでこうどうした")));
@@ -527,7 +529,7 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
 
   auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
   constexpr auto ValueIs = [](const auto &value) {
-    return Field(&Segment::Candidate::value, StrEq(value));
+    return Field(&Candidate::value, StrEq(value));
   };
 
   {

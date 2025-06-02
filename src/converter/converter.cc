@@ -51,6 +51,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
+#include "converter/candidate.h"
 #include "converter/history_reconstructor.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/reverse_converter.h"
@@ -67,6 +68,8 @@
 
 namespace mozc {
 namespace {
+
+using ::mozc::converter::Candidate;
 
 constexpr size_t kErrorIndex = static_cast<size_t>(-1);
 
@@ -171,13 +174,13 @@ bool Converter::StartReverseConversion(Segments *segments,
 
 // static
 void Converter::MaybeSetConsumedKeySizeToCandidate(
-    size_t consumed_key_size, Segment::Candidate *candidate) {
-  if (candidate->attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+    size_t consumed_key_size, Candidate *candidate) {
+  if (candidate->attributes & Candidate::PARTIALLY_KEY_CONSUMED) {
     // If PARTIALLY_KEY_CONSUMED is set already,
     // the candidate has set appropriate attribute and size by predictor.
     return;
   }
-  candidate->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+  candidate->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
   candidate->consumed_key_size = consumed_key_size;
 }
 
@@ -331,7 +334,7 @@ bool Converter::DeleteCandidateFromHistory(const Segments &segments,
   DCHECK_LT(segment_index, segments.segments_size());
   const Segment &segment = segments.segment(segment_index);
   DCHECK(segment.is_valid_index(candidate_index));
-  const Segment::Candidate &candidate = segment.candidate(candidate_index);
+  const Candidate &candidate = segment.candidate(candidate_index);
   bool result = false;
   result |=
       rewriter_->ClearHistoryEntry(segments, segment_index, candidate_index);
@@ -365,7 +368,7 @@ bool Converter::CommitSegmentValueInternal(
   segment->move_candidate(candidate_index, 0);
 
   if (candidate_index != 0) {
-    segment->mutable_candidate(0)->attributes |= Segment::Candidate::RERANKED;
+    segment->mutable_candidate(0)->attributes |= Candidate::RERANKED;
   }
 
   return true;
@@ -488,7 +491,7 @@ void Converter::ApplyConversion(Segments *segments,
   TrimCandidates(request, segments);
 }
 
-void Converter::CompletePosIds(Segment::Candidate *candidate) const {
+void Converter::CompletePosIds(Candidate *candidate) const {
   DCHECK(candidate);
   if (candidate->value.empty() || candidate->key.empty()) {
     return;
@@ -531,7 +534,7 @@ void Converter::CompletePosIds(Segment::Candidate *candidate) const {
       return;
     }
     for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-      const Segment::Candidate &ref_candidate =
+      const Candidate &ref_candidate =
           segments.segment(0).candidate(i);
       if (ref_candidate.value == candidate->value) {
         candidate->lid = ref_candidate.lid;
@@ -587,7 +590,7 @@ void Converter::RewriteAndSuppressCandidates(const ConversionRequest &request,
   // converter.
   for (Segment &segment : segments->conversion_segments()) {
     for (size_t j = 0; j < segment.candidates_size();) {
-      const Segment::Candidate &cand = segment.candidate(j);
+      const Candidate &cand = segment.candidate(j);
       if (user_dictionary_.IsSuppressedEntry(cand.key, cand.value)) {
         segment.erase_candidate(j);
       } else {

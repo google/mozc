@@ -54,6 +54,7 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/data_manager.h"
@@ -99,6 +100,7 @@ class ConverterTestPeer : public testing::TestPeer<Converter> {
 
 namespace {
 
+using ::mozc::converter::Candidate;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::MockUserDictionary;
@@ -126,7 +128,7 @@ Segment &AddSegment(absl::string_view key, Segment::SegmentType type,
 }
 
 void PushBackCandidate(absl::string_view text, Segment &segment) {
-  Segment::Candidate *cand = segment.push_back_candidate();
+  Candidate *cand = segment.push_back_candidate();
   cand->key = std::string(text);
   cand->content_key = cand->key;
   cand->value = cand->key;
@@ -167,12 +169,12 @@ class InsertPlaceholderWordsRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &, Segments *segments) const override {
     for (Segment &segment : segments->conversion_segments()) {
       {
-        Segment::Candidate *cand = segment.add_candidate();
+        Candidate *cand = segment.add_candidate();
         cand->key = "tobefiltered";
         cand->value = "ToBeFiltered";
       }
       {
-        Segment::Candidate *cand = segment.add_candidate();
+        Candidate *cand = segment.add_candidate();
         cand->key = "nottobefiltered";
         cand->value = "NotToBeFiltered";
       }
@@ -526,7 +528,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     const Segment &segment = segments.conversion_segment(0);
     EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
     EXPECT_EQ(segment.candidate(0).value, "2");
-    EXPECT_NE(segment.candidate(0).attributes & Segment::Candidate::RERANKED,
+    EXPECT_NE(segment.candidate(0).attributes & Candidate::RERANKED,
               0);
   }
   {
@@ -546,7 +548,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     const Segment &segment = segments.conversion_segment(0);
     EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
     EXPECT_EQ(segment.candidate(0).value, "3");
-    EXPECT_EQ(segment.candidate(0).attributes & Segment::Candidate::RERANKED,
+    EXPECT_EQ(segment.candidate(0).attributes & Candidate::RERANKED,
               0);
   }
 }
@@ -562,7 +564,7 @@ TEST_F(ConverterTest, CommitSegments) {
     Segment *segment = segments.add_segment();
     segment->set_key("あした");
     segment->set_segment_type(Segment::HISTORY);
-    Segment::Candidate *candidate = segment->add_candidate();
+    Candidate *candidate = segment->add_candidate();
     candidate->key = "あした";
     candidate->value = "今日";
   }
@@ -570,7 +572,7 @@ TEST_F(ConverterTest, CommitSegments) {
   {
     Segment *segment = segments.add_segment();
     segment->set_key("かつこうに");
-    Segment::Candidate *candidate = segment->add_candidate();
+    Candidate *candidate = segment->add_candidate();
     candidate->value = "学校に";
     candidate->key = "がっこうに";
   }
@@ -578,7 +580,7 @@ TEST_F(ConverterTest, CommitSegments) {
   {
     Segment *segment = segments.add_segment();
     segment->set_key("いく");
-    Segment::Candidate *candidate = segment->add_candidate();
+    Candidate *candidate = segment->add_candidate();
     candidate->value = "行く";
     candidate->key = "いく";
   }
@@ -649,7 +651,7 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
       EXPECT_EQ(segment.segment_type(), Segment::SUBMITTED);
       EXPECT_EQ(segment.candidate(0).value, "2");
       EXPECT_EQ(segment.key(), "left2");
-      EXPECT_NE(segment.candidate(0).attributes & Segment::Candidate::RERANKED,
+      EXPECT_NE(segment.candidate(0).attributes & Candidate::RERANKED,
                 0);
     }
     {
@@ -768,7 +770,7 @@ TEST_F(ConverterTest, CompletePosIds) {
         converter->immutable_converter().ConvertForRequest(request, &segments));
     const int lid = segments.segment(0).candidate(0).lid;
     const int rid = segments.segment(0).candidate(0).rid;
-    Segment::Candidate candidate;
+    Candidate candidate;
     candidate.value = segments.segment(0).candidate(0).value;
     candidate.key = segments.segment(0).candidate(0).key;
     candidate.lid = 0;
@@ -781,7 +783,7 @@ TEST_F(ConverterTest, CompletePosIds) {
   }
 
   {
-    Segment::Candidate candidate;
+    Candidate candidate;
     candidate.key = "test";
     candidate.value = "test";
     candidate.lid = 10;
@@ -976,32 +978,32 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
   // 1st candidate without PARTIALLY_KEY_CONSUMED
   segment.push_back_candidate();
   // 2nd candidate with PARTIALLY_KEY_CONSUMED
-  Segment::Candidate *candidate2 = segment.push_back_candidate();
-  candidate2->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+  Candidate *candidate2 = segment.push_back_candidate();
+  candidate2->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
   candidate2->consumed_key_size = original_consumed_key_size;
   // 1st meta candidate without PARTIALLY_KEY_CONSUMED
   segment.add_meta_candidate();
   // 2nd meta candidate with PARTIALLY_KEY_CONSUMED
-  Segment::Candidate *meta_candidate2 = segment.add_meta_candidate();
-  meta_candidate2->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+  Candidate *meta_candidate2 = segment.add_meta_candidate();
+  meta_candidate2->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
   meta_candidate2->consumed_key_size = original_consumed_key_size;
 
   ConverterTestPeer::MaybeSetConsumedKeySizeToSegment(consumed_key_size,
                                                       &segment);
   EXPECT_NE((segment.candidate(0).attributes &
-             Segment::Candidate::PARTIALLY_KEY_CONSUMED),
+             Candidate::PARTIALLY_KEY_CONSUMED),
             0);
   EXPECT_EQ(segment.candidate(0).consumed_key_size, consumed_key_size);
   EXPECT_NE((segment.candidate(1).attributes &
-             Segment::Candidate::PARTIALLY_KEY_CONSUMED),
+             Candidate::PARTIALLY_KEY_CONSUMED),
             0);
   EXPECT_EQ(segment.candidate(1).consumed_key_size, original_consumed_key_size);
   EXPECT_NE((segment.meta_candidate(0).attributes &
-             Segment::Candidate::PARTIALLY_KEY_CONSUMED),
+             Candidate::PARTIALLY_KEY_CONSUMED),
             0);
   EXPECT_EQ(segment.meta_candidate(0).consumed_key_size, consumed_key_size);
   EXPECT_NE((segment.meta_candidate(1).attributes &
-             Segment::Candidate::PARTIALLY_KEY_CONSUMED),
+             Candidate::PARTIALLY_KEY_CONSUMED),
             0);
   EXPECT_EQ(segment.meta_candidate(1).consumed_key_size,
             original_consumed_key_size);
@@ -1383,8 +1385,8 @@ TEST_F(ConverterTest, ReconstructHistory) {
   EXPECT_EQ(segment.segment_type(), Segment::HISTORY);
   EXPECT_EQ(segment.key(), "10");
   EXPECT_EQ(segment.candidates_size(), 1);
-  const Segment::Candidate &candidate = segment.candidate(0);
-  EXPECT_EQ(candidate.attributes, Segment::Candidate::NO_LEARNING);
+  const Candidate &candidate = segment.candidate(0);
+  EXPECT_EQ(candidate.attributes, Candidate::NO_LEARNING);
   EXPECT_EQ(candidate.content_key, "10");
   EXPECT_EQ(candidate.key, "10");
   EXPECT_EQ(candidate.content_value, kTen);
@@ -1501,7 +1503,7 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0),
                 ContainsCandidate(
-                    Field(&Segment::Candidate::value, StrEq("googleが"))));
+                    Field(&Candidate::value, StrEq("googleが"))));
   }
 }
 
@@ -1785,7 +1787,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
     Segment *segment = segments.add_segment();
     segment->set_key("に");
     segment->set_segment_type(Segment::HISTORY);
-    Segment::Candidate *candidate = segment->add_candidate();
+    Candidate *candidate = segment->add_candidate();
     candidate->key = "に";
     candidate->value = "に";
     // Hack: Get POS for "助詞".

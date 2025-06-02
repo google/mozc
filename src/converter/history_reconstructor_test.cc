@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <string>
 
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -148,8 +149,8 @@ TEST(HistoryReconstructorTest, ReconstructHistory) {
   EXPECT_EQ(segment.segment_type(), Segment::HISTORY);
   EXPECT_EQ(segment.key(), "10");
   EXPECT_EQ(segment.candidates_size(), 1);
-  const Segment::Candidate &candidate = segment.candidate(0);
-  EXPECT_EQ(candidate.attributes, Segment::Candidate::NO_LEARNING);
+  const Candidate &candidate = segment.candidate(0);
+  EXPECT_EQ(candidate.attributes, Candidate::NO_LEARNING);
   EXPECT_EQ(candidate.content_key, "10");
   EXPECT_EQ(candidate.key, "10");
   EXPECT_EQ(candidate.content_value, kTen);

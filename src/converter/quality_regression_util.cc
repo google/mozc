@@ -53,6 +53,7 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -61,6 +62,8 @@
 namespace mozc {
 namespace quality_regression {
 namespace {
+
+using converter::Candidate;
 
 constexpr char kConversionExpect[] = "Conversion Expected";
 constexpr char kConversionNotExpect[] = "Conversion Not Expected";
@@ -85,7 +88,7 @@ int GetRank(absl::string_view value, const Segments *segments,
   const Segment &seg = segments->segment(current_segment);
   int rank = 0;
   absl::flat_hash_set<absl::string_view> dedup;
-  for (const Segment::Candidate *cand : seg.candidates()) {
+  for (const Candidate *cand : seg.candidates()) {
     const std::string &cand_value = cand->value;
     const bool new_value = dedup.insert(cand_value).second;
     if (!new_value) {

@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
@@ -113,14 +114,14 @@ bool HistoryReconstructor::ReconstructHistory(absl::string_view preceding_text,
   Segment *segment = segments->add_segment();
   segment->set_key(key);
   segment->set_segment_type(Segment::HISTORY);
-  Segment::Candidate *candidate = segment->push_back_candidate();
+  Candidate *candidate = segment->push_back_candidate();
   candidate->rid = id;
   candidate->lid = id;
   candidate->content_key = key;
   candidate->key = std::move(key);
   candidate->content_value = value;
   candidate->value = std::move(value);
-  candidate->attributes = Segment::Candidate::NO_LEARNING;
+  candidate->attributes = Candidate::NO_LEARNING;
   return true;
 }
 

@@ -32,11 +32,12 @@
 #include <string>
 
 #include "absl/types/span.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
-namespace mozc {
+namespace mozc::converter {
 namespace {
 
 using ::testing::AllOf;
@@ -46,9 +47,9 @@ using ::testing::Not;
 using ::testing::Pointee;
 using ::testing::StrEq;
 
-Segment::Candidate MakeCandidate(const std::string &key,
+Candidate MakeCandidate(const std::string &key,
                                  const std::string &value) {
-  Segment::Candidate cand;
+  Candidate cand;
   cand.key = key;
   cand.value = value;
   return cand;
@@ -59,7 +60,7 @@ Segment MakeSegment(const std::string &key,
   Segment seg;
   seg.set_key(key);
   for (const std::string &val : values) {
-    Segment::Candidate *cand = seg.add_candidate();
+    Candidate *cand = seg.add_candidate();
     cand->key = key;
     cand->value = val;
   }
@@ -67,13 +68,13 @@ Segment MakeSegment(const std::string &key,
 }
 
 TEST(SegmentsMatchersTest, EqualsCandidate) {
-  const Segment::Candidate x = MakeCandidate("key_x", "value_x");
-  const Segment::Candidate y = MakeCandidate("key_y", "value_y");
+  const Candidate x = MakeCandidate("key_x", "value_x");
+  const Candidate y = MakeCandidate("key_y", "value_y");
   EXPECT_THAT(x, EqualsCandidate(x));
   EXPECT_THAT(x, Not(EqualsCandidate(y)));
 
   // Partially different.
-  const Segment::Candidate z = MakeCandidate("key_x", "value_z");
+  const Candidate z = MakeCandidate("key_x", "value_z");
   EXPECT_THAT(x, Not(EqualsCandidate(z)));
 }
 
@@ -87,8 +88,8 @@ TEST(SegmentsMatchersTest, EqualsSegment) {
 TEST(SegmentsMatchersTest, CandidatesAreArray) {
   const Segment x = MakeSegment("key", {"value1", "value2"});
   EXPECT_THAT(x, CandidatesAreArray({
-                     Field(&Segment::Candidate::value, "value1"),
-                     Field(&Segment::Candidate::key, "key"),
+                     Field(&Candidate::value, "value1"),
+                     Field(&Candidate::key, "key"),
                  }));
 }
 
@@ -96,9 +97,9 @@ TEST(SegmentsMatchersTest, CandidatesAreArrayWithCustomMatcher) {
   const Segment x = MakeSegment("key", {"value1", "value2"});
   constexpr auto KeyAndValueAre =
       [](const auto &key,
-         const auto &value) -> Matcher<const Segment::Candidate *> {
-    return Pointee(AllOf(Field(&Segment::Candidate::key, key),
-                         Field(&Segment::Candidate::value, value)));
+         const auto &value) -> Matcher<const Candidate *> {
+    return Pointee(AllOf(Field(&Candidate::key, key),
+                         Field(&Candidate::value, value)));
   };
   EXPECT_THAT(x, CandidatesAreArray({
                      KeyAndValueAre("key", "value1"),
@@ -109,16 +110,14 @@ TEST(SegmentsMatchersTest, CandidatesAreArrayWithCustomMatcher) {
 TEST(SegmentsMatchersTest, HasSingleCandidate) {
   const Segment x = MakeSegment("key", {"value"});
   const Segment y = MakeSegment("key", {"value1", "value2"});
-  EXPECT_THAT(x,
-              HasSingleCandidate(Field(&Segment::Candidate::value, "value")));
-  EXPECT_THAT(
-      y, Not(HasSingleCandidate(Field(&Segment::Candidate::value, "value1"))));
+  EXPECT_THAT(x, HasSingleCandidate(Field(&Candidate::value, "value")));
+  EXPECT_THAT(y, Not(HasSingleCandidate(Field(&Candidate::value, "value1"))));
 }
 
 TEST(SegmentsMatchersTest, ContainsCandidate) {
   const Segment x = MakeSegment("key", {"value1", "value2", "value3"});
   constexpr auto ValueIs = [](const auto &value) {
-    return Field(&Segment::Candidate::value, StrEq(value));
+    return Field(&Candidate::value, StrEq(value));
   };
   EXPECT_THAT(x, ContainsCandidate(ValueIs("value1")));
   EXPECT_THAT(x, ContainsCandidate(ValueIs("value2")));
@@ -139,4 +138,4 @@ TEST(SegmentsMatchersTest, EqualsSegments) {
 }
 
 }  // namespace
-}  // namespace mozc
+}  // namespace mozc::converter

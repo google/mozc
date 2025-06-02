@@ -41,7 +41,6 @@
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -56,8 +55,8 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/lattice.h"
 #include "converter/pos_id_printer.h"
@@ -103,6 +102,8 @@ ABSL_FLAG(std::string, decoder_experiment_params, "",
 namespace mozc {
 namespace {
 
+using ::mozc::converter::Candidate;
+
 // Wrapper class for pos id printing
 class PosIdPrintUtil {
  public:
@@ -147,9 +148,9 @@ std::string SegmentTypeToString(Segment::SegmentType type) {
 
 std::string CandidateAttributesToString(uint32_t attrs) {
   std::vector<std::string> v;
-#define ADD_STR(fieldname)                                              \
-  do {                                                                  \
-    if (attrs & Segment::Candidate::fieldname) v.push_back(#fieldname); \
+#define ADD_STR(fieldname)                                     \
+  do {                                                         \
+    if (attrs & Candidate::fieldname) v.push_back(#fieldname); \
   } while (false)
 
   ADD_STR(BEST_CANDIDATE);
@@ -201,13 +202,12 @@ std::string NumberStyleToString(NumberUtil::NumberString::Style style) {
 #undef RETURN_STR
 }
 
-std::string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
+std::string InnerSegmentBoundaryToString(const Candidate &cand) {
   if (cand.inner_segment_boundary.empty()) {
     return "";
   }
   std::vector<std::string> pieces;
-  for (Segment::Candidate::InnerSegmentIterator iter(&cand); !iter.Done();
-       iter.Next()) {
+  for (Candidate::InnerSegmentIterator iter(&cand); !iter.Done(); iter.Next()) {
     pieces.push_back(absl::StrCat("<", iter.GetKey(), ", ", iter.GetValue(),
                                   ", ", iter.GetContentKey(), ", ",
                                   iter.GetContentValue(), ">"));
@@ -216,7 +216,7 @@ std::string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
 }
 
 void PrintCandidate(const Segment &parent, size_t candidates_size, int num,
-                    const Segment::Candidate &cand, std::ostream *os) {
+                    const Candidate &cand, std::ostream *os) {
   std::vector<std::string> lines;
   if (parent.key() != cand.key) {
     lines.push_back("key: " + cand.key);

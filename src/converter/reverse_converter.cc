@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -115,8 +116,7 @@ bool ReverseConverter::ReverseConvert(absl::string_view key,
   {
     std::string value;
     if (TryNormalizingKeyAsMathExpression(key, &value)) {
-      Segment::Candidate *cand =
-          segments->mutable_segment(0)->push_back_candidate();
+      Candidate *cand = segments->mutable_segment(0)->push_back_candidate();
       strings::Assign(cand->key, key);
       cand->value = std::move(value);
       return true;
