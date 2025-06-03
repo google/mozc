@@ -59,9 +59,7 @@ namespace {
 using ::mozc::dictionary::MockDictionary;
 using ::testing::_;
 using ::testing::AtMost;
-using ::testing::DoAll;
 using ::testing::Return;
-using ::testing::SetArgPointee;
 using ::testing::Unused;
 
 class CheckCandSizeDictionaryPredictor : public PredictorInterface {
