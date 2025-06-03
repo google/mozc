@@ -35,6 +35,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
@@ -77,7 +78,7 @@ class A11yDescriptionRewriter : public RewriterInterface {
   std::string GetKanaCharacterLabel(char32_t codepoint,
                                     CharacterType current_type,
                                     CharacterType previous_type) const;
-  void AddA11yDescription(Segment::Candidate *candidate) const;
+  void AddA11yDescription(converter::Candidate *candidate) const;
 
   const absl::flat_hash_set<char32_t> small_letter_set_;
   const absl::flat_hash_map<char32_t, char32_t>

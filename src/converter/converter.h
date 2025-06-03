@@ -35,10 +35,14 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/history_reconstructor.h"
 #include "converter/immutable_converter_interface.h"
@@ -173,7 +177,7 @@ class Converter final : public ConverterInterface {
   // input hiragana sequence only with composition mode. Converter
   // cannot know which POS ids should be used for these directly-
   // input strings. This function estimates IDs from value heuristically.
-  void CompletePosIds(Segment::Candidate *candidate) const;
+  void CompletePosIds(converter::Candidate *candidate) const;
 
   bool CommitSegmentValueInternal(Segments *segments, size_t segment_index,
                                   int candidate_index,
@@ -181,8 +185,8 @@ class Converter final : public ConverterInterface {
 
   // Sets all the candidates' attribute PARTIALLY_KEY_CONSUMED
   // and consumed_key_size if the attribute is not set.
-  static void MaybeSetConsumedKeySizeToCandidate(size_t consumed_key_size,
-                                                 Segment::Candidate *candidate);
+  static void MaybeSetConsumedKeySizeToCandidate(
+      size_t consumed_key_size, converter::Candidate *candidate);
 
   // Sets all the candidates' attribute PARTIALLY_KEY_CONSUMED
   // and consumed_key_size if the attribute is not set.

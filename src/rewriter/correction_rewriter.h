@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "request/conversion_request.h"
@@ -75,7 +76,7 @@ class CorrectionRewriter : public RewriterInterface {
 
   // Sets |candidate| fields from |iterm|.
   static void SetCandidate(const ReadingCorrectionItem &item,
-                           Segment::Candidate *candidate);
+                           converter::Candidate *candidate);
 
   // Looks up corrections with key and value. Return true if at least
   // one correction is found in the internal dictionary.

@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
@@ -55,8 +56,8 @@ class EnglishVariantsRewriter : public RewriterInterface {
  private:
   friend class EnglishVariantsRewriterTestPeer;
 
-  bool IsT13NCandidate(Segment::Candidate *candidate) const;
-  bool IsEnglishCandidate(Segment::Candidate *candidate) const;
+  bool IsT13NCandidate(converter::Candidate *candidate) const;
+  bool IsEnglishCandidate(converter::Candidate *candidate) const;
   bool ExpandEnglishVariants(absl::string_view input,
                              std::vector<std::string> *variants) const;
   bool ExpandSpacePrefixedVariants(absl::string_view input,

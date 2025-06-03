@@ -38,7 +38,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "converter/segments.h"
+#include "converter/candidate.h"
 
 namespace mozc {
 
@@ -75,7 +75,7 @@ bool SplitStringIntoNumberAndCounterSuffix(
 //      suffix, where counter suffix needs to be provided as a sorted array.
 bool IsNumber(const SerializedStringArray &suffix_array,
               const dictionary::PosMatcher &pos_matcher,
-              const Segment::Candidate &cand);
+              const converter::Candidate &cand);
 
 }  // namespace number_compound_util
 }  // namespace mozc

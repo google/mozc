@@ -37,6 +37,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -69,7 +70,7 @@ class SuppressionFilter {
   static absl::StatusOr<SuppressionFilter> Create(
       absl::Span<const uint32_t> data);
 
-  bool Exists(const Segment::Candidate &cand) const;
+  bool Exists(const converter::Candidate &cand) const;
 
  private:
   storage::ExistenceFilter filter_;
@@ -96,8 +97,8 @@ class CollocationRewriter : public RewriterInterface {
                Segments *segments) const override;
 
  private:
-  bool IsName(const Segment::Candidate &cand) const;
-  bool RewriteFromPrevSegment(const Segment::Candidate &prev_cand,
+  bool IsName(const converter::Candidate &cand) const;
+  bool RewriteFromPrevSegment(const converter::Candidate &prev_cand,
                               Segment *seg) const;
   bool RewriteUsingNextSegment(Segment *next_seg, Segment *seg) const;
   bool RewriteCollocation(Segments *segments) const;

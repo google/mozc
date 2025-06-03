@@ -39,8 +39,8 @@
 #include "absl/hash/hash.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/candidate.h"
 #include "converter/node.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
@@ -52,7 +52,7 @@ namespace converter {
 namespace candidate_filter_internal {
 // ID of the candidate for filtering.
 struct CandidateId {
-  explicit CandidateId(const Segment::Candidate &candidate)
+  explicit CandidateId(const converter::Candidate &candidate)
       : value(candidate.value), lid(candidate.lid), rid(candidate.rid) {}
 
   template <typename H>
@@ -65,7 +65,7 @@ struct CandidateId {
     return lhs.lid == rhs.lid && lhs.rid == rhs.rid && lhs.value == rhs.value;
   }
   friend bool operator==(const CandidateId &lhs,
-                         const Segment::Candidate &rhs) {
+                         const converter::Candidate &rhs) {
     return lhs.lid == rhs.lid && lhs.rid == rhs.rid && lhs.value == rhs.value;
   }
 
@@ -78,7 +78,7 @@ struct CandidateHasher {
   using is_transparent = void;
 
   size_t operator()(const CandidateId &c) const { return absl::HashOf(c); }
-  size_t operator()(const Segment::Candidate &c) const {
+  size_t operator()(const converter::Candidate &c) const {
     return absl::HashOf(c.value, c.lid, c.rid);
   }
 };
@@ -105,7 +105,7 @@ class CandidateFilter {
   // nodes: Node vector for the target candidate
   ResultType FilterCandidate(const ConversionRequest &request,
                              absl::string_view original_key,
-                             const Segment::Candidate *candidate,
+                             const converter::Candidate *candidate,
                              absl::Span<const Node *const> top_nodes,
                              absl::Span<const Node *const> nodes);
 
@@ -115,11 +115,11 @@ class CandidateFilter {
  private:
   ResultType CheckRequestType(const ConversionRequest &request,
                               absl::string_view original_key,
-                              const Segment::Candidate &candidate,
+                              const converter::Candidate &candidate,
                               absl::Span<const Node *const> nodes) const;
   ResultType FilterCandidateInternal(const ConversionRequest &request,
                                      absl::string_view original_key,
-                                     const Segment::Candidate *candidate,
+                                     const converter::Candidate *candidate,
                                      absl::Span<const Node *const> top_nodes,
                                      absl::Span<const Node *const> nodes);
 
@@ -131,7 +131,7 @@ class CandidateFilter {
                       candidate_filter_internal::CandidateHasher,
                       std::equal_to<>>
       seen_;
-  const Segment::Candidate *top_candidate_;
+  const converter::Candidate *top_candidate_;
 };
 
 }  // namespace converter

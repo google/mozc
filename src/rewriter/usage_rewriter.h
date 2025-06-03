@@ -41,6 +41,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -106,8 +107,9 @@ class UsageRewriter : public RewriterInterface {
   static std::string GetKanjiPrefixAndOneHiragana(absl::string_view word);
 
   UsageDictItemIterator LookupUnmatchedUsageHeuristically(
-      const Segment::Candidate &candidate) const;
-  UsageDictItemIterator LookupUsage(const Segment::Candidate &candidate) const;
+      const converter::Candidate &candidate) const;
+  UsageDictItemIterator LookupUsage(
+      const converter::Candidate &candidate) const;
 
   absl::flat_hash_map<StrPair, UsageDictItemIterator> key_value_usageitem_map_;
   const dictionary::PosMatcher pos_matcher_;

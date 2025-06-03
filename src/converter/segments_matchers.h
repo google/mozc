@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "absl/strings/str_format.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -48,7 +49,7 @@ namespace mozc {
 // can display which field is different.
 //
 // Usage:
-//   Segment::Candidate actual_candidate = ...;
+//   converter::Candidate actual_candidate = ...;
 //   EXPECT_THAT(actual_candidate, EqualsCandidate(expected_candidate));
 MATCHER_P(EqualsCandidate, candidate, "") {
 #define COMPARE_FIELD(field)                                         \
@@ -170,15 +171,15 @@ MATCHER_P(CandidatesAreArrayMatcherImpl, matcher_array,
 //
 // Segment segment = ...;
 // EXPECT_THAT(segment, CandidatesAreArray({
-//     Field(&Segment::Candidate::value, "value"),
-//     Field(&Segment::Candidate::key, "key"),
+//     Field(&converter::Candidate::value, "value"),
+//     Field(&converter::Candidate::key, "key"),
 // });
 //
 // The above code checks if the first candidate's value is "value" and the
 // second candidate's key is "key".
 //
 // Remark: Each candidate matcher should test against the pointer type
-// (Segment::Candidate *). Note: Field() from gMock is applicable to pointer
+// (converter::Candidate *). Note: Field() from gMock is applicable to pointer
 // types too. See SegmentsMatchersTest.CandidatesAreArrayWithCustomMatcher for
 // example.
 template <typename T>
@@ -196,7 +197,7 @@ template <typename Container>
 // given matcher.
 template <typename T>
 ::testing::Matcher<Segment> HasSingleCandidate(const T &matcher) {
-  using CandidateMatcherType = ::testing::Matcher<const Segment::Candidate *>;
+  using CandidateMatcherType = ::testing::Matcher<const converter::Candidate *>;
   return CandidatesAreArray(std::vector<CandidateMatcherType>{matcher});
 }
 

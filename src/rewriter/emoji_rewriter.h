@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/emoji_data.h"
@@ -53,7 +54,7 @@ namespace mozc {
 //
 //   mozc::Segments segments;
 //   mozc::Segment *segment = segments.add_segment();
-//   mozc::Segment::Candidate *candidate = segment->add_candidate();
+//   mozc::converter::Candidate *candidate = segment->add_candidate();
 //   candidate->set_key("えもじ");
 //
 //   // Use one of data manager from data_manager/.
@@ -90,7 +91,7 @@ class EmojiRewriter : public RewriterInterface {
   //     predictor/user_history_predictor.cc.  If you make similar functions
   //     before the merging in case, put a same note to avoid twisted
   //     dependency.
-  static bool IsEmojiCandidate(const Segment::Candidate &candidate);
+  static bool IsEmojiCandidate(const converter::Candidate &candidate);
 
  private:
   EmojiDataIterator begin() const {

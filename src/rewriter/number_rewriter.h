@@ -35,6 +35,7 @@
 #include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "base/number_util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -62,14 +63,14 @@ class NumberRewriter : public RewriterInterface {
  private:
   bool RewriteOneSegment(const ConversionRequest &request, Segment *segment,
                          Segments *segments) const;
-  void RememberNumberStyle(const Segment::Candidate &candidate);
-  std::vector<Segment::Candidate> GenerateCandidatesToInsert(
-      const Segment::Candidate &arabic_candidate,
+  void RememberNumberStyle(const converter::Candidate &candidate);
+  std::vector<converter::Candidate> GenerateCandidatesToInsert(
+      const converter::Candidate &arabic_candidate,
       absl::Span<const NumberUtil::NumberString> numbers,
       bool should_rerank) const;
   bool ShouldRerankCandidates(const ConversionRequest &request,
                               const Segments &segments) const;
-  void RerankCandidates(std::vector<Segment::Candidate> &candidates) const;
+  void RerankCandidates(std::vector<converter::Candidate> &candidates) const;
 
   SerializedStringArray suffix_array_;
   const dictionary::PosMatcher pos_matcher_;

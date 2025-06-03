@@ -32,12 +32,13 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/absl_nullability.h"
 #include "base/container/freelist.h"
+#include "converter/candidate.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
 #include "converter/lattice.h"
@@ -171,25 +172,25 @@ class NBestGenerator {
   // Iterator:
   // Can obtain N-best results by calling Next() in sequence.
   bool Next(const ConversionRequest &request, absl::string_view original_key,
-            Segment::Candidate &candidate);
+            converter::Candidate &candidate);
 
   int InsertTopResult(const ConversionRequest &request,
                       absl::string_view original_key,
-                      Segment::Candidate &candidate);
+                      converter::Candidate &candidate);
 
-  bool MakeCandidateFromBestPath(Segment::Candidate &candidate);
-  void MakePrefixCandidateFromBestPath(Segment::Candidate &candidate);
+  bool MakeCandidateFromBestPath(converter::Candidate &candidate);
+  void MakePrefixCandidateFromBestPath(converter::Candidate &candidate);
 
-  void MakeCandidate(Segment::Candidate &candidate, int32_t cost,
+  void MakeCandidate(converter::Candidate &candidate, int32_t cost,
                      int32_t structure_cost, int32_t wcost,
                      absl::Span<const Node *absl_nonnull const> nodes) const;
 
   converter::CandidateFilter::ResultType MakeCandidateFromElement(
       const ConversionRequest &request, absl::string_view original_key,
-      const QueueElement &element, Segment::Candidate &candidate);
+      const QueueElement &element, converter::Candidate &candidate);
 
   void FillInnerSegmentInfo(absl::Span<const Node *absl_nonnull const> odes,
-                            Segment::Candidate &candidate) const;
+                            converter::Candidate &candidate) const;
 
   // Helper function for Next(). Checks node boundary conditions.
   BoundaryCheckResult BoundaryCheck(const Node &lnode, const Node &rnode,
@@ -227,7 +228,7 @@ class NBestGenerator {
   Options options_;
 
 #ifdef MOZC_CANDIDATE_DEBUG
-  std::vector<Segment::Candidate> bad_candidates_;
+  std::vector<converter::Candidate> bad_candidates_;
 #endif  // MOZC_CANDIDATE_DEBUG
 };
 

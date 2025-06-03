@@ -34,10 +34,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -85,10 +87,10 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   };
 
   struct ScoreCandidate : public Score {
-    ScoreCandidate(const Score s, const Segment::Candidate *candidate)
+    ScoreCandidate(const Score s, const converter::Candidate *candidate)
         : Score(s), candidate(candidate) {}
 
-    const Segment::Candidate *candidate;
+    const converter::Candidate *candidate;
   };
 
   static Segments MakeLearningSegmentsFromInnerSegments(
@@ -99,8 +101,8 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   Score GetScore(const ConversionRequest &request, const Segments &segments,
                  size_t segment_index, int candidate_index) const;
   bool Replaceable(const ConversionRequest &request,
-                   const Segment::Candidate &best_candidate,
-                   const Segment::Candidate &target_candidate) const;
+                   const converter::Candidate &best_candidate,
+                   const converter::Candidate &target_candidate) const;
   // |revert_entries| will be stored to Segments and used to revert last
   // Finish() operation in Revert().
   void RememberFirstCandidate(const ConversionRequest &request,
@@ -112,7 +114,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool ShouldRewrite(const Segment &segment, size_t *max_candidates_size) const;
   void InsertTriggerKey(const Segment &segment);
   bool IsPunctuation(const Segment &seg,
-                     const Segment::Candidate &candidate) const;
+                     const converter::Candidate &candidate) const;
   bool SortCandidates(absl::Span<const ScoreCandidate> sorted_scores,
                       Segment *segment) const;
   Score Fetch(absl::string_view key, uint32_t weight) const;

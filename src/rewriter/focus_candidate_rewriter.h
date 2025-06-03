@@ -35,6 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
@@ -82,7 +83,7 @@ class FocusCandidateRewriter : public RewriterInterface {
   // defined to be the following pattern:
   //   * [数][助数詞][並立助詞]?  (e.g., 一階, 二回, ３階や, etc.)
   // Returns false if the value of candidate doesn't match the pattern.
-  bool ParseNumberCandidate(const Segment::Candidate &cand,
+  bool ParseNumberCandidate(const converter::Candidate &cand,
                             absl::string_view *number,
                             absl::string_view *suffix,
                             uint32_t *script_type) const;

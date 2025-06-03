@@ -36,6 +36,7 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -61,7 +62,8 @@ class SingleKanjiRewriter : public RewriterInterface {
                        absl::Span<const std::string> kanji_list,
                        Segment *segment) const;
   void FillCandidate(absl::string_view key, absl::string_view value, int cost,
-                     uint16_t single_kanji_id, Segment::Candidate *cand) const;
+                     uint16_t single_kanji_id,
+                     converter::Candidate *cand) const;
 
   const dictionary::PosMatcher pos_matcher_;
   std::unique_ptr<dictionary::SingleKanjiDictionary> single_kanji_dictionary_;

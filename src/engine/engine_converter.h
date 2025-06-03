@@ -35,11 +35,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "engine/candidate_list.h"
@@ -325,7 +327,7 @@ class EngineConverter : public EngineConverterInterface {
   std::string GetSelectedCandidateValue(size_t segment_index) const;
 
   // Returns the candidate to be used by the converter.
-  const Segment::Candidate &GetSelectedCandidate(size_t segment_index) const;
+  const converter::Candidate &GetSelectedCandidate(size_t segment_index) const;
 
   // Returns the length of committed candidate's key in characters.
   // True is returned if the selected candidate is successfully committed.
@@ -398,7 +400,7 @@ class EngineConverter : public EngineConverterInterface {
   std::vector<int> selected_candidate_indices_;
 
   // Indicates whether config_ will be updated by the command candidate.
-  Segment::Candidate::Command updated_command_;
+  converter::Candidate::Command updated_command_;
 
   // Revision number of client context with which the converter determines when
   // the history segments should be invalidated. See the implementation of
