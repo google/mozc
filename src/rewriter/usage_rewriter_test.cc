@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -64,7 +65,7 @@ using ::testing::SetArgPointee;
 void AddCandidate(const absl::string_view key, const absl::string_view value,
                   const absl::string_view content_key,
                   const absl::string_view content_value, Segment *segment) {
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->key = std::string(key);
   candidate->value = std::string(value);
   candidate->content_key = std::string(content_key);
@@ -387,12 +388,14 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
   EXPECT_TRUE(rewriter->Rewrite(convreq, &segments));
 
   // Result of ("うま", "Horse"). No comment is expected.
-  const Segment::Candidate &cand0 = segments.conversion_segment(0).candidate(0);
+  const converter::Candidate &cand0 =
+      segments.conversion_segment(0).candidate(0);
   EXPECT_TRUE(cand0.usage_title.empty());
   EXPECT_TRUE(cand0.usage_description.empty());
 
   // Result of ("うま", "アルパカ"). Comment from user dictionary is expected.
-  const Segment::Candidate &cand1 = segments.conversion_segment(0).candidate(1);
+  const converter::Candidate &cand1 =
+      segments.conversion_segment(0).candidate(1);
   EXPECT_EQ(cand1.usage_title, "アルパカ");
   EXPECT_EQ(cand1.usage_description, "アルパカコメント");
 }

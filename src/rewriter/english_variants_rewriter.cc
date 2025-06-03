@@ -40,6 +40,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -127,13 +128,13 @@ bool EnglishVariantsRewriter::ExpandEnglishVariants(
 }
 
 bool EnglishVariantsRewriter::IsT13NCandidate(
-    Segment::Candidate *candidate) const {
+    converter::Candidate *candidate) const {
   return (Util::IsEnglishTransliteration(candidate->content_value) &&
           Util::GetScriptType(candidate->content_key) == Util::HIRAGANA);
 }
 
 bool EnglishVariantsRewriter::IsEnglishCandidate(
-    Segment::Candidate *candidate) const {
+    converter::Candidate *candidate) const {
   return (Util::IsEnglishTransliteration(candidate->content_value) &&
           Util::GetScriptType(candidate->content_key) == Util::ALPHABET);
 }
@@ -151,25 +152,25 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
   }
 
   for (int i = seg->candidates_size() - 1; i >= 0; --i) {
-    Segment::Candidate *original_candidate = seg->mutable_candidate(i);
+    converter::Candidate *original_candidate = seg->mutable_candidate(i);
     DCHECK(original_candidate);
 
     // http://b/issue?id=5137299
     // If the entry is coming from user dictionary,
     // expand English variants.
     if (original_candidate->attributes &
-            Segment::Candidate::NO_VARIANTS_EXPANSION &&
+            converter::Candidate::NO_VARIANTS_EXPANSION &&
         !(original_candidate->attributes &
-          Segment::Candidate::USER_DICTIONARY)) {
+          converter::Candidate::USER_DICTIONARY)) {
       continue;
     }
 
     if (IsT13NCandidate(original_candidate)) {
       if (!(original_candidate->attributes &
-            Segment::Candidate::NO_VARIANTS_EXPANSION)) {
+            converter::Candidate::NO_VARIANTS_EXPANSION)) {
         modified = true;
         original_candidate->attributes |=
-            Segment::Candidate::NO_VARIANTS_EXPANSION;
+            converter::Candidate::NO_VARIANTS_EXPANSION;
       }
 
       if (expanded_t13n_candidates.find(original_candidate->value) !=
@@ -209,7 +210,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
           }
           modified = true;
 
-          Segment::Candidate *new_candidate = seg->insert_candidate(i + 1);
+          converter::Candidate *new_candidate = seg->insert_candidate(i + 1);
           DCHECK(new_candidate);
           new_candidate->value = std::move(new_value);
           new_candidate->key = original_candidate->key;
@@ -221,11 +222,11 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
           new_candidate->lid = original_candidate->lid;
           new_candidate->rid = original_candidate->rid;
           new_candidate->attributes |=
-              Segment::Candidate::NO_VARIANTS_EXPANSION;
+              converter::Candidate::NO_VARIANTS_EXPANSION;
           if (original_candidate->attributes &
-              Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+              converter::Candidate::PARTIALLY_KEY_CONSUMED) {
             new_candidate->attributes |=
-                Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+                converter::Candidate::PARTIALLY_KEY_CONSUMED;
             new_candidate->consumed_key_size =
                 original_candidate->consumed_key_size;
           }
@@ -235,7 +236,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
       // Fix variants for English candidate
       modified = true;
       original_candidate->attributes |=
-          Segment::Candidate::NO_VARIANTS_EXPANSION;
+          converter::Candidate::NO_VARIANTS_EXPANSION;
     }
   }
 

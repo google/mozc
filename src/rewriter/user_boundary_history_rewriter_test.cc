@@ -37,6 +37,7 @@
 #include "base/file_util.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -51,8 +52,8 @@ namespace {
 using ::testing::ElementsAre;
 
 // Creates a simple candidate whose key and value are set to `text`.
-Segment::Candidate MakeCandidate(absl::string_view text) {
-  Segment::Candidate cand;
+converter::Candidate MakeCandidate(absl::string_view text) {
+  converter::Candidate cand;
   cand.key = std::string(text);
   cand.content_key = cand.key;
   cand.value = cand.key;

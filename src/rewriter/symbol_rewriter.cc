@@ -47,7 +47,7 @@
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "base/vlog.h"
-#include "converter/converter_interface.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
@@ -121,7 +121,7 @@ bool SymbolRewriter::IsSymbol(const absl::string_view key) {
 // static function
 void SymbolRewriter::ExpandSpace(Segment *segment) {
   auto insert_candidate = [segment](int base, absl::string_view value) {
-    auto c = std::make_unique<Segment::Candidate>(segment->candidate(base));
+    auto c = std::make_unique<converter::Candidate>(segment->candidate(base));
     strings::Assign(c->value, value);
     strings::Assign(c->content_value, value);
     // Boundary is invalidated and unnecessary for space.
@@ -205,11 +205,11 @@ void SymbolRewriter::InsertCandidates(
     }
   }
 
-  const Segment::Candidate &base_candidate = segment->candidate(0);
+  const converter::Candidate &base_candidate = segment->candidate(0);
   auto create_candidate = [&base_candidate, &candidate_key, context_sensitive](
                               const SerializedDictionary::const_iterator &iter)
-      -> std::unique_ptr<Segment::Candidate> {
-    auto candidate = std::make_unique<Segment::Candidate>();
+      -> std::unique_ptr<converter::Candidate> {
+    auto candidate = std::make_unique<converter::Candidate>();
     candidate->lid = iter.lid();
     candidate->rid = iter.rid();
     candidate->cost = base_candidate.cost;
@@ -220,16 +220,16 @@ void SymbolRewriter::InsertCandidates(
     candidate->content_key = candidate_key;
 
     if (context_sensitive) {
-      candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
+      candidate->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
     }
 
     // The first two consist of two characters but the one of characters doesn't
     // have alternative character.
     if (candidate->value == "“”" || candidate->value == "‘’" ||
         candidate->value == "w" || candidate->value == "www") {
-      candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+      candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
     }
-    candidate->category = Segment::Candidate::SYMBOL;
+    candidate->category = converter::Candidate::SYMBOL;
 
     candidate->description = GetDescription(
         candidate->value, iter.description(), iter.additional_description());
@@ -237,7 +237,7 @@ void SymbolRewriter::InsertCandidates(
   };
 
   const size_t range_size = range.second - range.first;
-  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(range_size);
   SerializedDictionary::const_iterator iter = range.first;
   for (; iter != range.second; ++iter) {
@@ -275,7 +275,7 @@ void SymbolRewriter::InsertCandidates(
 void SymbolRewriter::AddDescForCurrentCandidates(
     const SerializedDictionary::IterRange &range, Segment *segment) {
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    Segment::Candidate *candidate = segment->mutable_candidate(i);
+    converter::Candidate *candidate = segment->mutable_candidate(i);
     std::string full_width_value =
         japanese_util::HalfWidthToFullWidth(candidate->value);
     std::string half_width_value =

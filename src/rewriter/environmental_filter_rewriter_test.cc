@@ -41,6 +41,7 @@
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/emoji_data.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -60,7 +61,7 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
   segments->Clear();
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
-  Segment::Candidate *candidate = seg->add_candidate();
+  converter::Candidate *candidate = seg->add_candidate();
   candidate->value = std::string(value);
   candidate->content_value = std::string(value);
 }
@@ -70,7 +71,7 @@ void AddSegment(const absl::string_view key,
   Segment *seg = segments->add_segment();
   seg->set_key(key);
   for (const std::string &value : values) {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = std::string(key);
     candidate->value = value;
     candidate->content_value = value;
@@ -373,7 +374,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
                &segments);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
     segments.mutable_conversion_segment(0)->mutable_candidate(1)->attributes =
-        Segment::Candidate::USER_DICTIONARY;
+        converter::Candidate::USER_DICTIONARY;
 
     EXPECT_TRUE(rewriter_->Rewrite(conversion_request, &segments));
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 1);
@@ -518,7 +519,7 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   // U+301C
   AddSegment("なみ", "〜", &segments);
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
-      Segment::Candidate::USER_DICTIONARY;
+      converter::Candidate::USER_DICTIONARY;
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
   // U+301C
   EXPECT_EQ(segments.segment(0).candidate(0).value, "〜");
@@ -528,7 +529,7 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   // U+301C
   AddSegment("なみ", "〜", &segments);
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
-      Segment::Candidate::NO_MODIFICATION;
+      converter::Candidate::NO_MODIFICATION;
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
   // U+301C
   EXPECT_EQ(segments.segment(0).candidate(0).value, "〜");

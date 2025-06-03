@@ -34,6 +34,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -58,7 +59,7 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
   segments->Clear();
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
-  Segment::Candidate *candidate = seg->add_candidate();
+  converter::Candidate *candidate = seg->add_candidate();
   candidate->value = std::string(key);
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);
@@ -73,7 +74,7 @@ bool HasZipcodeAndAddress(const Segments &segments,
                           const absl::string_view expected) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segments.segment(0).candidate(i);
+    const converter::Candidate &candidate = segments.segment(0).candidate(i);
     if (candidate.description == "郵便番号と住所") {
       if (candidate.content_value == expected) {
         return true;

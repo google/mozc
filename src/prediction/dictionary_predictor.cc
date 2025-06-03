@@ -42,7 +42,6 @@
 #include <vector>
 
 #include "absl/algorithm/container.h"
-#include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
@@ -50,11 +49,11 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/strings/assign.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
+#include "converter/candidate.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -284,22 +283,23 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
     single_kanji_dictionary_->GenerateDescription(result.value,
                                                   &result.description);
     if ((result.candidate_attributes &
-         Segment::Candidate::PARTIALLY_KEY_CONSUMED) &&
+         converter::Candidate::PARTIALLY_KEY_CONSUMED) &&
         cursor_at_tail) {
       result.candidate_attributes |=
-          Segment::Candidate::AUTO_PARTIAL_SUGGESTION;
+          converter::Candidate::AUTO_PARTIAL_SUGGESTION;
     }
 
     if ((!(result.candidate_attributes &
-           Segment::Candidate::SPELLING_CORRECTION) &&
+           converter::Candidate::SPELLING_CORRECTION) &&
          IsLatinInputMode(request)) ||
         (result.types & PredictionType::SUFFIX)) {
-      result.candidate_attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-      result.candidate_attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
+      result.candidate_attributes |=
+          converter::Candidate::NO_VARIANTS_EXPANSION;
+      result.candidate_attributes |= converter::Candidate::NO_EXTRA_DESCRIPTION;
     }
 
     if (result.types & PredictionType::TYPING_CORRECTION) {
-      result.candidate_attributes |= Segment::Candidate::TYPING_CORRECTION;
+      result.candidate_attributes |= converter::Candidate::TYPING_CORRECTION;
     }
 
     final_results.emplace_back(std::move(result));
@@ -365,7 +365,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
     }
     int lm_cost = GetLMCost(result, rid);
     if (result.candidate_attributes &
-        Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+        converter::Candidate::PARTIALLY_KEY_CONSUMED) {
       lm_cost += CalculatePrefixPenalty(request, input_key, result,
                                         immutable_converter_, cache);
     }
@@ -430,7 +430,7 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
 
   if (!auto_partial_suggestion_ &&
       (result.candidate_attributes &
-       Segment::Candidate::PARTIALLY_KEY_CONSUMED)) {
+       converter::Candidate::PARTIALLY_KEY_CONSUMED)) {
     *log_message = "Auto partial suggestion disabled";
     return true;
   }
@@ -465,7 +465,8 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
 
   // User input: "おーすとり" (len = 5)
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
-  if ((result.candidate_attributes & Segment::Candidate::SPELLING_CORRECTION) &&
+  if ((result.candidate_attributes &
+       converter::Candidate::SPELLING_CORRECTION) &&
       result.key != input_key_ &&
       input_key_len_ <= GetMissSpelledPosition(result.key, result.value) + 1) {
     *log_message = "Spelling correction";
@@ -525,7 +526,7 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
   if ((result.types & PredictionType::PREFIX) &&
-      (result.candidate_attributes & Segment::Candidate::TYPING_CORRECTION) &&
+      (result.candidate_attributes & converter::Candidate::TYPING_CORRECTION) &&
       (prefix_tc_count_++ >= 3 || added_num >= 10)) {
     *log_message = "Added prefix typing correction >= 3 || added >= 10";
     return true;
@@ -768,7 +769,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       MOZC_WORD_LOG(result, "SingleKanji: ", cost);
     }
 
-    if (result.candidate_attributes & Segment::Candidate::USER_DICTIONARY &&
+    if (result.candidate_attributes & converter::Candidate::USER_DICTIONARY &&
         result.lid != general_symbol_id_) {
       // Decrease cost for words from user dictionary in order to promote them,
       // provided that it is not a general symbol (Note: emoticons are mapped to
@@ -801,7 +802,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     }
     // Penalty for prefix results.
     if (result.candidate_attributes &
-        Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+        converter::Candidate::PARTIALLY_KEY_CONSUMED) {
       const int prefix_penalty =
           CalculatePrefixPenalty(request, input_key, result,
                                  immutable_converter_, &prefix_penalty_cache);
@@ -860,7 +861,7 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
   for (size_t i = 0; i < results.size(); ++i) {
     const Result &result = results[i];
     if (!(result.candidate_attributes &
-          Segment::Candidate::SPELLING_CORRECTION)) {
+          converter::Candidate::SPELLING_CORRECTION)) {
       continue;
     }
 
@@ -877,7 +878,7 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
       }
       const Result &target_result = results[j];
       if (target_result.candidate_attributes &
-          Segment::Candidate::SPELLING_CORRECTION) {
+          converter::Candidate::SPELLING_CORRECTION) {
         continue;
       }
       if (target_result.key == result.key) {
@@ -973,7 +974,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
 
   if (immutable_converter.ConvertForRequest(req, &tmp_segments) &&
       tmp_segments.segment(0).candidates_size() > 0) {
-    const Segment::Candidate &top_candidate =
+    const converter::Candidate &top_candidate =
         tmp_segments.segment(0).candidate(0);
     penalty = (connector_.GetTransitionCost(result_rid, top_candidate.lid) +
                top_candidate.cost);

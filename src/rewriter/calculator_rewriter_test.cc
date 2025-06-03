@@ -37,6 +37,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "protocol/commands.pb.h"
@@ -52,7 +53,7 @@ namespace {
 
 void AddCandidate(const absl::string_view key, const absl::string_view value,
                   Segment *segment) {
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = std::string(value);
   candidate->content_value = std::string(value);
   candidate->content_key = std::string(key);
@@ -73,7 +74,7 @@ void SetSegment(const absl::string_view key, const absl::string_view value,
 
 constexpr char kCalculationDescription[] = "計算結果";
 
-bool ContainsCalculatedResult(const Segment::Candidate &candidate) {
+bool ContainsCalculatedResult(const converter::Candidate &candidate) {
   return absl::StrContains(candidate.description, kCalculationDescription);
 }
 
@@ -82,7 +83,7 @@ bool ContainsCalculatedResult(const Segment::Candidate &candidate) {
 int GetIndexOfCalculatedCandidate(const Segments &segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segments.segment(0).candidate(i);
+    const converter::Candidate &candidate = segments.segment(0).candidate(i);
     if (ContainsCalculatedResult(candidate)) {
       return i;
     }
@@ -128,12 +129,12 @@ TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
     EXPECT_FALSE(InsertCandidate(calculator_rewriter, "value", 0, &segment));
   }
 
-  Segment::Candidate expected;
+  converter::Candidate expected;
   expected.value = "value";
   expected.content_key = "key";
   expected.content_value = "value";
-  expected.attributes = Segment::Candidate::NO_LEARNING |
-                        Segment::Candidate::NO_VARIANTS_EXPANSION;
+  expected.attributes = converter::Candidate::NO_LEARNING |
+                        converter::Candidate::NO_VARIANTS_EXPANSION;
   expected.description = kCalculationDescription;
 
   // Test insertion at each position of candidates list

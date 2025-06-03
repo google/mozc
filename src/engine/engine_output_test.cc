@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "engine/candidate_list.h"
 #include "protocol/candidate_window.pb.h"
@@ -56,7 +57,7 @@ struct DummySegment {
 void FillDummySegment(const DummySegment *dummy_segments, const size_t num,
                       Segment *segment, CandidateList *candidate_list) {
   for (size_t i = 0; i < num; ++i) {
-    Segment::Candidate *cand = segment->push_back_candidate();
+    converter::Candidate *cand = segment->push_back_candidate();
     candidate_list->AddCandidate(i, dummy_segments[i].value);
     cand->value = dummy_segments[i].value;
     cand->usage_id = dummy_segments[i].usage_id;
@@ -243,7 +244,7 @@ TEST(EngineOutputTest, FillAllCandidateWords) {
                             "sub2_2", "subsub1_1", "subsub1_2"};
   constexpr size_t kValueSize = std::size(kValues);
   for (size_t i = 0; i < kValueSize; ++i) {
-    Segment::Candidate *candidate = segment.push_back_candidate();
+    converter::Candidate *candidate = segment.push_back_candidate();
     candidate->content_key = kNormalKey;
     candidate->value = kValues[i];
     candidate->description = kDescription;
@@ -360,7 +361,7 @@ TEST(EngineOutputTest, FillAllCandidateWords_Attributes) {
                             "value_4"};
   constexpr size_t kValueSize = std::size(kValues);
   for (size_t i = 0; i < kValueSize; ++i) {
-    Segment::Candidate *candidate = segment.push_back_candidate();
+    converter::Candidate *candidate = segment.push_back_candidate();
     candidate->content_key = kKey;
     candidate->value = kValues[i];
 
@@ -368,16 +369,16 @@ TEST(EngineOutputTest, FillAllCandidateWords_Attributes) {
   }
 
   segment.mutable_candidate(1)->attributes =
-      Segment::Candidate::Attribute::USER_DICTIONARY;
+      converter::Candidate::Attribute::USER_DICTIONARY;
   segment.mutable_candidate(2)->attributes =
-      Segment::Candidate::Attribute::USER_HISTORY_PREDICTION |
-      Segment::Candidate::Attribute::NO_VARIANTS_EXPANSION;
+      converter::Candidate::Attribute::USER_HISTORY_PREDICTION |
+      converter::Candidate::Attribute::NO_VARIANTS_EXPANSION;
   segment.mutable_candidate(3)->attributes =
-      Segment::Candidate::Attribute::SPELLING_CORRECTION |
-      Segment::Candidate::Attribute::NO_EXTRA_DESCRIPTION;
+      converter::Candidate::Attribute::SPELLING_CORRECTION |
+      converter::Candidate::Attribute::NO_EXTRA_DESCRIPTION;
   segment.mutable_candidate(4)->attributes =
-      Segment::Candidate::Attribute::TYPING_CORRECTION |
-      Segment::Candidate::Attribute::BEST_CANDIDATE;
+      converter::Candidate::Attribute::TYPING_CORRECTION |
+      converter::Candidate::Attribute::BEST_CANDIDATE;
 
   candidate_list.set_focused(true);
   candidate_list.MoveToId(0);
@@ -914,7 +915,7 @@ TEST(EngineOutputTest, FillAllCandidateWords_NonFocused) {
   const char *kNormalKey = "key";
   segment.set_key(kNormalKey);
 
-  Segment::Candidate *candidate = segment.push_back_candidate();
+  converter::Candidate *candidate = segment.push_back_candidate();
   candidate->content_key = "key";
   candidate->value = "value";
 
@@ -950,7 +951,7 @@ TEST(EngineOutputTest, FillRemovedCandidateWords) {
   const char *kNormalKey = "key";
   segment.set_key(kNormalKey);
 
-  Segment::Candidate candidate;
+  converter::Candidate candidate;
   candidate.content_key = "key";
   candidate.value = "value";
   segment.removed_candidates_for_debug_.push_back(candidate);

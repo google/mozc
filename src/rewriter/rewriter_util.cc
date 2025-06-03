@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstddef>
 
+#include "converter/candidate.h"
 #include "converter/segments.h"
 
 namespace mozc {
@@ -56,7 +57,7 @@ size_t RewriterUtil::CalculateInsertPosition(const Segment &segment,
     // Assume that the user history prediction candidates are inserted
     // sequentially from top.
     if (segment.candidate(i).attributes &
-        Segment::Candidate::USER_HISTORY_PREDICTION) {
+        converter::Candidate::USER_HISTORY_PREDICTION) {
       ++existing_history_candidates_num;
     } else if (existing_history_candidates_num > 0) {
       break;

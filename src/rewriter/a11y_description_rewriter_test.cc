@@ -32,6 +32,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -44,7 +45,7 @@ namespace mozc {
 namespace {
 
 void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->key = segment->key();
   candidate->content_key = segment->key();
   candidate->value = std::string(value);

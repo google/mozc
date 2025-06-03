@@ -42,6 +42,7 @@
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -132,7 +133,7 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
     return false;
   }
 
-  const Segment::Candidate &base_candidate = segment->candidate(0);
+  const converter::Candidate &base_candidate = segment->candidate(0);
 
   // Normalize the expression, used in description.
   std::string expression =
@@ -143,7 +144,7 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
 
   for (int n = 0; n < 2; ++n) {
     int current_offset = offset + n;
-    Segment::Candidate *candidate = segment->insert_candidate(current_offset);
+    converter::Candidate *candidate = segment->insert_candidate(current_offset);
     if (candidate == nullptr) {
       LOG(ERROR) << "cannot insert candidate at " << current_offset;
       return false;
@@ -155,7 +156,7 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
     if (reference_index >= segment->candidates_size()) {
       reference_index = current_offset - 1;
     }
-    const Segment::Candidate &reference_candidate =
+    const converter::Candidate &reference_candidate =
         segment->candidate(reference_index);
 
     candidate->lid = reference_candidate.lid;
@@ -163,8 +164,8 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
     candidate->cost = reference_candidate.cost;
     candidate->key = base_candidate.key;
     candidate->content_key = base_candidate.content_key;
-    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-    candidate->attributes |= Segment::Candidate::NO_LEARNING;
+    candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes |= converter::Candidate::NO_LEARNING;
     candidate->description = "計算結果";
 
     if (n == 0) {  // without expression

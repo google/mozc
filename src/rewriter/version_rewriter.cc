@@ -38,6 +38,7 @@
 #include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/version.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 
@@ -86,9 +87,9 @@ bool VersionRewriter::Rewrite(const ConversionRequest &request,
     if (it != entries_.end()) {
       for (size_t j = 0; j < segment.candidates_size(); ++j) {
         const VersionEntry &ent = it->second;
-        const Segment::Candidate &c = segment.candidate(static_cast<int>(j));
+        const converter::Candidate &c = segment.candidate(static_cast<int>(j));
         if (c.value == ent.base_candidate) {
-          Segment::Candidate *new_cand = segment.insert_candidate(
+          converter::Candidate *new_cand = segment.insert_candidate(
               std::min<int>(segment.candidates_size(), ent.rank));
           if (new_cand != nullptr) {
             new_cand->lid = c.lid;
@@ -99,7 +100,7 @@ bool VersionRewriter::Rewrite(const ConversionRequest &request,
             new_cand->key = segment.key();
             new_cand->content_key = segment.key();
             // we don't learn version
-            new_cand->attributes |= Segment::Candidate::NO_LEARNING;
+            new_cand->attributes |= converter::Candidate::NO_LEARNING;
             result = true;
           }
           break;

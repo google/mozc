@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "protocol/commands.pb.h"
@@ -78,42 +79,42 @@ Segments BuildTestSegments() {
   Segments segments;
   segments.add_segment();
   auto add_candidate = [&](const std::string key, const std::string value,
-                           Segment::Candidate::Category category) {
+                           converter::Candidate::Category category) {
     Segment *segment = segments.mutable_conversion_segment(0);
-    Segment::Candidate *c = segment->add_candidate();
+    converter::Candidate *c = segment->add_candidate();
     c->key = key;
     c->content_key = key;
     c->value = value;
     c->content_value = value;
     c->category = category;
     if (c->key.size() < segment->key().size()) {
-      c->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      c->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
       c->consumed_key_size = c->key.size();
     }
   };
 
   segments.mutable_conversion_segment(0)->set_key("きょうの");
-  add_candidate("きょうの", "今日の", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "きょうの", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "other1", Segment::Candidate::OTHER);
-  add_candidate("きょうの", "教の", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "強の", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "凶の", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "キョウの", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "キョウノ", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "KYOUNO", Segment::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "今日の", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "きょうの", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "other1", converter::Candidate::OTHER);
+  add_candidate("きょうの", "教の", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "強の", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "凶の", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "キョウの", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "キョウノ", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "KYOUNO", converter::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうのてんき", "今日の天気",
-                Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "other2", Segment::Candidate::OTHER);
-  add_candidate("きょう", "今日", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょう", "きょう", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょう", "京", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょ", "許", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょう", "供", Segment::Candidate::DEFAULT_CATEGORY);
-  add_candidate("きょうの", "😀", Segment::Candidate::SYMBOL);
-  add_candidate("きょうの", "響野", Segment::Candidate::DEFAULT_CATEGORY);
+                converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "other2", converter::Candidate::OTHER);
+  add_candidate("きょう", "今日", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょう", "きょう", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょう", "京", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょ", "許", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょう", "供", converter::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "😀", converter::Candidate::SYMBOL);
+  add_candidate("きょうの", "響野", converter::Candidate::DEFAULT_CATEGORY);
 
-  Segment::Candidate *meta_candidate =
+  converter::Candidate *meta_candidate =
       segments.mutable_conversion_segment(0)->add_meta_candidate();
   meta_candidate->key = "きょうの";
   meta_candidate->content_key = "きょうの";
@@ -154,7 +155,7 @@ TEST_F(OrderRewriterTest, Rewrite) {
   EXPECT_TRUE(rewriter_->Rewrite(convreq, &segments));
 
   constexpr auto ValueIs = [](const auto &value) {
-    return Pointee(Field(&Segment::Candidate::value, value));
+    return Pointee(Field(&converter::Candidate::value, value));
   };
   EXPECT_THAT(segments.conversion_segment(0),
               CandidatesAreArray({

@@ -50,6 +50,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "config/character_form_manager.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -75,7 +76,7 @@ enum RewriteType {
 struct RewriteCandidateInfo {
   RewriteType type;
   int position;                  // Base (arabic number) candidate position
-  Segment::Candidate candidate;  // Base candidate
+  converter::Candidate candidate;  // Base candidate
 };
 
 bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
@@ -90,11 +91,11 @@ bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
 std::optional<RewriteCandidateInfo> GetRewriteCandidateInfo(
     const SerializedStringArray &suffix_array, const Segment &seg,
     int base_candidate_pos, const PosMatcher &pos_matcher) {
-  const Segment::Candidate &c = seg.candidate(base_candidate_pos);
+  const converter::Candidate &c = seg.candidate(base_candidate_pos);
   if (!number_compound_util::IsNumber(suffix_array, pos_matcher, c)) {
     return std::nullopt;
   }
-  if (c.attributes & Segment::Candidate::NO_MODIFICATION) {
+  if (c.attributes & converter::Candidate::NO_MODIFICATION) {
     return std::nullopt;
   }
   // Do not rewrite hex/oct/bin number.
@@ -112,7 +113,7 @@ std::optional<RewriteCandidateInfo> GetRewriteCandidateInfo(
     info.candidate.inner_segment_boundary.clear();
     DCHECK(info.candidate.IsValid());
     if (Util::GetScriptType(c.content_key) == Util::NUMBER ||
-        (c.attributes & Segment::Candidate::USER_DICTIONARY)) {
+        (c.attributes & converter::Candidate::USER_DICTIONARY)) {
       // ARABIC_FIRST when:
       // - a user types number key
       // - or, the entry came from the user dictionary
@@ -153,7 +154,7 @@ std::optional<RewriteCandidateInfo> GetRewriteCandidateInfo(
   info.candidate.lid = c.lid;
   info.candidate.rid = c.rid;
   info.candidate.attributes |=
-      c.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      c.attributes & converter::Candidate::PARTIALLY_KEY_CONSUMED;
   DCHECK(info.candidate.IsValid());
 
   info.type = KANJI_FIRST;
@@ -204,9 +205,9 @@ int GetInsertOffset(RewriteType type) {
 void PushBackCandidate(const absl::string_view value,
                        const absl::string_view desc,
                        NumberUtil::NumberString::Style style,
-                       std::vector<Segment::Candidate> *results) {
+                       std::vector<converter::Candidate> *results) {
   bool found = false;
-  for (std::vector<Segment::Candidate>::const_iterator it = results->begin();
+  for (std::vector<converter::Candidate>::const_iterator it = results->begin();
        it != results->end(); ++it) {
     if (it->value == value) {
       found = true;
@@ -214,7 +215,7 @@ void PushBackCandidate(const absl::string_view value,
     }
   }
   if (!found) {
-    Segment::Candidate cand;
+    converter::Candidate cand;
     cand.value = std::string(value);
     cand.description = std::string(desc);
     cand.style = style;
@@ -222,13 +223,13 @@ void PushBackCandidate(const absl::string_view value,
   }
 }
 
-void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
-                       std::vector<Segment::Candidate> *candidates) {
+void SetCandidatesInfo(const converter::Candidate &arabic_cand,
+                       std::vector<converter::Candidate> *candidates) {
   const std::string suffix(
       arabic_cand.value, arabic_cand.content_value.size(),
       arabic_cand.value.size() - arabic_cand.content_value.size());
 
-  for (std::vector<Segment::Candidate>::iterator it = candidates->begin();
+  for (std::vector<converter::Candidate>::iterator it = candidates->begin();
        it != candidates->end(); ++it) {
     it->content_value.assign(it->value);
     it->value.append(suffix);
@@ -238,7 +239,7 @@ void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
 // Note:
 // Some number characters such as superscript (¹) is out of target of
 // number styles.
-bool IsNumberCandidate(const Segment::Candidate &candidate,
+bool IsNumberCandidate(const converter::Candidate &candidate,
                        const PosMatcher &pos_matcher) {
   if (candidate.lid != candidate.rid) {
     return false;
@@ -267,7 +268,7 @@ void SetNumberInfoToExistingCandidates(
   }
 
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    Segment::Candidate *candidate = segment->mutable_candidate(i);
+    converter::Candidate *candidate = segment->mutable_candidate(i);
     const auto &itr = number_map.find(candidate->value);
     if (itr == number_map.end()) {
       continue;
@@ -286,7 +287,7 @@ void SetNumberInfoToExistingCandidates(
 class CheckValueOperator {
  public:
   explicit CheckValueOperator(const absl::string_view v) : find_value_(v) {}
-  bool operator()(const Segment::Candidate &cand) const {
+  bool operator()(const converter::Candidate &cand) const {
     return (cand.value == find_value_);
   }
 
@@ -296,7 +297,7 @@ class CheckValueOperator {
 
 // If we have the candidates to be inserted before the base candidate,
 // delete them.
-void FindEraseCandidates(absl::Span<const Segment::Candidate> results,
+void FindEraseCandidates(absl::Span<const converter::Candidate> results,
                          int base_candidate_pos, RewriteType type,
                          const Segment &seg, std::set<int> *erase_positions) {
   // Remember base candidate value
@@ -306,12 +307,12 @@ void FindEraseCandidates(absl::Span<const Segment::Candidate> results,
     if (pos == base_candidate_pos) {
       continue;
     }
-    if (seg.candidate(pos).attributes & Segment::Candidate::NO_MODIFICATION) {
+    if (seg.candidate(pos).attributes & converter::Candidate::NO_MODIFICATION) {
       continue;
     }
 
     // Simple liner search. |results| size is small. (at most 10 or so)
-    for (const Segment::Candidate &cand : results) {
+    for (const converter::Candidate &cand : results) {
       if (cand.value == seg.candidate(pos).value) {
         erase_positions->insert(pos);
         break;
@@ -322,9 +323,9 @@ void FindEraseCandidates(absl::Span<const Segment::Candidate> results,
 
 // This is a utility function for InsertCandidate and UpdateCandidate.
 // Do not use this function directly.
-void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
-                                const Segment::Candidate &result_cand,
-                                Segment::Candidate *cand) {
+void MergeCandidateInfoInternal(const converter::Candidate &base_cand,
+                                const converter::Candidate &result_cand,
+                                converter::Candidate *cand) {
   DCHECK(cand);
   cand->key = base_cand.key;
   cand->value = result_cand.value;
@@ -341,42 +342,42 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
   if (cand->style == NumberUtil::NumberString::NUMBER_HEX ||
       cand->style == NumberUtil::NumberString::NUMBER_OCT ||
       cand->style == NumberUtil::NumberString::NUMBER_BIN) {
-    cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    cand->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
   }
   cand->attributes |=
-      base_cand.attributes & (Segment::Candidate::PARTIALLY_KEY_CONSUMED |
-                              Segment::Candidate::NO_LEARNING);
+      base_cand.attributes & (converter::Candidate::PARTIALLY_KEY_CONSUMED |
+                              converter::Candidate::NO_LEARNING);
   cand->attributes |=
-      result_cand.attributes & Segment::Candidate::NO_VARIANTS_EXPANSION;
+      result_cand.attributes & converter::Candidate::NO_VARIANTS_EXPANSION;
 }
 
 void InsertCandidate(Segment *segment, int32_t insert_position,
-                     const Segment::Candidate &base_cand,
-                     const Segment::Candidate &result_cand) {
+                     const converter::Candidate &base_cand,
+                     const converter::Candidate &result_cand) {
   DCHECK(segment);
-  Segment::Candidate *c = segment->insert_candidate(insert_position);
+  converter::Candidate *c = segment->insert_candidate(insert_position);
   MergeCandidateInfoInternal(base_cand, result_cand, c);
 }
 
 void UpdateCandidate(Segment *segment, int32_t update_position,
-                     const Segment::Candidate &base_cand,
-                     const Segment::Candidate &result_cand) {
+                     const converter::Candidate &base_cand,
+                     const converter::Candidate &result_cand) {
   DCHECK(segment);
-  Segment::Candidate *c = segment->mutable_candidate(update_position);
+  converter::Candidate *c = segment->mutable_candidate(update_position);
   // Do not call |c->Init()| for an existing candidate.
   // There are two major reasons.
   // 1) Future design change may introduce another field into
-  //    Segment::Candidate. In such situation, simply calling |c->Init()|
+  //    converter::Candidate. In such situation, simply calling |c->Init()|
   //    for an existing candidate may result in unexpeced data loss.
   // 2) In order to preserve existing attribute information such as
-  //    Segment::Candidate::USER_DICTIONARY bit in |c|, we cannot call
+  //    converter::Candidate::USER_DICTIONARY bit in |c|, we cannot call
   //    |c->Init()|. Note that neither |base_cand| nor |result[0]| has
   //    valid value in its |attributes|.
   MergeCandidateInfoInternal(base_cand, result_cand, c);
 }
 
-void InsertConvertedCandidates(absl::Span<const Segment::Candidate> results,
-                               const Segment::Candidate &base_cand,
+void InsertConvertedCandidates(absl::Span<const converter::Candidate> results,
+                               const converter::Candidate &base_cand,
                                int base_candidate_pos, int insert_pos,
                                Segment *seg) {
   if (results.empty()) {
@@ -491,7 +492,7 @@ bool NumberRewriter::Rewrite(const ConversionRequest &request,
 }
 
 namespace {
-bool IsAlreadyUpdated(absl::Span<const Segment::Candidate> number_candidates,
+bool IsAlreadyUpdated(absl::Span<const converter::Candidate> number_candidates,
                       const Segment &seg) {
   absl::flat_hash_set<absl::string_view> values;
   for (int i = 0; i < seg.candidates_size(); ++i) {
@@ -549,7 +550,7 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
                                  arabic_content_value);
     SetNumberInfoToExistingCandidates(output, pos_matcher_, seg);
 
-    const std::vector<Segment::Candidate> number_candidates =
+    const std::vector<converter::Candidate> number_candidates =
         GenerateCandidatesToInsert(info.candidate, output, should_rerank);
 
     // If all the candidates are already in the segment, do nothing.
@@ -573,11 +574,11 @@ bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
   return modified;
 }
 
-std::vector<Segment::Candidate> NumberRewriter::GenerateCandidatesToInsert(
-    const Segment::Candidate &arabic_candidate,
+std::vector<converter::Candidate> NumberRewriter::GenerateCandidatesToInsert(
+    const converter::Candidate &arabic_candidate,
     absl::Span<const NumberUtil::NumberString> numbers,
     bool should_rerank) const {
-  std::vector<Segment::Candidate> converted_numbers;
+  std::vector<converter::Candidate> converted_numbers;
   for (const auto &number_string : numbers) {
     PushBackCandidate(number_string.value, number_string.description,
                       number_string.style, &converted_numbers);
@@ -617,7 +618,7 @@ bool NumberRewriter::ShouldRerankCandidates(const ConversionRequest &request,
 }
 
 void NumberRewriter::RerankCandidates(
-    std::vector<Segment::Candidate> &candidates) const {
+    std::vector<converter::Candidate> &candidates) const {
   std::optional<const CharacterFormManager::NumberFormStyle> stored_entry =
       CharacterFormManager::GetCharacterFormManager()->GetLastNumberStyle();
   if (!stored_entry.has_value()) {
@@ -642,7 +643,7 @@ void NumberRewriter::RerankCandidates(
 
   // Rerank `top_number_entry` to top.
   std::rotate(candidates.begin(), top_number_entry, top_number_entry + 1);
-  candidates.begin()->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  candidates.begin()->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
 }
 
 void NumberRewriter::Finish(const ConversionRequest &request,
@@ -667,7 +668,7 @@ void NumberRewriter::Finish(const ConversionRequest &request,
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &
-            Segment::Candidate::NO_HISTORY_LEARNING) {
+            converter::Candidate::NO_HISTORY_LEARNING) {
       continue;
     }
     if (segment.candidates_size() == 0) {
@@ -680,7 +681,8 @@ void NumberRewriter::Finish(const ConversionRequest &request,
   }
 }
 
-void NumberRewriter::RememberNumberStyle(const Segment::Candidate &candidate) {
+void NumberRewriter::RememberNumberStyle(
+    const converter::Candidate &candidate) {
   const Util::FormType form = Util::GetFormType(candidate.value);
   CharacterFormManager::NumberFormStyle entry = {
       form == Util::HALF_WIDTH ? config::Config::HALF_WIDTH

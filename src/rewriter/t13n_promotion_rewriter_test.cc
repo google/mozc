@@ -35,7 +35,7 @@
 
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -52,7 +52,7 @@ namespace mozc {
 namespace {
 
 void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->key = segment->key();
   candidate->content_key = segment->key();
   candidate->value = std::string(value);
@@ -178,7 +178,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteKatakana) {
   const int katakana_index = GetCandidateIndexByValue("キョウ", *segment);
   EXPECT_EQ(katakana_index, 7);
 
-  Segment::Candidate *katakana_candidate =
+  converter::Candidate *katakana_candidate =
       segment->mutable_candidate(katakana_index);
   katakana_candidate->lid = 1;
   katakana_candidate->rid = 1;

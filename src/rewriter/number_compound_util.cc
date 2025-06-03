@@ -38,7 +38,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "base/util.h"
-#include "converter/segments.h"
+#include "converter/candidate.h"
 #include "dictionary/pos_matcher.h"
 
 using mozc::dictionary::PosMatcher;
@@ -106,7 +106,7 @@ bool SplitStringIntoNumberAndCounterSuffix(
 }
 
 bool IsNumber(const SerializedStringArray &suffix_array,
-              const PosMatcher &pos_matcher, const Segment::Candidate &cand) {
+              const PosMatcher &pos_matcher, const converter::Candidate &cand) {
   // Compound number entries have the left POS ID of number.
   if (pos_matcher.IsNumber(cand.lid) || pos_matcher.IsKanjiNumber(cand.lid)) {
     return true;

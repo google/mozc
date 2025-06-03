@@ -51,6 +51,7 @@
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -207,8 +208,8 @@ void PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
                                   size_t content_key_len,
                                   size_t content_value_len, Result *result) {
   uint32_t encoded;
-  if (!Segment::Candidate::EncodeLengths(key_len, value_len, content_key_len,
-                                         content_value_len, &encoded)) {
+  if (!converter::Candidate::EncodeLengths(key_len, value_len, content_key_len,
+                                           content_value_len, &encoded)) {
     return;
   }
   result->inner_segment_boundary.push_back(encoded);
@@ -227,7 +228,7 @@ void PrependHistorySegments(absl::string_view key, absl::string_view value,
   Segment *seg = segments->push_front_segment();
   seg->set_segment_type(Segment::HISTORY);
   seg->set_key(key);
-  Segment::Candidate *c = seg->add_candidate();
+  converter::Candidate *c = seg->add_candidate();
   c->key.assign(key.data(), key.size());
   c->content_key = c->key;
   c->value.assign(value.data(), value.size());
@@ -686,7 +687,7 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
   {
     Segments segments;
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->cost = 10;
     EXPECT_CALL(*immutable_converter, ConvertForRequest(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -719,8 +720,8 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_result(result, prediction::PREFIX, &c));
     EXPECT_EQ(c.value, "てす");
     EXPECT_EQ(c.candidate_attributes,
-              Segment::Candidate::PARTIALLY_KEY_CONSUMED |
-                  Segment::Candidate::AUTO_PARTIAL_SUGGESTION);
+              converter::Candidate::PARTIALLY_KEY_CONSUMED |
+                  converter::Candidate::AUTO_PARTIAL_SUGGESTION);
     EXPECT_EQ(c.consumed_key_size, 2);
   }
   {
@@ -732,24 +733,26 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_result(result, prediction::REALTIME_TOP, &c));
     EXPECT_EQ(c.value, "リアルタイムトップ");
     EXPECT_EQ(c.candidate_attributes,
-              Segment::Candidate::REALTIME_CONVERSION |
-                  Segment::Candidate::NO_VARIANTS_EXPANSION);
+              converter::Candidate::REALTIME_CONVERSION |
+                  converter::Candidate::NO_VARIANTS_EXPANSION);
   }
   {
     // REALTIME: inner_segment_boundary
     Result result = CreateResult5("てすと", "リアルタイム", 100,
                                   prediction::REALTIME, Token::NONE);
     uint32_t encoded;
-    Segment::Candidate::EncodeLengths(strlen("てす"), strlen("リアル"),
-                                      strlen("て"), strlen("リア"), &encoded);
+    converter::Candidate::EncodeLengths(strlen("てす"), strlen("リアル"),
+                                        strlen("て"), strlen("リア"), &encoded);
     result.inner_segment_boundary.push_back(encoded);
-    Segment::Candidate::EncodeLengths(strlen("と"), strlen("タイム"),
-                                      strlen("と"), strlen("タイム"), &encoded);
+    converter::Candidate::EncodeLengths(strlen("と"), strlen("タイム"),
+                                        strlen("と"), strlen("タイム"),
+                                        &encoded);
     result.inner_segment_boundary.push_back(encoded);
 
     EXPECT_TRUE(get_top_result(result, prediction::REALTIME, &c));
     EXPECT_EQ(c.value, "リアルタイム");
-    EXPECT_EQ(c.candidate_attributes, Segment::Candidate::REALTIME_CONVERSION);
+    EXPECT_EQ(c.candidate_attributes,
+              converter::Candidate::REALTIME_CONVERSION);
     EXPECT_EQ(c.inner_segment_boundary.size(), 2);
   }
   {
@@ -760,7 +763,8 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
 
     EXPECT_TRUE(get_top_result(result, prediction::UNIGRAM, &c));
     EXPECT_EQ(c.value, "SPELLING_CORRECTION");
-    EXPECT_EQ(c.candidate_attributes, Segment::Candidate::SPELLING_CORRECTION);
+    EXPECT_EQ(c.candidate_attributes,
+              converter::Candidate::SPELLING_CORRECTION);
   }
   {
     // TYPING_CORRECTION
@@ -769,7 +773,7 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
 
     EXPECT_TRUE(get_top_result(result, prediction::TYPING_CORRECTION, &c));
     EXPECT_EQ(c.value, "TYPING_CORRECTION");
-    EXPECT_EQ(c.candidate_attributes, Segment::Candidate::TYPING_CORRECTION);
+    EXPECT_EQ(c.candidate_attributes, converter::Candidate::TYPING_CORRECTION);
   }
   {
     // USER_DICTIONARY
@@ -779,9 +783,9 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_result(result, prediction::UNIGRAM, &c));
     EXPECT_EQ(c.value, "ユーザー辞書");
     EXPECT_EQ(c.candidate_attributes,
-              Segment::Candidate::USER_DICTIONARY |
-                  Segment::Candidate::NO_MODIFICATION |
-                  Segment::Candidate::NO_VARIANTS_EXPANSION);
+              converter::Candidate::USER_DICTIONARY |
+                  converter::Candidate::NO_MODIFICATION |
+                  converter::Candidate::NO_VARIANTS_EXPANSION);
   }
   {
     // removed
@@ -796,20 +800,20 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
 /*
 TEST_F(DictionaryPredictorTest, SetDebugDescription) {
   {
-    Segment::Candidate candidate;
+    converter::Candidate candidate;
     const PredictionTypes types = prediction::UNIGRAM | prediction::ENGLISH;
     DictionaryPredictorTestPeer::SetDebugDescription(types, &candidate);
     EXPECT_EQ(candidate.description, "UE");
   }
   {
-    Segment::Candidate candidate;
+    converter::Candidate candidate;
     candidate.description = "description";
     const PredictionTypes types = prediction::REALTIME | prediction::BIGRAM;
     DictionaryPredictorTestPeer::SetDebugDescription(types, &candidate);
     EXPECT_EQ(candidate.description, "description BR");
   }
   {
-    Segment::Candidate candidate;
+    converter::Candidate candidate;
     const PredictionTypes types =
         prediction::BIGRAM | prediction::REALTIME | prediction::SUFFIX;
     DictionaryPredictorTestPeer::SetDebugDescription(types, &candidate);
@@ -1515,7 +1519,7 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
     Segment *segment = segments.add_segment();
     segment->set_key("ーひー");
     // Dummy candidate
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = "ーひー";
     candidate->key = "ーひー";
     candidate->cost = 0;
@@ -1626,17 +1630,17 @@ TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
   Segments segments;
   Segment *segment = segments.add_segment();
 
-  Segment::Candidate *cand1 = segment->push_back_candidate();
+  converter::Candidate *cand1 = segment->push_back_candidate();
   cand1->key = "Cand1";
   cand1->cost = 1000;
   cand1->cost_before_rescoring = 3000;
 
-  Segment::Candidate *cand2 = segment->push_back_candidate();
+  converter::Candidate *cand2 = segment->push_back_candidate();
   cand2->key = "Cand2";
   cand2->cost = 2000;
   cand2->cost_before_rescoring = 2000;
 
-  Segment::Candidate *cand3 = segment->push_back_candidate();
+  converter::Candidate *cand3 = segment->push_back_candidate();
   cand3->key = "Cand3";
   cand3->cost = 3000;
   cand3->cost_before_rescoring = 1000;

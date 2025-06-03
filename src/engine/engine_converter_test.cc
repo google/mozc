@@ -51,6 +51,7 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/candidate.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
@@ -96,7 +97,7 @@ void AddSegmentWithSingleCandidate(Segments *segments, absl::string_view key,
                                    absl::string_view value) {
   Segment *seg = segments->add_segment();
   seg->set_key(key);
-  Segment::Candidate *cand = seg->add_candidate();
+  converter::Candidate *cand = seg->add_candidate();
   cand->key.assign(key.data(), key.size());
   cand->content_key = cand->key;
   cand->value.assign(value.data(), value.size());
@@ -187,7 +188,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   static void SetAiueo(Segments *segments) {
     segments->Clear();
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segment = segments->add_segment();
     segment->set_key("あいうえお");
@@ -206,7 +207,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   // set result for "かまぼこのいんぼう"
   static void SetKamaboko(Segments *segments) {
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segments->Clear();
     segment = segments->add_segment();
@@ -236,7 +237,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     candidate->content_value = candidate->value;
 
     // Set dummy T13Ns
-    std::vector<Segment::Candidate> *meta_candidates =
+    std::vector<converter::Candidate> *meta_candidates =
         segment->mutable_meta_candidates();
     meta_candidates->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
@@ -255,7 +256,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
       std::vector<std::string> t13ns;
       composer->GetSubTransliterations(composition_pos, composition_len,
                                        &t13ns);
-      std::vector<Segment::Candidate> *meta_candidates =
+      std::vector<converter::Candidate> *meta_candidates =
           segment.mutable_meta_candidates();
       meta_candidates->resize(transliteration::NUM_T13N_TYPES);
       for (size_t j = 0; j < transliteration::NUM_T13N_TYPES; ++j) {
@@ -274,7 +275,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
     composer_->InsertCharacterKeyAndPreedit("ke", "け");
 
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segments->Clear();
     segment = segments->add_segment();
@@ -299,7 +300,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
   static Segments GetSegmentsTest() {
     Segments segments;
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key("てすと");
     candidate = segment->add_candidate();
     candidate->value = "テスト";
@@ -394,10 +395,10 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
 
   static void SetCommandCandidate(Segments *segments, int segment_index,
                                   int candidate_index,
-                                  Segment::Candidate::Command command) {
+                                  converter::Candidate::Command command) {
     segments->mutable_conversion_segment(segment_index)
         ->mutable_candidate(candidate_index)
-        ->attributes |= Segment::Candidate::COMMAND_CANDIDATE;
+        ->attributes |= converter::Candidate::COMMAND_CANDIDATE;
     segments->mutable_conversion_segment(segment_index)
         ->mutable_candidate(candidate_index)
         ->command = command;
@@ -482,7 +483,7 @@ TEST_F(EngineConverterTest, ConvertWithSpellingCorrection) {
     FillT13Ns(&segments, composer_.get());
     segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes |=
 
-        Segment::Candidate::SPELLING_CORRECTION;
+        converter::Candidate::SPELLING_CORRECTION;
     EXPECT_CALL(*mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
@@ -611,7 +612,7 @@ TEST_F(EngineConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     Segments segments;
     {
       Segment *segment;
-      Segment::Candidate *candidate;
+      converter::Candidate *candidate;
       segment = segments.add_segment();
       segment->set_key("dvd");
       candidate = segment->add_candidate();
@@ -1016,7 +1017,7 @@ TEST_F(EngineConverterTest, T13NWithResegmentation) {
   {
     Segments segments;
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     CHECK(segment);
     segment->set_key("かまぼこの");
     candidate = segment->add_candidate();
@@ -1047,7 +1048,7 @@ TEST_F(EngineConverterTest, T13NWithResegmentation) {
   {
     Segments segments;
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segments.Clear();
     segment = segments.add_segment();
@@ -1477,7 +1478,7 @@ TEST_F(EngineConverterTest, CommitHeadToFocusedSegments) {
   {  // Three segments as the result of conversion.
     Segments segments;
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segment = segments.add_segment();
     segment->set_key(kIberiko);
@@ -1511,7 +1512,7 @@ TEST_F(EngineConverterTest, CommitHeadToFocusedSegments) {
   {  // Initialization of CommitSegments.
     Segments segments;
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segment = segments.add_segment();
     segment->set_key(kItadaita);
@@ -1566,7 +1567,7 @@ TEST_F(EngineConverterTest, CommitConvertedBracketPairText) {
   {  // Initialize segments.
     segments.Clear();
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kKakko);
     candidate = segment->add_candidate();
     candidate->value = "（）";
@@ -1746,7 +1747,7 @@ TEST_F(EngineConverterTest, CommitSuggestionByIndex) {
   Segments segments;
   {  // Initialize mock segments for suggestion
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -1822,7 +1823,7 @@ TEST_F(EngineConverterTest, CommitSuggestionById) {
   Segments segments;
   {  // Initialize mock segments for suggestion
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -1889,13 +1890,13 @@ TEST_F(EngineConverterTest, PartialPrediction) {
 
   {  // Initialize mock segments for partial prediction
     Segment *segment = segments1.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Kokode);
     candidate = segment->add_candidate();
     candidate->value = "此処では";
     candidate->key = kChars_Kokode;
     candidate->content_key = kChars_Kokode;
-    candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
     candidate->consumed_key_size = Util::CharsLen(kChars_Kokode);
   }
 
@@ -1903,7 +1904,7 @@ TEST_F(EngineConverterTest, PartialPrediction) {
   // Should not be used by partial prediction.
   {
     Segment *segment = suggestion_segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Kokode);
     candidate = segment->add_candidate();
     candidate->value = "ここでは着物を";
@@ -1914,7 +1915,7 @@ TEST_F(EngineConverterTest, PartialPrediction) {
 
   {  // Initialize mock segments for prediction
     Segment *segment = segments2.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Hakimonowo);
     candidate = segment->add_candidate();
     candidate->value = "此処では";
@@ -1989,7 +1990,7 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
   Segments segments;
   {  // Initialize mock segments for suggestion
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -2079,7 +2080,7 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
   Segments mondrian_segments;
   {  // Initialize mock segments for prediction
     Segment *segment = mondrian_segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozuku;
@@ -2182,7 +2183,7 @@ TEST_F(EngineConverterTest, SuggestFillIncognitoCandidateWords) {
   Segments segments;
   {  // Initialize mock segments for suggestion
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -2239,7 +2240,7 @@ TEST_F(EngineConverterTest, OnePhaseSuggestion) {
   Segments segments;
   {  // Initialize mock segments for suggestion (internally prediction)
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozuku;
@@ -2342,11 +2343,11 @@ TEST_F(EngineConverterTest, AppendCandidateList) {
   }
   {
     Segment *segment = segments.mutable_conversion_segment(0);
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = "あいうえお_2";
     // New meta candidates.
     // They should be ignored.
-    std::vector<Segment::Candidate> *meta_candidates =
+    std::vector<converter::Candidate> *meta_candidates =
         segment->mutable_meta_candidates();
     meta_candidates->clear();
     meta_candidates->resize(1);
@@ -2551,7 +2552,7 @@ TEST_F(EngineConverterTest, GetPreeditAndGetConversion) {
   Segments segments;
 
   Segment *segment;
-  Segment::Candidate *candidate;
+  converter::Candidate *candidate;
 
   segment = segments.add_segment();
   segment->set_segment_type(Segment::HISTORY);
@@ -2647,7 +2648,7 @@ TEST_F(EngineConverterTest, GetAndSetSegments) {
   for (size_t i = 0; i < std::size(kHistoryInput); ++i) {
     Segment *segment = segments.add_segment();
     segment->set_segment_type(Segment::HISTORY);
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = kHistoryInput[i];
   }
   EXPECT_CALL(*mock_converter, FinishConversion(_, _))
@@ -2663,7 +2664,7 @@ TEST_F(EngineConverterTest, GetAndSetSegments) {
   src.mutable_history_segment(0)->mutable_candidate(0)->value = "歩いて";
   Segment *segment = src.add_segment();
   segment->set_segment_type(Segment::FREE);
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "?";
 
   SetSegments(src, &converter);
@@ -2728,7 +2729,7 @@ TEST_F(EngineConverterTest, Issue1948334) {
   Segments segments;
   {  // Initialize mock segments for the first suggestion
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -2749,7 +2750,7 @@ TEST_F(EngineConverterTest, Issue1948334) {
   segments.Clear();
   {  // Initialize mock segments for the second suggestion
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key("もず");
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozukusu;
@@ -2800,7 +2801,7 @@ TEST_F(EngineConverterTest, Issue1960362) {
   Segments segments;
   {
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segment = segments.add_segment();
     segment->set_key("ZYU");
@@ -2818,7 +2819,7 @@ TEST_F(EngineConverterTest, Issue1960362) {
   Segments resized_segments;
   {
     Segment *segment = resized_segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key("ZYUt");
     candidate = segment->add_candidate();
     candidate->value = "[ZYUt]";
@@ -2854,7 +2855,7 @@ TEST_F(EngineConverterTest, Issue1978201) {
 
   {  // Initialize mock segments for prediction
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozuku;
@@ -2945,7 +2946,7 @@ TEST_F(EngineConverterTest, Issue2029557) {
   segments.Clear();
   Segment *segment = segments.add_segment();
   segment->set_key("a");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "a";
 
   FillT13Ns(&segments, composer_.get());
@@ -2966,7 +2967,7 @@ TEST_F(EngineConverterTest, Issue2031986) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("aaaa");
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     candidate = segment->add_candidate();
     candidate->value = "AAAA";
     candidate = segment->add_candidate();
@@ -3020,7 +3021,7 @@ TEST_F(EngineConverterTest, Issue2040116) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("G");
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     candidate = segment->add_candidate();
     candidate->value = "GoogleSuggest";
     EXPECT_CALL(*mock_converter, StartPrediction(_, _))
@@ -3084,7 +3085,7 @@ TEST_F(EngineConverterTest, GetReadingText) {
   Segment *segment;
   segment = reverse_segments.add_segment();
   segment->set_key(kKanjiAiueo);
-  Segment::Candidate *candidate;
+  converter::Candidate *candidate;
   candidate = segment->add_candidate();
   // For reverse conversion, key is the original kanji string.
   candidate->key = kKanjiAiueo;
@@ -3218,7 +3219,7 @@ TEST_F(EngineConverterTest, CommandCandidate) {
   composer_->InsertCharacterPreedit("あいうえお");
   FillT13Ns(&segments, composer_.get());
   // set COMMAND_CANDIDATE.
-  SetCommandCandidate(&segments, 0, 0, Segment::Candidate::DEFAULT_COMMAND);
+  SetCommandCandidate(&segments, 0, 0, converter::Candidate::DEFAULT_COMMAND);
   EXPECT_CALL(*mock_converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
@@ -3243,7 +3244,7 @@ TEST_F(EngineConverterTest, CommandCandidateWithCommitCommands) {
     EngineConverter converter(mock_converter, request_, config_);
     Segments segments;
     SetKamaboko(&segments);
-    SetCommandCandidate(&segments, 0, 0, Segment::Candidate::DEFAULT_COMMAND);
+    SetCommandCandidate(&segments, 0, 0, converter::Candidate::DEFAULT_COMMAND);
     EXPECT_CALL(*mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     converter.Convert(*composer_);
@@ -3266,7 +3267,7 @@ TEST_F(EngineConverterTest, CommandCandidateWithCommitCommands) {
     EngineConverter converter(mock_converter, request_, config_);
     Segments segments;
     SetKamaboko(&segments);
-    SetCommandCandidate(&segments, 1, 0, Segment::Candidate::DEFAULT_COMMAND);
+    SetCommandCandidate(&segments, 1, 0, converter::Candidate::DEFAULT_COMMAND);
     EXPECT_CALL(*mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     converter.Convert(*composer_);
@@ -3288,7 +3289,7 @@ TEST_F(EngineConverterTest, CommandCandidateWithCommitCommands) {
     EngineConverter converter(mock_converter, request_, config_);
     Segments segments;
     SetAiueo(&segments);
-    SetCommandCandidate(&segments, 0, 0, Segment::Candidate::DEFAULT_COMMAND);
+    SetCommandCandidate(&segments, 0, 0, converter::Candidate::DEFAULT_COMMAND);
     EXPECT_CALL(*mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     converter.Suggest(*composer_, Context::default_instance());
@@ -3305,7 +3306,7 @@ TEST_F(EngineConverterTest, CommandCandidateWithCommitCommands) {
     EngineConverter converter(mock_converter, request_, config_);
     Segments segments;
     SetAiueo(&segments);
-    SetCommandCandidate(&segments, 0, 1, Segment::Candidate::DEFAULT_COMMAND);
+    SetCommandCandidate(&segments, 0, 1, converter::Candidate::DEFAULT_COMMAND);
     EXPECT_CALL(*mock_converter, StartPrediction(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     converter.Suggest(*composer_, Context::default_instance());
@@ -3327,7 +3328,7 @@ TEST_F(EngineConverterTest, ExecuteCommandCandidate) {
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
-                        Segment::Candidate::ENABLE_INCOGNITO_MODE);
+                        converter::Candidate::ENABLE_INCOGNITO_MODE);
     EXPECT_CALL(*mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
@@ -3355,7 +3356,7 @@ TEST_F(EngineConverterTest, ExecuteCommandCandidate) {
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
-                        Segment::Candidate::DISABLE_INCOGNITO_MODE);
+                        converter::Candidate::DISABLE_INCOGNITO_MODE);
     EXPECT_CALL(*mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
@@ -3383,7 +3384,7 @@ TEST_F(EngineConverterTest, ExecuteCommandCandidate) {
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
-                        Segment::Candidate::ENABLE_PRESENTATION_MODE);
+                        converter::Candidate::ENABLE_PRESENTATION_MODE);
     EXPECT_CALL(*mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
@@ -3411,7 +3412,7 @@ TEST_F(EngineConverterTest, ExecuteCommandCandidate) {
     Segments segments;
     SetAiueo(&segments);
     SetCommandCandidate(&segments, 0, 0,
-                        Segment::Candidate::DISABLE_PRESENTATION_MODE);
+                        converter::Candidate::DISABLE_PRESENTATION_MODE);
     EXPECT_CALL(*mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
@@ -3649,14 +3650,14 @@ TEST_F(EngineConverterTest, ReconstructHistoryByPrecedingText) {
     Segment *segment = mock_result.add_segment();
     segment->set_key(kKey);
     segment->set_segment_type(Segment::HISTORY);
-    Segment::Candidate *candidate = segment->push_back_candidate();
+    converter::Candidate *candidate = segment->push_back_candidate();
     candidate->rid = kId;
     candidate->lid = kId;
     candidate->content_key = kKey;
     candidate->key = kKey;
     candidate->content_value = kValue;
     candidate->value = kValue;
-    candidate->attributes = Segment::Candidate::NO_LEARNING;
+    candidate->attributes = converter::Candidate::NO_LEARNING;
   }
 
   // With revision
@@ -3722,7 +3723,7 @@ TEST_F(EngineConverterTest, ResultTokens) {
   Segments segments;
   {
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key("きょうは");
     candidate = segment->add_candidate();
     candidate->key = "きょうは";
@@ -3734,7 +3735,7 @@ TEST_F(EngineConverterTest, ResultTokens) {
   }
   {
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key("はれ");
     candidate = segment->add_candidate();
     candidate->key = "はれ";
@@ -3780,7 +3781,7 @@ TEST_F(EngineConverterTest, ResultTokensWithInnerSegements) {
   Segments segments;
   {
     Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     segment->set_key("きょうははれ");
     candidate = segment->add_candidate();
     candidate->key = "きょうははれ";

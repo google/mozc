@@ -42,6 +42,7 @@
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/singleton.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 
@@ -126,9 +127,9 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
     return false;
   }
 
-  const Segment::Candidate &base_candidate = segment->candidate(0);
+  const converter::Candidate &base_candidate = segment->candidate(0);
   size_t offset = std::min(insert_pos, segment->candidates_size());
-  const Segment::Candidate &trigger_c = segment->candidate(offset - 1);
+  const converter::Candidate &trigger_c = segment->candidate(offset - 1);
 
   std::string value;
   switch (fortune_type) {
@@ -155,7 +156,7 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
       return false;
   }
 
-  Segment::Candidate *c = segment->insert_candidate(offset);
+  converter::Candidate *c = segment->insert_candidate(offset);
   if (c == nullptr) {
     LOG(ERROR) << "cannot insert candidate at " << offset;
     return false;
@@ -167,8 +168,8 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
   c->content_value = value;
   c->key = base_candidate.key;
   c->content_key = base_candidate.content_key;
-  c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-  c->attributes |= Segment::Candidate::NO_LEARNING;
+  c->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+  c->attributes |= converter::Candidate::NO_LEARNING;
   c->description = "今日の運勢";
   return true;
 }

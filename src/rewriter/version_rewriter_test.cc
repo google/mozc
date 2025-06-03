@@ -34,6 +34,7 @@
 #include <utility>
 
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -57,7 +58,7 @@ class VersionRewriterTest : public testing::TestWithTempUserProfile {
 
   static void AddCandidate(std::string key, std::string value,
                            Segment *segment) {
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = value;
     candidate->content_value = std::move(value);
     candidate->content_key = std::move(key);

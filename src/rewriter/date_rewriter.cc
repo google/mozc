@@ -67,6 +67,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
@@ -507,19 +508,19 @@ bool ExpandYear(const absl::string_view prefix, int year,
   return true;
 }
 
-std::unique_ptr<Segment::Candidate> CreateCandidate(
-    const Segment::Candidate &base_candidate, std::string value,
+std::unique_ptr<converter::Candidate> CreateCandidate(
+    const converter::Candidate &base_candidate, std::string value,
     std::string description) {
-  auto candidate = std::make_unique<Segment::Candidate>();
+  auto candidate = std::make_unique<converter::Candidate>();
   candidate->lid = base_candidate.lid;
   candidate->rid = base_candidate.rid;
   candidate->cost = base_candidate.cost;
   candidate->value = std::move(value);
   candidate->key = base_candidate.key;
   candidate->content_key = base_candidate.content_key;
-  candidate->attributes |= (Segment::Candidate::NO_LEARNING |
-                            Segment::Candidate::NO_VARIANTS_EXPANSION);
-  candidate->category = Segment::Candidate::OTHER;
+  candidate->attributes |= (converter::Candidate::NO_LEARNING |
+                            converter::Candidate::NO_VARIANTS_EXPANSION);
+  candidate->category = converter::Candidate::OTHER;
   candidate->description = std::move(description);
   return candidate;
 }
@@ -993,8 +994,8 @@ bool DateRewriter::RewriteDate(Segment *segment,
   }
 
   // Insert words.
-  const Segment::Candidate &base_cand = segment->candidate(cand_idx);
-  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  const converter::Candidate &base_cand = segment->candidate(cand_idx);
+  std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(conversions.size());
   for (std::string &conversion : conversions) {
     candidates.push_back(CreateCandidate(base_cand, std::move(conversion),
@@ -1048,16 +1049,16 @@ bool DateRewriter::RewriteEra(Segments::range segments_range,
   }
 
   constexpr absl::string_view kDescription = "和暦";
-  const Segment::Candidate &base_cand = segment.candidate(0);
-  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  const converter::Candidate &base_cand = segment.candidate(0);
+  std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(results.size());
   for (std::string &value : results) {
     if (has_suffix) {
       value.append(kNenValue);
     }
-    std::unique_ptr<Segment::Candidate> candidate =
+    std::unique_ptr<converter::Candidate> candidate =
         CreateCandidate(base_cand, std::move(value), std::string(kDescription));
-    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
     candidates.push_back(std::move(candidate));
   }
 
@@ -1094,8 +1095,8 @@ bool DateRewriter::RewriteAd(Segments::range segments_range,
     return false;
   }
 
-  const Segment::Candidate &base_cand = segment->candidate(0);
-  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  const converter::Candidate &base_cand = segment->candidate(0);
+  std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(results_anddescriptions.size());
   for (auto &[result, description] : results_anddescriptions) {
     candidates.push_back(
@@ -1290,10 +1291,10 @@ bool DateRewriter::RewriteConsecutiveDigits(
 
   // The existence of segment->candidate(0) or segment->meta_candidate(0) is
   // guaranteed at the above check.
-  const Segment::Candidate &top_cand = (segment->candidates_size() > 0)
-                                           ? segment->candidate(0)
-                                           : segment->meta_candidate(0);
-  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  const converter::Candidate &top_cand = (segment->candidates_size() > 0)
+                                             ? segment->candidate(0)
+                                             : segment->meta_candidate(0);
+  std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(results.size());
   for (DateCandidate &result : results) {
     candidates.push_back(CreateCandidate(top_cand, std::move(result.candidate),

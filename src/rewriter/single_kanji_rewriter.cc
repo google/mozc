@@ -41,6 +41,7 @@
 #include "absl/types/span.h"
 #include "base/strings/assign.h"
 #include "base/vlog.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
@@ -81,10 +82,10 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
     const int insert_pos = RewriterUtil::CalculateInsertPosition(
         *segment,
         static_cast<int>(iter.cost() + (segment->candidate(0).attributes &
-                                        Segment::Candidate::CONTEXT_SENSITIVE)
+                                        converter::Candidate::CONTEXT_SENSITIVE)
                              ? 1
                              : 0));
-    Segment::Candidate *c = segment->insert_candidate(insert_pos);
+    converter::Candidate *c = segment->insert_candidate(insert_pos);
     c->lid = pos_matcher.GetNounPrefixId();
     c->rid = pos_matcher.GetNounPrefixId();
     c->cost = 5000;
@@ -92,8 +93,8 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
     c->key = candidate_key;
     c->content_key = candidate_key;
     strings::Assign(c->value, iter.value());
-    c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
-    c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    c->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
+    c->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
   }
 }
 
@@ -156,7 +157,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
     }
 
     if (i + 1 < segments_size) {
-      const Segment::Candidate &right_candidate =
+      const converter::Candidate &right_candidate =
           conversion_segments[i + 1].candidate(0);
       // right segment must be a noun.
       if (!pos_matcher_.IsContentNoun(right_candidate.lid)) {
@@ -187,7 +188,7 @@ void SingleKanjiRewriter::AddDescriptionForExistingCandidates(
     Segment *segment) const {
   DCHECK(segment);
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    Segment::Candidate *cand = segment->mutable_candidate(i);
+    converter::Candidate *cand = segment->mutable_candidate(i);
     if (!cand->description.empty()) {
       continue;
     }
@@ -217,7 +218,7 @@ bool SingleKanjiRewriter::InsertCandidate(
 
   // Append single-kanji
   for (size_t i = 0; i < kanji_list.size(); ++i) {
-    Segment::Candidate *c = segment->push_back_candidate();
+    converter::Candidate *c = segment->push_back_candidate();
     FillCandidate(candidate_key, kanji_list[i], kOffsetCost + i,
                   single_kanji_id, c);
   }
@@ -228,7 +229,7 @@ void SingleKanjiRewriter::FillCandidate(const absl::string_view key,
                                         const absl::string_view value,
                                         const int cost,
                                         const uint16_t single_kanji_id,
-                                        Segment::Candidate *cand) const {
+                                        converter::Candidate *cand) const {
   cand->lid = single_kanji_id;
   cand->rid = single_kanji_id;
   cand->cost = cost;
@@ -236,8 +237,8 @@ void SingleKanjiRewriter::FillCandidate(const absl::string_view key,
   strings::Assign(cand->content_value, value);
   strings::Assign(cand->key, key);
   strings::Assign(cand->value, value);
-  cand->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
-  cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  cand->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
+  cand->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
   single_kanji_dictionary_->GenerateDescription(value, &cand->description);
 }
 }  // namespace mozc

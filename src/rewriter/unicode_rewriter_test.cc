@@ -40,6 +40,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
@@ -56,7 +57,7 @@ namespace {
 void AddSegment(const absl::string_view key, const absl::string_view value,
                 Segments *segments) {
   Segment *seg = segments->add_segment();
-  Segment::Candidate *candidate = seg->add_candidate();
+  converter::Candidate *candidate = seg->add_candidate();
   seg->set_key(key);
   candidate->content_key = std::string(key);
   candidate->value = std::string(value);
@@ -169,7 +170,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(segments.segment(0).candidate(0).value.at(0), ascii);
     EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
-                Segment::Candidate::NO_MODIFICATION);
+                converter::Candidate::NO_MODIFICATION);
   }
 
   // Mozc accepts Japanese characters
@@ -181,7 +182,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(ContainCandidate(segments, kCodepointUtf8Data[i].utf8));
     EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
-                Segment::Candidate::NO_MODIFICATION);
+                converter::Candidate::NO_MODIFICATION);
   }
 
   // Mozc does not accept other characters

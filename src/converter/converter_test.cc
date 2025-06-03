@@ -2276,15 +2276,15 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     Segments segments;
     Segment *segment = segments.add_segment();
 
-    Segment::Candidate *cand1 = segment->add_candidate();
+    converter::Candidate *cand1 = segment->add_candidate();
     cand1->value = "東京";
     cand1->content_value = "東京";
 
-    Segment::Candidate *cand2 = segment->add_candidate();
+    converter::Candidate *cand2 = segment->add_candidate();
     cand2->value = "大阪";
     cand2->content_value = "大阪";
 
-    Segment::Candidate *cand3 = segment->add_candidate();
+    converter::Candidate *cand3 = segment->add_candidate();
     cand3->value = "群馬";
     cand3->content_value = "群馬";
 
@@ -2305,15 +2305,15 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     Segments segments;
     Segment *segment = segments.add_segment();
 
-    Segment::Candidate *cand1 = segment->add_candidate();
+    converter::Candidate *cand1 = segment->add_candidate();
     cand1->value = "東京に";
     cand1->content_value = "東京";
 
-    Segment::Candidate *cand2 = segment->add_candidate();
+    converter::Candidate *cand2 = segment->add_candidate();
     cand2->value = "大阪に";
     cand2->content_value = "大阪";
 
-    Segment::Candidate *cand3 = segment->add_candidate();
+    converter::Candidate *cand3 = segment->add_candidate();
     cand3->value = "群馬に";
     cand3->content_value = "群馬";
 
@@ -2335,7 +2335,7 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     Segments segments;
     Segment *segment = segments.add_segment();
 
-    Segment::Candidate *cand1 = segment->add_candidate();
+    converter::Candidate *cand1 = segment->add_candidate();
     cand1->value = "東京便";
     cand1->content_value = "東京";
 
@@ -2352,7 +2352,7 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     Segments segments;
     Segment *segment = segments.add_segment();
 
-    Segment::Candidate *cand1 = segment->add_candidate();
+    converter::Candidate *cand1 = segment->add_candidate();
     cand1->value = "東京";
     cand1->content_value.clear();
 

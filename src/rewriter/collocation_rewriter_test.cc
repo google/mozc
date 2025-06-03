@@ -37,6 +37,7 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -54,7 +55,7 @@ using ::mozc::dictionary::PosMatcher;
 class CollocationRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   // Helper data structures to define test cases.
-  // Used to generate Segment::Candidate.
+  // Used to generate converter::Candidate.
   struct CandidateData {
     const absl::string_view key;
     const absl::string_view content_key;
@@ -82,7 +83,7 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
   static void MakeSegment(const SegmentData &data, Segment *segment) {
     segment->set_key(data.key);
     for (size_t i = 0; i < data.candidates.size(); ++i) {
-      Segment::Candidate *cand = segment->add_candidate();
+      converter::Candidate *cand = segment->add_candidate();
       const CandidateData &cand_data = data.candidates[i];
       cand->key = cand_data.key;
       cand->content_key = cand_data.content_key;
@@ -111,7 +112,7 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
   static std::string GetTopValue(const Segments &segments) {
     std::string result;
     for (const Segment &segment : segments.conversion_segments()) {
-      const Segment::Candidate &candidate = segment.candidate(0);
+      const converter::Candidate &candidate = segment.candidate(0);
       result.append(candidate.value);
     }
     return result;

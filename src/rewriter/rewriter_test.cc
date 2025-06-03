@@ -34,6 +34,7 @@
 #include <string>
 
 #include "absl/log/check.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/modules.h"
@@ -49,7 +50,7 @@ size_t CommandCandidatesSize(const Segment &segment) {
   size_t result = 0;
   for (int i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).attributes &
-        Segment::Candidate::COMMAND_CANDIDATE) {
+        converter::Candidate::COMMAND_CANDIDATE) {
       result++;
     }
   }
@@ -80,7 +81,7 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
   Segment *seg = segments.push_back_segment();
 
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     seg->set_key("こまんど");
     candidate->value = "コマンド";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
@@ -93,7 +94,7 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
   }
 
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     seg->set_key("さじぇすと");
     candidate->value = "サジェスト";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
@@ -114,7 +115,7 @@ TEST_F(RewriterTest, EmoticonsAboveSymbols) {
   const ConversionRequest request;
   Segments segments;
   Segment *seg = segments.push_back_segment();
-  Segment::Candidate *candidate = seg->add_candidate();
+  converter::Candidate *candidate = seg->add_candidate();
   seg->set_key(kKey);
   candidate->value = kKey;
   EXPECT_EQ(seg->candidates_size(), 1);

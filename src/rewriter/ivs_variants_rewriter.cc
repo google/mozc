@@ -37,6 +37,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
@@ -132,7 +133,7 @@ bool ExpandIvsVariantsWithSegment(Segment *seg) {
 
   bool modified = false;
   for (int i = seg->candidates_size() - 1; i >= 0; --i) {
-    const Segment::Candidate &original_candidate = seg->candidate(i);
+    const converter::Candidate &original_candidate = seg->candidate(i);
     auto it = kIvsExpansionTable->find(
         {original_candidate.content_key, original_candidate.content_value});
     if (it == kIvsExpansionTable->end()) {
@@ -143,7 +144,7 @@ bool ExpandIvsVariantsWithSegment(Segment *seg) {
     const auto &[key, value] = *it;
 
     auto new_candidate =
-        std::make_unique<Segment::Candidate>(original_candidate);
+        std::make_unique<converter::Candidate>(original_candidate);
     // "は" for "葛城市は"
     const absl::string_view non_content_value =
         absl::string_view(original_candidate.value)

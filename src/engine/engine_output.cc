@@ -50,6 +50,7 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "composer/composer.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "engine/candidate_list.h"
 #include "protocol/candidate_window.pb.h"
@@ -59,7 +60,7 @@ namespace mozc {
 namespace engine {
 namespace {
 
-bool FillAnnotation(const Segment::Candidate &candidate_value,
+bool FillAnnotation(const converter::Candidate &candidate_value,
                     commands::Annotation *annotation) {
   bool is_modified = false;
   if (!candidate_value.prefix.empty()) {
@@ -79,14 +80,14 @@ bool FillAnnotation(const Segment::Candidate &candidate_value,
     is_modified = true;
   }
   if (candidate_value.attributes &
-      Segment::Candidate::USER_HISTORY_PREDICTION) {
+      converter::Candidate::USER_HISTORY_PREDICTION) {
     annotation->set_deletable(true);
     is_modified = true;
   }
   return is_modified;
 }
 
-void FillCandidateWord(const Segment::Candidate &segment_candidate,
+void FillCandidateWord(const converter::Candidate &segment_candidate,
                        const int id, const int index,
                        const absl::string_view base_key,
                        commands::CandidateWord *candidate_word_proto) {
@@ -102,17 +103,18 @@ void FillCandidateWord(const Segment::Candidate &segment_candidate,
     *candidate_word_proto->mutable_annotation() = annotation;
   }
 
-  if (segment_candidate.attributes & Segment::Candidate::USER_DICTIONARY) {
+  if (segment_candidate.attributes & converter::Candidate::USER_DICTIONARY) {
     candidate_word_proto->add_attributes(commands::USER_DICTIONARY);
   }
   if (segment_candidate.attributes &
-      Segment::Candidate::USER_HISTORY_PREDICTION) {
+      converter::Candidate::USER_HISTORY_PREDICTION) {
     candidate_word_proto->add_attributes(commands::USER_HISTORY);
   }
-  if (segment_candidate.attributes & Segment::Candidate::SPELLING_CORRECTION) {
+  if (segment_candidate.attributes &
+      converter::Candidate::SPELLING_CORRECTION) {
     candidate_word_proto->add_attributes(commands::SPELLING_CORRECTION);
   }
-  if (segment_candidate.attributes & Segment::Candidate::TYPING_CORRECTION) {
+  if (segment_candidate.attributes & converter::Candidate::TYPING_CORRECTION) {
     candidate_word_proto->add_attributes(commands::TYPING_CORRECTION);
   }
 
@@ -157,7 +159,7 @@ void FillAllCandidateWordsInternal(
                  << ", actual candidates size: " << segment.candidates_size();
       return;
     }
-    const Segment::Candidate &segment_candidate = segment.candidate(id);
+    const converter::Candidate &segment_candidate = segment.candidate(id);
     FillCandidateWord(segment_candidate, id, index, segment.key(),
                       candidate_word_proto);
   }
@@ -176,7 +178,8 @@ void FillCandidate(const Segment &segment, const Candidate &candidate,
     return;
   }
 
-  const Segment::Candidate &candidate_value = segment.candidate(candidate.id());
+  const converter::Candidate &candidate_value =
+      segment.candidate(candidate.id());
   candidate_proto->set_value(candidate_value.value);
 
   candidate_proto->set_id(candidate.id());
@@ -246,9 +249,9 @@ void FillAllCandidateWords(const Segment &segment,
 void FillRemovedCandidates(const Segment &segment,
                            commands::CandidateList *candidate_list_proto) {
   int index = 1000;
-  absl::Span<const Segment::Candidate> candidates =
+  absl::Span<const converter::Candidate> candidates =
       segment.removed_candidates_for_debug_;
-  for (const Segment::Candidate &candidate : candidates) {
+  for (const converter::Candidate &candidate : candidates) {
     commands::CandidateWord *candidate_word_proto =
         candidate_list_proto->add_candidates();
     FillCandidateWord(candidate, index, index, "", candidate_word_proto);
@@ -288,7 +291,8 @@ void FillUsages(const Segment &segment, const CandidateList &cand_list,
     if (candidate_ptr.HasSubcandidateList()) {
       continue;
     }
-    const Segment::Candidate &candidate = segment.candidate(candidate_ptr.id());
+    const converter::Candidate &candidate =
+        segment.candidate(candidate_ptr.id());
     if (candidate.usage_title.empty()) {
       continue;
     }

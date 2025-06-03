@@ -45,6 +45,7 @@
 #include "base/japanese_util.h"
 #include "base/strings/assign.h"
 #include "base/vlog.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/emoji_data.h"
@@ -68,10 +69,10 @@ constexpr size_t kDefaultInsertPos = 6;
 using EmojiEntryList =
     std::vector<std::pair<absl::string_view, absl::string_view>>;
 
-std::unique_ptr<Segment::Candidate> CreateCandidate(
+std::unique_ptr<converter::Candidate> CreateCandidate(
     absl::string_view key, absl::string_view value,
     absl::string_view description, int cost) {
-  auto candidate = std::make_unique<Segment::Candidate>();
+  auto candidate = std::make_unique<converter::Candidate>();
   // Fill 0 (BOS/EOS) pos code intentionally.
   candidate->lid = 0;
   candidate->rid = 0;
@@ -85,9 +86,9 @@ std::unique_ptr<Segment::Candidate> CreateCandidate(
   } else {
     candidate->description = absl::StrCat(kEmoji, " ", description);
   }
-  candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-  candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
-  candidate->category = Segment::Candidate::SYMBOL;
+  candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+  candidate->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
+  candidate->category = converter::Candidate::SYMBOL;
 
   return candidate;
 }
@@ -112,9 +113,9 @@ void GatherAllEmojiData(EmojiDataIterator begin, EmojiDataIterator end,
   std::sort(utf8_emoji_list->begin(), utf8_emoji_list->end());
 }
 
-std::vector<std::unique_ptr<Segment::Candidate>> CreateAllEmojiData(
+std::vector<std::unique_ptr<converter::Candidate>> CreateAllEmojiData(
     absl::string_view key, const int cost, EmojiEntryList utf8_emoji_list) {
-  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(utf8_emoji_list.size());
   for (const auto &emoji_entry : utf8_emoji_list) {
     candidates.push_back(
@@ -123,10 +124,10 @@ std::vector<std::unique_ptr<Segment::Candidate>> CreateAllEmojiData(
   return candidates;
 }
 
-std::vector<std::unique_ptr<Segment::Candidate>> CreateEmojiData(
+std::vector<std::unique_ptr<converter::Candidate>> CreateEmojiData(
     absl::string_view key, const int cost, EmojiRewriter::IteratorRange range,
     const SerializedStringArray &string_array) {
-  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(range.second - range.first);
   for (auto iter = range.first; iter != range.second; ++iter) {
     absl::string_view utf8_emoji = string_array[iter.emoji_index()];
@@ -166,7 +167,7 @@ bool EmojiRewriter::Rewrite(const ConversionRequest &request,
   return RewriteCandidates(segments);
 }
 
-bool EmojiRewriter::IsEmojiCandidate(const Segment::Candidate &candidate) {
+bool EmojiRewriter::IsEmojiCandidate(const converter::Candidate &candidate) {
   return absl::StrContains(candidate.description, kEmoji);
 }
 
@@ -186,7 +187,7 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
   std::string reading;
 
   auto insert_candidates =
-      [](std::vector<std::unique_ptr<Segment::Candidate>> &&cands,
+      [](std::vector<std::unique_ptr<converter::Candidate>> &&cands,
          Segment *segment) -> bool {
     if (cands.empty()) {
       return false;
@@ -212,7 +213,7 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
       }
 
       const int cost = GetEmojiCost(segment);
-      std::vector<std::unique_ptr<Segment::Candidate>> candidates =
+      std::vector<std::unique_ptr<converter::Candidate>> candidates =
           CreateAllEmojiData(reading, cost, utf8_emoji_list);
       modified |= insert_candidates(std::move(candidates), &segment);
       continue;
@@ -225,7 +226,7 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
     }
 
     const int cost = GetEmojiCost(segment);
-    std::vector<std::unique_ptr<Segment::Candidate>> candidates =
+    std::vector<std::unique_ptr<converter::Candidate>> candidates =
         CreateEmojiData(reading, cost, range, string_array_);
     modified |= insert_candidates(std::move(candidates), &segment);
   }

@@ -36,6 +36,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
@@ -52,7 +53,7 @@ namespace {
 void AddSegment(absl::string_view key, absl::string_view value,
                 Segments *segments) {
   Segment *seg = segments->add_segment();
-  Segment::Candidate *candidate = seg->add_candidate();
+  converter::Candidate *candidate = seg->add_candidate();
   seg->set_key(key);
   strings::Assign(candidate->content_key, key);
   strings::Assign(candidate->value, value);

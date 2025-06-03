@@ -655,7 +655,7 @@ void Converter::PopulateReadingOfCommittedCandidateIfMissing(
   Segment *segment = segments->mutable_conversion_segment(0);
   if (segment->candidates_size() == 0) return;
 
-  Segment::Candidate *cand = segment->mutable_candidate(0);
+  converter::Candidate *cand = segment->mutable_candidate(0);
   if (!cand->key.empty() || cand->value.empty()) return;
 
   if (cand->content_value == cand->value) {
@@ -737,7 +737,7 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
     // This block has been moved from user_history_predictor.
     // TODO(taku): Reconsider  more appropriate place to put this block.
     if (candidate->description.empty() &&
-        candidate->attributes & Segment::Candidate::USER_HISTORY_PREDICTION) {
+        candidate->attributes & converter::Candidate::USER_HISTORY_PREDICTION) {
       VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, candidate);
     }
 #ifndef NDEBUG

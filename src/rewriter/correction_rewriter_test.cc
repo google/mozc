@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -53,12 +54,12 @@ Segment *AddSegment(const absl::string_view key, Segments *segments) {
   return segment;
 }
 
-Segment::Candidate *AddCandidate(const absl::string_view key,
-                                 const absl::string_view value,
-                                 const absl::string_view content_key,
-                                 const absl::string_view content_value,
-                                 Segment *segment) {
-  Segment::Candidate *candidate = segment->add_candidate();
+converter::Candidate *AddCandidate(const absl::string_view key,
+                                   const absl::string_view value,
+                                   const absl::string_view content_key,
+                                   const absl::string_view content_value,
+                                   Segment *segment) {
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->key = std::string(key);
   candidate->value = std::string(value);
   candidate->content_key = std::string(content_key);
@@ -105,9 +106,9 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
   Segments segments;
 
   Segment *segment = AddSegment("gekkyokuwo", &segments);
-  Segment::Candidate *candidate = AddCandidate(
+  converter::Candidate *candidate = AddCandidate(
       "gekkyokuwo", "TSUKIGIMEwo", "gekkyoku", "TSUKIGIME", segment);
-  candidate->attributes |= Segment::Candidate::RERANKED;
+  candidate->attributes |= converter::Candidate::RERANKED;
 
   AddCandidate("gekkyokuwo", "GEKKYOKUwo", "gekkyoku", "GEKKYOKU", segment);
 
@@ -121,15 +122,15 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
   EXPECT_TRUE(rewriter_->Rewrite(convreq2, &segments));
 
   // candidate 0
-  EXPECT_EQ(
-      segments.conversion_segment(0).candidate(0).attributes,
-      (Segment::Candidate::RERANKED | Segment::Candidate::SPELLING_CORRECTION));
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).attributes,
+            (converter::Candidate::RERANKED |
+             converter::Candidate::SPELLING_CORRECTION));
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).description,
             "<もしかして: tsukigime>");
 
   // candidate 1
   EXPECT_EQ(segments.conversion_segment(0).candidate(1).attributes,
-            Segment::Candidate::DEFAULT_ATTRIBUTE);
+            converter::Candidate::DEFAULT_ATTRIBUTE);
   EXPECT_TRUE(segments.conversion_segment(0).candidate(1).description.empty());
 }
 

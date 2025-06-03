@@ -33,6 +33,7 @@
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "testing/gunit.h"
 
@@ -41,7 +42,7 @@ namespace {
 
 void AddCandidate(const absl::string_view key, const absl::string_view value,
                   Segment *segment) {
-  Segment::Candidate *candidate = segment->push_back_candidate();
+  converter::Candidate *candidate = segment->push_back_candidate();
   candidate->key = std::string(key);
   candidate->value = std::string(value);
 }
@@ -55,7 +56,7 @@ TEST(RewriterUtilTest, CalculateInsertPositionTest_UserHistory) {
 
   for (int i = 0; i < 3; ++i) {
     segment.mutable_candidate(i)->attributes =
-        Segment::Candidate::USER_HISTORY_PREDICTION;
+        converter::Candidate::USER_HISTORY_PREDICTION;
   }
 
   EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 0), 3);

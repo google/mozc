@@ -54,6 +54,7 @@
 #include "base/vlog.h"
 #include "composer/query.h"
 #include "config/character_form_manager.h"
+#include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -402,11 +403,12 @@ class PrefixLookupCallback : public DictionaryInterface::Callback {
     Result result;
     result.InitializeByTokenAndTypes(token, PREFIX);
     if (key != actual_key) {
-      result.candidate_attributes |= Segment::Candidate::TYPING_CORRECTION;
+      result.candidate_attributes |= converter::Candidate::TYPING_CORRECTION;
     }
     const int key_len = Util::CharsLen(key);
     if (key_len < input_key_len_) {
-      result.candidate_attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      result.candidate_attributes |=
+          converter::Candidate::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = key_len;
     }
     results_->emplace_back(std::move(result));
@@ -859,7 +861,7 @@ void DictionaryPredictionAggregator::AggregateRealtime(
   // Copy candidates into the array of Results.
   const Segment &segment = tmp_segments.conversion_segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segment.candidate(i);
+    const converter::Candidate &candidate = segment.candidate(i);
 
     Result result;
     result.key = candidate.key;
@@ -872,13 +874,15 @@ void DictionaryPredictionAggregator::AggregateRealtime(
     result.rid = candidate.rid;
     result.inner_segment_boundary = candidate.inner_segment_boundary;
     result.SetTypesAndTokenAttributes(REALTIME, Token::NONE);
-    result.candidate_attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    result.candidate_attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
     if (candidate.key.size() < segment.key().size()) {
-      result.candidate_attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      result.candidate_attributes |=
+          converter::Candidate::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = Util::CharsLen(candidate.key);
     }
     // Kana expansion happens inside the decoder.
-    if (candidate.attributes & Segment::Candidate::KEY_EXPANDED_IN_DICTIONARY) {
+    if (candidate.attributes &
+        converter::Candidate::KEY_EXPANDED_IN_DICTIONARY) {
       result.types |= prediction::KEY_EXPANDED_IN_DICTIONARY;
     }
     result.candidate_attributes |= candidate.attributes;
@@ -929,9 +933,9 @@ void DictionaryPredictionAggregator::AggregateUnigramForHandwriting(
         .types = UNIGRAM,
         // Set small cost for the top recognition result.
         .wcost = (i == 0) ? 0 : kAsisCostOffset + recognition_cost,
-        .candidate_attributes = (Segment::Candidate::NO_VARIANTS_EXPANSION |
-                                 Segment::Candidate::NO_EXTRA_DESCRIPTION |
-                                 Segment::Candidate::NO_MODIFICATION),
+        .candidate_attributes = (converter::Candidate::NO_VARIANTS_EXPANSION |
+                                 converter::Candidate::NO_EXTRA_DESCRIPTION |
+                                 converter::Candidate::NO_MODIFICATION),
     };
 
     const std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
@@ -998,7 +1002,7 @@ void DictionaryPredictionAggregator::AggregateUnigramForMixedConversion(
     for (Iter iter = min_iter; iter != max_iter;) {
       // - We do not filter user dictionary word.
       const bool should_check_redundant =
-          !(iter->candidate_attributes & Segment::Candidate::USER_DICTIONARY);
+          !(iter->candidate_attributes & converter::Candidate::USER_DICTIONARY);
       if (should_check_redundant &&
           MaybeRedundant(reference_result.value, iter->value)) {
         // Swap out the redundant result.
@@ -1132,7 +1136,7 @@ void DictionaryPredictionAggregator::AggregateNumber(
     result.types = PredictionType::NUMBER;
     result.key = input_key.substr(0, decode_result.consumed_key_byte_len);
     result.value = std::move(decode_result.candidate);
-    result.candidate_attributes |= Segment::Candidate::NO_SUGGEST_LEARNING;
+    result.candidate_attributes |= converter::Candidate::NO_SUGGEST_LEARNING;
     // Heuristic cost:
     // Large digit number (1億, 1兆, etc) should have larger cost
     // 1000 ~= 500 * log(10)
@@ -1140,7 +1144,8 @@ void DictionaryPredictionAggregator::AggregateNumber(
     result.lid = is_arabic ? number_id_ : kanji_number_id_;
     result.rid = is_arabic ? number_id_ : kanji_number_id_;
     if (decode_result.consumed_key_byte_len < input_key.size()) {
-      result.candidate_attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      result.candidate_attributes |=
+          converter::Candidate::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = Util::CharsLen(result.key);
     }
     results->emplace_back(std::move(result));
@@ -1438,7 +1443,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
           .candidate(0)
           .rid;
   result.SetTypesAndTokenAttributes(REALTIME | REALTIME_TOP, Token::NONE);
-  result.candidate_attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  result.candidate_attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
 
   // Concatenate the top candidates.
   // Note that since StartConversion() runs in conversion mode, the
@@ -1448,17 +1453,17 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
   // and we should refactor code after finding more good design.
   bool inner_segment_boundary_success = true;
   for (const Segment &segment : tmp_segments.conversion_segments()) {
-    const Segment::Candidate &candidate = segment.candidate(0);
+    const converter::Candidate &candidate = segment.candidate(0);
     result.value.append(candidate.value);
     result.key.append(candidate.key);
     result.wcost += candidate.wcost;
     result.candidate_attributes |=
         (candidate.attributes &
-         Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
+         converter::Candidate::USER_SEGMENT_HISTORY_REWRITER);
 
     uint32_t encoded_lengths = 0;
     if (inner_segment_boundary_success &&
-        Segment::Candidate::EncodeLengths(
+        converter::Candidate::EncodeLengths(
             candidate.key.size(), candidate.value.size(),
             candidate.content_key.size(), candidate.content_value.size(),
             &encoded_lengths)) {

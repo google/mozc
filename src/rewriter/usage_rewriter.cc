@@ -41,6 +41,7 @@
 #include "base/container/serialized_string_array.h"
 #include "base/util.h"
 #include "base/vlog.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -141,7 +142,7 @@ std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
 
 UsageRewriter::UsageDictItemIterator
 UsageRewriter::LookupUnmatchedUsageHeuristically(
-    const Segment::Candidate &candidate) const {
+    const converter::Candidate &candidate) const {
   // We check Unknown POS ("名詞,サ変接続") as well, since
   // target verbs/adjectives may be in web dictionary.
   if (!pos_matcher_.IsContentWordWithConjugation(candidate.lid) &&
@@ -171,7 +172,7 @@ UsageRewriter::LookupUnmatchedUsageHeuristically(
 }
 
 UsageRewriter::UsageDictItemIterator UsageRewriter::LookupUsage(
-    const Segment::Candidate &candidate) const {
+    const converter::Candidate &candidate) const {
   const absl::string_view key = candidate.content_key;
   const absl::string_view value = candidate.content_value;
   StrPair key_value(key, value);
@@ -217,7 +218,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
         if (dictionary_->LookupComment(segment->candidate(j).content_key,
                                        segment->candidate(j).content_value,
                                        request, &comment)) {
-          Segment::Candidate *candidate = segment->mutable_candidate(j);
+          converter::Candidate *candidate = segment->mutable_candidate(j);
           candidate->usage_id = usage_id_for_user_comment;
           candidate->usage_title = segment->candidate(j).content_value;
           candidate->usage_description = std::move(comment);
@@ -231,7 +232,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
       // dictionary.
       const UsageDictItemIterator iter = LookupUsage(segment->candidate(j));
       if (iter.IsValid()) {
-        Segment::Candidate *candidate = segment->mutable_candidate(j);
+        converter::Candidate *candidate = segment->mutable_candidate(j);
         DCHECK(candidate);
         candidate->usage_id = iter.usage_id();
 

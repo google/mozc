@@ -40,6 +40,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/emoji_data.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -65,7 +66,7 @@ void SetSegment(const absl::string_view key, const absl::string_view value,
   segments->Clear();
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
-  Segment::Candidate *candidate = seg->add_candidate();
+  converter::Candidate *candidate = seg->add_candidate();
   candidate->value = std::string(key);
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);
@@ -90,7 +91,7 @@ bool HasExpectedCandidate(const Segments &segments,
   CHECK_LE(1, segments.segments_size());
   const Segment &segment = segments.segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segment.candidate(i);
+    const converter::Candidate &candidate = segment.candidate(i);
     if (candidate.value == expect_value) {
       return true;
     }
@@ -314,7 +315,7 @@ TEST_F(EmojiRewriterTest, CheckDescription) {
   ASSERT_LT(0, CountEmojiCandidates(segments));
   const Segment &segment = segments.segment(0);
   for (int i = 0; i < segment.candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segment.candidate(i);
+    const converter::Candidate &candidate = segment.candidate(i);
     const std::string &description = candidate.description;
     // Skip non emoji candidates.
     if (!EmojiRewriter::IsEmojiCandidate(candidate)) {
@@ -339,7 +340,7 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
     segment->set_key("Neko");
     for (int i = 0; i < kExpectPosition * 2; ++i) {
       std::string value = "candidate" + std::to_string(i);
-      Segment::Candidate *candidate = segment->add_candidate();
+      converter::Candidate *candidate = segment->add_candidate();
       candidate->value = value;
       candidate->content_key = "Neko";
       candidate->content_value = value;
@@ -354,7 +355,7 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
   for (int i = 0; i < kExpectPosition; ++i) {
     EXPECT_FALSE(EmojiRewriter::IsEmojiCandidate(segment.candidate(i)));
   }
-  const Segment::Candidate &candidate = segment.candidate(kExpectPosition);
+  const converter::Candidate &candidate = segment.candidate(kExpectPosition);
   EXPECT_TRUE(EmojiRewriter::IsEmojiCandidate(candidate));
   EXPECT_EQ(candidate.value, "CAT");
 }

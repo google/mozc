@@ -42,6 +42,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -204,7 +205,7 @@ void AddCandidate(std::string key, std::string description, std::string value,
     index = segment->candidates_size();
   }
 
-  Segment::Candidate *candidate = segment->insert_candidate(index);
+  converter::Candidate *candidate = segment->insert_candidate(index);
   DCHECK(candidate);
 
   segment->set_key(key);
@@ -212,8 +213,8 @@ void AddCandidate(std::string key, std::string description, std::string value,
   candidate->value = value;
   candidate->content_value = std::move(value);
   candidate->description = std::move(description);
-  candidate->attributes |= (Segment::Candidate::NO_LEARNING |
-                            Segment::Candidate::NO_VARIANTS_EXPANSION);
+  candidate->attributes |= (converter::Candidate::NO_LEARNING |
+                            converter::Candidate::NO_VARIANTS_EXPANSION);
 }
 
 std::optional<std::string> GetValue(absl::string_view key) {

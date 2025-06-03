@@ -53,6 +53,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "config/character_form_manager.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -133,7 +134,8 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
   // BEST_CANDIDATE is highly possibly in that range (http://b/9992330).
   const int size = std::min<int>(segment.candidates_size(), kMaxRerankSize + 1);
   for (int i = 0; i < size; ++i) {
-    if (segment.candidate(i).attributes & Segment::Candidate::BEST_CANDIDATE) {
+    if (segment.candidate(i).attributes &
+        converter::Candidate::BEST_CANDIDATE) {
       return i;
     }
   }
@@ -265,7 +267,7 @@ std::string FeatureKey::LeftNumber(absl::string_view base_key,
     return "";
   }
   const int j = GetDefaultCandidateIndex(segments_.segment(index_ - 1));
-  const Segment::Candidate &candidate =
+  const converter::Candidate &candidate =
       segments_.segment(index_ - 1).candidate(j);
   if (pos_matcher_.IsNumber(candidate.rid) ||
       pos_matcher_.IsKanjiNumber(candidate.rid) ||
@@ -282,7 +284,7 @@ std::string FeatureKey::RightNumber(absl::string_view base_key,
     return "";
   }
   const int j = GetDefaultCandidateIndex(segments_.segment(index_ + 1));
-  const Segment::Candidate &candidate =
+  const converter::Candidate &candidate =
       segments_.segment(index_ + 1).candidate(j);
   if (pos_matcher_.IsNumber(candidate.lid) ||
       pos_matcher_.IsKanjiNumber(candidate.lid) ||
@@ -316,7 +318,7 @@ void GetValueByType(const Segment *segment,
                     NumberUtil::NumberString::Style style,
                     std::string *output) {
   DCHECK(output);
-  for (const Segment::Candidate *candidate : segment->candidates()) {
+  for (const converter::Candidate *candidate : segment->candidates()) {
     if (candidate->style == style) {
       *output = candidate->value;
       return;
@@ -327,10 +329,10 @@ void GetValueByType(const Segment *segment,
 // NormalizeCandidate using config
 void NormalizeCandidate(const Segment *segment, int n,
                         std::string *normalized_value) {
-  const Segment::Candidate &candidate = segment->candidate(n);
+  const converter::Candidate &candidate = segment->candidate(n);
 
   // use "AS IS"
-  if (candidate.attributes & Segment::Candidate::NO_VARIANTS_EXPANSION) {
+  if (candidate.attributes & converter::Candidate::NO_VARIANTS_EXPANSION) {
     *normalized_value = candidate.value;
     return;
   }
@@ -376,7 +378,7 @@ void NormalizeCandidate(const Segment *segment, int n,
 // When candidate is in meta candidate,
 // set meta candidate index, (-index-1) to position.
 bool GetSameValueCandidatePosition(const Segment *segment,
-                                   const Segment::Candidate *candidate,
+                                   const converter::Candidate *candidate,
                                    int *position) {
   DCHECK(position);
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
@@ -394,7 +396,7 @@ bool GetSameValueCandidatePosition(const Segment *segment,
   return false;
 }
 
-bool IsT13NCandidate(const Segment::Candidate &cand) {
+bool IsT13NCandidate(const converter::Candidate &cand) {
   // The cand with 0-id can be the transliterated candidate.
   return (cand.lid == 0 && cand.rid == 0);
 }
@@ -414,7 +416,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
     if (kScoreGap < (top_score - sorted_scores[n].score)) {
       break;
     }
-    const Segment::Candidate *candidate = sorted_scores[n].candidate;
+    const converter::Candidate *candidate = sorted_scores[n].candidate;
     DCHECK(candidate);
     int old_position = 0;
 
@@ -430,7 +432,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
     NormalizeCandidate(segment, old_position, &normalized_value);
 
     if (normalized_value != candidate->value) {
-      const Segment::Candidate *normalized_cand = nullptr;
+      const converter::Candidate *normalized_cand = nullptr;
       int pos = segment->candidates_size();
       for (size_t l = 0; l < segment->candidates_size(); ++l) {
         if (segment->candidate(l).value == normalized_value) {
@@ -451,7 +453,8 @@ bool UserSegmentHistoryRewriter::SortCandidates(
         // If default character form is different and
         // is not found in the candidates, make a new
         // candidate and push it to the top.
-        Segment::Candidate *new_candidate = segment->insert_candidate(next_pos);
+        converter::Candidate *new_candidate =
+            segment->insert_candidate(next_pos);
         DCHECK(new_candidate);
 
         *new_candidate = *candidate;  // copy candidate
@@ -495,9 +498,9 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
     const ConversionRequest &request, const Segments &segments,
     size_t segment_index, int candidate_index) const {
   const size_t segments_size = segments.conversion_segments_size();
-  const Segment::Candidate &top_candidate =
+  const converter::Candidate &top_candidate =
       segments.segment(segment_index).candidate(0);
-  const Segment::Candidate &candidate =
+  const converter::Candidate &candidate =
       segments.segment(segment_index).candidate(candidate_index);
   absl::string_view all_value = candidate.value;
   absl::string_view content_value = candidate.content_value;
@@ -508,9 +511,9 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
   // don't apply UNIGRAM model
   const bool context_sensitive =
       segments.resized() ||
-      (candidate.attributes & Segment::Candidate::CONTEXT_SENSITIVE) ||
+      (candidate.attributes & converter::Candidate::CONTEXT_SENSITIVE) ||
       (segments.segment(segment_index).candidate(0).attributes &
-       Segment::Candidate::CONTEXT_SENSITIVE);
+       converter::Candidate::CONTEXT_SENSITIVE);
 
   const uint32_t trigram_weight = (segments_size == 3) ? 180 : 30;
   const uint32_t bigram_weight = (segments_size == 2) ? 60 : 10;
@@ -568,8 +571,9 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
 // Here, "best candidate" means the candidate from converter before applying
 // personalization.
 bool UserSegmentHistoryRewriter::Replaceable(
-    const ConversionRequest &request, const Segment::Candidate &best_candidate,
-    const Segment::Candidate &target_candidate) const {
+    const ConversionRequest &request,
+    const converter::Candidate &best_candidate,
+    const converter::Candidate &target_candidate) const {
   const bool same_functional_value = (best_candidate.functional_value() ==
                                       target_candidate.functional_value());
   const bool same_pos_group = (pos_group_->GetPosGroup(best_candidate.lid) ==
@@ -581,7 +585,7 @@ bool UserSegmentHistoryRewriter::Replaceable(
 
 void UserSegmentHistoryRewriter::RememberNumberPreference(
     const Segment &segment, std::vector<std::string> &revert_entries) {
-  const Segment::Candidate &candidate = segment.candidate(0);
+  const converter::Candidate &candidate = segment.candidate(0);
 
   if ((candidate.style ==
        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH) ||
@@ -609,7 +613,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
     const ConversionRequest &request, const Segments &segments,
     size_t segment_index, std::vector<std::string> &revert_entries) {
   const Segment &seg = segments.segment(segment_index);
-  const Segment::Candidate &candidate = seg.candidate(0);
+  const converter::Candidate &candidate = seg.candidate(0);
 
   // http://b/issue?id=3156109
   // Do not remember the preference of Punctuations
@@ -619,7 +623,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
 
   const bool context_sensitive =
       segments.resized() ||
-      (candidate.attributes & Segment::Candidate::CONTEXT_SENSITIVE);
+      (candidate.attributes & converter::Candidate::CONTEXT_SENSITIVE);
   absl::string_view all_value = candidate.value;
   absl::string_view content_value = candidate.content_value;
   absl::string_view all_key = seg.key();
@@ -628,7 +632,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   // even if the candidate was the top (default) candidate,
   // ERANKED will be set when user changes the ranking
   const bool force_insert =
-      ((candidate.attributes & Segment::Candidate::RERANKED) != 0);
+      ((candidate.attributes & converter::Candidate::RERANKED) != 0);
 
   // Compare the POS group and Functional value.
   // if "is_replaceable_with_top" is true, it means that  the target candidate
@@ -721,7 +725,8 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
 // Inner segments boundary will be expanded.
 Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
     const ConversionRequest &request, const Segments &segments) {
-  auto inner_segments_info_available = [&request](const Segment::Candidate &c) {
+  auto inner_segments_info_available = [&request](
+                                           const converter::Candidate &c) {
     if (request.request()
             .decoder_experiment_params()
             .apply_single_inner_segment_boundary()) {
@@ -733,14 +738,14 @@ Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
 
   Segments ret;
   for (const Segment &segment : segments) {
-    const Segment::Candidate &candidate = segment.candidate(0);
+    const converter::Candidate &candidate = segment.candidate(0);
     if (!inner_segments_info_available(candidate)) {
       // No inner segment info
       Segment *seg = ret.add_segment();
       *seg = segment;
       continue;
     }
-    for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
+    for (converter::Candidate::InnerSegmentIterator iter(&candidate);
          !iter.Done(); iter.Next()) {
       size_t index = iter.GetIndex();
       absl::string_view key = iter.GetKey();
@@ -750,7 +755,7 @@ Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
       seg->set_key(key);
       seg->clear_candidates();
 
-      Segment::Candidate *cand = seg->add_candidate();
+      converter::Candidate *cand = seg->add_candidate();
       cand->attributes = candidate.attributes;
       cand->key = key;
       cand->content_key = iter.GetContentKey();
@@ -795,7 +800,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &
-            Segment::Candidate::NO_HISTORY_LEARNING) {
+            converter::Candidate::NO_HISTORY_LEARNING) {
       continue;
     }
     if (IsNumberSegment(segment) && !IsNumberStyleLearningEnabled(request)) {
@@ -867,7 +872,7 @@ bool UserSegmentHistoryRewriter::ShouldRewrite(
 }
 
 void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
-  if (!(segment.candidate(0).attributes & Segment::Candidate::RERANKED)) {
+  if (!(segment.candidate(0).attributes & converter::Candidate::RERANKED)) {
     MOZC_VLOG(2) << "InsertTriggerKey is skipped";
     return;
   }
@@ -946,7 +951,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
   for (Segment &segment : *segments) {
     DCHECK_GT(segment.candidates_size(), 0);
     segment.mutable_candidate(0)->attributes |=
-        Segment::Candidate::BEST_CANDIDATE;
+        converter::Candidate::BEST_CANDIDATE;
   }
 
   bool modified = false;
@@ -1008,9 +1013,9 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
                      std::greater<ScoreCandidate>());
     modified |= SortCandidates(scores, segment);
     if (!(segment->candidate(0).attributes &
-          Segment::Candidate::BEST_CANDIDATE)) {
+          converter::Candidate::BEST_CANDIDATE)) {
       segment->mutable_candidate(0)->attributes |=
-          Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER;
+          converter::Candidate::USER_SEGMENT_HISTORY_REWRITER;
     }
   }
   return modified;
@@ -1041,7 +1046,7 @@ bool UserSegmentHistoryRewriter::ClearHistoryEntry(const Segments &segments,
   DCHECK_LT(segment_index, segments.segments_size());
   const Segment &segment = segments.segment(segment_index);
   DCHECK(segment.is_valid_index(candidate_index));
-  const Segment::Candidate &candidate = segment.candidate(0);
+  const converter::Candidate &candidate = segment.candidate(0);
   absl::string_view key = candidate.key;
   absl::string_view value = candidate.value;
 
@@ -1060,7 +1065,7 @@ bool UserSegmentHistoryRewriter::ClearHistoryEntry(const Segments &segments,
 }
 
 bool UserSegmentHistoryRewriter::IsPunctuation(
-    const Segment &seg, const Segment::Candidate &candidate) const {
+    const Segment &seg, const converter::Candidate &candidate) const {
   return (pos_matcher_->IsJapanesePunctuations(candidate.lid) &&
           candidate.lid == candidate.rid && IsPunctuationInternal(seg.key()) &&
           IsPunctuationInternal(candidate.value));

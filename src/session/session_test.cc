@@ -49,6 +49,7 @@
 #include "composer/key_parser.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -202,20 +203,20 @@ bool InsertCharacterCodeAndString(const char key_code,
   return session->InsertCharacter(command);
 }
 
-Segment::Candidate *AddCandidate(const absl::string_view key,
-                                 const absl::string_view value,
-                                 Segment *segment) {
-  Segment::Candidate *candidate = segment->add_candidate();
+converter::Candidate *AddCandidate(const absl::string_view key,
+                                   const absl::string_view value,
+                                   Segment *segment) {
+  converter::Candidate *candidate = segment->add_candidate();
   strings::Assign(candidate->key, key);
   strings::Assign(candidate->content_key, key);
   strings::Assign(candidate->value, value);
   return candidate;
 }
 
-Segment::Candidate *AddMetaCandidate(const absl::string_view key,
-                                     const absl::string_view value,
-                                     Segment *segment) {
-  Segment::Candidate *candidate = segment->add_meta_candidate();
+converter::Candidate *AddMetaCandidate(const absl::string_view key,
+                                       const absl::string_view value,
+                                       Segment *segment) {
+  converter::Candidate *candidate = segment->add_meta_candidate();
   strings::Assign(candidate->key, key);
   strings::Assign(candidate->content_key, key);
   strings::Assign(candidate->value, value);
@@ -471,7 +472,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
   void SetAiueo(Segments *segments) {
     segments->Clear();
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segment = segments->add_segment();
     segment->set_key("あいうえお");
@@ -556,7 +557,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
   // set result for "like"
   void SetLike(Segments *segments) {
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segments->Clear();
     segment = segments->add_segment();
@@ -598,7 +599,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
     Segment *segment;
     segment = reverse_segments.add_segment();
     segment->set_key(kanji);
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     candidate = segment->add_candidate();
     // For reverse conversion, key is the original kanji string.
     candidate->key = kanji;
@@ -693,7 +694,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
       SetAiueo(&segments);
       // Don't use FillT13Ns(). It makes platform dependent segments.
       // TODO(hsumita): Makes FillT13Ns() independent from platforms.
-      Segment::Candidate *candidate;
+      converter::Candidate *candidate;
       candidate = segments.mutable_segment(0)->add_candidate();
       candidate->value = "aiueo";
       candidate = segments.mutable_segment(0)->add_candidate();
@@ -1225,7 +1226,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("わたしの");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "私の";
   candidate = segment->add_candidate();
   candidate->value = "わたしの";
@@ -1327,7 +1328,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("あい");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "愛";
   candidate = segment->add_candidate();
   candidate->value = "相";
@@ -1415,7 +1416,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("ばりに");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "バリに";
   candidate = segment->add_candidate();
   candidate->value = "針に";
@@ -1495,7 +1496,7 @@ TEST_F(SessionTest, CommitSegment) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("わたしの");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "私の";
   candidate = segment->add_candidate();
   candidate->value = "わたしの";
@@ -1554,7 +1555,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("わたしの");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "私の";
   segment = segments.add_segment();
   segment->set_key("はは");
@@ -1611,7 +1612,7 @@ TEST_F(SessionTest, Transliterations) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("じしん");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "自信";
   candidate = segment->add_candidate();
   candidate->value = "自身";
@@ -1673,7 +1674,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("じしん");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "自信";
   candidate = segment->add_candidate();
   candidate->value = "自身";
@@ -1712,7 +1713,7 @@ TEST_F(SessionTest, ConvertToTransliterationOfNegativeNumber) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("−７８９");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "−７８９";
 
   const ConversionRequest request = CreateConversionRequest(session);
@@ -1821,7 +1822,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("ｄｖｄ");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "DVD";
   candidate = segment->add_candidate();
   candidate->value = "dvd";
@@ -1865,7 +1866,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("ｄｖｄ");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "DVD";
   candidate = segment->add_candidate();
   candidate->value = "dvd";
@@ -2171,7 +2172,7 @@ TEST_F(SessionTest, RomajiInput) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("ぱん");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "パン";
 
   const ConversionRequest request = CreateConversionRequest(session);
@@ -2224,7 +2225,7 @@ TEST_F(SessionTest, KanaInput) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("もずく!");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "もずく！";
 
   const ConversionRequest request = CreateConversionRequest(session);
@@ -2256,7 +2257,7 @@ TEST_F(SessionTest, ExceededComposition) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key(long_a);
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = long_a;
 
   const ConversionRequest request = CreateConversionRequest(session);
@@ -2450,7 +2451,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     SetAiueo(&segments);
     // Don't use FillT13Ns(). It makes platform dependent segments.
     // TODO(hsumita): Makes FillT13Ns() independent from platforms.
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "aiueo";
     candidate = segments.mutable_segment(0)->add_candidate();
@@ -2617,7 +2618,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
   {  // Create segments
     InsertCharacterChars("key1key2key3", &session, &command);
 
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     Segment *segment;
 
     segment = segments.add_segment();
@@ -2786,7 +2787,7 @@ TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
   {  // Create segments
     InsertCharacterChars("あかっこ", &session, &command);
 
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     Segment *segment;
 
     segment = segments.add_segment();
@@ -2858,7 +2859,7 @@ TEST_F(SessionTest, MultipleUndo) {
   {  // Create segments
     InsertCharacterChars("key1key2key3", &session, &command);
 
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     Segment *segment;
 
     segment = segments.add_segment();
@@ -2960,7 +2961,7 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
     {  // Create segments
       InsertCharacterChars("aiueo", &session, &command);
       SetAiueo(&segments);
-      Segment::Candidate *candidate;
+      converter::Candidate *candidate;
       candidate = segments.mutable_segment(0)->add_candidate();
       candidate->value = "aiueo";
       candidate = segments.mutable_segment(0)->add_candidate();
@@ -3010,7 +3011,7 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);
     SetAiueo(&segments);
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "aiueo";
     candidate = segments.mutable_segment(0)->add_candidate();
@@ -3699,7 +3700,7 @@ TEST_F(SessionTest, Issue1805239) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("わたしの");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "私の";
   candidate = segment->add_candidate();
   candidate->value = "渡しの";
@@ -3752,7 +3753,7 @@ TEST_F(SessionTest, Issue1816861) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("かまぼこの");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "かまぼこの";
   candidate = segment->add_candidate();
   candidate->value = "カマボコの";
@@ -3814,7 +3815,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     Segment *segment;
     segment = segments.add_segment();
     segment->set_key("かまぼこの");
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = "かまぼこの";
     candidate = segment->add_candidate();
     candidate->value = "カマボコの";
@@ -3834,7 +3835,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("かまぼこの");
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = "かまぼこの";
     candidate = segment->add_candidate();
     candidate->value = "カマボコの";
@@ -4556,11 +4557,11 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   Segment *segment = segments_jueri.add_segment();
   constexpr absl::string_view kJueri = "じゅえり";
   segment->set_key(kJueri);
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->key = "くえり";
   candidate->content_key = candidate->key;
   candidate->value = "クエリ";
-  candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+  candidate->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
   candidate->consumed_key_size = strings::CharsLen(kJueri);
 
   MockEngine engine;
@@ -4608,11 +4609,11 @@ TEST_F(SessionTest, MobilePartialPrediction) {
     segment = segments_wata.add_segment();
     constexpr absl::string_view kWata = "わた";
     segment->set_key(kWata);
-    Segment::Candidate *cand1 = AddCandidate(kWata, "綿", segment);
-    cand1->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    converter::Candidate *cand1 = AddCandidate(kWata, "綿", segment);
+    cand1->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
     cand1->consumed_key_size = strings::CharsLen(kWata);
-    Segment::Candidate *cand2 = AddCandidate(kWata, kWata, segment);
-    cand2->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    converter::Candidate *cand2 = AddCandidate(kWata, kWata, segment);
+    cand2->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
     cand2->consumed_key_size = strings::CharsLen(kWata);
   }
 
@@ -4622,13 +4623,13 @@ TEST_F(SessionTest, MobilePartialPrediction) {
     segment = segments_watashino.add_segment();
     constexpr absl::string_view kWatashino = "わたしの";
     segment->set_key(kWatashino);
-    Segment::Candidate *cand1 = segment->add_candidate();
+    converter::Candidate *cand1 = segment->add_candidate();
     cand1->value = "私の";
-    cand1->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    cand1->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
     cand1->consumed_key_size = strings::CharsLen(kWatashino);
-    Segment::Candidate *cand2 = segment->add_candidate();
+    converter::Candidate *cand2 = segment->add_candidate();
     cand2->value = kWatashino;
-    cand2->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    cand2->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
     cand2->consumed_key_size = strings::CharsLen(kWatashino);
   }
 
@@ -4638,10 +4639,10 @@ TEST_F(SessionTest, MobilePartialPrediction) {
     segment = segments_shino.add_segment();
     constexpr absl::string_view kShino = "しの";
     segment->set_key(kShino);
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     candidate = AddCandidate("しのみや", "四ノ宮", segment);
     candidate->content_key = segment->key();
-    candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
     candidate->consumed_key_size = strings::CharsLen(kShino);
     candidate = AddCandidate(kShino, "shino", segment);
   }
@@ -5926,7 +5927,7 @@ TEST_F(SessionTest, Issue2034943) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("mozu");
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     candidate = segment->add_candidate();
     candidate->value = "MOZU";
     const ConversionRequest request = CreateConversionRequest(session);
@@ -5989,7 +5990,7 @@ TEST_F(SessionTest, Issue2066906) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("a");
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = "abc";
   candidate = segment->add_candidate();
   candidate->value = "abcdef";
@@ -6252,7 +6253,7 @@ TEST_F(SessionTest, Issue2223755) {
       Segment *segment;
       segment = segments.add_segment();
       segment->set_key("あ い");
-      Segment::Candidate *candidate;
+      converter::Candidate *candidate;
       candidate = segment->add_candidate();
       candidate->value = "あ い";
       const ConversionRequest request = CreateConversionRequest(session);
@@ -6396,7 +6397,7 @@ TEST_F(SessionTest, Issue2379374) {
   Segments segments;
   {  // Set mock conversion.
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segment = segments.add_segment();
     segment->set_key("あ");
@@ -6942,7 +6943,7 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
     SetAiueo(&segments);
     // Don't use FillT13Ns(). It makes platform dependent segments.
     // TODO(hsumita): Makes FillT13Ns() independent from platforms.
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "aiueo";
     candidate = segments.mutable_segment(0)->add_candidate();
@@ -7694,7 +7695,7 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
   {  // Segments as conversion result.
     Segments segments;
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segment = segments.add_segment();
     segment->set_key("ねこの");
@@ -7726,7 +7727,7 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
   {  // Segments as result of CommitHeadToFocusedSegments
     Segments segments;
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segment = segments.add_segment();
     segment->set_key("ぬいた");
@@ -7758,7 +7759,7 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
   {  // Segments as conversion result.
     Segments segments;
     Segment *segment;
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
 
     segment = segments.add_segment();
     segment->set_key("ねこの");
@@ -8724,7 +8725,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);
     SetAiueo(&segments);
-    Segment::Candidate *candidate;
+    converter::Candidate *candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "aiueo";
     candidate = segments.mutable_segment(0)->add_candidate();

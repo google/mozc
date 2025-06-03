@@ -37,6 +37,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
@@ -54,13 +55,13 @@ void AddCandidate(std::string value, const bool is_user_dictionary,
   } else {
     seg = segments->mutable_segment(0);
   }
-  Segment::Candidate *candidate = seg->add_candidate();
+  converter::Candidate *candidate = seg->add_candidate();
   candidate->key = value;
   candidate->content_key = value;
   candidate->value = value;
   candidate->content_value = std::move(value);
   if (is_user_dictionary) {
-    candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
+    candidate->attributes |= converter::Candidate::USER_DICTIONARY;
   }
 }
 

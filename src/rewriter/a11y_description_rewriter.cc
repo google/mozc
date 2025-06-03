@@ -38,6 +38,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
@@ -186,7 +187,7 @@ A11yDescriptionRewriter::A11yDescriptionRewriter(
 }
 
 void A11yDescriptionRewriter::AddA11yDescription(
-    Segment::Candidate *candidate) const {
+    converter::Candidate *candidate) const {
   absl::string_view content_value = candidate->content_value;
   std::string buf(content_value);
   CharacterType previous_type = INITIAL_STATE;
@@ -234,7 +235,7 @@ bool A11yDescriptionRewriter::Rewrite(const ConversionRequest &request,
   bool modified = false;
   for (Segment &segment : segments->conversion_segments()) {
     for (size_t j = 0; j < segment.candidates_size(); ++j) {
-      Segment::Candidate *candidate = segment.mutable_candidate(j);
+      converter::Candidate *candidate = segment.mutable_candidate(j);
       AddA11yDescription(candidate);
       modified = true;
     }

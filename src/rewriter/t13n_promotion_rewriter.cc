@@ -36,6 +36,7 @@
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -85,7 +86,7 @@ bool MaybeInsertLatinT13n(Segment *segment) {
 
   size_t pos = insert_pos;
   for (const auto t13n_type : kLatinT13nTypes) {
-    const Segment::Candidate &t13n_candidate =
+    const converter::Candidate &t13n_candidate =
         segment->meta_candidate(t13n_type);
     auto [it, inserted] = seen.insert(t13n_candidate.value);
     if (!inserted) {
@@ -102,7 +103,7 @@ bool MaybeInsertLatinT13n(Segment *segment) {
 // Katakana candidate is searched from `start_offset`.
 // When no Katakana is found, `katakana_candidate` is inserted.
 void InsertKatakana(int start_offset, int insert_pos,
-                    const Segment::Candidate &katakana_candidate,
+                    const converter::Candidate &katakana_candidate,
                     Segment *segment) {
   int katakana_index = -1;
   for (int i = start_offset; i < segment->candidates_size(); ++i) {
@@ -121,7 +122,7 @@ void InsertKatakana(int start_offset, int insert_pos,
 
 bool MaybePromoteKatakanaWithStaticOffset(
     const commands::DecoderExperimentParams &params,
-    const Segment::Candidate &katakana_candidate, Segment *segment) {
+    const converter::Candidate &katakana_candidate, Segment *segment) {
   if (params.katakana_promotion_offset() < 0) {
     return false;
   }
@@ -152,7 +153,7 @@ bool MaybePromoteKatakana(const ConversionRequest &request, Segment *segment) {
   }
 
   const auto &params = request.request().decoder_experiment_params();
-  const Segment::Candidate &katakana_candidate =
+  const converter::Candidate &katakana_candidate =
       segment->meta_candidate(transliteration::FULL_KATAKANA);
 
   return MaybePromoteKatakanaWithStaticOffset(params, katakana_candidate,

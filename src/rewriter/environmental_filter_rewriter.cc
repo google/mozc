@@ -48,6 +48,7 @@
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/emoji_data.h"
@@ -168,12 +169,12 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
 }
 
 // If the candidate should not by modified by this rewriter, returns true.
-bool ShouldKeepCandidate(const Segment::Candidate &candidate) {
-  return candidate.attributes & (Segment::Candidate::NO_MODIFICATION |
-                                 Segment::Candidate::USER_DICTIONARY);
+bool ShouldKeepCandidate(const converter::Candidate &candidate) {
+  return candidate.attributes & (converter::Candidate::NO_MODIFICATION |
+                                 converter::Candidate::USER_DICTIONARY);
 }
 
-bool NormalizeCandidate(Segment::Candidate *candidate,
+bool NormalizeCandidate(converter::Candidate *candidate,
                         TextNormalizer::Flag flag) {
   DCHECK(candidate);
   // ShouldKeepCandidate should be called before.
@@ -406,7 +407,7 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
   for (Segment &segment : segments->conversion_segments()) {
     // Meta candidate
     for (size_t j = 0; j < segment.meta_candidates_size(); ++j) {
-      Segment::Candidate *candidate = segment.mutable_meta_candidate(j);
+      converter::Candidate *candidate = segment.mutable_meta_candidate(j);
       DCHECK(candidate);
       if (ShouldKeepCandidate(*candidate)) {
         continue;
@@ -419,7 +420,7 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
 
     for (size_t j = 0; j < candidates_size; ++j) {
       const size_t reversed_j = candidates_size - j - 1;
-      Segment::Candidate *candidate = segment.mutable_candidate(reversed_j);
+      converter::Candidate *candidate = segment.mutable_candidate(reversed_j);
       DCHECK(candidate);
 
       if (ShouldKeepCandidate(*candidate)) {

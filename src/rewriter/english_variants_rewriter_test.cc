@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -164,12 +165,12 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     Segments segments;
     const ConversionRequest request;
     Segment *seg = segments.push_back_segment();
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "Google";
     candidate->content_value = "Google";
-    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
 
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Google");
@@ -195,18 +196,18 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
 
     Segment *seg1 = segments.push_back_segment();
     Segment *seg2 = segments.push_back_segment();
-    Segment::Candidate *candidate1 = seg1->add_candidate();
+    converter::Candidate *candidate1 = seg1->add_candidate();
     candidate1->content_key = "ぐーぐる";
     candidate1->key = "ぐーぐる";
     candidate1->value = "Google";
     candidate1->content_value = "Google";
-    candidate1->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
-    Segment::Candidate *candidate2 = seg2->add_candidate();
+    candidate1->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
+    converter::Candidate *candidate2 = seg2->add_candidate();
     candidate2->content_key = "じゃぱん";
     candidate2->key = "じゃぱん";
     candidate2->value = "Japan";
     candidate2->content_value = "Japan";
-    candidate2->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate2->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
     EXPECT_EQ(seg1->candidates_size(), 1);
     EXPECT_EQ(seg1->candidate(0).value, "Google");
     EXPECT_EQ(seg1->candidate(0).content_value, "Google");
@@ -248,13 +249,13 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     Segment *seg1 = segments.push_back_segment();
     Segment *seg2 = segments.push_back_segment();
     // When seg1 has no candidates, seg2 will not be expanded.
-    Segment::Candidate *candidate2 = seg2->add_candidate();
+    converter::Candidate *candidate2 = seg2->add_candidate();
     candidate2->content_key = "じゃぱん";
 
     candidate2->key = "じゃぱん";
     candidate2->value = "Japan";
     candidate2->content_value = "Japan";
-    candidate2->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate2->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
     EXPECT_EQ(seg1->candidates_size(), 0);
     EXPECT_EQ(seg2->candidates_size(), 1);
     EXPECT_EQ(seg2->candidate(0).value, "Japan");
@@ -282,18 +283,18 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     Segment *seg2 = segments.push_back_segment();
 
     // When seg1 is not an English word, seg2 will not be expanded.
-    Segment::Candidate *candidate1 = seg1->add_candidate();
+    converter::Candidate *candidate1 = seg1->add_candidate();
     candidate1->content_key = "ぐーぐる";
     candidate1->key = "ぐーぐる";
     candidate1->value = "ぐーぐる";
     candidate1->content_value = "ぐーぐる";
-    candidate1->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
-    Segment::Candidate *candidate2 = seg2->add_candidate();
+    candidate1->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
+    converter::Candidate *candidate2 = seg2->add_candidate();
     candidate2->content_key = "じゃぱん";
     candidate2->key = "じゃぱん";
     candidate2->value = "Japan";
     candidate2->content_value = "Japan";
-    candidate2->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate2->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
     EXPECT_EQ(seg1->candidates_size(), 1);
     EXPECT_EQ(seg1->candidate(0).value, "ぐーぐる");
     EXPECT_EQ(seg1->candidate(0).content_value, "ぐーぐる");
@@ -314,15 +315,15 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     seg->Clear();
 
     for (int i = 0; i < 10; ++i) {
-      Segment::Candidate *candidate1 = seg->add_candidate();
+      converter::Candidate *candidate1 = seg->add_candidate();
       candidate1->value = std::to_string(i);
       candidate1->content_value = std::to_string(i);
-      Segment::Candidate *candidate2 = seg->add_candidate();
+      converter::Candidate *candidate2 = seg->add_candidate();
       candidate2->content_key = "ぐーぐる";
       candidate2->key = "ぐーぐる";
       candidate2->value = "Google";
       candidate2->content_value = "Google";
-      candidate2->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+      candidate2->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
     }
 
     EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
@@ -349,12 +350,12 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
   // Multi-word English candidate should not be expanded.
   // NO_VARIANTS_EXPANSION is passed to the candidate only.
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "まいけるじゃくそん";
     candidate->key = "まいけるじゃくそん";
     candidate->value = "Michael Jackson";
     candidate->content_value = "Michael Jackson";
-    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
 
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Michael Jackson");
@@ -364,7 +365,7 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
     EXPECT_EQ(seg->candidate(0).value, "Michael Jackson");
     EXPECT_EQ(seg->candidate(0).content_value, "Michael Jackson");
     EXPECT_NE((seg->candidate(0).attributes &
-               Segment::Candidate::NO_VARIANTS_EXPANSION),
+               converter::Candidate::NO_VARIANTS_EXPANSION),
               0);
   }
 }
@@ -375,12 +376,12 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
   Segment *seg = segments.push_back_segment();
 
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "Google";
     candidate->content_value = "Google";
-    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Google");
     EXPECT_EQ(seg->candidate(0).content_value, "Google");
@@ -390,13 +391,13 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
 
   {
     seg->clear_candidates();
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "Google";
     candidate->content_value = "Google";
-    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-    candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
+    candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes |= converter::Candidate::USER_DICTIONARY;
 
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Google");
@@ -418,7 +419,7 @@ TEST_F(EnglishVariantsRewriterTest, DoNotAddDuplicatedCandidates) {
   Segment *seg = segments.push_back_segment();
 
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "GOOGLE";
@@ -448,7 +449,7 @@ TEST_F(EnglishVariantsRewriterTest, KeepRank) {
   Segment *seg = segments.push_back_segment();
 
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "GOOGLE";
@@ -487,12 +488,12 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
   Segment *seg = segments.push_back_segment();
 
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "google";
     candidate->key = "google";
     candidate->value = "Google";
     candidate->content_value = "Google";
-    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
 
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Google");
@@ -502,7 +503,7 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
     EXPECT_EQ(seg->candidate(0).value, "Google");
     EXPECT_EQ(seg->candidate(0).content_value, "Google");
     EXPECT_NE((seg->candidate(0).attributes &
-               Segment::Candidate::NO_VARIANTS_EXPANSION),
+               converter::Candidate::NO_VARIANTS_EXPANSION),
               0);
   }
 }
@@ -513,21 +514,21 @@ TEST_F(EnglishVariantsRewriterTest, DoNotExpandUpperCaseProperNouns) {
   Segment *seg = segments.push_back_segment();
 
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "なさ";
     candidate->key = "なさ";
     candidate->content_value = "NASA";
     candidate->value = "NASA";
     candidate->lid = pos_matcher_.GetUniqueNounId();
     candidate->rid = pos_matcher_.GetUniqueNounId();
-    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
   }
 
   EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
   EXPECT_EQ(seg->candidates_size(), 1);
   EXPECT_EQ(seg->candidate(0).value, "NASA");
   EXPECT_NE((seg->candidate(0).attributes &
-             Segment::Candidate::NO_VARIANTS_EXPANSION),
+             converter::Candidate::NO_VARIANTS_EXPANSION),
             0);
 }
 
@@ -537,29 +538,29 @@ TEST_F(EnglishVariantsRewriterTest, ProperNouns) {
   Segment *seg = segments.push_back_segment();
 
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->content_value = "google";
     candidate->value = "google";
     candidate->lid = pos_matcher_.GetUniqueNounId();
     candidate->rid = pos_matcher_.GetUniqueNounId();
-    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
   }
 
   EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
   ASSERT_EQ(seg->candidates_size(), 3);
   EXPECT_EQ(seg->candidate(0).value, "google");
   EXPECT_NE((seg->candidate(0).attributes &
-             Segment::Candidate::NO_VARIANTS_EXPANSION),
+             converter::Candidate::NO_VARIANTS_EXPANSION),
             0);
   EXPECT_EQ(seg->candidate(1).value, "Google");
   EXPECT_NE((seg->candidate(1).attributes &
-             Segment::Candidate::NO_VARIANTS_EXPANSION),
+             converter::Candidate::NO_VARIANTS_EXPANSION),
             0);
   EXPECT_EQ(seg->candidate(2).value, "GOOGLE");
   EXPECT_NE((seg->candidate(2).attributes &
-             Segment::Candidate::NO_VARIANTS_EXPANSION),
+             converter::Candidate::NO_VARIANTS_EXPANSION),
             0);
 }
 
@@ -570,20 +571,20 @@ TEST_F(EnglishVariantsRewriterTest, FillConsumedKeySize) {
 
   constexpr absl::string_view kKey = "なさ";
   {
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->content_key = kKey;
     candidate->key = kKey;
     candidate->content_value = "nasa";
     candidate->value = "nasa";
     candidate->consumed_key_size = kKey.size();
-    candidate->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->attributes |= converter::Candidate::PARTIALLY_KEY_CONSUMED;
   }
 
   EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
   EXPECT_GT(seg->candidates_size(), 1);
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
-    const Segment::Candidate &c = seg->candidate(i);
-    EXPECT_TRUE(c.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+    const converter::Candidate &c = seg->candidate(i);
+    EXPECT_TRUE(c.attributes & converter::Candidate::PARTIALLY_KEY_CONSUMED);
     EXPECT_EQ(c.consumed_key_size, kKey.size());
   }
 }

@@ -357,7 +357,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     Segment *seg = segments->push_front_segment();
     seg->set_segment_type(Segment::HISTORY);
     seg->set_key(key);
-    Segment::Candidate *c = seg->add_candidate();
+    converter::Candidate *c = seg->add_candidate();
     c->key = std::string(key);
     c->content_key = std::string(key);
     c->value = std::string(value);
@@ -444,7 +444,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
 
   static void AddCandidate(size_t index, absl::string_view value,
                            Segments *segments) {
-    Segment::Candidate *candidate =
+    converter::Candidate *candidate =
         segments->mutable_segment(index)->add_candidate();
     CHECK(candidate);
     candidate->value = std::string(value);
@@ -456,7 +456,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   static void AddCandidateWithDescription(size_t index, absl::string_view value,
                                           absl::string_view desc,
                                           Segments *segments) {
-    Segment::Candidate *candidate =
+    converter::Candidate *candidate =
         segments->mutable_segment(index)->add_candidate();
     CHECK(candidate);
     candidate->value = std::string(value);
@@ -3412,7 +3412,7 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
     constexpr char kValue[] = "私の名前は中野です";
     const ConversionRequest convreq1 =
         SetUpInputForPrediction(kKey, &composer_, &segments);
-    Segment::Candidate *candidate =
+    converter::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
     CHECK(candidate);
     candidate->value = kValue;
@@ -3455,7 +3455,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
     constexpr char kValue[] = "私の名前は中野です";
     const ConversionRequest convreq =
         SetUpInputForPrediction(kKey, &composer_, &segments);
-    Segment::Candidate *candidate =
+    converter::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
     CHECK(candidate);
     candidate->value = kValue;
@@ -3501,7 +3501,7 @@ TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
     constexpr char kValue[] = "よろしくお願いします";
     const ConversionRequest convreq =
         SetUpInputForPrediction(kKey, &composer_, &segments);
-    Segment::Candidate *candidate =
+    converter::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
     CHECK(candidate);
     candidate->value = kValue;
@@ -4145,7 +4145,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
     Segment *seg = segments.add_segment();
     seg->set_key("きょうも");
     seg->set_segment_type(Segment::FIXED_VALUE);
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->value = "今日も";
     candidate->content_value = "今日";
     candidate->key = seg->key();
@@ -4209,7 +4209,7 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
     constexpr char kValue[] = "東京か名古屋に行きたい";
     const ConversionRequest convreq1 =
         SetUpInputForPrediction(kKey, &composer_, &segments);
-    Segment::Candidate *candidate =
+    converter::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
     candidate->key = kKey;
     candidate->value = kValue;
@@ -4850,7 +4850,7 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
                       segments.revert_id());
   }
   {
-    Segment::Candidate *candidate =
+    converter::Candidate *candidate =
         segments.mutable_segment(1)->mutable_candidate(0);
     candidate->value = "😎";
     candidate->content_value = candidate->value;
@@ -4858,7 +4858,7 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
                       segments.revert_id());
   }
   {
-    Segment::Candidate *candidate =
+    converter::Candidate *candidate =
         segments.mutable_segment(1)->mutable_candidate(0);
     candidate->value = "😂";
     candidate->content_value = candidate->value;
@@ -5137,7 +5137,7 @@ TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
     constexpr absl::string_view kValue = "私の名前は中野です";
     const ConversionRequest convreq =
         SetUpInputForPrediction(kKey, &composer_, &segments);
-    Segment::Candidate *candidate =
+    converter::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
     CHECK(candidate);
     candidate->value = kValue;

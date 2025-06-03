@@ -49,6 +49,7 @@
 #include "base/vlog.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "engine/candidate_list.h"
@@ -1170,30 +1171,30 @@ void EngineConverter::SetCandidateListVisible(bool visible) {
 void EngineConverter::PopOutput(const composer::Composer &composer,
                                 commands::Output *output) {
   FillOutput(composer, output);
-  updated_command_ = Segment::Candidate::DEFAULT_COMMAND;
+  updated_command_ = converter::Candidate::DEFAULT_COMMAND;
   ResetResult();
 }
 
 namespace {
-void MaybeFillConfig(Segment::Candidate::Command command,
+void MaybeFillConfig(converter::Candidate::Command command,
                      const config::Config &base_config,
                      commands::Output *output) {
-  if (command == Segment::Candidate::DEFAULT_COMMAND) {
+  if (command == converter::Candidate::DEFAULT_COMMAND) {
     return;
   }
 
   *output->mutable_config() = base_config;
   switch (command) {
-    case Segment::Candidate::ENABLE_INCOGNITO_MODE:
+    case converter::Candidate::ENABLE_INCOGNITO_MODE:
       output->mutable_config()->set_incognito_mode(true);
       break;
-    case Segment::Candidate::DISABLE_INCOGNITO_MODE:
+    case converter::Candidate::DISABLE_INCOGNITO_MODE:
       output->mutable_config()->set_incognito_mode(false);
       break;
-    case Segment::Candidate::ENABLE_PRESENTATION_MODE:
+    case converter::Candidate::ENABLE_PRESENTATION_MODE:
       output->mutable_config()->set_presentation_mode(true);
       break;
-    case Segment::Candidate::DISABLE_PRESENTATION_MODE:
+    case converter::Candidate::DISABLE_PRESENTATION_MODE:
       output->mutable_config()->set_presentation_mode(false);
       break;
     default:
@@ -1362,11 +1363,11 @@ void EngineConverter::UpdateResultTokens(const size_t index,
 
   for (size_t i = index; i < size; ++i) {
     const int cand_idx = GetCandidateIndexForConverter(i);
-    const Segment::Candidate &candidate =
+    const converter::Candidate &candidate =
         segments_.conversion_segment(i).candidate(cand_idx);
     const int first_token_idx = result_.tokens_size();
 
-    if (Segment::Candidate::InnerSegmentIterator it(&candidate); !it.Done()) {
+    if (converter::Candidate::InnerSegmentIterator it(&candidate); !it.Done()) {
       // If the candidate has inner segments, fill them to the result tokens.
       for (; !it.Done(); it.Next()) {
         add_tokens(it.GetContentKey(), it.GetContentValue(),
@@ -1394,8 +1395,8 @@ size_t EngineConverter::GetConsumedPreeditSize(const size_t index,
     DCHECK_EQ(1, size);
     const Segment &segment = segments_.conversion_segment(0);
     const int id = GetCandidateIndexForConverter(0);
-    const Segment::Candidate &candidate = segment.candidate(id);
-    return (candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED)
+    const converter::Candidate &candidate = segment.candidate(id);
+    return (candidate.attributes & converter::Candidate::PARTIALLY_KEY_CONSUMED)
                ? candidate.consumed_key_size
                : kConsumedAllCharacters;
   }
@@ -1404,10 +1405,10 @@ size_t EngineConverter::GetConsumedPreeditSize(const size_t index,
   size_t result = 0;
   for (size_t i = index; i < size; ++i) {
     const int id = GetCandidateIndexForConverter(i);
-    const Segment::Candidate &candidate =
+    const converter::Candidate &candidate =
         segments_.conversion_segment(i).candidate(id);
     DCHECK(
-        !(candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED));
+        !(candidate.attributes & converter::Candidate::PARTIALLY_KEY_CONSUMED));
     result += segments_.conversion_segment(i).key_len();
   }
   return result;
@@ -1419,17 +1420,17 @@ bool EngineConverter::MaybePerformCommandCandidate(const size_t index,
   // instead of Commit after executing the specified action.
   for (size_t i = index; i < size; ++i) {
     const int id = GetCandidateIndexForConverter(i);
-    const Segment::Candidate &candidate =
+    const converter::Candidate &candidate =
         segments_.conversion_segment(i).candidate(id);
-    if (candidate.attributes & Segment::Candidate::COMMAND_CANDIDATE) {
+    if (candidate.attributes & converter::Candidate::COMMAND_CANDIDATE) {
       switch (candidate.command) {
-        case Segment::Candidate::DEFAULT_COMMAND:
+        case converter::Candidate::DEFAULT_COMMAND:
           // Do nothing
           break;
-        case Segment::Candidate::ENABLE_INCOGNITO_MODE:
-        case Segment::Candidate::DISABLE_INCOGNITO_MODE:
-        case Segment::Candidate::ENABLE_PRESENTATION_MODE:
-        case Segment::Candidate::DISABLE_PRESENTATION_MODE:
+        case converter::Candidate::ENABLE_INCOGNITO_MODE:
+        case converter::Candidate::DISABLE_INCOGNITO_MODE:
+        case converter::Candidate::ENABLE_PRESENTATION_MODE:
+        case converter::Candidate::DISABLE_PRESENTATION_MODE:
           updated_command_ = candidate.command;
           break;
         default:
@@ -1489,19 +1490,19 @@ void EngineConverter::AppendCandidateList() {
   const Segment &segment = segments_.conversion_segment(segment_index_);
 
   auto get_candidate_dedup_key =
-      [](const Segment::Candidate &c) -> const std::string & {
+      [](const converter::Candidate &c) -> const std::string & {
     return c.value;
   };
 
   for (size_t i = candidate_list_.next_available_id();
        i < segment.candidates_size(); ++i) {
-    const Segment::Candidate &c = segment.candidate(i);
+    const converter::Candidate &c = segment.candidate(i);
     candidate_list_.AddCandidate(i, get_candidate_dedup_key(c));
     // if candidate has spelling correction attribute,
     // always display the candidate to let user know the
     // miss spelled candidate.
     if (i < 10 && (segment.candidate(i).attributes &
-                   Segment::Candidate::SPELLING_CORRECTION)) {
+                   converter::Candidate::SPELLING_CORRECTION)) {
       candidate_list_visible_ = true;
     }
   }
@@ -1570,16 +1571,16 @@ std::string EngineConverter::GetSelectedCandidateValue(
     const size_t segment_index) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
   const int id = GetCandidateIndexForConverter(segment_index);
-  const Segment::Candidate &candidate =
+  const converter::Candidate &candidate =
       segments_.conversion_segment(segment_index).candidate(id);
-  if (candidate.attributes & Segment::Candidate::COMMAND_CANDIDATE) {
+  if (candidate.attributes & converter::Candidate::COMMAND_CANDIDATE) {
     // Return an empty string, however this path should not be reached.
     return "";
   }
   return candidate.value;
 }
 
-const Segment::Candidate &EngineConverter::GetSelectedCandidate(
+const converter::Candidate &EngineConverter::GetSelectedCandidate(
     const size_t segment_index) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
   const int id = GetCandidateIndexForConverter(segment_index);
@@ -1724,7 +1725,7 @@ void EngineConverter::FillIncognitoCandidateWords(
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     commands::CandidateWord *candidate_word_proto =
         candidates->add_candidates();
-    const Segment::Candidate cand = segment.candidate(i);
+    const converter::Candidate cand = segment.candidate(i);
 
     candidate_word_proto->set_id(i);
     candidate_word_proto->set_index(i);
@@ -1743,7 +1744,7 @@ void EngineConverter::SetRequest(
 void EngineConverter::SetConfig(std::shared_ptr<const config::Config> config) {
   DCHECK(config);
   config_ = std::move(config);
-  updated_command_ = Segment::Candidate::DEFAULT_COMMAND;
+  updated_command_ = converter::Candidate::DEFAULT_COMMAND;
   selection_shortcut_ = config_->selection_shortcut();
   use_cascading_window_ = config_->use_cascading_window();
 }

@@ -38,6 +38,7 @@
 #include "base/japanese_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -164,7 +165,7 @@ void GetAlphabetIds(const Segment &segment, uint16_t *lid, uint16_t *rid) {
   DCHECK(rid);
 
   for (int i = 0; i < segment.candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segment.candidate(i);
+    const converter::Candidate &candidate = segment.candidate(i);
     const Util::ScriptType type = Util::GetScriptType(candidate.value);
     if (type == Util::ALPHABET) {
       *lid = candidate.lid;
@@ -204,7 +205,7 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
     // Do no insert the new candidate over the typing corrections.
     while (rank < segment->candidates_size()) {
       if (!(segment->candidate(rank).attributes &
-            Segment::Candidate::TYPING_CORRECTION)) {
+            converter::Candidate::TYPING_CORRECTION)) {
         break;
       }
       ++rank;
@@ -221,7 +222,7 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
   if (rank > segment->candidates_size()) {
     rank = segment->candidates_size();
   }
-  Segment::Candidate *candidate = segment->insert_candidate(rank);
+  converter::Candidate *candidate = segment->insert_candidate(rank);
   candidate->value = raw_string;
   candidate->key = raw_string;
   candidate->content_value = raw_string;
@@ -230,8 +231,8 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
   candidate->lid = lid;
   candidate->rid = rid;
 
-  candidate->attributes |= (Segment::Candidate::NO_VARIANTS_EXPANSION |
-                            Segment::Candidate::NO_EXTRA_DESCRIPTION);
+  candidate->attributes |= (converter::Candidate::NO_VARIANTS_EXPANSION |
+                            converter::Candidate::NO_EXTRA_DESCRIPTION);
 
   if (!IsMobileRequest(request)) {
     candidate->prefix = "→ ";
@@ -251,7 +252,7 @@ bool LanguageAwareRewriter::Rewrite(const ConversionRequest &request,
 
 namespace {
 bool IsLanguageAwareInputCandidate(absl::string_view raw_string,
-                                   const Segment::Candidate &candidate) {
+                                   const converter::Candidate &candidate) {
   // Check candidate.prefix to filter if the candidate is probably generated
   // from LanguangeAwareInput or not.
   if (candidate.prefix != "→ ") {

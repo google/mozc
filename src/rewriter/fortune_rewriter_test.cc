@@ -34,6 +34,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
@@ -47,7 +48,7 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
   segments->Clear();
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
-  Segment::Candidate *candidate = seg->add_candidate();
+  converter::Candidate *candidate = seg->add_candidate();
   candidate->value = std::string(key);
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);
@@ -56,7 +57,7 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
 bool HasFortune(const Segments &segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segments.segment(0).candidate(i);
+    const converter::Candidate &candidate = segments.segment(0).candidate(i);
     if ("今日の運勢" == candidate.description) {
       // has valid value?
       if ("大吉" == candidate.value || "吉" == candidate.value ||

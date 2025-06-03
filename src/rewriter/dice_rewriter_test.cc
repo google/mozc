@@ -33,6 +33,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
@@ -50,7 +51,7 @@ constexpr int kPageSize = 9;
 
 void AddCandidate(const absl::string_view key, const absl::string_view value,
                   Segment *segment) {
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   candidate->value = std::string(value);
   candidate->content_value = std::string(value);
   candidate->content_key = std::string(key);
@@ -81,7 +82,7 @@ void MakeSegments(Segments *segments, const absl::string_view key,
 int CountDiceNumber(const Segment &segment) {
   int count_dice_number = 0;
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segment.candidate(i);
+    const converter::Candidate &candidate = segment.candidate(i);
     if (candidate.description == kDescription) {
       ++count_dice_number;
     }
@@ -89,7 +90,7 @@ int CountDiceNumber(const Segment &segment) {
   return count_dice_number;
 }
 
-bool HasValidValue(const Segment::Candidate &candidate) {
+bool HasValidValue(const converter::Candidate &candidate) {
   return ("1" == candidate.value || "2" == candidate.value ||
           "3" == candidate.value || "4" == candidate.value ||
           "5" == candidate.value || "6" == candidate.value);

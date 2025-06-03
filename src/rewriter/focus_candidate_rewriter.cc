@@ -41,6 +41,7 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "base/vlog.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "rewriter/number_compound_util.h"
@@ -80,7 +81,7 @@ bool IsValidSegment(const Segment &segment) {
           segment.segment_type() == Segment::FIXED_VALUE);
 }
 
-bool IsNumberCandidate(const Segment::Candidate &candidate) {
+bool IsNumberCandidate(const converter::Candidate &candidate) {
   return (candidate.style != NumberUtil::NumberString::DEFAULT_STYLE ||
           Util::GetScriptType(candidate.value) == Util::NUMBER);
 }
@@ -91,8 +92,8 @@ bool IsNumberSegment(const Segment &segment) {
 }
 
 // Returns true if two candidates have the same number form.
-bool IsSameNumberType(const Segment::Candidate &candidate1,
-                      const Segment::Candidate &candidate2) {
+bool IsSameNumberType(const converter::Candidate &candidate1,
+                      const converter::Candidate &candidate2) {
   if (candidate1.style == candidate2.style) {
     if (candidate1.style == NumberUtil::NumberString::DEFAULT_STYLE) {
       if (IsNumberCandidate(candidate1) && IsNumberCandidate(candidate2) &&
@@ -107,7 +108,7 @@ bool IsSameNumberType(const Segment::Candidate &candidate1,
   return false;
 }
 
-bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
+bool RewriteNumber(Segment *segment, const converter::Candidate &candidate) {
   for (int i = 0; i < segment->candidates_size(); ++i) {
     if (IsSameNumberType(candidate, segment->candidate(i))) {
       segment->move_candidate(i, 0);  // move to top
@@ -352,7 +353,7 @@ int FocusCandidateRewriter::FindMatchingCandidates(
     absl::string_view ref_suffix) const {
   // Only segments whose top candidate is a number compound are target of
   // reranking.
-  const Segment::Candidate &cand = seg.candidate(0);
+  const converter::Candidate &cand = seg.candidate(0);
   absl::string_view number, suffix;
   uint32_t script_type = 0;
   if (!ParseNumberCandidate(cand, &number, &suffix, &script_type)) {
@@ -380,7 +381,7 @@ int FocusCandidateRewriter::FindMatchingCandidates(
 }
 
 bool FocusCandidateRewriter::ParseNumberCandidate(
-    const Segment::Candidate &cand, absl::string_view *number,
+    const converter::Candidate &cand, absl::string_view *number,
     absl::string_view *suffix, uint32_t *script_type) const {
   // If the lengths of content value and value are different, particles may be
   // appended to value.  In such cases, we only accept parallel markers.

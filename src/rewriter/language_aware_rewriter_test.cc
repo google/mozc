@@ -36,6 +36,7 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -114,7 +115,7 @@ class LanguageAwareRewriterTest : public testing::TestWithTempUserProfile {
 };
 
 void PushFrontCandidate(const absl::string_view data, Segment *segment) {
-  Segment::Candidate *candidate = segment->push_front_candidate();
+  converter::Candidate *candidate = segment->push_front_candidate();
   candidate->value = std::string(data);
   candidate->key = std::string(data);
   candidate->content_value = std::string(data);
@@ -129,20 +130,22 @@ void PushFrontCandidate(const absl::string_view data, int attributes,
   }
 }
 
-// A matcher for Segment::Candidate to test if a candidate has the given value.
+// A matcher for converter::Candidate to test if a candidate has the given
+// value.
 constexpr auto ValueIs =
-    [](const auto &matcher) -> Matcher<const Segment::Candidate *> {
-  return Field(&Segment::Candidate::value, matcher);
+    [](const auto &matcher) -> Matcher<const converter::Candidate *> {
+  return Field(&converter::Candidate::value, matcher);
 };
 
-// A matcher for Segment::Candidate to test if a candidate has the given value
+// A matcher for converter::Candidate to test if a candidate has the given value
 // with "did you mean" annotation.
 constexpr auto IsLangAwareCandidate =
-    [](absl::string_view value) -> Matcher<const Segment::Candidate *> {
-  return Pointee(AllOf(Field(&Segment::Candidate::key, value),
-                       Field(&Segment::Candidate::value, value),
-                       Field(&Segment::Candidate::prefix, "→ "),
-                       Field(&Segment::Candidate::description, "もしかして")));
+    [](absl::string_view value) -> Matcher<const converter::Candidate *> {
+  return Pointee(
+      AllOf(Field(&converter::Candidate::key, value),
+            Field(&converter::Candidate::value, value),
+            Field(&converter::Candidate::prefix, "→ "),
+            Field(&converter::Candidate::description, "もしかして")));
 };
 
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
@@ -187,8 +190,10 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     Segments segments;
     Segment *segment = segments.push_back_segment();
     PushFrontCandidate("cand4", segment);
-    PushFrontCandidate("cand3", Segment::Candidate::TYPING_CORRECTION, segment);
-    PushFrontCandidate("cand2", Segment::Candidate::TYPING_CORRECTION, segment);
+    PushFrontCandidate("cand3", converter::Candidate::TYPING_CORRECTION,
+                       segment);
+    PushFrontCandidate("cand2", converter::Candidate::TYPING_CORRECTION,
+                       segment);
     PushFrontCandidate("cand1", segment);
     PushFrontCandidate("cand0", segment);
     ASSERT_EQ(segment->candidates_size(), 5);

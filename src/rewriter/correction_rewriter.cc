@@ -118,7 +118,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
     for (size_t j = 0; j < segment.candidates_size(); ++j) {
       // Check if the existing candidate is a corrected candidate.
       // In this case, update the candidate description.
-      const Segment::Candidate &candidate = segment.candidate(j);
+      const converter::Candidate &candidate = segment.candidate(j);
       if (!LookupCorrection(candidate.content_key, candidate.content_value,
                             &results)) {
         continue;

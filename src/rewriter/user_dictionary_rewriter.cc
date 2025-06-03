@@ -32,6 +32,7 @@
 #include <cstddef>
 
 #include "absl/log/check.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 
@@ -53,7 +54,7 @@ bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
     for (size_t move_from = 2; move_from < segment.candidates_size();
          ++move_from) {
       if (!(segment.candidate(move_from).attributes &
-            Segment::Candidate::USER_DICTIONARY)) {
+            converter::Candidate::USER_DICTIONARY)) {
         continue;
       }
 
@@ -62,7 +63,7 @@ bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
       int move_to = -1;
       for (int j = move_to_start; j < static_cast<int>(move_from); ++j) {
         if (!(segment.candidate(j).attributes &
-              Segment::Candidate::USER_DICTIONARY)) {
+              converter::Candidate::USER_DICTIONARY)) {
           move_to = j;
           break;
         }

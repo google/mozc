@@ -37,6 +37,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "rewriter/rewriter_interface.h"
@@ -48,7 +49,7 @@ namespace mozc {
 namespace {
 
 void AddCandidate(Segment *segment, const absl::string_view value) {
-  Segment::Candidate *c = segment->add_candidate();
+  converter::Candidate *c = segment->add_candidate();
   c->value = std::string(value);
   c->content_value = std::string(value);
 }
@@ -56,7 +57,7 @@ void AddCandidate(Segment *segment, const absl::string_view value) {
 void AddCandidateWithContentValue(Segment *segment,
                                   const absl::string_view value,
                                   const absl::string_view content_value) {
-  Segment::Candidate *c = segment->add_candidate();
+  converter::Candidate *c = segment->add_candidate();
   c->value = std::string(value);
   c->content_value = std::string(content_value);
 }
@@ -277,7 +278,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   // set meta candidates
   {
     EXPECT_EQ(seg[0]->meta_candidates_size(), 0);
-    std::vector<Segment::Candidate> *meta_cands =
+    std::vector<converter::Candidate> *meta_cands =
         seg[0]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
@@ -303,7 +304,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   // set meta candidates
   {
     EXPECT_EQ(seg[2]->meta_candidates_size(), 0);
-    std::vector<Segment::Candidate> *meta_cands =
+    std::vector<converter::Candidate> *meta_cands =
         seg[2]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {

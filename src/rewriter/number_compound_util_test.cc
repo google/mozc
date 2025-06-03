@@ -36,7 +36,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
-#include "converter/segments.h"
+#include "converter/candidate.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/gunit.h"
@@ -148,40 +148,40 @@ TEST(NumberCompoundUtilTest, IsNumber) {
   const testing::MockDataManager data_manager;
   const PosMatcher pos_matcher(data_manager.GetPosMatcherData());
 
-  Segment::Candidate c;
+  converter::Candidate c;
 
   c.lid = pos_matcher.GetNumberId();
   c.rid = pos_matcher.GetNumberId();
   EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
-  c = Segment::Candidate();
+  c = converter::Candidate();
   c.lid = pos_matcher.GetKanjiNumberId();
   c.rid = pos_matcher.GetKanjiNumberId();
   EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
-  c = Segment::Candidate();
+  c = converter::Candidate();
   c.lid = pos_matcher.GetNumberId();
   c.rid = pos_matcher.GetCounterSuffixWordId();
   EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
-  c = Segment::Candidate();
+  c = converter::Candidate();
   c.lid = pos_matcher.GetNumberId();
   c.rid = pos_matcher.GetParallelMarkerId();
   EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
-  c = Segment::Candidate();
+  c = converter::Candidate();
   c.value = "一階";
   c.content_value = "一階";
   c.lid = pos_matcher.GetNumberId();
   c.rid = pos_matcher.GetNumberId();
   EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
-  c = Segment::Candidate();
+  c = converter::Candidate();
   c.lid = pos_matcher.GetAdverbId();
   c.rid = pos_matcher.GetAdverbId();
   EXPECT_FALSE(IsNumber(suffix_array, pos_matcher, c));
 
-  c = Segment::Candidate();
+  c = converter::Candidate();
   c.key = "いちぎょう";
   c.content_key = "いちぎょう";
   c.value = "一行";
@@ -191,7 +191,7 @@ TEST(NumberCompoundUtilTest, IsNumber) {
   EXPECT_TRUE(IsNumber(suffix_array, pos_matcher, c));
 
   // Exception entry
-  c = Segment::Candidate();
+  c = converter::Candidate();
   c.key = "いっこう";
   c.content_key = "いっこう";
   c.value = "一行";

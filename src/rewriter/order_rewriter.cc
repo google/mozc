@@ -39,6 +39,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "base/util.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "request/request_util.h"
@@ -53,21 +54,23 @@ class CandidateGroup {
   CandidateGroup() = default;
   ~CandidateGroup() = default;
 
-  const std::deque<Segment::Candidate> &candidates() const {
+  const std::deque<converter::Candidate> &candidates() const {
     return candidates_;
   }
 
   void AppendToSegment(Segment &segment) const {
-    for (const Segment::Candidate &c : candidates_) {
-      Segment::Candidate *candidate = segment.add_candidate();
+    for (const converter::Candidate &c : candidates_) {
+      converter::Candidate *candidate = segment.add_candidate();
       *candidate = c;
     }
   }
 
-  std::deque<Segment::Candidate> *mutable_candidates() { return &candidates_; }
+  std::deque<converter::Candidate> *mutable_candidates() {
+    return &candidates_;
+  }
   size_t size() const { return candidates_.size(); }
 
-  void AddCandidate(const Segment::Candidate &candidate) {
+  void AddCandidate(const converter::Candidate &candidate) {
     if (const auto [_, inserted] =
             added_.emplace(candidate.key, candidate.value);
         inserted) {
@@ -77,8 +80,8 @@ class CandidateGroup {
 
   void AddHiraganaCandidates() {
     // (Key, Base candidate)
-    absl::flat_hash_map<std::string, const Segment::Candidate *> keys;
-    for (const Segment::Candidate &c : candidates_) {
+    absl::flat_hash_map<std::string, const converter::Candidate *> keys;
+    for (const converter::Candidate &c : candidates_) {
       keys.insert({c.key, &c});
     }
     for (const auto &[key, candidate] : keys) {
@@ -86,7 +89,7 @@ class CandidateGroup {
         // Hiragana candidate is already included.
         continue;
       }
-      Segment::Candidate c = *candidate;
+      converter::Candidate c = *candidate;
       c.value = c.key;
       c.content_key = c.key;
       c.content_value = c.key;
@@ -98,8 +101,8 @@ class CandidateGroup {
   }
 
   void SortWithKeyLength() {
-    const auto cmp = [](const Segment::Candidate &lhs,
-                        const Segment::Candidate &rhs) {
+    const auto cmp = [](const converter::Candidate &lhs,
+                        const converter::Candidate &rhs) {
       return lhs.key.size() > rhs.key.size();
     };
     absl::c_stable_sort(candidates_, cmp);
@@ -107,8 +110,8 @@ class CandidateGroup {
 
   void SortWithKeyValueLength() {
     // key length -> value length
-    const auto cmp = [](const Segment::Candidate &lhs,
-                        const Segment::Candidate &rhs) {
+    const auto cmp = [](const converter::Candidate &lhs,
+                        const converter::Candidate &rhs) {
       if (lhs.key.size() != rhs.key.size()) {
         if (lhs.content_key.size() != rhs.content_key.size()) {
           return lhs.content_key.size() > rhs.content_key.size();
@@ -126,7 +129,7 @@ class CandidateGroup {
   }
 
  private:
-  std::deque<Segment::Candidate> candidates_;
+  std::deque<converter::Candidate> candidates_;
   absl::flat_hash_set<std::pair<std::string, std::string>> added_;
 };
 
@@ -167,24 +170,24 @@ bool OrderRewriter::Rewrite(const ConversionRequest &request,
   CandidateGroup partial;  // For prefix match.
 
   for (size_t i = 0; i < segment->meta_candidates_size(); ++i) {
-    const Segment::Candidate &c = segment->meta_candidate(i);
+    const converter::Candidate &c = segment->meta_candidate(i);
     t13n.AddCandidate(c);
   }
 
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segment->candidate(i);
+    const converter::Candidate &candidate = segment->candidate(i);
     if (top.size() < top_candidates_size) {
       top.AddCandidate(candidate);
       continue;
     }
-    if (candidate.category == Segment::Candidate::SYMBOL) {
+    if (candidate.category == converter::Candidate::SYMBOL) {
       symbol.AddCandidate(candidate);
-    } else if (candidate.category == Segment::Candidate::OTHER) {
+    } else if (candidate.category == converter::Candidate::OTHER) {
       other.AddCandidate(candidate);
     } else {
       // DEFAULT_CATEGORY
       const bool is_partial =
-          candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+          candidate.attributes & converter::Candidate::PARTIALLY_KEY_CONSUMED;
       if (is_partial) {
         partial.AddCandidate(candidate);
       } else {

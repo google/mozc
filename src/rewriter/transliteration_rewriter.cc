@@ -45,6 +45,7 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
@@ -203,7 +204,7 @@ void GetIds(const Segment &segment, T13nIds *ids) {
   DCHECK(ids);
   // reverse loop to use the highest rank results for each type
   for (int i = segment.candidates_size() - 1; i >= 0; --i) {
-    const Segment::Candidate &candidate = segment.candidate(i);
+    const converter::Candidate &candidate = segment.candidate(i);
     Util::ScriptType type = Util::GetScriptType(candidate.value);
     if (type == Util::HIRAGANA) {
       ids->hiragana_lid = candidate.lid;
@@ -361,11 +362,11 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
   // If half_ascii is equal to meta candidate's HALF_ASCII candidate, skip.
   if (segment->meta_candidates_size() < transliteration::HALF_ASCII ||
       segment->meta_candidate(transliteration::HALF_ASCII).value != raw) {
-    Segment::Candidate *half_candidate = segment->add_candidate();
+    converter::Candidate *half_candidate = segment->add_candidate();
     InitT13nCandidate(raw, raw, ids.ascii_lid, ids.ascii_rid, half_candidate);
     // Keep the character form.
     // Without this attribute the form will be changed by VariantsRewriter.
-    half_candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    half_candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
   }
 
   // Do the same thing on full form.
@@ -373,10 +374,10 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
   DCHECK(!full_raw.empty());
   if (segment->meta_candidates_size() < transliteration::FULL_ASCII ||
       segment->meta_candidate(transliteration::FULL_ASCII).value != full_raw) {
-    Segment::Candidate *full_candidate = segment->add_candidate();
+    converter::Candidate *full_candidate = segment->add_candidate();
     InitT13nCandidate(raw, full_raw, ids.ascii_lid, ids.ascii_rid,
                       full_candidate);
-    full_candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    full_candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
   }
   return true;
 }
@@ -400,7 +401,7 @@ bool TransliterationRewriter::Rewrite(const ConversionRequest &request,
 
 void TransliterationRewriter::InitT13nCandidate(
     const absl::string_view key, const absl::string_view value,
-    const uint16_t lid, const uint16_t rid, Segment::Candidate *cand) const {
+    const uint16_t lid, const uint16_t rid, converter::Candidate *cand) const {
   DCHECK(cand);
   cand->value = std::string(value);
   cand->key = std::string(key);
@@ -423,7 +424,7 @@ bool TransliterationRewriter::SetTransliterations(
   T13nIds ids;
   GetIds(*segment, &ids);
 
-  std::vector<Segment::Candidate> *meta_candidates =
+  std::vector<converter::Candidate> *meta_candidates =
       segment->mutable_meta_candidates();
   meta_candidates->resize(transliteration::NUM_T13N_TYPES);
 

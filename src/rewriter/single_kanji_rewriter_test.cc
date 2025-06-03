@@ -35,6 +35,7 @@
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -64,7 +65,7 @@ class SingleKanjiRewriterTest : public testing::TestWithTempUserProfile {
     Segment *segment = segments->add_segment();
     segment->set_key(key);
 
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->key.assign(key.data(), key.size());
     candidate->content_key.assign(key.data(), key.size());
     candidate->value.assign(value.data(), value.size());
@@ -111,7 +112,7 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
   Segment *segment = segments.add_segment();
   const std::string kKey = "あ";
   segment->set_key(kKey);
-  Segment::Candidate *candidate = segment->add_candidate();
+  converter::Candidate *candidate = segment->add_candidate();
   // First candidate may be inserted by other rewriters.
   candidate->key = "strange key";
   candidate->content_key = "starnge key";
@@ -151,7 +152,7 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   Segment *segment1 = segments.add_segment();
 
   segment1->set_key("み");
-  Segment::Candidate *candidate1 = segment1->add_candidate();
+  converter::Candidate *candidate1 = segment1->add_candidate();
 
   candidate1->key = "み";
   candidate1->content_key = "見";
@@ -166,7 +167,7 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   Segment *segment2 = segments.add_segment();
 
   segment2->set_key("こうたい");
-  Segment::Candidate *candidate2 = segment2->add_candidate();
+  converter::Candidate *candidate2 = segment2->add_candidate();
 
   candidate2->key = "こうたい";
   candidate2->content_key = "後退";
@@ -176,7 +177,7 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   candidate2->rid = pos_matcher().GetContentWordWithConjugationId();
 
   candidate1 = segment1->mutable_candidate(0);
-  *candidate1 = Segment::Candidate();
+  *candidate1 = converter::Candidate();
   candidate1->key = "み";
   candidate1->content_key = "見";
   candidate1->value = "見";
@@ -203,7 +204,7 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
 
   segment->set_key("あ");
   for (int i = 0; i < 10; ++i) {
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->key = segment->key();
     candidate->content_key = segment->key();
     candidate->value = absl::StrFormat("cand%d", i);
@@ -216,7 +217,7 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
 
   for (int i = 0; i < 10; ++i) {
     // First 10 candidates have not changed.
-    const Segment::Candidate &candidate = segment->candidate(i);
+    const converter::Candidate &candidate = segment->candidate(i);
     EXPECT_EQ(candidate.value, absl::StrFormat("cand%d", i));
   }
 }
@@ -228,7 +229,7 @@ TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
 
   segment->set_key("あ");
   {
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->key = segment->key();
     candidate->content_key = segment->key();
     candidate->value = "亞";  // variant of "亜".

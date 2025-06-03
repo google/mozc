@@ -50,6 +50,7 @@
 #include "composer/query.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/immutable_converter_interface.h"
@@ -196,7 +197,7 @@ void PrependHistorySegments(absl::string_view key, absl::string_view value,
   Segment *seg = segments->push_front_segment();
   seg->set_segment_type(Segment::HISTORY);
   seg->set_key(key);
-  Segment::Candidate *c = seg->add_candidate();
+  converter::Candidate *c = seg->add_candidate();
   c->key.assign(key.data(), key.size());
   c->content_key = c->key;
   c->value.assign(value.data(), value.size());
@@ -298,7 +299,7 @@ class MockImmutableConverter : public ImmutableConverterInterface {
     }
     absl::string_view key = segments->conversion_segment(0).key();
     Segment *segment = segments->mutable_conversion_segment(0);
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = key;
     candidate->key = key;
     return true;
@@ -1129,7 +1130,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   table_->LoadFromFile("system://12keys-hiragana.tsv");
 
   auto is_user_dictionary_result = [](const Result &res) {
-    return (res.candidate_attributes & Segment::Candidate::USER_DICTIONARY) !=
+    return (res.candidate_attributes & converter::Candidate::USER_DICTIONARY) !=
            0;
   };
 
@@ -1290,7 +1291,7 @@ TEST_F(DictionaryPredictionAggregatorTest, DISABLED_MobileZeroQueryAfterEOS) {
     Segment *seg = segments.push_front_segment();
     seg->set_segment_type(Segment::HISTORY);
     seg->set_key(test_case.key);
-    Segment::Candidate *c = seg->add_candidate();
+    converter::Candidate *c = seg->add_candidate();
     c->key = test_case.key;
     c->content_key = test_case.key;
     c->value = test_case.value;
@@ -1764,7 +1765,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
                                    absl::string_view value) {
       Segment *segment = segments.add_segment();
       segment->set_key(key);
-      Segment::Candidate *candidate = segment->add_candidate();
+      converter::Candidate *candidate = segment->add_candidate();
       candidate->key = std::string(key);
       candidate->value = std::string(value);
     };
@@ -1782,7 +1783,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("わたしのなまえはなかのです");
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = "私の名前は中野です";
     candidate->key = ("わたしのなまえはなかのです");
     // "わたしの, 私の", "わたし, 私"
@@ -1817,7 +1818,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     EXPECT_EQ(results[0].key, kKey);
     EXPECT_EQ(results[0].inner_segment_boundary.size(), 3);
     EXPECT_TRUE(results[0].candidate_attributes &
-                Segment::Candidate::NO_VARIANTS_EXPANSION);
+                converter::Candidate::NO_VARIANTS_EXPANSION);
   }
 
   // A test case with use_actual_converter_for_realtime_conversion being
@@ -1844,7 +1845,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     for (size_t i = 0; i < results.size(); ++i) {
       EXPECT_TRUE(results[i].types & REALTIME);
       EXPECT_TRUE(results[i].candidate_attributes &
-                  Segment::Candidate::NO_VARIANTS_EXPANSION);
+                  converter::Candidate::NO_VARIANTS_EXPANSION);
       if (results[i].key == kKey &&
           results[i].value == "WatashinoNamaehaNakanodesu" &&
           results[i].inner_segment_boundary.size() == 3) {
@@ -1876,7 +1877,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserHistoryAttribute) {
                                    absl::string_view value) {
       Segment *segment = segments.add_segment();
       segment->set_key(key);
-      Segment::Candidate *candidate = segment->add_candidate();
+      converter::Candidate *candidate = segment->add_candidate();
       candidate->key = std::string(key);
       candidate->value = std::string(value);
     };
@@ -1885,7 +1886,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserHistoryAttribute) {
     add_segment("なまえは", "Namaeha");
     add_segment("なかのです", "Nakanodesu");
     segments.mutable_segment(1)->mutable_candidate(0)->attributes =
-        Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER;
+        converter::Candidate::USER_SEGMENT_HISTORY_REWRITER;
 
     EXPECT_CALL(*data_and_aggregator->mutable_converter(),
                 StartConversion(_, _))
@@ -1912,9 +1913,9 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserHistoryAttribute) {
     EXPECT_TRUE(results[0].types & REALTIME);
     EXPECT_TRUE(results[0].types & REALTIME_TOP);
     EXPECT_TRUE(results[0].candidate_attributes &
-                Segment::Candidate::NO_VARIANTS_EXPANSION);
+                converter::Candidate::NO_VARIANTS_EXPANSION);
     EXPECT_TRUE(results[0].candidate_attributes &
-                Segment::Candidate::USER_SEGMENT_HISTORY_REWRITER);
+                converter::Candidate::USER_SEGMENT_HISTORY_REWRITER);
     EXPECT_EQ(results[0].key, kKey);
     EXPECT_EQ(results[0].value, "WatashinoNamaehaNakanodesu");
     EXPECT_EQ(results[0].inner_segment_boundary.size(), 3);
@@ -1941,7 +1942,7 @@ TEST_F(DictionaryPredictionAggregatorTest, UseActualConverterRequest) {
                                    absl::string_view value) {
       Segment *segment = segments.add_segment();
       segment->set_key(key);
-      Segment::Candidate *candidate = segment->add_candidate();
+      converter::Candidate *candidate = segment->add_candidate();
       candidate->key = std::string(key);
       candidate->value = std::string(value);
     };
@@ -1959,7 +1960,7 @@ TEST_F(DictionaryPredictionAggregatorTest, UseActualConverterRequest) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("わたしのなまえはなかのです");
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = "私の名前は中野です";
     candidate->key = ("わたしのなまえはなかのです");
     // "わたしの, 私の", "わたし, 私"
@@ -2700,7 +2701,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   aggregator.AggregateUnigram(convreq1, &results, &min_unigram_key_len);
   ASSERT_FALSE(results.empty());
   EXPECT_TRUE(results[0].candidate_attributes &
-              Segment::Candidate::SPELLING_CORRECTION);  // From unigram
+              converter::Candidate::SPELLING_CORRECTION);  // From unigram
 
   results.clear();
 
@@ -2720,9 +2721,9 @@ TEST_F(DictionaryPredictionAggregatorTest,
     Segments segments;
     Segment *seg = segments.add_segment();
     seg->set_key(kKeyWithDe);
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->value = kExpectedSuggestionValueWithDe;
-    candidate->attributes = Segment::Candidate::SPELLING_CORRECTION;
+    candidate->attributes = converter::Candidate::SPELLING_CORRECTION;
     EXPECT_CALL(*immutable_converter,
                 ConvertForRequest(_, Truly(has_conversion_segment_key)))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2735,7 +2736,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].types, REALTIME);
   EXPECT_NE(0, (results[0].candidate_attributes &
-                Segment::Candidate::SPELLING_CORRECTION));
+                converter::Candidate::SPELLING_CORRECTION));
   EXPECT_EQ(results[0].value, kExpectedSuggestionValueWithDe);
 }
 
@@ -2764,7 +2765,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserDictionaryAttribute) {
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ユーザー");
     EXPECT_TRUE(results[0].candidate_attributes &
-                Segment::Candidate::USER_DICTIONARY);
+                converter::Candidate::USER_DICTIONARY);
   }
 
   constexpr absl::string_view kKey = "ゆーざーの";
@@ -2782,9 +2783,9 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserDictionaryAttribute) {
     Segments segments;
     Segment *seg = segments.add_segment();
     seg->set_key(kKey);
-    Segment::Candidate *candidate = seg->add_candidate();
+    converter::Candidate *candidate = seg->add_candidate();
     candidate->value = kValue;
-    candidate->attributes = Segment::Candidate::USER_DICTIONARY;
+    candidate->attributes = converter::Candidate::USER_DICTIONARY;
     EXPECT_CALL(*immutable_converter,
                 ConvertForRequest(_, Truly(has_conversion_segment_key)))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -2799,7 +2800,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserDictionaryAttribute) {
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, kValue);
     EXPECT_TRUE(results[0].candidate_attributes &
-                Segment::Candidate::USER_DICTIONARY);
+                converter::Candidate::USER_DICTIONARY);
   }
 }
 
@@ -2834,7 +2835,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PrefixCandidates) {
   for (const auto &r : results) {
     if (r.types == PREFIX) {
       EXPECT_TRUE(r.candidate_attributes &
-                  Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+                  converter::Candidate::PARTIALLY_KEY_CONSUMED);
       EXPECT_NE(r.consumed_key_size, 0);
     }
   }
@@ -3015,7 +3016,7 @@ TEST_F(DictionaryPredictionAggregatorTest, DoNotModifyHistorySegment) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_segment_type(Segment::HISTORY);
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->key = "key_can_be_modified";
     candidate->value = "history_value";
 
@@ -3062,9 +3063,9 @@ TEST_F(DictionaryPredictionAggregatorTest, NumberDecoderCandidates) {
                    [](Result r) { return r.value == "45" && !r.removed; });
   ASSERT_NE(result, results.end());
   EXPECT_TRUE(result->candidate_attributes &
-              Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+              converter::Candidate::PARTIALLY_KEY_CONSUMED);
   EXPECT_TRUE(result->candidate_attributes &
-              Segment::Candidate::NO_SUGGEST_LEARNING);
+              converter::Candidate::NO_SUGGEST_LEARNING);
 }
 
 TEST_F(DictionaryPredictionAggregatorTest, DoNotPredictNoisyNumberEntries) {
@@ -3196,7 +3197,7 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwriting) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("かん");
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = "かん";
     candidate->key = "かん";
 
@@ -3290,7 +3291,7 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingT13N) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("キた");
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->value = "きた";
     candidate->key = "きた";  // T13N key can be looked up
 
@@ -3399,7 +3400,7 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingRealtime) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("ばらが");
-    Segment::Candidate *candidate = segment->add_candidate();
+    converter::Candidate *candidate = segment->add_candidate();
     candidate->key = "ばらが";
     candidate->value = "薔薇が";
     candidate->content_key = "ばら";

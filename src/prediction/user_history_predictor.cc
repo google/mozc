@@ -1524,16 +1524,17 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     Result result;
     result.key = result_entry->key();
     result.value = result_entry->value();
-    result.candidate_attributes |= Segment::Candidate::USER_HISTORY_PREDICTION |
-                                   Segment::Candidate::NO_VARIANTS_EXPANSION;
+    result.candidate_attributes |=
+        converter::Candidate::USER_HISTORY_PREDICTION |
+        converter::Candidate::NO_VARIANTS_EXPANSION;
     if (result_entry->spelling_correction()) {
-      result.candidate_attributes |= Segment::Candidate::SPELLING_CORRECTION;
+      result.candidate_attributes |= converter::Candidate::SPELLING_CORRECTION;
     }
     absl::string_view description = result_entry->description();
     // If we have stored description, set it exactly.
     if (!description.empty()) {
       result.description = description;
-      result.candidate_attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
+      result.candidate_attributes |= converter::Candidate::NO_EXTRA_DESCRIPTION;
     }
     MOZC_WORD_LOG(result, "Added by UserHistoryPredictor::InsertCandidates");
 #if DEBUG
@@ -1767,7 +1768,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   }
 
   if (results.empty() || results.front().candidate_attributes &
-                             Segment::Candidate::NO_SUGGEST_LEARNING) {
+                             converter::Candidate::NO_SUGGEST_LEARNING) {
     MOZC_VLOG(2) << "NO_SUGGEST_LEARNING";
     return;
   }
