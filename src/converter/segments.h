@@ -63,6 +63,10 @@ class Segment final {
     HISTORY          // history node. It is hidden from user.
   };
 
+  // This is an alias for backward compatibility.
+  // Using ::mozc::converter::Candidate is preferred.
+  using Candidate = ::mozc::converter::Candidate;
+
   Segment() : segment_type_(FREE), pool_(kCandidatesPoolSize) {}
 
   Segment(const Segment &x);
@@ -89,20 +93,20 @@ class Segment final {
 
   // Candidate manipulations
   // getter
-  const converter::Candidate &candidate(int i) const;
+  const Candidate &candidate(int i) const;
 
   // setter
-  converter::Candidate *mutable_candidate(int i);
+  Candidate *mutable_candidate(int i);
 
   // push and insert candidates
-  converter::Candidate *push_front_candidate();
-  converter::Candidate *push_back_candidate();
+  Candidate *push_front_candidate();
+  Candidate *push_back_candidate();
   // alias of push_back_candidate()
-  converter::Candidate *add_candidate() { return push_back_candidate(); }
-  converter::Candidate *insert_candidate(int i);
-  void insert_candidate(int i, std::unique_ptr<converter::Candidate> candidate);
-  void insert_candidates(
-      int i, std::vector<std::unique_ptr<converter::Candidate>> candidates);
+  Candidate *add_candidate() { return push_back_candidate(); }
+  Candidate *insert_candidate(int i);
+  void insert_candidate(int i, std::unique_ptr<Candidate> candidate);
+  void insert_candidates(int i,
+                         std::vector<std::unique_ptr<Candidate>> candidates);
 
   // get size of candidates
   size_t candidates_size() const { return candidates_.size(); }
@@ -121,15 +125,15 @@ class Segment final {
   // TODO(toshiyuki): Integrate meta candidates to candidate and delete these
   size_t meta_candidates_size() const { return meta_candidates_.size(); }
   void clear_meta_candidates() { meta_candidates_.clear(); }
-  absl::Span<const converter::Candidate> meta_candidates() const {
+  absl::Span<const Candidate> meta_candidates() const {
     return meta_candidates_;
   }
-  std::vector<converter::Candidate> *mutable_meta_candidates() {
+  std::vector<Candidate> *mutable_meta_candidates() {
     return &meta_candidates_;
   }
-  const converter::Candidate &meta_candidate(size_t i) const;
-  converter::Candidate *mutable_meta_candidate(size_t i);
-  converter::Candidate *add_meta_candidate();
+  const Candidate &meta_candidate(size_t i) const;
+  Candidate *mutable_meta_candidate(size_t i);
+  Candidate *add_meta_candidate();
 
   // move old_idx-th-candidate to new_index
   void move_candidate(int old_idx, int new_idx);
@@ -145,15 +149,13 @@ class Segment final {
     return os << segment.DebugString();
   }
 
-  const std::deque<converter::Candidate *> &candidates() const {
-    return candidates_;
-  }
+  const std::deque<Candidate *> &candidates() const { return candidates_; }
 
   // For debug. Candidate words removed through conversion process.
-  std::vector<converter::Candidate> removed_candidates_for_debug_;
+  std::vector<Candidate> removed_candidates_for_debug_;
 
  private:
-  void DeepCopyCandidates(const std::deque<converter::Candidate *> &candidates);
+  void DeepCopyCandidates(const std::deque<Candidate *> &candidates);
 
   static constexpr int kCandidatesPoolSize = 16;
 
@@ -168,9 +170,9 @@ class Segment final {
   // You should detect that by using both Composer and Segments.
   std::string key_;
   size_t key_len_ = 0;
-  std::deque<converter::Candidate *> candidates_;
-  std::vector<converter::Candidate> meta_candidates_;
-  std::vector<std::unique_ptr<converter::Candidate>> pool_;
+  std::deque<Candidate *> candidates_;
+  std::vector<Candidate> meta_candidates_;
+  std::vector<std::unique_ptr<Candidate>> pool_;
   // LINT.ThenChange(//converter/segments_matchers.h)
 };
 
