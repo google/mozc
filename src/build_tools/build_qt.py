@@ -37,7 +37,7 @@ with dropping unnecessary features to minimize the installer size.
 
 By default, this script assumes that Qt archives are stored as
 
-  src/third_party_cache/qtbase-everywhere-src-6.8.0.tar.xz
+  src/third_party_cache/qtbase-everywhere-src-6.9.1.tar.xz
 
 and Qt src files that are necessary to build Mozc will be checked out into
 
@@ -72,7 +72,7 @@ ABS_QT_DEST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
 ABS_QT_HOST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_host')
 # The archive filename should be consistent with update_deps.py.
 ABS_QT6_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
-    'third_party_cache', 'qtbase-everywhere-src-6.8.0.tar.xz'
+    'third_party_cache', 'qtbase-everywhere-src-6.9.1.tar.xz'
 )
 ABS_DEFAULT_NINJA_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'ninja')
 QT_CONFIGURE_COMMON = [

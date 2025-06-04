@@ -86,9 +86,9 @@ class ArchiveInfo:
 
 
 QT6 = ArchiveInfo(
-    url='https://download.qt.io/archive/qt/6.8/6.8.0/submodules/qtbase-everywhere-src-6.8.0.tar.xz',
-    size=49819628,
-    sha256='1bad481710aa27f872de6c9f72651f89a6107f0077003d0ebfcc9fd15cba3c75',
+    url='https://download.qt.io/archive/qt/6.8/6.8.0/submodules/qtbase-everywhere-src-6.9.1.tar.xz',
+    size=49755912,
+    sha256='40caedbf83cc9a1959610830563565889878bc95f115868bbf545d1914acf28e',
 )
 
 NDK_LINUX = ArchiveInfo(
