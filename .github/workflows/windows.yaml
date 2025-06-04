@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build_gyp:
     # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
     runs-on: windows-2022
     timeout-minutes: 120
@@ -67,14 +67,14 @@ jobs:
         run: |
           python build_mozc.py build -c Release package
 
-      - name: upload Mozc64.msi
+      - name: upload Mozc64_gyp.msi
         uses: actions/upload-artifact@v4
         with:
-          name: Mozc64.msi
+          name: Mozc64_gyp.msi
           path: src/out_win/Release/Mozc64.msi
           if-no-files-found: warn
 
-  build_bazel:
+  build:
     # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
     runs-on: windows-2022
     timeout-minutes: 120
@@ -119,14 +119,14 @@ jobs:
         run: |
           bazelisk build --config oss_windows --config release_build package
 
-      - name: upload Mozc64_bazel.msi
+      - name: upload Mozc64.msi
         uses: actions/upload-artifact@v4
         with:
-          name: Mozc64_bazel.msi
+          name: Mozc64.msi
           path: src/bazel-bin/win32/installer/Mozc64.msi
           if-no-files-found: warn
 
-  test:
+  test_gyp:
     # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
     runs-on: windows-2022
     timeout-minutes: 90
@@ -168,7 +168,7 @@ jobs:
         run: |
           python build_mozc.py runtests -c Debug
 
-  test_bazel:
+  test:
     # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
     runs-on: windows-2022
     timeout-minutes: 120
