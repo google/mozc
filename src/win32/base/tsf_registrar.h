@@ -32,6 +32,8 @@
 
 #include <windows.h>
 
+#include <string_view>
+
 namespace mozc {
 namespace win32 {
 
@@ -44,7 +46,7 @@ class TsfRegistrar {
 
   // Registers this COM server to the profile store for input processors.
   // The caller is responsible for initializing COM before call this function.
-  static HRESULT RegisterProfiles(const wchar_t *path, DWORD path_length);
+  static HRESULT RegisterProfiles(std::wstring_view resource_dll_path);
 
   // Unregisters this COM server from the text service framework.
   // The caller is responsible for initializing COM before call this function.
