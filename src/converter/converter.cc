@@ -63,7 +63,6 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "rewriter/variants_rewriter.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -173,8 +172,8 @@ bool Converter::StartReverseConversion(Segments *segments,
 }
 
 // static
-void Converter::MaybeSetConsumedKeySizeToCandidate(
-    size_t consumed_key_size, Candidate *candidate) {
+void Converter::MaybeSetConsumedKeySizeToCandidate(size_t consumed_key_size,
+                                                   Candidate *candidate) {
   if (candidate->attributes & Candidate::PARTIALLY_KEY_CONSUMED) {
     // If PARTIALLY_KEY_CONSUMED is set already,
     // the candidate has set appropriate attribute and size by predictor.
@@ -534,8 +533,7 @@ void Converter::CompletePosIds(Candidate *candidate) const {
       return;
     }
     for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-      const Candidate &ref_candidate =
-          segments.segment(0).candidate(i);
+      const Candidate &ref_candidate = segments.segment(0).candidate(i);
       if (ref_candidate.value == candidate->value) {
         candidate->lid = ref_candidate.lid;
         candidate->rid = ref_candidate.rid;
@@ -732,13 +730,6 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
           function_value_len <= candidate->content_value.size()) {
         candidate->content_value.erase(content_value_len, function_value_len);
       }
-    }
-
-    // This block has been moved from user_history_predictor.
-    // TODO(taku): Reconsider  more appropriate place to put this block.
-    if (candidate->description.empty() &&
-        candidate->attributes & converter::Candidate::USER_HISTORY_PREDICTION) {
-      VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, candidate);
     }
 #ifndef NDEBUG
     absl::StrAppend(&candidate->log, "\n", result.log);

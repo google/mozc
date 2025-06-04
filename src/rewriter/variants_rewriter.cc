@@ -501,6 +501,12 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       continue;
     }
 
+    if (original_candidate->description.empty() &&
+        original_candidate->attributes & Candidate::USER_HISTORY_PREDICTION) {
+      SetDescriptionForPrediction(pos_matcher_, original_candidate);
+      continue;
+    }
+
     SetDescription(pos_matcher_, result.original_candidate_description_type,
                    original_candidate);
     if (type == EXPAND_VARIANT) {
