@@ -454,7 +454,7 @@ UINT __stdcall RegisterTIP(MSIHANDLE msi_handle) {
   // which does not need to match the native CPU architecture. Here we use
   // 32-bit TIP DLL as it is always installed even on an ARM64 target.
   const std::wstring resource_dll_path = GetMozcComponentPath(mozc::kMozcTIP32);
-  mozc::win32::TsfRegistrar::RegisterProfiles(resource_dll_path);
+  result = mozc::win32::TsfRegistrar::RegisterProfiles(resource_dll_path);
   if (FAILED(result)) {
     LOG_ERROR_FOR_OMAHA();
     UnregisterTIP(msi_handle);
