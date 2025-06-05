@@ -86,7 +86,7 @@ class ArchiveInfo:
 
 
 QT6 = ArchiveInfo(
-    url='https://download.qt.io/archive/qt/6.8/6.8.0/submodules/qtbase-everywhere-src-6.9.1.tar.xz',
+    url='https://download.qt.io/archive/qt/6.9/6.9.1/submodules/qtbase-everywhere-src-6.9.1.tar.xz',
     size=49755912,
     sha256='40caedbf83cc9a1959610830563565889878bc95f115868bbf545d1914acf28e',
 )
