@@ -180,14 +180,6 @@ ConversionRequest GetConversionRequestForRealtimeCandidates(
       .Build();
 }
 
-bool IsBigramNwpFilteringMode(
-    const ConversionRequest &request,
-    commands::DecoderExperimentParams::BigramNwpFilteringMode mode) {
-  return request.request()
-             .decoder_experiment_params()
-             .bigram_nwp_filtering_mode() == mode;
-}
-
 class PredictiveLookupCallback : public DictionaryInterface::Callback {
  public:
   PredictiveLookupCallback(PredictionTypes types, size_t limit,
@@ -604,7 +596,8 @@ std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
   }
 
   constexpr int kMinHistoryKeyLen = 3;
-  if (HasHistoryKeyLongerThanOrEqualTo(request, kMinHistoryKeyLen)) {
+  if (HasHistoryKeyLongerThanOrEqualTo(request, kMinHistoryKeyLen) &&
+      !request.IsZeroQuerySuggestion()) {
     AggregateBigram(request, &results);
   }
 
@@ -690,7 +683,9 @@ DictionaryPredictionAggregator::AggregateTypingCorrectedResults(
                         /* insert_realtime_top_from_actual_converter= */ false,
                         &corrected_results);
 
-      AggregateBigram(corrected_request, &corrected_results);
+      if (!request.IsZeroQuerySuggestion()) {
+        AggregateBigram(corrected_request, &corrected_results);
+      }
 
       if (!number_added) {
         const int prev_size = corrected_results.size();
@@ -770,18 +765,7 @@ void DictionaryPredictionAggregator::AggregateZeroQuery(
     const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
 
-  // There are 5 sources in zero query suggestion.
-
-  // 1. Bigram in dictionary
-  // "東京" -> "大学" when  "東京大学" exists in the dictionary.
-  constexpr int kMinHistoryKeyLenForZeroQuery = 2;
-  if (HasHistoryKeyLongerThanOrEqualTo(request,
-                                       kMinHistoryKeyLenForZeroQuery) &&
-      !IsBigramNwpFilteringMode(
-          request, commands::DecoderExperimentParams::FILTER_ALL)) {
-    // TODO(taku): Remove the precondition of filtering mode.
-    AggregateBigram(request, results);
-  }
+  // There are 4 sources in zero query suggestion.
 
   const std::string history_value = request.converter_history_value(1);
   const std::string history_key = request.converter_history_key(1);
@@ -790,17 +774,17 @@ void DictionaryPredictionAggregator::AggregateZeroQuery(
     return;
   }
 
-  // 2. Supplemental model.
+  // 1. Supplemental model.
   modules_.GetSupplementalModel().Predict(request, *results);
 
-  // 3. Zero query number dictionary(data / zero_query / zero_query_number.def)
+  // 2. Zero query number dictionary(data / zero_query / zero_query_number.def)
   // "30" -> "年"
   // TOOD(taku): Consider to aggregate other candidates.
   if (AggregateNumberZeroQuery(request, results)) {
     return;
   }
 
-  // 4. Zero query dictionary (data/zero_query/zero_query.def)
+  // 3. Zero query dictionary (data/zero_query/zero_query.def)
   // "あけまして" -> "おめでとうございます”
   constexpr uint16_t kId = 0;  // EOS
   GetZeroQueryCandidatesForKey(request, history_value, zero_query_dict_, kId,
@@ -812,7 +796,7 @@ void DictionaryPredictionAggregator::AggregateZeroQuery(
     return;
   }
 
-  // 5. Zero query suffix dictionary.
+  // 4. Zero query suffix dictionary.
   //    "東京" -> "は"
   if (results->empty() || !IsZeroQuerySuffixPredictionDisabled(request) ||
       request_util::IsHandwriting(request)) {
@@ -1037,10 +1021,9 @@ void DictionaryPredictionAggregator::AggregateBigram(
     const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
 
-  // TODO(taku): Remove this pre-condition.
-  if (request.IsZeroQuerySuggestion() &&
-      IsBigramNwpFilteringMode(request,
-                               commands::DecoderExperimentParams::FILTER_ALL)) {
+  // Disables bigram zero query just in case.
+  // This check must be done outside of this method.
+  if (request.IsZeroQuerySuggestion()) {
     return;
   }
 
@@ -1576,15 +1559,6 @@ void DictionaryPredictionAggregator::CheckBigramResult(
 
   const Util::ScriptType ctype =
       Util::GetScriptType(Util::Utf8SubString(value, 0, 1));
-
-  if (is_zero_query &&
-      IsBigramNwpFilteringMode(
-          request, commands::DecoderExperimentParams::FILTER_SAME_CTYPE) &&
-      ctype == history_ctype) {
-    result->removed = true;
-    MOZC_WORD_LOG(*result, "Removed. ctype is the same as history ctype.");
-    return;
-  }
 
   if (history_ctype == Util::KANJI && ctype == Util::KATAKANA) {
     // Do not filter "六本木ヒルズ"

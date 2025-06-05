@@ -1368,6 +1368,8 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateBigramPrediction) {
   }
 }
 
+// Zero query bigram is deprecated and disabled.
+// Keep this test to confirm that no suggestions are shown.
 TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
       CreateAggregatorWithMockData();
@@ -1392,15 +1394,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
     aggregator.AggregateBigram(convreq, &results);
-    EXPECT_FALSE(results.empty());
-
-    for (const auto &result : results) {
-      // history must be removed from key/value.
-      EXPECT_FALSE(result.key.starts_with(kHistoryKey));
-      EXPECT_FALSE(result.value.starts_with(kHistoryValue));
-      // Zero query
-      EXPECT_EQ(result.zero_query_type, ZERO_QUERY_BIGRAM);
-    }
+    EXPECT_TRUE(results.empty());
   }
 
   {
@@ -1446,78 +1440,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateZeroQueryBigramPrediction) {
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
     aggregator.AggregateBigram(convreq, &results);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results.size(), 5);
-
-    EXPECT_TRUE(FindResultByValue(results, "ございます"));
-    EXPECT_TRUE(FindResultByValue(results, "御座います"));
-    EXPECT_TRUE(FindResultByValue(results, "御座いました"));
-    // "ございました" is not in the dictionary, but suggested
-    // because it is used as the key of other words (i.e. 御座いました).
-    EXPECT_TRUE(FindResultByValue(results, "ございました"));
-    // "ね" is in the dictionary, but filtered due to the word length.
-    EXPECT_FALSE(FindResultByValue(results, "ね"));
-
-    for (const auto &result : results) {
-      EXPECT_FALSE(result.key.starts_with(kHistory));
-      EXPECT_FALSE(result.value.starts_with(kHistory));
-      // Zero query
-      EXPECT_NE(result.zero_query_type, ZERO_QUERY_SUFFIX);
-      if (result.key == "ね") {
-        EXPECT_TRUE(result.removed);
-      } else {
-        EXPECT_FALSE(result.removed);
-      }
-    }
-  }
-}
-
-TEST_F(DictionaryPredictionAggregatorTest,
-       AggregateZeroQueryBigramPredictionFilteringMode) {
-  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
-      CreateAggregatorWithMockData();
-  const DictionaryPredictionAggregatorTestPeer &aggregator =
-      data_and_aggregator->aggregator();
-  request_test_util::FillMobileRequest(request_.get());
-  request_->mutable_decoder_experiment_params()->set_bigram_nwp_filtering_mode(
-      commands::DecoderExperimentParams::FILTER_SAME_CTYPE);
-
-  Segments segments;
-
-  // Zero query
-  InitSegmentsWithKey("", &segments);
-
-  // history is "グーグル"
-  constexpr absl::string_view kHistoryKey = "ぐーぐる";
-  constexpr absl::string_view kHistoryValue = "グーグル";
-
-  PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
-
-  {
-    MockDictionary *mock = data_and_aggregator->mutable_dictionary();
-    EXPECT_CALL(*mock, LookupPrefix(_, _, _)).Times(AnyNumber());
-    EXPECT_CALL(*mock, LookupPredictive(_, _, _)).Times(AnyNumber());
-    EXPECT_CALL(*mock, LookupPrefix(StrEq(kHistoryKey), _, _))
-        .WillRepeatedly(InvokeCallbackWithKeyValues{{
-            {kHistoryKey, kHistoryValue},
-        }});
-    EXPECT_CALL(*mock, LookupPredictive(StrEq(kHistoryKey), _, _))
-        .WillRepeatedly(InvokeCallbackWithKeyValues{{
-            {"ぐーぐるじゃぱん", "グーグルジャパン"},
-            {"ぐーぐるごうどうがいしゃ", "グーグル合同会社"},
-        }});
-  }
-
-  {
-    std::vector<Result> results;
-
-    const ConversionRequest convreq =
-        CreateSuggestionConversionRequest(segments);
-    aggregator.AggregateBigram(convreq, &results);
-    EXPECT_FALSE(results.empty());
-
-    EXPECT_FALSE(FindResultByValue(results, "ジャパン"));
-    EXPECT_TRUE(FindResultByValue(results, "合同会社"));
+    EXPECT_TRUE(results.empty());
   }
 }
 
