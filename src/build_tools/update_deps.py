@@ -43,14 +43,11 @@ import pathlib
 import shutil
 import stat
 import subprocess
-import sys
 import tarfile
-import time
 from typing import Union
-import zipfile
-
-import urllib.request
 import urllib.error
+import urllib.request
+import zipfile
 
 from progress_printer import ProgressPrinter
 
@@ -195,7 +192,7 @@ def download(archive: ArchiveInfo, dryrun: bool = False) -> None:
             saved += len(chunk)
             printer.print_line(f'{archive.filename}: {saved}/{archive.size}')
   except urllib.error.URLError as e:
-    raise RuntimeError(f'Failed to download {archive.url}: {e}')
+    raise RuntimeError(f'Failed to download {archive.url}: {e}') from e
 
   if saved != archive.size:
     raise RuntimeError(
@@ -558,7 +555,9 @@ def exec_command(
           continue
         if exitcode == 0:
           return
-        raise ChildProcessError(f'Failed to execute {args}. exitcode={exitcode}')
+        raise ChildProcessError(
+            f'Failed to execute {args}. exitcode={exitcode}'
+        )
     return
   _, _ = process.communicate()
   exitcode = process.wait()
