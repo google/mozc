@@ -38,6 +38,10 @@
 <?define QtWidgetsFilename="Qt$(var.QtVer)Widgets.dll" ?>
 <?define QtWidgetsdFilename="Qt$(var.QtVer)Widgetsd.dll" ?>
 
+<?ifndef MozcTIP64ArmPath ?>
+  <?define MozcTIP64ArmPath="" ?>
+<?endif?>
+
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 
   <!--
@@ -64,10 +68,12 @@
     <Launch Condition="Privileged" Message="Mozc をインストールするには管理者権限が必要です。" />
     <Media Id="1" Cabinet="Mozc.cab" EmbedCab="yes" CompressionLevel="high" />
 
-    <Property Id="PROCESSOR_ARCHITECTURE">
-      <RegistrySearch Id="ProcessorArchitectureValue" Type="raw" Root="HKLM" Key="System\CurrentControlSet\Control\Session Manager\Environment" Name="PROCESSOR_ARCHITECTURE" />
-    </Property>
-    <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="ARM64 環境へのインストールは未対応です" />
+    <?if $(var.MozcTIP64ArmPath) == "" ?>
+      <Property Id="PROCESSOR_ARCHITECTURE">
+        <RegistrySearch Id="ProcessorArchitectureValue" Type="raw" Root="HKLM" Key="System\CurrentControlSet\Control\Session Manager\Environment" Name="PROCESSOR_ARCHITECTURE" />
+      </Property>
+      <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="ARM64 環境へのインストールは未対応です" />
+    <?endif?>
 
     <!-- Set Add/Remove Program Icon -->
     <Icon Id="add_remove_program_icon.ico" SourceFile="$(var.AddRemoveProgramIconPath)" />
@@ -93,6 +99,9 @@
     <Feature Id="MozcInstall" Title="Mozc" Level="1">
       <ComponentRef Id="MozcTIP32" />
       <ComponentRef Id="MozcTIP64" />
+      <?if $(var.MozcTIP64ArmPath) != "" ?>
+        <ComponentRef Id="MozcTIP64Arm" />
+      <?endif?>
       <ComponentRef Id="MozcBroker" />
       <ComponentRef Id="MozcConverter" />
       <ComponentRef Id="MozcCacheService" />
@@ -224,9 +233,18 @@
         </Component>
         <Component Id="MozcTIP64" Permanent="no" Bitness="always64">
           <File Id="mozc_tip64.dll" Name="mozc_tip64.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64Path)" Vital="yes">
-            <Class Context="InprocServer32" ThreadingModel="apartment" Description="Mozc" Id="10A67BC8-22FA-4A59-90DC-2546652C56BF" />
+            <?if $(var.MozcTIP64ArmPath) == "" ?>
+              <Class Context="InprocServer32" ThreadingModel="apartment" Description="Mozc" Id="10A67BC8-22FA-4A59-90DC-2546652C56BF" />
+            <?endif?>
           </File>
         </Component>
+        <?if $(var.MozcTIP64ArmPath) != "" ?>
+          <Component Id="MozcTIP64Arm" Permanent="no" Bitness="always64">
+            <File Id="mozc_tip64arm.dll" Name="mozc_tip64arm.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64ArmPath)" Vital="yes">
+              <Class Context="InprocServer32" ThreadingModel="apartment" Description="Mozc" Id="10A67BC8-22FA-4A59-90DC-2546652C56BF" />
+            </File>
+          </Component>
+        <?endif?>
         <Component Id="MozcBroker" Permanent="no">
           <File Id="mozc_broker.exe" Name="mozc_broker.exe" DiskId="1" Checksum="yes" Source="$(var.MozcBroker64Path)" Vital="yes" />
         </Component>

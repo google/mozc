@@ -34,10 +34,6 @@ build:windows_env --extra_toolchains=@local_config_cc//:cc-toolchain-x64_x86_win
 build:windows_env --host_platform=//:host-windows-clang-cl
 build:windows_env --copt "/D_WIN32_WINNT=0x0A00" --host_copt "/D_WIN32_WINNT=0x0A00"
 
-# A temporary setting until we fully support building Mozc on ARM64 environment.
-# TODO(https://github.com/google/mozc/issues/1296): Remove this.
-build:windows_env --platforms=//:windows-x86_64
-
 ## Compiler options
 common:linux_env   --config=compiler_gcc_like
 common:android_env --config=compiler_gcc_like

@@ -101,6 +101,25 @@ mozc_win32_cc_prod_binary(
     ],
 )
 
+mozc_win32_cc_prod_binary(
+    name = "mozc_tip64arm",
+    srcs = ["mozc_tip_main.cc"],
+    executable_name_map = {
+        "Mozc": "mozc_tip64arm.dll",
+        "GoogleJapaneseInput": "GoogleIMEJaTIP64Arm.dll",
+    },
+    linkshared = True,
+    platform = "//:windows-arm64",
+    static_crt = True,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//win32/installer:__subpackages__"],  # Scheuklappen: keep
+    win_def_file = "mozc_tip.def",
+    deps = [
+        ":mozc_tip_deps",
+    ],
+)
+
 mozc_win32_resource_from_template(
     name = "mozc_tip_resource",
     src = "tip_resource.rc",

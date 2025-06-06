@@ -73,7 +73,22 @@ END
 // Version
 //
 
-#ifdef _WIN64
+#if defined(_ARM64_)
+  #ifndef MOZC_RES_INTERNAL_NAME
+    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
+      #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaTIP64Arm"
+    #elif defined(MOZC_BUILD)
+      #define MOZC_RES_INTERNAL_NAME "mozc_tip64Arm"
+    #endif
+  #endif
+  #ifndef MOZC_RES_ORIGINAL_FILENAME
+    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
+      #define MOZC_RES_ORIGINAL_FILENAME "GoogleIMEJaTIP64Arm.dll"
+    #elif defined(MOZC_BUILD)
+      #define MOZC_RES_ORIGINAL_FILENAME "mozc_tip64arm.dll"
+    #endif
+  #endif
+#elif defined(_WIN64)
   #ifndef MOZC_RES_INTERNAL_NAME
     #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
       #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaTIP64"

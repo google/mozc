@@ -82,7 +82,10 @@ genrule(
         "//data/installer:credits_en.html",
         "@qt_win//:bin/Qt6Core.dll",
         "@wix//:wix.exe",
-    ],
+    ] + select({
+        "@platforms//cpu:arm64": ["//win32/tip:mozc_tip64arm"],
+        "//conditions:default": [],
+    }),
     outs = [_MSI_FILE],
     cmd = " ".join([
         "$(location :build_installer)",
@@ -103,7 +106,16 @@ genrule(
         "--wix_path=$(location @wix//:wix.exe)",
         "--branding=" + BRANDING,
     ]) + select({
+        "@platforms//cpu:arm64": " " + " ".join([
+            "--mozc_tip64arm=$(location //win32/tip:mozc_tip64arm)",
+        ]),
+        "//conditions:default": "",
+    }) + select({
         ":debug_build": " --debug_build",
+        "//conditions:default": "",
+    }) + select({
+        "@platforms//cpu:x86_64": " --arch=x64",
+        "@platforms//cpu:arm64": " --arch=arm64",
         "//conditions:default": "",
     }),
     target_compatible_with = _TARGET_COMPATIBLE_WITH,

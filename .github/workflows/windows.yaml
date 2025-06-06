@@ -74,7 +74,7 @@ jobs:
           path: src/out_win/Release/Mozc64.msi
           if-no-files-found: warn
 
-  build:
+  build_x64:
     # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
     runs-on: windows-2022
     timeout-minutes: 120
@@ -119,10 +119,62 @@ jobs:
         run: |
           bazelisk build --config oss_windows --config release_build package
 
-      - name: upload Mozc64.msi
+      - name: upload Mozc64_x64.msi
         uses: actions/upload-artifact@v4
         with:
-          name: Mozc64.msi
+          name: Mozc64_x64.msi
+          path: src/bazel-bin/win32/installer/Mozc64.msi
+          if-no-files-found: warn
+
+  build_arm64:
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
+    runs-on: windows-2022
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v4
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install Dependencies
+        shell: cmd
+        working-directory: .\src
+        # This command uses src/third_party_cache as the download cache.
+        run: |
+          python build_tools/update_deps.py
+
+      - name: Build Qt (arm64)
+        shell: cmd
+        working-directory: .\src
+        run: |
+          python build_tools/build_qt.py --release --confirm_license --target_arch=arm64
+
+      # This is needed only for GitHub Actions where free disk space is quite limited.
+      - name: Delete Qt src to save disk space
+        shell: cmd
+        working-directory: .\src
+        run: |
+          rmdir third_party\qt_src /s /q
+
+      - name: build artifacts
+        shell: cmd
+        working-directory: .\src
+        env:
+          ANDROID_NDK_HOME: ""
+        run: |
+          bazelisk build package --config oss_windows --config release_build --platforms=//:windows-arm64
+
+      - name: upload Mozc64_arm64.msi
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mozc64_arm64.msi
           path: src/bazel-bin/win32/installer/Mozc64.msi
           if-no-files-found: warn
 
