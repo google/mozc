@@ -119,10 +119,8 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
             std::make_unique<prediction::DictionaryPredictor>(
                 modules, converter, immutable_converter);
 
-        const bool enable_content_word_learning = is_mobile;
         auto user_history_predictor =
-            std::make_unique<prediction::UserHistoryPredictor>(
-                modules, enable_content_word_learning);
+            std::make_unique<prediction::UserHistoryPredictor>(modules);
 
         return is_mobile ? prediction::MobilePredictor::CreateMobilePredictor(
                                std::move(dictionary_predictor),

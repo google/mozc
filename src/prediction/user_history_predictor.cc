@@ -327,12 +327,10 @@ UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
   return pool_.Alloc();
 }
 
-UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules,
-                                           bool enable_content_word_learning)
+UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules)
     : dictionary_(modules.GetDictionary()),
       user_dictionary_(modules.GetUserDictionary()),
       predictor_name_("UserHistoryPredictor"),
-      content_word_learning_enabled_(enable_content_word_learning),
       updated_(false),
       dic_(new DicCache(UserHistoryPredictor::cache_size())),
       modules_(modules),
@@ -1950,7 +1948,8 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     TryInsert(request, segment.key, segment.value, segment.description,
               is_suggestion_selected, next_fps_to_set, last_access_time,
               revert_entries);
-    if (content_word_learning_enabled_ && segment.content_key != segment.key &&
+    if (request.request().mixed_conversion() &&
+        segment.content_key != segment.key &&
         segment.content_value != segment.value) {
       TryInsert(request, segment.content_key, segment.content_value,
                 segment.description, is_suggestion_selected, {},

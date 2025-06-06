@@ -93,13 +93,8 @@ class UserHistoryStorage {
 // called by multiple-threads at the same time
 class UserHistoryPredictor : public PredictorInterface {
  public:
-  UserHistoryPredictor(const engine::Modules &modules,
-                       bool enable_content_word_learning);
+  explicit UserHistoryPredictor(const engine::Modules &modules);
   ~UserHistoryPredictor() override;
-
-  void set_content_word_learning_enabled(bool value) {
-    content_word_learning_enabled_ = value;
-  }
 
   std::vector<Result> Predict(const ConversionRequest &request) const override;
 
@@ -459,7 +454,6 @@ class UserHistoryPredictor : public PredictorInterface {
   const dictionary::UserDictionaryInterface &user_dictionary_;
   const std::string predictor_name_;
 
-  bool content_word_learning_enabled_;
   mutable std::atomic<bool> updated_;
   std::unique_ptr<DicCache> dic_;
   mutable std::optional<BackgroundFuture<void>> sync_;

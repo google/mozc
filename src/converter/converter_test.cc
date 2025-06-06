@@ -51,10 +51,10 @@
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/candidate.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/data_manager.h"
@@ -279,21 +279,16 @@ class ConverterTest : public testing::TestWithTempUserProfile {
         std::unique_ptr<PredictorInterface>,
         std::unique_ptr<PredictorInterface>, const ConverterInterface &)>
         predictor_factory = nullptr;
-    bool enable_content_word_learning = false;
-
     switch (predictor_type) {
       case DEFAULT_PREDICTOR:
         predictor_factory = DesktopPredictor::CreateDesktopPredictor;
-        enable_content_word_learning = false;
         break;
       case MOBILE_PREDICTOR:
         predictor_factory = MobilePredictor::CreateMobilePredictor;
-        enable_content_word_learning = true;
         break;
       default:
         LOG(ERROR) << "Should not come here: Invalid predictor type.";
         predictor_factory = DesktopPredictor::CreateDesktopPredictor;
-        enable_content_word_learning = false;
         break;
     }
 
@@ -303,8 +298,8 @@ class ConverterTest : public testing::TestWithTempUserProfile {
         modules, converter, immutable_converter);
     CHECK(dictionary_predictor);
 
-    auto user_history_predictor = std::make_unique<UserHistoryPredictor>(
-        modules, enable_content_word_learning);
+    auto user_history_predictor =
+        std::make_unique<UserHistoryPredictor>(modules);
     CHECK(user_history_predictor);
 
     auto ret_predictor =
@@ -528,8 +523,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     const Segment &segment = segments.conversion_segment(0);
     EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
     EXPECT_EQ(segment.candidate(0).value, "2");
-    EXPECT_NE(segment.candidate(0).attributes & Candidate::RERANKED,
-              0);
+    EXPECT_NE(segment.candidate(0).attributes & Candidate::RERANKED, 0);
   }
   {
     // Make the segment SUBMITTED
@@ -548,8 +542,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     const Segment &segment = segments.conversion_segment(0);
     EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
     EXPECT_EQ(segment.candidate(0).value, "3");
-    EXPECT_EQ(segment.candidate(0).attributes & Candidate::RERANKED,
-              0);
+    EXPECT_EQ(segment.candidate(0).attributes & Candidate::RERANKED, 0);
   }
 }
 
@@ -651,8 +644,7 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
       EXPECT_EQ(segment.segment_type(), Segment::SUBMITTED);
       EXPECT_EQ(segment.candidate(0).value, "2");
       EXPECT_EQ(segment.key(), "left2");
-      EXPECT_NE(segment.candidate(0).attributes & Candidate::RERANKED,
-                0);
+      EXPECT_NE(segment.candidate(0).attributes & Candidate::RERANKED, 0);
     }
     {
       // The head segment of the conversion segments uses |new_segment_key|.
@@ -990,13 +982,11 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
 
   ConverterTestPeer::MaybeSetConsumedKeySizeToSegment(consumed_key_size,
                                                       &segment);
-  EXPECT_NE((segment.candidate(0).attributes &
-             Candidate::PARTIALLY_KEY_CONSUMED),
-            0);
+  EXPECT_NE(
+      (segment.candidate(0).attributes & Candidate::PARTIALLY_KEY_CONSUMED), 0);
   EXPECT_EQ(segment.candidate(0).consumed_key_size, consumed_key_size);
-  EXPECT_NE((segment.candidate(1).attributes &
-             Candidate::PARTIALLY_KEY_CONSUMED),
-            0);
+  EXPECT_NE(
+      (segment.candidate(1).attributes & Candidate::PARTIALLY_KEY_CONSUMED), 0);
   EXPECT_EQ(segment.candidate(1).consumed_key_size, original_consumed_key_size);
   EXPECT_NE((segment.meta_candidate(0).attributes &
              Candidate::PARTIALLY_KEY_CONSUMED),
@@ -1108,7 +1098,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
         return DesktopPredictor::CreateDesktopPredictor(
             std::make_unique<DictionaryPredictor>(modules, converter,
                                                   immutable_converter),
-            std::make_unique<UserHistoryPredictor>(modules, false), converter);
+            std::make_unique<UserHistoryPredictor>(modules), converter);
       },
       [](const engine::Modules &modules) {
         return std::make_unique<Rewriter>(modules);
@@ -1502,8 +1492,7 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
     EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
     EXPECT_THAT(segments.segment(0),
-                ContainsCandidate(
-                    Field(&Candidate::value, StrEq("googleが"))));
+                ContainsCandidate(Field(&Candidate::value, StrEq("googleが"))));
   }
 }
 

@@ -504,8 +504,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
                        .PresetDictionary(std::make_unique<MockDictionary>())
                        .Build(std::make_unique<testing::MockDataManager>())
                        .value();
-    ret->predictor =
-        std::make_unique<UserHistoryPredictor>(*ret->modules, false);
+    ret->predictor = std::make_unique<UserHistoryPredictor>(*ret->modules);
     ret->predictor->WaitForSyncer();
     return ret;
   }
@@ -3402,54 +3401,75 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
 }
 
 TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
-  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  for (bool mixed_conversion : {true, false}) {
+    UserHistoryPredictor *predictor =
+        GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
-  std::vector<Result> results;
+    Segments segments;
+    std::vector<Result> results;
 
-  {
-    constexpr char kKey[] = "わたしのなまえはなかのです";
-    constexpr char kValue[] = "私の名前は中野です";
-    const ConversionRequest convreq1 =
-        SetUpInputForPrediction(kKey, &composer_, &segments);
-    converter::Candidate *candidate =
-        segments.mutable_segment(0)->add_candidate();
-    CHECK(candidate);
-    candidate->value = kValue;
-    candidate->content_value = kValue;
-    candidate->key = kKey;
-    candidate->content_key = kKey;
-    // "わたしの, 私の", "わたし, 私"
-    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
-    // "なまえは, 名前は", "なまえ, 名前"
-    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
-    // "なかのです, 中野です", "なかの, 中野"
-    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    request_.set_mixed_conversion(mixed_conversion);
+
+    {
+      constexpr char kKey[] = "わたしのなまえはなかのです";
+      constexpr char kValue[] = "私の名前は中野です";
+      const ConversionRequest convreq1 =
+          SetUpInputForPrediction(kKey, &composer_, &segments);
+      converter::Candidate *candidate =
+          segments.mutable_segment(0)->add_candidate();
+      CHECK(candidate);
+      candidate->value = kValue;
+      candidate->content_value = kValue;
+      candidate->key = kKey;
+      candidate->content_key = kKey;
+      // "わたしの, 私の", "わたし, 私"
+      candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+      // "なまえは, 名前は", "なまえ, 名前"
+      candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+      // "なかのです, 中野です", "なかの, 中野"
+      candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
+      predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
+                        segments.revert_id());
+    }
+    segments.Clear();
+
+    const ConversionRequest convreq2 =
+        SetUpInputForPrediction("なかの", &composer_, &segments);
+    results = predictor->Predict(convreq2);
+    EXPECT_FALSE(results.empty());
+    if (mixed_conversion) {
+      EXPECT_TRUE(FindCandidateByValue("中野", results));
+    } else {
+      EXPECT_TRUE(FindCandidateByValue("中野です", results));
+    }
+    segments.Clear();
+
+    const ConversionRequest convreq3 =
+        SetUpInputForPrediction("なかので", &composer_, &segments);
+    results = predictor->Predict(convreq3);
+    EXPECT_FALSE(results.empty());
+    EXPECT_TRUE(FindCandidateByValue("中野です", results));
+
+    segments.Clear();
+    const ConversionRequest convreq4 =
+        SetUpInputForPrediction("なまえ", &composer_, &segments);
+    results = predictor->Predict(convreq4);
+    EXPECT_FALSE(results.empty());
+    if (mixed_conversion) {
+      EXPECT_TRUE(FindCandidateByValue("名前", results));
+      EXPECT_TRUE(FindCandidateByValue("名前は中野", results));
+    } else {
+      EXPECT_TRUE(FindCandidateByValue("名前は", results));
+      EXPECT_TRUE(FindCandidateByValue("名前は中野です", results));
+    }
   }
-  segments.Clear();
-
-  const ConversionRequest convreq2 =
-      SetUpInputForPrediction("なかの", &composer_, &segments);
-  results = predictor->Predict(convreq2);
-  EXPECT_FALSE(results.empty());
-  EXPECT_TRUE(FindCandidateByValue("中野です", results));
-
-  segments.Clear();
-  const ConversionRequest convreq3 =
-      SetUpInputForPrediction("なまえ", &composer_, &segments);
-  results = predictor->Predict(convreq3);
-  EXPECT_FALSE(results.empty());
-  EXPECT_TRUE(FindCandidateByValue("名前は", results));
-  EXPECT_TRUE(FindCandidateByValue("名前は中野です", results));
 }
 
 TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  request_.set_mixed_conversion(true);
 
   Segments segments;
-  ConversionRequest convreq1;
   {
     constexpr char kKey[] = "わたしのなまえはなかのです";
     constexpr char kValue[] = "私の名前は中野です";
@@ -3468,9 +3488,9 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
     candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
     // "なかのです, 中野です", "なかの, 中野"
     candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
+    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
+                      segments.revert_id());
   }
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
   segments.Clear();
 
   const ConversionRequest convreq2 =
@@ -3486,7 +3506,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
       "", "わたしの", "私の", &composer_, &segments);
   const std::vector<Result> results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
-  EXPECT_TRUE(FindCandidateByValue("名前は", results));
+  EXPECT_TRUE(FindCandidateByValue("名前", results));
 }
 
 TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
@@ -4199,7 +4219,8 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
 
 TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-  predictor->set_content_word_learning_enabled(true);
+
+  request_.set_mixed_conversion(true);
 
   Segments segments;
   std::vector<Result> results;
@@ -4936,7 +4957,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
           .PresetSupplementalModel(std::move(mock))
           .Build(std::make_unique<testing::MockDataManager>())
           .value();
-  auto predictor = std::make_unique<UserHistoryPredictor>(*modules, false);
+  auto predictor = std::make_unique<UserHistoryPredictor>(*modules);
   UserHistoryPredictorTestPeer(*predictor).WaitForSyncer();
 
   ScopedClockMock clock(absl::FromUnixSeconds(1));

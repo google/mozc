@@ -219,7 +219,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
           .value();
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<UserHistoryPredictor>(*modules, true), converter);
+      std::make_unique<UserHistoryPredictor>(*modules), converter);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PARTIAL_PREDICTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
