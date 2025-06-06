@@ -96,14 +96,24 @@
       ],
     },
     {
+      'target_name': 'absl_container_internal',
+      'toolsets': ['host', 'target'],
+      'type': 'static_library',
+      'sources': [
+        '<!@(<(glob_absl) container/internal "*.cc")',
+      ],
+    },
+    {
       'target_name': 'absl_hash_internal',
       'toolsets': ['host', 'target'],
       'type': 'static_library',
       'sources': [
-        '<(absl_srcdir)/container/internal/raw_hash_set.cc',
         '<(absl_srcdir)/hash/internal/city.cc',
         '<(absl_srcdir)/hash/internal/hash.cc',
         '<(absl_srcdir)/hash/internal/low_level_hash.cc',
+      ],
+      'dependencies': [
+          'absl_container_internal',
       ],
     },
     {
