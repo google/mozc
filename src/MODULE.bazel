@@ -1,10 +1,10 @@
 module(name = "mozc")
 
-# absl-cpp: 2025-02-04
+# absl-cpp: 20250512.0 2025-05-13
 # https://github.com/abseil/abseil-cpp
 bazel_dep(
     name = "abseil-cpp",
-    version = "20250127.0",
+    version = "20250512.0",
     repo_name = "com_google_absl",
 )
 
@@ -17,29 +17,29 @@ bazel_dep(
     version = "2024-07-02.bcr.1",
 )
 
-# protobuf: 29.3 2025-01-09
+# protobuf: 30.2 2025-03-27
 # https://github.com/protocolbuffers/protobuf
-# We cannot switch to 30.x until the protobuf team fixes the following issue.
-#   * https://github.com/protocolbuffers/protobuf/issues/20645
+# 31.0 or 31.1 does not work due to the build failure for Windows debug build.
+#   * https://github.com/protocolbuffers/protobuf/issues/21957
 bazel_dep(
     name = "protobuf",
-    version = "29.3",
+    version = "30.2",
     repo_name = "com_google_protobuf",
 )
 
-# googletest: 1.15.2 2024-07-31
+# googletest: 1.17.0 2025-05-01
 # https://github.com/google/googletest
 bazel_dep(
     name = "googletest",
-    version = "1.15.2",
+    version = "1.17.0",
     repo_name = "com_google_googletest",
 )
 
-# platforms: 0.0.10 2024-04-26
+# platforms: 1.0.0 2025-05-22
 # https://github.com/bazelbuild/platforms/
 bazel_dep(
     name = "platforms",
-    version = "0.0.10",
+    version = "1.0.0",
 )
 
 # bazel_skylib: 1.7.1 2024-06-03
@@ -49,35 +49,36 @@ bazel_dep(
     version = "1.7.1",
 )
 
-# rules_python: 1.0.0 2024-12-06
+# rules_python: 1.4.1 2025-05-09
 # https://github.com/bazelbuild/rules_python/
 bazel_dep(
     name = "rules_python",
-    version = "1.0.0",
+    version = "1.4.1",
 )
 
-# Bazel macOS build (3.16.1 2024-12-13)
+# Bazel macOS build (3.22.0 2025-05-20)
 # https://github.com/bazelbuild/rules_apple
 bazel_dep(
     name = "rules_apple",
-    version = "3.16.1",
+    version = "3.22.0",
     repo_name = "build_bazel_rules_apple",
 )
 
-# Apple Support for Bazel (1.16.0 2024-07-10)
+# Apple Support for Bazel (1.22.0 2025-05-05)
+# https://github.com/bazelbuild/apple_support/
 ## this must come above 'rules_cc'
 ## https://github.com/bazelbuild/apple_support/blob/d87e8b07f3345e750834dbb6ce38c7c7d3b8b44b/README.md#bazel-7-setup
 bazel_dep(
     name = "apple_support",
-    version = "1.16.0",
+    version = "1.22.0",
     repo_name = "build_bazel_apple_support",
 )
 
-# rules_cc: 0.0.17 2024-11-19
+# rules_cc: 0.1.1 2025-02-07
 # https://github.com/bazelbuild/rules_cc/
 bazel_dep(
     name = "rules_cc",
-    version = "0.0.17",
+    version = "0.1.1",
 )
 single_version_override(
     module_name = "rules_cc",
@@ -88,7 +89,7 @@ single_version_override(
         "bazel/rules_cc_windows_cc_configure.bzl.patch",
         "bazel/rules_cc_windows_cc_toolchain_config.bzl.patch",
     ],
-    version = "0.0.17",
+    version = "0.1.1",
 )
 
 cc_configure = use_extension(
