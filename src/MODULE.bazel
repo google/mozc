@@ -17,14 +17,21 @@ bazel_dep(
     version = "2024-07-02.bcr.1",
 )
 
-# protobuf: 30.2 2025-03-27
+# protobuf: 31.1 2025-05-27
 # https://github.com/protocolbuffers/protobuf
-# 31.0 or 31.1 does not work due to the build failure for Windows debug build.
-#   * https://github.com/protocolbuffers/protobuf/issues/21957
 bazel_dep(
     name = "protobuf",
-    version = "30.2",
+    version = "31.1",
     repo_name = "com_google_protobuf",
+)
+single_version_override(
+    module_name = "protobuf",
+    patches = [
+        # Patch to fix build failure for Windows debug build.
+        # https://github.com/protocolbuffers/protobuf/issues/21957
+        "bazel/protobuf_src_google_protobuf_port.h.patch",
+    ],
+    version = "31.1",
 )
 
 # googletest: 1.17.0 2025-05-01
@@ -72,6 +79,16 @@ bazel_dep(
     name = "apple_support",
     version = "1.22.0",
     repo_name = "build_bazel_apple_support",
+)
+
+# While Mozc does not directly depends on rules_swift, it is still indirectly
+# used by rules_apple. To avoid the build failure on Windows, its version needs
+# to be 2.5.0 or higher.
+# https://github.com/bazelbuild/rules_swift/issues/1502
+bazel_dep(
+    name = "rules_swift",
+    version = "2.8.2",
+    repo_name = "build_bazel_rules_swift",
 )
 
 # rules_cc: 0.1.1 2025-02-07
