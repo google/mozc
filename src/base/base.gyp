@@ -424,36 +424,6 @@
       ],
     },
     {
-      'target_name': 'crash_report_handler',
-      'type': 'static_library',
-      'sources': [
-        'crash_report_handler.cc',
-      ],
-      'dependencies': [
-        'base',
-        'base.gyp:version',
-      ],
-      'conditions': [
-        ['OS=="win" and branding=="GoogleJapaneseInput"', {
-          'dependencies': [
-            'breakpad',
-          ],
-        }],
-        ['OS=="mac"', {
-          'hard_dependency': 1,
-          'sources': [
-            'crash_report_handler_mac.mm',
-          ],
-          'sources!': [
-            'crash_report_handler.cc',
-          ],
-          'dependencies': [
-            'breakpad',
-          ],
-        }],
-      ],
-    },
-    {
       'target_name': 'serialized_string_array',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
@@ -464,83 +434,5 @@
         'base_core',
       ],
     },
-  ],
-  'conditions': [
-    ['OS=="win" and branding=="GoogleJapaneseInput"', {
-      'targets': [
-        {
-          'target_name': 'breakpad',
-          'type': 'static_library',
-          'variables': {
-            'breakpad_root': '<(third_party_dir)/breakpad',
-          },
-          'include_dirs': [
-            # Use the local glog configured for Windows.
-            # See b/2954681 for details.
-            '<(breakpad_root)/src/third_party/glog/glog/src/windows',
-            '<(breakpad_root)/src',
-          ],
-          'sources': [
-            '<(breakpad_root)/src/client/windows/crash_generation/client_info.cc',
-            '<(breakpad_root)/src/client/windows/crash_generation/crash_generation_client.cc',
-            '<(breakpad_root)/src/client/windows/crash_generation/crash_generation_server.cc',
-            '<(breakpad_root)/src/client/windows/crash_generation/minidump_generator.cc',
-            '<(breakpad_root)/src/client/windows/handler/exception_handler.cc',
-            '<(breakpad_root)/src/client/windows/sender/crash_report_sender.cc',
-            '<(breakpad_root)/src/common/windows/guid_string.cc',
-            '<(breakpad_root)/src/common/windows/http_upload.cc'
-          ],
-          'direct_dependent_settings': {
-            'include_dirs': [
-              '<(breakpad_root)/src',
-            ],
-          },
-          'link_settings': {
-            'msvs_settings': {
-              'VCLinkerTool': {
-                'AdditionalDependencies': [
-                  'dbghelp.lib',
-                ],
-              },
-            },
-          },
-        },
-      ]},
-    ],
-    ['OS=="mac"', {
-      'targets': [
-        {
-          'target_name': 'breakpad',
-          'type': 'none',
-          'variables': {
-            'bpdir': '<(third_party_dir)/breakpad',
-          },
-          'actions': [{
-            'action_name': 'build_breakpad',
-            'inputs': [
-              '<(bpdir)/src/client/mac/Breakpad.xcodeproj/project.pbxproj',
-            ],
-            'outputs': [
-              '<(mac_breakpad_dir)/Breakpad.framework',
-              '<(mac_breakpad_dir)/Inspector',
-              '<(mac_breakpad_dir)/dump_syms',
-              '<(mac_breakpad_dir)/symupload',
-            ],
-            'action': [
-              '<(python)', '<(mozc_oss_src_dir)/build_tools/build_breakpad.py',
-              '--bpdir', '<(bpdir)',
-              '--outdir', '<(mac_breakpad_dir)',
-              '--sdk', 'macosx<(mac_sdk)',
-              '--deployment_target', '<(mac_deployment_target)',
-            ],
-          }],
-          'direct_dependent_settings': {
-            'mac_framework_dirs': [
-              '<(mac_breakpad_dir)',
-            ],
-          },
-        },
-      ]},
-    ],
   ],
 }
