@@ -13,8 +13,8 @@ concurrency:
 
 jobs:
   build_arm64:
-    # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
-    runs-on: macos-14
+    # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
+    runs-on: macos-15
     timeout-minutes: 60
 
     steps:
@@ -54,8 +54,8 @@ jobs:
           if-no-files-found: warn
 
   build_intel64:
-    # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
-    runs-on: macos-14
+    # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
+    runs-on: macos-15
     timeout-minutes: 60
 
     steps:
@@ -95,8 +95,8 @@ jobs:
           if-no-files-found: warn
 
   build_universal_binary:
-    # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
-    runs-on: macos-14
+    # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
+    runs-on: macos-15
     timeout-minutes: 90
 
     steps:
@@ -136,8 +136,8 @@ jobs:
           if-no-files-found: warn
 
   test:
-    # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
-    runs-on: macos-14
+    # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
+    runs-on: macos-15
     timeout-minutes: 60
 
     steps:
@@ -167,8 +167,8 @@ jobs:
   # in other jobs. Another approach would be to use "needs:".
   # https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow
   cache_deps:
-    # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
-    runs-on: macos-14
+    # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
+    runs-on: macos-15
     timeout-minutes: 15
 
     steps:
