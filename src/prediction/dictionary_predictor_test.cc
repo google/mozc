@@ -94,7 +94,6 @@ class DictionaryPredictorTestPeer
 
   PEER_STATIC_METHOD(IsAggressiveSuggestion);
   PEER_STATIC_METHOD(RemoveMissSpelledCandidates);
-  PEER_STATIC_METHOD(GetMissSpelledPosition);
   PEER_STATIC_METHOD(AddRescoringDebugDescription);
   PEER_METHOD(GetLMCost);
   PEER_METHOD(RerankAndFilterResults);
@@ -159,8 +158,6 @@ class MockDataAndPredictor {
 };
 
 namespace {
-
-constexpr int kInfinity = (2 << 20);
 
 Result CreateResult4(absl::string_view key, absl::string_view value,
                      PredictionTypes types,
@@ -322,25 +319,6 @@ TEST_F(DictionaryPredictorTest, IsAggressiveSuggestion) {
   // cost <= 4000
   EXPECT_FALSE(DictionaryPredictorTestPeer::IsAggressiveSuggestion(4, 13, 4000,
                                                                    true, 20));
-}
-
-TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
-  EXPECT_EQ(DictionaryPredictorTestPeer::GetMissSpelledPosition("", ""), 0);
-  EXPECT_EQ(DictionaryPredictorTestPeer::GetMissSpelledPosition("れみおめろん",
-                                                                "レミオロメン"),
-            3);
-  EXPECT_EQ(DictionaryPredictorTestPeer::GetMissSpelledPosition("とーとばっく",
-                                                                "トートバッグ"),
-            5);
-  EXPECT_EQ(DictionaryPredictorTestPeer::GetMissSpelledPosition(
-                "おーすとりらあ", "オーストラリア"),
-            4);
-  EXPECT_EQ(DictionaryPredictorTestPeer::GetMissSpelledPosition(
-                "おーすとりあ", "おーすとらりあ"),
-            4);
-  EXPECT_EQ(DictionaryPredictorTestPeer::GetMissSpelledPosition(
-                "じきそうしょう", "時期尚早"),
-            7);
 }
 
 TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
@@ -937,7 +915,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
     if (i < kLowCostCandidateSize) {
       result->cost = i + 1000;
     } else {
-      result->cost = i + kInfinity;
+      result->cost = i + Result::kInvalidCost;
     }
   }
   absl::BitGen urbg;

@@ -179,11 +179,11 @@ mozc_cc_library(
         ":prediction_aggregator_interface",
         ":predictor_interface",
         ":result",
+        ":result_filter",
         ":suggestion_filter",
         "//base:thread",
         "//base:util",
         "//base:vlog",
-        "//base/strings:assign",
         "//base/strings:japanese",
         "//composer",
         "//converter:connector",
@@ -229,6 +229,38 @@ mozc_cc_library(
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+mozc_cc_library(
+    name = "result_filter",
+    srcs = ["result_filter.cc"],
+    hdrs = ["result_filter.h"],
+    deps = [
+        ":result",
+        ":suggestion_filter",
+        "//base:util",
+        "//base/strings:japanese",
+        "//converter:connector",
+        "//converter:segments",
+        "//dictionary:pos_matcher",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
+        "//request:request_util",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "result_filter_test",
+    srcs = ["result_filter_test.cc"],
+    deps = [
+        ":result_filter",
+        "//testing:gunit",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

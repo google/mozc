@@ -66,6 +66,7 @@
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
+#include "prediction/result_filter.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -76,14 +77,6 @@ namespace mozc::prediction {
 namespace {
 
 using ::mozc::commands::Request;
-
-// Used to emulate positive infinity for cost. This value is set for those
-// candidates that are thought to be aggressive; thus we can eliminate such
-// candidates from suggestion or prediction. Note that for this purpose we
-// don't want to use INT_MAX because someone might further add penalty after
-// cost is set to INT_MAX, which leads to overflow and consequently aggressive
-// candidates would appear in the top results.
-constexpr int kInfinity = (2 << 20);
 
 bool IsDebug(const ConversionRequest &request) {
 #ifndef NDEBUG
@@ -119,7 +112,7 @@ void MaybeFixRealtimeTopCost(const ConversionRequest &request,
   // Remember the minimum cost among those REALTIME
   // candidates that have the same key length as |input_key| so that we can set
   // a slightly smaller cost to REALTIME_TOP than these.
-  int realtime_cost_min = kInfinity;
+  int realtime_cost_min = Result::kInvalidCost;
   Result *realtime_top_result = nullptr;
   for (Result &result : results) {
     if (result.types & PredictionType::REALTIME_TOP) {
@@ -137,7 +130,8 @@ void MaybeFixRealtimeTopCost(const ConversionRequest &request,
 
   // Ensure that the REALTIME_TOP candidate has relatively smaller cost than
   // those of REALTIME candidates.
-  if (realtime_top_result != nullptr && realtime_cost_min != kInfinity) {
+  if (realtime_top_result != nullptr &&
+      realtime_cost_min != Result::kInvalidCost) {
     realtime_top_result->cost = std::max(0, realtime_cost_min - 10);
   }
 }
@@ -227,9 +221,6 @@ std::vector<Result> DictionaryPredictor::AggregateTypingCorrectedResults(
 
 std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
     const ConversionRequest &request, std::vector<Result> results) const {
-  const std::string history_key = request.converter_history_key(1);
-  const std::string history_value = request.converter_history_value(1);
-
   const bool cursor_at_tail =
       request.composer().GetCursor() == request.composer().GetLength();
 
@@ -244,7 +235,8 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
   const size_t max_candidates_size = std::min(
       request.max_dictionary_prediction_candidates_size(), results.size());
 
-  ResultFilter filter(request, pos_matcher_, connector_, suggestion_filter_);
+  filter::ResultFilter filter(request, pos_matcher_, connector_,
+                              suggestion_filter_);
 
   absl::flat_hash_map<std::string, int32_t> merged_types;
   if (IsDebug(request)) {
@@ -265,7 +257,7 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
                   });
     Result &result = results[results.size() - i - 1];
     if (final_results.size() >= max_candidates_size ||
-        result.cost >= kInfinity) {
+        result.cost >= Result::kInvalidCost) {
       break;
     }
 
@@ -274,8 +266,7 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
       final_results.emplace_back(*prev_top_result);
     }
 
-    std::string log_message;
-    if (filter.ShouldRemove(result, final_results.size(), &log_message)) {
+    if (filter.ShouldRemove(result, final_results.size())) {
       continue;
     }
 
@@ -394,158 +385,6 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
   return wcost_diff + kSingleKanjiPredictionCostOffset;
 }
 
-DictionaryPredictor::ResultFilter::ResultFilter(
-    const ConversionRequest &request, dictionary::PosMatcher pos_matcher,
-    const Connector &connector, const SuggestionFilter &suggestion_filter)
-    : input_key_(request.converter_key()),
-      history_key_(request.converter_history_key(1)),
-      history_value_(request.converter_history_value(1)),
-      input_key_len_(Util::CharsLen(input_key_)),
-      pos_matcher_(pos_matcher),
-      connector_(connector),
-      suggestion_filter_(suggestion_filter),
-      is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
-      auto_partial_suggestion_(
-          request_util::IsAutoPartialSuggestionEnabled(request)),
-      include_exact_key_(IsMixedConversionEnabled(request.request())),
-      is_handwriting_(request_util::IsHandwriting(request)),
-      suffix_nwp_transition_cost_threshold_(
-          request.request()
-              .decoder_experiment_params()
-              .suffix_nwp_transition_cost_threshold()),
-      history_rid_(request.converter_history_rid()) {}
-
-bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
-                                                     int added_num,
-                                                     std::string *log_message) {
-  if (result.removed) {
-    *log_message = "Removed flag is on";
-    return true;
-  }
-
-  if (result.cost >= kInfinity) {
-    *log_message = "Too large cost";
-    return true;
-  }
-
-  if (!auto_partial_suggestion_ &&
-      (result.candidate_attributes &
-       converter::Candidate::PARTIALLY_KEY_CONSUMED)) {
-    *log_message = "Auto partial suggestion disabled";
-    return true;
-  }
-
-  // When |include_exact_key| is true, we don't filter the results
-  // which have the exactly same key as the input even if it's a bad
-  // suggestion.
-  if (!(include_exact_key_ && result.key == input_key_) &&
-      suggestion_filter_.IsBadSuggestion(result.value)) {
-    *log_message = "Bad suggestion";
-    return true;
-  }
-
-  if (is_handwriting_) {
-    // Only unigram results are appended for handwriting and we do not need to
-    // apply filtering.
-    return false;
-  }
-
-  // Don't suggest exactly the same candidate as key.
-  // if |include_exact_key| is true, that's not the case.
-  if (!include_exact_key_ && !(result.types & PredictionType::REALTIME) &&
-      input_key_ == result.value) {
-    *log_message = "Key == candidate";
-    return true;
-  }
-
-  if (seen_.contains(result.value)) {
-    *log_message = "Duplicated";
-    return true;
-  }
-
-  // User input: "おーすとり" (len = 5)
-  // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
-  if ((result.candidate_attributes &
-       converter::Candidate::SPELLING_CORRECTION) &&
-      result.key != input_key_ &&
-      input_key_len_ <= GetMissSpelledPosition(result.key, result.value) + 1) {
-    *log_message = "Spelling correction";
-    return true;
-  }
-
-  const size_t lookup_key_len = Util::CharsLen(input_key_);
-
-  if (suffix_nwp_transition_cost_threshold_ > 0 && lookup_key_len == 0 &&
-      result.types & PredictionType::SUFFIX &&
-      connector_.GetTransitionCost(history_rid_, result.lid) >
-          suffix_nwp_transition_cost_threshold_) {
-    *log_message = "Suffix NWP transition cost is too high";
-    return true;
-  }
-
-  if ((result.types & PredictionType::SUFFIX) && suffix_count_++ >= 20) {
-    // TODO(toshiyuki): Need refactoring for controlling suffix
-    // prediction number after we will fix the appropriate number.
-    *log_message = "Added suffix >= 20";
-    return true;
-  }
-
-  if (!is_mixed_conversion_) {
-    return CheckDupAndReturn(result.value, result, log_message);
-  }
-
-  // Suppress long candidates to show more candidates in the candidate view.
-  const size_t candidate_key_len = Util::CharsLen(result.key);
-  if (lookup_key_len > 0 &&  // Do not filter for zero query
-      lookup_key_len < candidate_key_len &&
-      (predictive_count_++ >= 3 || added_num >= 10)) {
-    *log_message = absl::StrCat("Added predictive (",
-                                GetPredictionTypeDebugString(result.types),
-                                ") >= 3 || added >= 10");
-    return true;
-  }
-  if ((result.types & PredictionType::REALTIME) &&
-      // Do not remove one-segment / on-char realtime candidates
-      // example:
-      // - "勝った" for the reading, "かった".
-      // - "勝" for the reading, "かつ".
-      result.inner_segment_boundary.size() >= 2 &&
-      Util::CharsLen(result.value) != 1 &&
-      (realtime_count_++ >= 3 || added_num >= 5)) {
-    *log_message = "Added realtime >= 3 || added >= 5";
-    return true;
-  }
-
-  constexpr int kTcMaxCount = 3;
-  constexpr int kTcMaxRank = 10;
-
-  if ((result.types & PredictionType::TYPING_CORRECTION) &&
-      (tc_count_++ >= kTcMaxCount || added_num >= kTcMaxRank)) {
-    *log_message = absl::StrCat("Added typing correction >= ", kTcMaxCount,
-                                " || added >= ", kTcMaxRank);
-    return true;
-  }
-  if ((result.types & PredictionType::PREFIX) &&
-      (result.candidate_attributes & converter::Candidate::TYPING_CORRECTION) &&
-      (prefix_tc_count_++ >= 3 || added_num >= 10)) {
-    *log_message = "Added prefix typing correction >= 3 || added >= 10";
-    return true;
-  }
-
-  return CheckDupAndReturn(result.value, result, log_message);
-}
-
-bool DictionaryPredictor::ResultFilter::CheckDupAndReturn(
-    const absl::string_view value, const Result &result,
-    std::string *log_message) {
-  if (seen_.contains(value)) {
-    *log_message = "Duplicated";
-    return true;
-  }
-  seen_.emplace(value);
-  return false;
-}
-
 std::string DictionaryPredictor::GetPredictionTypeDebugString(
     PredictionTypes types) {
   std::string debug_desc;
@@ -640,7 +479,7 @@ void DictionaryPredictor::SetPredictionCost(const ConversionRequest &request,
 
     if (IsAggressiveSuggestion(query_len, key_len, cost, is_suggestion,
                                results.size())) {
-      result.cost = kInfinity;
+      result.cost = Result::kInvalidCost;
       continue;
     }
 
@@ -820,35 +659,6 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
 }
 
 // static
-size_t DictionaryPredictor::GetMissSpelledPosition(
-    const absl::string_view key, const absl::string_view value) {
-  const std::string hiragana_value = japanese::KatakanaToHiragana(value);
-  // value is mixed type. return true if key == request_key.
-  if (Util::GetScriptType(hiragana_value) != Util::HIRAGANA) {
-    return Util::CharsLen(key);
-  }
-
-  // Find the first position of character where miss spell occurs.
-  int position = 0;
-  ConstChar32Iterator key_iter(key);
-  for (ConstChar32Iterator hiragana_iter(hiragana_value);
-       !hiragana_iter.Done() && !key_iter.Done();
-       hiragana_iter.Next(), key_iter.Next(), ++position) {
-    if (hiragana_iter.Get() != key_iter.Get()) {
-      return position;
-    }
-  }
-
-  // not find. return the length of key.
-  while (!key_iter.Done()) {
-    ++position;
-    key_iter.Next();
-  }
-
-  return position;
-}
-
-// static
 void DictionaryPredictor::RemoveMissSpelledCandidates(
     const ConversionRequest &request, absl::Span<Result> results) {
   const size_t request_key_len = Util::CharsLen(request.converter_key());
@@ -905,7 +715,8 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
         results[k].removed = true;
         MOZC_WORD_LOG(results[k], "Removed. same_key_index.");
       }
-      if (request_key_len <= GetMissSpelledPosition(result.key, result.value)) {
+      if (request_key_len <=
+          filter::GetMissSpelledPosition(result.key, result.value)) {
         results[i].removed = true;
         MOZC_WORD_LOG(results[i], "Removed. Invalid MissSpelledPosition.");
       }
@@ -982,7 +793,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   // ConvertForRequest() can return placeholder candidate with cost 0 when it
   // failed to generate candidates.
   if (penalty <= 0) {
-    penalty = kInfinity;
+    penalty = Result::kInvalidCost;
   }
   constexpr int kPrefixCandidateCostOffset = 1151;  // 500 * log(10)
   // TODO(toshiyuki): Optimize the cost offset.

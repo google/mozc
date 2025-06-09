@@ -43,6 +43,7 @@
         'number_decoder.cc',
         'predictor.cc',
         'result.cc',
+        'result_filter.cc',
         'single_kanji_prediction_aggregator.cc',
         'user_history_predictor.cc',
       ],

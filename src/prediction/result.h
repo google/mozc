@@ -141,6 +141,14 @@ struct Result {
   std::string log;
 #endif  // NDEBUG
 
+  // Used to emulate positive infinity for cost. This value is set for those
+  // candidates that are thought to be aggressive; thus we can eliminate such
+  // candidates from suggestion or prediction. Note that for this purpose we
+  // don't want to use INT_MAX because someone might further add penalty after
+  // cost is set to INT_MAX, which leads to overflow and consequently aggressive
+  // candidates would appear in the top results.
+  inline static constexpr int kInvalidCost = (2 << 20);
+
   template <typename S>
   friend void AbslStringify(S &sink, const Result &r) {
     absl::Format(

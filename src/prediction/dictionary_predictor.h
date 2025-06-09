@@ -88,44 +88,6 @@ class DictionaryPredictor : public PredictorInterface {
   friend class DictionaryPredictorTestPeer;
   friend class MockDataAndPredictor;
 
-  class ResultFilter {
-   public:
-    ResultFilter(const ConversionRequest &request,
-                 dictionary::PosMatcher pos_matcher,
-                 const Connector &connector ABSL_ATTRIBUTE_LIFETIME_BOUND,
-                 const SuggestionFilter &suggestion_filter
-                     ABSL_ATTRIBUTE_LIFETIME_BOUND);
-    bool ShouldRemove(const Result &result, int added_num,
-                      std::string *log_message);
-
-   private:
-    bool CheckDupAndReturn(absl::string_view value, const Result &result,
-                           std::string *log_message);
-
-    const std::string input_key_;
-    const std::string history_key_;
-    const std::string history_value_;
-    const size_t input_key_len_;
-    const dictionary::PosMatcher pos_matcher_;
-    const Connector &connector_;
-    const SuggestionFilter &suggestion_filter_;
-    const bool is_mixed_conversion_;
-    const bool auto_partial_suggestion_;
-    const bool include_exact_key_;
-    const bool is_handwriting_;
-    const int suffix_nwp_transition_cost_threshold_;
-    const int history_rid_ = 0;
-
-    int suffix_count_ = 0;
-    int predictive_count_ = 0;
-    int realtime_count_ = 0;
-    int prefix_tc_count_ = 0;
-    int tc_count_ = 0;
-
-    // Seen set for dup value check.
-    absl::flat_hash_set<std::string> seen_;
-  };
-
   // pair: <rid, key_length>
   using PrefixPenaltyKey = std::pair<uint16_t, int16_t>;
 
@@ -138,20 +100,6 @@ class DictionaryPredictor : public PredictorInterface {
 
   std::vector<Result> RerankAndFilterResults(const ConversionRequest &request,
                                              std::vector<Result> result) const;
-
-  // Returns the position of misspelled character position.
-  //
-  // Example:
-  // key: "れみおめろん"
-  // value: "レミオロメン"
-  // returns 3
-  //
-  // Example:
-  // key: "ろっぽんぎ"
-  // value: "六本木"
-  // returns 5 (charslen("ろっぽんぎ"))
-  static size_t GetMissSpelledPosition(absl::string_view key,
-                                       absl::string_view value);
 
   // Returns language model cost of |token| given prediction type |type|.
   // |rid| is the right id of previous word (token).
