@@ -237,6 +237,32 @@ bool Converter::StartPrediction(const ConversionRequest &request,
     MOZC_VLOG(1) << "PredictForRequest failed for key: "
                  << segments->segment(0).key();
   }
+  ApplyPostProcessing(request, segments);
+  return IsValidSegments(request, *segments);
+}
+
+bool Converter::StartPredictionWithPreviousSuggestion(
+    const ConversionRequest &request, const Segment &previous_segment,
+    Segments *segments) const {
+  bool result = StartPrediction(request, segments);
+  segments->PrependCandidates(previous_segment);
+  if (!result) {
+    return false;
+  }
+
+  ApplyPostProcessing(request, segments);
+  return IsValidSegments(request, *segments);
+}
+
+void Converter::PrependCandidates(const ConversionRequest &request,
+                                  const Segment &segment,
+                                  Segments *segments) const {
+  segments->PrependCandidates(segment);
+  ApplyPostProcessing(request, segments);
+}
+
+void Converter::ApplyPostProcessing(const ConversionRequest &request,
+                                    Segments *segments) const {
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
   if (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
@@ -250,10 +276,9 @@ bool Converter::StartPrediction(const ConversionRequest &request,
     // To do this, PARTIALLY_KEY_CONSUMED and consumed_key_size should be set.
     // Note that this process should be done in a predictor because
     // we have to do this on the candidates created by rewriters.
-    MaybeSetConsumedKeySizeToSegment(Util::CharsLen(key),
+    MaybeSetConsumedKeySizeToSegment(Util::CharsLen(request.key()),
                                      segments->mutable_conversion_segment(0));
   }
-  return IsValidSegments(request, *segments);
 }
 
 void Converter::FinishConversion(const ConversionRequest &request,
@@ -486,8 +511,8 @@ void Converter::ApplyConversion(Segments *segments,
     MOZC_VLOG(1) << "ConvertForRequest failed for key: "
                  << segments->segment(0).key();
   }
-  RewriteAndSuppressCandidates(request, segments);
-  TrimCandidates(request, segments);
+
+  ApplyPostProcessing(request, segments);
 }
 
 void Converter::CompletePosIds(Candidate *candidate) const {

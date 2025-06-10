@@ -96,6 +96,18 @@ class MinimalConverter : public ConverterInterface {
     return AddAsIsCandidate(request, segments);
   }
 
+  bool StartPredictionWithPreviousSuggestion(
+      const ConversionRequest &request, const Segment &previous_segment,
+      Segments *segments) const override {
+    return AddAsIsCandidate(request, segments);
+  }
+
+  void PrependCandidates(const ConversionRequest &request,
+                         const Segment &segment,
+                         Segments *segments) const override {
+    segments->PrependCandidates(segment);
+  }
+
   void FinishConversion(const ConversionRequest &request,
                         Segments *segments) const override {}
 

@@ -55,6 +55,14 @@ class StrictMockConverter : public ConverterInterface {
   MOCK_METHOD(bool, StartPrediction,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
+  MOCK_METHOD(bool, StartPredictionWithPreviousSuggestion,
+              (const ConversionRequest &request,
+               const Segment &previous_segment, Segments *segments),
+              (const, override));
+  MOCK_METHOD(void, PrependCandidates,
+              (const ConversionRequest &request, const Segment &segment,
+               Segments *segments),
+              (const, override));
   MOCK_METHOD(void, FinishConversion,
               (const ConversionRequest &request, Segments *segments),
               (const, override));

@@ -1730,14 +1730,17 @@ TEST_F(EngineConverterTest, PredictIsNotCalledInPredictionState) {
   // Call Predict() and sets the segments of converter to the following one. By
   // calling Predict(), converter enters PREDICTION state.
   const Segments &segments = GetSegmentsTest();
-  EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .WillOnce(DoAll(SetArgPointee<2>(segments), Return(true)));
   composer_->InsertCharacterPreedit("てすと");
   EXPECT_TRUE(converter.Predict(*composer_));
   Mock::VerifyAndClearExpectations(&mock_converter);
 
   // Then, call Predict() again. PredictForRequest() is not called.
-  EXPECT_CALL(*mock_converter, StartPrediction(_, _)).Times(0);
+  EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .Times(0);
+  EXPECT_CALL(*mock_converter, PrependCandidates(_, _, _))
+      .WillOnce(SetArgPointee<2>(segments));
   EXPECT_TRUE(converter.Predict(*composer_));
 }
 
@@ -1987,8 +1990,9 @@ TEST_F(EngineConverterTest, PartialPrediction) {
 TEST_F(EngineConverterTest, SuggestAndPredict) {
   auto mock_converter = std::make_shared<MockConverter>();
   EngineConverter converter(mock_converter, request_, config_);
-  Segments segments;
-  {  // Initialize mock segments for suggestion
+  const Segments suggest_segments = []() {
+    // Initialize mock segments for suggestion
+    Segments segments;
     Segment *segment = segments.add_segment();
     converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -1998,14 +2002,18 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     candidate = segment->add_candidate();
     candidate->value = kChars_Momonga;
     candidate->content_key = kChars_Momonga;
-  }
+    return segments;
+  }();
   composer_->InsertCharacterPreedit(kChars_Mo);
 
-  // Suggestion
+  // Action 1. Suggest()
+  // ["もずくす", "ももんが"] will be suggested.
   EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+      .WillOnce(DoAll(SetArgPointee<1>(suggest_segments), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_, Context::default_instance()));
+
   Mock::VerifyAndClearExpectations(&mock_converter);
+
   std::vector<int> expected_indices = {0};
   EXPECT_TRUE(IsCandidateListVisible(converter));
   EXPECT_TRUE(converter.IsActive());
@@ -2035,11 +2043,24 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_FALSE(candidate_window.has_focused_index());
   }
 
+  // Action 2. Predict()
+  // ["もずくす", "ももんが"] will be shown as prediction.
+  // "もずくす" is focused.
+  //
   // Since Suggest() was called, the converter stores its results internally. In
   // this case, the prediction is not triggered.
-  EXPECT_CALL(*mock_converter, StartPrediction(_, _)).Times(0);
+  EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .Times(0);
+  // b/417900855: Post processing should be called for the previous segments.
+  // We have different rewriter set for prediction and suggestion.
+  EXPECT_CALL(*mock_converter,
+              PrependCandidates(
+                  _, EqualsSegment(suggest_segments.conversion_segment(0)), _))
+      .WillOnce(SetArgPointee<2>(suggest_segments));
   EXPECT_TRUE(converter.Predict(*composer_));
+
   Mock::VerifyAndClearExpectations(&mock_converter);
+
   EXPECT_TRUE(IsCandidateListVisible(converter));
   EXPECT_TRUE(converter.IsActive());
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -2069,19 +2090,38 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_EQ(candidate_window.focused_index(), 0);
   }
 
+  // Action 3. CandidateNext()
+  // "ももんが" is focused.
+
   EXPECT_CALL(*mock_converter, FocusSegmentValue(_, 0, 1))
       .WillOnce(Return(true));
   converter.CandidateNext(*composer_);
+
   Mock::VerifyAndClearExpectations(&mock_converter);
 
-  // Prediction is called
+  // Action 4. CandidateNext()
+  // Prediction is expanded.
+  // converter returns:
+  // ["もずくす", "ももんが", "もずく", "ももんが", "モンドリアン"]
+  // output is deduped:
+  // ["もずくす", "ももんが", "もずく", "モンドリアン"]
+  // "もずく" is focused.
   EXPECT_CALL(*mock_converter, FocusSegmentValue(_, 0, 2))
       .WillOnce(Return(true));
-  Segments mondrian_segments;
-  {  // Initialize mock segments for prediction
-    Segment *segment = mondrian_segments.add_segment();
+  const Segments expanded_segments = []() {
+    Segments segments;
+    // Initialize mock segments for prediction
+    Segment *segment = segments.add_segment();
     converter::Candidate *candidate;
     segment->set_key(kChars_Mo);
+    // From previous suggestion
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Mozukusu;
+    candidate->content_key = kChars_Mozukusu;
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Momonga;
+    candidate->content_key = kChars_Momonga;
+    // From prediction
     candidate = segment->add_candidate();
     candidate->value = kChars_Mozuku;
     candidate->content_key = kChars_Mozuku;
@@ -2091,13 +2131,17 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     candidate = segment->add_candidate();
     candidate->value = "モンドリアン";
     candidate->content_key = "もんどりあん";
-  }
-  EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(mondrian_segments), Return(true)));
+    return segments;
+  }();
+  EXPECT_CALL(*mock_converter,
+              StartPredictionWithPreviousSuggestion(
+                  _, EqualsSegment(suggest_segments.conversion_segment(0)), _))
+      .WillRepeatedly(DoAll(SetArgPointee<2>(expanded_segments), Return(true)));
   converter.CandidateNext(*composer_);
   Mock::VerifyAndClearExpectations(&mock_converter);
   expected_indices[0] += 2;
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+
   {
     // Check the candidate list
     commands::Output output;
@@ -2117,7 +2161,8 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_TRUE(candidate_window.has_focused_index());
   }
 
-  // Select to "モンドリアン".
+  // Action 5. CandidateNext()
+  // "モンドリアン" is focused.
   EXPECT_CALL(*mock_converter, FocusSegmentValue(_, 0, 4))
       .WillOnce(Return(true));
   converter.CandidateNext(*composer_);
@@ -2125,6 +2170,7 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
   expected_indices[0] += 1;
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
+  // Action 6. Commit()
   // Commit "モンドリアン".
   EXPECT_CALL(*mock_converter, CommitSegmentValue(_, 0, 4))
       .WillOnce(Return(true));
@@ -2146,10 +2192,25 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_EQ(result.key(), "もんどりあん");
   }
 
+  // Action 7. Predict() (Next Word Prediction)
   // After commit, the state should be reset. Thus, calling prediction before
   // suggestion should trigger StartPrediction().
-  EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(mondrian_segments), Return(true)));
+  const Segment kEmptySegment;
+  const Segments nwp_segments = []() {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    converter::Candidate *candidate;
+    candidate = segment->add_candidate();
+    candidate->value = "が";
+    candidate->content_key = "が";
+    candidate = segment->add_candidate();
+    candidate->value = "の";
+    candidate->content_key = "の";
+    return segments;
+  }();
+  EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(
+                                   _, EqualsSegment(kEmptySegment), _))
+      .WillOnce(DoAll(SetArgPointee<2>(nwp_segments), Return(true)));
   expected_indices.push_back(0);
   EXPECT_TRUE(converter.Predict(*composer_));
   Mock::VerifyAndClearExpectations(&mock_converter);
@@ -2162,19 +2223,18 @@ TEST_F(EngineConverterTest, SuggestAndPredict) {
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidate_window());
 
-    // Check the conversion
-    const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(conversion.segment_size(), 1);
-    EXPECT_EQ(conversion.segment(0).value(), kChars_Mozuku);
+    // Check the composition
+    const commands::Preedit &composition = output.preedit();
+    EXPECT_EQ(composition.segment_size(), 1);
+    EXPECT_EQ(composition.segment(0).value(), "が");
 
     // Check the candidate list
     const commands::CandidateWindow &candidate_window =
         output.candidate_window();
     // Candidates should NOT be merged with the previous suggestions.
-    EXPECT_EQ(candidate_window.size(), 3);
-    EXPECT_EQ(candidate_window.candidate(0).value(), kChars_Mozuku);
-    EXPECT_EQ(candidate_window.candidate(1).value(), kChars_Momonga);
-    EXPECT_EQ(candidate_window.candidate(2).value(), "モンドリアン");
+    EXPECT_EQ(candidate_window.size(), 2);
+    EXPECT_EQ(candidate_window.candidate(0).value(), "が");
+    EXPECT_EQ(candidate_window.candidate(1).value(), "の");
     EXPECT_TRUE(candidate_window.has_focused_index());
   }
 }
@@ -2579,8 +2639,8 @@ TEST_F(EngineConverterTest, GetPreeditAndGetConversion) {
     // PREDICTION
     auto mock_converter = std::make_shared<MockConverter>();
     EngineConverter converter(mock_converter, request_, config_);
-    EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+    EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<2>(segments), Return(true)));
     EXPECT_CALL(*mock_converter, FocusSegmentValue(_, 0, 1))
         .WillOnce(Return(true));
     converter.Predict(*composer_);
@@ -2866,8 +2926,9 @@ TEST_F(EngineConverterTest, Issue1978201) {
   }
 
   // Prediction
-  EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-      .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+  EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .WillRepeatedly(DoAll(SetArgPointee<2>(segments), Return(true)));
+
   EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
@@ -2930,6 +2991,7 @@ TEST_F(EngineConverterTest, Issue2029557) {
   // Unittest against http://b/2029557
   // a<tab><F6> raised a DCHECK error.
   auto mock_converter = std::make_shared<MockConverter>();
+
   EngineConverter converter(mock_converter, request_, config_);
   // Composition (as "a")
   composer_->InsertCharacterPreedit("a");
@@ -2937,8 +2999,8 @@ TEST_F(EngineConverterTest, Issue2029557) {
   // Prediction (as <tab>)
   Segments segments;
   SetAiueo(&segments);
-  EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .WillOnce(DoAll(SetArgPointee<2>(segments), Return(true)));
   EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
@@ -3000,6 +3062,7 @@ TEST_F(EngineConverterTest, Issue2040116) {
   // MaybeExpandPrediction does not return any results.  That's a
   // trick by GoogleSuggest.
   auto mock_converter = std::make_shared<MockConverter>();
+
   EngineConverter converter(mock_converter, request_, config_);
   composer_->InsertCharacterPreedit("G");
 
@@ -3008,8 +3071,8 @@ TEST_F(EngineConverterTest, Issue2040116) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("G");
-    EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
+    EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<2>(segments), Return(false)));
   }
   // Get prediction
   EXPECT_FALSE(converter.Predict(*composer_));
@@ -3024,8 +3087,8 @@ TEST_F(EngineConverterTest, Issue2040116) {
     converter::Candidate *candidate;
     candidate = segment->add_candidate();
     candidate->value = "GoogleSuggest";
-    EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+    EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<2>(segments), Return(true)));
   }
   // Get prediction again
   EXPECT_TRUE(converter.Predict(*composer_));
@@ -3050,7 +3113,8 @@ TEST_F(EngineConverterTest, Issue2040116) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("G");
-    EXPECT_CALL(*mock_converter, StartPrediction(_, _)).Times(0);
+    EXPECT_CALL(*mock_converter, StartPredictionWithPreviousSuggestion(_, _, _))
+        .Times(0);
   }
   // Hide prediction
   EXPECT_CALL(*mock_converter, FocusSegmentValue(_, 0, 0));

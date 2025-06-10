@@ -91,6 +91,15 @@ class Converter final : public ConverterInterface {
   bool StartPrediction(const ConversionRequest &request,
                        Segments *segments) const override;
 
+  [[nodiscard]]
+  bool StartPredictionWithPreviousSuggestion(const ConversionRequest &request,
+                                             const Segment &previous_segment,
+                                             Segments *segments) const override;
+
+  void PrependCandidates(const ConversionRequest &request,
+                         const Segment &segment,
+                         Segments *segments) const override;
+
   void FinishConversion(const ConversionRequest &request,
                         Segments *segments) const override;
   void CancelConversion(Segments *segments) const override;
@@ -213,6 +222,11 @@ class Converter final : public ConverterInterface {
 
   bool PredictForRequestWithSegments(const ConversionRequest &request,
                                      Segments *segments) const;
+
+  // Post processing after conversion.
+  // Rewriter, SuppressionDictionary, etc.
+  void ApplyPostProcessing(const ConversionRequest &request,
+                           Segments *segments) const;
 
   std::unique_ptr<engine::Modules> modules_;
   std::unique_ptr<const ImmutableConverterInterface> immutable_converter_;

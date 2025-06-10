@@ -672,8 +672,11 @@ class SessionTest : public testing::TestWithTempUserProfile {
       segment->set_key("");
       AddCandidate("search", "search", segment);
       AddCandidate("input", "input", segment);
-      EXPECT_CALL(*mock_converter, StartPrediction(_, _))
-          .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+      EXPECT_CALL(*mock_converter,
+                  StartPredictionWithPreviousSuggestion(_, _, _))
+          .WillRepeatedly(DoAll(SetArgPointee<2>(segments), Return(true)));
+      EXPECT_CALL(*mock_converter, PrependCandidates(_, _, _))
+          .WillRepeatedly(SetArgPointee<2>(segments));
     }
   }
 
@@ -3793,8 +3796,8 @@ TEST_F(SessionTest, Issue1816861) {
   candidate = segment->add_candidate();
   candidate->value = "陰謀説";
 
-  EXPECT_CALL(*converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  EXPECT_CALL(*converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .WillOnce(DoAll(SetArgPointee<2>(segments), Return(true)));
 
   SendSpecialKey(commands::KeyEvent::TAB, &session, &command);
 }
@@ -4198,7 +4201,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   }
 }
 
-TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion1) {
+TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSuggestion1) {
   // This is a unittest against http://b/2977131.
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
@@ -4238,7 +4241,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion1) {
   EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 }
 
-TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
+TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSuggestion2) {
   // This is a unittest against http://b/2977131.
   MockEngine engine;
   std::shared_ptr<MockConverter> converter = CreateEngineConverterMock(&engine);
@@ -4252,12 +4255,14 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
   // Global mode should be kept as HIRAGANA
   EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
-  Segments segments;
-  Segment *segment = segments.add_segment();
-  segment->set_key("NFL");
-  segment->add_candidate()->value = "NFL";
-  EXPECT_CALL(*converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("NFL");
+    segment->add_candidate()->value = "NFL";
+    EXPECT_CALL(*converter, StartPredictionWithPreviousSuggestion(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<2>(segments), Return(true)));
+  }
 
   EXPECT_TRUE(session.PredictAndConvert(&command));
   ASSERT_TRUE(command.output().has_candidate_window());
@@ -4268,8 +4273,6 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion2) {
   EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
   EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
-  EXPECT_CALL(*converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
   EXPECT_TRUE(SendKey("a", &session, &command));
   EXPECT_FALSE(command.output().has_candidate_window());
   EXPECT_RESULT("NFL", command);
@@ -5857,6 +5860,8 @@ TEST_F(SessionTest, Issue1975771) {
   EXPECT_TRUE(session.InsertCharacter(&command));
 
   // Click the first candidate.
+  EXPECT_CALL(*converter, PrependCandidates(_, _, _))
+      .WillRepeatedly(SetArgPointee<2>(segments));
   SetSendCommandCommand(commands::SessionCommand::SELECT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
   EXPECT_TRUE(session.SendCommand(&command));
@@ -5889,8 +5894,8 @@ TEST_F(SessionTest, Issue2029466) {
   // <tab>
   Segments segments;
   SetAiueo(&segments);
-  EXPECT_CALL(*converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  EXPECT_CALL(*converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .WillOnce(DoAll(SetArgPointee<2>(segments), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.PredictAndConvert(&command));
 
@@ -5994,8 +5999,8 @@ TEST_F(SessionTest, Issue2066906) {
   candidate->value = "abc";
   candidate = segment->add_candidate();
   candidate->value = "abcdef";
-  EXPECT_CALL(*converter, StartPrediction(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  EXPECT_CALL(*converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .WillRepeatedly(DoAll(SetArgPointee<2>(segments), Return(true)));
 
   // Prediction with "a"
   commands::Command command;
@@ -9837,8 +9842,8 @@ TEST_F(SessionTest, DeleteHistory) {
   Segment *segment = segments.add_segment();
   segment->set_key("delete");
   segment->add_candidate()->value = "DeleteHistory";
-  EXPECT_CALL(*converter, StartPrediction(_, _))
-      .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+  EXPECT_CALL(*converter, StartPredictionWithPreviousSuggestion(_, _, _))
+      .WillRepeatedly(DoAll(SetArgPointee<2>(segments), Return(true)));
 
   // Type "del". Preedit = "でｌ".
   commands::Command command;

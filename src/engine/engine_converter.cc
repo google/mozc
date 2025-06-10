@@ -648,28 +648,25 @@ bool EngineConverter::PredictWithPreferences(
   segments_.clear_conversion_segments();
 
   if (predict_expand || predict_first) {
-    if (!converter_->StartPrediction(conversion_request, &segments_)) {
-      LOG(WARNING) << "StartPrediction() failed";
-      // TODO(komatsu): Perform refactoring after checking the stability test.
-      //
+    const bool result = converter_->StartPredictionWithPreviousSuggestion(
+        conversion_request, previous_suggestions_, &segments_);
+    if (!result && predict_first) {
+      // Returns false if we failed at the first prediction.
       // If predict_expand is true, it means we have prevous_suggestions_.
       // So we can use it as the result of this prediction.
-      if (predict_first) {
-        ResetState();
-        return false;
-      }
+      ResetState();
+      return false;
     }
+  } else {
+    converter_->PrependCandidates(conversion_request, previous_suggestions_,
+                                  &segments_);
   }
-
-  // Merge suggestions and prediction
-  segments_.PrependCandidates(previous_suggestions_);
 
   segment_index_ = 0;
   state_ = PREDICTION;
   UpdateCandidateList();
   candidate_list_visible_ = true;
   InitializeSelectedCandidateIndices();
-
   return true;
 }
 

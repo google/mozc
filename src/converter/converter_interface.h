@@ -67,6 +67,20 @@ class ConverterInterface {
   virtual bool StartPrediction(const ConversionRequest &request,
                                Segments *segments) const = 0;
 
+  // Starts prediction with previous suggestion.
+  // This method is used for expanding the candidates while keeping the
+  // previous suggestion.
+  [[nodiscard]]
+  virtual bool StartPredictionWithPreviousSuggestion(
+      const ConversionRequest &request, const Segment &previous_segment,
+      Segments *segments) const = 0;
+
+  // Builds segments from the given segment.
+  // This method also applies the converter's post processing such as rewriters.
+  virtual void PrependCandidates(const ConversionRequest &request,
+                                 const Segment &segment,
+                                 Segments *segments) const = 0;
+
   // Finish conversion.
   // Segments are cleared. Context is not cleared
   virtual void FinishConversion(const ConversionRequest &request,
