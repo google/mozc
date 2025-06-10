@@ -37,6 +37,10 @@
 <?define QtWidgetsFilename="Qt$(var.QtVer)Widgets.dll" ?>
 <?define QtWidgetsdFilename="Qt$(var.QtVer)Widgetsd.dll" ?>
 
+<?ifndef MozcTIP64ArmPath ?>
+  <?define MozcTIP64ArmPath="" ?>
+<?endif?>
+
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 
   <!--
@@ -63,10 +67,12 @@
     <Launch Condition="Privileged" Message="Google 日本語入力をインストールするには管理者権限が必要です。" />
     <Media Id="1" Cabinet="GoogleJapaneseInput.cab" EmbedCab="yes" CompressionLevel="high" />
 
-    <Property Id="PROCESSOR_ARCHITECTURE">
-      <RegistrySearch Id="ProcessorArchitectureValue" Type="raw" Root="HKLM" Key="System\CurrentControlSet\Control\Session Manager\Environment" Name="PROCESSOR_ARCHITECTURE" />
-    </Property>
-    <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="ARM64 環境へのインストールは未対応です。" />
+    <?if $(var.MozcTIP64ArmPath) == "" ?>
+      <Property Id="PROCESSOR_ARCHITECTURE">
+        <RegistrySearch Id="ProcessorArchitectureValue" Type="raw" Root="HKLM" Key="System\CurrentControlSet\Control\Session Manager\Environment" Name="PROCESSOR_ARCHITECTURE" />
+      </Property>
+      <Launch Condition="(NOT (PROCESSOR_ARCHITECTURE=&quot;ARM64&quot;)) OR UPGRADING OR (REMOVE=&quot;ALL&quot;)" Message="ARM64 環境へのインストールは未対応です" />
+    <?endif?>
 
     <!-- Set Add/Remove Program Icon -->
     <Icon Id="add_remove_program_icon.ico" SourceFile="$(var.AddRemoveProgramIconPath)" />
@@ -109,6 +115,9 @@
     <Feature Id="GIMEJaInstall" Title="Google 日本語入力" Level="1">
       <ComponentRef Id="GIMEJaTIP32" />
       <ComponentRef Id="GIMEJaTIP64" />
+      <?if $(var.MozcTIP64ArmPath) != "" ?>
+        <ComponentRef Id="GIMEJaTIP64Arm" />
+      <?endif?>
       <ComponentRef Id="GIMEJaBroker" />
       <ComponentRef Id="GIMEJaConverter" />
       <ComponentRef Id="GIMEJaCacheService" />
@@ -249,9 +258,18 @@
           </Component>
           <Component Id="GIMEJaTIP64" Permanent="no" Bitness="always64">
             <File Id="GoogleIMEJaTIP64.dll" Name="GoogleIMEJaTIP64.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64Path)" Vital="yes">
-              <Class Context="InprocServer32" ThreadingModel="apartment" Description="Google Japanese Input" Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
+              <?if $(var.MozcTIP64ArmPath) == "" ?>
+                <Class Context="InprocServer32" ThreadingModel="apartment" Description="Google Japanese Input" Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
+              <?endif?>
             </File>
           </Component>
+          <?if $(var.MozcTIP64ArmPath) != "" ?>
+            <Component Id="GIMEJaTIP64Arm" Permanent="no" Bitness="always64">
+              <File Id="GoogleIMEJaTIP64Arm.dll" Name="GoogleIMEJaTIP64Arm.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64ArmPath)" Vital="yes">
+                <Class Context="InprocServer32" ThreadingModel="apartment" Description="Google Japanese Input" Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
+              </File>
+            </Component>
+          <?endif?>
           <Component Id="GIMEJaBroker" Permanent="no">
             <File Id="GoogleIMEJaBroker.exe" Name="GoogleIMEJaBroker.exe" DiskId="1" Checksum="yes" Source="$(var.MozcBroker64Path)" Vital="yes" />
           </Component>
