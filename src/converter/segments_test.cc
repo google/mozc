@@ -47,6 +47,7 @@
 #include "testing/test_peer.h"
 
 namespace mozc {
+namespace converter {
 
 class SegmentsPoolAccessorTestPeer : testing::TestPeer<Segments> {
  public:
@@ -56,7 +57,6 @@ class SegmentsPoolAccessorTestPeer : testing::TestPeer<Segments> {
   size_t released_size() const { return value_.pool_.released_size(); }
 };
 
-using converter::Candidate;
 using ::testing::ElementsAre;
 
 template <typename T>
@@ -849,4 +849,5 @@ TEST(SegmentTest, IteratorRange) {
   EXPECT_THAT(ToKeys(segments.all().subrange(5, 2)), ElementsAre());
   EXPECT_THAT(ToKeys(segments.all().subrange(6, 2)), ElementsAre());
 }
+}  // namespace converter
 }  // namespace mozc

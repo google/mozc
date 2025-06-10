@@ -30,12 +30,12 @@
 #ifndef MOZC_REWRITER_FORTUNE_REWRITER_H_
 #define MOZC_REWRITER_FORTUNE_REWRITER_H_
 
+#include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
 class ConversionRequest;
-class Segments;
 
 class FortuneRewriter : public RewriterInterface {
  public:
@@ -43,7 +43,7 @@ class FortuneRewriter : public RewriterInterface {
   ~FortuneRewriter() override;
 
   bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+               converter::Segments *segments) const override;
 };
 
 }  // namespace mozc

@@ -52,8 +52,7 @@
 #include "converter/candidate.h"
 
 namespace mozc {
-
-using ::mozc::converter::Candidate;
+namespace converter {
 
 namespace {
 constexpr size_t kMaxHistorySize = 32;
@@ -415,7 +414,7 @@ void Segments::InitForConvert(absl::string_view key) {
 
   Segment *segment = add_segment();
   segment->set_key(key);
-  segment->set_segment_type(mozc::Segment::FREE);
+  segment->set_segment_type(Segment::FREE);
 
   MOZC_VLOG(2) << DebugString();
 }
@@ -590,4 +589,5 @@ std::string Segments::DebugString() const {
   return os.str();
 }
 
+}  // namespace converter
 }  // namespace mozc

@@ -31,12 +31,12 @@
 #define MOZC_REWRITER_DICE_REWRITER_H_
 
 #include "absl/random/random.h"
+#include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
 class ConversionRequest;
-class Segments;
 
 class DiceRewriter : public RewriterInterface {
  public:
@@ -44,7 +44,7 @@ class DiceRewriter : public RewriterInterface {
   ~DiceRewriter() override;
 
   bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+               converter::Segments *segments) const override;
 };
 
 }  // namespace mozc

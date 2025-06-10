@@ -42,7 +42,6 @@
 #include "protocol/config.pb.h"
 
 namespace mozc {
-class Segments;
 class ConverterInterface;
 
 namespace commands {

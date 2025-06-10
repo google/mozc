@@ -51,6 +51,7 @@
 #include "converter/lattice.h"
 
 namespace mozc {
+namespace converter {
 
 class Segment final {
  public:
@@ -496,6 +497,12 @@ inline converter::Candidate *Segment::mutable_candidate(int i) {
   DCHECK_LT(i, candidates_.size());
   return candidates_[i];
 }
+}  // namespace converter
+
+// This is an alias for backward compatibility.
+// Using ::mozc::converter::Segment is preferred.
+using Segment = ::mozc::converter::Segment;
+using Segments = ::mozc::converter::Segments;
 
 }  // namespace mozc
 

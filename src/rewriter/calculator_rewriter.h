@@ -44,7 +44,6 @@ class CalculatorRewriterTest;
 class ConversionRequest;
 class ConversionRequest;
 class ConverterInterface;
-class Segments;
 
 class CalculatorRewriter : public RewriterInterface {
  public:
