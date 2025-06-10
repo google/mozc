@@ -31,6 +31,7 @@
 #define MOZC_REQUEST_CONVERSION_REQUEST_H_
 
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -371,7 +372,7 @@ class ConversionRequest {
     return static_cast<bool>(segments_);
   }
 
-  // Temporal API to acesses raw history segments.
+  // Temporal API to accesses raw history segments.
   // TODO(b/409183257): Better to return 'Result' instead.
   struct HistorySegment {
     absl::string_view key;
