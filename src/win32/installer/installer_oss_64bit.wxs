@@ -41,6 +41,9 @@
 <?ifndef MozcTIP64ArmPath ?>
   <?define MozcTIP64ArmPath="" ?>
 <?endif?>
+<?ifndef MozcTIP64XPath ?>
+  <?define MozcTIP64XPath="" ?>
+<?endif?>
 
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 
@@ -68,7 +71,7 @@
     <Launch Condition="Privileged" Message="Mozc をインストールするには管理者権限が必要です。" />
     <Media Id="1" Cabinet="Mozc.cab" EmbedCab="yes" CompressionLevel="high" />
 
-    <?if $(var.MozcTIP64ArmPath) == "" ?>
+    <?if $(var.MozcTIP64ArmPath) == "" and $(var.MozcTIP64XPath) == "" ?>
       <Property Id="PROCESSOR_ARCHITECTURE">
         <RegistrySearch Id="ProcessorArchitectureValue" Type="raw" Root="HKLM" Key="System\CurrentControlSet\Control\Session Manager\Environment" Name="PROCESSOR_ARCHITECTURE" />
       </Property>
@@ -99,8 +102,9 @@
     <Feature Id="MozcInstall" Title="Mozc" Level="1">
       <ComponentRef Id="MozcTIP32" />
       <ComponentRef Id="MozcTIP64" />
-      <?if $(var.MozcTIP64ArmPath) != "" ?>
+      <?if $(var.MozcTIP64ArmPath) != "" and $(var.MozcTIP64XPath) != "" ?>
         <ComponentRef Id="MozcTIP64Arm" />
+        <ComponentRef Id="MozcTIP64X" />
       <?endif?>
       <ComponentRef Id="MozcBroker" />
       <ComponentRef Id="MozcConverter" />
@@ -233,14 +237,17 @@
         </Component>
         <Component Id="MozcTIP64" Permanent="no" Bitness="always64">
           <File Id="mozc_tip64.dll" Name="mozc_tip64.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64Path)" Vital="yes">
-            <?if $(var.MozcTIP64ArmPath) == "" ?>
+            <?if $(var.MozcTIP64ArmPath) == "" and $(var.MozcTIP64XPath) == "" ?>
               <Class Context="InprocServer32" ThreadingModel="apartment" Description="Mozc" Id="10A67BC8-22FA-4A59-90DC-2546652C56BF" />
             <?endif?>
           </File>
         </Component>
-        <?if $(var.MozcTIP64ArmPath) != "" ?>
+        <?if $(var.MozcTIP64ArmPath) != "" and $(var.MozcTIP64XPath) != "" ?>
           <Component Id="MozcTIP64Arm" Permanent="no" Bitness="always64">
-            <File Id="mozc_tip64arm.dll" Name="mozc_tip64arm.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64ArmPath)" Vital="yes">
+            <File Id="mozc_tip64arm.dll" Name="mozc_tip64arm.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64ArmPath)" Vital="yes" />
+          </Component>
+          <Component Id="MozcTIP64X" Permanent="no" Bitness="always64">
+            <File Id="mozc_tip64x.dll" Name="mozc_tip64x.dll" DiskId="1" Checksum="yes" Source="$(var.MozcTIP64XPath)" Vital="yes">
               <Class Context="InprocServer32" ThreadingModel="apartment" Description="Mozc" Id="10A67BC8-22FA-4A59-90DC-2546652C56BF" />
             </File>
           </Component>
