@@ -355,10 +355,11 @@ class ConversionRequest {
   // use Segments as the decoder request.
   // TODO(b/409183257): remove this API after removing the dependency
   // from ConverterRequest to Segments.
-  Segments MakeRequestSegments() const {
+  converter::Segments MakeRequestSegments() const {
     // Needs to call SetHistorySegmentsView to use this method.
     DCHECK(segments_);
-    Segments segments = segments_ ? *segments_ : Segments();
+    converter::Segments segments =
+        segments_ ? *segments_ : converter::Segments();
     if (segments.conversion_segments_size() == 0) {
       segments.add_segment()->set_key(key());
     }
@@ -384,7 +385,7 @@ class ConversionRequest {
   std::vector<HistorySegment> GetConverterHistorySegments() const {
     if (!segments_) return {};
     std::vector<HistorySegment> results;
-    for (const Segment &segment : segments_->history_segments()) {
+    for (const converter::Segment &segment : segments_->history_segments()) {
       DCHECK_LE(1, segment.candidates_size());
       const auto &candidate = segment.candidate(0);
       results.push_back({candidate.key, candidate.value, candidate.content_key,
@@ -401,7 +402,7 @@ class ConversionRequest {
     if (!segments_ || segments_->history_segments_size() == 0) {
       return nullptr;
     }
-    const Segment &history_segment =
+    const converter::Segment &history_segment =
         segments_->history_segment(segments_->history_segments_size() - 1);
     if (history_segment.candidates_size() == 0) {
       return nullptr;
@@ -427,7 +428,7 @@ class ConversionRequest {
   // supplemental model to Segments. See converter_history_(key|value) methods.
   // TODO(taku): Migrate them to context proto to feed the context information
   // from the client to decoder.
-  internal::copy_or_view_ptr<const Segments> segments_;
+  internal::copy_or_view_ptr<const converter::Segments> segments_;
 
   // Options for conversion request.
   Options options_;
@@ -535,14 +536,14 @@ class ConversionRequestBuilder {
   // Generally ConversionRequest only stores the request to the
   // converter, while segments both contain request and result.
   ConversionRequestBuilder &SetHistorySegments(
-      const Segments &segments ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+      const converter::Segments &segments ABSL_ATTRIBUTE_LIFETIME_BOUND) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.segments_.copy_from(segments);
     return *this;
   }
   ConversionRequestBuilder &SetHistorySegmentsView(
-      const Segments &segments ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+      const converter::Segments &segments ABSL_ATTRIBUTE_LIFETIME_BOUND) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.segments_.set_view(segments);
