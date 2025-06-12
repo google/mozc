@@ -51,7 +51,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "engine/modules.h"
-#include "prediction/prediction_aggregator_interface.h"
+#include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
@@ -94,8 +94,7 @@ class DictionaryPredictor : public PredictorInterface {
   // Constructor for testing
   DictionaryPredictor(
       std::string predictor_name, const engine::Modules &modules,
-      std::unique_ptr<const prediction::PredictionAggregatorInterface>
-          aggregator,
+      std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
       const ImmutableConverterInterface &immutable_converter);
 
   std::vector<Result> RerankAndFilterResults(const ConversionRequest &request,
@@ -187,7 +186,7 @@ class DictionaryPredictor : public PredictorInterface {
       const ImmutableConverterInterface &immutable_converter,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
-  std::vector<Result> AggregateTypingCorrectedResults(
+  std::vector<Result> AggregateTypingCorrectedResultsForMixedConversion(
       const ConversionRequest &request) const;
 
   void MaybeApplyPostCorrection(const ConversionRequest &request,
@@ -201,7 +200,7 @@ class DictionaryPredictor : public PredictorInterface {
   std::shared_ptr<Result> MaybeGetPreviousTopResult(
       const Result &current_top_result, const ConversionRequest &request) const;
 
-  std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator_;
+  std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator_;
 
   // Previous top result and request key length. (not result length).
   // When the previous and current result are consistent, we still keep showing

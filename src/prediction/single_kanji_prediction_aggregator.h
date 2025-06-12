@@ -40,20 +40,19 @@
 #include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
-#include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
 
 namespace mozc::prediction {
 
-class SingleKanjiPredictionAggregator : public PredictionAggregatorInterface {
+class SingleKanjiPredictionAggregator {
  public:
   SingleKanjiPredictionAggregator(const DataManager &data_manager,
                                   const dictionary::PosMatcher &pos_matcher);
-  ~SingleKanjiPredictionAggregator() override;
+  virtual ~SingleKanjiPredictionAggregator();
 
-  std::vector<Result> AggregateResults(
-      const ConversionRequest &request) const override;
+  virtual std::vector<Result> AggregateResults(
+      const ConversionRequest &request) const;
 
  private:
   void AppendResults(absl::string_view kanji_key,

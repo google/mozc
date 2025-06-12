@@ -64,7 +64,6 @@
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/dictionary_prediction_aggregator.h"
-#include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
 #include "prediction/result_filter.h"
 #include "prediction/suggestion_filter.h"
@@ -149,7 +148,7 @@ DictionaryPredictor::DictionaryPredictor(
 
 DictionaryPredictor::DictionaryPredictor(
     std::string predictor_name, const engine::Modules &modules,
-    std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator,
+    std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
     const ImmutableConverterInterface &immutable_converter)
     : aggregator_(std::move(aggregator)),
       immutable_converter_(immutable_converter),
@@ -171,16 +170,21 @@ std::vector<Result> DictionaryPredictor::Predict(
     return {};
   }
 
-  std::vector<Result> literal_results = aggregator_->AggregateResults(request);
-  std::vector<Result> tc_results = AggregateTypingCorrectedResults(request);
-
-  // TODO(taku): Moves the rewriting/rescoring logic to mixer component.
-  RewriteResultsForPrediction(request, absl::MakeSpan(literal_results));
-  RewriteResultsForPrediction(request, absl::MakeSpan(tc_results));
-
   std::vector<Result> results;
-  absl::c_move(literal_results, std::back_inserter(results));
-  absl::c_move(tc_results, std::back_inserter(results));
+
+  // TODO(taku): Separate DesktopPredictor and MixedDecodingPredictor.
+  if (IsMixedConversionEnabled(request.request())) {
+    std::vector<Result> literal_results =
+        aggregator_->AggregateResultsForMixedConversion(request);
+    std::vector<Result> tc_results =
+        AggregateTypingCorrectedResultsForMixedConversion(request);
+    absl::c_move(literal_results, std::back_inserter(results));
+    absl::c_move(tc_results, std::back_inserter(results));
+  } else {
+    results = aggregator_->AggregateResultsForDesktop(request);
+  }
+
+  RewriteResultsForPrediction(request, absl::MakeSpan(results));
 
   MaybeRescoreResults(request, absl::MakeSpan(results));
 
@@ -208,7 +212,8 @@ void DictionaryPredictor::RewriteResultsForPrediction(
   }
 }
 
-std::vector<Result> DictionaryPredictor::AggregateTypingCorrectedResults(
+std::vector<Result>
+DictionaryPredictor::AggregateTypingCorrectedResultsForMixedConversion(
     const ConversionRequest &request) const {
   constexpr int kMinTypingCorrectionKeyLen = 3;
   if (!IsTypingCorrectionEnabled(request) ||
@@ -216,7 +221,8 @@ std::vector<Result> DictionaryPredictor::AggregateTypingCorrectedResults(
     return {};
   }
 
-  return aggregator_->AggregateTypingCorrectedResults(request);
+  return aggregator_->AggregateTypingCorrectedResultsForMixedConversion(
+      request);
 }
 
 std::vector<Result> DictionaryPredictor::RerankAndFilterResults(

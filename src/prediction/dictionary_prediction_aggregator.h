@@ -46,7 +46,6 @@
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
 #include "prediction/number_decoder.h"
-#include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
 #include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
@@ -54,23 +53,55 @@
 namespace mozc {
 namespace prediction {
 
-class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
+// TODO(taku): We want to make this class only provide the primitive
+// candidate aggregate methods. The downstream client will decide which
+// aggregators are used and combined.
+
+// Interface class for mock.
+class DictionaryPredictionAggregatorInterface {
  public:
+  virtual ~DictionaryPredictionAggregatorInterface() = default;
+
+  // These methods will be moved to DesktopPredictor and MixedDecodingPredictor.
+  virtual std::vector<Result> AggregateResultsForMixedConversion(
+      const ConversionRequest &request) const = 0;
+
+  virtual std::vector<Result> AggregateResultsForDesktop(
+      const ConversionRequest &request) const = 0;
+
+  virtual std::vector<Result> AggregateTypingCorrectedResultsForMixedConversion(
+      const ConversionRequest &request) const = 0;
+};
+
+class DictionaryPredictionAggregator
+    : public DictionaryPredictionAggregatorInterface {
+ public:
+  DictionaryPredictionAggregator() = default;
   DictionaryPredictionAggregator(const DictionaryPredictionAggregator &) =
       delete;
+
   DictionaryPredictionAggregator &operator=(
       const DictionaryPredictionAggregator &) = delete;
-  ~DictionaryPredictionAggregator() override = default;
+  virtual ~DictionaryPredictionAggregator() = default;
 
   DictionaryPredictionAggregator(
       const engine::Modules &modules, const ConverterInterface &converter,
       const ImmutableConverterInterface &immutable_converter);
 
-  std::vector<Result> AggregateResults(
-      const ConversionRequest &request) const override;
+  // Calls AggregateResultsForMixedConversion or AggregateResultsForDesktop
+  // depending on the request.
+  std::vector<Result> AggregateResultsForTesting(
+      const ConversionRequest &request) const;
 
-  std::vector<Result> AggregateTypingCorrectedResults(
-      const ConversionRequest &request) const override;
+  // These methods will be moved to DesktopPredictor and MixedDecodingPredictor.
+  virtual std::vector<Result> AggregateResultsForMixedConversion(
+      const ConversionRequest &request) const;
+
+  virtual std::vector<Result> AggregateResultsForDesktop(
+      const ConversionRequest &request) const;
+
+  virtual std::vector<Result> AggregateTypingCorrectedResultsForMixedConversion(
+      const ConversionRequest &request) const;
 
  private:
   struct HandwritingQueryInfo {
@@ -206,8 +237,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   static bool IsZipCodeRequest(absl::string_view key);
 
   // Returns max size of realtime candidates.
-  static size_t GetRealtimeCandidateMaxSize(const ConversionRequest &request,
-                                            bool mixed_conversion);
+  static size_t GetRealtimeCandidateMaxSize(const ConversionRequest &request);
 
   // Returns cutoff threshold of unigram candidates.
   // AggregateUnigramPrediction method does not return any candidates
@@ -245,8 +275,6 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   const ZeroQueryDict &zero_query_dict_;
   const ZeroQueryDict &zero_query_number_dict_;
   const NumberDecoder number_decoder_;
-  std::unique_ptr<PredictionAggregatorInterface>
-      single_kanji_prediction_aggregator_;
 };
 
 }  // namespace prediction

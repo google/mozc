@@ -94,8 +94,8 @@ class DictionaryPredictionAggregatorTestPeer {
   }
 
   // Make them public via peer class.
-  DEFINE_PEER(AggregateResults);
-  DEFINE_PEER(AggregateTypingCorrectedResults);
+  DEFINE_PEER(AggregateResultsForTesting);
+  DEFINE_PEER(AggregateTypingCorrectedResultsForMixedConversion);
   DEFINE_PEER(AggregateUnigram);
   DEFINE_PEER(AggregateBigram);
   DEFINE_PEER(AggregateRealtime);
@@ -399,8 +399,8 @@ class DictionaryPredictionAggregatorTest
       ConversionRequest::Options &&options, const Segments &segments) const {
     return ConversionRequestBuilder()
         .SetComposer(*composer_)
-        .SetRequestView(*request_)
-        .SetConfigView(*config_)
+        .SetRequest(*request_)
+        .SetConfig(*config_)
         .SetOptions(std::move(options))
         .SetHistorySegmentsView(segments)
         .SetKey(segments.conversion_segment(0).key())
@@ -563,7 +563,7 @@ TEST_F(DictionaryPredictionAggregatorTest, OnOffTest) {
     SetUpInputForSuggestion("ぐーぐるあ", composer_.get(), &segments);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    EXPECT_TRUE(aggregator.AggregateResults(convreq).empty());
+    EXPECT_TRUE(aggregator.AggregateResultsForTesting(convreq).empty());
   }
   {
     // turn on
@@ -572,7 +572,7 @@ TEST_F(DictionaryPredictionAggregatorTest, OnOffTest) {
     SetUpInputForSuggestion("ぐーぐるあ", composer_.get(), &segments);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    EXPECT_FALSE(aggregator.AggregateResults(convreq).empty());
+    EXPECT_FALSE(aggregator.AggregateResultsForTesting(convreq).empty());
   }
   {
     // empty query
@@ -580,7 +580,7 @@ TEST_F(DictionaryPredictionAggregatorTest, OnOffTest) {
     SetUpInputForSuggestion("", composer_.get(), &segments);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    EXPECT_TRUE(aggregator.AggregateResults(convreq).empty());
+    EXPECT_TRUE(aggregator.AggregateResultsForTesting(convreq).empty());
   }
 }
 
@@ -601,7 +601,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PartialSuggestion) {
   seg->set_segment_type(Segment::FREE);
   const ConversionRequest convreq = CreateConversionRequest(
       {.request_type = ConversionRequest::PARTIAL_SUGGESTION}, segments);
-  EXPECT_FALSE(aggregator.AggregateResults(convreq).empty());
+  EXPECT_FALSE(aggregator.AggregateResultsForTesting(convreq).empty());
 }
 
 TEST_F(DictionaryPredictionAggregatorTest,
@@ -640,7 +640,8 @@ TEST_F(DictionaryPredictionAggregatorTest,
   EXPECT_CALL(*immutable_converter, ConvertForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments2), Return(true)));
 
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(GetMergedTypes(results) & REALTIME);
 }
 
@@ -660,7 +661,8 @@ TEST_F(DictionaryPredictionAggregatorTest, BigramTest) {
 
   // "グーグルアドセンス" will be returned.
   const ConversionRequest convreq = CreateSuggestionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(BIGRAM | GetMergedTypes(results));
 }
 
@@ -681,7 +683,8 @@ TEST_F(DictionaryPredictionAggregatorTest, BigramTestWithZeroQuery) {
   PrependHistorySegments("ぐーぐる", "グーグル", &segments);
 
   const ConversionRequest convreq = CreateSuggestionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(BIGRAM | GetMergedTypes(results));
 }
 
@@ -704,7 +707,8 @@ TEST_F(DictionaryPredictionAggregatorTest, BigramTestWithZeroQueryFilterMode) {
   PrependHistorySegments("ぐーぐる", "グーグル", &segments);
 
   const ConversionRequest convreq = CreateSuggestionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_FALSE(BIGRAM & GetMergedTypes(results));
 }
 
@@ -724,7 +728,8 @@ TEST_F(DictionaryPredictionAggregatorTest, Regression3042706) {
   PrependHistorySegments("きょうと", "京都", &segments);
 
   const ConversionRequest convreq = CreateSuggestionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(REALTIME | GetMergedTypes(results));
   for (auto r : results) {
     EXPECT_FALSE(r.value.starts_with("京都"));
@@ -775,7 +780,8 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_EQ(GetMergedTypes(results),
               AddDefaultPredictionTypes(UNIGRAM, is_mobile));
   }
@@ -789,13 +795,13 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       const ConversionRequest suggestion_convreq =
           CreateSuggestionConversionRequest(segments);
       const std::vector<Result> results1 =
-          aggregator.AggregateResults(suggestion_convreq);
+          aggregator.AggregateResultsForTesting(suggestion_convreq);
       EXPECT_EQ(GetMergedTypes(results1), (UNIGRAM | REALTIME | PREFIX));
 
       const ConversionRequest prediction_convreq =
           CreatePredictionConversionRequest(segments);
       const std::vector<Result> results2 =
-          aggregator.AggregateResults(prediction_convreq);
+          aggregator.AggregateResultsForTesting(prediction_convreq);
       EXPECT_EQ(GetMergedTypes(results2), (UNIGRAM | REALTIME | PREFIX));
     } else {
       // Unigram is not triggered for SUGGESTION if key length is short.
@@ -803,11 +809,12 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       composer_->SetInputMode(transliteration::HIRAGANA);
       const ConversionRequest suggestion_convreq =
           CreateSuggestionConversionRequest(segments);
-      EXPECT_TRUE(aggregator.AggregateResults(suggestion_convreq).empty());
+      EXPECT_TRUE(
+          aggregator.AggregateResultsForTesting(suggestion_convreq).empty());
       const ConversionRequest prediction_convreq =
           CreatePredictionConversionRequest(segments);
       const std::vector<Result> results =
-          aggregator.AggregateResults(prediction_convreq);
+          aggregator.AggregateResultsForTesting(prediction_convreq);
       EXPECT_EQ(GetMergedTypes(results), UNIGRAM);
     }
   }
@@ -818,7 +825,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    EXPECT_TRUE(aggregator.AggregateResults(convreq).empty());
+    EXPECT_TRUE(aggregator.AggregateResultsForTesting(convreq).empty());
   }
 
   // History is short => UNIGRAM
@@ -828,7 +835,8 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_EQ(GetMergedTypes(results),
               AddDefaultPredictionTypes(UNIGRAM, is_mobile));
   }
@@ -840,7 +848,8 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_EQ(GetMergedTypes(results),
               AddDefaultPredictionTypes(UNIGRAM | BIGRAM, is_mobile));
   }
@@ -854,7 +863,8 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       composer_->SetInputMode(transliteration::HIRAGANA);
       const ConversionRequest convreq =
           CreateSuggestionConversionRequest(segments);
-      const std::vector<Result> results = aggregator.AggregateResults(convreq);
+      const std::vector<Result> results =
+          aggregator.AggregateResultsForTesting(convreq);
       EXPECT_EQ(GetMergedTypes(results),
                 (UNIGRAM | BIGRAM | REALTIME | PREFIX));
     } else {
@@ -864,7 +874,8 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       composer_->SetInputMode(transliteration::HIRAGANA);
       const ConversionRequest convreq =
           CreateSuggestionConversionRequest(segments);
-      const std::vector<Result> results = aggregator.AggregateResults(convreq);
+      const std::vector<Result> results =
+          aggregator.AggregateResultsForTesting(convreq);
       EXPECT_EQ(GetMergedTypes(results), BIGRAM);
     }
   }
@@ -875,7 +886,8 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_FALSE(TYPING_CORRECTION & GetMergedTypes(results));
   }
 
@@ -909,7 +921,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       const ConversionRequest convreq1 =
           CreateSuggestionConversionRequest(segments);
       std::vector<Result> results;
-      results = aggregator.AggregateResults(convreq1);
+      results = aggregator.AggregateResultsForTesting(convreq1);
       EXPECT_FALSE(GetMergedTypes(results) & ENGLISH);
 
       // Language aware input is off: No English prediction.
@@ -917,7 +929,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
           commands::Request::NO_LANGUAGE_AWARE_INPUT);
       const ConversionRequest convreq2 =
           CreateSuggestionConversionRequest(segments);
-      results = aggregator.AggregateResults(convreq2);
+      results = aggregator.AggregateResultsForTesting(convreq2);
       EXPECT_FALSE(GetMergedTypes(results) & ENGLISH);
 
       // Language aware input is on: English prediction is included.
@@ -925,7 +937,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
           commands::Request::LANGUAGE_AWARE_SUGGESTION);
       const ConversionRequest convreq3 =
           CreateSuggestionConversionRequest(segments);
-      results = aggregator.AggregateResults(convreq3);
+      results = aggregator.AggregateResultsForTesting(convreq3);
       EXPECT_FALSE(GetMergedTypes(results) & ENGLISH);
     }
 
@@ -956,7 +968,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       const ConversionRequest convreq1 =
           CreateSuggestionConversionRequest(segments);
       std::vector<Result> results;
-      results = aggregator.AggregateResults(convreq1);
+      results = aggregator.AggregateResultsForTesting(convreq1);
       EXPECT_FALSE(GetMergedTypes(results) & ENGLISH);
 
       // Language aware input is off.
@@ -964,7 +976,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
           commands::Request::NO_LANGUAGE_AWARE_INPUT);
       const ConversionRequest convreq2 =
           CreateSuggestionConversionRequest(segments);
-      results = aggregator.AggregateResults(convreq2);
+      results = aggregator.AggregateResultsForTesting(convreq2);
       EXPECT_FALSE(GetMergedTypes(results) & ENGLISH);
 
       // Language aware input is on.
@@ -972,7 +984,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
           commands::Request::LANGUAGE_AWARE_SUGGESTION);
       const ConversionRequest convreq3 =
           CreateSuggestionConversionRequest(segments);
-      results = aggregator.AggregateResults(convreq3);
+      results = aggregator.AggregateResultsForTesting(convreq3);
       EXPECT_FALSE(GetMergedTypes(results) & ENGLISH);
     }
   }
@@ -1030,14 +1042,14 @@ TEST_F(DictionaryPredictionAggregatorTest, TriggerConditionsLatinInputMode) {
     config_->set_use_realtime_conversion(false);
     const ConversionRequest convreq1 =
         CreateSuggestionConversionRequest(segments);
-    results = aggregator.AggregateResults(convreq1);
+    results = aggregator.AggregateResultsForTesting(convreq1);
     EXPECT_EQ(GetMergedTypes(results),
               AddDefaultPredictionTypes(ENGLISH, is_mobile));
 
     config_->set_use_realtime_conversion(true);
     const ConversionRequest convreq2 =
         CreateSuggestionConversionRequest(segments);
-    results = aggregator.AggregateResults(convreq2);
+    results = aggregator.AggregateResultsForTesting(convreq2);
     EXPECT_EQ(GetMergedTypes(results),
               AddDefaultPredictionTypes(ENGLISH | REALTIME, is_mobile));
 
@@ -1046,14 +1058,14 @@ TEST_F(DictionaryPredictionAggregatorTest, TriggerConditionsLatinInputMode) {
     config_->set_use_dictionary_suggest(false);
     const ConversionRequest convreq3 =
         CreateSuggestionConversionRequest(segments);
-    EXPECT_TRUE(aggregator.AggregateResults(convreq3).empty());
+    EXPECT_TRUE(aggregator.AggregateResultsForTesting(convreq3).empty());
 
     // Has realtime results for PARTIAL_SUGGESTION request.
     config_->set_use_dictionary_suggest(true);
     const ConversionRequest partial_suggestion_convreq =
         CreateConversionRequest(
             {.request_type = ConversionRequest::PARTIAL_SUGGESTION}, segments);
-    results = aggregator.AggregateResults(partial_suggestion_convreq);
+    results = aggregator.AggregateResultsForTesting(partial_suggestion_convreq);
     EXPECT_EQ(GetMergedTypes(results), REALTIME);
   }
 }
@@ -1300,7 +1312,8 @@ TEST_F(DictionaryPredictionAggregatorTest, DISABLED_MobileZeroQueryAfterEOS) {
 
     const ConversionRequest convreq =
         CreatePredictionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_EQ(!results.empty(), test_case.expected_result);
   }
 }
@@ -1555,56 +1568,80 @@ TEST_F(DictionaryPredictionAggregatorTest, GetRealtimeCandidateMaxSize) {
   constexpr size_t kMaxSize = 100;
   segments.push_back_segment();
 
-  const ConversionRequest suggestion_convreq = CreateConversionRequest(
+  request_->Clear();
+  const ConversionRequest suggestion_convreq_no_mixed = CreateConversionRequest(
       {
           .request_type = ConversionRequest::SUGGESTION,
           .max_dictionary_prediction_candidates_size = kMaxSize,
       },
       segments);
-  const ConversionRequest prediction_convreq =
+  const ConversionRequest prediction_convreq_no_mixed =
+      CreatePredictionConversionRequest(segments);
+
+  request_test_util::FillMobileRequest(request_.get());
+  const ConversionRequest suggestion_convreq_mixed = CreateConversionRequest(
+      {
+          .request_type = ConversionRequest::SUGGESTION,
+          .max_dictionary_prediction_candidates_size = kMaxSize,
+      },
+      segments);
+  const ConversionRequest prediction_convreq_mixed =
       CreatePredictionConversionRequest(segments);
 
   // non-partial, non-mixed-conversion
   const size_t prediction_no_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(prediction_convreq, false);
+      aggregator.GetRealtimeCandidateMaxSize(prediction_convreq_no_mixed);
   EXPECT_GE(kMaxSize, prediction_no_mixed);
 
   const size_t suggestion_no_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(suggestion_convreq, false);
+      aggregator.GetRealtimeCandidateMaxSize(suggestion_convreq_no_mixed);
   EXPECT_GE(kMaxSize, suggestion_no_mixed);
   EXPECT_LE(suggestion_no_mixed, prediction_no_mixed);
 
   // non-partial, mixed-conversion
   const size_t prediction_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(prediction_convreq, true);
+      aggregator.GetRealtimeCandidateMaxSize(prediction_convreq_mixed);
   EXPECT_GE(kMaxSize, prediction_mixed);
 
   const size_t suggestion_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(suggestion_convreq, true);
+      aggregator.GetRealtimeCandidateMaxSize(suggestion_convreq_mixed);
   EXPECT_GE(kMaxSize, suggestion_mixed);
 
   // partial, non-mixed-conversion
-  const ConversionRequest partial_suggestion_convreq = CreateConversionRequest(
-      {.request_type = ConversionRequest::PARTIAL_SUGGESTION}, segments);
-  const ConversionRequest partial_prediction_convreq = CreateConversionRequest(
-      {.request_type = ConversionRequest::PARTIAL_PREDICTION}, segments);
+  request_->Clear();
+  const ConversionRequest partial_suggestion_convreq_no_mixed =
+      CreateConversionRequest(
+          {.request_type = ConversionRequest::PARTIAL_SUGGESTION}, segments);
+  const ConversionRequest partial_prediction_convreq_no_mixed =
+      CreateConversionRequest(
+          {.request_type = ConversionRequest::PARTIAL_PREDICTION}, segments);
+
+  request_test_util::FillMobileRequest(request_.get());
+  const ConversionRequest partial_suggestion_convreq_mixed =
+      CreateConversionRequest(
+          {.request_type = ConversionRequest::PARTIAL_SUGGESTION}, segments);
+  const ConversionRequest partial_prediction_convreq_mixed =
+      CreateConversionRequest(
+          {.request_type = ConversionRequest::PARTIAL_PREDICTION}, segments);
 
   const size_t partial_prediction_no_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(partial_prediction_convreq, false);
+      aggregator.GetRealtimeCandidateMaxSize(
+          partial_prediction_convreq_no_mixed);
   EXPECT_GE(kMaxSize, partial_prediction_no_mixed);
 
   const size_t partial_suggestion_no_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(partial_suggestion_convreq, false);
+      aggregator.GetRealtimeCandidateMaxSize(
+          partial_suggestion_convreq_no_mixed);
   EXPECT_GE(kMaxSize, partial_suggestion_no_mixed);
   EXPECT_LE(partial_suggestion_no_mixed, partial_prediction_no_mixed);
 
   // partial, mixed-conversion
   const size_t partial_prediction_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(partial_prediction_convreq, true);
+      aggregator.GetRealtimeCandidateMaxSize(partial_prediction_convreq_mixed);
   EXPECT_GE(kMaxSize, partial_prediction_mixed);
 
   const size_t partial_suggestion_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(partial_suggestion_convreq, true);
+      aggregator.GetRealtimeCandidateMaxSize(partial_suggestion_convreq_mixed);
   EXPECT_GE(kMaxSize, partial_suggestion_mixed);
   EXPECT_LE(partial_suggestion_mixed, partial_prediction_mixed);
 
@@ -1626,6 +1663,8 @@ TEST_F(DictionaryPredictionAggregatorTest,
   Segments short_segments;
   short_segments.InitForConvert("short");
 
+  request_test_util::FillMobileRequest(
+      request_.get());  // enables mixed conversion.
   const ConversionRequest suggestion_short_convreq = CreateConversionRequest(
       {.request_type = ConversionRequest::SUGGESTION,
        .max_dictionary_prediction_candidates_size = kMaxSize},
@@ -1637,11 +1676,11 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
   // for short key, try to provide many results as possible
   const size_t short_suggestion_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(suggestion_short_convreq, true);
+      aggregator.GetRealtimeCandidateMaxSize(suggestion_short_convreq);
   EXPECT_GE(kMaxSize, short_suggestion_mixed);
 
   const size_t short_prediction_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(prediction_short_convreq, true);
+      aggregator.GetRealtimeCandidateMaxSize(prediction_short_convreq);
   EXPECT_GE(kMaxSize, short_prediction_mixed);
 
   Segments long_segments;
@@ -1657,12 +1696,12 @@ TEST_F(DictionaryPredictionAggregatorTest,
       long_segments);
 
   const size_t long_suggestion_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(suggestion_long_convreq, true);
+      aggregator.GetRealtimeCandidateMaxSize(suggestion_long_convreq);
   EXPECT_GE(kMaxSize, long_suggestion_mixed);
   EXPECT_GT(short_suggestion_mixed, long_suggestion_mixed);
 
   const size_t long_prediction_mixed =
-      aggregator.GetRealtimeCandidateMaxSize(prediction_long_convreq, true);
+      aggregator.GetRealtimeCandidateMaxSize(prediction_long_convreq);
   EXPECT_GE(kMaxSize, long_prediction_mixed);
   EXPECT_GT(kMaxSize, long_prediction_mixed + long_suggestion_mixed);
   EXPECT_GT(short_prediction_mixed, long_prediction_mixed);
@@ -1905,7 +1944,8 @@ TEST_F(DictionaryPredictionAggregatorTest, UseActualConverterRequest) {
         {.request_type = ConversionRequest::SUGGESTION,
          .use_actual_converter_for_realtime_conversion = true},
         segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     ASSERT_GT(results.size(), 0);
     bool has_realtime_top = false;
     for (const Result &r : results) {
@@ -1925,7 +1965,8 @@ TEST_F(DictionaryPredictionAggregatorTest, UseActualConverterRequest) {
         {.request_type = ConversionRequest::SUGGESTION,
          .use_actual_converter_for_realtime_conversion = false},
         segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     ASSERT_GT(results.size(), 0);
     bool has_realtime_top = false;
     for (const Result &r : results) {
@@ -2233,7 +2274,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
   ConversionRequest convreq = CreatePredictionConversionRequest(segments);
   const std::vector<Result> results =
-      aggregator.AggregateTypingCorrectedResults(convreq);
+      aggregator.AggregateTypingCorrectedResultsForMixedConversion(convreq);
 
   EXPECT_EQ(results.size(), 5);
   for (int i = 0; i < results.size(); ++i) {
@@ -2271,7 +2312,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
   ConversionRequest convreq = CreatePredictionConversionRequest(segments);
   const std::vector<Result> results =
-      aggregator.AggregateTypingCorrectedResults(convreq);
+      aggregator.AggregateTypingCorrectedResultsForMixedConversion(convreq);
 
   EXPECT_EQ(results.size(), 1);
 
@@ -2302,7 +2343,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
 
   ConversionRequest convreq = CreatePredictionConversionRequest(segments);
   const std::vector<Result> results =
-      aggregator.AggregateTypingCorrectedResults(convreq);
+      aggregator.AggregateTypingCorrectedResultsForMixedConversion(convreq);
   EXPECT_EQ(results.size(), 2);
   EXPECT_EQ(results[1].value, "２５");  // default is full width.
 }
@@ -2495,7 +2536,8 @@ TEST_F(DictionaryPredictionAggregatorTest, ZipCodeRequest) {
     const ConversionRequest convreq =
         test_case.is_suggestion ? CreateSuggestionConversionRequest(segments)
                                 : CreatePredictionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     const bool has_result = !results.empty();
     EXPECT_EQ(has_result, test_case.should_aggregate) << test_case.key;
   }
@@ -2527,7 +2569,8 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileZipcodeEntries) {
     SetUpInputForSuggestion("101-000", composer_.get(), &segments);
     const ConversionRequest convreq =
         CreatePredictionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_FALSE(FindResultByValue(results, "東京都千代田"));
   }
   {
@@ -2536,7 +2579,8 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileZipcodeEntries) {
     SetUpInputForSuggestion("101-0001", composer_.get(), &segments);
     const ConversionRequest convreq =
         CreatePredictionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_TRUE(FindResultByValue(results, "東京都千代田"));
   }
 }
@@ -2684,7 +2728,8 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserDictionaryAttribute) {
     SetUpInputForSuggestion("ゆーざー", composer_.get(), &segments);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ユーザー");
     EXPECT_TRUE(results[0].candidate_attributes &
@@ -2719,7 +2764,8 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserDictionaryAttribute) {
     SetUpInputForSuggestion(kKey, composer_.get(), &segments);
     const ConversionRequest convreq =
         CreateSuggestionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, kValue);
     EXPECT_TRUE(results[0].candidate_attributes &
@@ -2738,7 +2784,8 @@ TEST_F(DictionaryPredictionAggregatorTest, EnrichPartialCandidates) {
   SetUpInputForSuggestion("ぐーぐる", composer_.get(), &segments);
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(GetMergedTypes(results) & PREFIX);
 }
 
@@ -2753,7 +2800,8 @@ TEST_F(DictionaryPredictionAggregatorTest, PrefixCandidates) {
   SetUpInputForSuggestion("ぐーぐるあ", composer_.get(), &segments);
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(GetMergedTypes(results) & PREFIX);
   for (const auto &r : results) {
     if (r.types == PREFIX) {
@@ -2795,7 +2843,8 @@ TEST_F(DictionaryPredictionAggregatorTest, CandidatesFromUserDictionary) {
 
     const ConversionRequest convreq =
         CreatePredictionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_TRUE(GetMergedTypes(results) & UNIGRAM);
     EXPECT_TRUE(FindResultByValue(results, "しょうとかっと"));
     EXPECT_FALSE(FindResultByValue(results, "ショートカット"));
@@ -2806,7 +2855,8 @@ TEST_F(DictionaryPredictionAggregatorTest, CandidatesFromUserDictionary) {
 
     const ConversionRequest convreq =
         CreatePredictionConversionRequest(segments);
-    const std::vector<Result> results = aggregator.AggregateResults(convreq);
+    const std::vector<Result> results =
+        aggregator.AggregateResultsForTesting(convreq);
     EXPECT_TRUE(GetMergedTypes(results) & UNIGRAM);
     EXPECT_TRUE(FindResultByValue(results, "しょうとかっと"));
     EXPECT_TRUE(FindResultByValue(results, "ショートカット"));
@@ -2963,7 +3013,8 @@ TEST_F(DictionaryPredictionAggregatorTest, DoNotModifyHistorySegment) {
        .use_actual_converter_for_realtime_conversion = false},
       segments);
 
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "conversion_result");
   EXPECT_EQ(segments.history_segment(0).candidate(0).value, "103");
@@ -2980,7 +3031,8 @@ TEST_F(DictionaryPredictionAggregatorTest, NumberDecoderCandidates) {
   SetUpInputForSuggestion("よんじゅうごかい", composer_.get(), &segments);
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   const auto &result =
       std::find_if(results.begin(), results.end(),
                    [](Result r) { return r.value == "45" && !r.removed; });
@@ -3015,7 +3067,8 @@ TEST_F(DictionaryPredictionAggregatorTest, DoNotPredictNoisyNumberEntries) {
   SetUpInputForSuggestion("1", composer_.get(), &segments);
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_FALSE(FindResultByValue(results, "10時"));
   EXPECT_FALSE(FindResultByValue(results, "十時"));
   EXPECT_FALSE(FindResultByValue(results, "1時過ぎ"));
@@ -3053,7 +3106,8 @@ TEST_F(DictionaryPredictionAggregatorTest, SingleKanji) {
   SetUpInputForSuggestion("てすと", composer_.get(), &segments);
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(GetMergedTypes(results) & SINGLE_KANJI);
   for (const auto &result : results) {
     if (!(result.types & SINGLE_KANJI)) {
@@ -3080,7 +3134,8 @@ TEST_F(DictionaryPredictionAggregatorTest,
   SetUpInputForSuggestion("てすと", composer_.get(), &segments);
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_FALSE(GetMergedTypes(results) & SINGLE_KANJI);
 }
 
@@ -3159,7 +3214,8 @@ TEST_F(DictionaryPredictionAggregatorTest, Handwriting) {
       }});
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(GetMergedTypes(results) & UNIGRAM);
 
   EXPECT_GE(results.size(), 5);
@@ -3236,7 +3292,8 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingT13N) {
       }});
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(GetMergedTypes(results) & UNIGRAM);
 
   EXPECT_GE(results.size(), 2);
@@ -3287,7 +3344,8 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingNoHiragana) {
   EXPECT_CALL(*mock_dict, LookupExact(_, _, _)).Times(0);
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(GetMergedTypes(results) & UNIGRAM);
   EXPECT_GE(results.size(), 1);
   // composition from handwriting output
@@ -3339,7 +3397,8 @@ TEST_F(DictionaryPredictionAggregatorTest, HandwritingRealtime) {
   }
 
   const ConversionRequest convreq = CreatePredictionConversionRequest(segments);
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results =
+      aggregator.AggregateResultsForTesting(convreq);
   EXPECT_TRUE(GetMergedTypes(results) & UNIGRAM);
 
   EXPECT_GE(results.size(), 2);

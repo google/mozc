@@ -176,7 +176,6 @@ mozc_cc_library(
     ],
     deps = [
         ":dictionary_prediction_aggregator",
-        ":prediction_aggregator_interface",
         ":predictor_interface",
         ":result",
         ":result_filter",
@@ -259,17 +258,7 @@ mozc_cc_test(
         ":result_filter",
         "//testing:gunit",
         "//testing:gunit_main",
-        "//testing:mozctest",
         "@com_google_absl//absl/strings:string_view",
-    ],
-)
-
-mozc_cc_library(
-    name = "prediction_aggregator_interface",
-    hdrs = ["prediction_aggregator_interface.h"],
-    deps = [
-        ":result",
-        "//request:conversion_request",
     ],
 )
 
@@ -281,7 +270,6 @@ mozc_cc_library(
     hdrs = ["dictionary_prediction_aggregator.h"],
     deps = [
         ":number_decoder",
-        ":prediction_aggregator_interface",
         ":result",
         ":single_kanji_prediction_aggregator",
         ":zero_query_dict",
@@ -366,8 +354,8 @@ mozc_cc_test(
         "dictionary_predictor_test.cc",
     ],
     deps = [
+        ":dictionary_prediction_aggregator",
         ":dictionary_predictor",
-        ":prediction_aggregator_interface",
         ":result",
         "//base:util",
         "//base/strings:assign",
@@ -409,7 +397,6 @@ mozc_cc_library(
     hdrs = ["single_kanji_prediction_aggregator.h"],
     visibility = ["//engine:__pkg__"],
     deps = [
-        ":prediction_aggregator_interface",
         ":result",
         "//base:util",
         "//base/strings:assign",

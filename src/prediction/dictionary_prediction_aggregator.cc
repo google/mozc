@@ -127,8 +127,8 @@ bool IsZeroQuerySuffixPredictionDisabled(const ConversionRequest &request) {
       .disable_zero_query_suffix_prediction();
 }
 
-bool IsMixedConversionEnabled(const Request &request) {
-  return request.mixed_conversion();
+bool IsMixedConversionEnabled(const ConversionRequest &request) {
+  return request.request().mixed_conversion();
 }
 
 bool HasHistoryKeyLongerThanOrEqualTo(const ConversionRequest &request,
@@ -538,15 +538,20 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       zero_query_dict_(modules.GetZeroQueryDict()),
       zero_query_number_dict_(modules.GetZeroQueryNumberDict()) {}
 
-std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
+std::vector<Result> DictionaryPredictionAggregator::AggregateResultsForTesting(
     const ConversionRequest &request) const {
-  const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
+  return IsMixedConversionEnabled(request)
+             ? AggregateResultsForMixedConversion(request)
+             : AggregateResultsForDesktop(request);
+}
 
-  // In mixed conversion mode, the number of real time candidates is increased.
-  const size_t realtime_max_size =
-      GetRealtimeCandidateMaxSize(request, is_mixed_conversion);
+std::vector<Result>
+DictionaryPredictionAggregator::AggregateResultsForMixedConversion(
+    const ConversionRequest &request) const {
+  DCHECK(IsMixedConversionEnabled(request));
 
   std::vector<Result> results;
+  absl::string_view key = request.converter_key();
 
   // Zero query prediction.
   if (request.IsZeroQuerySuggestion()) {
@@ -556,28 +561,15 @@ std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
     return results;
   }
 
-  absl::string_view key = request.converter_key();
-  const size_t key_len = Util::CharsLen(key);
-
-  // TODO(toshiyuki): Check if we can remove this SUGGESTION check.
-  // i.e. can we return NO_PREDICTION here for both of SUGGESTION and
-  // PREDICTION?
-  if (request.request_type() == ConversionRequest::SUGGESTION) {
-    if (!request.config().use_dictionary_suggest()) {
-      MOZC_VLOG(2) << "no_dictionary_suggest";
-      return results;
-    }
-    // Never trigger prediction if the key looks like zip code.
-    if (DictionaryPredictionAggregator::IsZipCodeRequest(key) && key_len < 6) {
-      return results;
-    }
+  if (request.request_type() == ConversionRequest::SUGGESTION &&
+      (!request.config().use_dictionary_suggest() || IsZipCodeRequest(key))) {
+    return results;
   }
 
-  if (ShouldAggregateRealTimeConversionResults(request)) {
-    AggregateRealtime(request, realtime_max_size,
-                      request.use_actual_converter_for_realtime_conversion(),
-                      &results);
-  }
+  // Always aggregate realtime results when mixed conversion mode.
+  AggregateRealtime(request, GetRealtimeCandidateMaxSize(request),
+                    request.use_actual_converter_for_realtime_conversion(),
+                    &results);
 
   // In partial suggestion or prediction, only realtime candidates are used.
   if (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
@@ -590,8 +582,7 @@ std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
   int min_unigram_key_len = 0;
   AggregateUnigram(request, &results, &min_unigram_key_len);
 
-  if (is_mixed_conversion && key_len > 0 &&
-      IsNotExceedingCutoffThreshold(request, results)) {
+  if (IsNotExceedingCutoffThreshold(request, results)) {
     AggregateNumber(request, &results);
   }
 
@@ -602,6 +593,7 @@ std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
   }
 
   // `min_unigram_key_len` is only used here.
+  const size_t key_len = Util::CharsLen(key);
   if (IsLanguageAwareInputEnabled(request) && IsQwertyMobileTable(request) &&
       key_len >= min_unigram_key_len) {
     AggregateEnglishUsingRawInput(request, &results);
@@ -612,21 +604,58 @@ std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
     AggregatePrefix(request, &results);
   }
 
-  if (IsMixedConversionEnabled(request.request())) {
-    // We do not want to add single kanji results for non mixed conversion
-    // (i.e., Desktop, or Hardware Keyboard in Mobile), since they contain
-    // partial results.
-    AggregateSingleKanji(request, &results);
-  }
+  // Always aggregate single kanji results when mixed conversion mode.
+  AggregateSingleKanji(request, &results);
 
   MaybePopulateTypingCorrectionPenalty(request, &results);
 
   return results;
 }
 
-std::vector<Result>
-DictionaryPredictionAggregator::AggregateTypingCorrectedResults(
+std::vector<Result> DictionaryPredictionAggregator::AggregateResultsForDesktop(
     const ConversionRequest &request) const {
+  DCHECK(!IsMixedConversionEnabled(request));
+
+  std::vector<Result> results;
+
+  absl::string_view key = request.converter_key();
+
+  if (request.request_type() == ConversionRequest::SUGGESTION &&
+      (!request.config().use_dictionary_suggest() || IsZipCodeRequest(key))) {
+    return results;
+  }
+
+  if (ShouldAggregateRealTimeConversionResults(request)) {
+    AggregateRealtime(request, GetRealtimeCandidateMaxSize(request),
+                      request.use_actual_converter_for_realtime_conversion(),
+                      &results);
+  }
+
+  // Desktop mode never sets PARTIAL mode, so we may use DCHECK after the
+  // refactoring.
+  if (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
+      request.request_type() == ConversionRequest::PARTIAL_PREDICTION) {
+    return results;
+  }
+
+  int min_unigram_key_len = 0;
+  AggregateUnigram(request, &results, &min_unigram_key_len);
+
+  if (IsNotExceedingCutoffThreshold(request, results)) {
+    AggregateNumber(request, &results);
+  }
+
+  constexpr int kMinHistoryKeyLen = 3;
+  if (HasHistoryKeyLongerThanOrEqualTo(request, kMinHistoryKeyLen)) {
+    AggregateBigram(request, &results);
+  }
+
+  return results;
+}
+
+std::vector<Result> DictionaryPredictionAggregator::
+    AggregateTypingCorrectedResultsForMixedConversion(
+        const ConversionRequest &request) const {
   const std::optional<std::vector<TypeCorrectedQuery>> corrected =
       modules_.GetSupplementalModel().CorrectComposition(request);
   if (!corrected) {
@@ -720,7 +749,7 @@ void DictionaryPredictionAggregator::AggregateUnigram(
     return;
   }
 
-  const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
+  const bool is_mixed_conversion = IsMixedConversionEnabled(request);
 
   using AggregateUnigramFn = void (DictionaryPredictionAggregator::*)(
       const ConversionRequest &request, std::vector<Result> *results) const;
@@ -1352,7 +1381,7 @@ size_t DictionaryPredictionAggregator::GetCandidateCutoffThreshold(
 }
 
 size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
-    const ConversionRequest &request, bool mixed_conversion) {
+    const ConversionRequest &request) {
   const ConversionRequest::RequestType request_type = request.request_type();
   DCHECK(request_type == ConversionRequest::PREDICTION ||
          request_type == ConversionRequest::SUGGESTION ||
@@ -1366,6 +1395,7 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
     return kRealtimeCandidatesSizeForHandwriting;
   }
 
+  const bool mixed_conversion = IsMixedConversionEnabled(request);
   const bool is_long_key = IsLongKeyForRealtimeCandidates(request);
   const size_t max_size = GetMaxSizeForRealtimeCandidates(request, is_long_key);
   const size_t default_size = GetDefaultSizeForRealtimeCandidates(is_long_key);
@@ -1640,7 +1670,7 @@ bool DictionaryPredictionAggregator::ShouldAggregateRealTimeConversionResults(
 
   return (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
           request.config().use_realtime_conversion() ||
-          IsMixedConversionEnabled(request.request()));
+          IsMixedConversionEnabled(request));
 }
 
 bool DictionaryPredictionAggregator::IsZipCodeRequest(
@@ -1649,13 +1679,16 @@ bool DictionaryPredictionAggregator::IsZipCodeRequest(
     return false;
   }
 
+  int num_chars = 0;
   for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
     const char32_t c = iter.Get();
     if (!('0' <= c && c <= '9') && (c != '-')) {
       return false;
     }
+    ++num_chars;
   }
-  return true;
+
+  return num_chars < 6;
 }
 
 void DictionaryPredictionAggregator::MaybePopulateTypingCorrectionPenalty(
