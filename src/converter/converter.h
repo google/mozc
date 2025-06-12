@@ -57,6 +57,7 @@
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
+namespace converter {
 
 class Converter final : public ConverterInterface {
  public:
@@ -186,7 +187,7 @@ class Converter final : public ConverterInterface {
   // input hiragana sequence only with composition mode. Converter
   // cannot know which POS ids should be used for these directly-
   // input strings. This function estimates IDs from value heuristically.
-  void CompletePosIds(converter::Candidate *candidate) const;
+  void CompletePosIds(Candidate *candidate) const;
 
   bool CommitSegmentValueInternal(Segments *segments, size_t segment_index,
                                   int candidate_index,
@@ -194,8 +195,8 @@ class Converter final : public ConverterInterface {
 
   // Sets all the candidates' attribute PARTIALLY_KEY_CONSUMED
   // and consumed_key_size if the attribute is not set.
-  static void MaybeSetConsumedKeySizeToCandidate(
-      size_t consumed_key_size, converter::Candidate *candidate);
+  static void MaybeSetConsumedKeySizeToCandidate(size_t consumed_key_size,
+                                                 Candidate *candidate);
 
   // Sets all the candidates' attribute PARTIALLY_KEY_CONSUMED
   // and consumed_key_size if the attribute is not set.
@@ -235,11 +236,11 @@ class Converter final : public ConverterInterface {
 
   const dictionary::PosMatcher &pos_matcher_;
   const dictionary::UserDictionaryInterface &user_dictionary_;
-  const converter::HistoryReconstructor history_reconstructor_;
-  const converter::ReverseConverter reverse_converter_;
+  const HistoryReconstructor history_reconstructor_;
+  const ReverseConverter reverse_converter_;
   const uint16_t general_noun_id_ = std::numeric_limits<uint16_t>::max();
 };
-
+}  // namespace converter
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_CONVERTER_H_

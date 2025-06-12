@@ -157,7 +157,7 @@ class Engine : public EngineInterface {
   DataLoader loader_;
 
   std::unique_ptr<engine::SupplementalModelInterface> supplemental_model_;
-  std::shared_ptr<Converter> converter_;
+  std::shared_ptr<converter::Converter> converter_;
   std::shared_ptr<ConverterInterface> minimal_converter_;
   std::unique_ptr<DataLoader::Response> loader_response_;
   // Do not initialized with Init() because the cost of initialization is

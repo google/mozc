@@ -66,9 +66,8 @@
 #include "transliteration/transliteration.h"
 
 namespace mozc {
+namespace converter {
 namespace {
-
-using ::mozc::converter::Candidate;
 
 constexpr size_t kErrorIndex = static_cast<size_t>(-1);
 
@@ -678,7 +677,7 @@ void Converter::PopulateReadingOfCommittedCandidateIfMissing(
   Segment *segment = segments->mutable_conversion_segment(0);
   if (segment->candidates_size() == 0) return;
 
-  converter::Candidate *cand = segment->mutable_candidate(0);
+  Candidate *cand = segment->mutable_candidate(0);
   if (!cand->key.empty() || cand->value.empty()) return;
 
   if (cand->content_value == cand->value) {
@@ -724,7 +723,7 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
   DCHECK(segment);
 
   for (const prediction::Result &result : results) {
-    converter::Candidate *candidate = segment->add_candidate();
+    Candidate *candidate = segment->add_candidate();
     strings::Assign(candidate->key, result.key);
     strings::Assign(candidate->value, result.value);
     strings::Assign(candidate->content_key, result.key);
@@ -743,8 +742,7 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
     if (!result.inner_segment_boundary.empty()) {
       // Gets the last key/value and content_key/content_value.
       const auto [key_len, value_len, content_key_len, content_value_len] =
-          converter::Candidate::DecodeLengths(
-              result.inner_segment_boundary.back());
+          Candidate::DecodeLengths(result.inner_segment_boundary.back());
       const int function_key_len = key_len - content_key_len;
       const int function_value_len = value_len - content_value_len;
       if (function_key_len > 0 &&
@@ -793,10 +791,10 @@ std::vector<prediction::Result> Converter::MakeLearningResults(
       // Force to set inner_segment_boundary from key/content_key.
       uint32_t encoded = 0;
       if (result.inner_segment_boundary.empty() &&
-          converter::Candidate::EncodeLengths(
-              candidate->key.size(), candidate->value.size(),
-              candidate->content_key.size(), candidate->content_value.size(),
-              &encoded)) {
+          Candidate::EncodeLengths(candidate->key.size(),
+                                   candidate->value.size(),
+                                   candidate->content_key.size(),
+                                   candidate->content_value.size(), &encoded)) {
         result.inner_segment_boundary.emplace_back(encoded);
       }
       results.emplace_back(std::move(result));
@@ -813,17 +811,17 @@ std::vector<prediction::Result> Converter::MakeLearningResults(
     prediction::Result result;
     for (const auto &segment : segments.conversion_segments()) {
       if (segment.candidates_size() == 0) return {};
-      const converter::Candidate &candidate = segment.candidate(0);
+      const Candidate &candidate = segment.candidate(0);
       absl::StrAppend(&result.key, candidate.key);
       absl::StrAppend(&result.value, candidate.value);
       result.candidate_attributes |= candidate.attributes;
       result.wcost += candidate.wcost;
       result.cost += candidate.cost;
       uint32_t encoded = 0;
-      if (!converter::Candidate::EncodeLengths(
-              candidate.key.size(), candidate.value.size(),
-              candidate.content_key.size(), candidate.content_value.size(),
-              &encoded)) {
+      if (!Candidate::EncodeLengths(candidate.key.size(),
+                                    candidate.value.size(),
+                                    candidate.content_key.size(),
+                                    candidate.content_value.size(), &encoded)) {
         inner_segment_boundary_failed = true;
       }
       result.inner_segment_boundary.emplace_back(encoded);
@@ -840,4 +838,5 @@ std::vector<prediction::Result> Converter::MakeLearningResults(
 
   return results;
 }
+}  // namespace converter
 }  // namespace mozc

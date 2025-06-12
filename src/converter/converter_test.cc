@@ -88,6 +88,7 @@
 #include "transliteration/transliteration.h"
 
 namespace mozc {
+namespace converter {
 
 class ConverterTestPeer : public testing::TestPeer<Converter> {
  public:
@@ -100,7 +101,6 @@ class ConverterTestPeer : public testing::TestPeer<Converter> {
 
 namespace {
 
-using ::mozc::converter::Candidate;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::MockUserDictionary;
@@ -2265,15 +2265,15 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     Segments segments;
     Segment *segment = segments.add_segment();
 
-    converter::Candidate *cand1 = segment->add_candidate();
+    Candidate *cand1 = segment->add_candidate();
     cand1->value = "東京";
     cand1->content_value = "東京";
 
-    converter::Candidate *cand2 = segment->add_candidate();
+    Candidate *cand2 = segment->add_candidate();
     cand2->value = "大阪";
     cand2->content_value = "大阪";
 
-    converter::Candidate *cand3 = segment->add_candidate();
+    Candidate *cand3 = segment->add_candidate();
     cand3->value = "群馬";
     cand3->content_value = "群馬";
 
@@ -2294,15 +2294,15 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     Segments segments;
     Segment *segment = segments.add_segment();
 
-    converter::Candidate *cand1 = segment->add_candidate();
+    Candidate *cand1 = segment->add_candidate();
     cand1->value = "東京に";
     cand1->content_value = "東京";
 
-    converter::Candidate *cand2 = segment->add_candidate();
+    Candidate *cand2 = segment->add_candidate();
     cand2->value = "大阪に";
     cand2->content_value = "大阪";
 
-    converter::Candidate *cand3 = segment->add_candidate();
+    Candidate *cand3 = segment->add_candidate();
     cand3->value = "群馬に";
     cand3->content_value = "群馬";
 
@@ -2324,7 +2324,7 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     Segments segments;
     Segment *segment = segments.add_segment();
 
-    converter::Candidate *cand1 = segment->add_candidate();
+    Candidate *cand1 = segment->add_candidate();
     cand1->value = "東京便";
     cand1->content_value = "東京";
 
@@ -2341,7 +2341,7 @@ TEST_F(ConverterTest, PopulateReadingOfCommittedCandidateIfMissing) {
     Segments segments;
     Segment *segment = segments.add_segment();
 
-    converter::Candidate *cand1 = segment->add_candidate();
+    Candidate *cand1 = segment->add_candidate();
     cand1->value = "東京";
     cand1->content_value.clear();
 
@@ -2367,7 +2367,7 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
     Segments segments;
     Segment *segment = segments.add_segment();
     for (int i = 0; i < 10; ++i) {
-      converter::Candidate *c = segment->add_candidate();
+      Candidate *c = segment->add_candidate();
       c->key = absl::StrCat("k", i);
       c->content_key = "k";
       c->value = absl::StrCat("v", i);
@@ -2383,7 +2383,7 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
         Converter::MakeLearningResults(segments);
     EXPECT_EQ(results.size(), 5);
     for (int i = 0; i < results.size(); ++i) {
-      const converter::Candidate &c = segment->candidate(i);
+      const Candidate &c = segment->candidate(i);
       const prediction::Result &result = results[i];
       EXPECT_EQ(c.key, result.key);
       EXPECT_EQ(c.value, result.value);
@@ -2393,8 +2393,8 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
       EXPECT_EQ(c.cost, result.cost);
       EXPECT_EQ(c.wcost, result.wcost);
 
-      converter::Candidate::InnerSegmentIterator iter(
-          result.inner_segment_boundary, result.key, result.value);
+      Candidate::InnerSegmentIterator iter(result.inner_segment_boundary,
+                                           result.key, result.value);
       ASSERT_FALSE(iter.Done());
       EXPECT_EQ(iter.GetKey(), c.key);
       EXPECT_EQ(iter.GetContentKey(), c.content_key);
@@ -2408,7 +2408,7 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
     Segments segments;
     for (int i = 0; i < 3; ++i) {
       Segment *segment = segments.add_segment();
-      converter::Candidate *c = segment->add_candidate();
+      Candidate *c = segment->add_candidate();
       c->key = absl::StrCat("k", i);
       c->content_key = "k";
       c->value = absl::StrCat("v", i);
@@ -2432,10 +2432,10 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
     EXPECT_EQ(result.wcost, 0 + 10 + 20);
 
     int n = 0;
-    for (converter::Candidate::InnerSegmentIterator iter(
-             result.inner_segment_boundary, result.key, result.value);
+    for (Candidate::InnerSegmentIterator iter(result.inner_segment_boundary,
+                                              result.key, result.value);
          !iter.Done(); iter.Next()) {
-      const converter::Candidate &c = segments.segment(n).candidate(0);
+      const Candidate &c = segments.segment(n).candidate(0);
       EXPECT_EQ(iter.GetKey(), c.key);
       EXPECT_EQ(iter.GetContentKey(), c.content_key);
       EXPECT_EQ(iter.GetValue(), c.value);
@@ -2446,4 +2446,5 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
   }
 }
 
+}  // namespace converter
 }  // namespace mozc

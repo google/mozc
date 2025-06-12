@@ -89,6 +89,7 @@ namespace {
 using ::mozc::commands::Request;
 using ::mozc::composer::TypeCorrectedQuery;
 using ::mozc::config::Config;
+using ::mozc::converter::Converter;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::UserDictionaryInterface;
 using ::testing::_;
