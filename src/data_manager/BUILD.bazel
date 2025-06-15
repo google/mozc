@@ -316,8 +316,5 @@ bzl_library(
 mozc_cc_library(
     name = "emoji_data",
     hdrs = ["emoji_data.h"],
-    visibility = [
-        "//dictionary:__pkg__",
-        "//rewriter:__pkg__",
-    ],
+    visibility = ["//rewriter:__pkg__"],
 )
