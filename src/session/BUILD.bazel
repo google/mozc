@@ -48,12 +48,7 @@ mozc_cc_library(
     name = "session",
     srcs = ["session.cc"],
     hdrs = ["session.h"],
-    visibility = [
-        "//android/jni:__pkg__",
-        "//evaluation/candidates_diff_checker:__pkg__",
-        "//ios:__pkg__",
-        "//server:__pkg__",
-    ],
+    visibility = ["//evaluation/candidates_diff_checker:__pkg__"],
     deps = [
         ":ime_context",
         ":key_event_transformer",
@@ -157,7 +152,6 @@ mozc_cc_library(
     visibility = [
         "//android/jni:__pkg__",
         "//ios:__pkg__",
-        "//server:__pkg__",
     ],
     deps = [
         ":keymap",
@@ -412,10 +406,7 @@ mozc_cc_library(
         ":session_stress_test_data",
     ],
     hdrs = ["random_keyevents_generator.h"],
-    visibility = [
-        "//client:__pkg__",
-        "//server:__pkg__",
-    ],
+    visibility = ["//client:__pkg__"],
     deps = [
         ":keymap",
         "//base:japanese_util",
