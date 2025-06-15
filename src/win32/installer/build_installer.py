@@ -147,9 +147,13 @@ def run_wix4(args) -> None:
       '-out', args.output,
       '-src', args.wxs_path,
   ]
-  if args.mozc_tip64arm:
+  if args.mozc_tip64arm and args.mozc_tip64x:
     mozc_tip64arm = pathlib.Path(args.mozc_tip64arm).resolve()
-    commands += ['-define', f'MozcTIP64ArmPath={mozc_tip64arm}']
+    mozc_tip64x = pathlib.Path(args.mozc_tip64x).resolve()
+    commands += [
+        '-define', f'MozcTIP64ArmPath={mozc_tip64arm}',
+        '-define', f'MozcTIP64XPath={mozc_tip64x}',
+    ]
   exec_command(commands, cwd=os.getcwd())
 
 
@@ -165,6 +169,7 @@ def main():
   parser.add_argument('--mozc_tip32', type=str)
   parser.add_argument('--mozc_tip64', type=str)
   parser.add_argument('--mozc_tip64arm', type=str)
+  parser.add_argument('--mozc_tip64x', type=str)
   parser.add_argument('--custom_action', type=str)
   parser.add_argument('--icon_path', type=str)
   parser.add_argument('--credit_file', type=str)
