@@ -371,7 +371,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
   }
 
   dictionary->set_id(*new_dictionary_id);
-  dictionary->set_name(std::string(dictionary_name));
+  dictionary->set_name(dictionary_name);
   return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 

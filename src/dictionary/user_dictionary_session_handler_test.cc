@@ -114,7 +114,7 @@ class UserDictionarySessionHandlerTest
     Clear();
     command_->set_type(UserDictionaryCommand::CREATE_DICTIONARY);
     command_->set_session_id(session_id);
-    command_->set_dictionary_name(std::string(name));
+    command_->set_dictionary_name(name);
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
     EXPECT_EQ(status_->status(),
               (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
