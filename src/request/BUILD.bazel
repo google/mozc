@@ -81,7 +81,6 @@ mozc_cc_library(
     visibility = [
         "//:__subpackages__",
         "//converter:__pkg__",
-        "//dictionary:__subpackages__",
         "//prediction:__pkg__",
         "//rewriter:__pkg__",
     ],
