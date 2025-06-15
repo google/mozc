@@ -104,6 +104,13 @@ namespace {
 
 using ::mozc::converter::Candidate;
 
+int FindCandidate(const Segment &segment, absl::string_view value) {
+  for (int i = 0; i < segment.candidates_size(); ++i) {
+    if (segment.candidate(i).value == value) return i;
+  }
+  return -1;
+}
+
 // Wrapper class for pos id printing
 class PosIdPrintUtil {
  public:
@@ -441,6 +448,36 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
     config->set_history_learning_level(config::Config::NO_HISTORY);
   } else if (func == "enableuserhistory") {
     config->set_history_learning_level(config::Config::DEFAULT_HISTORY);
+  } else if (func == "zeroquerysuggest" || func == "z") {
+    CHECK_FIELDS_LENGTH(3);  // command history_key history_value
+    if (!ExecCommand(converter, "reset", request, config, segments)) {
+      LOG(ERROR) << "Reset failed";
+      return false;
+    }
+    if (!ExecCommand(converter, absl::StrFormat("predict %s", fields[1]),
+                     request, config, segments)) {
+      LOG(ERROR) << "Predict failed for context key " << fields[1];
+      return false;
+    }
+    const int index = FindCandidate(segments->conversion_segment(0), fields[2]);
+    if (index == -1) {
+      LOG(ERROR) << "Cannot find candidate " << fields[2];
+      return false;
+    }
+    if (!ExecCommand(converter, absl::StrFormat("commit 0 %d", index), request,
+                     config, segments)) {
+      LOG(ERROR) << "commit failed";
+      return false;
+    }
+    if (!ExecCommand(converter, "finish", request, config, segments)) {
+      LOG(ERROR) << "finish failed";
+      return false;
+    }
+    if (!ExecCommand(converter, "predict", request, config, segments)) {
+      LOG(ERROR) << "predict from zero query failed";
+      return false;
+    }
+    return true;
   } else {
     LOG(WARNING) << "Unknown command: " << func;
     return false;
