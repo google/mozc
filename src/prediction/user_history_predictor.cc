@@ -83,19 +83,17 @@ using ::mozc::composer::TypeCorrectedQuery;
 
 // Finds suggestion candidates from the most recent 3000 history in LRU.
 // We don't check all history, since suggestion is called every key event
-constexpr size_t kMaxSuggestionTrial = 3000;
+constexpr size_t kDefaultMaxSuggestionTrial = 3000;
 
 // Finds suffix matches of history_segments from the most recent 500 histories
 // in LRU.
 constexpr size_t kMaxPrevValueTrial = 500;
 
-// Cache size
+// On-memory LRU cache size.
 // Typically memory/storage footprint becomes kLruCacheSize * 70 bytes.
-#ifdef __ANDROID__
-constexpr size_t kLruCacheSize = 4000;
-#else   // __ANDROID__
+// Note that actual entries serialized to the disk may be smaller
+// than this size.
 constexpr size_t kLruCacheSize = 10000;
-#endif  // __ANDROID__
 
 // Don't save key/value that are
 // longer than kMaxCandidateSize to avoid memory explosion
@@ -116,8 +114,6 @@ constexpr absl::string_view kDelimiter = "\t";
 constexpr absl::string_view kEmojiDescription = "絵文字";
 
 constexpr size_t kRevertCacheSize = 16;
-
-constexpr absl::Duration k62Days = absl::Hours(62 * 24);
 
 // TODO(peria, hidehiko): Unify this checker and IsEmojiCandidate in
 //     EmojiRewriter.  If you make similar functions before the merging in
@@ -234,20 +230,11 @@ bool UserHistoryStorage::Load() {
     return false;
   }
 
-  const int num_deleted = DeleteEntriesUntouchedFor62Days();
-  LOG_IF(INFO, num_deleted > 0)
-      << num_deleted << " old entries were not loaded "
-      << proto_.entries_size();
-
   MOZC_VLOG(1) << "Loaded user history, size=" << proto_.entries_size();
   return true;
 }
 
 bool UserHistoryStorage::Save() {
-  const int num_deleted = DeleteEntriesUntouchedFor62Days();
-  LOG_IF(INFO, num_deleted > 0)
-      << num_deleted << " old entries were removed before save";
-
   std::string output;
   if (!proto_.AppendToString(&output)) {
     LOG(ERROR) << "AppendToString failed";
@@ -267,37 +254,6 @@ bool UserHistoryStorage::Save() {
   }
 
   return true;
-}
-
-int UserHistoryStorage::DeleteEntriesBefore(uint64_t timestamp) {
-  // Partition entries so that [0, new_size) is kept and [new_size, size) is
-  // deleted.
-  int i = 0;
-  int new_size = proto_.entries_size();
-  while (i < new_size) {
-    if (proto_.entries(i).last_access_time() >= timestamp) {
-      ++i;
-      continue;
-    }
-    // Swap this entry (to be deleted) and the last entry (not yet checked) for
-    // batch deletion.
-    --new_size;
-    if (i != new_size) {
-      proto_.mutable_entries()->SwapElements(i, new_size);
-    }
-  }
-  if (new_size == proto_.entries_size()) {
-    return 0;
-  }
-  const int num_deleted = proto_.entries_size() - new_size;
-  proto_.mutable_entries()->DeleteSubrange(new_size, num_deleted);
-  return num_deleted;
-}
-
-int UserHistoryStorage::DeleteEntriesUntouchedFor62Days() {
-  const absl::Time now = Clock::GetAbslTime();
-  const absl::Time timestamp = std::max(now - k62Days, absl::UnixEpoch());
-  return DeleteEntriesBefore(absl::ToUnixSeconds(timestamp));
 }
 
 bool UserHistoryPredictor::EntryPriorityQueue::Push(Entry *entry) {
@@ -372,10 +328,7 @@ bool UserHistoryPredictor::CheckSyncerAndDelete() const {
   return true;
 }
 
-bool UserHistoryPredictor::Sync() {
-  return AsyncSave();
-  // return Save();   blocking version
-}
+bool UserHistoryPredictor::Sync() { return AsyncSave(); }
 
 bool UserHistoryPredictor::Reload() {
   WaitForSyncer();
@@ -451,9 +404,26 @@ bool UserHistoryPredictor::Save() {
 
   UserHistoryStorage history(filename);
 
-  for (const DicElement *elm = dic_->Tail(); elm != nullptr; elm = elm->prev) {
-    *history.GetProto().add_entries() = elm->value;
+  // Copy the current values to avoid these values from being updated in
+  // the actual copy operations.
+  const int store_size = cache_store_size_.load();
+  const absl::Duration lifetime_days = entry_lifetime_days_as_duration();
+  auto &proto = history.GetProto();
+
+  const absl::Time now = Clock::GetAbslTime();
+  for (const DicElement &elm : *dic_) {
+    if (store_size > 0 && proto.entries_size() >= store_size) {
+      break;
+    }
+    if (absl::FromUnixSeconds(elm.value.last_access_time()) + lifetime_days <
+        now) {
+      continue;
+    }
+    *proto.add_entries() = elm.value;
   }
+
+  // Reverse the contents to keep the LRU order when loading.
+  absl::c_reverse(*proto.mutable_entries());
 
   if (!history.Save()) {
     LOG(ERROR) << "UserHistoryStorage::Save() failed";
@@ -1155,6 +1125,9 @@ std::vector<Result> UserHistoryPredictor::Predict(
 
   const auto &params = request.request().decoder_experiment_params();
 
+  SetEntryLifetimeDays(params.user_history_entry_lifetime_days());
+  SetCacheStoreSize(params.user_history_cache_store_size());
+
   const bool is_zero_query =
       request.request().zero_query_suggestion() && is_empty_input;
   size_t max_prediction_size =
@@ -1254,8 +1227,10 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
 
   // Check the timestamp of prev_entry.
   const absl::Time now = Clock::GetAbslTime();
+  const absl::Duration lifetime_days = entry_lifetime_days_as_duration();
   if (prev_entry != nullptr &&
-      absl::FromUnixSeconds(prev_entry->last_access_time()) + k62Days < now) {
+      absl::FromUnixSeconds(prev_entry->last_access_time()) + lifetime_days <
+          now) {
     updated_ = true;  // We found an entry to be deleted at next save.
     return nullptr;
   }
@@ -1325,6 +1300,12 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
   EntryPriorityQueue entry_queue;
   const absl::Time now = Clock::GetAbslTime();
   int trial = 0;
+  int max_trial = request.request()
+                      .decoder_experiment_params()
+                      .user_history_max_suggestion_trial();
+  if (max_trial <= 0) max_trial = kDefaultMaxSuggestionTrial;
+  const absl::Duration lifetime_days = entry_lifetime_days_as_duration();
+
   for (const DicElement &elm : *dic_) {
     // already found enough entry_queue.
     if (entry_queue.size() >= max_entry_queue_size) {
@@ -1334,12 +1315,13 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
     if (!IsValidEntryIgnoringRemovedField(elm.value)) {
       continue;
     }
-    if (absl::FromUnixSeconds(elm.value.last_access_time()) + k62Days < now) {
+    if (absl::FromUnixSeconds(elm.value.last_access_time()) + lifetime_days <
+        now) {
       updated_ = true;  // We found an entry to be deleted at next save.
       continue;
     }
     if (request.request_type() == ConversionRequest::SUGGESTION &&
-        trial++ >= kMaxSuggestionTrial) {
+        trial++ >= max_trial) {
       MOZC_VLOG(2) << "too many trials";
       break;
     }

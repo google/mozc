@@ -119,6 +119,11 @@ class UserHistoryPredictorTestPeer
   PEER_METHOD(LookupEntry);
   PEER_METHOD(RemoveNgramChain);
   PEER_METHOD(WaitForSyncer);
+  PEER_METHOD(Save);
+  PEER_METHOD(SetEntryLifetimeDays);
+  PEER_METHOD(SetCacheStoreSize);
+  PEER_VARIABLE(cache_store_size_);
+  PEER_VARIABLE(entry_lifetime_days_);
   PEER_VARIABLE(dic_);
   PEER_DECLARE(MatchType);
   PEER_DECLARE(RemoveNgramChainResult);
@@ -2720,68 +2725,6 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
   EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 
-TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
-  ScopedClockMock clock(absl::FromUnixSeconds(1));
-  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
-
-  // Create a history proto containing old entries (timestamp = 1).
-  user_history_predictor::UserHistory history;
-  for (int i = 0; i < 10; ++i) {
-    auto *entry = history.add_entries();
-    entry->set_key(absl::StrFormat("old_key%d", i));
-    entry->set_value(absl::StrFormat("old_value%d", i));
-    entry->set_last_access_time(absl::ToUnixSeconds(clock->GetAbslTime()));
-  }
-  clock->Advance(absl::Hours(24 * 63));  // Advance clock for 63 days.
-  for (int i = 0; i < 10; ++i) {
-    auto *entry = history.add_entries();
-    entry->set_key(absl::StrFormat("new_key%d", i));
-    entry->set_value(absl::StrFormat("new_value%d", i));
-    entry->set_last_access_time(absl::ToUnixSeconds(clock->GetAbslTime()));
-  }
-
-  // Test Load().
-  {
-    const std::string filename =
-        FileUtil::JoinPath(temp_dir.path(), "testload");
-    // Write directly to the file to keep old entries for testing.
-    storage::EncryptedStringStorage file_storage(filename);
-    ASSERT_TRUE(file_storage.Save(history.SerializeAsString()));
-
-    UserHistoryStorage storage(filename);
-    ASSERT_TRUE(storage.Load());
-    // Only the new entries are loaded.
-    EXPECT_EQ(storage.GetProto().entries_size(), 10);
-    for (const auto &entry : storage.GetProto().entries()) {
-      EXPECT_TRUE(entry.key().starts_with("new_"));
-      EXPECT_TRUE(entry.value().starts_with("new_"));
-    }
-    EXPECT_OK(FileUtil::Unlink(filename));
-  }
-
-  // Test Save().
-  {
-    const std::string filename =
-        FileUtil::JoinPath(temp_dir.path(), "testsave");
-    UserHistoryStorage storage(filename);
-    storage.GetProto() = history;
-    ASSERT_TRUE(storage.Save());
-
-    // Directly open the file to check the actual entries written.
-    storage::EncryptedStringStorage file_storage(filename);
-    std::string content;
-    ASSERT_TRUE(file_storage.Load(&content));
-    user_history_predictor::UserHistory modified_history;
-    ASSERT_TRUE(modified_history.ParseFromString(content));
-    EXPECT_EQ(modified_history.entries_size(), 10);
-    for (const auto &entry : storage.GetProto().entries()) {
-      EXPECT_TRUE(entry.key().starts_with("new_"));
-      EXPECT_TRUE(entry.value().starts_with("new_"));
-    }
-    EXPECT_OK(FileUtil::Unlink(filename));
-  }
-}
-
 TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
   // This test checks invalid entries are not loaded into dic_.
   ScopedClockMock clock(absl::FromUnixSeconds(1));
@@ -4637,6 +4580,101 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(FindCandidateByValue("よろしくお願いします", results));
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, EntriesMaxTrialSize) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  UserHistoryPredictorTestPeer predictor_peer(*predictor);
+
+  // Insert one entry per day.
+  for (int i = 0; i < 30; ++i) {
+    Segments segments;
+    const ConversionRequest convreq = SetUpInputForConversion(
+        absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments);
+    AddCandidate(absl::StrFormat("私の名前%2d", i), &segments);
+    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
+                      segments.revert_id());
+  }
+
+  for (int trial : {10, 20}) {
+    request_.mutable_decoder_experiment_params()
+        ->set_user_history_max_suggestion_trial(trial);
+    for (int i = 29; i >= 0; --i) {
+      Segments segments;
+      const ConversionRequest convreq = SetUpInputForSuggestion(
+          absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments);
+      const std::vector<Result> results = predictor->Predict(convreq);
+      const int lookup_trial = 29 - i;
+      if (lookup_trial < trial) {
+        EXPECT_FALSE(results.empty());
+      } else {
+        EXPECT_TRUE(results.empty());
+      }
+    }
+  }
+
+  request_.mutable_decoder_experiment_params()
+      ->set_user_history_max_suggestion_trial(0);
+}
+
+TEST_F(UserHistoryPredictorTest, EntriesAreDeletedAtSync) {
+  // mode 0 -> delete by lifetime
+  // mode 1 -> delete by cache size.
+
+  for (const int mode : {0, 1}) {
+    for (const int limit : {10, 20, 30, 40}) {
+      ScopedClockMock clock(absl::FromUnixSeconds(1));
+      UserHistoryPredictor *predictor =
+          GetUserHistoryPredictorWithClearedHistory();
+      UserHistoryPredictorTestPeer predictor_peer(*predictor);
+
+      if (mode == 0) {
+        predictor_peer.SetEntryLifetimeDays(limit);
+        EXPECT_EQ(predictor_peer.entry_lifetime_days_(), limit);
+      } else {
+        predictor_peer.SetCacheStoreSize(limit);
+        EXPECT_EQ(predictor_peer.cache_store_size_(), limit);
+      }
+
+      // Insert one entry per day.
+      for (int i = 0; i < 50; ++i) {
+        Segments segments;
+        const ConversionRequest convreq = SetUpInputForConversion(
+            absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments);
+        AddCandidate(absl::StrFormat("私の名前%2d", i), &segments);
+        predictor->Finish(convreq, Converter::MakeLearningResults(segments),
+                          segments.revert_id());
+        if (mode == 0) {
+          clock->Advance(absl::Hours(24));  // advance one day.
+        }
+      }
+
+      predictor_peer.Save();
+
+      auto lookup_key = [&](absl::string_view key) -> std::string {
+        Segments segments;
+        const ConversionRequest convreq =
+            SetUpInputForPrediction(key, &composer_, &segments);
+        const std::vector<Result> results = predictor->Predict(convreq);
+        return results.empty() ? "" : results[0].value;
+      };
+
+      const int deleted = 50 - limit;
+      for (int i = 0; i < deleted; ++i) {
+        EXPECT_EQ(lookup_key(absl::StrFormat("わたしのなまえ%2d", i)), "");
+      }
+
+      for (int i = deleted; i < limit; ++i) {
+        EXPECT_EQ(lookup_key(absl::StrFormat("わたしのなまえ%2d", i)),
+                  absl::StrFormat("私の名前%2d", i));
+      }
+
+      predictor_peer.SetEntryLifetimeDays(0);
+      predictor_peer.SetCacheStoreSize(0);
+      EXPECT_EQ(predictor_peer.entry_lifetime_days_(), 62);
+      EXPECT_EQ(predictor_peer.cache_store_size_(), 0);
+    }
   }
 }
 

@@ -68,14 +68,6 @@ class UserHistoryStorage {
   // Saves history into encrypted file.
   bool Save();
 
-  // Deletes entries before the given timestamp.  Returns the number of deleted
-  // entries.
-  int DeleteEntriesBefore(uint64_t timestamp);
-
-  // Deletes entries that are not accessed for 62 days.  Returns the number of
-  // deleted entries.
-  int DeleteEntriesUntouchedFor62Days();
-
   mozc::user_history_predictor::UserHistory &GetProto() { return proto_; }
   const mozc::user_history_predictor::UserHistory &GetProto() const {
     return proto_;
@@ -450,6 +442,16 @@ class UserHistoryPredictor : public PredictorInterface {
   void MaybeRemoveUnselectedHistory(absl::Span<const Result> results,
                                     RevertEntries *revert_entries);
 
+  // Default entry lifetime period.
+  // Entries will be automatically purged after this period.
+  static constexpr int kDefaultEntryLifetimeDays = 62;
+
+  void SetEntryLifetimeDays(int days) const {
+    entry_lifetime_days_.store(days <= 0 ? kDefaultEntryLifetimeDays : days);
+  }
+
+  void SetCacheStoreSize(int size) const { cache_store_size_.store(size); }
+
   const dictionary::DictionaryInterface &dictionary_;
   const dictionary::UserDictionaryInterface &user_dictionary_;
   const std::string predictor_name_;
@@ -458,6 +460,16 @@ class UserHistoryPredictor : public PredictorInterface {
   std::unique_ptr<DicCache> dic_;
   mutable std::optional<BackgroundFuture<void>> sync_;
   const engine::Modules &modules_;
+
+  mutable std::atomic<int> entry_lifetime_days_ = kDefaultEntryLifetimeDays;
+
+  absl::Duration entry_lifetime_days_as_duration() const {
+    return absl::Hours(24 * entry_lifetime_days_.load());
+  }
+
+  // The maximum entries size serialized to the file.
+  // When zero, all entries in the on-memory LRU are stored.
+  mutable std::atomic<int> cache_store_size_ = 0;
 
   // Internal LRU cache to store dic_key/Entry to be reverted.
   storage::LruCache<uint64_t, RevertEntries> revert_cache_;
