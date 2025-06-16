@@ -745,13 +745,17 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
           Candidate::DecodeLengths(result.inner_segment_boundary.back());
       const int function_key_len = key_len - content_key_len;
       const int function_value_len = value_len - content_value_len;
-      if (function_key_len > 0 &&
+      const int content_key_start =
+          candidate->content_key.size() - function_key_len;
+      const int content_value_start =
+          candidate->content_value.size() - function_value_len;
+      if (function_key_len > 0 && content_key_start > 0 &&
           function_key_len <= candidate->content_key.size()) {
-        candidate->content_key.erase(content_key_len, function_key_len);
+        candidate->content_key.erase(content_key_start, function_key_len);
       }
-      if (function_value_len > 0 &&
+      if (function_value_len > 0 && content_value_start > 0 &&
           function_value_len <= candidate->content_value.size()) {
-        candidate->content_value.erase(content_value_len, function_value_len);
+        candidate->content_value.erase(content_value_start, function_value_len);
       }
     }
 #ifndef NDEBUG

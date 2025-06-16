@@ -115,6 +115,7 @@ using ::mozc::prediction::Result;
 using ::mozc::prediction::UserHistoryPredictor;
 using ::testing::_;
 using ::testing::AnyNumber;
+using ::testing::Return;
 using ::testing::StrEq;
 
 using UserEntry = user_dictionary::UserDictionary::Entry;
@@ -2444,6 +2445,70 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
     }
     EXPECT_EQ(n, 3);
   }
+}
+
+TEST_F(ConverterTest, Bugfix424676259) {
+  auto mock_predictor = absl::make_unique<MockPredictor>();
+  auto mock_rewriter = absl::make_unique<MockRewriter>();
+
+  std::vector<prediction::Result> results;
+
+  prediction::Result result;
+  result.key = "3:30から";
+  result.value = "３：３０から";
+
+  // 3|:|30から
+  result.inner_segment_boundary.push_back(
+      converter::Candidate::EncodeLengths(1, 3, 1, 3));  // 3
+  result.inner_segment_boundary.push_back(
+      converter::Candidate::EncodeLengths(1, 3, 1, 3));  // :
+  result.inner_segment_boundary.push_back(
+      converter::Candidate::EncodeLengths(8, 12, 2, 6));  // ３０_から
+
+  results.emplace_back(std::move(result));
+
+  EXPECT_CALL(*mock_predictor, Predict(_)).WillRepeatedly(Return(results));
+
+  std::unique_ptr<engine::Modules> modules =
+      engine::Modules::Create(std::make_unique<testing::MockDataManager>())
+          .value();
+
+  auto converter = std::make_unique<Converter>(
+      std::move(modules),
+      [](const engine::Modules &modules) {
+        return std::make_unique<ImmutableConverter>(modules);
+      },
+      [&mock_predictor](
+          const engine::Modules &modules, const ConverterInterface &converter,
+          const ImmutableConverterInterface &immutable_converter) {
+        return std::move(mock_predictor);
+      },
+      [&mock_rewriter](const engine::Modules &modules) {
+        return std::move(mock_rewriter);
+      });
+
+  commands::Request request;
+  request.set_mixed_conversion(true);
+  const ConversionRequest convreq =
+      ConversionRequestBuilder()
+          .SetRequestView(request)
+          .SetRequestType(ConversionRequest::SUGGESTION)
+          .Build();
+
+  converter::Segments segments;
+  EXPECT_TRUE(converter->StartPrediction(convreq, &segments));
+
+  ASSERT_EQ(segments.segments_size(), 1);
+  const converter::Segment &segment = segments.segment(0);
+  ASSERT_EQ(segment.candidates_size(), 1);
+  const converter::Candidate &candidate = segment.candidate(0);
+
+  EXPECT_EQ(candidate.key, "3:30から");
+  EXPECT_EQ(candidate.value, "３：３０から");
+  EXPECT_EQ(candidate.content_key, "3:30");
+  EXPECT_EQ(candidate.content_value, "３：３０");
+  EXPECT_EQ(candidate.inner_segment_boundary,
+            results[0].inner_segment_boundary);
 }
 
 }  // namespace converter
