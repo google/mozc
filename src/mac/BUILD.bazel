@@ -238,6 +238,7 @@ mozc_objc_test(
     sdk_frameworks = ["AppKit"],
     deps = [
         ":keycode_map",
+        "//base/protobuf:text_format",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main_objc",
     ],
