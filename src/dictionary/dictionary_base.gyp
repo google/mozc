@@ -49,59 +49,8 @@
         '<(mozc_oss_src_dir)/base/base.gyp:base',
         '<(mozc_oss_src_dir)/base/base.gyp:multifile',
         '<(mozc_oss_src_dir)/base/base.gyp:number_util',
-        'pos_matcher',
+        'pos_matcher.gyp:pos_matcher',
       ],
-    },
-    {
-      'target_name': 'pos_util',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        '<(mozc_oss_src_dir)/build_tools/code_generator_util.py',
-        'pos_util.py',
-      ],
-    },
-    {
-      'target_name': 'gen_pos_matcher',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        'pos_util',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_pos_matcher',
-          'variables': {
-            'pos_matcher_rule': '<(mozc_oss_src_dir)/data/rules/pos_matcher_rule.def',
-            'pos_matcher_header': '<(gen_out_dir)/pos_matcher_impl.inc',
-          },
-          'inputs': [
-            'gen_pos_matcher_code.py',
-            '<(pos_matcher_rule)'
-          ],
-          'outputs': [
-            '<(pos_matcher_header)',
-          ],
-          'action': [
-            '<(python)', 'gen_pos_matcher_code.py',
-            '--pos_matcher_rule_file=<(pos_matcher_rule)',
-            '--output_pos_matcher_h=<(pos_matcher_header)',
-          ],
-          'message': ('Generating <(pos_matcher_header)'),
-        },
-      ],
-    },
-    {
-      'target_name': 'pos_matcher',
-      'type': 'none',
-      'toolsets': ['target', 'host'],
-      'hard_dependency': 1,
-      'dependencies': [
-        'gen_pos_matcher#host',
-      ],
-      'export_dependent_settings': [
-        'gen_pos_matcher#host',
-      ]
     },
     {
       'target_name': 'user_pos',
@@ -174,7 +123,7 @@
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:user_dictionary_storage_proto',
         '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         'gen_pos_map#host',
-        'pos_matcher',
+        'pos_matcher.gyp:pos_matcher',
       ],
     },
   ],

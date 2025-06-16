@@ -59,9 +59,9 @@
         '<(mozc_oss_src_dir)/testing/testing.gyp:testing_util',
         'dictionary.gyp:dictionary',
         'dictionary.gyp:dictionary_test_util',
-        'dictionary_base.gyp:pos_matcher',
         'dictionary_base.gyp:user_dictionary',
         'dictionary_base.gyp:user_pos',
+        'pos_matcher.gyp:pos_matcher',
       ],
       'variables': {
         'test_size': 'small',

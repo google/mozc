@@ -98,7 +98,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_util',
+        '<(mozc_oss_src_dir)/dictionary/pos_matcher.gyp:pos_util',
       ],
       'actions': [
         {
@@ -143,7 +143,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_util',
+        '<(mozc_oss_src_dir)/dictionary/pos_matcher.gyp:pos_util',
       ],
       'actions': [
         {

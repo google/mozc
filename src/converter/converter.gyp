@@ -46,7 +46,7 @@
         '<(mozc_oss_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_oss_src_dir)/base/base.gyp:number_util',
         '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
+        '<(mozc_oss_src_dir)/dictionary/pos_matcher.gyp:pos_matcher',
         '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction',
         '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction_protocol',
         '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
@@ -58,7 +58,7 @@
         'immutable_converter.gyp:immutable_converter',
       ],
       'export_dependent_settings': [
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
+        '<(mozc_oss_src_dir)/dictionary/pos_matcher.gyp:pos_matcher',
       ],
     },
   ],

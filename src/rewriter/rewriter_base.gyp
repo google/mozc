@@ -40,7 +40,7 @@
       'target_name': 'gen_rewriter_files',
       'type': 'none',
       'dependencies': [
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_util',
+        '<(mozc_oss_src_dir)/dictionary/pos_matcher.gyp:pos_util',
         'gen_usage_rewriter_dictionary_main#host',
       ],
       'toolsets': ['host'],
@@ -130,8 +130,8 @@
         '<(mozc_oss_src_dir)/base/base.gyp:serialized_string_array',
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
-        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_pos',
+        '<(mozc_oss_src_dir)/dictionary/pos_matcher.gyp:pos_matcher',
       ],
     },
     {

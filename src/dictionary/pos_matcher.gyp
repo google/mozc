@@ -27,33 +27,64 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# immutable_converter.gyp defines targets for immutable_converter that is
-# located in the middle of converter.gyp and converter_base.gyp.
-# This separated file is necessary to avoid circular dependencies.
+# pos_matcher.gyp defines targets for pos_matcher.
+# This file is used to address cyclic dependency among gyp files.
 {
+  'variables': {
+    'relative_dir': 'dictionary',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+  },
   'targets': [
     {
-      'target_name': 'immutable_converter',
-      'type': 'static_library',
+      'target_name': 'pos_util',
+      'type': 'none',
+      'toolsets': ['host'],
       'sources': [
-        'immutable_converter.cc',
-        'key_corrector.cc',
+        '<(mozc_oss_src_dir)/build_tools/code_generator_util.py',
+        'pos_util.py',
       ],
+    },
+    {
+      'target_name': 'gen_pos_matcher',
+      'type': 'none',
+      'toolsets': ['host'],
       'dependencies': [
-        '<(mozc_oss_src_dir)/base/base.gyp:base',
-        '<(mozc_oss_src_dir)/base/base.gyp:japanese_util',
-        '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
-        '<(mozc_oss_src_dir)/converter/converter_base.gyp:connector',
-        '<(mozc_oss_src_dir)/converter/converter_base.gyp:segmenter',
-        '<(mozc_oss_src_dir)/converter/converter_base.gyp:segments',
-        '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:suffix_dictionary',
-        '<(mozc_oss_src_dir)/dictionary/pos_matcher.gyp:pos_matcher',
-        '<(mozc_oss_src_dir)/engine/engine_base.gyp:modules',
-        '<(mozc_oss_src_dir)/protocol/protocol.gyp:commands_proto',
-        '<(mozc_oss_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
-        '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_rewriter_files#host',
+        'pos_util',
       ],
+      'actions': [
+        {
+          'action_name': 'gen_pos_matcher',
+          'variables': {
+            'pos_matcher_rule': '<(mozc_oss_src_dir)/data/rules/pos_matcher_rule.def',
+            'pos_matcher_header': '<(gen_out_dir)/pos_matcher_impl.inc',
+          },
+          'inputs': [
+            'gen_pos_matcher_code.py',
+            '<(pos_matcher_rule)'
+          ],
+          'outputs': [
+            '<(pos_matcher_header)',
+          ],
+          'action': [
+            '<(python)', 'gen_pos_matcher_code.py',
+            '--pos_matcher_rule_file=<(pos_matcher_rule)',
+            '--output_pos_matcher_h=<(pos_matcher_header)',
+          ],
+          'message': ('Generating <(pos_matcher_header)'),
+        },
+      ],
+    },
+    {
+      'target_name': 'pos_matcher',
+      'type': 'none',
+      'toolsets': ['target', 'host'],
+      'hard_dependency': 1,
+      'dependencies': [
+        'gen_pos_matcher#host',
+      ],
+      'export_dependent_settings': [
+        'gen_pos_matcher#host',
+      ]
     },
   ],
 }
