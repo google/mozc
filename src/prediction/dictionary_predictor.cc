@@ -384,41 +384,6 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
   return wcost_diff + kSingleKanjiPredictionCostOffset;
 }
 
-std::string DictionaryPredictor::GetPredictionTypeDebugString(
-    PredictionTypes types) {
-  std::string debug_desc;
-  if (types & PredictionType::UNIGRAM) {
-    debug_desc.append(1, 'U');
-  }
-  if (types & PredictionType::BIGRAM) {
-    debug_desc.append(1, 'B');
-  }
-  if (types & PredictionType::REALTIME_TOP) {
-    debug_desc.append("R1");
-  } else if (types & PredictionType::REALTIME) {
-    debug_desc.append(1, 'R');
-  }
-  if (types & PredictionType::SUFFIX) {
-    debug_desc.append(1, 'S');
-  }
-  if (types & PredictionType::ENGLISH) {
-    debug_desc.append(1, 'E');
-  }
-  if (types & PredictionType::TYPING_CORRECTION) {
-    debug_desc.append(1, 'T');
-  }
-  if (types & PredictionType::TYPING_COMPLETION) {
-    debug_desc.append(1, 'C');
-  }
-  if (types & PredictionType::SUPPLEMENTAL_MODEL) {
-    debug_desc.append(1, 'X');
-  }
-  if (types & PredictionType::KEY_EXPANDED_IN_DICTIONARY) {
-    debug_desc.append(1, 'K');
-  }
-  return debug_desc;
-}
-
 // Returns cost for |result| when it's transitioned from |rid|.  Suffix penalty
 // is also added for non-realtime results.
 int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {

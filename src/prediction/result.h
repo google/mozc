@@ -211,6 +211,9 @@ void PopulateTypeCorrectedQuery(
     const composer::TypeCorrectedQuery &typing_corrected_result,
     Result *absl_nonnull result);
 
+// Makes debug string from `types`.
+std::string GetPredictionTypeDebugString(PredictionTypes types);
+
 #ifndef NDEBUG
 #define MOZC_WORD_LOG(result, ...)                                  \
   {                                                                 \

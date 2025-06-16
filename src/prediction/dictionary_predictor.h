@@ -177,8 +177,6 @@ class DictionaryPredictor : public PredictorInterface {
                                      bool is_suggestion,
                                      size_t total_candidates_size);
 
-  static std::string GetPredictionTypeDebugString(PredictionTypes types);
-
   int CalculatePrefixPenalty(
       const ConversionRequest &request, absl::string_view input_key,
       const Result &result,
