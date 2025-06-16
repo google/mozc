@@ -37,8 +37,8 @@
 #include <functional>
 #include <utility>
 
+#include "absl/base/nullability.h"
 #include "absl/types/span.h"
-#include "base/absl_nullability.h"
 #include "base/container/flat_internal.h"
 
 namespace mozc {

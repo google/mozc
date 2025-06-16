@@ -41,10 +41,10 @@
 #include <utility>
 
 #include "absl/base/attributes.h"
+#include "absl/base/nullability.h"
 #include "absl/base/optimization.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
-#include "base/absl_nullability.h"
 #include "base/strings/internal/utf8_internal.h"
 
 namespace mozc {

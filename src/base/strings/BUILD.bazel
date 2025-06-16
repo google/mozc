@@ -80,8 +80,8 @@ mozc_cc_library(
     hdrs = ["zstring_view.h"],
     deps = [
         ":pfchar",
-        "//base:absl_nullability",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:nullability",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
@@ -135,9 +135,9 @@ mozc_cc_library(
     srcs = ["unicode.cc"],
     hdrs = ["unicode.h"],
     deps = [
-        "//base:absl_nullability",
         "//base/strings/internal:utf8_internal",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:nullability",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],

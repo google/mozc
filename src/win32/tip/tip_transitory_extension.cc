@@ -34,7 +34,7 @@
 #include <wil/resource.h>
 #include <windows.h>
 
-#include "base/absl_nullability.h"
+#include "absl/base/nullability.h"
 #include "base/win32/com.h"
 #include "base/win32/hresultor.h"
 #include "win32/tip/tip_compartment_util.h"

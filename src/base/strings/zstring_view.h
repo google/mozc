@@ -39,10 +39,10 @@
 #include <string_view>
 
 #include "absl/base/attributes.h"
+#include "absl/base/nullability.h"
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "base/absl_nullability.h"
 #include "base/strings/pfchar.h"
 
 namespace mozc {

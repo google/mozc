@@ -34,9 +34,9 @@
 #include <cstdint>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "base/absl_nullability.h"
 #include "base/container/freelist.h"
 #include "converter/candidate.h"
 #include "converter/candidate_filter.h"

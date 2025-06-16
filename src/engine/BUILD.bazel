@@ -113,7 +113,6 @@ mozc_cc_library(
         "//prediction:__pkg__",
     ],
     deps = [
-        "//base:absl_nullability",
         "//composer:query",
         "//prediction:result",
         "//protocol:commands_cc_proto",
@@ -133,7 +132,6 @@ mozc_cc_library(
     ],
     deps = [
         ":supplemental_model_interface",
-        "//base:absl_nullability",
         "//composer:query",
         "//prediction:result",
         "//protocol:commands_cc_proto",

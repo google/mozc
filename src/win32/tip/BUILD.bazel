@@ -231,9 +231,9 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":tip_compartment_util",
-        "//base:absl_nullability",
         "//base/win32:com",
         "//base/win32:hresultor",
+        "@com_google_absl//absl/base:nullability",
         "@com_microsoft_wil//:wil",
     ],
 )

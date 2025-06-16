@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-#include "base/absl_nullability.h"
+#include "absl/base/nullability.h"
 
 namespace mozc {
 

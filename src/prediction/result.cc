@@ -31,9 +31,9 @@
 
 #include <tuple>
 
+#include "absl/base/nullability.h"
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
-#include "base/absl_nullability.h"
 #include "base/strings/unicode.h"
 #include "composer/query.h"
 #include "converter/candidate.h"
