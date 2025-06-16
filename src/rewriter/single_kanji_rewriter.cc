@@ -123,7 +123,12 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
   if (request.request().mixed_conversion() &&
       request.request_type() != ConversionRequest::CONVERSION) {
     MOZC_VLOG(2) << "single kanji prediction is enabled";
-    return false;
+    // Single kanji entries are populated in the predictor when mixed conversion
+    // mode, so we only sets the description of single kanji.
+    for (Segment &segment : segments->conversion_segments()) {
+      AddDescriptionForExistingCandidates(&segment);
+    }
+    return true;
   }
 
   bool modified = false;

@@ -191,7 +191,6 @@ mozc_cc_library(
         "//converter:segmenter",
         "//converter:segments",
         "//dictionary:pos_matcher",
-        "//dictionary:single_kanji_dictionary",
         "//engine:modules",
         "//engine:supplemental_model_interface",
         "//protocol:commands_cc_proto",

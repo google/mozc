@@ -837,36 +837,6 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
   }
 }
 
-TEST_F(DictionaryPredictorTest, SetDescription) {
-  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
-  DictionaryPredictorTestPeer predictor_peer =
-      data_and_predictor->predictor_peer();
-
-  std::vector<Result> results = {
-      CreateResult6("ほせい", "補正", 0, 0, prediction::TYPING_CORRECTION,
-                    Token::NONE),
-      CreateResult6("あ", "亞", 0, 10, prediction::UNIGRAM, Token::NONE),
-      CreateResult6("たんご", "単語", 0, 20, prediction::UNIGRAM, Token::NONE),
-  };
-
-  Segments segments;
-  InitSegmentsWithKey("test", &segments);
-
-  const ConversionRequest convreq =
-      CreateConversionRequest(ConversionRequest::PREDICTION, segments);
-  results = predictor_peer.RerankAndFilterResults(convreq, results);
-
-  EXPECT_EQ(results.size(), 3);
-  EXPECT_EQ(results[0].value, "補正");
-  EXPECT_EQ(results[1].value, "亞");
-  // "亜の旧字体"
-  // We cannot compare the description as-is, since the other description
-  // may be appended in the dbg build.
-  EXPECT_TRUE(absl::StrContains(results[1].description, "の"));
-  EXPECT_EQ(results[2].value, "単語");
-  EXPECT_FALSE(absl::StrContains(results[2].description, "の"));
-}
-
 TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
   auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
   DictionaryPredictorTestPeer predictor_peer =

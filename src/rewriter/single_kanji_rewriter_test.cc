@@ -224,23 +224,47 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
 
 TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
   const SingleKanjiRewriter rewriter(data_manager_);
-  Segments segments;
-  Segment *segment = segments.add_segment();
 
-  segment->set_key("あ");
+  Segments segments;
+
+  auto init_segment = [&segments]() {
+    segments.Clear();
+    Segment *segment = segments.add_segment();
+
+    segment->set_key("あ");
+    {
+      converter::Candidate *candidate = segment->add_candidate();
+      candidate->key = segment->key();
+      candidate->content_key = segment->key();
+      candidate->value = "亞";  // variant of "亜".
+      candidate->content_value = candidate->value;
+    }
+    return segment;
+  };
+
+  // desktop
   {
-    converter::Candidate *candidate = segment->add_candidate();
-    candidate->key = segment->key();
-    candidate->content_key = segment->key();
-    candidate->value = "亞";  // variant of "亜".
-    candidate->content_value = candidate->value;
+    Segment *segment = init_segment();
+    EXPECT_EQ(segment->candidates_size(), 1);
+    EXPECT_TRUE(segment->candidate(0).description.empty());
+    EXPECT_TRUE(rewriter.Rewrite(default_request_, &segments));
+    EXPECT_LT(1, segment->candidates_size());  // Some candidates were inserted.
+    EXPECT_EQ(segment->candidate(0).description, "亜の旧字体");
   }
 
-  EXPECT_EQ(segment->candidates_size(), 1);
-  EXPECT_TRUE(segment->candidate(0).description.empty());
-  EXPECT_TRUE(rewriter.Rewrite(default_request_, &segments));
-  EXPECT_LT(1, segment->candidates_size());  // Some candidates were inserted.
-  EXPECT_EQ(segment->candidate(0).description, "亜の旧字体");
+  // Only sets the description in mixed conversion mode.
+  {
+    commands::Request request;
+    request_test_util::FillMobileRequest(&request);
+    Segment *segment = init_segment();
+    const ConversionRequest convreq =
+        ConvReq(request, ConversionRequest::PREDICTION);
+    EXPECT_EQ(segment->candidates_size(), 1);
+    EXPECT_TRUE(segment->candidate(0).description.empty());
+    EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
+    EXPECT_EQ(1, segment->candidates_size());  // No candidates were inserted.
+    EXPECT_EQ(segment->candidate(0).description, "亜の旧字体");
+  }
 }
 
 TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
@@ -255,7 +279,7 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
     const ConversionRequest convreq =
         ConvReq(request, ConversionRequest::PREDICTION);
     ASSERT_TRUE(rewriter.capability(convreq) & RewriterInterface::PREDICTION);
-    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
+    EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
   }
 
   {

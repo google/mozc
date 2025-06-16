@@ -49,7 +49,6 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/single_kanji_dictionary.h"
 #include "engine/modules.h"
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/predictor_interface.h"
@@ -218,8 +217,6 @@ class DictionaryPredictor : public PredictorInterface {
   const Connector &connector_;
   const Segmenter &segmenter_;
   const SuggestionFilter &suggestion_filter_;
-  std::unique_ptr<const dictionary::SingleKanjiDictionary>
-      single_kanji_dictionary_;
   const dictionary::PosMatcher pos_matcher_;
   const uint16_t general_symbol_id_;
   const std::string predictor_name_;
