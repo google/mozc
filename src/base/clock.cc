@@ -66,10 +66,7 @@ class ClockImpl : public ClockInterface {
 
   absl::Time GetAbslTime() override { return absl::Now(); }
 
-  absl::TimeZone GetTimeZone() override { return timezone_; }
-
- private:
-  const absl::TimeZone timezone_ = GetLocalTimeZone();
+  absl::TimeZone GetTimeZone() override { return GetLocalTimeZone(); }
 };
 }  // namespace
 
