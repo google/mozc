@@ -33,15 +33,21 @@
 #include "absl/time/time.h"
 #include "base/singleton.h"
 
-#if defined(OS_CHROMEOS) || defined(_WIN32)
+#if !(defined(OS_CHROMEOS) || defined(_WIN32))
+#define MOZC_USE_ABSL_TIME_ZONE
+#endif  // !(defined(OS_CHROMEOS) || defined(_WIN32))
+
+#ifndef MOZC_USE_ABSL_TIME_ZONE
 #include <ctime>
-#endif  // defined(OS_CHROMEOS) || defined(_WIN32)
+#endif  // MOZC_USE_ABSL_TIME_ZONE
 
 namespace mozc {
 namespace {
 
 absl::TimeZone GetLocalTimeZone() {
-#if defined(OS_CHROMEOS) || defined(_WIN32)
+#ifdef MOZC_USE_ABSL_TIME_ZONE
+  return absl::LocalTimeZone();
+#else  // MOZC_USE_ABSL_TIME_ZONE
   // Do not use absl::LocalTimeZone() here because
   // - on Chrome OS, it returns UTC: b/196271425
   // - on Windows, it crashes: https://github.com/google/mozc/issues/856
@@ -54,9 +60,7 @@ absl::TimeZone GetLocalTimeZone() {
       (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
       + offset->tm_hour * 60 * 60           // hour offset from 00 am.
       + offset->tm_min * 60);               // minute offset.
-#else   // !defined(OS_CHROMEOS) && !defined(_WIN32)
-  return absl::LocalTimeZone();
-#endif  // defined(OS_CHROMEOS) || defined(_WIN32)
+#endif  // MOZC_USE_ABSL_TIME_ZONE
 }
 
 class ClockImpl : public ClockInterface {
