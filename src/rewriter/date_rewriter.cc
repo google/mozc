@@ -869,9 +869,9 @@ std::vector<std::string> DateRewriter::ConvertDateWithYear(uint32_t year,
 }
 
 namespace {
-absl::CivilMinute GetCivilMinuteWithDiff(int type, int diff) {
+absl::CivilMinute GetCivilMinuteWithDiff(int type, int diff,
+                                         absl::TimeZone tz) {
   const absl::Time at = Clock::GetAbslTime();
-  const absl::TimeZone &tz = Clock::GetTimeZone();
 
   if (type == DATE) {
     const absl::CivilDay c_day = absl::ToCivilDay(at, tz) + diff;
@@ -898,10 +898,10 @@ absl::CivilMinute GetCivilMinuteWithDiff(int type, int diff) {
 std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
                                         const absl::string_view extra_format) {
   std::vector<std::string> results;
-  const absl::CivilMinute cm = GetCivilMinuteWithDiff(data.type, data.diff);
+  const absl::TimeZone tz = Clock::GetTimeZone();
+  const absl::CivilMinute cm = GetCivilMinuteWithDiff(data.type, data.diff, tz);
 
   if (!extra_format.empty()) {
-    const absl::TimeZone &tz = Clock::GetTimeZone();
     const absl::Time at = absl::FromCivil(cm, tz);
     results.push_back(absl::FormatTime(extra_format, at, tz));
   }
