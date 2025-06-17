@@ -89,8 +89,8 @@ bool IsLatinInputMode(const ConversionRequest &request) {
          request.composer().GetInputMode() == transliteration::FULL_ASCII;
 }
 
-bool IsMixedConversionEnabled(const Request &request) {
-  return request.mixed_conversion();
+bool IsMixedConversionEnabled(const ConversionRequest &request) {
+  return request.request().mixed_conversion();
 }
 
 bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
@@ -140,13 +140,13 @@ DictionaryPredictor::DictionaryPredictor(
     const engine::Modules &modules, const ConverterInterface &converter,
     const ImmutableConverterInterface &immutable_converter)
     : DictionaryPredictor(
-          "DictionaryPredictor", modules,
+          modules,
           std::make_unique<prediction::DictionaryPredictionAggregator>(
               modules, converter, immutable_converter),
           immutable_converter) {}
 
 DictionaryPredictor::DictionaryPredictor(
-    std::string predictor_name, const engine::Modules &modules,
+    const engine::Modules &modules,
     std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
     const ImmutableConverterInterface &immutable_converter)
     : aggregator_(std::move(aggregator)),
@@ -156,7 +156,6 @@ DictionaryPredictor::DictionaryPredictor(
       suggestion_filter_(modules.GetSuggestionFilter()),
       pos_matcher_(modules.GetPosMatcher()),
       general_symbol_id_(pos_matcher_.GetGeneralSymbolId()),
-      predictor_name_(std::move(predictor_name)),
       modules_(modules) {}
 
 std::vector<Result> DictionaryPredictor::Predict(
@@ -169,7 +168,7 @@ std::vector<Result> DictionaryPredictor::Predict(
   std::vector<Result> results;
 
   // TODO(taku): Separate DesktopPredictor and MixedDecodingPredictor.
-  if (IsMixedConversionEnabled(request.request())) {
+  if (IsMixedConversionEnabled(request)) {
     std::vector<Result> literal_results =
         aggregator_->AggregateResultsForMixedConversion(request);
     std::vector<Result> tc_results =
@@ -193,7 +192,7 @@ void DictionaryPredictor::RewriteResultsForPrediction(
   // Mixed conversion is the feature that mixes prediction and
   // conversion, meaning that results may include the candidates whose
   // key is exactly the same as the composition.  This mode is used in mobile.
-  const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
+  const bool is_mixed_conversion = IsMixedConversionEnabled(request);
 
   if (is_mixed_conversion) {
     SetPredictionCostForMixedConversion(request, results);
@@ -311,10 +310,8 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
 void DictionaryPredictor::MaybeApplyPostCorrection(
     const ConversionRequest &request, std::vector<Result> &results) const {
   // b/363902660:
-  // Stop applying post correction when typing correction is disabled.
-  // We may want to use other conditions if we want to enable post correction
-  // separately.
-  if (!IsTypingCorrectionEnabled(request)) {
+  // Stop applying post correction when handwriting mode.
+  if (request_util::IsHandwriting(request)) {
     return;
   }
   modules_.GetSupplementalModel().PostCorrect(request, results);

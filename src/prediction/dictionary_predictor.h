@@ -61,12 +61,6 @@ namespace mozc::prediction {
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
  public:
-  // Cost penalty 1151 means that expanded candidates are evaluated
-  // 10 times smaller in frequency.
-  // Note that the cost is calcurated by cost = -500 * log(prob)
-  // 1151 = 500 * log(10)
-  static constexpr int kKeyExpansionPenalty = 1151;
-
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
   DictionaryPredictor(const engine::Modules &modules,
@@ -79,7 +73,7 @@ class DictionaryPredictor : public PredictorInterface {
   std::vector<Result> Predict(const ConversionRequest &request) const override;
 
   absl::string_view GetPredictorName() const override {
-    return predictor_name_;
+    return "DictionaryPredictor";
   }
 
  private:
@@ -92,7 +86,7 @@ class DictionaryPredictor : public PredictorInterface {
 
   // Constructor for testing
   DictionaryPredictor(
-      std::string predictor_name, const engine::Modules &modules,
+      const engine::Modules &modules,
       std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
       const ImmutableConverterInterface &immutable_converter);
 
@@ -217,7 +211,6 @@ class DictionaryPredictor : public PredictorInterface {
   const SuggestionFilter &suggestion_filter_;
   const dictionary::PosMatcher pos_matcher_;
   const uint16_t general_symbol_id_;
-  const std::string predictor_name_;
   const engine::Modules &modules_;
 };
 

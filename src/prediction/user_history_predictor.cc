@@ -286,7 +286,6 @@ UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
 UserHistoryPredictor::UserHistoryPredictor(const engine::Modules &modules)
     : dictionary_(modules.GetDictionary()),
       user_dictionary_(modules.GetUserDictionary()),
-      predictor_name_("UserHistoryPredictor"),
       updated_(false),
       dic_(new DicCache(UserHistoryPredictor::cache_size())),
       modules_(modules),

@@ -122,7 +122,7 @@ class UserHistoryPredictor : public PredictorInterface {
   static std::string GetUserHistoryFileName();
 
   absl::string_view GetPredictorName() const override {
-    return predictor_name_;
+    return "UserHistoryPredictor";
   }
 
   // From user_history_predictor.proto
@@ -454,7 +454,6 @@ class UserHistoryPredictor : public PredictorInterface {
 
   const dictionary::DictionaryInterface &dictionary_;
   const dictionary::UserDictionaryInterface &user_dictionary_;
-  const std::string predictor_name_;
 
   mutable std::atomic<bool> updated_;
   std::unique_ptr<DicCache> dic_;

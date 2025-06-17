@@ -134,9 +134,9 @@ class MockDataAndPredictor {
                    .PresetSupplementalModel(std::move(supplemental_model))
                    .Build(std::make_unique<testing::MockDataManager>())
                    .value();
-    predictor_ = absl::WrapUnique(new DictionaryPredictor(
-        "DictionaryPredictorForTest", *modules_,
-        absl::WrapUnique(mock_aggregator_), mock_immutable_converter_));
+    predictor_ = absl::WrapUnique(
+        new DictionaryPredictor(*modules_, absl::WrapUnique(mock_aggregator_),
+                                mock_immutable_converter_));
   }
 
   MockImmutableConverter *mutable_immutable_converter() {
