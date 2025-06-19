@@ -553,8 +553,6 @@ message Capability {
 message DecoderExperimentParams {
   reserved 1;
 
-  optional int32 mobile_history_prediction_size = 2;
-
   enum VariationCharacterType {
     NO_VARIATION = 0;
     // Standardized variation sequences for Japanese.

@@ -62,21 +62,6 @@ constexpr int kPredictionSize = 100;
 // conversion so the limit is same as conversion's one.
 constexpr int kMobilePredictionSize = 200;
 
-size_t GetHistoryPredictionSizeFromRequest(const ConversionRequest &request) {
-  if (!request.request().zero_query_suggestion()) {
-    return 2;
-  }
-  if (request.request().has_decoder_experiment_params() &&
-      request.request()
-          .decoder_experiment_params()
-          .has_mobile_history_prediction_size()) {
-    return request.request()
-        .decoder_experiment_params()
-        .mobile_history_prediction_size();
-  }
-  return 3;
-}
-
 }  // namespace
 
 BasePredictor::BasePredictor(
@@ -222,11 +207,9 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
     const ConversionRequest &request) {
   DCHECK(request.HasConverterHistorySegments());
   ConversionRequest::Options options = request.options();
-  size_t history_prediction_size = GetHistoryPredictionSizeFromRequest(request);
   switch (request.request_type()) {
     case ConversionRequest::SUGGESTION: {
-      options.max_user_history_prediction_candidates_size =
-          history_prediction_size;
+      options.max_user_history_prediction_candidates_size = 1;
       options.max_user_history_prediction_candidates_size_for_zero_query = 4;
       options.max_dictionary_prediction_candidates_size = 20;
       break;
@@ -240,8 +223,7 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
       break;
     }
     case ConversionRequest::PREDICTION: {
-      options.max_user_history_prediction_candidates_size =
-          history_prediction_size;
+      options.max_user_history_prediction_candidates_size = 1;
       options.max_user_history_prediction_candidates_size_for_zero_query = 4;
       options.max_dictionary_prediction_candidates_size = kMobilePredictionSize;
       break;

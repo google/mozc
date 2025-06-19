@@ -183,7 +183,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
   MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(1, 4), converter);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
@@ -204,7 +204,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
   MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(1, 4), converter);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
