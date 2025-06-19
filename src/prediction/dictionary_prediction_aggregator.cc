@@ -259,7 +259,6 @@ class PredictiveLookupCallback : public DictionaryInterface::Callback {
     result.wcost += penalty_;
     if (penalty_ > 0) result.types |= KEY_EXPANDED_IN_DICTIONARY;
     RewriteResult(result);
-    if (types_ & SUFFIX) result.zero_query_type = ZERO_QUERY_SUFFIX;
     results_->emplace_back(std::move(result));
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
   }
@@ -1357,7 +1356,6 @@ void DictionaryPredictionAggregator::GetZeroQueryCandidatesForKey(
 
     Result result;
     result.SetTypesAndTokenAttributes(SUFFIX, Token::NONE);
-    result.zero_query_type = type;
     result.key = value;
     result.value = value;
     result.wcost = cost;
@@ -1570,12 +1568,6 @@ void DictionaryPredictionAggregator::CheckBigramResult(
     const Util::ScriptType last_history_ctype, const ConversionRequest &request,
     Result *result) const {
   DCHECK(result);
-
-  const bool is_zero_query = request.IsZeroQuerySuggestion();
-
-  if (is_zero_query) {
-    result->zero_query_type = ZERO_QUERY_BIGRAM;
-  }
 
   absl::string_view key = result->key;
   absl::string_view value = result->value;

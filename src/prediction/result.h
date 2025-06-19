@@ -124,7 +124,6 @@ struct Result {
   // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
   // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
   std::vector<uint32_t> inner_segment_boundary;
-  uint16_t zero_query_type = 0;
   size_t consumed_key_size = 0;
   // The total penalty added to this result.
   int penalty = 0;
@@ -154,14 +153,12 @@ struct Result {
     absl::Format(
         &sink,
         "key: %s, value: %s, types: %d, wcost: %d, cost: %d, cost_before: %d, "
-        "lid: %d, "
-        "rid: %d, attrs: %d, bdd: %s, srcinfo: %d, "
-        "consumed_key_size: %d, penalty: %d, tc_adjustment: %d, removed: %v",
+        "lid: %d, rid: %d, attrs: %d, bdd: %s, consumed_key_size: %d, penalty: "
+        "%d, tc_adjustment: %d, removed: %v",
         r.key, r.value, r.types, r.wcost, r.cost, r.cost_before_rescoring,
         r.lid, r.rid, r.candidate_attributes,
-        absl::StrJoin(r.inner_segment_boundary, ","), r.zero_query_type,
-        r.consumed_key_size, r.penalty, r.typing_correction_adjustment,
-        r.removed);
+        absl::StrJoin(r.inner_segment_boundary, ","), r.consumed_key_size,
+        r.penalty, r.typing_correction_adjustment, r.removed);
 #ifndef NDEBUG
     sink.Append(", log:\n");
     for (absl::string_view line : absl::StrSplit(r.log, '\n')) {
