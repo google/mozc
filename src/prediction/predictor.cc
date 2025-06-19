@@ -57,17 +57,82 @@
 namespace mozc::prediction {
 namespace {
 
-constexpr int kPredictionSize = 100;
-// On Mobile mode PREDICTION (including PARTIAL_PREDICTION) behaves like as
-// conversion so the limit is same as conversion's one.
-constexpr int kMobilePredictionSize = 200;
+constexpr int kPredictionSizeForDesktop = 100;
+
+// On mixed conversion mode PREDICTION (including PARTIAL_PREDICTION) behaves
+// like as conversion so the limit is same as conversion's one.
+constexpr int kPredictionSizeForMixedConersion = 200;
+
+bool IsMixedConversionEnabled(const ConversionRequest &request) {
+  return request.request().mixed_conversion();
+}
+
+ConversionRequest GetRequestForMixedConversion(
+    const ConversionRequest &request) {
+  DCHECK(request.HasConverterHistorySegments());
+  ConversionRequest::Options options = request.options();
+  switch (request.request_type()) {
+    case ConversionRequest::SUGGESTION: {
+      options.max_user_history_prediction_candidates_size = 3;
+      options.max_user_history_prediction_candidates_size_for_zero_query = 4;
+      options.max_dictionary_prediction_candidates_size = 20;
+      break;
+    }
+    case ConversionRequest::PARTIAL_SUGGESTION: {
+      options.max_dictionary_prediction_candidates_size = 20;
+      break;
+    }
+    case ConversionRequest::PARTIAL_PREDICTION: {
+      options.max_dictionary_prediction_candidates_size =
+          kPredictionSizeForMixedConersion;
+      break;
+    }
+    case ConversionRequest::PREDICTION: {
+      options.max_user_history_prediction_candidates_size = 3;
+      options.max_user_history_prediction_candidates_size_for_zero_query = 4;
+      options.max_dictionary_prediction_candidates_size =
+          kPredictionSizeForMixedConersion;
+      break;
+    }
+    default:
+      DLOG(ERROR) << "Unexpected request type: " << request.request_type();
+  }
+  return ConversionRequestBuilder()
+      .SetConversionRequestView(request)
+      .SetOptions(std::move(options))
+      .Build();
+}
+
+// Fills empty lid and rid of candidates with the candidates of the same value.
+void MaybeFillFallbackPos(absl::Span<Result> results) {
+  absl::flat_hash_map<absl::string_view, Result *> posless_results;
+  for (Result &result : results) {
+    // Candidates with empty POS come before candidates with filled POS.
+    if (result.lid == 0 || result.rid == 0) {
+      posless_results[result.value] = &result;
+      continue;
+    }
+    if (!posless_results.contains(result.value)) {
+      continue;
+    }
+    Result *posless_result = posless_results[result.value];
+    if (posless_result->lid == 0) {
+      posless_result->lid = result.lid;
+    }
+    if (posless_result->rid == 0) {
+      posless_result->rid = result.rid;
+    }
+    if (posless_result->lid != 0 && posless_result->rid != 0) {
+      posless_results.erase(result.value);
+    }
+  }
+}
 
 }  // namespace
 
-BasePredictor::BasePredictor(
-    std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor,
-    const ConverterInterface &converter)
+Predictor::Predictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
+                     std::unique_ptr<PredictorInterface> user_history_predictor,
+                     const ConverterInterface &converter)
     : dictionary_predictor_(std::move(dictionary_predictor)),
       user_history_predictor_(std::move(user_history_predictor)),
       converter_(converter) {
@@ -75,70 +140,72 @@ BasePredictor::BasePredictor(
   DCHECK(user_history_predictor_);
 }
 
-void BasePredictor::Finish(const ConversionRequest &request,
-                           absl::Span<const Result> results,
-                           uint32_t revert_id) {
-  user_history_predictor_->Finish(request, results, revert_id);
-}
-
-// Since DictionaryPredictor is immutable, no need
-// to call DictionaryPredictor::Revert/Clear*/Finish methods.
-void BasePredictor::Revert(uint32_t revert_id) {
-  user_history_predictor_->Revert(revert_id);
-}
-
-bool BasePredictor::ClearAllHistory() {
-  return user_history_predictor_->ClearAllHistory();
-}
-
-bool BasePredictor::ClearUnusedHistory() {
-  return user_history_predictor_->ClearUnusedHistory();
-}
-
-bool BasePredictor::ClearHistoryEntry(const absl::string_view key,
-                                      const absl::string_view value) {
-  return user_history_predictor_->ClearHistoryEntry(key, value);
-}
-
-bool BasePredictor::Wait() { return user_history_predictor_->Wait(); }
-
-bool BasePredictor::Sync() { return user_history_predictor_->Sync(); }
-
-bool BasePredictor::Reload() { return user_history_predictor_->Reload(); }
-
-// static
-std::unique_ptr<PredictorInterface> DesktopPredictor::CreateDesktopPredictor(
-    std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor,
-    const ConverterInterface &converter) {
-  return std::make_unique<DesktopPredictor>(std::move(dictionary_predictor),
-                                            std::move(user_history_predictor),
-                                            converter);
-}
-
-DesktopPredictor::DesktopPredictor(
-    std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor,
-    const ConverterInterface &converter)
-    : BasePredictor(std::move(dictionary_predictor),
-                    std::move(user_history_predictor), converter),
-      predictor_name_("DesktopPredictor") {}
-
-DesktopPredictor::~DesktopPredictor() = default;
-
-std::vector<Result> DesktopPredictor::Predict(
-    const ConversionRequest &request) const {
+std::vector<Result> Predictor::Predict(const ConversionRequest &request) const {
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION ||
          request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
          request.request_type() == ConversionRequest::PARTIAL_SUGGESTION);
   DCHECK(request.HasConverterHistorySegments());
 
+  if (request.request_type() == ConversionRequest::CONVERSION) {
+    return {};
+  }
+
   if (request.config().presentation_mode()) {
     return {};
   }
 
-  int prediction_size = kPredictionSize;
+  // TODO(taku): Introduces independent sub predictors for desktop and mixed
+  // conversion.
+  return IsMixedConversionEnabled(request) ? PredictForMixedConversion(request)
+                                           : PredictForDesktop(request);
+}
+
+void Predictor::Finish(const ConversionRequest &request,
+                       absl::Span<const Result> results, uint32_t revert_id) {
+  user_history_predictor_->Finish(request, results, revert_id);
+}
+
+// Since DictionaryPredictor is immutable, no need
+// to call DictionaryPredictor::Revert/Clear*/Finish methods.
+void Predictor::Revert(uint32_t revert_id) {
+  user_history_predictor_->Revert(revert_id);
+}
+
+bool Predictor::ClearAllHistory() {
+  return user_history_predictor_->ClearAllHistory();
+}
+
+bool Predictor::ClearUnusedHistory() {
+  return user_history_predictor_->ClearUnusedHistory();
+}
+
+bool Predictor::ClearHistoryEntry(const absl::string_view key,
+                                  const absl::string_view value) {
+  return user_history_predictor_->ClearHistoryEntry(key, value);
+}
+
+bool Predictor::Wait() { return user_history_predictor_->Wait(); }
+
+bool Predictor::Sync() { return user_history_predictor_->Sync(); }
+
+bool Predictor::Reload() { return user_history_predictor_->Reload(); }
+
+// static
+std::unique_ptr<PredictorInterface> Predictor::CreatePredictor(
+    std::unique_ptr<PredictorInterface> dictionary_predictor,
+    std::unique_ptr<PredictorInterface> user_history_predictor,
+    const ConverterInterface &converter) {
+  return std::make_unique<Predictor>(std::move(dictionary_predictor),
+                                     std::move(user_history_predictor),
+                                     converter);
+}
+
+std::vector<Result> Predictor::PredictForDesktop(
+    const ConversionRequest &request) const {
+  DCHECK(!IsMixedConversionEnabled(request));
+
+  int prediction_size = kPredictionSizeForDesktop;
   if (request.request_type() == ConversionRequest::SUGGESTION) {
     prediction_size =
         std::clamp<int>(request.config().suggestions_size(), 1, 9);
@@ -183,100 +250,12 @@ std::vector<Result> DesktopPredictor::Predict(
   return results;
 }
 
-// static
-std::unique_ptr<PredictorInterface> MobilePredictor::CreateMobilePredictor(
-    std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor,
-    const ConverterInterface &converter) {
-  return std::make_unique<MobilePredictor>(std::move(dictionary_predictor),
-                                           std::move(user_history_predictor),
-                                           converter);
-}
-
-MobilePredictor::MobilePredictor(
-    std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor,
-    const ConverterInterface &converter)
-    : BasePredictor(std::move(dictionary_predictor),
-                    std::move(user_history_predictor), converter),
-      predictor_name_("MobilePredictor") {}
-
-MobilePredictor::~MobilePredictor() = default;
-
-ConversionRequest MobilePredictor::GetRequestForPredict(
-    const ConversionRequest &request) {
-  DCHECK(request.HasConverterHistorySegments());
-  ConversionRequest::Options options = request.options();
-  switch (request.request_type()) {
-    case ConversionRequest::SUGGESTION: {
-      options.max_user_history_prediction_candidates_size = 1;
-      options.max_user_history_prediction_candidates_size_for_zero_query = 4;
-      options.max_dictionary_prediction_candidates_size = 20;
-      break;
-    }
-    case ConversionRequest::PARTIAL_SUGGESTION: {
-      options.max_dictionary_prediction_candidates_size = 20;
-      break;
-    }
-    case ConversionRequest::PARTIAL_PREDICTION: {
-      options.max_dictionary_prediction_candidates_size = kMobilePredictionSize;
-      break;
-    }
-    case ConversionRequest::PREDICTION: {
-      options.max_user_history_prediction_candidates_size = 1;
-      options.max_user_history_prediction_candidates_size_for_zero_query = 4;
-      options.max_dictionary_prediction_candidates_size = kMobilePredictionSize;
-      break;
-    }
-    default:
-      DLOG(ERROR) << "Unexpected request type: " << request.request_type();
-  }
-  return ConversionRequestBuilder()
-      .SetConversionRequestView(request)
-      .SetOptions(std::move(options))
-      .Build();
-}
-
-namespace {
-// Fills empty lid and rid of candidates with the candidates of the same value.
-void MaybeFillFallbackPos(absl::Span<Result> results) {
-  absl::flat_hash_map<absl::string_view, Result *> posless_results;
-  for (Result &result : results) {
-    // Candidates with empty POS come before candidates with filled POS.
-    if (result.lid == 0 || result.rid == 0) {
-      posless_results[result.value] = &result;
-      continue;
-    }
-    if (!posless_results.contains(result.value)) {
-      continue;
-    }
-    Result *posless_result = posless_results[result.value];
-    if (posless_result->lid == 0) {
-      posless_result->lid = result.lid;
-    }
-    if (posless_result->rid == 0) {
-      posless_result->rid = result.rid;
-    }
-    if (posless_result->lid != 0 && posless_result->rid != 0) {
-      posless_results.erase(result.value);
-    }
-  }
-}
-}  // namespace
-
-std::vector<Result> MobilePredictor::Predict(
+std::vector<Result> Predictor::PredictForMixedConversion(
     const ConversionRequest &request) const {
-  DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
-         request.request_type() == ConversionRequest::SUGGESTION ||
-         request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
-         request.request_type() == ConversionRequest::PARTIAL_SUGGESTION);
-  DCHECK(request.HasConverterHistorySegments());
+  DCHECK(IsMixedConversionEnabled(request));
 
-  if (request.config().presentation_mode()) {
-    return {};
-  }
-
-  const ConversionRequest request_for_predict = GetRequestForPredict(request);
+  const ConversionRequest request_for_predict =
+      GetRequestForMixedConversion(request);
 
   DCHECK(request_for_predict.HasConverterHistorySegments());
 

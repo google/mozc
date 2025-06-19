@@ -148,7 +148,7 @@ class MockPredictor : public PredictorInterface {
 
 }  // namespace
 
-class MobilePredictorTest : public ::testing::Test {
+class MixedDecodingPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
     config_ = std::make_unique<config::Config>();
@@ -179,19 +179,19 @@ class MobilePredictorTest : public ::testing::Test {
   commands::Context context_;
 };
 
-TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
+TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobileSuggestion) {
   MockConverter converter;
-  auto predictor = std::make_unique<MobilePredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(1, 4), converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
-TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
+TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialSuggestion) {
   MockConverter converter;
-  auto predictor = std::make_unique<MobilePredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
       // We don't call history predictor
       std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1), converter);
@@ -200,24 +200,24 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
-TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
+TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePrediction) {
   MockConverter converter;
-  auto predictor = std::make_unique<MobilePredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(1, 4), converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
-TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
+TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialPrediction) {
   MockConverter converter;
   std::unique_ptr<engine::Modules> modules =
       engine::ModulesPresetBuilder()
           .PresetDictionary(std::make_unique<MockDictionary>())
           .Build(std::make_unique<testing::MockDataManager>())
           .value();
-  auto predictor = std::make_unique<MobilePredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       std::make_unique<UserHistoryPredictor>(*modules), converter);
   const ConversionRequest convreq =
@@ -225,7 +225,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
-TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
+TEST_F(MixedDecodingPredictorTest, CallPredictForRequestMobile) {
   auto predictor1 = std::make_unique<MockPredictor>();
   auto predictor2 = std::make_unique<MockPredictor>();
   const std::vector<Result> results(2);
@@ -237,7 +237,7 @@ TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
       .WillOnce(Return(results));
 
   MockConverter converter;
-  auto predictor = std::make_unique<MobilePredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::move(predictor1), std::move(predictor2), converter);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
@@ -276,7 +276,7 @@ class PredictorTest : public ::testing::Test {
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
   MockConverter converter;
-  auto predictor = std::make_unique<DesktopPredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::make_unique<NullPredictor>(true),
       std::make_unique<NullPredictor>(true), converter);
   const ConversionRequest convreq =
@@ -285,7 +285,7 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
 
 TEST_F(PredictorTest, MixedReturnValue) {
   MockConverter converter;
-  auto predictor = std::make_unique<DesktopPredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::make_unique<NullPredictor>(true),
       std::make_unique<NullPredictor>(false), converter);
   const ConversionRequest convreq =
@@ -295,7 +295,7 @@ TEST_F(PredictorTest, MixedReturnValue) {
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
   MockConverter converter;
-  auto predictor = std::make_unique<DesktopPredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::make_unique<NullPredictor>(false),
       std::make_unique<NullPredictor>(false), converter);
   const ConversionRequest convreq =
@@ -307,7 +307,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
   MockConverter converter;
   const int suggestions_size =
       config::ConfigHandler::DefaultConfig().suggestions_size();
-  auto predictor = std::make_unique<DesktopPredictor>(
+  auto predictor = std::make_unique<Predictor>(
       // -1 as UserHistoryPredictor returns 1 result.
       std::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size - 1),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
@@ -321,7 +321,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
   MockConverter converter;
   constexpr int kPredictionSize = 100;
-  auto predictor = std::make_unique<DesktopPredictor>(
+  auto predictor = std::make_unique<Predictor>(
       // -1 as UserHistoryPredictor returns 1 result.
       std::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize - 1),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
@@ -344,7 +344,7 @@ TEST_F(PredictorTest, CallPredictForRequest) {
       .WillOnce(Return(results));
 
   MockConverter converter;
-  auto predictor = std::make_unique<DesktopPredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::move(predictor1), std::move(predictor2), converter);
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
@@ -357,7 +357,7 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   const auto *pred1 = predictor1.get();  // Keep the reference
   const auto *pred2 = predictor2.get();  // Keep the reference
   MockConverter converter;
-  auto predictor = std::make_unique<DesktopPredictor>(
+  auto predictor = std::make_unique<Predictor>(
       std::move(predictor1), std::move(predictor2), converter);
   config_->set_presentation_mode(true);
   const ConversionRequest convreq1 =
@@ -375,7 +375,7 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   EXPECT_TRUE(pred2->predict_called());
 }
 
-TEST_F(MobilePredictorTest, FillPos) {
+TEST_F(MixedDecodingPredictorTest, FillPos) {
   auto mock_dictionary_predictor = std::make_unique<MockPredictor>();
   auto mock_history_predictor = std::make_unique<MockPredictor>();
   auto add_candidate = [](absl::string_view key, absl::string_view value,
@@ -402,9 +402,9 @@ TEST_F(MobilePredictorTest, FillPos) {
       .WillOnce(Return(predictor_results));
 
   MockConverter converter;
-  auto predictor = std::make_unique<MobilePredictor>(
-      std::move(mock_dictionary_predictor), std::move(mock_history_predictor),
-      converter);
+  auto predictor =
+      std::make_unique<Predictor>(std::move(mock_dictionary_predictor),
+                                  std::move(mock_history_predictor), converter);
 
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);

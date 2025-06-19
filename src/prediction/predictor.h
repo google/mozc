@@ -44,12 +44,21 @@
 
 namespace mozc::prediction {
 
-class BasePredictor : public PredictorInterface {
+class Predictor : public PredictorInterface {
  public:
   // Initializes the composite of predictor with given sub-predictors.
-  BasePredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
-                std::unique_ptr<PredictorInterface> user_history_predictor,
-                const ConverterInterface &converter);
+  Predictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
+            std::unique_ptr<PredictorInterface> user_history_predictor,
+            const ConverterInterface &converter);
+
+  static std::unique_ptr<PredictorInterface> CreatePredictor(
+      std::unique_ptr<PredictorInterface> dictionary_predictor,
+      std::unique_ptr<PredictorInterface> user_history_predictor,
+      const ConverterInterface &converter);
+
+  std::vector<Result> Predict(const ConversionRequest &request) const;
+
+  absl::string_view GetPredictorName() const override { return "Predictor"; }
 
   // Hook(s) for all mutable operations.
   void Finish(const ConversionRequest &request,
@@ -77,62 +86,41 @@ class BasePredictor : public PredictorInterface {
   // Waits for syncer to complete.
   bool Wait() override;
 
- protected:
+ private:
+  std::vector<Result> PredictForDesktop(const ConversionRequest &request) const;
+
+  std::vector<Result> PredictForMixedConversion(
+      const ConversionRequest &request) const;
+
   std::unique_ptr<PredictorInterface> dictionary_predictor_;
   std::unique_ptr<PredictorInterface> user_history_predictor_;
 
- private:
   const ConverterInterface &converter_;
 };
 
-class DesktopPredictor : public BasePredictor {
+// Alias for backward compatibility.
+class DesktopPredictor : public Predictor {
  public:
   static std::unique_ptr<PredictorInterface> CreateDesktopPredictor(
       std::unique_ptr<PredictorInterface> dictionary_predictor,
       std::unique_ptr<PredictorInterface> user_history_predictor,
-      const ConverterInterface &converter);
-
-  DesktopPredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
-                   std::unique_ptr<PredictorInterface> user_history_predictor,
-                   const ConverterInterface &converter);
-  ~DesktopPredictor() override;
-
-  std::vector<Result> Predict(const ConversionRequest &request) const override;
-
-  absl::string_view GetPredictorName() const override {
-    return predictor_name_;
+      const ConverterInterface &converter) {
+    return Predictor::CreatePredictor(std::move(dictionary_predictor),
+                                      std::move(user_history_predictor),
+                                      converter);
   }
-
- private:
-  const std::string predictor_name_;
 };
 
-// TODO(taku): Renamed it to more general name, e.g. UnifiedDecoer
-// as we would like to use the same and unified decoder for desktop and
-// mobile.
-class MobilePredictor : public BasePredictor {
+class MobilePredictor : public Predictor {
  public:
   static std::unique_ptr<PredictorInterface> CreateMobilePredictor(
       std::unique_ptr<PredictorInterface> dictionary_predictor,
       std::unique_ptr<PredictorInterface> user_history_predictor,
-      const ConverterInterface &converter);
-
-  MobilePredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
-                  std::unique_ptr<PredictorInterface> user_history_predictor,
-                  const ConverterInterface &converter);
-  ~MobilePredictor() override;
-
-  std::vector<Result> Predict(const ConversionRequest &request) const override;
-
-  absl::string_view GetPredictorName() const override {
-    return predictor_name_;
+      const ConverterInterface &converter) {
+    return Predictor::CreatePredictor(std::move(dictionary_predictor),
+                                      std::move(user_history_predictor),
+                                      converter);
   }
-
-  static ConversionRequest GetRequestForPredict(
-      const ConversionRequest &request);
-
- private:
-  const std::string predictor_name_;
 };
 
 }  // namespace mozc::prediction
