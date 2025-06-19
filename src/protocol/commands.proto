@@ -634,7 +634,6 @@ message DecoderExperimentParams {
     // Filter all bigram candidates.
     FILTER_ALL = 2;
   }
-  optional int32 bigram_nwp_filtering_mode = 106 [default = 0];
 
   // Threshold for suffix NWP transition cost.
   // If the transition cost is greater than this value, the candidate will be

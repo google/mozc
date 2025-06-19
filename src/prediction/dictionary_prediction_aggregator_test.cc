@@ -697,8 +697,6 @@ TEST_F(DictionaryPredictionAggregatorTest, BigramTestWithZeroQueryFilterMode) {
   Segments segments;
   config_->set_use_dictionary_suggest(true);
   request_->set_zero_query_suggestion(true);
-  request_->mutable_decoder_experiment_params()->set_bigram_nwp_filtering_mode(
-      commands::DecoderExperimentParams::FILTER_ALL);
 
   // current query is empty
   InitSegmentsWithKey("", &segments);
