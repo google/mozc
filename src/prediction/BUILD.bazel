@@ -586,6 +586,7 @@ mozc_cc_library(
     ],
     deps = [
         "//base/container:trie",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",

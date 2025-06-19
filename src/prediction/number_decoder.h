@@ -175,7 +175,7 @@ class NumberDecoder {
                            number_decoder_internal::State &state,
                            std::vector<Result> &results) const;
 
-  Trie<number_decoder_internal::Entry> entries_;
+  const Trie<number_decoder_internal::Entry> &entries_;
 };
 
 }  // namespace mozc
