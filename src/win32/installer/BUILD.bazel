@@ -83,7 +83,10 @@ genrule(
         "@qt_win//:bin/Qt6Core.dll",
         "@wix//:wix.exe",
     ] + select({
-        "@platforms//cpu:arm64": ["//win32/tip:mozc_tip64arm"],
+        "@platforms//cpu:arm64": [
+            "//win32/tip:mozc_tip64arm",
+            "//win32/tip:mozc_tip64x",
+        ],
         "//conditions:default": [],
     }),
     outs = [_MSI_FILE],
@@ -108,6 +111,7 @@ genrule(
     ]) + select({
         "@platforms//cpu:arm64": " " + " ".join([
             "--mozc_tip64arm=$(location //win32/tip:mozc_tip64arm)",
+            "--mozc_tip64x=$(location //win32/tip:mozc_tip64x)",
         ]),
         "//conditions:default": "",
     }) + select({
