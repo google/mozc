@@ -74,8 +74,6 @@
 namespace mozc::prediction {
 namespace {
 
-using ::mozc::commands::Request;
-
 bool IsDebug(const ConversionRequest &request) {
 #ifndef NDEBUG
   return true;
