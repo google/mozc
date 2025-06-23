@@ -55,7 +55,6 @@ mozc_cc_library(
         "//engine:__pkg__",
         "//request:__pkg__",
         "//session:__pkg__",
-        "//unix/emacs:__pkg__",
     ],
     deps = [
         ":composition",
@@ -208,7 +207,6 @@ mozc_cc_library(
     hdrs = ["key_parser.h"],
     visibility = [
         "//client:__pkg__",
-        "//converter:__pkg__",
         "//gui/config_dialog:__pkg__",
         "//session:__pkg__",
         "//unix/emacs:__pkg__",
