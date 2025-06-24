@@ -70,8 +70,8 @@ TEST(DatasetWriterTest, Write) {
     w.Add("data16", 16, "data16 \xAB\xCD\xEF");
     w.Add("data32", 32, std::string("data32 \x00\xAB\n\r\n", 12));
     w.Add("data64", 64, std::string("data64 \t\t\x00\x00", 11));
-    w.Add("data128", 128, std::string("data128 abcdefg"));
-    w.Add("data256", 256, std::string("data256 xyz"));
+    w.Add("data128", 128, "data128 abcdefg");
+    w.Add("data256", 256, "data256 xyz");
 
     w.AddFile("file8", 8, in.path());
     w.AddFile("file16", 16, in.path());
