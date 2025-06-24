@@ -89,7 +89,7 @@ struct State {
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const State &state) {
-    absl::StrFormat(
+    absl::Format(
         &sink,
         "small_digit_num: %d, num_str: %s, sd: %d, bd: %d, consumed_blen: %d",
         state.small_digit_num, state.current_num_str, state.small_digit,

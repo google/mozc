@@ -38,6 +38,7 @@
 
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
 #include "base/thread.h"
@@ -96,9 +97,9 @@ class DataLoader {
 
     template <typename Sink>
     friend void AbslStringify(Sink &sink, const RequestData &p) {
-      sink.Append(absl::StrCat("id=", p.id, " priority=", p.request.priority(),
-                               " sequence_id=", p.sequence_id,
-                               " file_path=", p.request.file_path()));
+      absl::Format(&sink, "id=%d priority = %d sequence_id=%d file_path=%s",
+                   p.id, p.request.priority(),
+                   p.sequence_id, p.request.file_path());
     }
   };
 
