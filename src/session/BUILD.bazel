@@ -501,6 +501,7 @@ mozc_cc_binary(
     deps = [
         ":session_handler_tool",
         "//base:file_stream",
+        "//base:file_util",
         "//base:init_mozc",
         "//base:system_util",
         "//base/protobuf:message",

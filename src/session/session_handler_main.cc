@@ -69,6 +69,7 @@ SHOW_LOG_BY_VALUE       ございました
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/init_mozc.h"
 #include "base/system_util.h"
 #include "data_manager/oss/oss_data_manager.h"
@@ -224,7 +225,13 @@ absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   if (!absl::GetFlag(FLAGS_profile).empty()) {
-    mozc::SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_profile));
+    const std::string profile = absl::GetFlag(FLAGS_profile);
+    if (!mozc::FileUtil::CreateDirectory(profile).ok()) {
+      std::cout << "ERROR: Failed to create profile directory: " << profile
+                << std::endl;
+      return 1;
+    }
+    mozc::SystemUtil::SetUserProfileDirectory(profile);
   }
 
   std::string engine_name = absl::GetFlag(FLAGS_engine);
