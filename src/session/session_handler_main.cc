@@ -31,7 +31,7 @@
 //
 // Usage:
 // session_handler_main --input input.txt --profile /tmp/mozc
-//                      --dictionary oss --engine desktop
+//                      --dictionary oss
 //
 // session_handler_main --test --input input.txt --profile /tmp/mozc
 //
@@ -83,7 +83,6 @@ ABSL_DECLARE_FLAG(bool, use_history_rewriter);
 
 ABSL_FLAG(std::string, input, "", "Input file. ");
 ABSL_FLAG(std::string, profile, "", "User profile directory");
-ABSL_FLAG(std::string, engine, "", "Conversion engine: 'mobile' or 'desktop'");
 ABSL_FLAG(std::string, dictionary, "", "Dictionary: 'oss' or 'test'");
 ABSL_FLAG(bool, test, false, "Run as a test and quit.");
 
@@ -207,17 +206,8 @@ std::unique_ptr<const DataManager> CreateDataManager(
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(
-    const std::string &engine, const std::string &dictionary) {
-  if (engine == "desktop") {
-    return Engine::CreateDesktopEngine(CreateDataManager(dictionary));
-  }
-  if (engine == "mobile") {
-    return Engine::CreateMobileEngine(CreateDataManager(dictionary));
-  }
-  if (!engine.empty()) {
-    std::cout << "ERROR: Unknown engine name: " << engine << std::endl;
-  }
-  return Engine::CreateMobileEngine(CreateDataManager(dictionary));
+    const std::string &dictionary) {
+  return Engine::CreateEngine(CreateDataManager(dictionary));
 }
 
 }  // namespace mozc
@@ -234,20 +224,16 @@ int main(int argc, char **argv) {
     mozc::SystemUtil::SetUserProfileDirectory(profile);
   }
 
-  std::string engine_name = absl::GetFlag(FLAGS_engine);
   std::string dictionary_name = absl::GetFlag(FLAGS_dictionary);
   const bool is_test = absl::GetFlag(FLAGS_test);
   if (is_test) {
     absl::SetFlag(&FLAGS_use_history_rewriter, true);
-    if (engine_name.empty()) {
-      engine_name = "desktop";
-    }
     if (dictionary_name.empty()) {
       dictionary_name = "mock";
     }
   }
 
-  auto engine = mozc::CreateEngine(engine_name, dictionary_name);
+  auto engine = mozc::CreateEngine(dictionary_name);
   if (!engine.ok()) {
     std::cout << "engine init error" << std::endl;
     return 1;

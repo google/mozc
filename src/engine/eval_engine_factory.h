@@ -39,8 +39,7 @@
 namespace mozc {
 
 absl::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
-    absl::string_view data_file_path, absl::string_view data_type,
-    absl::string_view engine_type);
+    absl::string_view data_file_path, absl::string_view data_type);
 
 }  // namespace mozc
 

@@ -61,26 +61,22 @@ class EngineTest : public ::testing::Test {
   EngineTest() {
     const std::string mock_path =
         testing::GetSourcePath({"data_manager", "testing", "mock_mozc.data"});
-    mock_request_.set_engine_type(EngineReloadRequest::MOBILE);
     mock_request_.set_file_path(mock_path);
     mock_request_.set_magic_number(kMockMagicNumber);
     mock_request_.set_priority(kMiddlePriority);
 
     const std::string oss_path =
         testing::GetSourcePath({"data_manager", "oss", "mozc.data"});
-    oss_request_.set_engine_type(EngineReloadRequest::MOBILE);
     oss_request_.set_file_path(oss_path);
     oss_request_.set_magic_number(kOssMagicNumber);
     oss_request_.set_priority(kMiddlePriority);
 
     const std::string invalid_path =
         testing::GetSourcePath({"data_manager", "invalid", "mozc.data"});
-    invalid_path_request_.set_engine_type(EngineReloadRequest::MOBILE);
     invalid_path_request_.set_file_path(invalid_path);
     invalid_path_request_.set_magic_number(kOssMagicNumber);
     invalid_path_request_.set_priority(kMiddlePriority);
 
-    invalid_data_request_.set_engine_type(EngineReloadRequest::MOBILE);
     invalid_data_request_.set_file_path(mock_path);
     invalid_data_request_.set_magic_number(kOssMagicNumber);
     invalid_data_request_.set_priority(kMiddlePriority);
@@ -116,8 +112,7 @@ TEST_F(EngineTest, ReloadModulesTest) {
       engine::Modules::Create(std::make_unique<testing::MockDataManager>())
           .value();
 
-  const bool is_mobile = true;
-  CHECK_OK(engine_->ReloadModules(std::move(modules), is_mobile));
+  CHECK_OK(engine_->ReloadModules(std::move(modules)));
 }
 
 // Tests the interaction with DataLoader for successful Engine

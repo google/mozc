@@ -100,8 +100,7 @@ int main(int argc, char **argv) {
 
   absl::StatusOr<std::unique_ptr<Engine>> create_result =
       mozc::CreateEvalEngine(absl::GetFlag(FLAGS_data_file),
-                             absl::GetFlag(FLAGS_data_type),
-                             absl::GetFlag(FLAGS_engine_type));
+                             absl::GetFlag(FLAGS_data_type));
   if (!create_result.ok()) {
     LOG(ERROR) << create_result.status();
     return static_cast<int>(create_result.status().code());

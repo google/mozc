@@ -61,32 +61,20 @@
 
 namespace mozc {
 
-absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
-    std::unique_ptr<const DataManager> data_manager) {
-  constexpr bool kIsMobile = false;
-  return CreateEngine(std::move(data_manager), kIsMobile);
-}
-
-absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
-    std::unique_ptr<const DataManager> data_manager) {
-  constexpr bool kIsMobile = true;
-  return CreateEngine(std::move(data_manager), kIsMobile);
-}
-
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
-    std::unique_ptr<const DataManager> data_manager, bool is_mobile) {
+    std::unique_ptr<const DataManager> data_manager) {
   absl::StatusOr<std::unique_ptr<engine::Modules>> modules_status =
       engine::Modules::Create(std::move(data_manager));
   if (!modules_status.ok()) {
     return modules_status.status();
   }
-  return CreateEngine(std::move(modules_status.value()), is_mobile);
+  return CreateEngine(std::move(modules_status.value()));
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateEngine(
-    std::unique_ptr<engine::Modules> modules, bool is_mobile) {
+    std::unique_ptr<engine::Modules> modules) {
   auto engine = std::make_unique<Engine>();
-  absl::Status engine_status = engine->Init(std::move(modules), is_mobile);
+  absl::Status engine_status = engine->Init(std::move(modules));
   if (!engine_status.ok()) {
     return engine_status;
   }
@@ -99,22 +87,19 @@ std::unique_ptr<Engine> Engine::CreateEngine() {
 
 Engine::Engine() : minimal_converter_(CreateMinimalConverter()) {}
 
-absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules,
-                                   bool is_mobile) {
+absl::Status Engine::ReloadModules(std::unique_ptr<engine::Modules> modules) {
   ReloadAndWait();
-  return Init(std::move(modules), is_mobile);
+  return Init(std::move(modules));
 }
 
-absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
-                          bool is_mobile) {
+absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules) {
   auto immutable_converter_factory = [](const engine::Modules &modules) {
     return std::make_unique<ImmutableConverter>(modules);
   };
 
   auto predictor_factory =
-      [is_mobile](const engine::Modules &modules,
-                  const ConverterInterface &converter,
-                  const ImmutableConverterInterface &immutable_converter) {
+      [](const engine::Modules &modules, const ConverterInterface &converter,
+         const ImmutableConverterInterface &immutable_converter) {
         auto dictionary_predictor =
             std::make_unique<prediction::DictionaryPredictor>(
                 modules, converter, immutable_converter);
@@ -122,12 +107,9 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules,
         auto user_history_predictor =
             std::make_unique<prediction::UserHistoryPredictor>(modules);
 
-        return is_mobile ? prediction::MobilePredictor::CreateMobilePredictor(
-                               std::move(dictionary_predictor),
-                               std::move(user_history_predictor), converter)
-                         : prediction::DesktopPredictor::CreateDesktopPredictor(
-                               std::move(dictionary_predictor),
-                               std::move(user_history_predictor), converter);
+        return prediction::Predictor::CreatePredictor(
+            std::move(dictionary_predictor), std::move(user_history_predictor),
+            converter);
       };
 
   auto rewriter_factory = [](const engine::Modules &modules) {
@@ -179,12 +161,10 @@ bool Engine::MaybeReloadEngine(EngineReloadResponse *response) {
     return false;
   }
 
-  const bool is_mobile = loader_response_->response.request().engine_type() ==
-                         EngineReloadRequest::MOBILE;
   *response = std::move(loader_response_->response);
 
   const absl::Status reload_status =
-      ReloadModules(std::move(loader_response_->modules), is_mobile);
+      ReloadModules(std::move(loader_response_->modules));
   if (reload_status.ok()) {
     response->set_status(EngineReloadResponse::RELOADED);
   }

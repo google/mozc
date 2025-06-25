@@ -102,13 +102,13 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
     return Engine::CreateEngine();
   }
   // NOTE: we need to copy the data version to our local string before calling
-  // `Engine::CreateMobileEngine` because, if the engine creation below fails,
+  // `Engine::CreateEngine` because, if the engine creation below fails,
   // it deletes `data_manager` and all the references to its data get
   // invalidated. We want to log the data version on failure, so its copy is
   // necessary.
   const std::string data_version =
       std::string((*data_manager)->GetDataVersion());
-  auto engine = Engine::CreateMobileEngine(*std::move(data_manager));
+  auto engine = Engine::CreateEngine(*std::move(data_manager));
   if (!engine.ok()) {
     LOG(ERROR) << "Failed to create a mobile engine: file " << data_file_path
                << ", data version: " << data_version << ": " << engine.status()

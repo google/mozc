@@ -38,7 +38,7 @@
 namespace mozc {
 
 absl::StatusOr<std::unique_ptr<Engine>> MockDataEngineFactory::Create() {
-  return Engine::CreateDesktopEngine(
+  return Engine::CreateEngine(
       std::make_unique<mozc::testing::MockDataManager>());
 }
 

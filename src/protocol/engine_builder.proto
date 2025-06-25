@@ -35,12 +35,7 @@ option java_outer_classname = "ProtoEngineBuilder";
 option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
 
 message EngineReloadRequest {
-  // Specify the type of engine to build.
-  enum EngineType {
-    DESKTOP = 0;
-    MOBILE = 1;
-  }
-  required EngineType engine_type = 1;
+  reserved 1;  // Deprecated engine_type
 
   // Path to the data file to be loaded in a new engine.
   required string file_path = 2;

@@ -612,12 +612,11 @@ int main(int argc, char **argv) {
 
   mozc::config::Config config = mozc::config::ConfigHandler::DefaultConfig();
   mozc::commands::Request request;
-  std::unique_ptr<mozc::Engine> engine;
+  std::unique_ptr<mozc::Engine> engine =
+      mozc::Engine::CreateEngine(*std::move(data_manager)).value();
   if (absl::GetFlag(FLAGS_engine_type) == "desktop") {
-    engine =
-        mozc::Engine::CreateDesktopEngine(*std::move(data_manager)).value();
+    // Uses the default request for desktop.
   } else if (absl::GetFlag(FLAGS_engine_type) == "mobile") {
-    engine = mozc::Engine::CreateMobileEngine(*std::move(data_manager)).value();
     mozc::request_test_util::FillMobileRequest(&request);
     config.set_use_kana_modifier_insensitive_conversion(true);
   } else {

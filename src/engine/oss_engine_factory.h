@@ -43,11 +43,7 @@ namespace mozc {
 class OssEngineFactory {
  public:
   static absl::StatusOr<std::unique_ptr<Engine>> Create() {
-#ifdef __ANDROID__
-    return Engine::CreateMobileEngine(std::make_unique<oss::OssDataManager>());
-#else   // __ANDROID__
-    return Engine::CreateDesktopEngine(std::make_unique<oss::OssDataManager>());
-#endif  // __ANDROID__
+    return Engine::CreateEngine(std::make_unique<oss::OssDataManager>());
   }
 };
 
