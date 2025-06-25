@@ -231,5 +231,22 @@ TEST_F(A11yDescriptionRewriterTest, AddA11yDescriptionForAlphabetCharacters) {
             "Ｇｏｏｇｌｅ。ゼンカクオオモジ Ｇ。ゼンカクコモジ ｏｏｇｌｅ");
 }
 
+TEST_F(A11yDescriptionRewriterTest, CandidateValue) {
+  // Confirm the `value` is used rather than `content_value`.
+  Segments segments;
+  Segment *segment = segments.push_back_segment();
+  segment->set_key("あを");
+  converter::Candidate *candidate = segment->add_candidate();
+  candidate->key = "あを";
+  candidate->content_key = "あ";
+  candidate->value = "亜を";
+  candidate->content_value = "亜";
+
+  const ConversionRequest request;
+  EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
+  EXPECT_EQ(segment->candidate(0).a11y_description,
+            "亜を。アネッタイ ノ ア。ヒラガナ を");
+}
+
 }  // namespace
 }  // namespace mozc
