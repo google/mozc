@@ -37,7 +37,10 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/connector.h"
 #include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
+#include "engine/modules.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
@@ -46,15 +49,11 @@ namespace mozc::prediction {
 
 class Predictor : public PredictorInterface {
  public:
-  // Initializes the composite of predictor with given sub-predictors.
+  Predictor() = default;
+  Predictor(const engine::Modules &modules, const ConverterInterface &converter,
+            const ImmutableConverterInterface &immutable_converters);
   Predictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
-            std::unique_ptr<PredictorInterface> user_history_predictor,
-            const ConverterInterface &converter);
-
-  static std::unique_ptr<PredictorInterface> CreatePredictor(
-      std::unique_ptr<PredictorInterface> dictionary_predictor,
-      std::unique_ptr<PredictorInterface> user_history_predictor,
-      const ConverterInterface &converter);
+            std::unique_ptr<PredictorInterface> user_history_predictor);
 
   std::vector<Result> Predict(const ConversionRequest &request) const;
 
@@ -94,33 +93,6 @@ class Predictor : public PredictorInterface {
 
   std::unique_ptr<PredictorInterface> dictionary_predictor_;
   std::unique_ptr<PredictorInterface> user_history_predictor_;
-
-  const ConverterInterface &converter_;
-};
-
-// Alias for backward compatibility.
-class DesktopPredictor : public Predictor {
- public:
-  static std::unique_ptr<PredictorInterface> CreateDesktopPredictor(
-      std::unique_ptr<PredictorInterface> dictionary_predictor,
-      std::unique_ptr<PredictorInterface> user_history_predictor,
-      const ConverterInterface &converter) {
-    return Predictor::CreatePredictor(std::move(dictionary_predictor),
-                                      std::move(user_history_predictor),
-                                      converter);
-  }
-};
-
-class MobilePredictor : public Predictor {
- public:
-  static std::unique_ptr<PredictorInterface> CreateMobilePredictor(
-      std::unique_ptr<PredictorInterface> dictionary_predictor,
-      std::unique_ptr<PredictorInterface> user_history_predictor,
-      const ConverterInterface &converter) {
-    return Predictor::CreatePredictor(std::move(dictionary_predictor),
-                                      std::move(user_history_predictor),
-                                      converter);
-  }
 };
 
 }  // namespace mozc::prediction

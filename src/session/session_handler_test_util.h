@@ -65,7 +65,7 @@ class SessionHandlerTestBase : public ::mozc::testing::TestWithTempUserProfile {
   void SetUp() override;
   void TearDown() override;
 
-  void ClearState();
+  virtual void ClearState();
 
  private:
   config::Config config_backup_;

@@ -37,7 +37,6 @@
 #include "base/file_util.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_handler.h"
@@ -145,8 +144,6 @@ void SessionHandlerTestBase::ClearState() {
       ConfigFileStream::GetFileName("user://boundary.db"));
   FileUtil::UnlinkOrLogError(
       ConfigFileStream::GetFileName("user://segment.db"));
-  FileUtil::UnlinkOrLogError(
-      prediction::UserHistoryPredictor::GetUserHistoryFileName());
 }
 
 }  // namespace testing

@@ -48,8 +48,12 @@
 #include "absl/types/span.h"
 #include "base/util.h"
 #include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
+#include "engine/modules.h"
+#include "prediction/dictionary_predictor.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
+#include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -130,12 +134,20 @@ void MaybeFillFallbackPos(absl::Span<Result> results) {
 
 }  // namespace
 
+Predictor::Predictor(const engine::Modules &modules,
+                     const ConverterInterface &converter,
+                     const ImmutableConverterInterface &immutable_converter)
+    : dictionary_predictor_(std::make_unique<DictionaryPredictor>(
+          modules, converter, immutable_converter)),
+      user_history_predictor_(std::make_unique<UserHistoryPredictor>(modules)) {
+  DCHECK(dictionary_predictor_);
+  DCHECK(user_history_predictor_);
+}
+
 Predictor::Predictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
-                     std::unique_ptr<PredictorInterface> user_history_predictor,
-                     const ConverterInterface &converter)
+                     std::unique_ptr<PredictorInterface> user_history_predictor)
     : dictionary_predictor_(std::move(dictionary_predictor)),
-      user_history_predictor_(std::move(user_history_predictor)),
-      converter_(converter) {
+      user_history_predictor_(std::move(user_history_predictor)) {
   DCHECK(dictionary_predictor_);
   DCHECK(user_history_predictor_);
 }
@@ -190,16 +202,6 @@ bool Predictor::Wait() { return user_history_predictor_->Wait(); }
 bool Predictor::Sync() { return user_history_predictor_->Sync(); }
 
 bool Predictor::Reload() { return user_history_predictor_->Reload(); }
-
-// static
-std::unique_ptr<PredictorInterface> Predictor::CreatePredictor(
-    std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor,
-    const ConverterInterface &converter) {
-  return std::make_unique<Predictor>(std::move(dictionary_predictor),
-                                     std::move(user_history_predictor),
-                                     converter);
-}
 
 std::vector<Result> Predictor::PredictForDesktop(
     const ConversionRequest &request) const {

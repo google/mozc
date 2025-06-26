@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
-#include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
@@ -180,38 +179,34 @@ class MixedDecodingPredictorTest : public ::testing::Test {
 };
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobileSuggestion) {
-  MockConverter converter;
   auto predictor = std::make_unique<Predictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialSuggestion) {
-  MockConverter converter;
   auto predictor = std::make_unique<Predictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
       // We don't call history predictor
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1), converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PARTIAL_SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePrediction) {
-  MockConverter converter;
   auto predictor = std::make_unique<Predictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), converter);
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialPrediction) {
-  MockConverter converter;
   std::unique_ptr<engine::Modules> modules =
       engine::ModulesPresetBuilder()
           .PresetDictionary(std::make_unique<MockDictionary>())
@@ -219,7 +214,7 @@ TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialPrediction) {
           .value();
   auto predictor = std::make_unique<Predictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<UserHistoryPredictor>(*modules), converter);
+      std::make_unique<UserHistoryPredictor>(*modules));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PARTIAL_PREDICTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
@@ -236,9 +231,8 @@ TEST_F(MixedDecodingPredictorTest, CallPredictForRequestMobile) {
       .Times(AtMost(1))
       .WillOnce(Return(results));
 
-  MockConverter converter;
-  auto predictor = std::make_unique<Predictor>(
-      std::move(predictor1), std::move(predictor2), converter);
+  auto predictor =
+      std::make_unique<Predictor>(std::move(predictor1), std::move(predictor2));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
@@ -275,58 +269,51 @@ class PredictorTest : public ::testing::Test {
 };
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
-  MockConverter converter;
-  auto predictor = std::make_unique<Predictor>(
-      std::make_unique<NullPredictor>(true),
-      std::make_unique<NullPredictor>(true), converter);
+  auto predictor =
+      std::make_unique<Predictor>(std::make_unique<NullPredictor>(true),
+                                  std::make_unique<NullPredictor>(true));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
 }
 
 TEST_F(PredictorTest, MixedReturnValue) {
-  MockConverter converter;
-  auto predictor = std::make_unique<Predictor>(
-      std::make_unique<NullPredictor>(true),
-      std::make_unique<NullPredictor>(false), converter);
+  auto predictor =
+      std::make_unique<Predictor>(std::make_unique<NullPredictor>(true),
+                                  std::make_unique<NullPredictor>(false));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
-  MockConverter converter;
-  auto predictor = std::make_unique<Predictor>(
-      std::make_unique<NullPredictor>(false),
-      std::make_unique<NullPredictor>(false), converter);
+  auto predictor =
+      std::make_unique<Predictor>(std::make_unique<NullPredictor>(false),
+                                  std::make_unique<NullPredictor>(false));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(PredictorTest, CallPredictorsForSuggestion) {
-  MockConverter converter;
   const int suggestions_size =
       config::ConfigHandler::DefaultConfig().suggestions_size();
   auto predictor = std::make_unique<Predictor>(
       // -1 as UserHistoryPredictor returns 1 result.
       std::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size - 1),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
-                                                          suggestions_size),
-      converter);
+                                                          suggestions_size));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
 }
 
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
-  MockConverter converter;
   constexpr int kPredictionSize = 100;
   auto predictor = std::make_unique<Predictor>(
       // -1 as UserHistoryPredictor returns 1 result.
       std::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize - 1),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
-                                                          kPredictionSize),
-      converter);
+                                                          kPredictionSize));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::PREDICTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
@@ -343,9 +330,8 @@ TEST_F(PredictorTest, CallPredictForRequest) {
       .Times(AtMost(1))
       .WillOnce(Return(results));
 
-  MockConverter converter;
-  auto predictor = std::make_unique<Predictor>(
-      std::move(predictor1), std::move(predictor2), converter);
+  auto predictor =
+      std::make_unique<Predictor>(std::move(predictor1), std::move(predictor2));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->Predict(convreq).empty());
@@ -356,9 +342,8 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   auto predictor2 = std::make_unique<NullPredictor>(true);
   const auto *pred1 = predictor1.get();  // Keep the reference
   const auto *pred2 = predictor2.get();  // Keep the reference
-  MockConverter converter;
-  auto predictor = std::make_unique<Predictor>(
-      std::move(predictor1), std::move(predictor2), converter);
+  auto predictor =
+      std::make_unique<Predictor>(std::move(predictor1), std::move(predictor2));
   config_->set_presentation_mode(true);
   const ConversionRequest convreq1 =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
@@ -401,10 +386,8 @@ TEST_F(MixedDecodingPredictorTest, FillPos) {
   EXPECT_CALL(*mock_dictionary_predictor, Predict(_))
       .WillOnce(Return(predictor_results));
 
-  MockConverter converter;
-  auto predictor =
-      std::make_unique<Predictor>(std::move(mock_dictionary_predictor),
-                                  std::move(mock_history_predictor), converter);
+  auto predictor = std::make_unique<Predictor>(
+      std::move(mock_dictionary_predictor), std::move(mock_history_predictor));
 
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);

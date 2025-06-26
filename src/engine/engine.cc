@@ -50,10 +50,7 @@
 #include "engine/minimal_converter.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
-#include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
-#include "prediction/predictor_interface.h"
-#include "prediction/user_history_predictor.h"
 #include "protocol/engine_builder.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "rewriter/rewriter.h"
@@ -100,16 +97,8 @@ absl::Status Engine::Init(std::unique_ptr<engine::Modules> modules) {
   auto predictor_factory =
       [](const engine::Modules &modules, const ConverterInterface &converter,
          const ImmutableConverterInterface &immutable_converter) {
-        auto dictionary_predictor =
-            std::make_unique<prediction::DictionaryPredictor>(
-                modules, converter, immutable_converter);
-
-        auto user_history_predictor =
-            std::make_unique<prediction::UserHistoryPredictor>(modules);
-
-        return prediction::Predictor::CreatePredictor(
-            std::move(dictionary_predictor), std::move(user_history_predictor),
-            converter);
+        return std::make_unique<prediction::Predictor>(modules, converter,
+                                                       immutable_converter);
       };
 
   auto rewriter_factory = [](const engine::Modules &modules) {

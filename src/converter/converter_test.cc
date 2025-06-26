@@ -68,11 +68,9 @@
 #include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/modules.h"
-#include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
-#include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -110,7 +108,6 @@ using ::mozc::dictionary::UserDictionary;
 using ::mozc::prediction::Predictor;
 using ::mozc::prediction::PredictorInterface;
 using ::mozc::prediction::Result;
-using ::mozc::prediction::UserHistoryPredictor;
 using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::Return;
@@ -273,23 +270,8 @@ class ConverterTest : public testing::TestWithTempUserProfile {
     if (predictor_type == STUB_PREDICTOR) {
       return std::make_unique<StubPredictor>();
     }
-
-    // Create a predictor with three sub-predictors, dictionary predictor, user
-    // history predictor, and extra predictor.
-    auto dictionary_predictor =
-        std::make_unique<prediction::DictionaryPredictor>(modules, converter,
-                                                          immutable_converter);
-    CHECK(dictionary_predictor);
-
-    auto user_history_predictor =
-        std::make_unique<prediction::UserHistoryPredictor>(modules);
-    CHECK(user_history_predictor);
-
-    auto ret_predictor = prediction::Predictor::CreatePredictor(
-        std::move(dictionary_predictor), std::move(user_history_predictor),
-        converter);
-    CHECK(ret_predictor);
-    return ret_predictor;
+    return std::make_unique<prediction::Predictor>(modules, converter,
+                                                   immutable_converter);
   }
 
   // Initializes Converter with mock data set using given |user_dictionary|.
@@ -1077,11 +1059,8 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       },
       [](const engine::Modules &modules, const ConverterInterface &converter,
          const ImmutableConverterInterface &immutable_converter) {
-        return Predictor::CreatePredictor(
-            std::make_unique<prediction::DictionaryPredictor>(
-                modules, converter, immutable_converter),
-            std::make_unique<prediction::UserHistoryPredictor>(modules),
-            converter);
+        return std::make_unique<prediction::Predictor>(modules, converter,
+                                                       immutable_converter);
       },
       [](const engine::Modules &modules) {
         return std::make_unique<Rewriter>(modules);

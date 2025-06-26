@@ -48,7 +48,6 @@
 #include "engine/minimal_converter.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
-#include "prediction/predictor_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "rewriter/rewriter_interface.h"

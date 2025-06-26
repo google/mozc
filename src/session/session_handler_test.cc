@@ -183,6 +183,15 @@ class SessionHandlerTest : public SessionHandlerTestBase {
     SessionHandlerTestBase::TearDown();
   }
 
+  void ClearState() override {
+    if (handler_) {
+      commands::Command command;
+      command.mutable_input()->set_type(commands::Input::CLEAR_USER_PREDICTION);
+      handler_->EvalCommand(&command);
+    }
+    SessionHandlerTestBase::ClearState();
+  }
+
   static std::unique_ptr<Engine> CreateMockDataEngine() {
     return MockDataEngineFactory::Create().value();
   }

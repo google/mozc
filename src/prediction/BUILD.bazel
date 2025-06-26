@@ -58,7 +58,6 @@ mozc_cc_library(
     hdrs = ["predictor_interface.h"],
     visibility = [
         "//converter:__pkg__",
-        "//engine:__pkg__",
     ],
     deps = [
         ":result",
@@ -72,11 +71,6 @@ mozc_cc_library(
     name = "user_history_predictor",
     srcs = ["user_history_predictor.cc"],
     hdrs = ["user_history_predictor.h"],
-    visibility = [
-        "//converter:__pkg__",
-        "//engine:__pkg__",
-        "//session:__pkg__",
-    ],
     deps = [
         ":predictor_interface",
         ":result",
@@ -170,10 +164,6 @@ mozc_cc_library(
         "dictionary_predictor.cc",
     ],
     hdrs = ["dictionary_predictor.h"],
-    visibility = [
-        "//converter:__pkg__",
-        "//engine:__pkg__",
-    ],
     deps = [
         ":dictionary_prediction_aggregator",
         ":predictor_interface",
@@ -446,10 +436,15 @@ mozc_cc_library(
         "//engine:__pkg__",
     ],
     deps = [
+        ":dictionary_predictor",
         ":predictor_interface",
         ":result",
+        ":user_history_predictor",
         "//base:util",
+        "//converter:connector",
         "//converter:converter_interface",
+        "//converter:immutable_converter_interface",
+        "//engine:modules",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
@@ -474,7 +469,6 @@ mozc_cc_test(
         ":user_history_predictor",
         "//composer",
         "//config:config_handler",
-        "//converter:converter_mock",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_mock",
