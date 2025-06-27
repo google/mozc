@@ -1450,7 +1450,6 @@ mozc_cc_test(
         ":a11y_description_rewriter",
         ":rewriter_interface",
         "//converter:segments",
-        "//data_manager",
         "//data_manager/testing:mock_data_manager",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
