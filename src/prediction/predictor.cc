@@ -71,42 +71,6 @@ bool IsMixedConversionEnabled(const ConversionRequest &request) {
   return request.request().mixed_conversion();
 }
 
-ConversionRequest GetRequestForMixedConversion(
-    const ConversionRequest &request) {
-  DCHECK(request.HasConverterHistorySegments());
-  ConversionRequest::Options options = request.options();
-  switch (request.request_type()) {
-    case ConversionRequest::SUGGESTION: {
-      options.max_user_history_prediction_candidates_size = 3;
-      options.max_user_history_prediction_candidates_size_for_zero_query = 4;
-      options.max_dictionary_prediction_candidates_size = 20;
-      break;
-    }
-    case ConversionRequest::PARTIAL_SUGGESTION: {
-      options.max_dictionary_prediction_candidates_size = 20;
-      break;
-    }
-    case ConversionRequest::PARTIAL_PREDICTION: {
-      options.max_dictionary_prediction_candidates_size =
-          kPredictionSizeForMixedConersion;
-      break;
-    }
-    case ConversionRequest::PREDICTION: {
-      options.max_user_history_prediction_candidates_size = 3;
-      options.max_user_history_prediction_candidates_size_for_zero_query = 4;
-      options.max_dictionary_prediction_candidates_size =
-          kPredictionSizeForMixedConersion;
-      break;
-    }
-    default:
-      DLOG(ERROR) << "Unexpected request type: " << request.request_type();
-  }
-  return ConversionRequestBuilder()
-      .SetConversionRequestView(request)
-      .SetOptions(std::move(options))
-      .Build();
-}
-
 // Fills empty lid and rid of candidates with the candidates of the same value.
 void MaybeFillFallbackPos(absl::Span<Result> results) {
   absl::flat_hash_map<absl::string_view, Result *> posless_results;
@@ -256,8 +220,19 @@ std::vector<Result> Predictor::PredictForMixedConversion(
     const ConversionRequest &request) const {
   DCHECK(IsMixedConversionEnabled(request));
 
+  // No distinction between SUGGESTION and PREDICTION in mixed conversion mode.
+  // Always PREDICTION mode is used.
+  ConversionRequest::Options options = request.options();
+  options.max_user_history_prediction_candidates_size = 3;
+  options.max_user_history_prediction_candidates_size_for_zero_query = 4;
+  options.max_dictionary_prediction_candidates_size =
+      kPredictionSizeForMixedConersion;
+
   const ConversionRequest request_for_predict =
-      GetRequestForMixedConversion(request);
+      ConversionRequestBuilder()
+          .SetConversionRequestView(request)
+          .SetOptions(std::move(options))
+          .Build();
 
   DCHECK(request_for_predict.HasConverterHistorySegments());
 

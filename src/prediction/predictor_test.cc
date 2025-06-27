@@ -180,7 +180,7 @@ class MixedDecodingPredictorTest : public ::testing::Test {
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobileSuggestion) {
   auto predictor = std::make_unique<Predictor>(
-      std::make_unique<CheckCandSizeDictionaryPredictor>(20),
+      std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   const ConversionRequest convreq =
       CreateConversionRequest(ConversionRequest::SUGGESTION);
@@ -189,7 +189,7 @@ TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobileSuggestion) {
 
 TEST_F(MixedDecodingPredictorTest, CallPredictorsForMobilePartialSuggestion) {
   auto predictor = std::make_unique<Predictor>(
-      std::make_unique<CheckCandSizeDictionaryPredictor>(20),
+      std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       // We don't call history predictor
       std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1));
   const ConversionRequest convreq =
