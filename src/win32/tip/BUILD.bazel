@@ -34,12 +34,25 @@ load(
     "MOZC_TAGS",
     "mozc_cc_library",
     "mozc_cc_test",
+    "mozc_py_binary",
     "mozc_win32_cc_prod_binary",
     "mozc_win32_resource_from_template",
 )
+load("//:config.bzl", "BRANDING")
 load(
     "//bazel/win32:build_defs.bzl",
     "features_gdi",
+)
+
+mozc_py_binary(
+    name = "build_tip_forwarder_dll",
+    srcs = ["build_tip_forwarder_dll.py"],
+    test_lib = False,
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build_tools:mozc_version_lib",
+        "//build_tools:vs_util",
+    ],
 )
 
 mozc_cc_library(
@@ -118,6 +131,25 @@ mozc_win32_cc_prod_binary(
     deps = [
         ":mozc_tip_deps",
     ],
+)
+
+genrule(
+    name = "mozc_tip64x",
+    srcs = [
+        "//base:mozc_version_txt",
+    ],
+    outs = ["mozc_tip64x.dll" if BRANDING == "Mozc" else "GoogleIMEJaTIP64X.msi"],
+    cmd = " ".join([
+        "$(location :build_tip_forwarder_dll)",
+        "--output=$@",
+        "--version_file=$(location //base:mozc_version_txt)",
+        "--branding=" + BRANDING,
+    ]),
+    target_compatible_with = ["@platforms//os:windows"],
+    tools = [
+        ":build_tip_forwarder_dll",
+    ],
+    visibility = ["//win32/installer:__subpackages__"],  # Scheuklappen: keep
 )
 
 mozc_win32_resource_from_template(
