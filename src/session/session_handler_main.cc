@@ -67,10 +67,10 @@ SHOW_LOG_BY_VALUE       ございました
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/numbers.h"
-#include "absl/strings/str_cat.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/init_mozc.h"
+#include "base/protobuf/message.h"
 #include "base/system_util.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -125,30 +125,28 @@ bool ParseLine(session::SessionHandlerInterpreter &handler, std::string line,
   const std::string &command = args[0];
 
   if (command == "SHOW_ALL") {
-    std::cout << absl::StrCat(handler.LastOutput()) << std::endl;
+    std::cout << protobuf::Utf8Format(handler.LastOutput()) << std::endl;
     return true;
   }
   if (command == "SHOW_OUTPUT") {
     commands::Output output = handler.LastOutput();
     output.mutable_removed_candidate_words_for_debug()->Clear();
-    std::cout << absl::StrCat(output.Utf8DebugString()) << std::endl;
+    std::cout << protobuf::Utf8Format(output) << std::endl;
     return true;
   }
   if (command == "SHOW_RESULT") {
     const commands::Output &output = handler.LastOutput();
-    std::cout << absl::StrCat(output.result().Utf8DebugString()) << std::endl;
+    std::cout << protobuf::Utf8Format(output.result()) << std::endl;
     return true;
   }
   if (command == "SHOW_CANDIDATES") {
-    std::cout << absl::StrCat(
-                     handler.LastOutput().candidate_window().Utf8DebugString())
+    std::cout << protobuf::Utf8Format(handler.LastOutput().candidate_window())
               << std::endl;
     return true;
   }
   if (command == "SHOW_REMOVED_CANDIDATES") {
-    std::cout << absl::StrCat(handler.LastOutput()
-                                  .removed_candidate_words_for_debug()
-                                  .Utf8DebugString())
+    std::cout << protobuf::Utf8Format(
+                     handler.LastOutput().removed_candidate_words_for_debug())
               << std::endl;
     return true;
   }
