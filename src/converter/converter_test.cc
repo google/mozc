@@ -136,7 +136,7 @@ class StubPredictor : public PredictorInterface {
   StubPredictor() : predictor_name_("StubPredictor") {}
 
   std::vector<Result> Predict(const ConversionRequest &request) const override {
-    absl::string_view key = request.converter_key();
+    absl::string_view key = request.key();
     if (key.empty()) {
       return {};
     }

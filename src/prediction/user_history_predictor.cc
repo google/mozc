@@ -641,7 +641,7 @@ std::string UserHistoryPredictor::GetRomanMisspelledKey(
     return "";
   }
 
-  absl::string_view preedit = request.converter_key();
+  absl::string_view preedit = request.key();
   // TODO(team): Use composer if it is available.
   // segments.composer()->GetQueryForConversion(&preedit);
   // Since ConverterInterface doesn't have StartPredictionWithComposer,
@@ -1115,7 +1115,7 @@ std::vector<Result> UserHistoryPredictor::Predict(
     return {};
   }
 
-  const bool is_empty_input = request.converter_key().empty();
+  const bool is_empty_input = request.key().empty();
   const Entry *prev_entry = LookupPrevEntry(request);
   if (is_empty_input && prev_entry == nullptr) {
     MOZC_VLOG(1) << "If input_key_len is 0, prev_entry must be set";
@@ -1188,7 +1188,7 @@ bool UserHistoryPredictor::ShouldPredict(
     return false;
   }
 
-  absl::string_view input_key = request.converter_key();
+  absl::string_view input_key = request.key();
 
   if (input_key.empty() && !request.request().zero_query_suggestion()) {
     MOZC_VLOG(2) << "key length is 0";
@@ -1415,7 +1415,7 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     LOG(ERROR) << "Unknown mode";
     return {};
   }
-  const uint32_t input_key_len = Util::CharsLen(request.converter_key());
+  const uint32_t input_key_len = Util::CharsLen(request.key());
 
   size_t inserted_num = 0;
   size_t inserted_char_coverage = 0;

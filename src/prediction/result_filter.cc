@@ -54,7 +54,7 @@ ResultFilter::ResultFilter(const ConversionRequest &request,
                            dictionary::PosMatcher pos_matcher,
                            const Connector &connector,
                            const SuggestionFilter &suggestion_filter)
-    : input_key_(request.converter_key()),
+    : input_key_(request.key()),
       history_key_(request.converter_history_key(1)),
       history_value_(request.converter_history_value(1)),
       input_key_len_(Util::CharsLen(input_key_)),

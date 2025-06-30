@@ -103,7 +103,7 @@ void AppendDescription(Result &result, Args &&...args) {
 
 void MaybeFixRealtimeTopCost(const ConversionRequest &request,
                              absl::Span<Result> results) {
-  absl::string_view input_key = request.converter_key();
+  absl::string_view input_key = request.key();
 
   // Remember the minimum cost among those REALTIME
   // candidates that have the same key length as |input_key| so that we can set
@@ -210,7 +210,7 @@ DictionaryPredictor::AggregateTypingCorrectedResultsForMixedConversion(
     const ConversionRequest &request) const {
   constexpr int kMinTypingCorrectionKeyLen = 3;
   if (!IsTypingCorrectionEnabled(request) ||
-      Util::CharsLen(request.converter_key()) < kMinTypingCorrectionKeyLen) {
+      Util::CharsLen(request.key()) < kMinTypingCorrectionKeyLen) {
     return {};
   }
 
@@ -414,7 +414,7 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
 
 void DictionaryPredictor::SetPredictionCost(const ConversionRequest &request,
                                             absl::Span<Result> results) const {
-  absl::string_view input_key = request.converter_key();
+  absl::string_view input_key = request.key();
   const int history_rid = request.converter_history_rid();
 
   const bool is_suggestion =
@@ -502,7 +502,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   }
 
   absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
-  absl::string_view input_key = request.converter_key();
+  absl::string_view input_key = request.key();
   const int single_kanji_offset = CalculateSingleKanjiCostOffset(
       request, history_rid, input_key, results, &prefix_penalty_cache);
 
@@ -620,7 +620,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
 // static
 void DictionaryPredictor::RemoveMissSpelledCandidates(
     const ConversionRequest &request, absl::Span<Result> results) {
-  const size_t request_key_len = Util::CharsLen(request.converter_key());
+  const size_t request_key_len = Util::CharsLen(request.key());
 
   if (results.size() <= 1) {
     return;
@@ -821,7 +821,7 @@ std::shared_ptr<Result> DictionaryPredictor::MaybeGetPreviousTopResult(
   std::shared_ptr<Result> prev_top_result = prev_top_result_.load();
 
   // Updates the key length.
-  const int cur_top_key_length = request.converter_key().size();
+  const int cur_top_key_length = request.key().size();
   const int prev_top_key_length = prev_top_key_length_.exchange(
       cur_top_key_length);  // returns the old value.
 
