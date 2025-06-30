@@ -49,13 +49,13 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/single_kanji_dictionary.h"
 #include "dictionary/suffix_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
 #include "engine/supplemental_model_interface.h"
-#include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/suggestion_filter.h"
 
 
@@ -155,11 +155,10 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
     suggestion_filter_ = *std::move(status_or_suggestion_filter);
   }
 
-  if (!single_kanji_prediction_aggregator_) {
-    single_kanji_prediction_aggregator_ =
-        std::make_unique<prediction::SingleKanjiPredictionAggregator>(
-            *data_manager_, *pos_matcher_);
-    RETURN_IF_NULL(single_kanji_prediction_aggregator_);
+  if (!single_kanji_dictionary_) {
+    single_kanji_dictionary_ =
+        std::make_unique<dictionary::SingleKanjiDictionary>(*data_manager_);
+    RETURN_IF_NULL(single_kanji_dictionary_);
   }
 
   absl::string_view zero_query_token_array_data;
@@ -193,7 +192,7 @@ absl::Status Modules::Init(std::unique_ptr<const DataManager> data_manager) {
   RETURN_IF_NULL(user_dictionary_);
   RETURN_IF_NULL(suffix_dictionary_);
   RETURN_IF_NULL(pos_group_);
-  RETURN_IF_NULL(single_kanji_prediction_aggregator_);
+  RETURN_IF_NULL(single_kanji_dictionary_);
   RETURN_IF_NULL(supplemental_model_);
 
   return absl::Status();
@@ -231,13 +230,11 @@ ModulesPresetBuilder& ModulesPresetBuilder::PresetDictionary(
   return *this;
 }
 
-ModulesPresetBuilder&
-ModulesPresetBuilder::PresetSingleKanjiPredictionAggregator(
-    std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
-        single_kanji_prediction_aggregator) {
+ModulesPresetBuilder& ModulesPresetBuilder::PresetSingleKanjiDictionary(
+    std::unique_ptr<const dictionary::SingleKanjiDictionary>
+        single_kanji_dictionary) {
   DCHECK(modules_) << "Module is already initialized";
-  modules_->single_kanji_prediction_aggregator_ =
-      std::move(single_kanji_prediction_aggregator);
+  modules_->single_kanji_dictionary_ = std::move(single_kanji_dictionary);
   return *this;
 }
 

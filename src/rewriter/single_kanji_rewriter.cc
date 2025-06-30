@@ -100,10 +100,11 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
 
 }  // namespace
 
-SingleKanjiRewriter::SingleKanjiRewriter(const DataManager &data_manager)
-    : pos_matcher_(data_manager.GetPosMatcherData()),
-      single_kanji_dictionary_(
-          new dictionary::SingleKanjiDictionary(data_manager)) {}
+SingleKanjiRewriter::SingleKanjiRewriter(
+    const dictionary::PosMatcher &pos_matcher,
+    const dictionary::SingleKanjiDictionary &single_kanji_dictionary)
+    : pos_matcher_(pos_matcher),
+      single_kanji_dictionary_(single_kanji_dictionary) {}
 
 SingleKanjiRewriter::~SingleKanjiRewriter() = default;
 
@@ -143,7 +144,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
     AddDescriptionForExistingCandidates(&segment);
 
     const std::vector<std::string> kanji_list =
-        single_kanji_dictionary_->LookupKanjiEntries(segment.key(), use_svs);
+        single_kanji_dictionary_.LookupKanjiEntries(segment.key(), use_svs);
     if (kanji_list.empty()) {
       continue;
     }
@@ -173,7 +174,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
     }
 
     absl::string_view key = segment.key();
-    const auto range = single_kanji_dictionary_->LookupNounPrefixEntries(key);
+    const auto range = single_kanji_dictionary_.LookupNounPrefixEntries(key);
     if (range.first == range.second) {
       continue;
     }
@@ -197,8 +198,8 @@ void SingleKanjiRewriter::AddDescriptionForExistingCandidates(
     if (!cand->description.empty()) {
       continue;
     }
-    single_kanji_dictionary_->GenerateDescription(cand->value,
-                                                  &cand->description);
+    single_kanji_dictionary_.GenerateDescription(cand->value,
+                                                 &cand->description);
   }
 }
 
@@ -244,6 +245,6 @@ void SingleKanjiRewriter::FillCandidate(const absl::string_view key,
   strings::Assign(cand->value, value);
   cand->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
   cand->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
-  single_kanji_dictionary_->GenerateDescription(value, &cand->description);
+  single_kanji_dictionary_.GenerateDescription(value, &cand->description);
 }
 }  // namespace mozc

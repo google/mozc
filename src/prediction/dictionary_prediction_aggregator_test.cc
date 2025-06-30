@@ -61,11 +61,11 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/single_kanji_dictionary.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "engine/supplemental_model_mock.h"
 #include "prediction/result.h"
-#include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -306,15 +306,11 @@ class MockImmutableConverter : public ImmutableConverterInterface {
   }
 };
 
-class MockSingleKanjiPredictionAggregator
-    : public SingleKanjiPredictionAggregator {
+class MockSingleKanjiDictionary : public dictionary::SingleKanjiDictionary {
  public:
-  explicit MockSingleKanjiPredictionAggregator(const DataManager &data_manager,
-                                               const PosMatcher &pos_matcher)
-      : SingleKanjiPredictionAggregator(data_manager, pos_matcher) {}
-  ~MockSingleKanjiPredictionAggregator() override = default;
-  MOCK_METHOD(std::vector<Result>, AggregateResults,
-              (const ConversionRequest &request), (const, override));
+  ~MockSingleKanjiDictionary() override = default;
+  MOCK_METHOD(std::vector<std::string>, LookupKanjiEntries,
+              (absl::string_view key, bool use_svs), (const, override));
 };
 
 // Helper class to hold dictionary data and aggregator object.
@@ -335,16 +331,15 @@ class MockDataAndAggregator {
 
     const PosMatcher pos_matcher(data_manager->GetPosMatcherData());
 
-    auto kanji_aggregator =
-        std::make_unique<MockSingleKanjiPredictionAggregator>(*data_manager,
-                                                              pos_matcher);
+    auto single_kanji_dictionary =
+        std::make_unique<MockSingleKanjiDictionary>();
     // TODO(taku): avoid sharing the pointer owned by std::unique_ptr.
-    single_kanji_prediction_aggregator_ = kanji_aggregator.get();
+    single_kanji_dictionary_ = single_kanji_dictionary.get();
 
     modules_ =
         engine::ModulesPresetBuilder()
             .PresetDictionary(std::move(dictionary))
-            .PresetSingleKanjiPredictionAggregator(std::move(kanji_aggregator))
+            .PresetSingleKanjiDictionary(std::move(single_kanji_dictionary))
             .PresetSuffixDictionary(std::move(suffix_dictionary))    // nullable
             .PresetSupplementalModel(std::move(supplemental_model))  // nullable
             .Build(std::move(data_manager))
@@ -363,9 +358,8 @@ class MockDataAndAggregator {
   MockImmutableConverter *mutable_immutable_converter() {
     return &mock_immutable_converter_;
   }
-  MockSingleKanjiPredictionAggregator *
-  mutable_single_kanji_prediction_aggregator() {
-    return single_kanji_prediction_aggregator_;
+  MockSingleKanjiDictionary *mutable_single_kanji_dictionary() {
+    return single_kanji_dictionary_;
   }
   const PosMatcher &pos_matcher() const { return modules_->GetPosMatcher(); }
   const DictionaryPredictionAggregatorTestPeer &aggregator() {
@@ -378,7 +372,7 @@ class MockDataAndAggregator {
   std::unique_ptr<engine::Modules> modules_;
 
   MockDictionary *mock_dictionary_;
-  MockSingleKanjiPredictionAggregator *single_kanji_prediction_aggregator_;
+  MockSingleKanjiDictionary *single_kanji_dictionary_;
 
   std::unique_ptr<DictionaryPredictionAggregatorTestPeer> aggregator_;
 };
@@ -3076,19 +3070,10 @@ TEST_F(DictionaryPredictionAggregatorTest, SingleKanji) {
   request_test_util::FillMobileRequest(request_.get());
 
   {
-    auto create_single_kanji_result = [](absl::string_view key,
-                                         absl::string_view value) {
-      Result result;
-      result.key = std::string(key);
-      result.value = std::string(value);
-      result.SetTypesAndTokenAttributes(SINGLE_KANJI, Token::NONE);
-      return result;
-    };
-    MockSingleKanjiPredictionAggregator *mock =
-        data_and_aggregator->mutable_single_kanji_prediction_aggregator();
-    EXPECT_CALL(*mock, AggregateResults(_))
-        .WillOnce(Return(
-            std::vector<Result>{create_single_kanji_result("て", "手")}));
+    MockSingleKanjiDictionary *mock =
+        data_and_aggregator->mutable_single_kanji_dictionary();
+    EXPECT_CALL(*mock, LookupKanjiEntries(_, _))
+        .WillRepeatedly(Return(std::vector<std::string>{"手"}));
   }
 
   Segments segments;
@@ -3114,9 +3099,9 @@ TEST_F(DictionaryPredictionAggregatorTest,
   request_test_util::FillMobileRequestWithHardwareKeyboard(request_.get());
 
   {
-    MockSingleKanjiPredictionAggregator *mock =
-        data_and_aggregator->mutable_single_kanji_prediction_aggregator();
-    EXPECT_CALL(*mock, AggregateResults(_)).Times(0);
+    MockSingleKanjiDictionary *mock =
+        data_and_aggregator->mutable_single_kanji_dictionary();
+    EXPECT_CALL(*mock, LookupKanjiEntries(_, _)).Times(0);
   }
 
   Segments segments;

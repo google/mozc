@@ -72,9 +72,9 @@ void StripLastChar(std::string *key) {
 }  // namespace
 
 SingleKanjiPredictionAggregator::SingleKanjiPredictionAggregator(
-    const DataManager &data_manager, const dictionary::PosMatcher &pos_matcher)
-    : single_kanji_dictionary_(
-          new dictionary::SingleKanjiDictionary(data_manager)),
+    const dictionary::PosMatcher &pos_matcher,
+    const dictionary::SingleKanjiDictionary &single_kanji_dictionary)
+    : single_kanji_dictionary_(single_kanji_dictionary),
       general_symbol_id_(pos_matcher.GetGeneralSymbolId()) {}
 
 SingleKanjiPredictionAggregator::~SingleKanjiPredictionAggregator() = default;
@@ -97,7 +97,7 @@ std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
       break;
     }
     const std::vector<std::string> kanji_list =
-        single_kanji_dictionary_->LookupKanjiEntries(key, use_svs);
+        single_kanji_dictionary_.LookupKanjiEntries(key, use_svs);
     if (kanji_list.empty()) {
       continue;
     }

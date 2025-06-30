@@ -1188,9 +1188,10 @@ void DictionaryPredictionAggregator::AggregateSingleKanji(
     const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
 
-  for (Result &result :
-       modules_.GetSingleKanjiPredictionAggregator().AggregateResults(
-           request)) {
+  const SingleKanjiPredictionAggregator aggregator(
+      modules_.GetPosMatcher(), modules_.GetSingleKanjiDictionary());
+
+  for (Result &result : aggregator.AggregateResults(request)) {
     results->emplace_back(std::move(result));
   }
 }

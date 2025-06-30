@@ -300,7 +300,6 @@ mozc_cc_test(
     deps = [
         ":dictionary_prediction_aggregator",
         ":result",
-        ":single_kanji_prediction_aggregator",
         ":zero_query_dict",
         "//base:util",
         "//base/container:serialized_string_array",
@@ -317,6 +316,7 @@ mozc_cc_test(
         "//dictionary:dictionary_mock",
         "//dictionary:dictionary_token",
         "//dictionary:pos_matcher",
+        "//dictionary:single_kanji_dictionary",
         "//engine:modules",
         "//engine:supplemental_model_interface",
         "//engine:supplemental_model_mock",
@@ -384,7 +384,6 @@ mozc_cc_library(
         "single_kanji_prediction_aggregator.cc",
     ],
     hdrs = ["single_kanji_prediction_aggregator.h"],
-    visibility = ["//engine:__pkg__"],
     deps = [
         ":result",
         "//base:util",
@@ -417,6 +416,8 @@ mozc_cc_test(
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher",
+        "//dictionary:single_kanji_dictionary",
+        "//engine:modules",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",

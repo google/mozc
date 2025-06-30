@@ -41,8 +41,8 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/single_kanji_dictionary.h"
 #include "engine/supplemental_model_interface.h"
-#include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_dict.h"
 
@@ -101,10 +101,9 @@ class Modules {
     return suggestion_filter_;
   }
 
-  const prediction::SingleKanjiPredictionAggregator &
-  GetSingleKanjiPredictionAggregator() const {
-    DCHECK(single_kanji_prediction_aggregator_);
-    return *single_kanji_prediction_aggregator_;
+  const dictionary::SingleKanjiDictionary &GetSingleKanjiDictionary() const {
+    DCHECK(single_kanji_dictionary_);
+    return *single_kanji_dictionary_;
   }
 
   const ZeroQueryDict &GetZeroQueryDict() const { return zero_query_dict_; }
@@ -135,8 +134,8 @@ class Modules {
   std::unique_ptr<dictionary::DictionaryInterface> dictionary_;
   std::unique_ptr<const dictionary::PosGroup> pos_group_;
   SuggestionFilter suggestion_filter_;
-  std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
-      single_kanji_prediction_aggregator_;
+  std::unique_ptr<const dictionary::SingleKanjiDictionary>
+      single_kanji_dictionary_;
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;
 
@@ -160,9 +159,9 @@ class ModulesPresetBuilder {
       std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary);
   ModulesPresetBuilder &PresetDictionary(
       std::unique_ptr<dictionary::DictionaryInterface> dictionary);
-  ModulesPresetBuilder &PresetSingleKanjiPredictionAggregator(
-      std::unique_ptr<const prediction::SingleKanjiPredictionAggregator>
-          single_kanji_prediction_aggregator);
+  ModulesPresetBuilder &PresetSingleKanjiDictionary(
+      std::unique_ptr<const dictionary::SingleKanjiDictionary>
+          single_kanji_dictionary);
   ModulesPresetBuilder &PresetSupplementalModel(
       std::unique_ptr<engine::SupplementalModelInterface> supplemental_model);
   absl::StatusOr<std::unique_ptr<Modules>> Build(

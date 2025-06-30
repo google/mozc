@@ -48,7 +48,9 @@ namespace mozc {
 
 class SingleKanjiRewriter : public RewriterInterface {
  public:
-  explicit SingleKanjiRewriter(const DataManager &data_manager);
+  SingleKanjiRewriter(
+      const dictionary::PosMatcher &pos_matcher,
+      const dictionary::SingleKanjiDictionary &single_kanji_dictionary);
   ~SingleKanjiRewriter() override;
 
   int capability(const ConversionRequest &request) const override;
@@ -65,8 +67,8 @@ class SingleKanjiRewriter : public RewriterInterface {
                      uint16_t single_kanji_id,
                      converter::Candidate *cand) const;
 
-  const dictionary::PosMatcher pos_matcher_;
-  std::unique_ptr<dictionary::SingleKanjiDictionary> single_kanji_dictionary_;
+  const dictionary::PosMatcher &pos_matcher_;
+  const dictionary::SingleKanjiDictionary &single_kanji_dictionary_;
 };
 
 }  // namespace mozc

@@ -42,6 +42,8 @@
 #include "converter/candidate.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/single_kanji_dictionary.h"
+#include "engine/modules.h"
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -68,11 +70,10 @@ bool FindResultByKey(absl::Span<const Result> results,
 
 class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
  protected:
-  SingleKanjiPredictionAggregatorTest() {
-    data_manager_ = std::make_unique<testing::MockDataManager>();
-    pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
-        data_manager_->GetPosMatcherData());
-  }
+  SingleKanjiPredictionAggregatorTest()
+      : modules_(engine::Modules::Create(
+                     std::make_unique<testing::MockDataManager>())
+                     .value()) {}
 
   ~SingleKanjiPredictionAggregatorTest() override = default;
 
@@ -98,19 +99,26 @@ class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
         .Build();
   }
 
+  const dictionary::PosMatcher &pos_matcher() const {
+    return modules_->GetPosMatcher();
+  }
+
+  const dictionary::SingleKanjiDictionary &single_kanji_dictionary() const {
+    return modules_->GetSingleKanjiDictionary();
+  }
+
   std::unique_ptr<composer::Composer> composer_;
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
   commands::Context context_;
-
-  std::unique_ptr<testing::MockDataManager> data_manager_;
-  std::unique_ptr<dictionary::PosMatcher> pos_matcher_;
+  std::unique_ptr<engine::Modules> modules_;
 };
 
 TEST_F(SingleKanjiPredictionAggregatorTest, NoResult) {
   SetUpInputWithKey("ん", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
-                                                   *pos_matcher_);
+  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
+                                                   single_kanji_dictionary());
+
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_TRUE(results.empty());
@@ -118,8 +126,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, NoResult) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, NoResultForHardwareKeyboard) {
   SetUpInputWithKey("あけぼのの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
-                                                   *pos_matcher_);
+  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
+                                                   single_kanji_dictionary());
   request_test_util::FillMobileRequestWithHardwareKeyboard(request_.get());
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
@@ -128,8 +136,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, NoResultForHardwareKeyboard) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, ResultsFromPrefix) {
   SetUpInputWithKey("あけぼのの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
-                                                   *pos_matcher_);
+  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
+                                                   single_kanji_dictionary());
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_GT(results.size(), 1);
@@ -146,16 +154,16 @@ TEST_F(SingleKanjiPredictionAggregatorTest, ResultsFromPrefix) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, Result) {
   SetUpInputWithKey("あけぼの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
-                                                   *pos_matcher_);
+  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
+                                                   single_kanji_dictionary());
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_GT(results.size(), 1);
   const auto &result = results[0];
   EXPECT_EQ(result.key, "あけぼの");
   EXPECT_EQ(result.types, SINGLE_KANJI);
-  EXPECT_EQ(result.lid, pos_matcher_->GetGeneralSymbolId());
-  EXPECT_EQ(result.rid, pos_matcher_->GetGeneralSymbolId());
+  EXPECT_EQ(result.lid, pos_matcher().GetGeneralSymbolId());
+  EXPECT_EQ(result.rid, pos_matcher().GetGeneralSymbolId());
   EXPECT_FALSE(result.candidate_attributes &
                converter::Candidate::PARTIALLY_KEY_CONSUMED);
   EXPECT_EQ(result.consumed_key_size, 0);
@@ -163,16 +171,16 @@ TEST_F(SingleKanjiPredictionAggregatorTest, Result) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, PrefixResult) {
   SetUpInputWithKey("あけぼのの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
-                                                   *pos_matcher_);
+  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
+                                                   single_kanji_dictionary());
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_GT(results.size(), 1);
   const auto &result = results[0];
   EXPECT_EQ(result.key, "あけぼの");
   EXPECT_EQ(result.types, SINGLE_KANJI);
-  EXPECT_EQ(result.lid, pos_matcher_->GetGeneralSymbolId());
-  EXPECT_EQ(result.rid, pos_matcher_->GetGeneralSymbolId());
+  EXPECT_EQ(result.lid, pos_matcher().GetGeneralSymbolId());
+  EXPECT_EQ(result.rid, pos_matcher().GetGeneralSymbolId());
   EXPECT_TRUE(result.candidate_attributes &
               converter::Candidate::PARTIALLY_KEY_CONSUMED);
   EXPECT_EQ(result.consumed_key_size, strings::CharsLen("あけぼの"));
@@ -181,8 +189,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, PrefixResult) {
 TEST_F(SingleKanjiPredictionAggregatorTest, NoPrefixResult) {
   request_->set_auto_partial_suggestion(false);
   SetUpInputWithKey("あけぼのの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
-                                                   *pos_matcher_);
+  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
+                                                   single_kanji_dictionary());
   const ConversionRequest convreq = CreateConversionRequest();
   const std::vector<Result> results = aggregator.AggregateResults(convreq);
   EXPECT_EQ(results.size(), 0);  // No "あけぼの"
@@ -190,8 +198,8 @@ TEST_F(SingleKanjiPredictionAggregatorTest, NoPrefixResult) {
 
 TEST_F(SingleKanjiPredictionAggregatorTest, SvsVariation) {
   SetUpInputWithKey("かみ", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(*data_manager_,
-                                                   *pos_matcher_);
+  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
+                                                   single_kanji_dictionary());
   request_->mutable_decoder_experiment_params()->set_variation_character_types(
       commands::DecoderExperimentParams::SVS_JAPANESE);
   const ConversionRequest convreq = CreateConversionRequest();
