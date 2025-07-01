@@ -13,8 +13,8 @@ concurrency:
 
 jobs:
   build_gyp:
-    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
-    runs-on: windows-2022
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md
+    runs-on: windows-2025
     timeout-minutes: 120
 
     steps:
@@ -75,8 +75,8 @@ jobs:
           if-no-files-found: warn
 
   build_x64:
-    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
-    runs-on: windows-2022
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md
+    runs-on: windows-2025
     timeout-minutes: 120
 
     steps:
@@ -127,8 +127,8 @@ jobs:
           if-no-files-found: warn
 
   build_arm64:
-    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
-    runs-on: windows-2022
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md
+    runs-on: windows-2025
     timeout-minutes: 120
 
     steps:
@@ -179,8 +179,8 @@ jobs:
           if-no-files-found: warn
 
   test_gyp:
-    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
-    runs-on: windows-2022
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md
+    runs-on: windows-2025
     timeout-minutes: 90
 
     steps:
@@ -221,8 +221,8 @@ jobs:
           python build_mozc.py runtests -c Debug
 
   test:
-    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
-    runs-on: windows-2022
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md
+    runs-on: windows-2025
     timeout-minutes: 120
 
     steps:
@@ -256,8 +256,8 @@ jobs:
   # in other jobs. Another approach would be to use "needs:".
   # https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow
   cache_deps:
-    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md
-    runs-on: windows-2022
+    # https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md
+    runs-on: windows-2025
     timeout-minutes: 15
 
     steps:
