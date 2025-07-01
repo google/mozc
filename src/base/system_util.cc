@@ -526,8 +526,12 @@ std::string SystemUtil::GetUserNameAsString() {
   DCHECK_NE(FALSE, result);
   return win32::WideToUtf8(wusername);
 #else   // _WIN32
-  const int bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
-  CHECK_NE(bufsize, -1);
+  int bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+  if (bufsize == -1) {
+    // Not all linux systems have _SC_GETPW_R_SIZE_MAX.
+    // e.g. musl libc returns -1.
+    bufsize = 1024;
+  }
   absl::FixedArray<char> buf(bufsize);
   struct passwd pw, *ppw;
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf.data(), buf.size(), &ppw));
