@@ -264,15 +264,7 @@ class ConversionRequest {
            options_.kana_modifier_insensitive_conversion;
   }
 
-  bool IsZeroQuerySuggestion() const {
-    // Checks segments_ first for compatibility.
-    if (segments_) {
-      return segments_->conversion_segments_size() == 0 ||
-             (segments_->conversion_segments_size() > 0 &&
-              segments_->conversion_segment(0).key().empty());
-    }
-    return key().empty();
-  }
+  bool IsZeroQuerySuggestion() const { return key().empty(); }
 
   size_t max_conversion_candidates_size() const {
     return options_.max_conversion_candidates_size;
