@@ -679,12 +679,12 @@ std::vector<Result> DictionaryPredictionAggregator::
     ConversionRequest::Options options = request.options();
     options.kana_modifier_insensitive_conversion = false;
     options.use_already_typing_corrected_key = true;
-    options.key = key;
     const ConversionRequest corrected_request =
         ConversionRequestBuilder()
             .SetConversionRequestView(request)
             .SetOptions(std::move(options))
             .SetHistorySegmentsView(corrected_segments)
+            .SetKey(key)
             .Build();
 
     std::vector<Result> corrected_results;
