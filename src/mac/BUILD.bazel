@@ -46,6 +46,7 @@ load(
 package(default_visibility = ["//visibility:private"])
 
 # BUILD_TYPE_SELECT is treated as a function, but not a string. This cannot be a value of join().
+# `--define CHANNEL=dev` is the command line option to select dev channel.
 BUILD_TYPE_SELECT = select({
     "//:dev_channel": "dev",
     "//conditions:default": "stable",
