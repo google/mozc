@@ -76,7 +76,6 @@ def TweakPkgproj(args, src_dir):
 def BuildInstaller(args, out_dir):
   """Creates a .pkg file by running packagesbuild."""
   # Make sure Packages is installed
-  packagesbuild_path = ''
   if os.path.exists('/usr/local/bin/packagesbuild'):
     packagesbuild_path = '/usr/local/bin/packagesbuild'
   elif os.path.exists('/usr/bin/packagesbuild'):
