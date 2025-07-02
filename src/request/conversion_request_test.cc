@@ -139,6 +139,12 @@ TEST(ConversionRequestTest, SetKeyTest) {
                                               .SetKey("foo")
                                               .Build();
   EXPECT_EQ("foo", conversion_request2.key());
+
+  ConversionRequest conversion_request3 =
+      ConversionRequestBuilder()
+          .SetConversionRequestView(conversion_request2)
+          .Build();
+  EXPECT_EQ("foo", conversion_request3.key());
 }
 
 TEST(ConversionRequestTest, SetHistorySegmentsTest) {

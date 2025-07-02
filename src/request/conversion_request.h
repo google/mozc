@@ -445,6 +445,7 @@ class ConversionRequestBuilder {
     request_.config_ = base_convreq.config_;
     request_.segments_ = base_convreq.segments_;
     request_.options_ = base_convreq.options_;
+    request_.key_ = base_convreq.key_;
     return *this;
   }
   ConversionRequestBuilder &SetConversionRequestView(
@@ -457,6 +458,7 @@ class ConversionRequestBuilder {
     request_.context_.set_view(*base_convreq.context_);
     request_.config_.set_view(*base_convreq.config_);
     request_.options_ = base_convreq.options_;
+    request_.key_ = base_convreq.key_;
     if (base_convreq.segments_) {
       request_.segments_.set_view(*base_convreq.segments_);
     }
