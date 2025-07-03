@@ -311,7 +311,7 @@ FAILED:	くうぐんしょうこう	空軍商工	Conversion Expected	空軍将�
 FAILED:	へんきんまち	返金街	Conversion Expected	返金待ち	2.30.5490
 OK:	いちじんしゃ	一迅社	Conversion Expected 9	一迅社	2.30.5618
 OK:	とうよ	投与	Conversion Expected 99	党与	2.30.5490
-FAILED:	けいゆう	慶祐	Conversion Expected 99	経由	2.30.5618
+OK:	けいゆう	経由	Conversion Expected 99	経由	2.31.5851
 OK:	おっぱ	オッパ	Conversion Expected 9	越波	2.30.5618
 FAILED:	じっぽん	十本	Conversion Expected 99	日本	2.30.5490
 OK:	いりなか	杁中	Conversion Expected 9	杁中	2.30.5618
