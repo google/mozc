@@ -195,14 +195,6 @@ archive_override(
     url = "https://github.com/hiroyuki-komatsu/japanese-usage-dictionary/archive/refs/tags/%s.zip" % JA_USAGE_DICT_TAG,
 )
 
-# Windows Implementation Library (WIL)
-# https://github.com/microsoft/wil/
-new_local_repository(
-    name = "com_microsoft_wil",
-    build_file = "@//bazel:BUILD.wil.bazel",
-    path = "third_party/wil",
-)
-
 pkg_config_repository = use_repo_rule(
     "@//bazel:pkg_config_repository.bzl",
     "pkg_config_repository",
@@ -324,6 +316,16 @@ http_file(
 )
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Windows Implementation Library (WIL)
+# https://github.com/microsoft/wil/
+http_archive(
+    name = "com_microsoft_wil",
+    build_file = "@//bazel:BUILD.wil.bazel",
+    sha256 = "f116af6cd96b8404d5e3cd6ef18853f7baa9c7d96930e741591fea8b5a3ef919",
+    strip_prefix = "wil-1.0.230629.1",
+    url = "https://github.com/microsoft/wil/archive/refs/tags/v1.0.230629.1.zip",
+)
 
 # Google Toolbox for Mac
 # https://github.com/google/google-toolbox-for-mac
