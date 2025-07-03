@@ -392,7 +392,8 @@ def mozc_win32_cc_prod_binary(
         features = features,
         # '/CETCOMPAT' is available only on x86/x64 architectures.
         linkopts = modified_linkopts + select({
-            "//:intel_cpu": ["/CETCOMPAT"],
+            "@platforms//cpu:x86_32": ["/CETCOMPAT"],
+            "@platforms//cpu:x86_64": ["/CETCOMPAT"],
             "//conditions:default": [],
         }),
         linkshared = linkshared,

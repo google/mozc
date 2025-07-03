@@ -131,14 +131,6 @@ platform(
     ],
 )
 
-selects.config_setting_group(
-    name = "intel_cpu",
-    match_any = [
-        "@platforms//cpu:x86_32",
-        "@platforms//cpu:x86_64",
-    ],
-)
-
 # Special target so as to define special macros for each platforms.
 # Don't depend on this directly. Use mozc_cc_(library|binary|test) rule instead.
 cc_library(
