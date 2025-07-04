@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "prediction/single_kanji_prediction_aggregator.h"
+#include "prediction/single_kanji_decoder.h"
 
 #include <memory>
 #include <utility>
@@ -68,14 +68,14 @@ bool FindResultByKey(absl::Span<const Result> results,
   return false;
 }
 
-class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
+class SingleKanjiDecoderTest : public ::testing::Test {
  protected:
-  SingleKanjiPredictionAggregatorTest()
+  SingleKanjiDecoderTest()
       : modules_(engine::Modules::Create(
                      std::make_unique<testing::MockDataManager>())
                      .value()) {}
 
-  ~SingleKanjiPredictionAggregatorTest() override = default;
+  ~SingleKanjiDecoderTest() override = default;
 
  protected:
   void SetUp() override {
@@ -114,32 +114,29 @@ class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
   std::unique_ptr<engine::Modules> modules_;
 };
 
-TEST_F(SingleKanjiPredictionAggregatorTest, NoResult) {
+TEST_F(SingleKanjiDecoderTest, NoResult) {
   SetUpInputWithKey("ん", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
-                                                   single_kanji_dictionary());
+  const SingleKanjiDecoder aggregator(pos_matcher(), single_kanji_dictionary());
 
   const ConversionRequest convreq = CreateConversionRequest();
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results = aggregator.Decode(convreq);
   EXPECT_TRUE(results.empty());
 }
 
-TEST_F(SingleKanjiPredictionAggregatorTest, NoResultForHardwareKeyboard) {
+TEST_F(SingleKanjiDecoderTest, NoResultForHardwareKeyboard) {
   SetUpInputWithKey("あけぼのの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
-                                                   single_kanji_dictionary());
+  const SingleKanjiDecoder aggregator(pos_matcher(), single_kanji_dictionary());
   request_test_util::FillMobileRequestWithHardwareKeyboard(request_.get());
   const ConversionRequest convreq = CreateConversionRequest();
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results = aggregator.Decode(convreq);
   EXPECT_EQ(results.size(), 0);
 }
 
-TEST_F(SingleKanjiPredictionAggregatorTest, ResultsFromPrefix) {
+TEST_F(SingleKanjiDecoderTest, ResultsFromPrefix) {
   SetUpInputWithKey("あけぼのの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
-                                                   single_kanji_dictionary());
+  const SingleKanjiDecoder aggregator(pos_matcher(), single_kanji_dictionary());
   const ConversionRequest convreq = CreateConversionRequest();
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results = aggregator.Decode(convreq);
   EXPECT_GT(results.size(), 1);
   EXPECT_TRUE(FindResultByKey(results, "あけぼの"));
   EXPECT_TRUE(FindResultByKey(results, "あけ"));
@@ -152,12 +149,11 @@ TEST_F(SingleKanjiPredictionAggregatorTest, ResultsFromPrefix) {
   }
 }
 
-TEST_F(SingleKanjiPredictionAggregatorTest, Result) {
+TEST_F(SingleKanjiDecoderTest, Result) {
   SetUpInputWithKey("あけぼの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
-                                                   single_kanji_dictionary());
+  const SingleKanjiDecoder aggregator(pos_matcher(), single_kanji_dictionary());
   const ConversionRequest convreq = CreateConversionRequest();
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results = aggregator.Decode(convreq);
   EXPECT_GT(results.size(), 1);
   const auto &result = results[0];
   EXPECT_EQ(result.key, "あけぼの");
@@ -169,12 +165,11 @@ TEST_F(SingleKanjiPredictionAggregatorTest, Result) {
   EXPECT_EQ(result.consumed_key_size, 0);
 }
 
-TEST_F(SingleKanjiPredictionAggregatorTest, PrefixResult) {
+TEST_F(SingleKanjiDecoderTest, PrefixResult) {
   SetUpInputWithKey("あけぼのの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
-                                                   single_kanji_dictionary());
+  const SingleKanjiDecoder aggregator(pos_matcher(), single_kanji_dictionary());
   const ConversionRequest convreq = CreateConversionRequest();
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results = aggregator.Decode(convreq);
   EXPECT_GT(results.size(), 1);
   const auto &result = results[0];
   EXPECT_EQ(result.key, "あけぼの");
@@ -186,24 +181,22 @@ TEST_F(SingleKanjiPredictionAggregatorTest, PrefixResult) {
   EXPECT_EQ(result.consumed_key_size, strings::CharsLen("あけぼの"));
 }
 
-TEST_F(SingleKanjiPredictionAggregatorTest, NoPrefixResult) {
+TEST_F(SingleKanjiDecoderTest, NoPrefixResult) {
   request_->set_auto_partial_suggestion(false);
   SetUpInputWithKey("あけぼのの", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
-                                                   single_kanji_dictionary());
+  const SingleKanjiDecoder aggregator(pos_matcher(), single_kanji_dictionary());
   const ConversionRequest convreq = CreateConversionRequest();
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results = aggregator.Decode(convreq);
   EXPECT_EQ(results.size(), 0);  // No "あけぼの"
 }
 
-TEST_F(SingleKanjiPredictionAggregatorTest, SvsVariation) {
+TEST_F(SingleKanjiDecoderTest, SvsVariation) {
   SetUpInputWithKey("かみ", composer_.get());
-  const SingleKanjiPredictionAggregator aggregator(pos_matcher(),
-                                                   single_kanji_dictionary());
+  const SingleKanjiDecoder aggregator(pos_matcher(), single_kanji_dictionary());
   request_->mutable_decoder_experiment_params()->set_variation_character_types(
       commands::DecoderExperimentParams::SVS_JAPANESE);
   const ConversionRequest convreq = CreateConversionRequest();
-  const std::vector<Result> results = aggregator.AggregateResults(convreq);
+  const std::vector<Result> results = aggregator.Decode(convreq);
   EXPECT_GT(results.size(), 1);
 
   auto contains = [&](absl::string_view value) {

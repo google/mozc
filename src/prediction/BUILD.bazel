@@ -260,7 +260,7 @@ mozc_cc_library(
     deps = [
         ":number_decoder",
         ":result",
-        ":single_kanji_prediction_aggregator",
+        ":single_kanji_decoder",
         ":zero_query_dict",
         "//base:japanese_util",
         "//base:number_util",
@@ -282,6 +282,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "//request:request_util",
         "//transliteration",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
@@ -379,11 +380,11 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "single_kanji_prediction_aggregator",
+    name = "single_kanji_decoder",
     srcs = [
-        "single_kanji_prediction_aggregator.cc",
+        "single_kanji_decoder.cc",
     ],
-    hdrs = ["single_kanji_prediction_aggregator.h"],
+    hdrs = ["single_kanji_decoder.h"],
     deps = [
         ":result",
         "//base:util",
@@ -402,13 +403,13 @@ mozc_cc_library(
 )
 
 mozc_cc_test(
-    name = "single_kanji_prediction_aggregator_test",
+    name = "single_kanji_decoder_test",
     srcs = [
-        "single_kanji_prediction_aggregator_test.cc",
+        "single_kanji_decoder_test.cc",
     ],
     deps = [
         ":result",
-        ":single_kanji_prediction_aggregator",
+        ":single_kanji_decoder",
         "//base/strings:unicode",
         "//composer",
         "//composer:table",

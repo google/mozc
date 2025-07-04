@@ -40,6 +40,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/container/btree_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -66,7 +67,7 @@
 #include "engine/supplemental_model_interface.h"
 #include "prediction/number_decoder.h"
 #include "prediction/result.h"
-#include "prediction/single_kanji_prediction_aggregator.h"
+#include "prediction/single_kanji_decoder.h"
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -1117,9 +1118,9 @@ void DictionaryPredictionAggregator::AggregateEnglish(
 
   const ResultsSizeAdjuster adjuster(request, results);
 
-  GetPredictiveResultsForEnglishKey(dictionary_, request,
-                                    request.key(), ENGLISH,
-                                    adjuster.cutoff_threshold(), results);
+  GetPredictiveResultsForEnglishKey(dictionary_, request, request.key(),
+                                    ENGLISH, adjuster.cutoff_threshold(),
+                                    results);
 }
 
 void DictionaryPredictionAggregator::AggregateEnglishUsingRawInput(
@@ -1188,12 +1189,11 @@ void DictionaryPredictionAggregator::AggregateSingleKanji(
     const ConversionRequest &request, std::vector<Result> *results) const {
   DCHECK(results);
 
-  const SingleKanjiPredictionAggregator aggregator(
-      modules_.GetPosMatcher(), modules_.GetSingleKanjiDictionary());
-
-  for (Result &result : aggregator.AggregateResults(request)) {
-    results->emplace_back(std::move(result));
-  }
+  const std::vector<Result> single_kaji_results =
+      SingleKanjiDecoder(modules_.GetPosMatcher(),
+                         modules_.GetSingleKanjiDictionary())
+          .Decode(request);
+  absl::c_move(single_kaji_results, std::back_inserter(*results));
 }
 
 void DictionaryPredictionAggregator::GetPredictiveResultsForUnigram(

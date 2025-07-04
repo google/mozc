@@ -42,7 +42,7 @@
         'number_decoder_test.cc',
         'user_history_predictor_test.cc',
         'predictor_test.cc',
-        'single_kanji_prediction_aggregator_test.cc',
+        'single_kanji_decoder_test.cc',
         'zero_query_dict_test.cc',
       ],
       'dependencies': [

@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "prediction/single_kanji_prediction_aggregator.h"
+#include "prediction/single_kanji_decoder.h"
 
 #include <cstddef>
 #include <memory>
@@ -71,15 +71,15 @@ void StripLastChar(std::string *key) {
 
 }  // namespace
 
-SingleKanjiPredictionAggregator::SingleKanjiPredictionAggregator(
+SingleKanjiDecoder::SingleKanjiDecoder(
     const dictionary::PosMatcher &pos_matcher,
     const dictionary::SingleKanjiDictionary &single_kanji_dictionary)
     : single_kanji_dictionary_(single_kanji_dictionary),
       general_symbol_id_(pos_matcher.GetGeneralSymbolId()) {}
 
-SingleKanjiPredictionAggregator::~SingleKanjiPredictionAggregator() = default;
+SingleKanjiDecoder::~SingleKanjiDecoder() = default;
 
-std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
+std::vector<Result> SingleKanjiDecoder::Decode(
     const ConversionRequest &request) const {
   std::vector<Result> results;
   constexpr int kMinSingleKanjiSize = 5;
@@ -113,10 +113,11 @@ std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
   return results;
 }
 
-void SingleKanjiPredictionAggregator::AppendResults(
-    absl::string_view kanji_key, absl::string_view original_input_key,
-    absl::Span<const std::string> kanji_list, const int offset,
-    std::vector<Result> *results) const {
+void SingleKanjiDecoder::AppendResults(absl::string_view kanji_key,
+                                       absl::string_view original_input_key,
+                                       absl::Span<const std::string> kanji_list,
+                                       const int offset,
+                                       std::vector<Result> *results) const {
   for (const std::string &kanji : kanji_list) {
     Result result;
     // Set the wcost to keep the `kanji_list` order.

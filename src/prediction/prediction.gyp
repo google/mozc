@@ -44,7 +44,7 @@
         'predictor.cc',
         'result.cc',
         'result_filter.cc',
-        'single_kanji_prediction_aggregator.cc',
+        'single_kanji_decoder.cc',
         'user_history_predictor.cc',
       ],
       'dependencies': [

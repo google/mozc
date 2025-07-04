@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_
-#define MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_
+#ifndef MOZC_PREDICTION_SINGLE_KANJI_DECODER_H_
+#define MOZC_PREDICTION_SINGLE_KANJI_DECODER_H_
 
 #include <cstdint>
 #include <memory>
@@ -45,15 +45,15 @@
 
 namespace mozc::prediction {
 
-class SingleKanjiPredictionAggregator {
+class SingleKanjiDecoder {
  public:
-  SingleKanjiPredictionAggregator(
-      const dictionary::PosMatcher &pos_matcher,
-      const dictionary::SingleKanjiDictionary &single_kanji_dictionary);
-  virtual ~SingleKanjiPredictionAggregator();
+  SingleKanjiDecoder(
+      const dictionary::PosMatcher &pos_matcher ABSL_ATTRIBUTE_LIFETIME_BOUND,
+      const dictionary::SingleKanjiDictionary &single_kanji_dictionary
+          ABSL_ATTRIBUTE_LIFETIME_BOUND);
+  virtual ~SingleKanjiDecoder();
 
-  virtual std::vector<Result> AggregateResults(
-      const ConversionRequest &request) const;
+  virtual std::vector<Result> Decode(const ConversionRequest &request) const;
 
  private:
   void AppendResults(absl::string_view kanji_key,
@@ -67,4 +67,4 @@ class SingleKanjiPredictionAggregator {
 
 }  // namespace mozc::prediction
 
-#endif  // MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_
+#endif  // MOZC_PREDICTION_SINGLE_KANJI_DECODER_H_
