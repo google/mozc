@@ -58,7 +58,7 @@ TEST(FlatMapTest, FindOrNull) {
   EXPECT_THAT(kMap.FindOrNull(6), IsNull());
 }
 
-TEST(FlatMapTest, CustomerCompare) {
+TEST(FlatMapTest, CustomCompare) {
   constexpr auto kMap = CreateFlatMap<int, absl::string_view, std::greater<>>({
       {1, "one"},
       {3, "three"},

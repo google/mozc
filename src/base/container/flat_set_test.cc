@@ -53,7 +53,7 @@ TEST(FlatSetTest, Contains) {
   EXPECT_FALSE(kSet.contains("six"));
 }
 
-TEST(FlatSetTest, CustomerCompare) {
+TEST(FlatSetTest, CustomCompare) {
   constexpr auto kSet = CreateFlatSet<absl::string_view, std::greater<>>({
       "one",
       "three",

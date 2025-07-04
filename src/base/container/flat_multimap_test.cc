@@ -68,7 +68,7 @@ TEST(FlatMultimapTest, EqualSpan) {
   EXPECT_THAT(kMultimap.EqualSpan(6), IsEmpty());
 }
 
-TEST(FlatMultimapTest, CustomerCompare) {
+TEST(FlatMultimapTest, CustomCompare) {
   constexpr auto kMultimap =
       CreateFlatMultimap<int, absl::string_view, std::greater<>>({
           {1, "one"},
