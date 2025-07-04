@@ -31,17 +31,26 @@
 
 #include <initializer_list>
 #include <iterator>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/random/random.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/util.h"
+#include "converter/candidate.h"
+#include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/pos_matcher.h"
+#include "engine/modules.h"
+#include "prediction/result.h"
+#include "request/conversion_request.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
-namespace mozc {
+namespace mozc::prediction {
 namespace {
 
 using ::testing::UnorderedElementsAreArray;
@@ -49,7 +58,7 @@ using ::testing::UnorderedElementsAreArray;
 struct TestParam {
   explicit TestParam(absl::string_view key) : key(key) {}
   TestParam(const absl::string_view key,
-            const std::initializer_list<NumberDecoder::Result> results)
+            const std::initializer_list<NumberDecoderResult> results)
       : key(key), expected(results) {}
 
   template <typename Sink>
@@ -58,7 +67,7 @@ struct TestParam {
   }
 
   absl::string_view key;
-  std::vector<NumberDecoder::Result> expected;
+  std::vector<NumberDecoderResult> expected;
 };
 
 TestParam AllConsumed(
@@ -72,10 +81,23 @@ TestParam AllConsumed(
   return param;
 }
 
-class NumberDecoderTest : public ::testing::TestWithParam<TestParam> {};
+class NumberDecoderTest : public ::testing::TestWithParam<TestParam> {
+ public:
+  NumberDecoderTest()
+      : modules_(engine::Modules::Create(
+                     std::make_unique<testing::MockDataManager>())
+                     .value()) {}
+
+  const dictionary::PosMatcher &pos_matcher() const {
+    return modules_->GetPosMatcher();
+  }
+
+ private:
+  std::unique_ptr<engine::Modules> modules_;
+};
 
 TEST_P(NumberDecoderTest, Decode) {
-  NumberDecoder decoder;
+  const NumberDecoder decoder(pos_matcher());
   EXPECT_THAT(decoder.Decode(GetParam().key),
               UnorderedElementsAreArray(GetParam().expected));
 }
@@ -162,7 +184,7 @@ INSTANTIATE_TEST_SUITE_P(InvalidSequences, NumberDecoderTest,
                                            TestParam("くせん", {}),
                                            TestParam("しがいせん", {})));
 
-TEST(NumberDecoderRandomTest, Random) {
+TEST_F(NumberDecoderTest, Random) {
   constexpr absl::string_view kKeys[] = {
       "ぜろ",     "いち",      "いっ",   "に",     "さん",     "し",
       "よん",     "ご",        "ろく",   "ろっ",   "なな",     "しち",
@@ -174,7 +196,7 @@ TEST(NumberDecoderRandomTest, Random) {
 
   constexpr int kTestSize = 1000;
   constexpr int kKeySize = 10;
-  NumberDecoder decoder;
+  const NumberDecoder decoder(pos_matcher());
   absl::BitGen gen;
   for (int try_count = 0; try_count < kTestSize; ++try_count) {
     std::string key;
@@ -183,9 +205,23 @@ TEST(NumberDecoderRandomTest, Random) {
     }
     // Check the key does not cause any failure.
     EXPECT_NO_FATAL_FAILURE(
-        { std::vector<NumberDecoder::Result> results = decoder.Decode(key); });
+        { std::vector<NumberDecoderResult> results = decoder.Decode(key); });
+
+    const ConversionRequest request =
+        ConversionRequestBuilder().SetKey(key).Build();
+    for (const Result &result : decoder.Decode(request)) {
+      EXPECT_TRUE(absl::StartsWith(key, result.key));
+      if (result.key.size() < key.size()) {
+        EXPECT_TRUE(result.candidate_attributes &
+                    converter::Candidate::PARTIALLY_KEY_CONSUMED);
+        EXPECT_EQ(result.consumed_key_size, Util::CharsLen(result.key));
+        EXPECT_GE(result.wcost, 1000);
+        EXPECT_NE(result.lid, 0);
+        EXPECT_NE(result.rid, 0);
+      }
+    }
   }
 }
 
 }  // namespace
-}  // namespace mozc
+}  // namespace mozc::prediction

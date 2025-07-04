@@ -270,11 +270,9 @@ class DictionaryPredictionAggregator
   const uint16_t counter_suffix_word_id_;
   const uint16_t kanji_number_id_;
   const uint16_t zip_code_id_;
-  const uint16_t number_id_;
   const uint16_t unknown_id_;
   const ZeroQueryDict &zero_query_dict_;
   const ZeroQueryDict &zero_query_number_dict_;
-  const NumberDecoder number_decoder_;
 };
 
 }  // namespace prediction
