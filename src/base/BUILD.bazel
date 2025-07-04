@@ -1018,22 +1018,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "crash_report_handler",
-    srcs = ["crash_report_handler.cc"],
-    hdrs = ["crash_report_handler.h"],
-    deps = [
-        ":const",
-        ":file_util",
-        ":system_util",
-        ":version",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-    ] + mozc_select(
-        windows = ["//base/win32:wide_char"],
-    ),
-)
-
-mozc_cc_library(
     name = "embedded_file",
     hdrs = ["embedded_file.h"],
     visibility = ["//:__subpackages__"],

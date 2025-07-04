@@ -424,36 +424,6 @@
       ],
     },
     {
-      'target_name': 'crash_report_handler',
-      'type': 'static_library',
-      'sources': [
-        'crash_report_handler.cc',
-      ],
-      'dependencies': [
-        'base',
-        'base.gyp:version',
-      ],
-      'conditions': [
-        ['OS=="win" and branding=="GoogleJapaneseInput"', {
-          'dependencies': [
-            'breakpad',
-          ],
-        }],
-        ['OS=="mac"', {
-          'hard_dependency': 1,
-          'sources': [
-            'crash_report_handler_mac.mm',
-          ],
-          'sources!': [
-            'crash_report_handler.cc',
-          ],
-          'dependencies': [
-            'breakpad',
-          ],
-        }],
-      ],
-    },
-    {
       'target_name': 'serialized_string_array',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
