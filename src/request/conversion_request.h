@@ -336,13 +336,10 @@ class ConversionRequest {
   // from ConverterRequest to Segments.
   converter::Segments MakeRequestSegments() const {
     // Needs to call SetHistorySegmentsView to use this method.
-    DCHECK(segments_);
     converter::Segments segments =
         segments_ ? *segments_ : converter::Segments();
-    if (segments.conversion_segments_size() == 0) {
-      segments.add_segment()->set_key(key());
-    }
-    segments.mutable_conversion_segment(0)->clear_candidates();
+    segments.clear_conversion_segments();
+    segments.add_segment()->set_key(key());
     return segments;
   }
 
@@ -521,7 +518,7 @@ class ConversionRequestBuilder {
   // Generally ConversionRequest only stores the request to the
   // converter, while segments both contain request and result.
   ConversionRequestBuilder &SetHistorySegments(
-      const converter::Segments &segments ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+      const converter::Segments &segments) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.segments_.copy_from(segments);
@@ -533,6 +530,9 @@ class ConversionRequestBuilder {
     stage_ = 2;
     request_.segments_.set_view(segments);
     return *this;
+  }
+  ConversionRequestBuilder &SetEmptyHistorySegments() {
+    return SetHistorySegments(Segments());
   }
   ConversionRequestBuilder &SetOptions(ConversionRequest::Options &&options) {
     DCHECK_LE(stage_, 2);

@@ -53,16 +53,13 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
-#include "converter/candidate.h"
 #include "converter/connector.h"
-#include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
-#include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/dictionary_prediction_aggregator.h"
+#include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/result_filter.h"
 #include "prediction/suggestion_filter.h"
@@ -135,20 +132,22 @@ void MaybeFixRealtimeTopCost(const ConversionRequest &request,
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor(
-    const engine::Modules &modules, const ConverterInterface &converter,
-    const ImmutableConverterInterface &immutable_converter)
-    : DictionaryPredictor(
-          modules,
-          std::make_unique<prediction::DictionaryPredictionAggregator>(
-              modules, converter, immutable_converter),
-          immutable_converter) {}
+    const engine::Modules &modules,
+    std::unique_ptr<const RealtimeDecoder> decoder)
+    : DictionaryPredictor(modules, nullptr, std::move(decoder)) {
+  // Explicitly allocate aggregator_ as decoder is unique_ptr and cannot be
+  // passed to the constructor of DictionaryPredictor and
+  // DictionaryPredictionAggregator at the same time.
+  aggregator_ = std::make_unique<prediction::DictionaryPredictionAggregator>(
+      modules, *decoder_);
+}
 
 DictionaryPredictor::DictionaryPredictor(
     const engine::Modules &modules,
     std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
-    const ImmutableConverterInterface &immutable_converter)
+    std::unique_ptr<const RealtimeDecoder> decoder)
     : aggregator_(std::move(aggregator)),
-      immutable_converter_(immutable_converter),
+      decoder_(std::move(decoder)),
       connector_(modules.GetConnector()),
       segmenter_(modules.GetSegmenter()),
       suggestion_filter_(modules.GetSuggestionFilter()),
@@ -351,8 +350,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
     int lm_cost = GetLMCost(result, rid);
     if (result.candidate_attributes &
         converter::Candidate::PARTIALLY_KEY_CONSUMED) {
-      lm_cost += CalculatePrefixPenalty(request, input_key, result,
-                                        immutable_converter_, cache);
+      lm_cost += CalculatePrefixPenalty(request, input_key, result, cache);
     }
     const auto it = min_cost_map.find(result.value);
     if (it == min_cost_map.end()) {
@@ -601,9 +599,8 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Penalty for prefix results.
     if (result.candidate_attributes &
         converter::Candidate::PARTIALLY_KEY_CONSUMED) {
-      const int prefix_penalty =
-          CalculatePrefixPenalty(request, input_key, result,
-                                 immutable_converter_, &prefix_penalty_cache);
+      const int prefix_penalty = CalculatePrefixPenalty(
+          request, input_key, result, &prefix_penalty_cache);
       result.penalty += prefix_penalty;
       cost += prefix_penalty;
       MOZC_WORD_LOG(result, "Prefix: ", cost,
@@ -708,7 +705,6 @@ bool DictionaryPredictor::IsAggressiveSuggestion(size_t query_len,
 int DictionaryPredictor::CalculatePrefixPenalty(
     const ConversionRequest &request, const absl::string_view input_key,
     const Result &result,
-    const ImmutableConverterInterface &immutable_converter,
     absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
   if (input_key == result.key) {
     LOG(WARNING) << "Invalid prefix key: " << result.key;
@@ -728,27 +724,33 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   // is "木:き", the penalty will be the cost of the conversion result for
   // "ょうの".
   int penalty = 0;
-  Segments tmp_segments;
-  tmp_segments.add_segment()->set_key(Util::Utf8SubString(input_key, key_len));
+
+  absl::string_view remain_key = Util::Utf8SubString(input_key, key_len);
 
   ConversionRequest::Options options = request.options();
   options.max_conversion_candidates_size = 1;
   // Explicitly request conversion result for the entire key.
   options.create_partial_candidates = false;
   options.kana_modifier_insensitive_conversion = false;
+  // for efficiency, disable converter.
+  options.use_actual_converter_for_realtime_conversion = false;
+
+  // Do not use the current segments but use empty segments as
+  // we want to calculate the suffix penalty only.
   const ConversionRequest req = ConversionRequestBuilder()
                                     .SetConversionRequestView(request)
                                     .SetOptions(std::move(options))
-                                    .SetHistorySegmentsView(tmp_segments)
+                                    .SetEmptyHistorySegments()
+                                    .SetKey(remain_key)
                                     .Build();
 
-  if (immutable_converter.ConvertForRequest(req, &tmp_segments) &&
-      tmp_segments.segment(0).candidates_size() > 0) {
-    const converter::Candidate &top_candidate =
-        tmp_segments.segment(0).candidate(0);
-    penalty = (connector_.GetTransitionCost(result_rid, top_candidate.lid) +
-               top_candidate.cost);
+  if (const std::vector<Result> results = decoder_->Decode(req);
+      !results.empty()) {
+    const Result &top_result = results.front();
+    penalty = connector_.GetTransitionCost(result_rid, top_result.lid) +
+              top_result.cost;
   }
+
   // ConvertForRequest() can return placeholder candidate with cost 0 when it
   // failed to generate candidates.
   if (penalty <= 0) {

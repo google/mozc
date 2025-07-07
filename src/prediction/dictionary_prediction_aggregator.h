@@ -40,12 +40,11 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/util.h"
-#include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
 #include "prediction/number_decoder.h"
+#include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
@@ -84,9 +83,8 @@ class DictionaryPredictionAggregator
       const DictionaryPredictionAggregator &) = delete;
   virtual ~DictionaryPredictionAggregator() = default;
 
-  DictionaryPredictionAggregator(
-      const engine::Modules &modules, const ConverterInterface &converter,
-      const ImmutableConverterInterface &immutable_converter);
+  DictionaryPredictionAggregator(const engine::Modules &modules,
+                                 const RealtimeDecoder &decoder);
 
   // Calls AggregateResultsForMixedConversion or AggregateResultsForDesktop
   // depending on the request.
@@ -253,18 +251,12 @@ class DictionaryPredictionAggregator
            GetCandidateCutoffThreshold(request.request_type());
   }
 
-  // Generates a top conversion result from |converter_| and adds its result to
-  // |results|.
-  bool PushBackTopConversionResult(const ConversionRequest &request,
-                                   std::vector<Result> *results) const;
-
   // Test peer to access private methods
   friend class DictionaryPredictionAggregatorTestPeer;
   friend class ResultsSizeAdjuster;
 
   const engine::Modules &modules_;
-  const ConverterInterface &converter_;
-  const ImmutableConverterInterface &immutable_converter_;
+  const RealtimeDecoder &decoder_;
   const dictionary::DictionaryInterface &dictionary_;
   const dictionary::DictionaryInterface &suffix_dictionary_;
   const uint16_t counter_suffix_word_id_;

@@ -167,6 +167,7 @@ mozc_cc_library(
     deps = [
         ":dictionary_prediction_aggregator",
         ":predictor_interface",
+        ":realtime_decoder",
         ":result",
         ":result_filter",
         ":suggestion_filter",
@@ -176,10 +177,7 @@ mozc_cc_library(
         "//base/strings:japanese",
         "//composer",
         "//converter:connector",
-        "//converter:converter_interface",
-        "//converter:immutable_converter_interface",
         "//converter:segmenter",
-        "//converter:segments",
         "//dictionary:pos_matcher",
         "//engine:modules",
         "//engine:supplemental_model_interface",
@@ -259,6 +257,7 @@ mozc_cc_library(
     hdrs = ["dictionary_prediction_aggregator.h"],
     deps = [
         ":number_decoder",
+        ":realtime_decoder",
         ":result",
         ":single_kanji_decoder",
         ":zero_query_dict",
@@ -269,10 +268,7 @@ mozc_cc_library(
         "//base/strings:unicode",
         "//composer:query",
         "//config:character_form_manager",
-        "//converter:converter_interface",
-        "//converter:immutable_converter_interface",
         "//converter:node_list_builder",
-        "//converter:segments",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
         "//dictionary:pos_matcher",
@@ -300,6 +296,7 @@ mozc_cc_test(
     ],
     deps = [
         ":dictionary_prediction_aggregator",
+        ":realtime_decoder",
         ":result",
         ":zero_query_dict",
         "//base:util",
@@ -307,9 +304,6 @@ mozc_cc_test(
         "//composer:query",
         "//composer:table",
         "//config:config_handler",
-        "//converter:converter_interface",
-        "//converter:converter_mock",
-        "//converter:immutable_converter_interface",
         "//converter:segments",
         "//data_manager",
         "//data_manager/testing:mock_data_manager",
@@ -346,6 +340,7 @@ mozc_cc_test(
     deps = [
         ":dictionary_prediction_aggregator",
         ":dictionary_predictor",
+        ":realtime_decoder",
         ":result",
         "//base:util",
         "//base/strings:assign",
@@ -353,8 +348,6 @@ mozc_cc_test(
         "//composer:table",
         "//config:config_handler",
         "//converter:connector",
-        "//converter:converter_interface",
-        "//converter:immutable_converter_interface",
         "//converter:segments",
         "//converter:segments_matchers",
         "//data_manager/testing:mock_data_manager",
@@ -440,6 +433,7 @@ mozc_cc_library(
     deps = [
         ":dictionary_predictor",
         ":predictor_interface",
+        ":realtime_decoder",
         ":result",
         ":user_history_predictor",
         "//base:util",
@@ -610,5 +604,44 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "realtime_decoder",
+    srcs = ["realtime_decoder.cc"],
+    hdrs = [
+        "realtime_decoder.h",
+    ],
+    deps = [
+        ":result",
+        "//base:util",
+        "//converter:converter_interface",
+        "//converter:immutable_converter_interface",
+        "//converter:segments",
+        "//dictionary:dictionary_token",
+        "//request:conversion_request",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "realtime_decoder_test",
+    srcs = ["realtime_decoder_test.cc"],
+    deps = [
+        ":realtime_decoder",
+        ":result",
+        "//converter:converter_interface",
+        "//converter:converter_mock",
+        "//converter:immutable_converter_interface",
+        "//converter:segments",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )

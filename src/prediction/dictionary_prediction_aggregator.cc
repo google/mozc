@@ -55,17 +55,14 @@
 #include "base/vlog.h"
 #include "composer/query.h"
 #include "config/character_form_manager.h"
-#include "converter/candidate.h"
-#include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "prediction/number_decoder.h"
+#include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/single_kanji_decoder.h"
 #include "prediction/zero_query_dict.h"
@@ -74,8 +71,7 @@
 #include "request/request_util.h"
 #include "transliteration/transliteration.h"
 
-namespace mozc {
-namespace prediction {
+namespace mozc::prediction {
 namespace {
 
 using ::mozc::commands::Request;
@@ -142,7 +138,7 @@ bool IsLongKeyForRealtimeCandidates(const ConversionRequest &request) {
   return Util::CharsLen(request.key()) >= kFewResultThreshold;
 }
 
-// Returns true if |segments| contains number history.
+// Returns true if `request` contains number history.
 // Normalized number will be set to |number_key|
 // Note:
 //  Now this function supports arabic number candidates only and
@@ -169,16 +165,6 @@ size_t GetMaxSizeForRealtimeCandidates(const ConversionRequest &request,
 
 size_t GetDefaultSizeForRealtimeCandidates(bool is_long_key) {
   return is_long_key ? 5 : 10;
-}
-
-ConversionRequest GetConversionRequestForRealtimeCandidates(
-    const ConversionRequest &request, size_t realtime_candidates_size) {
-  ConversionRequest::Options options = request.options();
-  options.max_conversion_candidates_size = realtime_candidates_size;
-  return ConversionRequestBuilder()
-      .SetConversionRequestView(request)
-      .SetOptions(std::move(options))
-      .Build();
 }
 
 class PredictiveLookupCallback : public DictionaryInterface::Callback {
@@ -523,11 +509,9 @@ class ResultsSizeAdjuster {
 };
 
 DictionaryPredictionAggregator::DictionaryPredictionAggregator(
-    const engine::Modules &modules, const ConverterInterface &converter,
-    const ImmutableConverterInterface &immutable_converter)
+    const engine::Modules &modules, const RealtimeDecoder &decoder)
     : modules_(modules),
-      converter_(converter),
-      immutable_converter_(immutable_converter),
+      decoder_(decoder),
       dictionary_(modules.GetDictionary()),
       suffix_dictionary_(modules.GetSuffixDictionary()),
       counter_suffix_word_id_(modules.GetPosMatcher().GetCounterSuffixWordId()),
@@ -668,9 +652,6 @@ std::vector<Result> DictionaryPredictionAggregator::
   for (const auto &query : corrected.value()) {
     absl::string_view key = query.correction;
 
-    Segments corrected_segments = request.MakeRequestSegments();
-    corrected_segments.mutable_conversion_segment(0)->set_key(key);
-
     // Make ConversionRequest that uses conversion_segment(0).key() as typing
     // corrected key instead of ComposerData to avoid the original key from
     // being used during the candidate aggregation.
@@ -679,11 +660,13 @@ std::vector<Result> DictionaryPredictionAggregator::
     ConversionRequest::Options options = request.options();
     options.kana_modifier_insensitive_conversion = false;
     options.use_already_typing_corrected_key = true;
+
+    // Populates all information, e.g., history segments, from `request`,
+    // and overrides the options and key.
     const ConversionRequest corrected_request =
         ConversionRequestBuilder()
             .SetConversionRequestView(request)
             .SetOptions(std::move(options))
-            .SetHistorySegmentsView(corrected_segments)
             .SetKey(key)
             .Build();
 
@@ -841,65 +824,19 @@ void DictionaryPredictionAggregator::AggregateRealtime(
     std::vector<Result> *results) const {
   DCHECK(results);
 
-  if (realtime_candidates_size == 0) {
-    return;
-  }
-
-  // First insert a top conversion result.
-  // Note: Do not call actual converter for partial suggestion / prediction.
-  // Converter::StartConversion() resets conversion key from composer
-  // rather than using the key in segments.
-  if (insert_realtime_top_from_actual_converter &&
-      request.request_type() != ConversionRequest::PARTIAL_SUGGESTION &&
-      request.request_type() != ConversionRequest::PARTIAL_PREDICTION) {
-    if (!PushBackTopConversionResult(request, results)) {
-      LOG(WARNING) << "Realtime conversion with converter failed";
-    }
-  }
+  ConversionRequest::Options options = request.options();
+  options.max_conversion_candidates_size = realtime_candidates_size;
+  options.use_actual_converter_for_realtime_conversion =
+      insert_realtime_top_from_actual_converter;
 
   const ConversionRequest request_for_realtime =
-      GetConversionRequestForRealtimeCandidates(request,
-                                                realtime_candidates_size);
-  Segments tmp_segments = request.MakeRequestSegments();
+      ConversionRequestBuilder()
+          .SetConversionRequestView(request)
+          .SetOptions(std::move(options))
+          .Build();
 
-  if (!immutable_converter_.ConvertForRequest(request_for_realtime,
-                                              &tmp_segments) ||
-      tmp_segments.conversion_segments_size() == 0 ||
-      tmp_segments.conversion_segment(0).candidates_size() == 0) {
-    LOG(WARNING) << "Convert failed";
-    return;
-  }
-
-  // Copy candidates into the array of Results.
-  const Segment &segment = tmp_segments.conversion_segment(0);
-  for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    const converter::Candidate &candidate = segment.candidate(i);
-
-    Result result;
-    result.key = candidate.key;
-    result.value = candidate.value;
-    // TODO(toshiyuki): Fix the cost.
-    // This should be |candidate.wcost + candidate.structure_cost|.
-    // |wcost| does not include transition cost between internal nodes.
-    result.wcost = candidate.wcost;
-    result.lid = candidate.lid;
-    result.rid = candidate.rid;
-    result.inner_segment_boundary = candidate.inner_segment_boundary;
-    result.SetTypesAndTokenAttributes(REALTIME, Token::NONE);
-    result.candidate_attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
-    if (candidate.key.size() < segment.key().size()) {
-      result.candidate_attributes |=
-          converter::Candidate::PARTIALLY_KEY_CONSUMED;
-      result.consumed_key_size = Util::CharsLen(candidate.key);
-    }
-    // Kana expansion happens inside the decoder.
-    if (candidate.attributes &
-        converter::Candidate::KEY_EXPANDED_IN_DICTIONARY) {
-      result.types |= prediction::KEY_EXPANDED_IN_DICTIONARY;
-    }
-    result.candidate_attributes |= candidate.attributes;
-    results->emplace_back(std::move(result));
-  }
+  std::vector<Result> realtime_results = decoder_.Decode(request_for_realtime);
+  absl::c_move(realtime_results, std::back_inserter(*results));
 }
 
 void DictionaryPredictionAggregator::AggregateUnigramForDictionary(
@@ -1403,74 +1340,6 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
   return std::min(max_size, size);
 }
 
-bool DictionaryPredictionAggregator::PushBackTopConversionResult(
-    const ConversionRequest &request, std::vector<Result> *results) const {
-  Segments tmp_segments = request.MakeRequestSegments();
-
-  ConversionRequest::Options options;
-  options.max_conversion_candidates_size = 20;
-  options.composer_key_selection = ConversionRequest::PREDICTION_KEY;
-  // Some rewriters cause significant performance loss. So we skip them.
-  options.skip_slow_rewriters = true;
-  // This method emulates usual converter's behavior so here disable
-  // partial candidates.
-  options.create_partial_candidates = false;
-  options.request_type = ConversionRequest::CONVERSION;
-  const ConversionRequest tmp_request = ConversionRequestBuilder()
-                                            .SetConversionRequestView(request)
-                                            .SetOptions(std::move(options))
-                                            .Build();
-  if (!converter_.StartConversion(tmp_request, &tmp_segments)) {
-    return false;
-  }
-
-  Result result;
-  result.lid = tmp_segments.conversion_segment(0).candidate(0).lid;
-  result.rid =
-      tmp_segments
-          .conversion_segment(tmp_segments.conversion_segments_size() - 1)
-          .candidate(0)
-          .rid;
-  result.SetTypesAndTokenAttributes(REALTIME | REALTIME_TOP, Token::NONE);
-  result.candidate_attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
-
-  // Concatenate the top candidates.
-  // Note that since StartConversion() runs in conversion mode, the
-  // resulting |tmp_segments| doesn't have inner_segment_boundary. We need to
-  // construct it manually here.
-  // TODO(noriyukit): This is code duplicate in converter/nbest_generator.cc
-  // and we should refactor code after finding more good design.
-  bool inner_segment_boundary_success = true;
-  for (const Segment &segment : tmp_segments.conversion_segments()) {
-    const converter::Candidate &candidate = segment.candidate(0);
-    result.value.append(candidate.value);
-    result.key.append(candidate.key);
-    result.wcost += candidate.wcost;
-    result.candidate_attributes |=
-        (candidate.attributes &
-         converter::Candidate::USER_SEGMENT_HISTORY_REWRITER);
-
-    uint32_t encoded_lengths = 0;
-    if (inner_segment_boundary_success &&
-        converter::Candidate::EncodeLengths(
-            candidate.key.size(), candidate.value.size(),
-            candidate.content_key.size(), candidate.content_value.size(),
-            &encoded_lengths)) {
-      result.inner_segment_boundary.push_back(encoded_lengths);
-    } else {
-      inner_segment_boundary_success = false;
-    }
-  }
-  if (!inner_segment_boundary_success) {
-    LOG(WARNING) << "Failed to construct inner segment boundary";
-    result.inner_segment_boundary.clear();
-  }
-
-  results->emplace_back(std::move(result));
-
-  return true;
-}
-
 std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
 DictionaryPredictionAggregator::GenerateQueryForHandwriting(
     const ConversionRequest &request,
@@ -1490,52 +1359,37 @@ DictionaryPredictionAggregator::GenerateQueryForHandwriting(
     return std::nullopt;
   }
 
-  Segments tmp_segments;
-  {
-    Segment *segment = tmp_segments.add_segment();
-    segment->set_key(composition_event.composition_string());
-  }
   const ConversionRequest request_for_realtime =
       ConversionRequestBuilder()
           .SetConversionRequestView(request)
           .SetRequestType(ConversionRequest::REVERSE_CONVERSION)
+          .SetKey(composition_event.composition_string())
           .Build();
-  if (!immutable_converter_.ConvertForRequest(request_for_realtime,
-                                              &tmp_segments) ||
-      tmp_segments.conversion_segments_size() == 0 ||
-      tmp_segments.conversion_segment(0).candidates_size() == 0) {
-    LOG(WARNING) << "Reverse conversion failed";
-    return std::nullopt;
-  }
-  HandwritingQueryInfo info;
-  for (const Segment &segment : tmp_segments.conversion_segments()) {
-    if (segment.candidates_size() == 0) {
-      LOG(WARNING) << "Reverse conversion failed";
-      return std::nullopt;
-    }
-    // Example:
-    // The result of reverse conversion for "見た" can be
-    // a single segment with content value:"み" + functional value:"た"
-    const absl::string_view converted = segment.candidate(0).value;
-    absl::StrAppend(&info.query, converted);
 
-    std::string utf8_str;
-    // b/324976556:
-    // We have to use the segment key instead of the candidate key.
-    // candidate key does not always match segment key for T13N chars.
-    const Utf8AsChars original_chars(segment.key());
-    for (const absl::string_view c : original_chars) {
-      if (Util::GetScriptType(c) != Util::HIRAGANA) {
-        absl::StrAppend(&utf8_str, c);
-      } else if (!utf8_str.empty()) {
-        info.constraints.emplace_back(utf8_str);
-        utf8_str.clear();
-      }
-    }
-    if (!utf8_str.empty()) {
+  HandwritingQueryInfo info;
+  std::vector<Result> results = decoder_.ReverseDecode(request_for_realtime);
+  if (results.empty()) return info;
+
+  Result &result = results.front();
+  info.query = std::move(result.value);
+
+  // b/324976556:
+  // We have to use the segment key instead of the candidate key.
+  // candidate key does not always match segment key for T13N chars.
+  std::string utf8_str;
+  const Utf8AsChars original_chars(result.key);
+  for (const absl::string_view c : original_chars) {
+    if (Util::GetScriptType(c) != Util::HIRAGANA) {
+      absl::StrAppend(&utf8_str, c);
+    } else if (!utf8_str.empty()) {
       info.constraints.emplace_back(utf8_str);
+      utf8_str.clear();
     }
   }
+  if (!utf8_str.empty()) {
+    info.constraints.emplace_back(utf8_str);
+  }
+
   return info;
 }
 
@@ -1667,5 +1521,4 @@ void DictionaryPredictionAggregator::MaybePopulateTypingCorrectionPenalty(
       request, absl::Span<Result>(*results));
 }
 
-}  // namespace prediction
-}  // namespace mozc
+}  // namespace mozc::prediction

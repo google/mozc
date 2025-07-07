@@ -45,8 +45,6 @@
 #include "absl/types/span.h"
 #include "base/thread.h"
 #include "converter/connector.h"
-#include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
@@ -64,8 +62,7 @@ class DictionaryPredictor : public PredictorInterface {
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
   DictionaryPredictor(const engine::Modules &modules,
-                      const ConverterInterface &converter,
-                      const ImmutableConverterInterface &immutable_converter);
+                      std::unique_ptr<const RealtimeDecoder> decoder);
 
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
@@ -88,7 +85,7 @@ class DictionaryPredictor : public PredictorInterface {
   DictionaryPredictor(
       const engine::Modules &modules,
       std::unique_ptr<const DictionaryPredictionAggregatorInterface> aggregator,
-      const ImmutableConverterInterface &immutable_converter);
+      std::unique_ptr<const RealtimeDecoder> decoder);
 
   std::vector<Result> RerankAndFilterResults(const ConversionRequest &request,
                                              std::vector<Result> result) const;
@@ -174,7 +171,6 @@ class DictionaryPredictor : public PredictorInterface {
   int CalculatePrefixPenalty(
       const ConversionRequest &request, absl::string_view input_key,
       const Result &result,
-      const ImmutableConverterInterface &immutable_converter,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
   std::vector<Result> AggregateTypingCorrectedResultsForMixedConversion(
@@ -205,7 +201,7 @@ class DictionaryPredictor : public PredictorInterface {
   mutable AtomicSharedPtr<Result> prev_top_result_;
   mutable std::atomic<int32_t> prev_top_key_length_ = 0;
 
-  const ImmutableConverterInterface &immutable_converter_;
+  std::unique_ptr<const RealtimeDecoder> decoder_;
   const Connector &connector_;
   const Segmenter &segmenter_;
   const SuggestionFilter &suggestion_filter_;

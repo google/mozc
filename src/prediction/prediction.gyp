@@ -42,6 +42,7 @@
         'dictionary_prediction_aggregator.cc',
         'number_decoder.cc',
         'predictor.cc',
+        'realtime_decoder.cc',
         'result.cc',
         'result_filter.cc',
         'single_kanji_decoder.cc',

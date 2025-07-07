@@ -52,6 +52,7 @@
 #include "engine/modules.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
@@ -102,7 +103,8 @@ Predictor::Predictor(const engine::Modules &modules,
                      const ConverterInterface &converter,
                      const ImmutableConverterInterface &immutable_converter)
     : dictionary_predictor_(std::make_unique<DictionaryPredictor>(
-          modules, converter, immutable_converter)),
+          modules,
+          std::make_unique<RealtimeDecoder>(immutable_converter, converter))),
       user_history_predictor_(std::make_unique<UserHistoryPredictor>(modules)) {
   DCHECK(dictionary_predictor_);
   DCHECK(user_history_predictor_);
