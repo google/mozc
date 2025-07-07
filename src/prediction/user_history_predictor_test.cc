@@ -95,6 +95,8 @@ using ::mozc::dictionary::UserDictionaryInterface;
 using ::testing::_;
 using ::testing::Return;
 
+constexpr int kRevertId = 1234;
+
 }  // namespace
 
 class UserHistoryPredictorTestPeer
@@ -130,6 +132,100 @@ class UserHistoryPredictorTestPeer
   PEER_DECLARE(EntryPriorityQueue);
 };
 
+// Wrapper class for Segments.
+// TODO(taku): re-implement it w/o using Segments.
+class SegmentsProxy {
+ public:
+  void AddSegment(absl::string_view key) {
+    Segment *seg = segments_.add_segment();
+    seg->set_key(key);
+    seg->set_segment_type(Segment::FIXED_VALUE);
+  }
+
+  void MakeSegments(absl::string_view key) {
+    segments_.Clear();
+    AddSegment(key);
+  }
+
+  void AddCandidate(size_t segment_index, absl::string_view value) {
+    converter::Candidate *candidate =
+        segments_.mutable_segment(segment_index)->add_candidate();
+    candidate->value = value;
+    candidate->content_value = value;
+    candidate->key = segments_.segment(segment_index).key();
+    candidate->content_key = segments_.segment(segment_index).key();
+  }
+
+  void SetCandidate(size_t segment_index, int candidate_index,
+                    absl::string_view value) {
+    converter::Candidate *candidate = segments_.mutable_segment(segment_index)
+                                          ->mutable_candidate(candidate_index);
+    candidate->value = value;
+    candidate->content_value = value;
+  }
+
+  void PushBackInnerSegmentBoundary(int segment_index, int candidate_index,
+                                    size_t key_len, size_t value_len,
+                                    size_t content_key_len,
+                                    size_t content_value_len) {
+    converter::Candidate *candidate = segments_.mutable_segment(segment_index)
+                                          ->mutable_candidate(candidate_index);
+    candidate->PushBackInnerSegmentBoundary(key_len, value_len, content_key_len,
+                                            content_value_len);
+  }
+
+  void AddCandidateWithDescription(size_t segment_index,
+                                   absl::string_view value,
+                                   absl::string_view desc) {
+    converter::Candidate *candidate =
+        segments_.mutable_segment(segment_index)->add_candidate();
+    candidate->value = value;
+    candidate->content_value = value;
+    candidate->key = segments_.segment(segment_index).key();
+    candidate->content_key = segments_.segment(segment_index).key();
+    candidate->description = desc;
+  }
+
+  void MoveCandidate(int segment_index, int src, int dst) {
+    segments_.mutable_segment(segment_index)->move_candidate(src, dst);
+  }
+
+  void PrependHistory(absl::string_view key, absl::string_view value) {
+    Segment *seg = segments_.push_front_segment();
+    seg->set_segment_type(Segment::HISTORY);
+    seg->set_key(key);
+    converter::Candidate *candidate = seg->add_candidate();
+    candidate->key = key;
+    candidate->content_key = key;
+    candidate->value = value;
+    candidate->content_value = value;
+  }
+
+  void SetHistoryType(int segment_index) {
+    segments_.mutable_segment(segment_index)
+        ->set_segment_type(Segment::HISTORY);
+  }
+
+  void clear_conversion_segments() { segments_.clear_conversion_segments(); }
+
+  void pop_back_segment() { return segments_.pop_back_segment(); }
+
+  absl::string_view key() const {
+    return segments_.conversion_segment(0).key();
+  }
+
+  std::vector<Result> MakeLearningResults() const {
+    return Converter::MakeLearningResults(segments_);
+  }
+
+  const Segments &segments() const { return segments_; }
+
+  void Clear() { segments_.Clear(); }
+
+ private:
+  Segments segments_;
+};
+
 class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
@@ -144,21 +240,22 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   void TearDown() override {}
 
   ConversionRequest CreateConversionRequestWithOptions(
-      const composer::Composer &composer, ConversionRequest::Options &&options,
-      const Segments &segments) const {
+      const composer::Composer &composer, ConversionRequest::Options options,
+      const SegmentsProxy &segments_proxy) const {
     return ConversionRequestBuilder()
         .SetComposer(composer_)
         .SetRequestView(request_)
         .SetContextView(context_)
         .SetConfigView(config_)
         .SetOptions(std::move(options))
-        .SetHistorySegmentsView(segments)
-        .SetKey(segments.conversion_segment(0).key())
+        .SetHistorySegmentsView(segments_proxy.segments())
+        .SetKey(segments_proxy.key())
         .Build();
   }
 
-  ConversionRequest CreateConversionRequest(const composer::Composer &composer,
-                                            const Segments &segments) const {
+  ConversionRequest CreateConversionRequest(
+      const composer::Composer &composer,
+      const SegmentsProxy &segments_proxy) const {
     ConversionRequest::Options options = {
         .max_user_history_prediction_candidates_size = 10,
         .max_user_history_prediction_candidates_size_for_zero_query = 10,
@@ -169,8 +266,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
         .SetContextView(context_)
         .SetConfigView(config_)
         .SetOptions(std::move(options))
-        .SetHistorySegmentsView(segments)
-        .SetKey(segments.conversion_segment(0).key())
+        .SetHistorySegmentsView(segments_proxy.segments())
+        .SetKey(segments_proxy.key())
         .Build();
   }
 
@@ -194,40 +291,40 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     return data_and_predictor_->modules->GetUserDictionary();
   }
 
-  bool IsSuggested(UserHistoryPredictor *predictor, const absl::string_view key,
-                   const absl::string_view value) {
+  bool IsSuggested(const UserHistoryPredictor *predictor,
+                   const absl::string_view key, const absl::string_view value) {
     composer::Composer composer;
     composer.SetPreeditTextForTestOnly(key);
-    Segments segments;
-    MakeSegments(key, &segments);
+    SegmentsProxy segments_proxy;
+    segments_proxy.MakeSegments(key);
     const ConversionRequest conversion_request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistorySegmentsView(segments)
+            .SetHistorySegmentsView(segments_proxy.segments())
             .SetRequestType(ConversionRequest::SUGGESTION)
             .Build();
     const std::vector<Result> results = predictor->Predict(conversion_request);
     return !results.empty() && FindCandidateByValue(value, results);
   }
 
-  bool IsPredicted(UserHistoryPredictor *predictor, const absl::string_view key,
-                   const absl::string_view value) {
+  bool IsPredicted(const UserHistoryPredictor *predictor,
+                   const absl::string_view key, const absl::string_view value) {
     composer::Composer composer;
     composer.SetPreeditTextForTestOnly(key);
-    Segments segments;
-    MakeSegments(key, &segments);
+    SegmentsProxy segments_proxy;
+    segments_proxy.MakeSegments(key);
 
     const ConversionRequest conversion_request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistorySegmentsView(segments)
+            .SetHistorySegmentsView(segments_proxy.segments())
             .SetRequestType(ConversionRequest::PREDICTION)
             .Build();
     const std::vector<Result> results = predictor->Predict(conversion_request);
     return !results.empty() && FindCandidateByValue(value, results);
   }
 
-  bool IsSuggestedAndPredicted(UserHistoryPredictor *predictor,
+  bool IsSuggestedAndPredicted(const UserHistoryPredictor *predictor,
                                const absl::string_view key,
                                const absl::string_view value) {
     return IsSuggested(predictor, key, value) &&
@@ -329,102 +426,78 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
   }
 
-  static void AddSegment(absl::string_view key, Segments *segments) {
-    Segment *seg = segments->add_segment();
-    seg->set_key(key);
-    seg->set_segment_type(Segment::FIXED_VALUE);
-  }
-
-  static void MakeSegments(absl::string_view key, Segments *segments) {
-    segments->Clear();
-    AddSegment(key, segments);
-  }
-
   void SetUpInput(absl::string_view key, composer::Composer *composer,
-                  Segments *segments) const {
+                  SegmentsProxy *segments_proxy) const {
     composer->Reset();
     composer->SetPreeditTextForTestOnly(key);
-    MakeSegments(key, segments);
+    segments_proxy->MakeSegments(key);
   }
 
-  ConversionRequest SetUpInputForSuggestion(absl::string_view key,
-                                            composer::Composer *composer,
-                                            Segments *segments) const {
-    SetUpInput(key, composer, segments);
+  ConversionRequest SetUpInputForSuggestion(
+      absl::string_view key, composer::Composer *composer,
+      SegmentsProxy *segments_proxy) const {
+    SetUpInput(key, composer, segments_proxy);
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::SUGGESTION};
     return CreateConversionRequestWithOptions(*composer, std::move(options),
-                                              *segments);
-  }
-
-  static void PrependHistorySegments(absl::string_view key,
-                                     absl::string_view value,
-                                     Segments *segments) {
-    Segment *seg = segments->push_front_segment();
-    seg->set_segment_type(Segment::HISTORY);
-    seg->set_key(key);
-    converter::Candidate *c = seg->add_candidate();
-    c->key = std::string(key);
-    c->content_key = std::string(key);
-    c->value = std::string(value);
-    c->content_value = std::string(value);
+                                              *segments_proxy);
   }
 
   ConversionRequest SetUpInputForSuggestionWithHistory(
       absl::string_view key, absl::string_view hist_key,
       absl::string_view hist_value, composer::Composer *composer,
-      Segments *segments) const {
+      SegmentsProxy *segments_proxy) const {
     const ConversionRequest convreq =
-        SetUpInputForSuggestion(key, composer, segments);
-    PrependHistorySegments(hist_key, hist_value, segments);
+        SetUpInputForSuggestion(key, composer, segments_proxy);
+    segments_proxy->PrependHistory(hist_key, hist_value);
     return convreq;
   }
 
-  ConversionRequest SetUpInputForPrediction(absl::string_view key,
-                                            composer::Composer *composer,
-                                            Segments *segments) const {
-    SetUpInput(key, composer, segments);
+  ConversionRequest SetUpInputForPrediction(
+      absl::string_view key, composer::Composer *composer,
+      SegmentsProxy *segments_proxy) const {
+    SetUpInput(key, composer, segments_proxy);
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::PREDICTION};
     return CreateConversionRequestWithOptions(*composer, std::move(options),
-                                              *segments);
+                                              *segments_proxy);
   }
 
   ConversionRequest SetUpInputForPredictionWithHistory(
       absl::string_view key, absl::string_view hist_key,
       absl::string_view hist_value, composer::Composer *composer,
-      Segments *segments) const {
+      SegmentsProxy *segments_proxy) const {
     const ConversionRequest convreq =
-        SetUpInputForPrediction(key, composer, segments);
-    PrependHistorySegments(hist_key, hist_value, segments);
+        SetUpInputForPrediction(key, composer, segments_proxy);
+    segments_proxy->PrependHistory(hist_key, hist_value);
     return convreq;
   }
 
-  ConversionRequest SetUpInputForConversion(absl::string_view key,
-                                            composer::Composer *composer,
-                                            Segments *segments) const {
-    SetUpInput(key, composer, segments);
+  ConversionRequest SetUpInputForConversion(
+      absl::string_view key, composer::Composer *composer,
+      SegmentsProxy *segments_proxy) const {
+    SetUpInput(key, composer, segments_proxy);
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::CONVERSION};
     return CreateConversionRequestWithOptions(*composer, std::move(options),
-                                              *segments);
+                                              *segments_proxy);
   }
 
   ConversionRequest SetUpInputForConversionWithHistory(
       absl::string_view key, absl::string_view hist_key,
       absl::string_view hist_value, composer::Composer *composer,
-      Segments *segments) const {
+      SegmentsProxy *segments_proxy) const {
     const ConversionRequest convreq =
-        SetUpInputForConversion(key, composer, segments);
-    PrependHistorySegments(hist_key, hist_value, segments);
+        SetUpInputForConversion(key, composer, segments_proxy);
+    segments_proxy->PrependHistory(hist_key, hist_value);
     return convreq;
   }
 
-  ConversionRequest InitSegmentsFromInputSequence(const absl::string_view text,
-                                                  composer::Composer *composer,
-                                                  Segments *segments) const {
+  ConversionRequest InitSegmentsFromInputSequence(
+      const absl::string_view text, composer::Composer *composer,
+      SegmentsProxy *segments_proxy) const {
     DCHECK(composer);
-    DCHECK(segments);
+    DCHECK(segments_proxy);
     for (const UnicodeChar ch : Utf8AsUnicodeChar(text)) {
       commands::KeyEvent key;
       const char32_t codepoint = ch.char32();
@@ -437,49 +510,13 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
       composer->InsertCharacterKeyEvent(key);
     }
 
-    Segment *segment = segments->add_segment();
-    CHECK(segment);
     std::string query = composer->GetQueryForPrediction();
-    segment->set_key(query);
+    segments_proxy->AddSegment(query);
 
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::PREDICTION};
     return CreateConversionRequestWithOptions(*composer, std::move(options),
-                                              *segments);
-  }
-
-  static void AddCandidate(size_t index, absl::string_view value,
-                           Segments *segments) {
-    converter::Candidate *candidate =
-        segments->mutable_segment(index)->add_candidate();
-    CHECK(candidate);
-    candidate->value = std::string(value);
-    candidate->content_value = std::string(value);
-    candidate->key = segments->segment(index).key();
-    candidate->content_key = segments->segment(index).key();
-  }
-
-  static void AddCandidateWithDescription(size_t index, absl::string_view value,
-                                          absl::string_view desc,
-                                          Segments *segments) {
-    converter::Candidate *candidate =
-        segments->mutable_segment(index)->add_candidate();
-    CHECK(candidate);
-    candidate->value = std::string(value);
-    candidate->content_value = std::string(value);
-    candidate->key = segments->segment(index).key();
-    candidate->content_key = segments->segment(index).key();
-    candidate->description = std::string(desc);
-  }
-
-  static void AddCandidate(absl::string_view value, Segments *segments) {
-    AddCandidate(0, value, segments);
-  }
-
-  static void AddCandidateWithDescription(absl::string_view value,
-                                          absl::string_view desc,
-                                          Segments *segments) {
-    AddCandidateWithDescription(0, value, desc, segments);
+                                              *segments_proxy);
   }
 
   static std::optional<int> FindCandidateByValue(
@@ -527,9 +564,9 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
     // Nothing happen
     {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       const ConversionRequest convreq =
-          SetUpInputForSuggestion("てすと", &composer_, &segments);
+          SetUpInputForSuggestion("てすと", &composer_, &segments_proxy);
       results = predictor->Predict(convreq);
       EXPECT_TRUE(results.empty());
       EXPECT_EQ(results.size(), 0);
@@ -537,9 +574,9 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
     // Nothing happen
     {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       const ConversionRequest convreq =
-          SetUpInputForSuggestion("てすと", &composer_, &segments);
+          SetUpInputForSuggestion("てすと", &composer_, &segments_proxy);
       results = predictor->Predict(convreq);
       EXPECT_TRUE(results.empty());
       EXPECT_EQ(results.size(), 0);
@@ -547,23 +584,23 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
     // Insert two items
     {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       const ConversionRequest convreq1 = SetUpInputForSuggestion(
-          "わたしのなまえはなかのです", &composer_, &segments);
-      AddCandidate("私の名前は中野です", &segments);
-      predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                        segments.revert_id());
+          "わたしのなまえはなかのです", &composer_, &segments_proxy);
+      segments_proxy.AddCandidate(0, "私の名前は中野です");
+      predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                        kRevertId);
 
-      segments.Clear();
+      segments_proxy.Clear();
       const ConversionRequest convreq2 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq2);
       EXPECT_FALSE(results.empty());
       EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-      segments.Clear();
+      segments_proxy.Clear();
       const ConversionRequest convreq3 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq3);
       EXPECT_FALSE(results.empty());
       EXPECT_EQ(results[0].value, "私の名前は中野です");
@@ -576,20 +613,20 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       for (config::Config::HistoryLearningLevel level : no_learning_levels) {
         config_.set_history_learning_level(level);
 
-        Segments segments;
+        SegmentsProxy segments_proxy;
         const ConversionRequest convreq1 = SetUpInputForSuggestion(
-            "こんにちはさようなら", &composer_, &segments);
-        AddCandidate("今日はさようなら", &segments);
-        predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                          segments.revert_id());
+            "こんにちはさようなら", &composer_, &segments_proxy);
+        segments_proxy.AddCandidate(0, "今日はさようなら");
+        predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                          kRevertId);
 
-        segments.Clear();
+        segments_proxy.Clear();
         const ConversionRequest convreq2 =
-            SetUpInputForSuggestion("こんにちは", &composer_, &segments);
+            SetUpInputForSuggestion("こんにちは", &composer_, &segments_proxy);
         results = predictor->Predict(convreq2);
         EXPECT_TRUE(results.empty());
         const ConversionRequest convreq3 =
-            SetUpInputForSuggestion("こんにちは", &composer_, &segments);
+            SetUpInputForSuggestion("こんにちは", &composer_, &segments_proxy);
         results = predictor->Predict(convreq3);
         EXPECT_TRUE(results.empty());
       }
@@ -605,16 +642,16 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
-    Segments segments;
+    SegmentsProxy segments_proxy;
     std::vector<Result> results;
 
     // turn off
     {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       config_.set_use_history_suggest(false);
 
       const ConversionRequest convreq1 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq1);
       EXPECT_TRUE(results.empty());
 
@@ -622,7 +659,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       config_.set_incognito_mode(true);
 
       const ConversionRequest convreq2 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq2);
       EXPECT_TRUE(results.empty());
 
@@ -630,7 +667,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       config_.set_history_learning_level(config::Config::NO_HISTORY);
 
       const ConversionRequest convreq3 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq3);
       EXPECT_TRUE(results.empty());
     }
@@ -643,42 +680,42 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     // reproduced
 
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
 
     // Exact Match
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq3 = SetUpInputForSuggestion(
-        "わたしのなまえはなかのです", &composer_, &segments);
+        "わたしのなまえはなかのです", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq4 = SetUpInputForSuggestion(
-        "わたしのなまえはなかのです", &composer_, &segments);
+        "わたしのなまえはなかのです", &composer_, &segments_proxy);
     results = predictor->Predict(convreq4);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments.Clear();
-    const ConversionRequest convreq5 =
-        SetUpInputForSuggestion("こんにちはさようなら", &composer_, &segments);
+    segments_proxy.Clear();
+    const ConversionRequest convreq5 = SetUpInputForSuggestion(
+        "こんにちはさようなら", &composer_, &segments_proxy);
     results = predictor->Predict(convreq5);
     EXPECT_TRUE(results.empty());
 
-    segments.Clear();
-    const ConversionRequest convreq6 =
-        SetUpInputForSuggestion("こんにちはさようなら", &composer_, &segments);
+    segments_proxy.Clear();
+    const ConversionRequest convreq6 = SetUpInputForSuggestion(
+        "こんにちはさようなら", &composer_, &segments_proxy);
     results = predictor->Predict(convreq6);
     EXPECT_TRUE(results.empty());
 
@@ -686,14 +723,14 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     {
       config_.set_history_learning_level(config::Config::READ_ONLY);
       const ConversionRequest convreq1 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq1);
       EXPECT_FALSE(results.empty());
       EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-      segments.Clear();
+      segments_proxy.Clear();
       const ConversionRequest convreq2 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq2);
       EXPECT_FALSE(results.empty());
       EXPECT_EQ(results[0].value, "私の名前は中野です");
@@ -709,17 +746,17 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
-    Segments segments;
+    SegmentsProxy segments_proxy;
     std::vector<Result> results;
 
     // reproduced
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_TRUE(results.empty());
 
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_TRUE(results.empty());
   }
@@ -728,17 +765,17 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
-    Segments segments;
+    SegmentsProxy segments_proxy;
     std::vector<Result> results;
 
     // reproduced
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_TRUE(results.empty());
 
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_TRUE(results.empty());
   }
@@ -753,25 +790,24 @@ TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
   std::vector<Result> results;
 
   auto make_segments = [](absl::Span<const Result> results,
-                          Segments *segments) {
+                          SegmentsProxy *segments_proxy) {
     for (const auto &result : results) {
-      AddCandidate(result.value, segments);
+      segments_proxy->AddCandidate(0, result.value);
     }
   };
 
   auto insert_target = [&]() {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForPrediction("わたしの", &composer_, &segments);
-    AddCandidate("私の", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "私の");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   };
 
   auto find_target = [&]() {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForPrediction("わたしの", &composer_, &segments);
+        SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq);
     EXPECT_FALSE(results.empty());
     return FindCandidateByValue("私の", results);
@@ -779,44 +815,42 @@ TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
 
   // Returns true if the target is found.
   auto select_target = [&]() {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForPrediction("わたしの", &composer_, &segments);
+        SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq);
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(FindCandidateByValue("私の", results));
-    make_segments(results, &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    make_segments(results, &segments_proxy);
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   };
 
   auto select_other = [&]() {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForPrediction("わたしの", &composer_, &segments);
+        SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq);
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(FindCandidateByValue("私の", results));
-    make_segments(results, &segments);
+    make_segments(results, &segments_proxy);
     auto find = FindCandidateByValue("わたしの", results);
     if (!find) {
-      AddCandidate("わたしの", &segments);
-      segments.mutable_segment(0)->move_candidate(1, 0);
+      segments_proxy.AddCandidate(0, "わたしの");
+      segments_proxy.MoveCandidate(0, 1, 0);
     } else {
-      segments.mutable_segment(0)->move_candidate(find.value(), 0);
+      segments_proxy.MoveCandidate(0, find.value(), 0);
     }
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());  // Select "わたしの"
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(),
+                      kRevertId);  // Select "わたしの"
   };
 
   auto input_other_key = [&]() {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForPrediction("てすと", &composer_, &segments);
+        SetUpInputForPrediction("てすと", &composer_, &segments_proxy);
     results = predictor->Predict(convreq);
-    make_segments(results, &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    make_segments(results, &segments_proxy);
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   };
 
   // min selected ratio threshold is 0.05
@@ -854,8 +888,8 @@ TEST_F(UserHistoryPredictorTest, RemoveUnselectedHistoryPrediction) {
     // select: 2, shown: 1+19+1+20, ratio: 2/41 < 0.05
     EXPECT_FALSE(find_target());  // **
 
-    Segments segments;
-    predictor->Revert(segments.revert_id());
+    SegmentsProxy segments_proxy;
+    predictor->Revert(kRevertId);
     EXPECT_TRUE(find_target());
   }
 }
@@ -869,14 +903,13 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
 
   // Register input histories via Finish method.
   {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForSuggestion("かまた", &composer_, &segments);
-    AddCandidate(0, "火魔汰", &segments);
-    AddSegment("ま", &segments);
-    AddCandidate(1, "摩", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForSuggestion("かまた", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "火魔汰");
+    segments_proxy.AddSegment("ま");
+    segments_proxy.AddCandidate(1, "摩");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
 
     // All added items must be suggestion entries.
     for (const auto &element : *predictor_peer.dic_()) {
@@ -891,10 +924,10 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
 
   // Obtain input histories via Predict method.
   {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     std::vector<Result> results;
     const ConversionRequest convreq =
-        SetUpInputForSuggestion("かま", &composer_, &segments);
+        SetUpInputForSuggestion("かま", &composer_, &segments_proxy);
     results = predictor->Predict(convreq);
     EXPECT_FALSE(results.empty());
     std::set<std::string, std::less<>> expected_candidates;
@@ -914,20 +947,19 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPreprocessInput) {
   {
     // Commit can be triggered by space in alphanumeric keyboard layout.
     // In this case, trailing white space is included to the key and value.
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForSuggestion("android ", &composer_, &segments);
-    AddCandidate(0, "android ", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForSuggestion("android ", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "android ");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   std::vector<Result> results;
 
   {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForSuggestion("androi", &composer_, &segments);
+        SetUpInputForSuggestion("androi", &composer_, &segments_proxy);
     results = predictor->Predict(convreq);
     EXPECT_FALSE(results.empty());
     // Preprocessed value should be learned.
@@ -951,24 +983,24 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 
     // Insert two items
     {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       const ConversionRequest convreq = SetUpInputForConversion(
-          "わたしのなまえはなかのです", &composer_, &segments);
-      AddCandidateWithDescription("私の名前は中野です", kDescription,
-                                  &segments);
-      predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                        segments.revert_id());
+          "わたしのなまえはなかのです", &composer_, &segments_proxy);
+      segments_proxy.AddCandidateWithDescription(0, "私の名前は中野です",
+                                                 kDescription);
+      predictor->Finish(convreq, segments_proxy.MakeLearningResults(),
+                        kRevertId);
 
       const ConversionRequest convreq1 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq1);
       EXPECT_FALSE(results.empty());
       EXPECT_EQ(results[0].value, "私の名前は中野です");
       EXPECT_EQ(results[0].description, kDescription);
 
-      segments.Clear();
+      segments_proxy.Clear();
       const ConversionRequest convreq2 =
-          SetUpInputForPrediction("わたしの", &composer_, &segments);
+          SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq2);
       EXPECT_FALSE(results.empty());
       EXPECT_EQ(results[0].value, "私の名前は中野です");
@@ -983,16 +1015,16 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
-    Segments segments;
+    SegmentsProxy segments_proxy;
 
     // turn off
     {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       config_.set_use_history_suggest(false);
       WaitForSyncer(predictor);
 
       const ConversionRequest convreq1 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq1);
       EXPECT_TRUE(results.empty());
 
@@ -1000,7 +1032,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
       config_.set_incognito_mode(true);
 
       const ConversionRequest convreq2 =
-          SetUpInputForSuggestion("わたしの", &composer_, &segments);
+          SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
       results = predictor->Predict(convreq2);
       EXPECT_TRUE(results.empty());
     }
@@ -1013,32 +1045,32 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 
     // reproduced
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
     EXPECT_EQ(results[0].description, kDescription);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForPrediction("わたしの", &composer_, &segments);
+        SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
     EXPECT_EQ(results[0].description, kDescription);
 
     // Exact Match
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq3 = SetUpInputForSuggestion(
-        "わたしのなまえはなかのです", &composer_, &segments);
+        "わたしのなまえはなかのです", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
     EXPECT_EQ(results[0].description, kDescription);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq4 = SetUpInputForSuggestion(
-        "わたしのなまえはなかのです", &composer_, &segments);
+        "わたしのなまえはなかのです", &composer_, &segments_proxy);
     results = predictor->Predict(convreq4);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
@@ -1053,16 +1085,16 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
-    Segments segments;
+    SegmentsProxy segments_proxy;
 
     // reproduced
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_TRUE(results.empty());
 
     const ConversionRequest convreq2 =
-        SetUpInputForPrediction("わたしの", &composer_, &segments);
+        SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_TRUE(results.empty());
   }
@@ -1071,16 +1103,16 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
-    Segments segments;
+    SegmentsProxy segments_proxy;
 
     // reproduced
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_TRUE(results.empty());
 
     const ConversionRequest convreq2 =
-        SetUpInputForPrediction("わたしの", &composer_, &segments);
+        SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_TRUE(results.empty());
   }
@@ -1093,23 +1125,23 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
 
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq1 = SetUpInputForSuggestion(
-        "わたしのなまえはなかのです", &composer_, &segments);
-    AddCandidate("私の名前は中野です", &segments);
+        "わたしのなまえはなかのです", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "私の名前は中野です");
 
     // once
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-    segments.Clear();
-    const ConversionRequest convreq2 =
-        SetUpInputForConversion("ひろすえりょうこ", &composer_, &segments);
-    AddCandidate("広末涼子", &segments);
+    segments_proxy.Clear();
+    const ConversionRequest convreq2 = SetUpInputForConversion(
+        "ひろすえりょうこ", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "広末涼子");
 
     // conversion
-    predictor->Finish(convreq2, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    predictor->Finish(convreq2, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     // sync
     predictor->Sync();
@@ -1118,17 +1150,17 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
-    Segments segments;
+    SegmentsProxy segments_proxy;
 
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("ひろすえ", &composer_, &segments);
+        SetUpInputForSuggestion("ひろすえ", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "広末涼子");
@@ -1136,16 +1168,16 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
     predictor->ClearUnusedHistory();
     WaitForSyncer(predictor);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq3 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq4 =
-        SetUpInputForSuggestion("ひろすえ", &composer_, &segments);
+        SetUpInputForSuggestion("ひろすえ", &composer_, &segments_proxy);
     results = predictor->Predict(convreq4);
     EXPECT_TRUE(results.empty());
 
@@ -1155,17 +1187,17 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
-    Segments segments;
+    SegmentsProxy segments_proxy;
 
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments);
+        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("ひろすえ", &composer_, &segments);
+        SetUpInputForSuggestion("ひろすえ", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_TRUE(results.empty());
   }
@@ -1176,27 +1208,26 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
 
   std::vector<Result> results;
 
-  Segments segments, segments2;
+  SegmentsProxy segments_proxy, segments_proxy2;
   const ConversionRequest convreq1 = SetUpInputForConversion(
-      "わたしのなまえはなかのです", &composer_, &segments);
-  AddCandidate("私の名前は中野です", &segments);
+      "わたしのなまえはなかのです", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "私の名前は中野です");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
   // Before Revert, Suggest works
   const ConversionRequest convreq2 =
-      SetUpInputForSuggestion("わたしの", &composer_, &segments2);
+      SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy2);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results[0].value, "私の名前は中野です");
 
   // Call revert here
-  predictor->Revert(segments.revert_id());
+  predictor->Revert(kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("わたしの", &composer_, &segments);
+      SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
 
   results = predictor->Predict(convreq3);
   EXPECT_TRUE(results.empty());
@@ -1209,16 +1240,17 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest) {
 
   std::vector<Result> results;
 
-  Segments segments;
-  const ConversionRequest convreq1 = SetUpInputForConversion(
-      "わたしのなまえはなかのです", &composer_, &segments);
-  AddCandidate("私の名前は中野です", &segments);
+  constexpr absl::string_view kKey = "わたしのなまえはなかのです";
+  constexpr absl::string_view kValue = "私の名前は中野です";
 
-  const converter::Candidate &candidate = segments.segment(0).candidate(0);
+  SegmentsProxy segments_proxy;
+  const ConversionRequest convreq1 =
+      SetUpInputForConversion(kKey, &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, kValue);
 
   auto freq_eq = [&](int expected_freq) {
     auto *entry = predictor_peer.dic_()->MutableLookupWithoutInsert(
-        UserHistoryPredictor::Fingerprint(candidate.key, candidate.value));
+        UserHistoryPredictor::Fingerprint(kKey, kValue));
     if (expected_freq == 0) {
       ASSERT_FALSE(entry);
     } else {
@@ -1229,31 +1261,22 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest) {
 
   freq_eq(0);
 
-  segments.set_revert_id(1);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), 1);
   freq_eq(1);
 
-  segments.set_revert_id(2);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), 2);
   freq_eq(2);
 
-  segments.set_revert_id(3);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), 3);
   freq_eq(3);
 
-  segments.set_revert_id(3);
-  predictor->Revert(segments.revert_id());
+  predictor->Revert(3);
   freq_eq(2);
 
-  segments.set_revert_id(2);
-  predictor->Revert(segments.revert_id());
+  predictor->Revert(2);
   freq_eq(1);
 
-  segments.set_revert_id(1);
-  predictor->Revert(segments.revert_id());
+  predictor->Revert(1);
   freq_eq(0);
 }
 
@@ -1265,12 +1288,11 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
 
   // input "testtest" 10 times
   for (int i = 0; i < 10; ++i) {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForConversion("testtest", &composer_, &segments);
-    AddCandidate("テストテスト", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForConversion("testtest", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "テストテスト");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   predictor->ClearAllHistory();
@@ -1278,25 +1300,24 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
 
   // input "testtest" 1 time
   for (int i = 0; i < 1; ++i) {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForConversion("testtest", &composer_, &segments);
-    AddCandidate("テストテスト", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForConversion("testtest", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "テストテスト");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   // frequency is cleared as well.
   {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("t", &composer_, &segments);
+        SetUpInputForSuggestion("t", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_TRUE(results.empty());
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("testte", &composer_, &segments);
+        SetUpInputForSuggestion("testte", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
   }
@@ -1305,32 +1326,30 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 = SetUpInputForConversion(
-      "わたしのなまえはなかのです", &composer_, &segments);
+      "わたしのなまえはなかのです", &composer_, &segments_proxy);
 
-  AddCandidate(0, "私の名前は中野です", &segments);
+  segments_proxy.AddCandidate(0, "私の名前は中野です");
+  segments_proxy.AddSegment("。");
+  segments_proxy.AddCandidate(1, "。");
 
-  AddSegment("。", &segments);
-  AddCandidate(1, "。", &segments);
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq2 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments);
+      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 2);
   EXPECT_EQ(results[0].value, "私の名前は中野です");
   EXPECT_EQ(results[1].value, "私の名前は中野です。");
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("わたしの", &composer_, &segments);
+      SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
 
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
@@ -1342,20 +1361,19 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
 TEST_F(UserHistoryPredictorTest, TrailingPunctuationMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   request_test_util::FillMobileRequest(&request_);
-  Segments segments;
+  SegmentsProxy segments_proxy;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("です。", &composer_, &segments);
+      SetUpInputForConversion("です。", &composer_, &segments_proxy);
 
-  AddCandidate(0, "です。", &segments);
+  segments_proxy.AddCandidate(0, "です。");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq2 =
-      SetUpInputForPrediction("です", &composer_, &segments);
+      SetUpInputForPrediction("です", &composer_, &segments_proxy);
   const std::vector<Result> results = predictor->Predict(convreq2);
   EXPECT_TRUE(results.empty());
 }
@@ -1363,71 +1381,65 @@ TEST_F(UserHistoryPredictorTest, TrailingPunctuationMobile) {
 TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   // Scenario 1: A user have committed "亜" by prediction and then commit "。".
   // Then, the unigram "亜" is learned but the bigram "亜。" shouldn't.
   const ConversionRequest convreq1 =
-      SetUpInputForPrediction("あ", &composer_, &segments);
-  AddCandidate(0, "亜", &segments);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+      SetUpInputForPrediction("あ", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "亜");
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(0);
 
-  AddSegment("。", &segments);
-  AddCandidate(1, "。", &segments);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  segments_proxy.AddSegment("。");
+  segments_proxy.AddCandidate(1, "。");
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq2 =
-      SetUpInputForPrediction("あ", &composer_, &segments);  // "あ"
+      SetUpInputForPrediction("あ", &composer_, &segments_proxy);  // "あ"
   results = predictor->Predict(convreq2);
   ASSERT_FALSE(results.empty());
   EXPECT_EQ(results[0].value, "亜");
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   // Scenario 2: the opposite case to Scenario 1, i.e., "。亜".  Nothing is
   // suggested from symbol "。".
   const ConversionRequest convreq3 =
-      SetUpInputForPrediction("。", &composer_, &segments);
-  AddCandidate(0, "。", &segments);
-  predictor->Finish(convreq3, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+      SetUpInputForPrediction("。", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "。");
+  predictor->Finish(convreq3, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(0);
 
-  AddSegment("あ", &segments);
-  AddCandidate(1, "亜", &segments);
-  predictor->Finish(convreq3, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  segments_proxy.AddSegment("あ");
+  segments_proxy.AddCandidate(1, "亜");
+  predictor->Finish(convreq3, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq4 =
-      SetUpInputForPrediction("。", &composer_, &segments);  // "。"
+      SetUpInputForPrediction("。", &composer_, &segments_proxy);  // "。"
   results = predictor->Predict(convreq4);
   EXPECT_TRUE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   // Scenario 3: If the history segment looks like a sentence and committed
   // value is a punctuation, the concatenated entry is also learned.
   const ConversionRequest convreq5 =
-      SetUpInputForPrediction("おつかれさまです", &composer_, &segments);
-  AddCandidate(0, "お疲れ様です", &segments);
-  predictor->Finish(convreq5, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+      SetUpInputForPrediction("おつかれさまです", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "お疲れ様です");
+  predictor->Finish(convreq5, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(0);
 
-  AddSegment("。", &segments);
-  AddCandidate(1, "。", &segments);
-  predictor->Finish(convreq5, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  segments_proxy.AddSegment("。");
+  segments_proxy.AddCandidate(1, "。");
+  predictor->Finish(convreq5, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq6 =
-      SetUpInputForPrediction("おつかれ", &composer_, &segments);
+      SetUpInputForPrediction("おつかれ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq6);
   ASSERT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "お疲れ様です");
@@ -1436,32 +1448,30 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPrecedingPunctuation) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("。", &composer_, &segments);
-  AddCandidate(0, "。", &segments);
+      SetUpInputForConversion("。", &composer_, &segments_proxy);
 
-  AddSegment("わたしのなまえはなかのです", &segments);
+  segments_proxy.AddCandidate(0, "。");
+  segments_proxy.AddSegment("わたしのなまえはなかのです");
+  segments_proxy.AddCandidate(1, "私の名前は中野です");
 
-  AddCandidate(1, "私の名前は中野です", &segments);
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq2 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments);
+      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
 
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("わたしの", &composer_, &segments);
+      SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 1);
@@ -1489,43 +1499,43 @@ TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
     predictor->ClearAllHistory();
     WaitForSyncer(predictor);
 
-    Segments segments;
+    SegmentsProxy segments_proxy;
     std::vector<Result> results;
     const std::string first_char = kTestCases[i].first_character;
     {
       // Learn from two segments
       const ConversionRequest convreq =
-          SetUpInputForConversion(first_char, &composer_, &segments);
-      AddCandidate(0, first_char, &segments);
-      AddSegment("てすとぶんしょう", &segments);
-      AddCandidate(1, "テスト文章", &segments);
-      predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                        segments.revert_id());
+          SetUpInputForConversion(first_char, &composer_, &segments_proxy);
+      segments_proxy.AddCandidate(0, first_char);
+      segments_proxy.AddSegment("てすとぶんしょう");
+      segments_proxy.AddCandidate(1, "テスト文章");
+      predictor->Finish(convreq, segments_proxy.MakeLearningResults(),
+                        kRevertId);
     }
-    segments.Clear();
+    segments_proxy.Clear();
     {
       // Learn from one segment
       const ConversionRequest convreq = SetUpInputForConversion(
-          first_char + "てすとぶんしょう", &composer_, &segments);
-      AddCandidate(0, first_char + "テスト文章", &segments);
-      predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                        segments.revert_id());
+          first_char + "てすとぶんしょう", &composer_, &segments_proxy);
+      segments_proxy.AddCandidate(0, first_char + "テスト文章");
+      predictor->Finish(convreq, segments_proxy.MakeLearningResults(),
+                        kRevertId);
     }
-    segments.Clear();
+    segments_proxy.Clear();
     {
       // Suggestion
       const ConversionRequest convreq =
-          SetUpInputForSuggestion(first_char, &composer_, &segments);
-      AddCandidate(0, first_char, &segments);
+          SetUpInputForSuggestion(first_char, &composer_, &segments_proxy);
+      segments_proxy.AddCandidate(0, first_char);
       results = predictor->Predict(convreq);
       EXPECT_EQ(!results.empty(), kTestCases[i].expected_result)
           << "Suggest from " << first_char;
     }
-    segments.Clear();
+    segments_proxy.Clear();
     {
       // Prediction
       const ConversionRequest convreq =
-          SetUpInputForPrediction(first_char, &composer_, &segments);
+          SetUpInputForPrediction(first_char, &composer_, &segments_proxy);
       results = predictor->Predict(convreq);
       EXPECT_EQ(!results.empty(), kTestCases[i].expected_result)
           << "Predict from " << first_char;
@@ -1541,48 +1551,48 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
   commands::Request non_zero_query_request;
   non_zero_query_request.set_zero_query_suggestion(false);
   commands::Context context;
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   // No history segments
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq =
-      SetUpInputForSuggestion("", &composer_, &segments);
+      SetUpInputForSuggestion("", &composer_, &segments_proxy);
   results = predictor->Predict(convreq);
   EXPECT_TRUE(results.empty());
 
   {
-    segments.Clear();
+    segments_proxy.Clear();
 
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("たろうは", &composer_, &segments);
-    AddCandidate(0, "太郎は", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForConversion("たろうは", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "太郎は");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     const ConversionRequest convreq2 = SetUpInputForConversionWithHistory(
-        "はなこに", "たろうは", "太郎は", &composer_, &segments);
-    AddCandidate(1, "花子に", &segments);
-    predictor->Finish(convreq2, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        "はなこに", "たろうは", "太郎は", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(1, "花子に");
+    predictor->Finish(convreq2, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     const ConversionRequest convreq3 = SetUpInputForConversionWithHistory(
-        "きょうと", "たろうは", "太郎は", &composer_, &segments);
-    AddCandidate(1, "京都", &segments);
+        "きょうと", "たろうは", "太郎は", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(1, "京都");
     absl::SleepFor(absl::Seconds(2));
-    predictor->Finish(convreq3, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    predictor->Finish(convreq3, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     const ConversionRequest convreq4 = SetUpInputForConversionWithHistory(
-        "おおさか", "たろうは", "太郎は", &composer_, &segments);
-    AddCandidate(1, "大阪", &segments);
+        "おおさか", "たろうは", "太郎は", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(1, "大阪");
     absl::SleepFor(absl::Seconds(2));
-    predictor->Finish(convreq4, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    predictor->Finish(convreq4, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     // Zero query suggestion is disabled.
     SetUpInputForSuggestionWithHistory("", "たろうは", "太郎は", &composer_,
-                                       &segments);
+                                       &segments_proxy);
     // convreq5 is not zero query suggestion unlike other convreqs.
     const ConversionRequest convreq5 =
         ConversionRequestBuilder()
@@ -1595,7 +1605,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     EXPECT_TRUE(results.empty());
 
     const ConversionRequest convreq6 = SetUpInputForSuggestionWithHistory(
-        "", "たろうは", "太郎は", &composer_, &segments);
+        "", "たろうは", "太郎は", &composer_, &segments_proxy);
     results = predictor->Predict(convreq6);
     EXPECT_FALSE(results.empty());
     // last-pushed segment is "大阪"
@@ -1604,7 +1614,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
 
     for (const char *key : {"は", "た", "き", "お"}) {
       const ConversionRequest convreq = SetUpInputForSuggestionWithHistory(
-          key, "たろうは", "太郎は", &composer_, &segments);
+          key, "たろうは", "太郎は", &composer_, &segments_proxy);
       results = predictor->Predict(convreq);
       EXPECT_FALSE(results.empty());
     }
@@ -1614,21 +1624,21 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
   WaitForSyncer(predictor);
 
   {
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("たろうは", &composer_, &segments);
-    AddCandidate(0, "太郎は", &segments);
+        SetUpInputForConversion("たろうは", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "太郎は");
 
-    AddSegment("はなこに", &segments);
-    AddCandidate(1, "花子に", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.AddSegment("はなこに");
+    segments_proxy.AddCandidate(1, "花子に");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-    segments.Clear();
+    segments_proxy.Clear();
     ConversionRequest convreq2 =
-        SetUpInputForSuggestion("たろうは", &composer_, &segments);
-    AddCandidate(0, "太郎は", &segments);
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+        SetUpInputForSuggestion("たろうは", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "太郎は");
+    segments_proxy.SetHistoryType(0);
 
     // Zero query suggestion is disabled.
     const ConversionRequest non_zero_query_convreq =
@@ -1637,33 +1647,33 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
             .SetRequestView(non_zero_query_request)
             .SetContextView(context)
             .SetConfigView(config_)
-            .SetHistorySegmentsView(segments)
+            .SetHistorySegmentsView(segments_proxy.segments())
             .Build();
 
-    AddSegment("", &segments);  // empty request
+    segments_proxy.AddSegment("");  // empty request
     EXPECT_TRUE(predictor->Predict(non_zero_query_convreq).empty());
 
     auto convreq = [&]() {
       composer_.Reset();
-      composer_.SetPreeditTextForTestOnly(segments.conversion_segment(0).key());
+      composer_.SetPreeditTextForTestOnly(segments_proxy.key());
       ConversionRequest::Options options = {.request_type =
                                                 ConversionRequest::SUGGESTION};
       return CreateConversionRequestWithOptions(composer_, std::move(options),
-                                                segments);
+                                                segments_proxy);
     };
 
-    segments.pop_back_segment();
-    AddSegment("", &segments);  // empty request
+    segments_proxy.pop_back_segment();
+    segments_proxy.AddSegment("");  // empty request
     results = predictor->Predict(convreq());
     EXPECT_FALSE(results.empty());
 
-    segments.pop_back_segment();
-    AddSegment("は", &segments);
+    segments_proxy.pop_back_segment();
+    segments_proxy.AddSegment("は");
     results = predictor->Predict(convreq());
     EXPECT_FALSE(results.empty());
 
-    segments.pop_back_segment();
-    AddSegment("た", &segments);
+    segments_proxy.pop_back_segment();
+    segments_proxy.AddSegment("た");
     results = predictor->Predict(convreq());
     EXPECT_FALSE(results.empty());
   }
@@ -1672,110 +1682,103 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
 TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("たろうは", &composer_, &segments);
-  AddCandidate(0, "太郎は", &segments);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+      SetUpInputForConversion("たろうは", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "太郎は");
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(0);
 
-  AddSegment("はなこに", &segments);
-  AddCandidate(1, "花子に", &segments);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
+  segments_proxy.AddSegment("はなこに");
+  segments_proxy.AddCandidate(1, "花子に");
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(1);
 
-  segments.clear_conversion_segments();
-  AddSegment("むずかしい", &segments);
-  AddCandidate(2, "難しい", &segments);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(2)->set_segment_type(Segment::HISTORY);
+  segments_proxy.clear_conversion_segments();
+  segments_proxy.AddSegment("むずかしい");
+  segments_proxy.AddCandidate(2, "難しい");
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(2);
 
-  segments.clear_conversion_segments();
-  AddSegment("ほんを", &segments);
-  AddCandidate(3, "本を", &segments);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(3)->set_segment_type(Segment::HISTORY);
+  segments_proxy.clear_conversion_segments();
+  segments_proxy.AddSegment("ほんを");
+  segments_proxy.AddCandidate(3, "本を");
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(3);
 
-  segments.clear_conversion_segments();
-  AddSegment("よませた", &segments);
-  AddCandidate(4, "読ませた", &segments);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  segments_proxy.clear_conversion_segments();
+  segments_proxy.AddSegment("よませた");
+  segments_proxy.AddCandidate(4, "読ませた");
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq2 =
-      SetUpInputForSuggestion("た", &composer_, &segments);
+      SetUpInputForSuggestion("た", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_TRUE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("たろうは", &composer_, &segments);
+      SetUpInputForSuggestion("たろうは", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq4 =
-      SetUpInputForSuggestion("ろうは", &composer_, &segments);
+      SetUpInputForSuggestion("ろうは", &composer_, &segments_proxy);
   results = predictor->Predict(convreq4);
   EXPECT_TRUE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq5 =
-      SetUpInputForSuggestion("たろうははな", &composer_, &segments);
+      SetUpInputForSuggestion("たろうははな", &composer_, &segments_proxy);
   results = predictor->Predict(convreq5);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq6 =
-      SetUpInputForSuggestion("はなこにむ", &composer_, &segments);
+      SetUpInputForSuggestion("はなこにむ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq6);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq7 =
-      SetUpInputForSuggestion("むずかし", &composer_, &segments);
+      SetUpInputForSuggestion("むずかし", &composer_, &segments_proxy);
   results = predictor->Predict(convreq7);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
-  const ConversionRequest convreq8 =
-      SetUpInputForSuggestion("はなこにむずかしいほ", &composer_, &segments);
+  segments_proxy.Clear();
+  const ConversionRequest convreq8 = SetUpInputForSuggestion(
+      "はなこにむずかしいほ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq8);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq9 =
-      SetUpInputForSuggestion("ほんをよま", &composer_, &segments);
+      SetUpInputForSuggestion("ほんをよま", &composer_, &segments_proxy);
   results = predictor->Predict(convreq9);
   EXPECT_FALSE(results.empty());
 
   absl::SleepFor(absl::Seconds(1));
 
   // Add new entry "たろうはよしこに/太郎は良子に"
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq10 =
-      SetUpInputForConversion("たろうは", &composer_, &segments);
-  AddCandidate(0, "太郎は", &segments);
-  predictor->Finish(convreq10, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+      SetUpInputForConversion("たろうは", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "太郎は");
+  predictor->Finish(convreq10, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(0);
 
-  AddSegment("よしこに", &segments);
-  AddCandidate(1, "良子に", &segments);
-  predictor->Finish(convreq10, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
+  segments_proxy.AddSegment("よしこに");
+  segments_proxy.AddCandidate(1, "良子に");
+  predictor->Finish(convreq10, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(1);
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq11 =
-      SetUpInputForSuggestion("たろうは", &composer_, &segments);
+      SetUpInputForSuggestion("たろうは", &composer_, &segments_proxy);
   results = predictor->Predict(convreq11);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results[0].value, "太郎は良子に");
@@ -1784,96 +1787,93 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
 TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("たろうは", &composer_, &segments);
-  AddCandidate(0, "太郎は", &segments);
+      SetUpInputForConversion("たろうは", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "太郎は");
 
-  AddSegment("はなこに", &segments);
-  AddCandidate(1, "花子に", &segments);
+  segments_proxy.AddSegment("はなこに");
+  segments_proxy.AddCandidate(1, "花子に");
 
-  AddSegment("むずかしい", &segments);
-  AddCandidate(2, "難しい", &segments);
+  segments_proxy.AddSegment("むずかしい");
+  segments_proxy.AddCandidate(2, "難しい");
 
-  AddSegment("ほんを", &segments);
-  AddCandidate(3, "本を", &segments);
+  segments_proxy.AddSegment("ほんを");
+  segments_proxy.AddCandidate(3, "本を");
 
-  AddSegment("よませた", &segments);
-  AddCandidate(4, "読ませた", &segments);
+  segments_proxy.AddSegment("よませた");
+  segments_proxy.AddCandidate(4, "読ませた");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq2 =
-      SetUpInputForSuggestion("たろうは", &composer_, &segments);
+      SetUpInputForSuggestion("たろうは", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("た", &composer_, &segments);
+      SetUpInputForSuggestion("た", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_TRUE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq4 =
-      SetUpInputForSuggestion("たろうははな", &composer_, &segments);
+      SetUpInputForSuggestion("たろうははな", &composer_, &segments_proxy);
   results = predictor->Predict(convreq4);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq5 =
-      SetUpInputForSuggestion("ろうははな", &composer_, &segments);
+      SetUpInputForSuggestion("ろうははな", &composer_, &segments_proxy);
   results = predictor->Predict(convreq5);
   EXPECT_TRUE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq6 =
-      SetUpInputForSuggestion("はなこにむ", &composer_, &segments);
+      SetUpInputForSuggestion("はなこにむ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq6);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq7 =
-      SetUpInputForSuggestion("むずかし", &composer_, &segments);
+      SetUpInputForSuggestion("むずかし", &composer_, &segments_proxy);
   results = predictor->Predict(convreq7);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
-  const ConversionRequest convreq8 =
-      SetUpInputForSuggestion("はなこにむずかしいほ", &composer_, &segments);
+  segments_proxy.Clear();
+  const ConversionRequest convreq8 = SetUpInputForSuggestion(
+      "はなこにむずかしいほ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq8);
   EXPECT_FALSE(results.empty());
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq9 =
-      SetUpInputForSuggestion("ほんをよま", &composer_, &segments);
+      SetUpInputForSuggestion("ほんをよま", &composer_, &segments_proxy);
   results = predictor->Predict(convreq9);
   EXPECT_FALSE(results.empty());
 
   absl::SleepFor(absl::Seconds(1));
 
   // Add new entry "たろうはよしこに/太郎は良子に"
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq10 =
-      SetUpInputForConversion("たろうは", &composer_, &segments);
-  AddCandidate(0, "太郎は", &segments);
-  predictor->Finish(convreq10, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+      SetUpInputForConversion("たろうは", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "太郎は");
+  predictor->Finish(convreq10, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(0);
 
-  AddSegment("よしこに", &segments);
-  AddCandidate(1, "良子に", &segments);
-  predictor->Finish(convreq10, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
+  segments_proxy.AddSegment("よしこに");
+  segments_proxy.AddCandidate(1, "良子に");
+  predictor->Finish(convreq10, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(1);
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq11 =
-      SetUpInputForSuggestion("たろうは", &composer_, &segments);
+      SetUpInputForSuggestion("たろうは", &composer_, &segments_proxy);
   results = predictor->Predict(convreq11);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results[0].value, "太郎は良子に");
@@ -1882,49 +1882,47 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
 TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("とうきょうは", &composer_, &segments);
-  AddCandidate(0, "東京は", &segments);
+      SetUpInputForConversion("とうきょうは", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "東京は");
 
-  AddSegment("、", &segments);
-  AddCandidate(1, "、", &segments);
+  segments_proxy.AddSegment("、");
+  segments_proxy.AddCandidate(1, "、");
 
-  AddSegment("にほんです", &segments);
-  AddCandidate(2, "日本です", &segments);
+  segments_proxy.AddSegment("にほんです");
+  segments_proxy.AddCandidate(2, "日本です");
 
-  AddSegment("。", &segments);
-  AddCandidate(3, "。", &segments);
+  segments_proxy.AddSegment("。");
+  segments_proxy.AddCandidate(3, "。");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   absl::SleepFor(absl::Seconds(1));
 
   const ConversionRequest convreq2 =
-      SetUpInputForConversion("らーめんは", &composer_, &segments);
-  AddCandidate(0, "ラーメンは", &segments);
+      SetUpInputForConversion("らーめんは", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "ラーメンは");
 
-  AddSegment("、", &segments);
-  AddCandidate(1, "、", &segments);
+  segments_proxy.AddSegment("、");
+  segments_proxy.AddCandidate(1, "、");
 
-  AddSegment("めんるいです", &segments);
-  AddCandidate(2, "麺類です", &segments);
+  segments_proxy.AddSegment("めんるいです");
+  segments_proxy.AddCandidate(2, "麺類です");
 
-  AddSegment("。", &segments);
-  AddCandidate(3, "。", &segments);
+  segments_proxy.AddSegment("。");
+  segments_proxy.AddCandidate(3, "。");
 
-  predictor->Finish(convreq2, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq2, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("とうきょうは、", &composer_, &segments);
+      SetUpInputForSuggestion("とうきょうは、", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
 
@@ -1934,50 +1932,49 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
 TEST_F(UserHistoryPredictorTest, Regression2843371Case2) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("えど", &composer_, &segments);
-  AddCandidate(0, "江戸", &segments);
+      SetUpInputForConversion("えど", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "江戸");
 
-  AddSegment("(", &segments);
-  AddCandidate(1, "(", &segments);
+  segments_proxy.AddSegment("(");
+  segments_proxy.AddCandidate(1, "(");
 
-  AddSegment("とうきょう", &segments);
-  AddCandidate(2, "東京", &segments);
+  segments_proxy.AddSegment("とうきょう");
+  segments_proxy.AddCandidate(2, "東京");
 
-  AddSegment(")", &segments);
-  AddCandidate(3, ")", &segments);
+  segments_proxy.AddSegment(")");
+  segments_proxy.AddCandidate(3, ")");
 
-  AddSegment("は", &segments);
-  AddCandidate(4, "は", &segments);
+  segments_proxy.AddSegment("は");
+  segments_proxy.AddCandidate(4, "は");
 
-  AddSegment("えぞ", &segments);
-  AddCandidate(5, "蝦夷", &segments);
+  segments_proxy.AddSegment("えぞ");
+  segments_proxy.AddCandidate(5, "蝦夷");
 
-  AddSegment("(", &segments);
-  AddCandidate(6, "(", &segments);
+  segments_proxy.AddSegment("(");
+  segments_proxy.AddCandidate(6, "(");
 
-  AddSegment("ほっかいどう", &segments);
-  AddCandidate(7, "北海道", &segments);
+  segments_proxy.AddSegment("ほっかいどう");
+  segments_proxy.AddCandidate(7, "北海道");
 
-  AddSegment(")", &segments);
-  AddCandidate(8, ")", &segments);
+  segments_proxy.AddSegment(")");
+  segments_proxy.AddCandidate(8, ")");
 
-  AddSegment("ではない", &segments);
-  AddCandidate(9, "ではない", &segments);
+  segments_proxy.AddSegment("ではない");
+  segments_proxy.AddCandidate(9, "ではない");
 
-  AddSegment("。", &segments);
-  AddCandidate(10, "。", &segments);
+  segments_proxy.AddSegment("。");
+  segments_proxy.AddCandidate(10, "。");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq2 =
-      SetUpInputForSuggestion("えど(", &composer_, &segments);
+      SetUpInputForSuggestion("えど(", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results[0].value, "江戸(東京");
@@ -1991,61 +1988,59 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case2) {
 TEST_F(UserHistoryPredictorTest, Regression2843371Case3) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("「", &composer_, &segments);
-  AddCandidate(0, "「", &segments);
+      SetUpInputForConversion("「", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "「");
 
-  AddSegment("やま", &segments);
-  AddCandidate(1, "山", &segments);
+  segments_proxy.AddSegment("やま");
+  segments_proxy.AddCandidate(1, "山");
 
-  AddSegment("」", &segments);
-  AddCandidate(2, "」", &segments);
+  segments_proxy.AddSegment("」");
+  segments_proxy.AddCandidate(2, "」");
 
-  AddSegment("は", &segments);
-  AddCandidate(3, "は", &segments);
+  segments_proxy.AddSegment("は");
+  segments_proxy.AddCandidate(3, "は");
 
-  AddSegment("たかい", &segments);
-  AddCandidate(4, "高い", &segments);
+  segments_proxy.AddSegment("たかい");
+  segments_proxy.AddCandidate(4, "高い");
 
-  AddSegment("。", &segments);
-  AddCandidate(5, "。", &segments);
+  segments_proxy.AddSegment("。");
+  segments_proxy.AddCandidate(5, "。");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
   absl::SleepFor(absl::Seconds(2));
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq2 =
-      SetUpInputForConversion("「", &composer_, &segments);
-  AddCandidate(0, "「", &segments);
+      SetUpInputForConversion("「", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "「");
 
-  AddSegment("うみ", &segments);
-  AddCandidate(1, "海", &segments);
+  segments_proxy.AddSegment("うみ");
+  segments_proxy.AddCandidate(1, "海");
 
-  AddSegment("」", &segments);
-  AddCandidate(2, "」", &segments);
+  segments_proxy.AddSegment("」");
+  segments_proxy.AddCandidate(2, "」");
 
-  AddSegment("は", &segments);
-  AddCandidate(3, "は", &segments);
+  segments_proxy.AddSegment("は");
+  segments_proxy.AddCandidate(3, "は");
 
-  AddSegment("ふかい", &segments);
-  AddCandidate(4, "深い", &segments);
+  segments_proxy.AddSegment("ふかい");
+  segments_proxy.AddCandidate(4, "深い");
 
-  AddSegment("。", &segments);
-  AddCandidate(5, "。", &segments);
+  segments_proxy.AddSegment("。");
+  segments_proxy.AddCandidate(5, "。");
 
-  predictor->Finish(convreq2, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq2, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("「やま」は", &composer_, &segments);
+      SetUpInputForSuggestion("「やま」は", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
 
@@ -2055,23 +2050,22 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case3) {
 TEST_F(UserHistoryPredictorTest, Regression2843775) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("そうです", &composer_, &segments);
-  AddCandidate(0, "そうです", &segments);
+      SetUpInputForConversion("そうです", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "そうです");
 
-  AddSegment("。よろしくおねがいします", &segments);
-  AddCandidate(1, "。よろしくお願いします", &segments);
+  segments_proxy.AddSegment("。よろしくおねがいします");
+  segments_proxy.AddCandidate(1, "。よろしくお願いします");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq2 =
-      SetUpInputForSuggestion("そうです", &composer_, &segments);
+      SetUpInputForSuggestion("そうです", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
 
@@ -2081,41 +2075,40 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
 TEST_F(UserHistoryPredictorTest, DuplicateString) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("らいおん", &composer_, &segments);
-  AddCandidate(0, "ライオン", &segments);
+      SetUpInputForConversion("らいおん", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "ライオン");
 
-  AddSegment("（", &segments);
-  AddCandidate(1, "（", &segments);
+  segments_proxy.AddSegment("（");
+  segments_proxy.AddCandidate(1, "（");
 
-  AddSegment("もうじゅう", &segments);
-  AddCandidate(2, "猛獣", &segments);
+  segments_proxy.AddSegment("もうじゅう");
+  segments_proxy.AddCandidate(2, "猛獣");
 
-  AddSegment("）と", &segments);
-  AddCandidate(3, "）と", &segments);
+  segments_proxy.AddSegment("）と");
+  segments_proxy.AddCandidate(3, "）と");
 
-  AddSegment("ぞうりむし", &segments);
-  AddCandidate(4, "ゾウリムシ", &segments);
+  segments_proxy.AddSegment("ぞうりむし");
+  segments_proxy.AddCandidate(4, "ゾウリムシ");
 
-  AddSegment("（", &segments);
-  AddCandidate(5, "（", &segments);
+  segments_proxy.AddSegment("（");
+  segments_proxy.AddCandidate(5, "（");
 
-  AddSegment("びせいぶつ", &segments);
-  AddCandidate(6, "微生物", &segments);
+  segments_proxy.AddSegment("びせいぶつ");
+  segments_proxy.AddCandidate(6, "微生物");
 
-  AddSegment("）", &segments);
-  AddCandidate(7, "）", &segments);
+  segments_proxy.AddSegment("）");
+  segments_proxy.AddCandidate(7, "）");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq2 =
-      SetUpInputForSuggestion("ぞうりむし", &composer_, &segments);
+      SetUpInputForSuggestion("ぞうりむし", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
 
@@ -2124,10 +2117,10 @@ TEST_F(UserHistoryPredictorTest, DuplicateString) {
               std::string::npos);  // "猛獣" should not be found
   }
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("らいおん", &composer_, &segments);
+      SetUpInputForSuggestion("らいおん", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
 
@@ -2173,7 +2166,7 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
   }
 
   // Kind of stress test
-  Segments segments;
+  SegmentsProxy segments_proxy;
   for (size_t i = 0; i < commands.size(); ++i) {
     switch (commands[i].type) {
       case Command::SYNC:
@@ -2183,18 +2176,18 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
         WaitForSyncer(predictor);
         break;
       case Command::INSERT: {
-        segments.Clear();
-        const ConversionRequest convreq =
-            SetUpInputForConversion(commands[i].key, &composer_, &segments);
-        AddCandidate(commands[i].value, &segments);
-        predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                          segments.revert_id());
+        segments_proxy.Clear();
+        const ConversionRequest convreq = SetUpInputForConversion(
+            commands[i].key, &composer_, &segments_proxy);
+        segments_proxy.AddCandidate(0, commands[i].value);
+        predictor->Finish(convreq, segments_proxy.MakeLearningResults(),
+                          kRevertId);
         break;
       }
       case Command::LOOKUP: {
-        segments.Clear();
-        const ConversionRequest convreq =
-            SetUpInputForSuggestion(commands[i].key, &composer_, &segments);
+        segments_proxy.Clear();
+        const ConversionRequest convreq = SetUpInputForSuggestion(
+            commands[i].key, &composer_, &segments_proxy);
         predictor->Predict(convreq);
         break;
       }
@@ -2229,8 +2222,8 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
-  constexpr char kKey[] = "abc";
-  constexpr char kValue[] = "ABC";
+  constexpr absl::string_view kKey = "abc";
+  constexpr absl::string_view kValue = "ABC";
 
   UserHistoryPredictor::Entry entry;
   entry.set_key(kKey);
@@ -2591,12 +2584,12 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
 
     // Initial commit.
     {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       const ConversionRequest convreq =
-          SetUpInputForConversion(input, &composer_, &segments);
-      AddCandidate(0, output, &segments);
-      predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                        segments.revert_id());
+          SetUpInputForConversion(input, &composer_, &segments_proxy);
+      segments_proxy.AddCandidate(0, output);
+      predictor->Finish(convreq, segments_proxy.MakeLearningResults(),
+                        kRevertId);
     }
 
     // TODO(yukawa): Refactor the scenario runner below by making
@@ -2604,9 +2597,9 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
 
     // Check suggestion
     {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       const ConversionRequest convreq1 =
-          SetUpInputForSuggestion(partial_input, &composer_, &segments);
+          SetUpInputForSuggestion(partial_input, &composer_, &segments_proxy);
       if (expect_sensitive) {
         results = predictor->Predict(convreq1);
         EXPECT_TRUE(results.empty())
@@ -2616,9 +2609,9 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
         EXPECT_FALSE(results.empty())
             << description << " input: " << input << " output: " << output;
       }
-      segments.Clear();
+      segments_proxy.Clear();
       const ConversionRequest convreq2 =
-          SetUpInputForPrediction(input, &composer_, &segments);
+          SetUpInputForPrediction(input, &composer_, &segments_proxy);
       if (expect_sensitive) {
         results = predictor->Predict(convreq2);
         EXPECT_TRUE(results.empty())
@@ -2632,9 +2625,9 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
 
     // Check Prediction
     {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       const ConversionRequest convreq1 =
-          SetUpInputForPrediction(partial_input, &composer_, &segments);
+          SetUpInputForPrediction(partial_input, &composer_, &segments_proxy);
       if (expect_sensitive) {
         results = predictor->Predict(convreq1);
         EXPECT_TRUE(results.empty())
@@ -2644,9 +2637,9 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
         EXPECT_FALSE(results.empty())
             << description << " input: " << input << " output: " << output;
       }
-      segments.Clear();
+      segments_proxy.Clear();
       const ConversionRequest convreq2 =
-          SetUpInputForPrediction(input, &composer_, &segments);
+          SetUpInputForPrediction(input, &composer_, &segments_proxy);
       if (expect_sensitive) {
         results = predictor->Predict(convreq2);
         EXPECT_TRUE(results.empty())
@@ -2669,38 +2662,37 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveMultiSegmentsTest) {
   // considered to be privacy sensitive when the input is committed.
   // Currently this is a known issue.
   {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForConversion("123", &composer_, &segments);
-    AddSegment("abc!", &segments);
-    AddCandidate(0, "123", &segments);
-    AddCandidate(1, "abc!", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForConversion("123", &composer_, &segments_proxy);
+    segments_proxy.AddSegment("abc!");
+    segments_proxy.AddCandidate(0, "123");
+    segments_proxy.AddCandidate(1, "abc!");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("123abc", &composer_, &segments);
+        SetUpInputForSuggestion("123abc", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("123abc!", &composer_, &segments);
+        SetUpInputForSuggestion("123abc!", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
   }
 
   {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq1 =
-        SetUpInputForPrediction("123abc", &composer_, &segments);
+        SetUpInputForPrediction("123abc", &composer_, &segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForPrediction("123abc!", &composer_, &segments);
+        SetUpInputForPrediction("123abc!", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
   }
@@ -2855,28 +2847,37 @@ TEST_F(UserHistoryPredictorTest, MaybeRomanMisspelledKey) {
 }
 
 TEST_F(UserHistoryPredictorTest, GetRomanMisspelledKey) {
-  Segments segments;
+  SegmentsProxy segments_proxy;
 
   config_.set_preedit_method(config::Config::ROMAN);
-  auto convreq = [&]() { return CreateConversionRequest(composer_, segments); };
 
-  segments.InitForConvert("");
-  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()), "");
+  auto convreq = [&](absl::string_view key) {
+    return ConversionRequestBuilder()
+        .SetConfigView(config_)
+        .SetKey(key)
+        .Build();
+  };
 
-  segments.InitForConvert("おねがいしまうs");
-  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()),
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq("")),
+            "");
+
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(
+                convreq("おねがいしまうs")),
             "onegaisimaus");
 
-  segments.InitForConvert("おねがいします");
-  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()), "");
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(
+                convreq("おねがいします")),
+            "");
 
   config_.set_preedit_method(config::Config::KANA);
 
-  segments.InitForConvert("おねがいしまうs");
-  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()), "");
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(
+                convreq("おねがいしまうs")),
+            "");
 
-  segments.InitForConvert("おねがいします");
-  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(convreq()), "");
+  EXPECT_EQ(UserHistoryPredictorTestPeer::GetRomanMisspelledKey(
+                convreq("おねがいします")),
+            "");
 }
 
 TEST_F(UserHistoryPredictorTest, RomanFuzzyLookupEntry) {
@@ -3142,10 +3143,10 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
-  Segments segments;
+  SegmentsProxy segments_proxy;
 
   const ConversionRequest convreq =
-      InitSegmentsFromInputSequence("gu-g", &composer_, &segments);
+      InitSegmentsFromInputSequence("gu-g", &composer_, &segments_proxy);
   std::string input_key;
   std::string base;
   std::unique_ptr<Trie<std::string>> expanded;
@@ -3163,14 +3164,14 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
-  Segments segments;
+  SegmentsProxy segments_proxy;
   Random random;
 
   for (size_t i = 0; i < 1000; ++i) {
     composer_.Reset();
     const std::string input = random.Utf8StringRandomLen(4, ' ', '~');
     const ConversionRequest convreq =
-        InitSegmentsFromInputSequence(input, &composer_, &segments);
+        InitSegmentsFromInputSequence(input, &composer_, &segments_proxy);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3183,11 +3184,11 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
 // input_key != base by composer modification.
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
-  Segments segments;
+  SegmentsProxy segments_proxy;
 
   {
     const ConversionRequest convreq =
-        InitSegmentsFromInputSequence("8,+", &composer_, &segments);
+        InitSegmentsFromInputSequence("8,+", &composer_, &segments_proxy);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3198,11 +3199,11 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
-  Segments segments;
+  SegmentsProxy segments_proxy;
 
   {
     const ConversionRequest convreq =
-        InitSegmentsFromInputSequence("n", &composer_, &segments);
+        InitSegmentsFromInputSequence("n", &composer_, &segments_proxy);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3220,10 +3221,10 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   }
 
   composer_.Reset();
-  segments.Clear();
+  segments_proxy.Clear();
   {
     const ConversionRequest convreq =
-        InitSegmentsFromInputSequence("nn", &composer_, &segments);
+        InitSegmentsFromInputSequence("nn", &composer_, &segments_proxy);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3235,10 +3236,10 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   }
 
   composer_.Reset();
-  segments.Clear();
+  segments_proxy.Clear();
   {
     const ConversionRequest convreq =
-        InitSegmentsFromInputSequence("n'", &composer_, &segments);
+        InitSegmentsFromInputSequence("n'", &composer_, &segments_proxy);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3250,10 +3251,10 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   }
 
   composer_.Reset();
-  segments.Clear();
+  segments_proxy.Clear();
   {
     const ConversionRequest convreq =
-        InitSegmentsFromInputSequence("n'n", &composer_, &segments);
+        InitSegmentsFromInputSequence("n'n", &composer_, &segments_proxy);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3273,11 +3274,11 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
   table_->LoadFromFile("system://flick-hiragana.tsv");
-  Segments segments;
+  SegmentsProxy segments_proxy;
 
   {
     const ConversionRequest convreq =
-        InitSegmentsFromInputSequence("/", &composer_, &segments);
+        InitSegmentsFromInputSequence("/", &composer_, &segments_proxy);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3297,11 +3298,11 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
   table_->LoadFromFile("system://12keys-hiragana.tsv");
-  Segments segments;
+  SegmentsProxy segments_proxy;
 
   {
     const ConversionRequest convreq =
-        InitSegmentsFromInputSequence("わ00", &composer_, &segments);
+        InitSegmentsFromInputSequence("わ00", &composer_, &segments_proxy);
     std::string input_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
@@ -3321,10 +3322,10 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
 
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
   table_->LoadFromFile("system://kana.tsv");
-  Segments segments;
+  SegmentsProxy segments_proxy;
 
   const ConversionRequest convreq =
-      InitSegmentsFromInputSequence("あか", &composer_, &segments);
+      InitSegmentsFromInputSequence("あか", &composer_, &segments_proxy);
 
   {
     std::string input_key;
@@ -3349,36 +3350,30 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
     UserHistoryPredictor *predictor =
         GetUserHistoryPredictorWithClearedHistory();
 
-    Segments segments;
+    SegmentsProxy segments_proxy;
     std::vector<Result> results;
 
     request_.set_mixed_conversion(mixed_conversion);
 
     {
-      constexpr char kKey[] = "わたしのなまえはなかのです";
-      constexpr char kValue[] = "私の名前は中野です";
+      constexpr absl::string_view kKey = "わたしのなまえはなかのです";
+      constexpr absl::string_view kValue = "私の名前は中野です";
       const ConversionRequest convreq1 =
-          SetUpInputForPrediction(kKey, &composer_, &segments);
-      converter::Candidate *candidate =
-          segments.mutable_segment(0)->add_candidate();
-      CHECK(candidate);
-      candidate->value = kValue;
-      candidate->content_value = kValue;
-      candidate->key = kKey;
-      candidate->content_key = kKey;
+          SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
+      segments_proxy.AddCandidate(0, kValue);
       // "わたしの, 私の", "わたし, 私"
-      candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+      segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 6, 9, 3);
       // "なまえは, 名前は", "なまえ, 名前"
-      candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+      segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 9, 9, 6);
       // "なかのです, 中野です", "なかの, 中野"
-      candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
-      predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                        segments.revert_id());
+      segments_proxy.PushBackInnerSegmentBoundary(0, 0, 15, 12, 9, 6);
+      predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                        kRevertId);
     }
-    segments.Clear();
+    segments_proxy.Clear();
 
     const ConversionRequest convreq2 =
-        SetUpInputForPrediction("なかの", &composer_, &segments);
+        SetUpInputForPrediction("なかの", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     if (mixed_conversion) {
@@ -3386,17 +3381,17 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
     } else {
       EXPECT_TRUE(FindCandidateByValue("中野です", results));
     }
-    segments.Clear();
+    segments_proxy.Clear();
 
     const ConversionRequest convreq3 =
-        SetUpInputForPrediction("なかので", &composer_, &segments);
+        SetUpInputForPrediction("なかので", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(FindCandidateByValue("中野です", results));
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq4 =
-        SetUpInputForPrediction("なまえ", &composer_, &segments);
+        SetUpInputForPrediction("なまえ", &composer_, &segments_proxy);
     results = predictor->Predict(convreq4);
     EXPECT_FALSE(results.empty());
     if (mixed_conversion) {
@@ -3413,41 +3408,33 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   request_.set_mixed_conversion(true);
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   {
-    constexpr char kKey[] = "わたしのなまえはなかのです";
-    constexpr char kValue[] = "私の名前は中野です";
+    constexpr absl::string_view kKey = "わたしのなまえはなかのです";
+    constexpr absl::string_view kValue = "私の名前は中野です";
     const ConversionRequest convreq =
-        SetUpInputForPrediction(kKey, &composer_, &segments);
-    converter::Candidate *candidate =
-        segments.mutable_segment(0)->add_candidate();
-    CHECK(candidate);
-    candidate->value = kValue;
-    candidate->content_value = kValue;
-    candidate->key = kKey;
-    candidate->content_key = kKey;
+        SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, kValue);
     // "わたしの, 私の", "わたし, 私"
-    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 6, 9, 3);
     // "なまえは, 名前は", "なまえ, 名前"
-    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 9, 9, 6);
     // "なかのです, 中野です", "なかの, 中野"
-    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 15, 12, 9, 6);
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq2 =
-      SetUpInputForConversion("わたしの", &composer_, &segments);
-  AddCandidate(0, "私の", &segments);
-  predictor->Finish(convreq2, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+      SetUpInputForConversion("わたしの", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "私の");
+  predictor->Finish(convreq2, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.SetHistoryType(0);
 
   commands::Request request;
   request_.set_zero_query_suggestion(true);
   const ConversionRequest convreq3 = SetUpInputForSuggestionWithHistory(
-      "", "わたしの", "私の", &composer_, &segments);
+      "", "わたしの", "私の", &composer_, &segments_proxy);
   const std::vector<Result> results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("名前", results));
@@ -3459,26 +3446,19 @@ TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
   request_test_util::FillMobileRequest(&request_);
   std::vector<Result> results;
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   for (size_t i = 0; i < 3; ++i) {
-    constexpr char kKey[] = "よろしくおねがいします";
-    constexpr char kValue[] = "よろしくお願いします";
+    constexpr absl::string_view kKey = "よろしくおねがいします";
+    constexpr absl::string_view kValue = "よろしくお願いします";
     const ConversionRequest convreq =
-        SetUpInputForPrediction(kKey, &composer_, &segments);
-    converter::Candidate *candidate =
-        segments.mutable_segment(0)->add_candidate();
-    CHECK(candidate);
-    candidate->value = kValue;
-    candidate->content_value = kValue;
-    candidate->key = kKey;
-    candidate->content_key = kKey;
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
-    segments.Clear();
+        SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, kValue);
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+    segments_proxy.Clear();
   }
 
   const ConversionRequest convreq =
-      SetUpInputForPrediction("よろ", &composer_, &segments);
+      SetUpInputForPrediction("よろ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("よろしくお願いします", results));
@@ -4073,12 +4053,11 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario1) {
   // Set up history. Convert "ぐーぐｒ" to "グーグr" 3 times.  This emulates a
   // case that a user accidentally input incomplete sequence.
   for (int i = 0; i < 3; ++i) {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq =
-        SetUpInputForConversion("ぐーぐｒ", &composer_, &segments);
-    AddCandidate("グーグr", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForConversion("ぐーぐｒ", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "グーグr");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   // Test if the predictor learned "グーグr".
@@ -4103,43 +4082,19 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
   // so that the predictor learns the sentence. We assume that this sentence
   // consists of three segments: "今日も|いい天気|!".
   for (int i = 0; i < 3; ++i) {
-    Segments segments;
+    SegmentsProxy segments_proxy;
 
-    // The first segment: ("きょうも", "今日も")
-    Segment *seg = segments.add_segment();
-    seg->set_key("きょうも");
-    seg->set_segment_type(Segment::FIXED_VALUE);
-    converter::Candidate *candidate = seg->add_candidate();
-    candidate->value = "今日も";
-    candidate->content_value = "今日";
-    candidate->key = seg->key();
-    candidate->content_key = "きょう";
-
-    // The second segment: ("いいてんき", "いい天気")
-    seg = segments.add_segment();
-    seg->set_key("いいてんき");
-    seg->set_segment_type(Segment::FIXED_VALUE);
-    candidate = seg->add_candidate();
-    candidate->value = "いい天気";
-    candidate->content_value = candidate->value;
-    candidate->key = seg->key();
-    candidate->content_key = seg->key();
-
-    // The third segment: ("！", "!")
-    seg = segments.add_segment();
-    seg->set_key("！");
-    seg->set_segment_type(Segment::FIXED_VALUE);
-    candidate = seg->add_candidate();
-    candidate->value = "!";
-    candidate->content_value = "!";
-    candidate->key = seg->key();
-    candidate->content_key = seg->key();
+    segments_proxy.AddSegment("きょうも");
+    segments_proxy.AddSegment("いいてんき");
+    segments_proxy.AddSegment("！");
+    segments_proxy.AddCandidate(0, "今日も");
+    segments_proxy.AddCandidate(1, "いい天気");
+    segments_proxy.AddCandidate(2, "!");
 
     const ConversionRequest convreq =
-        CreateConversionRequest(composer_, segments);
+        CreateConversionRequest(composer_, segments_proxy);
 
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   // Check if the predictor learned the sentence.  Since the symbol is contained
@@ -4166,46 +4121,41 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
 
   request_.set_mixed_conversion(true);
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   {
-    constexpr char kKey[] = "とうきょうかなごやにいきたい";
-    constexpr char kValue[] = "東京か名古屋に行きたい";
+    constexpr absl::string_view kKey = "とうきょうかなごやにいきたい";
+    constexpr absl::string_view kValue = "東京か名古屋に行きたい";
     const ConversionRequest convreq1 =
-        SetUpInputForPrediction(kKey, &composer_, &segments);
-    converter::Candidate *candidate =
-        segments.mutable_segment(0)->add_candidate();
-    candidate->key = kKey;
-    candidate->value = kValue;
-    candidate->content_key = kKey;
-    candidate->content_value = kValue;
-    candidate->PushBackInnerSegmentBoundary(18, 9, 15, 6);
-    candidate->PushBackInnerSegmentBoundary(12, 12, 9, 9);
-    candidate->PushBackInnerSegmentBoundary(12, 12, 12, 12);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, kValue);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 18, 9, 15, 6);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 12, 9, 9);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 12, 12, 12);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
   }
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq2 =
-      SetUpInputForPrediction("と", &composer_, &segments);
+      SetUpInputForPrediction("と", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("東京", results));
   EXPECT_FALSE(FindCandidateByValue("東京か", results));
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq3 =
-      SetUpInputForPrediction("な", &composer_, &segments);
+      SetUpInputForPrediction("な", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("名古屋", results));
   EXPECT_FALSE(FindCandidateByValue("名古屋に", results));
 
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq4 =
-      SetUpInputForPrediction("い", &composer_, &segments);
+      SetUpInputForPrediction("い", &composer_, &segments_proxy);
   results = predictor->Predict(convreq4);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("行きたい", results));
@@ -4214,123 +4164,121 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
 TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   request_test_util::FillMobileRequest(&request_);
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("わたしの", &composer_, &segments);
-  AddCandidate(0, "私の", &segments);
+      SetUpInputForConversion("わたしの", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "私の");
 
-  AddSegment("なまえは", &segments);
-  AddCandidate(1, "名前は", &segments);
+  segments_proxy.AddSegment("なまえは");
+  segments_proxy.AddCandidate(1, "名前は");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
-  segments.Clear();
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
+  segments_proxy.Clear();
 
   const ConversionRequest convreq2 =
-      SetUpInputForSuggestion("わたし", &composer_, &segments);
+      SetUpInputForSuggestion("わたし", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の");
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq3 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments);
+      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の");
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq4 =
-      SetUpInputForPrediction("わたしのな", &composer_, &segments);
+      SetUpInputForPrediction("わたしのな", &composer_, &segments_proxy);
   results = predictor->Predict(convreq4);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の名前は");
-  segments.Clear();
+  segments_proxy.Clear();
 }
 
 TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq1 =
-      SetUpInputForConversion("わたしの", &composer_, &segments);
-  AddCandidate(0, "私の", &segments);
+      SetUpInputForConversion("わたしの", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "私の");
 
-  AddSegment("なまえは", &segments);
-  AddCandidate(1, "名前は", &segments);
+  segments_proxy.AddSegment("なまえは");
+  segments_proxy.AddCandidate(1, "名前は");
 
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq2 =
-      SetUpInputForSuggestion("わたし", &composer_, &segments);
+      SetUpInputForSuggestion("わたし", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 2);
   EXPECT_EQ(results[0].value, "私の");
   EXPECT_EQ(results[1].value, "私の名前は");
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq3 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments);
+      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の名前は");
-  segments.Clear();
+  segments_proxy.Clear();
 
   const ConversionRequest convreq4 =
-      SetUpInputForPrediction("わたしのな", &composer_, &segments);
+      SetUpInputForPrediction("わたしのな", &composer_, &segments_proxy);
   results = predictor->Predict(convreq4);
   EXPECT_FALSE(results.empty());
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].value, "私の名前は");
-  segments.Clear();
+  segments_proxy.Clear();
 }
 
 TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   request_test_util::FillMobileRequest(&request_);
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   {
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("ございます", &composer_, &segments);
-    AddCandidate(0, "ございます", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForConversion("ございます", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "ございます");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     const ConversionRequest convreq2 = SetUpInputForConversionWithHistory(
-        "!", "ございます", "ございます", &composer_, &segments);
-    AddCandidate(1, "！", &segments);
-    predictor->Finish(convreq2, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        "!", "ございます", "ございます", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(1, "！");
+    predictor->Finish(convreq2, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq3 =
-        SetUpInputForSuggestion("ございま", &composer_, &segments);
+        SetUpInputForSuggestion("ございま", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ございます");
     EXPECT_FALSE(FindCandidateByValue("ございます！", results));
 
     // Zero query from "ございます" -> "！"
-    segments.Clear();
+    segments_proxy.Clear();
     // Output of SetupInputForConversion is not used here.
-    SetUpInputForConversion("ございます", &composer_, &segments);
-    AddCandidate(0, "ございます", &segments);
+    SetUpInputForConversion("ございます", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "ございます");
     const ConversionRequest convreq4 = SetUpInputForSuggestionWithHistory(
-        "", "ございます", "ございます", &composer_, &segments);
+        "", "ございます", "ございます", &composer_, &segments_proxy);
     results = predictor->Predict(convreq4);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "！");
@@ -4341,21 +4289,21 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
 
   {
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("!", &composer_, &segments);
-    AddCandidate(0, "！", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForConversion("!", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "！");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     const ConversionRequest convreq2 = SetUpInputForSuggestionWithHistory(
-        "ございます", "!", "！", &composer_, &segments);
-    AddCandidate(1, "ございます", &segments);
-    predictor->Finish(convreq2, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        "ございます", "!", "！", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(1, "ございます");
+    predictor->Finish(convreq2, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     // Zero query from "！" -> no suggestion
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq3 = SetUpInputForSuggestionWithHistory(
-        "", "!", "！", &composer_, &segments);
+        "", "!", "！", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
     EXPECT_TRUE(results.empty());
   }
@@ -4365,35 +4313,35 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
 
   {
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("ございます!", &composer_, &segments);
-    AddCandidate(0, "ございます！", &segments);
+        SetUpInputForConversion("ございます!", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "ございます！");
 
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    segments_proxy.SetHistoryType(0);
 
-    AddSegment("よろしくおねがいします", &segments);
-    AddCandidate(1, "よろしくお願いします", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.AddSegment("よろしくおねがいします");
+    segments_proxy.AddCandidate(1, "よろしくお願いします");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     // Zero query from "！" -> no suggestion
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForConversion("!", &composer_, &segments);
-    AddCandidate(0, "！", &segments);
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
-    AddSegment("", &segments);  // empty request
+        SetUpInputForConversion("!", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "！");
+    segments_proxy.SetHistoryType(0);
+    segments_proxy.AddSegment("");  // empty request
     results = predictor->Predict(convreq2);
     EXPECT_TRUE(results.empty());
 
     // Zero query from "ございます！" -> no suggestion
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq3 =
-        SetUpInputForConversion("ございます!", &composer_, &segments);
-    AddCandidate(0, "ございます！", &segments);
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
-    AddSegment("", &segments);  // empty request
+        SetUpInputForConversion("ございます!", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "ございます！");
+    segments_proxy.SetHistoryType(0);
+    segments_proxy.AddSegment("");  // empty request
     results = predictor->Predict(convreq3);
     EXPECT_TRUE(results.empty());
   }
@@ -4403,21 +4351,21 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
 
   {
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("ございます", &composer_, &segments);
-    AddCandidate(0, "ございます", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForConversion("ございます", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "ございます");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
     const ConversionRequest convreq2 = SetUpInputForConversionWithHistory(
         "!よろしくおねがいします", "ございます", "ございます", &composer_,
-        &segments);
-    AddCandidate(1, "！よろしくお願いします", &segments);
-    predictor->Finish(convreq2, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        &segments_proxy);
+    segments_proxy.AddCandidate(1, "！よろしくお願いします");
+    predictor->Finish(convreq2, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq3 =
-        SetUpInputForSuggestion("ございま", &composer_, &segments);
+        SetUpInputForSuggestion("ございま", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ございます");
@@ -4426,8 +4374,8 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
 
     // Zero query from "ございます" -> no suggestion
     const ConversionRequest convreq4 = SetUpInputForConversionWithHistory(
-        "", "ございます", "ございます", &composer_, &segments);
-    AddSegment("", &segments);  // empty request
+        "", "ございます", "ございます", &composer_, &segments_proxy);
+    segments_proxy.AddSegment("");  // empty request
     results = predictor->Predict(convreq4);
     EXPECT_TRUE(results.empty());
   }
@@ -4435,34 +4383,34 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
 
 TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   {
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("ございます", &composer_, &segments);
-    AddCandidate(0, "ございます", &segments);
+        SetUpInputForConversion("ございます", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "ございます");
 
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    segments_proxy.SetHistoryType(0);
 
-    AddSegment("!", &segments);
-    AddCandidate(1, "！", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.AddSegment("!");
+    segments_proxy.AddCandidate(1, "！");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("ございま", &composer_, &segments);
+        SetUpInputForSuggestion("ございま", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ございます");
     EXPECT_FALSE(FindCandidateByValue("ございます！", results));
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq3 =
-        SetUpInputForSuggestion("ございます", &composer_, &segments);
+        SetUpInputForSuggestion("ございます", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ございます");
@@ -4474,21 +4422,21 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
 
   {
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("!", &composer_, &segments);
-    AddCandidate(0, "！", &segments);
+        SetUpInputForConversion("!", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "！");
 
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    segments_proxy.SetHistoryType(0);
 
-    AddSegment("よろしくおねがいします", &segments);
-    AddCandidate(1, "よろしくお願いします", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.AddSegment("よろしくおねがいします");
+    segments_proxy.AddCandidate(1, "よろしくお願いします");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("!", &composer_, &segments);
+        SetUpInputForSuggestion("!", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_TRUE(results.empty());
   }
@@ -4498,30 +4446,30 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
 
   {
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("ございます!", &composer_, &segments);
-    AddCandidate(0, "ございます！", &segments);
+        SetUpInputForConversion("ございます!", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "ございます！");
 
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    segments_proxy.SetHistoryType(0);
 
-    AddSegment("よろしくおねがいします", &segments);
-    AddCandidate(1, "よろしくお願いします", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.AddSegment("よろしくおねがいします");
+    segments_proxy.AddCandidate(1, "よろしくお願いします");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("ございます", &composer_, &segments);
+        SetUpInputForSuggestion("ございます", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ございます！");
     EXPECT_FALSE(
         FindCandidateByValue("ございます！よろしくお願いします", results));
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq3 =
-        SetUpInputForSuggestion("ございます!", &composer_, &segments);
+        SetUpInputForSuggestion("ございます!", &composer_, &segments_proxy);
     results = predictor->Predict(convreq3);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ございます！");
@@ -4534,21 +4482,21 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
 
   {
     const ConversionRequest convreq1 =
-        SetUpInputForConversion("ございます", &composer_, &segments);
-    AddCandidate(0, "ございます", &segments);
+        SetUpInputForConversion("ございます", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "ございます");
 
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    segments_proxy.SetHistoryType(0);
 
-    AddSegment("!よろしくおねがいします", &segments);
-    AddCandidate(1, "！よろしくお願いします", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.AddSegment("!よろしくおねがいします");
+    segments_proxy.AddCandidate(1, "！よろしくお願いします");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("ございます", &composer_, &segments);
+        SetUpInputForSuggestion("ございます", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ございます");
@@ -4562,21 +4510,21 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
 
   {
     const ConversionRequest convreq1 = SetUpInputForConversion(
-        "よろしくおねがいします", &composer_, &segments);
-    AddCandidate(0, "よろしくお願いします", &segments);
+        "よろしくおねがいします", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "よろしくお願いします");
 
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    segments_proxy.SetHistoryType(0);
 
-    AddSegment("!", &segments);
-    AddCandidate(1, "！", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.AddSegment("!");
+    segments_proxy.AddCandidate(1, "！");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 = SetUpInputForSuggestion(
-        "よろしくおねがいします", &composer_, &segments);
+        "よろしくおねがいします", &composer_, &segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(FindCandidateByValue("よろしくお願いします", results));
@@ -4589,21 +4537,20 @@ TEST_F(UserHistoryPredictorTest, EntriesMaxTrialSize) {
 
   // Insert one entry per day.
   for (int i = 0; i < 30; ++i) {
-    Segments segments;
+    SegmentsProxy segments_proxy;
     const ConversionRequest convreq = SetUpInputForConversion(
-        absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments);
-    AddCandidate(absl::StrFormat("私の名前%2d", i), &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, absl::StrFormat("私の名前%2d", i));
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   for (int trial : {10, 20}) {
     request_.mutable_decoder_experiment_params()
         ->set_user_history_max_suggestion_trial(trial);
     for (int i = 29; i >= 0; --i) {
-      Segments segments;
+      SegmentsProxy segments_proxy;
       const ConversionRequest convreq = SetUpInputForSuggestion(
-          absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments);
+          absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments_proxy);
       const std::vector<Result> results = predictor->Predict(convreq);
       const int lookup_trial = 29 - i;
       if (lookup_trial < trial) {
@@ -4639,12 +4586,13 @@ TEST_F(UserHistoryPredictorTest, EntriesAreDeletedAtSync) {
 
       // Insert one entry per day.
       for (int i = 0; i < 50; ++i) {
-        Segments segments;
-        const ConversionRequest convreq = SetUpInputForConversion(
-            absl::StrFormat("わたしのなまえ%2d", i), &composer_, &segments);
-        AddCandidate(absl::StrFormat("私の名前%2d", i), &segments);
-        predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                          segments.revert_id());
+        SegmentsProxy segments_proxy;
+        const ConversionRequest convreq =
+            SetUpInputForConversion(absl::StrFormat("わたしのなまえ%2d", i),
+                                    &composer_, &segments_proxy);
+        segments_proxy.AddCandidate(0, absl::StrFormat("私の名前%2d", i));
+        predictor->Finish(convreq, segments_proxy.MakeLearningResults(),
+                          kRevertId);
         if (mode == 0) {
           clock->Advance(absl::Hours(24));  // advance one day.
         }
@@ -4653,9 +4601,9 @@ TEST_F(UserHistoryPredictorTest, EntriesAreDeletedAtSync) {
       predictor_peer.Save();
 
       auto lookup_key = [&](absl::string_view key) -> std::string {
-        Segments segments;
+        SegmentsProxy segments_proxy;
         const ConversionRequest convreq =
-            SetUpInputForPrediction(key, &composer_, &segments);
+            SetUpInputForPrediction(key, &composer_, &segments_proxy);
         const std::vector<Result> results = predictor->Predict(convreq);
         return results.empty() ? "" : results[0].value;
       };
@@ -4686,17 +4634,16 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
   std::vector<Result> results;
 
   // Let the predictor learn "私の名前は中野です".
-  Segments segments;
+  SegmentsProxy segments_proxy;
   const ConversionRequest convreq1 = SetUpInputForConversion(
-      "わたしのなまえはなかのです", &composer_, &segments);
-  AddCandidate("私の名前は中野です", &segments);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+      "わたしのなまえはなかのです", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "私の名前は中野です");
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
   // Verify that "私の名前は中野です" is predicted.
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq2 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments);
+      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("私の名前は中野です", results));
@@ -4705,19 +4652,18 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
   clock->Advance(absl::Hours(63 * 24));
 
   // Let the predictor learn "私の名前は高橋です".
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq3 = SetUpInputForConversion(
-      "わたしのなまえはたかはしです", &composer_, &segments);
-  AddCandidate("私の名前は高橋です", &segments);
-  predictor->Finish(convreq3, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+      "わたしのなまえはたかはしです", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "私の名前は高橋です");
+  predictor->Finish(convreq3, segments_proxy.MakeLearningResults(), kRevertId);
 
   // Verify that "私の名前は高橋です" is predicted but "私の名前は中野です" is
   // not.  The latter one is still in on-memory data structure but lookup is
   // prevented.  The entry is removed when the data is written to disk.
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq4 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments);
+      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq4);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("私の名前は高橋です", results));
@@ -4729,9 +4675,9 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
 
   // Verify that "私の名前は中野です" is no longer predicted because it was
   // learned 63 days before.
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq5 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments);
+      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq5);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("私の名前は高橋です", results));
@@ -4755,18 +4701,17 @@ TEST_F(UserHistoryPredictorTest, FutureTimestamp) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Let the predictor learn "私の名前は中野です".
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
   const ConversionRequest convreq1 = SetUpInputForConversion(
-      "わたしのなまえはなかのです", &composer_, &segments);
-  AddCandidate("私の名前は中野です", &segments);
-  predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                    segments.revert_id());
+      "わたしのなまえはなかのです", &composer_, &segments_proxy);
+  segments_proxy.AddCandidate(0, "私の名前は中野です");
+  predictor->Finish(convreq1, segments_proxy.MakeLearningResults(), kRevertId);
 
   // Verify that "私の名前は中野です" is predicted.
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq2 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments);
+      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("私の名前は中野です", results));
@@ -4775,9 +4720,9 @@ TEST_F(UserHistoryPredictorTest, FutureTimestamp) {
   clock->SetTime(absl::FromUnixSeconds(1));
 
   // Verify that "私の名前は中野です" is predicted without crash.
-  segments.Clear();
+  segments_proxy.Clear();
   const ConversionRequest convreq3 =
-      SetUpInputForPrediction("わたしの", &composer_, &segments);
+      SetUpInputForPrediction("わたしの", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_FALSE(results.empty());
   EXPECT_TRUE(FindCandidateByValue("私の名前は中野です", results));
@@ -4785,29 +4730,26 @@ TEST_F(UserHistoryPredictorTest, FutureTimestamp) {
 
 TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
   {
     const ConversionRequest convreq =
-        SetUpInputForPrediction("てすと", &composer_, &segments);
-    AddCandidate(0, "てすと", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction("てすと", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "てすと");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
   {
     const ConversionRequest convreq =
-        SetUpInputForPrediction("てすと", &composer_, &segments);
+        SetUpInputForPrediction("てすと", &composer_, &segments_proxy);
 
-    AddCandidate(0, "テスト", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.AddCandidate(0, "テスト");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
   {
     const ConversionRequest convreq =
-        SetUpInputForPrediction("てすと", &composer_, &segments);
-    AddCandidate(0, "Test", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction("てすと", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "Test");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
   {
     ConversionRequest::Options options1 = {
@@ -4815,12 +4757,11 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
         .max_user_history_prediction_candidates_size = 2,
     };
     const ConversionRequest convreq1 = CreateConversionRequestWithOptions(
-        composer_, std::move(options1), segments);
-    MakeSegments("てすと", &segments);
+        composer_, std::move(options1), segments_proxy);
+    segments_proxy.MakeSegments("てすと");
 
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(results.size(), 2);
 
     ConversionRequest::Options options2 = {
@@ -4828,63 +4769,58 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
         .max_user_history_prediction_candidates_size = 2,
     };
     const ConversionRequest convreq2 = CreateConversionRequestWithOptions(
-        composer_, std::move(options2), segments);
-    MakeSegments("てすと", &segments);
+        composer_, std::move(options2), segments_proxy);
+    segments_proxy.MakeSegments("てすと");
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(results.size(), 2);
   }
   {
-    SetUpInput("てすと", &composer_, &segments);
+    SetUpInput("てすと", &composer_, &segments_proxy);
     ConversionRequest::Options options1 = {
         .request_type = ConversionRequest::SUGGESTION,
         .max_user_history_prediction_candidates_size = 3,
     };
     const ConversionRequest convreq1 = CreateConversionRequestWithOptions(
-        composer_, std::move(options1), segments);
+        composer_, std::move(options1), segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(results.size(), 3);
 
-    SetUpInput("てすと", &composer_, &segments);
+    SetUpInput("てすと", &composer_, &segments_proxy);
     ConversionRequest::Options options2 = {
         .request_type = ConversionRequest::PREDICTION,
         .max_user_history_prediction_candidates_size = 3,
     };
     const ConversionRequest convreq2 = CreateConversionRequestWithOptions(
-        composer_, std::move(options2), segments);
+        composer_, std::move(options2), segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(results.size(), 3);
   }
 
   {
     // Only 3 candidates in user history
-    SetUpInput("てすと", &composer_, &segments);
+    SetUpInput("てすと", &composer_, &segments_proxy);
     ConversionRequest::Options options1 = {
         .request_type = ConversionRequest::SUGGESTION,
         .max_user_history_prediction_candidates_size = 4,
     };
     const ConversionRequest convreq1 = CreateConversionRequestWithOptions(
-        composer_, std::move(options1), segments);
+        composer_, std::move(options1), segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(results.size(), 3);
 
-    SetUpInput("てすと", &composer_, &segments);
+    SetUpInput("てすと", &composer_, &segments_proxy);
     ConversionRequest::Options options2 = {
         .request_type = ConversionRequest::PREDICTION,
         .max_user_history_prediction_candidates_size = 4,
     };
     const ConversionRequest convreq2 = CreateConversionRequestWithOptions(
-        composer_, std::move(options2), segments);
+        composer_, std::move(options2), segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(results.size(), 3);
   }
 }
@@ -4892,93 +4828,81 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
 TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   request_test_util::FillMobileRequest(&request_);
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   const ConversionRequest convreq =
-      SetUpInputForPrediction("てすと", &composer_, &segments);
+      SetUpInputForPrediction("てすと", &composer_, &segments_proxy);
   {
-    AddCandidate(0, "てすと", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+    segments_proxy.AddCandidate(0, "てすと");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
+    segments_proxy.SetHistoryType(0);
   }
   {
-    AddSegment("かお", &segments);
-    AddCandidate(1, "😀", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.AddSegment("かお");
+    segments_proxy.AddCandidate(1, "😀");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
   {
-    converter::Candidate *candidate =
-        segments.mutable_segment(1)->mutable_candidate(0);
-    candidate->value = "😎";
-    candidate->content_value = candidate->value;
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.SetCandidate(1, 0, "😎");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
   {
-    converter::Candidate *candidate =
-        segments.mutable_segment(1)->mutable_candidate(0);
-    candidate->value = "😂";
-    candidate->content_value = candidate->value;
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.SetCandidate(1, 0, "😂");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   // normal prediction candidates size
   {
-    SetUpInput("かお", &composer_, &segments);
+    SetUpInput("かお", &composer_, &segments_proxy);
     ConversionRequest::Options options1 = {
         .request_type = ConversionRequest::SUGGESTION,
         .max_user_history_prediction_candidates_size = 2,
         .max_user_history_prediction_candidates_size_for_zero_query = 3,
     };
     const ConversionRequest convreq1 = CreateConversionRequestWithOptions(
-        composer_, std::move(options1), segments);
+        composer_, std::move(options1), segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(results.size(), 2);
 
-    SetUpInput("かお", &composer_, &segments);
+    SetUpInput("かお", &composer_, &segments_proxy);
     ConversionRequest::Options options2 = {
         .request_type = ConversionRequest::PREDICTION,
         .max_user_history_prediction_candidates_size = 2,
         .max_user_history_prediction_candidates_size_for_zero_query = 3,
     };
     const ConversionRequest convreq2 = CreateConversionRequestWithOptions(
-        composer_, std::move(options2), segments);
+        composer_, std::move(options2), segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(results.size(), 2);
   }
 
   // prediction candidates for zero query
   {
-    SetUpInput("", &composer_, &segments);
-    PrependHistorySegments("てすと", "てすと", &segments);
+    SetUpInput("", &composer_, &segments_proxy);
+    segments_proxy.PrependHistory("てすと", "てすと");
     ConversionRequest::Options options1 = {
         .request_type = ConversionRequest::SUGGESTION,
         .max_user_history_prediction_candidates_size = 2,
         .max_user_history_prediction_candidates_size_for_zero_query = 3,
     };
     const ConversionRequest convreq1 = CreateConversionRequestWithOptions(
-        composer_, std::move(options1), segments);
+        composer_, std::move(options1), segments_proxy);
     results = predictor->Predict(convreq1);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results.size(), 3);
 
-    SetUpInput("", &composer_, &segments);
-    PrependHistorySegments("てすと", "てすと", &segments);
+    SetUpInput("", &composer_, &segments_proxy);
+    segments_proxy.PrependHistory("てすと", "てすと");
     ConversionRequest::Options options2 = {
         .request_type = ConversionRequest::PREDICTION,
         .max_user_history_prediction_candidates_size = 2,
         .max_user_history_prediction_candidates_size_for_zero_query = 3,
     };
     const ConversionRequest convreq2 = CreateConversionRequestWithOptions(
-        composer_, std::move(options2), segments);
+        composer_, std::move(options2), segments_proxy);
     results = predictor->Predict(convreq2);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results.size(), 3);
@@ -5001,47 +4925,44 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
 
   ScopedClockMock clock(absl::FromUnixSeconds(1));
 
-  Segments segments;
+  SegmentsProxy segments_proxy;
   std::vector<Result> results;
 
   {
     clock->Advance(absl::Hours(1));
     const ConversionRequest convreq =
-        SetUpInputForPrediction("がっこう", &composer_, &segments);
-    AddCandidate(0, "学校", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction("がっこう", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "学校");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   {
     clock->Advance(absl::Hours(1));
     const ConversionRequest convreq =
-        SetUpInputForPrediction("がっこう", &composer_, &segments);
-    AddCandidate(0, "ガッコウ", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction("がっこう", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "ガッコウ");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   {
     clock->Advance(absl::Hours(1));
     const ConversionRequest convreq =
-        SetUpInputForPrediction("かっこう", &composer_, &segments);
-    AddCandidate(0, "格好", &segments);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction("かっこう", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "格好");
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   request_.mutable_decoder_experiment_params()
       ->set_typing_correction_apply_user_history_size(1);
 
   const ConversionRequest convreq1 =
-      SetUpInputForSuggestion("がっこ", &composer_, &segments);
+      SetUpInputForSuggestion("がっこ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq1);
   EXPECT_FALSE(results.empty());
 
   // No typing correction.
   const ConversionRequest convreq2 =
-      SetUpInputForSuggestion("かつこ", &composer_, &segments);
+      SetUpInputForSuggestion("かつこ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq2);
   EXPECT_TRUE(results.empty());
 
@@ -5061,7 +4982,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   request_.mutable_decoder_experiment_params()
       ->set_typing_correction_apply_user_history_size(0);
   const ConversionRequest convreq3 =
-      SetUpInputForSuggestion("かつこ", &composer_, &segments);
+      SetUpInputForSuggestion("かつこ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq3);
   EXPECT_TRUE(results.empty());
 
@@ -5069,10 +4990,9 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   request_.mutable_decoder_experiment_params()
       ->set_typing_correction_apply_user_history_size(1);
   const ConversionRequest convreq4 =
-      SetUpInputForSuggestion("かつこ", &composer_, &segments);
+      SetUpInputForSuggestion("かつこ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq4);
   EXPECT_FALSE(results.empty());
-  ASSERT_EQ(segments.segments_size(), 1);
   ASSERT_EQ(results.size(), 2);
   EXPECT_EQ(results[0].value, "ガッコウ");
   EXPECT_EQ(results[1].value, "学校");
@@ -5081,7 +5001,7 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
   request_.mutable_decoder_experiment_params()
       ->set_typing_correction_apply_user_history_size(2);
   const ConversionRequest convreq5 =
-      SetUpInputForSuggestion("かつこ", &composer_, &segments);
+      SetUpInputForSuggestion("かつこ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq5);
   EXPECT_FALSE(results.empty());
   ASSERT_EQ(results.size(), 3);
@@ -5091,35 +5011,35 @@ TEST_F(UserHistoryPredictorTest, TypingCorrection) {
 
   ::testing::Mock::VerifyAndClearExpectations(mock_ptr);
   const ConversionRequest convreq6 =
-      SetUpInputForSuggestion("かつこ", &composer_, &segments);
+      SetUpInputForSuggestion("かつこ", &composer_, &segments_proxy);
   results = predictor->Predict(convreq6);
   EXPECT_TRUE(results.empty());
 }
 
 TEST_F(UserHistoryPredictorTest, MaxCharCoverage) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
-  Segments segments;
+  SegmentsProxy segments_proxy;
 
   {
     const ConversionRequest convreq1 =
-        SetUpInputForPrediction("てすと", &composer_, &segments);
-    AddCandidate(0, "てすと", &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction("てすと", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "てすと");
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
   }
   {
     const ConversionRequest convreq2 =
-        SetUpInputForPrediction("てすと", &composer_, &segments);
-    AddCandidate(0, "テスト", &segments);
-    predictor->Finish(convreq2, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction("てすと", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "テスト");
+    predictor->Finish(convreq2, segments_proxy.MakeLearningResults(),
+                      kRevertId);
   }
   {
     const ConversionRequest convreq3 =
-        SetUpInputForPrediction("てすと", &composer_, &segments);
-    AddCandidate(0, "Test", &segments);
-    predictor->Finish(convreq3, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+        SetUpInputForPrediction("てすと", &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, "Test");
+    predictor->Finish(convreq3, segments_proxy.MakeLearningResults(),
+                      kRevertId);
   }
 
   // [max_char_coverage, expected_candidate_size]
@@ -5130,15 +5050,14 @@ TEST_F(UserHistoryPredictorTest, MaxCharCoverage) {
   for (const auto &[coverage, candidates_size] : kTestCases) {
     request_.mutable_decoder_experiment_params()
         ->set_user_history_prediction_max_char_coverage(coverage);
-    MakeSegments("てすと", &segments);
+    segments_proxy.MakeSegments("てすと");
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::SUGGESTION};
     const ConversionRequest convreq = CreateConversionRequestWithOptions(
-        composer_, std::move(options), segments);
+        composer_, std::move(options), segments_proxy);
 
     const std::vector<Result> results = predictor->Predict(convreq);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_EQ(results.size(), candidates_size);
   }
 }
@@ -5150,26 +5069,25 @@ TEST_F(UserHistoryPredictorTest, RemoveRedundantCandidates) {
     ScopedClockMock clock(absl::FromUnixSeconds(1));
     UserHistoryPredictor *predictor =
         GetUserHistoryPredictorWithClearedHistory();
-    Segments segments;
+    SegmentsProxy segments_proxy;
     // Insert in reverse order to emulate LRU.
     for (auto it = candidates.rbegin(); it != candidates.rend(); ++it) {
       clock->Advance(absl::Hours(1));
       const ConversionRequest convreq =
-          SetUpInputForPrediction("とうき", &composer_, &segments);
-      AddCandidate(0, *it, &segments);
-      predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                        segments.revert_id());
+          SetUpInputForPrediction("とうき", &composer_, &segments_proxy);
+      segments_proxy.AddCandidate(0, *it);
+      predictor->Finish(convreq, segments_proxy.MakeLearningResults(),
+                        kRevertId);
     }
-    MakeSegments("とうき", &segments);
+    segments_proxy.MakeSegments("とうき");
     ConversionRequest::Options options = {
         .request_type = ConversionRequest::SUGGESTION,
         .max_user_history_prediction_candidates_size = 10,
     };
     const ConversionRequest convreq = CreateConversionRequestWithOptions(
-        composer_, std::move(options), segments);
+        composer_, std::move(options), segments_proxy);
     const std::vector<Result> results = predictor->Predict(convreq);
     EXPECT_FALSE(results.empty());
-    EXPECT_EQ(segments.segments_size(), 1);
     ASSERT_EQ(expected.size(), results.size());
     for (int i = 0; i < expected.size(); ++i) {
       EXPECT_EQ(expected[i], results[i].value);
@@ -5191,27 +5109,20 @@ TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Remember 私の名前は中野です
-  Segments segments;
+  SegmentsProxy segments_proxy;
   {
     constexpr absl::string_view kKey = "わたしのなまえはなかのです";
     constexpr absl::string_view kValue = "私の名前は中野です";
     const ConversionRequest convreq =
-        SetUpInputForPrediction(kKey, &composer_, &segments);
-    converter::Candidate *candidate =
-        segments.mutable_segment(0)->add_candidate();
-    CHECK(candidate);
-    candidate->value = kValue;
-    candidate->content_value = kValue;
-    candidate->key = kKey;
-    candidate->content_key = kKey;
+        SetUpInputForPrediction(kKey, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, kValue);
     // "わたしの, 私の", "わたし, 私"
-    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 6, 9, 3);
     // "なまえは, 名前は", "なまえ, 名前"
-    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 12, 9, 9, 6);
     // "なかのです, 中野です", "なかの, 中野"
-    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
-    predictor->Finish(convreq, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
+    segments_proxy.PushBackInnerSegmentBoundary(0, 0, 15, 12, 9, 6);
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
   }
 
   // Zero query from content values. suffix is suggested.
@@ -5223,38 +5134,38 @@ TEST_F(UserHistoryPredictorTest, ContentValueZeroQuery) {
                         {"わたしの", "私の", "名前"},
                         {"なまえは", "名前は", "中野"}};
   for (const auto &[hist_key, hist_value, suggestion] : kZeroQueryTest) {
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq1 =
-        SetUpInputForConversion(hist_key, &composer_, &segments);
-    AddCandidate(0, hist_value, &segments);
-    predictor->Finish(convreq1, Converter::MakeLearningResults(segments),
-                      segments.revert_id());
-    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+        SetUpInputForConversion(hist_key, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, hist_value);
+    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
+                      kRevertId);
+    segments_proxy.SetHistoryType(0);
     request_.set_zero_query_suggestion(true);
     const ConversionRequest convreq2 = SetUpInputForSuggestionWithHistory(
-        "", hist_key, hist_value, &composer_, &segments);
+        "", hist_key, hist_value, &composer_, &segments_proxy);
     const std::vector<Result> results = predictor->Predict(convreq2);
     ASSERT_FALSE(results.empty());
   }
 
   // Bigram History.
   {
-    segments.Clear();
+    segments_proxy.Clear();
     std::vector<Result> results;
     const ConversionRequest convreq1 =
-        SetUpInputForSuggestion("", &composer_, &segments);
-    PrependHistorySegments("の", "の", &segments);
-    PrependHistorySegments("わたし", "私", &segments);
+        SetUpInputForSuggestion("", &composer_, &segments_proxy);
+    segments_proxy.PrependHistory("の", "の");
+    segments_proxy.PrependHistory("わたし", "私");
     request_.set_zero_query_suggestion(true);
     results = predictor->Predict(convreq1);
     ASSERT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "名前");
 
-    segments.Clear();
+    segments_proxy.Clear();
     const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("", &composer_, &segments);
-    PrependHistorySegments("は", "は", &segments);
-    PrependHistorySegments("なまえ", "名前", &segments);
+        SetUpInputForSuggestion("", &composer_, &segments_proxy);
+    segments_proxy.PrependHistory("は", "は");
+    segments_proxy.PrependHistory("なまえ", "名前");
     request_.set_zero_query_suggestion(true);
     results = predictor->Predict(convreq2);
     ASSERT_FALSE(results.empty());
