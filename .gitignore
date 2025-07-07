@@ -27,6 +27,9 @@ MODULE.bazel.lock
 /src/third_party/wix/
 /src/third_party_cache/
 
+# third_party dirs for internal use.
+/src/third_party/google_updater/
+
 # Temporary dir for Docker
 /docker/ubuntu20.04/src/
 
