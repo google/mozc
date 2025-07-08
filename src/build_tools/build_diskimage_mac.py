@@ -91,7 +91,7 @@ def main():
     os.chmod(keystone_install_file, 0o755)  # rwxr-xr-x
 
   # Copy .pkg file to the temp directory.
-  CopyFile(options.pkg_file, temp_dir)
+  CopyFile(options.pkg_file, path.join(temp_dir, options.volname + ".pkg"))
 
   # build a disk image
   dmg_path = path.join(temp_root_dir, path.basename(options.output))

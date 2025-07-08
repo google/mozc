@@ -609,7 +609,12 @@ genrule(
         "--output $@",
         "--pkg_file $(location :package)",
         "--keystone_install_file $(location :keystone_install)",
-    ]),
+    ]) +
+    # mozc_select cannot be in join, as it's treated as a function rather than a string.
+    mozc_select(
+        default = " --volname Mozc",
+        prod = " --volname GoogleJapaneseInput",
+    ),
     exec_compatible_with = ["@platforms//os:macos"],
     # Use local execution instead of sandbox because it uses `hdiutil` that accesses to /Volumes/.
     local = True,
