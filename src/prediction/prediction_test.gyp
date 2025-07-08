@@ -37,14 +37,13 @@
       'target_name': 'prediction_test',
       'type': 'executable',
       'sources': [
-        'dictionary_predictor_test.cc',
         'dictionary_prediction_aggregator_test.cc',
+        'dictionary_predictor_test.cc',
         'number_decoder_test.cc',
-        'user_history_predictor_test.cc',
         'predictor_test.cc',
-        'single_kanji_decoder_test.cc',
         'realtime_decoder_test.cc',
-        'single_kanji_prediction_aggregator_test.cc',
+        'single_kanji_decoder_test.cc',
+        'user_history_predictor_test.cc',
         'zero_query_dict_test.cc',
       ],
       'dependencies': [
