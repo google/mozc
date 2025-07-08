@@ -1159,6 +1159,9 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileUnigram) {
             {"とうきょう!", "東京!", 1100, kPosId, kPosId, Token::NONE},
             {"とうきょう!?", "東京!?", 1200, kPosId, kPosId, Token::NONE},
             {"とうきょう", "東京❤", 1300, kPosId, kPosId, Token::NONE},
+            // "とうきょう → 東京宇" is not an actual word, but an emulation of
+            // "さかい → (堺, 堺井)" and "いずみ → (泉, 泉水)".
+            {"とうきょう", "東京宇", 1400, kPosId, kPosId, Token::NONE},
         }});
   }
 
@@ -1167,6 +1170,7 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileUnigram) {
   aggregator.AggregateUnigramForMixedConversion(convreq, &results);
 
   EXPECT_TRUE(FindResultByValue(results, "東京"));
+  EXPECT_TRUE(FindResultByValue(results, "東京宇"));
 
   int prefix_count = 0;
   for (const auto &result : results) {

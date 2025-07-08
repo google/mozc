@@ -85,15 +85,30 @@ constexpr size_t kSuggestionMaxResultsSize = 256;
 constexpr size_t kPredictionMaxResultsSize = 100000;
 
 // Returns true if the |target| may be redundant result.
-bool MaybeRedundant(const absl::string_view reference,
-                    const absl::string_view target) {
+bool MaybeRedundant(const Result &reference_result,
+                    const Result &target_result) {
+  const absl::string_view reference = reference_result.value;
+  const absl::string_view target = target_result.value;
+
+  // Same value means the result is redundant.
+  if (reference == target) {
+    return true;
+  }
+
+  // If the key is the same, the target is not redundant as value is different.
+  if (reference_result.key == target_result.key) {
+    return false;
+  }
+
+  // target is not an appended value of the reference.
   if (!target.starts_with(reference)) {
     return false;
   }
+
+  // If the suffix is Emoji or unknown script, the result is not redundant.
+  // For example, if the reference is "東京", "東京🗼" is not redundant, but
+  // "東京タワー" is redundant.
   const absl::string_view suffix = target.substr(reference.size());
-  if (suffix.empty()) {
-    return true;
-  }
   const Util::ScriptType script_type = Util::GetScriptType(suffix);
   return (script_type != Util::EMOJI && script_type != Util::UNKNOWN_SCRIPT);
 }
@@ -949,17 +964,18 @@ void DictionaryPredictionAggregator::AggregateUnigramForMixedConversion(
 
     // Traverse all remaining elements and check if each result is redundant.
     for (Iter iter = min_iter; iter != max_iter;) {
-      // - We do not filter user dictionary word.
-      const bool should_check_redundant =
-          !(iter->candidate_attributes & converter::Candidate::USER_DICTIONARY);
-      if (should_check_redundant &&
-          MaybeRedundant(reference_result.value, iter->value)) {
-        // Swap out the redundant result.
+      // We do not filter user dictionary word.
+      if (iter->candidate_attributes & converter::Candidate::USER_DICTIONARY) {
+        ++iter;
+        continue;
+      }
+      // If the result is redundant, swap it out.
+      if (MaybeRedundant(reference_result, *iter)) {
         --max_iter;
         std::iter_swap(iter, max_iter);
-      } else {
-        ++iter;
+        continue;
       }
+      ++iter;
     }
   }
 
