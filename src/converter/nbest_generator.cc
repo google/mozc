@@ -275,13 +275,12 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
     Candidate &candidate) {
   std::vector<const Node *absl_nonnull> nodes;
 
+  if (element.next == nullptr) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
   if (options_.candidate_mode &
       CandidateMode::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT) {
-    const QueueElement *absl_nullable elm = element.next;
-    if (elm == nullptr) {
-      return CandidateFilter::BAD_CANDIDATE;
-    }
-
+    const QueueElement *absl_nonnull elm = element.next;
     for (; elm->next != nullptr; elm = elm->next) {
       nodes.push_back(elm->node);
       if (IsBetweenAlphabetKeys(*elm->node, *elm->next->node)) {
@@ -291,10 +290,7 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
         break;
       }
     }
-
-    if (elm == nullptr) {
-      return CandidateFilter::BAD_CANDIDATE;
-    }
+    DCHECK_NE(elm, nullptr);
 
     // Does not contain the transition cost to the right
     const int cost = element.gx - elm->gx;
@@ -302,7 +298,7 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
     const int wcost = element.w_gx - elm->w_gx;
     MakeCandidate(candidate, cost, structure_cost, wcost, nodes);
   } else {
-    for (const QueueElement *absl_nullable elm = element.next;
+    for (const QueueElement *absl_nonnull elm = element.next;
          elm->next != nullptr; elm = elm->next) {
       nodes.push_back(elm->node);
     }
