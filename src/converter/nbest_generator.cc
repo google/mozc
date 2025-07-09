@@ -32,7 +32,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
-#include <iterator>
 #include <string>
 #include <vector>
 
@@ -67,9 +66,8 @@ constexpr int kFreeListSize = 512;
 constexpr int kCostDiff = 3453;  // log prob of 1/1000
 
 bool IsBetweenAlphabets(const Node &left, const Node &right) {
-  DCHECK(!left.value.empty());
-  DCHECK(!right.value.empty());
-  return absl::ascii_isalpha(left.value.back()) &&
+  return !left.value.empty() && !right.value.empty() &&
+         absl::ascii_isalpha(left.value.back()) &&
          absl::ascii_isalpha(right.value.front());
 }
 
@@ -564,8 +562,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::BoundaryCheck(
   // and "EOS" in their values, respectively. So the emptiness of `key` is
   // checked.
   if (!lnode.key.empty() && !rnode.key.empty() &&
-      absl::ascii_isalpha(lnode.value.back()) &&
-      absl::ascii_isalpha(rnode.value.front())) {
+      IsBetweenAlphabets(lnode, rnode)) {
     return INVALID;
   }
 
