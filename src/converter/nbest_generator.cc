@@ -65,10 +65,10 @@ using ::mozc::dictionary::UserDictionaryInterface;
 constexpr int kFreeListSize = 512;
 constexpr int kCostDiff = 3453;  // log prob of 1/1000
 
-bool IsBetweenAlphabets(const Node &left, const Node &right) {
-  return !left.value.empty() && !right.value.empty() &&
-         absl::ascii_isalpha(left.value.back()) &&
-         absl::ascii_isalpha(right.value.front());
+bool IsBetweenAlphabetKeys(const Node &left, const Node &right) {
+  return !left.key.empty() && !right.key.empty() &&
+         absl::ascii_isalpha(left.key.back()) &&
+         absl::ascii_isalpha(right.key.front());
 }
 
 }  // namespace
@@ -278,9 +278,13 @@ CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
   if (options_.candidate_mode &
       CandidateMode::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT) {
     const QueueElement *absl_nullable elm = element.next;
+    if (elm == nullptr) {
+      return CandidateFilter::BAD_CANDIDATE;
+    }
+
     for (; elm->next != nullptr; elm = elm->next) {
       nodes.push_back(elm->node);
-      if (IsBetweenAlphabets(*elm->node, *elm->next->node)) {
+      if (IsBetweenAlphabetKeys(*elm->node, *elm->next->node)) {
         return CandidateFilter::BAD_CANDIDATE;
       }
       if (segmenter_.IsBoundary(*elm->node, *elm->next->node, false)) {
@@ -558,11 +562,10 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::BoundaryCheck(
     return VALID;
   }
 
-  // We don't want to connect alphabet words. Note: The BOS and EOS have "BOS"
-  // and "EOS" in their values, respectively. So the emptiness of `key` is
-  // checked.
-  if (!lnode.key.empty() && !rnode.key.empty() &&
-      IsBetweenAlphabets(lnode, rnode)) {
+  // We don't want to connect alphabet keys.
+  // If "eupho" is not in the dictionary, "eupho" as an as-is fallback is
+  // expected rather than "EUpho" (EU + pho).
+  if (IsBetweenAlphabetKeys(lnode, rnode)) {
     return INVALID;
   }
 
@@ -636,7 +639,7 @@ bool NBestGenerator::MakeCandidateFromBestPath(Candidate &candidate) {
   for (const Node *node = begin_node_->next; node != end_node_;
        node = node->next) {
     if (node != begin_node_->next) {
-      if (IsBetweenAlphabets(*top_nodes_.back(), *node)) {
+      if (IsBetweenAlphabetKeys(*top_nodes_.back(), *node)) {
         return false;
       }
       total_wcost += node->wcost;

@@ -148,6 +148,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "suggest_after_zero_query.txt",
     DATA_DIR "switch_kana_type.txt",
     DATA_DIR "t13n_negative_number.txt",
+    DATA_DIR "t13n_rewriter_twice.txt",
     DATA_DIR "toggle_flick_hiragana_preedit_a.txt",
     DATA_DIR "toggle_flick_hiragana_preedit_ka.txt",
     DATA_DIR "toggle_flick_hiragana_preedit_sa.txt",

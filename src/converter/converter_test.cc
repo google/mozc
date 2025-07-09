@@ -32,7 +32,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -386,6 +385,36 @@ TEST_F(ConverterTest, CanConvertTest) {
     Segments segments;
     EXPECT_TRUE(converter->StartConversion(
         ConvReq("おきておきて", ConversionRequest::CONVERSION), &segments));
+  }
+}
+
+TEST_F(ConverterTest, ConvertTest) {
+  std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
+  std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
+  CHECK(converter);
+
+  Segments segments;
+  {
+    ConversionRequest convreq =
+        ConvReq("ぐうぐる", ConversionRequest::CONVERSION);
+    EXPECT_TRUE(converter->StartConversion(convreq, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+
+    const int index =
+        GetCandidateIndexByValue("Google", segments.conversion_segment(0));
+    ASSERT_NE(index, -1);
+    EXPECT_TRUE(converter->CommitSegmentValue(&segments, 0, index));
+    converter->FinishConversion(convreq, &segments);
+  }
+  {
+    EXPECT_TRUE(converter->StartConversion(
+        ConvReq("ぐーぐる", ConversionRequest::CONVERSION), &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+
+    const int index =
+        GetCandidateIndexByValue("Google", segments.conversion_segment(0));
+    ASSERT_NE(index, -1);
+    EXPECT_TRUE(converter->CommitSegmentValue(&segments, 0, index));
   }
 }
 

@@ -30,7 +30,6 @@
 #include "converter/immutable_converter.h"
 
 #include <cstddef>
-#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -89,6 +88,15 @@ void SetCandidate(absl::string_view key, absl::string_view value,
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);
 #endif  // ABSL_USES_STD_STRING_VIEW
+}
+
+int GetCandidateIndexByValue(absl::string_view value, const Segment &segment) {
+  for (size_t i = 0; i < segment.candidates_size(); ++i) {
+    if (segment.candidate(i).value == value) {
+      return i;
+    }
+  }
+  return -1;  // not found
 }
 
 class MockDataAndImmutableConverter {
@@ -579,6 +587,46 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
     EXPECT_THAT(*segment, ContainsCandidate(ValueIs("来るまで")));
     EXPECT_THAT(*segment, ContainsCandidate(ValueIs("くるまで")));
   }
+}
+
+// Confirm t13n (Hiragana to English) conversions twice work (b/427316871).
+TEST(ImmutableConverterTest, T13nConversionTwice) {
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter);
+  Segments segments;
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_key("ぐうぐる");
+  }
+  const ConversionRequest request;
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
+  ASSERT_EQ(segments.segments_size(), 1);
+
+  const int index =
+      GetCandidateIndexByValue("Google", segments.conversion_segment(0));
+  ASSERT_NE(index, -1);
+
+  {  // Make the existing segment HISTORY
+    Segment &segment = *segments.mutable_segment(0);
+    segment.set_segment_type(Segment::HISTORY);
+    segment.move_candidate(index, 0);
+    if (index != 0) {
+      segment.mutable_candidate(0)->attributes |= Candidate::RERANKED;
+    }
+  }
+
+  {  // Add a new segment for t13n conversion again.
+    Segment *segment = segments.add_segment();
+    segment->set_key("ぐーぐる");
+  }
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
+  ASSERT_EQ(segments.segments_size(), 2);
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+
+  ASSERT_NE(GetCandidateIndexByValue("Google", segments.conversion_segment(0)),
+            -1);
 }
 
 }  // namespace mozc

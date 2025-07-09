@@ -1,0 +1,18 @@
+# Enable IME
+SEND_KEY	ON
+
+# Test hiragana mode.
+SET_CONFIG	preedit_method	KANA
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Type kana preedit and verify the candidates.
+RESET_CONTEXT
+
+SEND_KEYS	gu-guru
+SEND_KEY	SPACE
+EXPECT_IN_ALL_CANDIDATE_WORDS	Google
+SUBMIT_CANDIDATE_BY_VALUE	Google
+
+SEND_KEYS	gu-guru
+SEND_KEY	SPACE
+EXPECT_IN_ALL_CANDIDATE_WORDS	Google
