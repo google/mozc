@@ -51,7 +51,6 @@
 #include "rewriter/ivs_variants_rewriter.h"
 #include "rewriter/language_aware_rewriter.h"
 #include "rewriter/number_rewriter.h"
-#include "rewriter/order_rewriter.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "rewriter/small_letter_rewriter.h"
@@ -186,7 +185,6 @@ Rewriter::Rewriter(const engine::Modules &modules) {
   AddRewriter(std::make_unique<T13nPromotionRewriter>());
   AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(data_manager));
   AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());
-  AddRewriter(std::make_unique<OrderRewriter>());
   AddRewriter(std::make_unique<A11yDescriptionRewriter>(data_manager));
 }
 

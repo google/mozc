@@ -56,7 +56,6 @@
         'merger_rewriter_test.cc',
         'number_compound_util_test.cc',
         'number_rewriter_test.cc',
-        'order_rewriter_test.cc',
         'remove_redundant_candidate_rewriter_test.cc',
         'rewriter_test.cc',
         'small_letter_rewriter_test.cc',

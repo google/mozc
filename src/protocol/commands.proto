@@ -584,9 +584,6 @@ message DecoderExperimentParams {
 
   optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
-  optional bool enable_findability_oriented_order = 42 [default = false];
-  optional int32 findability_oriented_order_top_size = 43 [default = 10];
-
   // Changes the size of history with character coverage.
   optional int32 user_history_prediction_max_char_coverage = 82 [default = 0];
 
@@ -645,15 +642,15 @@ message DecoderExperimentParams {
   // How many initial LRU entries to look up.
   // We use a simple linear-search on LRU.
   // When zero, default value (3000) is used.
-  optional int32 user_history_max_suggestion_trial = 108 [ default = 0];
+  optional int32 user_history_max_suggestion_trial = 108 [default = 0];
 
   // The maximum lifetime of the entries.
   // When zero, default value (62) is used.
-  optional int32 user_history_entry_lifetime_days = 109 [ default = 0];
+  optional int32 user_history_entry_lifetime_days = 109 [default = 0];
 
   // The maximum size of entries actually saved to disk.
   // When zero, store all entries in the on-memory LRU.
-  optional int32 user_history_cache_store_size = 110 [ default = 0];
+  optional int32 user_history_cache_store_size = 110 [default = 0];
 }
 
 // Clients' request to the server.

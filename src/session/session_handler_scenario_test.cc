@@ -254,16 +254,8 @@ commands::Request GetMobileRequest() {
 // Makes sure that the results are not changed by experiment params.
 INSTANTIATE_TEST_SUITE_P(
     TestForExperimentParams, SessionHandlerScenarioTestForRequest,
-    ::testing::Combine(
-        ::testing::ValuesIn(kScenariosForExperimentParams),
-        ::testing::Values(
-            GetMobileRequest(),
-            []() {
-              auto request = GetMobileRequest();
-              request.mutable_decoder_experiment_params()
-                  ->set_enable_findability_oriented_order(true);
-              return request;
-            }())),
+    ::testing::Combine(::testing::ValuesIn(kScenariosForExperimentParams),
+                       ::testing::Values(GetMobileRequest())),
     SessionHandlerScenarioTestForRequest::GetTestName);
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {

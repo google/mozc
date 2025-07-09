@@ -1487,7 +1487,6 @@ mozc_cc_library(
         ":language_aware_rewriter",
         ":merger_rewriter",
         ":number_rewriter",
-        ":order_rewriter",
         ":remove_redundant_candidate_rewriter",
         ":single_kanji_rewriter",
         ":small_letter_rewriter",
@@ -1686,37 +1685,5 @@ mozc_cc_test(
         "//converter:segments",
         "//request:conversion_request",
         "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
-    name = "order_rewriter",
-    srcs = ["order_rewriter.cc"],
-    hdrs = ["order_rewriter.h"],
-    deps = [
-        ":rewriter_interface",
-        "//base:util",
-        "//converter:segments",
-        "//request:conversion_request",
-        "//request:request_util",
-        "@com_google_absl//absl/algorithm:container",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/container:flat_hash_set",
-    ],
-)
-
-mozc_cc_test(
-    name = "order_rewriter_test",
-    srcs = ["order_rewriter_test.cc"],
-    deps = [
-        ":order_rewriter",
-        ":rewriter_interface",
-        "//converter:segments",
-        "//converter:segments_matchers",
-        "//protocol:commands_cc_proto",
-        "//request:conversion_request",
-        "//request:request_test_util",
-        "//testing:gunit_main",
-        "//testing:mozctest",
     ],
 )

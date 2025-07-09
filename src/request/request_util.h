@@ -47,18 +47,6 @@ inline bool IsAutoPartialSuggestionEnabled(
   return conversion_request.request().auto_partial_suggestion();
 }
 
-inline bool IsFindabilityOrientedOrderEnabled(
-    const commands::Request &request) {
-  return (
-      request.auto_partial_suggestion() && request.mixed_conversion() &&
-      request.decoder_experiment_params().enable_findability_oriented_order());
-}
-
-inline bool IsFindabilityOrientedOrderEnabled(
-    const ConversionRequest &conversion_request) {
-  return IsFindabilityOrientedOrderEnabled(conversion_request.request());
-}
-
 inline bool ShouldFilterNoisyNumberCandidate(
     const ConversionRequest &conversion_request) {
   return conversion_request.create_partial_candidates();

@@ -62,7 +62,6 @@
         'language_aware_rewriter.cc',
         'number_compound_util.cc',
         'number_rewriter.cc',
-        'order_rewriter.cc',
         'remove_redundant_candidate_rewriter.cc',
         'rewriter.cc',
         'rewriter_util.cc',
