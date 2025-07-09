@@ -245,31 +245,34 @@ void NormalizeHistorySegments(Segments *segments) {
   }
 }
 
-Lattice *GetLattice(Segments *segments, bool is_prediction) {
+Lattice *GetCachedLattice(Segments *segments, bool is_prediction) {
   Lattice *lattice = segments->mutable_cached_lattice();
   if (lattice == nullptr) {
     return nullptr;
   }
 
-  std::string history_key = "";
+  // Do not cache if conversion is not prediction.
+  if (!is_prediction) {
+    lattice->Clear();
+    return lattice;
+  }
+
+  size_t history_key_size = 0;  // size in bytes. (3 for "あ").
   for (const Segment &segment : segments->history_segments()) {
-    history_key.append(segment.key());
+    history_key_size += segment.key().size();
   }
-  std::string conversion_key = "";
+
+  size_t key_length = 0;  // length in Unicode (1 for "あ").
   for (const Segment &segment : segments->conversion_segments()) {
-    conversion_key.append(segment.key());
+    key_length += segment.key_len();
   }
 
-  const size_t lattice_history_end_pos = lattice->history_end_pos();
-
-  if (!is_prediction || Util::CharsLen(conversion_key) <= 1 ||
-      lattice_history_end_pos != history_key.size()) {
-    // Do not cache if conversion is not prediction.  In addition, if a user
-    // input the key right after the finish of conversion, reset the lattice to
-    // erase old nodes.  Even if the lattice key is not changed, we should reset
-    // the lattice when the history size is changed.  When we submit the
-    // candidate partially, the entire key will not changed, but the history
-    // position will be changed.
+  if (key_length <= 1 || lattice->history_end_pos() != history_key_size) {
+    // If a user inputs the key right after the finish of conversion,
+    // reset the lattice to erase old nodes. Even if the lattice key is not
+    // changed, we should reset the lattice when the history size is changed.
+    // When we submit the candidate partially, the entire key will not changed,
+    // but the history position will be changed.
     lattice->Clear();
   }
 
@@ -1999,7 +2002,7 @@ bool ImmutableConverter::ConvertForRequest(const ConversionRequest &request,
       (request.request_type() == ConversionRequest::PREDICTION ||
        request.request_type() == ConversionRequest::SUGGESTION);
 
-  Lattice *lattice = GetLattice(segments, is_prediction);
+  Lattice *lattice = GetCachedLattice(segments, is_prediction);
 
   if (!MakeLattice(request, segments, lattice)) {
     LOG(WARNING) << "could not make lattice";
