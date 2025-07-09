@@ -169,18 +169,6 @@ std::optional<std::string> GetNumberHistory(const ConversionRequest &request) {
   return japanese_util::FullWidthToHalfWidth(history_value);
 }
 
-size_t GetMaxSizeForRealtimeCandidates(const ConversionRequest &request,
-                                       bool is_long_key) {
-  const size_t size = request.max_dictionary_prediction_candidates_size();
-  if (request.create_partial_candidates()) {
-    return std::min<size_t>(size, 20);
-  }
-  return is_long_key ? std::min<size_t>(size, 8) : size;
-}
-
-size_t GetDefaultSizeForRealtimeCandidates(bool is_long_key) {
-  return is_long_key ? 5 : 10;
-}
 
 class PredictiveLookupCallback : public DictionaryInterface::Callback {
  public:
@@ -1324,36 +1312,46 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
     return kRealtimeCandidatesSizeForHandwriting;
   }
 
+  const size_t size_limit = request.max_dictionary_prediction_candidates_size();
+
+  // Set the initial values to max_size and default_size.
+  size_t max_size = size_limit;
+  if (request.create_partial_candidates()) {
+     max_size = 20;
+  }
+  size_t default_size = 10;
+
+  // Reduce the number of candidates for long key.
+  if (IsLongKeyForRealtimeCandidates(request)) {
+    max_size = 8;
+    default_size = 5;
+  }
+
+  // Cap the numbers of candidates to the size limit.
+  max_size = std::min(max_size, size_limit);
+  default_size = std::min(default_size, size_limit);
+
   const bool mixed_conversion = IsMixedConversionEnabled(request);
-  const bool is_long_key = IsLongKeyForRealtimeCandidates(request);
-  const size_t max_size = GetMaxSizeForRealtimeCandidates(request, is_long_key);
-  const size_t default_size = GetDefaultSizeForRealtimeCandidates(is_long_key);
-  size_t size = 0;
   switch (request_type) {
     case ConversionRequest::PREDICTION:
-      size = mixed_conversion ? max_size : default_size;
-      break;
+      return mixed_conversion ? max_size : default_size;
     case ConversionRequest::SUGGESTION:
       // Fewer candidates are needed basically.
       // But on mixed_conversion mode we should behave like as conversion
       // mode.
-      size = mixed_conversion ? default_size : 1;
-      break;
+      return mixed_conversion ? default_size : 1;
     case ConversionRequest::PARTIAL_PREDICTION:
       // This is kind of prediction so richer result than PARTIAL_SUGGESTION
       // is needed.
-      size = max_size;
-      break;
+      return max_size;
     case ConversionRequest::PARTIAL_SUGGESTION:
       // PARTIAL_SUGGESTION works like as conversion mode so returning
       // some candidates is needed.
-      size = default_size;
-      break;
+      return default_size;
     default:
       DLOG(FATAL) << "Unexpected request type: " << request_type;
+      return 0;
   }
-
-  return std::min(max_size, size);
 }
 
 std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>
