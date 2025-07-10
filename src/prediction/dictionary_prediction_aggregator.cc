@@ -64,6 +64,7 @@
 #include "prediction/number_decoder.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
+#include "prediction/result_filter.h"
 #include "prediction/single_kanji_decoder.h"
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
@@ -83,35 +84,6 @@ using ::mozc::dictionary::Token;
 // Number of prediction calls should be minimized.
 constexpr size_t kSuggestionMaxResultsSize = 256;
 constexpr size_t kPredictionMaxResultsSize = 100000;
-
-// Returns true if the |target| may be redundant result.
-bool MaybeRedundant(const Result &reference_result,
-                    const Result &target_result) {
-  const absl::string_view reference = reference_result.value;
-  const absl::string_view target = target_result.value;
-
-  // Same value means the result is redundant.
-  if (reference == target) {
-    return true;
-  }
-
-  // If the key is the same, the target is not redundant as value is different.
-  if (reference_result.key == target_result.key) {
-    return false;
-  }
-
-  // target is not an appended value of the reference.
-  if (!target.starts_with(reference)) {
-    return false;
-  }
-
-  // If the suffix is Emoji or unknown script, the result is not redundant.
-  // For example, if the reference is "東京", "東京🗼" is not redundant, but
-  // "東京タワー" is redundant.
-  const absl::string_view suffix = target.substr(reference.size());
-  const Util::ScriptType script_type = Util::GetScriptType(suffix);
-  return (script_type != Util::EMOJI && script_type != Util::UNKNOWN_SCRIPT);
-}
 
 bool IsLatinInputMode(const ConversionRequest &request) {
   return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
@@ -168,7 +140,6 @@ std::optional<std::string> GetNumberHistory(const ConversionRequest &request) {
   }
   return japanese_util::FullWidthToHalfWidth(history_value);
 }
-
 
 class PredictiveLookupCallback : public DictionaryInterface::Callback {
  public:
@@ -917,73 +888,12 @@ void DictionaryPredictionAggregator::AggregateUnigramForMixedConversion(
          request.request_type() == ConversionRequest::SUGGESTION);
 
   std::vector<Result> raw_result;
-  // No history key
   GetPredictiveResultsForUnigram(dictionary_, request, UNIGRAM,
                                  kPredictionMaxResultsSize, &raw_result);
 
-  // Hereafter, we split "Needed Results" and "(maybe) Unneeded Results."
-  // The algorithm is:
-  // 1) Take the Result with minimum cost.
-  // 2) Remove results which is "redundant" (defined by MaybeRedundant),
-  //    from remaining results.
-  // 3) Repeat 1) and 2) five times.
-  // Note: to reduce the number of memory allocation, we swap out the
-  //   "redundant" results to the end of the |results| vector.
-  constexpr size_t kDeleteTrialNum = 5;
+  filter::RemoveRedundantResults(&raw_result);
 
-  // min_iter is the beginning of the remaining results (inclusive), and
-  // max_iter is the end of the remaining results (exclusive).
-  typedef std::vector<Result>::iterator Iter;
-  Iter min_iter = raw_result.begin();
-  Iter max_iter = raw_result.end();
-  for (size_t i = 0; i < kDeleteTrialNum; ++i) {
-    if (min_iter == max_iter) {
-      break;
-    }
-
-    // Find the Result with minimum cost. Swap it with the beginning element.
-    std::iter_swap(min_iter,
-                   std::min_element(min_iter, max_iter, ResultWCostLess()));
-
-    const Result &reference_result = *min_iter;
-
-    // Preserve the reference result.
-    ++min_iter;
-
-    // Traverse all remaining elements and check if each result is redundant.
-    for (Iter iter = min_iter; iter != max_iter;) {
-      // We do not filter user dictionary word.
-      if (iter->candidate_attributes & converter::Candidate::USER_DICTIONARY) {
-        ++iter;
-        continue;
-      }
-      // If the result is redundant, swap it out.
-      if (MaybeRedundant(reference_result, *iter)) {
-        --max_iter;
-        std::iter_swap(iter, max_iter);
-        continue;
-      }
-      ++iter;
-    }
-  }
-
-  // Then the |raw_result| contains;
-  // [begin, min_iter): reference results in the above loop.
-  // [max_iter, end): (maybe) redundant results.
-  // [min_iter, max_iter): remaining results.
-  // Here, we revive the redundant results up to five in the result cost order.
-  constexpr size_t kDoNotDeleteNum = 5;
-  if (std::distance(max_iter, raw_result.end()) >= kDoNotDeleteNum) {
-    std::partial_sort(max_iter, max_iter + kDoNotDeleteNum, raw_result.end(),
-                      ResultWCostLess());
-    max_iter += kDoNotDeleteNum;
-  } else {
-    max_iter = raw_result.end();
-  }
-
-  // Finally output the result.
-  results->insert(results->end(), std::make_move_iterator(raw_result.begin()),
-                  std::make_move_iterator(max_iter));
+  absl::c_move(raw_result, std::back_inserter(*results));
 }
 
 void DictionaryPredictionAggregator::AggregateBigram(
@@ -1317,7 +1227,7 @@ size_t DictionaryPredictionAggregator::GetRealtimeCandidateMaxSize(
   // Set the initial values to max_size and default_size.
   size_t max_size = size_limit;
   if (request.create_partial_candidates()) {
-     max_size = 20;
+    max_size = 20;
   }
   size_t default_size = 10;
 

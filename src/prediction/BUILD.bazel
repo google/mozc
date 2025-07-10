@@ -234,6 +234,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "//request:request_util",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -242,10 +243,13 @@ mozc_cc_test(
     name = "result_filter_test",
     srcs = ["result_filter_test.cc"],
     deps = [
+        ":result",
         ":result_filter",
         "//testing:gunit",
         "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -259,6 +263,7 @@ mozc_cc_library(
         ":number_decoder",
         ":realtime_decoder",
         ":result",
+        ":result_filter",
         ":single_kanji_decoder",
         ":zero_query_dict",
         "//base:japanese_util",

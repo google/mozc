@@ -29,12 +29,15 @@
 
 #include "prediction/result_filter.h"
 
+#include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
@@ -49,6 +52,38 @@
 
 namespace mozc::prediction::filter {
 
+namespace {
+
+// Returns true if the |target| may be redundant result.
+bool MaybeRedundant(const Result &reference_result,
+                    const Result &target_result) {
+  const absl::string_view reference = reference_result.value;
+  const absl::string_view target = target_result.value;
+
+  // Same value means the result is redundant.
+  if (reference == target) {
+    return true;
+  }
+
+  // If the key is the same, the target is not redundant as value is different.
+  if (reference_result.key == target_result.key) {
+    return false;
+  }
+
+  // target is not an appended value of the reference.
+  if (!target.starts_with(reference)) {
+    return false;
+  }
+
+  // If the suffix is Emoji or unknown script, the result is not redundant.
+  // For example, if the reference is "東京", "東京🗼" is not redundant, but
+  // "東京タワー" is redundant.
+  const absl::string_view suffix = target.substr(reference.size());
+  const Util::ScriptType script_type = Util::GetScriptType(suffix);
+  return (script_type != Util::EMOJI && script_type != Util::UNKNOWN_SCRIPT);
+}
+
+}  // namespace
 
 ResultFilter::ResultFilter(const ConversionRequest &request,
                            dictionary::PosMatcher pos_matcher,
@@ -206,6 +241,62 @@ size_t GetMissSpelledPosition(const absl::string_view key,
   }
 
   return position;
+}
+
+void RemoveRedundantResults(std::vector<Result> *results) {
+  constexpr size_t kDeleteTrialNum = 5;
+  DCHECK(results);
+
+  // min_iter is the beginning of the remaining results (inclusive), and
+  // max_iter is the end of the remaining results (exclusive).
+  auto min_iter = results->begin();
+  auto max_iter = results->end();
+  for (size_t i = 0; i < kDeleteTrialNum; ++i) {
+    if (min_iter == max_iter) {
+      break;
+    }
+
+    // Find the Result with minimum cost. Swap it with the beginning element.
+    std::iter_swap(min_iter,
+                   std::min_element(min_iter, max_iter, ResultWCostLess()));
+
+    const Result &reference_result = *min_iter;
+
+    // Preserve the reference result.
+    ++min_iter;
+
+    // Traverse all remaining elements and check if each result is redundant.
+    for (auto iter = min_iter; iter != max_iter;) {
+      // We do not filter user dictionary word.
+      if (iter->candidate_attributes & converter::Candidate::USER_DICTIONARY) {
+        ++iter;
+        continue;
+      }
+      // If the result is redundant, swap it out.
+      if (MaybeRedundant(reference_result, *iter)) {
+        --max_iter;
+        std::iter_swap(iter, max_iter);
+        continue;
+      }
+      ++iter;
+    }
+  }
+
+  // Then the |results| contains;
+  // [begin, min_iter): reference results in the above loop.
+  // [max_iter, end): (maybe) redundant results.
+  // [min_iter, max_iter): remaining results.
+  // Here, we revive the redundant results up to five in the result cost order.
+  constexpr size_t kDoNotDeleteNum = 5;
+  if (std::distance(max_iter, results->end()) >= kDoNotDeleteNum) {
+    std::partial_sort(max_iter, max_iter + kDoNotDeleteNum, results->end(),
+                      ResultWCostLess());
+    max_iter += kDoNotDeleteNum;
+  } else {
+    max_iter = results->end();
+  }
+
+  results->erase(max_iter, results->end());
 }
 
 }  // namespace mozc::prediction::filter

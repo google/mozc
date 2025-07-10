@@ -94,5 +94,16 @@ class ResultFilter {
 // returns 5 (charslen("ろっぽんぎ"))
 size_t GetMissSpelledPosition(absl::string_view key, absl::string_view value);
 
+// Removes redundant result from `results` based on the following algorithm.
+// 1) Take the Result with minimum cost.
+// 2) Remove results which is "redundant" (defined by MaybeRedundant in
+//    result_filter.cc), from remaining results.
+// 3) Repeat 1) and 2) five times.
+// Note: to reduce the number of memory allocation, we swap out the
+//   "redundant" results to the end of the `results` vector.
+// TODO(taku): Better to pass the function object to define the redundant
+// condition of two results.
+void RemoveRedundantResults(std::vector<Result> *results);
+
 }  // namespace mozc::prediction::filter
 #endif  // MOZC_PREDICTION_RESULT_FILTER_H_

@@ -1127,69 +1127,6 @@ TEST_F(DictionaryPredictionAggregatorTest,
   }
 }
 
-TEST_F(DictionaryPredictionAggregatorTest, MobileUnigram) {
-  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
-      CreateAggregatorWithMockData();
-  const DictionaryPredictionAggregatorTestPeer &aggregator =
-      data_and_aggregator->aggregator();
-
-  constexpr absl::string_view kKey = "とうきょう";
-
-  request_test_util::FillMobileRequest(request_.get());
-
-  {
-    constexpr auto kPosId = MockDictionary::kDefaultPosId;
-    MockDictionary *mock = data_and_aggregator->mutable_dictionary();
-    EXPECT_CALL(*mock, LookupPrefix(_, _, _)).Times(AnyNumber());
-    EXPECT_CALL(*mock, LookupPredictive(_, _, _)).Times(AnyNumber());
-    EXPECT_CALL(*mock, LookupPredictive(StrEq("とうきょう"), _, _))
-        .WillRepeatedly(InvokeCallbackWithTokens{{
-            {"とうきょう", "東京", 100, kPosId, kPosId, Token::NONE},
-            {"とうきょう", "TOKYO", 200, kPosId, kPosId, Token::NONE},
-            {"とうきょうと", "東京都", 110, kPosId, kPosId, Token::NONE},
-            {"とうきょう", "東京", 120, kPosId, kPosId, Token::NONE},
-            {"とうきょう", "TOKYO", 120, kPosId, kPosId, Token::NONE},
-            {"とうきょうわん", "東京湾", 120, kPosId, kPosId, Token::NONE},
-            {"とうきょうえき", "東京駅", 130, kPosId, kPosId, Token::NONE},
-            {"とうきょうべい", "東京ベイ", 140, kPosId, kPosId, Token::NONE},
-            {"とうきょうゆき", "東京行", 150, kPosId, kPosId, Token::NONE},
-            {"とうきょうしぶ", "東京支部", 160, kPosId, kPosId, Token::NONE},
-            {"とうきょうてん", "東京店", 170, kPosId, kPosId, Token::NONE},
-            {"とうきょうがす", "東京ガス", 180, kPosId, kPosId, Token::NONE},
-            {"とうきょう!", "東京!", 1100, kPosId, kPosId, Token::NONE},
-            {"とうきょう!?", "東京!?", 1200, kPosId, kPosId, Token::NONE},
-            {"とうきょう", "東京❤", 1300, kPosId, kPosId, Token::NONE},
-            // "とうきょう → 東京宇" is not an actual word, but an emulation of
-            // "さかい → (堺, 堺井)" and "いずみ → (泉, 泉水)".
-            {"とうきょう", "東京宇", 1400, kPosId, kPosId, Token::NONE},
-        }});
-  }
-
-  std::vector<Result> results;
-  const ConversionRequest convreq = CreatePredictionConversionRequest(kKey);
-  aggregator.AggregateUnigramForMixedConversion(convreq, &results);
-
-  EXPECT_TRUE(FindResultByValue(results, "東京"));
-  EXPECT_TRUE(FindResultByValue(results, "東京宇"));
-
-  int prefix_count = 0;
-  for (const auto &result : results) {
-    if (result.value.starts_with("東京")) {
-      ++prefix_count;
-    }
-  }
-  // Should not have same prefix candidates a lot.
-  EXPECT_LE(prefix_count, 11);
-  // Candidates that predict symbols should not be handled as the redundant
-  // candidates.
-  const absl::string_view kExpected[] = {
-      "東京", "TOKYO", "東京!", "東京!?", "東京❤",
-  };
-  for (int i = 0; i < std::size(kExpected); ++i) {
-    EXPECT_EQ(results[i].value, kExpected[i]);
-  }
-}
-
 // We are not sure what should we suggest after the end of sentence for now.
 // However, we decided to show zero query suggestion rather than stopping
 // zero query completely. Users may be confused if they cannot see suggestion
