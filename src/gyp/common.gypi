@@ -45,7 +45,7 @@
 
     # Versioning stuff for Mac.
     'mac_sdk%': '15.0',
-    'mac_deployment_target%': '11.0',
+    'mac_deployment_target%': '12.0',
 
     # warning_cflags will be shared with Mac and Linux.
     'warning_cflags': [

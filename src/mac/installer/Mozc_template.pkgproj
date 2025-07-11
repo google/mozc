@@ -782,7 +782,7 @@
 						<key>IC_REQUIREMENT_OS_DISTRIBUTION_TYPE</key>
 						<integer>0</integer>
 						<key>IC_REQUIREMENT_OS_MINIMUM_VERSION</key>
-						<integer>110000</integer>
+						<integer>120000</integer>
 					</dict>
 					<key>IC_REQUIREMENT_CHECK_TYPE</key>
 					<integer>1</integer>
@@ -794,7 +794,7 @@
 							<key>LANGUAGE</key>
 							<string>English</string>
 							<key>VALUE</key>
-							<string>Mozc requires macOS 11 or later.</string>
+							<string>Mozc requires macOS 12 or later.</string>
 						</dict>
 						<dict>
 							<key>LANGUAGE</key>
@@ -802,7 +802,7 @@
 							<key>SECONDARY_VALUE</key>
 							<string></string>
 							<key>VALUE</key>
-							<string>Mozc は macOS 11 以降で動作します。</string>
+							<string>Mozc は macOS 12 以降で動作します。</string>
 						</dict>
 					</array>
 					<key>NAME</key>

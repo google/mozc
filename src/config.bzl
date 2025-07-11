@@ -49,7 +49,7 @@ EMACS_MOZC_CLIENT_DIR = "/usr/share/emacs/site-lisp/emacs-mozc"
 EMACS_MOZC_HELPER_DIR = "/usr/bin"
 
 MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
-MACOS_MIN_OS_VER = "11.0"
+MACOS_MIN_OS_VER = "12.0"
 
 # identity for codesign. The value passed to the --sign option of the codesign command.
 #
