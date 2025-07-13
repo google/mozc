@@ -107,8 +107,8 @@ class LruCache {
   const_iterator end() const { return const_iterator{nullptr}; }
 
   // Adds the specified key/value pair into the cache, putting it at the head
-  // of the LRU list.
-  void Insert(const Key& key, const Value& value);
+  // of the LRU list. Can pass rvalue reference to move the ownership.
+  void Insert(const Key& key, Value value);
 
   // Adds the specified key and return the Element added to the cache.
   // Caller needs to set the value
@@ -125,10 +125,10 @@ class LruCache {
   Value* MutableLookup(const Key& key);
 
   // Lookup/MutableLookup don't change the LRU order.
-  const Value* LookupWithoutInsert(const Key& key) const {
-    return MutableLookupWithoutInsert(key);
-  }
-  Value* MutableLookupWithoutInsert(const Key& key) const;
+  const Value* LookupWithoutInsert(const Key& key) const;
+
+  // Returns non-const value.
+  Value* MutableLookupWithoutInsert(const Key& key);
 
   // Removes the cache entry specified by key.  Returns true if the entry was
   // in the cache, otherwise returns false.
@@ -147,11 +147,11 @@ class LruCache {
 
   // Returns the head of LRU list
   const Element* Head() const { return lru_head_; }
-  Element* MutableHead() const { return lru_head_; }
+  Element* MutableHead() { return lru_head_; }
 
   // Returns the tail of LRU list
   const Element* Tail() const { return lru_tail_; }
-  Element* MutableTail() const { return lru_tail_; }
+  Element* MutableTail() { return lru_tail_; }
 
   // Expose the free list only for testing purposes.
   const Element* FreeListForTesting() const { return free_list_; }
@@ -340,10 +340,10 @@ LruCache<Key, Value>::LruCache(size_t max_elements)
 }
 
 template <typename Key, typename Value>
-void LruCache<Key, Value>::Insert(const Key& key, const Value& value) {
+void LruCache<Key, Value>::Insert(const Key& key, Value value) {
   Element* e = Insert(key);
   if (e != nullptr) {
-    e->value = value;
+    e->value = std::move(value);
   }
 }
 
@@ -384,7 +384,16 @@ Value* LruCache<Key, Value>::MutableLookup(const Key& key) {
 }
 
 template <typename Key, typename Value>
-Value* LruCache<Key, Value>::MutableLookupWithoutInsert(const Key& key) const {
+Value* LruCache<Key, Value>::MutableLookupWithoutInsert(const Key& key) {
+  Element* e = LookupInternal(key);
+  if (e != nullptr) {
+    return &(e->value);
+  }
+  return nullptr;
+}
+
+template <typename Key, typename Value>
+const Value* LruCache<Key, Value>::LookupWithoutInsert(const Key& key) const {
   Element* e = LookupInternal(key);
   if (e != nullptr) {
     return &(e->value);
