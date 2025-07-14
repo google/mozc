@@ -372,12 +372,12 @@ bool UserHistoryPredictor::Load() {
     LOG(ERROR) << "UserHistoryStorage::Load() failed";
     return false;
   }
-  return Load(history);
+  return Load(std::move(history));
 }
 
-bool UserHistoryPredictor::Load(const UserHistoryStorage &history) {
+bool UserHistoryPredictor::Load(UserHistoryStorage &&history) {
   dic_->Clear();
-  for (const Entry &entry : history.GetProto().entries()) {
+  for (Entry &entry : *history.GetProto().mutable_entries()) {
     // Workaround for b/116826494: Some garbled characters are suggested
     // from user history. This filters such entries.
     if (entry.value().empty() || entry.key().empty() ||
@@ -385,11 +385,12 @@ bool UserHistoryPredictor::Load(const UserHistoryStorage &history) {
       LOG(ERROR) << "Invalid UTF8 found in user history: " << entry;
       continue;
     }
-    dic_->Insert(EntryFingerprint(entry), entry);
+    // conversion_freq is migrated to suggestion_freq.
+    entry.set_suggestion_freq(
+        std::max(entry.suggestion_freq(), entry.conversion_freq_deprecated()));
+    entry.clear_conversion_freq_deprecated();
+    dic_->Insert(EntryFingerprint(entry), std::move(entry));
   }
-
-  MOZC_VLOG(1) << "Loaded user history, size="
-               << history.GetProto().entries_size();
 
   return true;
 }
@@ -429,7 +430,7 @@ bool UserHistoryPredictor::Save() {
     return false;
   }
 
-  Load(history);
+  Load(std::move(history));
 
   updated_ = false;
 
@@ -590,7 +591,6 @@ bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
     Entry *entry = dic_->MutableLookupWithoutInsert(Fingerprint(key, value));
     if (entry != nullptr && !entry->removed()) {
       entry->set_suggestion_freq(0);
-      entry->set_conversion_freq(0);
       entry->set_shown_freq(0);
       entry->set_removed(true);
       // We don't clear entry->next_entries() so that we can generate prediction
@@ -1667,11 +1667,7 @@ void UserHistoryPredictor::Insert(
   }
 
   entry->set_last_access_time(last_access_time);
-  if (is_suggestion_selected) {
-    entry->set_suggestion_freq(entry->suggestion_freq() + 1);
-  } else {
-    entry->set_conversion_freq(entry->conversion_freq() + 1);
-  }
+  entry->set_suggestion_freq(entry->suggestion_freq() + 1);
 
   // Inserts next_fp to the entry
   for (const auto next_fp : next_fps) {
@@ -1704,8 +1700,7 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
     entry->set_shown_freq(entry->shown_freq() + 1);
 
     const float selected_ratio =
-        1.0 * std::max(entry->suggestion_freq(), entry->conversion_freq()) /
-        entry->shown_freq();
+        1.0 * entry->suggestion_freq() / entry->shown_freq();
 
     if (selected_ratio < kMinSelectedRatio) {
       auto revert_entry = std::make_unique<Entry>(*entry);
@@ -1713,7 +1708,6 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
       revert_entries->emplace_back(dic_key, std::move(revert_entry));
 
       entry->set_suggestion_freq(0);
-      entry->set_conversion_freq(0);
       entry->set_shown_freq(0);
       entry->set_removed(true);
       continue;
@@ -2096,10 +2090,7 @@ bool UserHistoryPredictor::IsValidSuggestion(const ConversionRequest &request,
   if (request.request().zero_query_suggestion()) {
     return true;
   }
-  // Handles suggestion_freq and conversion_freq differently.
-  // conversion_freq is less aggressively affecting to the final decision.
-  const uint32_t freq =
-      std::max(entry.suggestion_freq(), entry.conversion_freq() / 4);
+  const uint32_t freq = entry.suggestion_freq();
   // TODO(taku,komatsu): better to make it simpler and easier to be understood.
   const uint32_t base_prefix_len = 3 - std::min<uint32_t>(2, freq);
   return (prefix_len >= base_prefix_len);

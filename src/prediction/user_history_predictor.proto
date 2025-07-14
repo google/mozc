@@ -43,11 +43,14 @@ message UserHistory {
     optional string value = 2 [default = ""];
     optional string description = 6 [default = ""];
 
-    // how many times the candidate is selected via suggestion
+    // how many times the candidate is selected.
     optional uint32 suggestion_freq = 3 [default = 0];
 
-    // how many times the candidate is selected via conversion
-    optional uint32 conversion_freq = 5 [default = 0];
+    // This field is kept for backward compatibility.
+    // We do not distinguish suggestion and conversion mode.
+    // When loading old proto, max(conversion_freq_deprecated, suggestion_freq)
+    // is set to suggestion_freq.
+    optional uint32 conversion_freq_deprecated = 5 [default = 0];
 
     // how many times the candidate is shown on commit event
     optional uint32 shown_freq = 22 [default = 0];

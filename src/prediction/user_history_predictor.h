@@ -196,8 +196,9 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Loads user history data to an on-memory LRU from the local file.
   bool Load();
+
   // Loads user history data to an on-memory LRU.
-  bool Load(const UserHistoryStorage &history);
+  bool Load(UserHistoryStorage &&history);
 
   // Saves user history data in LRU to local file
   bool Save();

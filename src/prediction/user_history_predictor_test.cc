@@ -355,8 +355,8 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   static bool LoadStorage(UserHistoryPredictor *predictor,
-                          const UserHistoryStorage &history) {
-    return predictor->Load(history);
+                          UserHistoryStorage &&history) {
+    return predictor->Load(std::move(history));
   }
 
   static bool IsConnected(const UserHistoryPredictor::Entry &prev,
@@ -917,8 +917,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
         break;  // Except the last one.
       }
       const user_history_predictor::UserHistory::Entry &entry = element.value;
-      EXPECT_TRUE(entry.has_suggestion_freq() && entry.suggestion_freq() == 1);
-      EXPECT_TRUE(!entry.has_conversion_freq() && entry.conversion_freq() == 0);
+      EXPECT_EQ(entry.suggestion_freq(), 1);
     }
   }
 
@@ -1121,84 +1120,56 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
   std::vector<Result> results;
 
+  constexpr absl::string_view kKey = "わたしのなまえはなかのです";
+  constexpr absl::string_view kValue = "私の名前は中野です";
+
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     WaitForSyncer(predictor);
 
     SegmentsProxy segments_proxy;
-    const ConversionRequest convreq1 = SetUpInputForSuggestion(
-        "わたしのなまえはなかのです", &composer_, &segments_proxy);
-    segments_proxy.AddCandidate(0, "私の名前は中野です");
+    const ConversionRequest convreq =
+        SetUpInputForSuggestion(kKey, &composer_, &segments_proxy);
+    segments_proxy.AddCandidate(0, kValue);
 
-    // once
-    predictor->Finish(convreq1, segments_proxy.MakeLearningResults(),
-                      kRevertId);
+    predictor->Finish(convreq, segments_proxy.MakeLearningResults(), kRevertId);
 
-    segments_proxy.Clear();
-    const ConversionRequest convreq2 = SetUpInputForConversion(
-        "ひろすえりょうこ", &composer_, &segments_proxy);
-    segments_proxy.AddCandidate(0, "広末涼子");
-
-    // conversion
-    predictor->Finish(convreq2, segments_proxy.MakeLearningResults(),
-                      kRevertId);
-
-    // sync
     predictor->Sync();
   }
 
   {
     UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    UserHistoryPredictorTestPeer predictor_peer(*predictor);
     WaitForSyncer(predictor);
     SegmentsProxy segments_proxy;
 
-    const ConversionRequest convreq1 =
+    const ConversionRequest convreq =
         SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq1);
+    results = predictor->Predict(convreq);
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments_proxy.Clear();
-    const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("ひろすえ", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq2);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "広末涼子");
+    // Generates unused entry.
+    UserHistoryPredictor::Entry *entry =
+        predictor_peer.dic_()->MutableLookupWithoutInsert(
+            UserHistoryPredictor::Fingerprint(kKey, kValue));
+    ASSERT_TRUE(entry);
+    // Implementing Revert at zero frequency is a valid and
+    // consistent way to implement redo.
+    entry->set_suggestion_freq(0);  // set unused.
+  }
 
+  {
+    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
     predictor->ClearUnusedHistory();
     WaitForSyncer(predictor);
 
-    segments_proxy.Clear();
-    const ConversionRequest convreq3 =
-        SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq3);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "私の名前は中野です");
-
-    segments_proxy.Clear();
-    const ConversionRequest convreq4 =
-        SetUpInputForSuggestion("ひろすえ", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq4);
-    EXPECT_TRUE(results.empty());
-
-    predictor->Sync();
-  }
-
-  {
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
-    WaitForSyncer(predictor);
     SegmentsProxy segments_proxy;
-
-    const ConversionRequest convreq1 =
+    const ConversionRequest convreq =
         SetUpInputForSuggestion("わたしの", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq1);
-    EXPECT_FALSE(results.empty());
-    EXPECT_EQ(results[0].value, "私の名前は中野です");
 
-    segments_proxy.Clear();
-    const ConversionRequest convreq2 =
-        SetUpInputForSuggestion("ひろすえ", &composer_, &segments_proxy);
-    results = predictor->Predict(convreq2);
+    // No suggestion after clear unused history.
+    results = predictor->Predict(convreq);
     EXPECT_TRUE(results.empty());
   }
 }
@@ -1255,7 +1226,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertFreqTest) {
       ASSERT_FALSE(entry);
     } else {
       ASSERT_TRUE(entry);
-      EXPECT_EQ(entry->conversion_freq(), expected_freq);
+      EXPECT_EQ(entry->suggestion_freq(), expected_freq);
     }
   };
 
@@ -2352,7 +2323,7 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
     entry->set_key("foo");
     entry->set_value("bar");
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
-    GetUserDictionary().Load(storage);
+    GetUserDictionary().Load(std::move(storage));
     GetUserDictionary().WaitForReloader();
   }
 
@@ -2383,7 +2354,7 @@ TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
       UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
 
   entry.set_bigram_boost(false);
-  entry.set_conversion_freq(10);
+  entry.set_suggestion_freq(10);
   EXPECT_TRUE(
       UserHistoryPredictorTestPeer::IsValidSuggestion(convreq, 1, entry));
 
@@ -2754,11 +2725,11 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
     UserHistoryStorage storage(filename);
     ASSERT_TRUE(storage.Load());
 
-    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
-    EXPECT_TRUE(LoadStorage(predictor, storage));
-
     // Only the valid entries are loaded.
     EXPECT_EQ(storage.GetProto().entries_size(), 9);
+
+    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    EXPECT_TRUE(LoadStorage(predictor, std::move(storage)));
     EXPECT_EQ(EntrySize(*predictor), 0);
   }
 }
