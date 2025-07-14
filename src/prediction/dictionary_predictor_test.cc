@@ -77,11 +77,9 @@ namespace mozc::prediction {
 using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::Token;
 using ::testing::_;
-using ::testing::DoAll;
 using ::testing::Field;
 using ::testing::Invoke;
 using ::testing::Return;
-using ::testing::SetArgPointee;
 using ::testing::StrictMock;
 
 class DictionaryPredictorTestPeer
