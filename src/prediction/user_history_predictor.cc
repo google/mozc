@@ -389,7 +389,9 @@ bool UserHistoryPredictor::Load(UserHistoryStorage &&history) {
     entry.set_suggestion_freq(
         std::max(entry.suggestion_freq(), entry.conversion_freq_deprecated()));
     entry.clear_conversion_freq_deprecated();
-    dic_->Insert(EntryFingerprint(entry), std::move(entry));
+    // Avoid std::move() is called before EntryFingerprint.
+    const uint32_t dic_key = EntryFingerprint(entry);
+    dic_->Insert(dic_key, std::move(entry));
   }
 
   return true;
