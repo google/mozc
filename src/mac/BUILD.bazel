@@ -175,8 +175,6 @@ mozc_objc_test(
     name = "mozc_imk_input_controller_test",
     size = "small",
     srcs = ["mozc_imk_input_controller_test.mm"],
-    # TODO: b/426098963 - Temporarily disable this test on TAP since the test runner results fail.
-    tags = ["notap"],
     deps = [
         ":keycode_map",
         ":mozc_imk_input_controller",
