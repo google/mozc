@@ -35,6 +35,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -43,6 +44,7 @@
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
@@ -52,6 +54,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
 #include "base/bits.h"
@@ -1113,6 +1116,20 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
 
 std::vector<Result> UserHistoryPredictor::Predict(
     const ConversionRequest &request) const {
+  {
+    // MaybeProcessPartialRevertEntry is marked as const so
+    // as to access it Predict(), but it updates the contents of dic_, so
+    // WriterLock is required.
+    absl::WriterMutexLock lock(&dic_mutex_);
+    MaybeProcessPartialRevertEntry(request);
+  }
+
+  // The const-method accessing the contents in `dic_` should be protected
+  // with ReaderLock, as the Entry in `dic_` may be updated in different thread.
+  // We wants to use ReaderLock instead of MutexLock as the
+  // actual decoding process is much slower than ReaderLock.
+  absl::ReaderMutexLock lock(&dic_mutex_);
+
   if (!ShouldPredict(request)) {
     return {};
   }
@@ -1618,22 +1635,24 @@ bool UserHistoryPredictor::ShouldInsert(
 }
 
 void UserHistoryPredictor::TryInsert(
-    const ConversionRequest &request, absl::string_view key,
-    absl::string_view value, absl::string_view description,
-    bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
-    uint64_t last_access_time,
+    const ConversionRequest &request, int32_t key_begin, int32_t value_begin,
+    absl::string_view key, absl::string_view value,
+    absl::string_view description, bool is_suggestion_selected,
+    absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
     UserHistoryPredictor::RevertEntries *revert_entries) {
   // b/279560433: Preprocess key value
+  // (key|value)_begin don't change after StripTrailingAsciiWhitespace.
   key = absl::StripTrailingAsciiWhitespace(key);
   value = absl::StripTrailingAsciiWhitespace(value);
   if (ShouldInsert(request, key, value, description)) {
-    Insert(std::string(key), std::string(value), std::string(description),
+    Insert(key_begin, value_begin, key, value, description,
            is_suggestion_selected, next_fps, last_access_time, revert_entries);
   }
 }
 
 void UserHistoryPredictor::Insert(
-    std::string key, std::string value, std::string description,
+    int32_t key_begin, int32_t value_begin, absl::string_view key,
+    absl::string_view value, absl::string_view description,
     bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
     uint64_t last_access_time,
     UserHistoryPredictor::RevertEntries *revert_entries) {
@@ -1650,23 +1669,22 @@ void UserHistoryPredictor::Insert(
   Entry *entry = &(e->value);
   DCHECK(entry);
 
-  if (has_dic_key) {
-    // revert to previous `*entry` when reverted.
-    revert_entries->emplace_back(dic_key, std::make_unique<Entry>(*entry));
-  } else {
-    // `dic_key` is removed when reverted.
-    revert_entries->emplace_back(dic_key, nullptr);
+  // `entry` might be reused from the heap, so explicitly clear.
+  if (!has_dic_key) {
+    entry->Clear();
   }
 
-  entry->set_key(std::move(key));
-  entry->set_value(std::move(value));
+  entry->set_key(key);
+  entry->set_value(value);
   entry->set_removed(false);
 
   if (description.empty()) {
     entry->clear_description();
   } else {
-    entry->set_description(std::move(description));
+    entry->set_description(description);
   }
+
+  revert_entries->entries.emplace_back(key_begin, value_begin, *entry);
 
   entry->set_last_access_time(last_access_time);
   entry->set_suggestion_freq(entry->suggestion_freq() + 1);
@@ -1705,9 +1723,9 @@ void UserHistoryPredictor::MaybeRemoveUnselectedHistory(
         1.0 * entry->suggestion_freq() / entry->shown_freq();
 
     if (selected_ratio < kMinSelectedRatio) {
-      auto revert_entry = std::make_unique<Entry>(*entry);
-      revert_entry->set_shown_freq(std::max<int>(0, entry->shown_freq() - 1));
-      revert_entries->emplace_back(dic_key, std::move(revert_entry));
+      Entry revert_entry = *entry;
+      revert_entry.set_shown_freq(std::max<int>(0, entry->shown_freq() - 1));
+      revert_entries->entries.emplace_back(0, 0, std::move(revert_entry));
 
       entry->set_suggestion_freq(0);
       entry->set_shown_freq(0);
@@ -1742,6 +1760,8 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
     return;
   }
 
+  last_committed_entries_.reset();
+
   if (results.empty() || results.front().candidate_attributes &
                              converter::Candidate::NO_SUGGEST_LEARNING) {
     MOZC_VLOG(2) << "NO_SUGGEST_LEARNING";
@@ -1762,7 +1782,8 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
 
   MaybeRemoveUnselectedHistory(results, &revert_entries);
 
-  if (!revert_entries.empty()) {
+  if (!revert_entries.entries.empty()) {
+    revert_entries.result = results.front();
     if (auto *element = revert_cache_.Insert(revert_id); element) {
       element->value = std::move(revert_entries);
     }
@@ -1778,7 +1799,7 @@ UserHistoryPredictor::MakeLearningSegments(
 
   for (const auto &candidate : request.GetConverterHistorySegments()) {
     learning_segments.history_segments.push_back(
-        {candidate.key, candidate.value, candidate.content_key,
+        {0, 0, candidate.key, candidate.value, candidate.content_key,
          candidate.content_value, ""});
   }
 
@@ -1786,17 +1807,21 @@ UserHistoryPredictor::MakeLearningSegments(
   learning_segments.conversion_segments_key = result.key;
   learning_segments.conversion_segments_value = result.value;
   if (result.inner_segment_boundary.empty()) {
-    learning_segments.conversion_segments.push_back({result.key, result.value,
-                                                     result.key, result.value,
-                                                     GetDescription(result)});
+    learning_segments.conversion_segments.push_back(
+        {0, 0, result.key, result.value, result.key, result.value,
+         GetDescription(result)});
   } else {
     const bool is_single_segment = result.inner_segment_boundary.size() == 1;
     for (converter::Candidate::InnerSegmentIterator iter(
              result.inner_segment_boundary, result.key, result.value);
          !iter.Done(); iter.Next()) {
+      const int key_begin =
+          std::distance(result.key.data(), iter.GetKey().data());
+      const int value_begin =
+          std::distance(result.value.data(), iter.GetValue().data());
       learning_segments.conversion_segments.push_back(
-          {iter.GetKey(), iter.GetValue(), iter.GetContentKey(),
-           iter.GetContentValue(),
+          {key_begin, value_begin, iter.GetKey(), iter.GetValue(),
+           iter.GetContentKey(), iter.GetContentValue(),
            is_single_segment ? GetDescription(result) : ""});
     }
   }
@@ -1832,7 +1857,7 @@ void UserHistoryPredictor::InsertHistoryForHistorySegments(
   if (!request.request().zero_query_suggestion() &&
       learning_segments.conversion_segments.size() > 1 && !all_key.empty() &&
       !all_value.empty()) {
-    TryInsert(request, all_key, all_value, "", is_suggestion_selected, {},
+    TryInsert(request, 0, 0, all_key, all_value, "", is_suggestion_selected, {},
               last_access_time, revert_entries);
   }
 
@@ -1922,15 +1947,15 @@ void UserHistoryPredictor::InsertHistoryForConversionSegments(
     } else {
       this_was_seen = false;
     }
-    TryInsert(request, segment.key, segment.value, segment.description,
-              is_suggestion_selected, next_fps_to_set, last_access_time,
-              revert_entries);
+    TryInsert(request, segment.key_begin, segment.value_begin, segment.key,
+              segment.value, segment.description, is_suggestion_selected,
+              next_fps_to_set, last_access_time, revert_entries);
     if (request.request().mixed_conversion() &&
         segment.content_key != segment.key &&
         segment.content_value != segment.value) {
-      TryInsert(request, segment.content_key, segment.content_value,
-                segment.description, is_suggestion_selected, {},
-                last_access_time, revert_entries);
+      TryInsert(request, segment.key_begin, segment.value_begin,
+                segment.content_key, segment.content_value, segment.description,
+                is_suggestion_selected, {}, last_access_time, revert_entries);
     }
   }
 }
@@ -1947,15 +1972,36 @@ void UserHistoryPredictor::Revert(uint32_t revert_id) {
     return;
   }
 
-  for (auto &[dic_key, revert_entry] : *revert_entries) {
-    if (!revert_entry) {
-      MOZC_VLOG(2) << "Erasing the key: " << dic_key;
-      dic_->Erase(dic_key);
-    } else if (Entry *entry = dic_->MutableLookupWithoutInsert(dic_key);
-               entry) {
-      *entry = *revert_entry;
+  // `last_committed_entries` keeps the original entries before Revert.
+  auto last_committed_entries = std::make_unique<RevertEntries>();
+
+  // `revert_entries->entries` store the entries before the commit,
+  // while `last_committed_entries->entries` will store the entries after the
+  // commit.
+  last_committed_entries->result = revert_entries->result;
+
+  for (const auto &[key_begin, value_begin, revert_entry] :
+       revert_entries->entries) {
+    // We do not explicitly remove the entry from the `dic_`, but simply
+    // rollback to the previous entry. This behavior is consistent with the
+    // partial-revert operation. Entry with zero frequency is not suggested in
+    // the first place.
+    // Currently, dic_ stores the committed entries, but wants to rollback
+    // to them to reverted entries..
+    if (Entry *committed_entry =
+            dic_->MutableLookupWithoutInsert(EntryFingerprint(revert_entry));
+        committed_entry) {
+      // Stores the entries after the commit so we can redo the commit
+      // operations after Revert().
+      last_committed_entries->entries.emplace_back(key_begin, value_begin,
+                                                   *committed_entry);
+      // Performs the actual revert operation. dic_ will store the
+      // reverted entries.
+      *committed_entry = revert_entry;
     }
   }
+
+  last_committed_entries_ = std::move(last_committed_entries);
 }
 
 // static
@@ -2107,6 +2153,180 @@ uint32_t UserHistoryPredictor::GetScore(const Entry &entry) {
   constexpr uint32_t kBigramBoostAsTime = 7 * 24 * 60 * 60;  // 1 week.
   return entry.last_access_time() - Util::CharsLen(entry.value()) +
          (entry.bigram_boost() ? kBigramBoostAsTime : 0);
+}
+
+// static
+int32_t UserHistoryPredictor::GuessRevertedValueOffset(
+    absl::string_view reverted_value, absl::string_view left_context) {
+  if (reverted_value.empty() || left_context.empty()) {
+    return 0;
+  }
+
+  absl::string_view value = reverted_value;
+  absl::string_view remain;
+  char32_t last_char;  // not used.
+
+  // Strip the last character one-by-one, emulating the backspace key.
+  while (Util::SplitLastChar32(value, &remain, &last_char)) {
+    if (absl::EndsWith(left_context, value)) {
+      return value.size();
+    }
+    value = remain;
+  }
+
+  return 0;
+}
+
+// Example
+// 1) Commit "東京駅|に".
+//    1-1) Remembers {東京駅, 東京駅に} in `revert_entries`.
+//    1-2) Increments the frequency of entries and updates the LRU.
+// 2) Revert.
+//    2-1) Remembers the entries in dic_ in `last_committed_entries`.
+//    2-1) Rollback the entries in dic_ to `revert_entries`.
+// 3) Erase "に" with backspace.
+// 4) Type new characters
+//    `MaybeProcessPartialRevertEntry` is called in the step 4).
+//    4-1) "東京駅" is the suffix of the left-context ->
+//          re-commits the entries by inserting `last_committed_entries`
+//          to dic_.
+//    4-2) "東京駅に" exceeds the left-context-boundary, so do nothing.
+//
+//    Note that step 4) may generate the entries which are not in the
+//    revert_entries depending on the cursor position. e.g. "東京".
+//    In this case, creates a new entry and insert it to dic_.
+void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
+    const ConversionRequest &request) const {
+  if (!last_committed_entries_) {
+    return;
+  }
+
+  auto last_committed_entries = std::move(last_committed_entries_);
+  last_committed_entries_.reset();
+
+  const commands::DecoderExperimentParams &params =
+      request.request().decoder_experiment_params();
+  if (params.user_history_partial_revert_mode() == 0) {
+    return;
+  }
+
+  // Gets the actual cursor position after committing the result.
+  const int32_t actual_value_end = GuessRevertedValueOffset(
+      last_committed_entries->result.value, request.context().preceding_text());
+
+  // actual_value_end == 0 means that all characters are removed.
+  // There are no entries to rollback.
+  if (actual_value_end == 0) {
+    return;
+  }
+
+  auto insert_entry = [&](const Entry &new_entry) {
+    if (Entry *entry =
+            dic_->MutableLookupWithoutInsert(EntryFingerprint(new_entry));
+        entry) {
+      *entry = new_entry;
+      updated_ = true;
+    }
+  };
+
+  auto force_insert_entry = [&](const Entry &new_entry) {
+    const uint32_t dic_key = EntryFingerprint(new_entry);
+    const bool has_dic_key = dic_->HasKey(dic_key);
+    DicElement *elm = dic_->Insert(dic_key);
+    if (!elm) return;
+
+    Entry *entry = &(elm->value);
+    if (has_dic_key) {
+      // reuse key, value, description and other fields.
+      entry->set_suggestion_freq(entry->suggestion_freq() + 1);
+    } else {
+      *entry = new_entry;  // copy key and value
+      entry->set_suggestion_freq(1);
+    }
+    entry->set_last_access_time(new_entry.last_access_time());
+    updated_ = true;
+  };
+
+  absl::flat_hash_map<int32_t, int32_t> value_to_key_end_map;
+  absl::flat_hash_set<std::pair<int32_t, int32_t>> range_map;
+
+  auto maybe_initialize_map = [&]() {
+    if (!value_to_key_end_map.empty() && !range_map.empty()) return;
+    for (const auto &[key_begin, value_begin, committed_entry] :
+         last_committed_entries->entries) {
+      const int32_t key_end = key_begin + committed_entry.key().size();
+      const int32_t value_end = value_begin + committed_entry.value().size();
+      value_to_key_end_map.emplace(value_end, key_end);
+      range_map.emplace(value_begin, value_end);
+    }
+  };
+
+  // Returns the key_end corresponding to `value_end`.
+  auto get_key_end = [&](int32_t value_end) {
+    maybe_initialize_map();
+    return value_to_key_end_map[value_end];
+  };
+
+  // Returns true if there is an entry at [value_begin, value_end).
+  auto has_entry_in = [&](int32_t value_begin, int32_t value_end) {
+    maybe_initialize_map();
+    return range_map.contains(std::make_pair(value_begin, value_end));
+  };
+
+  // Utility functions to obtain the prefix/suffix after
+  // removing n- last characters.
+  auto get_suffix = [](absl::string_view str, int32_t n) {
+    DCHECK_LE(n, str.size());
+    return str.substr(str.size() - n, n);
+  };
+  auto get_prefix = [](absl::string_view str, int32_t n) {
+    DCHECK_LE(n, str.size());
+    return str.substr(0, str.size() - n);
+  };
+
+  for (const auto &[key_begin, value_begin, committed_entry] :
+       last_committed_entries->entries) {
+    absl::string_view cvalue = committed_entry.value();
+    absl::string_view ckey = committed_entry.key();
+    const int32_t value_end = value_begin + cvalue.size();
+    const int32_t key_end = key_begin + ckey.size();
+
+    if (value_end <= actual_value_end) {
+      // `committed_entry` exists in the remained context.
+      // safely rollback the `committed_entry`.
+      insert_entry(committed_entry);
+    } else if (value_begin < actual_value_end && actual_value_end < value_end) {
+      // Cursor is at the middle of the `committed_entry.value()`.
+      // Heuristically obtain the prefix key (= ckey_prefix).
+      const int32_t cvalue_suffix_len = value_end - actual_value_end;
+      absl::string_view cvalue_suffix = get_suffix(cvalue, cvalue_suffix_len);
+      absl::string_view cvalue_prefix = get_prefix(cvalue, cvalue_suffix_len);
+      absl::string_view ckey_prefix;  // unknown here.
+      if (has_entry_in(value_begin, actual_value_end)) {
+        // There is an another entry in [value_begin, actual_value_end).
+      } else if (const int32_t actual_key_end = get_key_end(actual_value_end);
+                 actual_key_end > 0 && actual_key_end > key_begin &&
+                 actual_key_end < key_end) {
+        // Reuses the boundary of other entries ending at `actual_key_end`.
+        ckey_prefix = get_prefix(ckey, key_end - actual_key_end);
+      } else if (cvalue_suffix_len < ckey.size() &&
+                 cvalue_suffix == get_suffix(ckey, cvalue_suffix_len) &&
+                 Util::GetScriptType(cvalue_suffix) == Util::HIRAGANA) {
+        // suffix value/key are same and script type is HIRAGANA.
+        ckey_prefix = get_prefix(ckey, cvalue_suffix_len);
+      } else {
+        // TODO(taku): Obtain ckey_prefix with char-by-char alignments or
+        // realtime decoder.
+      }
+
+      if (!ckey_prefix.empty() && !cvalue_prefix.empty()) {
+        Entry prefix_entry = committed_entry;
+        prefix_entry.set_key(ckey_prefix);
+        prefix_entry.set_value(cvalue_prefix);
+        force_insert_entry(prefix_entry);
+      }
+    }
+  }
 }
 
 // Returns the size of cache.

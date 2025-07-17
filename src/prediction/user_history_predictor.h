@@ -37,11 +37,13 @@
 #include <optional>
 #include <queue>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "base/container/freelist.h"
 #include "base/container/trie.h"
 #include "base/thread.h"
@@ -142,6 +144,9 @@ class UserHistoryPredictor : public PredictorInterface {
 
  private:
   struct SegmentForLearning {
+    // The string byte offset of key and value on result.(key|value).
+    int32_t key_begin = 0;
+    int32_t value_begin = 0;
     absl::string_view key;
     absl::string_view value;
     absl::string_view content_key;
@@ -378,11 +383,16 @@ class UserHistoryPredictor : public PredictorInterface {
                             const Entry *prev_entry,
                             EntryPriorityQueue *entry_queue) const;
 
-  // vector of [dic_key, revert_entry]
-  // When entry is nullptr, remove entry[dic_key].
-  // otherwise, revert the entry[dic_key] to revert_entry.
-  using RevertEntries =
-      std::vector<std::pair<uint32_t, std::unique_ptr<Entry>>>;
+  struct RevertEntries {
+    // The result committed.
+    Result result;
+
+    // Actual primitive entries associated with the last commit operation.
+    // vector of [key_begin, value_begin, revert_entry].
+    // `revert_entry` is stored in the LRU cache.
+    // entry.key/value() starts from the result.key/value[key/value_begin].
+    std::vector<std::tuple<int32_t, int32_t, Entry>> entries;
+  };
 
   void InsertHistory(const ConversionRequest &request,
                      const SegmentsForLearning &learning_segments,
@@ -399,10 +409,12 @@ class UserHistoryPredictor : public PredictorInterface {
       RevertEntries *revert_entries);
 
   // Inserts |key,value,description| to the internal dictionary database.
+  // |key_begin,value_begin|: string byte offset on result.(key|value).
   // |is_suggestion_selected|: key/value is suggestion or conversion.
   // |next_fp|: fingerprints of the next segment.
   // |last_access_time|: the time when this entry was created
-  void Insert(std::string key, std::string value, std::string description,
+  void Insert(int32_t key_begin, int32_t value_begin, absl::string_view key,
+              absl::string_view value, absl::string_view description,
               bool is_suggestion_selected, absl::Span<const uint32_t> next_fps,
               uint64_t last_access_time, RevertEntries *revert_entries);
 
@@ -413,7 +425,8 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Tries to insert entry.
   // Entry's contents and request_type will be checked before insertion.
-  void TryInsert(const ConversionRequest &request, absl::string_view key,
+  void TryInsert(const ConversionRequest &request, int32_t key_begin,
+                 int32_t value_begin, absl::string_view key,
                  absl::string_view value, absl::string_view description,
                  bool is_suggestion_selected,
                  absl::Span<const uint32_t> next_fps, uint64_t last_access_time,
@@ -443,6 +456,26 @@ class UserHistoryPredictor : public PredictorInterface {
   void MaybeRemoveUnselectedHistory(absl::Span<const Result> results,
                                     RevertEntries *revert_entries);
 
+  // Returns the value string byte offset on `reverted_value` with the context
+  // information populated from the client. When all characters in
+  // `reverted_value` are removed, returns 0.
+  // Example:
+  //  - reverted_value: 東京駅
+  //  - left_context:   ここは東京
+  //   -> returns 6.  (only '駅' is removed, and '東京' is kept.).
+  // User may type "ここは" -> "東京駅" -> backspace -> ...
+  //
+  // This function returns the position in best-effort-basis as context
+  // information is not always accurate. Returns 0 when failing to detect
+  // the position, which leads to revert the entire value, same as the
+  // previous behavior.
+  static int GuessRevertedValueOffset(absl::string_view reverted_value,
+                                      absl::string_view left_context);
+
+  // Re-commits the reverted entries using the left context information.
+  // Users may use the backspace key just to remove the last few characters.
+  void MaybeProcessPartialRevertEntry(const ConversionRequest &request) const;
+
   // Default entry lifetime period.
   // Entries will be automatically purged after this period.
   static constexpr int kDefaultEntryLifetimeDays = 62;
@@ -457,7 +490,23 @@ class UserHistoryPredictor : public PredictorInterface {
   const dictionary::UserDictionaryInterface &user_dictionary_;
 
   mutable std::atomic<bool> updated_;
-  std::unique_ptr<DicCache> dic_;
+
+  // The const methods of `dic_` are not strictly thread-safe. This is
+  // because these const methods e.g., `dic_->(Mutable)LookupWithoutInsert()`,
+  // return an Entry pointer held by `dic_`, meaning the returned content
+  // could be updated by another thread while the current thread is accessing
+  // it.
+  //
+  // When accessing dic_'s Entry pointer in the const method of this
+  // class .e.g. Predict(), need to protect `dic_` with a ReaderLock. In
+  // addition, WriteLock is required when modifying dic_'s Entry pointer.
+  // This rule is not applied when using dic_ in non-const method now, e.g.
+  // Finish() and Revert(), but wants to apply them for the sake of consistency.
+  //
+  // TODO(taku): Add absl's thread annotations to all variables.
+  mutable absl::Mutex dic_mutex_;
+  mutable std::unique_ptr<DicCache> dic_;
+
   mutable std::optional<BackgroundFuture<void>> sync_;
   const engine::Modules &modules_;
 
@@ -473,6 +522,11 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Internal LRU cache to store dic_key/Entry to be reverted.
   storage::LruCache<uint64_t, RevertEntries> revert_cache_;
+
+  // `last_committed_entries_` stores the entries to be re-committed
+  // after Revert().  Note that `last_committed_entries_` is not associated with
+  // revert_id and shared across different context (text view).
+  mutable std::unique_ptr<const RevertEntries> last_committed_entries_;
 };
 
 }  // namespace mozc::prediction
