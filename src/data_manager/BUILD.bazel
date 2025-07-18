@@ -311,6 +311,7 @@ bzl_library(
     srcs = ["mozc_data.bzl"],
     test_size = "small",
     visibility = ["//data_manager:__subpackages__"],
+    deps = ["@rules_cc//cc:core_rules"],
 )
 
 mozc_cc_library(

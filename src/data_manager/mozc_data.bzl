@@ -27,6 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
 def mozc_dataset(
         name,
         outs,
@@ -435,8 +437,7 @@ def mozc_dataset(
         cmd = ("$(location //converter:gen_segmenter_code) $(SRCS) > $@"),
         tools = ["//converter:gen_segmenter_code"],
     )
-
-    native.cc_binary(
+    cc_binary(
         name = name + "@segmenter_generator",
         srcs =
             segmenter_generator_srcs +

@@ -31,6 +31,7 @@
 #   Declaration of package_group for visibility managing.
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load(
     "//:build_defs.bzl",
     "mozc_select",
@@ -216,6 +217,7 @@ bzl_library(
         "//devtools/build_cleaner/skylark:build_defs_lib",
         "@bazel_skylib//rules:select_file",
         "@build_bazel_rules_apple//apple:macos",
+        "@rules_cc//cc:core_rules",
     ],
 )
 

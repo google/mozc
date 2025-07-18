@@ -44,6 +44,11 @@ See also: https://bazel.build/rules/bzl-style#rules
 
 load("@bazel_skylib//rules:select_file.bzl", "select_file")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle", "macos_unit_test")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_import.bzl", "cc_import")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("@windows_sdk//:windows_sdk_rules.bzl", "windows_resource")
 load(
     "//:config.bzl",
@@ -83,7 +88,7 @@ def mozc_cc_library(deps = [], copts = [], visibility = None, **kwargs):
     """
     cc_library wrapper adding //:macro dependecny.
     """
-    native.cc_library(
+    cc_library(
         deps = deps + ["//:macro"],
         copts = copts + _copts_unsigned_char(),
         visibility = _update_visibility(visibility),
@@ -99,7 +104,7 @@ def mozc_cc_binary(deps = [], copts = [], **kwargs):
     """
     cc_binary wrapper adding //:macro dependecny.
     """
-    native.cc_binary(
+    cc_binary(
         deps = deps + ["//:macro"],
         copts = copts + _copts_unsigned_char(),
         **kwargs
@@ -120,7 +125,7 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
       copts: copts for cc_test.
       **kwargs: other args for cc_test.
     """
-    native.cc_test(
+    cc_test(
         name = name,
         tags = tags,
         deps = deps + ["//:macro"],
@@ -505,8 +510,7 @@ def mozc_cc_win32_library(
         target_compatible_with = target_compatible_with,
         visibility = ["//visibility:private"],
     )
-
-    native.cc_import(
+    cc_import(
         name = cc_import_taget_name,
         interface_library = ":" + filegroup_target_name,
         shared_library = ":" + cc_binary_target_name,
@@ -607,7 +611,7 @@ def mozc_objc_library(
         copts = [],
         tags = [],
         **kwargs):
-    native.objc_library(
+    objc_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
