@@ -41,6 +41,7 @@
 #include <vector>
 
 #include "absl/base/no_destructor.h"
+#include "absl/base/nullability.h"
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -340,13 +341,13 @@ bool Table::IsLoopingEntry(const absl::string_view input,
   return false;
 }
 
-const Entry *Table::AddRule(const absl::string_view input,
-                            const absl::string_view output,
-                            const absl::string_view pending) {
+const Entry *absl_nullable Table::AddRule(const absl::string_view input,
+                                          const absl::string_view output,
+                                          const absl::string_view pending) {
   return AddRuleWithAttributes(input, output, pending, NO_TABLE_ATTRIBUTE);
 }
 
-const Entry *Table::AddRuleWithAttributes(
+const Entry *absl_nullable Table::AddRuleWithAttributes(
     const absl::string_view escaped_input, const absl::string_view output,
     const absl::string_view escaped_pending, const TableAttributes attributes) {
   if (attributes & NEW_CHUNK) {

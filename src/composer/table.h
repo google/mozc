@@ -39,6 +39,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
@@ -97,13 +98,13 @@ class Table final {
   // Return true if adding the input-pending pair makes a loop of
   // conversion rules.
   bool IsLoopingEntry(absl::string_view input, absl::string_view pending) const;
-  const Entry *AddRule(absl::string_view input, absl::string_view output,
-                       absl::string_view pending);
-
-  const Entry *AddRuleWithAttributes(absl::string_view input,
+  const Entry *absl_nullable AddRule(absl::string_view input,
                                      absl::string_view output,
-                                     absl::string_view pending,
-                                     TableAttributes attributes);
+                                     absl::string_view pending);
+
+  const Entry *absl_nullable AddRuleWithAttributes(
+      absl::string_view input, absl::string_view output,
+      absl::string_view pending, TableAttributes attributes);
 
   void DeleteRule(absl::string_view input);
 
