@@ -70,7 +70,7 @@ Mixed.
 See [src/data/dictionary_oss/README.txt](src/data/dictionary_oss/README.txt)
 
 ### [src/data/test/dictionary/](src/data/test/dictionary)
-The same to [src/data/dictionary_oss/](src/data/dictionary_oss).
+The same as [src/data/dictionary_oss/](src/data/dictionary_oss).
 See [src/data/dictionary_oss/README.txt](src/data/dictionary_oss/README.txt)
 
 ### [src/data/test/stress_test/](src/data/test/stress_test)
