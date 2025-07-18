@@ -57,6 +57,9 @@ config_setting(
     visibility = ["//visibility:private"],
 )
 
+# CHANNEL=dev is used to build Dev channel binaries.
+# Dev channel is a kind of beta release that can be used by external users.
+# The version number of Dev channel should end with 10x (e.g. 100 for Windows, 101 for macOS).
 config_setting(
     name = "dev_channel",
     values = {
