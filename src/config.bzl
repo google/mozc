@@ -67,9 +67,3 @@ MACOS_CODESIGN_IDENTITY = MACOS_CODESIGN_IDENTITY_PSEUDO
 #
 # For Linux, Qt paths are managed by pkg_config_repository in WORKSPACE.bazel.
 MACOS_QT_PATH = "/usr/local/Qt-6.5.2"
-
-## SHA256 of zip code files.
-# When zip code files are prefetched and used via --repository_cache for offline build,
-# SHA256 values should be specified.
-SHA256_ZIP_CODE_KEN_ALL = None
-SHA256_ZIP_CODE_JIGYOSYO = None
