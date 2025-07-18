@@ -2162,6 +2162,20 @@ int32_t UserHistoryPredictor::GuessRevertedValueOffset(
     return 0;
   }
 
+  // Removes specified suffixes which may be inserted directly.
+  while (true) {
+    bool removed = false;
+    // Includes full width whitespace.
+    for (absl::string_view suffix : {"\r", "\n", "\t", " ", "　"}) {
+      if (absl::EndsWith(left_context, suffix)) {
+        left_context.remove_suffix(suffix.size());
+        removed = true;
+        break;
+      }
+    }
+    if (!removed) break;
+  }
+
   absl::string_view value = reverted_value;
   absl::string_view remain;
   char32_t last_char;  // not used.

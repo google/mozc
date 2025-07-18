@@ -5392,6 +5392,24 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     EXPECT_FALSE(has_entry(predictor, "きょうとだいがく", "京都大学"));
     EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
   }
+
+  // Adds extra characters directly w/o using IME.
+  {
+    UserHistoryPredictor *predictor = init_predictor();
+
+    results = suggest_with_context(predictor, "さとう",
+                                   "佐藤さんは京都大学を \n\r　");
+    EXPECT_FALSE(results.empty());
+    EXPECT_TRUE(absl::StartsWith(results[0].value, "佐藤さん"));
+
+    EXPECT_TRUE(has_entry(predictor, "さとうさんはきょうとだいがくを",
+                          "佐藤さんは京都大学を"));
+    EXPECT_TRUE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
+    EXPECT_TRUE(has_entry(predictor, "さとうさん", "佐藤さん"));
+    EXPECT_TRUE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
+    EXPECT_TRUE(has_entry(predictor, "きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
+  }
 }
 
 }  // namespace mozc::prediction
