@@ -754,13 +754,13 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
 }
 
 bool UserHistoryPredictor::ZeroQueryLookupEntry(
-    const ConversionRequest &request, absl::string_view input_key,
+    const ConversionRequest &request, absl::string_view request_key,
     const Entry *entry, const Entry *prev_entry,
     EntryPriorityQueue *entry_queue) const {
   DCHECK(entry);
   DCHECK(entry_queue);
 
-  // - input_key is empty,
+  // - request_key is empty,
   // - prev_entry(history) = 東京
   // - entry in LRU = 東京で
   //   Then we suggest で as zero query suggestion.
@@ -768,7 +768,7 @@ bool UserHistoryPredictor::ZeroQueryLookupEntry(
   // when `perv_entry` is not null, it is guaranteed that
   // the history segment is in the LRU cache.
   if (prev_entry && request.request().zero_query_suggestion() &&
-      input_key.empty() && entry->key().size() > prev_entry->key().size() &&
+      request_key.empty() && entry->key().size() > prev_entry->key().size() &&
       entry->value().size() > prev_entry->value().size() &&
       entry->key().starts_with(prev_entry->key()) &&
       entry->value().starts_with(prev_entry->value())) {
@@ -795,16 +795,16 @@ bool UserHistoryPredictor::ZeroQueryLookupEntry(
 }
 
 bool UserHistoryPredictor::RomanFuzzyLookupEntry(
-    const absl::string_view roman_input_key, const Entry *entry,
+    const absl::string_view roman_request_key, const Entry *entry,
     EntryPriorityQueue *entry_queue) const {
-  if (roman_input_key.empty()) {
+  if (roman_request_key.empty()) {
     return false;
   }
 
   DCHECK(entry);
   DCHECK(entry_queue);
 
-  if (!RomanFuzzyPrefixMatch(ToRoman(entry->key()), roman_input_key)) {
+  if (!RomanFuzzyPrefixMatch(ToRoman(entry->key()), roman_request_key)) {
     return false;
   }
 
@@ -847,7 +847,7 @@ UserHistoryPredictor::Entry *UserHistoryPredictor::AddEntryWithNewKeyValue(
 }
 
 bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
-    const absl::string_view input_key, const Entry *entry,
+    const absl::string_view request_key, const Entry *entry,
     const Entry **result_last_entry, uint64_t *left_last_access_time,
     uint64_t *left_most_last_access_time, std::string *result_key,
     std::string *result_value) const {
@@ -856,8 +856,8 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
   const Entry *current_entry = entry;
   absl::flat_hash_set<std::pair<absl::string_view, absl::string_view>> seen;
   seen.emplace(current_entry->key(), current_entry->value());
-  // Until target entry gets longer than input_key.
-  while (key.size() <= input_key.size()) {
+  // Until target entry gets longer than request_key.
+  while (key.size() <= request_key.size()) {
     const Entry *latest_entry = nullptr;
     const Entry *left_same_timestamp_entry = nullptr;
     const Entry *left_most_same_timestamp_entry = nullptr;
@@ -868,7 +868,7 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
         continue;
       }
       const MatchType mtype_joined =
-          GetMatchType(absl::StrCat(key, tmp_next_entry->key()), input_key);
+          GetMatchType(absl::StrCat(key, tmp_next_entry->key()), request_key);
       if (mtype_joined == MatchType::NO_MATCH ||
           mtype_joined == MatchType::LEFT_EMPTY_MATCH) {
         continue;
@@ -937,7 +937,7 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
     }
   }
 
-  if (key.size() < input_key.size()) {
+  if (key.size() < request_key.size()) {
     MOZC_VLOG(3) << "Cannot find prefix match even after chain rules";
     return false;
   }
@@ -948,7 +948,7 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
 }
 
 bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
-                                       const absl::string_view input_key,
+                                       const absl::string_view request_key,
                                        const absl::string_view key_base,
                                        const Trie<std::string> *key_expanded,
                                        const Entry *entry,
@@ -973,16 +973,16 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
   // left_last_access_time:   timestamp of D
   // left_most_last_access_time:   timestamp of B
 
-  // |input_key| is a query user is now typing.
+  // |request_key| is a query user is now typing.
   // |entry->key()| is a target value saved in the database.
-  //  const string input_key = key_base;
+  //  const string request_key = key_base;
 
   const MatchType mtype =
-      GetMatchTypeFromInput(input_key, key_base, key_expanded, entry->key());
+      GetMatchTypeFromInput(request_key, key_base, key_expanded, entry->key());
   if (mtype == MatchType::NO_MATCH) {
     return false;
   } else if (mtype == MatchType::LEFT_EMPTY_MATCH) {  // zero-query-suggestion
-    // if |input_key| is empty, the |prev_entry| and |entry| must
+    // if |request_key| is empty, the |prev_entry| and |entry| must
     // have bigram relation.
     if (prev_entry != nullptr && HasBigramEntry(*entry, *prev_entry)) {
       result = AddEntry(*entry, entry_queue);
@@ -996,9 +996,9 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
       return false;
     }
   } else if (mtype == MatchType::LEFT_PREFIX_MATCH) {
-    // |input_key| is shorter than |entry->key()|
+    // |request_key| is shorter than |entry->key()|
     // This scenario is a simple prefix match.
-    // e.g., |input_key|="foo", |entry->key()|="foobar"
+    // e.g., |request_key|="foo", |entry->key()|="foobar"
     result = AddEntry(*entry, entry_queue);
     if (result) {
       last_entry = entry;
@@ -1008,10 +1008,10 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
     }
   } else if (mtype == MatchType::RIGHT_PREFIX_MATCH ||
              mtype == MatchType::EXACT_MATCH) {
-    // |input_key| is longer than or the same as |entry->key()|.
+    // |request_key| is longer than or the same as |entry->key()|.
     // In this case, recursively traverse "next_entries" until
-    // target entry gets longer than input_key.
-    // e.g., |input_key|="foobar", |entry->key()|="foo"
+    // target entry gets longer than request_key.
+    // e.g., |request_key|="foobar", |entry->key()|="foo"
     if (request.request().zero_query_suggestion() &&
         mtype == MatchType::EXACT_MATCH) {
       // For mobile, we don't generate joined result.
@@ -1028,7 +1028,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
       left_most_last_access_time =
           IsContentWord(entry->value()) ? left_last_access_time : 0;
       if (!GetKeyValueForExactAndRightPrefixMatch(
-              input_key, entry, &last_entry, &left_last_access_time,
+              request_key, entry, &last_entry, &left_last_access_time,
               &left_most_last_access_time, &key, &value)) {
         return false;
       }
@@ -1065,7 +1065,7 @@ bool UserHistoryPredictor::LookupEntry(const ConversionRequest &request,
 
   // Generates joined result using |last_entry|.
   if (last_entry != nullptr && Util::CharsLen(result->key()) >= 1 &&
-      2 * Util::CharsLen(input_key) >= Util::CharsLen(result->key())) {
+      2 * Util::CharsLen(request_key) >= Util::CharsLen(result->key())) {
     const Entry *latest_entry = nullptr;
     const Entry *left_same_timestamp_entry = nullptr;
     const Entry *left_most_same_timestamp_entry = nullptr;
@@ -1137,7 +1137,7 @@ std::vector<Result> UserHistoryPredictor::Predict(
   const bool is_empty_input = request.key().empty();
   const Entry *prev_entry = LookupPrevEntry(request);
   if (is_empty_input && prev_entry == nullptr) {
-    MOZC_VLOG(1) << "If input_key_len is 0, prev_entry must be set";
+    MOZC_VLOG(1) << "If request_key_len is 0, prev_entry must be set";
     return {};
   }
 
@@ -1207,15 +1207,15 @@ bool UserHistoryPredictor::ShouldPredict(
     return false;
   }
 
-  absl::string_view input_key = request.key();
+  absl::string_view request_key = request.key();
 
-  if (input_key.empty() && !request.request().zero_query_suggestion()) {
+  if (request_key.empty() && !request.request().zero_query_suggestion()) {
     MOZC_VLOG(2) << "key length is 0";
     return false;
   }
 
-  if (IsPunctuation(Util::Utf8SubString(input_key, 0, 1))) {
-    MOZC_VLOG(2) << "input_key starts with punctuations";
+  if (IsPunctuation(Util::Utf8SubString(request_key, 0, 1))) {
+    MOZC_VLOG(2) << "request_key starts with punctuations";
     return false;
   }
 
@@ -1288,7 +1288,7 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
     const ConversionRequest &request, const Entry *prev_entry,
     size_t max_entry_queue_size) const {
   // Gets romanized input key if the given preedit looks misspelled.
-  const std::string roman_input_key = GetRomanMisspelledKey(request);
+  const std::string roman_request_key = GetRomanMisspelledKey(request);
 
   const std::vector<TypeCorrectedQuery> corrected =
       GetTypingCorrectedQueries(request);
@@ -1299,21 +1299,21 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
   // Example2 kana input: for "あか", we will get |base|, "あ" and |expanded|,
   // "か", and "が".
 
-  // |base_key| and |input_key| could be different
+  // |base_key| and |request_key| could be different
   // For kana-input, we will expand the ambiguity for "゛".
   // When we input "もす",
   // |base_key|: "も"
   // |expanded|: "す", "ず"
-  // |input_key|: "もす"
+  // |request_key|: "もす"
   // In this case, we want to show candidates for "もす" as EXACT match,
   // and candidates for "もず" as LEFT_PREFIX_MATCH
   //
   // For roman-input, when we input "あｋ",
-  // |input_key| is "あｋ" and |base_key| is "あ"
-  std::string input_key;
+  // |request_key| is "あｋ" and |base_key| is "あ"
+  std::string request_key;
   std::string base_key;
   std::unique_ptr<Trie<std::string>> expanded;
-  GetInputKeyFromRequest(request, &input_key, &base_key, &expanded);
+  GetInputKeyFromRequest(request, &request_key, &base_key, &expanded);
 
   EntryPriorityQueue entry_queue;
   const absl::Time now = Clock::GetAbslTime();
@@ -1346,17 +1346,17 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
 
     // Lookup key from elm_value and prev_entry.
     // If a new entry is found, the entry is pushed to the entry_queue.
-    if (LookupEntry(request, input_key, base_key, expanded.get(), &(elm.value),
-                    prev_entry, &entry_queue) ||
-        RomanFuzzyLookupEntry(roman_input_key, &(elm.value), &entry_queue) ||
-        ZeroQueryLookupEntry(request, input_key, &(elm.value), prev_entry,
+    if (LookupEntry(request, request_key, base_key, expanded.get(),
+                    &(elm.value), prev_entry, &entry_queue) ||
+        RomanFuzzyLookupEntry(roman_request_key, &(elm.value), &entry_queue) ||
+        ZeroQueryLookupEntry(request, request_key, &(elm.value), prev_entry,
                              &entry_queue)) {
       continue;
     }
 
-    // Lookup typing corrected keys when the original `input_key` doesn't match.
-    // Since dic_ is sorted in LRU, typing corrected queries are ranked lower
-    // than the original key.
+    // Lookup typing corrected keys when the original `request_key` doesn't
+    // match. Since dic_ is sorted in LRU, typing corrected queries are ranked
+    // lower than the original key.
     for (const auto &c : corrected) {
       // Only apply when score > 0. When score < 0, we trigger literal-on-top
       // in dictionary predictor.
@@ -1373,12 +1373,12 @@ UserHistoryPredictor::GetEntry_QueueFromHistoryDictionary(
 
 // static
 void UserHistoryPredictor::GetInputKeyFromRequest(
-    const ConversionRequest &request, std::string *input_key, std::string *base,
-    std::unique_ptr<Trie<std::string>> *expanded) {
-  DCHECK(input_key);
+    const ConversionRequest &request, std::string *request_key,
+    std::string *base, std::unique_ptr<Trie<std::string>> *expanded) {
+  DCHECK(request_key);
   DCHECK(base);
 
-  *input_key = request.composer().GetStringForPreedit();
+  *request_key = request.composer().GetStringForPreedit();
   // auto = std::pair<std::string, absl::btree_set<std::string>>
   const auto [query_base, expanded_set] =
       request.composer().GetQueriesForPrediction();
@@ -1394,9 +1394,9 @@ void UserHistoryPredictor::GetInputKeyFromRequest(
 
 UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     const ConversionRequest &request, bool is_top_candidate,
-    uint32_t input_key_len, const Entry &entry) {
+    uint32_t request_key_len, const Entry &entry) {
   if (request.request().mixed_conversion()) {
-    if (IsValidSuggestionForMixedConversion(request, input_key_len, entry)) {
+    if (IsValidSuggestionForMixedConversion(request, request_key_len, entry)) {
       return ResultType::GOOD_RESULT;
     }
     return ResultType::BAD_RESULT;
@@ -1411,7 +1411,7 @@ UserHistoryPredictor::ResultType UserHistoryPredictor::GetResultType(
     // "です" after that,  showing "デスノート" is annoying.
     // In this situation, "です" is in the LRU, but SuggestionTriggerFunc
     // returns false for "です", since it is short.
-    if (IsValidSuggestion(request, input_key_len, entry)) {
+    if (IsValidSuggestion(request, request_key_len, entry)) {
       return ResultType::GOOD_RESULT;
     }
     if (is_top_candidate) {
@@ -1434,7 +1434,7 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     LOG(ERROR) << "Unknown mode";
     return {};
   }
-  const uint32_t input_key_len = Util::CharsLen(request.key());
+  const uint32_t request_key_len = Util::CharsLen(request.key());
 
   size_t inserted_num = 0;
   size_t inserted_char_coverage = 0;
@@ -1489,7 +1489,7 @@ std::vector<Result> UserHistoryPredictor::MakeResults(
     }
 
     const ResultType result =
-        GetResultType(request, entries.empty(), input_key_len, *result_entry);
+        GetResultType(request, entries.empty(), request_key_len, *result_entry);
     if (result == ResultType::STOP_ENUMERATION) {
       break;
     } else if (result == ResultType::BAD_RESULT) {
@@ -2033,11 +2033,11 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchType(
 
 // static
 UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
-    const absl::string_view input_key, const absl::string_view key_base,
+    const absl::string_view request_key, const absl::string_view key_base,
     const Trie<std::string> *key_expanded, const absl::string_view target) {
   if (key_expanded == nullptr) {
-    // |input_key| and |key_base| can be different by composer modification.
-    // For example, |input_key|, "８，＋", and |base| "８、＋".
+    // |request_key| and |key_base| can be different by composer modification.
+    // For example, |request_key|, "８，＋", and |base| "８、＋".
     return GetMatchType(key_base, target);
   }
 
@@ -2049,7 +2049,7 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
     if (!key_expanded->LookUpPrefix(target, &value, &key_length,
                                     &has_subtrie)) {
       return MatchType::NO_MATCH;
-    } else if (value == target && value == input_key) {
+    } else if (value == target && value == request_key) {
       return MatchType::EXACT_MATCH;
     } else {
       return MatchType::LEFT_PREFIX_MATCH;
@@ -2073,7 +2073,7 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
       return MatchType::NO_MATCH;
     }
     const std::string matched = absl::StrCat(key_base, value);
-    if (matched == target && matched == input_key) {
+    if (matched == target && matched == request_key) {
       return MatchType::EXACT_MATCH;
     } else {
       return MatchType::LEFT_PREFIX_MATCH;

@@ -100,11 +100,9 @@ void AppendDescription(Result &result, Args &&...args) {
 
 void MaybeFixRealtimeTopCost(const ConversionRequest &request,
                              absl::Span<Result> results) {
-  absl::string_view input_key = request.key();
-
   // Remember the minimum cost among those REALTIME
-  // candidates that have the same key length as |input_key| so that we can set
-  // a slightly smaller cost to REALTIME_TOP than these.
+  // candidates that have the same key length as |request_key| so that we can
+  // set a slightly smaller cost to REALTIME_TOP than these.
   int realtime_cost_min = Result::kInvalidCost;
   Result *realtime_top_result = nullptr;
   for (Result &result : results) {
@@ -113,10 +111,10 @@ void MaybeFixRealtimeTopCost(const ConversionRequest &request,
     }
 
     // Update the minimum cost for REALTIME candidates that have the same key
-    // length as input_key.
+    // length as request_key.
     if (result.types & PredictionType::REALTIME &&
         result.cost < realtime_cost_min &&
-        result.key.size() == input_key.size()) {
+        result.key.size() == request.key().size()) {
       realtime_cost_min = result.cost;
     }
   }
@@ -316,7 +314,7 @@ void DictionaryPredictor::MaybeApplyPostCorrection(
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(
     const ConversionRequest &request, uint16_t rid,
-    const absl::string_view input_key, absl::Span<const Result> results,
+    absl::Span<const Result> results,
     absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
   // Make a map from reference value to min-cost result.
   // Reference entry:
@@ -336,7 +334,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
       continue;
     }
 
-    if (result.value == input_key) {
+    if (result.value == request.key()) {
       const int cost = GetLMCost(result, rid);
       if (fallback_cost == -1 || fallback_cost > cost) {
         fallback_cost = cost;
@@ -350,7 +348,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
     int lm_cost = GetLMCost(result, rid);
     if (result.candidate_attributes &
         converter::Candidate::PARTIALLY_KEY_CONSUMED) {
-      lm_cost += CalculatePrefixPenalty(request, input_key, result, cache);
+      lm_cost += CalculatePrefixPenalty(request, result, cache);
     }
     const auto it = min_cost_map.find(result.value);
     if (it == min_cost_map.end()) {
@@ -412,7 +410,6 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
 
 void DictionaryPredictor::SetPredictionCost(const ConversionRequest &request,
                                             absl::Span<Result> results) const {
-  absl::string_view input_key = request.key();
   const int history_rid = request.converter_history_rid();
 
   const bool is_suggestion =
@@ -423,11 +420,11 @@ void DictionaryPredictor::SetPredictionCost(const ConversionRequest &request,
   // key as a context information.
   const size_t history_key_len =
       Util::CharsLen(request.converter_history_key(1));
-  const size_t input_key_len = Util::CharsLen(input_key);
+  const size_t request_key_len = Util::CharsLen(request.key());
 
   for (Result &result : results) {
     const int cost = GetLMCost(result, history_rid);
-    size_t query_len = input_key_len;
+    size_t query_len = request_key_len;
     size_t key_len = Util::CharsLen(result.key);
     if (result.types & PredictionType::BIGRAM) {
       query_len += history_key_len;
@@ -500,9 +497,8 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   }
 
   absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
-  absl::string_view input_key = request.key();
   const int single_kanji_offset = CalculateSingleKanjiCostOffset(
-      request, history_rid, input_key, results, &prefix_penalty_cache);
+      request, history_rid, results, &prefix_penalty_cache);
 
   for (Result &result : results) {
     int cost = GetLMCost(result, history_rid);
@@ -584,7 +580,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // - Users expect the candidates for the input key on the candidates.
     // - We want to show candidates as many as possible in the limited
     //   candidates area.
-    const size_t candidate_lookup_key_len = Util::CharsLen(input_key);
+    const size_t candidate_lookup_key_len = Util::CharsLen(request.key());
     const size_t candidate_key_len = Util::CharsLen(result.key);
     if (!(result.types & PredictionType::SUFFIX) &&
         candidate_key_len > candidate_lookup_key_len) {
@@ -599,8 +595,8 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Penalty for prefix results.
     if (result.candidate_attributes &
         converter::Candidate::PARTIALLY_KEY_CONSUMED) {
-      const int prefix_penalty = CalculatePrefixPenalty(
-          request, input_key, result, &prefix_penalty_cache);
+      const int prefix_penalty =
+          CalculatePrefixPenalty(request, result, &prefix_penalty_cache);
       result.penalty += prefix_penalty;
       cost += prefix_penalty;
       MOZC_WORD_LOG(result, "Prefix: ", cost,
@@ -703,29 +699,27 @@ bool DictionaryPredictor::IsAggressiveSuggestion(size_t query_len,
 }
 
 int DictionaryPredictor::CalculatePrefixPenalty(
-    const ConversionRequest &request, const absl::string_view input_key,
-    const Result &result,
+    const ConversionRequest &request, const Result &result,
     absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
-  if (input_key == result.key) {
+  if (request.key() == result.key) {
     LOG(WARNING) << "Invalid prefix key: " << result.key;
     return 0;
   }
-  absl::string_view candidate_key = result.key;
   const uint16_t result_rid = result.rid;
-  const size_t key_len = Util::CharsLen(candidate_key);
+  const size_t key_len = Util::CharsLen(result.key);
   const PrefixPenaltyKey cache_key = std::make_pair(result_rid, key_len);
   if (const auto it = cache->find(cache_key); it != cache->end()) {
     return it->second;
   }
 
-  // Use the conversion result's cost for the remaining input key
+  // Use the conversion result's cost for the remaining request.key
   // as the penalty of the prefix candidate.
   // For example, if the input key is "きょうの" and the target prefix candidate
   // is "木:き", the penalty will be the cost of the conversion result for
   // "ょうの".
   int penalty = 0;
 
-  absl::string_view remain_key = Util::Utf8SubString(input_key, key_len);
+  absl::string_view remain_key = Util::Utf8SubString(request.key(), key_len);
 
   ConversionRequest::Options options = request.options();
   options.max_conversion_candidates_size = 1;

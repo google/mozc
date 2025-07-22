@@ -89,10 +89,10 @@ ResultFilter::ResultFilter(const ConversionRequest &request,
                            dictionary::PosMatcher pos_matcher,
                            const Connector &connector,
                            const SuggestionFilter &suggestion_filter)
-    : input_key_(request.key()),
+    : request_key_(request.key()),
       history_key_(request.converter_history_key(1)),
       history_value_(request.converter_history_value(1)),
-      input_key_len_(Util::CharsLen(input_key_)),
+      request_key_len_(Util::CharsLen(request_key_)),
       pos_matcher_(pos_matcher),
       connector_(connector),
       suggestion_filter_(suggestion_filter),
@@ -125,7 +125,7 @@ bool ResultFilter::ShouldRemove(const Result &result, int added_num) {
   // When |include_exact_key| is true, we don't filter the results
   // which have the exactly same key as the input even if it's a bad
   // suggestion.
-  if (!(include_exact_key_ && result.key == input_key_) &&
+  if (!(include_exact_key_ && result.key == request_key_) &&
       suggestion_filter_.IsBadSuggestion(result.value)) {
     return true;
   }
@@ -139,7 +139,7 @@ bool ResultFilter::ShouldRemove(const Result &result, int added_num) {
   // Don't suggest exactly the same candidate as key.
   // if |include_exact_key| is true, that's not the case.
   if (!include_exact_key_ && !(result.types & PredictionType::REALTIME) &&
-      input_key_ == result.value) {
+      request_key_ == result.value) {
     return true;
   }
 
@@ -151,12 +151,13 @@ bool ResultFilter::ShouldRemove(const Result &result, int added_num) {
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
   if ((result.candidate_attributes &
        converter::Candidate::SPELLING_CORRECTION) &&
-      result.key != input_key_ &&
-      input_key_len_ <= GetMissSpelledPosition(result.key, result.value) + 1) {
+      result.key != request_key_ &&
+      request_key_len_ <=
+          GetMissSpelledPosition(result.key, result.value) + 1) {
     return true;
   }
 
-  const size_t lookup_key_len = Util::CharsLen(input_key_);
+  const size_t lookup_key_len = Util::CharsLen(request_key_);
 
   if (suffix_nwp_transition_cost_threshold_ > 0 && lookup_key_len == 0 &&
       result.types & PredictionType::SUFFIX &&

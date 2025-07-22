@@ -2897,7 +2897,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
 
   // Roman
   // preedit: "あｋ"
-  // input_key: "あｋ"
+  // request_key: "あｋ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
   auto expanded = std::make_unique<Trie<std::string>>();
@@ -2926,7 +2926,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
 
   // only expanded
   // preedit: "k"
-  // input_key: ""
+  // request_key: ""
   // key_base: ""
   // key_expanded: "か","き","く","け", "こ"
 
@@ -2952,7 +2952,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
 
   // Kana
   // preedit: "あし"
-  // input_key: "あし"
+  // request_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
   auto expanded = std::make_unique<Trie<std::string>>();
@@ -2979,7 +2979,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   }
 
   // only expanded
-  // input_key: "し"
+  // request_key: "し"
   // key_base: ""
   // key_expanded: "し","じ"
   constexpr LookupTestData kTests2[] = {
@@ -3008,7 +3008,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
 
   // Roman
   // preedit: "あｋ"
-  // input_key: "あ"
+  // request_key: "あ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
   auto expanded = std::make_unique<Trie<std::string>>();
@@ -3036,7 +3036,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
 
   // only expanded
   // preedit: "ｋ"
-  // input_key: ""
+  // request_key: ""
   // key_base: ""
   // key_expanded: "か","き","く","け", "こ"
   constexpr MatchTypeTestData kTests2[] = {
@@ -3067,7 +3067,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
 
   // Kana
   // preedit: "あし"
-  // input_key: "あし"
+  // request_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
   auto expanded = std::make_unique<Trie<std::string>>();
@@ -3094,7 +3094,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
 
   // only expanded
   // preedit: "し"
-  // input_key: "し"
+  // request_key: "し"
   // key_base: ""
   // key_expanded: "し","じ"
   constexpr MatchTypeTestData kTests2[] = {
@@ -3120,12 +3120,12 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
 
   const ConversionRequest convreq =
       InitSegmentsFromInputSequence("gu-g", &composer_, &segments_proxy);
-  std::string input_key;
+  std::string request_key;
   std::string base;
   std::unique_ptr<Trie<std::string>> expanded;
-  UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+  UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                        &base, &expanded);
-  EXPECT_EQ(input_key, "ぐーｇ");
+  EXPECT_EQ(request_key, "ぐーｇ");
   EXPECT_EQ(base, "ぐー");
   EXPECT_TRUE(expanded != nullptr);
   std::string value;
@@ -3145,16 +3145,16 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
     const std::string input = random.Utf8StringRandomLen(4, ' ', '~');
     const ConversionRequest convreq =
         InitSegmentsFromInputSequence(input, &composer_, &segments_proxy);
-    std::string input_key;
+    std::string request_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                          &base, &expanded);
   }
 }
 
 // Found by random test.
-// input_key != base by composer modification.
+// request_key != base by composer modification.
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
   SegmentsProxy segments_proxy;
@@ -3162,10 +3162,10 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
   {
     const ConversionRequest convreq =
         InitSegmentsFromInputSequence("8,+", &composer_, &segments_proxy);
-    std::string input_key;
+    std::string request_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                          &base, &expanded);
   }
 }
@@ -3177,12 +3177,12 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   {
     const ConversionRequest convreq =
         InitSegmentsFromInputSequence("n", &composer_, &segments_proxy);
-    std::string input_key;
+    std::string request_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                          &base, &expanded);
-    EXPECT_EQ(input_key, "ｎ");
+    EXPECT_EQ(request_key, "ｎ");
     EXPECT_EQ(base, "");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;
@@ -3198,12 +3198,12 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   {
     const ConversionRequest convreq =
         InitSegmentsFromInputSequence("nn", &composer_, &segments_proxy);
-    std::string input_key;
+    std::string request_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                          &base, &expanded);
-    EXPECT_EQ(input_key, "ん");
+    EXPECT_EQ(request_key, "ん");
     EXPECT_EQ(base, "ん");
     EXPECT_TRUE(expanded == nullptr);
   }
@@ -3213,12 +3213,12 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   {
     const ConversionRequest convreq =
         InitSegmentsFromInputSequence("n'", &composer_, &segments_proxy);
-    std::string input_key;
+    std::string request_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                          &base, &expanded);
-    EXPECT_EQ(input_key, "ん");
+    EXPECT_EQ(request_key, "ん");
     EXPECT_EQ(base, "ん");
     EXPECT_TRUE(expanded == nullptr);
   }
@@ -3228,12 +3228,12 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
   {
     const ConversionRequest convreq =
         InitSegmentsFromInputSequence("n'n", &composer_, &segments_proxy);
-    std::string input_key;
+    std::string request_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                          &base, &expanded);
-    EXPECT_EQ(input_key, "んｎ");
+    EXPECT_EQ(request_key, "んｎ");
     EXPECT_EQ(base, "ん");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;
@@ -3252,12 +3252,12 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
   {
     const ConversionRequest convreq =
         InitSegmentsFromInputSequence("/", &composer_, &segments_proxy);
-    std::string input_key;
+    std::string request_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                          &base, &expanded);
-    EXPECT_EQ(input_key, "ん");
+    EXPECT_EQ(request_key, "ん");
     EXPECT_EQ(base, "");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;
@@ -3276,12 +3276,12 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
   {
     const ConversionRequest convreq =
         InitSegmentsFromInputSequence("わ00", &composer_, &segments_proxy);
-    std::string input_key;
+    std::string request_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                          &base, &expanded);
-    EXPECT_EQ(input_key, "ん");
+    EXPECT_EQ(request_key, "ん");
     EXPECT_EQ(base, "");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;
@@ -3301,12 +3301,12 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
       InitSegmentsFromInputSequence("あか", &composer_, &segments_proxy);
 
   {
-    std::string input_key;
+    std::string request_key;
     std::string base;
     std::unique_ptr<Trie<std::string>> expanded;
-    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &input_key,
+    UserHistoryPredictorTestPeer::GetInputKeyFromRequest(convreq, &request_key,
                                                          &base, &expanded);
-    EXPECT_EQ(input_key, "あか");
+    EXPECT_EQ(request_key, "あか");
     EXPECT_EQ(base, "あ");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;

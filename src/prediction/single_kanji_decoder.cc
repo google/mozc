@@ -86,13 +86,13 @@ std::vector<Result> SingleKanjiDecoder::Decode(
 
   const bool use_svs = UseSvs(request);
 
-  const std::string original_input_key =
+  const std::string original_request_key =
       request.composer().GetQueryForPrediction();
   int offset = 0;
-  for (std::string key = original_input_key; !key.empty();
+  for (std::string key = original_request_key; !key.empty();
        StripLastChar(&key)) {
     if (!request_util::IsAutoPartialSuggestionEnabled(request) &&
-        key != original_input_key) {
+        key != original_request_key) {
       // Do not include partial results
       break;
     }
@@ -101,7 +101,7 @@ std::vector<Result> SingleKanjiDecoder::Decode(
     if (kanji_list.empty()) {
       continue;
     }
-    AppendResults(key, original_input_key, kanji_list, offset, &results);
+    AppendResults(key, original_request_key, kanji_list, offset, &results);
     // Make sure that single kanji entries for shorter key should be
     // ranked lower than the entries for longer key.
     constexpr int kShorterKeyOffst = 3450;  // 500 * log(1000)
@@ -114,7 +114,7 @@ std::vector<Result> SingleKanjiDecoder::Decode(
 }
 
 void SingleKanjiDecoder::AppendResults(absl::string_view kanji_key,
-                                       absl::string_view original_input_key,
+                                       absl::string_view original_request_key,
                                        absl::Span<const std::string> kanji_list,
                                        const int offset,
                                        std::vector<Result> *results) const {
@@ -127,7 +127,7 @@ void SingleKanjiDecoder::AppendResults(absl::string_view kanji_key,
     result.value = kanji;
     result.lid = general_symbol_id_;
     result.rid = general_symbol_id_;
-    if (kanji_key.size() < original_input_key.size()) {
+    if (kanji_key.size() < original_request_key.size()) {
       result.candidate_attributes =
           converter::Candidate::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = Util::CharsLen(kanji_key);

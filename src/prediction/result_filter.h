@@ -57,10 +57,10 @@ class ResultFilter {
   bool ShouldRemove(const Result &result, int added_num);
 
  private:
-  std::string input_key_;
+  absl::string_view request_key_;
   std::string history_key_;
   std::string history_value_;
-  const size_t input_key_len_;
+  const size_t request_key_len_;
   const dictionary::PosMatcher pos_matcher_;
   const Connector &connector_;
   const SuggestionFilter &suggestion_filter_;

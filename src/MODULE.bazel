@@ -324,6 +324,7 @@ http_archive(
 
 # Japanese Usage Dictionary (2025-01-25)
 JA_USAGE_DICT_TAG = "2025-01-25"
+
 http_archive(
     name = "ja_usage_dict",
     sha256 = "140f24f71f7d78d5eb5b93a9c079f44f23728dca5ab16bf857fe8a3fa1bf20ed",

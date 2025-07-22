@@ -220,14 +220,14 @@ NumberDecoder::NumberDecoder(const dictionary::PosMatcher &pos_matcher)
 std::vector<prediction::Result> NumberDecoder::Decode(
     const ConversionRequest &request) const {
   std::vector<prediction::Result> results;
-  absl::string_view input_key = request.key();
+  absl::string_view request_key = request.key();
 
-  for (const auto &decode_result : Decode(input_key)) {
+  for (const auto &decode_result : Decode(request_key)) {
     Result result;
     const bool is_arabic =
         Util::GetScriptType(decode_result.candidate) == Util::NUMBER;
     result.types = PredictionType::NUMBER;
-    result.key = input_key.substr(0, decode_result.consumed_key_byte_len);
+    result.key = request_key.substr(0, decode_result.consumed_key_byte_len);
     result.value = std::move(decode_result.candidate);
     result.candidate_attributes |= converter::Candidate::NO_SUGGEST_LEARNING;
     // Heuristic cost:
@@ -236,7 +236,7 @@ std::vector<prediction::Result> NumberDecoder::Decode(
     result.wcost = 1000 * (1 + decode_result.digit_num);
     result.lid = is_arabic ? number_id_ : kanji_number_id_;
     result.rid = is_arabic ? number_id_ : kanji_number_id_;
-    if (decode_result.consumed_key_byte_len < input_key.size()) {
+    if (decode_result.consumed_key_byte_len < request_key.size()) {
       result.candidate_attributes |=
           converter::Candidate::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = Util::CharsLen(result.key);

@@ -223,7 +223,7 @@ class UserHistoryPredictor : public PredictorInterface {
   static MatchType GetMatchType(absl::string_view lstr, absl::string_view rstr);
 
   // Gets match type with ambiguity expansion
-  static MatchType GetMatchTypeFromInput(absl::string_view input_key,
+  static MatchType GetMatchTypeFromInput(absl::string_view request_key,
                                          absl::string_view key_base,
                                          const Trie<std::string> *key_expanded,
                                          absl::string_view target);
@@ -245,8 +245,8 @@ class UserHistoryPredictor : public PredictorInterface {
       const Entry &entry);
 
   static ResultType GetResultType(const ConversionRequest &request,
-                                  bool is_top_candidate, uint32_t input_key_len,
-                                  const Entry &entry);
+                                  bool is_top_candidate,
+                                  uint32_t request_key_len, const Entry &entry);
 
   // Returns true if entry is DEFAULT_ENTRY, satisfies certain conditions, and
   // doesn't have removed flag.
@@ -292,12 +292,12 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // If |entry| is the target of prediction,
   // create a new result and insert it to |entry_queue|.
-  // Can set |prev_entry| if there is a history segment just before |input_key|.
-  // |prev_entry| is an optional field. If set nullptr, this field is just
-  // ignored. This method adds a new result entry with score,
+  // Can set |prev_entry| if there is a history segment just before
+  // |request_key|. |prev_entry| is an optional field. If set nullptr, this
+  // field is just ignored. This method adds a new result entry with score,
   // pair<score, entry>, to |entry_queue|.
   bool LookupEntry(const ConversionRequest &request,
-                   absl::string_view input_key, absl::string_view key_base,
+                   absl::string_view request_key, absl::string_view key_base,
                    const Trie<std::string> *key_expanded, const Entry *entry,
                    const Entry *prev_entry,
                    EntryPriorityQueue *entry_queue) const;
@@ -311,7 +311,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // |left_last_access_time| and |left_most_last_access_time| will be updated
   // according to the entry lookup.
   bool GetKeyValueForExactAndRightPrefixMatch(
-      absl::string_view input_key, const Entry *entry,
+      absl::string_view request_key, const Entry *entry,
       const Entry **result_last_entry, uint64_t *left_last_access_time,
       uint64_t *left_most_last_access_time, std::string *result_key,
       std::string *result_value) const;
@@ -333,7 +333,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // Gets input data from segments.
   // These input data include ambiguities.
   static void GetInputKeyFromRequest(
-      const ConversionRequest &request, std::string *input_key,
+      const ConversionRequest &request, std::string *request_key,
       std::string *base, std::unique_ptr<Trie<std::string>> *expanded);
 
   std::vector<Result> MakeResults(const ConversionRequest &request,
@@ -368,18 +368,18 @@ class UserHistoryPredictor : public PredictorInterface {
   // 2) other characters of key are all hiragana.
   static bool MaybeRomanMisspelledKey(absl::string_view key);
 
-  // If roman_input_key can be a target key of entry->key(), creat a new
+  // If roman_request_key can be a target key of entry->key(), creat a new
   // result and insert it to |entry_queue|.
   // This method adds a new result entry with score, pair<score, entry>, to
   // |entry_queue|.
-  bool RomanFuzzyLookupEntry(absl::string_view roman_input_key,
+  bool RomanFuzzyLookupEntry(absl::string_view roman_request_key,
                              const Entry *entry,
                              EntryPriorityQueue *entry_queue) const;
 
   // if `prev_entry` is the prefix of `entry`, add the suffix part as
   // zero-query suggestion.
   bool ZeroQueryLookupEntry(const ConversionRequest &request,
-                            absl::string_view input_key, const Entry *entry,
+                            absl::string_view request_key, const Entry *entry,
                             const Entry *prev_entry,
                             EntryPriorityQueue *entry_queue) const;
 

@@ -159,7 +159,7 @@ class DictionaryPredictor : public PredictorInterface {
   // so we want to add the offset based on the other entries.
   int CalculateSingleKanjiCostOffset(
       const ConversionRequest &request, uint16_t rid,
-      absl::string_view input_key, absl::Span<const Result> results,
+      absl::Span<const Result> results,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
   // Returns true if the suggestion is classified
@@ -169,8 +169,7 @@ class DictionaryPredictor : public PredictorInterface {
                                      size_t total_candidates_size);
 
   int CalculatePrefixPenalty(
-      const ConversionRequest &request, absl::string_view input_key,
-      const Result &result,
+      const ConversionRequest &request, const Result &result,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
   std::vector<Result> AggregateTypingCorrectedResultsForMixedConversion(

@@ -193,7 +193,7 @@ class DictionaryPredictionAggregator
   // applied to lookup key and/or output results.
   void GetPredictiveResultsForEnglishKey(
       const dictionary::DictionaryInterface &dictionary,
-      const ConversionRequest &request, absl::string_view input_key,
+      const ConversionRequest &request, absl::string_view request_key,
       PredictionTypes types, size_t lookup_limit,
       std::vector<Result> *results) const;
 

@@ -57,7 +57,7 @@ class SingleKanjiDecoder {
 
  private:
   void AppendResults(absl::string_view kanji_key,
-                     absl::string_view original_input_key,
+                     absl::string_view original_request_key,
                      absl::Span<const std::string> kanji_list, int offset,
                      std::vector<Result> *results) const;
 
