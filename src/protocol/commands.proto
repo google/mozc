@@ -616,9 +616,6 @@ message DecoderExperimentParams {
   optional int32 handwriting_conversion_candidate_cost_offset = 102
       [default = 1151];
 
-  // Apply inner segment boundary information to the single segment candidate.
-  optional bool apply_single_inner_segment_boundary = 105 [default = true];
-
   enum BigramNwpFilteringMode {
     // Control implementation is used. For example,
     // - Kanji + Katakana will not be filtered.

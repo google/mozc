@@ -1862,55 +1862,6 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
     EXPECT_TRUE(rewriter->Rewrite(default_mobile_convreq, &segments));
     EXPECT_EQ(segments.segment(0).candidate(0).value, "中野");
   }
-
-  {
-    // Disable inner segment boundary for single segment
-    request_->mutable_decoder_experiment_params()
-        ->set_apply_single_inner_segment_boundary(false);
-
-    // Inner segment boundary with size 1 may have better information.
-    segments.Clear();
-    InitSegments(&segments, 1, 2);
-    constexpr absl::string_view kKey = "わたしの";
-    constexpr absl::string_view kValue = "私の";
-    segments.mutable_segment(0)->set_key(kKey);
-    converter::Candidate *candidate =
-        segments.mutable_segment(0)->mutable_candidate(1);
-
-    candidate->value = kValue;
-    candidate->content_value = kValue;
-    candidate->key = kKey;
-    candidate->content_key = kKey;
-    // "わたしの, 私の", "わたし, 私"
-    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
-    candidate->lid = 10;
-    candidate->rid = 10;
-
-    segments.mutable_segment(0)->move_candidate(1, 0);
-    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
-        converter::Candidate::RERANKED;
-    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-
-    const ConversionRequest convreq = CreateConversionRequest();
-    {
-      const Segments learning_segments = UserSegmentHistoryRewriterTestPeer::
-          MakeLearningSegmentsFromInnerSegments(convreq, segments);
-      EXPECT_EQ(learning_segments.segments_size(), 1);
-      EXPECT_EQ(learning_segments.segment(0).key(), "わたしの");
-      EXPECT_EQ(learning_segments.segment(0).candidate(0).key, "わたしの");
-      EXPECT_EQ(learning_segments.segment(0).candidate(0).value, "私の");
-      EXPECT_EQ(learning_segments.segment(0).candidate(0).content_key,
-                "わたしの");
-      EXPECT_EQ(learning_segments.segment(0).candidate(0).content_value,
-                "私の");
-      EXPECT_EQ(learning_segments.segment(0).candidate(0).lid, 10);
-      EXPECT_EQ(learning_segments.segment(0).candidate(0).rid, 10);
-      EXPECT_EQ(learning_segments.segment(0).segment_type(),
-                Segment::FIXED_VALUE);
-    }
-
-    rewriter->Finish(convreq, segments);
-  }
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, Revert) {

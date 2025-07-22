@@ -725,21 +725,10 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
 // Inner segments boundary will be expanded.
 Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
     const ConversionRequest &request, const Segments &segments) {
-  auto inner_segments_info_available = [&request](
-                                           const converter::Candidate &c) {
-    if (request.request()
-            .decoder_experiment_params()
-            .apply_single_inner_segment_boundary()) {
-      return !c.inner_segment_boundary.empty();
-    } else {
-      return c.inner_segment_boundary.size() > 1;
-    }
-  };
-
   Segments ret;
   for (const Segment &segment : segments) {
     const converter::Candidate &candidate = segment.candidate(0);
-    if (!inner_segments_info_available(candidate)) {
+    if (candidate.inner_segment_boundary.empty()) {
       // No inner segment info
       Segment *seg = ret.add_segment();
       *seg = segment;
