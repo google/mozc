@@ -32,6 +32,9 @@
 
 <installer-gui-script minSpecVersion="1">
     <title>Mozc</title>
+    <allowed-os-versions>
+        <os-version min="12.0"/>
+    </allowed-os-versions>
     <pkg-ref id="org.mozc.pkg.JapaneseInput"/>
     <domains enable_localSystem="true"/>
     <options rootVolumeOnly="true"/>
