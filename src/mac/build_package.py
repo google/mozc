@@ -76,6 +76,7 @@ def main():
         'productbuild',
         '--distribution', 'distribution.xml',
         '--plugins', 'Plugins/',
+        '--resources', 'Resources/',
         'package.pkg',  # this name is only used within this script.
     ]
     util.RunOrDie(productbuild_commands)

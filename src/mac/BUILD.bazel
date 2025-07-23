@@ -435,7 +435,7 @@ genrule(
         ":tweak_preflight",
         ":tweak_postflight",
     ] + mozc_select(
-        # For both macos and oss_macos
+        # Common files for all build types.
         macos = [
             ":activate_pane",
             ":dev_confirm_pane",
@@ -443,22 +443,25 @@ genrule(
             ":uninstaller_macos",
         ],
     ) + mozc_select(
-        # For macos or oss_macos only
+        # Files per build type.
         macos = [
             "//mac/installer:distribution.xml",
             "//mac/installer:InstallerSections.plist",
             "//mac/installer:launch_agents",
+            "//mac/installer:resources",
         ],
         oss_macos = [
             "//mac/installer:distribution.xml",
             "//mac/installer:InstallerSections.plist",
             "//mac/installer:launch_agents",
+            "//mac/installer:resources",
         ],
         prod_macos = [
             "@google_updater//:GoogleUpdater.pkg",
             "//mac/installer:distribution.xml",
             "//mac/installer:InstallerSections.plist",
             "//mac/installer:launch_agents",
+            "//mac/installer:resources",
         ],
     ),
     outs = ["installer.zip"],

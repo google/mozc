@@ -49,3 +49,13 @@ pkg_zip(
     out = "launch_agents.zip",
     strip_prefix = ".",
 )
+
+pkg_zip(
+    name = "resources",
+    srcs = [
+        "Resources/en.lproj/Localizable.strings",
+        "Resources/ja.lproj/Localizable.strings",
+    ],
+    out = "resources.zip",
+    strip_prefix = ".",
+)
