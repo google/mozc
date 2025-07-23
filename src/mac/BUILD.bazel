@@ -66,29 +66,19 @@ mozc_macos_application(
     name = "mozc_macos",
     additional_contents = mozc_select(
         default = {},
+        # macos is used for Google internal build.
         macos = {
             "//renderer:mozc_renderer_macos": "Resources",
             "//server:mozc_server_macos": "Resources",
         },
+        # prod_macos also refers to oss_macos settings.
         oss_macos = {
-            "//gui/about_dialog:about_dialog_macos": (
-                "Resources"
-            ),
-            "//gui/config_dialog:config_dialog_macos": (
-                "Resources"
-            ),
-            "//gui/dictionary_tool:dictionary_tool_macos": (
-                "Resources"
-            ),
-            "//gui/error_message_dialog:error_message_dialog_macos": (
-                "Resources"
-            ),
-            "//gui/tool:mozc_prelauncher_macos": (
-                "Resources"
-            ),
-            "//gui/word_register_dialog:word_register_dialog_macos": (
-                "Resources"
-            ),
+            "//gui/about_dialog:about_dialog_macos": "Resources",
+            "//gui/config_dialog:config_dialog_macos": "Resources",
+            "//gui/dictionary_tool:dictionary_tool_macos": "Resources",
+            "//gui/error_message_dialog:error_message_dialog_macos": "Resources",
+            "//gui/tool:mozc_prelauncher_macos": "Resources",
+            "//gui/word_register_dialog:word_register_dialog_macos": "Resources",
             "//renderer:mozc_renderer_macos": "Resources",
             "//server:mozc_server_macos": "Resources",
         },
