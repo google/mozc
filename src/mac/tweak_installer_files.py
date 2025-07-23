@@ -138,23 +138,14 @@ def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
   if oss:
     name = 'Mozc'
     folder = 'Mozc'
-    domain = 'org.mozc'
   else:
     name = 'GoogleJapaneseInput'
     folder = 'GoogleJapaneseInput.localized'
-    domain = 'com.google'
 
   renames = [
       (f'Uninstall{name}.app', f'root/Applications/{folder}/'),
       (f'{name}.app', 'root/Library/Input Methods/'),
-      (
-          f'{domain}.inputmethod.Japanese.Converter.plist',
-          'root/Library/LaunchAgents/',
-      ),
-      (
-          f'{domain}.inputmethod.Japanese.Renderer.plist',
-          'root/Library/LaunchAgents/',
-      ),
+      ('LaunchAgents', 'root/Library/'),
       ('ActivatePane.bundle', 'Plugins/'),
       ('InstallerSections.plist', 'Plugins/'),
       ('postflight.sh', 'scripts/postinstall'),

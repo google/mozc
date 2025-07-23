@@ -76,6 +76,13 @@ bazel_dep(
     version = "1.7.1",
 )
 
+# rules_pkg: 1.1.0 2025-03-06
+# https://github.com/bazelbuild/rules_pkg
+bazel_dep(
+    name = "rules_pkg",
+    version = "1.1.0",
+)
+
 # rules_python: 1.4.1 2025-05-09
 # https://github.com/bazelbuild/rules_python/
 bazel_dep(
