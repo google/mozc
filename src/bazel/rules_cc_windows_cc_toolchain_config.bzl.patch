@@ -9,7 +9,7 @@
  
  def _impl(ctx):
      if _use_msvc_toolchain(ctx):
-@@ -767,7 +767,6 @@
+@@ -752,7 +752,6 @@
                          flag_group(
                              flags = [
                                  "/DNOMINMAX",
@@ -17,7 +17,7 @@
                                  "/D_CRT_SECURE_NO_DEPRECATE",
                                  "/D_CRT_SECURE_NO_WARNINGS",
                                  "/bigobj",
-@@ -777,7 +776,7 @@
+@@ -762,7 +761,7 @@
                                  "/wd4291",
                                  "/wd4250",
                                  "/wd4996",
