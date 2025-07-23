@@ -31,6 +31,7 @@
 -->
 
 <installer-gui-script minSpecVersion="1">
+    <title>Mozc</title>
     <pkg-ref id="org.mozc.pkg.JapaneseInput"/>
     <domains enable_localSystem="true"/>
     <options rootVolumeOnly="true"/>
