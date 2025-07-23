@@ -386,8 +386,8 @@ mozc_macos_application(
 genrule(
     name = "tweak_preflight",
     srcs = mozc_select(
-        default = ["installer/preflight_template.sh"],
-        oss = ["installer/preflight_template.sh"],
+        default = ["//mac/installer:preflight_template.sh"],
+        oss = ["//mac/installer:preflight_template.sh"],
     ),
     outs = ["preflight.sh"],
     cmd = " ".join([
@@ -403,8 +403,8 @@ genrule(
 genrule(
     name = "tweak_postflight",
     srcs = mozc_select(
-        default = ["installer/postflight_template.sh"],
-        oss = ["installer/postflight_template.sh"],
+        default = ["//mac/installer:postflight_template.sh"],
+        oss = ["//mac/installer:postflight_template.sh"],
     ),
     outs = ["postflight.sh"],
     cmd = " ".join([
@@ -445,23 +445,23 @@ genrule(
     ) + mozc_select(
         # For macos or oss_macos only
         macos = [
-            "installer/distribution.xml",
-            "installer/InstallerSections.plist",
-            "installer/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
-            "installer/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
+            "//mac/installer:distribution.xml",
+            "//mac/installer:InstallerSections.plist",
+            "//mac/installer:LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
+            "//mac/installer:LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
         ],
         oss_macos = [
-            "installer/distribution.xml",
-            "installer/InstallerSections.plist",
-            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
-            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
+            "//mac/installer:distribution.xml",
+            "//mac/installer:InstallerSections.plist",
+            "//mac/installer:LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
+            "//mac/installer:LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
         ],
         prod_macos = [
             "@google_updater//:GoogleUpdater.pkg",
-            "installer/distribution.xml",
-            "installer/InstallerSections.plist",
-            "installer/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
-            "installer/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
+            "//mac/installer:distribution.xml",
+            "//mac/installer:InstallerSections.plist",
+            "//mac/installer:LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
+            "//mac/installer:LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
         ],
     ),
     outs = ["installer.zip"],
@@ -511,7 +511,7 @@ genrule(
 # .keystone_install stored in the installer .dmg file.
 genrule(
     name = "keystone_install",
-    srcs = ["installer/.keystone_install_template"],
+    srcs = ["//mac/installer:.keystone_install_template"],
     outs = [".keystone_install"],
     cmd = " ".join([
         "$(location" +
