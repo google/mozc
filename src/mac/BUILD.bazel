@@ -508,45 +508,6 @@ genrule(
     tools = [":tweak_installer_files"],
 )
 
-# Binary for Packages (i.e. packagesbuild command)
-mozc_py_binary(
-    name = "build_installer",
-    srcs = ["build_installer.py"],
-    test_lib = False,
-    deps = ["//build_tools:util"],
-)
-
-# AUTO_UPDATER_DIR should be replaced with a valid directory.
-AUTO_UPDATER_DIR = "installer/client/mac_universal"  # Placeholder
-
-genrule(
-    name = "installer_oss_macos",
-    srcs = [":tweaked_installer_files"] +
-           mozc_select(
-               oss_macos = ["installer/Mozc_template.pkgproj"],
-               prod_macos = ["installer/Mozc_template.pkgproj"],
-           ),
-    outs = ["Mozc_Packages.pkg"],
-    cmd = " ".join([
-        "$(location :build_installer)",
-        "--input $(location :tweaked_installer_files) --output $@" +
-        "--pkgproj_command" +
-        " $(location //build_tools:tweak_pkgproj)",
-        "--pkgproj_input $(location installer/Mozc_template.pkgproj)",
-        "--pkgproj_output installer.pkgproj",
-        "--version_file" +
-        " $(location //base:mozc_version_txt)",
-        "--auto_updater_dir " + AUTO_UPDATER_DIR,
-        "--build_type ",
-    ]) + BUILD_TYPE_SELECT,  # "dev" or "stable"
-    tags = ["manual"],
-    tools = [
-        ":build_installer",
-        "//base:mozc_version_txt",
-        "//build_tools:tweak_pkgproj",
-    ],
-)
-
 # .keystone_install stored in the installer .dmg file.
 genrule(
     name = "keystone_install",
