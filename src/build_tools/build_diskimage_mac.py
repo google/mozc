@@ -90,8 +90,10 @@ def main():
     CopyFile(options.keystone_install_file, keystone_install_file)
     os.chmod(keystone_install_file, 0o755)  # rwxr-xr-x
 
-  # Copy .pkg file to the temp directory.
-  CopyFile(options.pkg_file, path.join(temp_dir, options.volname + ".pkg"))
+  # Copy .pkg file to the temp directory and make it non-executable.
+  pkg_file = path.join(temp_dir, options.volname + ".pkg")
+  CopyFile(options.pkg_file, pkg_file)
+  os.chmod(pkg_file, 0o644)  # rw-r--r--
 
   # build a disk image
   dmg_path = path.join(temp_root_dir, path.basename(options.output))
