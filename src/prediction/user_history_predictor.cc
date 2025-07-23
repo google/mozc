@@ -1236,8 +1236,8 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
   // longest context information is used.
   const Entry *prev_entry = nullptr;
   for (int size = request.converter_history_size(); size >= 1; --size) {
-    const std::string suffix_key = request.converter_history_key(size);
-    const std::string suffix_value = request.converter_history_value(size);
+    absl::string_view suffix_key = request.converter_history_key(size);
+    absl::string_view suffix_value = request.converter_history_value(size);
     prev_entry =
         dic_->LookupWithoutInsert(Fingerprint(suffix_key, suffix_value));
     if (prev_entry) break;
@@ -1257,7 +1257,7 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
   // do linear-search over the LRU.
   if (prev_entry == nullptr ||
       (prev_entry != nullptr && prev_entry->next_entries_size() == 0)) {
-    const std::string prev_value = prev_entry == nullptr
+    absl::string_view prev_value = prev_entry == nullptr
                                        ? request.converter_history_value(1)
                                        : prev_entry->value();
     int trial = 0;
@@ -1797,34 +1797,36 @@ UserHistoryPredictor::MakeLearningSegments(
 
   if (results.empty()) return learning_segments;
 
-  for (const auto &candidate : request.GetConverterHistorySegments()) {
-    learning_segments.history_segments.push_back(
-        {0, 0, candidate.key, candidate.value, candidate.content_key,
-         candidate.content_value, ""});
-  }
+  auto make_learning_segments = [](const Result &result) {
+    std::vector<SegmentForLearning> segments;
+    const bool is_single_segment = result.inner_segment_boundary.size() == 1;
+    if (result.inner_segment_boundary.empty()) {
+      segments.push_back({0, 0, result.key, result.value, result.key,
+                          result.value, GetDescription(result)});
+    } else {
+      for (converter::Candidate::InnerSegmentIterator iter(
+               result.inner_segment_boundary, result.key, result.value);
+           !iter.Done(); iter.Next()) {
+        const int key_begin =
+            std::distance(result.key.data(), iter.GetKey().data());
+        const int value_begin =
+            std::distance(result.value.data(), iter.GetValue().data());
+        segments.push_back({key_begin, value_begin, iter.GetKey(),
+                            iter.GetValue(), iter.GetContentKey(),
+                            iter.GetContentValue(),
+                            is_single_segment ? GetDescription(result) : ""});
+      }
+    }
+    return segments;
+  };
 
   const Result &result = results.front();
+
   learning_segments.conversion_segments_key = result.key;
   learning_segments.conversion_segments_value = result.value;
-  if (result.inner_segment_boundary.empty()) {
-    learning_segments.conversion_segments.push_back(
-        {0, 0, result.key, result.value, result.key, result.value,
-         GetDescription(result)});
-  } else {
-    const bool is_single_segment = result.inner_segment_boundary.size() == 1;
-    for (converter::Candidate::InnerSegmentIterator iter(
-             result.inner_segment_boundary, result.key, result.value);
-         !iter.Done(); iter.Next()) {
-      const int key_begin =
-          std::distance(result.key.data(), iter.GetKey().data());
-      const int value_begin =
-          std::distance(result.value.data(), iter.GetValue().data());
-      learning_segments.conversion_segments.push_back(
-          {key_begin, value_begin, iter.GetKey(), iter.GetValue(),
-           iter.GetContentKey(), iter.GetContentValue(),
-           is_single_segment ? GetDescription(result) : ""});
-    }
-  }
+  learning_segments.history_segments =
+      make_learning_segments(request.history_result());
+  learning_segments.conversion_segments = make_learning_segments(result);
 
   return learning_segments;
 }

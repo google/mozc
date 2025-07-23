@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "engine/modules.h"
@@ -166,7 +165,6 @@ class MixedDecodingPredictorTest : public ::testing::Test {
         .SetRequestView(*request_)
         .SetContextView(context_)
         .SetConfigView(*config_)
-        .SetHistorySegmentsView(segments_)
         .SetOptions(std::move(options))
         .Build();
   }
@@ -174,7 +172,7 @@ class MixedDecodingPredictorTest : public ::testing::Test {
   std::unique_ptr<mozc::composer::Composer> composer_;
   std::unique_ptr<commands::Request> request_;
   std::unique_ptr<config::Config> config_;
-  Segments segments_;
+  Result history_result_;
   commands::Context context_;
 };
 
@@ -256,7 +254,7 @@ class PredictorTest : public ::testing::Test {
         .SetRequestView(*request_)
         .SetContextView(context_)
         .SetConfigView(*config_)
-        .SetHistorySegmentsView(segments_)
+        .SetHistoryResultView(history_result_)
         .SetOptions(std::move(options))
         .Build();
   }
@@ -265,7 +263,7 @@ class PredictorTest : public ::testing::Test {
   std::unique_ptr<commands::Request> request_;
   std::unique_ptr<config::Config> config_;
   commands::Context context_;
-  Segments segments_;
+  Result history_result_;
 };
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {

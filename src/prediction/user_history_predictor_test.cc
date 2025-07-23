@@ -29,8 +29,10 @@
 
 #include "prediction/user_history_predictor.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <functional>
 #include <iterator>
 #include <memory>
@@ -64,8 +66,6 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/candidate.h"
-#include "converter/converter.h"
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
@@ -90,7 +90,6 @@ namespace {
 using ::mozc::commands::Request;
 using ::mozc::composer::TypeCorrectedQuery;
 using ::mozc::config::Config;
-using ::mozc::converter::Converter;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::UserDictionaryInterface;
 using ::testing::_;
@@ -134,98 +133,165 @@ class UserHistoryPredictorTestPeer
   PEER_DECLARE(EntryPriorityQueue);
 };
 
-// Wrapper class for Segments.
-// TODO(taku): re-implement it w/o using Segments.
+// Needs to call UpdateHistoryResult() to update history_result_.
+// The reference of history_result_ is shared by ConversionRequest.
 class SegmentsProxy {
  public:
   void AddSegment(absl::string_view key) {
-    Segment *seg = segments_.add_segment();
-    seg->set_key(key);
-    seg->set_segment_type(Segment::FIXED_VALUE);
+    Segment segment;
+    segment.key = key;
+    segments_.emplace_back(std::move(segment));
+    UpdateHistoryResult();
   }
 
   void MakeSegments(absl::string_view key) {
-    segments_.Clear();
+    segments_.clear();
     AddSegment(key);
+    UpdateHistoryResult();
   }
 
   void AddCandidate(size_t segment_index, absl::string_view value) {
-    converter::Candidate *candidate =
-        segments_.mutable_segment(segment_index)->add_candidate();
-    candidate->value = value;
-    candidate->content_value = value;
-    candidate->key = segments_.segment(segment_index).key();
-    candidate->content_key = segments_.segment(segment_index).key();
+    Result result;
+    result.key = segments_[segment_index].key;
+    result.value = value;
+    segments_[segment_index].results.emplace_back(std::move(result));
+    UpdateHistoryResult();
   }
 
   void SetCandidate(size_t segment_index, int candidate_index,
                     absl::string_view value) {
-    converter::Candidate *candidate = segments_.mutable_segment(segment_index)
-                                          ->mutable_candidate(candidate_index);
-    candidate->value = value;
-    candidate->content_value = value;
+    segments_[segment_index].results[candidate_index].value = value;
+    UpdateHistoryResult();
   }
 
   void PushBackInnerSegmentBoundary(int segment_index, int candidate_index,
                                     size_t key_len, size_t value_len,
                                     size_t content_key_len,
                                     size_t content_value_len) {
-    converter::Candidate *candidate = segments_.mutable_segment(segment_index)
-                                          ->mutable_candidate(candidate_index);
-    candidate->PushBackInnerSegmentBoundary(key_len, value_len, content_key_len,
-                                            content_value_len);
+    uint32_t encoded = 0;
+    converter::Candidate::EncodeLengths(key_len, value_len, content_key_len,
+                                        content_value_len, &encoded);
+    segments_[segment_index]
+        .results[candidate_index]
+        .inner_segment_boundary.push_back(encoded);
+    UpdateHistoryResult();
   }
 
   void AddCandidateWithDescription(size_t segment_index,
                                    absl::string_view value,
                                    absl::string_view desc) {
-    converter::Candidate *candidate =
-        segments_.mutable_segment(segment_index)->add_candidate();
-    candidate->value = value;
-    candidate->content_value = value;
-    candidate->key = segments_.segment(segment_index).key();
-    candidate->content_key = segments_.segment(segment_index).key();
-    candidate->description = desc;
+    Result result;
+    result.value = value;
+    result.key = segments_[segment_index].key;
+    result.description = desc;
+    segments_[segment_index].results.emplace_back(std::move(result));
+    UpdateHistoryResult();
   }
 
   void MoveCandidate(int segment_index, int src, int dst) {
-    segments_.mutable_segment(segment_index)->move_candidate(src, dst);
+    auto &results = segments_[segment_index].results;
+    auto it_old = results.begin() + src;
+    auto it_new = results.begin() + dst;
+    std::rotate(it_new, it_old, it_old + 1);
+    UpdateHistoryResult();
   }
 
   void PrependHistory(absl::string_view key, absl::string_view value) {
-    Segment *seg = segments_.push_front_segment();
-    seg->set_segment_type(Segment::HISTORY);
-    seg->set_key(key);
-    converter::Candidate *candidate = seg->add_candidate();
-    candidate->key = key;
-    candidate->content_key = key;
-    candidate->value = value;
-    candidate->content_value = value;
+    Segment segment;
+    segment.key = key;
+    segment.is_history = true;
+    Result result;
+    result.key = key;
+    result.value = value;
+    segment.results.emplace_back(std::move(result));
+    segments_.emplace_front(std::move(segment));
+    UpdateHistoryResult();
   }
 
   void SetHistoryType(int segment_index) {
-    segments_.mutable_segment(segment_index)
-        ->set_segment_type(Segment::HISTORY);
+    segments_[segment_index].is_history = true;
+    UpdateHistoryResult();
   }
 
-  void clear_conversion_segments() { segments_.clear_conversion_segments(); }
+  void pop_back_segment() {
+    if (!segments_.empty()) segments_.pop_back();
+    UpdateHistoryResult();
+  }
 
-  void pop_back_segment() { return segments_.pop_back_segment(); }
+  void clear_conversion_segments() {
+    while (!segments_.empty()) {
+      if (segments_.back().is_history) break;
+      segments_.pop_back();
+    }
+    UpdateHistoryResult();
+  }
 
   absl::string_view key() const {
-    return segments_.conversion_segment(0).key();
+    for (const auto &segment : segments_) {
+      if (!segment.is_history) return segment.key;
+    }
+    return "";
   }
+
+  const Result &history_result() const { return history_result_; }
 
   std::vector<Result> MakeLearningResults() const {
-    return Converter::MakeLearningResults(segments_);
+    return MakeResults(false /* is_history */);
   }
 
-  const Segments &segments() const { return segments_; }
-
-  void Clear() { segments_.Clear(); }
+  void Clear() { segments_.clear(); }
 
  private:
-  Segments segments_;
+  std::vector<Result> MakeResults(bool is_history) const {
+    std::vector<Result> results;
+    if (segments_.empty()) return results;
+
+    std::vector<const Segment *> sub_segments;
+    for (const auto &segment : segments_) {
+      if (segment.is_history != is_history) continue;
+      if (segment.results.empty()) return results;
+      sub_segments.emplace_back(&segment);
+    }
+
+    if (sub_segments.size() == 1) {
+      return sub_segments.front()->results;
+    } else {
+      Result result;
+      for (const auto *segment : sub_segments) {
+        const Result &top_result = segment->results.front();
+        absl::StrAppend(&result.key, top_result.key);
+        absl::StrAppend(&result.value, top_result.value);
+        absl::StrAppend(&result.description, top_result.description);
+        if (top_result.inner_segment_boundary.empty()) {
+          uint32_t encoded = 0;
+          converter::Candidate::EncodeLengths(
+              top_result.key.size(), top_result.value.size(),
+              top_result.key.size(), top_result.value.size(), &encoded);
+          result.inner_segment_boundary.push_back(encoded);
+        } else {
+          for (uint32_t encoded : top_result.inner_segment_boundary) {
+            result.inner_segment_boundary.push_back(encoded);
+          }
+        }
+      }
+      results.emplace_back(std::move(result));
+    }
+
+    return results;
+  }
+
+  void UpdateHistoryResult() {
+    history_result_ = MakeResults(true /* is_history */).front();
+  }
+
+  struct Segment {
+    std::string key;
+    std::vector<Result> results;
+    bool is_history = false;
+  };
+
+  std::deque<Segment> segments_;
+  Result history_result_;
 };
 
 class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
@@ -250,7 +316,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
         .SetContextView(context_)
         .SetConfigView(config_)
         .SetOptions(std::move(options))
-        .SetHistorySegmentsView(segments_proxy.segments())
+        .SetHistoryResultView(segments_proxy.history_result())
         .SetKey(segments_proxy.key())
         .Build();
   }
@@ -268,7 +334,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
         .SetContextView(context_)
         .SetConfigView(config_)
         .SetOptions(std::move(options))
-        .SetHistorySegmentsView(segments_proxy.segments())
+        .SetHistoryResultView(segments_proxy.history_result())
         .SetKey(segments_proxy.key())
         .Build();
   }
@@ -302,7 +368,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     const ConversionRequest conversion_request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistorySegmentsView(segments_proxy.segments())
+            .SetHistoryResultView(segments_proxy.history_result())
             .SetRequestType(ConversionRequest::SUGGESTION)
             .Build();
     const std::vector<Result> results = predictor->Predict(conversion_request);
@@ -319,7 +385,7 @@ class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
     const ConversionRequest conversion_request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistorySegmentsView(segments_proxy.segments())
+            .SetHistoryResultView(segments_proxy.history_result())
             .SetRequestType(ConversionRequest::PREDICTION)
             .Build();
     const std::vector<Result> results = predictor->Predict(conversion_request);
@@ -1620,7 +1686,7 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
             .SetRequestView(non_zero_query_request)
             .SetContextView(context)
             .SetConfigView(config_)
-            .SetHistorySegmentsView(segments_proxy.segments())
+            .SetHistoryResultView(segments_proxy.history_result())
             .Build();
 
     segments_proxy.AddSegment("");  // empty request

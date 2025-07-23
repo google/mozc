@@ -52,7 +52,6 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
-#include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
@@ -238,18 +237,13 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
   }
 
   void PrependHistory(absl::string_view key, absl::string_view value) {
-    Segment *seg = segments_.push_front_segment();
-    seg->set_segment_type(Segment::HISTORY);
-    seg->set_key(key);
-    converter::Candidate *c = seg->add_candidate();
-    c->key = key;
-    c->content_key = key;
-    c->value = value;
-    c->content_value = value;
+    history_result_.value = absl::StrCat(value, history_result_.value);
+    history_result_.key = absl::StrCat(key, history_result_.key);
   }
 
   void InitHistory(absl::string_view key, absl::string_view value) {
-    segments_.Clear();
+    history_result_.key.clear();
+    history_result_.value.clear();
     PrependHistory(key, value);
   }
 
@@ -261,7 +255,7 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
         .SetContextView(context_)
         .SetConfigView(*config_)
         .SetOptions(std::move(options))
-        .SetHistorySegmentsView(segments_)
+        .SetHistoryResultView(history_result_)
         .SetKey(key)
         .Build();
   }
@@ -278,7 +272,7 @@ class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
   commands::Context context_;
-  Segments segments_;
+  Result history_result_;
 };
 
 TEST_F(DictionaryPredictorTest, IsAggressiveSuggestion) {
@@ -1693,7 +1687,7 @@ TEST_F(DictionaryPredictorTest, FilterNwpSuffixCandidates) {
 
   for (int id : test_ids) {
     InitHistory("こみっと", "コミット");
-    segments_.mutable_segment(0)->mutable_candidate(0)->rid = id;
+    history_result_.rid = id;
     const ConversionRequest convreq = CreateConversionRequestWithOptions(
         {
             .request_type = ConversionRequest::PREDICTION,

@@ -134,7 +134,7 @@ bool IsLongKeyForRealtimeCandidates(const ConversionRequest &request) {
 //  "一二", "十二", "壱拾弐", etc for 12.
 // TODO(toshiyuki): Define the spec and support Kanji.
 std::optional<std::string> GetNumberHistory(const ConversionRequest &request) {
-  const std::string history_value = request.converter_history_value(1);
+  absl::string_view history_value = request.converter_history_value(1);
   if (history_value.empty() || !NumberUtil::IsArabicNumber(history_value)) {
     return std::nullopt;
   }
@@ -752,8 +752,8 @@ void DictionaryPredictionAggregator::AggregateZeroQuery(
 
   // There are 4 sources in zero query suggestion.
 
-  const std::string history_value = request.converter_history_value(1);
-  const std::string history_key = request.converter_history_key(1);
+  absl::string_view history_value = request.converter_history_value(1);
+  absl::string_view history_key = request.converter_history_key(1);
 
   if (history_key.empty() || history_value.empty()) {
     return;
@@ -908,8 +908,8 @@ void DictionaryPredictionAggregator::AggregateBigram(
 
   // TODO(toshiyuki): Support suggestion from the last 2 histories.
   //  ex) "六本木"+"ヒルズ"->"レジデンス"
-  const std::string history_key = request.converter_history_key(1);
-  const std::string history_value = request.converter_history_value(1);
+  absl::string_view history_key = request.converter_history_key(1);
+  absl::string_view history_value = request.converter_history_value(1);
   if (history_key.empty() || history_value.empty()) {
     return;
   }

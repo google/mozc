@@ -206,6 +206,7 @@ mozc_cc_library(
     visibility = [
         "//converter:__subpackages__",
         "//engine:__subpackages__",
+        "//request:__subpackages__",
     ],
     deps = [
         ":zero_query_dict",
@@ -213,6 +214,7 @@ mozc_cc_library(
         "//composer:query",
         "//converter:segments",
         "//dictionary:dictionary_token",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/base:nullability",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
@@ -623,6 +625,7 @@ mozc_cc_library(
     deps = [
         ":result",
         "//base:util",
+        "//base/strings:assign",
         "//converter:converter_interface",
         "//converter:immutable_converter_interface",
         "//converter:segments",

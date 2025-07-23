@@ -143,10 +143,8 @@ TEST(RealtimeDecoderTest, Decode) {
     options.use_actual_converter_for_realtime_conversion = false;
     options.request_type = ConversionRequest::PREDICTION;
 
-    const ConversionRequest convreq = ConversionRequestBuilder()
-                                          .SetOptions(std::move(options))
-                                          .SetHistorySegmentsView(segments)
-                                          .Build();
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetOptions(std::move(options)).Build();
 
     std::vector<Result> results = decoder.Decode(convreq);
     ASSERT_EQ(results.size(), 1);
@@ -174,10 +172,8 @@ TEST(RealtimeDecoderTest, Decode) {
     options.use_actual_converter_for_realtime_conversion = true;
     options.request_type = ConversionRequest::PREDICTION;
 
-    const ConversionRequest convreq = ConversionRequestBuilder()
-                                          .SetOptions(std::move(options))
-                                          .SetHistorySegmentsView(segments)
-                                          .Build();
+    const ConversionRequest convreq =
+        ConversionRequestBuilder().SetOptions(std::move(options)).Build();
     std::vector<Result> results = decoder.Decode(convreq);
 
     // When |request.use_actual_converter_for_realtime_conversion| is true,

@@ -30,6 +30,7 @@
 #ifndef MOZC_REQUEST_CONVERSION_REQUEST_H_
 #define MOZC_REQUEST_CONVERSION_REQUEST_H_
 
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -46,7 +47,7 @@
 #include "composer/composer.h"
 #include "config/config_handler.h"
 #include "converter/candidate.h"
-#include "converter/segments.h"
+#include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 
@@ -211,6 +212,7 @@ class ConversionRequest {
         request_(commands::Request::default_instance()),
         context_(commands::Context::default_instance()),
         config_(config::ConfigHandler::DefaultConfig()),
+        history_result_(prediction::Result::DefaultResult()),
         options_(Options()) {}
 
   ConversionRequest(const ConversionRequest &) = default;
@@ -253,6 +255,10 @@ class ConversionRequest {
   }
   const Options &options() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return options_;
+  }
+  const prediction::Result &history_result() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return *history_result_;
   }
 
   // TODO(noriyukit): Remove these methods after removing skip_slow_rewriters_
@@ -297,93 +303,58 @@ class ConversionRequest {
 
   absl::string_view key() const ABSL_ATTRIBUTE_LIFETIME_BOUND { return key_; }
 
-  // Takes the last `size` history key. return all key when size = -1.
-  std::string converter_history_key(int size = -1) const {
-    return segments_ ? segments_->history_key(size) : "";
+  // Takes the last `size` history key. return all value when size = -1.
+  absl::string_view converter_history_key(int size = -1) const {
+    return GetHistoryKeyAndValue(size).first;
   }
 
   // Takes the last `size` history value. return all value when size = -1.
-  std::string converter_history_value(int size = -1) const {
-    return segments_ ? segments_->history_value(size) : "";
+  absl::string_view converter_history_value(int size = -1) const {
+    return GetHistoryKeyAndValue(size).second;
   }
 
+
+  // ConversionRequest is initialized with default history result, which
+  // has zero key/value. Since we do not have the empty history result now,
+  // checks the length of key first.
+  // When inner segment boundary is not defined, the segment size is 1.
   size_t converter_history_size() const {
-    return segments_ ? segments_->history_segments_size() : 0;
+    if (history_result_->key.empty()) return 0;
+    return std::max<size_t>(1, history_result_->inner_segment_boundary.size());
   }
 
   // Returns the right context id of the history.
-  int converter_history_rid() const {
-    if (const converter::Candidate *candidate = last_history_candidate();
-        candidate) {
-      return candidate->rid;
-    }
-    return 0;
-  }
+  int converter_history_rid() const { return history_result_->rid; }
 
   // Returns the cost of the history if defined.
-  std::optional<int> converter_history_cost() const {
-    if (const converter::Candidate *candidate = last_history_candidate();
-        candidate) {
-      return candidate->cost;
-    }
-    return std::nullopt;
-  }
-
-  // Temporal API to make legacy Segments from request.
-  // This API is used in the components (e.g.. immutable converter) that
-  // use Segments as the decoder request.
-  // TODO(b/409183257): remove this API after removing the dependency
-  // from ConverterRequest to Segments.
-  converter::Segments MakeRequestSegments() const {
-    // Needs to call SetHistorySegmentsView to use this method.
-    converter::Segments segments =
-        segments_ ? *segments_ : converter::Segments();
-    segments.clear_conversion_segments();
-    segments.add_segment()->set_key(key());
-    return segments;
-  }
-
-  // Returns true if request has the legacy segments structure.
-  // This method is only used in the segments to request migration.
-  bool HasConverterHistorySegments() const {
-    return static_cast<bool>(segments_);
-  }
-
-  // Temporal API to accesses raw history segments.
-  // TODO(b/409183257): Better to return 'Result' instead.
-  struct HistorySegment {
-    absl::string_view key;
-    absl::string_view value;
-    absl::string_view content_key;
-    absl::string_view content_value;
-  };
-
-  std::vector<HistorySegment> GetConverterHistorySegments() const {
-    if (!segments_) return {};
-    std::vector<HistorySegment> results;
-    for (const converter::Segment &segment : segments_->history_segments()) {
-      DCHECK_LE(1, segment.candidates_size());
-      const auto &candidate = segment.candidate(0);
-      results.push_back({candidate.key, candidate.value, candidate.content_key,
-                         candidate.content_value});
-    }
-    return results;
-  }
+  int converter_history_cost() const { return history_result_->cost; }
 
   // Builder can access the private member for construction.
   friend class ConversionRequestBuilder;
 
  private:
-  const converter::Candidate *last_history_candidate() const {
-    if (!segments_ || segments_->history_segments_size() == 0) {
-      return nullptr;
+  std::pair<absl::string_view, absl::string_view> GetHistoryKeyAndValue(
+      int size) const {
+    if (size == 0) return std::make_pair("", "");
+
+    absl::string_view key = history_result_->key;
+    absl::string_view value = history_result_->value;
+    int index = history_result_->inner_segment_boundary.size() - size - 1;
+
+    if (size < 0 || index < 0 ||
+        history_result_->inner_segment_boundary.empty()) {
+      return std::make_pair(key, value);
+    } else {
+      for (converter::Candidate::InnerSegmentIterator iter(
+               history_result_->inner_segment_boundary, key, value);
+           !iter.Done(); iter.Next()) {
+        key.remove_prefix(iter.GetKey().size());
+        value.remove_prefix(iter.GetValue().size());
+        if (index-- == 0) return std::make_pair(key, value);
+      }
     }
-    const converter::Segment &history_segment =
-        segments_->history_segment(segments_->history_segments_size() - 1);
-    if (history_segment.candidates_size() == 0) {
-      return nullptr;
-    }
-    return &history_segment.candidate(0);
+
+    return std::make_pair(key, value);
   }
 
   // Required options
@@ -399,12 +370,8 @@ class ConversionRequest {
   // Input config.
   internal::copy_or_view_ptr<const config::Config> config_;
 
-  // Stores segments to access legacy context key/value stored in Segments.
-  // Actual segments is NOT exposed to users to get rid of the dependency from
-  // supplemental model to Segments. See converter_history_(key|value) methods.
-  // TODO(taku): Migrate them to context proto to feed the context information
-  // from the client to decoder.
-  internal::copy_or_view_ptr<const converter::Segments> segments_;
+  // Left context history.
+  internal::copy_or_view_ptr<const prediction::Result> history_result_;
 
   // Options for conversion request.
   Options options_;
@@ -440,7 +407,7 @@ class ConversionRequestBuilder {
     request_.request_ = base_convreq.request_;
     request_.context_ = base_convreq.context_;
     request_.config_ = base_convreq.config_;
-    request_.segments_ = base_convreq.segments_;
+    request_.history_result_ = base_convreq.history_result_;
     request_.options_ = base_convreq.options_;
     request_.key_ = base_convreq.key_;
     return *this;
@@ -456,9 +423,7 @@ class ConversionRequestBuilder {
     request_.config_.set_view(*base_convreq.config_);
     request_.options_ = base_convreq.options_;
     request_.key_ = base_convreq.key_;
-    if (base_convreq.segments_) {
-      request_.segments_.set_view(*base_convreq.segments_);
-    }
+    request_.history_result_.set_view(*base_convreq.history_result_);
     return *this;
   }
   ConversionRequestBuilder &SetComposerData(
@@ -513,26 +478,22 @@ class ConversionRequestBuilder {
     request_.config_.set_view(config);
     return *this;
   }
-  // `segments` contain both conversion segments and history segments,
-  // but we only populate the information in history segments.
-  // Generally ConversionRequest only stores the request to the
-  // converter, while segments both contain request and result.
-  ConversionRequestBuilder &SetHistorySegments(
-      const converter::Segments &segments) {
+  ConversionRequestBuilder &SetHistoryResult(
+      const prediction::Result &history_result) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
-    request_.segments_.copy_from(segments);
+    request_.history_result_.copy_from(history_result);
     return *this;
   }
-  ConversionRequestBuilder &SetHistorySegmentsView(
-      const converter::Segments &segments ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+  ConversionRequestBuilder &SetHistoryResultView(
+      const prediction::Result &history_result ABSL_ATTRIBUTE_LIFETIME_BOUND) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
-    request_.segments_.set_view(segments);
+    request_.history_result_.set_view(history_result);
     return *this;
   }
-  ConversionRequestBuilder &SetEmptyHistorySegments() {
-    return SetHistorySegments(Segments());
+  ConversionRequestBuilder &SetEmptyHistoryResult() {
+    return SetHistoryResultView(prediction::Result::DefaultResult());
   }
   ConversionRequestBuilder &SetOptions(ConversionRequest::Options &&options) {
     DCHECK_LE(stage_, 2);

@@ -486,14 +486,11 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   const int history_rid =
       request.converter_history_rid();  // 0 (BOS) is default
 
-  int prev_cost = 0;  // cost of the last history candidate.
-  if (std::optional<int> prev_cost_opt = request.converter_history_cost();
-      prev_cost_opt) {
-    prev_cost = *prev_cost_opt;
-    if (prev_cost == 0) {
-      // if prev_cost is set to be 0 for some reason, use default cost.
-      prev_cost = 5000;
-    }
+  // cost of the last history candidate.
+  int prev_cost = request.converter_history_cost();
+  if (prev_cost == 0) {
+    // if prev_cost is set to be 0 for some reason, use default cost.
+    prev_cost = 5000;
   }
 
   absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
@@ -705,6 +702,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
     LOG(WARNING) << "Invalid prefix key: " << result.key;
     return 0;
   }
+
   const uint16_t result_rid = result.rid;
   const size_t key_len = Util::CharsLen(result.key);
   const PrefixPenaltyKey cache_key = std::make_pair(result_rid, key_len);
@@ -734,7 +732,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   const ConversionRequest req = ConversionRequestBuilder()
                                     .SetConversionRequestView(request)
                                     .SetOptions(std::move(options))
-                                    .SetEmptyHistorySegments()
+                                    .SetEmptyHistoryResult()
                                     .SetKey(remain_key)
                                     .Build();
 

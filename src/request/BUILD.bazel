@@ -52,6 +52,7 @@ mozc_cc_library(
         "//composer",
         "//config:config_handler",
         "//converter:segments",  # TODO(b/409183257): Remove the dependency to segments.
+        "//prediction:result",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/base:core_headers",
@@ -68,6 +69,7 @@ mozc_cc_test(
         "//composer",
         "//composer:table",
         "//converter:segments",
+        "//prediction:result",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",

@@ -173,9 +173,12 @@ class Converter final : public ConverterInterface {
     return *modules_;
   }
 
-  // Utility method to results for Predictor::Finish().
+  // Utility method to make committed results for Predictor::Finish().
   static std::vector<prediction::Result> MakeLearningResults(
       const Segments &segments);
+
+  // Utility method to make history result passed to ConversionRequest.
+  static prediction::Result MakeHistoryResult(const Segments &segments);
 
  private:
   Converter() = default;

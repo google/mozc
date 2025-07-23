@@ -36,6 +36,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/no_destructor.h"
 #include "absl/base/nullability.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -96,6 +97,11 @@ struct Result {
   void SetTypesAndTokenAttributes(
       PredictionTypes prediction_types,
       dictionary::Token::AttributesBitfield token_attr);
+
+  inline static const Result &DefaultResult() {
+    static const absl::NoDestructor<Result> kResult;
+    return *kResult;
+  }
 
   std::string key;
   std::string value;

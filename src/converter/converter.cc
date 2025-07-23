@@ -305,15 +305,15 @@ void Converter::FinishConversion(const ConversionRequest &request,
       absl::IntervalClosed, bitgen, 1, std::numeric_limits<uint64_t>::max());
   segments->set_revert_id(revert_id);
 
+  const prediction::Result history_result = MakeHistoryResult(*segments);
+  const std::vector<prediction::Result> committed_results =
+      MakeLearningResults(*segments);
   const ConversionRequest finish_req = ConversionRequestBuilder()
                                            .SetConversionRequestView(request)
-                                           .SetHistorySegmentsView(*segments)
+                                           .SetHistoryResultView(history_result)
                                            .Build();
-  DCHECK(finish_req.HasConverterHistorySegments());
-
   rewriter_->Finish(finish_req, *segments);
-  predictor_->Finish(finish_req, MakeLearningResults(*segments),
-                     segments->revert_id());
+  predictor_->Finish(finish_req, committed_results, segments->revert_id());
 
   if (request.request_type() != ConversionRequest::CONVERSION &&
       segments->conversion_segments_size() >= 1 &&
@@ -711,16 +711,20 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
   DCHECK(segments);
   DCHECK(predictor_);
 
+  const prediction::Result history_result = MakeHistoryResult(*segments);
+
   const ConversionRequest conv_req = ConversionRequestBuilder()
                                          .SetConversionRequestView(request)
-                                         .SetHistorySegmentsView(*segments)
+                                         .SetHistoryResultView(history_result)
                                          .Build();
-  DCHECK(conv_req.HasConverterHistorySegments());
 
   const std::vector<prediction::Result> results = predictor_->Predict(conv_req);
 
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
+
+  // TODO(taku): Make utility functions to convert
+  // Segments <-> history_result, committed_results.
 
   for (const prediction::Result &result : results) {
     Candidate *candidate = segment->add_candidate();
@@ -842,5 +846,42 @@ std::vector<prediction::Result> Converter::MakeLearningResults(
 
   return results;
 }
+
+// static
+prediction::Result Converter::MakeHistoryResult(const Segments &segments) {
+  prediction::Result result;
+
+  if (segments.history_segments_size() == 0) {
+    return result;
+  }
+
+  bool inner_segment_boundary_failed = false;
+  for (const auto &segment : segments.history_segments()) {
+    if (segment.candidates_size() == 0) {
+      return prediction::Result::DefaultResult();  // Returns an empty result.
+    }
+    const Candidate &candidate = segment.candidate(0);
+    absl::StrAppend(&result.key, candidate.key);
+    absl::StrAppend(&result.value, candidate.value);
+    result.candidate_attributes |= candidate.attributes;
+    uint32_t encoded = 0;
+    if (!Candidate::EncodeLengths(candidate.key.size(), candidate.value.size(),
+                                  candidate.content_key.size(),
+                                  candidate.content_value.size(), &encoded)) {
+      inner_segment_boundary_failed = true;
+    }
+    result.inner_segment_boundary.emplace_back(encoded);
+  }
+
+  if (inner_segment_boundary_failed) result.inner_segment_boundary.clear();
+
+  const int size = segments.history_segments_size();
+  result.lid = segments.history_segment(0).candidate(0).lid;
+  result.rid = segments.history_segment(size - 1).candidate(0).rid;
+  result.cost = segments.history_segment(size - 1).candidate(0).cost;
+
+  return result;
+}
+
 }  // namespace converter
 }  // namespace mozc

@@ -51,7 +51,6 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/candidate.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -342,19 +341,11 @@ class DictionaryPredictionAggregatorTest
         std::make_unique<composer::Composer>(table_, *request_, *config_);
   }
 
-  // Segments is used only to populate histories to request.
   void PrependHistory(absl::string_view hist_key, absl::string_view hist_value,
                       int rid = -1) {
-    segments_.clear_history_segments();
-    Segment *seg = segments_.push_front_segment();
-    seg->set_segment_type(Segment::HISTORY);
-    seg->set_key(hist_key);
-    converter::Candidate *c = seg->add_candidate();
-    c->key = hist_key;
-    c->content_key = hist_key;
-    c->value = hist_value;
-    c->content_value = hist_value;
-    if (rid >= 0) c->rid = rid;
+    history_result_.key = hist_key;
+    history_result_.value = hist_value;
+    history_result_.rid = rid;
   }
 
   // when `init_composer` is false, composer is initialized outside of this
@@ -371,7 +362,7 @@ class DictionaryPredictionAggregatorTest
         .SetRequest(*request_)
         .SetConfig(*config_)
         .SetOptions(std::move(options))
-        .SetHistorySegmentsView(segments_)
+        .SetHistoryResultView(history_result_)
         .SetKey(key)
         .Build();
   }
@@ -520,9 +511,7 @@ class DictionaryPredictionAggregatorTest
   std::shared_ptr<composer::Table> table_;
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Request> request_;
-
-  // TODO(taku): Remove dependency to Segments.
-  Segments segments_;
+  Result history_result_;
 };
 
 TEST_F(DictionaryPredictionAggregatorTest, OnOffTest) {

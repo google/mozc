@@ -29,6 +29,7 @@
 
 #include "request/conversion_request.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -38,6 +39,7 @@
 #include "composer/table.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
+#include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
@@ -147,60 +149,62 @@ TEST(ConversionRequestTest, SetKeyTest) {
   EXPECT_EQ("foo", conversion_request3.key());
 }
 
-TEST(ConversionRequestTest, SetHistorySegmentsTest) {
-  Segments segments;
+TEST(ConversionRequestTest, SetHistoryResultTest) {
+  prediction::Result result;
+
+  result.rid = 12;
+  result.cost = 102;
+
+  auto add_segment = [&](absl::string_view key, absl::string_view value) {
+    uint32_t encoded = 0;
+    ASSERT_TRUE(converter::Candidate::EncodeLengths(
+        key.size(), value.size(), key.size(), value.size(), &encoded));
+    absl::StrAppend(&result.key, key);
+    absl::StrAppend(&result.value, value);
+    result.inner_segment_boundary.emplace_back(encoded);
+  };
+
   for (int i = 0; i < 3; ++i) {
-    Segment *seg = segments.push_back_segment();
-    seg->set_segment_type(Segment::HISTORY);
-    converter::Candidate *c = seg->add_candidate();
-    c->key = absl::StrCat("k", i);
-    c->content_key = "k";
-    c->value = absl::StrCat("v", i);
-    c->content_value = "v";
-    c->rid = i + 10;
-    c->cost = i + 100;
+    add_segment(absl::StrCat("k", i), absl::StrCat("v", i));
   }
 
   {
     const ConversionRequest convreq =
-        ConversionRequestBuilder().SetHistorySegmentsView(segments).Build();
+        ConversionRequestBuilder().SetHistoryResultView(result).Build();
 
-    EXPECT_TRUE(convreq.HasConverterHistorySegments());
+    EXPECT_EQ(&result, &convreq.history_result());
 
     EXPECT_EQ(convreq.converter_history_size(), 3);
-
     EXPECT_EQ(convreq.converter_history_key(), "k0k1k2");
     EXPECT_EQ(convreq.converter_history_value(), "v0v1v2");
+    EXPECT_EQ(convreq.converter_history_key(-1), "k0k1k2");
+    EXPECT_EQ(convreq.converter_history_value(-1), "v0v1v2");
     EXPECT_EQ(convreq.converter_history_key(10), "k0k1k2");
     EXPECT_EQ(convreq.converter_history_value(10), "v0v1v2");
     EXPECT_EQ(convreq.converter_history_key(0), "");
     EXPECT_EQ(convreq.converter_history_value(0), "");
-    EXPECT_EQ(convreq.converter_history_key(2), "k1k2");
-    EXPECT_EQ(convreq.converter_history_value(2), "v1v2");
     EXPECT_EQ(convreq.converter_history_key(1), "k2");
     EXPECT_EQ(convreq.converter_history_value(1), "v2");
+    EXPECT_EQ(convreq.converter_history_key(2), "k1k2");
+    EXPECT_EQ(convreq.converter_history_value(2), "v1v2");
+    EXPECT_EQ(convreq.converter_history_key(3), "k0k1k2");
+    EXPECT_EQ(convreq.converter_history_value(3), "v0v1v2");
+    EXPECT_EQ(convreq.converter_history_key(4), "k0k1k2");
+    EXPECT_EQ(convreq.converter_history_value(4), "v0v1v2");
 
     EXPECT_EQ(convreq.converter_history_rid(), 12);
-    EXPECT_EQ(*convreq.converter_history_cost(), 102);
-
-    int n = 0;
-    for (const auto &cand : convreq.GetConverterHistorySegments()) {
-      const converter::Candidate &c = segments.history_segment(n).candidate(0);
-      EXPECT_EQ(cand.key, c.key);
-      EXPECT_EQ(cand.value, c.value);
-      EXPECT_EQ(cand.content_key, c.content_key);
-      EXPECT_EQ(cand.content_value, c.content_value);
-      ++n;
-    }
+    EXPECT_EQ(convreq.converter_history_cost(), 102);
   }
 
   {
+    // Default history_result.
     const ConversionRequest convreq = ConversionRequestBuilder().Build();
-    EXPECT_FALSE(convreq.HasConverterHistorySegments());
 
     EXPECT_EQ(convreq.converter_history_size(), 0);
     EXPECT_EQ(convreq.converter_history_key(), "");
     EXPECT_EQ(convreq.converter_history_value(), "");
+    EXPECT_EQ(convreq.converter_history_key(-1), "");
+    EXPECT_EQ(convreq.converter_history_value(-1), "");
     EXPECT_EQ(convreq.converter_history_key(10), "");
     EXPECT_EQ(convreq.converter_history_value(10), "");
     EXPECT_EQ(convreq.converter_history_key(0), "");
@@ -215,16 +219,21 @@ TEST(ConversionRequestTest, SetHistorySegmentsTest) {
   }
 
   {
+    result.key = "key";
+    result.value = "value";
+    result.inner_segment_boundary.clear();  // boundary is not specified.
     const ConversionRequest convreq =
-        ConversionRequestBuilder().SetHistorySegmentsView(segments).Build();
-    const ConversionRequest convreq2 =
-        ConversionRequestBuilder().SetConversionRequestView(convreq).Build();
-    const ConversionRequest convreq3 =
-        ConversionRequestBuilder().SetConversionRequest(convreq).Build();
+        ConversionRequestBuilder().SetHistoryResultView(result).Build();
 
-    EXPECT_TRUE(convreq.HasConverterHistorySegments());
-    EXPECT_TRUE(convreq2.HasConverterHistorySegments());
-    EXPECT_TRUE(convreq3.HasConverterHistorySegments());
+    EXPECT_EQ(convreq.converter_history_size(), 1);
+    EXPECT_EQ(convreq.converter_history_key(), "key");
+    EXPECT_EQ(convreq.converter_history_value(), "value");
+    EXPECT_EQ(convreq.converter_history_key(-1), "key");
+    EXPECT_EQ(convreq.converter_history_value(-1), "value");
+    EXPECT_EQ(convreq.converter_history_key(1), "key");
+    EXPECT_EQ(convreq.converter_history_value(1), "value");
+    EXPECT_EQ(convreq.converter_history_key(2), "key");
+    EXPECT_EQ(convreq.converter_history_value(2), "value");
   }
 }
 

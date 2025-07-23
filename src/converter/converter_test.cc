@@ -856,13 +856,14 @@ TEST_F(ConverterTest, StartSuggestion) {
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::SUGGESTION};
     Segments segments;
-    const ConversionRequest request = ConversionRequestBuilder()
-                                          .SetComposer(composer)
-                                          .SetRequestView(client_request)
-                                          .SetConfigView(config)
-                                          .SetHistorySegmentsView(segments)
-                                          .SetOptions(std::move(options))
-                                          .Build();
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(client_request)
+            .SetConfigView(config)
+            .SetHistoryResult(Converter::MakeHistoryResult(segments))
+            .SetOptions(std::move(options))
+            .Build();
 
     EXPECT_TRUE(converter->StartPrediction(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
@@ -881,13 +882,14 @@ TEST_F(ConverterTest, StartSuggestion) {
     ConversionRequest::Options options = {.request_type =
                                               ConversionRequest::SUGGESTION};
     Segments segments;
-    const ConversionRequest request = ConversionRequestBuilder()
-                                          .SetComposer(composer)
-                                          .SetRequestView(client_request)
-                                          .SetConfigView(config)
-                                          .SetHistorySegmentsView(segments)
-                                          .SetOptions(std::move(options))
-                                          .Build();
+    const ConversionRequest request =
+        ConversionRequestBuilder()
+            .SetComposer(composer)
+            .SetRequestView(client_request)
+            .SetConfigView(config)
+            .SetHistoryResult(Converter::MakeHistoryResult(segments))
+            .SetOptions(std::move(options))
+            .Build();
 
     EXPECT_TRUE(converter->StartPrediction(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
@@ -1027,7 +1029,7 @@ TEST_F(ConverterTest, PredictSetKey) {
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistorySegmentsView(segments)
+            .SetHistoryResult(Converter::MakeHistoryResult(segments))
             .SetRequestType(ConversionRequest::PREDICTION)
             .Build();
     ASSERT_TRUE(converter->StartPrediction(request, &segments));
@@ -1132,7 +1134,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistorySegmentsView(segments)
+            .SetHistoryResult(Converter::MakeHistoryResult(segments))
             .SetOptions(
                 {.composer_key_selection = ConversionRequest::CONVERSION_KEY})
             .Build();
@@ -1149,7 +1151,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(composer)
-            .SetHistorySegmentsView(segments)
+            .SetHistoryResult(Converter::MakeHistoryResult(segments))
             .SetOptions(
                 {.composer_key_selection = ConversionRequest::PREDICTION_KEY})
             .Build();
@@ -1183,11 +1185,12 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   composer.InsertCharacter("placeholder");
   commands::Context context;
   Segments segments;
-  const ConversionRequest request = ConversionRequestBuilder()
-                                        .SetComposer(composer)
-                                        .SetHistorySegmentsView(segments)
-                                        .SetConfig(config)
-                                        .Build();
+  const ConversionRequest request =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .SetConfig(config)
+          .Build();
   EXPECT_TRUE(converter->StartConversion(request, &segments));
 
   // Verify that words inserted by the rewriter is suppressed if its in the
@@ -1386,11 +1389,12 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
   mozc::composer::Composer composer(table, request_proto, config);
   composer.InsertCharacterPreedit("あ");
   Segments segments;
-  const ConversionRequest request1 = ConversionRequestBuilder()
-                                         .SetComposer(composer)
-                                         .SetHistorySegmentsView(segments)
-                                         .SetRequest(request_proto)
-                                         .Build();
+  const ConversionRequest request1 =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .SetRequest(request_proto)
+          .Build();
   ASSERT_TRUE(converter->StartConversion(request1, &segments));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const int original_candidates_size = segments.segment(0).candidates_size();
@@ -1402,11 +1406,12 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
 
   segments.Clear();
   request_proto.set_candidates_size_limit(original_candidates_size - 1);
-  const ConversionRequest request2 = ConversionRequestBuilder()
-                                         .SetComposer(composer)
-                                         .SetRequest(request_proto)
-                                         .SetHistorySegmentsView(segments)
-                                         .Build();
+  const ConversionRequest request2 =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequest(request_proto)
+          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .Build();
   ASSERT_TRUE(converter->StartConversion(request2, &segments));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_GE(original_candidates_size - 1,
@@ -1418,11 +1423,12 @@ TEST_F(ConverterTest, LimitCandidatesSize) {
 
   segments.Clear();
   request_proto.set_candidates_size_limit(0);
-  const ConversionRequest request3 = ConversionRequestBuilder()
-                                         .SetComposer(composer)
-                                         .SetRequest(request_proto)
-                                         .SetHistorySegmentsView(segments)
-                                         .Build();
+  const ConversionRequest request3 =
+      ConversionRequestBuilder()
+          .SetComposer(composer)
+          .SetRequest(request_proto)
+          .SetHistoryResult(Converter::MakeHistoryResult(segments))
+          .Build();
   ASSERT_TRUE(converter->StartConversion(request3, &segments));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_EQ(segments.segment(0).candidates_size(), 1);
@@ -1477,7 +1483,7 @@ TEST_F(ConverterTest, UserEntryInMobilePrediction) {
             .SetComposer(composer)
             .SetRequestView(request)
             .SetConfigView(config)
-            .SetHistorySegmentsView(segments)
+            .SetHistoryResult(Converter::MakeHistoryResult(segments))
             .SetOptions(std::move(options))
             .Build();
     EXPECT_TRUE(converter->StartPrediction(conversion_request, &segments));
@@ -1668,7 +1674,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
           .SetComposer(composer)
           .SetRequestView(request)
           .SetConfigView(config)
-          .SetHistorySegmentsView(segments)
+          .SetHistoryResult(Converter::MakeHistoryResult(segments))
           .SetOptions(std::move(options))
           .Build();
 
@@ -1782,7 +1788,7 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
           .SetComposer(composer)
           .SetRequestView(request)
           .SetConfigView(config)
-          .SetHistorySegmentsView(segments)
+          .SetHistoryResult(Converter::MakeHistoryResult(segments))
           .SetOptions(std::move(options))
           .Build();
 
@@ -2435,6 +2441,42 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
     }
     EXPECT_EQ(n, 3);
   }
+}
+
+TEST_F(ConverterTest, MakeHistoryResultTest) {
+  Segments segments;
+  for (int i = 0; i < 3; ++i) {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::HISTORY);
+    Candidate *c = segment->add_candidate();
+    c->key = absl::StrCat("k", i);
+    c->content_key = "k";
+    c->value = absl::StrCat("v", i);
+    c->content_value = "v";
+    c->lid = i;
+    c->rid = i + 1;
+    c->cost = i;
+  };
+
+  const prediction::Result result = Converter::MakeHistoryResult(segments);
+  EXPECT_EQ(result.key, "k0k1k2");
+  EXPECT_EQ(result.value, "v0v1v2");
+  EXPECT_EQ(result.lid, segments.segment(0).candidate(0).lid);
+  EXPECT_EQ(result.rid, segments.segment(2).candidate(0).rid);
+  EXPECT_EQ(result.cost, 2);  // only the last cost.
+
+  int n = 0;
+  for (Candidate::InnerSegmentIterator iter(result.inner_segment_boundary,
+                                            result.key, result.value);
+       !iter.Done(); iter.Next()) {
+    const Candidate &c = segments.segment(n).candidate(0);
+    EXPECT_EQ(iter.GetKey(), c.key);
+    EXPECT_EQ(iter.GetContentKey(), c.content_key);
+    EXPECT_EQ(iter.GetValue(), c.value);
+    EXPECT_EQ(iter.GetContentValue(), c.content_value);
+    ++n;
+  }
+  EXPECT_EQ(n, 3);
 }
 
 TEST_F(ConverterTest, Bugfix424676259) {

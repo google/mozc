@@ -123,8 +123,6 @@ std::vector<Result> Predictor::Predict(const ConversionRequest &request) const {
          request.request_type() == ConversionRequest::SUGGESTION ||
          request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
          request.request_type() == ConversionRequest::PARTIAL_SUGGESTION);
-  DCHECK(request.HasConverterHistorySegments());
-
   if (request.request_type() == ConversionRequest::CONVERSION) {
     return {};
   }
@@ -205,7 +203,6 @@ std::vector<Result> Predictor::PredictForDesktop(
             .SetConversionRequestView(request_for_prediction)
             .SetOptions(std::move(options2))
             .Build();
-    DCHECK(request_for_prediction2.HasConverterHistorySegments());
     dictionary_results =
         dictionary_predictor_->Predict(request_for_prediction2);
   }
@@ -235,8 +232,6 @@ std::vector<Result> Predictor::PredictForMixedConversion(
           .SetConversionRequestView(request)
           .SetOptions(std::move(options))
           .Build();
-
-  DCHECK(request_for_predict.HasConverterHistorySegments());
 
   std::vector<Result> user_history_results, dictionary_results;
 

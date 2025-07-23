@@ -39,6 +39,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "base/strings/assign.h"
 #include "base/util.h"
 #include "converter/candidate.h"
 #include "converter/converter_interface.h"
@@ -49,6 +50,51 @@
 #include "request/conversion_request.h"
 namespace mozc::prediction {
 namespace {
+
+// TODO(taku): Defines this function as a common utility function.
+Segments MakeSegments(const ConversionRequest &request) {
+  converter::Segments segments;
+  const prediction::Result &result = request.history_result();
+
+  auto add_history_segment = [&](absl::string_view key, absl::string_view value,
+                                 absl::string_view content_key,
+                                 absl::string_view content_value) {
+    converter::Segment *seg = segments.add_segment();
+    seg->set_key(key);
+    seg->set_segment_type(converter::Segment::HISTORY);
+    converter::Candidate *candidate = seg->add_candidate();
+    strings::Assign(candidate->key, key);
+    strings::Assign(candidate->value, value);
+    strings::Assign(candidate->content_key, content_key);
+    strings::Assign(candidate->content_value, content_value);
+  };
+
+  if (result.key.empty() || result.value.empty()) {
+    // Do nothing. history is not defined.
+  } else if (result.inner_segment_boundary.empty()) {
+    add_history_segment(result.key, result.value, result.key, result.value);
+  } else {
+    for (converter::Candidate::InnerSegmentIterator iter(
+             result.inner_segment_boundary, result.key, result.value);
+         !iter.Done(); iter.Next()) {
+      add_history_segment(iter.GetKey(), iter.GetValue(), iter.GetContentKey(),
+                          iter.GetContentValue());
+    }
+  }
+
+  const int history_size = segments.history_segments_size();
+  if (history_size > 0) {
+    converter::Candidate *candidate =
+        segments.mutable_history_segment(history_size - 1)
+            ->mutable_candidate(0);
+    candidate->cost = result.cost;
+    candidate->rid = result.rid;
+  }
+
+  segments.add_segment()->set_key(request.key());
+
+  return segments;
+}
 
 // TODO(taku): Defines this function as a common utility function.
 std::optional<Result> ConversionSegmentsToResult(const Segments &segments) {
@@ -106,7 +152,7 @@ bool RealtimeDecoder::PushBackTopConversionResult(
                                             .SetOptions(std::move(options))
                                             .Build();
 
-  Segments tmp_segments = request.MakeRequestSegments();
+  Segments tmp_segments = MakeSegments(request);
 
   DCHECK_EQ(tmp_segments.conversion_segments_size(), 1);
   DCHECK_EQ(tmp_segments.conversion_segment(0).key(), tmp_request.key());
@@ -143,14 +189,10 @@ std::vector<Result> RealtimeDecoder::Decode(
     return results;
   }
 
-  Segments tmp_segments = request.MakeRequestSegments();
-
   const ConversionRequest request_for_realtime =
-      ConversionRequestBuilder()
-          .SetConversionRequestView(request)
-          .SetHistorySegmentsView(tmp_segments)
-          .Build();
+      ConversionRequestBuilder().SetConversionRequestView(request).Build();
 
+  Segments tmp_segments = MakeSegments(request);
   DCHECK_EQ(tmp_segments.conversion_segments_size(), 1);
   DCHECK_EQ(tmp_segments.conversion_segment(0).key(),
             request_for_realtime.key());
@@ -210,12 +252,11 @@ std::vector<Result> RealtimeDecoder::Decode(
 
 std::vector<Result> RealtimeDecoder::ReverseDecode(
     const ConversionRequest &request) const {
-  Segments tmp_segments = request.MakeRequestSegments();
+  Segments tmp_segments = MakeSegments(request);
 
   const ConversionRequest request_for_reverse =
       ConversionRequestBuilder()
           .SetConversionRequestView(request)
-          .SetHistorySegmentsView(tmp_segments)
           .SetRequestType(ConversionRequest::REVERSE_CONVERSION)
           .Build();
 
