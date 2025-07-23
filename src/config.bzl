@@ -58,7 +58,12 @@ MACOS_MIN_OS_VER = "12.0"
 # https://github.com/bazelbuild/rules_apple/blob/3.5.1/apple/internal/codesigning_support.bzl#L42
 # https://developer.apple.com/documentation/security/seccodesignatureflags/1397793-adhoc
 MACOS_CODESIGN_IDENTITY_PSEUDO = "-"
-MACOS_CODESIGN_IDENTITY = MACOS_CODESIGN_IDENTITY_PSEUDO
+
+# identity for continuous testing build
+MACOS_CODESIGN_IDENTITY_TESTING = MACOS_CODESIGN_IDENTITY_PSEUDO
+
+# identyty for external release build
+MACOS_CODESIGN_IDENTITY_RELEASE = MACOS_CODESIGN_IDENTITY_PSEUDO
 
 ## Qt path for macOS
 # The paths are the default paths of Qt 6.5.2 installed by "make install".

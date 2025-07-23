@@ -40,7 +40,9 @@ load(
     "//:config.bzl",
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
-    "MACOS_CODESIGN_IDENTITY",
+    "MACOS_CODESIGN_IDENTITY_PSEUDO",
+    "MACOS_CODESIGN_IDENTITY_RELEASE",
+    "MACOS_CODESIGN_IDENTITY_TESTING",
 )
 
 package(default_visibility = ["//visibility:private"])
@@ -50,6 +52,14 @@ package(default_visibility = ["//visibility:private"])
 BUILD_TYPE_SELECT = select({
     "//:dev_channel": "dev",
     "//conditions:default": "stable",
+})
+
+# CODESIGN_IDENTITY_SELECT is treated as a function. This cannot be a value of join().
+# `--define CODESIGN=testing` is the command line option to select testing codesign.
+CODESIGN_IDENTITY_SELECT = select({
+    "//:codesign_release": MACOS_CODESIGN_IDENTITY_RELEASE,
+    "//:codesign_testing": MACOS_CODESIGN_IDENTITY_TESTING,
+    "//conditions:default": MACOS_CODESIGN_IDENTITY_PSEUDO,
 })
 
 mozc_macos_application(
@@ -490,9 +500,7 @@ genrule(
               oss_macos = " --oss",
               prod_macos = "",
           ) +
-          ' --codesign_identity "' +
-          MACOS_CODESIGN_IDENTITY +
-          '"',
+          ' --codesign_identity "' + CODESIGN_IDENTITY_SELECT + '"',
     # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
     local = True,
     tags = ["manual"],
@@ -629,10 +637,8 @@ genrule(
         "chmod u+w $@ &&",
         "/usr/bin/codesign",
         "--timestamp --options=runtime",  # For notarization
-        '--sign "' + MACOS_CODESIGN_IDENTITY + '"',
         "--keychain login.keychain",
-        "$@",
-    ]),
+    ]) + ' --sign "' + CODESIGN_IDENTITY_SELECT + '"' + " $@",
     exec_compatible_with = ["@platforms//os:macos"],
     # Use local execution instead of sandbox because it uses `codesign` that accesses to keychain.
     local = True,

@@ -67,6 +67,22 @@ config_setting(
     },
 )
 
+# CODESIGN=release is used to build binaries that are signed for external product release.
+config_setting(
+    name = "codesign_release",
+    values = {
+        "define": "CODESIGN=release",
+    },
+)
+
+# CODESIGN=testing is used to build binaries that are signed for internal testing release.
+config_setting(
+    name = "codesign_testing",
+    values = {
+        "define": "CODESIGN=testing",
+    },
+)
+
 alias(
     name = "compiler",
     actual = BAZEL_TOOLS_PREFIX + "//tools/cpp:compiler",
