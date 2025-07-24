@@ -82,6 +82,14 @@ bazel_dep(
     name = "rules_pkg",
     version = "1.1.0",
 )
+single_version_override(
+    module_name = "rules_pkg",
+    patches = [
+        # Patch to fix the failure of Bazel fetch.
+        "bazel/rules_pkg_MODULE.bazel.patch",
+    ],
+    version = "1.1.0",
+)
 
 # rules_python: 1.4.1 2025-05-09
 # https://github.com/bazelbuild/rules_python/

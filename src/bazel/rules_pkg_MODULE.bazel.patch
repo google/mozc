@@ -1,0 +1,10 @@
+--- MODULE.bazel
++++ MODULE.bazel
+@@ -36,7 +36,3 @@ register_toolchains(
+
+ local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "local_repository")
+
+-local_repository(
+-    name = "mappings_test_external_repo",
+-    path = "tests/mappings/external_repo",
+-)
