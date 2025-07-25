@@ -41,6 +41,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
@@ -269,7 +270,7 @@ class UserHistoryPredictor : public PredictorInterface {
     EntryPriorityQueue() : pool_(kEntryPoolSize) {}
     size_t size() const { return agenda_.size(); }
     bool Push(Entry *entry);
-    Entry *Pop();
+    Entry *absl_nullable Pop();
     Entry *NewEntry();
 
    private:
@@ -316,7 +317,8 @@ class UserHistoryPredictor : public PredictorInterface {
       uint64_t *left_most_last_access_time, std::string *result_key,
       std::string *result_value) const;
 
-  const Entry *LookupPrevEntry(const ConversionRequest &request) const;
+  const Entry *absl_nullable LookupPrevEntry(
+      const ConversionRequest &request) const;
 
   // Adds an entry to a priority queue.
   Entry *AddEntry(const Entry &entry, EntryPriorityQueue *entry_queue) const;

@@ -44,6 +44,7 @@
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "absl/base/nullability.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
@@ -270,7 +271,8 @@ bool UserHistoryPredictor::EntryPriorityQueue::Push(Entry *entry) {
   return true;
 }
 
-UserHistoryPredictor::Entry *UserHistoryPredictor::EntryPriorityQueue::Pop() {
+UserHistoryPredictor::Entry *absl_nullable
+UserHistoryPredictor::EntryPriorityQueue::Pop() {
   if (agenda_.empty()) {
     return nullptr;
   }
@@ -1222,8 +1224,8 @@ bool UserHistoryPredictor::ShouldPredict(
   return true;
 }
 
-const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
-    const ConversionRequest &request) const {
+const UserHistoryPredictor::Entry *absl_nullable
+UserHistoryPredictor::LookupPrevEntry(const ConversionRequest &request) const {
   // When there are non-zero history segments, lookup an entry
   // from the LRU dictionary, which is corresponding to the last
   // history segment.

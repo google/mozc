@@ -37,6 +37,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "base/mmap.h"
@@ -61,8 +62,9 @@ class LruStorage {
                     size_t new_size, uint32_t new_seed);
 
   // Looks up elements by key.
-  const char *Lookup(absl::string_view key, uint32_t *last_access_time) const;
-  const char *Lookup(absl::string_view key) const {
+  const char *absl_nullable Lookup(absl::string_view key,
+                                   uint32_t *last_access_time) const;
+  const char *absl_nullable Lookup(absl::string_view key) const {
     uint32_t last_access_time;
     return Lookup(key, &last_access_time);
   }

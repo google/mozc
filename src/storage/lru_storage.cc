@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "absl/algorithm/container.h"
+#include "absl/base/nullability.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -397,8 +398,8 @@ void LruStorage::Close() {
   lru_map_.clear();
 }
 
-const char *LruStorage::Lookup(const absl::string_view key,
-                               uint32_t *last_access_time) const {
+const char *absl_nullable LruStorage::Lookup(const absl::string_view key,
+                                             uint32_t *last_access_time) const {
   const uint64_t fp = FingerprintWithSeed(key, seed_);
   const auto it = lru_map_.find(fp);
   if (it == lru_map_.end()) {
