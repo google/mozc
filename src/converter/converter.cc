@@ -503,12 +503,11 @@ bool Converter::ResizeSegments(Segments *segments,
 
 void Converter::ApplyConversion(Segments *segments,
                                 const ConversionRequest &request) const {
-  if (!immutable_converter_->ConvertForRequest(request, segments)) {
+  if (!immutable_converter_->Convert(request, segments)) {
     // Conversion can fail for keys like "12". Even in such cases, rewriters
     // (e.g., number and variant rewriters) can populate some candidates.
     // Therefore, this is not an error.
-    MOZC_VLOG(1) << "ConvertForRequest failed for key: "
-                 << segments->segment(0).key();
+    MOZC_VLOG(1) << "Convert failed for key: " << segments->segment(0).key();
   }
 
   ApplyPostProcessing(request, segments);
@@ -552,7 +551,7 @@ void Converter::CompletePosIds(Candidate *candidate) const {
             })
             .Build();
     // In order to complete PosIds, call ImmutableConverter again.
-    if (!immutable_converter_->ConvertForRequest(request, &segments)) {
+    if (!immutable_converter_->Convert(request, &segments)) {
       LOG(ERROR) << "ImmutableConverter::Convert() failed";
       return;
     }

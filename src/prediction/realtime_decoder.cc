@@ -210,8 +210,7 @@ std::vector<Result> RealtimeDecoder::Decode(
   }
 
   // non-CONVERSION request returns concatenated single segment.
-  if (!immutable_converter().ConvertForRequest(request_for_realtime,
-                                               &tmp_segments) ||
+  if (!immutable_converter().Convert(request_for_realtime, &tmp_segments) ||
       tmp_segments.conversion_segments_size() != 1 ||
       tmp_segments.conversion_segment(0).candidates_size() == 0) {
     LOG(WARNING) << "Convert failed";
@@ -260,8 +259,7 @@ std::vector<Result> RealtimeDecoder::ReverseDecode(
           .SetRequestType(ConversionRequest::REVERSE_CONVERSION)
           .Build();
 
-  if (!immutable_converter().ConvertForRequest(request_for_reverse,
-                                               &tmp_segments) ||
+  if (!immutable_converter().Convert(request_for_reverse, &tmp_segments) ||
       tmp_segments.conversion_segments_size() == 0) {
     LOG(WARNING) << "Reverse conversion failed";
     return {};

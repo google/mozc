@@ -1996,8 +1996,8 @@ std::vector<uint16_t> ImmutableConverter::MakeGroup(
   return group;
 }
 
-bool ImmutableConverter::ConvertForRequest(const ConversionRequest &request,
-                                           Segments *segments) const {
+bool ImmutableConverter::Convert(const ConversionRequest &request,
+                                 Segments *segments) const {
   const bool is_prediction =
       (request.request_type() == ConversionRequest::PREDICTION ||
        request.request_type() == ConversionRequest::SUGGESTION);
