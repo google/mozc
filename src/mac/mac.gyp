@@ -455,6 +455,32 @@
               ],
             },
             {
+              'action_name': 'copy_localization_en_file',
+              'inputs': [
+                'installer/Resources/en.lproj/Localizable.strings',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/en.strings',
+              ],
+              'action': [
+                'cp', 'installer/Resources/en.lproj/Localizable.strings',
+                '<(gen_out_dir)/en.strings',
+              ],
+            },
+            {
+              'action_name': 'copy_localization_ja_file',
+              'inputs': [
+                'installer/Resources/ja.lproj/Localizable.strings',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/ja.strings',
+              ],
+              'action': [
+                'cp', 'installer/Resources/ja.lproj/Localizable.strings',
+                '<(gen_out_dir)/ja.strings',
+              ],
+            },
+            {
               'action_name': 'tweak_pkgproj',
               'inputs': [ 'installer/<(branding)_template.pkgproj', ],
               'outputs': [ '<(gen_out_dir)/<(branding).pkgproj' ],
@@ -485,6 +511,8 @@
                 '<(PRODUCT_DIR)/<(branding).app',
                 '<(PRODUCT_DIR)/Uninstall<(branding).app',
                 '<(gen_out_dir)/<(branding).pkgproj',
+                '<(gen_out_dir)/en.strings',
+                '<(gen_out_dir)/ja.strings',
               ],
               'outputs': [
                 '<(PRODUCT_DIR)/<(branding).pkg',
