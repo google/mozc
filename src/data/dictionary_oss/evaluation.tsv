@@ -523,3 +523,7 @@ FAILED:	はってん	発展	Conversion Expected 99	8点	2.31.5810
 OK:	はってん	発展	Conversion Expected 99	発展	2.31.5810
 FAILED:	きゅうしゅう	吸収	Conversion Expected 99	9週	2.31.5810
 OK:	きゅうしゅう	吸収	Conversion Expected 99	吸収	2.31.5810
+OK:	せんこう	先行	Conversion Expected 99	閃光	2.31.5851
+OK:	せんこうとともに	先行とともに	Conversion Expected 99	閃光とともに	2.31.5851
+OK:	おふろはいりません	お風呂入りません	Conversion Expected	お風呂入りません	2.31.5851
+FAILED:	おちゃはいりません	お茶入りません	Conversion Expected	お茶はいりません	2.31.5851

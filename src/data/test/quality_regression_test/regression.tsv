@@ -58,3 +58,7 @@ regression	はってん	8点	Conversion Expected 99
 regression	はってん	発展	Conversion Expected 99
 regression	きゅうしゅう	9週	Conversion Expected 99
 regression	きゅうしゅう	吸収	Conversion Expected 99
+regression	せんこう	閃光	Conversion Expected 99
+regression	せんこうとともに	閃光とともに	Conversion Expected 99
+regression	おふろはいりません	お風呂入りません	Conversion Expected
+regression	おちゃはいりません	お茶はいりません	Conversion Expected
