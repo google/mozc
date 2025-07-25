@@ -149,7 +149,8 @@ TEST(ImmutableConverterTest, KeepKeyForPrediction) {
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "よろしくおねがいしま";
   segment->set_key(kRequestKey);
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(request, &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_GT(segments.segment(0).candidates_size(), 0);
   EXPECT_EQ(segments.segment(0).key(), kRequestKey);
@@ -170,8 +171,8 @@ TEST(ImmutableConverterTest, ResegmentTest) {
     Segment *segment = segments.add_segment();
     const std::string kRequestKey = "1ねんせい";
     segment->set_key(kRequestKey);
-    EXPECT_TRUE(
-        data_and_converter->GetConverter()->Convert(request, &segments));
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        request, &segments));
     EXPECT_EQ(segments.segments_size(), 2);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "1");
     EXPECT_EQ(segments.segment(1).candidate(0).value, "年生");
@@ -182,8 +183,8 @@ TEST(ImmutableConverterTest, ResegmentTest) {
     Segment *segment = segments.add_segment();
     const std::string kRequestKey = "ちゅう2";
     segment->set_key(kRequestKey);
-    EXPECT_TRUE(
-        data_and_converter->GetConverter()->Convert(request, &segments));
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        request, &segments));
     EXPECT_EQ(segments.segments_size(), 2);
     EXPECT_EQ(segments.segment(0).candidate(0).value, "中");
     EXPECT_EQ(segments.segment(1).candidate(0).value, "2");
@@ -275,7 +276,8 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
           .SetOptions({.request_type = ConversionRequest::PREDICTION,
                        .max_conversion_candidates_size = 1})
           .Build();
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(request, &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   ASSERT_EQ(1, segments.segments_size());
   ASSERT_EQ(1, segments.segment(0).candidates_size());
 
@@ -322,7 +324,8 @@ TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
       ConversionRequestBuilder()
           .SetRequestType(ConversionRequest::CONVERSION)
           .Build();
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(request, &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   EXPECT_LE(1, segments.segments_size());
   EXPECT_LT(0, segments.segment(0).candidates_size());
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
@@ -425,7 +428,8 @@ TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
       ConversionRequestBuilder()
           .SetRequestType(ConversionRequest::CONVERSION)
           .Build();
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(request, &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   EXPECT_EQ(segments.history_segments_size(), 0);
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_GT(segments.segment(0).candidates_size(), 0);
@@ -448,8 +452,8 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(conversion_request,
-                                                          &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+      conversion_request, &segments));
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_LT(0, segments.segment(0).candidates_size());
   bool includes_only_first = false;
@@ -506,8 +510,8 @@ TEST(ImmutableConverterTest, FirstInnerSegment) {
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("くるまでこうどうした");
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(conversion_request,
-                                                          &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+      conversion_request, &segments));
 
   constexpr auto KeyIs = [](const auto &key) {
     return Field(&Candidate::key, StrEq(key));
@@ -540,8 +544,8 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("したとき");
-    EXPECT_TRUE(data_and_converter->GetConverter()->Convert(conversion_request,
-                                                            &segments));
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        conversion_request, &segments));
 
     EXPECT_THAT(*segment, ContainsCandidate(ValueIs("した時")));
     // The same segment structure, but included by char coverage rule.
@@ -551,8 +555,8 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("のとき");
-    EXPECT_TRUE(data_and_converter->GetConverter()->Convert(conversion_request,
-                                                            &segments));
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        conversion_request, &segments));
 
     EXPECT_THAT(*segment, ContainsCandidate(ValueIs("の時")));
     // The same segment structure, included by char coverage.
@@ -562,8 +566,8 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("かえる");
-    EXPECT_TRUE(data_and_converter->GetConverter()->Convert(conversion_request,
-                                                            &segments));
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        conversion_request, &segments));
 
     EXPECT_THAT(*segment, ContainsCandidate(ValueIs("換える")));
     EXPECT_THAT(*segment, ContainsCandidate(ValueIs("代える")));
@@ -575,8 +579,8 @@ TEST(ImmutableConverterTest, FirstInnerSegmentFiltering) {
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("くるまでこうどうした");
-    EXPECT_TRUE(data_and_converter->GetConverter()->Convert(conversion_request,
-                                                            &segments));
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        conversion_request, &segments));
 
     EXPECT_THAT(*segment, ContainsCandidate(ValueIs("車で行動した")));
     EXPECT_THAT(*segment, ContainsCandidate(ValueIs("車で")));
@@ -595,7 +599,8 @@ TEST(ImmutableConverterTest, T13nConversionTwice) {
     segment->set_key("ぐうぐる");
   }
   const ConversionRequest request;
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(request, &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   ASSERT_EQ(segments.segments_size(), 1);
 
   const int index =
@@ -615,7 +620,8 @@ TEST(ImmutableConverterTest, T13nConversionTwice) {
     Segment *segment = segments.add_segment();
     segment->set_key("ぐーぐる");
   }
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(request, &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   ASSERT_EQ(segments.segments_size(), 2);
   ASSERT_EQ(segments.conversion_segments_size(), 1);
 
