@@ -95,7 +95,8 @@ constexpr int32_t kStopEnmerationCacheSize = 30;
 // Returns true if the given node sequence is noisy weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
 inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
-                                const dictionary::PosMatcher &pos_matcher) {
+                                const dictionary::PosMatcher &pos_matcher,
+                                const Candidate *candidate) {
   if (nodes.size() <= 1) {
     return false;
   }
@@ -105,20 +106,24 @@ inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
   }
   if (pos_matcher.IsWeakCompoundFillerPrefix(nodes[0]->lid)) {
     // Word that starts with 'filler' is always noisy.
+    MOZC_CANDIDATE_LOG(candidate, "Noise: Word that starts with 'filler'");
     return true;
   }
   if (nodes[1]->lid != nodes[1]->rid) {
     // Some node +  COMPOUND node may be noisy.
+    MOZC_CANDIDATE_LOG(candidate, "Noise: Some node + COMPOUND node");
     return true;
   }
   if (pos_matcher.IsWeakCompoundNounPrefix(nodes[0]->lid) &&
       !pos_matcher.IsWeakCompoundNounSuffix(nodes[1]->lid)) {
     // Noun prefix + not noun
+    MOZC_CANDIDATE_LOG(candidate, "Noise: Noun prefix + not noun");
     return true;
   }
   if (pos_matcher.IsWeakCompoundVerbPrefix(nodes[0]->lid) &&
       !pos_matcher.IsWeakCompoundVerbSuffix(nodes[1]->lid)) {
     // Verb prefix + not verb
+    MOZC_CANDIDATE_LOG(candidate, "Noise: Verb prefix + not verb");
     return true;
   }
   return false;
@@ -127,7 +132,8 @@ inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
 // Returns true if the given node sequence is connected weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
 inline bool IsConnectedWeakCompound(const absl::Span<const Node *const> nodes,
-                                    const dictionary::PosMatcher &pos_matcher) {
+                                    const dictionary::PosMatcher &pos_matcher,
+                                    const Candidate *candidate) {
   if (nodes.size() <= 1) {
     return false;
   }
@@ -138,11 +144,13 @@ inline bool IsConnectedWeakCompound(const absl::Span<const Node *const> nodes,
   if (pos_matcher.IsWeakCompoundNounPrefix(nodes[0]->lid) &&
       pos_matcher.IsWeakCompoundNounSuffix(nodes[1]->lid)) {
     // Noun prefix + noun
+    MOZC_CANDIDATE_LOG(candidate, "Connected: Noun prefix + noun");
     return true;
   }
   if (pos_matcher.IsWeakCompoundVerbPrefix(nodes[0]->lid) &&
       pos_matcher.IsWeakCompoundVerbSuffix(nodes[1]->lid)) {
     // Verb prefix + verb
+    MOZC_CANDIDATE_LOG(candidate, "Connected: Verb prefix + verb");
     return true;
   }
   return false;
@@ -463,9 +471,10 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   //   - We do not allow noisy weak compound except for the top result. Even for
   //     the top result, we will check other conditions for filtering.
   //   - We do not allow connected weak compound if the rank is low enough.
-  const bool is_noisy_weak_compound = IsNoisyWeakCompound(nodes, pos_matcher_);
+  const bool is_noisy_weak_compound =
+      IsNoisyWeakCompound(nodes, pos_matcher_, candidate);
   const bool is_connected_weak_compound =
-      IsConnectedWeakCompound(nodes, pos_matcher_);
+      IsConnectedWeakCompound(nodes, pos_matcher_, candidate);
 
   if (is_noisy_weak_compound && candidate_size >= 1) {
     MOZC_CANDIDATE_LOG(candidate, "is_noisy_weak_compound");
