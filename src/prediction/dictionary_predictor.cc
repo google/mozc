@@ -743,7 +743,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
               top_result.cost;
   }
 
-  // ConvertForRequest() can return placeholder candidate with cost 0 when it
+  // Convert() can return placeholder candidate with cost 0 when it
   // failed to generate candidates.
   if (penalty <= 0) {
     penalty = Result::kInvalidCost;
