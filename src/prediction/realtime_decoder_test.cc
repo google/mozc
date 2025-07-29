@@ -56,12 +56,12 @@ class MockImmutableConverter : public ImmutableConverterInterface {
   MockImmutableConverter() = default;
   ~MockImmutableConverter() override = default;
 
-  MOCK_METHOD(bool, Convert,
+  MOCK_METHOD(bool, ConvertForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
 
-  static bool ConvertImpl(const ConversionRequest &request,
-                          Segments *segments) {
+  static bool ConvertForRequestImpl(const ConversionRequest &request,
+                                    Segments *segments) {
     if (!segments || segments->conversion_segments_size() != 1 ||
         segments->conversion_segment(0).key().empty()) {
       return false;
@@ -120,7 +120,7 @@ TEST(RealtimeDecoderTest, Decode) {
     candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
     // "なかのです, 中野です", "なかの, 中野"
     candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
-    EXPECT_CALL(immutable_converter, Convert(_, _))
+    EXPECT_CALL(immutable_converter, ConvertForRequest(_, _))
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
