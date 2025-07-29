@@ -110,9 +110,20 @@ inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
     return true;
   }
   if (nodes[1]->lid != nodes[1]->rid) {
-    // Some node +  COMPOUND node may be noisy.
-    MOZC_CANDIDATE_LOG(candidate, "Noise: Some node + COMPOUND node");
-    return true;
+    // If the second node is a compound word (i.e. lid != rid),
+    // it is basically filtered.
+    // However, the second node is an anti_phrase word (e.g. とともに),
+    // the node is not filtered. Since there is no direct way
+    // to determine the anti_phrase word, we use the following heuristic.
+
+    const bool is_possible_anti_phrase_connection =
+        pos_matcher.IsContentNoun(nodes[0]->rid) &&
+        pos_matcher.IsAcceptableParticleAtBeginOfSegment(nodes[1]->lid);
+    if (!is_possible_anti_phrase_connection) {
+      // Some node +  COMPOUND node may be noisy.
+      MOZC_CANDIDATE_LOG(candidate, "Noise: Some node + COMPOUND node");
+      return true;
+    }
   }
   if (pos_matcher.IsWeakCompoundNounPrefix(nodes[0]->lid) &&
       !pos_matcher.IsWeakCompoundNounSuffix(nodes[1]->lid)) {

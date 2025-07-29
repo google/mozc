@@ -776,6 +776,76 @@ TEST_P(CandidateFilterTestWithParam,
             CandidateFilter::BAD_CANDIDATE);
 }
 
+TEST_P(CandidateFilterTestWithParam, NotFilteringAntiPhraseNode) {
+  ConversionRequest::RequestType type = GetParam();
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
+  std::vector<const Node *> top_nodes;
+  std::vector<const Node *> nodes;
+  const ConversionRequest convreq = ConvReq(type);
+
+  {
+    // Set "選考とともに" as the top candidate to the `filter` object.
+    // The top candidate is not filtered in any case.
+    Node *n1 = NewNode();
+    n1->key = "せんこう";
+    n1->value = "選考";
+    n1->lid = pos_matcher().GetGeneralNounId();
+    n1->rid = pos_matcher().GetGeneralNounId();
+    top_nodes.push_back(n1);
+
+    Node *n2 = NewNode();
+    n2->key = "とともに";
+    n2->value = "とともに";
+    n2->lid = pos_matcher().GetAdverbSegmentSuffixId();
+    n2->rid = pos_matcher().GetAdverbId();
+    top_nodes.push_back(n2);
+    EXPECT_NE(n2->lid, n2->rid);
+
+    Candidate *c = NewCandidate();
+    c->key = n1->key + n2->key;
+    c->value = n1->value + n2->value;
+    c->content_key = n1->key;
+    c->content_value = n1->value;
+    c->cost = 6000;
+    c->structure_cost = 500;
+
+    EXPECT_EQ(filter->FilterCandidate(convreq, c->key, c, top_nodes, top_nodes),
+              CandidateFilter::GOOD_CANDIDATE);
+  }
+  {
+    // Confirm "閃光とともに" is not filtered although it is not the top
+    // candidate.
+    Node *n1 = NewNode();
+    n1->key = "せんこう";
+    n1->value = "閃光";
+    n1->lid = pos_matcher().GetGeneralNounId();
+    n1->rid = pos_matcher().GetGeneralNounId();
+    nodes.push_back(n1);
+
+    // n2 (i.e. "と + ともに") is a compound word as lid != rid.
+    // Compound words are usually filtered, but the anti-phrase node is an
+    // exception.
+    Node *n2 = NewNode();
+    n2->key = "とともに";
+    n2->value = "とともに";
+    n2->lid = pos_matcher().GetAdverbSegmentSuffixId();
+    n2->rid = pos_matcher().GetAdverbId();
+    nodes.push_back(n2);
+    EXPECT_NE(n2->lid, n2->rid);
+
+    Candidate *c = NewCandidate();
+    c->key = n1->key + n2->key;
+    c->value = n1->value + n2->value;
+    c->content_key = n1->key;
+    c->content_value = n1->value;
+    c->cost = 6000;
+    c->structure_cost = 500;
+
+    EXPECT_EQ(filter->FilterCandidate(convreq, c->key, c, top_nodes, nodes),
+              CandidateFilter::GOOD_CANDIDATE);
+  }
+}
+
 TEST_P(CandidateFilterTestWithParam, FilterMultipleNumberNodesWord) {
   ConversionRequest::RequestType type = GetParam();
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
