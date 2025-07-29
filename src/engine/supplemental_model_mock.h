@@ -31,8 +31,10 @@
 #define MOZC_ENGINE_SUPPLEMENTAL_MODEL_MOCK_H_
 
 #include <optional>
+#include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/query.h"
 #include "engine/supplemental_model_interface.h"
@@ -68,6 +70,10 @@ class MockSupplementalModel : public SupplementalModelInterface {
   MOCK_METHOD(bool, Predict,
               (const ConversionRequest &request,
                std::vector<prediction::Result> &results),
+              (const, override));
+  MOCK_METHOD((std::vector<std::pair<absl::string_view, absl::string_view>>),
+              GetReadingAlignment,
+              (absl::string_view surface, absl::string_view reading),
               (const, override));
 };
 

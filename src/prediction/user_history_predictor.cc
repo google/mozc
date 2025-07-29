@@ -2333,8 +2333,21 @@ void UserHistoryPredictor::MaybeProcessPartialRevertEntry(
         // suffix value/key are same and script type is HIRAGANA.
         ckey_prefix = get_prefix(ckey, cvalue_suffix_len);
       } else {
-        // TODO(taku): Obtain ckey_prefix with char-by-char alignments or
-        // realtime decoder.
+        // Uses the aligner to get the ckey_prefix.
+        // GetReadingAlignment returns the per-char alignment, e.g.
+        // {東京駅, とうきょうえき} -> {{東, とう}, {京, きょう}, {駅, えき}}
+        int32_t key_consumed = 0, value_consumed = 0;
+        for (const auto &[surface, reading] :
+             modules_.GetSupplementalModel().GetReadingAlignment(cvalue,
+                                                                 ckey)) {
+          if (value_consumed > cvalue_prefix.size()) break;
+          if (value_consumed == cvalue_prefix.size()) {
+            ckey_prefix = ckey.substr(0, key_consumed);
+            break;
+          }
+          key_consumed += reading.size();
+          value_consumed += surface.size();
+        }
       }
 
       if (!ckey_prefix.empty() && !cvalue_prefix.empty()) {

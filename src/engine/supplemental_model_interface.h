@@ -31,8 +31,10 @@
 #define MOZC_ENGINE_SUPPLEMENTAL_MODEL_INTERFACE_H_
 
 #include <optional>
+#include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/query.h"
 #include "prediction/result.h"
@@ -84,6 +86,15 @@ class SupplementalModelInterface {
   virtual bool Predict(const ConversionRequest &request,
                        std::vector<prediction::Result> &results) const {
     return false;
+  }
+
+  // Returns character-by-mora reading to surface alignment.
+  // {東,とう},{京,きょう} = GetReadingAlignment("東京", "とうきょう")
+  // Returns empty list when no alignment is available.
+  virtual std::vector<std::pair<absl::string_view, absl::string_view>>
+  GetReadingAlignment(absl::string_view surface,
+                      absl::string_view reading) const {
+    return {};
   }
 };
 

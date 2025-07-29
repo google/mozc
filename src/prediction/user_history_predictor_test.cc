@@ -93,6 +93,7 @@ using ::mozc::config::Config;
 using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::UserDictionaryInterface;
 using ::testing::_;
+using ::testing::Invoke;
 using ::testing::Return;
 
 constexpr int kRevertId = 1234;
@@ -5241,8 +5242,30 @@ TEST_F(UserHistoryPredictorTest, GuessRevertedValueOffset) {
 TEST_F(UserHistoryPredictorTest, PartialRevert) {
   std::vector<Result> results;
 
-  auto has_entry = [](UserHistoryPredictor *predictor, absl::string_view key,
-                      absl::string_view value) {
+  auto mock = std::make_unique<engine::MockSupplementalModel>();
+
+  // Emulates reading aligner.
+  EXPECT_CALL(*mock, GetReadingAlignment(_, _))
+      .WillRepeatedly(
+          Invoke([](absl::string_view surface, absl::string_view reading) {
+            // splits 京都大学 -> 京都|大学
+            const auto pos1 = surface.find("大学");
+            const auto pos2 = reading.find("だいがく");
+            std::vector<std::pair<absl::string_view, absl::string_view>> v;
+            v.emplace_back(surface.substr(0, pos1), reading.substr(0, pos2));
+            v.emplace_back(surface.substr(pos1), reading.substr(pos2));
+            return v;
+          }));
+
+  std::unique_ptr<engine::Modules> modules =
+      engine::ModulesPresetBuilder()
+          .PresetDictionary(std::make_unique<MockDictionary>())
+          .PresetSupplementalModel(std::move(mock))
+          .Build(std::make_unique<testing::MockDataManager>())
+          .value();
+  auto predictor = std::make_unique<UserHistoryPredictor>(*modules);
+
+  auto has_entry = [&](absl::string_view key, absl::string_view value) {
     UserHistoryPredictorTestPeer predictor_peer(*predictor);
     const UserHistoryPredictor::Entry *entry =
         predictor_peer.dic_()->LookupWithoutInsert(
@@ -5252,8 +5275,6 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
   };
 
   auto init_predictor = [&]() {
-    UserHistoryPredictor *predictor =
-        GetUserHistoryPredictorWithClearedHistory();
     predictor->ClearAllHistory();
     UserHistoryPredictorTestPeer(*predictor).WaitForSyncer();
 
@@ -5289,33 +5310,28 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
     predictor->Finish(convreq, {result}, kRevertId);
 
     // New entries are inserted.
-    EXPECT_TRUE(has_entry(predictor,
-                          "さとうさんはきょうとだいがくをそつぎょうした",
+    EXPECT_TRUE(has_entry("さとうさんはきょうとだいがくをそつぎょうした",
                           "佐藤さんは京都大学を卒業した"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_TRUE(has_entry(predictor, "そつぎょうした", "卒業した"));
+    EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_TRUE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_TRUE(has_entry("そつぎょうした", "卒業した"));
 
     predictor->Revert(kRevertId);
 
     // All entries are removed with Revret.
-    EXPECT_FALSE(has_entry(predictor,
-                           "さとうさんはきょうとだいがくをそつぎょうした",
+    EXPECT_FALSE(has_entry("さとうさんはきょうとだいがくをそつぎょうした",
                            "佐藤さんは京都大学を卒業した"));
-    EXPECT_FALSE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_FALSE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
-
-    return predictor;
+    EXPECT_FALSE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_FALSE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_FALSE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_FALSE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   };
 
   // Continue to type with the key and left_context.
-  auto suggest_with_context = [&](UserHistoryPredictor *predictor,
-                                  absl::string_view key,
+  auto suggest_with_context = [&](absl::string_view key,
                                   absl::string_view left_context) {
     context_.set_preceding_text(left_context);
     request_.mutable_decoder_experiment_params()
@@ -5327,154 +5343,148 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
   };
 
   {
-    UserHistoryPredictor *predictor = init_predictor();
+    init_predictor();
 
-    results = suggest_with_context(predictor, "さとう", "佐藤さんは京都大学を");
+    results = suggest_with_context("さとう", "佐藤さんは京都大学を");
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(absl::StartsWith(results[0].value, "佐藤さん"));
 
-    EXPECT_TRUE(has_entry(predictor, "さとうさんはきょうとだいがくを",
-                          "佐藤さんは京都大学を"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
+    EXPECT_TRUE(
+        has_entry("さとうさんはきょうとだいがくを", "佐藤さんは京都大学を"));
+    EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_TRUE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   }
 
   {
-    UserHistoryPredictor *predictor = init_predictor();
+    init_predictor();
 
-    results = suggest_with_context(predictor, "さとう", "佐藤さんは京都大学");
+    results = suggest_with_context("さとう", "佐藤さんは京都大学");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_TRUE(has_entry(predictor, "さとうさんはきょうとだいがく",
-                          "佐藤さんは京都大学"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
+    EXPECT_TRUE(
+        has_entry("さとうさんはきょうとだいがく", "佐藤さんは京都大学"));
+    EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_FALSE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_TRUE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   }
 
   {
-    UserHistoryPredictor *predictor = init_predictor();
+    init_predictor();
 
-    // middle of 京都大学 -> cannot restore as no information to split the
-    // reading.
-    results = suggest_with_context(predictor, "さとう", "佐藤さんは京都");
+    // middle of 京都大学 -> split by reading aligner.
+    results = suggest_with_context("さとう", "佐藤さんは京都");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_FALSE(
-        has_entry(predictor, "さとうさんはきょうと", "佐藤さんは京都"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
+    EXPECT_TRUE(has_entry("さとうさんはきょうと", "佐藤さんは京都"));
+    EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_TRUE(has_entry("きょうと", "京都"));
+    EXPECT_FALSE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_FALSE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   }
 
   {
-    UserHistoryPredictor *predictor = init_predictor();
+    init_predictor();
 
     // Middle of 卒業した -> safely remove "した" as it is HIRAGANA.
-    results =
-        suggest_with_context(predictor, "さとう", "佐藤さんは京都大学を卒業");
+    results = suggest_with_context("さとう", "佐藤さんは京都大学を卒業");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_TRUE(has_entry(predictor, "さとうさんはきょうとだいがくをそつぎょう",
+    EXPECT_TRUE(has_entry("さとうさんはきょうとだいがくをそつぎょう",
                           "佐藤さんは京都大学を卒業"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
-    EXPECT_TRUE(has_entry(predictor, "そつぎょう", "卒業"));  // Newly added.
+    EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_TRUE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
+    EXPECT_TRUE(has_entry("そつぎょう", "卒業"));  // Newly added.
   }
 
   {
-    UserHistoryPredictor *predictor = init_predictor();
-    results =
-        suggest_with_context(predictor, "さとう", "佐藤さんは京都大学を卒業し");
+    init_predictor();
+    results = suggest_with_context("さとう", "佐藤さんは京都大学を卒業し");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_TRUE(has_entry(predictor,
-                          "さとうさんはきょうとだいがくをそつぎょうし",
+    EXPECT_TRUE(has_entry("さとうさんはきょうとだいがくをそつぎょうし",
                           "佐藤さんは京都大学を卒業し"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
-    EXPECT_TRUE(
-        has_entry(predictor, "そつぎょうし", "卒業し"));  // Newly added.
+    EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_TRUE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
+    EXPECT_TRUE(has_entry("そつぎょうし", "卒業し"));  // Newly added.
   }
 
   {
-    UserHistoryPredictor *predictor = init_predictor();
-    results = suggest_with_context(predictor, "さとう", "佐藤さん");
+    init_predictor();
+    results = suggest_with_context("さとう", "佐藤さん");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_FALSE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
+    EXPECT_FALSE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_FALSE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_FALSE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   }
 
   {
-    UserHistoryPredictor *predictor = init_predictor();
-    results = suggest_with_context(predictor, "さとう", "佐藤");
+    init_predictor();
+    results = suggest_with_context("さとう", "佐藤");
     EXPECT_FALSE(results.empty());
 
-    EXPECT_TRUE(has_entry(predictor, "さとう", "佐藤"));
-    EXPECT_FALSE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_FALSE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
+    EXPECT_TRUE(has_entry("さとう", "佐藤"));
+    EXPECT_FALSE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_FALSE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_FALSE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_FALSE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   }
 
   {
-    UserHistoryPredictor *predictor = init_predictor();
-    results = suggest_with_context(predictor, "さとう", "");
+    init_predictor();
+    results = suggest_with_context("さとう", "");
     EXPECT_TRUE(results.empty());
 
-    EXPECT_FALSE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_FALSE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
+    EXPECT_FALSE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_FALSE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_FALSE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_FALSE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   }
 
   {
-    UserHistoryPredictor *predictor = init_predictor();
-    results = suggest_with_context(predictor, "さとう", "関係ない文脈");
+    init_predictor();
+    results = suggest_with_context("さとう", "関係ない文脈");
     EXPECT_TRUE(results.empty());
 
-    EXPECT_FALSE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_FALSE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_FALSE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
+    EXPECT_FALSE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_FALSE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_FALSE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_FALSE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   }
 
   // Adds extra characters directly w/o using IME.
   {
-    UserHistoryPredictor *predictor = init_predictor();
+    init_predictor();
 
-    results = suggest_with_context(predictor, "さとう",
-                                   "佐藤さんは京都大学を \n\r　");
+    results = suggest_with_context("さとう", "佐藤さんは京都大学を \n\r　");
     EXPECT_FALSE(results.empty());
     EXPECT_TRUE(absl::StartsWith(results[0].value, "佐藤さん"));
 
-    EXPECT_TRUE(has_entry(predictor, "さとうさんはきょうとだいがくを",
-                          "佐藤さんは京都大学を"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさんは", "佐藤さんは"));
-    EXPECT_TRUE(has_entry(predictor, "さとうさん", "佐藤さん"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがくを", "京都大学を"));
-    EXPECT_TRUE(has_entry(predictor, "きょうとだいがく", "京都大学"));
-    EXPECT_FALSE(has_entry(predictor, "そつぎょうした", "卒業した"));
+    EXPECT_TRUE(
+        has_entry("さとうさんはきょうとだいがくを", "佐藤さんは京都大学を"));
+    EXPECT_TRUE(has_entry("さとうさんは", "佐藤さんは"));
+    EXPECT_TRUE(has_entry("さとうさん", "佐藤さん"));
+    EXPECT_TRUE(has_entry("きょうとだいがくを", "京都大学を"));
+    EXPECT_TRUE(has_entry("きょうとだいがく", "京都大学"));
+    EXPECT_FALSE(has_entry("そつぎょうした", "卒業した"));
   }
 }
 
