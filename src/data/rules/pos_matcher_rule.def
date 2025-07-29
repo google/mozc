@@ -43,6 +43,8 @@
 # uint16 POSMatcher::GetFirstNameId() { ... }
 # bool   POSMatcher::IsFirstName(uint16 id) { ... }
 
+# LINT.IfChange
+
 Functional ^(助詞|助動詞|動詞,非自立|名詞,非自立|形容詞,非自立|動詞,接尾|名詞,接尾|形容詞,接尾)
 
 Unknown    名詞,サ変接続
@@ -139,3 +141,5 @@ KagyoTaConnectionVerb ^動詞,(非自立|自立),*,*,五段・カ行(促音便|�
 # This rule is used for removing candidate "買いた"
 # Do not match ウ音便, because "吸うた" is acceptable.
 WagyoRenyoConnectionVerb ^動詞,(非自立|自立),*,*,五段・ワ行促音便,連用形
+
+# LINT.ThenChange(//data/version/mozc_version_template.bzl)
