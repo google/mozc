@@ -31,7 +31,6 @@
 
 #include <fstream>
 #include <ios>
-#include <string>
 
 #include "base/strings/pfchar.h"
 #include "base/strings/zstring_view.h"

@@ -33,6 +33,7 @@
 #include <cstdint>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "base/container/serialized_string_array.h"
 #include "dictionary/dictionary_interface.h"
 #include "request/conversion_request.h"

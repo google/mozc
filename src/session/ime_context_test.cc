@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "composer/table.h"

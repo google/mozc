@@ -41,7 +41,6 @@
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
-#include "base/file_util.h"
 #include "base/hash.h"
 #include "base/thread.h"
 #include "data_manager/data_manager.h"

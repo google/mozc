@@ -32,7 +32,6 @@
 #include <cstddef>
 
 #include "absl/log/check.h"
-#include "absl/strings/string_view.h"
 #include "base/embedded_file.h"
 #include "data_manager/data_manager.h"
 

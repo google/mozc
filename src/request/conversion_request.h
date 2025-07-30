@@ -33,7 +33,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <string>
 #include <type_traits>
 #include <utility>

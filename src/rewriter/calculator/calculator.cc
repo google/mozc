@@ -34,7 +34,6 @@
 #include <cstdio>  // IWYU pragma: keep, used in parser.c
 #include <cstdlib>
 #include <cstring>  // IWYU pragma: keep, used in parser.c
-#include <map>
 #include <string>
 #include <utility>
 #include <vector>

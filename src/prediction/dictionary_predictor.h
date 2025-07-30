@@ -34,13 +34,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
-#include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
-#include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/thread.h"
@@ -50,6 +47,7 @@
 #include "engine/modules.h"
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"

@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <iterator>
 #include <string>
 #include <vector>
 

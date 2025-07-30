@@ -31,13 +31,12 @@
 #define MOZC_PREDICTION_SINGLE_KANJI_DECODER_H_
 
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "prediction/result.h"

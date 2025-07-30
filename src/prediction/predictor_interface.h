@@ -31,7 +31,6 @@
 #define MOZC_PREDICTION_PREDICTOR_INTERFACE_H_
 
 #include <cstdint>
-#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"

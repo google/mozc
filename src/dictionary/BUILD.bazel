@@ -157,7 +157,6 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
         "//request:conversion_request",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/log",
@@ -259,10 +258,7 @@ mozc_cc_library(
         "//:__subpackages__",
         "//rewriter:__pkg__",
     ],
-    deps = [
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/types:span",
-    ],
+    deps = ["@com_google_absl//absl/types:span"],
 )
 
 mozc_py_binary(
@@ -381,17 +377,15 @@ mozc_cc_library(
         "//base:file_stream",
         "//base:file_util",
         "//base:process_mutex",
-        "//base:vlog",
         "//base/protobuf:coded_stream",
         "//base/protobuf:zero_copy_stream_impl",
         "//protocol:user_dictionary_storage_cc_proto",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -415,7 +409,6 @@ mozc_cc_test(
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

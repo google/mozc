@@ -47,7 +47,6 @@
 #include "base/vlog.h"
 #include "converter/candidate.h"
 #include "converter/node.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"

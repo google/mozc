@@ -33,11 +33,13 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "data_manager/data_manager.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 

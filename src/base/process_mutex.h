@@ -31,7 +31,9 @@
 #define MOZC_BASE_PROCESS_MUTEX_H_
 
 #include <string>
+#include <utility>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 

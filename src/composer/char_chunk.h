@@ -31,6 +31,7 @@
 #define MOZC_COMPOSER_CHAR_CHUNK_H_
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>

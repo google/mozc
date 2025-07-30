@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "absl/types/span.h"
 #include "converter/node.h"
 #include "data_manager/data_manager.h"
 

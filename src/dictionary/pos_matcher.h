@@ -32,7 +32,6 @@
 
 #include <cstdint>
 
-#include "absl/base/attributes.h"
 #include "absl/types/span.h"
 
 namespace mozc::dictionary {

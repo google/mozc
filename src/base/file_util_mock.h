@@ -30,7 +30,6 @@
 #ifndef MOZC_BASE_FILE_UTIL_MOCK_H_
 #define MOZC_BASE_FILE_UTIL_MOCK_H_
 
-#include <map>
 #include <string>
 
 #include "absl/container/btree_map.h"

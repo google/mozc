@@ -31,6 +31,7 @@
 #define MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 

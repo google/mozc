@@ -37,7 +37,6 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/supplemental_model_interface.h"
-#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {

@@ -30,7 +30,9 @@
 #ifndef MOZC_REWRITER_CALCULATOR_CALCULATOR_H_
 #define MOZC_REWRITER_CALCULATOR_CALCULATOR_H_
 
+#include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"

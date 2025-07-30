@@ -32,9 +32,9 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -44,13 +44,12 @@
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/data_loader.h"
 #include "engine/engine_converter.h"
+#include "engine/engine_converter_interface.h"
 #include "engine/engine_interface.h"
-#include "engine/minimal_converter.h"
 #include "engine/modules.h"
 #include "engine/supplemental_model_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 

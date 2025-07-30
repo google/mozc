@@ -30,6 +30,7 @@
 #include "prediction/realtime_decoder.h"
 
 #include <cstddef>
+#include <string>
 #include <utility>
 #include <vector>
 

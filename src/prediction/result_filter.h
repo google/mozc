@@ -31,12 +31,10 @@
 #define MOZC_PREDICTION_RESULT_FILTER_H_
 
 #include <cstddef>
-#include <cstdint>
-#include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "converter/connector.h"

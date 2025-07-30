@@ -38,6 +38,7 @@
 
 #include "absl/random/random.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "base/mmap.h"
 #include "base/vlog.h"
 #include "data_manager/connection_file_reader.h"

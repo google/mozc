@@ -32,7 +32,9 @@
 
 #include <cstddef>
 #include <list>
+#include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "absl/container/btree_set.h"
@@ -41,8 +43,8 @@
 #include "absl/strings/str_join.h"
 #include "composer/char_chunk.h"
 #include "composer/composition_input.h"
-#include "composer/transliterators.h"
 #include "composer/table.h"
+#include "composer/transliterators.h"
 
 namespace mozc {
 namespace composer {

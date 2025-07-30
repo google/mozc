@@ -30,7 +30,6 @@
 #ifndef MOZC_REWRITER_DICE_REWRITER_H_
 #define MOZC_REWRITER_DICE_REWRITER_H_
 
-#include "absl/random/random.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 

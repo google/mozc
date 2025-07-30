@@ -34,7 +34,6 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -48,7 +47,6 @@
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "composer/query.h"
 #include "config/config_handler.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -56,7 +54,6 @@
 #include "engine/engine_interface.h"
 #include "engine/engine_mock.h"
 #include "engine/mock_data_engine_factory.h"
-#include "engine/modules.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/keymap.h"

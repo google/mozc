@@ -34,11 +34,9 @@
 #define MOZC_SESSION_IME_CONTEXT_H_
 
 #include <memory>
-#include <utility>
 
 #include "absl/time/time.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
 #include "engine/engine_converter_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

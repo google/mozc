@@ -33,9 +33,10 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include "absl/base/thread_annotations.h"
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"

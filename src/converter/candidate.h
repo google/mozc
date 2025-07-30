@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <ostream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "absl/strings/string_view.h"

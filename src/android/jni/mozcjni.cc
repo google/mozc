@@ -29,7 +29,6 @@
 
 // JNI wrapper for SessionHandler.
 
-#include <utility>
 #ifdef __ANDROID__
 
 #include <jni.h>

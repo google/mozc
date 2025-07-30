@@ -34,10 +34,11 @@
 #include <optional>
 #include <vector>
 
-#include "absl/strings/string_view.h"
+#include "absl/log/check.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "prediction/result.h"
+#include "request/conversion_request.h"
 
 namespace mozc::prediction {
 

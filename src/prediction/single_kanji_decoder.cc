@@ -30,7 +30,6 @@
 #include "prediction/single_kanji_decoder.h"
 
 #include <cstddef>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -41,7 +40,6 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/candidate.h"
-#include "data_manager/data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "prediction/result.h"

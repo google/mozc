@@ -29,16 +29,15 @@
 
 #include "prediction/result.h"
 
+#include <string>
 #include <tuple>
 
 #include "absl/base/nullability.h"
-#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "base/strings/unicode.h"
 #include "composer/query.h"
 #include "converter/candidate.h"
 #include "dictionary/dictionary_token.h"
-#include "prediction/zero_query_dict.h"
 
 namespace mozc {
 namespace prediction {

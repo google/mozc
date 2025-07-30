@@ -33,7 +33,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/base/no_destructor.h"
@@ -44,7 +43,6 @@
 #include "absl/strings/string_view.h"
 #include "composer/query.h"
 #include "dictionary/dictionary_token.h"
-#include "prediction/zero_query_dict.h"
 
 namespace mozc {
 namespace prediction {

@@ -31,7 +31,6 @@
 #define MOZC_ENGINE_MODULES_H_
 
 #include <memory>
-#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/status/status.h"

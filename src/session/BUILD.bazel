@@ -640,6 +640,7 @@ mozc_cc_test(
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "//testing:testing_util",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ],
 )

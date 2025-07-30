@@ -35,10 +35,10 @@
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/candidate.h"
-#include "converter/segments.h"
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

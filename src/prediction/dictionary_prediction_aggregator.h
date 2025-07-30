@@ -32,7 +32,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -43,7 +42,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "engine/modules.h"
-#include "prediction/number_decoder.h"
 #include "prediction/realtime_decoder.h"
 #include "prediction/result.h"
 #include "prediction/zero_query_dict.h"
