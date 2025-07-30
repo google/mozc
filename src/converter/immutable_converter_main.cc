@@ -103,15 +103,17 @@ std::string DumpNodes(const Lattice &lattice) {
     return absl::StrCat(node_id(&node), "\t", node.key, "\t", node.value, "\t",
                         node.begin_pos, "\t", node.end_pos, "\t", node.lid,
                         "\t", node.rid, "\t", node.wcost, "\t", node.cost, "\t",
+                        node_id(node.bnext), "\t", node_id(node.enext), "\t",
                         node_id(node.prev), "\t", node_id(node.next), "\n");
   };
 
   std::string output;
 
   // Output header.
-  output = absl::StrJoin({"id", "key", "value", "begin_pos", "end_pos", "lid",
-                          "rid", "wcost", "cost", "prev", "next"},
-                         "\t");
+  output =
+      absl::StrJoin({"id", "key", "value", "begin_pos", "end_pos", "lid", "rid",
+                     "wcost", "cost", "bnext", "enext", "prev", "next"},
+                    "\t");
   absl::StrAppend(&output, "\n");
 
   // Output BOS node(s).
