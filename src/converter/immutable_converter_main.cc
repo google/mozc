@@ -57,6 +57,7 @@ id	key	value	begin_pos	end_pos	lid	rid	wcost	cost	prev	next
 #include <ostream>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
@@ -88,7 +89,7 @@ std::string DumpNodes(const Lattice &lattice) {
   node_id_map[nullptr] = 0;
 
   // Returns a unique ID for the given node.
-  auto node_id = [&node_id_map](const Node *node) {
+  auto node_id = [&node_id_map](const Node *node) -> uint32_t {
     auto it = node_id_map.find(node);
     if (it != node_id_map.end()) {
       return it->second;
@@ -99,7 +100,7 @@ std::string DumpNodes(const Lattice &lattice) {
   };
 
   // Returns a string representation of the given node in TSV.
-  auto dump_node = [&node_id](const Node &node) {
+  auto dump_node = [&node_id](const Node &node) -> std::string {
     return absl::StrCat(node_id(&node), "\t", node.key, "\t", node.value, "\t",
                         node.begin_pos, "\t", node.end_pos, "\t", node.lid,
                         "\t", node.rid, "\t", node.wcost, "\t", node.cost, "\t",
@@ -121,13 +122,46 @@ std::string DumpNodes(const Lattice &lattice) {
     absl::StrAppend(&output, dump_node(*node));
   }
 
-  // Output nodes.
+  // Make position nodes.
+  std::vector<Node> pos_nodes;
   for (size_t i = 0; i <= lattice.key().size(); ++i) {
-    if (lattice.begin_nodes(i) == nullptr) {
+    Node *begin_node = lattice.begin_nodes(i);
+    if (begin_node == nullptr) {
       continue;
     }
-    for (Node *node = lattice.begin_nodes(i); node != nullptr;
-         node = node->bnext) {
+
+    Node pos_node;
+    pos_node.begin_pos = i;
+    pos_node.end_pos = i;
+    pos_node.value = "POS";
+    pos_node.bnext = begin_node;
+    pos_nodes.push_back(std::move(pos_node));
+  }
+  for (size_t i = 0; i < pos_nodes.size() - 1; ++i) {
+    pos_nodes[i].next = &pos_nodes[i + 1];
+  }
+
+  // Output position nodes.
+  for (const Node &pos_node : pos_nodes) {
+    absl::StrAppend(&output, dump_node(pos_node));
+  }
+
+  // Output nodes.
+  for (size_t i = 0; i <= lattice.key().size(); ++i) {
+    Node *begin_node = lattice.begin_nodes(i);
+    if (begin_node == nullptr) {
+      continue;
+    }
+    {
+      Node pos_node;
+      pos_node.begin_pos = i;
+      pos_node.end_pos = i;
+      pos_node.value = "POS";
+      pos_node.bnext = begin_node;
+      pos_nodes.push_back(std::move(pos_node));
+    }
+
+    for (const Node *node = begin_node; node != nullptr; node = node->bnext) {
       absl::StrAppend(&output, dump_node(*node));
     }
   }
