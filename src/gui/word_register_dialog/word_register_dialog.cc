@@ -205,7 +205,7 @@ WordRegisterDialog::WordRegisterDialog()
   EnableIME();
 }
 
-WordRegisterDialog::~WordRegisterDialog() {}
+WordRegisterDialog::~WordRegisterDialog() = default;
 
 bool WordRegisterDialog::IsAvailable() const { return is_available_; }
 
