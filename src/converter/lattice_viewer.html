@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mozc Lattice Viewer (Material Design)</title>
+<!-- Material Design Components -->
+<link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+<script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Roboto', 'Noto Sans', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+  }
+  main {
+    padding: 1.5rem;
+  }
+  .controls-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .controls-left, .controls-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .edge-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border-left: 1px solid rgba(0,0,0,0.12);
+      padding-left: 1.5rem;
+  }
+  #cy-container {
+    width: 100%;
+    height: 70vh;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 4px 4px 0 0;
+    overflow: hidden;
+  }
+  #cy {
+    width: 100%;
+    height: 100%;
+  }
+  #resize-handle {
+    cursor: ns-resize;
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+  }
+  #resize-handle:hover {
+    background-color: #bdbdbd;
+  }
+  #info-panel-container {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    width: 320px;
+  }
+  #info-panel-header {
+    cursor: grab;
+    background-color: #f5f5f5; /* Material Design Grey 100 */
+  }
+  #info-panel-header:active {
+    cursor: grabbing;
+  }
+  #info-content {
+      height: 295px; /* Fixed height */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1rem;
+  }
+  #info-content p {
+    margin: 6px 0;
+  }
+  #loading {
+    padding: 2rem;
+    text-align: center;
+  }
+  .cy-dimmed {
+    opacity: 0.2 !important;
+  }
+  #uploadButton {
+    --mdc-theme-primary: #1976d2; /* Blue 600 */
+  }
+  .mdc-checkbox {
+    --mdc-theme-secondary: #1976d2; /* Blue 600 */
+    --mdc-theme-on-surface: #1976d2; /* Blue 600 */
+  }
+
+  #helpDialog .mdc-dialog__surface {
+    width: 640px;
+    max-width: none;
+  }
+</style>
+<!-- Library imports -->
+<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+</head>
+<body class="mdc-typography">
+
+<main>
+  <header class="mb-4">
+    <h1 class="mdc-typography--headline4">Mozc Lattice Viewer</h1>
+  </header>
+
+  <div class="controls-container">
+    <!-- Left Aligned Controls -->
+    <div class="controls-left">
+        <button id="uploadButton" class="mdc-button mdc-button--raised">
+          <span class="mdc-button__ripple"></span>
+          <span class="mdc-button__label">Upload TSV File</span>
+        </button>
+        <input type="file" id="tsvFileInput" accept=".tsv" style="display: none;">
+        <i id="helpIcon" class="material-icons" style="cursor: pointer;">help_outline</i>
+    </div>
+
+    <!-- Right Aligned Controls -->
+    <div class="controls-right">
+      <div class="mdc-text-field mdc-text-field--outlined mdc-text-field--dense" data-mdc-auto-init="MDCTextField" style="width: 120px;">
+        <input type="text" id="wrapLimitInput" class="mdc-text-field__input" placeholder="10" list="wrapLimitOptions">
+        <datalist id="wrapLimitOptions">
+          <option value="10"></option>
+          <option value="25"></option>
+          <option value="50"></option>
+          <option value="100"></option>
+        </datalist>
+        <div class="mdc-notched-outline">
+          <div class="mdc-notched-outline__leading"></div>
+          <div class="mdc-notched-outline__notch">
+            <label for="wrapLimitInput" class="mdc-floating-label" id="wrapLimitLabel">Wrap at</label>
+          </div>
+          <div class="mdc-notched-outline__trailing"></div>
+        </div>
+      </div>
+
+      <div class="edge-controls">
+          <span class="mdc-typography--body2">Show Edges:</span>
+          <div class="mdc-form-field">
+            <div class="mdc-checkbox" data-mdc-auto-init="MDCCheckbox">
+              <input type="checkbox" id="nextToggle" class="mdc-checkbox__native-control edge-toggle" checked/>
+              <div class="mdc-checkbox__background">
+                <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/></svg>
+                <div class="mdc-checkbox__mixedmark"></div>
+              </div>
+              <div class="mdc-checkbox__ripple"></div>
+            </div>
+            <label for="nextToggle">next</label>
+          </div>
+          <div class="mdc-form-field">
+            <div class="mdc-checkbox" data-mdc-auto-init="MDCCheckbox">
+              <input type="checkbox" id="bnextToggle" class="mdc-checkbox__native-control edge-toggle" checked/>
+              <div class="mdc-checkbox__background"><svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/></svg><div class="mdc-checkbox__mixedmark"></div></div><div class="mdc-checkbox__ripple"></div>
+            </div>
+            <label for="bnextToggle">bnext</label>
+          </div>
+          <div class="mdc-form-field">
+            <div class="mdc-checkbox" data-mdc-auto-init="MDCCheckbox">
+              <input type="checkbox" id="enextToggle" class="mdc-checkbox__native-control edge-toggle" checked/>
+              <div class="mdc-checkbox__background"><svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/></svg><div class="mdc-checkbox__mixedmark"></div></div><div class="mdc-checkbox__ripple"></div>
+            </div>
+            <label for="enextToggle">enext</label>
+          </div>
+          <div class="mdc-form-field">
+            <div class="mdc-checkbox" data-mdc-auto-init="MDCCheckbox">
+              <input type="checkbox" id="prevToggle" class="mdc-checkbox__native-control edge-toggle"/>
+              <div class="mdc-checkbox__background"><svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/></svg><div class="mdc-checkbox__mixedmark"></div></div><div class="mdc-checkbox__ripple"></div>
+            </div>
+            <label for="prevToggle">prev</label>
+          </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="relative">
+    <!-- Graph Container and Resizer -->
+    <div>
+      <div id="cy-container" style="position: relative;">
+        <div id="cy"></div>
+
+        <!-- Floating Info Panel -->
+        <div id="info-panel-container" class="mdc-card mdc-elevation--z4" style="display: none; position: absolute; top: 16px; right: 16px; z-index: 10; width: 320px;">
+          <div id="info-panel-header" class="mdc-card__primary-action" style="background-color: #f5f5f5;">
+            <div style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+              <h2 class="mdc-typography--headline6">Node Information</h2>
+              <button id="closeInfoPanelButton" class="mdc-icon-button material-icons" title="Close" data-mdc-auto-init="MDCRipple">close</button>
+            </div>
+          </div>
+          <div id="info-content" class="mdc-typography--body2" style="padding: 1.5rem;">
+            <p>Click a node to see details.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="resize-handle"></div>
+    </div>
+  </div>
+
+  <div id="loading" class="mdc-typography--headline6" style="display: none;">
+    Loading graph...
+  </div>
+
+  <!-- Help Dialog -->
+  <div id="helpDialog" class="mdc-dialog">
+    <div class="mdc-dialog__container">
+      <div class="mdc-dialog__surface"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="help-dialog-title"
+        aria-describedby="help-dialog-content">
+        <h2 class="mdc-dialog__title" id="help-dialog-title">How to Use</h2>
+        <div class="mdc-dialog__content" id="help-dialog-content">
+          <p>
+            This tool loads and visualizes Mozc lattice data in TSV format.
+            Click a node to see its details and dim unrelated nodes.
+          </p>
+          <p>
+            To generate the required TSV data, run the following command:
+          </p>
+          <pre><code>immutable_converter_main --dictionary oss --query=もじ --output=lattice.tsv</code></pre>
+        </div>
+        <div class="mdc-dialog__actions">
+          <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close">
+            <span class="mdc-button__label">Got it</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="mdc-dialog__scrim"></div>
+  </div>
+</main>
+
+<script>
+/**
+ * @fileoverview Description of this file.
+ */
+
+/**
+ * IIFE (Immediately Invoked Function Expression) to encapsulate the entire application logic,
+ * preventing global scope pollution.
+ */
+(function() {
+'use strict';
+
+// --- DOM Element Retrieval ---
+const infoContent = document.getElementById('info-content');
+const infoPanelContainer = document.getElementById('info-panel-container');
+const infoPanelHeader = document.getElementById('info-panel-header');
+const closeInfoPanelButton = document.getElementById('closeInfoPanelButton');
+const loadingMessage = document.getElementById('loading');
+const cyContainer = document.getElementById('cy');
+const cyContainerWrapper = document.getElementById('cy-container');
+const resizeHandle = document.getElementById('resize-handle');
+const tsvFileInput = document.getElementById('tsvFileInput');
+const uploadButton = document.getElementById('uploadButton');
+const wrapLimitInput = document.getElementById('wrapLimitInput');
+const wrapLimitLabel = document.getElementById('wrapLimitLabel');
+const edgeToggles = document.querySelectorAll('.edge-toggle');
+const helpIcon = document.getElementById('helpIcon');
+const helpDialog = new mdc.dialog.MDCDialog(document.getElementById('helpDialog'));
+
+function updateWrapLimitLabel() {
+  const value = wrapLimitInput.value || wrapLimitInput.placeholder;
+  wrapLimitLabel.textContent = `Wrap at (${value})`;
+}
+
+// --- Global Application State ---
+let cy; // Cytoscape instance
+let currentTsvString = '';
+
+// --- Initial Data (TSV format) ---
+const initialTsvData = `id\tkey\tvalue\tbegin_pos\tend_pos\tlid\trid\twcost\tcost\tbnext\tenext\tprev\tnext\n1\t\tBOS\t0\t0\t0\t0\t0\t0\t0\t0\t0\t2\n3\t\tPOS\t0\t0\t0\t0\t0\t0\t4\t0\t0\t5\n5\t\tPOS\t3\t3\t0\t0\t0\t0\t6\t0\t0\t7\n7\t\tPOS\t6\t6\t0\t0\t0\t0\t8\t0\t0\t0\n4\tも\tも\t0\t3\t1841\t1841\t32767\t34068\t9\t0\t1\t0\n9\tもじ\t捩\t0\t6\t577\t577\t11584\t15810\t10\t0\t1\t0\n10\tもじ\tもじ\t0\t6\t577\t577\t8697\t12923\t2\t9\t1\t0\n2\tもじ\t文字\t0\t6\t1851\t1851\t3953\t5044\t11\t10\t1\t8\n11\tもじ\tモジ\t0\t6\t1851\t1851\t7487\t8578\t12\t2\t1\t0\n12\tもじ\t門司\t0\t6\t1920\t1920\t5714\t8904\t13\t11\t1\t0\n13\tもじ\t門司\t0\t6\t1923\t1923\t5752\t8371\t14\t12\t1\t0\n14\tもじ\t門司\t0\t6\t1924\t1924\t4505\t7301\t15\t13\t1\t0\n15\tもじ\t茂地\t0\t6\t1924\t1924\t7372\t10168\t16\t14\t1\t0\n16\tも\tも\t0\t3\t284\t284\t2500\t4850\t17\t4\t1\t0\n17\tも\t盛\t0\t3\t577\t577\t10074\t14300\t18\t16\t1\t0\n18\tも\t漏\t0\t3\t577\t577\t8014\t12240\t19\t17\t1\t0\n19\tも\t洩\t0\t3\t577\t577\t9320\t13546\t20\t18\t1\t0\n20\tも\tも\t0\t3\t577\t577\t17185\t21411\t21\t19\t1\t0\n21\tも\t模\t0\t3\t1841\t1841\t5017\t6318\t22\t20\t1\t0\n22\tも\t裳\t0\t3\t1851\t1851\t6462\t7553\t23\t21\t1\t0\n23\tも\t藻\t0\t3\t1851\t1851\t5466\t6557\t24\t22\t1\t0\n24\tも\t喪\t0\t3\t1851\t1851\t6169\t7260\t0\t23\t1\t0\n6\tじ\tじ\t3\t6\t1841\t1841\t33067\t38971\t25\t15\t16\t0\n25\tじ\tじ\t3\t6\t36\t36\t259\t10291\t26\t6\t16\t0\n26\tじ\t持\t3\t6\t1841\t1841\t5521\t11425\t27\t25\t16\t0\n27\tじ\t辞\t3\t6\t1851\t1851\t5933\t11852\t28\t26\t16\t0\n28\tじ\t痔\t3\t6\t1851\t1851\t6129\t12048\t29\t27\t16\t0\n29\tじ\t痔\t3\t6\t1851\t1851\t6129\t12048\t30\t28\t16\t0\n30\tじ\t字\t3\t6\t1851\t1851\t4784\t10703\t31\t29\t16\t0\n31\tじ\t地\t3\t6\t1851\t1851\t4838\t10757\t32\t30\t16\t0\n32\tじ\tぢ\t3\t6\t1851\t1851\t6622\t12541\t33\t31\t16\t0\n33\tじ\t激\t3\t6\t1922\t1922\t6735\t14966\t34\t32\t16\t0\n34\tじ\t路\t3\t6\t1949\t1949\t4473\t12291\t35\t33\t21\t0\n35\tじ\t児\t3\t6\t1949\t1949\t4003\t11821\t36\t34\t21\t0\n36\tじ\t事\t3\t6\t1951\t1951\t1964\t13417\t37\t35\t21\t0\n37\tじ\t時\t3\t6\t2005\t2005\t765\t10057\t38\t36\t21\t0\n38\tじ\t字\t3\t6\t2009\t2009\t3992\t14164\t39\t37\t16\t0\n39\tじ\t児\t3\t6\t2009\t2009\t4275\t14447\t40\t38\t16\t0\n40\tじ\t時\t3\t6\t2013\t2013\t314\t18653\t41\t39\t23\t0\n41\tじ\t次\t3\t6\t2015\t2015\t315\t15752\t42\t40\t23\t0\n42\tじ\t次\t3\t6\t2624\t2624\t4015\t14889\t43\t41\t16\t0\n43\tじ\t自\t3\t6\t2629\t2629\t4001\t14466\t0\t42\t16\t0\n8\t\tEOS\t6\t6\t0\t0\t0\t5044\t0\t0\t2\t0`;
+
+// --- Cytoscape Configuration ---
+const CONFIG = {
+  COLUMN_WIDTH: 150,
+  GROUP_PADDING: 50,
+  WRAP_X_OFFSET_RATIO: 0.4,
+  Y_SPACING: 80,
+  POS_Y: 50,
+  BOS_X_OFFSET: -120,
+  WRAP_START_Y_ROW: 4,
+  COLORS: {
+    nodePrimary: '#1976d2',   // Blue 600
+    nodeSecondary: '#fb8c00', // Orange 600
+    nodeTertiary: '#43a047',  // Green 600
+    nodeSpecial: '#757575',   // Grey 600
+    next: '#009688',          // Teal 500
+    prev: '#ffa000',          // Amber 700
+    enext: '#ec407a',         // Pink 400
+    bnext: '#29b6f6',         // Light Blue 400
+    mutual: '#7e57c2'         // Deep Purple 400
+  },
+};
+CONFIG.CYTOSCAPE_STYLE = [
+  { selector: 'node', style: {
+    'shape': 'round-rectangle', 'label': 'data(label)', 'text-valign': 'center',
+    'color': 'white', 'font-size': '14px', 'padding': '10px', 'width': 'label',
+    'height': 'label', 'text-wrap': 'wrap', 'text-max-width': '100px',
+    'transition-property': 'opacity', 'transition-duration': '0.3s'
+  }},
+  { selector: 'node[lid>=1000]', style: { 'background-color': CONFIG.COLORS.nodePrimary }},
+  { selector: 'node[lid<1000][lid>=100]', style: { 'background-color': CONFIG.COLORS.nodeSecondary }},
+  { selector: 'node[lid<100]', style: { 'background-color': CONFIG.COLORS.nodeTertiary }},
+  { selector: 'node[type="SPECIAL"], node[type="POS_NODE"]', style: { 'background-color': CONFIG.COLORS.nodeSpecial, 'shape': 'ellipse' }},
+  { selector: 'edge', style: { 'width': 2, 'curve-style': 'bezier', 'transition-property': 'opacity', 'transition-duration': '0.3s' }},
+  { selector: 'edge[type="next"]', style: { 'line-color': CONFIG.COLORS.next, 'target-arrow-color': CONFIG.COLORS.next, 'target-arrow-shape': 'triangle' }},
+  { selector: 'edge[type="prev"]', style: { 'line-color': CONFIG.COLORS.prev, 'target-arrow-color': CONFIG.COLORS.prev, 'target-arrow-shape': 'triangle' }},
+  { selector: 'edge[type="bnext"]', style: { 'line-color': CONFIG.COLORS.bnext, 'target-arrow-color': CONFIG.COLORS.bnext, 'target-arrow-shape': 'triangle' }},
+  { selector: 'edge[type="enext"][?isMutual]', style: { 'line-color': CONFIG.COLORS.enext, 'target-arrow-color': CONFIG.COLORS.enext, 'target-arrow-shape': 'circle', 'curve-style': 'bezier' }},
+  { selector: 'edge[type="enext"][!isMutual]', style: { 'line-color': CONFIG.COLORS.enext, 'target-arrow-color': CONFIG.COLORS.enext, 'target-arrow-shape': 'circle', 'curve-style': 'unbundled-bezier', 'control-point-distances': '-100', 'control-point-weights': '0.5' }},
+  { selector: 'edge[type="mutual"]', style: { 'line-color': CONFIG.COLORS.mutual, 'target-arrow-color': CONFIG.COLORS.mutual, 'target-arrow-shape': 'triangle', 'source-arrow-color': CONFIG.COLORS.mutual, 'source-arrow-shape': 'circle' }},
+  { selector: '.cy-dimmed', style: { 'opacity': 0.2 }},
+  { selector: '.edges-hidden', style: { 'display': 'none' }},
+  { selector: '.temp-edge', style: { 'opacity': 1 }}
+];
+
+
+// --- Function Definitions ---
+
+/**
+ * Parses TSV text into an array of objects.
+ * @param {string} tsvText The raw TSV string.
+ * @returns {!Array<!Object>} An array of objects representing the rows.
+ */
+function parseTSV(tsvText) {
+  const lines = tsvText.trim().split('\n');
+  if (lines.length < 2) {
+    return [];
+  }
+  const headers = lines[0].split('\t').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const values = line.split('\t');
+    return headers.reduce((obj, header, index) => {
+      obj[header] = values[index] ? values[index].trim() : '';
+      return obj;
+    }, {});
+  });
+}
+
+
+/**
+ * Builds Cytoscape elements (nodes and edges) from parsed data.
+ * @param {!Array<!Object>} parsedData The parsed TSV string.
+ * @returns {!Array<!Object>} An array of Cytoscape elements.
+ */
+function buildCytoscapeElements(parsedData) {
+  const nodes = [];
+  const edges = [];
+  const nodeMap = new Map(parsedData.map(item => [item.id, item]));
+
+  parsedData.forEach(item => {
+    let nodeType = 'NORMAL';
+    if (['BOS', 'EOS'].includes(item.value)) {
+      nodeType = 'SPECIAL';
+    } else if (item.value === 'POS') {
+      nodeType = 'POS_NODE';
+    }
+
+    let label = item.value || item.key;
+    if (nodeType === 'POS_NODE') {
+      label = `POS${item.begin_pos}`;
+    }
+
+    nodes.push({ group: 'nodes', data: { id: item.id, label: label, ...item, type: nodeType } });
+
+    if (item.bnext !== '0' && nodeMap.has(item.bnext)) {
+      const source = item.id;
+      const target = item.bnext;
+      const isMutual = nodeMap.get(nodeMap.get(source).bnext).enext === source;
+      edges.push({ group: 'edges', data: { id: `bnext-${source}-${target}`, source: source, target: target, type: 'bnext', isMutual: isMutual } });
+      if (isMutual) {
+        edges.push({ group: 'edges', data: { id: `mutual-${source}-${target}`, source: source, target: target, type: 'mutual' } });
+      }
+    }
+    if (item.enext !== '0' && nodeMap.has(item.enext)) {
+      const source = item.id;
+      const target = item.enext;
+      const isMutual = nodeMap.get(nodeMap.get(source).enext).bnext === source;
+      edges.push({ group: 'edges', data: { id: `enext-${source}-${target}`, source: source, target: target, type: 'enext', isMutual: isMutual } });
+    }
+    if (item.next !== '0' && nodeMap.has(item.next)) {
+      edges.push({ group: 'edges', data: { id: `next-${item.id}-${item.next}`, source: item.id, target: item.next, type: 'next' } });
+    }
+    if (item.prev !== '0' && nodeMap.has(item.prev)) {
+      edges.push({ group: 'edges', data: { id: `prev-${item.id}-${item.prev}`, source: item.id, target: item.prev, type: 'prev' } });
+    }
+  });
+
+  return nodes.concat(edges);
+}
+
+/**
+ * Sets node positions for normal nodes and BOS/EOS nodes.
+ * @param {!cytoscape.Collection} posNodes Collection of POS nodes.
+ * @param {number} wrapLimit The number of nodes before wrapping.
+ */
+function layoutNodes(posNodes, wrapLimit) {
+  // Initialize all nodes with a default position if they don't have one,
+  // to ensure 'preset' layout has coordinates for every element.
+  cy.nodes().forEach(node => {
+    if (node.position('x') === undefined || node.position('y') === undefined) {
+      node.position({ x: 0, y: 0 }); // Set a default position
+    }
+  });
+
+  // bnext chain wrapping logic
+  posNodes.forEach(posNode => {
+    const beginPos = posNode.data('begin_pos');
+    const nodesForThisPos = cy.nodes(`[type="NORMAL"][begin_pos = "${beginPos}"]`);
+    if (nodesForThisPos.empty()) {
+      return;
+    }
+
+    const bnextTargets = new Set();
+    nodesForThisPos.forEach(n => {
+      if (n.data('bnext') !== '0') {
+        bnextTargets.add(n.data('bnext'));
+      }
+    });
+    const starters = nodesForThisPos.filter(n => !bnextTargets.has(n.id()));
+
+    // Define startXForGroup within this scope, as it depends on posNode's position
+    const startXForGroup = posNode.position('x');
+
+    starters.forEach((startNode) => {
+      let chain = [];
+      let curr = startNode;
+      while (curr.nonempty()) {
+        chain.push(curr);
+        // Ensure we only follow bnext within the same pos group
+        curr = cy.getElementById(curr.data('bnext')).filter(t => nodesForThisPos.contains(t));
+      }
+
+      if (chain.length > 0) {
+        const startY = posNode.position('y') + CONFIG.Y_SPACING;
+        const wrapStartY = startY + ((CONFIG.WRAP_START_Y_ROW - 1) * CONFIG.Y_SPACING);
+
+        chain.forEach((currentNode, i) => {
+          const col = Math.floor(i / wrapLimit);
+          const row = i % wrapLimit;
+          const currentY = (col === 0) ? (startY + row * CONFIG.Y_SPACING) : (wrapStartY + row * CONFIG.Y_SPACING);
+          currentNode.position({ x: startXForGroup + col * CONFIG.COLUMN_WIDTH * CONFIG.WRAP_X_OFFSET_RATIO, y: currentY });
+        });
+      }
+    });
+  });
+
+  // BOS and EOS placement
+  const bosNode = cy.nodes('[value="BOS"]');
+  if (bosNode.length > 0) {
+    const bosTargets = bosNode.outgoers('edge');
+    if (bosTargets.length > 0) {
+      const leftMostTarget = bosTargets.targets().sort((a, b) => a.position('x') - b.position('x'))[0];
+      if (leftMostTarget) {
+        bosNode.position({ x: leftMostTarget.position('x') + CONFIG.BOS_X_OFFSET, y: leftMostTarget.position('y') });
+      }
+    }
+  }
+  const eosNode = cy.nodes('[value="EOS"]');
+  if (eosNode.length > 0) {
+    const preEosNode = eosNode.incomers('edge').sources().first();
+    const targetPosNode = posNodes.filter(node => node.data('begin_pos') === eosNode.data('begin_pos')).first();
+    if (targetPosNode.nonempty() && preEosNode.nonempty()) {
+        eosNode.position({ x: targetPosNode.position('x'), y: preEosNode.position('y') + CONFIG.Y_SPACING });
+    }
+  }
+}
+
+/**
+ * Initializes Cytoscape and applies the full custom layout.
+ * @param {string} dataString The raw TSV string.
+ */
+function initializeAndLayout(dataString) {
+  if (cy) {
+    cy.destroy();
+  }
+
+  const wrapLimit = parseInt(wrapLimitInput.value, 10) || 10;
+  const parsedData = parseTSV(dataString);
+
+  cy = cytoscape({
+    container: cyContainer,
+    elements: buildCytoscapeElements(parsedData),
+    style: CONFIG.CYTOSCAPE_STYLE,
+  });
+  currentTsvString = dataString;
+
+  const posNodes = cy.nodes('[type="POS_NODE"]');
+  const sortedPosNodes = posNodes.sort((a, b) => Number(a.data('begin_pos')) - Number(b.data('begin_pos')));
+  let currentX = CONFIG.GROUP_PADDING;
+
+    // Count the number of nodes per begin_pos
+  const nodeCounts = new Map();
+  parsedData.forEach(p => {
+    const pos = p.begin_pos;
+    const numNodes = nodeCounts.get(pos) ?? 0;
+    nodeCounts.set(pos, numNodes + 1);
+  });
+
+  // Set initial positions for POS nodes
+  sortedPosNodes.forEach(posNode => {
+    const beginPos = posNode.data('begin_pos');
+    const numColumns = Math.ceil(nodeCounts.get(beginPos) / wrapLimit);
+    const groupWidth = ((numColumns - 1) * CONFIG.COLUMN_WIDTH * CONFIG.WRAP_X_OFFSET_RATIO) + CONFIG.COLUMN_WIDTH;
+    posNode.position({ x: currentX + CONFIG.COLUMN_WIDTH / 2, y: CONFIG.POS_Y });
+    currentX += groupWidth + CONFIG.GROUP_PADDING;
+  });
+  posNodes.lock(); // Lock POS nodes so they don't move during layout
+
+  // Layout normal nodes and BOS/EOS nodes based on POS nodes.
+  layoutNodes(posNodes, wrapLimit);
+
+  // Run the 'preset' layout, which will use the positions already set
+  cy.elements().layout({
+    name: 'preset',
+    fit: false, // We will fit manually after layout
+    padding: 50,
+    stop: function() {
+        posNodes.unlock(); // Unlock POS nodes after layout is complete
+        updateEdgeVisibility();
+        cy.fit(null, 50); // Fit the view to all elements
+    }
+  }).run();
+
+  setupEventListeners();
+  resetView();
+}
+
+/**
+ * Creates a clickable node ID link for the info panel.
+ * @param {string} id The node ID.
+ * @returns {string} The HTML string for the link.
+ */
+function nodeLink(id) {
+  if (id && id !== '0' && cy) {
+    const node = cy.getElementById(id);
+    if (node.nonempty()) {
+      const label = node.data('label');
+      return `<div class="flex items-center"><a href="#" class="node-link" data-node-id="${id}" style="color: #1976d2; text-decoration: none;">${id} (${label})</a></div>`;
+    }
+  }
+  return `<div class="flex items-center"><span>0</span></div>`;
+}
+function nodeIcon(edgeType) {
+  const color = CONFIG.COLORS[edgeType] || '#888';
+  const arrow = { prev: '←', next: '→', enext: '↑', bnext: '↓' }[edgeType] || '•';
+  const icon = `<span style="color:${color}; font-weight:bold;">${arrow}</span>`;
+  return icon;
+}
+
+/**
+ * Updates and displays the details panel with information for the given node.
+ * @param {?cytoscape.NodeSingular} node The node to display information for.
+ */
+function updateInfoPanel(node) {
+  if (!node) {
+    infoPanelContainer.style.display = 'none';
+    return;
+  }
+  const data = node.data();
+  const infoBlock = `
+    <p><strong>Surface:</strong> ${data.value}</p>
+    <p><strong>Reading:</strong> ${data.key}</p>
+    <p><strong>Cost:</strong> ${data.cost} (word cost: ${data.wcost})</p>
+    <p><strong>Position:</strong> ${data.begin_pos} → ${data.end_pos}</p>
+    <p><strong>POS ID:</strong> ${data.lid} / ${data.rid}</p>
+  `;
+
+  let mainInfo;
+  if (data.type === 'NORMAL') {
+    mainInfo = infoBlock;
+  } else {
+    mainInfo = `<p><strong>Type:</strong> ${data.label}</p>`;
+  }
+  mainInfo += `<p><strong>ID:</strong> ${data.id}</p>`;
+
+  const mainInfoContainer = `<div style="flex-grow: 1;">${mainInfo}</div>`;
+
+  const connectionInfo = `
+        <div>
+          <hr style="margin: 0.5rem 0; border-color: rgba(0,0,0,0.12);">
+          <div style="display: grid; grid-template-columns: auto 1fr; align-items: center; row-gap: 0.25rem;">
+              <strong>prev: ${nodeIcon('prev')}</strong> ${nodeLink(data.prev)}
+              <strong>next: ${nodeIcon('next')}</strong> ${nodeLink(data.next)}
+              <strong>enext: ${nodeIcon('enext')}</strong> ${nodeLink(data.enext)}
+              <strong>bnext: ${nodeIcon('bnext')}</strong> ${nodeLink(data.bnext)}
+          </div>
+        </div>
+      `;
+
+  const content = mainInfoContainer + connectionInfo;
+  infoContent.innerHTML = content;
+  infoPanelContainer.style.display = 'block';
+}
+
+/** Resets the view of all elements. */
+function resetView() {
+  if (!cy) {
+    return;
+  }
+  cy.elements().removeClass('cy-dimmed selected');
+  updateEdgeVisibility();
+  updateInfoPanel(null);
+}
+
+/** Updates edge visibility based on checkboxes. */
+function updateEdgeVisibility() {
+  if (!cy) {
+    return;
+  }
+  const showNext = document.getElementById('nextToggle').checked;
+  const showBNext = document.getElementById('bnextToggle').checked;
+  const showENext = document.getElementById('enextToggle').checked;
+  const showPrev = document.getElementById('prevToggle').checked;
+
+  cy.edges().forEach(edge => {
+    const d = edge.data();
+    let hide = false;
+
+    switch (d.type) {
+      case 'next': hide = !showNext; break;
+      case 'prev': hide = !showPrev; break;
+      case 'bnext': hide = !showBNext || (d.isMutual && showENext); break;
+      case 'enext': hide = !showENext || (d.isMutual && showBNext); break;
+      case 'mutual': hide = !(showBNext && showENext); break;
+      default: break; // Do nothing for unknown types
+    }
+    edge.toggleClass('edges-hidden', hide);
+  });
+}
+
+/** Sets up event listeners for Cytoscape and the UI. */
+function setupEventListeners() {
+  cy.on('tap', 'node', function(evt){
+    updateEdgeVisibility();
+    cy.elements().removeClass('selected').addClass('cy-dimmed');
+
+    const node = evt.target;
+    node.addClass('selected').removeClass('cy-dimmed');
+
+    const neighborhood = node.neighborhood();
+    neighborhood.removeClass('cy-dimmed');
+    neighborhood.edges().removeClass('edges-hidden');
+
+    const mutualsInHighlight = neighborhood.edges().filter('[type="mutual"]');
+    if (mutualsInHighlight.nonempty()) {
+      mutualsInHighlight.forEach(mEdge => {
+        const { source, target } = mEdge.data();
+        cy.edges(`[id="bnext-${source}-${target}"], [id="enext-${target}-${source}"]`).addClass('edges-hidden');
+      });
+    }
+
+    updateInfoPanel(node);
+  });
+
+  cy.on('tap', function(evt){
+    if (evt.target === cy) {
+      resetView();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (cy) {
+      // Re-initialize and layout on resize to ensure positions are recalculated for the new size
+      initializeAndLayout(currentTsvString);
+    }
+  });
+}
+
+/** Sets up event listeners for the resize handle. */
+function setupResizeListeners() {
+  let isResizing = false;
+
+  const doResize = (e) => {
+    if (!isResizing) {
+      return;
+    }
+    const newHeight = e.clientY - cyContainerWrapper.getBoundingClientRect().top;
+    if (newHeight > 100) { // Minimum height
+      cyContainerWrapper.style.height = `${newHeight}px`;
+      // No need to call cy.resize() here as it's handled by the container.
+    }
+  };
+
+  const stopResize = () => {
+    isResizing = false;
+    document.removeEventListener('mousemove', doResize);
+    document.removeEventListener('mouseup', stopResize);
+    document.body.style.userSelect = '';
+    if (cy) {
+      cy.resize(); // Resize cytoscape to fit the new container size
+      cy.fit(null, 50); // Then fit the graph within the new bounds
+    }
+  };
+
+  resizeHandle.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    document.body.style.userSelect = 'none'; // Prevent text selection during resize
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResize, { once: true });
+  });
+}
+
+/** Makes the info panel draggable. */
+function makePanelDraggable() {
+  let isDragging = false;
+  let offsetX, offsetY;
+
+  const onDrag = (e) => {
+    if (!isDragging) {
+      return;
+    }
+    infoPanelContainer.style.left = `${e.clientX - offsetX}px`;
+    infoPanelContainer.style.top = `${e.clientY - offsetY}px`;
+  };
+
+  const stopDrag = () => {
+    isDragging = false;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', stopDrag);
+  };
+
+  infoPanelHeader.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    offsetX = e.clientX - infoPanelContainer.offsetLeft;
+    offsetY = e.clientY - infoPanelContainer.offsetTop;
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+  });
+}
+
+// --- UI Button Event Listeners ---
+uploadButton.addEventListener('click', () => tsvFileInput.click());
+
+tsvFileInput.addEventListener('change', function(event) {
+  const file = event.target.files[0];
+  if (!file) {
+    return;
+  }
+  loadingMessage.style.display = 'block';
+  cyContainerWrapper.style.display = 'none';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const tsvDataString = e.target.result;
+      cyContainerWrapper.style.display = 'block';
+      loadingMessage.style.display = 'none';
+
+      initializeAndLayout(tsvDataString);
+    } catch (error) {
+      cyContainerWrapper.style.display = 'none';
+      loadingMessage.textContent = `Error: ${error.message}`;
+      loadingMessage.style.display = 'block';
+    }
+  };
+  reader.readAsText(file);
+});
+
+closeInfoPanelButton.addEventListener('click', () => {
+  if (cy) {
+    const selectedNode = cy.nodes('.selected').first();
+    if (selectedNode.nonempty()) {
+      selectedNode.removeClass('selected');
+    }
+    resetView();
+  }
+});
+
+wrapLimitInput.addEventListener('change', () => {
+  updateWrapLimitLabel();
+  if (cy) {
+    initializeAndLayout(currentTsvString);
+  }
+});
+
+edgeToggles.forEach(toggle => {
+  toggle.addEventListener('change', () => {
+    updateEdgeVisibility();
+    const selectedNode = cy.nodes('.selected').first();
+    if (selectedNode.nonempty()) {
+      selectedNode.trigger('tap');
+    }
+  });
+});
+
+helpIcon.addEventListener('click', () => {
+  helpDialog.open();
+});
+
+infoContent.addEventListener('click', (e) => {
+  if (!e.target.classList.contains('node-link')) {
+    return;
+  }
+
+  e.preventDefault();
+  const nodeId = e.target.dataset.nodeId;
+  if (!cy || !nodeId) {
+    return;
+  }
+
+  const node = cy.getElementById(nodeId);
+  if (node.empty()) {
+    return;
+  }
+  node.trigger('tap');
+
+  let collectionToShow = cy.collection();
+  const nodesToView = [node.id(), node.data('prev'), node.data('next')].filter(Boolean);
+  nodesToView.forEach(id => {
+    const n = cy.getElementById(id);
+    if (n.nonempty()) {
+      collectionToShow = collectionToShow.union(n).union(n.neighborhood());
+    }
+  });
+
+  const targetBoundingBox = collectionToShow.renderedBoundingBox();
+  const extent = cy.extent();
+
+  const isVisible = targetBoundingBox.x1 >= extent.x1 && targetBoundingBox.x2 <= extent.x2 &&
+                    targetBoundingBox.y1 >= extent.y1 && targetBoundingBox.y2 <= extent.y2;
+  if (isVisible) {
+    return;
+  }
+
+  // Adjust the zoom level to fit the target bounding box within the extent.
+  if (targetBoundingBox.w * cy.zoom() <= extent.w && targetBoundingBox.h * cy.zoom() <= extent.h) {
+    cy.animate({
+      center: { eles: collectionToShow },
+      duration: 400
+    });
+  } else {
+    cy.animate({
+      fit: { eles: collectionToShow, padding: 50 },
+      duration: 400
+    });
+  }
+});
+
+// --- Initialization ---
+function main() {
+  mdc.autoInit();
+  const helpDialog = new mdc.dialog.MDCDialog(document.getElementById('helpDialog'));
+
+  helpIcon.addEventListener('click', () => {
+    helpDialog.open();
+  });
+
+  initializeAndLayout(initialTsvData);
+  setupResizeListeners();
+  makePanelDraggable();
+  updateWrapLimitLabel();
+}
+
+main();
+})();
+</script>
+
+</body>
+</html>
