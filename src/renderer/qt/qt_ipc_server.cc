@@ -57,7 +57,7 @@ std::string GetServiceName() {
 
 QtIpcServer::QtIpcServer()
     : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut) {}
-QtIpcServer::~QtIpcServer() {}
+QtIpcServer::~QtIpcServer() = default;
 
 bool QtIpcServer::Process(absl::string_view request, std::string *response) {
   // no need to set the result code.
