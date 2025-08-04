@@ -30,16 +30,18 @@
 #include "dictionary/user_dictionary_importer.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <iterator>
-#include <limits>
-#include <map>
-#include <set>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
+#include "absl/base/attributes.h"
+#include "absl/container/flat_hash_set.h"
+#include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
@@ -47,7 +49,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "base/hash.h"
+#include "absl/strings/strip.h"
+#include "absl/types/span.h"
 #include "base/japanese_util.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
@@ -58,46 +61,39 @@
 #include "protocol/user_dictionary_storage.pb.h"
 
 namespace mozc {
-
-using user_dictionary::UserDictionary;
-using user_dictionary::UserDictionaryCommandStatus;
-
 namespace {
 
-uint64_t EntryFingerprint(const UserDictionary::Entry &entry) {
+using ::mozc::user_dictionary::UserDictionary;
+using ::mozc::user_dictionary::UserDictionaryCommandStatus;
+
+size_t HashOf(const UserDictionary::Entry &entry) {
   DCHECK(UserDictionary::PosType_IsValid(entry.pos()));
-  static_assert(UserDictionary::PosType_MAX <=
-                std::numeric_limits<char>::max());
-  return Fingerprint(entry.key() + "\t" + entry.value() + "\t" +
-                     static_cast<char>(entry.pos()));
+  return absl::HashOf(entry.key(), entry.value(), entry.pos());
 }
 
+// Normalizes POS (removes full width ascii and half width katakana).
 std::string NormalizePos(const absl::string_view input) {
   std::string tmp = japanese_util::FullWidthAsciiToHalfWidthAscii(input);
   return japanese_util::HalfWidthKatakanaToFullWidthKatakana(tmp);
 }
 
+std::pair<absl::string_view, absl::string_view> SplitPosAndLocale(
+    const absl::string_view pos ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+  return absl::StrSplit(pos, absl::MaxSplits(':', 1));
+}
+
 // A data type to hold conversion rules of POSes. If mozc_pos is set to be an
 // empty string (""), it means that words of the POS should be ignored in Mozc.
 struct PosMap {
-  const char *source_pos;            // POS string of a third party IME.
+  absl::string_view source_pos;      // POS string of a third party IME.
   UserDictionary::PosType mozc_pos;  // POS of Mozc.
 };
 
 // Include actual POS mapping rules defined outside the file.
 #include "dictionary/pos_map.inc"
 
-// A functor for searching an array of PosMap for the given POS. The class is
-// used with std::lower_bound().
-class PosMapCompare {
- public:
-  bool operator()(const PosMap &l_pos_map, const PosMap &r_pos_map) const {
-    return (strcmp(l_pos_map.source_pos, r_pos_map.source_pos) < 0);
-  }
-};
-
 // Convert POS of a third party IME to that of Mozc using the given mapping.
-bool ConvertEntryInternal(const PosMap *pos_map, size_t map_size,
+bool ConvertEntryInternal(const absl::Span<const PosMap> pos_map,
                           const UserDictionaryImporter::RawEntry &from,
                           UserDictionary::Entry *to) {
   if (to == nullptr) {
@@ -111,34 +107,20 @@ bool ConvertEntryInternal(const PosMap *pos_map, size_t map_size,
     return false;
   }
 
-  // Normalize POS (remove full width ascii and half width katakana)
-  std::string pos = NormalizePos(from.pos);
-
-  std::string locale;
-  // TODO(all): Better to use StrSplit.
-  const auto it = pos.find(':');
-  if (it != std::string::npos) {
-    locale = pos.substr(it + 1, pos.size());
-    pos = pos.substr(0, it);
-  }
+  const std::string normalized_pos = NormalizePos(from.pos);
+  auto [pos, locale] = SplitPosAndLocale(normalized_pos);
 
   // ATOK's POS has a special marker for distinguishing auto-registered
   // words/manually-registered words. Remove the mark here.
-  // TODO(yukawa): Use string::back once C++11 is enabled on Mac.
-  if (!pos.empty() && (*pos.rbegin() == '$' || *pos.rbegin() == '*')) {
-    // TODO(matsuzakit): Use pop_back instead when C++11 is ready on Android.
-    pos.resize(pos.size() - 1);
-  }
-
-  PosMap key;
-  key.source_pos = pos.c_str();
-  key.mozc_pos = static_cast<UserDictionary::PosType>(0);
+  absl::ConsumePrefix(&pos, "$");
+  absl::ConsumePrefix(&pos, "*");
 
   // Search for mapping for the given POS.
-  const PosMap *found =
-      std::lower_bound(pos_map, pos_map + map_size, key, PosMapCompare());
-  if (found == pos_map + map_size ||
-      strcmp(found->source_pos, key.source_pos) != 0) {
+  const auto found = absl::c_lower_bound(
+      pos_map, pos, [](const PosMap map, absl::string_view pos) -> bool {
+        return map.source_pos < pos;
+      });
+  if (found == pos_map.end() || found->source_pos != pos) {
     LOG(WARNING) << "Invalid POS is passed: " << from.pos;
     return false;
   }
@@ -154,8 +136,7 @@ bool ConvertEntryInternal(const PosMap *pos_map, size_t map_size,
   to->set_pos(found->mozc_pos);
 
   // Normalize reading.
-  std::string normalized_key = UserDictionaryUtil::NormalizeReading(to->key());
-  to->set_key(normalized_key);
+  to->set_key(UserDictionaryUtil::NormalizeReading(to->key()));
 
   // Copy comment.
   if (!from.comment.empty()) {
@@ -189,12 +170,11 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
 
   ErrorType ret = IMPORT_NO_ERROR;
 
-  std::set<uint64_t> existent_entries;
-  for (size_t i = 0; i < user_dic->entries_size(); ++i) {
-    existent_entries.insert(EntryFingerprint(user_dic->entries(i)));
+  absl::flat_hash_set<size_t> existent_entries;
+  for (const auto &entry : user_dic->entries()) {
+    existent_entries.insert(HashOf(entry));
   }
 
-  UserDictionary::Entry entry;
   RawEntry raw_entry;
   while (iter->Next(&raw_entry)) {
     if (user_dic->entries_size() >= max_size) {
@@ -209,6 +189,7 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
       continue;
     }
 
+    UserDictionary::Entry entry;
     if (!ConvertEntry(raw_entry, &entry)) {
       LOG(WARNING) << "Entry is not valid";
       ret = IMPORT_INVALID_ENTRIES;
@@ -216,13 +197,11 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
     }
 
     // Don't register words if it is already in the current dictionary.
-    if (!existent_entries.insert(EntryFingerprint(entry)).second) {
+    if (!existent_entries.insert(HashOf(entry)).second) {
       continue;
     }
 
-    UserDictionary::Entry *new_entry = user_dic->add_entries();
-    DCHECK(new_entry);
-    *new_entry = entry;
+    user_dic->mutable_entries()->Add(std::move(entry));
   }
 
   return ret;
@@ -242,13 +221,10 @@ UserDictionaryImporter::ImportFromTextLineIterator(
 
 UserDictionaryImporter::StringTextLineIterator::StringTextLineIterator(
     absl::string_view data)
-    : data_(data), position_(0) {}
-
-UserDictionaryImporter::StringTextLineIterator::~StringTextLineIterator() =
-    default;
+    : data_(data), first_(data_.begin()) {}
 
 bool UserDictionaryImporter::StringTextLineIterator::IsAvailable() const {
-  return position_ < data_.length();
+  return data_.end() != first_;
 }
 
 bool UserDictionaryImporter::StringTextLineIterator::Next(std::string *line) {
@@ -256,27 +232,28 @@ bool UserDictionaryImporter::StringTextLineIterator::Next(std::string *line) {
     return false;
   }
 
-  const absl::string_view crlf("\r\n");
-  for (size_t i = position_; i < data_.length(); ++i) {
-    if (data_[i] == '\n' || data_[i] == '\r') {
-      const absl::string_view next_line =
-          absl::ClippedSubstr(data_, position_, i - position_);
-      line->assign(next_line.data(), next_line.size());
+  constexpr absl::string_view kCRLF("\r\n");
+  for (auto it = first_; it != data_.end(); ++it) {
+    if (*it == '\n' || *it == '\r') {
+      line->assign(first_, it);
       // Handles CR/LF issue.
-      const absl::string_view possible_crlf = absl::ClippedSubstr(data_, i, 2);
-      position_ = possible_crlf == crlf ? (i + 2) : (i + 1);
+      if (absl::string_view(std::to_address(it), data_.end() - it)
+              .starts_with(kCRLF)) {
+        ++it;
+      }
+      first_ = ++it;
       return true;
     }
   }
 
-  const absl::string_view next_line =
-      absl::ClippedSubstr(data_, position_, data_.size() - position_);
-  line->assign(next_line.data(), next_line.size());
-  position_ = data_.length();
+  line->assign(first_, data_.end());
+  first_ = data_.end();
   return true;
 }
 
-void UserDictionaryImporter::StringTextLineIterator::Reset() { position_ = 0; }
+void UserDictionaryImporter::StringTextLineIterator::Reset() {
+  first_ = data_.begin();
+}
 
 UserDictionaryImporter::TextInputIterator::TextInputIterator(
     IMEType ime_type, TextLineIteratorInterface *iter)
@@ -381,7 +358,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
 
 bool UserDictionaryImporter::ConvertEntry(const RawEntry &from,
                                           UserDictionary::Entry *to) {
-  return ConvertEntryInternal(kPosMap, std::size(kPosMap), from, to);
+  return ConvertEntryInternal(kPosMap, from, to);
 }
 
 UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
@@ -390,7 +367,7 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
     return NUM_IMES;
   }
 
-  std::string lower = std::string(line);
+  std::string lower(line);
   Util::LowerString(&lower);
 
   if (lower.starts_with("!microsoft ime")) {
@@ -400,7 +377,7 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
   // Old ATOK format (!!DICUT10) is not supported for now
   // http://b/2455897
   if (lower.starts_with("!!dicut") && lower.size() > 7) {
-    const std::string version(lower, 7, lower.size() - 7);
+    const absl::string_view version(lower.data() + 7, lower.size() - 7);
     if (NumberUtil::SimpleAtoi(version) >= 11) {
       return ATOK;
     } else {
@@ -412,8 +389,8 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
     return ATOK;
   }
 
-  if (*line.begin() == '"' && *line.rbegin() == '"' &&
-      !absl::StrContains(line, "\t")) {
+  if (line.front() == '"' && line.back() == '"' &&
+      !absl::StrContains(line, '\t')) {
     return KOTOERI;
   }
 
@@ -421,7 +398,7 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
     return GBOARD_V1;
   }
 
-  if (*line.begin() == '#' || absl::StrContains(line, "\t")) {
+  if (line.front() == '#' || absl::StrContains(line, '\t')) {
     return MOZC;
   }
 

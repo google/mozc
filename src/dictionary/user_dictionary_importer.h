@@ -30,7 +30,6 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_IMPORTER_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_IMPORTER_H_
 
-#include <cstddef>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -38,7 +37,7 @@
 
 namespace mozc {
 
-// An utilitiy class for importing user dictionary from different devices,
+// An utility class for importing user dictionary from different devices,
 // including text files and MS-IME, Kotoeri, and ATOK(optional) user
 // dictionaries.
 class UserDictionaryImporter {
@@ -111,9 +110,6 @@ class UserDictionaryImporter {
   class StringTextLineIterator : public TextLineIteratorInterface {
    public:
     explicit StringTextLineIterator(absl::string_view data);
-    StringTextLineIterator(const StringTextLineIterator &) = delete;
-    StringTextLineIterator &operator=(const StringTextLineIterator &) = delete;
-    ~StringTextLineIterator() override;
 
     bool IsAvailable() const override;
     bool Next(std::string *line) override;
@@ -121,7 +117,7 @@ class UserDictionaryImporter {
 
    private:
     const absl::string_view data_;
-    size_t position_;
+    absl::string_view::const_iterator first_;
   };
 
   // List of IMEs.
@@ -162,9 +158,6 @@ class UserDictionaryImporter {
   class TextInputIterator : public InputIteratorInterface {
    public:
     TextInputIterator(IMEType ime_type, TextLineIteratorInterface *iter);
-    TextInputIterator(const TextInputIterator &) = delete;
-    TextInputIterator &operator=(const TextInputIterator &) = delete;
-    ~TextInputIterator() override = default;
 
     bool IsAvailable() const override;
     bool Next(RawEntry *entry) override;

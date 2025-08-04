@@ -31,17 +31,16 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
-#include <iterator>
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gunit.h"
 
 namespace mozc {
-
 namespace {
 
 class TestInputIterator
@@ -82,7 +81,7 @@ class TestInputIterator
 }  // namespace
 
 TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
-  constexpr char kInput[] =
+  constexpr absl::string_view kInput =
       "きょうと\t京都\t名詞\n"
       "おおさか\t大阪\t地名\n"
       "とうきょう\t東京\t地名\tコメント\n"
@@ -134,7 +133,7 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
 }
 
 TEST(UserDictionaryImporter, ImportFromGboardTextTest) {
-  constexpr char kInput[] =
+  constexpr absl::string_view kInput =
       "# Gboard Dictionary Version:1\n"
       "きょうと\t京都\tja-JP\n"
       "せかい\t世界\t\n"
@@ -169,7 +168,7 @@ TEST(UserDictionaryImporter, ImportFromGboardTextTest) {
 }
 
 TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
-  constexpr char kInput[] =
+  constexpr absl::string_view kInput =
       "\"きょうと\","
       "\"京都\",\"名詞\"\n"
       "\"おおさか\","
@@ -207,7 +206,7 @@ TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
 }
 
 TEST(UserDictionaryImporter, ImportSpecialPosTagTest) {
-  constexpr char kInput[] =
+  constexpr absl::string_view kInput =
       "きょうと\t京都\tサジェストのみ\n"
       "おおさか\t大阪\t短縮よみ\n"
       "すずき\t鈴木\t品詞なし\n";
@@ -239,14 +238,14 @@ TEST(UserDictionaryImporter, ImportSpecialPosTagTest) {
 }
 
 TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
-  constexpr char kInput[] =
+  constexpr absl::string_view kInput =
       "きょうと\t京都\t名詞\n"
       "!おおさか\t大阪\t地名\n"
       "\n"
       "#とうきょう\t東京\t地名\tコメント\n"
       "すずき\t鈴木\t人名\n";
   {
-    const std::string kMsImeInput(std::string("!Microsoft IME\n") + kInput);
+    const std::string kMsImeInput(absl::StrCat("!Microsoft IME\n", kInput));
     UserDictionaryImporter::StringTextLineIterator iter(kMsImeInput);
     UserDictionaryStorage::UserDictionary user_dic;
 
@@ -297,7 +296,7 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
 }
 
 TEST(UserDictionaryImporter, ImportFromInvalidTextTest) {
-  constexpr char kInput[] =
+  constexpr absl::string_view kInput =
       "a"
       "\n"
       "東京\t\t地名\tコメント\n"
@@ -360,24 +359,22 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
   TestInputIterator iter;
   UserDictionaryStorage::UserDictionary user_dic;
 
-  static constexpr size_t kSize[] = {10, 100, 1000, 5000, 12000};
-  for (size_t i = 0; i < std::size(kSize); ++i) {
+  static constexpr size_t kSizes[] = {10, 100, 1000, 5000, 12000};
+  for (const size_t size : kSizes) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
-    for (size_t j = 0; j < kSize[i]; ++j) {
-      UserDictionaryImporter::RawEntry entry;
-      const std::string key("key" + std::to_string(static_cast<uint32_t>(j)));
-      const std::string value("value" +
-                              std::to_string(static_cast<uint32_t>(j)));
-      entry.key = key;
-      entry.value = value;
-      entry.pos = "名詞";
-      entries.push_back(entry);
+    entries.reserve(size);
+    for (size_t i = 0; i < size; ++i) {
+      entries.push_back({
+          .key = absl::StrCat("key", i),
+          .value = absl::StrCat("value", i),
+          .pos = "名詞",
+      });
     }
 
     iter.set_available(true);
     iter.set_entries(&entries);
 
-    if (kSize[i] <= UserDictionaryStorage::max_entry_size()) {
+    if (size <= UserDictionaryStorage::max_entry_size()) {
       EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
                 UserDictionaryImporter::IMPORT_NO_ERROR);
     } else {
@@ -385,13 +382,13 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
                 UserDictionaryImporter::IMPORT_TOO_MANY_WORDS);
     }
 
-    const size_t size =
-        std::min(UserDictionaryStorage::max_entry_size(), kSize[i]);
-    ASSERT_EQ(user_dic.entries_size(), size);
-    for (size_t j = 0; j < size; ++j) {
-      EXPECT_EQ(user_dic.entries(j).key(), entries[j].key);
-      EXPECT_EQ(user_dic.entries(j).value(), entries[j].value);
-      EXPECT_EQ(user_dic.entries(j).pos(),
+    const size_t valid_size =
+        std::min(UserDictionaryStorage::max_entry_size(), size);
+    ASSERT_EQ(user_dic.entries_size(), valid_size);
+    for (size_t i = 0; i < valid_size; ++i) {
+      EXPECT_EQ(user_dic.entries(i).key(), entries[i].key);
+      EXPECT_EQ(user_dic.entries(i).value(), entries[i].value);
+      EXPECT_EQ(user_dic.entries(i).pos(),
                 user_dictionary::UserDictionary::NOUN);
     }
   }
@@ -401,20 +398,20 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
   TestInputIterator iter;
   UserDictionaryStorage::UserDictionary user_dic;
 
-  static constexpr size_t kSize[] = {10, 100, 1000};
-  for (size_t i = 0; i < std::size(kSize); ++i) {
+  static constexpr size_t kSizes[] = {10, 100, 1000};
+  for (const size_t size : kSizes) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
-    for (size_t j = 0; j < kSize[i]; ++j) {
-      UserDictionaryImporter::RawEntry entry;
-      const std::string key("key" + std::to_string(static_cast<uint32_t>(j)));
-      const std::string value("value" +
-                              std::to_string(static_cast<uint32_t>(j)));
-      entry.key = key;
-      entry.value = value;
-      if (j % 2 == 0) {
-        entry.pos = "名詞";
+    entries.reserve(size);
+    for (size_t i = 0; i < size; ++i) {
+      absl::string_view pos;
+      if (i % 2 == 0) {
+        pos = "名詞";
       }
-      entries.push_back(entry);
+      entries.push_back({
+          .key = absl::StrCat("key", i),
+          .value = absl::StrCat("value", i),
+          .pos = std::string(pos),
+      });
     }
 
     iter.set_available(true);
@@ -422,7 +419,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
 
     EXPECT_EQ(UserDictionaryImporter::ImportFromIterator(&iter, &user_dic),
               UserDictionaryImporter::IMPORT_INVALID_ENTRIES);
-    EXPECT_EQ(user_dic.entries_size(), kSize[i] / 2);
+    EXPECT_EQ(user_dic.entries_size(), size / 2);
   }
 }
 
@@ -575,67 +572,67 @@ TEST(UserDictionaryImporter, DetermineFinalIMETypeTest) {
 
 TEST(UserDictionaryImporter, GuessEncodingTypeTest) {
   {
-    const char str[] = "これはテストです。";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(str),
+    constexpr absl::string_view kStr = "これはテストです。";
+    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
               UserDictionaryImporter::UTF8);
   }
   {
-    const char str[] = "私の名前は中野ですABC";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(str),
+    constexpr absl::string_view kStr = "私の名前は中野ですABC";
+    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
               UserDictionaryImporter::UTF8);
   }
   {
-    const char str[] = "ABCDEFG abcdefg";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(str),
+    constexpr absl::string_view kStr = "ABCDEFG abcdefg";
+    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
               UserDictionaryImporter::UTF8);
   }
   {
-    const char str[] = "ハロー";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(str),
+    constexpr absl::string_view kStr = "ハロー";
+    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
               UserDictionaryImporter::UTF8);
   }
 
   {
     // "よろしくお願いします" in Shift-JIS
-    const char str[] =
+    constexpr absl::string_view kStr =
         "\x82\xE6\x82\xEB\x82\xB5\x82\xAD"
         "\x82\xA8\x8A\xE8\x82\xA2\x82\xB5\x82\xDC\x82\xB7";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(str),
+    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
               UserDictionaryImporter::SHIFT_JIS);
   }
 
   {
     // "東京" in Shift-JIS
-    const char str[] = "\x93\x8C\x8B\x9E";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(str),
+    constexpr absl::string_view kStr = "\x93\x8C\x8B\x9E";
+    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
               UserDictionaryImporter::SHIFT_JIS);
   }
 
   {
     // BOM of UTF-16
-    const char str[] = "\xFF\xFE";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(str),
+    constexpr absl::string_view kStr = "\xFF\xFE";
+    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
               UserDictionaryImporter::UTF16);
   }
 
   {
     // BOM of UTF-16
-    const char str[] = "\xFE\xFF";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(str),
+    constexpr absl::string_view kStr = "\xFE\xFF";
+    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
               UserDictionaryImporter::UTF16);
   }
 
   {
     // BOM of UTF-8
-    const char str[] = "\xEF\xBB\xBF";
-    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(str),
+    constexpr absl::string_view kStr = "\xEF\xBB\xBF";
+    EXPECT_EQ(UserDictionaryImporter::GuessEncodingType(kStr),
               UserDictionaryImporter::UTF8);
   }
 }
 
 TEST(UserDictionaryImporter, StringTextLineIterator) {
   std::string line;
-  const char *kTestData[] = {
+  constexpr absl::string_view kTestData[] = {
       // Test for LF.
       "abcde\n"
       "fghij\n"
@@ -652,13 +649,14 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
       "klmno",
   };
 
-  for (size_t i = 0; i < std::size(kTestData); ++i) {
-    UserDictionaryImporter::StringTextLineIterator iter(kTestData[i]);
+  for (const absl::string_view data : kTestData) {
+    UserDictionaryImporter::StringTextLineIterator iter(data);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
     EXPECT_EQ(line, "abcde");
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
+
     EXPECT_EQ(line, "fghij");
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
@@ -668,7 +666,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
 
   // Test empty line with CR.
   {
-    constexpr char kInput[] = "\r\rabcde";
+    constexpr absl::string_view kInput = "\r\rabcde";
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
@@ -684,7 +682,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
 
   // Test empty line with LF.
   {
-    constexpr char kInput[] = "\n\nabcde";
+    constexpr absl::string_view kInput = "\n\nabcde";
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
@@ -700,7 +698,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
 
   // Test empty line with CRLF.
   {
-    constexpr char kInput[] = "\r\n\r\nabcde";
+    constexpr absl::string_view kInput = "\r\n\r\nabcde";
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
@@ -717,7 +715,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
   // Invalid empty line.
   // At the moment, \n\r is processed as two empty lines.
   {
-    constexpr char kInput[] = "\n\rabcde";
+    constexpr absl::string_view kInput = "\n\rabcde";
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
