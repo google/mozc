@@ -35,7 +35,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "converter/converter_mock.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
@@ -153,7 +153,7 @@ TEST(RealtimeDecoderTest, Decode) {
     EXPECT_EQ(results[0].key, kKey);
     EXPECT_EQ(results[0].inner_segment_boundary.size(), 3);
     EXPECT_TRUE(results[0].candidate_attributes &
-                converter::Candidate::NO_VARIANTS_EXPANSION);
+                converter::Attribute::NO_VARIANTS_EXPANSION);
   }
 
   // A test case with use_actual_converter_for_realtime_conversion being
@@ -184,7 +184,7 @@ TEST(RealtimeDecoderTest, Decode) {
     for (size_t i = 0; i < results.size(); ++i) {
       EXPECT_TRUE(results[i].types & REALTIME);
       EXPECT_TRUE(results[i].candidate_attributes &
-                  converter::Candidate::NO_VARIANTS_EXPANSION);
+                  converter::Attribute::NO_VARIANTS_EXPANSION);
       if (results[i].key == kKey &&
           results[i].value == "WatashinoNamaehaNakanodesu" &&
           results[i].inner_segment_boundary.size() == 3) {

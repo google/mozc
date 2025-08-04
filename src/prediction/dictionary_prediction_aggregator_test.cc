@@ -51,7 +51,7 @@
 #include "composer/query.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
@@ -1056,7 +1056,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   table_->LoadFromFile("system://12keys-hiragana.tsv");
 
   auto is_user_dictionary_result = [](const Result &res) {
-    return (res.candidate_attributes & converter::Candidate::USER_DICTIONARY) !=
+    return (res.candidate_attributes & converter::Attribute::USER_DICTIONARY) !=
            0;
   };
 
@@ -1505,7 +1505,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
         results[0].value = "私の名前は中野です";
         results[0].types = REALTIME | REALTIME_TOP;
         results[0].candidate_attributes |=
-            converter::Candidate::NO_VARIANTS_EXPANSION;
+            converter::Attribute::NO_VARIANTS_EXPANSION;
 
         EXPECT_CALL(
             *data_and_aggregator->mutable_realtime_decoder(),
@@ -1527,7 +1527,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
       EXPECT_EQ(results[0].types, REALTIME | REALTIME_TOP);
       EXPECT_EQ(results[0].key, kKey);
       EXPECT_TRUE(results[0].candidate_attributes &
-                  converter::Candidate::NO_VARIANTS_EXPANSION);
+                  converter::Attribute::NO_VARIANTS_EXPANSION);
     }
   }
 }
@@ -2153,7 +2153,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   aggregator.AggregateUnigram(convreq1, &results, &min_unigram_key_len);
   ASSERT_FALSE(results.empty());
   EXPECT_TRUE(results[0].candidate_attributes &
-              converter::Candidate::SPELLING_CORRECTION);  // From unigram
+              converter::Attribute::SPELLING_CORRECTION);  // From unigram
 
   results.clear();
 
@@ -2168,7 +2168,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
     result.key = kKeyWithDe;
     result.value = kExpectedSuggestionValueWithDe;
     result.types = REALTIME;
-    result.candidate_attributes = converter::Candidate::SPELLING_CORRECTION;
+    result.candidate_attributes = converter::Attribute::SPELLING_CORRECTION;
     EXPECT_CALL(*realtime_decoder,
                 Decode(Truly([&kKeyWithDe](const ConversionRequest &request) {
                   return request.key() == kKeyWithDe;
@@ -2182,7 +2182,7 @@ TEST_F(DictionaryPredictionAggregatorTest,
   EXPECT_EQ(results.size(), 1);
   EXPECT_EQ(results[0].types, REALTIME);
   EXPECT_NE(0, (results[0].candidate_attributes &
-                converter::Candidate::SPELLING_CORRECTION));
+                converter::Attribute::SPELLING_CORRECTION));
   EXPECT_EQ(results[0].value, kExpectedSuggestionValueWithDe);
 }
 
@@ -2210,7 +2210,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserDictionaryAttribute) {
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, "ユーザー");
     EXPECT_TRUE(results[0].candidate_attributes &
-                converter::Candidate::USER_DICTIONARY);
+                converter::Attribute::USER_DICTIONARY);
   }
 
   constexpr absl::string_view kKey = "ゆーざーの";
@@ -2222,7 +2222,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserDictionaryAttribute) {
     Result result;
     result.key = kKey;
     result.value = kValue;
-    result.candidate_attributes = converter::Candidate::USER_DICTIONARY;
+    result.candidate_attributes = converter::Attribute::USER_DICTIONARY;
     EXPECT_CALL(*realtime_decoder,
                 Decode(Truly([kKey](const ConversionRequest &request) {
                   return request.key() == kKey;
@@ -2237,7 +2237,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PropagateUserDictionaryAttribute) {
     EXPECT_FALSE(results.empty());
     EXPECT_EQ(results[0].value, kValue);
     EXPECT_TRUE(results[0].candidate_attributes &
-                converter::Candidate::USER_DICTIONARY);
+                converter::Attribute::USER_DICTIONARY);
   }
 }
 
@@ -2270,7 +2270,7 @@ TEST_F(DictionaryPredictionAggregatorTest, PrefixCandidates) {
   for (const auto &r : results) {
     if (r.types == PREFIX) {
       EXPECT_TRUE(r.candidate_attributes &
-                  converter::Candidate::PARTIALLY_KEY_CONSUMED);
+                  converter::Attribute::PARTIALLY_KEY_CONSUMED);
       EXPECT_NE(r.consumed_key_size, 0);
     }
   }
@@ -2446,9 +2446,9 @@ TEST_F(DictionaryPredictionAggregatorTest, NumberDecoderCandidates) {
                    [](Result r) { return r.value == "45" && !r.removed; });
   ASSERT_NE(result, results.end());
   EXPECT_TRUE(result->candidate_attributes &
-              converter::Candidate::PARTIALLY_KEY_CONSUMED);
+              converter::Attribute::PARTIALLY_KEY_CONSUMED);
   EXPECT_TRUE(result->candidate_attributes &
-              converter::Candidate::NO_SUGGEST_LEARNING);
+              converter::Attribute::NO_SUGGEST_LEARNING);
 }
 
 TEST_F(DictionaryPredictionAggregatorTest, DoNotPredictNoisyNumberEntries) {

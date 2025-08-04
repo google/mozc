@@ -41,13 +41,14 @@
 #include "absl/strings/string_view.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
+
 namespace mozc::prediction {
 namespace {
 
@@ -111,7 +112,7 @@ std::optional<Result> ConversionSegmentsToResult(const Segments &segments) {
     result.candidate_attributes |= candidate.attributes;
     result.candidate_attributes |=
         (candidate.attributes &
-         converter::Candidate::USER_SEGMENT_HISTORY_REWRITER);
+         converter::Attribute::USER_SEGMENT_HISTORY_REWRITER);
 
     uint32_t encoded = 0;
     if (!converter::Candidate::EncodeLengths(
@@ -169,7 +170,7 @@ bool RealtimeDecoder::PushBackTopConversionResult(
   Result &result = result_opt.value();
   result.SetTypesAndTokenAttributes(REALTIME | REALTIME_TOP,
                                     dictionary::Token::NONE);
-  result.candidate_attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+  result.candidate_attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
 
   results->emplace_back(std::move(result));
 
@@ -232,15 +233,15 @@ std::vector<Result> RealtimeDecoder::Decode(
     result.rid = candidate.rid;
     result.inner_segment_boundary = candidate.inner_segment_boundary;
     result.SetTypesAndTokenAttributes(REALTIME, dictionary::Token::NONE);
-    result.candidate_attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+    result.candidate_attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
     if (candidate.key.size() < segment.key().size()) {
       result.candidate_attributes |=
-          converter::Candidate::PARTIALLY_KEY_CONSUMED;
+          converter::Attribute::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = Util::CharsLen(candidate.key);
     }
     // Kana expansion happens inside the decoder.
     if (candidate.attributes &
-        converter::Candidate::KEY_EXPANDED_IN_DICTIONARY) {
+        converter::Attribute::KEY_EXPANDED_IN_DICTIONARY) {
       result.types |= prediction::KEY_EXPANDED_IN_DICTIONARY;
     }
     result.candidate_attributes |= candidate.attributes;

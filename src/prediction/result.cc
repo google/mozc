@@ -36,7 +36,7 @@
 #include "absl/strings/string_view.h"
 #include "base/strings/unicode.h"
 #include "composer/query.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "dictionary/dictionary_token.h"
 
 namespace mozc {
@@ -73,7 +73,7 @@ bool ValueLess(absl::string_view lhs, absl::string_view rhs) {
 
 }  // namespace result_internal
 
-using ::mozc::converter::Candidate;
+using ::mozc::converter::Attribute;
 using ::mozc::dictionary::Token;
 
 void Result::InitializeByTokenAndTypes(const Token &token,
@@ -91,24 +91,24 @@ void Result::SetTypesAndTokenAttributes(PredictionTypes prediction_types,
   types = prediction_types;
   candidate_attributes = 0;
   if (types & TYPING_CORRECTION) {
-    candidate_attributes |= Candidate::TYPING_CORRECTION;
+    candidate_attributes |= Attribute::TYPING_CORRECTION;
   }
   if (types & (REALTIME | REALTIME_TOP)) {
-    candidate_attributes |= Candidate::REALTIME_CONVERSION;
+    candidate_attributes |= Attribute::REALTIME_CONVERSION;
   }
   if (types & REALTIME_TOP) {
-    candidate_attributes |= Candidate::NO_VARIANTS_EXPANSION;
+    candidate_attributes |= Attribute::NO_VARIANTS_EXPANSION;
   }
   if (types & PREFIX) {
-    candidate_attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate_attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
   }
   if (token_attr & Token::SPELLING_CORRECTION) {
-    candidate_attributes |= Candidate::SPELLING_CORRECTION;
+    candidate_attributes |= Attribute::SPELLING_CORRECTION;
   }
   if (token_attr & Token::USER_DICTIONARY) {
     candidate_attributes |=
-        (Candidate::USER_DICTIONARY | Candidate::NO_MODIFICATION |
-         Candidate::NO_VARIANTS_EXPANSION);
+        (Attribute::USER_DICTIONARY | Attribute::NO_MODIFICATION |
+         Attribute::NO_VARIANTS_EXPANSION);
   }
 }
 

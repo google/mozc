@@ -57,6 +57,7 @@ mozc_cc_library(
         "//rewriter:__pkg__",
     ],
     deps = [
+        ":attribute",
         ":lattice",
         "//base:number_util",
         "//base:util",
@@ -94,6 +95,16 @@ mozc_cc_test(
         "//base:number_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "attribute",
+    hdrs = ["attribute.h"],
+    visibility = [
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+        "//rewriter:__pkg__",
     ],
 )
 

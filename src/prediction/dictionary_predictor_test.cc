@@ -51,7 +51,7 @@
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "converter/connector.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
@@ -666,8 +666,8 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_result(result, prediction::PREFIX, &c));
     EXPECT_EQ(c.value, "てす");
     EXPECT_EQ(c.candidate_attributes,
-              converter::Candidate::PARTIALLY_KEY_CONSUMED |
-                  converter::Candidate::AUTO_PARTIAL_SUGGESTION);
+              converter::Attribute::PARTIALLY_KEY_CONSUMED |
+                  converter::Attribute::AUTO_PARTIAL_SUGGESTION);
     EXPECT_EQ(c.consumed_key_size, 2);
   }
   {
@@ -679,8 +679,8 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_result(result, prediction::REALTIME_TOP, &c));
     EXPECT_EQ(c.value, "リアルタイムトップ");
     EXPECT_EQ(c.candidate_attributes,
-              converter::Candidate::REALTIME_CONVERSION |
-                  converter::Candidate::NO_VARIANTS_EXPANSION);
+              converter::Attribute::REALTIME_CONVERSION |
+                  converter::Attribute::NO_VARIANTS_EXPANSION);
   }
   {
     // REALTIME: inner_segment_boundary
@@ -698,7 +698,7 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_result(result, prediction::REALTIME, &c));
     EXPECT_EQ(c.value, "リアルタイム");
     EXPECT_EQ(c.candidate_attributes,
-              converter::Candidate::REALTIME_CONVERSION);
+              converter::Attribute::REALTIME_CONVERSION);
     EXPECT_EQ(c.inner_segment_boundary.size(), 2);
   }
   {
@@ -710,7 +710,7 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_result(result, prediction::UNIGRAM, &c));
     EXPECT_EQ(c.value, "SPELLING_CORRECTION");
     EXPECT_EQ(c.candidate_attributes,
-              converter::Candidate::SPELLING_CORRECTION);
+              converter::Attribute::SPELLING_CORRECTION);
   }
   {
     // TYPING_CORRECTION
@@ -719,7 +719,7 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
 
     EXPECT_TRUE(get_top_result(result, prediction::TYPING_CORRECTION, &c));
     EXPECT_EQ(c.value, "TYPING_CORRECTION");
-    EXPECT_EQ(c.candidate_attributes, converter::Candidate::TYPING_CORRECTION);
+    EXPECT_EQ(c.candidate_attributes, converter::Attribute::TYPING_CORRECTION);
   }
   {
     // USER_DICTIONARY
@@ -729,9 +729,9 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_result(result, prediction::UNIGRAM, &c));
     EXPECT_EQ(c.value, "ユーザー辞書");
     EXPECT_EQ(c.candidate_attributes,
-              converter::Candidate::USER_DICTIONARY |
-                  converter::Candidate::NO_MODIFICATION |
-                  converter::Candidate::NO_VARIANTS_EXPANSION);
+              converter::Attribute::USER_DICTIONARY |
+                  converter::Attribute::NO_MODIFICATION |
+                  converter::Attribute::NO_VARIANTS_EXPANSION);
   }
   {
     // removed

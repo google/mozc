@@ -39,7 +39,7 @@
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "prediction/result.h"
@@ -127,7 +127,7 @@ void SingleKanjiDecoder::AppendResults(absl::string_view kanji_key,
     result.rid = general_symbol_id_;
     if (kanji_key.size() < original_request_key.size()) {
       result.candidate_attributes =
-          converter::Candidate::PARTIALLY_KEY_CONSUMED;
+          converter::Attribute::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = Util::CharsLen(kanji_key);
     }
 

@@ -54,7 +54,7 @@
 #include "base/util.h"
 #include "composer/query.h"
 #include "config/character_form_manager.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "converter/node_list_builder.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
@@ -355,12 +355,12 @@ class PrefixLookupCallback : public DictionaryInterface::Callback {
     Result result;
     result.InitializeByTokenAndTypes(token, PREFIX);
     if (key != actual_key) {
-      result.candidate_attributes |= converter::Candidate::TYPING_CORRECTION;
+      result.candidate_attributes |= converter::Attribute::TYPING_CORRECTION;
     }
     const int key_len = Util::CharsLen(key);
     if (key_len < request_key_len_) {
       result.candidate_attributes |=
-          converter::Candidate::PARTIALLY_KEY_CONSUMED;
+          converter::Attribute::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = key_len;
     }
     results_->emplace_back(std::move(result));
@@ -856,9 +856,9 @@ void DictionaryPredictionAggregator::AggregateUnigramForHandwriting(
         .types = UNIGRAM,
         // Set small cost for the top recognition result.
         .wcost = (i == 0) ? 0 : kAsisCostOffset + recognition_cost,
-        .candidate_attributes = (converter::Candidate::NO_VARIANTS_EXPANSION |
-                                 converter::Candidate::NO_EXTRA_DESCRIPTION |
-                                 converter::Candidate::NO_MODIFICATION),
+        .candidate_attributes = (converter::Attribute::NO_VARIANTS_EXPANSION |
+                                 converter::Attribute::NO_EXTRA_DESCRIPTION |
+                                 converter::Attribute::NO_MODIFICATION),
     };
 
     const std::optional<DictionaryPredictionAggregator::HandwritingQueryInfo>

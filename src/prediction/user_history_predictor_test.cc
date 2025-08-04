@@ -65,7 +65,6 @@
 #include "composer/query.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/candidate.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"

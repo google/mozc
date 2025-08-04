@@ -39,7 +39,7 @@
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
@@ -161,7 +161,7 @@ TEST_F(SingleKanjiDecoderTest, Result) {
   EXPECT_EQ(result.lid, pos_matcher().GetGeneralSymbolId());
   EXPECT_EQ(result.rid, pos_matcher().GetGeneralSymbolId());
   EXPECT_FALSE(result.candidate_attributes &
-               converter::Candidate::PARTIALLY_KEY_CONSUMED);
+               converter::Attribute::PARTIALLY_KEY_CONSUMED);
   EXPECT_EQ(result.consumed_key_size, 0);
 }
 
@@ -177,7 +177,7 @@ TEST_F(SingleKanjiDecoderTest, PrefixResult) {
   EXPECT_EQ(result.lid, pos_matcher().GetGeneralSymbolId());
   EXPECT_EQ(result.rid, pos_matcher().GetGeneralSymbolId());
   EXPECT_TRUE(result.candidate_attributes &
-              converter::Candidate::PARTIALLY_KEY_CONSUMED);
+              converter::Attribute::PARTIALLY_KEY_CONSUMED);
   EXPECT_EQ(result.consumed_key_size, strings::CharsLen("あけぼの"));
 }
 

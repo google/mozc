@@ -41,7 +41,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "engine/modules.h"
@@ -213,7 +213,7 @@ TEST_F(NumberDecoderTest, Random) {
       EXPECT_TRUE(absl::StartsWith(key, result.key));
       if (result.key.size() < key.size()) {
         EXPECT_TRUE(result.candidate_attributes &
-                    converter::Candidate::PARTIALLY_KEY_CONSUMED);
+                    converter::Attribute::PARTIALLY_KEY_CONSUMED);
         EXPECT_EQ(result.consumed_key_size, Util::CharsLen(result.key));
         EXPECT_GE(result.wcost, 1000);
         EXPECT_NE(result.lid, 0);

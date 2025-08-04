@@ -41,7 +41,7 @@
 #include "absl/strings/string_view.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "converter/connector.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/result.h"
@@ -118,7 +118,7 @@ bool ResultFilter::ShouldRemove(const Result &result, int added_num) {
 
   if (!auto_partial_suggestion_ &&
       (result.candidate_attributes &
-       converter::Candidate::PARTIALLY_KEY_CONSUMED)) {
+       converter::Attribute::PARTIALLY_KEY_CONSUMED)) {
     return true;
   }
 
@@ -150,7 +150,7 @@ bool ResultFilter::ShouldRemove(const Result &result, int added_num) {
   // User input: "おーすとり" (len = 5)
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
   if ((result.candidate_attributes &
-       converter::Candidate::SPELLING_CORRECTION) &&
+       converter::Attribute::SPELLING_CORRECTION) &&
       result.key != request_key_ &&
       request_key_len_ <=
           GetMissSpelledPosition(result.key, result.value) + 1) {
@@ -208,7 +208,7 @@ bool ResultFilter::ShouldRemove(const Result &result, int added_num) {
   }
 
   if ((result.types & PredictionType::PREFIX) &&
-      (result.candidate_attributes & converter::Candidate::TYPING_CORRECTION) &&
+      (result.candidate_attributes & converter::Attribute::TYPING_CORRECTION) &&
       (prefix_tc_count_++ >= 3 || added_num >= 10)) {
     return true;
   }
@@ -269,7 +269,7 @@ void RemoveRedundantResults(std::vector<Result> *results) {
     // Traverse all remaining elements and check if each result is redundant.
     for (auto iter = min_iter; iter != max_iter;) {
       // We do not filter user dictionary word.
-      if (iter->candidate_attributes & converter::Candidate::USER_DICTIONARY) {
+      if (iter->candidate_attributes & converter::Attribute::USER_DICTIONARY) {
         ++iter;
         continue;
       }

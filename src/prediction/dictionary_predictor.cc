@@ -51,7 +51,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
-#include "converter/candidate.h"
+#include "converter/attribute.h"
 #include "converter/connector.h"
 #include "converter/segmenter.h"
 #include "dictionary/pos_matcher.h"
@@ -266,23 +266,23 @@ std::vector<Result> DictionaryPredictor::RerankAndFilterResults(
     }
 
     if ((result.candidate_attributes &
-         converter::Candidate::PARTIALLY_KEY_CONSUMED) &&
+         converter::Attribute::PARTIALLY_KEY_CONSUMED) &&
         cursor_at_tail) {
       result.candidate_attributes |=
-          converter::Candidate::AUTO_PARTIAL_SUGGESTION;
+          converter::Attribute::AUTO_PARTIAL_SUGGESTION;
     }
 
     if ((!(result.candidate_attributes &
-           converter::Candidate::SPELLING_CORRECTION) &&
+           converter::Attribute::SPELLING_CORRECTION) &&
          IsLatinInputMode(request)) ||
         (result.types & PredictionType::SUFFIX)) {
       result.candidate_attributes |=
-          converter::Candidate::NO_VARIANTS_EXPANSION;
-      result.candidate_attributes |= converter::Candidate::NO_EXTRA_DESCRIPTION;
+          converter::Attribute::NO_VARIANTS_EXPANSION;
+      result.candidate_attributes |= converter::Attribute::NO_EXTRA_DESCRIPTION;
     }
 
     if (result.types & PredictionType::TYPING_CORRECTION) {
-      result.candidate_attributes |= converter::Candidate::TYPING_CORRECTION;
+      result.candidate_attributes |= converter::Attribute::TYPING_CORRECTION;
     }
 
     final_results.emplace_back(std::move(result));
@@ -346,7 +346,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
     }
     int lm_cost = GetLMCost(result, rid);
     if (result.candidate_attributes &
-        converter::Candidate::PARTIALLY_KEY_CONSUMED) {
+        converter::Attribute::PARTIALLY_KEY_CONSUMED) {
       lm_cost += CalculatePrefixPenalty(request, result, cache);
     }
     const auto it = min_cost_map.find(result.value);
@@ -557,7 +557,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       MOZC_WORD_LOG(result, "SingleKanji: ", cost);
     }
 
-    if (result.candidate_attributes & converter::Candidate::USER_DICTIONARY &&
+    if (result.candidate_attributes & converter::Attribute::USER_DICTIONARY &&
         result.lid != general_symbol_id_) {
       // Decrease cost for words from user dictionary in order to promote them,
       // provided that it is not a general symbol (Note: emoticons are mapped to
@@ -590,7 +590,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     }
     // Penalty for prefix results.
     if (result.candidate_attributes &
-        converter::Candidate::PARTIALLY_KEY_CONSUMED) {
+        converter::Attribute::PARTIALLY_KEY_CONSUMED) {
       const int prefix_penalty =
           CalculatePrefixPenalty(request, result, &prefix_penalty_cache);
       result.penalty += prefix_penalty;
@@ -619,7 +619,7 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
   for (size_t i = 0; i < results.size(); ++i) {
     const Result &result = results[i];
     if (!(result.candidate_attributes &
-          converter::Candidate::SPELLING_CORRECTION)) {
+          converter::Attribute::SPELLING_CORRECTION)) {
       continue;
     }
 
@@ -636,7 +636,7 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
       }
       const Result &target_result = results[j];
       if (target_result.candidate_attributes &
-          converter::Candidate::SPELLING_CORRECTION) {
+          converter::Attribute::SPELLING_CORRECTION) {
         continue;
       }
       if (target_result.key == result.key) {
