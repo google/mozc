@@ -62,3 +62,4 @@ regression	せんこう	閃光	Conversion Expected 99
 regression	せんこうとともに	閃光とともに	Conversion Expected 99
 regression	おふろはいりません	お風呂入りません	Conversion Expected
 regression	おちゃはいりません	お茶はいりません	Conversion Expected
+regression	きいてください	聞いてください	Conversion Expected 9

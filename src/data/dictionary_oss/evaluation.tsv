@@ -527,3 +527,4 @@ OK:	せんこう	先行	Conversion Expected 99	閃光	2.31.5851
 OK:	せんこうとともに	先行とともに	Conversion Expected 99	閃光とともに	2.31.5851
 OK:	おふろはいりません	お風呂入りません	Conversion Expected	お風呂入りません	2.31.5851
 FAILED:	おちゃはいりません	お茶入りません	Conversion Expected	お茶はいりません	2.31.5851
+OK:	きいてください	聞いてください	Conversion Expected 9	聞いてください	2.31.5851
