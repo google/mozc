@@ -71,9 +71,9 @@ const TranslationMap kUTF8JapaneseMap[] = {
 namespace mozc {
 namespace ibus {
 
-MessageTranslatorInterface::~MessageTranslatorInterface() {}
+MessageTranslatorInterface::~MessageTranslatorInterface() = default;
 
-NullMessageTranslator::NullMessageTranslator() {}
+NullMessageTranslator::NullMessageTranslator() = default;
 
 std::string NullMessageTranslator::MaybeTranslate(
     const std::string &message) const {
