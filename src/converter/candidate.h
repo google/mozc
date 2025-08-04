@@ -303,17 +303,13 @@ class Candidate {
 
 // Inlining basic accessors here.
 inline absl::string_view Candidate::functional_key() const {
-  return key.size() <= content_key.size()
-             ? absl::string_view()
-             : absl::string_view(key.data() + content_key.size(),
-                                 key.size() - content_key.size());
+  return absl::string_view(key).substr(
+      std::min(key.size(), content_key.size()));
 }
 
 inline absl::string_view Candidate::functional_value() const {
-  return value.size() <= content_value.size()
-             ? absl::string_view()
-             : absl::string_view(value.data() + content_value.size(),
-                                 value.size() - content_value.size());
+  return absl::string_view(value).substr(
+      std::min(value.size(), content_value.size()));
 }
 
 }  // namespace converter
