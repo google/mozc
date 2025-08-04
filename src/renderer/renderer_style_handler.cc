@@ -47,7 +47,7 @@ constexpr int kDefaultDPI = 96;
 class RendererStyleHandlerImpl {
  public:
   RendererStyleHandlerImpl();
-  ~RendererStyleHandlerImpl() {}
+  ~RendererStyleHandlerImpl() = default;
   bool GetRendererStyle(RendererStyle *style);
   bool SetRendererStyle(const RendererStyle &style);
   void GetDefaultRendererStyle(RendererStyle *style);
