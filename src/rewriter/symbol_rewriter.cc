@@ -152,10 +152,7 @@ bool SymbolRewriter::InSameSymbolGroup(
   if (lhs.description().empty() || rhs.description().empty()) {
     return false;
   }
-  const size_t cmp_len =
-      std::max(lhs.description().size(), rhs.description().size());
-  return std::strncmp(lhs.description().data(), rhs.description().data(),
-                      cmp_len) == 0;
+  return lhs.description() == rhs.description();
 }
 
 // Insert Symbol into segment.
