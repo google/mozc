@@ -89,7 +89,7 @@ constexpr int kMinCost = 100;
 constexpr int kCostOffset = 6907;
 constexpr int kStructureCostOffset = 3453;
 constexpr int kMinStructureCostOffset = 1151;
-constexpr int32_t kStopEnmerationCacheSize = 30;
+constexpr int32_t kStopEnumerationCacheSize = 30;
 
 // Returns true if the given node sequence is noisy weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
@@ -586,7 +586,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
                  << " top_structure_cost=" << top_structure_cost
                  << " structure_cost=" << candidate->structure_cost
                  << " lid=" << candidate->lid << " rid=" << candidate->rid;
-    if (candidate_size < kStopEnmerationCacheSize) {
+    if (candidate_size < kStopEnumerationCacheSize) {
       // Even when the current candidate is classified as bad candidate,
       // we don't return STOP_ENUMERATION here.
       // When the current candidate is removed only with the "structure_cost",
