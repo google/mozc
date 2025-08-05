@@ -49,6 +49,7 @@
 #include "base/vlog.h"
 #include "config/character_form_manager.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
@@ -406,8 +407,8 @@ VariantsRewriter::CreateAlternativeCandidate(
     const Candidate &original_candidate) const {
   std::string primary_value, secondary_value;
   std::string primary_content_value, secondary_content_value;
-  std::vector<uint32_t> primary_inner_segment_boundary;
-  std::vector<uint32_t> secondary_inner_segment_boundary;
+  converter::InnerSegmentBoundary primary_inner_segment_boundary;
+  converter::InnerSegmentBoundary secondary_inner_segment_boundary;
 
   AlternativeCandidateResult result;
   if (!GenerateAlternatives(
@@ -533,8 +534,8 @@ bool VariantsRewriter::GenerateAlternatives(
     const Candidate &original, std::string *primary_value,
     std::string *secondary_value, std::string *primary_content_value,
     std::string *secondary_content_value,
-    std::vector<uint32_t> *primary_inner_segment_boundary,
-    std::vector<uint32_t> *secondary_inner_segment_boundary) const {
+    converter::InnerSegmentBoundary *primary_inner_segment_boundary,
+    converter::InnerSegmentBoundary *secondary_inner_segment_boundary) const {
   primary_value->clear();
   secondary_value->clear();
   primary_content_value->clear();
@@ -545,39 +546,15 @@ bool VariantsRewriter::GenerateAlternatives(
   const config::CharacterFormManager *manager =
       CharacterFormManager::GetCharacterFormManager();
 
-  // TODO(noriyukit): Some rewriter may rewrite key and/or value and make the
-  // inner segment boundary inconsistent.  Ideally, it should always be valid.
-  // Accessing inner segments with broken boundary information is very
-  // dangerous. So here checks the validity.  For invalid candidate, inner
-  // segment boundary is ignored.
-  const bool is_valid = original.IsValid();
-  if (!is_valid) {
-    MOZC_VLOG(2) << "Invalid candidate: " << original.DebugString();
-  }
-  if (original.inner_segment_boundary.empty() || !is_valid) {
-    if (!manager->ConvertConversionStringWithAlternative(
-            original.value, primary_value, secondary_value)) {
-      return false;
-    }
-    if (original.value != original.content_value) {
-      manager->ConvertConversionStringWithAlternative(original.content_value,
-                                                      primary_content_value,
-                                                      secondary_content_value);
-    } else {
-      *primary_content_value = *primary_value;
-      *secondary_content_value = *secondary_value;
-    }
-    return true;
-  }
-
   // When inner segment boundary is present, rewrite each inner segment.  If at
   // least one inner segment is rewritten, the whole segment is considered
   // rewritten.
   bool at_least_one_modified = false;
   std::string inner_primary_value, inner_secondary_value;
   std::string inner_primary_content_value, inner_secondary_content_value;
-  for (Candidate::InnerSegmentIterator iter(&original); !iter.Done();
-       iter.Next()) {
+  converter::InnerSegmentBoundaryBuilder primary_builder, secondary_builder;
+
+  for (const auto &iter : original.inner_segments()) {
     inner_primary_value.clear();
     inner_secondary_value.clear();
     if (!manager->ConvertConversionStringWithAlternative(
@@ -601,13 +578,18 @@ bool VariantsRewriter::GenerateAlternatives(
     absl::StrAppend(secondary_value, inner_secondary_value);
     absl::StrAppend(primary_content_value, inner_primary_content_value);
     absl::StrAppend(secondary_content_value, inner_secondary_content_value);
-    primary_inner_segment_boundary->push_back(Candidate::EncodeLengths(
-        iter.GetKey().size(), inner_primary_value.size(),
-        iter.GetContentKey().size(), inner_primary_content_value.size()));
-    secondary_inner_segment_boundary->push_back(Candidate::EncodeLengths(
-        iter.GetKey().size(), inner_secondary_value.size(),
-        iter.GetContentKey().size(), inner_secondary_content_value.size()));
+    primary_builder.Add(iter.GetKey().size(), inner_primary_value.size(),
+                        iter.GetContentKey().size(),
+                        inner_primary_content_value.size());
+    secondary_builder.Add(iter.GetKey().size(), inner_secondary_value.size(),
+                          iter.GetContentKey().size(),
+                          inner_secondary_content_value.size());
   }
+
+  *primary_inner_segment_boundary =
+      primary_builder.Build(original.key, *primary_value);
+  *secondary_inner_segment_boundary =
+      secondary_builder.Build(original.key, *secondary_value);
   return at_least_one_modified;
 }
 

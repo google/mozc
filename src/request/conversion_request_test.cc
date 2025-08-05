@@ -39,6 +39,7 @@
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -155,18 +156,19 @@ TEST(ConversionRequestTest, SetHistoryResultTest) {
   result.rid = 12;
   result.cost = 102;
 
+  converter::InnerSegmentBoundaryBuilder builder;
+
   auto add_segment = [&](absl::string_view key, absl::string_view value) {
-    uint32_t encoded = 0;
-    ASSERT_TRUE(converter::Candidate::EncodeLengths(
-        key.size(), value.size(), key.size(), value.size(), &encoded));
+    builder.Add(key.size(), value.size(), key.size(), value.size());
     absl::StrAppend(&result.key, key);
     absl::StrAppend(&result.value, value);
-    result.inner_segment_boundary.emplace_back(encoded);
   };
 
   for (int i = 0; i < 3; ++i) {
     add_segment(absl::StrCat("k", i), absl::StrCat("v", i));
   }
+
+  result.inner_segment_boundary = builder.Build(result.key, result.value);
 
   {
     const ConversionRequest convreq =

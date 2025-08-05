@@ -44,6 +44,7 @@
 #include "converter/attribute.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
 #include "prediction/result.h"
@@ -70,17 +71,9 @@ Segments MakeSegments(const ConversionRequest &request) {
     strings::Assign(candidate->content_value, content_value);
   };
 
-  if (result.key.empty() || result.value.empty()) {
-    // Do nothing. history is not defined.
-  } else if (result.inner_segment_boundary.empty()) {
-    add_history_segment(result.key, result.value, result.key, result.value);
-  } else {
-    for (converter::Candidate::InnerSegmentIterator iter(
-             result.inner_segment_boundary, result.key, result.value);
-         !iter.Done(); iter.Next()) {
-      add_history_segment(iter.GetKey(), iter.GetValue(), iter.GetContentKey(),
-                          iter.GetContentValue());
-    }
+  for (const auto &iter : result.inner_segments()) {
+    add_history_segment(iter.GetKey(), iter.GetValue(), iter.GetContentKey(),
+                        iter.GetContentValue());
   }
 
   const int history_size = segments.history_segments_size();
@@ -101,7 +94,7 @@ Segments MakeSegments(const ConversionRequest &request) {
 std::optional<Result> ConversionSegmentsToResult(const Segments &segments) {
   Result result;
 
-  bool inner_segment_boundary_failed = false;
+  converter::InnerSegmentBoundaryBuilder builder;
   for (const Segment &segment : segments.conversion_segments()) {
     if (segment.candidates_size() == 0) return std::nullopt;
     const converter::Candidate &candidate = segment.candidate(0);
@@ -113,21 +106,11 @@ std::optional<Result> ConversionSegmentsToResult(const Segments &segments) {
     result.candidate_attributes |=
         (candidate.attributes &
          converter::Attribute::USER_SEGMENT_HISTORY_REWRITER);
-
-    uint32_t encoded = 0;
-    if (!converter::Candidate::EncodeLengths(
-            candidate.key.size(), candidate.value.size(),
-            candidate.content_key.size(), candidate.content_value.size(),
-            &encoded)) {
-      inner_segment_boundary_failed = true;
-    }
-    result.inner_segment_boundary.emplace_back(encoded);
+    builder.Add(candidate.key.size(), candidate.value.size(),
+                candidate.content_key.size(), candidate.content_value.size());
   }
 
-  if (inner_segment_boundary_failed) {
-    LOG(WARNING) << "Failed to construct inner segment boundary";
-    result.inner_segment_boundary.clear();
-  }
+  result.inner_segment_boundary = builder.Build(result.key, result.value);
 
   const int size = segments.conversion_segments_size();
   result.lid = segments.conversion_segment(0).candidate(0).lid;

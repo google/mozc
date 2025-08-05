@@ -37,10 +37,12 @@
 #include <tuple>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/number_util.h"
 #include "converter/attribute.h"
+#include "converter/inner_segment.h"
 
 #ifndef NDEBUG
 #define MOZC_CANDIDATE_DEBUG
@@ -137,7 +139,7 @@ class Candidate {
   // Boundary information for real time conversion.  This will be set only for
   // real time conversion result candidates.  Each element is the encoded
   // lengths of key, value, content key and content value.
-  std::vector<uint32_t> inner_segment_boundary;
+  InnerSegmentBoundary inner_segment_boundary;
   // LINT.ThenChange(//converter/segments_matchers.h)
 
   // The original cost before rescoring. Used for debugging purpose.
@@ -148,67 +150,10 @@ class Candidate {
   mutable std::string log;
 #endif  // MOZC_CANDIDATE_DEBUG
 
-  static bool EncodeLengths(size_t key_len, size_t value_len,
-                            size_t content_key_len, size_t content_value_len,
-                            uint32_t *result);
-
-  // This function ignores error, so be careful when using this.
-  static uint32_t EncodeLengths(size_t key_len, size_t value_len,
-                                size_t content_key_len,
-                                size_t content_value_len) {
-    uint32_t result;
-    EncodeLengths(key_len, value_len, content_key_len, content_value_len,
-                  &result);
-    return result;
+  InnerSegments inner_segments() const {
+    return InnerSegments(key, value, content_key, content_value,
+                         inner_segment_boundary);
   }
-
-  // returns [key_len, value_len, content_value_len, content_value_len]
-  static std::tuple<size_t, size_t, size_t, size_t> DecodeLengths(
-      uint32_t encoded);
-
-  // Inserts a new element to |inner_segment_boundary|.  If one of four
-  // lengths is longer than 255, this method returns false.
-  bool PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
-                                    size_t content_key_len,
-                                    size_t content_value_len);
-
-  // Iterates inner segments.  Usage example:
-  // for (InnerSegmentIterator iter(&cand); !iter.Done(); iter.Next()) {
-  //   absl::string_view s = iter.GetContentKey();
-  //   ...
-  // }
-  class InnerSegmentIterator final {
-   public:
-    explicit InnerSegmentIterator(const Candidate *candidate)
-        : inner_segment_boundary_(candidate->inner_segment_boundary),
-          key_offset_(candidate->key.data()),
-          value_offset_(candidate->value.data()),
-          index_(0) {}
-
-    InnerSegmentIterator(absl::Span<const uint32_t> inner_segment_boundary,
-                         absl::string_view key, absl::string_view value)
-        : inner_segment_boundary_(inner_segment_boundary),
-          key_offset_(key.data()),
-          value_offset_(value.data()),
-          index_(0) {}
-
-    bool Done() const { return index_ == inner_segment_boundary_.size(); }
-
-    void Next();
-    absl::string_view GetKey() const;
-    absl::string_view GetValue() const;
-    absl::string_view GetContentKey() const;
-    absl::string_view GetContentValue() const;
-    absl::string_view GetFunctionalKey() const;
-    absl::string_view GetFunctionalValue() const;
-    size_t GetIndex() const { return index_; }
-
-   private:
-    const absl::Span<const uint32_t> inner_segment_boundary_;
-    const char *key_offset_ = nullptr;
-    const char *value_offset_ = nullptr;
-    size_t index_ = 0;
-  };
 
   // Clears the Candidate with default values. Note that the default
   // constructor already does the same so you don't need to call Clear
@@ -225,18 +170,11 @@ class Candidate {
   // value.substr(content_value.size(), value.size() - content_value.size());
   absl::string_view functional_value() const;
 
-  // Returns whether the inner_segment_boundary member is consistent with
-  // key and value.
-  // Note: content_key and content_value are not checked here.
-  // We cannot compose candidate's content_key and content_value directly
-  // from the inner segments in the current implementation.
-  // Example:
-  // value: 車のほうがあとだ
-  // content_value: 車のほうがあとだ
-  // inner_segments:
-  // <くるまのほうが, 車のほうが, くるま, 車>
-  // <あとだ, あとだ, あとだ, あとだ>
-  bool IsValid() const;
+  // inner_segments() always returns valid information, so
+  // IsValid() can return always true.
+  // TODO(taku): Remove this method.
+  ABSL_DEPRECATED("IsValid() always returns true.")
+  bool IsValid() const { return true; }
   std::string DebugString() const;
 
   friend std::ostream &operator<<(std::ostream &os,

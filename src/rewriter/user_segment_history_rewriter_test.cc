@@ -47,6 +47,7 @@
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
@@ -1737,12 +1738,11 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
     candidate->content_value = kValue;
     candidate->key = kKey;
     candidate->content_key = kKey;
-    // "わたしの, 私の", "わたし, 私"
-    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
-    // "なまえは, 名前は", "なまえ, 名前"
-    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
-    // "なかのです, 中野です", "なかの, 中野"
-    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
+    candidate->inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+        {{12, 6, 9, 3},    // "わたしの, 私の", "わたし, 私"
+         {12, 9, 9, 6},    // "なまえは, 名前は", "なまえ, 名前"
+         {15, 12, 9, 6}},  // "なかのです, 中野です", "なかの, 中野"
+        candidate->key, candidate->value);
     candidate->lid = 10;
     candidate->rid = 20;
 
@@ -1811,7 +1811,8 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
     candidate->key = kKey;
     candidate->content_key = kKey;
     // "わたしの, 私の", "わたし, 私"
-    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    candidate->inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+        {{12, 6, 9, 3}}, candidate->key, candidate->value);
     candidate->lid = 10;
     candidate->rid = 10;
 

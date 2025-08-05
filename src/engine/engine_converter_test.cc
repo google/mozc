@@ -53,6 +53,7 @@
 #include "composer/table.h"
 #include "converter/candidate.h"
 #include "converter/converter_mock.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -3854,10 +3855,12 @@ TEST_F(EngineConverterTest, ResultTokensWithInnerSegements) {
     candidate->content_value = "今日は晴れ";
     candidate->lid = 100;
     candidate->rid = 201;
-    // 12, 9, 9, 6 = len("きょうは"), len("今日"), len("きょう"), len("今日")
-    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
-    // 6, 6, 6, 6 = len("はれ"), len("晴れ"), len("はれ"), len("晴れ")
-    candidate->PushBackInnerSegmentBoundary(6, 6, 6, 6);
+    candidate->inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+        {// len("きょうは"), len("今日"), len("きょう"), len("今日")
+         {12, 9, 9, 6},
+         // len("はれ"), len("晴れ"), len("はれ"), len("晴れ")
+         {6, 6, 6, 6}},
+        candidate->key, candidate->value);
   }
   EXPECT_CALL(*mock_converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));

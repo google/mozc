@@ -51,7 +51,7 @@ mozc_cc_library(
         "//base/strings:assign",
         "//composer",
         "//config:config_handler",
-        "//converter:segments",  # TODO(b/409183257): Remove the dependency to segments.
+        "//converter:inner_segment",
         "//prediction:result",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
@@ -68,6 +68,7 @@ mozc_cc_test(
         ":conversion_request",
         "//composer",
         "//composer:table",
+        "//converter:inner_segment",
         "//converter:segments",
         "//prediction:result",
         "//protocol:commands_cc_proto",

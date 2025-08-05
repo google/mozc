@@ -58,12 +58,14 @@ mozc_cc_library(
     ],
     deps = [
         ":attribute",
+        ":inner_segment",
         ":lattice",
         "//base:number_util",
         "//base:util",
         "//base:vlog",
         "//base/container:freelist",
         "//base/strings:assign",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
@@ -91,6 +93,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["candidate_test.cc"],
     deps = [
+        ":inner_segment",
         ":segments",
         "//base:number_util",
         "//testing:gunit_main",
@@ -105,6 +108,41 @@ mozc_cc_library(
         "//engine:__pkg__",
         "//prediction:__pkg__",
         "//rewriter:__pkg__",
+    ],
+)
+
+mozc_cc_library(
+    name = "inner_segment",
+    hdrs = [
+        "inner_segment.h",
+    ],
+    visibility = [
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+        "//request:__pkg__",
+        "//rewriter:__pkg__",
+    ],
+    deps = [
+        "@com_google_absl//absl/container:fixed_array",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_test(
+    name = "inner_segment_test",
+    srcs = [
+        "inner_segment_test.cc",
+    ],
+    deps = [
+        ":inner_segment",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -223,6 +261,7 @@ mozc_cc_library(
     deps = [
         ":candidate_filter",
         ":connector",
+        ":inner_segment",
         ":lattice",
         ":node",
         ":segmenter",
@@ -423,6 +462,7 @@ mozc_cc_test(
     ],
     deps = [
         ":immutable_converter_no_factory",
+        ":inner_segment",
         ":lattice",
         ":node",
         ":segments",
@@ -475,6 +515,7 @@ mozc_cc_library(
         ":converter_interface",
         ":history_reconstructor",
         ":immutable_converter_interface",
+        ":inner_segment",
         ":reverse_converter",
         ":segments",
         "//base:util",
@@ -509,6 +550,7 @@ mozc_cc_test(
         ":converter_interface",
         ":immutable_converter_interface",
         ":immutable_converter_no_factory",
+        ":inner_segment",
         ":segments",
         ":segments_matchers",
         "//base:util",

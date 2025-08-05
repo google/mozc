@@ -734,11 +734,9 @@ Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
       *seg = segment;
       continue;
     }
-    for (converter::Candidate::InnerSegmentIterator iter(&candidate);
-         !iter.Done(); iter.Next()) {
-      size_t index = iter.GetIndex();
+    int index = 0;
+    for (const auto &iter : candidate.inner_segments()) {
       absl::string_view key = iter.GetKey();
-
       Segment *seg = ret.add_segment();
       seg->set_segment_type(segment.segment_type());
       seg->set_key(key);
@@ -754,10 +752,11 @@ Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
       if (index == 0) {
         cand->lid = candidate.lid;
         cand->rid = candidate.lid;
-      } else if (index == candidate.inner_segment_boundary.size() - 1) {
+      } else if (index == candidate.inner_segments().size() - 1) {
         cand->lid = candidate.rid;
         cand->rid = candidate.rid;
       }
+      ++index;
     }
   }
   return ret;

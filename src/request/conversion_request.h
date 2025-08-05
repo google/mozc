@@ -45,7 +45,7 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
-#include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -312,14 +312,8 @@ class ConversionRequest {
     return GetHistoryKeyAndValue(size).second;
   }
 
-
-  // ConversionRequest is initialized with default history result, which
-  // has zero key/value. Since we do not have the empty history result now,
-  // checks the length of key first.
-  // When inner segment boundary is not defined, the segment size is 1.
   size_t converter_history_size() const {
-    if (history_result_->key.empty()) return 0;
-    return std::max<size_t>(1, history_result_->inner_segment_boundary.size());
+    return history_result_->inner_segments().size();
   }
 
   // Returns the right context id of the history.
@@ -338,15 +332,12 @@ class ConversionRequest {
 
     absl::string_view key = history_result_->key;
     absl::string_view value = history_result_->value;
-    int index = history_result_->inner_segment_boundary.size() - size - 1;
+    int index = history_result_->inner_segments().size() - size - 1;
 
-    if (size < 0 || index < 0 ||
-        history_result_->inner_segment_boundary.empty()) {
+    if (size < 0 || index < 0) {
       return std::make_pair(key, value);
     } else {
-      for (converter::Candidate::InnerSegmentIterator iter(
-               history_result_->inner_segment_boundary, key, value);
-           !iter.Done(); iter.Next()) {
+      for (const auto &iter : history_result_->inner_segments()) {
         key.remove_prefix(iter.GetKey().size());
         value.remove_prefix(iter.GetValue().size());
         if (index-- == 0) return std::make_pair(key, value);

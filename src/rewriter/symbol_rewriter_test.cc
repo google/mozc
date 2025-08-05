@@ -38,6 +38,7 @@
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
@@ -344,7 +345,8 @@ TEST_F(SymbolRewriterTest, ExpandSpace) {
   candidate->value = " ";
   candidate->content_key = " ";
   candidate->content_value = " ";
-  candidate->PushBackInnerSegmentBoundary(1, 1, 1, 1);
+  candidate->inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+      {{1, 1, 1, 1}}, candidate->key, candidate->value);
 
   EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
   EXPECT_LE(2, segment->candidates_size());
@@ -355,8 +357,6 @@ TEST_F(SymbolRewriterTest, ExpandSpace) {
   EXPECT_EQ(cand0.content_key, " ");
   EXPECT_EQ(cand0.content_value, " ");
   ASSERT_EQ(cand0.inner_segment_boundary.size(), 1);
-  EXPECT_EQ(cand0.inner_segment_boundary[0],
-            converter::Candidate::EncodeLengths(1, 1, 1, 1));
 
   const char *kFullWidthSpace = "　";
   const converter::Candidate &cand1 = segment->candidate(1);

@@ -273,8 +273,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   EXPECT_EQ(top_cand.value, "東京か名古屋に行きたい");
 
   std::vector<absl::string_view> keys, values, content_keys, content_values;
-  for (Candidate::InnerSegmentIterator iter(&top_cand); !iter.Done();
-       iter.Next()) {
+  for (const auto &iter : top_cand.inner_segments()) {
     keys.push_back(iter.GetKey());
     values.push_back(iter.GetValue());
     content_keys.push_back(iter.GetContentKey());
@@ -387,9 +386,8 @@ TEST_F(NBestGeneratorTest, NoAlphabetsConnection2Nodes) {
   // The test dictionary contains key value pairs (eu, EU) and (pho, pho), but
   // "EUpho" should not be generated as it is a concatenation of two alphabet
   // words. The only expected candidate is (eupho, eupho).
-  EXPECT_THAT(result_segment,
-              HasSingleCandidate(::testing::Field(
-                  "value", &Candidate::value, "eupho")));
+  EXPECT_THAT(result_segment, HasSingleCandidate(::testing::Field(
+                                  "value", &Candidate::value, "eupho")));
 }
 
 TEST_F(NBestGeneratorTest, NoAlphabetsConnection3Nodes) {

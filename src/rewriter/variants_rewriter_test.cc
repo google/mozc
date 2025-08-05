@@ -42,6 +42,7 @@
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -829,10 +830,8 @@ TEST_F(VariantsRewriterTest, RewriteForMixedConversion) {
     candidate->content_key = candidate->key;
     candidate->value = "３円";  // Full-width three.
     candidate->content_value = candidate->value;
-    candidate->inner_segment_boundary = {
-        converter::Candidate::EncodeLengths(6, 3, 6, 3),
-        converter::Candidate::EncodeLengths(6, 3, 6, 3),
-    };
+    candidate->inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+        {{6, 3, 6, 3}, {6, 3, 6, 3}}, candidate->key, candidate->value);
 
     EXPECT_TRUE(rewriter->Rewrite(conv_request, &segments));
 
@@ -845,19 +844,17 @@ TEST_F(VariantsRewriterTest, RewriteForMixedConversion) {
     EXPECT_EQ(half.key, "さんえん");
     EXPECT_EQ(half.value, "3円");
     ASSERT_EQ(half.inner_segment_boundary.size(), 2);
-    EXPECT_EQ(half.inner_segment_boundary[0],
-              converter::Candidate::EncodeLengths(6, 1, 6, 1));
-    EXPECT_EQ(half.inner_segment_boundary[1],
-              converter::Candidate::EncodeLengths(6, 3, 6, 3));
+    EXPECT_EQ(half.inner_segment_boundary,
+              converter::BuildInnerSegmentBoundary({{6, 1, 6, 1}, {6, 3, 6, 3}},
+                                                   half.key, half.value));
 
     const converter::Candidate &full = segments.segment(0).candidate(1);
     EXPECT_EQ(full.key, "さんえん");
     EXPECT_EQ(full.value, "３円");
     ASSERT_EQ(full.inner_segment_boundary.size(), 2);
-    EXPECT_EQ(full.inner_segment_boundary[0],
-              converter::Candidate::EncodeLengths(6, 3, 6, 3));
-    EXPECT_EQ(full.inner_segment_boundary[1],
-              converter::Candidate::EncodeLengths(6, 3, 6, 3));
+    EXPECT_EQ(full.inner_segment_boundary,
+              converter::BuildInnerSegmentBoundary({{6, 3, 6, 3}, {6, 3, 6, 3}},
+                                                   full.key, full.value));
   }
 }
 
@@ -967,10 +964,12 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
     candidate->content_key = candidate->key;
     candidate->value = "マジ!";
     candidate->content_value = candidate->value;
-    candidate->inner_segment_boundary.push_back(
-        converter::Candidate::EncodeLengths(6, 6, 6, 6));  // 6 bytes for "まじ"
-    candidate->inner_segment_boundary.push_back(
-        converter::Candidate::EncodeLengths(1, 1, 1, 1));  // 1 byte for "!"
+    candidate->inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+        {
+            {6, 6, 6, 6},  // 6 bytes for "まじ"
+            {1, 1, 1, 1}   // 1 byte for "!"
+        },
+        candidate->key, candidate->value);
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
@@ -981,17 +980,16 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
     EXPECT_EQ(rewritten_candidate.value, "マジ！");  // "マジ！" (full-width)
     EXPECT_EQ(rewritten_candidate.content_value,
               "マジ！");  // "マジ！" (full-width)
-    ASSERT_EQ(rewritten_candidate.inner_segment_boundary.size(), 2);
-
-    // Boundary information for
-    // key="まじ", value="マジ", ckey="まじ", cvalue="マジ"
-    EXPECT_EQ(rewritten_candidate.inner_segment_boundary[0],
-              converter::Candidate::EncodeLengths(6, 6, 6, 6));
-    // Boundary information for
-    // key="!", value="！", ckey="!", cvalue="！".
-    // Values are converted to full-width.
-    EXPECT_EQ(rewritten_candidate.inner_segment_boundary[1],
-              converter::Candidate::EncodeLengths(1, 3, 1, 3));
+    EXPECT_EQ(rewritten_candidate.inner_segment_boundary,
+              converter::BuildInnerSegmentBoundary(
+                  {
+                      // key="まじ", value="マジ", ckey="まじ", cvalue="マジ"
+                      {6, 6, 6, 6},
+                      // key="!", value="！", ckey="!", cvalue="！".
+                      // Values are converted to full-width.
+                      {1, 3, 1, 3}  // 1 byte for "!"
+                  },
+                  rewritten_candidate.key, rewritten_candidate.value));
   }
 }
 

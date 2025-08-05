@@ -39,6 +39,7 @@
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
@@ -163,8 +164,8 @@ class VariantsRewriter : public RewriterInterface {
       const converter::Candidate &original, std::string *primary_value,
       std::string *secondary_value, std::string *primary_content_value,
       std::string *secondary_content_value,
-      std::vector<uint32_t> *primary_inner_segment_boundary,
-      std::vector<uint32_t> *secondary_inner_segment_boundary) const;
+      converter::InnerSegmentBoundary *primary_inner_segment_boundary,
+      converter::InnerSegmentBoundary *secondary_inner_segment_boundary) const;
 
   // Returns an alternative candidate and information for the base candidate.
   struct AlternativeCandidateResult {

@@ -42,6 +42,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "composer/query.h"
+#include "converter/inner_segment.h"
 #include "dictionary/dictionary_token.h"
 
 namespace mozc {
@@ -127,7 +128,7 @@ struct Result {
   // If the candidate key and value are
   // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
   // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
-  std::vector<uint32_t> inner_segment_boundary;
+  converter::InnerSegmentBoundary inner_segment_boundary;
   size_t consumed_key_size = 0;
   // The total penalty added to this result.
   int penalty = 0;
@@ -143,6 +144,10 @@ struct Result {
 #ifndef NDEBUG
   std::string log;
 #endif  // NDEBUG
+
+  converter::InnerSegments inner_segments() const {
+    return converter::InnerSegments(key, value, inner_segment_boundary);
+  }
 
   // Used to emulate positive infinity for cost. This value is set for those
   // candidates that are thought to be aggressive; thus we can eliminate such

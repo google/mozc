@@ -1364,15 +1364,9 @@ void EngineConverter::UpdateResultTokens(const size_t index,
         segments_.conversion_segment(i).candidate(cand_idx);
     const int first_token_idx = result_.tokens_size();
 
-    if (converter::Candidate::InnerSegmentIterator it(&candidate); !it.Done()) {
-      // If the candidate has inner segments, fill them to the result tokens.
-      for (; !it.Done(); it.Next()) {
-        add_tokens(it.GetContentKey(), it.GetContentValue(),
-                   it.GetFunctionalKey(), it.GetFunctionalValue());
-      }
-    } else {
-      add_tokens(candidate.content_key, candidate.content_value,
-                 candidate.functional_key(), candidate.functional_value());
+    for (const auto &it : candidate.inner_segments()) {
+      add_tokens(it.GetContentKey(), it.GetContentValue(),
+                 it.GetFunctionalKey(), it.GetFunctionalValue());
     }
     // Set lid and rid to the first and last tokens respectively.
     // Other lids and rids are filled with the default POS (i.e. -1 as unknown).

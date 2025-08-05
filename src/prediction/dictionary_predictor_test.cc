@@ -53,6 +53,7 @@
 #include "config/config_handler.h"
 #include "converter/attribute.h"
 #include "converter/connector.h"
+#include "converter/inner_segment.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -204,12 +205,10 @@ Result CreateResult7(absl::string_view key, absl::string_view value, int wcost,
 void PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
                                   size_t content_key_len,
                                   size_t content_value_len, Result *result) {
-  uint32_t encoded;
-  if (!converter::Candidate::EncodeLengths(key_len, value_len, content_key_len,
-                                           content_value_len, &encoded)) {
-    return;
-  }
-  result->inner_segment_boundary.push_back(encoded);
+  result->inner_segment_boundary.push_back(
+      converter::EncodeLengths(key_len, value_len, content_key_len,
+                               content_value_len)
+          .value());
 }
 
 bool FindCandidateByKeyValue(absl::Span<const Result> results,
@@ -686,15 +685,10 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     // REALTIME: inner_segment_boundary
     Result result = CreateResult5("てすと", "リアルタイム", 100,
                                   prediction::REALTIME, Token::NONE);
-    uint32_t encoded;
-    converter::Candidate::EncodeLengths(strlen("てす"), strlen("リアル"),
-                                        strlen("て"), strlen("リア"), &encoded);
-    result.inner_segment_boundary.push_back(encoded);
-    converter::Candidate::EncodeLengths(strlen("と"), strlen("タイム"),
-                                        strlen("と"), strlen("タイム"),
-                                        &encoded);
-    result.inner_segment_boundary.push_back(encoded);
-
+    result.inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+        {{strlen("てす"), strlen("リアル"), strlen("て"), strlen("リア")},
+         {strlen("と"), strlen("タイム"), strlen("と"), strlen("タイム")}},
+        result.key, result.value);
     EXPECT_TRUE(get_top_result(result, prediction::REALTIME, &c));
     EXPECT_EQ(c.value, "リアルタイム");
     EXPECT_EQ(c.candidate_attributes,

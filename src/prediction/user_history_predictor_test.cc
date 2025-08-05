@@ -65,6 +65,7 @@
 #include "composer/query.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/inner_segment.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
@@ -168,12 +169,12 @@ class SegmentsProxy {
                                     size_t key_len, size_t value_len,
                                     size_t content_key_len,
                                     size_t content_value_len) {
-    uint32_t encoded = 0;
-    converter::Candidate::EncodeLengths(key_len, value_len, content_key_len,
-                                        content_value_len, &encoded);
     segments_[segment_index]
         .results[candidate_index]
-        .inner_segment_boundary.push_back(encoded);
+        .inner_segment_boundary.push_back(
+            converter::EncodeLengths(key_len, value_len, content_key_len,
+                                     content_value_len)
+                .value());
     UpdateHistoryResult();
   }
 
@@ -263,11 +264,11 @@ class SegmentsProxy {
         absl::StrAppend(&result.value, top_result.value);
         absl::StrAppend(&result.description, top_result.description);
         if (top_result.inner_segment_boundary.empty()) {
-          uint32_t encoded = 0;
-          converter::Candidate::EncodeLengths(
-              top_result.key.size(), top_result.value.size(),
-              top_result.key.size(), top_result.value.size(), &encoded);
-          result.inner_segment_boundary.push_back(encoded);
+          result.inner_segment_boundary.push_back(
+              converter::EncodeLengths(
+                  top_result.key.size(), top_result.value.size(),
+                  top_result.key.size(), top_result.value.size())
+                  .value());
         } else {
           for (uint32_t encoded : top_result.inner_segment_boundary) {
             result.inner_segment_boundary.push_back(encoded);
@@ -5284,13 +5285,12 @@ TEST_F(UserHistoryPredictorTest, PartialRevert) {
                            absl::string_view content_value) {
       ASSERT_TRUE(absl::StartsWith(key, content_key));
       ASSERT_TRUE(absl::StartsWith(value, content_value));
-      uint32_t encoded = 0;
-      ASSERT_TRUE(converter::Candidate::EncodeLengths(
-          key.size(), value.size(), content_key.size(), content_value.size(),
-          &encoded));
       absl::StrAppend(&result.key, key);
       absl::StrAppend(&result.value, value);
-      result.inner_segment_boundary.emplace_back(encoded);
+      result.inner_segment_boundary.emplace_back(
+          converter::EncodeLengths(key.size(), value.size(), content_key.size(),
+                                   content_value.size())
+              .value());
     };
 
     // 佐藤さんは京都大学を卒業した

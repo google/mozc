@@ -443,6 +443,7 @@ mozc_cc_test(
         "//composer",
         "//composer:table",
         "//converter:converter_mock",
+        "//converter:inner_segment",
         "//converter:segments",
         "//converter:segments_matchers",
         "//data_manager/testing:mock_data_manager",

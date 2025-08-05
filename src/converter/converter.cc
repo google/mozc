@@ -37,6 +37,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -54,6 +55,7 @@
 #include "converter/candidate.h"
 #include "converter/history_reconstructor.h"
 #include "converter/immutable_converter_interface.h"
+#include "converter/inner_segment.h"
 #include "converter/reverse_converter.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -730,8 +732,6 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
     Candidate *candidate = segment->add_candidate();
     strings::Assign(candidate->key, result.key);
     strings::Assign(candidate->value, result.value);
-    strings::Assign(candidate->content_key, result.key);
-    strings::Assign(candidate->content_value, result.value);
     strings::Assign(candidate->description, result.description);
     candidate->lid = result.lid;
     candidate->rid = result.rid;
@@ -743,25 +743,8 @@ bool Converter::PredictForRequestWithSegments(const ConversionRequest &request,
 
     // When inner_segment_boundary is available, generate
     // content_key and content_value from the boundary info.
-    if (!result.inner_segment_boundary.empty()) {
-      // Gets the last key/value and content_key/content_value.
-      const auto [key_len, value_len, content_key_len, content_value_len] =
-          Candidate::DecodeLengths(result.inner_segment_boundary.back());
-      const int function_key_len = key_len - content_key_len;
-      const int function_value_len = value_len - content_value_len;
-      const int content_key_start =
-          candidate->content_key.size() - function_key_len;
-      const int content_value_start =
-          candidate->content_value.size() - function_value_len;
-      if (function_key_len > 0 && content_key_start > 0 &&
-          function_key_len <= candidate->content_key.size()) {
-        candidate->content_key.erase(content_key_start, function_key_len);
-      }
-      if (function_value_len > 0 && content_value_start > 0 &&
-          function_value_len <= candidate->content_value.size()) {
-        candidate->content_value.erase(content_value_start, function_value_len);
-      }
-    }
+    std::tie(candidate->content_key, candidate->content_value) =
+        result.inner_segments().GetMergedContentKeyAndValue();
 #ifndef NDEBUG
     absl::StrAppend(&candidate->log, "\n", result.log);
 #endif  // NDEBUG
@@ -797,13 +780,11 @@ std::vector<prediction::Result> Converter::MakeLearningResults(
       result.consumed_key_size = candidate->consumed_key_size;
       result.inner_segment_boundary = candidate->inner_segment_boundary;
       // Force to set inner_segment_boundary from key/content_key.
-      uint32_t encoded = 0;
-      if (result.inner_segment_boundary.empty() &&
-          Candidate::EncodeLengths(candidate->key.size(),
-                                   candidate->value.size(),
-                                   candidate->content_key.size(),
-                                   candidate->content_value.size(), &encoded)) {
-        result.inner_segment_boundary.emplace_back(encoded);
+      if (result.inner_segment_boundary.empty()) {
+        result.inner_segment_boundary = BuildInnerSegmentBoundary(
+            {{candidate->key.size(), candidate->value.size(),
+              candidate->content_key.size(), candidate->content_value.size()}},
+            result.key, result.value);
       }
       results.emplace_back(std::move(result));
       if (results.size() >= kMaxHistorySize) break;
@@ -815,8 +796,8 @@ std::vector<prediction::Result> Converter::MakeLearningResults(
   // segments_size > 1: Populates the top candidate to result by
   //                    concatenating the segments.
   {
-    bool inner_segment_boundary_failed = false;
     prediction::Result result;
+    InnerSegmentBoundaryBuilder builder;
     for (const auto &segment : segments.conversion_segments()) {
       if (segment.candidates_size() == 0) return {};
       const Candidate &candidate = segment.candidate(0);
@@ -825,18 +806,10 @@ std::vector<prediction::Result> Converter::MakeLearningResults(
       result.candidate_attributes |= candidate.attributes;
       result.wcost += candidate.wcost;
       result.cost += candidate.cost;
-      uint32_t encoded = 0;
-      if (!Candidate::EncodeLengths(candidate.key.size(),
-                                    candidate.value.size(),
-                                    candidate.content_key.size(),
-                                    candidate.content_value.size(), &encoded)) {
-        inner_segment_boundary_failed = true;
-      }
-      result.inner_segment_boundary.emplace_back(encoded);
+      builder.Add(candidate.key.size(), candidate.value.size(),
+                  candidate.content_key.size(), candidate.content_value.size());
     }
-
-    if (inner_segment_boundary_failed) result.inner_segment_boundary.clear();
-
+    result.inner_segment_boundary = builder.Build(result.key, result.value);
     const int size = segments.conversion_segments_size();
     result.lid = segments.conversion_segment(0).candidate(0).lid;
     result.rid = segments.conversion_segment(size - 1).candidate(0).rid;
@@ -855,7 +828,7 @@ prediction::Result Converter::MakeHistoryResult(const Segments &segments) {
     return result;
   }
 
-  bool inner_segment_boundary_failed = false;
+  InnerSegmentBoundaryBuilder builder;
   for (const auto &segment : segments.history_segments()) {
     if (segment.candidates_size() == 0) {
       return prediction::Result::DefaultResult();  // Returns an empty result.
@@ -864,16 +837,11 @@ prediction::Result Converter::MakeHistoryResult(const Segments &segments) {
     absl::StrAppend(&result.key, candidate.key);
     absl::StrAppend(&result.value, candidate.value);
     result.candidate_attributes |= candidate.attributes;
-    uint32_t encoded = 0;
-    if (!Candidate::EncodeLengths(candidate.key.size(), candidate.value.size(),
-                                  candidate.content_key.size(),
-                                  candidate.content_value.size(), &encoded)) {
-      inner_segment_boundary_failed = true;
-    }
-    result.inner_segment_boundary.emplace_back(encoded);
+    builder.Add(candidate.key.size(), candidate.value.size(),
+                candidate.content_key.size(), candidate.content_value.size());
   }
 
-  if (inner_segment_boundary_failed) result.inner_segment_boundary.clear();
+  result.inner_segment_boundary = builder.Build(result.key, result.value);
 
   const int size = segments.history_segments_size();
   result.lid = segments.history_segment(0).candidate(0).lid;

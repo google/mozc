@@ -40,6 +40,7 @@
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "converter/candidate.h"
+#include "converter/inner_segment.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
 #include "converter/segments.h"
@@ -209,9 +210,9 @@ TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
   Segment segment;
   SetCandidate("てすと", "test", &segment);
   Candidate *c = segment.mutable_candidate(0);
-  c->PushBackInnerSegmentBoundary(3, 2, 3, 2);
-  c->PushBackInnerSegmentBoundary(6, 2, 6, 2);
-  EXPECT_TRUE(c->IsValid());
+  c->inner_segment_boundary = converter::BuildInnerSegmentBoundary(
+      {{3, 2, 3, 2}, {6, 2, 6, 2}}, c->key, c->value);
+  EXPECT_EQ(c->inner_segment_boundary.size(), 2);
 
   data_and_converter->GetConverterTestPeer().InsertDummyCandidates(&segment,
                                                                    10);
@@ -285,8 +286,7 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
   const Candidate &cand = segments.segment(0).candidate(0);
   EXPECT_TRUE(cand.IsValid());
   std::vector<absl::string_view> keys, values, content_keys, content_values;
-  for (Candidate::InnerSegmentIterator iter(&cand); !iter.Done();
-       iter.Next()) {
+  for (const auto &iter : cand.inner_segments()) {
     keys.push_back(iter.GetKey());
     values.push_back(iter.GetValue());
     content_keys.push_back(iter.GetContentKey());

@@ -40,6 +40,7 @@
         'candidate_filter_test.cc',
         'converter_test.cc',
         'immutable_converter_test.cc',
+        'inner_segment_test.cc',
         'key_corrector_test.cc',
         'lattice_test.cc',
         'nbest_generator_test.cc',

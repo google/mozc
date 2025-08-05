@@ -282,8 +282,7 @@ Lattice *GetCachedLattice(Segments *segments, bool is_prediction) {
 // Returns the vector of the inner segment's key.
 std::vector<absl::string_view> GetBoundaryInfo(const Candidate &c) {
   std::vector<absl::string_view> ret;
-  for (Candidate::InnerSegmentIterator iter(&c); !iter.Done();
-       iter.Next()) {
+  for (const auto &iter : c.inner_segments()) {
     ret.emplace_back(iter.GetKey());
   }
   return ret;
@@ -1667,8 +1666,7 @@ void ImmutableConverter::InsertFirstSegmentToCandidates(
       if (candidate->key.size() < first_segment.key().size()) {
         candidate->cost += (base_cost_diff + kOnlyFirstSegmentOffset);
         candidate->wcost += (base_wcost_diff + kOnlyFirstSegmentOffset);
-        DCHECK(!(candidate->attributes &
-                 Candidate::PARTIALLY_KEY_CONSUMED));
+        DCHECK(!(candidate->attributes & Candidate::PARTIALLY_KEY_CONSUMED));
         candidate->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
       }
       candidate->consumed_key_size = Util::CharsLen(candidate->key);
@@ -1689,8 +1687,7 @@ void ImmutableConverter::InsertFirstSegmentToCandidates(
       }
       candidate->cost += (base_cost_diff + kOnlyFirstSegmentOffset);
       candidate->wcost += (base_wcost_diff + kOnlyFirstSegmentOffset);
-      DCHECK(!(candidate->attributes &
-               Candidate::PARTIALLY_KEY_CONSUMED));
+      DCHECK(!(candidate->attributes & Candidate::PARTIALLY_KEY_CONSUMED));
       candidate->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
       candidate->consumed_key_size = Util::CharsLen(candidate->key);
       ++i;

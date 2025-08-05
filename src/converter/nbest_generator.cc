@@ -46,6 +46,7 @@
 #include "converter/candidate.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
+#include "converter/inner_segment.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
 #include "converter/segmenter.h"
@@ -153,8 +154,8 @@ void NBestGenerator::Reset(const Node *absl_nonnull begin_node,
 }
 
 void NBestGenerator::MakeCandidate(
-    Candidate &candidate, int32_t cost, int32_t structure_cost,
-    int32_t wcost, absl::Span<const Node *absl_nonnull const> nodes) const {
+    Candidate &candidate, int32_t cost, int32_t structure_cost, int32_t wcost,
+    absl::Span<const Node *absl_nonnull const> nodes) const {
   DCHECK(!nodes.empty());
 
   candidate.Clear();
@@ -224,6 +225,9 @@ void NBestGenerator::FillInnerSegmentInfo(
     content_key_len = 0;
     content_value_len = 0;
   }
+
+  converter::InnerSegmentBoundaryBuilder builder;
+
   for (size_t i = 1; i < nodes.size(); ++i) {
     const Node *absl_nonnull lnode = nodes[i - 1];
     const Node *absl_nonnull rnode = nodes[i];
@@ -234,8 +238,7 @@ void NBestGenerator::FillInnerSegmentInfo(
         content_key_len = key_len;
         content_value_len = value_len;
       }
-      candidate.PushBackInnerSegmentBoundary(
-          key_len, value_len, content_key_len, content_value_len);
+      builder.Add(key_len, value_len, content_key_len, content_value_len);
       key_len = 0;
       value_len = 0;
       content_key_len = 0;
@@ -266,14 +269,15 @@ void NBestGenerator::FillInnerSegmentInfo(
     content_key_len = key_len;
     content_value_len = value_len;
   }
-  candidate.PushBackInnerSegmentBoundary(key_len, value_len, content_key_len,
-                                         content_value_len);
+
+  builder.Add(key_len, value_len, content_key_len, content_value_len);
+  candidate.inner_segment_boundary =
+      builder.Build(candidate.key, candidate.value);
 }
 
 CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
     const ConversionRequest &request, absl::string_view original_key,
-    const NBestGenerator::QueueElement &element,
-    Candidate &candidate) {
+    const NBestGenerator::QueueElement &element, Candidate &candidate) {
   std::vector<const Node *absl_nonnull> nodes;
 
   if (element.next == nullptr) {
@@ -658,8 +662,7 @@ bool NBestGenerator::MakeCandidateFromBestPath(Candidate &candidate) {
   return true;
 }
 
-void NBestGenerator::MakePrefixCandidateFromBestPath(
-    Candidate &candidate) {
+void NBestGenerator::MakePrefixCandidateFromBestPath(Candidate &candidate) {
   top_nodes_.clear();
   int total_extra_wcost = 0;  // wcost sum excepting the first node
   const Node *prev_node = begin_node_;

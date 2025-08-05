@@ -210,11 +210,8 @@ std::string NumberStyleToString(NumberUtil::NumberString::Style style) {
 }
 
 std::string InnerSegmentBoundaryToString(const Candidate &cand) {
-  if (cand.inner_segment_boundary.empty()) {
-    return "";
-  }
   std::vector<std::string> pieces;
-  for (Candidate::InnerSegmentIterator iter(&cand); !iter.Done(); iter.Next()) {
+  for (const auto &iter : cand.inner_segments()) {
     pieces.push_back(absl::StrCat("<", iter.GetKey(), ", ", iter.GetValue(),
                                   ", ", iter.GetContentKey(), ", ",
                                   iter.GetContentValue(), ">"));

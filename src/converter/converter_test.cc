@@ -54,6 +54,7 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
+#include "converter/inner_segment.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/data_manager.h"
@@ -2390,13 +2391,13 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
       EXPECT_EQ(c.cost, result.cost);
       EXPECT_EQ(c.wcost, result.wcost);
 
-      Candidate::InnerSegmentIterator iter(result.inner_segment_boundary,
-                                           result.key, result.value);
-      ASSERT_FALSE(iter.Done());
-      EXPECT_EQ(iter.GetKey(), c.key);
-      EXPECT_EQ(iter.GetContentKey(), c.content_key);
-      EXPECT_EQ(iter.GetValue(), c.value);
-      EXPECT_EQ(iter.GetContentValue(), c.content_value);
+      EXPECT_EQ(result.inner_segments().size(), 1);
+      for (const auto &iter : result.inner_segments()) {
+        EXPECT_EQ(iter.GetKey(), c.key);
+        EXPECT_EQ(iter.GetContentKey(), c.content_key);
+        EXPECT_EQ(iter.GetValue(), c.value);
+        EXPECT_EQ(iter.GetContentValue(), c.content_value);
+      }
     }
   }
 
@@ -2429,9 +2430,7 @@ TEST_F(ConverterTest, MakeLearningResultsTest) {
     EXPECT_EQ(result.wcost, 0 + 10 + 20);
 
     int n = 0;
-    for (Candidate::InnerSegmentIterator iter(result.inner_segment_boundary,
-                                              result.key, result.value);
-         !iter.Done(); iter.Next()) {
+    for (const auto &iter : result.inner_segments()) {
       const Candidate &c = segments.segment(n).candidate(0);
       EXPECT_EQ(iter.GetKey(), c.key);
       EXPECT_EQ(iter.GetContentKey(), c.content_key);
@@ -2466,9 +2465,7 @@ TEST_F(ConverterTest, MakeHistoryResultTest) {
   EXPECT_EQ(result.cost, 2);  // only the last cost.
 
   int n = 0;
-  for (Candidate::InnerSegmentIterator iter(result.inner_segment_boundary,
-                                            result.key, result.value);
-       !iter.Done(); iter.Next()) {
+  for (const auto &iter : result.inner_segments()) {
     const Candidate &c = segments.segment(n).candidate(0);
     EXPECT_EQ(iter.GetKey(), c.key);
     EXPECT_EQ(iter.GetContentKey(), c.content_key);
@@ -2490,12 +2487,11 @@ TEST_F(ConverterTest, Bugfix424676259) {
   result.value = "３：３０から";
 
   // 3|:|30から
-  result.inner_segment_boundary.push_back(
-      converter::Candidate::EncodeLengths(1, 3, 1, 3));  // 3
-  result.inner_segment_boundary.push_back(
-      converter::Candidate::EncodeLengths(1, 3, 1, 3));  // :
-  result.inner_segment_boundary.push_back(
-      converter::Candidate::EncodeLengths(8, 12, 2, 6));  // ３０_から
+  result.inner_segment_boundary =
+      BuildInnerSegmentBoundary({{1, 3, 1, 3},    // 3
+                                 {1, 3, 1, 3},    // :
+                                 {8, 12, 2, 6}},  // ３０_から
+                                result.key, result.value);
 
   results.emplace_back(std::move(result));
 

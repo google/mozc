@@ -1801,23 +1801,16 @@ UserHistoryPredictor::MakeLearningSegments(
 
   auto make_learning_segments = [](const Result &result) {
     std::vector<SegmentForLearning> segments;
-    const bool is_single_segment = result.inner_segment_boundary.size() == 1;
-    if (result.inner_segment_boundary.empty()) {
-      segments.push_back({0, 0, result.key, result.value, result.key,
-                          result.value, GetDescription(result)});
-    } else {
-      for (converter::Candidate::InnerSegmentIterator iter(
-               result.inner_segment_boundary, result.key, result.value);
-           !iter.Done(); iter.Next()) {
-        const int key_begin =
-            std::distance(result.key.data(), iter.GetKey().data());
-        const int value_begin =
-            std::distance(result.value.data(), iter.GetValue().data());
-        segments.push_back({key_begin, value_begin, iter.GetKey(),
-                            iter.GetValue(), iter.GetContentKey(),
-                            iter.GetContentValue(),
-                            is_single_segment ? GetDescription(result) : ""});
-      }
+    const bool is_single_segment = result.inner_segments().size() <= 1;
+    for (const auto &iter : result.inner_segments()) {
+      const int key_begin =
+          std::distance(result.key.data(), iter.GetKey().data());
+      const int value_begin =
+          std::distance(result.value.data(), iter.GetValue().data());
+      segments.push_back({key_begin, value_begin, iter.GetKey(),
+                          iter.GetValue(), iter.GetContentKey(),
+                          iter.GetContentValue(),
+                          is_single_segment ? GetDescription(result) : ""});
     }
     return segments;
   };

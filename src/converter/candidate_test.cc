@@ -34,6 +34,7 @@
 
 #include "absl/strings/string_view.h"
 #include "base/number_util.h"
+#include "converter/inner_segment.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -63,21 +64,14 @@ TEST(CandidateTest, IsValid) {
   EXPECT_TRUE(c.IsValid());  // Empty inner_segment_boundary
 
   // Valid inner_segment_boundary.
-  c.inner_segment_boundary.push_back(
-      Candidate::EncodeLengths(1, 3, 8, 8));
-  c.inner_segment_boundary.push_back(
-      Candidate::EncodeLengths(2, 2, 3, 5));
-  EXPECT_TRUE(c.IsValid());
+  EXPECT_FALSE(
+      BuildInnerSegmentBoundary({{1, 3, 1, 3}, {2, 2, 1, 1}}, c.key, c.value)
+          .empty());
 
   // Invalid inner_segment_boundary.
-  c.inner_segment_boundary.clear();
-  c.inner_segment_boundary.push_back(
-      Candidate::EncodeLengths(1, 1, 2, 2));
-  c.inner_segment_boundary.push_back(
-      Candidate::EncodeLengths(2, 2, 3, 3));
-  c.inner_segment_boundary.push_back(
-      Candidate::EncodeLengths(3, 3, 4, 4));
-  EXPECT_FALSE(c.IsValid());
+  EXPECT_TRUE(BuildInnerSegmentBoundary(
+                  {{1, 1, 1, 1}, {2, 2, 2, 2}, {3, 3, 1, 1}}, c.key, c.value)
+                  .empty());
 }
 
 TEST(CandidateTest, functional_key) {
@@ -146,8 +140,13 @@ TEST(CandidateTest, InnerSegmentIterator) {
     Candidate candidate;
     candidate.key = "testfoobar";
     candidate.value = "redgreenblue";
-    Candidate::InnerSegmentIterator iter(&candidate);
-    EXPECT_TRUE(iter.Done());
+    EXPECT_EQ(candidate.inner_segments().size(), 1);
+    for (const auto &iter : candidate.inner_segments()) {
+      EXPECT_EQ(iter.GetKey(), candidate.key);
+      EXPECT_EQ(iter.GetValue(), candidate.value);
+      EXPECT_EQ(iter.GetContentKey(), candidate.key);
+      EXPECT_EQ(iter.GetContentValue(), candidate.value);
+    }
   }
   {
     //           key: test | foobar
@@ -157,12 +156,11 @@ TEST(CandidateTest, InnerSegmentIterator) {
     Candidate candidate;
     candidate.key = "testfoobar";
     candidate.value = "redgreenblue";
-    candidate.PushBackInnerSegmentBoundary(4, 3, 4, 3);
-    candidate.PushBackInnerSegmentBoundary(6, 9, 3, 5);
+    candidate.inner_segment_boundary = BuildInnerSegmentBoundary(
+        {{4, 3, 4, 3}, {6, 9, 3, 5}}, candidate.key, candidate.value);
     std::vector<absl::string_view> keys, values, content_keys, content_values,
         functional_keys, functional_values;
-    for (Candidate::InnerSegmentIterator iter(&candidate);
-         !iter.Done(); iter.Next()) {
+    for (const auto &iter : candidate.inner_segments()) {
       keys.push_back(iter.GetKey());
       values.push_back(iter.GetValue());
       content_keys.push_back(iter.GetContentKey());

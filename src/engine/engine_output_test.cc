@@ -249,7 +249,10 @@ TEST(EngineOutputTest, FillAllCandidateWords) {
     candidate->value = kValues[i];
     candidate->description = kDescription;
     for (size_t j = 0; j < i; ++j) {
-      candidate->PushBackInnerSegmentBoundary(1, 1, 1, 1);
+      // Puts placeholder lengths.
+      // This field is used to determine the size of inner segments.
+      // TODO(taku): Stop exposing internal data structure.
+      candidate->inner_segment_boundary.push_back(1);
     }
   }
   // Set special key to ID:4 / Index:6
