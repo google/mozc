@@ -50,6 +50,7 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "composer/composer.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "engine/candidate_list.h"
@@ -80,7 +81,7 @@ bool FillAnnotation(const converter::Candidate &candidate_value,
     is_modified = true;
   }
   if (candidate_value.attributes &
-      converter::Candidate::USER_HISTORY_PREDICTION) {
+      converter::Attribute::USER_HISTORY_PREDICTION) {
     annotation->set_deletable(true);
     is_modified = true;
   }
@@ -103,18 +104,18 @@ void FillCandidateWord(const converter::Candidate &segment_candidate,
     *candidate_word_proto->mutable_annotation() = annotation;
   }
 
-  if (segment_candidate.attributes & converter::Candidate::USER_DICTIONARY) {
+  if (segment_candidate.attributes & converter::Attribute::USER_DICTIONARY) {
     candidate_word_proto->add_attributes(commands::USER_DICTIONARY);
   }
   if (segment_candidate.attributes &
-      converter::Candidate::USER_HISTORY_PREDICTION) {
+      converter::Attribute::USER_HISTORY_PREDICTION) {
     candidate_word_proto->add_attributes(commands::USER_HISTORY);
   }
   if (segment_candidate.attributes &
-      converter::Candidate::SPELLING_CORRECTION) {
+      converter::Attribute::SPELLING_CORRECTION) {
     candidate_word_proto->add_attributes(commands::SPELLING_CORRECTION);
   }
-  if (segment_candidate.attributes & converter::Candidate::TYPING_CORRECTION) {
+  if (segment_candidate.attributes & converter::Attribute::TYPING_CORRECTION) {
     candidate_word_proto->add_attributes(commands::TYPING_CORRECTION);
   }
 

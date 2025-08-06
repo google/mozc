@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "engine/candidate_list.h"
@@ -372,16 +373,16 @@ TEST(EngineOutputTest, FillAllCandidateWords_Attributes) {
   }
 
   segment.mutable_candidate(1)->attributes =
-      converter::Candidate::Attribute::USER_DICTIONARY;
+      converter::Attribute::USER_DICTIONARY;
   segment.mutable_candidate(2)->attributes =
-      converter::Candidate::Attribute::USER_HISTORY_PREDICTION |
-      converter::Candidate::Attribute::NO_VARIANTS_EXPANSION;
+      converter::Attribute::USER_HISTORY_PREDICTION |
+      converter::Attribute::NO_VARIANTS_EXPANSION;
   segment.mutable_candidate(3)->attributes =
-      converter::Candidate::Attribute::SPELLING_CORRECTION |
-      converter::Candidate::Attribute::NO_EXTRA_DESCRIPTION;
+      converter::Attribute::SPELLING_CORRECTION |
+      converter::Attribute::NO_EXTRA_DESCRIPTION;
   segment.mutable_candidate(4)->attributes =
-      converter::Candidate::Attribute::TYPING_CORRECTION |
-      converter::Candidate::Attribute::BEST_CANDIDATE;
+      converter::Attribute::TYPING_CORRECTION |
+      converter::Attribute::BEST_CANDIDATE;
 
   candidate_list.set_focused(true);
   candidate_list.MoveToId(0);

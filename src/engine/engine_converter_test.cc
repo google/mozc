@@ -51,6 +51,7 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/converter_mock.h"
 #include "converter/inner_segment.h"
@@ -484,7 +485,7 @@ TEST_F(EngineConverterTest, ConvertWithSpellingCorrection) {
     FillT13Ns(&segments, composer_.get());
     segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes |=
 
-        converter::Candidate::SPELLING_CORRECTION;
+        converter::Attribute::SPELLING_CORRECTION;
     EXPECT_CALL(*mock_converter, StartConversion(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
@@ -1900,7 +1901,7 @@ TEST_F(EngineConverterTest, PartialPrediction) {
     candidate->value = "此処では";
     candidate->key = kChars_Kokode;
     candidate->content_key = kChars_Kokode;
-    candidate->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     candidate->consumed_key_size = Util::CharsLen(kChars_Kokode);
   }
 
@@ -3722,7 +3723,7 @@ TEST_F(EngineConverterTest, ReconstructHistoryByPrecedingText) {
     candidate->key = kKey;
     candidate->content_value = kValue;
     candidate->value = kValue;
-    candidate->attributes = converter::Candidate::NO_LEARNING;
+    candidate->attributes = converter::Attribute::NO_LEARNING;
   }
 
   // With revision

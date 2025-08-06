@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "base/strings/assign.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
@@ -66,7 +67,7 @@ bool AddAsIsCandidate(const absl::string_view key, Segments *segments) {
   candidate->rid = 0;
   candidate->wcost = 0;
   candidate->cost = 0;
-  candidate->attributes = converter::Candidate::DEFAULT_ATTRIBUTE;
+  candidate->attributes = converter::Attribute::DEFAULT_ATTRIBUTE;
 
   return true;
 }

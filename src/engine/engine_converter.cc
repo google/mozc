@@ -49,6 +49,7 @@
 #include "base/vlog.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
@@ -1387,7 +1388,7 @@ size_t EngineConverter::GetConsumedPreeditSize(const size_t index,
     const Segment &segment = segments_.conversion_segment(0);
     const int id = GetCandidateIndexForConverter(0);
     const converter::Candidate &candidate = segment.candidate(id);
-    return (candidate.attributes & converter::Candidate::PARTIALLY_KEY_CONSUMED)
+    return (candidate.attributes & converter::Attribute::PARTIALLY_KEY_CONSUMED)
                ? candidate.consumed_key_size
                : kConsumedAllCharacters;
   }
@@ -1399,7 +1400,7 @@ size_t EngineConverter::GetConsumedPreeditSize(const size_t index,
     const converter::Candidate &candidate =
         segments_.conversion_segment(i).candidate(id);
     DCHECK(
-        !(candidate.attributes & converter::Candidate::PARTIALLY_KEY_CONSUMED));
+        !(candidate.attributes & converter::Attribute::PARTIALLY_KEY_CONSUMED));
     result += segments_.conversion_segment(i).key_len();
   }
   return result;
@@ -1493,7 +1494,7 @@ void EngineConverter::AppendCandidateList() {
     // always display the candidate to let user know the
     // miss spelled candidate.
     if (i < 10 && (segment.candidate(i).attributes &
-                   converter::Candidate::SPELLING_CORRECTION)) {
+                   converter::Attribute::SPELLING_CORRECTION)) {
       candidate_list_visible_ = true;
     }
   }
