@@ -58,14 +58,44 @@
     <SummaryInformation Keywords="Installer" Description="Mozc インストーラー" Manufacturer="Google LLC" Codepage="932" />
 
     <!--
-                     VersionNT
-       Windows 8.0      602
-       Windows 8.1      603
-       Windows 10       603
-       Windows 11       603
-       https://learn.microsoft.com/en-us/troubleshoot/windows-client/application-management/versionnt-value-for-windows-10-server
+       While obtaining the OS build number from the registry does not seem to be officially
+       explained, there are several articles in the Microsoft website that do mention how to do so
+       with the registry value.
+         https://learn.microsoft.com/en-us/fslogix/reference-configuration-settings#custom-environment-variables
+         https://learn.microsoft.com/en-us/intune/intune-service/apps/apps-win32-deploy-update-package
+
+       Here are other examples that use the same registry value to check the OS build number.
+         Microsoft PowerToys
+           https://github.com/microsoft/PowerToys/blob/ca473b488bc3df626140cd332b9a1ea4ff1fcdf2/installer/PowerToysSetup/Product.wxs#L43-L45
+         Google bindiff
+           https://github.com/google/bindiff/blob/7e4d0375035b2353f22f44311f747eedafd98c4e/packaging/msi/Setup.wxs#L70-L75
+
+                         Build Number
+       Windows 10 1507      10240
+       Windows 10 1511      10586
+       Windows 10 1607      14393
+       Windows 10 1703      15063
+       Windows 10 1709      16299
+       Windows 10 1803      17134
+       Windows 10 1809      17763
+       Windows 10 1903      18362
+       Windows 10 1903      18362
+       Windows 10 1909      18363
+       Windows 10 2004      19041
+       Windows 10 20H2      19042
+       Windows 10 21H1      19043
+       Windows 10 21H2      19044
+       Windows 10 22H2      19045
+
+       Windows 11 21H2      22000
+       Windows 11 22H2      22621
+       Windows 11 23H2      22631
+       Windows 11 24H2      26100
     -->
-    <Launch Condition="VersionNT &gt;= 603" Message="Mozc をインストールするには Windows 10 以降にアップグレードする必要があります。" />
+    <Property Id="OS_BUILD_NUMBER">
+      <RegistrySearch Id="CurrentBuildNumberValue" Type="raw" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" />
+    </Property>
+    <Launch Condition="(OS_BUILD_NUMBER AND (OS_BUILD_NUMBER &gt;= 10240)) OR (REMOVE=&quot;ALL&quot;)" Message="Mozc をインストールするには Windows 10 以降にアップグレードする必要があります。" />
 
     <!-- Check if the user have the administrative privileges. -->
     <Launch Condition="Privileged" Message="Mozc をインストールするには管理者権限が必要です。" />
