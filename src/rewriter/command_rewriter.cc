@@ -38,6 +38,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
@@ -88,8 +89,8 @@ converter::Candidate *InsertCommandCandidate(Segment *segment,
       std::min(segment->candidates_size(), insert_pos));
   DCHECK(candidate);
   *candidate = segment->candidate(reference_pos);
-  candidate->attributes |= converter::Candidate::COMMAND_CANDIDATE;
-  candidate->attributes |= converter::Candidate::NO_LEARNING;
+  candidate->attributes |= converter::Attribute::COMMAND_CANDIDATE;
+  candidate->attributes |= converter::Attribute::NO_LEARNING;
   candidate->description = kDescription;
   candidate->prefix = kPrefix;
   candidate->suffix = kSuffix;

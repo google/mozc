@@ -53,6 +53,7 @@
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "base/vlog.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/connector.h"
 #include "converter/key_corrector.h"
@@ -75,6 +76,7 @@
 namespace mozc {
 namespace {
 
+using ::mozc::converter::Attribute;
 using ::mozc::converter::Candidate;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::Token;
@@ -430,7 +432,7 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
     // One character hiragana/katakana will cause side effect.
     // Type "し" and choose "シ". After that, "しました" will become "シました".
     if (Util::CharsLen(new_candidate->key) <= 1) {
-      new_candidate->attributes |= Candidate::CONTEXT_SENSITIVE;
+      new_candidate->attributes |= Attribute::CONTEXT_SENSITIVE;
     }
     DCHECK(new_candidate->IsValid());
   }
@@ -454,7 +456,7 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
     new_candidate->lid = last_candidate->lid;
     new_candidate->rid = last_candidate->rid;
     if (Util::CharsLen(new_candidate->key) <= 1) {
-      new_candidate->attributes |= Candidate::CONTEXT_SENSITIVE;
+      new_candidate->attributes |= Attribute::CONTEXT_SENSITIVE;
     }
     DCHECK(new_candidate->IsValid());
   }
@@ -1492,7 +1494,7 @@ bool ImmutableConverter::MakeLatticeNodesForHistorySegments(
         new_node->lid = compound_node->lid;
         new_node->bnext = nullptr;
         new_node->node_type = Node::NOR_NODE;
-        new_node->attributes |= Candidate::CONTEXT_SENSITIVE;
+        new_node->attributes |= Attribute::CONTEXT_SENSITIVE;
 
         // New cost recalcuration:
         //
@@ -1666,8 +1668,8 @@ void ImmutableConverter::InsertFirstSegmentToCandidates(
       if (candidate->key.size() < first_segment.key().size()) {
         candidate->cost += (base_cost_diff + kOnlyFirstSegmentOffset);
         candidate->wcost += (base_wcost_diff + kOnlyFirstSegmentOffset);
-        DCHECK(!(candidate->attributes & Candidate::PARTIALLY_KEY_CONSUMED));
-        candidate->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
+        DCHECK(!(candidate->attributes & Attribute::PARTIALLY_KEY_CONSUMED));
+        candidate->attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
       }
       candidate->consumed_key_size = Util::CharsLen(candidate->key);
     }
@@ -1687,8 +1689,8 @@ void ImmutableConverter::InsertFirstSegmentToCandidates(
       }
       candidate->cost += (base_cost_diff + kOnlyFirstSegmentOffset);
       candidate->wcost += (base_wcost_diff + kOnlyFirstSegmentOffset);
-      DCHECK(!(candidate->attributes & Candidate::PARTIALLY_KEY_CONSUMED));
-      candidate->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
+      DCHECK(!(candidate->attributes & Attribute::PARTIALLY_KEY_CONSUMED));
+      candidate->attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
       candidate->consumed_key_size = Util::CharsLen(candidate->key);
       ++i;
     }

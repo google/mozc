@@ -38,6 +38,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -115,8 +116,8 @@ bool ZipcodeRewriter::InsertCandidate(const size_t insert_pos,
   candidate->content_value = std::move(value);
   candidate->key = zipcode;
   candidate->content_key = std::move(zipcode);
-  candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
-  candidate->attributes |= converter::Candidate::NO_LEARNING;
+  candidate->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+  candidate->attributes |= converter::Attribute::NO_LEARNING;
   candidate->description = "郵便番号と住所";
 
   return true;

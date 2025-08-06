@@ -53,6 +53,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "config/character_form_manager.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
@@ -135,7 +136,7 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
   const int size = std::min<int>(segment.candidates_size(), kMaxRerankSize + 1);
   for (int i = 0; i < size; ++i) {
     if (segment.candidate(i).attributes &
-        converter::Candidate::BEST_CANDIDATE) {
+        converter::Attribute::BEST_CANDIDATE) {
       return i;
     }
   }
@@ -332,7 +333,7 @@ void NormalizeCandidate(const Segment *segment, int n,
   const converter::Candidate &candidate = segment->candidate(n);
 
   // use "AS IS"
-  if (candidate.attributes & converter::Candidate::NO_VARIANTS_EXPANSION) {
+  if (candidate.attributes & converter::Attribute::NO_VARIANTS_EXPANSION) {
     *normalized_value = candidate.value;
     return;
   }
@@ -511,9 +512,9 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
   // don't apply UNIGRAM model
   const bool context_sensitive =
       segments.resized() ||
-      (candidate.attributes & converter::Candidate::CONTEXT_SENSITIVE) ||
+      (candidate.attributes & converter::Attribute::CONTEXT_SENSITIVE) ||
       (segments.segment(segment_index).candidate(0).attributes &
-       converter::Candidate::CONTEXT_SENSITIVE);
+       converter::Attribute::CONTEXT_SENSITIVE);
 
   const uint32_t trigram_weight = (segments_size == 3) ? 180 : 30;
   const uint32_t bigram_weight = (segments_size == 2) ? 60 : 10;
@@ -623,7 +624,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
 
   const bool context_sensitive =
       segments.resized() ||
-      (candidate.attributes & converter::Candidate::CONTEXT_SENSITIVE);
+      (candidate.attributes & converter::Attribute::CONTEXT_SENSITIVE);
   absl::string_view all_value = candidate.value;
   absl::string_view content_value = candidate.content_value;
   absl::string_view all_key = seg.key();
@@ -632,7 +633,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   // even if the candidate was the top (default) candidate,
   // ERANKED will be set when user changes the ranking
   const bool force_insert =
-      ((candidate.attributes & converter::Candidate::RERANKED) != 0);
+      ((candidate.attributes & converter::Attribute::RERANKED) != 0);
 
   // Compare the POS group and Functional value.
   // if "is_replaceable_with_top" is true, it means that  the target candidate
@@ -788,7 +789,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &
-            converter::Candidate::NO_HISTORY_LEARNING) {
+            converter::Attribute::NO_HISTORY_LEARNING) {
       continue;
     }
     if (IsNumberSegment(segment) && !IsNumberStyleLearningEnabled(request)) {
@@ -860,7 +861,7 @@ bool UserSegmentHistoryRewriter::ShouldRewrite(
 }
 
 void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
-  if (!(segment.candidate(0).attributes & converter::Candidate::RERANKED)) {
+  if (!(segment.candidate(0).attributes & converter::Attribute::RERANKED)) {
     MOZC_VLOG(2) << "InsertTriggerKey is skipped";
     return;
   }
@@ -939,7 +940,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
   for (Segment &segment : *segments) {
     DCHECK_GT(segment.candidates_size(), 0);
     segment.mutable_candidate(0)->attributes |=
-        converter::Candidate::BEST_CANDIDATE;
+        converter::Attribute::BEST_CANDIDATE;
   }
 
   bool modified = false;
@@ -1001,9 +1002,9 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
                      std::greater<ScoreCandidate>());
     modified |= SortCandidates(scores, segment);
     if (!(segment->candidate(0).attributes &
-          converter::Candidate::BEST_CANDIDATE)) {
+          converter::Attribute::BEST_CANDIDATE)) {
       segment->mutable_candidate(0)->attributes |=
-          converter::Candidate::USER_SEGMENT_HISTORY_REWRITER;
+          converter::Attribute::USER_SEGMENT_HISTORY_REWRITER;
     }
   }
   return modified;

@@ -37,6 +37,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "config/config_handler.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
@@ -133,8 +134,8 @@ TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
   expected.value = "value";
   expected.content_key = "key";
   expected.content_value = "value";
-  expected.attributes = converter::Candidate::NO_LEARNING |
-                        converter::Candidate::NO_VARIANTS_EXPANSION;
+  expected.attributes = converter::Attribute::NO_LEARNING |
+                        converter::Attribute::NO_VARIANTS_EXPANSION;
   expected.description = kCalculationDescription;
 
   // Test insertion at each position of candidates list

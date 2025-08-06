@@ -45,6 +45,7 @@
 #include "base/japanese_util.h"
 #include "base/strings/assign.h"
 #include "base/vlog.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
@@ -86,8 +87,8 @@ std::unique_ptr<converter::Candidate> CreateCandidate(
   } else {
     candidate->description = absl::StrCat(kEmoji, " ", description);
   }
-  candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
-  candidate->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
+  candidate->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+  candidate->attributes |= converter::Attribute::CONTEXT_SENSITIVE;
   candidate->category = converter::Candidate::SYMBOL;
 
   return candidate;

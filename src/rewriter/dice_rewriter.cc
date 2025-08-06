@@ -37,6 +37,7 @@
 #include "absl/random/random.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -76,8 +77,8 @@ bool InsertCandidate(int top_face_number, size_t insert_pos, Segment *segment) {
   c->content_value = c->value;
   c->key = base_candidate.key;
   c->content_key = base_candidate.content_key;
-  c->attributes |= converter::Candidate::NO_LEARNING;
-  c->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+  c->attributes |= converter::Attribute::NO_LEARNING;
+  c->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
   c->description = "出た目の数";
   return true;
 }

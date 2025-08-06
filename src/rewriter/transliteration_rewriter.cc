@@ -45,6 +45,7 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -366,7 +367,7 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
     InitT13nCandidate(raw, raw, ids.ascii_lid, ids.ascii_rid, half_candidate);
     // Keep the character form.
     // Without this attribute the form will be changed by VariantsRewriter.
-    half_candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+    half_candidate->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
   }
 
   // Do the same thing on full form.
@@ -377,7 +378,7 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
     converter::Candidate *full_candidate = segment->add_candidate();
     InitT13nCandidate(raw, full_raw, ids.ascii_lid, ids.ascii_rid,
                       full_candidate);
-    full_candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+    full_candidate->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
   }
   return true;
 }

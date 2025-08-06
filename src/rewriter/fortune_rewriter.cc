@@ -42,6 +42,7 @@
 #include "absl/time/time.h"
 #include "base/clock.h"
 #include "base/singleton.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -168,8 +169,8 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
   c->content_value = value;
   c->key = base_candidate.key;
   c->content_key = base_candidate.content_key;
-  c->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
-  c->attributes |= converter::Candidate::NO_LEARNING;
+  c->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+  c->attributes |= converter::Attribute::NO_LEARNING;
   c->description = "今日の運勢";
   return true;
 }

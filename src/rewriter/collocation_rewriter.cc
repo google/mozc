@@ -48,6 +48,7 @@
 #include "base/hash.h"
 #include "base/util.h"
 #include "base/vlog.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
@@ -589,7 +590,7 @@ bool CollocationRewriter::RewriteFromPrevSegment(
         }
         seg->move_candidate(i, 0);
         seg->mutable_candidate(0)->attributes |=
-            converter::Candidate::CONTEXT_SENSITIVE;
+            converter::Attribute::CONTEXT_SENSITIVE;
         return true;
       }
     }
@@ -657,10 +658,10 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
                 << "IsNaturalContent() should not fail here.";
             seg->move_candidate(i, 0);
             seg->mutable_candidate(0)->attributes |=
-                converter::Candidate::CONTEXT_SENSITIVE;
+                converter::Attribute::CONTEXT_SENSITIVE;
             next_seg->move_candidate(j, 0);
             next_seg->mutable_candidate(0)->attributes |=
-                converter::Candidate::CONTEXT_SENSITIVE;
+                converter::Attribute::CONTEXT_SENSITIVE;
             return true;
           }
         }

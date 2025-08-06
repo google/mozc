@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/util.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -121,7 +122,7 @@ bool HistoryReconstructor::ReconstructHistory(absl::string_view preceding_text,
   candidate->key = std::move(key);
   candidate->content_value = value;
   candidate->value = std::move(value);
-  candidate->attributes = Candidate::NO_LEARNING;
+  candidate->attributes = Attribute::NO_LEARNING;
   return true;
 }
 

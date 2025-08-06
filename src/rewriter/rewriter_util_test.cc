@@ -33,6 +33,7 @@
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "testing/gunit.h"
@@ -56,7 +57,7 @@ TEST(RewriterUtilTest, CalculateInsertPositionTest_UserHistory) {
 
   for (int i = 0; i < 3; ++i) {
     segment.mutable_candidate(i)->attributes =
-        converter::Candidate::USER_HISTORY_PREDICTION;
+        converter::Attribute::USER_HISTORY_PREDICTION;
   }
 
   EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 0), 3);

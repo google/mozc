@@ -40,6 +40,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -159,18 +160,18 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
     // If the entry is coming from user dictionary,
     // expand English variants.
     if (original_candidate->attributes &
-            converter::Candidate::NO_VARIANTS_EXPANSION &&
+            converter::Attribute::NO_VARIANTS_EXPANSION &&
         !(original_candidate->attributes &
-          converter::Candidate::USER_DICTIONARY)) {
+          converter::Attribute::USER_DICTIONARY)) {
       continue;
     }
 
     if (IsT13NCandidate(original_candidate)) {
       if (!(original_candidate->attributes &
-            converter::Candidate::NO_VARIANTS_EXPANSION)) {
+            converter::Attribute::NO_VARIANTS_EXPANSION)) {
         modified = true;
         original_candidate->attributes |=
-            converter::Candidate::NO_VARIANTS_EXPANSION;
+            converter::Attribute::NO_VARIANTS_EXPANSION;
       }
 
       if (expanded_t13n_candidates.find(original_candidate->value) !=
@@ -222,11 +223,11 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
           new_candidate->lid = original_candidate->lid;
           new_candidate->rid = original_candidate->rid;
           new_candidate->attributes |=
-              converter::Candidate::NO_VARIANTS_EXPANSION;
+              converter::Attribute::NO_VARIANTS_EXPANSION;
           if (original_candidate->attributes &
-              converter::Candidate::PARTIALLY_KEY_CONSUMED) {
+              converter::Attribute::PARTIALLY_KEY_CONSUMED) {
             new_candidate->attributes |=
-                converter::Candidate::PARTIALLY_KEY_CONSUMED;
+                converter::Attribute::PARTIALLY_KEY_CONSUMED;
             new_candidate->consumed_key_size =
                 original_candidate->consumed_key_size;
           }
@@ -236,7 +237,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
       // Fix variants for English candidate
       modified = true;
       original_candidate->attributes |=
-          converter::Candidate::NO_VARIANTS_EXPANSION;
+          converter::Attribute::NO_VARIANTS_EXPANSION;
     }
   }
 

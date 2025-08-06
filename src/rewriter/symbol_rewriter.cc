@@ -47,6 +47,7 @@
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "base/vlog.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
@@ -217,14 +218,14 @@ void SymbolRewriter::InsertCandidates(
     candidate->content_key = candidate_key;
 
     if (context_sensitive) {
-      candidate->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
+      candidate->attributes |= converter::Attribute::CONTEXT_SENSITIVE;
     }
 
     // The first two consist of two characters but the one of characters doesn't
     // have alternative character.
     if (candidate->value == "“”" || candidate->value == "‘’" ||
         candidate->value == "w" || candidate->value == "www") {
-      candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+      candidate->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
     }
     candidate->category = converter::Candidate::SYMBOL;
 

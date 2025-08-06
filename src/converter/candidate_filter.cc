@@ -45,6 +45,7 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "base/vlog.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/node.h"
 #include "dictionary/dictionary_interface.h"
@@ -354,7 +355,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // If the top candidate has constrained node, we skip the main body
   // of CandidateFilter, meaning that the node is not treated as the top
   // node for CandidateFilter.
-  if (candidate->attributes & Candidate::CONTEXT_SENSITIVE) {
+  if (candidate->attributes & Attribute::CONTEXT_SENSITIVE) {
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
@@ -398,7 +399,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // Don't remove duplications if USER_DICTIONARY.
-  if (candidate->attributes & Candidate::USER_DICTIONARY) {
+  if (candidate->attributes & Attribute::USER_DICTIONARY) {
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
@@ -529,7 +530,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // Skip this check when the conversion mode is real-time;
   // otherwise this ruins the whole sentence
   // that starts with alphabets.
-  if (!(candidate->attributes & Candidate::REALTIME_CONVERSION)) {
+  if (!(candidate->attributes & Attribute::REALTIME_CONVERSION)) {
     const bool is_top_english_t13n =
         (Util::GetScriptType(nodes[0]->key) == Util::HIRAGANA &&
          Util::IsEnglishTransliteration(nodes[0]->value));

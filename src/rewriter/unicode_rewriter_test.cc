@@ -40,6 +40,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "engine/engine.h"
@@ -170,7 +171,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(segments.segment(0).candidate(0).value.at(0), ascii);
     EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
-                converter::Candidate::NO_MODIFICATION);
+                converter::Attribute::NO_MODIFICATION);
   }
 
   // Mozc accepts Japanese characters
@@ -182,7 +183,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(ContainCandidate(segments, kCodepointUtf8Data[i].utf8));
     EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
-                converter::Candidate::NO_MODIFICATION);
+                converter::Attribute::NO_MODIFICATION);
   }
 
   // Mozc does not accept other characters

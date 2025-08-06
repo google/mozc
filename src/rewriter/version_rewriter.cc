@@ -38,6 +38,7 @@
 #include "absl/strings/string_view.h"
 #include "base/const.h"
 #include "base/version.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -100,7 +101,7 @@ bool VersionRewriter::Rewrite(const ConversionRequest &request,
             new_cand->key = segment.key();
             new_cand->content_key = segment.key();
             // we don't learn version
-            new_cand->attributes |= converter::Candidate::NO_LEARNING;
+            new_cand->attributes |= converter::Attribute::NO_LEARNING;
             result = true;
           }
           break;

@@ -37,6 +37,7 @@
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
 #include "config/config_handler.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -108,7 +109,7 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
   Segment *segment = AddSegment("gekkyokuwo", &segments);
   converter::Candidate *candidate = AddCandidate(
       "gekkyokuwo", "TSUKIGIMEwo", "gekkyoku", "TSUKIGIME", segment);
-  candidate->attributes |= converter::Candidate::RERANKED;
+  candidate->attributes |= converter::Attribute::RERANKED;
 
   AddCandidate("gekkyokuwo", "GEKKYOKUwo", "gekkyoku", "GEKKYOKU", segment);
 
@@ -123,14 +124,14 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
 
   // candidate 0
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).attributes,
-            (converter::Candidate::RERANKED |
-             converter::Candidate::SPELLING_CORRECTION));
+            (converter::Attribute::RERANKED |
+             converter::Attribute::SPELLING_CORRECTION));
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).description,
             "<もしかして: tsukigime>");
 
   // candidate 1
   EXPECT_EQ(segments.conversion_segment(0).candidate(1).attributes,
-            converter::Candidate::DEFAULT_ATTRIBUTE);
+            converter::Attribute::DEFAULT_ATTRIBUTE);
   EXPECT_TRUE(segments.conversion_segment(0).candidate(1).description.empty());
 }
 

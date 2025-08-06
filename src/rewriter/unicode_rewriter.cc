@@ -44,6 +44,7 @@
 #include "absl/strings/string_view.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -91,9 +92,9 @@ void AddCandidate(absl::string_view key, absl::string_view value, int index,
   // NO_MODIFICATION is required here, in order to escape
   // EnvironmentalFilterRewriter. Otherwise, some candidates from
   // UnicodeRewriter will be removed because they are unrenderable.
-  candidate->attributes |= (converter::Candidate::NO_LEARNING |
-                            converter::Candidate::NO_VARIANTS_EXPANSION |
-                            converter::Candidate::NO_MODIFICATION);
+  candidate->attributes |= (converter::Attribute::NO_LEARNING |
+                            converter::Attribute::NO_VARIANTS_EXPANSION |
+                            converter::Attribute::NO_MODIFICATION);
 }
 }  // namespace
 

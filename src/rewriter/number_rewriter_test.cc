@@ -42,6 +42,7 @@
 #include "base/number_util.h"
 #include "base/strings/assign.h"
 #include "config/character_form_manager.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
@@ -877,7 +878,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
 // - Value: "8823"
 // - POS: GeneralNoun (not *Number*)
 // In this case, NumberRewriter should not clear
-// converter::Candidate::USER_DICTIONARY bit in the base candidate.
+// converter::Attribute::USER_DICTIONARY bit in the base candidate.
 TEST_F(NumberRewriterTest, PreserveUserDictionaryAttribute) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   {
@@ -893,8 +894,8 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttribute) {
       candidate->content_value = candidate->value;
       candidate->cost = 5925;
       candidate->wcost = 5000;
-      candidate->attributes = converter::Candidate::USER_DICTIONARY |
-                              converter::Candidate::NO_VARIANTS_EXPANSION;
+      candidate->attributes = converter::Attribute::USER_DICTIONARY |
+                              converter::Attribute::NO_VARIANTS_EXPANSION;
     }
 
     EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
@@ -904,7 +905,7 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttribute) {
       for (size_t i = 0; i < segment.candidates_size(); ++i) {
         const converter::Candidate &candidate = segment.candidate(i);
         if (candidate.value == "8823" &&
-            (candidate.attributes & converter::Candidate::USER_DICTIONARY)) {
+            (candidate.attributes & converter::Attribute::USER_DICTIONARY)) {
           base_candidate_found = true;
           break;
         }
@@ -996,8 +997,8 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
     candidate->value = "090";
     candidate->content_key = "090";
     candidate->content_value = "090";
-    candidate->attributes = (converter::Candidate::PARTIALLY_KEY_CONSUMED |
-                             converter::Candidate::NO_SUGGEST_LEARNING);
+    candidate->attributes = (converter::Attribute::PARTIALLY_KEY_CONSUMED |
+                             converter::Attribute::NO_SUGGEST_LEARNING);
     candidate->consumed_key_size = 3;
   }
   {
@@ -1016,9 +1017,9 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     const converter::Candidate &candidate = seg.candidate(i);
     EXPECT_TRUE(candidate.attributes &
-                converter::Candidate::PARTIALLY_KEY_CONSUMED);
+                converter::Attribute::PARTIALLY_KEY_CONSUMED);
     EXPECT_TRUE(candidate.attributes &
-                converter::Candidate::NO_SUGGEST_LEARNING);
+                converter::Attribute::NO_SUGGEST_LEARNING);
   }
 }
 
@@ -1036,7 +1037,7 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
     candidate->value = "一人";
     candidate->content_key = "ひとり";
     candidate->content_value = "一人";
-    candidate->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     candidate->consumed_key_size = 3;
   }
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
@@ -1053,7 +1054,7 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
     found_halfwidth = true;
     EXPECT_EQ(candidate.consumed_key_size, 3);
     EXPECT_TRUE(candidate.attributes &
-                converter::Candidate::PARTIALLY_KEY_CONSUMED);
+                converter::Attribute::PARTIALLY_KEY_CONSUMED);
   }
   EXPECT_TRUE(found_halfwidth);
 }
@@ -1222,7 +1223,7 @@ TEST_P(NumberStyleLearningTest, NumberRewriterTest) {
               NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH);
     ASSERT_EQ(new_segments.conversion_segment(0).candidate(3).value, "2,000");
     ASSERT_TRUE(new_segments.conversion_segment(0).candidate(3).attributes &
-                converter::Candidate::NO_VARIANTS_EXPANSION);
+                converter::Attribute::NO_VARIANTS_EXPANSION);
 
     ASSERT_EQ(new_segments.conversion_segment(0).candidate(4).style,
               NumberUtil::NumberString::DEFAULT_STYLE);
@@ -1274,7 +1275,7 @@ TEST_F(NumberRewriterTest, NoModification) {
     candidate->cost = 5925;
     candidate->wcost = 5000;
     if (i == 0) {
-      candidate->attributes = converter::Candidate::NO_MODIFICATION;
+      candidate->attributes = converter::Attribute::NO_MODIFICATION;
     }
   }
 

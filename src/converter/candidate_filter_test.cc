@@ -40,6 +40,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "base/container/freelist.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/node.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -607,7 +608,7 @@ TEST_P(CandidateFilterTestWithParam, FilterRealtimeConversionTest) {
   n.push_back(n2);
 
   Candidate *c1 = NewCandidate();
-  c1->attributes |= Candidate::REALTIME_CONVERSION;
+  c1->attributes |= Attribute::REALTIME_CONVERSION;
   c1->key = "PCてすと";
   c1->value = "PCテスト";
   // Don't filter a candidate because it starts with alphabets and

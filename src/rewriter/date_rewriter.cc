@@ -67,6 +67,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -518,8 +519,8 @@ std::unique_ptr<converter::Candidate> CreateCandidate(
   candidate->value = std::move(value);
   candidate->key = base_candidate.key;
   candidate->content_key = base_candidate.content_key;
-  candidate->attributes |= (converter::Candidate::NO_LEARNING |
-                            converter::Candidate::NO_VARIANTS_EXPANSION);
+  candidate->attributes |= (converter::Attribute::NO_LEARNING |
+                            converter::Attribute::NO_VARIANTS_EXPANSION);
   candidate->category = converter::Candidate::OTHER;
   candidate->description = std::move(description);
   return candidate;
@@ -1058,7 +1059,7 @@ bool DateRewriter::RewriteEra(Segments::range segments_range,
     }
     std::unique_ptr<converter::Candidate> candidate =
         CreateCandidate(base_cand, std::move(value), std::string(kDescription));
-    candidate->attributes &= ~converter::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes &= ~converter::Attribute::NO_VARIANTS_EXPANSION;
     candidates.push_back(std::move(candidate));
   }
 

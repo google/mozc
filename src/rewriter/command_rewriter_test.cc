@@ -33,6 +33,7 @@
 #include <string>
 
 #include "config/config_handler.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -48,7 +49,7 @@ size_t CommandCandidatesSize(const Segment &segment) {
   size_t result = 0;
   for (int i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).attributes &
-        converter::Candidate::COMMAND_CANDIDATE) {
+        converter::Attribute::COMMAND_CANDIDATE) {
       result++;
     }
   }
@@ -58,7 +59,7 @@ size_t CommandCandidatesSize(const Segment &segment) {
 std::string GetCommandCandidateValue(const Segment &segment) {
   for (int i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).attributes &
-        converter::Candidate::COMMAND_CANDIDATE) {
+        converter::Attribute::COMMAND_CANDIDATE) {
       return segment.candidate(i).value;
     }
   }

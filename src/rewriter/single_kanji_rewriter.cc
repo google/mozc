@@ -40,6 +40,7 @@
 #include "absl/types/span.h"
 #include "base/strings/assign.h"
 #include "base/vlog.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
@@ -80,7 +81,7 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
     const int insert_pos = RewriterUtil::CalculateInsertPosition(
         *segment,
         static_cast<int>(iter.cost() + (segment->candidate(0).attributes &
-                                        converter::Candidate::CONTEXT_SENSITIVE)
+                                        converter::Attribute::CONTEXT_SENSITIVE)
                              ? 1
                              : 0));
     converter::Candidate *c = segment->insert_candidate(insert_pos);
@@ -91,8 +92,8 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
     c->key = candidate_key;
     c->content_key = candidate_key;
     strings::Assign(c->value, iter.value());
-    c->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
-    c->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+    c->attributes |= converter::Attribute::CONTEXT_SENSITIVE;
+    c->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
   }
 }
 
@@ -241,8 +242,8 @@ void SingleKanjiRewriter::FillCandidate(const absl::string_view key,
   strings::Assign(cand->content_value, value);
   strings::Assign(cand->key, key);
   strings::Assign(cand->value, value);
-  cand->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
-  cand->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+  cand->attributes |= converter::Attribute::CONTEXT_SENSITIVE;
+  cand->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
   single_kanji_dictionary_.GenerateDescription(value, &cand->description);
 }
 }  // namespace mozc

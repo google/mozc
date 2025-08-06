@@ -48,6 +48,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "config/character_form_manager.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/inner_segment.h"
 #include "converter/segments.h"
@@ -60,6 +61,7 @@ namespace mozc {
 namespace {
 
 using ::mozc::config::CharacterFormManager;
+using ::mozc::converter::Attribute;
 using ::mozc::converter::Candidate;
 using ::mozc::dictionary::PosMatcher;
 
@@ -289,7 +291,7 @@ std::string VariantsRewriter::GetDescription(const PosMatcher pos_matcher,
   // TODO(taku): reconsider this behavior.
   // Spelling Correction description
   if ((description_type & SPELLING_CORRECTION) &&
-      (candidate.attributes & Candidate::SPELLING_CORRECTION)) {
+      (candidate.attributes & Attribute::SPELLING_CORRECTION)) {
     // Append default description because it may contain extra description.
     if (candidate.description.empty()) {
       pieces = {kDidYouMean};
@@ -304,7 +306,7 @@ std::string VariantsRewriter::GetDescription(const PosMatcher pos_matcher,
 absl::string_view VariantsRewriter::GetPrefix(const int description_type,
                                               const Candidate &candidate) {
   if ((description_type & SPELLING_CORRECTION) &&
-      (candidate.attributes & Candidate::SPELLING_CORRECTION)) {
+      (candidate.attributes & Attribute::SPELLING_CORRECTION)) {
     // Add prefix to distinguish this candidate.
     return "→ ";
   }
@@ -318,7 +320,7 @@ void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
   candidate->description =
       GetDescription(pos_matcher, description_type, *candidate);
   candidate->prefix = GetPrefix(description_type, *candidate);
-  candidate->attributes |= Candidate::NO_EXTRA_DESCRIPTION;
+  candidate->attributes |= Attribute::NO_EXTRA_DESCRIPTION;
 }
 
 int VariantsRewriter::capability(const ConversionRequest &request) const {
@@ -474,7 +476,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
 
   // Meta Candidate
   for (Candidate &candidate : *seg->mutable_meta_candidates()) {
-    if (candidate.attributes & Candidate::NO_EXTRA_DESCRIPTION) {
+    if (candidate.attributes & Attribute::NO_EXTRA_DESCRIPTION) {
       continue;
     }
     SetDescriptionForTransliteration(pos_matcher_, &candidate);
@@ -485,11 +487,11 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     Candidate *original_candidate = seg->mutable_candidate(i);
     DCHECK(original_candidate);
 
-    if (original_candidate->attributes & Candidate::NO_EXTRA_DESCRIPTION) {
+    if (original_candidate->attributes & Attribute::NO_EXTRA_DESCRIPTION) {
       continue;
     }
 
-    if (original_candidate->attributes & Candidate::NO_VARIANTS_EXPANSION) {
+    if (original_candidate->attributes & Attribute::NO_VARIANTS_EXPANSION) {
       SetDescriptionForCandidate(pos_matcher_, original_candidate);
       MOZC_VLOG(1) << "Candidate has NO_NORMALIZATION node";
       continue;
@@ -503,7 +505,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     }
 
     if (original_candidate->description.empty() &&
-        original_candidate->attributes & Candidate::USER_HISTORY_PREDICTION) {
+        original_candidate->attributes & Attribute::USER_HISTORY_PREDICTION) {
       SetDescriptionForPrediction(pos_matcher_, original_candidate);
       continue;
     }
@@ -609,12 +611,12 @@ void VariantsRewriter::Finish(const ConversionRequest &request,
   for (const Segment &segment : segments.conversion_segments()) {
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
-        segment.candidate(0).attributes & Candidate::NO_HISTORY_LEARNING) {
+        segment.candidate(0).attributes & Attribute::NO_HISTORY_LEARNING) {
       continue;
     }
 
     const Candidate &candidate = segment.candidate(0);
-    if (candidate.attributes & Candidate::NO_VARIANTS_EXPANSION) {
+    if (candidate.attributes & Attribute::NO_VARIANTS_EXPANSION) {
       continue;
     }
 

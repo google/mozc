@@ -34,6 +34,7 @@
 #include <string>
 
 #include "absl/log/check.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -50,7 +51,7 @@ size_t CommandCandidatesSize(const Segment &segment) {
   size_t result = 0;
   for (int i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).attributes &
-        converter::Candidate::COMMAND_CANDIDATE) {
+        converter::Attribute::COMMAND_CANDIDATE) {
       result++;
     }
   }

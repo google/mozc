@@ -48,6 +48,7 @@
 #include "base/container/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
@@ -170,8 +171,8 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
 
 // If the candidate should not by modified by this rewriter, returns true.
 bool ShouldKeepCandidate(const converter::Candidate &candidate) {
-  return candidate.attributes & (converter::Candidate::NO_MODIFICATION |
-                                 converter::Candidate::USER_DICTIONARY);
+  return candidate.attributes & (converter::Attribute::NO_MODIFICATION |
+                                 converter::Attribute::USER_DICTIONARY);
 }
 
 bool NormalizeCandidate(converter::Candidate *candidate,

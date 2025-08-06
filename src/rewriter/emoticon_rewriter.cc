@@ -41,6 +41,7 @@
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "base/vlog.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
@@ -125,11 +126,11 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
     c->key = base_candidate.key;
     c->content_key = base_candidate.content_key;
     // no full/half width normalizations
-    c->attributes |= converter::Candidate::NO_EXTRA_DESCRIPTION;
-    c->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
-    c->attributes |= converter::Candidate::CONTEXT_SENSITIVE;
+    c->attributes |= converter::Attribute::NO_EXTRA_DESCRIPTION;
+    c->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+    c->attributes |= converter::Attribute::CONTEXT_SENSITIVE;
     if (is_no_learning) {
-      c->attributes |= converter::Candidate::NO_LEARNING;
+      c->attributes |= converter::Attribute::NO_LEARNING;
     }
 
     constexpr char kBaseEmoticonDescription[] = "顔文字";

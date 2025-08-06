@@ -39,6 +39,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "base/container/serialized_string_array.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
@@ -47,12 +48,13 @@
 
 namespace mozc {
 
+using ::mozc::converter::Attribute;
 using ::mozc::converter::Candidate;
 
 void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
                                       Candidate *candidate) {
   candidate->prefix = "→ ";
-  candidate->attributes |= Candidate::SPELLING_CORRECTION;
+  candidate->attributes |= Attribute::SPELLING_CORRECTION;
 
   candidate->description = absl::StrCat("<もしかして: ", item.correction, ">");
 
@@ -96,7 +98,7 @@ std::unique_ptr<CorrectionRewriter>
 CorrectionRewriter::CreateCorrectionRewriter(const DataManager &data_manager) {
   absl::string_view value_array_data, error_array_data, correction_array_data;
   data_manager.GetReadingCorrectionData(&value_array_data, &error_array_data,
-                                         &correction_array_data);
+                                        &correction_array_data);
   return std::make_unique<CorrectionRewriter>(
       value_array_data, error_array_data, correction_array_data);
 }

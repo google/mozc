@@ -42,6 +42,7 @@
 #include "absl/strings/string_view.h"
 #include "base/japanese_util.h"
 #include "base/util.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -164,8 +165,8 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
     candidate->cost = reference_candidate.cost;
     candidate->key = base_candidate.key;
     candidate->content_key = base_candidate.content_key;
-    candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
-    candidate->attributes |= converter::Candidate::NO_LEARNING;
+    candidate->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
+    candidate->attributes |= converter::Attribute::NO_LEARNING;
     candidate->description = "計算結果";
 
     if (n == 0) {  // without expression

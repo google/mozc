@@ -36,6 +36,7 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
@@ -190,9 +191,9 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     Segments segments;
     Segment *segment = segments.push_back_segment();
     PushFrontCandidate("cand4", segment);
-    PushFrontCandidate("cand3", converter::Candidate::TYPING_CORRECTION,
+    PushFrontCandidate("cand3", converter::Attribute::TYPING_CORRECTION,
                        segment);
-    PushFrontCandidate("cand2", converter::Candidate::TYPING_CORRECTION,
+    PushFrontCandidate("cand2", converter::Attribute::TYPING_CORRECTION,
                        segment);
     PushFrontCandidate("cand1", segment);
     PushFrontCandidate("cand0", segment);

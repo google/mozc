@@ -259,6 +259,7 @@ mozc_cc_library(
     ],
     hdrs = ["nbest_generator.h"],
     deps = [
+        ":attribute",
         ":candidate_filter",
         ":connector",
         ":inner_segment",
@@ -311,6 +312,7 @@ mozc_cc_library(
     ],
     hdrs = ["candidate_filter.h"],
     deps = [
+        ":attribute",
         ":node",
         ":segments",
         "//base:number_util",
@@ -335,6 +337,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["candidate_filter_test.cc"],
     deps = [
+        ":attribute",
         ":candidate_filter",
         ":node",
         ":segments",
@@ -419,6 +422,7 @@ mozc_cc_library(
     hdrs = ["immutable_converter.h"],
     visibility = ["//engine:__pkg__"],
     deps = [
+        ":attribute",
         ":connector",
         ":immutable_converter_interface",
         ":key_corrector",
@@ -444,7 +448,6 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/algorithm:container",
-        "@com_google_absl//absl/base:nullability",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
@@ -461,6 +464,7 @@ mozc_cc_test(
         "immutable_converter_test.cc",
     ],
     deps = [
+        ":attribute",
         ":immutable_converter_no_factory",
         ":inner_segment",
         ":lattice",
@@ -512,6 +516,7 @@ mozc_cc_library(
         "//rewriter:__pkg__",
     ],
     deps = [
+        ":attribute",
         ":converter_interface",
         ":history_reconstructor",
         ":immutable_converter_interface",
@@ -546,6 +551,7 @@ mozc_cc_test(
     timeout = "moderate",
     srcs = ["converter_test.cc"],
     deps = [
+        ":attribute",
         ":converter",
         ":converter_interface",
         ":immutable_converter_interface",
@@ -618,6 +624,7 @@ mozc_cc_library(
     hdrs = ["history_reconstructor.h"],
     visibility = ["//prediction:__pkg__"],
     deps = [
+        ":attribute",
         ":segments",
         "//base:japanese_util",
         "//base:util",
@@ -632,6 +639,7 @@ mozc_cc_test(
     srcs = ["history_reconstructor_test.cc"],
     visibility = ["//prediction:__pkg__"],
     deps = [
+        ":attribute",
         ":history_reconstructor",
         ":segments",
         "//data_manager/testing:mock_data_manager",

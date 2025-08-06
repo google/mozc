@@ -52,6 +52,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "composer/composer.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/history_reconstructor.h"
 #include "converter/immutable_converter_interface.h"
@@ -175,12 +176,12 @@ bool Converter::StartReverseConversion(Segments *segments,
 // static
 void Converter::MaybeSetConsumedKeySizeToCandidate(size_t consumed_key_size,
                                                    Candidate *candidate) {
-  if (candidate->attributes & Candidate::PARTIALLY_KEY_CONSUMED) {
+  if (candidate->attributes & Attribute::PARTIALLY_KEY_CONSUMED) {
     // If PARTIALLY_KEY_CONSUMED is set already,
     // the candidate has set appropriate attribute and size by predictor.
     return;
   }
-  candidate->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
+  candidate->attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
   candidate->consumed_key_size = consumed_key_size;
 }
 
@@ -393,7 +394,7 @@ bool Converter::CommitSegmentValueInternal(
   segment->move_candidate(candidate_index, 0);
 
   if (candidate_index != 0) {
-    segment->mutable_candidate(0)->attributes |= Candidate::RERANKED;
+    segment->mutable_candidate(0)->attributes |= Attribute::RERANKED;
   }
 
   return true;

@@ -38,6 +38,7 @@
 #include "base/japanese_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -205,7 +206,7 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
     // Do no insert the new candidate over the typing corrections.
     while (rank < segment->candidates_size()) {
       if (!(segment->candidate(rank).attributes &
-            converter::Candidate::TYPING_CORRECTION)) {
+            converter::Attribute::TYPING_CORRECTION)) {
         break;
       }
       ++rank;
@@ -231,8 +232,8 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
   candidate->lid = lid;
   candidate->rid = rid;
 
-  candidate->attributes |= (converter::Candidate::NO_VARIANTS_EXPANSION |
-                            converter::Candidate::NO_EXTRA_DESCRIPTION);
+  candidate->attributes |= (converter::Attribute::NO_VARIANTS_EXPANSION |
+                            converter::Attribute::NO_EXTRA_DESCRIPTION);
 
   if (!IsMobileRequest(request)) {
     candidate->prefix = "→ ";

@@ -50,6 +50,7 @@
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
@@ -517,7 +518,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     const Segment &segment = segments.conversion_segment(0);
     EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
     EXPECT_EQ(segment.candidate(0).value, "2");
-    EXPECT_NE(segment.candidate(0).attributes & Candidate::RERANKED, 0);
+    EXPECT_NE(segment.candidate(0).attributes & Attribute::RERANKED, 0);
   }
   {
     // Make the segment SUBMITTED
@@ -536,7 +537,7 @@ TEST_F(ConverterTest, CommitSegmentValue) {
     const Segment &segment = segments.conversion_segment(0);
     EXPECT_EQ(segment.segment_type(), Segment::FIXED_VALUE);
     EXPECT_EQ(segment.candidate(0).value, "3");
-    EXPECT_EQ(segment.candidate(0).attributes & Candidate::RERANKED, 0);
+    EXPECT_EQ(segment.candidate(0).attributes & Attribute::RERANKED, 0);
   }
 }
 
@@ -638,7 +639,7 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
       EXPECT_EQ(segment.segment_type(), Segment::SUBMITTED);
       EXPECT_EQ(segment.candidate(0).value, "2");
       EXPECT_EQ(segment.key(), "left2");
-      EXPECT_NE(segment.candidate(0).attributes & Candidate::RERANKED, 0);
+      EXPECT_NE(segment.candidate(0).attributes & Attribute::RERANKED, 0);
     }
     {
       // The head segment of the conversion segments uses |new_segment_key|.
@@ -967,29 +968,29 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
   segment.push_back_candidate();
   // 2nd candidate with PARTIALLY_KEY_CONSUMED
   Candidate *candidate2 = segment.push_back_candidate();
-  candidate2->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
+  candidate2->attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
   candidate2->consumed_key_size = original_consumed_key_size;
   // 1st meta candidate without PARTIALLY_KEY_CONSUMED
   segment.add_meta_candidate();
   // 2nd meta candidate with PARTIALLY_KEY_CONSUMED
   Candidate *meta_candidate2 = segment.add_meta_candidate();
-  meta_candidate2->attributes |= Candidate::PARTIALLY_KEY_CONSUMED;
+  meta_candidate2->attributes |= Attribute::PARTIALLY_KEY_CONSUMED;
   meta_candidate2->consumed_key_size = original_consumed_key_size;
 
   ConverterTestPeer::MaybeSetConsumedKeySizeToSegment(consumed_key_size,
                                                       &segment);
   EXPECT_NE(
-      (segment.candidate(0).attributes & Candidate::PARTIALLY_KEY_CONSUMED), 0);
+      (segment.candidate(0).attributes & Attribute::PARTIALLY_KEY_CONSUMED), 0);
   EXPECT_EQ(segment.candidate(0).consumed_key_size, consumed_key_size);
   EXPECT_NE(
-      (segment.candidate(1).attributes & Candidate::PARTIALLY_KEY_CONSUMED), 0);
+      (segment.candidate(1).attributes & Attribute::PARTIALLY_KEY_CONSUMED), 0);
   EXPECT_EQ(segment.candidate(1).consumed_key_size, original_consumed_key_size);
   EXPECT_NE((segment.meta_candidate(0).attributes &
-             Candidate::PARTIALLY_KEY_CONSUMED),
+             Attribute::PARTIALLY_KEY_CONSUMED),
             0);
   EXPECT_EQ(segment.meta_candidate(0).consumed_key_size, consumed_key_size);
   EXPECT_NE((segment.meta_candidate(1).attributes &
-             Candidate::PARTIALLY_KEY_CONSUMED),
+             Attribute::PARTIALLY_KEY_CONSUMED),
             0);
   EXPECT_EQ(segment.meta_candidate(1).consumed_key_size,
             original_consumed_key_size);
@@ -1371,7 +1372,7 @@ TEST_F(ConverterTest, ReconstructHistory) {
   EXPECT_EQ(segment.key(), "10");
   EXPECT_EQ(segment.candidates_size(), 1);
   const Candidate &candidate = segment.candidate(0);
-  EXPECT_EQ(candidate.attributes, Candidate::NO_LEARNING);
+  EXPECT_EQ(candidate.attributes, Attribute::NO_LEARNING);
   EXPECT_EQ(candidate.content_key, "10");
   EXPECT_EQ(candidate.key, "10");
   EXPECT_EQ(candidate.content_value, kTen);

@@ -39,6 +39,7 @@
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "base/util.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/inner_segment.h"
 #include "converter/lattice.h"
@@ -70,6 +71,7 @@ class ImmutableConverterTestPeer : testing::TestPeer<ImmutableConverter> {
 
 namespace {
 
+using converter::Attribute;
 using converter::Candidate;
 using dictionary::DictionaryInterface;
 using ::testing::StrEq;
@@ -612,7 +614,7 @@ TEST(ImmutableConverterTest, T13nConversionTwice) {
     segment.set_segment_type(Segment::HISTORY);
     segment.move_candidate(index, 0);
     if (index != 0) {
-      segment.mutable_candidate(0)->attributes |= Candidate::RERANKED;
+      segment.mutable_candidate(0)->attributes |= Attribute::RERANKED;
     }
   }
 

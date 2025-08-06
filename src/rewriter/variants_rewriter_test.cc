@@ -41,6 +41,7 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/inner_segment.h"
 #include "converter/segments.h"
@@ -134,7 +135,7 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
     converter::Candidate *candidate = seg->add_candidate();
     candidate->value = "012";
     candidate->content_value = "012";
-    candidate->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
     CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
         "012", Config::FULL_WIDTH);
 
@@ -206,8 +207,8 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
     converter::Candidate *candidate = seg->add_candidate();
     candidate->value = "グーグル";
     candidate->content_value = "グーグル";
-    candidate->attributes |= converter::Candidate::SPELLING_CORRECTION;
-    candidate->attributes |= converter::Candidate::USER_HISTORY_PREDICTION;
+    candidate->attributes |= converter::Attribute::SPELLING_CORRECTION;
+    candidate->attributes |= converter::Attribute::USER_HISTORY_PREDICTION;
     EXPECT_TRUE(candidate->description.empty());
     EXPECT_FALSE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), 1);
@@ -883,8 +884,8 @@ TEST_F(VariantsRewriterTest, RewriteForPartialSuggestion) {
     candidate->value = "３";  // Full-width three.
     candidate->content_value = candidate->value;
     candidate->consumed_key_size = 1;
-    candidate->attributes |= converter::Candidate::PARTIALLY_KEY_CONSUMED;
-    candidate->attributes |= converter::Candidate::AUTO_PARTIAL_SUGGESTION;
+    candidate->attributes |= converter::Attribute::PARTIALLY_KEY_CONSUMED;
+    candidate->attributes |= converter::Attribute::AUTO_PARTIAL_SUGGESTION;
 
     EXPECT_TRUE(rewriter->Rewrite(conv_request, &segments));
 
@@ -895,9 +896,9 @@ TEST_F(VariantsRewriterTest, RewriteForPartialSuggestion) {
       const converter::Candidate &cand = segments.segment(0).candidate(i);
       EXPECT_EQ(cand.consumed_key_size, 1);
       EXPECT_TRUE(cand.attributes &
-                  converter::Candidate::PARTIALLY_KEY_CONSUMED);
+                  converter::Attribute::PARTIALLY_KEY_CONSUMED);
       EXPECT_TRUE(cand.attributes &
-                  converter::Candidate::AUTO_PARTIAL_SUGGESTION);
+                  converter::Attribute::AUTO_PARTIAL_SUGGESTION);
     }
   }
 }

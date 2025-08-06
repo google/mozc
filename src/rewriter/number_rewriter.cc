@@ -50,6 +50,7 @@
 #include "base/util.h"
 #include "base/vlog.h"
 #include "config/character_form_manager.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
@@ -95,7 +96,7 @@ std::optional<RewriteCandidateInfo> GetRewriteCandidateInfo(
   if (!number_compound_util::IsNumber(suffix_array, pos_matcher, c)) {
     return std::nullopt;
   }
-  if (c.attributes & converter::Candidate::NO_MODIFICATION) {
+  if (c.attributes & converter::Attribute::NO_MODIFICATION) {
     return std::nullopt;
   }
   // Do not rewrite hex/oct/bin number.
@@ -113,7 +114,7 @@ std::optional<RewriteCandidateInfo> GetRewriteCandidateInfo(
     info.candidate.inner_segment_boundary.clear();
     DCHECK(info.candidate.IsValid());
     if (Util::GetScriptType(c.content_key) == Util::NUMBER ||
-        (c.attributes & converter::Candidate::USER_DICTIONARY)) {
+        (c.attributes & converter::Attribute::USER_DICTIONARY)) {
       // ARABIC_FIRST when:
       // - a user types number key
       // - or, the entry came from the user dictionary
@@ -154,7 +155,7 @@ std::optional<RewriteCandidateInfo> GetRewriteCandidateInfo(
   info.candidate.lid = c.lid;
   info.candidate.rid = c.rid;
   info.candidate.attributes |=
-      c.attributes & converter::Candidate::PARTIALLY_KEY_CONSUMED;
+      c.attributes & converter::Attribute::PARTIALLY_KEY_CONSUMED;
   DCHECK(info.candidate.IsValid());
 
   info.type = KANJI_FIRST;
@@ -307,7 +308,7 @@ void FindEraseCandidates(absl::Span<const converter::Candidate> results,
     if (pos == base_candidate_pos) {
       continue;
     }
-    if (seg.candidate(pos).attributes & converter::Candidate::NO_MODIFICATION) {
+    if (seg.candidate(pos).attributes & converter::Attribute::NO_MODIFICATION) {
       continue;
     }
 
@@ -342,13 +343,13 @@ void MergeCandidateInfoInternal(const converter::Candidate &base_cand,
   if (cand->style == NumberUtil::NumberString::NUMBER_HEX ||
       cand->style == NumberUtil::NumberString::NUMBER_OCT ||
       cand->style == NumberUtil::NumberString::NUMBER_BIN) {
-    cand->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+    cand->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
   }
   cand->attributes |=
-      base_cand.attributes & (converter::Candidate::PARTIALLY_KEY_CONSUMED |
-                              converter::Candidate::NO_LEARNING);
+      base_cand.attributes & (converter::Attribute::PARTIALLY_KEY_CONSUMED |
+                              converter::Attribute::NO_LEARNING);
   cand->attributes |=
-      result_cand.attributes & converter::Candidate::NO_VARIANTS_EXPANSION;
+      result_cand.attributes & converter::Attribute::NO_VARIANTS_EXPANSION;
 }
 
 void InsertCandidate(Segment *segment, int32_t insert_position,
@@ -370,7 +371,7 @@ void UpdateCandidate(Segment *segment, int32_t update_position,
   //    converter::Candidate. In such situation, simply calling |c->Init()|
   //    for an existing candidate may result in unexpeced data loss.
   // 2) In order to preserve existing attribute information such as
-  //    converter::Candidate::USER_DICTIONARY bit in |c|, we cannot call
+  //    converter::Attribute::USER_DICTIONARY bit in |c|, we cannot call
   //    |c->Init()|. Note that neither |base_cand| nor |result[0]| has
   //    valid value in its |attributes|.
   MergeCandidateInfoInternal(base_cand, result_cand, c);
@@ -643,7 +644,7 @@ void NumberRewriter::RerankCandidates(
 
   // Rerank `top_number_entry` to top.
   std::rotate(candidates.begin(), top_number_entry, top_number_entry + 1);
-  candidates.begin()->attributes |= converter::Candidate::NO_VARIANTS_EXPANSION;
+  candidates.begin()->attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
 }
 
 void NumberRewriter::Finish(const ConversionRequest &request,
@@ -668,7 +669,7 @@ void NumberRewriter::Finish(const ConversionRequest &request,
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &
-            converter::Candidate::NO_HISTORY_LEARNING) {
+            converter::Attribute::NO_HISTORY_LEARNING) {
       continue;
     }
     if (segment.candidates_size() == 0) {
