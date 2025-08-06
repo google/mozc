@@ -304,12 +304,12 @@ class ConversionRequest {
 
   // Takes the last `size` history key. return all value when size = -1.
   absl::string_view converter_history_key(int size = -1) const {
-    return GetHistoryKeyAndValue(size).first;
+    return history_result_->inner_segments().GetSuffixKeyAndValue(size).first;
   }
 
   // Takes the last `size` history value. return all value when size = -1.
   absl::string_view converter_history_value(int size = -1) const {
-    return GetHistoryKeyAndValue(size).second;
+    return history_result_->inner_segments().GetSuffixKeyAndValue(size).second;
   }
 
   size_t converter_history_size() const {
@@ -326,27 +326,6 @@ class ConversionRequest {
   friend class ConversionRequestBuilder;
 
  private:
-  std::pair<absl::string_view, absl::string_view> GetHistoryKeyAndValue(
-      int size) const {
-    if (size == 0) return std::make_pair("", "");
-
-    absl::string_view key = history_result_->key;
-    absl::string_view value = history_result_->value;
-    int index = history_result_->inner_segments().size() - size - 1;
-
-    if (size < 0 || index < 0) {
-      return std::make_pair(key, value);
-    } else {
-      for (const auto &iter : history_result_->inner_segments()) {
-        key.remove_prefix(iter.GetKey().size());
-        value.remove_prefix(iter.GetValue().size());
-        if (index-- == 0) return std::make_pair(key, value);
-      }
-    }
-
-    return std::make_pair(key, value);
-  }
-
   // Required options
   // Input composer to generate a key for conversion, suggestion, etc.
   internal::copy_or_view_ptr<const composer::ComposerData> composer_data_;

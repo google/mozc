@@ -310,6 +310,33 @@ class InnerSegments {
     return std::make_pair(key, value);
   }
 
+  // Returns the concatenated suffix key and value of segments size `size`, used
+  // in history result. When size is -1, returns all key/value.
+  std::pair<absl::string_view, absl::string_view> GetSuffixKeyAndValue(
+      int size = -1) const {
+    absl::string_view key = begin_.data_.key_;
+    absl::string_view value = begin_.data_.value_;
+
+    if (size == 0) {
+      // Returns last empty string so to allow pointer diff.
+      return std::make_pair(key.substr(key.size()), value.substr(value.size()));
+    }
+
+    int index = this->size() - size - 1;
+
+    if (size < 0 || index < 0) {
+      return std::make_pair(key, value);
+    } else {
+      for (const auto& iter : *this) {
+        key.remove_prefix(iter.GetKey().size());
+        value.remove_prefix(iter.GetValue().size());
+        if (index-- == 0) return std::make_pair(key, value);
+      }
+    }
+
+    return std::make_pair(key, value);
+  }
+
   // Constructor for the structure only with key/value.
   InnerSegments(absl::string_view key, absl::string_view value,
                 InnerSegmentBoundarySpan inner_segment_boundary)
