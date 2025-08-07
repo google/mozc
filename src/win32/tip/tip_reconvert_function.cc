@@ -41,23 +41,15 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "base/win32/com.h"
-#include "base/win32/com_implements.h"
 #include "win32/tip/tip_candidate_list.h"
-#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_query_provider.h"
 #include "win32/tip/tip_surrounding_text.h"
-#include "win32/tip/tip_text_service.h"
 
 namespace mozc {
 namespace win32 {
-
-template <>
-bool IsIIDOf<ITfFnReconversion>(REFIID riid) {
-  return IsIIDOf<ITfFnReconversion, ITfFunction>(riid);
-}
-
 namespace tsf {
 namespace {
 
@@ -69,139 +61,95 @@ constexpr std::wstring_view kReconvertFunctionDisplayName =
     L"Mozc: Reconversion Function";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-class CandidateListCallbackImpl : public TipCandidateListCallback {
- public:
-  CandidateListCallbackImpl(wil::com_ptr_nothrow<TipTextService> text_service,
-                            wil::com_ptr_nothrow<ITfRange> range)
-      : text_service_(std::move(text_service)), range_(std::move(range)) {}
-  CandidateListCallbackImpl(const CandidateListCallbackImpl &) = delete;
-  CandidateListCallbackImpl &operator=(const CandidateListCallbackImpl &) =
-      delete;
-
- private:
-  // TipCandidateListCallback overrides:
-  virtual void OnFinalize(size_t index, const std::wstring &candidate) {
-    TipEditSession::SetTextAsync(text_service_.get(), candidate, range_.get());
-  }
-
-  wil::com_ptr_nothrow<TipTextService> text_service_;
-  wil::com_ptr_nothrow<ITfRange> range_;
-};
-
-class ReconvertFunctionImpl final : public TipComImplements<ITfFnReconversion> {
- public:
-  explicit ReconvertFunctionImpl(
-      wil::com_ptr_nothrow<TipTextService> text_service)
-      : text_service_(std::move(text_service)) {}
-
- private:
-  // The ITfFunction interface method.
-  virtual HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR *name) {
-    if (name == nullptr) {
-      return E_INVALIDARG;
-    }
-    *name = SysAllocStringLen(kReconvertFunctionDisplayName.data(),
-                              kReconvertFunctionDisplayName.size());
-    return S_OK;
-  }
-
-  // The ITfFnReconversion interface method.
-  virtual HRESULT STDMETHODCALLTYPE QueryRange(ITfRange *range,
-                                               ITfRange **new_range,
-                                               BOOL *convertible) {
-    if (range == nullptr) {
-      return E_INVALIDARG;
-    }
-    if (new_range == nullptr) {
-      return E_INVALIDARG;
-    }
-    BOOL dummy_bool = FALSE;
-    if (convertible == nullptr) {
-      convertible = &dummy_bool;
-    }
-    *convertible = FALSE;
-    *new_range = nullptr;
-
-    wil::com_ptr_nothrow<ITfContext> context;
-    if (FAILED(range->GetContext(&context))) {
-      return E_FAIL;
-    }
-
-    TipSurroundingTextInfo info;
-    if (!TipSurroundingText::Get(text_service_.get(), context.get(), &info)) {
-      return E_FAIL;
-    }
-
-    if (info.in_composition) {
-      // on-going composition is found.
-      *convertible = FALSE;
-      *new_range = nullptr;
-      return S_OK;
-    }
-
-    if (info.selected_text.find(static_cast<wchar_t>(TS_CHAR_EMBEDDED)) !=
-        std::wstring::npos) {
-      // embedded object is found.
-      *convertible = FALSE;
-      *new_range = nullptr;
-      return S_OK;
-    }
-
-    if (FAILED(range->Clone(new_range))) {
-      return E_FAIL;
-    }
-    *convertible = TRUE;
-    return S_OK;
-  }
-
-  virtual HRESULT STDMETHODCALLTYPE
-  GetReconversion(ITfRange *range, ITfCandidateList **candidate_list) {
-    if (range == nullptr) {
-      return E_INVALIDARG;
-    }
-    if (candidate_list == nullptr) {
-      return E_INVALIDARG;
-    }
-    std::unique_ptr<TipQueryProvider> provider(TipQueryProvider::Create());
-    if (!provider) {
-      return E_FAIL;
-    }
-    std::wstring query;
-    if (!TipEditSession::GetTextSync(text_service_.get(), range, &query)) {
-      return E_FAIL;
-    }
-    std::vector<std::wstring> candidates;
-    if (!provider->Query(query, TipQueryProvider::kReconversion, &candidates)) {
-      return E_FAIL;
-    }
-    auto callback =
-        std::make_unique<CandidateListCallbackImpl>(text_service_, range);
-    *candidate_list =
-        TipCandidateList::New(std::move(candidates), std::move(callback))
-            .detach();
-    return S_OK;
-  }
-
-  virtual HRESULT STDMETHODCALLTYPE Reconvert(ITfRange *range) {
-    if (range == nullptr) {
-      return E_INVALIDARG;
-    }
-
-    if (!TipEditSession::ReconvertFromApplicationSync(text_service_.get(),
-                                                      range)) {
-      return E_FAIL;
-    }
-    return S_OK;
-  }
-
-  wil::com_ptr_nothrow<TipTextService> text_service_;
-};
-
 }  // namespace
 
-wil::com_ptr_nothrow<ITfFnReconversion> TipReconvertFunction::New(
-    wil::com_ptr_nothrow<TipTextService> text_service) {
-  return MakeComPtr<ReconvertFunctionImpl>(std::move(text_service));
+STDMETHODIMP TipReconvertFunction::GetDisplayName(BSTR *absl_nullable name) {
+  return SaveToOutParam(MakeUniqueBSTR(kReconvertFunctionDisplayName), name);
+}
+
+STDMETHODIMP TipReconvertFunction::QueryRange(
+    ITfRange *absl_nullable range, ITfRange **absl_nullable new_range,
+    BOOL *absl_nullable opt_convertible) {
+  if (range == nullptr) {
+    return E_INVALIDARG;
+  }
+  if (new_range == nullptr) {
+    return E_INVALIDARG;
+  }
+  *new_range = nullptr;
+
+  wil::com_ptr_nothrow<ITfContext> context;
+  if (FAILED(range->GetContext(&context))) {
+    return E_FAIL;
+  }
+
+  TipSurroundingTextInfo info;
+  if (!TipSurroundingText::Get(text_service_.get(), context.get(), &info)) {
+    return E_FAIL;
+  }
+
+  if (info.in_composition) {
+    // on-going composition is found.
+    SaveToOptionalOutParam(FALSE, opt_convertible);
+    return S_OK;
+  }
+
+  if (info.selected_text.find(static_cast<wchar_t>(TS_CHAR_EMBEDDED)) !=
+      std::wstring::npos) {
+    // embedded object is found.
+    SaveToOptionalOutParam(FALSE, opt_convertible);
+    return S_OK;
+  }
+
+  if (FAILED(range->Clone(new_range))) {
+    return E_FAIL;
+  }
+  SaveToOptionalOutParam(TRUE, opt_convertible);
+  return S_OK;
+}
+
+STDMETHODIMP
+TipReconvertFunction::GetReconversion(
+    ITfRange *absl_nullable range,
+    ITfCandidateList **absl_nullable candidate_list) {
+  if (range == nullptr) {
+    return E_INVALIDARG;
+  }
+  std::unique_ptr<TipQueryProvider> provider(TipQueryProvider::Create());
+  if (!provider) {
+    return E_FAIL;
+  }
+  std::wstring query;
+  if (!TipEditSession::GetTextSync(text_service_.get(), range, &query)) {
+    return E_FAIL;
+  }
+  std::vector<std::wstring> candidates;
+  if (!provider->Query(query, TipQueryProvider::kReconversion, &candidates)) {
+    return E_FAIL;
+  }
+  return SaveToOutParam(MakeComPtr<TipCandidateList>(
+                            std::move(candidates), OnCandidateFinalize(range)),
+                        candidate_list);
+}
+
+TipCandidateOnFinalize TipReconvertFunction::OnCandidateFinalize(
+    wil::com_ptr_nothrow<ITfRange> range) const {
+  return [this, range = std::move(range)](size_t index,
+                                          std::wstring_view candidate) {
+    TipEditSession::SetTextAsync(text_service_.get(), candidate, range.get());
+  };
+}
+
+STDMETHODIMP TipReconvertFunction::Reconvert(ITfRange *absl_nullable range) {
+  if (range == nullptr) {
+    return E_INVALIDARG;
+  }
+
+  if (!TipEditSession::ReconvertFromApplicationSync(text_service_.get(),
+                                                    range)) {
+    return E_FAIL;
+  }
+  return S_OK;
 }
 
 }  // namespace tsf

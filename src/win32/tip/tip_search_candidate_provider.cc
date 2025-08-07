@@ -37,13 +37,14 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
+#include "absl/base/nullability.h"
 #include "base/win32/com.h"
 #include "base/win32/com_implements.h"
 #include "win32/tip/tip_candidate_list.h"
-#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_query_provider.h"
 
 namespace mozc {
@@ -58,65 +59,49 @@ namespace tsf {
 namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-constexpr wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
+constexpr std::wstring_view kSearchCandidateProviderName =
+    L"Google Japanese Input";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
-constexpr wchar_t kSearchCandidateProviderName[] = L"Mozc";
+constexpr std::wstring_view kSearchCandidateProviderName[] = L"Mozc";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-
-class SearchCandidateProviderImpl final
-    : public TipComImplements<ITfFnSearchCandidateProvider> {
- public:
-  explicit SearchCandidateProviderImpl(
-      std::unique_ptr<TipQueryProvider> provider)
-      : provider_(std::move(provider)) {}
-
-  // The ITfFunction interface method.
-  STDMETHODIMP GetDisplayName(BSTR *name) override {
-    if (name == nullptr) {
-      return E_INVALIDARG;
-    }
-    *name = ::SysAllocString(kSearchCandidateProviderName);
-    return S_OK;
-  }
-
-  // The ITfFnSearchCandidateProvider interface method.
-  STDMETHODIMP GetSearchCandidates(BSTR query, BSTR application_id,
-                                   ITfCandidateList **candidate_list) override {
-    if (candidate_list == nullptr) {
-      return E_INVALIDARG;
-    }
-    std::vector<std::wstring> candidates;
-    if (!provider_->Query(query, TipQueryProvider::kDefault, &candidates)) {
-      return E_FAIL;
-    }
-    *candidate_list =
-        TipCandidateList::New(std::move(candidates), nullptr).detach();
-    return S_OK;
-  }
-
-  STDMETHODIMP SetResult(BSTR query, BSTR application_id,
-                         BSTR result) override {
-    // Not implemented.
-    return S_OK;
-  }
-
-  std::unique_ptr<TipQueryProvider> provider_;
-};
 
 }  // namespace
 
-// static
-wil::com_ptr_nothrow<IUnknown> TipSearchCandidateProvider::New() {
+STDMETHODIMP TipSearchCandidateProvider::GetDisplayName(
+    BSTR* absl_nullable name) {
+  return SaveToOutParam(MakeUniqueBSTR(kSearchCandidateProviderName), name);
+}
+
+STDMETHODIMP TipSearchCandidateProvider::GetSearchCandidates(
+    BSTR absl_nullable query, BSTR absl_nullable application_id,
+    ITfCandidateList** absl_nullable candidate_list) {
+  if (query == nullptr || candidate_list == nullptr) {
+    return E_INVALIDARG;
+  }
+  std::vector<std::wstring> candidates;
+  if (!provider_->Query(query, TipQueryProvider::kDefault, &candidates)) {
+    return E_FAIL;
+  }
+  return SaveToOutParam(
+      MakeComPtr<TipCandidateList>(std::move(candidates), nullptr),
+      candidate_list);
+}
+
+STDMETHODIMP TipSearchCandidateProvider::SetResult(BSTR absl_nullable query,
+                                                   BSTR
+                                                   absl_nullable application_id,
+                                                   BSTR absl_nullable result) {
+  // Not implemented.
+  return S_OK;
+}
+
+wil::com_ptr_nothrow<TipSearchCandidateProvider>
+TipSearchCandidateProvider::New() {
   std::unique_ptr<TipQueryProvider> provider = TipQueryProvider::Create();
   if (!provider) {
     return nullptr;
   }
-  return MakeComPtr<SearchCandidateProviderImpl>(std::move(provider));
-}
-
-// static
-const IID &TipSearchCandidateProvider::GetIID() {
-  return IID_ITfFnSearchCandidateProvider;
+  return MakeComPtr<TipSearchCandidateProvider>(std::move(provider));
 }
 
 }  // namespace tsf

@@ -35,34 +35,46 @@
 #include <wil/com.h>
 
 #include <cstddef>
-#include <memory>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
+
+#include "absl/base/nullability.h"
+#include "absl/functional/any_invocable.h"
+#include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-class TipCandidateListCallback {
- public:
-  virtual ~TipCandidateListCallback() = default;
-  virtual void OnFinalize(size_t index, const std::wstring &candidate) = 0;
-};
+// A callback function to be called when ITfCandidateList::SetResult is called
+// with CAND_FINALIZED.
+using TipCandidateOnFinalize =
+    absl::AnyInvocable<void(size_t, std::wstring_view) &&>;
 
-class TipCandidateList {
+// Implements ITfCandidateList.
+class TipCandidateList : public TipComImplements<ITfCandidateList> {
  public:
-  TipCandidateList() = delete;
-  TipCandidateList(const TipCandidateList &) = delete;
-  TipCandidateList &operator=(const TipCandidateList &) = delete;
+  // |on_finalize| can be empty.
+  TipCandidateList(std::vector<std::wstring> candidates,
+                   TipCandidateOnFinalize on_finalize)
+      : candidates_(std::move(candidates)),
+        on_finalize_(std::move(on_finalize)) {}
 
-  // Returns an object that implements ITfFnSearchCandidateProvider.
-  // |callback| will be called back when ITfCandidateList::SetResult
-  // is called with CAND_FINALIZED. TipCandidateList will take the
-  // ownership of |callback|. |callback| can be nullptr.
-  static wil::com_ptr_nothrow<ITfCandidateList> New(
-      std::vector<std::wstring> candidates,
-      std::unique_ptr<TipCandidateListCallback> callback);
-  static const IID &GetIID();
+  // The ITfCandidateList interface methods.
+  STDMETHODIMP EnumCandidates(
+      IEnumTfCandidates** absl_nullable enum_candidate) override;
+  STDMETHODIMP GetCandidate(
+      ULONG index,
+      ITfCandidateString** absl_nullable candidate_string) override;
+  STDMETHODIMP GetCandidateNum(ULONG* absl_nullable count) override;
+  STDMETHODIMP SetResult(ULONG index,
+                         TfCandidateResult candidate_result) override;
+
+ private:
+  std::vector<std::wstring> candidates_;
+  TipCandidateOnFinalize on_finalize_;
 };
 
 }  // namespace tsf

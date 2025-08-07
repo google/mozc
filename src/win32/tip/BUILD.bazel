@@ -219,8 +219,6 @@ mozc_cc_library(
         ":tip_thread_context",
         ":tip_ui_handler",
         "//base:const",
-        "//base:file_util",
-        "//base:log_file",
         "//base:process",
         "//base:system_util",
         "//base:update_util",
@@ -271,14 +269,73 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
+    name = "tip_candidate_string",
+    srcs = ["tip_candidate_string.cc"],
+    hdrs = ["tip_candidate_string.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_dll_module",
+        "//base/win32:com",
+        "@com_google_absl//absl/base:nullability",
+    ],
+)
+
+mozc_cc_test(
+    name = "tip_candidate_string_test",
+    size = "small",
+    srcs = ["tip_candidate_string_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":gmock_matchers",
+        ":tip_candidate_string",
+        "//testing:gunit_main",
+        "@com_microsoft_wil//:wil",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_enum_candidates",
+    srcs = ["tip_enum_candidates.cc"],
+    hdrs = ["tip_enum_candidates.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_candidate_string",
+        ":tip_dll_module",
+        "//base/win32:com",
+        "@com_google_absl//absl/base:nullability",
+    ],
+)
+
+mozc_cc_test(
+    name = "tip_enum_candidates_test",
+    size = "small",
+    srcs = ["tip_enum_candidates_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":gmock_matchers",
+        ":tip_enum_candidates",
+        "//testing:gunit_main",
+        "@com_microsoft_wil//:wil",
+    ],
+)
+
+mozc_cc_library(
     name = "tip_candidate_list",
     srcs = ["tip_candidate_list.cc"],
     hdrs = ["tip_candidate_list.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":tip_candidate_string",
         ":tip_dll_module",
+        ":tip_enum_candidates",
         "//base/win32:com",
+        "@com_google_absl//absl/base:nullability",
+        "@com_google_absl//absl/functional:any_invocable",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -409,6 +466,7 @@ mozc_cc_library(
         ":tip_query_provider",
         "//base/win32:com",
         "//base/win32:com_implements",
+        "@com_google_absl//absl/base:nullability",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -565,6 +623,7 @@ mozc_cc_library(
         ":tip_text_service",
         "//base/win32:com",
         "//base/win32:com_implements",
+        "@com_google_absl//absl/base:nullability",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -640,6 +699,7 @@ mozc_cc_library(
         ":tip_text_service",
         "//base/win32:com",
         "//base/win32:com_implements",
+        "@com_google_absl//absl/base:nullability",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -755,9 +815,11 @@ mozc_cc_test(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":gmock_matchers",
         ":tip_candidate_list",
-        ":tip_dll_module",
+        "//base/win32:com",
         "//testing:gunit_main",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
         "@com_microsoft_wil//:wil",
     ],
@@ -798,5 +860,19 @@ mozc_cc_test(
     deps = [
         ":tip_input_mode_manager",
         "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "gmock_matchers",
+    testonly = True,
+    hdrs = ["gmock_matchers.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base/win32:hresult",
+        "//base/win32:wide_char",
+        "//testing:gunit",
+        "@com_microsoft_wil//:wil",
     ],
 )

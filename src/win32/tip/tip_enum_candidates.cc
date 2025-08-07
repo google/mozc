@@ -27,57 +27,53 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "win32/tip/tip_candidate_list.h"
-
-#include <ctffunc.h>
-#include <objbase.h>
-#include <oleauto.h>
-#include <wil/com.h>
-
-#include <utility>
-#include <vector>
+#include "win32/tip/tip_enum_candidates.h"
 
 #include "absl/base/nullability.h"
 #include "base/win32/com.h"
 #include "win32/tip/tip_candidate_string.h"
-#include "win32/tip/tip_enum_candidates.h"
 
-namespace mozc {
-namespace win32 {
-namespace tsf {
+namespace mozc::win32::tsf {
 
-STDMETHODIMP TipCandidateList::EnumCandidates(
-    IEnumTfCandidates **absl_nullable enum_candidate) {
+STDMETHODIMP TipEnumCandidates::Clone(
+    IEnumTfCandidates** absl_nullable enum_candidates) {
   return SaveToOutParam(MakeComPtr<TipEnumCandidates>(candidates_),
-                        enum_candidate);
+                        enum_candidates);
 }
 
-STDMETHODIMP TipCandidateList::GetCandidate(
-    ULONG index, ITfCandidateString **absl_nullable candidate_string) {
-  if (index >= candidates_.size()) {
-    return E_FAIL;
-  }
-  return SaveToOutParam(
-      MakeComPtr<TipCandidateString>(index, candidates_[index]),
-      candidate_string);
-}
-
-STDMETHODIMP TipCandidateList::GetCandidateNum(ULONG *absl_nullable count) {
-  return SaveToOutParam(candidates_.size(), count);
-}
-
-STDMETHODIMP TipCandidateList::SetResult(ULONG index,
-                                         TfCandidateResult candidate_result) {
-  if (candidates_.size() <= index) {
+STDMETHODIMP TipEnumCandidates::Next(
+    ULONG count, ITfCandidateString** absl_nullable candidate_string,
+    ULONG* absl_nullable opt_fetched_count) {
+  if (candidate_string == nullptr) {
     return E_INVALIDARG;
   }
-  if (candidate_result == CAND_FINALIZED && on_finalize_) {
-    std::move(on_finalize_)(index, candidates_[index]);
-    on_finalize_ = nullptr;
+  const auto candidates_size = candidates_.size();
+  for (ULONG i = 0; i < count; ++i) {
+    if (current_ >= candidates_size) {
+      SaveToOptionalOutParam(i, opt_fetched_count);
+      return S_FALSE;
+    }
+    candidate_string[i] =
+        MakeComPtr<TipCandidateString>(current_, candidates_[current_])
+            .detach();
+    ++current_;
   }
+  SaveToOptionalOutParam(count, opt_fetched_count);
   return S_OK;
 }
 
-}  // namespace tsf
-}  // namespace win32
-}  // namespace mozc
+STDMETHODIMP TipEnumCandidates::Reset() {
+  current_ = 0;
+  return S_OK;
+}
+
+STDMETHODIMP TipEnumCandidates::Skip(ULONG count) {
+  if ((candidates_.size() - current_) < count) {
+    current_ = candidates_.size();
+    return S_FALSE;
+  }
+  current_ += count;
+  return S_OK;
+}
+
+}  // namespace mozc::win32::tsf

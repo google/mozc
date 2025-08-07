@@ -35,13 +35,16 @@
 #include <wil/resource.h>
 
 #include <cstddef>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
+#include "base/win32/com.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "win32/tip/gmock_matchers.h"
 
 namespace mozc {
 namespace win32 {
@@ -51,6 +54,8 @@ namespace {
 using ::testing::AssertionFailure;
 using ::testing::AssertionResult;
 using ::testing::AssertionSuccess;
+using ::testing::IsNull;
+using ::testing::NotNull;
 
 class MockCallbackResult {
  public:
@@ -64,10 +69,12 @@ class MockCallbackResult {
     candidate_.clear();
   }
 
-  void OnFinalize(size_t index, const std::wstring &candidate) {
-    on_finalize_called_ = true;
-    index_ = index;
-    candidate_ = candidate;
+  TipCandidateOnFinalize GetCallback() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return [this](size_t index, std::wstring_view candidate) {
+      on_finalize_called_ = true;
+      index_ = index;
+      candidate_ = candidate;
+    };
   }
 
   bool on_finalize_called() const { return on_finalize_called_; }
@@ -82,68 +89,13 @@ class MockCallbackResult {
   std::wstring candidate_;
 };
 
-class MockCallback : public TipCandidateListCallback {
- public:
-  // Does not take ownership of |result|.
-  explicit MockCallback(MockCallbackResult *result) : result_(result) {}
-  MockCallback(const MockCallback &) = delete;
-  MockCallback &operator=(const MockCallback &) = delete;
-
- private:
-  // TipCandidateListCallback overrides:
-
-  void OnFinalize(size_t index, const std::wstring &candidate) override {
-    result_->OnFinalize(index, candidate);
-  }
-
-  MockCallbackResult *result_;
-};
-
-AssertionResult ExpectCandidateString(ULONG expected_index,
-                                      const std::wstring &expected_text,
-                                      ITfCandidateString *candidate) {
-  if (candidate == nullptr) {
-    return AssertionFailure() << "|actual| should be non-null";
-  }
-  HRESULT hr = S_OK;
-  {
-    ULONG index = 0;
-    hr = candidate->GetIndex(&index);
-    if (FAILED(hr)) {
-      return AssertionFailure() << "ITfCandidateString::GetIndex failed."
-                                << " hr = " << hr;
-    }
-    if (expected_index != index) {
-      return AssertionFailure()
-             << "expected: " << expected_index << ", actual: " << index;
-    }
-  }
-  {
-    wil::unique_bstr str;
-    hr = candidate->GetString(str.put());
-    if (FAILED(hr)) {
-      return AssertionFailure() << "ITfCandidateString::GetString failed."
-                                << " hr = " << hr;
-    }
-    const std::wstring wstr(str.get());
-    if (expected_text != wstr) {
-      return AssertionFailure()
-             << "expected: " << expected_text << ", actual: " << wstr;
-    }
-  }
-  return AssertionSuccess();
-}
-
-#define EXPECT_CANDIDATE_STR(expected_index, expected_str, actual) \
-  EXPECT_PRED3(ExpectCandidateString, expected_index, expected_str, actual)
-
 TEST(TipCandidateListTest, EmptyCandidate) {
   MockCallbackResult result;
 
   std::vector<std::wstring> empty;
-  wil::com_ptr_nothrow<ITfCandidateList> candidate_list(
-      TipCandidateList::New(empty, std::make_unique<MockCallback>(&result)));
-  ASSERT_NE(candidate_list, nullptr);
+  auto candidate_list =
+      MakeComPtr<TipCandidateList>(empty, result.GetCallback());
+  ASSERT_THAT(candidate_list, NotNull());
 
   ULONG num = 0;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->GetCandidateNum(&num));
@@ -151,11 +103,11 @@ TEST(TipCandidateListTest, EmptyCandidate) {
 
   wil::com_ptr_nothrow<ITfCandidateString> str;
   EXPECT_HRESULT_FAILED(candidate_list->GetCandidate(0, &str));
-  EXPECT_EQ(str, nullptr);
+  EXPECT_THAT(str, IsNull());
 
   wil::com_ptr_nothrow<IEnumTfCandidates> enum_candidates;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->EnumCandidates(&enum_candidates));
-  ASSERT_NE(enum_candidates, nullptr);
+  ASSERT_THAT(enum_candidates, NotNull());
 
   ITfCandidateString *buffer[3] = {};
   ULONG num_fetched = 0;
@@ -175,11 +127,11 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
 
   std::vector<std::wstring> source;
   for (wchar_t c = L'A'; c < L'Z'; ++c) {
-    source.push_back(std::wstring(c, 1));
+    source.emplace_back(c, 1);
   }
-  wil::com_ptr_nothrow<ITfCandidateList> candidate_list(
-      TipCandidateList::New(source, std::make_unique<MockCallback>(&result)));
-  ASSERT_NE(candidate_list, nullptr);
+  auto candidate_list =
+      MakeComPtr<TipCandidateList>(source, result.GetCallback());
+  ASSERT_THAT(candidate_list, NotNull());
 
   ULONG num = 0;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->GetCandidateNum(&num));
@@ -187,13 +139,15 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
 
   for (size_t i = 0; i < source.size(); ++i) {
     wil::com_ptr_nothrow<ITfCandidateString> candidate_str;
-    EXPECT_HRESULT_SUCCEEDED(candidate_list->GetCandidate(i, &candidate_str));
-    EXPECT_CANDIDATE_STR(i, source[i], candidate_str.get());
+    EXPECT_HRESULT_SUCCEEDED(
+        candidate_list->GetCandidate(i, candidate_str.put()));
+    EXPECT_THAT(candidate_str, CandidateStringIndexIs(i));
+    EXPECT_THAT(candidate_str, CandidateStringIs(source[i]));
   }
 
   wil::com_ptr_nothrow<IEnumTfCandidates> enum_candidates;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->EnumCandidates(&enum_candidates));
-  EXPECT_NE(enum_candidates, nullptr);
+  EXPECT_THAT(enum_candidates, NotNull());
 
   for (size_t offset = 0; offset < source.size();) {
     constexpr size_t kBufferSize = 10;
@@ -214,7 +168,8 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
     }
     for (size_t buffer_index = 0; buffer_index < num_fetched; ++buffer_index) {
       const size_t index = offset + buffer_index;
-      EXPECT_CANDIDATE_STR(index, source[index], strings[buffer_index].get());
+      EXPECT_THAT(strings[buffer_index], CandidateStringIndexIs(index));
+      EXPECT_THAT(strings[buffer_index], CandidateStringIs(source[index]));
     }
     offset += num_fetched;
   }

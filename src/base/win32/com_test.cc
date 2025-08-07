@@ -48,6 +48,8 @@
 namespace mozc::win32 {
 namespace {
 
+using ::testing::IsNull;
+using ::testing::NotNull;
 using ::testing::StrEq;
 
 // Mock interfaces for testing.
@@ -113,38 +115,38 @@ class ComTest : public ::testing::Test {
 TEST_F(ComTest, ComCreateInstance) {
   wil::com_ptr_nothrow<IShellLink> shellink =
       ComCreateInstance<IShellLink, ShellLink>();
-  EXPECT_TRUE(shellink);
-  EXPECT_TRUE(ComCreateInstance<IShellLink>(CLSID_ShellLink));
-  EXPECT_FALSE(ComCreateInstance<IShellFolder>(CLSID_ShellLink));
+  EXPECT_THAT(shellink, NotNull());
+  EXPECT_THAT(ComCreateInstance<IShellLink>(CLSID_ShellLink), NotNull());
+  EXPECT_THAT(ComCreateInstance<IShellFolder>(CLSID_ShellLink), IsNull());
 }
 
 TEST_F(ComTest, MakeComPtr) {
   auto ptr = MakeComPtr<Mock>();
-  EXPECT_TRUE(ptr);
+  ASSERT_THAT(ptr, NotNull());
   EXPECT_EQ(object_count, 1);
   EXPECT_EQ(ptr->GetQICountAndReset(), 0);
 }
 
 TEST_F(ComTest, ComQuery) {
   wil::com_ptr_nothrow<IMock1> mock1(MakeComPtr<Mock>());
-  EXPECT_TRUE(mock1);
+  ASSERT_THAT(mock1, NotNull());
   EXPECT_EQ(mock1->Test1(), S_OK);
 
   wil::com_ptr_nothrow<IDerived> derived = ComQuery<IDerived>(mock1);
-  EXPECT_TRUE(derived);
+  ASSERT_THAT(derived, NotNull());
   EXPECT_EQ(derived->Derived(), 2);
   EXPECT_EQ(derived->GetQICountAndReset(), 1);
 
-  EXPECT_TRUE(ComQuery<IMock1>(derived));
+  EXPECT_THAT(ComQuery<IMock1>(derived), NotNull());
   EXPECT_EQ(derived->GetQICountAndReset(), 0);
 
   wil::com_ptr_nothrow<IMock2> mock2 = ComQuery<IMock2>(mock1);
-  EXPECT_TRUE(mock2);
+  ASSERT_THAT(mock2, NotNull());
   EXPECT_EQ(mock2->Test2(), S_FALSE);
   EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 
   mock2 = ComQuery<IMock2>(mock1);
-  EXPECT_TRUE(mock2);
+  ASSERT_THAT(mock2, NotNull());
   EXPECT_EQ(mock2->Test2(), S_FALSE);
   EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 
@@ -154,18 +156,18 @@ TEST_F(ComTest, ComQuery) {
 
 TEST_F(ComTest, ComCopy) {
   wil::com_ptr_nothrow<IMock1> mock1(MakeComPtr<Mock>());
-  EXPECT_TRUE(mock1);
+  ASSERT_THAT(mock1, NotNull());
   EXPECT_EQ(mock1->Test1(), S_OK);
 
   wil::com_ptr_nothrow<IUnknown> unknown = ComCopy<IUnknown>(mock1);
-  EXPECT_TRUE(unknown);
+  EXPECT_THAT(unknown, NotNull());
   EXPECT_EQ(mock1->GetQICountAndReset(), 0);
 
-  EXPECT_FALSE(ComCopy<IShellLink>(unknown));
+  EXPECT_THAT(ComCopy<IShellLink>(unknown), IsNull());
   EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 
   IUnknown *null = nullptr;
-  EXPECT_FALSE(ComCopy<IUnknown>(null));
+  EXPECT_THAT(ComCopy<IUnknown>(null), IsNull());
 }
 
 TEST(ComBSTRTest, MakeUniqueBSTR) {
@@ -175,6 +177,51 @@ TEST(ComBSTRTest, MakeUniqueBSTR) {
   constexpr std::wstring_view kSource = L"こんにちは, Mozc.";
   wil::unique_bstr result = MakeUniqueBSTR(kSource);
   EXPECT_EQ(result.get(), kSource);
+}
+
+TEST(SaveToOutParam, Nullptr) {
+  EXPECT_EQ(SaveToOutParam(0, static_cast<int *>(nullptr)), E_INVALIDARG);
+  EXPECT_EQ(SaveToOutParam(wil::unique_bstr(), static_cast<BSTR *>(nullptr)),
+            E_INVALIDARG);
+  EXPECT_EQ(
+      SaveToOutParam(static_cast<BSTR>(nullptr), static_cast<BSTR *>(nullptr)),
+      E_INVALIDARG);
+  EXPECT_EQ(SaveToOutParam(wil::com_ptr_nothrow<IMock1>(),
+                           static_cast<IMock1 **>(nullptr)),
+            E_INVALIDARG);
+}
+
+TEST(SaveToOutParam, OutOfMemory) {
+  BSTR out = nullptr;
+  EXPECT_EQ(SaveToOutParam(static_cast<BSTR>(nullptr), &out), E_OUTOFMEMORY);
+}
+
+TEST(SaveToOutParam, BSTR) {
+  wil::unique_bstr output;
+  EXPECT_EQ(SaveToOutParam(MakeUniqueBSTR(L"Hello"), output.put()), S_OK);
+  EXPECT_THAT(output.get(), StrEq(L"Hello"));
+}
+
+TEST(SaveToOutParam, ComPtr) {
+  wil::com_ptr_nothrow<IMock1> output;
+  EXPECT_EQ(SaveToOutParam(MakeComPtr<Mock>(), output.put()), S_OK);
+  EXPECT_THAT(output, NotNull());
+}
+
+TEST(SaveToOutParam, Int) {
+  int output = 1;
+  EXPECT_EQ(SaveToOutParam(0, &output), S_OK);
+  EXPECT_EQ(output, 0);
+}
+
+TEST(SaveToOptionalOutParam, Nullptr) {
+  SaveToOptionalOutParam(1, static_cast<int *>(nullptr));
+}
+
+TEST(SaveToOptionalOutParam, Int) {
+  int output = 1;
+  SaveToOptionalOutParam(0, &output);
+  EXPECT_EQ(output, 0);
 }
 
 }  // namespace

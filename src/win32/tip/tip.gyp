@@ -62,6 +62,7 @@
           'sources': [
             'mozc_tip_main.cc',
             'tip_candidate_list.cc',
+            'tip_candidate_string.cc',
             'tip_class_factory.cc',
             'tip_compartment_util.cc',
             'tip_composition_util.cc',
@@ -69,6 +70,7 @@
             'tip_dll_module.cc',
             'tip_edit_session.cc',
             'tip_edit_session_impl.cc',
+            'tip_enum_candidates.cc',
             'tip_enum_display_attributes.cc',
             'tip_input_mode_manager.cc',
             'tip_keyevent_handler.cc',
@@ -115,6 +117,8 @@
           'type': 'executable',
           'sources': [
             'tip_candidate_list_test.cc',
+            'tip_candidate_string_test.cc',
+            'tip_enum_candidates_test.cc',
             'tip_display_attributes_test.cc',
             'tip_enum_display_attributes_test.cc',
             'tip_input_mode_manager_test.cc',

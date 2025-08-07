@@ -27,57 +27,28 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "win32/tip/tip_candidate_list.h"
-
-#include <ctffunc.h>
-#include <objbase.h>
-#include <oleauto.h>
-#include <wil/com.h>
-
-#include <utility>
-#include <vector>
-
-#include "absl/base/nullability.h"
-#include "base/win32/com.h"
 #include "win32/tip/tip_candidate_string.h"
-#include "win32/tip/tip_enum_candidates.h"
 
-namespace mozc {
-namespace win32 {
-namespace tsf {
+#include <wil/resource.h>
 
-STDMETHODIMP TipCandidateList::EnumCandidates(
-    IEnumTfCandidates **absl_nullable enum_candidate) {
-  return SaveToOutParam(MakeComPtr<TipEnumCandidates>(candidates_),
-                        enum_candidate);
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "win32/tip/gmock_matchers.h"
+
+namespace mozc::win32::tsf {
+namespace {
+
+TEST(TipCandidateStringTest, Success) {
+  TipCandidateString candidate(1, L"Hello");
+  EXPECT_THAT(&candidate, CandidateStringIndexIs(1));
+  EXPECT_THAT(&candidate, CandidateStringIs(L"Hello"));
 }
 
-STDMETHODIMP TipCandidateList::GetCandidate(
-    ULONG index, ITfCandidateString **absl_nullable candidate_string) {
-  if (index >= candidates_.size()) {
-    return E_FAIL;
-  }
-  return SaveToOutParam(
-      MakeComPtr<TipCandidateString>(index, candidates_[index]),
-      candidate_string);
+TEST(TipCandidateStringTest, Nullptr) {
+  TipCandidateString candidate(0, L"Hello");
+  EXPECT_EQ(candidate.GetString(nullptr), E_INVALIDARG);
+  EXPECT_EQ(candidate.GetIndex(nullptr), E_INVALIDARG);
 }
 
-STDMETHODIMP TipCandidateList::GetCandidateNum(ULONG *absl_nullable count) {
-  return SaveToOutParam(candidates_.size(), count);
-}
-
-STDMETHODIMP TipCandidateList::SetResult(ULONG index,
-                                         TfCandidateResult candidate_result) {
-  if (candidates_.size() <= index) {
-    return E_INVALIDARG;
-  }
-  if (candidate_result == CAND_FINALIZED && on_finalize_) {
-    std::move(on_finalize_)(index, candidates_[index]);
-    on_finalize_ = nullptr;
-  }
-  return S_OK;
-}
-
-}  // namespace tsf
-}  // namespace win32
-}  // namespace mozc
+}  // namespace
+}  // namespace mozc::win32::tsf

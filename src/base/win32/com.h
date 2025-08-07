@@ -42,6 +42,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/base/nullability.h"
 #include "base/win32/hresult.h"
 #include "base/win32/hresultor.h"
 
@@ -132,6 +133,71 @@ inline wil::unique_bstr MakeUniqueBSTR(const std::wstring_view source) {
 
 inline wil::unique_bstr MakeUniqueBSTR(const wchar_t *source) {
   return wil::unique_bstr(SysAllocString(source));
+}
+
+// Saves the value to the out parameter of a COM method.
+//
+// Return values:
+//   - S_OK: success.
+//   - E_INVALIDARG: the out parameter is null.
+//   - E_OUTOFMEMORY: the value is a null pointer.
+//
+// Note: this behavior is different from IUnknown methods. Check COM interface
+// documentation to make sure the returned error codes are correct.
+template <typename T, typename U>
+  requires std::integral<T> && std::integral<U>
+HResult SaveToOutParam(T value, U *absl_nullable out);
+template <typename T, typename U>
+HResult SaveToOutParam(T *absl_nullable value, U **absl_nullable out);
+template <typename T, typename U>
+HResult SaveToOutParam(wil::com_ptr_nothrow<T> value, U **absl_nullable out) {
+  return SaveToOutParam<T, U>(value.detach(), out);
+}
+template <typename T>
+HResult SaveToOutParam(
+    wil::unique_any_t<T> value,
+    typename wil::unique_any_t<T>::pointer *absl_nullable out) {
+  return SaveToOutParam(value.release(), out);
+}
+
+// Saves the value to the out parameter of a COM method. It's a noop if the
+// out parameter is nullptr.
+template <typename T, typename U>
+  requires std::integral<T> && std::integral<U>
+void SaveToOptionalOutParam(T value, U *absl_nullable out);
+
+// Implementations.
+
+template <typename T, typename U>
+  requires std::integral<T> && std::integral<U>
+HResult SaveToOutParam(T value, U *absl_nullable out) {
+  static_assert(std::convertible_to<T, U>);
+  if (out == nullptr) {
+    return HResultInvalidArg();
+  }
+  *out = value;
+  return HResultOk();
+}
+
+template <typename T, typename U>
+HResult SaveToOutParam(T *absl_nullable value, U **absl_nullable out) {
+  if (out == nullptr) {
+    return HResultInvalidArg();
+  }
+  if (value == nullptr) {
+    return HResultOutOfMemory();
+  }
+  *out = value;
+  return HResultOk();
+}
+
+template <typename T, typename U>
+  requires std::integral<T> && std::integral<U>
+void SaveToOptionalOutParam(T value, U *absl_nullable out) {
+  static_assert(std::convertible_to<T, U>);
+  if (out != nullptr) {
+    *out = value;
+  }
 }
 
 }  // namespace mozc::win32

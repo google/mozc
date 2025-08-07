@@ -295,8 +295,9 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":hresult",
         ":hresultor",
-        "@com_google_absl//absl/meta:type_traits",
+        "@com_google_absl//absl/base:nullability",
         "@com_microsoft_wil//:wil",
     ],
 )

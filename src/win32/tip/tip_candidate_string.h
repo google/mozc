@@ -27,60 +27,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_TIP_TIP_RECONVERT_FUNCTION_H_
-#define MOZC_WIN32_TIP_TIP_RECONVERT_FUNCTION_H_
+#ifndef MOZC_WIN32_TIP_TIP_CANDIDATE_STRING_H_
+#define MOZC_WIN32_TIP_TIP_CANDIDATE_STRING_H_
 
 #include <ctffunc.h>
-#include <msctf.h>
-#include <wil/com.h>
 
+#include <string>
 #include <utility>
 
 #include "absl/base/nullability.h"
-#include "base/win32/com_implements.h"
-#include "win32/tip/tip_candidate_list.h"
 #include "win32/tip/tip_dll_module.h"
-#include "win32/tip/tip_text_service.h"
 
-namespace mozc {
-namespace win32 {
+namespace mozc::win32::tsf {
 
-template <>
-inline bool IsIIDOf<ITfFnReconversion>(REFIID riid) {
-  return IsIIDOf<ITfFnReconversion, ITfFunction>(riid);
-}
-
-namespace tsf {
-
-// A TSF function object that can be use to invoke reconversion from an
-// application.
-class TipReconvertFunction : public TipComImplements<ITfFnReconversion> {
+class TipCandidateString : public TipComImplements<ITfCandidateString> {
  public:
-  explicit TipReconvertFunction(
-      wil::com_ptr_nothrow<TipTextService> text_service)
-      : text_service_(std::move(text_service)) {}
+  TipCandidateString(ULONG index, std::wstring value)
+      : index_(index), value_(std::move(value)) {}
 
-  // The ITfFunction interface method.
-  STDMETHODIMP GetDisplayName(BSTR *absl_nullable name) override;
-
-  // The ITfFnReconversion interface methods.
-  STDMETHODIMP QueryRange(ITfRange *absl_nullable range,
-                          ITfRange **absl_nullable new_range,
-                          BOOL *absl_nullable opt_convertible) override;
-  STDMETHODIMP
-  GetReconversion(ITfRange *absl_nullable range,
-                  ITfCandidateList **absl_nullable candidate_list) override;
-  STDMETHODIMP Reconvert(ITfRange *absl_nullable range) override;
+  // The ITfCandidateString interface methods.
+  STDMETHODIMP GetString(BSTR* absl_nullable str) override;
+  STDMETHODIMP GetIndex(ULONG* absl_nullable index) override;
 
  private:
-  TipCandidateOnFinalize OnCandidateFinalize(
-      wil::com_ptr_nothrow<ITfRange> range) const;
-
-  wil::com_ptr_nothrow<TipTextService> text_service_;
+  ULONG index_;
+  std::wstring value_;
 };
 
-}  // namespace tsf
-}  // namespace win32
-}  // namespace mozc
+}  // namespace mozc::win32::tsf
 
-#endif  // MOZC_WIN32_TIP_TIP_RECONVERT_FUNCTION_H_
+#endif  // MOZC_WIN32_TIP_TIP_CANDIDATE_STRING_H_

@@ -34,6 +34,7 @@
 #include <msctf.h>
 #include <objbase.h>
 #include <wil/com.h>
+#include <wil/result_macros.h>
 #include <windows.h>
 
 #include <algorithm>
@@ -49,10 +50,7 @@
 #include "absl/functional/any_invocable.h"
 #include "absl/log/log.h"
 #include "base/const.h"
-#include "base/file_util.h"
-#include "base/log_file.h"
 #include "base/process.h"
-#include "base/system_util.h"
 #include "base/update_util.h"
 #include "base/win32/com.h"
 #include "base/win32/com_implements.h"
@@ -117,7 +115,6 @@ constexpr UINT kUpdateUIMessage = WM_USER;
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 constexpr char kHelpUrl[] = "http://www.google.com/support/ime/japanese";
-constexpr char kLogFileName[] = "GoogleJapaneseInput_tsf_ui.log";
 constexpr wchar_t kTaskWindowClassName[] =
     L"Google Japanese Input Task Message Window";
 
@@ -879,7 +876,7 @@ class TipTextServiceImpl
       return E_INVALIDARG;
     }
     if (::IsEqualGUID(IID_ITfFnReconversion, iid)) {
-      *unknown = TipReconvertFunction::New(this).detach();
+      *unknown = MakeComPtr<TipReconvertFunction>(this).detach();
     } else if (::IsEqualGUID(TipPreferredTouchKeyboard::GetIID(), iid)) {
       *unknown = TipPreferredTouchKeyboard::New().detach();
     } else {

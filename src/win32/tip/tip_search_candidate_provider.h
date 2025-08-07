@@ -30,24 +30,46 @@
 #ifndef MOZC_WIN32_TIP_TIP_SEARCH_CANDIDATE_PROVIDER_H_
 #define MOZC_WIN32_TIP_TIP_SEARCH_CANDIDATE_PROVIDER_H_
 
+#include <ctffunc.h>
 #include <guiddef.h>
 #include <unknwn.h>
 #include <wil/com.h>
+
+#include <memory>
+#include <utility>
+
+#include "absl/base/nullability.h"
+#include "win32/tip/tip_dll_module.h"
+#include "win32/tip/tip_query_provider.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-class TipSearchCandidateProvider {
+class TipSearchCandidateProvider
+    : public TipComImplements<ITfFnSearchCandidateProvider> {
  public:
-  TipSearchCandidateProvider() = delete;
-  TipSearchCandidateProvider(const TipSearchCandidateProvider&) = delete;
-  TipSearchCandidateProvider& operator=(const TipSearchCandidateProvider&) =
-      delete;
+  explicit TipSearchCandidateProvider(
+      std::unique_ptr<TipQueryProvider> absl_nonnull provider)
+      : provider_(std::move(provider)) {}
 
   // Returns a COM object that implements ITfFnSearchCandidateProvider.
-  static wil::com_ptr_nothrow<IUnknown> New();
-  static const IID& GetIID();
+  static wil::com_ptr_nothrow<TipSearchCandidateProvider> New();
+
+  // ITfFunction interface methods.
+  STDMETHODIMP GetDisplayName(BSTR* absl_nullable name) override;
+
+  // ITfFnSearchCandidateProvider interface methods.
+  STDMETHODIMP GetSearchCandidates(
+      BSTR absl_nullable query, BSTR absl_nullable application_id,
+      ITfCandidateList** absl_nullable candidate_list) override;
+
+  STDMETHODIMP SetResult(BSTR absl_nullable query,
+                         BSTR absl_nullable application_id,
+                         BSTR absl_nullable result) override;
+
+ private:
+  std::unique_ptr<TipQueryProvider> provider_;
 };
 
 }  // namespace tsf

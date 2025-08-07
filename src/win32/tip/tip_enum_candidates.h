@@ -27,60 +27,40 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_TIP_TIP_RECONVERT_FUNCTION_H_
-#define MOZC_WIN32_TIP_TIP_RECONVERT_FUNCTION_H_
+#ifndef MOZC_WIN32_TIP_TIP_ENUM_CANDIDATES_H_
+#define MOZC_WIN32_TIP_TIP_ENUM_CANDIDATES_H_
 
 #include <ctffunc.h>
-#include <msctf.h>
-#include <wil/com.h>
 
+#include <cstddef>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/base/nullability.h"
-#include "base/win32/com_implements.h"
-#include "win32/tip/tip_candidate_list.h"
 #include "win32/tip/tip_dll_module.h"
-#include "win32/tip/tip_text_service.h"
 
-namespace mozc {
-namespace win32 {
+namespace mozc::win32::tsf {
 
-template <>
-inline bool IsIIDOf<ITfFnReconversion>(REFIID riid) {
-  return IsIIDOf<ITfFnReconversion, ITfFunction>(riid);
-}
-
-namespace tsf {
-
-// A TSF function object that can be use to invoke reconversion from an
-// application.
-class TipReconvertFunction : public TipComImplements<ITfFnReconversion> {
+class TipEnumCandidates : public TipComImplements<IEnumTfCandidates> {
  public:
-  explicit TipReconvertFunction(
-      wil::com_ptr_nothrow<TipTextService> text_service)
-      : text_service_(std::move(text_service)) {}
+  explicit TipEnumCandidates(std::vector<std::wstring> candidates)
+      : candidates_(std::move(candidates)) {}
 
-  // The ITfFunction interface method.
-  STDMETHODIMP GetDisplayName(BSTR *absl_nullable name) override;
-
-  // The ITfFnReconversion interface methods.
-  STDMETHODIMP QueryRange(ITfRange *absl_nullable range,
-                          ITfRange **absl_nullable new_range,
-                          BOOL *absl_nullable opt_convertible) override;
-  STDMETHODIMP
-  GetReconversion(ITfRange *absl_nullable range,
-                  ITfCandidateList **absl_nullable candidate_list) override;
-  STDMETHODIMP Reconvert(ITfRange *absl_nullable range) override;
+  STDMETHODIMP Clone(
+      IEnumTfCandidates** absl_nullable enum_candidates) override;
+  STDMETHODIMP Next(ULONG count,
+                    ITfCandidateString** absl_nullable candidate_string,
+                    ULONG* absl_nullable opt_fetched_count) override;
+  STDMETHODIMP Reset() override;
+  STDMETHODIMP Skip(ULONG count) override;
 
  private:
-  TipCandidateOnFinalize OnCandidateFinalize(
-      wil::com_ptr_nothrow<ITfRange> range) const;
-
-  wil::com_ptr_nothrow<TipTextService> text_service_;
+  std::vector<std::wstring> candidates_;
+  // The index of the current candidate.
+  size_t current_ = 0;
 };
 
-}  // namespace tsf
-}  // namespace win32
-}  // namespace mozc
+}  // namespace mozc::win32::tsf
 
-#endif  // MOZC_WIN32_TIP_TIP_RECONVERT_FUNCTION_H_
+#endif  // MOZC_WIN32_TIP_TIP_ENUM_CANDIDATES_H_

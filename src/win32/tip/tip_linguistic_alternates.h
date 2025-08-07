@@ -34,22 +34,42 @@
 #include <guiddef.h>
 #include <wil/com.h>
 
+#include <memory>
+#include <utility>
+
+#include "absl/base/nullability.h"
+#include "win32/tip/tip_dll_module.h"
+#include "win32/tip/tip_query_provider.h"
 #include "win32/tip/tip_text_service.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-class TipLinguisticAlternates {
+class TipLinguisticAlternates
+    : public TipComImplements<ITfFnGetLinguisticAlternates> {
  public:
-  TipLinguisticAlternates() = delete;
-  TipLinguisticAlternates(const TipLinguisticAlternates &) = delete;
-  TipLinguisticAlternates &operator=(const TipLinguisticAlternates &) = delete;
+  TipLinguisticAlternates(
+      wil::com_ptr_nothrow<TipTextService> text_service,
+      std::unique_ptr<TipQueryProvider> absl_nonnull provider)
+      : text_service_(std::move(text_service)),
+        provider_(std::move(provider)) {}
 
-  // Returns a COM object that implements ITfFnGetLinguisticAlternates.
-  static wil::com_ptr_nothrow<ITfFnGetLinguisticAlternates> New(
+  // Returns a new instance of TipLinguisticAlternates.
+  static wil::com_ptr_nothrow<TipLinguisticAlternates> New(
       wil::com_ptr_nothrow<TipTextService> text_service);
-  static const IID &GetIID();
+
+  // ITfFunction interface method.
+  STDMETHODIMP GetDisplayName(BSTR* absl_nullable name) override;
+
+  // ITfFnGetLinguisticAlternates interface method.
+  STDMETHODIMP GetAlternates(
+      ITfRange* absl_nullable range,
+      ITfCandidateList** absl_nullable candidate_list) override;
+
+ private:
+  wil::com_ptr_nothrow<TipTextService> text_service_;
+  std::unique_ptr<TipQueryProvider> provider_;
 };
 
 }  // namespace tsf
