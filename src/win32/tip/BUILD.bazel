@@ -532,6 +532,9 @@ mozc_cc_library(
     deps = [
         ":tip_display_attributes",
         ":tip_dll_module",
+        "//base/win32:com",
+        "@com_google_absl//absl/base:nullability",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -750,6 +753,8 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":tip_dll_module",
+        "//base/win32:com",
+        "@com_google_absl//absl/base:nullability",
     ],
 )
 

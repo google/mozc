@@ -32,7 +32,12 @@
 #include <msctf.h>
 #include <objbase.h>
 #include <unknwn.h>
+#include <wil/com.h>
 
+#include <utility>
+
+#include "absl/base/nullability.h"
+#include "base/win32/com.h"
 #include "win32/tip/tip_display_attributes.h"
 
 namespace mozc {
@@ -40,60 +45,55 @@ namespace win32 {
 namespace tsf {
 
 // Implements the IEnumTfDisplayAttributeInfo::Clone() function.
-HRESULT STDMETHODCALLTYPE
-TipEnumDisplayAttributes::Clone(IEnumTfDisplayAttributeInfo **enum_attributes) {
+STDMETHODIMP
+TipEnumDisplayAttributes::Clone(
+    IEnumTfDisplayAttributeInfo **absl_nullable enum_attributes) {
   // Check the output argument and return if it is invalid.
   if (enum_attributes == nullptr) {
     return E_INVALIDARG;
   }
 
-  // Create a new ImeEnumDisplayAttributeInfo object.
-  TipEnumDisplayAttributes *clone = new TipEnumDisplayAttributes;
-
+  auto clone = MakeComPtr<TipEnumDisplayAttributes>();
   // Copy the state of the source object (except its reference count).
   clone->index_ = index_;
-  *enum_attributes = clone;
-  (*enum_attributes)->AddRef();
-  return S_OK;
+
+  return SaveToOutParam(std::move(clone), enum_attributes);
 }
 
 // Implements the IEnumTfDisplayAttributeInfo::Next() function.
 // This function copies the |count| items from the current position into
 // the |attribute_array|.
-HRESULT STDMETHODCALLTYPE TipEnumDisplayAttributes::Next(
-    ULONG count, ITfDisplayAttributeInfo **attribute_array, ULONG *fetched) {
+STDMETHODIMP TipEnumDisplayAttributes::Next(
+    ULONG count, ITfDisplayAttributeInfo **absl_nonnull attribute_array,
+    ULONG *absl_nullable fetched) {
   ULONG items = 0;
   for (; items < count; ++items) {
-    ITfDisplayAttributeInfo *attribute = nullptr;
+    wil::com_ptr_nothrow<ITfDisplayAttributeInfo> attribute;
     if (index_ == 0) {
-      attribute = new TipDisplayAttributeInput();
+      attribute_array[items] = MakeComPtr<TipDisplayAttributeInput>().detach();
     } else if (index_ == 1) {
-      attribute = new TipDisplayAttributeConverted();
+      attribute_array[items] =
+          MakeComPtr<TipDisplayAttributeConverted>().detach();
     } else {
       break;
     }
-    attribute_array[items] = attribute;
-    attribute->AddRef();
     ++index_;
   }
-
-  if (fetched) {
-    *fetched = items;
-  }
+  SaveToOptionalOutParam(items, fetched);
 
   return (items == count) ? S_OK : S_FALSE;
 }
 
 // Implements the IEnumTfDisplayAttributeInfo::Reset() function.
 // This function resets the iterator of this enumeration list.
-HRESULT STDMETHODCALLTYPE TipEnumDisplayAttributes::Reset() {
+STDMETHODIMP TipEnumDisplayAttributes::Reset() {
   index_ = 0;
   return S_OK;
 }
 
 // Implements the IEnumTfDisplayAttributeInfo::Skip() function.
 // This function skips |count| items in this enumeration list.
-HRESULT STDMETHODCALLTYPE TipEnumDisplayAttributes::Skip(ULONG count) {
+STDMETHODIMP TipEnumDisplayAttributes::Skip(ULONG count) {
   // There is only a single item to enum
   // so just skip it and avoid any overflow errors
   if (count > 0 && index_ == 0) {

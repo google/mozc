@@ -145,7 +145,6 @@ inline wil::unique_bstr MakeUniqueBSTR(const wchar_t *source) {
 // Note: this behavior is different from IUnknown methods. Check COM interface
 // documentation to make sure the returned error codes are correct.
 template <typename T, typename U>
-  requires std::integral<T> && std::integral<U>
 HResult SaveToOutParam(T value, U *absl_nullable out);
 template <typename T, typename U>
 HResult SaveToOutParam(T *absl_nullable value, U **absl_nullable out);
@@ -169,7 +168,6 @@ void SaveToOptionalOutParam(T value, U *absl_nullable out);
 // Implementations.
 
 template <typename T, typename U>
-  requires std::integral<T> && std::integral<U>
 HResult SaveToOutParam(T value, U *absl_nullable out) {
   static_assert(std::convertible_to<T, U>);
   if (out == nullptr) {

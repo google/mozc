@@ -34,7 +34,9 @@
 #include <windows.h>
 
 #include <string>
+#include <string_view>
 
+#include "absl/base/nullability.h"
 #include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
@@ -45,32 +47,29 @@ namespace tsf {
 class TipDisplayAttribute : public TipComImplements<ITfDisplayAttributeInfo> {
  public:
   // ITfDisplayAttributeInfo interface methods
-  virtual HRESULT STDMETHODCALLTYPE GetGUID(GUID *guid);
-  virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *description);
-  virtual HRESULT STDMETHODCALLTYPE
-  GetAttributeInfo(TF_DISPLAYATTRIBUTE *attribute);
-  virtual HRESULT STDMETHODCALLTYPE
-  SetAttributeInfo(const TF_DISPLAYATTRIBUTE *attribute);
-  virtual HRESULT STDMETHODCALLTYPE Reset();
+  STDMETHODIMP GetGUID(GUID *absl_nullable guid) override;
+  STDMETHODIMP GetDescription(BSTR *absl_nullable description) override;
+  STDMETHODIMP
+  GetAttributeInfo(TF_DISPLAYATTRIBUTE *absl_nullable attribute) override;
+  STDMETHODIMP
+  SetAttributeInfo(const TF_DISPLAYATTRIBUTE *absl_nullable attribute) override;
+  STDMETHODIMP Reset() override;
 
  protected:
   TipDisplayAttribute(const GUID &guid, const TF_DISPLAYATTRIBUTE &attribute,
-                      const std::wstring &description);
+                      std::wstring_view description);
 
  private:
   GUID guid_;
-  TF_DISPLAYATTRIBUTE original_attribute_;
   std::wstring description_;
   TF_DISPLAYATTRIBUTE attribute_;
+  TF_DISPLAYATTRIBUTE original_attribute_;
 };
 
 // Represents the display attributes for input characters.
 class TipDisplayAttributeInput : public TipDisplayAttribute {
  public:
   TipDisplayAttributeInput();
-  TipDisplayAttributeInput(const TipDisplayAttributeInput &) = delete;
-  TipDisplayAttributeInput &operator=(const TipDisplayAttributeInput &) =
-      delete;
 
   static const GUID &guid();
 };
@@ -79,9 +78,6 @@ class TipDisplayAttributeInput : public TipDisplayAttribute {
 class TipDisplayAttributeConverted : public TipDisplayAttribute {
  public:
   TipDisplayAttributeConverted();
-  TipDisplayAttributeConverted(const TipDisplayAttributeConverted &) = delete;
-  TipDisplayAttributeConverted &operator=(
-      const TipDisplayAttributeConverted &) = delete;
 
   static const GUID &guid();
 };

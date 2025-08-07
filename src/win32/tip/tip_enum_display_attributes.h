@@ -34,6 +34,7 @@
 #include <rpcsal.h>
 #include <windows.h>
 
+#include "absl/base/nullability.h"
 #include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
@@ -47,12 +48,13 @@ class TipEnumDisplayAttributes
   TipEnumDisplayAttributes() : index_(0) {}
 
   // IEnumTfDisplayAttributeInfo
-  virtual HRESULT STDMETHODCALLTYPE
-  Clone(IEnumTfDisplayAttributeInfo **enum_attributes);
-  virtual HRESULT STDMETHODCALLTYPE
-  Next(ULONG count, ITfDisplayAttributeInfo **attribute_array, ULONG *fetched);
-  virtual HRESULT STDMETHODCALLTYPE Reset();
-  virtual HRESULT STDMETHODCALLTYPE Skip(ULONG count);
+  STDMETHODIMP
+  Clone(IEnumTfDisplayAttributeInfo **absl_nullable enum_attributes) override;
+  STDMETHODIMP
+  Next(ULONG count, ITfDisplayAttributeInfo **absl_nonnull attribute_array,
+       ULONG *absl_nullable fetched) override;
+  STDMETHODIMP Reset() override;
+  STDMETHODIMP Skip(ULONG count) override;
 
  private:
   LONG index_;

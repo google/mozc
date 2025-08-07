@@ -31,13 +31,19 @@
 
 #include <windows.h>
 
+#include <string_view>
+
+#include "absl/base/nullability.h"
+#include "base/win32/com.h"
+
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
 namespace {
 
-constexpr wchar_t kInputDescription[] = L"TextService Display Attribute Input";
+constexpr std::wstring_view kInputDescription =
+    L"TextService Display Attribute Input";
 constexpr TF_DISPLAYATTRIBUTE kInputAttribute = {
     {TF_CT_NONE, {}},  // text color
     {TF_CT_NONE, {}},  // background color
@@ -47,7 +53,7 @@ constexpr TF_DISPLAYATTRIBUTE kInputAttribute = {
     TF_ATTR_INPUT      // attribute info
 };
 
-constexpr wchar_t kConvertedDescription[] =
+constexpr std::wstring_view kConvertedDescription =
     L"TextService Display Attribute Converted";
 constexpr TF_DISPLAYATTRIBUTE kConvertedAttribute = {
     {TF_CT_NONE, {}},         // text color
@@ -96,51 +102,40 @@ constexpr GUID kDisplayAttributeConverted = {
 
 TipDisplayAttribute::TipDisplayAttribute(const GUID &guid,
                                          const TF_DISPLAYATTRIBUTE &attribute,
-                                         const std::wstring &description)
-    : guid_(guid), description_(description) {
-  ::CopyMemory(&original_attribute_, &attribute, sizeof(original_attribute_));
-  ::CopyMemory(&attribute_, &attribute, sizeof(attribute_));
+                                         const std::wstring_view description)
+    : guid_(guid),
+      description_(description),
+      attribute_(attribute),
+      original_attribute_(attribute) {}
+
+STDMETHODIMP TipDisplayAttribute::GetGUID(GUID *absl_nullable guid) {
+  return SaveToOutParam(guid_, guid);
 }
 
-HRESULT STDMETHODCALLTYPE TipDisplayAttribute::GetGUID(GUID *guid) {
-  if (guid == nullptr) {
-    return E_INVALIDARG;
-  }
-  *guid = guid_;
-  return S_OK;
+STDMETHODIMP
+TipDisplayAttribute::GetDescription(BSTR *absl_nullable description) {
+  return SaveToOutParam(MakeUniqueBSTR(description_), description);
 }
 
-HRESULT STDMETHODCALLTYPE
-TipDisplayAttribute::GetDescription(BSTR *description) {
-  if (description == nullptr) {
-    return E_INVALIDARG;
-  }
-
-  *description = ::SysAllocString(description_.c_str());
-  return (*description != nullptr) ? S_OK : E_OUTOFMEMORY;
+STDMETHODIMP
+TipDisplayAttribute::GetAttributeInfo(
+    TF_DISPLAYATTRIBUTE *absl_nullable attribute) {
+  return SaveToOutParam(attribute_, attribute);
 }
 
-HRESULT STDMETHODCALLTYPE
-TipDisplayAttribute::GetAttributeInfo(TF_DISPLAYATTRIBUTE *attribute) {
+STDMETHODIMP
+TipDisplayAttribute::SetAttributeInfo(
+    const TF_DISPLAYATTRIBUTE *absl_nullable attribute) {
   if (attribute == nullptr) {
     return E_INVALIDARG;
   }
-  ::CopyMemory(attribute, &attribute_, sizeof(attribute_));
+  attribute_ = *attribute;
   return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE
-TipDisplayAttribute::SetAttributeInfo(const TF_DISPLAYATTRIBUTE *attribute) {
-  if (attribute == nullptr) {
-    return E_INVALIDARG;
-  }
-  ::CopyMemory(&attribute_, attribute, sizeof(attribute_));
-
+STDMETHODIMP TipDisplayAttribute::Reset() {
+  attribute_ = original_attribute_;
   return S_OK;
-}
-
-HRESULT STDMETHODCALLTYPE TipDisplayAttribute::Reset() {
-  return SetAttributeInfo(&original_attribute_);
 }
 
 TipDisplayAttributeInput::TipDisplayAttributeInput()
