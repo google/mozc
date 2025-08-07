@@ -1414,7 +1414,7 @@ bool EngineConverter::MaybePerformCommandCandidate(const size_t index,
     const int id = GetCandidateIndexForConverter(i);
     const converter::Candidate &candidate =
         segments_.conversion_segment(i).candidate(id);
-    if (candidate.attributes & converter::Candidate::COMMAND_CANDIDATE) {
+    if (candidate.attributes & converter::Attribute::COMMAND_CANDIDATE) {
       switch (candidate.command) {
         case converter::Candidate::DEFAULT_COMMAND:
           // Do nothing
@@ -1565,7 +1565,7 @@ std::string EngineConverter::GetSelectedCandidateValue(
   const int id = GetCandidateIndexForConverter(segment_index);
   const converter::Candidate &candidate =
       segments_.conversion_segment(segment_index).candidate(id);
-  if (candidate.attributes & converter::Candidate::COMMAND_CANDIDATE) {
+  if (candidate.attributes & converter::Attribute::COMMAND_CANDIDATE) {
     // Return an empty string, however this path should not be reached.
     return "";
   }

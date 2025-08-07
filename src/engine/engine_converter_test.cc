@@ -400,7 +400,7 @@ class EngineConverterTest : public testing::TestWithTempUserProfile {
                                   converter::Candidate::Command command) {
     segments->mutable_conversion_segment(segment_index)
         ->mutable_candidate(candidate_index)
-        ->attributes |= converter::Candidate::COMMAND_CANDIDATE;
+        ->attributes |= converter::Attribute::COMMAND_CANDIDATE;
     segments->mutable_conversion_segment(segment_index)
         ->mutable_candidate(candidate_index)
         ->command = command;

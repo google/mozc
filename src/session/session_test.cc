@@ -49,6 +49,7 @@
 #include "composer/key_parser.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
@@ -4564,7 +4565,7 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   candidate->key = "くえり";
   candidate->content_key = candidate->key;
   candidate->value = "クエリ";
-  candidate->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
+  candidate->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
   candidate->consumed_key_size = strings::CharsLen(kJueri);
 
   MockEngine engine;
@@ -4613,10 +4614,10 @@ TEST_F(SessionTest, MobilePartialPrediction) {
     constexpr absl::string_view kWata = "わた";
     segment->set_key(kWata);
     converter::Candidate *cand1 = AddCandidate(kWata, "綿", segment);
-    cand1->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
+    cand1->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     cand1->consumed_key_size = strings::CharsLen(kWata);
     converter::Candidate *cand2 = AddCandidate(kWata, kWata, segment);
-    cand2->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
+    cand2->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     cand2->consumed_key_size = strings::CharsLen(kWata);
   }
 
@@ -4628,11 +4629,11 @@ TEST_F(SessionTest, MobilePartialPrediction) {
     segment->set_key(kWatashino);
     converter::Candidate *cand1 = segment->add_candidate();
     cand1->value = "私の";
-    cand1->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
+    cand1->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     cand1->consumed_key_size = strings::CharsLen(kWatashino);
     converter::Candidate *cand2 = segment->add_candidate();
     cand2->value = kWatashino;
-    cand2->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
+    cand2->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     cand2->consumed_key_size = strings::CharsLen(kWatashino);
   }
 
@@ -4645,7 +4646,7 @@ TEST_F(SessionTest, MobilePartialPrediction) {
     converter::Candidate *candidate;
     candidate = AddCandidate("しのみや", "四ノ宮", segment);
     candidate->content_key = segment->key();
-    candidate->attributes = converter::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     candidate->consumed_key_size = strings::CharsLen(kShino);
     candidate = AddCandidate(kShino, "shino", segment);
   }

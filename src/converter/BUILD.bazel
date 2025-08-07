@@ -108,6 +108,7 @@ mozc_cc_library(
         "//engine:__pkg__",
         "//prediction:__pkg__",
         "//rewriter:__pkg__",
+        "//session:__pkg__",
     ],
 )
 
@@ -731,6 +732,7 @@ mozc_cc_binary(
         "//engine:eval_engine_data",
     ],
     deps = [
+        ":attribute",
         ":converter_interface",
         ":lattice",
         ":pos_id_printer",

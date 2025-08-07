@@ -89,6 +89,7 @@ mozc_cc_test(
         "//composer:key_parser",
         "//composer:table",
         "//config:config_handler",
+        "//converter:attribute",
         "//converter:converter_mock",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",

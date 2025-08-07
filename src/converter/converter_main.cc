@@ -56,6 +56,7 @@
 #include "base/system_util.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
+#include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/lattice.h"
@@ -155,9 +156,9 @@ std::string SegmentTypeToString(Segment::SegmentType type) {
 
 std::string CandidateAttributesToString(uint32_t attrs) {
   std::vector<std::string> v;
-#define ADD_STR(fieldname)                                     \
-  do {                                                         \
-    if (attrs & Candidate::fieldname) v.push_back(#fieldname); \
+#define ADD_STR(fieldname)                                                \
+  do {                                                                    \
+    if (attrs & converter::Attribute::fieldname) v.push_back(#fieldname); \
   } while (false)
 
   ADD_STR(BEST_CANDIDATE);
