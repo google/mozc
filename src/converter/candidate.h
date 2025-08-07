@@ -66,7 +66,7 @@ class Candidate {
   // Allows to refer Attribute via Candidate::XXX
   // TODO(taku): Remove this alias after full migration.
   using Attribute = converter::Attribute::Attribute_;
-  using enum Attribute;
+  using enum converter::Attribute::Attribute_;
 
   enum Command {
     DEFAULT_COMMAND = 0,
