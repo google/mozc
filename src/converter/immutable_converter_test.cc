@@ -76,21 +76,13 @@ using converter::Candidate;
 using dictionary::DictionaryInterface;
 using ::testing::StrEq;
 
-void SetCandidate(absl::string_view key, absl::string_view value,
-                  Segment *segment) {
+void SetCandidate(std::string key, std::string value, Segment *segment) {
   segment->set_key(key);
   Candidate *candidate = segment->add_candidate();
-#ifdef ABSL_USES_STD_STRING_VIEW
   candidate->key = key;
   candidate->value = value;
-  candidate->content_key = key;
-  candidate->content_value = value;
-#else   // ABSL_USES_STD_STRING_VIEW
-  candidate->key = std::string(key);
-  candidate->value = std::string(value);
-  candidate->content_key = std::string(key);
-  candidate->content_value = std::string(value);
-#endif  // ABSL_USES_STD_STRING_VIEW
+  candidate->content_key = std::move(key);
+  candidate->content_value = std::move(value);
 }
 
 int GetCandidateIndexByValue(absl::string_view value, const Segment &segment) {
