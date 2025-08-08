@@ -38,8 +38,7 @@ namespace converter {
 // explicit casting.
 class Attribute {
  public:
-  // TODO(taku): Can use unnamed enum after full migration.
-  enum Attribute_ {
+  enum {
     DEFAULT_ATTRIBUTE = 0,
     // this was the best candidate before learning
     BEST_CANDIDATE = 1 << 0,
