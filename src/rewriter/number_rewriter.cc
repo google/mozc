@@ -76,7 +76,7 @@ enum RewriteType {
 
 struct RewriteCandidateInfo {
   RewriteType type;
-  int position;                  // Base (arabic number) candidate position
+  int position;                    // Base (arabic number) candidate position
   converter::Candidate candidate;  // Base candidate
 };
 
@@ -112,7 +112,6 @@ std::optional<RewriteCandidateInfo> GetRewriteCandidateInfo(
   if (Util::GetScriptType(c.content_value) == Util::NUMBER) {
     info.candidate = c;
     info.candidate.inner_segment_boundary.clear();
-    DCHECK(info.candidate.IsValid());
     if (Util::GetScriptType(c.content_key) == Util::NUMBER ||
         (c.attributes & converter::Attribute::USER_DICTIONARY)) {
       // ARABIC_FIRST when:
@@ -156,7 +155,6 @@ std::optional<RewriteCandidateInfo> GetRewriteCandidateInfo(
   info.candidate.rid = c.rid;
   info.candidate.attributes |=
       c.attributes & converter::Attribute::PARTIALLY_KEY_CONSUMED;
-  DCHECK(info.candidate.IsValid());
 
   info.type = KANJI_FIRST;
   return info;

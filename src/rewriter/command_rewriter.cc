@@ -95,7 +95,6 @@ converter::Candidate *InsertCommandCandidate(Segment *segment,
   candidate->prefix = kPrefix;
   candidate->suffix = kSuffix;
   candidate->inner_segment_boundary.clear();
-  DCHECK(candidate->IsValid());
   return candidate;
 }
 

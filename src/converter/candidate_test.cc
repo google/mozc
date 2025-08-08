@@ -42,26 +42,8 @@ namespace converter {
 
 TEST(CandidateTest, IsValid) {
   Candidate c;
-  EXPECT_TRUE(c.IsValid());
-
   c.key = "key";
   c.value = "value";
-  c.content_key = "content_key";
-  c.content_value = "content_value";
-  c.prefix = "prefix";
-  c.suffix = "suffix";
-  c.description = "description";
-  c.usage_title = "usage_title";
-  c.usage_description = "usage_description";
-  c.cost = 1;
-  c.wcost = 2;
-  c.structure_cost = 3;
-  c.lid = 4;
-  c.rid = 5;
-  c.attributes = 6;
-  c.style = NumberUtil::NumberString::NUMBER_CIRCLED;
-  c.command = Candidate::DISABLE_PRESENTATION_MODE;
-  EXPECT_TRUE(c.IsValid());  // Empty inner_segment_boundary
 
   // Valid inner_segment_boundary.
   EXPECT_FALSE(

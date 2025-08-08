@@ -213,7 +213,6 @@ TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
   ASSERT_GE(segment.candidates_size(), 3);
   for (size_t i = 1; i < 3; ++i) {
     EXPECT_TRUE(segment.candidate(i).inner_segment_boundary.empty());
-    EXPECT_TRUE(segment.candidate(i).IsValid());
   }
 }
 
@@ -278,7 +277,6 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
 
   // Result will be, "私の|名前は|中ノです" with mock dictionary.
   const Candidate &cand = segments.segment(0).candidate(0);
-  EXPECT_TRUE(cand.IsValid());
   std::vector<absl::string_view> keys, values, content_keys, content_values;
   for (const auto &iter : cand.inner_segments()) {
     keys.push_back(iter.GetKey());

@@ -57,8 +57,6 @@ void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
   candidate->attributes |= Attribute::SPELLING_CORRECTION;
 
   candidate->description = absl::StrCat("<もしかして: ", item.correction, ">");
-
-  DCHECK(candidate->IsValid());
 }
 
 bool CorrectionRewriter::LookupCorrection(

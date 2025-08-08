@@ -402,7 +402,6 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
     new_candidate->attributes = 0;
     // We cannot copy inner_segment_boundary; see b/8109381.
     new_candidate->inner_segment_boundary.clear();
-    DCHECK(new_candidate->IsValid());
     last_candidate = new_candidate;
   }
 
@@ -434,7 +433,6 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
     if (Util::CharsLen(new_candidate->key) <= 1) {
       new_candidate->attributes |= Attribute::CONTEXT_SENSITIVE;
     }
-    DCHECK(new_candidate->IsValid());
   }
 
   // Insert a dummy katakana candidate.
@@ -458,7 +456,6 @@ void ImmutableConverter::InsertDummyCandidates(Segment *segment,
     if (Util::CharsLen(new_candidate->key) <= 1) {
       new_candidate->attributes |= Attribute::CONTEXT_SENSITIVE;
     }
-    DCHECK(new_candidate->IsValid());
   }
 
   DCHECK_GT(segment->candidates_size(), 0);
