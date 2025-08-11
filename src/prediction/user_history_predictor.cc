@@ -1122,7 +1122,7 @@ std::vector<Result> UserHistoryPredictor::Predict(
     // MaybeProcessPartialRevertEntry is marked as const so
     // as to access it Predict(), but it updates the contents of dic_, so
     // WriterLock is required.
-    absl::WriterMutexLock lock(&dic_mutex_);
+    absl::WriterMutexLock lock(dic_mutex_);
     MaybeProcessPartialRevertEntry(request);
   }
 
@@ -1130,7 +1130,7 @@ std::vector<Result> UserHistoryPredictor::Predict(
   // with ReaderLock, as the Entry in `dic_` may be updated in different thread.
   // We wants to use ReaderLock instead of MutexLock as the
   // actual decoding process is much slower than ReaderLock.
-  absl::ReaderMutexLock lock(&dic_mutex_);
+  absl::ReaderMutexLock lock(dic_mutex_);
 
   if (!ShouldPredict(request)) {
     return {};
