@@ -274,11 +274,11 @@ bool IosEngine::MaybeCreateNewChunk(commands::Command *command)
   input->set_type(commands::Input::SEND_COMMAND);
   commands::SessionCommand *session_command = input->mutable_command();
   session_command->set_type(commands::SessionCommand::STOP_KEY_TOGGLING);
-  if (!mutex_.TryLock()) {
+  if (!mutex_.try_lock()) {
     return false;
   }
   const bool ret = session_handler_->EvalCommand(command);
-  mutex_.Unlock();
+  mutex_.unlock();
   return ret;
 }
 
@@ -294,7 +294,7 @@ bool IosEngine::SendSessionCommand(
 }
 
 bool IosEngine::EvalCommandLockGuarded(commands::Command *command) {
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   if (command->input().has_command()) {
     previous_command_ = command->input().command().type();
   } else {
