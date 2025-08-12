@@ -177,36 +177,21 @@ bool ContainsWhiteSpacesOnly(const absl::string_view s) {
 // <number, suffix>
 std::pair<absl::string_view, absl::string_view> DecomposeNumberAndSuffix(
     absl::string_view input) {
-  const char *begin = input.data();
-  const char *end = input.data() + input.size();
-  size_t pos = 0;
-  while (begin < end) {
-    if (IsNumber(*begin)) {
-      ++pos;
-      ++begin;
-    }
-    break;
+  absl::string_view suffix = input;
+  while (!suffix.empty() && IsNumber(suffix.front())) {
+    suffix.remove_prefix(1);
   }
-  return std::make_pair(input.substr(0, pos),
-                        input.substr(pos, input.size() - pos));
+  return std::make_pair(input.substr(0, input.size() - suffix.size()), suffix);
 }
 
 // <prefix, number>
 std::pair<absl::string_view, absl::string_view> DecomposePrefixAndNumber(
     absl::string_view input) {
-  const char *begin = input.data();
-  const char *end = input.data() + input.size() - 1;
-  size_t pos = input.size();
-  while (begin <= end) {
-    if (IsNumber(*end)) {
-      --pos;
-      --end;
-      continue;
-    }
-    break;
+  absl::string_view prefix = input;
+  while (!prefix.empty() && IsNumber(prefix.back())) {
+    prefix.remove_suffix(1);
   }
-  return std::make_pair(input.substr(0, pos),
-                        input.substr(pos, input.size() - pos));
+  return std::make_pair(prefix, input.substr(prefix.size()));
 }
 
 void NormalizeHistorySegments(Segments *segments) {
