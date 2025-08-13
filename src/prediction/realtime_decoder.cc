@@ -42,6 +42,7 @@
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "converter/attribute.h"
+#include "converter/candidate.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/inner_segment.h"
@@ -54,31 +55,31 @@ namespace mozc::prediction {
 namespace {
 
 // TODO(taku): Defines this function as a common utility function.
-Segments MakeSegments(const ConversionRequest &request) {
+Segments MakeSegments(const ConversionRequest& request) {
   converter::Segments segments;
-  const prediction::Result &result = request.history_result();
+  const prediction::Result& result = request.history_result();
 
   auto add_history_segment = [&](absl::string_view key, absl::string_view value,
                                  absl::string_view content_key,
                                  absl::string_view content_value) {
-    converter::Segment *seg = segments.add_segment();
+    converter::Segment* seg = segments.add_segment();
     seg->set_key(key);
     seg->set_segment_type(converter::Segment::HISTORY);
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     strings::Assign(candidate->key, key);
     strings::Assign(candidate->value, value);
     strings::Assign(candidate->content_key, content_key);
     strings::Assign(candidate->content_value, content_value);
   };
 
-  for (const auto &iter : result.inner_segments()) {
+  for (const auto& iter : result.inner_segments()) {
     add_history_segment(iter.GetKey(), iter.GetValue(), iter.GetContentKey(),
                         iter.GetContentValue());
   }
 
   const int history_size = segments.history_segments_size();
   if (history_size > 0) {
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_history_segment(history_size - 1)
             ->mutable_candidate(0);
     candidate->cost = result.cost;
@@ -91,13 +92,13 @@ Segments MakeSegments(const ConversionRequest &request) {
 }
 
 // TODO(taku): Defines this function as a common utility function.
-std::optional<Result> ConversionSegmentsToResult(const Segments &segments) {
+std::optional<Result> ConversionSegmentsToResult(const Segments& segments) {
   Result result;
 
   converter::InnerSegmentBoundaryBuilder builder;
-  for (const Segment &segment : segments.conversion_segments()) {
+  for (const Segment& segment : segments.conversion_segments()) {
     if (segment.candidates_size() == 0) return std::nullopt;
-    const converter::Candidate &candidate = segment.candidate(0);
+    const converter::Candidate& candidate = segment.candidate(0);
     absl::StrAppend(&result.value, candidate.value);
     absl::StrAppend(&result.key, candidate.key);
     result.wcost += candidate.wcost;
@@ -112,16 +113,15 @@ std::optional<Result> ConversionSegmentsToResult(const Segments &segments) {
 
   result.inner_segment_boundary = builder.Build(result.key, result.value);
 
-  const int size = segments.conversion_segments_size();
-  result.lid = segments.conversion_segment(0).candidate(0).lid;
-  result.rid = segments.conversion_segment(size - 1).candidate(0).rid;
+  result.lid = segments.conversion_segments().front().candidate(0).lid;
+  result.rid = segments.conversion_segments().back().candidate(0).rid;
 
   return result;
 }
 }  // namespace
 
 bool RealtimeDecoder::PushBackTopConversionResult(
-    const ConversionRequest &request, std::vector<Result> *results) const {
+    const ConversionRequest& request, std::vector<Result>* results) const {
   ConversionRequest::Options options;
   options.max_conversion_candidates_size = 20;
   options.composer_key_selection = ConversionRequest::PREDICTION_KEY;
@@ -150,7 +150,7 @@ bool RealtimeDecoder::PushBackTopConversionResult(
     return false;
   }
 
-  Result &result = result_opt.value();
+  Result& result = result_opt.value();
   result.SetTypesAndTokenAttributes(REALTIME | REALTIME_TOP,
                                     dictionary::Token::NONE);
   result.candidate_attributes |= converter::Attribute::NO_VARIANTS_EXPANSION;
@@ -161,7 +161,7 @@ bool RealtimeDecoder::PushBackTopConversionResult(
 }
 
 std::vector<Result> RealtimeDecoder::Decode(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   std::vector<Result> results;
   if (request.options().max_conversion_candidates_size == 0) {
     return results;
@@ -202,9 +202,9 @@ std::vector<Result> RealtimeDecoder::Decode(
   }
 
   // Copy candidates into the array of Results.
-  const Segment &segment = tmp_segments.conversion_segment(0);
+  const Segment& segment = tmp_segments.conversion_segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    const converter::Candidate &candidate = segment.candidate(i);
+    const converter::Candidate& candidate = segment.candidate(i);
 
     Result result;
     result.key = candidate.key;
@@ -234,7 +234,7 @@ std::vector<Result> RealtimeDecoder::Decode(
 }
 
 std::vector<Result> RealtimeDecoder::ReverseDecode(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   Segments tmp_segments = MakeSegments(request);
 
   const ConversionRequest request_for_reverse =
