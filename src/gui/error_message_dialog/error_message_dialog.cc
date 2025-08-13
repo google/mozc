@@ -61,7 +61,7 @@ DeleyedMessageDialogHandler::DeleyedMessageDialogHandler(
     QMessageBox *message_box)
     : message_box_(message_box) {}
 
-DeleyedMessageDialogHandler::~DeleyedMessageDialogHandler() {}
+DeleyedMessageDialogHandler::~DeleyedMessageDialogHandler() = default;
 
 void DeleyedMessageDialogHandler::Exec() {
   constexpr int kDisableInterval = 3000;
