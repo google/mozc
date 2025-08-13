@@ -753,8 +753,7 @@ TEST_F(ConverterTest, CompletePosIds) {
                 .max_conversion_candidates_size = 20,
             })
             .Build();
-    CHECK(
-        converter->immutable_converter().ConvertForRequest(request, &segments));
+    CHECK(converter->immutable_converter().Convert(request, &segments));
     const int lid = segments.segment(0).candidate(0).lid;
     const int rid = segments.segment(0).candidate(0).rid;
     Candidate candidate;

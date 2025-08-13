@@ -59,8 +59,8 @@ class ImmutableConverter : public ImmutableConverterInterface {
   ImmutableConverter &operator=(const ImmutableConverter &) = delete;
   ~ImmutableConverter() override = default;
 
-  [[nodiscard]] bool ConvertForRequest(const ConversionRequest &request,
-                                       Segments *segments) const override;
+  [[nodiscard]] bool Convert(const ConversionRequest &request,
+                             Segments *segments) const override;
 
  private:
   friend class ImmutableConverterTestPeer;

@@ -412,6 +412,7 @@ mozc_cc_library(
     deps = [
         ":segments",
         "//request:conversion_request",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 

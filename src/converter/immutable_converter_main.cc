@@ -183,7 +183,7 @@ bool ExecCommand(const ImmutableConverter &immutable_converter,
 
   Segments segments;
   segments.InitForConvert(conversion_request.key());
-  if (!immutable_converter.ConvertForRequest(conversion_request, &segments)) {
+  if (!immutable_converter.Convert(conversion_request, &segments)) {
     return false;
   }
 
