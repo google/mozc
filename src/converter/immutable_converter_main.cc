@@ -36,6 +36,7 @@
 // immutable_converter_main --dictionary oss --query へんかん
 //   --output /tmp/lattice.tsv
 //
+// clang-format off
 // Output:
 /*
 id	key	value	begin_pos	end_pos	lid	rid	wcost	cost	prev	next
@@ -49,6 +50,7 @@ id	key	value	begin_pos	end_pos	lid	rid	wcost	cost	prev	next
 9	へん	へん	0	6	42	42	2001	7965	1	0
 ...
 */
+// clang-format on
 
 #include <cstddef>
 #include <cstdint>
@@ -83,13 +85,13 @@ ABSL_FLAG(std::string, output, "", "Output file");
 namespace mozc {
 namespace {
 
-std::string DumpNodes(const Lattice &lattice) {
+std::string DumpNodes(const Lattice& lattice) {
   // Map from Node pointer to a unique ID.
-  absl::flat_hash_map<const Node *, uint32_t> node_id_map;
+  absl::flat_hash_map<const Node*, uint32_t> node_id_map;
   node_id_map[nullptr] = 0;
 
   // Returns a unique ID for the given node.
-  auto node_id = [&node_id_map](const Node *node) -> uint32_t {
+  auto node_id = [&node_id_map](const Node* node) -> uint32_t {
     auto it = node_id_map.find(node);
     if (it != node_id_map.end()) {
       return it->second;
@@ -100,7 +102,7 @@ std::string DumpNodes(const Lattice &lattice) {
   };
 
   // Returns a string representation of the given node in TSV.
-  auto dump_node = [&node_id](const Node &node) -> std::string {
+  auto dump_node = [&node_id](const Node& node) -> std::string {
     return absl::StrCat(node_id(&node), "\t", node.key, "\t", node.value, "\t",
                         node.begin_pos, "\t", node.end_pos, "\t", node.lid,
                         "\t", node.rid, "\t", node.wcost, "\t", node.cost, "\t",
@@ -118,14 +120,14 @@ std::string DumpNodes(const Lattice &lattice) {
   absl::StrAppend(&output, "\n");
 
   // Output BOS node(s).
-  for (Node *node = lattice.bos_nodes(); node != nullptr; node = node->bnext) {
+  for (Node* node = lattice.bos_nodes(); node != nullptr; node = node->bnext) {
     absl::StrAppend(&output, dump_node(*node));
   }
 
   // Make position nodes.
   std::vector<Node> pos_nodes;
   for (size_t i = 0; i <= lattice.key().size(); ++i) {
-    Node *begin_node = lattice.begin_nodes(i);
+    Node* begin_node = lattice.begin_nodes(i);
     if (begin_node == nullptr) {
       continue;
     }
@@ -142,13 +144,13 @@ std::string DumpNodes(const Lattice &lattice) {
   }
 
   // Output position nodes.
-  for (const Node &pos_node : pos_nodes) {
+  for (const Node& pos_node : pos_nodes) {
     absl::StrAppend(&output, dump_node(pos_node));
   }
 
   // Output nodes.
   for (size_t i = 0; i <= lattice.key().size(); ++i) {
-    Node *begin_node = lattice.begin_nodes(i);
+    Node* begin_node = lattice.begin_nodes(i);
     if (begin_node == nullptr) {
       continue;
     }
@@ -161,15 +163,15 @@ std::string DumpNodes(const Lattice &lattice) {
       pos_nodes.push_back(std::move(pos_node));
     }
 
-    for (const Node *node = begin_node; node != nullptr; node = node->bnext) {
+    for (const Node* node = begin_node; node != nullptr; node = node->bnext) {
       absl::StrAppend(&output, dump_node(*node));
     }
   }
   return output;
 }
 
-bool ExecCommand(const ImmutableConverter &immutable_converter,
-                 absl::string_view query, const std::string &output) {
+bool ExecCommand(const ImmutableConverter& immutable_converter,
+                 absl::string_view query, const std::string& output) {
   ConversionRequest::Options options = {
       .request_type = ConversionRequest::CONVERSION,
       .use_actual_converter_for_realtime_conversion = true,
@@ -182,18 +184,19 @@ bool ExecCommand(const ImmutableConverter &immutable_converter,
           .Build();
 
   Segments segments;
+  Lattice lattice;
   segments.InitForConvert(conversion_request.key());
-  if (!immutable_converter.Convert(conversion_request, &segments)) {
+  if (!immutable_converter.Convert(conversion_request, &segments, &lattice)) {
     return false;
   }
 
   mozc::OutputFileStream os(output);
-  os << DumpNodes(*segments.mutable_cached_lattice());
+  os << DumpNodes(lattice);
   return true;
 }
 
 std::unique_ptr<const DataManager> CreateDataManager(
-    const std::string &dictionary) {
+    const std::string& dictionary) {
   if (dictionary == "oss") {
     return std::make_unique<const oss::OssDataManager>();
   }
@@ -210,7 +213,7 @@ std::unique_ptr<const DataManager> CreateDataManager(
 }  // namespace
 }  // namespace mozc
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::unique_ptr<const mozc::DataManager> data_manager =

@@ -56,7 +56,6 @@ struct Node {
     WEAK_CONNECTED_OBSOLETE = 1 << 3,
     STARTS_WITH_PARTICLE = 1 << 4,  // User input starts with particle
     SPELLING_CORRECTION = 1 << 5,   // "Did you mean"
-    ENABLE_CACHE = 1 << 6,          // Cache the node in lattice
     // Equal to that of Candidate.
     // Life of suggestion candidates from realtime conversion is;
     // 1. Created by ImmutableConverter as Candidate instance.

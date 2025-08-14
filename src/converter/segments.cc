@@ -271,15 +271,11 @@ Segments::Segments(const Segments &x)
     : max_history_segments_size_(x.max_history_segments_size_),
       resized_(x.resized_),
       pool_(32),
-      revert_id_(x.revert_id_),
-      cached_lattice_() {
+      revert_id_(x.revert_id_) {
   // Deep-copy segments.
   for (const Segment *segment : x.segments_) {
     *add_segment() = *segment;
   }
-  // Note: cached_lattice_ is not copied to follow the old copy policy.
-  // TODO(noriyukit): This design is not intuitive. It'd be better to manage
-  // cached_lattice_ in a better way.
 }
 
 Segments &Segments::operator=(const Segments &x) {
@@ -292,8 +288,6 @@ Segments &Segments::operator=(const Segments &x) {
     *add_segment() = *segment;
   }
   revert_id_ = x.revert_id_;
-  // Note: cached_lattice_ is not copied; see the comment for the copy
-  // constructor.
   return *this;
 }
 

@@ -47,16 +47,12 @@ TEST(LatticeTest, LatticeTest) {
   lattice.SetKey("this is a test");
   EXPECT_TRUE(lattice.has_lattice());
 
-  lattice.set_history_end_pos(4);
-  EXPECT_EQ(lattice.history_end_pos(), 4);
-
   EXPECT_NE(lattice.bos_nodes(), nullptr);
   EXPECT_NE(lattice.eos_nodes(), nullptr);
 
   lattice.Clear();
   EXPECT_EQ(lattice.key(), "");
   EXPECT_FALSE(lattice.has_lattice());
-  EXPECT_EQ(lattice.history_end_pos(), 0);
 }
 
 TEST(LatticeTest, NewNodeTest) {
@@ -105,14 +101,6 @@ TEST(LatticeTest, InsertTest) {
 
 namespace {
 
-// set cache_info[i] to (key.size() - i)
-void UpdateCacheInfo(Lattice *lattice) {
-  const size_t key_size = lattice->key().size();
-  for (size_t i = 0; i < key_size; ++i) {
-    lattice->SetCacheInfo(i, key_size - i);
-  }
-}
-
 // add nodes whose key is key.substr(i, key.size() - i)
 void InsertNodes(Lattice *lattice) {
   const size_t key_size = lattice->key().size();
@@ -124,101 +112,4 @@ void InsertNodes(Lattice *lattice) {
 }
 }  // namespace
 
-TEST(LatticeTest, AddSuffixTest) {
-  Lattice lattice;
-
-  const std::string kKey = "test";
-
-  lattice.SetKey("");
-  for (size_t len = 1; len <= kKey.size(); ++len) {
-    lattice.AddSuffix(kKey.substr(len - 1, 1));
-    InsertNodes(&lattice);
-    UpdateCacheInfo(&lattice);
-
-    // check BOS & EOS
-    EXPECT_TRUE(lattice.has_lattice());
-    EXPECT_NE(nullptr, lattice.bos_nodes());
-    EXPECT_NE(0, lattice.bos_nodes()->node_type & Node::BOS_NODE);
-    EXPECT_NE(nullptr, lattice.eos_nodes());
-    EXPECT_NE(0, lattice.eos_nodes()->node_type & Node::EOS_NODE);
-
-    // check cache_info
-    const size_t key_size = lattice.key().size();
-    for (size_t i = 0; i < key_size; ++i) {
-      EXPECT_LE(lattice.cache_info(i), key_size - i);
-    }
-
-    // check whether lattice have nodes for all substrings
-    for (size_t i = 0; i <= key_size; ++i) {
-      // check for begin_nodes
-      if (i < key_size) {
-        absl::btree_set<int> lengths;
-        for (Node *node = lattice.begin_nodes(i); node != nullptr;
-             node = node->bnext) {
-          lengths.insert(node->key.size());
-        }
-        EXPECT_EQ(lengths.size(), key_size - i);
-      }
-      // check for end_nodes
-      if (i > 0) {
-        absl::btree_set<int> lengths;
-        for (Node *node = lattice.end_nodes(i); node != nullptr;
-             node = node->enext) {
-          lengths.insert(node->key.size());
-        }
-        EXPECT_EQ(lengths.size(), i);
-      }
-    }
-  }
-}
-
-TEST(LatticeTest, ShrinkKeyTest) {
-  Lattice lattice;
-
-  const std::string kKey = "test";
-  for (size_t len = 1; len <= kKey.size(); ++len) {
-    lattice.AddSuffix(kKey.substr(len - 1, 1));
-    InsertNodes(&lattice);
-    UpdateCacheInfo(&lattice);
-  }
-
-  for (size_t len = kKey.size(); len >= 1; --len) {
-    lattice.ShrinkKey(len);
-
-    // check BOS & EOS
-    EXPECT_TRUE(lattice.has_lattice());
-    EXPECT_NE(nullptr, lattice.bos_nodes());
-    EXPECT_NE(0, lattice.bos_nodes()->node_type & Node::BOS_NODE);
-    EXPECT_NE(nullptr, lattice.eos_nodes());
-    EXPECT_NE(0, lattice.eos_nodes()->node_type & Node::EOS_NODE);
-
-    // check cache_info
-    const size_t key_size = lattice.key().size();
-    for (size_t i = 0; i < key_size; ++i) {
-      EXPECT_LE(lattice.cache_info(i), key_size - i);
-    }
-
-    // check whether lattice have nodes for all substrings
-    for (size_t i = 0; i <= key_size; ++i) {
-      // check for begin_nodes
-      if (i < key_size) {
-        absl::btree_set<int> lengths;
-        for (Node *node = lattice.begin_nodes(i); node != nullptr;
-             node = node->bnext) {
-          lengths.insert(node->key.size());
-        }
-        EXPECT_EQ(lengths.size(), key_size - i);
-      }
-      // check for end_nodes
-      if (i > 0) {
-        absl::btree_set<int> lengths;
-        for (Node *node = lattice.end_nodes(i); node != nullptr;
-             node = node->enext) {
-          lengths.insert(node->key.size());
-        }
-        EXPECT_EQ(lengths.size(), i);
-      }
-    }
-  }
-}
 }  // namespace mozc

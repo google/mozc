@@ -211,7 +211,6 @@ MATCHER_P(ContainsCandidate, matcher, "") {
 // following three fields:
 //   * pool_
 //   * revert_entries_
-//   * cached_lattice_
 // Note: this is more useful than defining operator==() in testing as it can
 // display which field is different.
 //

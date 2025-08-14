@@ -54,13 +54,20 @@ namespace mozc {
 
 class ImmutableConverter : public ImmutableConverterInterface {
  public:
-  explicit ImmutableConverter(const engine::Modules &modules);
-  ImmutableConverter(const ImmutableConverter &) = delete;
-  ImmutableConverter &operator=(const ImmutableConverter &) = delete;
+  explicit ImmutableConverter(const engine::Modules& modules);
+  ImmutableConverter(const ImmutableConverter&) = delete;
+  ImmutableConverter& operator=(const ImmutableConverter&) = delete;
   ~ImmutableConverter() override = default;
 
-  [[nodiscard]] bool Convert(const ConversionRequest &request,
-                             Segments *segments) const override;
+  // Accepts the internal lattice structure for debugging.
+  [[nodiscard]] bool Convert(const ConversionRequest& request,
+                             Segments* segments, Lattice* lattice) const;
+
+  [[nodiscard]] bool Convert(const ConversionRequest& request,
+                             Segments* segments) const override {
+    Lattice lattice;
+    return Convert(request, segments, &lattice);
+  }
 
  private:
   friend class ImmutableConverterTestPeer;
@@ -76,87 +83,87 @@ class ImmutableConverter : public ImmutableConverterInterface {
     FIRST_INNER_SEGMENT,
   };
 
-  void ExpandCandidates(const ConversionRequest &request,
-                        absl::string_view original_key, NBestGenerator *nbest,
-                        Segment *segment, size_t expand_size) const;
-  void InsertDummyCandidates(Segment *segment, size_t expand_size) const;
-  Node *Lookup(int begin_pos, const ConversionRequest &request, bool is_reverse,
-               bool is_prediction, Lattice *lattice) const;
-  Node *AddCharacterTypeBasedNodes(absl::string_view key_substr,
-                                   Lattice *lattice, Node *nodes) const;
+  void ExpandCandidates(const ConversionRequest& request,
+                        absl::string_view original_key, NBestGenerator* nbest,
+                        Segment* segment, size_t expand_size) const;
+  void InsertDummyCandidates(Segment* segment, size_t expand_size) const;
+  Node* Lookup(int begin_pos, const ConversionRequest& request, bool is_reverse,
+               Lattice* lattice) const;
+  Node* AddCharacterTypeBasedNodes(absl::string_view key_substr,
+                                   Lattice* lattice, Node* nodes) const;
 
-  void Resegment(const Segments &segments, absl::string_view history_key,
-                 absl::string_view conversion_key, Lattice *lattice) const;
+  void Resegment(const Segments& segments, absl::string_view history_key,
+                 absl::string_view conversion_key, Lattice* lattice) const;
 
-  void ApplyResegmentRules(size_t pos, Lattice *lattice) const;
+  void ApplyResegmentRules(size_t pos, Lattice* lattice) const;
   // Returns true resegmentation happened
-  bool ResegmentArabicNumberAndSuffix(size_t pos, Lattice *lattice) const;
-  bool ResegmentPrefixAndArabicNumber(size_t pos, Lattice *lattice) const;
-  bool ResegmentPersonalName(size_t pos, Lattice *lattice) const;
+  bool ResegmentArabicNumberAndSuffix(size_t pos, Lattice* lattice) const;
+  bool ResegmentPrefixAndArabicNumber(size_t pos, Lattice* lattice) const;
+  bool ResegmentPersonalName(size_t pos, Lattice* lattice) const;
 
-  bool MakeLattice(const ConversionRequest &request, Segments *segments,
-                   Lattice *lattice) const;
-  bool MakeLatticeNodesForHistorySegments(const Segments &segments,
-                                          const ConversionRequest &request,
-                                          Lattice *lattice) const;
-  void MakeLatticeNodesForConversionSegments(const Segments &segments,
-                                             const ConversionRequest &request,
+  bool MakeLattice(const ConversionRequest& request, Segments* segments,
+                   Lattice* lattice) const;
+  bool MakeLatticeNodesForHistorySegments(const Segments& segments,
+                                          const ConversionRequest& request,
+                                          Lattice* lattice) const;
+  void MakeLatticeNodesForConversionSegments(const Segments& segments,
+                                             const ConversionRequest& request,
                                              absl::string_view history_key,
-                                             Lattice *lattice) const;
+                                             Lattice* lattice) const;
   // Fixes for "好む" vs "この|無", "大|代" vs "代々" preferences.
   // If the last node ends with "prefix", give an extra
   // wcost penalty. In this case  "無" doesn't tend to appear at
   // user input.
   void ApplyPrefixSuffixPenalty(absl::string_view conversion_key,
-                                Lattice *lattice) const;
+                                Lattice* lattice) const;
 
-  bool Viterbi(const Segments &segments, Lattice *lattice) const;
+  bool Viterbi(const Segments& segments, Lattice* lattice) const;
 
-  bool PredictionViterbi(const Segments &segments, Lattice *lattice) const;
+  bool PredictionViterbi(const Segments& segments, Lattice* lattice) const;
   void PredictionViterbiInternal(int calc_begin_pos, int calc_end_pos,
-                                 Lattice *lattice) const;
+                                 Lattice* lattice) const;
 
   // TODO(toshiyuki): Change parameter order for mutable |segments|.
 
   // Inserts first segment from conversion result to candidates.
   // Costs will be modified using the existing candidates.
-  void InsertFirstSegmentToCandidates(const ConversionRequest &request,
-                                      Segments *segments,
-                                      const Lattice &lattice,
+  void InsertFirstSegmentToCandidates(const ConversionRequest& request,
+                                      Segments* segments,
+                                      const Lattice& lattice,
                                       absl::Span<const uint16_t> group,
                                       size_t max_candidates_size,
                                       bool allow_exact) const;
 
-  void InsertCandidates(const ConversionRequest &request, Segments *segments,
-                        const Lattice &lattice,
+  void InsertCandidates(const ConversionRequest& request, Segments* segments,
+                        const Lattice& lattice,
                         absl::Span<const uint16_t> group,
                         size_t max_candidates_size,
                         InsertCandidatesType type) const;
 
   void InsertCandidatesForRealtimeWithCandidateChecker(
-      const ConversionRequest &request, const Lattice &lattice,
-      absl::Span<const uint16_t> group, Segments *segments) const;
+      const ConversionRequest& request, const Lattice& lattice,
+      absl::Span<const uint16_t> group, Segments* segments) const;
 
   // Helper function for InsertCandidates().
   // Returns true if |node| is valid node for segment end.
-  bool IsSegmentEndNode(const ConversionRequest &request,
-                        const Segments &segments, const Node *node,
+  bool IsSegmentEndNode(const ConversionRequest& request,
+                        const Segments& segments, const Node* node,
                         absl::Span<const uint16_t> group,
                         bool is_single_segment) const;
 
   // Helper function for InsertCandidates().
   // Returns the segment for inserting candidates.
-  Segment *GetInsertTargetSegment(const Lattice &lattice,
+  Segment* GetInsertTargetSegment(const Lattice& lattice,
                                   absl::Span<const uint16_t> group,
                                   InsertCandidatesType type, size_t begin_pos,
-                                  const Node *node, Segments *segments) const;
+                                  const Node* node, Segments* segments) const;
 
-  bool MakeSegments(const ConversionRequest &request, const Lattice &lattice,
-                    Segments *segments) const;
+  bool MakeSegments(const ConversionRequest& request, const Lattice& lattice,
+                    Segments* segments) const;
 
-  std::vector<uint16_t> MakeGroup(const Segments &segments) const;
+  std::vector<uint16_t> MakeGroup(const Segments& segments) const;
 
-  inline int GetCost(const Node *lnode, const Node *rnode) const {
+  inline int GetCost(const Node* lnode, const Node* rnode) const {
     const int kInvalidPenaltyCost = 100000;
     if (rnode->constrained_prev != nullptr &&
         lnode != rnode->constrained_prev) {
@@ -165,24 +172,24 @@ class ImmutableConverter : public ImmutableConverterInterface {
     return connector_.GetTransitionCost(lnode->rid, rnode->lid) + rnode->wcost;
   }
 
-  void InsertCandidatesForConversion(const ConversionRequest &request,
-                                     const Lattice &lattice,
+  void InsertCandidatesForConversion(const ConversionRequest& request,
+                                     const Lattice& lattice,
                                      absl::Span<const uint16_t> group,
-                                     Segments *segments) const;
+                                     Segments* segments) const;
 
-  void InsertCandidatesForPrediction(const ConversionRequest &request,
-                                     const Lattice &lattice,
+  void InsertCandidatesForPrediction(const ConversionRequest& request,
+                                     const Lattice& lattice,
                                      absl::Span<const uint16_t> group,
-                                     Segments *segments) const;
+                                     Segments* segments) const;
 
-  const dictionary::DictionaryInterface &dictionary_;
-  const dictionary::DictionaryInterface &suffix_dictionary_;
-  const dictionary::UserDictionaryInterface &user_dictionary_;
-  const Connector &connector_;
-  const Segmenter &segmenter_;
-  const dictionary::PosMatcher &pos_matcher_;
-  const dictionary::PosGroup &pos_group_;
-  const SuggestionFilter &suggestion_filter_;
+  const dictionary::DictionaryInterface& dictionary_;
+  const dictionary::DictionaryInterface& suffix_dictionary_;
+  const dictionary::UserDictionaryInterface& user_dictionary_;
+  const Connector& connector_;
+  const Segmenter& segmenter_;
+  const dictionary::PosMatcher& pos_matcher_;
+  const dictionary::PosGroup& pos_group_;
+  const SuggestionFilter& suggestion_filter_;
 
   // Cache for POS ids.
   const uint16_t first_name_id_;

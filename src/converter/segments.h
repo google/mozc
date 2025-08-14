@@ -48,7 +48,6 @@
 #include "base/strings/assign.h"
 #include "base/util.h"
 #include "converter/candidate.h"
-#include "converter/lattice.h"
 
 namespace mozc {
 namespace converter {
@@ -334,11 +333,7 @@ class Segments final {
   using const_range = Range<const_iterator>;
 
   // constructors
-  Segments()
-      : max_history_segments_size_(0),
-        resized_(false),
-        pool_(32),
-        cached_lattice_() {}
+  Segments() : max_history_segments_size_(0), resized_(false), pool_(32) {}
 
   Segments(const Segments &x);
   Segments &operator=(const Segments &x);
@@ -452,9 +447,6 @@ class Segments final {
   void set_revert_id(uint64_t revert_id) { revert_id_ = revert_id; }
   uint64_t revert_id() const { return revert_id_; }
 
-  // setter
-  Lattice *mutable_cached_lattice() { return &cached_lattice_; }
-
  private:
   friend class SegmentsPoolAccessorTestPeer;
 
@@ -468,7 +460,6 @@ class Segments final {
   ObjectPool<Segment> pool_;
   std::deque<Segment *> segments_;
   uint64_t revert_id_ = 0;
-  Lattice cached_lattice_;
   // LINT.ThenChange(//converter/segments_matchers.h)
 };
 

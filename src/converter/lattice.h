@@ -44,9 +44,7 @@ namespace mozc {
 
 class Lattice {
  public:
-  Lattice()
-      : history_end_pos_(0),
-        node_allocator_(std::make_unique<NodeAllocator>()) {}
+  Lattice() : node_allocator_(std::make_unique<NodeAllocator>()) {}
 
   NodeAllocator *node_allocator() const { return node_allocator_.get(); }
 
@@ -55,12 +53,6 @@ class Lattice {
 
   // return key.
   absl::string_view key() const { return key_; }
-
-  // Set history end position.
-  // For cache, we have to reset lattice when the history size is changed.
-  void set_history_end_pos(size_t pos) { history_end_pos_ = pos; }
-
-  size_t history_end_pos() const { return history_end_pos_; }
 
   // allocate new node.
   Node *NewNode() { return node_allocator_->NewNode(); }
@@ -90,32 +82,6 @@ class Lattice {
   // return true if this instance has a valid lattice.
   bool has_lattice() const { return !begin_nodes_.empty(); }
 
-  // set key with cache information kept
-  void UpdateKey(absl::string_view new_key);
-
-  // add suffix_key to the end of a current key
-  void AddSuffix(absl::string_view suffix_key);
-
-  // erase the suffix of a key so that the length of the key becomes new_len
-  void ShrinkKey(size_t new_len);
-
-  // getter
-  size_t cache_info(const size_t pos) const {
-    CHECK_LE(pos, key_.size());
-    return cache_info_[pos];
-  }
-
-  // setter
-  void SetCacheInfo(const size_t pos, const size_t len) {
-    CHECK_LE(pos, key_.size());
-    cache_info_[pos] = len;
-  }
-
-  // revert the wcost of nodes if it has ENABLE_CACHE attribute.
-  // This function is needed for wcost may be changed during conversion
-  // process for some heuristic methods.
-  void ResetNodeCost();
-
   // Dump the best path and the path that contains the designated string.
   std::string DebugString() const;
 
@@ -127,17 +93,10 @@ class Lattice {
   static void ResetDebugDisplayNode();
 
  private:
-  // TODO(team): Splitting the cache module may make this module simpler.
   std::string key_;
-  size_t history_end_pos_;
   std::vector<Node *> begin_nodes_;
   std::vector<Node *> end_nodes_;
   std::unique_ptr<NodeAllocator> node_allocator_;
-
-  // cache_info_ holds cache information about lookup.
-  // If cache_info_[pos] equals to len, it means key.substr(pos, k)
-  // (1 <= k <= len) is already looked up.
-  std::vector<size_t> cache_info_;
 };
 
 }  // namespace mozc
