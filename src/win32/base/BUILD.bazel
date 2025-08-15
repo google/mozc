@@ -41,9 +41,7 @@ load(
     "features_gdi",
 )
 
-package(
-    default_visibility = ["//win32:__subpackages__"],
-)
+package(default_visibility = ["//win32:__subpackages__"])
 
 mozc_cc_library(
     name = "config_snapshot",

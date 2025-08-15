@@ -29,9 +29,7 @@
 
 load("//:build_defs.bzl", "mozc_infoplist")
 
-package(
-    default_visibility = ["//gui:__subpackages__"],
-)
+package(default_visibility = ["//gui:__subpackages__"])
 
 mozc_infoplist(
     name = "mozc_tool_info_plist",

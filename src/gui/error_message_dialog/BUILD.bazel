@@ -36,9 +36,7 @@ load(
     "mozc_qt_rcc",
 )
 
-package(
-    default_visibility = ["//gui:__subpackages__"],
-)
+package(default_visibility = ["//gui:__subpackages__"])
 
 mozc_qt_moc(
     name = "moc_error_message_dialog",

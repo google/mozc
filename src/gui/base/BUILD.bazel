@@ -42,9 +42,7 @@ load(
 )
 load("//bazel/win32:build_defs.bzl", "features_gdi")
 
-package(
-    default_visibility = ["//gui:__subpackages__"],
-)
+package(default_visibility = ["//gui:__subpackages__"])
 
 mozc_cc_library(
     name = "encoding_util",

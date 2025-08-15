@@ -37,9 +37,7 @@ load(
     "mozc_win32_resource_from_template",
 )
 
-package(
-    default_visibility = ["//visibility:private"],
-)
+package(default_visibility = ["//visibility:private"])
 
 mozc_win32_cc_prod_binary(
     name = "mozc_broker_main",

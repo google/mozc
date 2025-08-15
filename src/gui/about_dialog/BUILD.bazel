@@ -37,9 +37,7 @@ load(
     "mozc_qt_uic",
 )
 
-package(
-    default_visibility = ["//gui:__subpackages__"],
-)
+package(default_visibility = ["//gui:__subpackages__"])
 
 mozc_qt_moc(
     name = "moc_about_dialog",
