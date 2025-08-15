@@ -1929,4 +1929,21 @@ bool ImmutableConverter::Convert(const ConversionRequest& request,
   return true;
 }
 
+bool ImmutableConverter::Convert(const ConversionRequest& request,
+                                 Segments* segments) const {
+#if defined(__ANDROID__) || defined(_WIN32) || defined(__APPLE__)
+  // These platforms run the converter persistently on the same thread. Using
+  // thread_local allows the Lattice to be reused, which improves the
+  // performance. It's better not to use thread_local in general case as
+  // creating thread_local per thread has more performance penalty.
+  // TODO(all): Re-evaluate this implementation if we run converter on
+  // multi-threaded environment.
+  thread_local Lattice lattice;
+#else  // defined(__ANDROID__) || defined(_WIN32) || defined(__APPLE__)
+  Lattice lattice;
+#endif  // defined(__ANDROID__) || defined(_WIN32) || defined(__APPLE__)
+
+  return Convert(request, segments, &lattice);
+}
+
 }  // namespace mozc

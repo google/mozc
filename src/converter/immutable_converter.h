@@ -64,10 +64,7 @@ class ImmutableConverter : public ImmutableConverterInterface {
                              Segments* segments, Lattice* lattice) const;
 
   [[nodiscard]] bool Convert(const ConversionRequest& request,
-                             Segments* segments) const override {
-    Lattice lattice;
-    return Convert(request, segments, &lattice);
-  }
+                             Segments* segments) const override;
 
  private:
   friend class ImmutableConverterTestPeer;
