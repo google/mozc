@@ -40,8 +40,8 @@
 namespace mozc::japanese::internal {
 
 struct DoubleArray {
-  int32_t base;
-  uint32_t check;
+  int16_t base;
+  uint16_t check;
 };
 
 std::string ConvertUsingDoubleArray(const DoubleArray *da, const char *table,
