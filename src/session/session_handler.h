@@ -57,14 +57,14 @@ namespace mozc {
 class SessionHandler {
  public:
   explicit SessionHandler(std::unique_ptr<EngineInterface> engine);
-  SessionHandler(const SessionHandler &) = delete;
-  SessionHandler &operator=(const SessionHandler &) = delete;
+  SessionHandler(const SessionHandler&) = delete;
+  SessionHandler& operator=(const SessionHandler&) = delete;
   ~SessionHandler() = default;
 
   // Returns true if SessionHandle is available.
   bool IsAvailable() const;
 
-  bool EvalCommand(commands::Command *command);
+  bool EvalCommand(commands::Command* command);
 
   // Starts watch dog timer to cleanup sessions.
   void StartWatchDog();
@@ -74,7 +74,7 @@ class SessionHandler {
 
   absl::string_view GetDataVersion() const { return engine_->GetDataVersion(); }
 
-  const EngineInterface &engine() const { return *engine_; }
+  const EngineInterface& engine() const { return *engine_; }
 
  private:
   friend class KeyMapManagerAccessorTestPeer;
@@ -84,42 +84,42 @@ class SessionHandler {
   using SessionElement = SessionMap::Element;
 
   // Updates the config, if the |command| contains the config.
-  void MaybeUpdateConfig(commands::Command *command);
+  void MaybeUpdateConfig(commands::Command* command);
 
-  bool CreateSession(commands::Command *command);
-  bool DeleteSession(commands::Command *command);
-  bool TestSendKey(commands::Command *command);
-  bool SendKey(commands::Command *command);
-  bool SendCommand(commands::Command *command);
+  bool CreateSession(commands::Command* command);
+  bool DeleteSession(commands::Command* command);
+  bool TestSendKey(commands::Command* command);
+  bool SendKey(commands::Command* command);
+  bool SendCommand(commands::Command* command);
   // Syncs internal data to local file system and wait for finish.
-  bool SyncData(commands::Command *command);
-  bool ClearUserHistory(commands::Command *command);
-  bool ClearUserPrediction(commands::Command *command);
-  bool ClearUnusedUserPrediction(commands::Command *command);
-  bool Shutdown(commands::Command *command);
+  bool SyncData(commands::Command* command);
+  bool ClearUserHistory(commands::Command* command);
+  bool ClearUserPrediction(commands::Command* command);
+  bool ClearUnusedUserPrediction(commands::Command* command);
+  bool Shutdown(commands::Command* command);
   // Reloads all the sessions.
   // Before that, UpdateSessions() is called to update them.
-  bool Reload(commands::Command *command);
+  bool Reload(commands::Command* command);
   // Reloads and waits for reloader finish.
-  bool ReloadAndWait(commands::Command *command);
-  bool GetConfig(commands::Command *command);
-  bool SetConfig(commands::Command *command);
+  bool ReloadAndWait(commands::Command* command);
+  bool GetConfig(commands::Command* command);
+  bool SetConfig(commands::Command* command);
   // Updates all the sessions by UpdateSessions() with given |request|.
-  bool SetRequest(commands::Command *command);
+  bool SetRequest(commands::Command* command);
   // Update sessions if ConfigHandler::GetSharedConfig() is updated
   // or `request` is not null. This method doesn't reload the sessions.
   void UpdateSessions(
       std::unique_ptr<const commands::Request> request = nullptr);
 
-  bool Cleanup(commands::Command *command);
-  bool SendUserDictionaryCommand(commands::Command *command);
-  bool SendEngineReloadRequest(commands::Command *command);
-  bool NoOperation(commands::Command *command);
-  bool ReloadSupplementalModel(commands::Command *command);
-  bool GetServerVersion(commands::Command *command) const;
+  bool Cleanup(commands::Command* command);
+  bool SendUserDictionaryCommand(commands::Command* command);
+  bool SendEngineReloadRequest(commands::Command* command);
+  bool NoOperation(commands::Command* command);
+  bool ReloadSupplementalModel(commands::Command* command);
+  bool GetServerVersion(commands::Command* command) const;
 
   // Replaces engine_ with a new instance if it is ready.
-  void MaybeReloadEngine(commands::Command *command);
+  void MaybeReloadEngine(commands::Command* command);
 
   SessionID CreateNewSessionID();
   bool DeleteSessionID(SessionID id);

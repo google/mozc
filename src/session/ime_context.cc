@@ -76,7 +76,7 @@ ImeContext::ImeContext(
     std::unique_ptr<engine::EngineConverterInterface> converter)
     : converter_(std::move(converter)) {}
 
-ImeContext::ImeContext(const ImeContext &src) : data_(src.data_) {
+ImeContext::ImeContext(const ImeContext& src) : data_(src.data_) {
   if (src.converter_) {
     converter_ = absl::WrapUnique(src.converter().Clone());
   }
@@ -91,7 +91,7 @@ void ImeContext::SetRequest(std::shared_ptr<const commands::Request> request) {
   data_.composer.SetRequest(data_.request);
 }
 
-const commands::Request &ImeContext::GetRequest() const {
+const commands::Request& ImeContext::GetRequest() const {
   return *data_.request;
 }
 
@@ -107,7 +107,7 @@ void ImeContext::SetConfig(std::shared_ptr<const config::Config> config) {
   data_.key_event_transformer.ReloadConfig(*data_.config);
 }
 
-const config::Config &ImeContext::GetConfig() const { return *data_.config; }
+const config::Config& ImeContext::GetConfig() const { return *data_.config; }
 
 void ImeContext::SetKeyMapManager(
     std::shared_ptr<const keymap::KeyMapManager> key_map_manager) {
@@ -115,7 +115,7 @@ void ImeContext::SetKeyMapManager(
   data_.key_map_manager = std::move(key_map_manager);
 }
 
-const keymap::KeyMapManager &ImeContext::GetKeyMapManager() const {
+const keymap::KeyMapManager& ImeContext::GetKeyMapManager() const {
   return *data_.key_map_manager;
 }
 }  // namespace session

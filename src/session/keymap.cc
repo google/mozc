@@ -68,7 +68,7 @@ static constexpr char kOverlayHenkanMuhenkanToImeOnOffKeyMapFile[] =
 
 // static
 bool KeyMapManager::IsSameKeyMapManagerApplicable(
-    const config::Config &old_config, const config::Config &new_config) {
+    const config::Config& old_config, const config::Config& new_config) {
   if (&old_config == &new_config) {
     return true;
   }
@@ -94,7 +94,7 @@ KeyMapManager::KeyMapManager() {
   // No overlay keymap is set.
 }
 
-KeyMapManager::KeyMapManager(const config::Config &config) {
+KeyMapManager::KeyMapManager(const config::Config& config) {
   InitCommandData();
   ApplyPrimarySessionKeymap(config.session_keymap(),
                             config.custom_keymap_table());
@@ -113,8 +113,8 @@ void KeyMapManager::Reset() {
 
 bool KeyMapManager::ApplyPrimarySessionKeymap(
     const config::Config::SessionKeymap keymap,
-    const std::string &custom_keymap_table) {
-  const char *keymap_file = GetKeyMapFileName(keymap);
+    const std::string& custom_keymap_table) {
+  const char* keymap_file = GetKeyMapFileName(keymap);
   if ((keymap == config::Config::CUSTOM && custom_keymap_table.empty()) ||
       keymap_file == nullptr) {
     // Exceptional case; fallback to default key map.
@@ -128,7 +128,7 @@ bool KeyMapManager::ApplyPrimarySessionKeymap(
     // For custom keymap, apply keymap in the config message.
 #ifndef NDEBUG
     // make a copy of keymap file just for debugging
-    const char *keymap_file = GetKeyMapFileName(keymap);
+    const char* keymap_file = GetKeyMapFileName(keymap);
     const std::string filename = ConfigFileStream::GetFileName(keymap_file);
     OutputFileStream ofs(filename);
     if (ofs) {
@@ -144,9 +144,9 @@ bool KeyMapManager::ApplyPrimarySessionKeymap(
 }
 
 void KeyMapManager::ApplyOverlaySessionKeymap(
-    const ::mozc::protobuf::RepeatedField<int> &overlay_keymaps) {
-  for (const auto &overlay : overlay_keymaps) {
-    const char *overlay_keymap_file =
+    const ::mozc::protobuf::RepeatedField<int>& overlay_keymaps) {
+  for (const auto& overlay : overlay_keymaps) {
+    const char* overlay_keymap_file =
         GetKeyMapFileName(static_cast<config::Config::SessionKeymap>(overlay));
     DLOG(INFO) << "Overlay keymap " << overlay_keymap_file;
     if (overlay_keymap_file != nullptr) {
@@ -156,7 +156,7 @@ void KeyMapManager::ApplyOverlaySessionKeymap(
 }
 
 // static
-const char *KeyMapManager::GetKeyMapFileName(
+const char* KeyMapManager::GetKeyMapFileName(
     const config::Config::SessionKeymap keymap) {
   switch (keymap) {
     case config::Config::ATOK:
@@ -192,7 +192,7 @@ const char *KeyMapManager::GetKeyMapFileName(
   }
 }
 
-bool KeyMapManager::LoadFile(const char *filename) {
+bool KeyMapManager::LoadFile(const char* filename) {
   std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filename));
   if (ifs == nullptr) {
     LOG(WARNING) << "cannot load keymap table: " << filename;
@@ -201,13 +201,13 @@ bool KeyMapManager::LoadFile(const char *filename) {
   return LoadStream(ifs.get());
 }
 
-bool KeyMapManager::LoadStream(std::istream *ifs) {
+bool KeyMapManager::LoadStream(std::istream* ifs) {
   std::vector<std::string> errors;
   return LoadStreamWithErrors(ifs, &errors);
 }
 
-bool KeyMapManager::LoadStreamWithErrors(std::istream *ifs,
-                                         std::vector<std::string> *errors) {
+bool KeyMapManager::LoadStreamWithErrors(std::istream* ifs,
+                                         std::vector<std::string>* errors) {
   std::string line;
   std::getline(*ifs, line);  // Skip the first line.
   while (!ifs->eof()) {
@@ -244,9 +244,9 @@ bool KeyMapManager::LoadStreamWithErrors(std::istream *ifs,
   return true;
 }
 
-bool KeyMapManager::AddCommand(const std::string &state_name,
-                               const std::string &key_event_name,
-                               const std::string &command_name) {
+bool KeyMapManager::AddCommand(const std::string& state_name,
+                               const std::string& key_event_name,
+                               const std::string& command_name) {
 #ifdef NDEBUG  // means RELEASE BUILD
   // On the release build, we do not support the ReportBug
   // commands.  Note, true is returned as the arguments are
@@ -337,8 +337,8 @@ bool KeyMapManager::AddCommand(const std::string &state_name,
 namespace {
 template <typename T>
 bool GetNameInternal(
-    const absl::flat_hash_map<T, std::string> &reverse_command_map, T command,
-    std::string *name) {
+    const absl::flat_hash_map<T, std::string>& reverse_command_map, T command,
+    std::string* name) {
   DCHECK(name);
   const auto iter = reverse_command_map.find(command);
   if (iter == reverse_command_map.end()) {
@@ -351,49 +351,49 @@ bool GetNameInternal(
 }  // namespace
 
 bool KeyMapManager::GetNameFromCommandDirect(DirectInputState::Commands command,
-                                             std::string *name) const {
+                                             std::string* name) const {
   return GetNameInternal<DirectInputState::Commands>(
       reverse_command_direct_map_, command, name);
 }
 
 bool KeyMapManager::GetNameFromCommandPrecomposition(
-    PrecompositionState::Commands command, std::string *name) const {
+    PrecompositionState::Commands command, std::string* name) const {
   return GetNameInternal<PrecompositionState::Commands>(
       reverse_command_precomposition_map_, command, name);
 }
 
 bool KeyMapManager::GetNameFromCommandComposition(
-    CompositionState::Commands command, std::string *name) const {
+    CompositionState::Commands command, std::string* name) const {
   return GetNameInternal<CompositionState::Commands>(
       reverse_command_composition_map_, command, name);
 }
 
 bool KeyMapManager::GetNameFromCommandConversion(
-    ConversionState::Commands command, std::string *name) const {
+    ConversionState::Commands command, std::string* name) const {
   return GetNameInternal<ConversionState::Commands>(
       reverse_command_conversion_map_, command, name);
 }
 
-void KeyMapManager::RegisterDirectCommand(const std::string &command_string,
+void KeyMapManager::RegisterDirectCommand(const std::string& command_string,
                                           DirectInputState::Commands command) {
   command_direct_map_[command_string] = command;
   reverse_command_direct_map_[command] = command_string;
 }
 
 void KeyMapManager::RegisterPrecompositionCommand(
-    const std::string &command_string, PrecompositionState::Commands command) {
+    const std::string& command_string, PrecompositionState::Commands command) {
   command_precomposition_map_[command_string] = command;
   reverse_command_precomposition_map_[command] = command_string;
 }
 
 void KeyMapManager::RegisterCompositionCommand(
-    const std::string &command_string, CompositionState::Commands command) {
+    const std::string& command_string, CompositionState::Commands command) {
   command_composition_map_[command_string] = command;
   reverse_command_composition_map_[command] = command_string;
 }
 
 void KeyMapManager::RegisterConversionCommand(
-    const std::string &command_string, ConversionState::Commands command) {
+    const std::string& command_string, ConversionState::Commands command) {
   command_conversion_map_[command_string] = command;
   reverse_command_conversion_map_[command] = command_string;
 }
@@ -664,26 +664,26 @@ void KeyMapManager::InitCommandData() {
 }
 
 bool KeyMapManager::GetCommandDirect(
-    const commands::KeyEvent &key_event,
-    DirectInputState::Commands *command) const {
+    const commands::KeyEvent& key_event,
+    DirectInputState::Commands* command) const {
   return keymap_direct_.GetCommand(key_event, command);
 }
 
 bool KeyMapManager::GetCommandPrecomposition(
-    const commands::KeyEvent &key_event,
-    PrecompositionState::Commands *command) const {
+    const commands::KeyEvent& key_event,
+    PrecompositionState::Commands* command) const {
   return keymap_precomposition_.GetCommand(key_event, command);
 }
 
 bool KeyMapManager::GetCommandComposition(
-    const commands::KeyEvent &key_event,
-    CompositionState::Commands *command) const {
+    const commands::KeyEvent& key_event,
+    CompositionState::Commands* command) const {
   return keymap_composition_.GetCommand(key_event, command);
 }
 
 bool KeyMapManager::GetCommandZeroQuerySuggestion(
-    const commands::KeyEvent &key_event,
-    PrecompositionState::Commands *command) const {
+    const commands::KeyEvent& key_event,
+    PrecompositionState::Commands* command) const {
   // try zero query suggestion rule first
   if (keymap_zero_query_suggestion_.GetCommand(key_event, command)) {
     return true;
@@ -693,8 +693,8 @@ bool KeyMapManager::GetCommandZeroQuerySuggestion(
 }
 
 bool KeyMapManager::GetCommandSuggestion(
-    const commands::KeyEvent &key_event,
-    CompositionState::Commands *command) const {
+    const commands::KeyEvent& key_event,
+    CompositionState::Commands* command) const {
   // try suggestion rule first
   if (keymap_suggestion_.GetCommand(key_event, command)) {
     return true;
@@ -704,14 +704,14 @@ bool KeyMapManager::GetCommandSuggestion(
 }
 
 bool KeyMapManager::GetCommandConversion(
-    const commands::KeyEvent &key_event,
-    ConversionState::Commands *command) const {
+    const commands::KeyEvent& key_event,
+    ConversionState::Commands* command) const {
   return keymap_conversion_.GetCommand(key_event, command);
 }
 
 bool KeyMapManager::GetCommandPrediction(
-    const commands::KeyEvent &key_event,
-    ConversionState::Commands *command) const {
+    const commands::KeyEvent& key_event,
+    ConversionState::Commands* command) const {
   // try prediction rule first
   if (keymap_prediction_.GetCommand(key_event, command)) {
     return true;
@@ -721,8 +721,8 @@ bool KeyMapManager::GetCommandPrediction(
 }
 
 bool KeyMapManager::ParseCommandDirect(
-    const std::string &command_string,
-    DirectInputState::Commands *command) const {
+    const std::string& command_string,
+    DirectInputState::Commands* command) const {
   const auto it = command_direct_map_.find(command_string);
   if (it == command_direct_map_.end()) {
     return false;
@@ -733,8 +733,8 @@ bool KeyMapManager::ParseCommandDirect(
 
 // This should be in KeyMap instead of KeyMapManager.
 bool KeyMapManager::ParseCommandPrecomposition(
-    const std::string &command_string,
-    PrecompositionState::Commands *command) const {
+    const std::string& command_string,
+    PrecompositionState::Commands* command) const {
   const auto it = command_precomposition_map_.find(command_string);
   if (it == command_precomposition_map_.end()) {
     return false;
@@ -744,8 +744,8 @@ bool KeyMapManager::ParseCommandPrecomposition(
 }
 
 bool KeyMapManager::ParseCommandComposition(
-    const std::string &command_string,
-    CompositionState::Commands *command) const {
+    const std::string& command_string,
+    CompositionState::Commands* command) const {
   const auto it = command_composition_map_.find(command_string);
   if (it == command_composition_map_.end()) {
     return false;
@@ -755,8 +755,8 @@ bool KeyMapManager::ParseCommandComposition(
 }
 
 bool KeyMapManager::ParseCommandConversion(
-    const std::string &command_string,
-    ConversionState::Commands *command) const {
+    const std::string& command_string,
+    ConversionState::Commands* command) const {
   const auto it = command_conversion_map_.find(command_string);
   if (it == command_conversion_map_.end()) {
     return false;
@@ -766,45 +766,45 @@ bool KeyMapManager::ParseCommandConversion(
 }
 
 void KeyMapManager::AppendAvailableCommandNameDirect(
-    absl::flat_hash_set<std::string> &command_names) const {
-  for (const auto &[key, value] : command_direct_map_) {
+    absl::flat_hash_set<std::string>& command_names) const {
+  for (const auto& [key, value] : command_direct_map_) {
     command_names.insert(key);
   }
 }
 
 void KeyMapManager::AppendAvailableCommandNamePrecomposition(
-    absl::flat_hash_set<std::string> &command_names) const {
-  for (const auto &[key, value] : command_precomposition_map_) {
+    absl::flat_hash_set<std::string>& command_names) const {
+  for (const auto& [key, value] : command_precomposition_map_) {
     command_names.insert(key);
   }
 }
 
 void KeyMapManager::AppendAvailableCommandNameComposition(
-    absl::flat_hash_set<std::string> &command_names) const {
-  for (const auto &[key, value] : command_composition_map_) {
+    absl::flat_hash_set<std::string>& command_names) const {
+  for (const auto& [key, value] : command_composition_map_) {
     command_names.insert(key);
   }
 }
 
 void KeyMapManager::AppendAvailableCommandNameConversion(
-    absl::flat_hash_set<std::string> &command_names) const {
-  for (const auto &[key, value] : command_conversion_map_) {
+    absl::flat_hash_set<std::string>& command_names) const {
+  for (const auto& [key, value] : command_conversion_map_) {
     command_names.insert(key);
   }
 }
 
 void KeyMapManager::AppendAvailableCommandNameZeroQuerySuggestion(
-    absl::flat_hash_set<std::string> &command_names) const {
+    absl::flat_hash_set<std::string>& command_names) const {
   AppendAvailableCommandNamePrecomposition(command_names);
 }
 
 void KeyMapManager::AppendAvailableCommandNameSuggestion(
-    absl::flat_hash_set<std::string> &command_names) const {
+    absl::flat_hash_set<std::string>& command_names) const {
   AppendAvailableCommandNameComposition(command_names);
 }
 
 void KeyMapManager::AppendAvailableCommandNamePrediction(
-    absl::flat_hash_set<std::string> &command_names) const {
+    absl::flat_hash_set<std::string>& command_names) const {
   AppendAvailableCommandNameConversion(command_names);
 }
 

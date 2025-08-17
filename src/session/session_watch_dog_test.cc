@@ -83,8 +83,8 @@ class TestCPUStats : public CPUStatsInterface {
 
 }  // namespace
 
-client::ClientMock *CreateMockClient() {
-  auto *client = new client::ClientMock();
+client::ClientMock* CreateMockClient() {
+  auto* client = new client::ClientMock();
   EXPECT_CALL(*client, PingServer()).WillRepeatedly(Return(true));
   ON_CALL(*client, Cleanup()).WillByDefault(Return(true));
   return client;
@@ -92,7 +92,7 @@ client::ClientMock *CreateMockClient() {
 
 TEST(SessionWatchDogTest, SessionWatchDogTest) {
   constexpr absl::Duration kInterval = absl::Seconds(1);
-  auto *client = CreateMockClient();
+  auto* client = CreateMockClient();
   auto stats = std::make_unique<TestCPUStats>(std::vector<float>(5, 0.0f));
   EXPECT_CALL(*client, Cleanup()).Times(5);
 
@@ -108,8 +108,8 @@ TEST(SessionWatchDogTest, SessionWatchDogTest) {
 
 TEST(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   constexpr absl::Duration kInterval = absl::Seconds(1);
-  auto *client = CreateMockClient();
-  auto *cpu_loads = new TestCPUStats(std::vector<float>(5, 0.8f));
+  auto* client = CreateMockClient();
+  auto* cpu_loads = new TestCPUStats(std::vector<float>(5, 0.8f));
 
   mozc::SessionWatchDog watchdog(kInterval, absl::WrapUnique(client),
                                  absl::WrapUnique(cpu_loads));

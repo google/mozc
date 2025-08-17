@@ -52,54 +52,54 @@ namespace session {
 class SessionHandlerTool {
  public:
   explicit SessionHandlerTool(std::unique_ptr<EngineInterface> engine);
-  SessionHandlerTool(const SessionHandlerTool &) = delete;
-  SessionHandlerTool &operator=(const SessionHandlerTool &) = delete;
+  SessionHandlerTool(const SessionHandlerTool&) = delete;
+  SessionHandlerTool& operator=(const SessionHandlerTool&) = delete;
 
   bool CreateSession();
   bool DeleteSession();
   bool CleanUp();
   bool ClearUserPrediction();
   bool ClearUserHistory();
-  bool SendKey(const commands::KeyEvent &key, commands::Output *output) {
+  bool SendKey(const commands::KeyEvent& key, commands::Output* output) {
     return SendKeyWithOption(key, commands::Input::default_instance(), output);
   }
-  bool SendKeyWithOption(const commands::KeyEvent &key,
-                         const commands::Input &option,
-                         commands::Output *output);
-  bool TestSendKey(const commands::KeyEvent &key, commands::Output *output) {
+  bool SendKeyWithOption(const commands::KeyEvent& key,
+                         const commands::Input& option,
+                         commands::Output* output);
+  bool TestSendKey(const commands::KeyEvent& key, commands::Output* output) {
     return TestSendKeyWithOption(key, commands::Input::default_instance(),
                                  output);
   }
-  bool TestSendKeyWithOption(const commands::KeyEvent &key,
-                             const commands::Input &option,
-                             commands::Output *output);
+  bool TestSendKeyWithOption(const commands::KeyEvent& key,
+                             const commands::Input& option,
+                             commands::Output* output);
   bool UpdateComposition(absl::Span<const std::string> args,
-                         commands::Output *output);
-  bool SelectCandidate(uint32_t id, commands::Output *output);
-  bool SubmitCandidate(uint32_t id, commands::Output *output);
+                         commands::Output* output);
+  bool SelectCandidate(uint32_t id, commands::Output* output);
+  bool SubmitCandidate(uint32_t id, commands::Output* output);
 
   bool Reload();
   bool ResetContext();
-  bool UndoOrRewind(commands::Output *output);
+  bool UndoOrRewind(commands::Output* output);
   // Try to delete the candidate from the history.
   // The target candidate is specified with the |id|. If |id| is not specified,
   // the current focused candidate will be specified.
   bool DeleteCandidateFromHistory(std::optional<int> id,
-                                  commands::Output *output);
+                                  commands::Output* output);
   bool SwitchInputMode(commands::CompositionMode composition_mode);
-  bool SetRequest(const commands::Request &request, commands::Output *output);
-  bool SetConfig(const config::Config &config, commands::Output *output);
+  bool SetRequest(const commands::Request& request, commands::Output* output);
+  bool SetConfig(const config::Config& config, commands::Output* output);
   bool SyncData();
   void SetCallbackText(absl::string_view text);
   bool ReloadSupplementalModel(absl::string_view model_path);
 
  private:
-  bool EvalCommand(commands::Input *input, commands::Output *output);
-  bool EvalCommandInternal(commands::Input *input, commands::Output *output,
+  bool EvalCommand(commands::Input* input, commands::Output* output);
+  bool EvalCommandInternal(commands::Input* input, commands::Output* output,
                            bool allow_callback);
 
   uint64_t id_;  // Session ID
-  EngineInterface *engine_ = nullptr;
+  EngineInterface* engine_ = nullptr;
   std::unique_ptr<SessionHandler> handler_;
   std::string callback_text_;
 };
@@ -116,16 +116,16 @@ class SessionHandlerInterpreter final {
   void SyncDataToStorage();
   void ClearUserPrediction();
   void ClearUsageStats();
-  const commands::Output &LastOutput() const;
-  const commands::CandidateWord &GetCandidateByValue(
+  const commands::Output& LastOutput() const;
+  const commands::CandidateWord& GetCandidateByValue(
       absl::string_view value) const;
-  bool GetCandidateIdByValue(absl::string_view value, uint32_t *id) const;
+  bool GetCandidateIdByValue(absl::string_view value, uint32_t* id) const;
   std::vector<uint32_t> GetCandidateIdsByValue(absl::string_view value) const;
   std::vector<uint32_t> GetRemovedCandidateIdsByValue(
       absl::string_view value) const;
   std::vector<std::string> Parse(absl::string_view line);
   absl::Status Eval(absl::Span<const std::string> args);
-  void SetRequest(const commands::Request &request);
+  void SetRequest(const commands::Request& request);
   void ReloadSupplementalModel(absl::string_view model_path);
 
  private:

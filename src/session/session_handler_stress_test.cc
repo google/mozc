@@ -96,7 +96,7 @@ TEST_P(SessionHandlerStressTest, BasicStressTest) {
   while (keyevents_size < kEventsPerShard) {
     keys.clear();
     generator_.GenerateSequence(&keys);
-    for (const commands::KeyEvent &key : keys) {
+    for (const commands::KeyEvent& key : keys) {
       ++keyevents_size;
       EXPECT_TRUE(client_.TestSendKey(key, &output));
       EXPECT_TRUE(client_.SendKey(key, &output));

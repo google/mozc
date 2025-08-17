@@ -55,8 +55,8 @@ class SessionWatchDog {
                   std::unique_ptr<client::ClientInterface> client,
                   std::unique_ptr<CPUStatsInterface> cpu_stats);
 
-  SessionWatchDog(const SessionWatchDog &) = delete;
-  SessionWatchDog &operator=(const SessionWatchDog &) = delete;
+  SessionWatchDog(const SessionWatchDog&) = delete;
+  SessionWatchDog& operator=(const SessionWatchDog&) = delete;
 
   // Stops the watchdog and joins the background thread.
   ~SessionWatchDog();

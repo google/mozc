@@ -55,7 +55,7 @@ namespace {
 using ::mozc::config::Config;
 
 std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
-    std::istream *ifs) {
+    std::istream* ifs) {
   constexpr absl::string_view kModeDirect = "Direct";
   constexpr absl::string_view kModeDirectInput = "DirectInput";
 
@@ -93,7 +93,7 @@ std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
 }
 
 std::vector<KeyInformation> ExtractSortedDirectModeKeysFromFile(
-    const std::string &filename) {
+    const std::string& filename) {
   std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filename));
   if (ifs == nullptr) {
     DLOG(FATAL) << "could not open file: " << filename;
@@ -105,25 +105,25 @@ std::vector<KeyInformation> ExtractSortedDirectModeKeysFromFile(
 }  // namespace
 
 std::vector<KeyInformation> KeyInfoUtil::ExtractSortedDirectModeKeys(
-    const config::Config &config) {
-  const config::Config::SessionKeymap &keymap = config.session_keymap();
+    const config::Config& config) {
+  const config::Config::SessionKeymap& keymap = config.session_keymap();
   if (keymap == Config::CUSTOM) {
-    const std::string &custom_keymap_table = config.custom_keymap_table();
+    const std::string& custom_keymap_table = config.custom_keymap_table();
     if (custom_keymap_table.empty()) {
       LOG(WARNING) << "custom_keymap_table is empty. use default setting";
-      const char *default_keymapfile = keymap::KeyMapManager::GetKeyMapFileName(
+      const char* default_keymapfile = keymap::KeyMapManager::GetKeyMapFileName(
           config::ConfigHandler::GetDefaultKeyMap());
       return ExtractSortedDirectModeKeysFromFile(default_keymapfile);
     }
     std::istringstream ifs(custom_keymap_table);
     return ExtractSortedDirectModeKeysFromStream(&ifs);
   }
-  const char *keymap_file = keymap::KeyMapManager::GetKeyMapFileName(keymap);
+  const char* keymap_file = keymap::KeyMapManager::GetKeyMapFileName(keymap);
   return ExtractSortedDirectModeKeysFromFile(keymap_file);
 }
 
 bool KeyInfoUtil::ContainsKey(absl::Span<const KeyInformation> sorted_keys,
-                              const commands::KeyEvent &key_event) {
+                              const commands::KeyEvent& key_event) {
   KeyInformation key_info;
   if (!KeyEventUtil::GetKeyInformation(key_event, &key_info)) {
     return false;

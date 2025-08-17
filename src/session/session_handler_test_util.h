@@ -46,18 +46,18 @@ namespace testing {
 // Sends CREATE_SESSION command to the given handler and returns its result.
 // If it is successfully completed and the given id is not NULL,
 // also stores the session id to it.
-bool CreateSession(SessionHandler *handler, uint64_t *id);
+bool CreateSession(SessionHandler* handler, uint64_t* id);
 
 // Sends DELETE_SESSION command with the given id to the given handler,
 // and returns its result.
-bool DeleteSession(SessionHandler *handler, uint64_t id);
+bool DeleteSession(SessionHandler* handler, uint64_t id);
 
 // Sends CLEANUP command to the given handler, and returns its result.
-bool CleanUp(SessionHandler *handler, uint64_t id);
+bool CleanUp(SessionHandler* handler, uint64_t id);
 
 // Returns the session represented by the given id is "good" or not, based
 // on sending a SPACE key. See the implementation for the detail.
-bool IsGoodSession(SessionHandler *handler, uint64_t id);
+bool IsGoodSession(SessionHandler* handler, uint64_t id);
 
 // Base implementation of test cases.
 class SessionHandlerTestBase : public ::mozc::testing::TestWithTempUserProfile {

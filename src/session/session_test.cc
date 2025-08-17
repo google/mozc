@@ -79,7 +79,7 @@ namespace session {
 
 class SessionTestPeer : testing::TestPeer<Session> {
  public:
-  explicit SessionTestPeer(Session &session)
+  explicit SessionTestPeer(Session& session)
       : testing::TestPeer<Session>(session) {}
 
   PEER_METHOD(IsFullWidthInsertSpace);
@@ -98,22 +98,22 @@ using ::testing::Return;
 using ::testing::SetArgPointee;
 
 void SetSendKeyCommandWithKeyString(const absl::string_view key_string,
-                                    commands::Command *command) {
+                                    commands::Command* command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_KEY);
-  commands::KeyEvent *key = command->mutable_input()->mutable_key();
+  commands::KeyEvent* key = command->mutable_input()->mutable_key();
   key->set_key_string(key_string);
 }
 
 bool SetSendKeyCommand(const absl::string_view key,
-                       commands::Command *command) {
+                       commands::Command* command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_KEY);
   return KeyParser::ParseKey(key, command->mutable_input()->mutable_key());
 }
 
-bool SendKey(const absl::string_view key, Session *session,
-             commands::Command *command) {
+bool SendKey(const absl::string_view key, Session* session,
+             commands::Command* command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -121,8 +121,8 @@ bool SendKey(const absl::string_view key, Session *session,
 }
 
 bool SendKeyWithMode(const absl::string_view key,
-                     commands::CompositionMode mode, Session *session,
-                     commands::Command *command) {
+                     commands::CompositionMode mode, Session* session,
+                     commands::Command* command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -132,7 +132,7 @@ bool SendKeyWithMode(const absl::string_view key,
 
 bool SendKeyWithModeAndActivated(const absl::string_view key, bool activated,
                                  commands::CompositionMode mode,
-                                 Session *session, commands::Command *command) {
+                                 Session* session, commands::Command* command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -141,8 +141,8 @@ bool SendKeyWithModeAndActivated(const absl::string_view key, bool activated,
   return session->SendKey(command);
 }
 
-bool TestSendKey(const absl::string_view key, Session *session,
-                 commands::Command *command) {
+bool TestSendKey(const absl::string_view key, Session* session,
+                 commands::Command* command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -150,8 +150,8 @@ bool TestSendKey(const absl::string_view key, Session *session,
 }
 
 bool TestSendKeyWithMode(const absl::string_view key,
-                         commands::CompositionMode mode, Session *session,
-                         commands::Command *command) {
+                         commands::CompositionMode mode, Session* session,
+                         commands::Command* command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -162,8 +162,8 @@ bool TestSendKeyWithMode(const absl::string_view key,
 bool TestSendKeyWithModeAndActivated(const absl::string_view key,
                                      bool activated,
                                      commands::CompositionMode mode,
-                                     Session *session,
-                                     commands::Command *command) {
+                                     Session* session,
+                                     commands::Command* command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -173,7 +173,7 @@ bool TestSendKeyWithModeAndActivated(const absl::string_view key,
 }
 
 bool SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
-                    Session *session, commands::Command *command) {
+                    Session* session, commands::Command* command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_KEY);
   command->mutable_input()->mutable_key()->set_special_key(special_key);
@@ -181,50 +181,50 @@ bool SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
 }
 
 void SetSendCommandCommand(commands::SessionCommand::CommandType type,
-                           commands::Command *command) {
+                           commands::Command* command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_COMMAND);
   command->mutable_input()->mutable_command()->set_type(type);
 }
 
-bool SendCommand(commands::SessionCommand::CommandType type, Session *session,
-                 commands::Command *command) {
+bool SendCommand(commands::SessionCommand::CommandType type, Session* session,
+                 commands::Command* command) {
   SetSendCommandCommand(type, command);
   return session->SendCommand(command);
 }
 
 bool InsertCharacterCodeAndString(const char key_code,
                                   const absl::string_view key_string,
-                                  Session *session,
-                                  commands::Command *command) {
+                                  Session* session,
+                                  commands::Command* command) {
   command->Clear();
-  commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
+  commands::KeyEvent* key_event = command->mutable_input()->mutable_key();
   key_event->set_key_code(key_code);
   key_event->set_key_string(key_string);
   return session->InsertCharacter(command);
 }
 
-converter::Candidate *AddCandidate(const absl::string_view key,
+converter::Candidate* AddCandidate(const absl::string_view key,
                                    const absl::string_view value,
-                                   Segment *segment) {
-  converter::Candidate *candidate = segment->add_candidate();
+                                   Segment* segment) {
+  converter::Candidate* candidate = segment->add_candidate();
   strings::Assign(candidate->key, key);
   strings::Assign(candidate->content_key, key);
   strings::Assign(candidate->value, value);
   return candidate;
 }
 
-converter::Candidate *AddMetaCandidate(const absl::string_view key,
+converter::Candidate* AddMetaCandidate(const absl::string_view key,
                                        const absl::string_view value,
-                                       Segment *segment) {
-  converter::Candidate *candidate = segment->add_meta_candidate();
+                                       Segment* segment) {
+  converter::Candidate* candidate = segment->add_meta_candidate();
   strings::Assign(candidate->key, key);
   strings::Assign(candidate->content_key, key);
   strings::Assign(candidate->value, value);
   return candidate;
 }
 
-std::string GetComposition(const commands::Command &command) {
+std::string GetComposition(const commands::Command& command) {
   if (!command.output().has_preedit()) {
     return "";
   }
@@ -237,7 +237,7 @@ std::string GetComposition(const commands::Command &command) {
 }
 
 ::testing::AssertionResult EnsurePreedit(const absl::string_view expected,
-                                         const commands::Command &command) {
+                                         const commands::Command& command) {
   if (!command.output().has_preedit()) {
     return ::testing::AssertionFailure() << "No preedit.";
   }
@@ -253,7 +253,7 @@ std::string GetComposition(const commands::Command &command) {
 }
 
 ::testing::AssertionResult EnsureSingleSegment(
-    const absl::string_view expected, const commands::Command &command) {
+    const absl::string_view expected, const commands::Command& command) {
   if (!command.output().has_preedit()) {
     return ::testing::AssertionFailure() << "No preedit.";
   }
@@ -262,7 +262,7 @@ std::string GetComposition(const commands::Command &command) {
            << "Not single segment. segment size: "
            << command.output().preedit().segment_size();
   }
-  const commands::Preedit::Segment &segment =
+  const commands::Preedit::Segment& segment =
       command.output().preedit().segment(0);
   if (!segment.has_value()) {
     return ::testing::AssertionFailure() << "No segment value.";
@@ -277,7 +277,7 @@ std::string GetComposition(const commands::Command &command) {
 
 ::testing::AssertionResult EnsureSingleSegmentAndKey(
     const absl::string_view expected_value,
-    const absl::string_view expected_key, const commands::Command &command) {
+    const absl::string_view expected_key, const commands::Command& command) {
   if (!command.output().has_preedit()) {
     return ::testing::AssertionFailure() << "No preedit.";
   }
@@ -286,7 +286,7 @@ std::string GetComposition(const commands::Command &command) {
            << "Not single segment. segment size: "
            << command.output().preedit().segment_size();
   }
-  const commands::Preedit::Segment &segment =
+  const commands::Preedit::Segment& segment =
       command.output().preedit().segment(0);
   if (!segment.has_value()) {
     return ::testing::AssertionFailure() << "No segment value.";
@@ -294,8 +294,8 @@ std::string GetComposition(const commands::Command &command) {
   if (!segment.has_key()) {
     return ::testing::AssertionFailure() << "No segment key.";
   }
-  const std::string &actual_value = segment.value();
-  const std::string &actual_key = segment.key();
+  const std::string& actual_value = segment.value();
+  const std::string& actual_key = segment.key();
   if (expected_value == actual_value && expected_key == actual_key) {
     return ::testing::AssertionSuccess();
   }
@@ -306,14 +306,14 @@ std::string GetComposition(const commands::Command &command) {
 }
 
 ::testing::AssertionResult EnsureResult(const absl::string_view expected,
-                                        const commands::Command &command) {
+                                        const commands::Command& command) {
   if (!command.output().has_result()) {
     return ::testing::AssertionFailure() << "No result.";
   }
   if (!command.output().result().has_value()) {
     return ::testing::AssertionFailure() << "No result value.";
   }
-  const std::string &actual = command.output().result().value();
+  const std::string& actual = command.output().result().value();
   if (expected == actual) {
     return ::testing::AssertionSuccess();
   }
@@ -323,7 +323,7 @@ std::string GetComposition(const commands::Command &command) {
 
 ::testing::AssertionResult EnsureResultAndKey(
     const absl::string_view expected_value,
-    const absl::string_view expected_key, const commands::Command &command) {
+    const absl::string_view expected_key, const commands::Command& command) {
   if (!command.output().has_result()) {
     return ::testing::AssertionFailure() << "No result.";
   }
@@ -333,8 +333,8 @@ std::string GetComposition(const commands::Command &command) {
   if (!command.output().result().has_key()) {
     return ::testing::AssertionFailure() << "No result value.";
   }
-  const std::string &actual_value = command.output().result().value();
-  const std::string &actual_key = command.output().result().key();
+  const std::string& actual_value = command.output().result().value();
+  const std::string& actual_key = command.output().result().key();
   if (expected_value == actual_value && expected_key == actual_key) {
     return ::testing::AssertionSuccess();
   }
@@ -344,7 +344,7 @@ std::string GetComposition(const commands::Command &command) {
                                        << ", actual_key: " << actual_key;
 }
 
-::testing::AssertionResult TryUndoAndAssertSuccess(Session *session) {
+::testing::AssertionResult TryUndoAndAssertSuccess(Session* session) {
   commands::Command command;
   session->RequestUndo(&command);
   if (!command.output().consumed()) {
@@ -362,7 +362,7 @@ std::string GetComposition(const commands::Command &command) {
   return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult TryUndoAndAssertDoNothing(Session *session) {
+::testing::AssertionResult TryUndoAndAssertDoNothing(Session* session) {
   commands::Command command;
   session->RequestUndo(&command);
   if (command.output().consumed()) {
@@ -384,7 +384,7 @@ std::string GetComposition(const commands::Command &command) {
   EXPECT_TRUE(EnsureResultAndKey(expected_value, expected_key, command))
 
 void SwitchInputFieldType(commands::Context::InputFieldType type,
-                          Session *session) {
+                          Session* session) {
   commands::Command command;
   SetSendCommandCommand(commands::SessionCommand::SWITCH_INPUT_FIELD_TYPE,
                         &command);
@@ -393,14 +393,14 @@ void SwitchInputFieldType(commands::Context::InputFieldType type,
   EXPECT_EQ(session->context().composer().GetInputFieldType(), type);
 }
 
-bool SwitchInputModeCommand(commands::CompositionMode mode, Session *session,
-                            commands::Command *command) {
+bool SwitchInputModeCommand(commands::CompositionMode mode, Session* session,
+                            commands::Command* command) {
   SetSendCommandCommand(commands::SessionCommand::SWITCH_INPUT_MODE, command);
   command->mutable_input()->mutable_command()->set_composition_mode(mode);
   return session->SendCommand(command);
 }
 
-void SwitchInputMode(commands::CompositionMode mode, Session *session) {
+void SwitchInputMode(commands::CompositionMode mode, Session* session) {
   commands::Command command;
   EXPECT_TRUE(SwitchInputModeCommand(mode, session, &command));
 }
@@ -421,13 +421,13 @@ class SessionTest : public testing::TestWithTempUserProfile {
 
   void TearDown() override {}
 
-  void InsertCharacterChars(const absl::string_view chars, Session *session,
-                            commands::Command *command) const {
+  void InsertCharacterChars(const absl::string_view chars, Session* session,
+                            commands::Command* command) const {
     constexpr uint32_t kNoModifiers = 0;
     for (int i = 0; i < chars.size(); ++i) {
       command->Clear();
       command->mutable_input()->set_type(commands::Input::SEND_KEY);
-      commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
+      commands::KeyEvent* key_event = command->mutable_input()->mutable_key();
       key_event->set_key_code(chars[i]);
       key_event->set_modifiers(kNoModifiers);
       session->SendKey(command);
@@ -435,15 +435,15 @@ class SessionTest : public testing::TestWithTempUserProfile {
   }
 
   void InsertCharacterCharsWithContext(const absl::string_view chars,
-                                       const commands::Context &context,
-                                       Session *session,
-                                       commands::Command *command) const {
+                                       const commands::Context& context,
+                                       Session* session,
+                                       commands::Command* command) const {
     constexpr uint32_t kNoModifiers = 0;
     for (size_t i = 0; i < chars.size(); ++i) {
       command->Clear();
       command->mutable_input()->set_type(commands::Input::SEND_KEY);
       *command->mutable_input()->mutable_context() = context;
-      commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
+      commands::KeyEvent* key_event = command->mutable_input()->mutable_key();
       key_event->set_key_code(chars[i]);
       key_event->set_modifiers(kNoModifiers);
       session->SendKey(command);
@@ -451,8 +451,8 @@ class SessionTest : public testing::TestWithTempUserProfile {
   }
 
   void InsertCharacterString(const absl::string_view key_strings,
-                             const absl::string_view chars, Session *session,
-                             commands::Command *command) const {
+                             const absl::string_view chars, Session* session,
+                             commands::Command* command) const {
     constexpr uint32_t kNoModifiers = 0;
     auto chars_it = chars.begin();
     for (const absl::string_view key : Utf8AsChars(key_strings)) {
@@ -461,7 +461,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
       CHECK(chars_it != chars.end());
       command->Clear();
       command->mutable_input()->set_type(commands::Input::SEND_KEY);
-      commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
+      commands::KeyEvent* key_event = command->mutable_input()->mutable_key();
       key_event->set_key_code(*chars_it++);
       key_event->set_modifiers(kNoModifiers);
       key_event->set_key_string(key);
@@ -470,10 +470,10 @@ class SessionTest : public testing::TestWithTempUserProfile {
   }
 
   // set result for "あいうえお"
-  void SetAiueo(Segments *segments) {
+  void SetAiueo(Segments* segments) {
     segments->Clear();
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segment = segments->add_segment();
     segment->set_key("あいうえお");
@@ -487,14 +487,14 @@ class SessionTest : public testing::TestWithTempUserProfile {
     candidate->value = "アイウエオ";
   }
 
-  void InitSessionToDirect(Session *session) {
+  void InitSessionToDirect(Session* session) {
     InitSessionToPrecomposition(session);
     commands::Command command;
     session->IMEOff(&command);
   }
 
-  void InitSessionToConversionWithAiueo(Session *session,
-                                        MockConverter *converter) {
+  void InitSessionToConversionWithAiueo(Session* session,
+                                        MockConverter* converter) {
     InitSessionToPrecomposition(session);
 
     commands::Command command;
@@ -513,7 +513,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
   }
 
   std::shared_ptr<MockConverter> CreateEngineConverterMock(
-      MockEngine *mock_engine) {
+      MockEngine* mock_engine) {
     auto mock_converter = std::make_shared<MockConverter>();
     EXPECT_CALL(*mock_engine, CreateEngineConverter)
         .WillRepeatedly([mock_converter]() {
@@ -525,7 +525,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
   // TODO(matsuzakit): Set the session's state to PRECOMPOSITION.
   // Though the method name asserts "ToPrecomposition",
   // this method doesn't change session's state.
-  void InitSessionToPrecomposition(Session *session) {
+  void InitSessionToPrecomposition(Session* session) {
 #ifdef _WIN32
     // Session is created with direct mode on Windows
     // Direct status
@@ -535,8 +535,8 @@ class SessionTest : public testing::TestWithTempUserProfile {
     InitSessionWithRequest(session, commands::Request::default_instance());
   }
 
-  void InitSessionToPrecomposition(Session *session,
-                                   const commands::Request &request) {
+  void InitSessionToPrecomposition(Session* session,
+                                   const commands::Request& request) {
 #ifdef _WIN32
     // Session is created with direct mode on Windows
     // Direct status
@@ -546,8 +546,8 @@ class SessionTest : public testing::TestWithTempUserProfile {
     InitSessionWithRequest(session, request);
   }
 
-  void InitSessionWithRequest(Session *session,
-                              const commands::Request &request) {
+  void InitSessionWithRequest(Session* session,
+                              const commands::Request& request) {
     session->SetRequest(request);
     auto table = std::make_shared<composer::Table>();
     table->InitializeWithRequestAndConfig(
@@ -556,9 +556,9 @@ class SessionTest : public testing::TestWithTempUserProfile {
   }
 
   // set result for "like"
-  void SetLike(Segments *segments) {
-    Segment *segment;
-    converter::Candidate *candidate;
+  void SetLike(Segments* segments) {
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segments->Clear();
     segment = segments->add_segment();
@@ -578,12 +578,12 @@ class SessionTest : public testing::TestWithTempUserProfile {
     candidate->value = "け";
   }
 
-  void FillT13Ns(const ConversionRequest &request, Segments *segments) {
+  void FillT13Ns(const ConversionRequest& request, Segments* segments) {
     t13n_rewriter_->Rewrite(request, segments);
   }
 
-  ConversionRequest CreateConversionRequest(const Session &session) {
-    const ImeContext &context = session.context();
+  ConversionRequest CreateConversionRequest(const Session& session) {
+    const ImeContext& context = session.context();
     return ConversionRequestBuilder()
         .SetComposer(context.composer())
         .SetRequestView(context.GetRequest())
@@ -594,13 +594,13 @@ class SessionTest : public testing::TestWithTempUserProfile {
 
   void SetupMockForReverseConversion(const absl::string_view kanji,
                                      const absl::string_view hiragana,
-                                     MockConverter *converter) {
+                                     MockConverter* converter) {
     // Set up Segments for reverse conversion.
     Segments reverse_segments;
-    Segment *segment;
+    Segment* segment;
     segment = reverse_segments.add_segment();
     segment->set_key(kanji);
-    converter::Candidate *candidate;
+    converter::Candidate* candidate;
     candidate = segment->add_candidate();
     // For reverse conversion, key is the original kanji string.
     candidate->key = kanji;
@@ -619,7 +619,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
   }
 
   void SetupCommandForReverseConversion(const absl::string_view text,
-                                        commands::Input *input) {
+                                        commands::Input* input) {
     input->Clear();
     input->set_type(commands::Input::SEND_COMMAND);
     input->mutable_command()->set_type(
@@ -627,9 +627,9 @@ class SessionTest : public testing::TestWithTempUserProfile {
     input->mutable_command()->set_text(text);
   }
 
-  void SetupZeroQuerySuggestionReady(bool enable, Session *session,
-                                     commands::Request *request,
-                                     MockConverter *mock_converter) {
+  void SetupZeroQuerySuggestionReady(bool enable, Session* session,
+                                     commands::Request* request,
+                                     MockConverter* mock_converter) {
     InitSessionToPrecomposition(session);
 
     // Enable zero query suggest.
@@ -643,7 +643,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
     {
       // Set up a mock conversion result.
       Segments segments;
-      Segment *segment;
+      Segment* segment;
       segment = segments.add_segment();
       segment->set_key("google");
       segment->add_candidate()->value = "GOOGLE";
@@ -656,7 +656,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
     {
       // Set up a mock suggestion result.
       Segments segments;
-      Segment *segment;
+      Segment* segment;
       segment = segments.add_segment();
       segment->set_key("");
       AddCandidate("search", "search", segment);
@@ -668,7 +668,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
     {
       // Set up a mock prediction result.
       Segments segments;
-      Segment *segment;
+      Segment* segment;
       segment = segments.add_segment();
       segment->set_key("");
       AddCandidate("search", "search", segment);
@@ -681,15 +681,15 @@ class SessionTest : public testing::TestWithTempUserProfile {
     }
   }
 
-  void SetupZeroQuerySuggestion(Session *session, commands::Request *request,
-                                commands::Command *command,
-                                MockConverter *converter) {
+  void SetupZeroQuerySuggestion(Session* session, commands::Request* request,
+                                commands::Command* command,
+                                MockConverter* converter) {
     SetupZeroQuerySuggestionReady(true, session, request, converter);
     command->Clear();
     session->Commit(command);
   }
 
-  void SetUndoContext(Session *session, MockConverter *converter) {
+  void SetUndoContext(Session* session, MockConverter* converter) {
     commands::Command command;
     Segments segments;
 
@@ -698,7 +698,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
       SetAiueo(&segments);
       // Don't use FillT13Ns(). It makes platform dependent segments.
       // TODO(hsumita): Makes FillT13Ns() independent from platforms.
-      converter::Candidate *candidate;
+      converter::Candidate* candidate;
       candidate = segments.mutable_segment(0)->add_candidate();
       candidate->value = "aiueo";
       candidate = segments.mutable_segment(0)->add_candidate();
@@ -811,11 +811,11 @@ TEST_F(SessionTest, UpdateComposition) {
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
-  commands::Input *input = command.mutable_input();
+  commands::Input* input = command.mutable_input();
   input->set_type(commands::Input::SEND_COMMAND);
   input->mutable_command()->set_type(
       commands::SessionCommand::UPDATE_COMPOSITION);
-  commands::SessionCommand::CompositionEvent *composition_event =
+  commands::SessionCommand::CompositionEvent* composition_event =
       input->mutable_command()->add_composition_events();
   composition_event->set_composition_string("かん字");
   composition_event->set_probability(1.0);
@@ -982,7 +982,7 @@ TEST_F(SessionTest, SwitchInputModeWithCandidateList) {
     {
       // Set up a mock conversion result.
       Segments segments;
-      Segment *segment;
+      Segment* segment;
       segment = segments.add_segment();
       segment->set_key("");
       segment->add_candidate()->value = "google";
@@ -1228,9 +1228,9 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   // "わたしのなまえはなかのです[]"
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("わたしの");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "私の";
   candidate = segment->add_candidate();
   candidate->value = "わたしの";
@@ -1330,9 +1330,9 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   InsertCharacterChars("ai", &session, &command);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("あい");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "愛";
   candidate = segment->add_candidate();
   candidate->value = "相";
@@ -1418,9 +1418,9 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   // "ばりにりょこうにいった[]"
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("ばりに");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "バリに";
   candidate = segment->add_candidate();
   candidate->value = "針に";
@@ -1498,9 +1498,9 @@ TEST_F(SessionTest, CommitSegment) {
   // "わたしのなまえ[]"
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("わたしの");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "私の";
   candidate = segment->add_candidate();
   candidate->value = "わたしの";
@@ -1557,9 +1557,9 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   // "わたしのはは[]"
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("わたしの");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "私の";
   segment = segments.add_segment();
   segment->set_key("はは");
@@ -1614,9 +1614,9 @@ TEST_F(SessionTest, Transliterations) {
   InsertCharacterChars("jishin", &session, &command);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("じしん");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "自信";
   candidate = segment->add_candidate();
   candidate->value = "自身";
@@ -1676,9 +1676,9 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   InsertCharacterChars("jishin", &session, &command);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("じしん");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "自信";
   candidate = segment->add_candidate();
   candidate->value = "自身";
@@ -1715,9 +1715,9 @@ TEST_F(SessionTest, ConvertToTransliterationOfNegativeNumber) {
   InsertCharacterChars("-789", &session, &command);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("−７８９");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "−７８９";
 
   const ConversionRequest request = CreateConversionRequest(session);
@@ -1755,12 +1755,12 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
   command.Clear();
   session.Convert(&command);
   {  // Check the conversion #1
-    const commands::Output &output = command.output();
+    const commands::Output& output = command.output();
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 2);
     EXPECT_EQ(conversion.segment(0).value(), "ぃ");
     EXPECT_EQ(conversion.segment(1).value(), "家");
@@ -1770,12 +1770,12 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
   command.Clear();
   session.TranslateHalfASCII(&command);
   {  // Check the conversion #2
-    const commands::Output &output = command.output();
+    const commands::Output& output = command.output();
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidate_window());
 
-    const commands::Preedit &conversion = output.preedit();
+    const commands::Preedit& conversion = output.preedit();
     EXPECT_EQ(conversion.segment_size(), 2);
     EXPECT_EQ(conversion.segment(0).value(), "li");
   }
@@ -1792,7 +1792,7 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
 
   Segments segments;
   {  // Initialize segments.
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("あｂｃ");
     segment->add_candidate()->value = "あべし";
   }
@@ -1824,9 +1824,9 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   InsertCharacterChars("dvd", &session, &command);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("ｄｖｄ");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "DVD";
   candidate = segment->add_candidate();
   candidate->value = "dvd";
@@ -1868,9 +1868,9 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   InsertCharacterChars("dvd", &session, &command);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("ｄｖｄ");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "DVD";
   candidate = segment->add_candidate();
   candidate->value = "dvd";
@@ -1910,7 +1910,7 @@ TEST_F(SessionTest, SwitchKanaType) {
 
     Segments segments;
     {  // Initialize segments.
-      Segment *segment = segments.add_segment();
+      Segment* segment = segments.add_segment();
       segment->set_key("あｂｃ");
       segment->add_candidate()->value = "あべし";
     }
@@ -1947,7 +1947,7 @@ TEST_F(SessionTest, SwitchKanaType) {
 
     Segments segments;
     {  // Initialize segments.
-      Segment *segment = segments.add_segment();
+      Segment* segment = segments.add_segment();
       segment->set_key("かんじ");
       segment->add_candidate()->value = "漢字";
     }
@@ -2174,9 +2174,9 @@ TEST_F(SessionTest, RomajiInput) {
   command.Clear();
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("ぱん");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "パン";
 
   const ConversionRequest request = CreateConversionRequest(session);
@@ -2227,9 +2227,9 @@ TEST_F(SessionTest, KanaInput) {
   EXPECT_EQ(command.output().preedit().segment(0).value(), "もずく！");
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("もずく!");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "もずく！";
 
   const ConversionRequest request = CreateConversionRequest(session);
@@ -2259,9 +2259,9 @@ TEST_F(SessionTest, ExceededComposition) {
     long_a += "あ";
   }
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key(long_a);
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = long_a;
 
   const ConversionRequest request = CreateConversionRequest(session);
@@ -2302,7 +2302,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   command.Clear();
   session.Convert(&command);
   {
-    const commands::Output &output = command.output();
+    const commands::Output& output = command.output();
     EXPECT_TRUE(output.has_all_candidate_words());
 
     EXPECT_EQ(output.all_candidate_words().focused_index(), 0);
@@ -2329,7 +2329,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   command.Clear();
   session.ConvertNext(&command);
   {
-    const commands::Output &output = command.output();
+    const commands::Output& output = command.output();
 
     EXPECT_TRUE(output.has_all_candidate_words());
 
@@ -2455,7 +2455,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     SetAiueo(&segments);
     // Don't use FillT13Ns(). It makes platform dependent segments.
     // TODO(hsumita): Makes FillT13Ns() independent from platforms.
-    converter::Candidate *candidate;
+    converter::Candidate* candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "aiueo";
     candidate = segments.mutable_segment(0)->add_candidate();
@@ -2622,8 +2622,8 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
   {  // Create segments
     InsertCharacterChars("key1key2key3", &session, &command);
 
-    converter::Candidate *candidate;
-    Segment *segment;
+    converter::Candidate* candidate;
+    Segment* segment;
 
     segment = segments.add_segment();
     segment->set_key("key1");
@@ -2791,8 +2791,8 @@ TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
   {  // Create segments
     InsertCharacterChars("あかっこ", &session, &command);
 
-    converter::Candidate *candidate;
-    Segment *segment;
+    converter::Candidate* candidate;
+    Segment* segment;
 
     segment = segments.add_segment();
     segment->set_key("あ");
@@ -2863,8 +2863,8 @@ TEST_F(SessionTest, MultipleUndo) {
   {  // Create segments
     InsertCharacterChars("key1key2key3", &session, &command);
 
-    converter::Candidate *candidate;
-    Segment *segment;
+    converter::Candidate* candidate;
+    Segment* segment;
 
     segment = segments.add_segment();
     segment->set_key("key1");
@@ -2965,7 +2965,7 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
     {  // Create segments
       InsertCharacterChars("aiueo", &session, &command);
       SetAiueo(&segments);
-      converter::Candidate *candidate;
+      converter::Candidate* candidate;
       candidate = segments.mutable_segment(0)->add_candidate();
       candidate->value = "aiueo";
       candidate = segments.mutable_segment(0)->add_candidate();
@@ -3015,7 +3015,7 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);
     SetAiueo(&segments);
-    converter::Candidate *candidate;
+    converter::Candidate* candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "aiueo";
     candidate = segments.mutable_segment(0)->add_candidate();
@@ -3038,7 +3038,7 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
 
   Segments segments;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments.add_segment();
     AddCandidate("e", "e", segment);
     AddCandidate("e", "E", segment);
@@ -3070,7 +3070,7 @@ TEST_F(SessionTest, StopKeyToggling) {
 
   Segments segments;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments.add_segment();
     AddCandidate("placeholder", "PLACEHOLDER", segment);
   }
@@ -3109,7 +3109,7 @@ TEST_F(SessionTest, CommitRawText) {
 
     Segments segments;
     {  // Initialize segments.
-      Segment *segment = segments.add_segment();
+      Segment* segment = segments.add_segment();
       segment->set_key("あｂｃ");
       segment->add_candidate()->value = "あべし";
     }
@@ -3130,7 +3130,7 @@ TEST_F(SessionTest, CommitRawText) {
 
     Segments segments;
     {  // Initialize segments.
-      Segment *segment = segments.add_segment();
+      Segment* segment = segments.add_segment();
       segment->set_key("あｂｃ");
       segment->add_candidate()->value = "あべし";
     }
@@ -3255,7 +3255,7 @@ TEST_F(SessionTest, ConvertNextPagePrevPage) {
   //   "page2-cand8"
   {
     Segments segments;
-    Segment *segment = nullptr;
+    Segment* segment = nullptr;
     segment = segments.add_segment();
     segment->set_key("あいうえお");
     for (int page_index = 0; page_index < 3; ++page_index) {
@@ -3702,9 +3702,9 @@ TEST_F(SessionTest, Issue1805239) {
   InsertCharacterChars("watasinonamae", &session, &command);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("わたしの");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "私の";
   candidate = segment->add_candidate();
   candidate->value = "渡しの";
@@ -3755,9 +3755,9 @@ TEST_F(SessionTest, Issue1816861) {
   commands::Command command;
   InsertCharacterChars("kamabokonoinbou", &session, &command);
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("かまぼこの");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "かまぼこの";
   candidate = segment->add_candidate();
   candidate->value = "カマボコの";
@@ -3816,10 +3816,10 @@ TEST_F(SessionTest, T13NWithResegmentation) {
 
   {
     Segments segments;
-    Segment *segment;
+    Segment* segment;
     segment = segments.add_segment();
     segment->set_key("かまぼこの");
-    converter::Candidate *candidate = segment->add_candidate();
+    converter::Candidate* candidate = segment->add_candidate();
     candidate->value = "かまぼこの";
     candidate = segment->add_candidate();
     candidate->value = "カマボコの";
@@ -3837,9 +3837,9 @@ TEST_F(SessionTest, T13NWithResegmentation) {
   }
   {
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("かまぼこの");
-    converter::Candidate *candidate = segment->add_candidate();
+    converter::Candidate* candidate = segment->add_candidate();
     candidate->value = "かまぼこの";
     candidate = segment->add_candidate();
     candidate->value = "カマボコの";
@@ -3889,7 +3889,7 @@ TEST_F(SessionTest, Shortcut) {
   };
   for (size_t i = 0; i < std::size(kDataShortcut); ++i) {
     config::Config::SelectionShortcut shortcut = kDataShortcut[i];
-    const std::string *expected = kDataExpected[i];
+    const std::string* expected = kDataExpected[i];
 
     config::Config config;
     config.set_selection_shortcut(shortcut);
@@ -3904,7 +3904,7 @@ TEST_F(SessionTest, Shortcut) {
 
     Segments segments;
     SetAiueo(&segments);
-    const ImeContext &context = session.context();
+    const ImeContext& context = session.context();
     const ConversionRequest request =
         ConversionRequestBuilder()
             .SetComposer(context.composer())
@@ -3926,7 +3926,7 @@ TEST_F(SessionTest, Shortcut) {
     // Convert next
     SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
     ASSERT_TRUE(command.output().has_candidate_window());
-    const commands::CandidateWindow &candidate_window =
+    const commands::CandidateWindow& candidate_window =
         command.output().candidate_window();
     EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(),
               expected[0]);
@@ -3964,7 +3964,7 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
   ASSERT_TRUE(command.output().has_candidate_window());
 
-  const commands::CandidateWindow &candidate_window =
+  const commands::CandidateWindow& candidate_window =
       command.output().candidate_window();
   EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(), "a");
   EXPECT_EQ(candidate_window.candidate(1).annotation().shortcut(), "s");
@@ -4008,7 +4008,7 @@ TEST_F(SessionTest, ShortcutFromVK) {
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
   ASSERT_TRUE(command.output().has_candidate_window());
 
-  const commands::CandidateWindow &candidate_window =
+  const commands::CandidateWindow& candidate_window =
       command.output().candidate_window();
   EXPECT_EQ(candidate_window.candidate(0).annotation().shortcut(), "1");
   EXPECT_EQ(candidate_window.candidate(1).annotation().shortcut(), "2");
@@ -4217,7 +4217,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSuggestion1) {
   EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("NFL");
   segment->add_candidate()->value = "NFL";
   const ConversionRequest request = CreateConversionRequest(session);
@@ -4258,7 +4258,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSuggestion2) {
 
   {
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("NFL");
     segment->add_candidate()->value = "NFL";
     EXPECT_CALL(*converter, StartPredictionWithPreviousSuggestion(_, _, _))
@@ -4298,7 +4298,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion3) {
   EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("NFL");
   segment->add_candidate()->value = "NFL";
   const ConversionRequest request = CreateConversionRequest(session);
@@ -4428,7 +4428,7 @@ TEST_F(SessionTest, StatusOutput) {
 TEST_F(SessionTest, Suggest) {
   Segments segments_m;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_m.add_segment();
     segment->set_key("M");
     segment->add_candidate()->value = "MOCHA";
@@ -4437,7 +4437,7 @@ TEST_F(SessionTest, Suggest) {
 
   Segments segments_mo;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
     segment->add_candidate()->value = "MOCHA";
@@ -4446,7 +4446,7 @@ TEST_F(SessionTest, Suggest) {
 
   Segments segments_moz;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_moz.add_segment();
     segment->set_key("MOZ");
     segment->add_candidate()->value = "MOZUKU";
@@ -4530,7 +4530,7 @@ TEST_F(SessionTest, Suggest) {
 
   Segments segments_m_conv;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_m_conv.add_segment();
     segment->set_key("M");
     segment->add_candidate()->value = "M";
@@ -4558,10 +4558,10 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   request.set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
 
   Segments segments_jueri;
-  Segment *segment = segments_jueri.add_segment();
+  Segment* segment = segments_jueri.add_segment();
   constexpr absl::string_view kJueri = "じゅえり";
   segment->set_key(kJueri);
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->key = "くえり";
   candidate->content_key = candidate->key;
   candidate->value = "クエリ";
@@ -4609,29 +4609,29 @@ TEST_F(SessionTest, MobilePartialPrediction) {
 
   Segments segments_wata;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_wata.add_segment();
     constexpr absl::string_view kWata = "わた";
     segment->set_key(kWata);
-    converter::Candidate *cand1 = AddCandidate(kWata, "綿", segment);
+    converter::Candidate* cand1 = AddCandidate(kWata, "綿", segment);
     cand1->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     cand1->consumed_key_size = strings::CharsLen(kWata);
-    converter::Candidate *cand2 = AddCandidate(kWata, kWata, segment);
+    converter::Candidate* cand2 = AddCandidate(kWata, kWata, segment);
     cand2->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     cand2->consumed_key_size = strings::CharsLen(kWata);
   }
 
   Segments segments_watashino;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_watashino.add_segment();
     constexpr absl::string_view kWatashino = "わたしの";
     segment->set_key(kWatashino);
-    converter::Candidate *cand1 = segment->add_candidate();
+    converter::Candidate* cand1 = segment->add_candidate();
     cand1->value = "私の";
     cand1->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     cand1->consumed_key_size = strings::CharsLen(kWatashino);
-    converter::Candidate *cand2 = segment->add_candidate();
+    converter::Candidate* cand2 = segment->add_candidate();
     cand2->value = kWatashino;
     cand2->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
     cand2->consumed_key_size = strings::CharsLen(kWatashino);
@@ -4639,11 +4639,11 @@ TEST_F(SessionTest, MobilePartialPrediction) {
 
   Segments segments_shino;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_shino.add_segment();
     constexpr absl::string_view kShino = "しの";
     segment->set_key(kShino);
-    converter::Candidate *candidate;
+    converter::Candidate* candidate;
     candidate = AddCandidate("しのみや", "四ノ宮", segment);
     candidate->content_key = segment->key();
     candidate->attributes = converter::Attribute::PARTIALLY_KEY_CONSUMED;
@@ -5818,7 +5818,7 @@ TEST_F(SessionTest, Issue1978201) {
 
   // This is a unittest against http://b/1978201
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("いんぼう");
   segment->add_candidate()->value = "陰謀";
   segment->add_candidate()->value = "陰謀論";
@@ -5855,7 +5855,7 @@ TEST_F(SessionTest, Issue1975771) {
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
-  commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
+  commands::KeyEvent* key_event = command.mutable_input()->mutable_key();
   key_event->set_key_code('a');
   key_event->set_modifiers(0);  // No modifiers.
   EXPECT_TRUE(session.InsertCharacter(&command));
@@ -5931,9 +5931,9 @@ TEST_F(SessionTest, Issue2034943) {
 
   {  // Initialize a suggest result triggered by "mozu".
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key("mozu");
-    converter::Candidate *candidate;
+    converter::Candidate* candidate;
     candidate = segment->add_candidate();
     candidate->value = "MOZU";
     const ConversionRequest request = CreateConversionRequest(session);
@@ -5994,9 +5994,9 @@ TEST_F(SessionTest, Issue2066906) {
   InitSessionToPrecomposition(&session);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("a");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "abc";
   candidate = segment->add_candidate();
   candidate->value = "abcdef";
@@ -6256,10 +6256,10 @@ TEST_F(SessionTest, Issue2223755) {
 
     {  // Initialize the mock converter to generate t13n candidates.
       Segments segments;
-      Segment *segment;
+      Segment* segment;
       segment = segments.add_segment();
       segment->set_key("あ い");
-      converter::Candidate *candidate;
+      converter::Candidate* candidate;
       candidate = segment->add_candidate();
       candidate->value = "あ い";
       const ConversionRequest request = CreateConversionRequest(session);
@@ -6402,8 +6402,8 @@ TEST_F(SessionTest, Issue2379374) {
 
   Segments segments;
   {  // Set mock conversion.
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segment = segments.add_segment();
     segment->set_key("あ");
@@ -6949,7 +6949,7 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
     SetAiueo(&segments);
     // Don't use FillT13Ns(). It makes platform dependent segments.
     // TODO(hsumita): Makes FillT13Ns() independent from platforms.
-    converter::Candidate *candidate;
+    converter::Candidate* candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "aiueo";
     candidate = segments.mutable_segment(0)->add_candidate();
@@ -7334,7 +7334,7 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
   Segments segments;
   // Set a dummy segments for ConvertToHalfASCII.
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments.add_segment();
     segment->set_key("っsh");
 
@@ -7700,8 +7700,8 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
 
   {  // Segments as conversion result.
     Segments segments;
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segment = segments.add_segment();
     segment->set_key("ねこの");
@@ -7732,8 +7732,8 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
 
   {  // Segments as result of CommitHeadToFocusedSegments
     Segments segments;
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segment = segments.add_segment();
     segment->set_key("ぬいた");
@@ -7764,8 +7764,8 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
 
   {  // Segments as conversion result.
     Segments segments;
-    Segment *segment;
-    converter::Candidate *candidate;
+    Segment* segment;
+    converter::Candidate* candidate;
 
     segment = segments.add_segment();
     segment->set_key("ねこの");
@@ -7811,7 +7811,7 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
 
   Segments segments_mo;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
     AddCandidate("MOCHA", "MOCHA", segment);
@@ -7843,11 +7843,11 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   EXPECT_EQ(command.output().preedit().cursor(), 0);
 }
 
-bool FindCandidateID(const commands::CandidateWindow &candidate_window,
-                     const absl::string_view value, int *id) {
+bool FindCandidateID(const commands::CandidateWindow& candidate_window,
+                     const absl::string_view value, int* id) {
   CHECK(id);
   for (size_t i = 0; i < candidate_window.candidate_size(); ++i) {
-    const commands::CandidateWindow::Candidate &candidate =
+    const commands::CandidateWindow::Candidate& candidate =
         candidate_window.candidate(i);
     if (candidate.value() == value) {
       *id = candidate.id();
@@ -7857,12 +7857,12 @@ bool FindCandidateID(const commands::CandidateWindow &candidate_window,
   return false;
 }
 
-void FindCandidateIDs(const commands::CandidateWindow &candidate_window,
-                      const absl::string_view value, std::vector<int> *ids) {
+void FindCandidateIDs(const commands::CandidateWindow& candidate_window,
+                      const absl::string_view value, std::vector<int>* ids) {
   CHECK(ids);
   ids->clear();
   for (size_t i = 0; i < candidate_window.candidate_size(); ++i) {
-    const commands::CandidateWindow::Candidate &candidate =
+    const commands::CandidateWindow::Candidate& candidate =
         candidate_window.candidate(i);
     if (candidate.value() == value) {
       ids->push_back(candidate.id());
@@ -7878,7 +7878,7 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("tok");
   AddCandidate("tok", "tok", segment);
   AddMetaCandidate("tok", "tok", segment);
@@ -8206,7 +8206,7 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
 
   // Set up a mock suggestion result.
   Segments segments;
-  Segment *segment;
+  Segment* segment;
   segment = segments.add_segment();
   segment->set_key("");
   segment->add_candidate()->value = "search";
@@ -8220,7 +8220,7 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
   EXPECT_EQ(GetComposition(command), "");
   EXPECT_FALSE(command.output().has_candidate_window());
 
-  const ImeContext &context = session.context();
+  const ImeContext& context = session.context();
   EXPECT_EQ(context.state(), ImeContext::PRECOMPOSITION);
 }
 
@@ -8303,7 +8303,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     {
       // Set up a mock conversion result.
       Segments segments;
-      Segment *segment;
+      Segment* segment;
       segment = segments.add_segment();
       segment->set_key("");
       segment->add_candidate()->value = "google";
@@ -8317,7 +8317,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     {
       // Set up a mock suggestion result.
       Segments segments;
-      Segment *segment;
+      Segment* segment;
       segment = segments.add_segment();
       segment->set_key("");
       segment->add_candidate()->value = "search";
@@ -8731,7 +8731,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);
     SetAiueo(&segments);
-    converter::Candidate *candidate;
+    converter::Candidate* candidate;
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "aiueo";
     candidate = segments.mutable_segment(0)->add_candidate();
@@ -9254,7 +9254,7 @@ TEST_F(SessionTest, EditCancel) {
 
   Segments segments_mo;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
     segment->add_candidate()->value = "MOCHA";
@@ -9333,7 +9333,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 
   Segments segments_mo;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
     segment->add_candidate()->value = "MOCHA";
@@ -9486,7 +9486,7 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   }
   Segments segments_mo;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
     segment->add_candidate()->value = "MOCHA";
@@ -9608,7 +9608,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   }
   Segments segments_mo;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
     segment->add_candidate()->value = "MOCHA";
@@ -9745,7 +9745,7 @@ TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
 
   Segments segments_mo;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
     segment->add_candidate()->value = "MOCHA";
@@ -9775,7 +9775,7 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
 
   Segments segments_a_conv;
   {
-    Segment *segment;
+    Segment* segment;
     segment = segments_a_conv.add_segment();
     segment->set_key("あ");
     segment->add_candidate()->value = "あ";
@@ -9840,7 +9840,7 @@ TEST_F(SessionTest, DeleteHistory) {
   InitSessionToPrecomposition(&session);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("delete");
   segment->add_candidate()->value = "DeleteHistory";
   EXPECT_CALL(*converter, StartPredictionWithPreviousSuggestion(_, _, _))
@@ -10170,7 +10170,7 @@ TEST_F(SessionTest, ClearCompositionByBackspace) {
   Segments segments;
   {
     // Set up a mock conversion result.
-    Segment *segment;
+    Segment* segment;
     segment = segments.add_segment();
     segment->set_key("あ");
     segment->add_candidate()->value = "あ";
@@ -10206,7 +10206,7 @@ TEST_F(SessionTest, ClearCompositionByEscape) {
   Segments segments;
   {
     // Set up a mock conversion result.
-    Segment *segment;
+    Segment* segment;
     segment = segments.add_segment();
     segment->set_key("あ");
     segment->add_candidate()->value = "あ";

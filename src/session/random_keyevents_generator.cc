@@ -97,7 +97,7 @@ void RandomKeyEventsGenerator::PrepareForMemoryLeakTest() {
 // Generates KeyEvent instances based on |romaji| and stores into |keys|.
 void RandomKeyEventsGenerator::TypeRawKeys(
     absl::string_view romaji, bool create_probable_key_events,
-    std::vector<commands::KeyEvent> *keys) {
+    std::vector<commands::KeyEvent>* keys) {
   for (ConstChar32Iterator iter(romaji); !iter.Done(); iter.Next()) {
     const uint32_t codepoint = iter.Get();
     if (codepoint < 0x20 || codepoint > 0x7F) {
@@ -106,12 +106,12 @@ void RandomKeyEventsGenerator::TypeRawKeys(
     commands::KeyEvent key;
     key.set_key_code(codepoint);
     if (create_probable_key_events) {
-      commands::KeyEvent::ProbableKeyEvent *probable_key_event =
+      commands::KeyEvent::ProbableKeyEvent* probable_key_event =
           key.add_probable_key_event();
       probable_key_event->set_key_code(codepoint);
       probable_key_event->set_probability(kMostPossibleKeyProbability);
       for (size_t i = 0; i < kProbableKeyEventSize; ++i) {
-        commands::KeyEvent::ProbableKeyEvent *probable_key_event =
+        commands::KeyEvent::ProbableKeyEvent* probable_key_event =
             key.add_probable_key_event();
         probable_key_event->set_key_code(absl::Uniform(bitgen_, 0x20, 0x7F));
         probable_key_event->set_probability(
@@ -133,7 +133,7 @@ std::string ToRomaji(absl::string_view hiragana) {
 // The instances have ProbableKeyEvent if |create_probable_key_events| is set.
 void RandomKeyEventsGenerator::GenerateMobileSequenceInternal(
     absl::string_view sentence, bool create_probable_key_events,
-    std::vector<commands::KeyEvent> *keys) {
+    std::vector<commands::KeyEvent>* keys) {
   const std::string input = ToRomaji(sentence);
   MOZC_VLOG(1) << input;
 
@@ -146,7 +146,7 @@ void RandomKeyEventsGenerator::GenerateMobileSequenceInternal(
 }
 
 void RandomKeyEventsGenerator::GenerateMobileSequence(
-    bool create_probable_key_events, std::vector<commands::KeyEvent> *keys) {
+    bool create_probable_key_events, std::vector<commands::KeyEvent>* keys) {
   CHECK(keys);
   keys->clear();
 
@@ -166,7 +166,7 @@ void RandomKeyEventsGenerator::GenerateMobileSequence(
 }
 
 void RandomKeyEventsGenerator::GenerateSequence(
-    std::vector<commands::KeyEvent> *keys) {
+    std::vector<commands::KeyEvent>* keys) {
   CHECK(keys);
   keys->clear();
 
@@ -352,8 +352,8 @@ uint32_t RandomKeyEventsGenerator::GetRandomAsciiKey() {
 }
 
 // static
-absl::Span<const char *> RandomKeyEventsGenerator::GetTestSentences() {
-  return absl::Span<const char *>(kTestSentences);
+absl::Span<const char*> RandomKeyEventsGenerator::GetTestSentences() {
+  return absl::Span<const char*>(kTestSentences);
 }
 }  // namespace session
 }  // namespace mozc

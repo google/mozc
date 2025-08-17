@@ -58,7 +58,7 @@ config::Config GetDefaultConfig(config::Config::SessionKeymap keymap) {
 
 class KeyMapManagerTestPeer : public testing::TestPeer<KeyMapManager> {
  public:
-  explicit KeyMapManagerTestPeer(KeyMapManager &manager)
+  explicit KeyMapManagerTestPeer(KeyMapManager& manager)
       : testing::TestPeer<KeyMapManager>(manager) {}
 
   PEER_METHOD(AddCommand);

@@ -51,9 +51,9 @@ class ImeContext final {
   ImeContext() = default;
   explicit ImeContext(
       std::unique_ptr<engine::EngineConverterInterface> converter);
-  explicit ImeContext(const ImeContext &src);
+  explicit ImeContext(const ImeContext& src);
 
-  ImeContext &operator=(const ImeContext &) = delete;
+  ImeContext& operator=(const ImeContext&) = delete;
 
   absl::Time create_time() const { return data_.create_time; }
   void set_create_time(absl::Time create_time) {
@@ -65,17 +65,17 @@ class ImeContext final {
     data_.last_command_time = last_command_time;
   }
 
-  const composer::Composer &composer() const { return data_.composer; }
-  composer::Composer *mutable_composer() { return &data_.composer; }
+  const composer::Composer& composer() const { return data_.composer; }
+  composer::Composer* mutable_composer() { return &data_.composer; }
 
-  const engine::EngineConverterInterface &converter() const {
+  const engine::EngineConverterInterface& converter() const {
     return *converter_;
   }
-  engine::EngineConverterInterface *mutable_converter() {
+  engine::EngineConverterInterface* mutable_converter() {
     return converter_.get();
   }
 
-  const KeyEventTransformer &key_event_transformer() const {
+  const KeyEventTransformer& key_event_transformer() const {
     return data_.key_event_transformer;
   }
 
@@ -90,39 +90,39 @@ class ImeContext final {
   void set_state(State state) { data_.state = state; }
 
   void SetRequest(std::shared_ptr<const commands::Request> request);
-  const commands::Request &GetRequest() const;
+  const commands::Request& GetRequest() const;
 
   void SetConfig(std::shared_ptr<const config::Config> config);
-  const config::Config &GetConfig() const;
+  const config::Config& GetConfig() const;
 
   void SetKeyMapManager(
       std::shared_ptr<const keymap::KeyMapManager> key_map_manager);
-  const keymap::KeyMapManager &GetKeyMapManager() const;
+  const keymap::KeyMapManager& GetKeyMapManager() const;
 
-  const commands::Capability &client_capability() const {
+  const commands::Capability& client_capability() const {
     return data_.client_capability;
   }
-  commands::Capability *mutable_client_capability() {
+  commands::Capability* mutable_client_capability() {
     return &data_.client_capability;
   }
 
-  const commands::ApplicationInfo &application_info() const {
+  const commands::ApplicationInfo& application_info() const {
     return data_.application_info;
   }
-  commands::ApplicationInfo *mutable_application_info() {
+  commands::ApplicationInfo* mutable_application_info() {
     return &data_.application_info;
   }
 
   // Note that this may not be the latest info: this is likely to be a snapshot
   // of during the precomposition state and may not be updated during
   // composition/conversion state.
-  const commands::Context &client_context() const {
+  const commands::Context& client_context() const {
     return data_.client_context;
   }
-  commands::Context *mutable_client_context() { return &data_.client_context; }
+  commands::Context* mutable_client_context() { return &data_.client_context; }
 
-  const commands::Output &output() const { return data_.output; }
-  commands::Output *mutable_output() { return &data_.output; }
+  const commands::Output& output() const { return data_.output; }
+  commands::Output* mutable_output() { return &data_.output; }
 
  private:
   // Separate copyable data and non-copyable data to

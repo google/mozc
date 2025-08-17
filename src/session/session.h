@@ -53,35 +53,35 @@ namespace session {
 
 class Session {
  public:
-  explicit Session(const EngineInterface &engine);
-  Session(const Session &) = delete;
-  Session &operator=(const Session &) = delete;
+  explicit Session(const EngineInterface& engine);
+  Session(const Session&) = delete;
+  Session& operator=(const Session&) = delete;
 
-  bool SendKey(mozc::commands::Command *command);
+  bool SendKey(mozc::commands::Command* command);
 
   // Check if the input key event will be consumed by the session.
-  bool TestSendKey(mozc::commands::Command *command);
+  bool TestSendKey(mozc::commands::Command* command);
 
   // Perform the SEND_COMMAND command defined commands.proto.
-  bool SendCommand(mozc::commands::Command *command);
+  bool SendCommand(mozc::commands::Command* command);
 
   // Turn on IME. Do nothing (but the keyevent is consumed) when IME is already
   // turned on.
-  bool IMEOn(mozc::commands::Command *command);
+  bool IMEOn(mozc::commands::Command* command);
 
   // Turn off IME. Do nothing (but the keyevent is consumed) when IME is already
   // turned off.
-  bool IMEOff(mozc::commands::Command *command);
+  bool IMEOff(mozc::commands::Command* command);
 
   // Unlike IMEOn/IMEOff, these commands 1) can update composition mode, and
   // 2) are functional even when IME is already turned on/off.
   // TODO(team): Merge these into IMEOn/Off once b/10250883 is fixed.
-  bool MakeSureIMEOn(mozc::commands::Command *command);
-  bool MakeSureIMEOff(mozc::commands::Command *command);
+  bool MakeSureIMEOn(mozc::commands::Command* command);
+  bool MakeSureIMEOff(mozc::commands::Command* command);
 
-  bool EchoBack(mozc::commands::Command *command);
-  bool EchoBackAndClearUndoContext(mozc::commands::Command *command);
-  bool DoNothing(mozc::commands::Command *command);
+  bool EchoBack(mozc::commands::Command* command);
+  bool EchoBackAndClearUndoContext(mozc::commands::Command* command);
+  bool DoNothing(mozc::commands::Command* command);
 
   // Tries deleting the specified candidate from the user prediction history.
   // The candidate is determined by command.input.command.id, or the current
@@ -91,143 +91,143 @@ class Session {
   // invoking this method has the same effect as ConvertCancel() from the
   // viewpoint of session, meaning that the session state gets back to
   // composition.
-  bool DeleteCandidateFromHistory(mozc::commands::Command *command);
+  bool DeleteCandidateFromHistory(mozc::commands::Command* command);
 
   // Resets the composer and clear conversion segments.
   // History segments will not be cleared.
   // Therefore if a user commits "風"(かぜ) and Revert method is called,
   // preedit "ひいた"  will be converted into "邪引いた".
-  bool Revert(mozc::commands::Command *command);
+  bool Revert(mozc::commands::Command* command);
   // Reset the composer and clear all the segments (including history segments).
   // Therefore preedit "ひいた"  will *not* be converted into "邪引いた"
   // on the situation described above.
-  bool ResetContext(mozc::commands::Command *command);
+  bool ResetContext(mozc::commands::Command* command);
 
   // Returns the current status such as a composition string, input mode, etc.
-  bool GetStatus(mozc::commands::Command *command);
+  bool GetStatus(mozc::commands::Command* command);
 
   // Fills Output::Callback with the CONVERT_REVERSE SessionCommand to
   // ask the client to send back the SessionCommand to the server.
   // This function is called when the key event representing the
   // ConvertReverse keybinding is called.
-  bool RequestConvertReverse(mozc::commands::Command *command);
+  bool RequestConvertReverse(mozc::commands::Command* command);
 
   // Begins reverse conversion for the given session.  This function
   // is called when the CONVERT_REVERSE SessionCommand is called.
-  bool ConvertReverse(mozc::commands::Command *command);
+  bool ConvertReverse(mozc::commands::Command* command);
 
   // Fills Output::Callback with the Undo SessionCommand to ask the
   // client to send back the SessionCommand to the server.
   // This function is called when the key event representing the
   // Undo keybinding is called.
-  bool RequestUndo(mozc::commands::Command *command);
+  bool RequestUndo(mozc::commands::Command* command);
 
   // Undos the commitment.  This function is called when the
   // UNDO SessionCommand is called.
-  bool Undo(mozc::commands::Command *command);
+  bool Undo(mozc::commands::Command* command);
 
-  bool InsertSpace(mozc::commands::Command *command);
-  bool InsertSpaceToggled(mozc::commands::Command *command);
-  bool InsertSpaceHalfWidth(mozc::commands::Command *command);
-  bool InsertSpaceFullWidth(mozc::commands::Command *command);
-  bool InsertCharacter(mozc::commands::Command *command);
-  bool UpdateComposition(mozc::commands::Command *command);
-  bool UpdateCompositionInternal(mozc::commands::Command *command);
-  bool Delete(mozc::commands::Command *command);
-  bool Backspace(mozc::commands::Command *command);
-  bool EditCancel(mozc::commands::Command *command);
-  bool EditCancelAndIMEOff(mozc::commands::Command *command);
+  bool InsertSpace(mozc::commands::Command* command);
+  bool InsertSpaceToggled(mozc::commands::Command* command);
+  bool InsertSpaceHalfWidth(mozc::commands::Command* command);
+  bool InsertSpaceFullWidth(mozc::commands::Command* command);
+  bool InsertCharacter(mozc::commands::Command* command);
+  bool UpdateComposition(mozc::commands::Command* command);
+  bool UpdateCompositionInternal(mozc::commands::Command* command);
+  bool Delete(mozc::commands::Command* command);
+  bool Backspace(mozc::commands::Command* command);
+  bool EditCancel(mozc::commands::Command* command);
+  bool EditCancelAndIMEOff(mozc::commands::Command* command);
 
-  bool MoveCursorRight(mozc::commands::Command *command);
-  bool MoveCursorLeft(mozc::commands::Command *command);
-  bool MoveCursorToEnd(mozc::commands::Command *command);
-  bool MoveCursorToBeginning(mozc::commands::Command *command);
-  bool MoveCursorTo(mozc::commands::Command *command);
-  bool Convert(mozc::commands::Command *command);
+  bool MoveCursorRight(mozc::commands::Command* command);
+  bool MoveCursorLeft(mozc::commands::Command* command);
+  bool MoveCursorToEnd(mozc::commands::Command* command);
+  bool MoveCursorToBeginning(mozc::commands::Command* command);
+  bool MoveCursorTo(mozc::commands::Command* command);
+  bool Convert(mozc::commands::Command* command);
   // Starts conversion not using user history.  This is used for debugging.
-  bool ConvertWithoutHistory(mozc::commands::Command *command);
-  bool ConvertNext(mozc::commands::Command *command);
-  bool ConvertPrev(mozc::commands::Command *command);
+  bool ConvertWithoutHistory(mozc::commands::Command* command);
+  bool ConvertNext(mozc::commands::Command* command);
+  bool ConvertPrev(mozc::commands::Command* command);
   // Shows the next page of candidates.
-  bool ConvertNextPage(mozc::commands::Command *command);
+  bool ConvertNextPage(mozc::commands::Command* command);
   // Shows the previous page of candidates.
-  bool ConvertPrevPage(mozc::commands::Command *command);
-  bool ConvertCancel(mozc::commands::Command *command);
-  bool PredictAndConvert(mozc::commands::Command *command);
+  bool ConvertPrevPage(mozc::commands::Command* command);
+  bool ConvertCancel(mozc::commands::Command* command);
+  bool PredictAndConvert(mozc::commands::Command* command);
   // Note: Commit() also triggers zero query suggestion.
   // TODO(team): Rename this method to CommitWithZeroQuerySuggest.
-  bool Commit(mozc::commands::Command *command);
-  bool CommitNotTriggeringZeroQuerySuggest(commands::Command *command);
-  bool CommitFirstSuggestion(mozc::commands::Command *command);
+  bool Commit(mozc::commands::Command* command);
+  bool CommitNotTriggeringZeroQuerySuggest(commands::Command* command);
+  bool CommitFirstSuggestion(mozc::commands::Command* command);
   // Select a candidate located by input.command.id and commit.
-  bool CommitCandidate(mozc::commands::Command *command);
+  bool CommitCandidate(mozc::commands::Command* command);
 
   // Commits only the first segment.
-  bool CommitSegment(mozc::commands::Command *command);
+  bool CommitSegment(mozc::commands::Command* command);
   // Commits some characters at the head of the preedit.
-  bool CommitHead(size_t count, mozc::commands::Command *command);
+  bool CommitHead(size_t count, mozc::commands::Command* command);
   // Commits preedit if in password mode.
-  bool CommitIfPassword(mozc::commands::Command *command);
+  bool CommitIfPassword(mozc::commands::Command* command);
 
-  bool SegmentFocusRight(mozc::commands::Command *command);
-  bool SegmentFocusLeft(mozc::commands::Command *command);
-  bool SegmentFocusLast(mozc::commands::Command *command);
-  bool SegmentFocusLeftEdge(mozc::commands::Command *command);
-  bool SegmentWidthExpand(mozc::commands::Command *command);
-  bool SegmentWidthShrink(mozc::commands::Command *command);
+  bool SegmentFocusRight(mozc::commands::Command* command);
+  bool SegmentFocusLeft(mozc::commands::Command* command);
+  bool SegmentFocusLast(mozc::commands::Command* command);
+  bool SegmentFocusLeftEdge(mozc::commands::Command* command);
+  bool SegmentWidthExpand(mozc::commands::Command* command);
+  bool SegmentWidthShrink(mozc::commands::Command* command);
 
   // Selects the transliteration candidate.  If the current state is
   // composition, candidates will be generated with only translitaration
   // candidates.
-  bool ConvertToHiragana(mozc::commands::Command *command);
-  bool ConvertToFullKatakana(mozc::commands::Command *command);
-  bool ConvertToHalfKatakana(mozc::commands::Command *command);
-  bool ConvertToFullASCII(mozc::commands::Command *command);
-  bool ConvertToHalfASCII(mozc::commands::Command *command);
-  bool ConvertToHalfWidth(mozc::commands::Command *command);
+  bool ConvertToHiragana(mozc::commands::Command* command);
+  bool ConvertToFullKatakana(mozc::commands::Command* command);
+  bool ConvertToHalfKatakana(mozc::commands::Command* command);
+  bool ConvertToFullASCII(mozc::commands::Command* command);
+  bool ConvertToHalfASCII(mozc::commands::Command* command);
+  bool ConvertToHalfWidth(mozc::commands::Command* command);
   // Switch the composition to Hiragana, full-width Katakana or
   // half-width Katakana by rotation.
-  bool SwitchKanaType(mozc::commands::Command *command);
+  bool SwitchKanaType(mozc::commands::Command* command);
 
   // Select the transliteration candidate if the current status is
   // conversion.  This is same with the above ConvertTo functions.  If
   // the current state is composition, the display mode is changed to the
   // transliteration and the composition state still remains.
-  bool DisplayAsHiragana(mozc::commands::Command *command);
-  bool DisplayAsFullKatakana(mozc::commands::Command *command);
-  bool DisplayAsHalfKatakana(mozc::commands::Command *command);
-  bool TranslateFullASCII(mozc::commands::Command *command);
-  bool TranslateHalfASCII(mozc::commands::Command *command);
-  bool TranslateHalfWidth(mozc::commands::Command *command);
-  bool ToggleAlphanumericMode(mozc::commands::Command *command);
+  bool DisplayAsHiragana(mozc::commands::Command* command);
+  bool DisplayAsFullKatakana(mozc::commands::Command* command);
+  bool DisplayAsHalfKatakana(mozc::commands::Command* command);
+  bool TranslateFullASCII(mozc::commands::Command* command);
+  bool TranslateHalfASCII(mozc::commands::Command* command);
+  bool TranslateHalfWidth(mozc::commands::Command* command);
+  bool ToggleAlphanumericMode(mozc::commands::Command* command);
 
   // Switch the input mode.
-  bool InputModeHiragana(mozc::commands::Command *command);
-  bool InputModeFullKatakana(mozc::commands::Command *command);
-  bool InputModeHalfKatakana(mozc::commands::Command *command);
-  bool InputModeFullASCII(mozc::commands::Command *command);
-  bool InputModeHalfASCII(mozc::commands::Command *command);
-  bool InputModeSwitchKanaType(mozc::commands::Command *command);
+  bool InputModeHiragana(mozc::commands::Command* command);
+  bool InputModeFullKatakana(mozc::commands::Command* command);
+  bool InputModeHalfKatakana(mozc::commands::Command* command);
+  bool InputModeFullASCII(mozc::commands::Command* command);
+  bool InputModeHalfASCII(mozc::commands::Command* command);
+  bool InputModeSwitchKanaType(mozc::commands::Command* command);
 
   // Specify the input field type.
-  bool SwitchInputFieldType(mozc::commands::Command *command);
+  bool SwitchInputFieldType(mozc::commands::Command* command);
 
   // Let client launch config dialog
-  bool LaunchConfigDialog(mozc::commands::Command *command);
+  bool LaunchConfigDialog(mozc::commands::Command* command);
 
   // Let client launch dictionary tool
-  bool LaunchDictionaryTool(mozc::commands::Command *command);
+  bool LaunchDictionaryTool(mozc::commands::Command* command);
 
   // Let client launch word register dialog
-  bool LaunchWordRegisterDialog(mozc::commands::Command *command);
+  bool LaunchWordRegisterDialog(mozc::commands::Command* command);
 
   // Undo if pre-composition is empty. Rewind KANA cycle otherwise.
-  bool UndoOrRewind(mozc::commands::Command *command);
+  bool UndoOrRewind(mozc::commands::Command* command);
 
   // Stops key toggling in the composer.
-  bool StopKeyToggling(mozc::commands::Command *command);
+  bool StopKeyToggling(mozc::commands::Command* command);
 
-  bool ReportBug(mozc::commands::Command *command);
+  bool ReportBug(mozc::commands::Command* command);
 
   void SetConfig(std::shared_ptr<const mozc::config::Config> config);
 
@@ -254,7 +254,7 @@ class Session {
   void set_application_info(mozc::commands::ApplicationInfo application_info);
 
   // Get application information
-  const mozc::commands::ApplicationInfo &application_info() const;
+  const mozc::commands::ApplicationInfo& application_info() const;
 
   // Return the time when this instance was created.
   absl::Time create_session_time() const;
@@ -264,9 +264,9 @@ class Session {
 
   // TODO(komatsu): delete this function.
   // For unittest only
-  mozc::composer::Composer *get_internal_composer_only_for_unittest();
+  mozc::composer::Composer* get_internal_composer_only_for_unittest();
 
-  const ImeContext &context() const;
+  const ImeContext& context() const;
 
  private:
   friend class SessionTestPeer;
@@ -277,7 +277,7 @@ class Session {
   std::deque<std::unique_ptr<ImeContext>> undo_contexts_;
 
   std::unique_ptr<ImeContext> CreateContext(
-      const EngineInterface &engine) const;
+      const EngineInterface& engine) const;
 
   void PushUndoContext();
   void PopUndoContext();
@@ -291,48 +291,48 @@ class Session {
   // Otherwise no-op.
   // Some code treats empty Status and default Status differently so
   // we don't want to create a new Status instance if not required.
-  void MaybeSetUndoStatus(commands::Command *command) const;
+  void MaybeSetUndoStatus(commands::Command* command) const;
 
   // Return true if full width space is preferred in the given new input
   // state than half width space. When |input| does not have new input mode,
   // the current mode will be considered.
-  bool IsFullWidthInsertSpace(const mozc::commands::Input &input) const;
+  bool IsFullWidthInsertSpace(const mozc::commands::Input& input) const;
 
-  bool EditCancelOnPasswordField(mozc::commands::Command *command);
+  bool EditCancelOnPasswordField(mozc::commands::Command* command);
 
   bool ConvertToTransliteration(
-      mozc::commands::Command *command,
+      mozc::commands::Command* command,
       mozc::transliteration::TransliterationType type);
 
   // Select a candidate located by input.command.id.  This command
   // would not be used from SendKey but used from SendCommand because
   // it requires the argument id.
-  bool SelectCandidate(mozc::commands::Command *command);
+  bool SelectCandidate(mozc::commands::Command* command);
 
   // Calls EngineConverter::ConmmitHeadToFocusedSegments()
   // and deletes characters from the composer.
-  void CommitHeadToFocusedSegmentsInternal(const commands::Context &context);
+  void CommitHeadToFocusedSegmentsInternal(const commands::Context& context);
 
   // Commits without EngineConverter.
-  void CommitCompositionDirectly(commands::Command *command);
-  void CommitSourceTextDirectly(commands::Command *command);
-  void CommitRawTextDirectly(commands::Command *command);
+  void CommitCompositionDirectly(commands::Command* command);
+  void CommitSourceTextDirectly(commands::Command* command);
+  void CommitRawTextDirectly(commands::Command* command);
   void CommitStringDirectly(absl::string_view key, absl::string_view preedit,
-                            commands::Command *command);
-  bool CommitInternal(commands::Command *command,
+                            commands::Command* command);
+  bool CommitInternal(commands::Command* command,
                       bool trigger_zero_query_suggest);
 
   // Calls EngineConverter::Suggest if the condition is applicable to
   // call it.  True is returned when EngineConverter::Suggest is
   // called and results exist.  False is returned when
   // EngineConverter::Suggest is not called or no results exist.
-  bool Suggest(const mozc::commands::Input &input);
+  bool Suggest(const mozc::commands::Input& input);
 
   // Commands like EditCancel should restore the original string used for
   // the reverse conversion without any modification.
   // Returns true if the |source_text| is committed to cancel reconversion.
   // Returns false if this function has nothing to do.
-  bool TryCancelConvertReverse(mozc::commands::Command *command);
+  bool TryCancelConvertReverse(mozc::commands::Command* command);
 
   // Set the focus to the candidate located by input.command.id.  This
   // command would not be used from SendKey but used from SendCommand
@@ -340,38 +340,38 @@ class Session {
   // SelectCandidate is that HighlightCandidate does not close the
   // candidate window while SelectCandidate closes the candidate
   // window.
-  bool HighlightCandidate(mozc::commands::Command *command);
+  bool HighlightCandidate(mozc::commands::Command* command);
 
   // The internal implementation of both SelectCandidate and HighlightCandidate.
-  bool SelectCandidateInternal(mozc::commands::Command *command);
+  bool SelectCandidateInternal(mozc::commands::Command* command);
 
   // If the command is a shortcut to select a candidate from a list,
   // Process it and return true, otherwise return false.
-  bool MaybeSelectCandidate(mozc::commands::Command *command);
+  bool MaybeSelectCandidate(mozc::commands::Command* command);
 
   // Fill command's output according to the current state.
-  void OutputFromState(mozc::commands::Command *command);
-  void Output(mozc::commands::Command *command);
-  void OutputMode(mozc::commands::Command *command) const;
-  void OutputComposition(mozc::commands::Command *command) const;
-  void OutputKey(mozc::commands::Command *command) const;
+  void OutputFromState(mozc::commands::Command* command);
+  void Output(mozc::commands::Command* command);
+  void OutputMode(mozc::commands::Command* command) const;
+  void OutputComposition(mozc::commands::Command* command) const;
+  void OutputKey(mozc::commands::Command* command) const;
 
-  bool SendKeyDirectInputState(mozc::commands::Command *command);
-  bool SendKeyPrecompositionState(mozc::commands::Command *command);
-  bool SendKeyCompositionState(mozc::commands::Command *command);
-  bool SendKeyConversionState(mozc::commands::Command *command);
+  bool SendKeyDirectInputState(mozc::commands::Command* command);
+  bool SendKeyPrecompositionState(mozc::commands::Command* command);
+  bool SendKeyCompositionState(mozc::commands::Command* command);
+  bool SendKeyConversionState(mozc::commands::Command* command);
 
-  bool MoveCursorToEndInternal(mozc::commands::Command *command,
+  bool MoveCursorToEndInternal(mozc::commands::Command* command,
                                bool clear_undo);
 
   // update last_command_time;
   void UpdateTime();
 
   // update preferences only affecting this session.
-  void UpdatePreferences(mozc::commands::Command *command);
+  void UpdatePreferences(mozc::commands::Command* command);
 
   // Modify input of SendKey, TestSendKey, and SendCommand.
-  void TransformInput(mozc::commands::Input *input);
+  void TransformInput(mozc::commands::Input* input);
 
   // ensure session status is not DIRECT.
   // if session status is DIRECT, set the status to PRECOMPOSITION.
@@ -379,13 +379,13 @@ class Session {
 
   // return true if |key_event| is a triggering key_event of
   // AutoIMEConversion.
-  bool CanStartAutoConversion(const mozc::commands::KeyEvent &key_event) const;
+  bool CanStartAutoConversion(const mozc::commands::KeyEvent& key_event) const;
 
   // Handles KeyEvent::activated to support indirect IME on/off.
-  bool HandleIndirectImeOnOff(mozc::commands::Command *command);
+  bool HandleIndirectImeOnOff(mozc::commands::Command* command);
 
   // Commits the raw text of the composition.
-  bool CommitRawText(commands::Command *command);
+  bool CommitRawText(commands::Command* command);
 };
 
 }  // namespace session

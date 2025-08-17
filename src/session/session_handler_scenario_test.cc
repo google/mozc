@@ -88,10 +88,10 @@ class SessionHandlerScenarioTestBase : public SessionHandlerTestBase {
 };
 
 class SessionHandlerScenarioTest : public SessionHandlerScenarioTestBase,
-                                   public WithParamInterface<const char *> {
+                                   public WithParamInterface<const char*> {
  public:
   static std::string GetTestName(
-      const ::testing::TestParamInfo<ParamType> &info) {
+      const ::testing::TestParamInfo<ParamType>& info) {
     return absl::StrReplaceAll(
         FileUtil::Basename(FileUtil::NormalizeDirectorySeparator(info.param)),
         {{".", "_"}});
@@ -99,7 +99,7 @@ class SessionHandlerScenarioTest : public SessionHandlerScenarioTestBase,
 };
 
 // Tests should be passed.
-const char *kScenarioFileList[] = {
+const char* kScenarioFileList[] = {
 #define DATA_DIR "test/session/scenario/"
     DATA_DIR "auto_partial_suggestion.txt",
     DATA_DIR "b12751061_scenario.txt",
@@ -185,7 +185,7 @@ INSTANTIATE_TEST_SUITE_P(SessionHandlerScenarioParameters,
                          ::testing::ValuesIn(kScenarioFileList),
                          SessionHandlerScenarioTest::GetTestName);
 
-void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
+void ParseLine(SessionHandlerInterpreter& handler, const std::string& line) {
   std::vector<std::string> args = handler.Parse(line);
   if (args.empty()) {
     return;
@@ -219,10 +219,10 @@ TEST_P(SessionHandlerScenarioTest, TestImplBase) {
 
 class SessionHandlerScenarioTestForRequest
     : public SessionHandlerScenarioTestBase,
-      public WithParamInterface<std::tuple<const char *, commands::Request>> {
+      public WithParamInterface<std::tuple<const char*, commands::Request>> {
  public:
   static std::string GetTestName(
-      const ::testing::TestParamInfo<ParamType> &info) {
+      const ::testing::TestParamInfo<ParamType>& info) {
     return absl::StrCat(
         info.index, "_",
         absl::StrReplaceAll(
@@ -232,7 +232,7 @@ class SessionHandlerScenarioTestForRequest
   }
 };
 
-const char *kScenariosForExperimentParams[] = {
+const char* kScenariosForExperimentParams[] = {
 #define DATA_DIR "test/session/scenario/"
     DATA_DIR "mobile_apply_user_segment_history_rewriter.txt",
     DATA_DIR "mobile_delete_history.txt",

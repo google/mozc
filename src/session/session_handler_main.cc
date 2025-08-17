@@ -87,18 +87,18 @@ ABSL_FLAG(std::string, dictionary, "", "Dictionary: 'oss' or 'test'");
 ABSL_FLAG(bool, test, false, "Run as a test and quit.");
 
 namespace mozc {
-void Show(const commands::Output &output) {
-  for (const auto &segment : output.preedit().segment()) {
+void Show(const commands::Output& output) {
+  for (const auto& segment : output.preedit().segment()) {
     std::cout << segment.value() << " ";
   }
   std::cout << "(" << output.preedit().cursor() << ")" << std::endl;
-  for (const auto &candidate : output.candidate_window().candidate()) {
+  for (const auto& candidate : output.candidate_window().candidate()) {
     std::cout << candidate.id() << ": " << candidate.value() << std::endl;
   }
 }
 
-void ShowLog(const commands::Output &output, const int cand_id) {
-  for (const auto &candidate : output.all_candidate_words().candidates()) {
+void ShowLog(const commands::Output& output, const int cand_id) {
+  for (const auto& candidate : output.all_candidate_words().candidates()) {
     if (candidate.id() == cand_id) {
       std::cout << candidate.value() << std::endl;
       std::cout << candidate.log() << std::endl;
@@ -106,7 +106,7 @@ void ShowLog(const commands::Output &output, const int cand_id) {
     }
   }
 
-  for (const auto &candidate :
+  for (const auto& candidate :
        output.removed_candidate_words_for_debug().candidates()) {
     if (candidate.id() == cand_id) {
       std::cout << candidate.value() << std::endl;
@@ -116,13 +116,13 @@ void ShowLog(const commands::Output &output, const int cand_id) {
   }
 }
 
-bool ParseLine(session::SessionHandlerInterpreter &handler, std::string line,
+bool ParseLine(session::SessionHandlerInterpreter& handler, std::string line,
                int line_number) {
   std::vector<std::string> args = handler.Parse(line);
   if (args.empty()) {
     return true;
   }
-  const std::string &command = args[0];
+  const std::string& command = args[0];
 
   if (command == "SHOW_ALL") {
     std::cout << protobuf::Utf8Format(handler.LastOutput()) << std::endl;
@@ -135,7 +135,7 @@ bool ParseLine(session::SessionHandlerInterpreter &handler, std::string line,
     return true;
   }
   if (command == "SHOW_RESULT") {
-    const commands::Output &output = handler.LastOutput();
+    const commands::Output& output = handler.LastOutput();
     std::cout << protobuf::Utf8Format(output.result()) << std::endl;
     return true;
   }
@@ -189,7 +189,7 @@ bool ParseLine(session::SessionHandlerInterpreter &handler, std::string line,
 }
 
 std::unique_ptr<const DataManager> CreateDataManager(
-    const std::string &dictionary) {
+    const std::string& dictionary) {
   if (dictionary == "oss") {
     return std::make_unique<const oss::OssDataManager>();
   }
@@ -204,13 +204,13 @@ std::unique_ptr<const DataManager> CreateDataManager(
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(
-    const std::string &dictionary) {
+    const std::string& dictionary) {
   return Engine::CreateEngine(CreateDataManager(dictionary));
 }
 
 }  // namespace mozc
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   if (!absl::GetFlag(FLAGS_profile).empty()) {
     const std::string profile = absl::GetFlag(FLAGS_profile);

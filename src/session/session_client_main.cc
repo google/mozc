@@ -55,7 +55,7 @@ ABSL_FLAG(std::string, profile_dir, "", "Profile dir");
 namespace mozc {
 namespace {
 
-void Loop(std::istream *input, std::ostream *output) {
+void Loop(std::istream* input, std::ostream* output) {
   std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
   auto session = std::make_unique<session::Session>(*engine);
 
@@ -91,12 +91,12 @@ void Loop(std::istream *input, std::ostream *output) {
 }  // namespace
 }  // namespace mozc
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   std::unique_ptr<mozc::InputFileStream> input_file;
   std::unique_ptr<mozc::OutputFileStream> output_file;
-  std::istream *input = nullptr;
-  std::ostream *output = nullptr;
+  std::istream* input = nullptr;
+  std::ostream* output = nullptr;
 
   const std::string flags_profile_dir = absl::GetFlag(FLAGS_profile_dir);
   const std::string flags_input = absl::GetFlag(FLAGS_input);

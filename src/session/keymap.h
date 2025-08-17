@@ -202,9 +202,9 @@ class KeyMap {
  public:
   using CommandsType = typename T::Commands;
 
-  bool GetCommand(const commands::KeyEvent &key_event,
-                  CommandsType *command) const;
-  bool AddRule(const commands::KeyEvent &key_event, CommandsType command);
+  bool GetCommand(const commands::KeyEvent& key_event,
+                  CommandsType* command) const;
+  bool AddRule(const commands::KeyEvent& key_event, CommandsType command);
   void Clear();
 
  private:
@@ -220,65 +220,65 @@ class KeyMapManager {
  public:
   // Default ctor. keymap is NONE.
   KeyMapManager();
-  explicit KeyMapManager(const config::Config &config);
-  KeyMapManager(const KeyMapManager &) = delete;
-  KeyMapManager &operator=(const KeyMapManager &) = delete;
+  explicit KeyMapManager(const config::Config& config);
+  KeyMapManager(const KeyMapManager&) = delete;
+  KeyMapManager& operator=(const KeyMapManager&) = delete;
   ~KeyMapManager() = default;
 
-  bool GetCommandDirect(const commands::KeyEvent &key_event,
-                        DirectInputState::Commands *command) const;
+  bool GetCommandDirect(const commands::KeyEvent& key_event,
+                        DirectInputState::Commands* command) const;
 
-  bool GetCommandPrecomposition(const commands::KeyEvent &key_event,
-                                PrecompositionState::Commands *command) const;
+  bool GetCommandPrecomposition(const commands::KeyEvent& key_event,
+                                PrecompositionState::Commands* command) const;
 
-  bool GetCommandComposition(const commands::KeyEvent &key_event,
-                             CompositionState::Commands *command) const;
+  bool GetCommandComposition(const commands::KeyEvent& key_event,
+                             CompositionState::Commands* command) const;
 
-  bool GetCommandConversion(const commands::KeyEvent &key_event,
-                            ConversionState::Commands *command) const;
+  bool GetCommandConversion(const commands::KeyEvent& key_event,
+                            ConversionState::Commands* command) const;
 
   bool GetCommandZeroQuerySuggestion(
-      const commands::KeyEvent &key_event,
-      PrecompositionState::Commands *command) const;
+      const commands::KeyEvent& key_event,
+      PrecompositionState::Commands* command) const;
 
-  bool GetCommandSuggestion(const commands::KeyEvent &key_event,
-                            CompositionState::Commands *command) const;
+  bool GetCommandSuggestion(const commands::KeyEvent& key_event,
+                            CompositionState::Commands* command) const;
 
-  bool GetCommandPrediction(const commands::KeyEvent &key_event,
-                            ConversionState::Commands *command) const;
+  bool GetCommandPrediction(const commands::KeyEvent& key_event,
+                            ConversionState::Commands* command) const;
 
   bool GetNameFromCommandDirect(DirectInputState::Commands command,
-                                std::string *name) const;
+                                std::string* name) const;
   bool GetNameFromCommandPrecomposition(PrecompositionState::Commands command,
-                                        std::string *name) const;
+                                        std::string* name) const;
   bool GetNameFromCommandComposition(CompositionState::Commands command,
-                                     std::string *name) const;
+                                     std::string* name) const;
   bool GetNameFromCommandConversion(ConversionState::Commands command,
-                                    std::string *name) const;
+                                    std::string* name) const;
 
   // Append command names to command_names.
   void AppendAvailableCommandNameDirect(
-      absl::flat_hash_set<std::string> &command_names) const;
+      absl::flat_hash_set<std::string>& command_names) const;
   void AppendAvailableCommandNamePrecomposition(
-      absl::flat_hash_set<std::string> &command_names) const;
+      absl::flat_hash_set<std::string>& command_names) const;
   void AppendAvailableCommandNameComposition(
-      absl::flat_hash_set<std::string> &command_names) const;
+      absl::flat_hash_set<std::string>& command_names) const;
   void AppendAvailableCommandNameConversion(
-      absl::flat_hash_set<std::string> &command_names) const;
+      absl::flat_hash_set<std::string>& command_names) const;
   void AppendAvailableCommandNameZeroQuerySuggestion(
-      absl::flat_hash_set<std::string> &command_names) const;
+      absl::flat_hash_set<std::string>& command_names) const;
   void AppendAvailableCommandNameSuggestion(
-      absl::flat_hash_set<std::string> &command_names) const;
+      absl::flat_hash_set<std::string>& command_names) const;
   void AppendAvailableCommandNamePrediction(
-      absl::flat_hash_set<std::string> &command_names) const;
+      absl::flat_hash_set<std::string>& command_names) const;
 
   // Return the file name bound with the keymap enum.
-  static const char *GetKeyMapFileName(config::Config::SessionKeymap keymap);
+  static const char* GetKeyMapFileName(config::Config::SessionKeymap keymap);
 
   // Returns true if both `new_config` and `old_config`
   // can use the same KeyMapManager.
-  static bool IsSameKeyMapManagerApplicable(const config::Config &old_config,
-                                            const config::Config &new_config);
+  static bool IsSameKeyMapManagerApplicable(const config::Config& old_config,
+                                            const config::Config& new_config);
 
  private:
   friend class KeyMapTest;
@@ -288,37 +288,37 @@ class KeyMapManager {
   void InitCommandData();
   bool Initialize();
 
-  bool LoadFile(const char *filename);
-  bool LoadStream(std::istream *ifs);
-  bool LoadStreamWithErrors(std::istream *ifs,
-                            std::vector<std::string> *errors);
+  bool LoadFile(const char* filename);
+  bool LoadStream(std::istream* ifs);
+  bool LoadStreamWithErrors(std::istream* ifs,
+                            std::vector<std::string>* errors);
   // Applies "primary" SessionKeymap, like MSIME or KOTOERI.
   bool ApplyPrimarySessionKeymap(config::Config::SessionKeymap keymap,
-                                 const std::string &custom_keymap_table);
+                                 const std::string& custom_keymap_table);
   // Applies "overlay" SessionKeymaps, like OVERLAY_HENKAN_TO_IME_ON.
   void ApplyOverlaySessionKeymap(
-      const ::mozc::protobuf::RepeatedField<int> &overlay_keymaps);
+      const ::mozc::protobuf::RepeatedField<int>& overlay_keymaps);
 
   // Add a command bound with state and key_event.
-  bool AddCommand(const std::string &state_name,
-                  const std::string &key_event_name,
-                  const std::string &command_name);
+  bool AddCommand(const std::string& state_name,
+                  const std::string& key_event_name,
+                  const std::string& command_name);
 
-  bool ParseCommandDirect(const std::string &command_string,
-                          DirectInputState::Commands *command) const;
-  bool ParseCommandPrecomposition(const std::string &command_string,
-                                  PrecompositionState::Commands *command) const;
-  bool ParseCommandComposition(const std::string &command_string,
-                               CompositionState::Commands *command) const;
-  bool ParseCommandConversion(const std::string &command_string,
-                              ConversionState::Commands *command) const;
-  void RegisterDirectCommand(const std::string &command_string,
+  bool ParseCommandDirect(const std::string& command_string,
+                          DirectInputState::Commands* command) const;
+  bool ParseCommandPrecomposition(const std::string& command_string,
+                                  PrecompositionState::Commands* command) const;
+  bool ParseCommandComposition(const std::string& command_string,
+                               CompositionState::Commands* command) const;
+  bool ParseCommandConversion(const std::string& command_string,
+                              ConversionState::Commands* command) const;
+  void RegisterDirectCommand(const std::string& command_string,
                              DirectInputState::Commands command);
-  void RegisterPrecompositionCommand(const std::string &command_string,
+  void RegisterPrecompositionCommand(const std::string& command_string,
                                      PrecompositionState::Commands command);
-  void RegisterCompositionCommand(const std::string &command_string,
+  void RegisterCompositionCommand(const std::string& command_string,
                                   CompositionState::Commands command);
-  void RegisterConversionCommand(const std::string &command_string,
+  void RegisterConversionCommand(const std::string& command_string,
                                  ConversionState::Commands command);
 
 #if defined(__APPLE__)
@@ -365,8 +365,8 @@ class KeyMapManager {
 };
 
 template <typename T>
-bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
-                           CommandsType *command) const {
+bool KeyMap<T>::GetCommand(const commands::KeyEvent& key_event,
+                           CommandsType* command) const {
   // Shortcut keys should be available as if CapsLock was not enabled like
   // other IMEs such as MS-IME or ATOK. b/5627459
   commands::KeyEvent normalized_key_event;
@@ -393,7 +393,7 @@ bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
 }
 
 template <typename T>
-bool KeyMap<T>::AddRule(const commands::KeyEvent &key_event,
+bool KeyMap<T>::AddRule(const commands::KeyEvent& key_event,
                         CommandsType command) {
   KeyInformation key;
   if (!KeyEventUtil::GetKeyInformation(key_event, &key)) {

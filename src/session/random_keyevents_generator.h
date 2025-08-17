@@ -46,7 +46,7 @@ class RandomKeyEventsGenerator {
   RandomKeyEventsGenerator() = default;
   // Initialize with seed.
   template <typename Rng>
-  explicit RandomKeyEventsGenerator(Rng &&rng)
+  explicit RandomKeyEventsGenerator(Rng&& rng)
       : bitgen_(std::forward<Rng>(rng)) {}
 
   // Load all data to avoid a increase of memory usage
@@ -54,26 +54,26 @@ class RandomKeyEventsGenerator {
   void PrepareForMemoryLeakTest();
 
   // Generate a random test keyevents sequence for desktop
-  void GenerateSequence(std::vector<commands::KeyEvent> *keys);
+  void GenerateSequence(std::vector<commands::KeyEvent>* keys);
 
   // Generate a random test keyevents sequence for mobile
   void GenerateMobileSequence(bool create_probable_key_events,
-                              std::vector<commands::KeyEvent> *keys);
+                              std::vector<commands::KeyEvent>* keys);
 
   // return test sentence set embedded in RandomKeyEventsGenerator.
   // Example:
   // const absl::Span<const char *> sentences =
   //     RandomKeyEventsGenerator::GetTestSentences();
   // const absl::string_view s = sentences[10];
-  static absl::Span<const char *> GetTestSentences();
+  static absl::Span<const char*> GetTestSentences();
 
  private:
   uint32_t GetRandomAsciiKey();
   void TypeRawKeys(absl::string_view romaji, bool create_probable_key_events,
-                   std::vector<commands::KeyEvent> *keys);
+                   std::vector<commands::KeyEvent>* keys);
   void GenerateMobileSequenceInternal(absl::string_view sentence,
                                       bool create_probable_key_events,
-                                      std::vector<commands::KeyEvent> *keys);
+                                      std::vector<commands::KeyEvent>* keys);
 
   absl::BitGen bitgen_;
 };

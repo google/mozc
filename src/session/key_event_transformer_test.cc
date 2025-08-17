@@ -43,12 +43,12 @@ namespace session {
 namespace {
 
 ::testing::AssertionResult IsKeyEventTransformerEq(
-    const KeyEventTransformer &x, const KeyEventTransformer &y) {
+    const KeyEventTransformer& x, const KeyEventTransformer& y) {
   if (x.table().size() != y.table().size()) {
     return ::testing::AssertionFailure() << "Table size differs";
   }
 
-  for (const auto &[key, event] : x.table()) {
+  for (const auto& [key, event] : x.table()) {
     const auto iter = y.table().find(key);
     if (iter == y.table().end()) {
       return ::testing::AssertionFailure()
@@ -71,9 +71,9 @@ namespace {
 
 void TestNumpadTransformation(commands::KeyEvent::SpecialKey input,
                               uint32_t expected_key_code,
-                              const std::string &expected_key_string,
+                              const std::string& expected_key_string,
                               commands::KeyEvent::InputStyle expected_style) {
-  KeyEventTransformer *table = Singleton<KeyEventTransformer>::get();
+  KeyEventTransformer* table = Singleton<KeyEventTransformer>::get();
 
   commands::KeyEvent key_event;
   key_event.set_special_key(input);
@@ -87,10 +87,10 @@ void TestNumpadTransformation(commands::KeyEvent::SpecialKey input,
   EXPECT_EQ(key_event.input_style(), expected_style);
 }
 
-void TestKanaTransformation(const std::string &key_string,
+void TestKanaTransformation(const std::string& key_string,
                             uint32_t expected_key_code,
-                            const std::string &expected_key_string) {
-  KeyEventTransformer *table = Singleton<KeyEventTransformer>::get();
+                            const std::string& expected_key_string) {
+  KeyEventTransformer* table = Singleton<KeyEventTransformer>::get();
 
   commands::KeyEvent key_event;
   key_event.set_key_string(key_string);
@@ -112,7 +112,7 @@ void TestKanaTransformation(const std::string &key_string,
 }  // namespace
 
 TEST(KeyEventTransformerTest, Numpad) {
-  KeyEventTransformer *table = Singleton<KeyEventTransformer>::get();
+  KeyEventTransformer* table = Singleton<KeyEventTransformer>::get();
 
   {  // "Separator to Enter"
     commands::KeyEvent key_event;
@@ -190,13 +190,13 @@ TEST(KeyEventTransformerTest, Numpad) {
 }
 
 TEST(KeyEventTransformerTest, Kana) {
-  KeyEventTransformer *table = Singleton<KeyEventTransformer>::get();
+  KeyEventTransformer* table = Singleton<KeyEventTransformer>::get();
 
   {  // Punctuation
-    const char *kFullKuten = "、";
-    const char *kFullTouten = "。";
-    const char *kFullComma = "，";
-    const char *kFullPeriod = "．";
+    const char* kFullKuten = "、";
+    const char* kFullTouten = "。";
+    const char* kFullComma = "，";
+    const char* kFullPeriod = "．";
 
     {
       SCOPED_TRACE("KUTEN_TOUTEN");
@@ -237,12 +237,12 @@ TEST(KeyEventTransformerTest, Kana) {
   }
 
   {  // Symbol
-    const char *kFullLeftSquareBracket = "［";
-    const char *kFullRightSquareBracket = "］";
-    const char *kFullLeftCornerBracket = "「";
-    const char *kFullRightCornerBracket = "」";
-    const char *kFullSlash = "／";
-    const char *kFullMiddleDot = "・";
+    const char* kFullLeftSquareBracket = "［";
+    const char* kFullRightSquareBracket = "］";
+    const char* kFullLeftCornerBracket = "「";
+    const char* kFullRightCornerBracket = "」";
+    const char* kFullSlash = "／";
+    const char* kFullMiddleDot = "・";
 
     {
       SCOPED_TRACE("CORNER_BRACKET_MIDDLE_DOT");

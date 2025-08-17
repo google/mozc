@@ -48,19 +48,19 @@ class KeyEventTransformer final {
 
   KeyEventTransformer();
 
-  KeyEventTransformer(const KeyEventTransformer &) = default;
-  KeyEventTransformer &operator=(const KeyEventTransformer &) = default;
+  KeyEventTransformer(const KeyEventTransformer&) = default;
+  KeyEventTransformer& operator=(const KeyEventTransformer&) = default;
 
   ~KeyEventTransformer() = default;
 
   // Updates the transform table accoding to config.
-  void ReloadConfig(const config::Config &config);
+  void ReloadConfig(const config::Config& config);
 
   // Transforms key event accoding to transform table.
   // We should update table using ReloadConfig() before calling a this function.
-  bool TransformKeyEvent(commands::KeyEvent *key_event) const;
+  bool TransformKeyEvent(commands::KeyEvent* key_event) const;
 
-  const Table &table() const { return table_; }
+  const Table& table() const { return table_; }
   config::Config::NumpadCharacterForm numpad_character_form() const {
     return numpad_character_form_;
   }
@@ -68,11 +68,11 @@ class KeyEventTransformer final {
  private:
   // Transform the key event base on the rule.  This function is used
   // for special treatment with numpad keys.
-  bool TransformKeyEventForNumpad(commands::KeyEvent *key_event) const;
+  bool TransformKeyEventForNumpad(commands::KeyEvent* key_event) const;
 
   // Transform symbols for Kana input.  Character transformation for
   // Romanji input is performed in preedit/table.cc
-  bool TransformKeyEventForKana(commands::KeyEvent *key_event) const;
+  bool TransformKeyEventForKana(commands::KeyEvent* key_event) const;
 
   Table table_;
   config::Config::NumpadCharacterForm numpad_character_form_;

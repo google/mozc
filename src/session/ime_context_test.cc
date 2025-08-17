@@ -119,9 +119,9 @@ TEST(ImeContextTest, CopyContext) {
   auto converter = std::make_shared<MockConverter>();
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("あん");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = "庵";
   EXPECT_CALL(*converter, StartConversion(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));

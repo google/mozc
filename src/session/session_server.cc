@@ -84,7 +84,7 @@ bool SessionServer::Connected() const {
           IPCServer::Connected());
 }
 
-bool SessionServer::Process(absl::string_view request, std::string *response) {
+bool SessionServer::Process(absl::string_view request, std::string* response) {
   if (!session_handler_) {
     LOG(WARNING) << "handler is not available";
     return false;  // shutdown the server if handler doesn't exist

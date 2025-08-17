@@ -53,7 +53,7 @@ KeyEventTransformer::KeyEventTransformer() {
   ReloadConfig(config::ConfigHandler::DefaultConfig());
 }
 
-void KeyEventTransformer::ReloadConfig(const Config &config) {
+void KeyEventTransformer::ReloadConfig(const Config& config) {
   numpad_character_form_ = config.numpad_character_form();
 
   table_.clear();
@@ -98,7 +98,7 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
   }
 }
 
-bool KeyEventTransformer::TransformKeyEvent(KeyEvent *key_event) const {
+bool KeyEventTransformer::TransformKeyEvent(KeyEvent* key_event) const {
   if (key_event == nullptr) {
     LOG(ERROR) << "key_event is NULL";
     return false;
@@ -113,7 +113,7 @@ bool KeyEventTransformer::TransformKeyEvent(KeyEvent *key_event) const {
 }
 
 bool KeyEventTransformer::TransformKeyEventForNumpad(
-    KeyEvent *key_event) const {
+    KeyEvent* key_event) const {
   DCHECK(key_event);
 
   if (!KeyEventUtil::IsNumpadKey(*key_event)) {
@@ -177,7 +177,7 @@ bool KeyEventTransformer::TransformKeyEventForNumpad(
   return true;
 }
 
-bool KeyEventTransformer::TransformKeyEventForKana(KeyEvent *key_event) const {
+bool KeyEventTransformer::TransformKeyEventForKana(KeyEvent* key_event) const {
   DCHECK(key_event);
 
   if (!key_event->has_key_string()) {

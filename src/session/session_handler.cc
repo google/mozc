@@ -100,9 +100,9 @@ ABSL_FLAG(bool, restricted, false, "Launch server with restricted setting");
 namespace mozc {
 namespace {
 
-bool IsApplicationAlive(const session::Session *session) {
+bool IsApplicationAlive(const session::Session* session) {
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  const commands::ApplicationInfo &info = session->application_info();
+  const commands::ApplicationInfo& info = session->application_info();
   // When the thread/process's current status is unknown, i.e.,
   // if IsThreadAlive/IsProcessAlive functions failed to know the
   // status of the thread/process, return true just in case.
@@ -199,8 +199,8 @@ void SessionHandler::UpdateSessions(
   std::shared_ptr<const composer::Table> table =
       table_manager_->GetTable(*request_, *config_);
 
-  for (SessionElement &element : *session_map_) {
-    std::unique_ptr<session::Session> &session = element.value;
+  for (SessionElement& element : *session_map_) {
+    std::unique_ptr<session::Session>& session = element.value;
     if (!session) {
       continue;
     }
@@ -216,53 +216,53 @@ void SessionHandler::UpdateSessions(
   }
 }
 
-bool SessionHandler::SyncData(commands::Command *command) {
+bool SessionHandler::SyncData(commands::Command* command) {
   MOZC_VLOG(1) << "Syncing user data";
   engine_->Sync();
   engine_->Wait();
   return true;
 }
 
-bool SessionHandler::Shutdown(commands::Command *command) {
+bool SessionHandler::Shutdown(commands::Command* command) {
   MOZC_VLOG(1) << "Shutdown server";
   SyncData(command);
   is_available_ = false;
   return true;
 }
 
-bool SessionHandler::Reload(commands::Command *command) {
+bool SessionHandler::Reload(commands::Command* command) {
   MOZC_VLOG(1) << "Reloading server";
   UpdateSessions();
   engine_->Reload();
   return true;
 }
 
-bool SessionHandler::ReloadAndWait(commands::Command *command) {
+bool SessionHandler::ReloadAndWait(commands::Command* command) {
   MOZC_VLOG(1) << "Reloading server and wait for reloader";
   UpdateSessions();
   engine_->ReloadAndWait();
   return true;
 }
 
-bool SessionHandler::ClearUserHistory(commands::Command *command) {
+bool SessionHandler::ClearUserHistory(commands::Command* command) {
   MOZC_VLOG(1) << "Clearing user history";
   engine_->ClearUserHistory();
   return true;
 }
 
-bool SessionHandler::ClearUserPrediction(commands::Command *command) {
+bool SessionHandler::ClearUserPrediction(commands::Command* command) {
   MOZC_VLOG(1) << "Clearing user prediction";
   engine_->ClearUserPrediction();
   return true;
 }
 
-bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
+bool SessionHandler::ClearUnusedUserPrediction(commands::Command* command) {
   MOZC_VLOG(1) << "Clearing unused user prediction";
   engine_->ClearUnusedUserPrediction();
   return true;
 }
 
-bool SessionHandler::GetConfig(commands::Command *command) {
+bool SessionHandler::GetConfig(commands::Command* command) {
   MOZC_VLOG(1) << "Getting config";
   *command->mutable_output()->mutable_config() =
       config::ConfigHandler::GetCopiedConfig();
@@ -272,7 +272,7 @@ bool SessionHandler::GetConfig(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::SetConfig(commands::Command *command) {
+bool SessionHandler::SetConfig(commands::Command* command) {
   MOZC_VLOG(1) << "Setting user config";
   if (!command->input().has_config()) {
     LOG(WARNING) << "config is empty";
@@ -285,7 +285,7 @@ bool SessionHandler::SetConfig(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::SetRequest(commands::Command *command) {
+bool SessionHandler::SetRequest(commands::Command* command) {
   MOZC_VLOG(1) << "Setting client's request";
   if (!command->input().has_request()) {
     LOG(WARNING) << "request is empty";
@@ -297,7 +297,7 @@ bool SessionHandler::SetRequest(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::EvalCommand(commands::Command *command) {
+bool SessionHandler::EvalCommand(commands::Command* command) {
   if (!is_available_) {
     LOG(ERROR) << "SessionHandler is not available.";
     return false;
@@ -397,7 +397,7 @@ std::unique_ptr<session::Session> SessionHandler::NewSession() {
   return std::make_unique<session::Session>(*engine_);
 }
 
-void SessionHandler::MaybeUpdateConfig(commands::Command *command) {
+void SessionHandler::MaybeUpdateConfig(commands::Command* command) {
   if (!command->output().has_config()) {
     return;
   }
@@ -406,9 +406,9 @@ void SessionHandler::MaybeUpdateConfig(commands::Command *command) {
   Reload(command);
 }
 
-bool SessionHandler::SendKey(commands::Command *command) {
+bool SessionHandler::SendKey(commands::Command* command) {
   const SessionID id = command->input().id();
-  std::unique_ptr<session::Session> *session = session_map_->MutableLookup(id);
+  std::unique_ptr<session::Session>* session = session_map_->MutableLookup(id);
   if (session == nullptr || !*session) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -418,9 +418,9 @@ bool SessionHandler::SendKey(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::TestSendKey(commands::Command *command) {
+bool SessionHandler::TestSendKey(commands::Command* command) {
   const SessionID id = command->input().id();
-  std::unique_ptr<session::Session> *session = session_map_->MutableLookup(id);
+  std::unique_ptr<session::Session>* session = session_map_->MutableLookup(id);
   if (session == nullptr || !*session) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -429,9 +429,9 @@ bool SessionHandler::TestSendKey(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::SendCommand(commands::Command *command) {
+bool SessionHandler::SendCommand(commands::Command* command) {
   const SessionID id = command->input().id();
-  std::unique_ptr<session::Session> *session = session_map_->MutableLookup(id);
+  std::unique_ptr<session::Session>* session = session_map_->MutableLookup(id);
   if (session == nullptr || !*session) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -441,7 +441,7 @@ bool SessionHandler::SendCommand(commands::Command *command) {
   return true;
 }
 
-void SessionHandler::MaybeReloadEngine(commands::Command *command) {
+void SessionHandler::MaybeReloadEngine(commands::Command* command) {
   if (session_map_->Size() > 0) {
     // Some sessions still use the current engine_.
     return;
@@ -459,15 +459,15 @@ void SessionHandler::MaybeReloadEngine(commands::Command *command) {
   table_manager_->ClearCaches();
 }
 
-bool SessionHandler::GetServerVersion(mozc::commands::Command *command) const {
-  commands::Output::VersionInfo *version_info =
+bool SessionHandler::GetServerVersion(mozc::commands::Command* command) const {
+  commands::Output::VersionInfo* version_info =
       command->mutable_output()->mutable_server_version();
   version_info->set_mozc_version(Version::GetMozcVersion());
   version_info->set_data_version(engine_->GetDataVersion());
   return true;
 }
 
-bool SessionHandler::CreateSession(commands::Command *command) {
+bool SessionHandler::CreateSession(commands::Command* command) {
   // prevent DOS attack
   // don't allow CreateSession in very short period.
   const absl::Duration create_session_minimum_interval = std::max(
@@ -489,7 +489,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 
   // if session map is FULL, remove the oldest item from the LRU
   if (session_map_->Size() >= max_session_size_) {
-    SessionElement *oldest_element = session_map_->MutableTail();
+    SessionElement* oldest_element = session_map_->MutableTail();
     if (oldest_element == nullptr) {
       LOG(ERROR) << "oldest SessionElement is NULL";
       return false;
@@ -519,7 +519,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   }
 
   const SessionID new_id = CreateNewSessionID();
-  SessionElement *element = session_map_->Insert(new_id);
+  SessionElement* element = session_map_->Insert(new_id);
   element->value = std::move(session);
   command->mutable_output()->set_id(new_id);
 
@@ -535,7 +535,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::DeleteSession(commands::Command *command) {
+bool SessionHandler::DeleteSession(commands::Command* command) {
   DeleteSessionID(command->input().id());
   engine_->Sync();
   return true;
@@ -548,7 +548,7 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
 // Also, if timeout is enabled, shutdown server if there is
 // no active session and client doesn't send any conversion
 // request to the server for FLAGS_timeout sec.
-bool SessionHandler::Cleanup(commands::Command *command) {
+bool SessionHandler::Cleanup(commands::Command* command) {
   const absl::Time current_time = Clock::GetAbslTime();
 
   // suspend/hibernation may happen
@@ -580,8 +580,8 @@ bool SessionHandler::Cleanup(commands::Command *command) {
                    absl::Seconds(7200)));
 
   std::vector<SessionID> remove_ids;
-  for (const SessionElement &element : *session_map_) {
-    const session::Session *session = element.value.get();
+  for (const SessionElement& element : *session_map_) {
+    const session::Session* session = element.value.get();
     if (!IsApplicationAlive(session)) {
       MOZC_VLOG(2) << "Application is not alive. Removing: " << element.key;
       remove_ids.push_back(element.key);
@@ -619,7 +619,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::SendUserDictionaryCommand(commands::Command *command) {
+bool SessionHandler::SendUserDictionaryCommand(commands::Command* command) {
   if (!command->input().has_user_dictionary_command()) {
     return false;
   }
@@ -633,7 +633,7 @@ bool SessionHandler::SendUserDictionaryCommand(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::SendEngineReloadRequest(commands::Command *command) {
+bool SessionHandler::SendEngineReloadRequest(commands::Command* command) {
   if (!command->input().has_engine_reload_request()) {
     return false;
   }
@@ -646,9 +646,9 @@ bool SessionHandler::SendEngineReloadRequest(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::NoOperation(commands::Command *command) { return true; }
+bool SessionHandler::NoOperation(commands::Command* command) { return true; }
 
-bool SessionHandler::ReloadSupplementalModel(commands::Command *command) {
+bool SessionHandler::ReloadSupplementalModel(commands::Command* command) {
   if (!command->input().has_engine_reload_request()) {
     return false;
   }
@@ -677,7 +677,7 @@ SessionID SessionHandler::CreateNewSessionID() {
 }
 
 bool SessionHandler::DeleteSessionID(SessionID id) {
-  std::unique_ptr<session::Session> *session = session_map_->MutableLookup(id);
+  std::unique_ptr<session::Session>* session = session_map_->MutableLookup(id);
   if (session == nullptr || !*session) {
     LOG_IF(WARNING, id != 0) << "cannot find SessionID " << id;
     return false;

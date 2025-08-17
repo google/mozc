@@ -47,7 +47,7 @@ using ::mozc::commands::KeyEvent;
 using ::mozc::config::Config;
 using ::mozc::config::ConfigHandler;
 
-void PushKey(const std::string &key_string, std::vector<KeyInformation> *keys) {
+void PushKey(const std::string& key_string, std::vector<KeyInformation>* keys) {
   KeyEvent key;
   if (!KeyParser::ParseKey(key_string, &key)) {
     return;
@@ -73,7 +73,7 @@ TEST(KeyInfoUtilTest, ExtractSortedDirectModeKeys) {
   config.set_session_keymap(Config::CUSTOM);
   config.set_custom_keymap_table(kCustomKeymapTable);
 
-  const auto &actual = KeyInfoUtil::ExtractSortedDirectModeKeys(config);
+  const auto& actual = KeyInfoUtil::ExtractSortedDirectModeKeys(config);
 
   std::vector<KeyInformation> expected;
   PushKey("HENKAN", &expected);
