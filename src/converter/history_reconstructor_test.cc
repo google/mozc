@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "converter/attribute.h"
 #include "converter/candidate.h"
 #include "converter/segments.h"
@@ -141,7 +142,7 @@ TEST(HistoryReconstructorTest, ReconstructHistory) {
   const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
   const converter::HistoryReconstructor reconstructor(pos_matcher);
 
-  constexpr char kTen[] = "１０";
+  constexpr absl::string_view kTen = "１０";
 
   Segments segments;
   EXPECT_TRUE(reconstructor.ReconstructHistory(kTen, &segments));

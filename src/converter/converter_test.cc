@@ -734,7 +734,7 @@ TEST_F(ConverterTest, Regression3437022) {
 }
 
 TEST_F(ConverterTest, CompletePosIds) {
-  const char* kTestKeys[] = {
+  absl::string_view kTestKeys[] = {
       "きょうと", "いきます",         "うつくしい",
       "おおきな", "いっちゃわないね", "わたしのなまえはなかのです",
   };
@@ -787,12 +787,12 @@ TEST_F(ConverterTest, Regression3046266) {
   Segments segments;
 
   // Can be any string that has "ん" at the end
-  constexpr char kKey1[] = "かん";
+  constexpr absl::string_view kKey1 = "かん";
 
   // Can be any string that has a vowel at the beginning
-  constexpr char kKey2[] = "あか";
+  constexpr absl::string_view kKey2 = "あか";
 
-  constexpr char kValueNotExpected[] = "中";
+  constexpr absl::string_view kValueNotExpected = "中";
 
   EXPECT_TRUE(converter->StartConversion(
       ConvReq(kKey1, ConversionRequest::CONVERSION), &segments));
@@ -818,8 +818,8 @@ TEST_F(ConverterTest, Regression5502496) {
   std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
   Segments segments;
 
-  constexpr char kKey[] = "みんあ";
-  constexpr char kValueExpected[] = "みんな";
+  constexpr absl::string_view kKey = "みんあ";
+  constexpr absl::string_view kValueExpected = "みんな";
 
   EXPECT_TRUE(converter->StartConversion(
       ConvReq(kKey, ConversionRequest::CONVERSION), &segments));
@@ -996,8 +996,8 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
 }
 
 TEST_F(ConverterTest, PredictSetKey) {
-  constexpr char kPredictionKey[] = "prediction key";
-  constexpr char kPredictionKey2[] = "prediction key2";
+  constexpr absl::string_view kPredictionKey = "prediction key";
+  constexpr absl::string_view kPredictionKey2 = "prediction key2";
   // Tests whether SetKey method is called or not.
   struct TestData {
     // Input conditions.
@@ -1361,7 +1361,7 @@ TEST_F(ConverterTest, ReconstructHistory) {
   std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
   std::shared_ptr<const ConverterInterface> converter = engine->GetConverter();
 
-  constexpr char kTen[] = "１０";
+  constexpr absl::string_view kTen = "１０";
 
   Segments segments;
   EXPECT_TRUE(converter->ReconstructHistory(&segments, kTen));

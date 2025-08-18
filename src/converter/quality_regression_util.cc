@@ -65,20 +65,22 @@ namespace {
 
 using converter::Candidate;
 
-constexpr char kConversionExpect[] = "Conversion Expected";
-constexpr char kConversionNotExpect[] = "Conversion Not Expected";
-constexpr char kConversionMatch[] = "Conversion Match";
-constexpr char kConversionNotMatch[] = "Conversion Not Match";
-constexpr char kReverseConversionExpect[] = "ReverseConversion Expected";
-constexpr char kReverseConversionNotExpect[] = "ReverseConversion Not Expected";
+constexpr absl::string_view kConversionExpect = "Conversion Expected";
+constexpr absl::string_view kConversionNotExpect = "Conversion Not Expected";
+constexpr absl::string_view kConversionMatch = "Conversion Match";
+constexpr absl::string_view kConversionNotMatch = "Conversion Not Match";
+constexpr absl::string_view kReverseConversionExpect =
+    "ReverseConversion Expected";
+constexpr absl::string_view kReverseConversionNotExpect =
+    "ReverseConversion Not Expected";
 // For now, suggestion and prediction are using same implementation
-constexpr char kPredictionExpect[] = "Prediction Expected";
-constexpr char kPredictionNotExpect[] = "Prediction Not Expected";
-constexpr char kSuggestionExpect[] = "Suggestion Expected";
-constexpr char kSuggestionNotExpect[] = "Suggestion Not Expected";
+constexpr absl::string_view kPredictionExpect = "Prediction Expected";
+constexpr absl::string_view kPredictionNotExpect = "Prediction Not Expected";
+constexpr absl::string_view kSuggestionExpect = "Suggestion Expected";
+constexpr absl::string_view kSuggestionNotExpect = "Suggestion Not Expected";
 // Zero query
-constexpr char kZeroQueryExpect[] = "ZeroQuery Expected";
-constexpr char kZeroQueryNotExpect[] = "ZeroQuery Not Expected";
+constexpr absl::string_view kZeroQueryExpect = "ZeroQuery Expected";
+constexpr absl::string_view kZeroQueryNotExpect = "ZeroQuery Not Expected";
 
 int GetRank(absl::string_view value, const Segments* segments,
             size_t current_segment) {

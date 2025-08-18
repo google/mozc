@@ -1316,8 +1316,8 @@ TEST_F(CandidateFilterTest, ReverseConversion) {
   std::vector<const Node*> nodes;
   GetDefaultNodes(&nodes);
 
-  constexpr char kHonKanji[] = "本";
-  constexpr char kHonHiragana[] = "ほん";
+  constexpr absl::string_view kHonKanji = "本";
+  constexpr absl::string_view kHonHiragana = "ほん";
 
   Node* n1 = NewNode();
   n1->key = kHonKanji;

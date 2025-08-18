@@ -648,6 +648,7 @@ mozc_cc_test(
         "//protocol:user_dictionary_storage_cc_proto",
         "//testing:gunit_main",
         "//testing:test_peer",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

@@ -488,9 +488,9 @@ bool ExecCommand(const ConverterInterface& converter, const std::string& line,
 std::pair<std::string, std::string> SelectDataFileFromName(
     const std::string& mozc_runfiles_dir, const std::string& engine_name) {
   struct {
-    const char* engine_name;
-    const char* path;
-    const char* magic;
+    absl::string_view engine_name;
+    absl::string_view path;
+    absl::string_view magic;
   } kNameAndPath[] = {
       {"default", "data_manager/oss/mozc.data", "\xEFMOZC\r\n"},
       {"oss", "data_manager/oss/mozc.data", "\xEFMOZC\r\n"},
@@ -508,8 +508,8 @@ std::pair<std::string, std::string> SelectDataFileFromName(
 std::string SelectIdDefFromName(const std::string& mozc_runfiles_dir,
                                 const std::string& engine_name) {
   struct {
-    const char* engine_name;
-    const char* path;
+    absl::string_view engine_name;
+    absl::string_view path;
   } kNameAndPath[] = {
       {"default", "data/dictionary_oss/id.def"},
       {"oss", "data/dictionary_oss/id.def"},

@@ -183,7 +183,7 @@ TEST(SegmentsTest, BasicTest) {
 TEST(SegmentTest, CandidateTest) {
   Segment segment;
 
-  const char str[] = "this is a test";
+  const absl::string_view str = "this is a test";
   segment.set_key(str);
   EXPECT_EQ(segment.key(), str);
 
