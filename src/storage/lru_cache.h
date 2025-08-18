@@ -120,18 +120,18 @@ class LruCache {
   // ownership of the returned value.  The reference returned by Lookup() could
   // be invalidated by a call to Insert(), so the caller must take care to not
   // access the value if Insert() could have been called after Lookup().
-  const Value *absl_nullable Lookup(const Key &key) {
+  const Value* absl_nullable Lookup(const Key& key) {
     return MutableLookup(key);
   }
 
   // return non-const Value
-  Value *absl_nullable MutableLookup(const Key &key);
+  Value* absl_nullable MutableLookup(const Key& key);
 
   // Lookup/MutableLookup don't change the LRU order.
-  const Value *absl_nullable LookupWithoutInsert(const Key &key) const;
+  const Value* absl_nullable LookupWithoutInsert(const Key& key) const;
 
   // Returns non-const value.
-  Value *absl_nullable MutableLookupWithoutInsert(const Key &key);
+  Value* absl_nullable MutableLookupWithoutInsert(const Key& key);
 
   // Removes the cache entry specified by key.  Returns true if the entry was
   // in the cache, otherwise returns false.
@@ -174,11 +174,11 @@ class LruCache {
   // Returns a free element, popping from the free list if possible, or
   // allocating a new element if the free list is empty.  If there are already
   // max_elements_ in use this will return NULL.
-  Element *absl_nullable NextFreeElement();
+  Element* absl_nullable NextFreeElement();
 
   // Returns the Element* associated with key, or NULL if no element with this
   // key is found.
-  Element *absl_nullable LookupInternal(const Key &key) const;
+  Element* absl_nullable LookupInternal(const Key& key) const;
 
   // Removes the specified element from the LRU list.
   void RemoveFromLRU(Element* element);
@@ -257,7 +257,7 @@ typename LruCache<Key, Value>::Element* LruCache<Key, Value>::PopFreeList() {
 }
 
 template <typename Key, typename Value>
-typename LruCache<Key, Value>::Element *absl_nullable
+typename LruCache<Key, Value>::Element* absl_nullable
 LruCache<Key, Value>::NextFreeElement() {
   Element* r = PopFreeList();
   if (r == nullptr) {
@@ -268,7 +268,7 @@ LruCache<Key, Value>::NextFreeElement() {
 }
 
 template <typename Key, typename Value>
-typename LruCache<Key, Value>::Element *absl_nullable
+typename LruCache<Key, Value>::Element* absl_nullable
 LruCache<Key, Value>::LookupInternal(const Key& key) const {
   if (auto iter = table_.find(key); iter != table_.end()) {
     return iter->second;
@@ -377,7 +377,7 @@ typename LruCache<Key, Value>::Element* LruCache<Key, Value>::Insert(
 }
 
 template <typename Key, typename Value>
-Value *absl_nullable LruCache<Key, Value>::MutableLookup(const Key &key) {
+Value* absl_nullable LruCache<Key, Value>::MutableLookup(const Key& key) {
   Element* e = LookupInternal(key);
   if (e != nullptr) {
     PushLRUHead(e);

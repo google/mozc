@@ -42,9 +42,9 @@ namespace {
 using ::testing::ElementsAre;
 
 template <typename Key, typename Value>
-size_t SizeOfFreeList(const LruCache<Key, Value> &cache) {
+size_t SizeOfFreeList(const LruCache<Key, Value>& cache) {
   size_t size = 0;
-  for (const typename LruCache<Key, Value>::Element *e =
+  for (const typename LruCache<Key, Value>::Element* e =
            cache.FreeListForTesting();
        e; e = e->next) {
     ++size;
@@ -53,10 +53,10 @@ size_t SizeOfFreeList(const LruCache<Key, Value> &cache) {
 }
 
 template <typename Key, typename Value>
-std::vector<Key> GetOrderedKeys(const LruCache<Key, Value> &cache) {
+std::vector<Key> GetOrderedKeys(const LruCache<Key, Value>& cache) {
   std::vector<Key> keys;
   keys.reserve(cache.Size());
-  for (const typename LruCache<Key, Value>::Element &elem : cache) {
+  for (const typename LruCache<Key, Value>::Element& elem : cache) {
     keys.push_back(elem.key);
   }
   return keys;

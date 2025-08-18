@@ -58,7 +58,7 @@ namespace {
 
 constexpr uint32_t kSeed = 0x76fef;  // Seed for fingerprint.
 
-void RunTest(LruStorage *storage, uint32_t size) {
+void RunTest(LruStorage* storage, uint32_t size) {
   mozc::storage::LruCache<std::string, uint32_t> cache(size);
   std::set<std::string, std::less<>> used;
   std::vector<std::pair<std::string, uint32_t>> values;
@@ -73,7 +73,7 @@ void RunTest(LruStorage *storage, uint32_t size) {
     used.insert(key);
     values.push_back(std::make_pair(key, value));
     cache.Insert(key, value);
-    storage->Insert(key, reinterpret_cast<const char *>(&value));
+    storage->Insert(key, reinterpret_cast<const char*>(&value));
   }
 
   std::reverse(values.begin(), values.end());
@@ -83,11 +83,11 @@ void RunTest(LruStorage *storage, uint32_t size) {
 
   uint32_t last_access_time;
   for (int i = 0; i < size; ++i) {
-    const uint32_t *v1 = cache.Lookup(values[i].first);
-    const uint32_t *v2 = reinterpret_cast<const uint32_t *>(
+    const uint32_t* v1 = cache.Lookup(values[i].first);
+    const uint32_t* v2 = reinterpret_cast<const uint32_t*>(
         storage->Lookup(values[i].first, &last_access_time));
-    const uint32_t *v3 =
-        reinterpret_cast<const uint32_t *>(value_list[i].data());
+    const uint32_t* v3 =
+        reinterpret_cast<const uint32_t*>(value_list[i].data());
     EXPECT_TRUE(v1 != nullptr);
     EXPECT_EQ(*v1, values[i].second);
     EXPECT_TRUE(v2 != nullptr);
@@ -97,15 +97,15 @@ void RunTest(LruStorage *storage, uint32_t size) {
   }
 
   for (int i = size; i < values.size(); ++i) {
-    const uint32_t *v1 = cache.Lookup(values[i].first);
-    const uint32_t *v2 = reinterpret_cast<const uint32_t *>(
+    const uint32_t* v1 = cache.Lookup(values[i].first);
+    const uint32_t* v2 = reinterpret_cast<const uint32_t*>(
         storage->Lookup(values[i].first, &last_access_time));
     EXPECT_TRUE(v1 == nullptr);
     EXPECT_TRUE(v2 == nullptr);
   }
 }
 
-std::vector<std::string> GetValuesInStorageOrder(const LruStorage &storage) {
+std::vector<std::string> GetValuesInStorageOrder(const LruStorage& storage) {
   std::vector<std::string> ret;
   for (size_t i = 0; i < storage.used_size(); ++i) {
     uint64_t fp;
@@ -163,7 +163,7 @@ TEST_F(LruStorageTest, ReadWriteTest) {
       Entry entry;
       entry.key = absl::Uniform<uint64_t>(gen);
       const int n = absl::Uniform(gen, 0, std::numeric_limits<int>::max());
-      entry.value.assign(reinterpret_cast<const char *>(&n), 4);
+      entry.value.assign(reinterpret_cast<const char*>(&n), 4);
       entry.last_access_time = absl::Uniform(gen, 0, 100000);
       entries.push_back(entry);
       storage.Write(j, entry.key, entry.value, entry.last_access_time);
@@ -335,9 +335,9 @@ TEST_F(LruStorageTest, OpenOrCreateTest) {
     EXPECT_TRUE(storage.OpenOrCreate(file.path().c_str(), 4, 10, kSeed))
         << "Corrupted file should be replaced with new one.";
     uint32_t v = 823;
-    storage.Insert("test", reinterpret_cast<const char *>(&v));
-    const uint32_t *result =
-        reinterpret_cast<const uint32_t *>(storage.Lookup("test"));
+    storage.Insert("test", reinterpret_cast<const char*>(&v));
+    const uint32_t* result =
+        reinterpret_cast<const uint32_t*>(storage.Lookup("test"));
     CHECK_EQ(v, *result);
   }
 }
@@ -356,8 +356,8 @@ TEST_F(LruStorageTest, Delete) {
   EXPECT_TRUE(storage.Delete("nothing to delete"));
 
   struct {
-    const char *key;
-    const char *value;
+    const char* key;
+    const char* value;
   } kElements[kNumElements] = {
       // Elements are inserted into the storage in this order.
       {"0000", "aaaa"},
@@ -365,7 +365,7 @@ TEST_F(LruStorageTest, Delete) {
       {"2222", "cccc"},
       {"3333", "dddd"},
   };
-  for (const auto &kv : kElements) {
+  for (const auto& kv : kElements) {
     EXPECT_TRUE(storage.Insert(kv.key, kv.value));
   }
 
@@ -447,8 +447,8 @@ TEST_F(LruStorageTest, DeleteElementsBefore) {
   clock->AutoAdvance(absl::Seconds(1));
 
   struct {
-    const char *key;
-    const char *value;
+    const char* key;
+    const char* value;
   } kElements[kNumElements] = {
       // Elements are inserted into the storage in this order.  The above clock
       // mock gives timestamps 1 to 4.
@@ -457,7 +457,7 @@ TEST_F(LruStorageTest, DeleteElementsBefore) {
       {"3333", "cccc"},  // Timestamp 3
       {"4444", "dddd"},  // Timestamp 4
   };
-  for (const auto &kv : kElements) {
+  for (const auto& kv : kElements) {
     storage.Insert(kv.key, kv.value);
   }
 

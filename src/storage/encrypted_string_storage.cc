@@ -60,7 +60,7 @@ constexpr size_t kSaltSize = 32;
 constexpr size_t kMaxFileSize = 64 * 1024 * 1024;
 }  // namespace
 
-bool EncryptedStringStorage::Load(std::string *output) const {
+bool EncryptedStringStorage::Load(std::string* output) const {
   DCHECK(output);
 
   std::string salt;
@@ -93,8 +93,8 @@ bool EncryptedStringStorage::Load(std::string *output) const {
   return Decrypt(salt, output);
 }
 
-bool EncryptedStringStorage::Decrypt(const std::string &salt,
-                                     std::string *data) const {
+bool EncryptedStringStorage::Decrypt(const std::string& salt,
+                                     std::string* data) const {
   DCHECK(data);
 
   std::string password;
@@ -123,7 +123,7 @@ bool EncryptedStringStorage::Decrypt(const std::string &salt,
   return true;
 }
 
-bool EncryptedStringStorage::Save(const std::string &input) const {
+bool EncryptedStringStorage::Save(const std::string& input) const {
   // Generate salt.
   const std::string salt = mozc::Random().ByteString(kSaltSize);
 
@@ -164,8 +164,8 @@ bool EncryptedStringStorage::Save(const std::string &input) const {
   return true;
 }
 
-bool EncryptedStringStorage::Encrypt(const std::string &salt,
-                                     std::string *data) const {
+bool EncryptedStringStorage::Encrypt(const std::string& salt,
+                                     std::string* data) const {
   DCHECK(data);
 
   std::string password;

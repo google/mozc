@@ -47,7 +47,7 @@ namespace mozc {
 namespace storage {
 namespace {
 
-void CheckValues(const ExistenceFilter &filter, int m, int n) {
+void CheckValues(const ExistenceFilter& filter, int m, int n) {
   int false_positives = 0;
   for (int i = 0; i < 2 * n; ++i) {
     uint64_t hash = Fingerprint(i);
@@ -120,7 +120,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
   ExistenceFilterBuilder builder(
       ExistenceFilterBuilder::CreateOptimal(num_bytes, std::size(kWords)));
 
-  for (const absl::string_view &word : kWords) {
+  for (const absl::string_view& word : kWords) {
     builder.Insert(Fingerprint(word));
   }
 
@@ -130,7 +130,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
       ExistenceFilter::Read(aligned_buf));
   EXPECT_OK(filter_read);
 
-  for (const absl::string_view &word : kWords) {
+  for (const absl::string_view& word : kWords) {
     EXPECT_TRUE(filter_read->Exists(Fingerprint(word)));
   }
 }
@@ -146,13 +146,13 @@ TEST(ExistenceFilterTest, InsertAndExistsTest) {
   ExistenceFilterBuilder builder(
       ExistenceFilterBuilder::CreateOptimal(num_bytes, words.size()));
 
-  for (const std::string &word : words) {
+  for (const std::string& word : words) {
     builder.Insert(Fingerprint(word));
   }
 
   ExistenceFilter filter = builder.Build();
 
-  for (const std::string &word : words) {
+  for (const std::string& word : words) {
     EXPECT_TRUE(filter.Exists(Fingerprint(word)));
   }
 }

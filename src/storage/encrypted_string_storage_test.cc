@@ -51,18 +51,18 @@ namespace {
 // them, because we cannot launch JVM from native tests on Android.
 class TestEncryptedStringStorage : public EncryptedStringStorage {
  public:
-  explicit TestEncryptedStringStorage(const std::string &filename)
+  explicit TestEncryptedStringStorage(const std::string& filename)
       : EncryptedStringStorage(filename) {}
 
  protected:
-  virtual bool Encrypt(const std::string &salt, std::string *data) const {
+  virtual bool Encrypt(const std::string& salt, std::string* data) const {
     salt_ = salt;
     original_data_ = *data;
     *data = "123456789012345678901234567890";
     return true;
   }
 
-  virtual bool Decrypt(const std::string &salt, std::string *data) const {
+  virtual bool Decrypt(const std::string& salt, std::string* data) const {
     if (salt_ != salt) {
       return false;
     }
@@ -93,7 +93,7 @@ class EncryptedStringStorageTest : public testing::TestWithTempUserProfile {
 };
 
 TEST_F(EncryptedStringStorageTest, SaveAndLoad) {
-  const char *kData = "abcdefghijklmnopqrstuvwxyz";
+  const char* kData = "abcdefghijklmnopqrstuvwxyz";
   ASSERT_TRUE(storage_->Save(kData));
 
   std::string output;
