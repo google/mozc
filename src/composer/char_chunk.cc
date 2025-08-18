@@ -77,8 +77,8 @@ constexpr int kMaxRecursion = 4;
 // '{*}ぃ' -> '', '{*}い'
 // '{*}い' -> '', '{*}ぃ'
 // Here, we want to get '{*}あ' <-> '{*}ぁ' loop from the input, 'あ'
-bool GetFromPending(const Table *table, const absl::string_view key,
-                    int recursion_count, absl::btree_set<std::string> *result) {
+bool GetFromPending(const Table* table, const absl::string_view key,
+                    int recursion_count, absl::btree_set<std::string>* result) {
   DCHECK(result);
   if (recursion_count == 0) {
     // Don't find the loop within the |recursion_count|.
@@ -91,9 +91,9 @@ bool GetFromPending(const Table *table, const absl::string_view key,
   }
   result->emplace(key);
 
-  std::vector<const Entry *> entries;
+  std::vector<const Entry*> entries;
   table->LookUpPredictiveAll(key, &entries);
-  for (const Entry *entry : entries) {
+  for (const Entry* entry : entries) {
     if (!entry->result().empty()) {
       // skip rules with result, because this causes too many results.
       // for example, if we have
@@ -146,7 +146,7 @@ size_t CharChunk::GetLength(Transliterators::Transliterator t12r) const {
 }
 
 void CharChunk::AppendResult(Transliterators::Transliterator t12r,
-                             std::string *result) const {
+                             std::string* result) const {
   const std::string t13n =
       Transliterate(t12r, DeleteSpecialKeys(raw_),
                     DeleteSpecialKeys(absl::StrCat(conversion_, pending_)));
@@ -154,13 +154,13 @@ void CharChunk::AppendResult(Transliterators::Transliterator t12r,
 }
 
 void CharChunk::AppendTrimedResult(Transliterators::Transliterator t12r,
-                                   std::string *result) const {
+                                   std::string* result) const {
   // Only determined value (e.g. |conversion_| only) is added.
   std::string converted = conversion_;
   if (!pending_.empty()) {
     size_t key_length = 0;
     bool fixed = false;
-    const Entry *entry = table_->LookUpPrefix(pending_, &key_length, &fixed);
+    const Entry* entry = table_->LookUpPrefix(pending_, &key_length, &fixed);
     if (entry != nullptr && entry->input() == entry->result()) {
       converted.append(entry->result());
     }
@@ -170,7 +170,7 @@ void CharChunk::AppendTrimedResult(Transliterators::Transliterator t12r,
 }
 
 void CharChunk::AppendFixedResult(Transliterators::Transliterator t12r,
-                                  std::string *result) const {
+                                  std::string* result) const {
   std::string converted;
   if (!ambiguous_.empty()) {
     // Add the |ambiguous_| value as a fixed value.  |ambiguous_|
@@ -236,9 +236,9 @@ absl::btree_set<std::string> CharChunk::GetExpandedResults() const {
   if (conversion_.empty()) {
     results.insert(DeleteSpecialKeys(pending_));
   }
-  std::vector<const Entry *> entries;
+  std::vector<const Entry*> entries;
   table_->LookUpPredictiveAll(pending_, &entries);
-  for (const Entry *entry : entries) {
+  for (const Entry* entry : entries) {
     if (!entry->result().empty()) {
       results.insert(DeleteSpecialKeys(entry->result()));
     }
@@ -250,7 +250,7 @@ absl::btree_set<std::string> CharChunk::GetExpandedResults() const {
                         &loop_result)) {
       continue;
     }
-    for (const std::string &result : loop_result) {
+    for (const std::string& result : loop_result) {
       results.insert(DeleteSpecialKeys(result));
     }
   }
@@ -260,14 +260,14 @@ absl::btree_set<std::string> CharChunk::GetExpandedResults() const {
 bool CharChunk::IsFixed() const { return pending_.empty(); }
 
 bool CharChunk::IsAppendable(Transliterators::Transliterator t12r,
-                             const Table &table) const {
+                             const Table& table) const {
   return !pending_.empty() &&
          (t12r == Transliterators::LOCAL || t12r == transliterator_) &&
          &table == table_.get();
 }
 
 bool CharChunk::IsConvertible(Transliterators::Transliterator t12r,
-                              const Table &table,
+                              const Table& table,
                               const absl::string_view input) const {
   if (!IsAppendable(t12r, table)) {
     return false;
@@ -276,12 +276,12 @@ bool CharChunk::IsConvertible(Transliterators::Transliterator t12r,
   size_t key_length = 0;
   bool fixed = false;
   std::string key = absl::StrCat(pending_, input);
-  const Entry *entry = table.LookUpPrefix(key, &key_length, &fixed);
+  const Entry* entry = table.LookUpPrefix(key, &key_length, &fixed);
 
   return entry && (key.size() == key_length) && fixed;
 }
 
-void CharChunk::Combine(const CharChunk &left_chunk) {
+void CharChunk::Combine(const CharChunk& left_chunk) {
   conversion_ = left_chunk.conversion_ + conversion_;
   raw_ = left_chunk.raw_ + raw_;
   local_length_cache_ = std::string::npos;
@@ -307,7 +307,7 @@ std::pair<bool, absl::string_view> CharChunk::AddInputInternal(
   size_t used_key_length = 0;
   bool fixed = false;
   std::string key = absl::StrCat(pending_, input);
-  const Entry *entry = table_->LookUpPrefix(key, &used_key_length, &fixed);
+  const Entry* entry = table_->LookUpPrefix(key, &used_key_length, &fixed);
   local_length_cache_ = std::string::npos;
 
   if (entry == nullptr) {
@@ -337,7 +337,7 @@ std::pair<bool, absl::string_view> CharChunk::AddInputInternal(
       // that special key is removed.
       size_t used_length = 0;
       bool next_fixed = false;
-      const Entry *next_entry =
+      const Entry* next_entry =
           table_->LookUpPrefix(input, &used_length, &next_fixed);
       const bool no_entry = (next_entry == nullptr && used_length == 0);
       const absl::string_view trimmed = TrimLeadingSpecialKey(input);
@@ -417,7 +417,7 @@ std::pair<bool, absl::string_view> CharChunk::AddInputInternal(
   return {kLoop, input};
 }
 
-void CharChunk::AddInput(std::string *input) {
+void CharChunk::AddInput(std::string* input) {
   absl::string_view tmp = *input;
   bool loop = true;
   while (loop) {
@@ -426,7 +426,7 @@ void CharChunk::AddInput(std::string *input) {
   input->erase(0, input->size() - tmp.size());
 }
 
-void CharChunk::AddInputAndConvertedChar(CompositionInput *input) {
+void CharChunk::AddInputAndConvertedChar(CompositionInput* input) {
   local_length_cache_ = std::string::npos;
 
   if (input->is_asis()) {
@@ -451,7 +451,7 @@ void CharChunk::AddInputAndConvertedChar(CompositionInput *input) {
 
     // If this entry is the first entry, the table attributes are
     // applied to this chunk.
-    const Entry *entry = table_->LookUp(pending_);
+    const Entry* entry = table_->LookUp(pending_);
     if (entry != nullptr) {
       attributes_ = entry->attributes();
     }
@@ -461,7 +461,7 @@ void CharChunk::AddInputAndConvertedChar(CompositionInput *input) {
   const std::string key_input = pending_ + input->conversion();
   size_t key_length = 0;
   bool fixed = false;
-  const Entry *entry = table_->LookUpPrefix(key_input, &key_length, &fixed);
+  const Entry* entry = table_->LookUpPrefix(key_input, &key_length, &fixed);
   if (entry == nullptr) {
     // Do not modify this char_chunk, all `raw` and `conversion`
     // values of `input` will be used by the next char_chunk.
@@ -508,7 +508,7 @@ bool CharChunk::ShouldCommit() const {
   return (attributes_ & DIRECT_INPUT) && pending_.empty();
 }
 
-bool CharChunk::ShouldInsertNewChunk(const CompositionInput &input) const {
+bool CharChunk::ShouldInsertNewChunk(const CompositionInput& input) const {
   if (raw_.empty() && conversion_.empty() && pending_.empty()) {
     return false;
   }
@@ -524,7 +524,7 @@ bool CharChunk::ShouldInsertNewChunk(const CompositionInput &input) const {
   return false;
 }
 
-void CharChunk::AddCompositionInput(CompositionInput *input) {
+void CharChunk::AddCompositionInput(CompositionInput* input) {
   local_length_cache_ = std::string::npos;
   if (!input->conversion().empty()) {
     AddInputAndConvertedChar(input);

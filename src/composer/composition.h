@@ -66,10 +66,10 @@ class Composition final {
   }
 
   // Copyable and movable.
-  Composition(const Composition &) = default;
-  Composition &operator=(const Composition &) = default;
-  Composition(Composition &&) = default;
-  Composition &operator=(Composition &&) = default;
+  Composition(const Composition&) = default;
+  Composition& operator=(const Composition&) = default;
+  Composition(Composition&&) = default;
+  Composition& operator=(Composition&&) = default;
 
   // Deletes a right-hand character of the composition at the position.
   // e.g.
@@ -137,8 +137,8 @@ class Composition final {
   // Get string with consideration for ambiguity from pending input
   std::pair<std::string, absl::btree_set<std::string>> GetExpandedStrings()
       const;
-  void GetPreedit(size_t position, std::string *left, std::string *focused,
-                  std::string *right) const;
+  void GetPreedit(size_t position, std::string* left, std::string* focused,
+                  std::string* right) const;
 
   void SetInputMode(Transliterators::Transliterator transliterator);
 
@@ -157,10 +157,10 @@ class Composition final {
   // as "c" is the focused character.
   CharChunkList::iterator GetChunkAt(
       size_t position, Transliterators::Transliterator transliterator,
-      size_t *inner_position);
+      size_t* inner_position);
   CharChunkList::const_iterator GetChunkAt(
       size_t position, Transliterators::Transliterator transliterator,
-      size_t *inner_position) const;
+      size_t* inner_position) const;
   size_t GetPosition(Transliterators::Transliterator transliterator,
                      CharChunkList::const_iterator it) const;
 
@@ -197,22 +197,22 @@ class Composition final {
   //      can turn to be a fixed chunk.
   // e.g. [pending='k']+[pending='y']+[input='q'] are not combined.
   void CombinePendingChunks(CharChunkList::iterator it,
-                            const CompositionInput &input);
-  const CharChunkList &GetCharChunkList() const;
+                            const CompositionInput& input);
+  const CharChunkList& GetCharChunkList() const;
   std::shared_ptr<const Table> table_for_testing() const { return table_; }
-  const CharChunkList &chunks() const { return chunks_; }
+  const CharChunkList& chunks() const { return chunks_; }
   Transliterators::Transliterator input_t12r() const { return input_t12r_; }
 
-  friend bool operator==(const Composition &lhs, const Composition &rhs) {
+  friend bool operator==(const Composition& lhs, const Composition& rhs) {
     return std::tie(lhs.table_, lhs.chunks_, lhs.input_t12r_) ==
            std::tie(rhs.table_, rhs.chunks_, rhs.input_t12r_);
   }
-  friend bool operator!=(const Composition &lhs, const Composition &rhs) {
+  friend bool operator!=(const Composition& lhs, const Composition& rhs) {
     return !(lhs == rhs);
   }
 
   template <typename Sink>
-  friend void AbslStringify(Sink &sink, const Composition &composition) {
+  friend void AbslStringify(Sink& sink, const Composition& composition) {
     absl::Format(&sink, "table = %p, input transliterator = %v, chunks = [%s]",
                  composition.table_.get(), composition.input_t12r_,
                  absl::StrJoin(composition.chunks_, ", "));

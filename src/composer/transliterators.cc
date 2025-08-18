@@ -50,9 +50,9 @@ using ::mozc::config::CharacterFormManager;
 
 bool SplitPrimaryString(const size_t position, const absl::string_view primary,
                         const absl::string_view secondary,
-                        std::string *primary_lhs, std::string *primary_rhs,
-                        std::string *secondary_lhs,
-                        std::string *secondary_rhs) {
+                        std::string* primary_lhs, std::string* primary_rhs,
+                        std::string* secondary_lhs,
+                        std::string* secondary_rhs) {
   DCHECK(primary_lhs);
   DCHECK(primary_rhs);
   DCHECK(secondary_lhs);
@@ -104,9 +104,9 @@ class ConversionStringSelector : public internal::TransliteratorInterface {
   // TransliterateInterface whose first argument is not const.
   // Otherwise the Windows compiler (cl.exe) raises an error.
   bool Split(size_t position, const absl::string_view raw,
-             const absl::string_view converted, std::string *raw_lhs,
-             std::string *raw_rhs, std::string *converted_lhs,
-             std::string *converted_rhs) const override {
+             const absl::string_view converted, std::string* raw_lhs,
+             std::string* raw_rhs, std::string* converted_lhs,
+             std::string* converted_rhs) const override {
     return Transliterators::SplitConverted(position, raw, converted, raw_lhs,
                                            raw_rhs, converted_lhs,
                                            converted_rhs);
@@ -125,9 +125,9 @@ class RawStringSelector : public internal::TransliteratorInterface {
   }
 
   bool Split(size_t position, const absl::string_view raw,
-             const absl::string_view converted, std::string *raw_lhs,
-             std::string *raw_rhs, std::string *converted_lhs,
-             std::string *converted_rhs) const override {
+             const absl::string_view converted, std::string* raw_lhs,
+             std::string* raw_rhs, std::string* converted_lhs,
+             std::string* converted_rhs) const override {
     return Transliterators::SplitRaw(position, raw, converted, raw_lhs, raw_rhs,
                                      converted_lhs, converted_rhs);
   }
@@ -147,9 +147,9 @@ class HiraganaTransliterator : public internal::TransliteratorInterface {
   }
 
   bool Split(size_t position, const absl::string_view raw,
-             const absl::string_view converted, std::string *raw_lhs,
-             std::string *raw_rhs, std::string *converted_lhs,
-             std::string *converted_rhs) const override {
+             const absl::string_view converted, std::string* raw_lhs,
+             std::string* raw_rhs, std::string* converted_lhs,
+             std::string* converted_rhs) const override {
     return Transliterators::SplitConverted(position, raw, converted, raw_lhs,
                                            raw_rhs, converted_lhs,
                                            converted_rhs);
@@ -172,9 +172,9 @@ class FullKatakanaTransliterator : public internal::TransliteratorInterface {
   }
 
   bool Split(size_t position, const absl::string_view raw,
-             const absl::string_view converted, std::string *raw_lhs,
-             std::string *raw_rhs, std::string *converted_lhs,
-             std::string *converted_rhs) const override {
+             const absl::string_view converted, std::string* raw_lhs,
+             std::string* raw_rhs, std::string* converted_lhs,
+             std::string* converted_rhs) const override {
     return Transliterators::SplitConverted(position, raw, converted, raw_lhs,
                                            raw_rhs, converted_lhs,
                                            converted_rhs);
@@ -199,9 +199,9 @@ class HalfKatakanaTransliterator : public internal::TransliteratorInterface {
   }
 
   bool Split(size_t position, const absl::string_view raw,
-             const absl::string_view converted, std::string *raw_lhs,
-             std::string *raw_rhs, std::string *converted_lhs,
-             std::string *converted_rhs) const override {
+             const absl::string_view converted, std::string* raw_lhs,
+             std::string* raw_rhs, std::string* converted_lhs,
+             std::string* converted_rhs) const override {
     const std::string half_katakana = Transliterate(raw, converted);
     std::string hk_raw_lhs, hk_raw_rhs, hk_converted_lhs, hk_converted_rhs;
     const bool result = Transliterators::SplitConverted(
@@ -232,9 +232,9 @@ class HalfAsciiTransliterator : public internal::TransliteratorInterface {
   }
 
   bool Split(size_t position, const absl::string_view raw,
-             const absl::string_view converted, std::string *raw_lhs,
-             std::string *raw_rhs, std::string *converted_lhs,
-             std::string *converted_rhs) const override {
+             const absl::string_view converted, std::string* raw_lhs,
+             std::string* raw_rhs, std::string* converted_lhs,
+             std::string* converted_rhs) const override {
     return Transliterators::SplitRaw(position, raw, converted, raw_lhs, raw_rhs,
                                      converted_lhs, converted_rhs);
   }
@@ -251,9 +251,9 @@ class FullAsciiTransliterator : public internal::TransliteratorInterface {
   }
 
   bool Split(size_t position, const absl::string_view raw,
-             const absl::string_view converted, std::string *raw_lhs,
-             std::string *raw_rhs, std::string *converted_lhs,
-             std::string *converted_rhs) const override {
+             const absl::string_view converted, std::string* raw_lhs,
+             std::string* raw_rhs, std::string* converted_lhs,
+             std::string* converted_rhs) const override {
     return Transliterators::SplitRaw(position, raw, converted, raw_lhs, raw_rhs,
                                      converted_lhs, converted_rhs);
   }
@@ -262,7 +262,7 @@ class FullAsciiTransliterator : public internal::TransliteratorInterface {
 }  // namespace
 
 // static
-const internal::TransliteratorInterface *Transliterators::GetTransliterator(
+const internal::TransliteratorInterface* Transliterators::GetTransliterator(
     Transliterator transliterator) {
   MOZC_VLOG(2) << "Transliterators::GetTransliterator:" << transliterator;
   DCHECK(transliterator != LOCAL);
@@ -292,9 +292,9 @@ const internal::TransliteratorInterface *Transliterators::GetTransliterator(
 bool Transliterators::SplitRaw(const size_t position,
                                const absl::string_view raw,
                                const absl::string_view converted,
-                               std::string *raw_lhs, std::string *raw_rhs,
-                               std::string *converted_lhs,
-                               std::string *converted_rhs) {
+                               std::string* raw_lhs, std::string* raw_rhs,
+                               std::string* converted_lhs,
+                               std::string* converted_rhs) {
   return SplitPrimaryString(position, raw, converted, raw_lhs, raw_rhs,
                             converted_lhs, converted_rhs);
 }
@@ -303,9 +303,9 @@ bool Transliterators::SplitRaw(const size_t position,
 bool Transliterators::SplitConverted(const size_t position,
                                      const absl::string_view raw,
                                      const absl::string_view converted,
-                                     std::string *raw_lhs, std::string *raw_rhs,
-                                     std::string *converted_lhs,
-                                     std::string *converted_rhs) {
+                                     std::string* raw_lhs, std::string* raw_rhs,
+                                     std::string* converted_lhs,
+                                     std::string* converted_rhs) {
   return SplitPrimaryString(position, converted, raw, converted_lhs,
                             converted_rhs, raw_lhs, raw_rhs);
 }

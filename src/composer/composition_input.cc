@@ -41,8 +41,8 @@
 namespace mozc {
 namespace composer {
 
-bool CompositionInput::Init(const Table &table,
-                            const commands::KeyEvent &key_event,
+bool CompositionInput::Init(const Table& table,
+                            const commands::KeyEvent& key_event,
                             bool is_new_input) {
   if (key_event.has_key_code()) {
     raw_ = Util::CodepointToUtf8(key_event.key_code());

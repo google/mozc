@@ -312,8 +312,8 @@ std::string Composition::GetStringWithTrimMode(const TrimMode trim_mode) const {
   return GetStringWithModes(Transliterators::LOCAL, trim_mode);
 }
 
-void Composition::GetPreedit(size_t position, std::string *left,
-                             std::string *focused, std::string *right) const {
+void Composition::GetPreedit(size_t position, std::string* left,
+                             std::string* focused, std::string* right) const {
   const std::string composition = GetString();
   Util::Utf8SubString(composition, 0, position, left);
   Util::Utf8SubString(composition, position, 1, focused);
@@ -325,7 +325,7 @@ void Composition::GetPreedit(size_t position, std::string *left,
 // below.
 CharChunkList::iterator Composition::GetChunkAt(
     const size_t position, Transliterators::Transliterator transliterator,
-    size_t *inner_position) {
+    size_t* inner_position) {
   if (chunks_.empty()) {
     *inner_position = 0;
     return chunks_.begin();
@@ -350,10 +350,10 @@ CharChunkList::iterator Composition::GetChunkAt(
 
 CharChunkList::const_iterator Composition::GetChunkAt(
     size_t position, Transliterators::Transliterator transliterator,
-    size_t *inner_position) const {
+    size_t* inner_position) const {
   // This const_cast is safe as GetChunkAt() above doesn't mutate any members.
-  return const_cast<Composition *>(this)->GetChunkAt(position, transliterator,
-                                                     inner_position);
+  return const_cast<Composition*>(this)->GetChunkAt(position, transliterator,
+                                                    inner_position);
 }
 
 size_t Composition::GetPosition(Transliterators::Transliterator transliterator,
@@ -376,7 +376,7 @@ CharChunkList::iterator Composition::MaybeSplitChunkAt(const size_t position) {
     return it;
   }
 
-  CharChunk &chunk = *it;
+  CharChunk& chunk = *it;
   if (inner_position == chunk.GetLength(Transliterators::LOCAL)) {
     return std::next(it);
   }
@@ -390,7 +390,7 @@ CharChunkList::iterator Composition::MaybeSplitChunkAt(const size_t position) {
 }
 
 void Composition::CombinePendingChunks(CharChunkList::iterator it,
-                                       const CompositionInput &input) {
+                                       const CompositionInput& input) {
   // If the input is asis, pending chunks are not related with this input.
   if (input.is_asis()) {
     return;
@@ -418,11 +418,11 @@ CharChunkList::iterator Composition::InsertChunk(
   return chunks_.insert(it, CharChunk(input_t12r_, table_));
 }
 
-const CharChunkList &Composition::GetCharChunkList() const { return chunks_; }
+const CharChunkList& Composition::GetCharChunkList() const { return chunks_; }
 
 bool Composition::ShouldCommit() const {
   return absl::c_all_of(
-      chunks_, [](const CharChunk &chunk) { return chunk.ShouldCommit(); });
+      chunks_, [](const CharChunk& chunk) { return chunk.ShouldCommit(); });
 }
 
 // Return charchunk to be inserted and iterator of the *next* char chunk.

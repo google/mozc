@@ -38,7 +38,7 @@ namespace composer {
 namespace {
 
 TEST(TransliteratorsTest, ConversionStringSelector) {
-  const internal::TransliteratorInterface *t12r =
+  const internal::TransliteratorInterface* t12r =
       Transliterators::GetTransliterator(Transliterators::CONVERSION_STRING);
   EXPECT_EQ(t12r->Transliterate("zu", "ず"), "ず");
   EXPECT_EQ(t12r->Transliterate("kk", "っk"), "っk");
@@ -69,7 +69,7 @@ TEST(TransliteratorsTest, ConversionStringSelector) {
 }
 
 TEST(TransliteratorsTest, RawStringSelector) {
-  const internal::TransliteratorInterface *t12r =
+  const internal::TransliteratorInterface* t12r =
       Transliterators::GetTransliterator(Transliterators::RAW_STRING);
   EXPECT_EQ(t12r->Transliterate("zu", "ず"), "zu");
   EXPECT_EQ(t12r->Transliterate("kk", "っk"), "kk");
@@ -91,7 +91,7 @@ TEST(TransliteratorsTest, RawStringSelector) {
 }
 
 TEST(TransliteratorsTest, HiraganaTransliterator) {
-  const internal::TransliteratorInterface *t12r =
+  const internal::TransliteratorInterface* t12r =
       Transliterators::GetTransliterator(Transliterators::HIRAGANA);
   EXPECT_EQ(t12r->Transliterate("zu", "ず"), "ず");
   // Half width "k" is transliterated into full width "ｋ".
@@ -128,7 +128,7 @@ TEST(TransliteratorsTest, HiraganaTransliterator) {
 }
 
 TEST(TransliteratorsTest, FullKatakanaTransliterator) {
-  const internal::TransliteratorInterface *t12r =
+  const internal::TransliteratorInterface* t12r =
       Transliterators::GetTransliterator(Transliterators::FULL_KATAKANA);
   EXPECT_EQ(t12r->Transliterate("zu", "ず"), "ズ");
   // Half width "k" is transliterated into full width "ｋ".
@@ -156,7 +156,7 @@ TEST(TransliteratorsTest, FullKatakanaTransliterator) {
 }
 
 TEST(TransliteratorsTest, HalfKatakanaTransliterator) {
-  const internal::TransliteratorInterface *t12r =
+  const internal::TransliteratorInterface* t12r =
       Transliterators::GetTransliterator(Transliterators::HALF_KATAKANA);
   EXPECT_EQ(t12r->Transliterate("zu", "ず"), "ｽﾞ");
   // Half width "k" remains in the current implementation (can be changed).
@@ -192,7 +192,7 @@ TEST(TransliteratorsTest, HalfKatakanaTransliterator) {
 }
 
 TEST(TransliteratorsTest, HalfAsciiTransliterator) {
-  const internal::TransliteratorInterface *t12r =
+  const internal::TransliteratorInterface* t12r =
       Transliterators::GetTransliterator(Transliterators::HALF_ASCII);
   EXPECT_EQ(t12r->Transliterate("zu", "ず"), "zu");
   EXPECT_EQ(t12r->Transliterate("kk", "っk"), "kk");
@@ -219,7 +219,7 @@ TEST(TransliteratorsTest, HalfAsciiTransliterator) {
 }
 
 TEST(TransliteratorsTest, FullAsciiTransliterator) {
-  const internal::TransliteratorInterface *t12r =
+  const internal::TransliteratorInterface* t12r =
       Transliterators::GetTransliterator(Transliterators::FULL_ASCII);
   EXPECT_EQ(t12r->Transliterate("zu", "ず"), "ｚｕ");
   EXPECT_EQ(t12r->Transliterate("kk", "っk"), "ｋｋ");

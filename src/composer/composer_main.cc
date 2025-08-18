@@ -47,7 +47,7 @@ ABSL_FLAG(std::string, table, "system://romanji-hiragana.tsv",
 using ::mozc::commands::Request;
 using ::mozc::config::Config;
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   auto table = std::make_shared<mozc::composer::Table>();

@@ -44,13 +44,13 @@ class KeyParser {
  public:
   // Disallow implicit constructors.
   KeyParser() = delete;
-  KeyParser(const KeyParser &) = delete;
-  KeyParser &operator=(const KeyParser &) = delete;
+  KeyParser(const KeyParser&) = delete;
+  KeyParser& operator=(const KeyParser&) = delete;
 
   static bool ParseKey(absl::string_view key_string,
-                       commands::KeyEvent *key_event);
+                       commands::KeyEvent* key_event);
   static bool ParseKeyVector(absl::Span<const std::string> keys,
-                             commands::KeyEvent *key_event);
+                             commands::KeyEvent* key_event);
 
   // Returns corresponding string of SpecialKey (e.g. PAGE_UP → pageup).
   static std::string GetSpecialKeyString(commands::KeyEvent::SpecialKey key);

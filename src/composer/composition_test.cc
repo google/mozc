@@ -40,8 +40,8 @@
 #include "absl/strings/string_view.h"
 #include "composer/char_chunk.h"
 #include "composer/composition_input.h"
-#include "composer/transliterators.h"
 #include "composer/table.h"
+#include "composer/transliterators.h"
 #include "testing/gunit.h"
 
 namespace mozc {

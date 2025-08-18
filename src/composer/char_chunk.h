@@ -65,10 +65,10 @@ class CharChunk final {
   explicit CharChunk(Transliterators::Transliterator transliterator);
 
   // Copyable and movable.
-  CharChunk(const CharChunk &x) = default;
-  CharChunk &operator=(const CharChunk &x) = default;
-  CharChunk(CharChunk &&x) = default;
-  CharChunk &operator=(CharChunk &&x) = default;
+  CharChunk(const CharChunk& x) = default;
+  CharChunk& operator=(const CharChunk& x) = default;
+  CharChunk(CharChunk&& x) = default;
+  CharChunk& operator=(CharChunk&& x) = default;
   void Clear();
 
   size_t GetLength(Transliterators::Transliterator t12r) const;
@@ -77,11 +77,11 @@ class CharChunk final {
   // transliterator.  If the transliterator is LOCAL, the local
   // transliterator specified via SetTransliterator is used.
   void AppendResult(Transliterators::Transliterator t12r,
-                    std::string *result) const;
+                    std::string* result) const;
   void AppendTrimedResult(Transliterators::Transliterator t12r,
-                          std::string *result) const;
+                          std::string* result) const;
   void AppendFixedResult(Transliterators::Transliterator t12r,
-                         std::string *result) const;
+                         std::string* result) const;
 
   // Get possible results from current chunk
   absl::btree_set<std::string> GetExpandedResults() const;
@@ -89,7 +89,7 @@ class CharChunk final {
 
   // True if IsAppendable() is true and this object is fixed (|pending_|=="")
   // when |input| is appended.
-  bool IsConvertible(Transliterators::Transliterator t12r, const Table &table,
+  bool IsConvertible(Transliterators::Transliterator t12r, const Table& table,
                      absl::string_view input) const;
 
   // Combines all fields with |left_chunk|.
@@ -97,12 +97,12 @@ class CharChunk final {
   // Note that after calling this method,
   // the information contained in |left_chunk| duplicates.
   // Deleting |left_chunk| would be preferable.
-  void Combine(const CharChunk &left_chunk);
+  void Combine(const CharChunk& left_chunk);
 
   // Return true if this char chunk accepts additional characters with
   // the specified transliterator and the table.
   bool IsAppendable(Transliterators::Transliterator t12r,
-                    const Table &table) const;
+                    const Table& table) const;
 
   // Splits this CharChunk at |position| and returns the left chunk. Returns
   // nullptr on failure.
@@ -113,9 +113,9 @@ class CharChunk final {
   // function refers DIRECT_INPUT attribute.
   bool ShouldCommit() const;
 
-  bool ShouldInsertNewChunk(const CompositionInput &input) const;
-  void AddInput(std::string *input);
-  void AddCompositionInput(CompositionInput *input);
+  bool ShouldInsertNewChunk(const CompositionInput& input) const;
+  void AddInput(std::string* input);
+  void AddCompositionInput(CompositionInput* input);
 
   void SetTransliterator(Transliterators::Transliterator transliterator);
 
@@ -147,30 +147,30 @@ class CharChunk final {
   }
   std::shared_ptr<const Table> table_for_testing() const { return table_; }
 
-  const std::string &raw() const { return raw_; }
+  const std::string& raw() const { return raw_; }
   template <typename String>
-  void set_raw(String &&raw) {
+  void set_raw(String&& raw) {
     strings::Assign(raw_, std::forward<String>(raw));
     local_length_cache_ = std::string::npos;
   }
 
-  const std::string &conversion() const { return conversion_; }
+  const std::string& conversion() const { return conversion_; }
   template <typename String>
-  void set_conversion(String &&conversion) {
+  void set_conversion(String&& conversion) {
     strings::Assign(conversion_, std::forward<String>(conversion));
     local_length_cache_ = std::string::npos;
   }
 
-  const std::string &pending() const { return pending_; }
+  const std::string& pending() const { return pending_; }
   template <typename String>
-  void set_pending(String &&pending) {
+  void set_pending(String&& pending) {
     strings::Assign(pending_, std::forward<String>(pending));
     local_length_cache_ = std::string::npos;
   }
 
-  const std::string &ambiguous() const { return ambiguous_; }
+  const std::string& ambiguous() const { return ambiguous_; }
   template <typename String>
-  void set_ambiguous(String &&ambiguous) {
+  void set_ambiguous(String&& ambiguous) {
     strings::Assign(ambiguous_, std::forward<String>(ambiguous));
     local_length_cache_ = std::string::npos;
   }
@@ -178,19 +178,19 @@ class CharChunk final {
   TableAttributes attributes() const { return attributes_; }
   void set_attributes(TableAttributes attributes);
 
-  friend bool operator==(const CharChunk &lhs, const CharChunk &rhs) {
+  friend bool operator==(const CharChunk& lhs, const CharChunk& rhs) {
     return std::tie(lhs.table_, lhs.raw_, lhs.conversion_, lhs.pending_,
                     lhs.ambiguous_, lhs.transliterator_, lhs.attributes_) ==
            std::tie(rhs.table_, rhs.raw_, rhs.conversion_, rhs.pending_,
                     rhs.ambiguous_, rhs.transliterator_, rhs.attributes_);
   }
 
-  friend bool operator!=(const CharChunk &lhs, const CharChunk &rhs) {
+  friend bool operator!=(const CharChunk& lhs, const CharChunk& rhs) {
     return !(lhs == rhs);
   }
 
   template <typename Sink>
-  friend void AbslStringify(Sink &sink, const CharChunk &chunk) {
+  friend void AbslStringify(Sink& sink, const CharChunk& chunk) {
     absl::Format(&sink,
                  "table = %p, raw = %s, conversion = %s, pending = %s, "
                  "ambiguous = %s, transliterator = %v, attributes = %v",
@@ -204,7 +204,7 @@ class CharChunk final {
   std::pair<bool, absl::string_view> AddInputInternal(absl::string_view input);
 
  private:
-  void AddInputAndConvertedChar(CompositionInput *composition_input);
+  void AddInputAndConvertedChar(CompositionInput* composition_input);
 
   std::shared_ptr<const Table> table_;
 

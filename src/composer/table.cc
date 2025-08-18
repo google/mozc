@@ -139,13 +139,13 @@ constexpr absl::string_view kSquareOpen = "[";
 constexpr absl::string_view kSquareClose = "]";
 constexpr absl::string_view kMiddleDot = "・";
 
-bool Table::InitializeWithRequestAndConfig(const commands::Request &request,
-                                           const config::Config &config) {
+bool Table::InitializeWithRequestAndConfig(const commands::Request& request,
+                                           const config::Config& config) {
   case_sensitive_ = false;
   bool result = false;
   if (request.special_romanji_table() !=
       mozc::commands::Request::DEFAULT_TABLE) {
-    const char *table_file_name;
+    const char* table_file_name;
     switch (request.special_romanji_table()) {
       case mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA:
         table_file_name = k12keysHiraganaTableFile;
@@ -241,7 +241,7 @@ bool Table::InitializeWithRequestAndConfig(const commands::Request &request,
   // Initialize punctuations.
   const config::Config::PunctuationMethod punctuation_method =
       config.punctuation_method();
-  const mozc::composer::Entry *entry = nullptr;
+  const mozc::composer::Entry* entry = nullptr;
 
   // Comma / Kuten
   entry = LookUp(",");
@@ -330,7 +330,7 @@ bool Table::IsLoopingEntry(const absl::string_view input,
 
     size_t key_length = 0;
     bool fixed = false;
-    const Entry *entry = LookUpPrefix(key, &key_length, &fixed);
+    const Entry* entry = LookUpPrefix(key, &key_length, &fixed);
     if (entry == nullptr) {
       return false;
     }
@@ -341,13 +341,13 @@ bool Table::IsLoopingEntry(const absl::string_view input,
   return false;
 }
 
-const Entry *absl_nullable Table::AddRule(const absl::string_view input,
+const Entry* absl_nullable Table::AddRule(const absl::string_view input,
                                           const absl::string_view output,
                                           const absl::string_view pending) {
   return AddRuleWithAttributes(input, output, pending, NO_TABLE_ATTRIBUTE);
 }
 
-const Entry *absl_nullable Table::AddRuleWithAttributes(
+const Entry* absl_nullable Table::AddRuleWithAttributes(
     const absl::string_view escaped_input, const absl::string_view output,
     const absl::string_view escaped_pending, const TableAttributes attributes) {
   if (attributes & NEW_CHUNK) {
@@ -374,13 +374,13 @@ const Entry *absl_nullable Table::AddRuleWithAttributes(
     return nullptr;
   }
 
-  const Entry *old_entry = nullptr;
+  const Entry* old_entry = nullptr;
   if (entries_.LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
 
   auto entry = std::make_unique<Entry>(input, output, pending, attributes);
-  Entry *entry_ptr = entry.get();
+  Entry* entry_ptr = entry.get();
   entries_.AddEntry(input, entry_ptr);
   entry_set_.insert(std::move(entry));
 
@@ -408,19 +408,19 @@ void Table::DeleteRule(const absl::string_view input) {
   //     - This method is not used.
   //     - This method has no tests.
   //     - This method is private scope.
-  const Entry *old_entry;
+  const Entry* old_entry;
   if (entries_.LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
   entries_.DeleteEntry(input);
 }
 
-bool Table::LoadFromString(const std::string &str) {
+bool Table::LoadFromString(const std::string& str) {
   std::istringstream is(str);
   return LoadFromStream(&is);
 }
 
-bool Table::LoadFromFile(const char *filepath) {
+bool Table::LoadFromFile(const char* filepath) {
   std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filepath));
   if (ifs == nullptr) {
     return false;
@@ -452,7 +452,7 @@ TableAttributes ParseAttributes(const absl::string_view input) {
 }
 }  // namespace
 
-bool Table::LoadFromStream(std::istream *is) {
+bool Table::LoadFromStream(std::istream* is) {
   DCHECK(is);
   std::string line;
   while (!is->eof()) {
@@ -482,8 +482,8 @@ bool Table::LoadFromStream(std::istream *is) {
   return true;
 }
 
-const Entry *Table::LookUp(const absl::string_view input) const {
-  const Entry *entry = nullptr;
+const Entry* Table::LookUp(const absl::string_view input) const {
+  const Entry* entry = nullptr;
   if (case_sensitive_) {
     entries_.LookUp(input, &entry);
   } else {
@@ -494,9 +494,9 @@ const Entry *Table::LookUp(const absl::string_view input) const {
   return entry;
 }
 
-const Entry *Table::LookUpPrefix(const absl::string_view input,
-                                 size_t *key_length, bool *fixed) const {
-  const Entry *entry = nullptr;
+const Entry* Table::LookUpPrefix(const absl::string_view input,
+                                 size_t* key_length, bool* fixed) const {
+  const Entry* entry = nullptr;
   if (case_sensitive_) {
     entries_.LookUpPrefix(input, &entry, key_length, fixed);
   } else {
@@ -508,7 +508,7 @@ const Entry *Table::LookUpPrefix(const absl::string_view input,
 }
 
 void Table::LookUpPredictiveAll(const absl::string_view input,
-                                std::vector<const Entry *> *results) const {
+                                std::vector<const Entry*>* results) const {
   if (case_sensitive_) {
     entries_.LookUpPredictiveAll(input, results);
   } else {
@@ -544,7 +544,7 @@ bool Table::HasSubRules(const absl::string_view input) const {
   }
 }
 
-void Table::DeleteEntry(const Entry *entry) { entry_set_.erase(entry); }
+void Table::DeleteEntry(const Entry* entry) { entry_set_.erase(entry); }
 
 bool Table::case_sensitive() const { return case_sensitive_; }
 
@@ -553,7 +553,7 @@ void Table::set_case_sensitive(const bool case_sensitive) {
 }
 
 // static
-const Table &Table::GetDefaultTable() {
+const Table& Table::GetDefaultTable() {
   return *GetSharedDefaultTable();  // NOLINT: The referenced object has static
                                     // lifetime.
 }
@@ -571,8 +571,8 @@ TableManager::TableManager()
     : custom_roman_table_fingerprint_(Fingerprint32("")) {}
 
 std::shared_ptr<const Table> TableManager::GetTable(
-    const mozc::commands::Request &request,
-    const mozc::config::Config &config) {
+    const mozc::commands::Request& request,
+    const mozc::config::Config& config) {
   // calculate the hash depending on the request and the config
   const uint32_t hash =
       absl::HashOf(request.special_romanji_table(), config.preedit_method(),

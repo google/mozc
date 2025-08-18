@@ -304,8 +304,7 @@ TEST(KeyParserTest, GetSpecialKeyString) {
             "virtualright");
   EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::VIRTUAL_ENTER),
             "virtualenter");
-  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::VIRTUAL_UP),
-            "virtualup");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::VIRTUAL_UP), "virtualup");
   EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::VIRTUAL_DOWN),
             "virtualdown");
   EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::UNDEFINED_KEY),

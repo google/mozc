@@ -38,8 +38,8 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "composer/composition_input.h"
-#include "composer/transliterators.h"
 #include "composer/table.h"
+#include "composer/transliterators.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -1694,8 +1694,8 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
 }
 
 namespace {
-bool HasResult(const absl::btree_set<std::string> &results,
-               const std::string &value) {
+bool HasResult(const absl::btree_set<std::string>& results,
+               const std::string& value) {
   return (results.find(value) != results.end());
 }
 }  // namespace

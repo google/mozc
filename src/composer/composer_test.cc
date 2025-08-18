@@ -58,7 +58,7 @@ namespace composer {
 
 class ComposerTestPeer : public testing::TestPeer<Composer> {
  public:
-  explicit ComposerTestPeer(Composer &composer)
+  explicit ComposerTestPeer(Composer& composer)
       : testing::TestPeer<Composer>(composer) {}
 
   PEER_METHOD(ApplyTemporaryInputMode);
@@ -71,7 +71,7 @@ using ::mozc::commands::Request;
 using ::mozc::config::CharacterFormManager;
 using ::mozc::config::Config;
 
-bool InsertKey(const absl::string_view key_string, Composer *composer) {
+bool InsertKey(const absl::string_view key_string, Composer* composer) {
   commands::KeyEvent key;
   if (!KeyParser::ParseKey(key_string, &key)) {
     return false;
@@ -81,7 +81,7 @@ bool InsertKey(const absl::string_view key_string, Composer *composer) {
 
 bool InsertKeyWithMode(const absl::string_view key_string,
                        const commands::CompositionMode mode,
-                       Composer *composer) {
+                       Composer* composer) {
   commands::KeyEvent key;
   if (!KeyParser::ParseKey(key_string, &key)) {
     return false;
@@ -90,7 +90,7 @@ bool InsertKeyWithMode(const absl::string_view key_string,
   return composer->InsertCharacterKeyEvent(key);
 }
 
-void ExpectSameComposer(const Composer &lhs, const Composer &rhs) {
+void ExpectSameComposer(const Composer& lhs, const Composer& rhs) {
   EXPECT_EQ(lhs.GetCursor(), rhs.GetCursor());
   EXPECT_EQ(lhs.is_new_input(), rhs.is_new_input());
   EXPECT_EQ(lhs.GetInputMode(), rhs.GetInputMode());
@@ -112,8 +112,8 @@ void ExpectSameComposer(const Composer &lhs, const Composer &rhs) {
 class ComposerTest : public ::testing::Test {
  protected:
   ComposerTest() = default;
-  ComposerTest(const ComposerTest &) = delete;
-  ComposerTest &operator=(const ComposerTest &) = delete;
+  ComposerTest(const ComposerTest&) = delete;
+  ComposerTest& operator=(const ComposerTest&) = delete;
   ~ComposerTest() override = default;
 
   void SetUp() override {
@@ -647,7 +647,7 @@ TEST_F(ComposerTest, GetStringFunctionsInputFieldType) {
   composer_->SetInputMode(transliteration::HIRAGANA);
   for (size_t test_data_index = 0; test_data_index < std::size(test_data_list);
        ++test_data_index) {
-    const TestData &test_data = test_data_list[test_data_index];
+    const TestData& test_data = test_data_list[test_data_index];
     composer_->SetInputFieldType(test_data.field_type);
     std::string key;
     for (char c = 0x20; c <= 0x7E; ++c) {
@@ -1769,7 +1769,7 @@ TEST_F(ComposerTest, TransformCharactersForNumbers) {
 }
 
 TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
-  CharacterFormManager *manager =
+  CharacterFormManager* manager =
       CharacterFormManager::GetCharacterFormManager();
   table_->AddRule("0", "０", "");
   table_->AddRule("1", "１", "");
@@ -2368,7 +2368,7 @@ TEST_F(ComposerTest, ShouldCommitHead) {
   };
 
   for (size_t i = 0; i < std::size(test_data_list); ++i) {
-    const TestData &test_data = test_data_list[i];
+    const TestData& test_data = test_data_list[i];
     SCOPED_TRACE(test_data.input_text);
     SCOPED_TRACE(test_data.field_type);
     SCOPED_TRACE(test_data.expected_return);
@@ -2546,7 +2546,7 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
   }
   composer_->Reset();
   {
-    for (const std::string &c : Util::SplitStringToUtf8Chars(kTestStr)) {
+    for (const std::string& c : Util::SplitStringToUtf8Chars(kTestStr)) {
       composer_->InsertCharacterPreedit(c);
     }
     const std::string preedit = composer_->GetStringForPreedit();
@@ -2928,7 +2928,7 @@ TEST_F(ComposerTest, NBforeN_WithFullWidth) {
   table_->AddRule("nn", "ん", "");
   table_->AddRule("a", "あ", "");
 
-  CharacterFormManager *manager =
+  CharacterFormManager* manager =
       CharacterFormManager::GetCharacterFormManager();
   manager->SetDefaultRule();
   manager->AddPreeditRule("a", Config::FULL_WIDTH);
@@ -2975,7 +2975,7 @@ TEST_F(ComposerTest, NBforeN_WithHalfWidth) {
   table_->AddRule("nn", "ん", "");
   table_->AddRule("a", "あ", "");
 
-  CharacterFormManager *manager =
+  CharacterFormManager* manager =
       CharacterFormManager::GetCharacterFormManager();
   manager->SetDefaultRule();
   manager->AddPreeditRule("a", Config::HALF_WIDTH);
@@ -3025,7 +3025,7 @@ TEST_F(ComposerTest, GetStringForTypeCorrectionTest) {
 TEST_F(ComposerTest, UpdateComposition) {
   {
     commands::SessionCommand command;
-    commands::SessionCommand::CompositionEvent *composition_event =
+    commands::SessionCommand::CompositionEvent* composition_event =
         command.add_composition_events();
     composition_event->set_composition_string("かん字");
     composition_event->set_probability(1.0);
@@ -3037,7 +3037,7 @@ TEST_F(ComposerTest, UpdateComposition) {
 
   {
     commands::SessionCommand command;
-    commands::SessionCommand::CompositionEvent *composition_event =
+    commands::SessionCommand::CompositionEvent* composition_event =
         command.add_composition_events();
     composition_event->set_composition_string("ねこ");
     composition_event->set_probability(0.9);
@@ -3126,7 +3126,7 @@ TEST_F(ComposerTest, CreateComposerData) {
 
 TEST_F(ComposerTest, CreateComposerDataForHandwriting) {
   commands::SessionCommand command;
-  commands::SessionCommand::CompositionEvent *composition_event =
+  commands::SessionCommand::CompositionEvent* composition_event =
       command.add_composition_events();
   composition_event->set_composition_string("ねこ");
   composition_event->set_probability(0.9);
@@ -3230,7 +3230,7 @@ TEST_F(ComposerTest, CreateComposerOperators) {
 }
 
 TEST_F(ComposerTest, CreateEmptyComposerData) {
-  const ComposerData &data = Composer::EmptyComposerData();
+  const ComposerData& data = Composer::EmptyComposerData();
   EXPECT_EQ(data.GetInputMode(), transliteration::HIRAGANA);
   EXPECT_EQ(data.GetStringForPreedit(), "");
   EXPECT_EQ(data.GetQueryForConversion(), "");

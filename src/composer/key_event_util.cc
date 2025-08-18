@@ -64,7 +64,7 @@ bool None(uint32_t modifiers_to_be_tested, uint32_t modifiers_to_be_queried) {
 
 }  // namespace
 
-uint32_t KeyEventUtil::GetModifiers(const KeyEvent &key_event) {
+uint32_t KeyEventUtil::GetModifiers(const KeyEvent& key_event) {
   uint32_t modifiers = 0;
   if (key_event.has_modifiers()) {
     modifiers = key_event.modifiers();
@@ -76,8 +76,8 @@ uint32_t KeyEventUtil::GetModifiers(const KeyEvent &key_event) {
   return modifiers;
 }
 
-bool KeyEventUtil::GetKeyInformation(const KeyEvent &key_event,
-                                     KeyInformation *key) {
+bool KeyEventUtil::GetKeyInformation(const KeyEvent& key_event,
+                                     KeyInformation* key) {
   DCHECK(key);
 
   const uint16_t modifier_keys = static_cast<uint16_t>(GetModifiers(key_event));
@@ -99,8 +99,8 @@ bool KeyEventUtil::GetKeyInformation(const KeyEvent &key_event,
   return true;
 }
 
-void KeyEventUtil::NormalizeModifiers(const KeyEvent &key_event,
-                                      KeyEvent *new_key_event) {
+void KeyEventUtil::NormalizeModifiers(const KeyEvent& key_event,
+                                      KeyEvent* new_key_event) {
   DCHECK(new_key_event);
 
   // CTRL (or ALT, SHIFT) should be set on modifier_keys when
@@ -125,8 +125,8 @@ void KeyEventUtil::NormalizeModifiers(const KeyEvent &key_event,
   }
 }
 
-void KeyEventUtil::NormalizeNumpadKey(const KeyEvent &key_event,
-                                      KeyEvent *new_key_event) {
+void KeyEventUtil::NormalizeNumpadKey(const KeyEvent& key_event,
+                                      KeyEvent* new_key_event) {
   DCHECK(new_key_event);
   *new_key_event = key_event;
 
@@ -181,9 +181,9 @@ void KeyEventUtil::NormalizeNumpadKey(const KeyEvent &key_event,
   new_key_event->set_key_code(static_cast<uint32_t>(new_key_code));
 }
 
-void KeyEventUtil::RemoveModifiers(const KeyEvent &key_event,
+void KeyEventUtil::RemoveModifiers(const KeyEvent& key_event,
                                    uint32_t remove_modifiers,
-                                   KeyEvent *new_key_event) {
+                                   KeyEvent* new_key_event) {
   DCHECK(new_key_event);
   *new_key_event = key_event;
 
@@ -206,8 +206,8 @@ void KeyEventUtil::RemoveModifiers(const KeyEvent &key_event,
   }
 }
 
-bool KeyEventUtil::MaybeGetKeyStub(const KeyEvent &key_event,
-                                   KeyInformation *key) {
+bool KeyEventUtil::MaybeGetKeyStub(const KeyEvent& key_event,
+                                   KeyInformation* key) {
   DCHECK(key);
 
   // If any modifier keys were pressed, this function does nothing.
@@ -301,7 +301,7 @@ bool KeyEventUtil::IsAltCtrlShift(uint32_t modifiers) {
   return None(Ignore(modifiers, kCapsMask), ~kAltCtrlShiftMask);
 }
 
-bool KeyEventUtil::IsLowerAlphabet(const KeyEvent &key_event) {
+bool KeyEventUtil::IsLowerAlphabet(const KeyEvent& key_event) {
   if (!key_event.has_key_code()) {
     return false;
   }
@@ -317,7 +317,7 @@ bool KeyEventUtil::IsLowerAlphabet(const KeyEvent &key_event) {
   }
 }
 
-bool KeyEventUtil::IsUpperAlphabet(const KeyEvent &key_event) {
+bool KeyEventUtil::IsUpperAlphabet(const KeyEvent& key_event) {
   if (!key_event.has_key_code()) {
     return false;
   }
@@ -333,7 +333,7 @@ bool KeyEventUtil::IsUpperAlphabet(const KeyEvent &key_event) {
   }
 }
 
-bool KeyEventUtil::IsNumpadKey(const KeyEvent &key_event) {
+bool KeyEventUtil::IsNumpadKey(const KeyEvent& key_event) {
   if (!key_event.has_special_key()) {
     return false;
   }

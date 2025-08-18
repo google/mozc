@@ -74,9 +74,9 @@ class Entry final {
  public:
   Entry(absl::string_view input, absl::string_view result,
         absl::string_view pending, TableAttributes attributes);
-  constexpr const std::string &input() const { return input_; }
-  constexpr const std::string &result() const { return result_; }
-  constexpr const std::string &pending() const { return pending_; }
+  constexpr const std::string& input() const { return input_; }
+  constexpr const std::string& result() const { return result_; }
+  constexpr const std::string& pending() const { return pending_; }
   constexpr TableAttributes attributes() const { return attributes_; }
 
  private:
@@ -89,33 +89,34 @@ class Entry final {
 class Table final {
  public:
   Table();
-  Table(const Table &) = delete;
-  Table &operator=(const Table &) = delete;
+  Table(const Table&) = delete;
+  Table& operator=(const Table&) = delete;
 
-  bool InitializeWithRequestAndConfig(const commands::Request &request,
-                                      const config::Config &config);
+  bool InitializeWithRequestAndConfig(const commands::Request& request,
+                                      const config::Config& config);
 
   // Return true if adding the input-pending pair makes a loop of
   // conversion rules.
   bool IsLoopingEntry(absl::string_view input, absl::string_view pending) const;
-  const Entry *absl_nullable AddRule(absl::string_view input,
+  const Entry* absl_nullable AddRule(absl::string_view input,
                                      absl::string_view output,
                                      absl::string_view pending);
 
-  const Entry *absl_nullable AddRuleWithAttributes(
-      absl::string_view input, absl::string_view output,
-      absl::string_view pending, TableAttributes attributes);
+  const Entry* absl_nullable AddRuleWithAttributes(absl::string_view input,
+                                                   absl::string_view output,
+                                                   absl::string_view pending,
+                                                   TableAttributes attributes);
 
   void DeleteRule(absl::string_view input);
 
-  bool LoadFromString(const std::string &str);
-  bool LoadFromFile(const char *filepath);
+  bool LoadFromString(const std::string& str);
+  bool LoadFromFile(const char* filepath);
 
-  const Entry *LookUp(absl::string_view input) const;
-  const Entry *LookUpPrefix(absl::string_view input, size_t *key_length,
-                            bool *fixed) const;
+  const Entry* LookUp(absl::string_view input) const;
+  const Entry* LookUpPrefix(absl::string_view input, size_t* key_length,
+                            bool* fixed) const;
   void LookUpPredictiveAll(absl::string_view input,
-                           std::vector<const Entry *> *results) const;
+                           std::vector<const Entry*>* results) const;
   // TODO(komatsu): Delete this function.
   bool HasSubRules(absl::string_view input) const;
 
@@ -131,7 +132,7 @@ class Table final {
   }
 
   // Return the default table.
-  static const Table &GetDefaultTable();
+  static const Table& GetDefaultTable();
 
   // Return the default shared table.
   static std::shared_ptr<const Table> GetSharedDefaultTable();
@@ -140,10 +141,10 @@ class Table final {
   friend class TypingCorrectorTest;
   friend class TypingCorrectionTest;
 
-  bool LoadFromStream(std::istream *is);
-  void DeleteEntry(const Entry *entry);
+  bool LoadFromStream(std::istream* is);
+  void DeleteEntry(const Entry* entry);
 
-  using EntryTrie = Trie<const Entry *>;
+  using EntryTrie = Trie<const Entry*>;
   EntryTrie entries_;
   using EntrySet = absl::flat_hash_set<std::unique_ptr<Entry>>;
   EntrySet entry_set_;
@@ -161,8 +162,8 @@ class TableManager {
   ~TableManager() = default;
   // Return Table for the request and the config
   // Return nullptr when no Table is available.
-  std::shared_ptr<const Table> GetTable(const commands::Request &request,
-                                        const config::Config &config);
+  std::shared_ptr<const Table> GetTable(const commands::Request& request,
+                                        const config::Config& config);
 
   void ClearCaches();
 

@@ -44,38 +44,38 @@ using KeyInformation = uint64_t;
 class KeyEventUtil {
  public:
   KeyEventUtil() = delete;
-  KeyEventUtil(const KeyEventUtil &) = delete;
-  KeyEventUtil &operator=(const KeyEventUtil &) = delete;
+  KeyEventUtil(const KeyEventUtil&) = delete;
+  KeyEventUtil& operator=(const KeyEventUtil&) = delete;
 
-  static uint32_t GetModifiers(const commands::KeyEvent &key_event);
+  static uint32_t GetModifiers(const commands::KeyEvent& key_event);
 
   // |Modifiers(16bit)|SpecialKey(16bit)|Unicode(32bit)|
-  static bool GetKeyInformation(const commands::KeyEvent &key_event,
-                                KeyInformation *key);
+  static bool GetKeyInformation(const commands::KeyEvent& key_event,
+                                KeyInformation* key);
 
   // Normalizes given key event for key command looking-up. This function does
   // - remove commands::KeyEvent::CAPS from the modifier keys
   // - revert the flip of alphabetical key code caused by CapsLock
   // so that shortcut keys can be used as if CapsLock was not enabled. b/5627459
   // In addition, this function removes left / right specified modifiers.
-  static void NormalizeModifiers(const commands::KeyEvent &key_event,
-                                 commands::KeyEvent *new_key_event);
+  static void NormalizeModifiers(const commands::KeyEvent& key_event,
+                                 commands::KeyEvent* new_key_event);
 
   // Normalizes a numpad key to a normal key (e.g. NUMPAD0 => '0')
-  static void NormalizeNumpadKey(const commands::KeyEvent &key_event,
-                                 commands::KeyEvent *new_key_event);
+  static void NormalizeNumpadKey(const commands::KeyEvent& key_event,
+                                 commands::KeyEvent* new_key_event);
 
   // Removes modifier keys which are specified by |remove_modifiers|.
-  static void RemoveModifiers(const commands::KeyEvent &key_event,
+  static void RemoveModifiers(const commands::KeyEvent& key_event,
                               uint32_t remove_modifiers,
-                              commands::KeyEvent *new_key_event);
+                              commands::KeyEvent* new_key_event);
 
   // Returns a fallback keyevent generated from key_event. In the
   // current implementation, if the input key_event does not contains
   // any special keys or modifier keys, that printable key will be replaced
   // with the ASCII special key.
-  static bool MaybeGetKeyStub(const commands::KeyEvent &key_event,
-                              KeyInformation *key);
+  static bool MaybeGetKeyStub(const commands::KeyEvent& key_event,
+                              KeyInformation* key);
 
   static bool HasAlt(uint32_t modifiers);
   static bool HasCtrl(uint32_t modifiers);
@@ -91,9 +91,9 @@ class KeyEventUtil {
   static bool IsCtrlShift(uint32_t modifiers);
   static bool IsAltCtrlShift(uint32_t modifiers);
 
-  static bool IsLowerAlphabet(const commands::KeyEvent &key_event);
-  static bool IsUpperAlphabet(const commands::KeyEvent &key_event);
-  static bool IsNumpadKey(const commands::KeyEvent &key_event);
+  static bool IsLowerAlphabet(const commands::KeyEvent& key_event);
+  static bool IsUpperAlphabet(const commands::KeyEvent& key_event);
+  static bool IsNumpadKey(const commands::KeyEvent& key_event);
 };
 
 }  // namespace mozc

@@ -224,7 +224,7 @@ constexpr auto kModifierRemovalMap =
 
 void RemoveExpandedCharsForModifier(absl::string_view asis,
                                     absl::string_view base,
-                                    absl::btree_set<std::string> *expanded) {
+                                    absl::btree_set<std::string>* expanded) {
   if (!asis.starts_with(base)) {
     LOG(DFATAL) << "base is not a prefix of asis.";
     return;
@@ -240,7 +240,7 @@ constexpr size_t kMaxPreeditLength = 256;
 
 namespace common {
 std::string GetStringForPreedit(
-    const Composition &composition,
+    const Composition& composition,
     const commands::Context::InputFieldType input_field_type) {
   std::string output = composition.GetString();
   Composer::TransformCharactersForNumbers(&output);
@@ -267,7 +267,7 @@ std::string GetStringForPreedit(
   return output;
 }
 
-std::string GetQueryForConversion(const Composition &composition) {
+std::string GetQueryForConversion(const Composition& composition) {
   std::string base_output = composition.GetStringWithTrimMode(FIX);
   Composer::TransformCharactersForNumbers(&base_output);
   return japanese_util::FullWidthAsciiToHalfWidthAscii(base_output);
@@ -282,8 +282,8 @@ std::string GetQueryForConversion(const Composition &composition) {
 // ("z", "") -> "z"      // ditto.
 // = Kana Input =
 // ("か", "") -> "か"  // a part of kana (it can be "が") should not be trimed.
-std::string *GetBaseQueryForPrediction(std::string *asis_query,
-                                       std::string *trimed_query) {
+std::string* GetBaseQueryForPrediction(std::string* asis_query,
+                                       std::string* trimed_query) {
   // If the sizes are equal, there is no matter.
   if (asis_query->size() == trimed_query->size()) {
     return asis_query;
@@ -330,7 +330,7 @@ std::string *GetBaseQueryForPrediction(std::string *asis_query,
 }
 
 std::string GetQueryForPrediction(
-    const Composition &composition,
+    const Composition& composition,
     const transliteration::TransliterationType input_mode) {
   std::string asis_query = composition.GetStringWithTrimMode(ASIS);
 
@@ -354,14 +354,14 @@ std::string GetQueryForPrediction(
   // ideal solution is to expand the ambguity and pass all of them to
   // the converter. (e.g. "かn" -> ["かな",..."かの", "かん", ...] /
   // "あか" -> ["あか", "あが"])
-  std::string *base_query =
+  std::string* base_query =
       GetBaseQueryForPrediction(&asis_query, &trimed_query);
   Composer::TransformCharactersForNumbers(base_query);
   return japanese_util::FullWidthAsciiToHalfWidthAscii(*base_query);
 }
 
 std::pair<std::string, absl::btree_set<std::string>> GetQueriesForPrediction(
-    const Composition &composition,
+    const Composition& composition,
     const transliteration::TransliterationType input_mode) {
   // In case of the Latin input modes, we don't perform expansion.
   switch (input_mode) {
@@ -389,11 +389,11 @@ std::pair<std::string, absl::btree_set<std::string>> GetQueriesForPrediction(
       japanese_util::FullWidthAsciiToHalfWidthAscii(base_query), expanded);
 }
 
-std::string GetStringForTypeCorrection(const Composition &composition) {
+std::string GetStringForTypeCorrection(const Composition& composition) {
   return composition.GetStringWithTrimMode(ASIS);
 }
 
-std::string GetTransliteratedText(const Composition &composition,
+std::string GetTransliteratedText(const Composition& composition,
                                   Transliterators::Transliterator t12r,
                                   const size_t position, const size_t size) {
   const std::string full_base = composition.GetStringWithTransliterator(t12r);
@@ -407,18 +407,18 @@ std::string GetTransliteratedText(const Composition &composition,
   return std::string{Util::Utf8SubString(full_base, t13n_start, t13n_size)};
 }
 
-std::string GetRawSubString(const Composition &composition,
+std::string GetRawSubString(const Composition& composition,
                             const size_t position, const size_t size) {
   return GetTransliteratedText(composition, Transliterators::RAW_STRING,
                                position, size);
 }
 
-std::string GetRawString(const Composition &composition) {
+std::string GetRawString(const Composition& composition) {
   return GetRawSubString(composition, 0, composition.GetLength());
 }
 
 std::string GetSubTransliteration(
-    const Composition &composition,
+    const Composition& composition,
     const transliteration::TransliterationType type, const size_t position,
     const size_t size) {
   const Transliterators::Transliterator t12r = GetTransliterator(type);
@@ -428,8 +428,8 @@ std::string GetSubTransliteration(
 }
 
 void GetSubTransliterations(
-    const Composition &composition, const size_t position, const size_t size,
-    transliteration::Transliterations *transliterations) {
+    const Composition& composition, const size_t position, const size_t size,
+    transliteration::Transliterations* transliterations) {
   for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
     const transliteration::TransliterationType t13n_type =
         transliteration::TransliterationTypeArray[i];
@@ -439,8 +439,8 @@ void GetSubTransliterations(
   }
 }
 
-void GetTransliterations(const Composition &composition,
-                         transliteration::Transliterations *t13ns) {
+void GetTransliterations(const Composition& composition,
+                         transliteration::Transliterations* t13ns) {
   GetSubTransliterations(composition, 0, composition.GetLength(), t13ns);
 }
 }  // namespace common
@@ -511,13 +511,13 @@ std::string ComposerData::GetRawSubString(const size_t position,
 }
 
 void ComposerData::GetTransliterations(
-    transliteration::Transliterations *t13ns) const {
+    transliteration::Transliterations* t13ns) const {
   common::GetTransliterations(composition_, t13ns);
 }
 
 void ComposerData::GetSubTransliterations(
     const size_t position, const size_t size,
-    transliteration::Transliterations *t13ns) const {
+    transliteration::Transliterations* t13ns) const {
   common::GetSubTransliterations(composition_, position, size, t13ns);
 }
 
@@ -564,7 +564,7 @@ Composer::Composer(std::shared_ptr<const Table> table,
   Reset();
 }
 
-const ComposerData &Composer::EmptyComposerData() {
+const ComposerData& Composer::EmptyComposerData() {
   static const absl::NoDestructor<ComposerData> kComposerData(
       Composition(Table::GetSharedDefaultTable()), 0, transliteration::HIRAGANA,
       commands::Context::NORMAL, "",
@@ -813,11 +813,11 @@ void Composer::SetPreeditTextForTestOnly(const absl::string_view input) {
 }
 
 void Composer::SetCompositionsForHandwriting(
-    absl::Span<const commands::SessionCommand::CompositionEvent *const>
+    absl::Span<const commands::SessionCommand::CompositionEvent* const>
         compositions) {
   Reset();
   compositions_for_handwriting_.clear();
-  for (const auto &elm : compositions) {
+  for (const auto& elm : compositions) {
     compositions_for_handwriting_.push_back(*elm);
   }
 
@@ -851,7 +851,7 @@ bool Composer::InsertCharacterKeyAndPreedit(const absl::string_view key,
   return ProcessCompositionInput(std::move(input));
 }
 
-bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
+bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent& key) {
   if (!EnableInsert()) {
     return false;
   }
@@ -1004,8 +1004,8 @@ void Composer::MoveCursorTo(uint32_t new_position) {
   }
 }
 
-void Composer::GetPreedit(std::string *left, std::string *focused,
-                          std::string *right) const {
+void Composer::GetPreedit(std::string* left, std::string* focused,
+                          std::string* right) const {
   DCHECK(left);
   DCHECK(focused);
   DCHECK(right);
@@ -1070,7 +1070,7 @@ std::string Composer::GetRawSubString(const size_t position,
 }
 
 void Composer::GetTransliterations(
-    transliteration::Transliterations *t13ns) const {
+    transliteration::Transliterations* t13ns) const {
   common::GetTransliterations(composition_, t13ns);
 }
 
@@ -1082,7 +1082,7 @@ std::string Composer::GetSubTransliteration(
 
 void Composer::GetSubTransliterations(
     const size_t position, const size_t size,
-    transliteration::Transliterations *t13ns) const {
+    transliteration::Transliterations* t13ns) const {
   common::GetSubTransliterations(composition_, position, size, t13ns);
 }
 
@@ -1174,7 +1174,7 @@ void Composer::AutoSwitchMode() {
 
 bool Composer::ShouldCommit() const { return composition_.ShouldCommit(); }
 
-bool Composer::ShouldCommitHead(size_t *length_to_commit) const {
+bool Composer::ShouldCommitHead(size_t* length_to_commit) const {
   size_t max_remaining_composition_length;
   switch (GetInputFieldType()) {
     case commands::Context::PASSWORD:
@@ -1211,7 +1211,7 @@ bool IsAlphabetOrNumber(const Script script) {
 }  // namespace
 
 // static
-bool Composer::TransformCharactersForNumbers(std::string *query) {
+bool Composer::TransformCharactersForNumbers(std::string* query) {
   if (query == nullptr) {
     LOG(ERROR) << "query is nullptr";
     return false;

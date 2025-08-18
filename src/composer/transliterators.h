@@ -65,9 +65,9 @@ class TransliteratorInterface {
   //   (raw_lhs, raw_rhs) => ("す", "゛")  fall back strings.
   //   (conv_lhs, conv_rhs) => ("す", "゛")
   virtual bool Split(size_t position, absl::string_view raw,
-                     absl::string_view converted, std::string *raw_lhs,
-                     std::string *raw_rhs, std::string *converted_lhs,
-                     std::string *converted_rhs) const = 0;
+                     absl::string_view converted, std::string* raw_lhs,
+                     std::string* raw_rhs, std::string* converted_lhs,
+                     std::string* converted_rhs) const = 0;
 };
 }  // namespace internal
 
@@ -100,18 +100,18 @@ class Transliterators {
 
   // Return a singleton instance of a TransliteratorInterface.
   // LOCAL transliterator is not accepted.
-  static const internal::TransliteratorInterface *GetTransliterator(
+  static const internal::TransliteratorInterface* GetTransliterator(
       Transliterator transliterator);
 
   static bool SplitRaw(size_t position, absl::string_view raw,
-                       absl::string_view converted, std::string *raw_lhs,
-                       std::string *raw_rhs, std::string *converted_lhs,
-                       std::string *converted_rhs);
+                       absl::string_view converted, std::string* raw_lhs,
+                       std::string* raw_rhs, std::string* converted_lhs,
+                       std::string* converted_rhs);
 
   static bool SplitConverted(size_t position, absl::string_view raw,
-                             absl::string_view converted, std::string *raw_lhs,
-                             std::string *raw_rhs, std::string *converted_lhs,
-                             std::string *converted_rhs);
+                             absl::string_view converted, std::string* raw_lhs,
+                             std::string* raw_rhs, std::string* converted_lhs,
+                             std::string* converted_rhs);
 };
 
 }  // namespace composer

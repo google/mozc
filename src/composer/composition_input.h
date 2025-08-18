@@ -49,15 +49,15 @@ class CompositionInput final {
   CompositionInput() = default;
 
   // Copyable and movable.
-  CompositionInput(const CompositionInput &x) = default;
-  CompositionInput &operator=(const CompositionInput &x) = default;
-  CompositionInput(CompositionInput &&x) = default;
-  CompositionInput &operator=(CompositionInput &&x) = default;
+  CompositionInput(const CompositionInput& x) = default;
+  CompositionInput& operator=(const CompositionInput& x) = default;
+  CompositionInput(CompositionInput&& x) = default;
+  CompositionInput& operator=(CompositionInput&& x) = default;
 
   // Initializes with KeyEvent.
   // If KeyEvent has a special key (e.g. Henkan),
   // it is used as an input of a command key. (e.g. "{henkan}").
-  bool Init(const Table &table, const commands::KeyEvent &key_event,
+  bool Init(const Table& table, const commands::KeyEvent& key_event,
             bool is_new_input);
   void InitFromRaw(std::string raw, bool is_new_input);
   void InitFromRawAndConv(std::string raw, std::string conversion,
@@ -66,25 +66,25 @@ class CompositionInput final {
   void Clear();
   bool Empty() const;
 
-  const std::string &raw() const { return raw_; }
+  const std::string& raw() const { return raw_; }
   void clear_raw() { raw_.clear(); }
-  std::string *mutable_raw() { return &raw_; }
+  std::string* mutable_raw() { return &raw_; }
   template <typename String>
-  void set_raw(String &&raw) {
+  void set_raw(String&& raw) {
     strings::Assign(raw_, std::forward<String>(raw));
   }
 
-  const std::string &conversion() const { return conversion_; }
+  const std::string& conversion() const { return conversion_; }
   void clear_conversion() { conversion_.clear(); }
   template <typename String>
-  void set_conversion(String &&conversion) {
+  void set_conversion(String&& conversion) {
     strings::Assign(conversion_, std::forward<String>(conversion));
   }
 
-  const ProbableKeyEvents &probable_key_events() const {
+  const ProbableKeyEvents& probable_key_events() const {
     return probable_key_events_;
   }
-  void set_probable_key_events(const ProbableKeyEvents &probable_key_events) {
+  void set_probable_key_events(const ProbableKeyEvents& probable_key_events) {
     probable_key_events_ = probable_key_events;
   }
 

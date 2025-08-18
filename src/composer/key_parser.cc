@@ -175,7 +175,7 @@ constexpr auto kSpecialKeyMap =
 
 // static
 bool KeyParser::ParseKey(const absl::string_view key_string,
-                         KeyEvent *key_event) {
+                         KeyEvent* key_event) {
   std::vector<std::string> keys =
       absl::StrSplit(key_string, ' ', absl::SkipEmpty());
   if (keys.empty()) {
@@ -187,13 +187,13 @@ bool KeyParser::ParseKey(const absl::string_view key_string,
 
 // static
 bool KeyParser::ParseKeyVector(const absl::Span<const std::string> keys,
-                               KeyEvent *key_event) {
+                               KeyEvent* key_event) {
   CHECK(key_event);
 
   key_event->Clear();
   absl::btree_set<commands::KeyEvent::ModifierKey> modifiers_set;
 
-  for (const std::string &key : keys) {
+  for (const std::string& key : keys) {
     if (Util::CharsLen(key) == 1) {
       if (key_event->has_key_code()) {
         // Multiple keys are not supported.
@@ -214,7 +214,7 @@ bool KeyParser::ParseKeyVector(const absl::Span<const std::string> keys,
       }
       continue;
     }
-    if (const KeyEvent::SpecialKey *special_key =
+    if (const KeyEvent::SpecialKey* special_key =
             kSpecialKeyMap.FindOrNull(lower_key);
         special_key != nullptr) {
       if (key_event->has_special_key()) {

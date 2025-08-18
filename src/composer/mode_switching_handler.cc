@@ -77,7 +77,7 @@ void ModeSwitchingHandler::AddRule(absl::string_view key, const Rule rule) {
   patterns_.emplace(key, rule);
 }
 
-ModeSwitchingHandler *ModeSwitchingHandler::GetModeSwitchingHandler() {
+ModeSwitchingHandler* ModeSwitchingHandler::GetModeSwitchingHandler() {
   return Singleton<ModeSwitchingHandler>::get();
 }
 

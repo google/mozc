@@ -68,7 +68,7 @@ class ModeSwitchingHandler {
   Rule GetModeSwitchingRule(absl::string_view key) const;
 
   // Gets the singleton instance of this class.
-  static ModeSwitchingHandler *GetModeSwitchingHandler();
+  static ModeSwitchingHandler* GetModeSwitchingHandler();
 
   // Matcher to Windows drive letters like "C:\".
   // TODO(team): This static method is internal use only.  It's public for

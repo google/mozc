@@ -47,7 +47,7 @@ using ::mozc::commands::KeyEvent;
 
 ::testing::AssertionResult CompareKeyEvent(
     const absl::string_view expected_expr, const absl::string_view actual_expr,
-    const KeyEvent &expected, const KeyEvent &actual) {
+    const KeyEvent& expected, const KeyEvent& actual) {
   {  // Key code
     const int expected_key_code =
         (expected.has_key_code()) ? expected.key_code() : -1;
@@ -301,7 +301,7 @@ TEST(KeyEventUtilTest, RemoveModifiers) {
 
   for (size_t i = 0; i < std::size(kRemoveModifiersTestData); ++i) {
     SCOPED_TRACE(absl::StrFormat("index = %d", static_cast<int>(i)));
-    const RemoveModifiersTestData &data = kRemoveModifiersTestData[i];
+    const RemoveModifiersTestData& data = kRemoveModifiersTestData[i];
 
     KeyEvent input, remove, output;
     KeyParser::ParseKey(data.input, &input);
@@ -468,7 +468,7 @@ TEST(KeyEventUtilTest, IsModifiers) {
   };
 
   for (size_t i = 0; i < std::size(kIsModifiersTestData); ++i) {
-    const IsModifiersTestData &data = kIsModifiersTestData[i];
+    const IsModifiersTestData& data = kIsModifiersTestData[i];
     SCOPED_TRACE(absl::StrFormat("index: %d", static_cast<int>(i)));
 
     EXPECT_EQ(KeyEventUtil::IsAlt(data.modifiers), data.is_alt);

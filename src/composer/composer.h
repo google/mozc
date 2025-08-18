@@ -70,10 +70,10 @@ class ComposerData {
                    compositions_for_handwriting);
 
   // Copyable and movable.
-  ComposerData(const ComposerData &other) = default;
-  ComposerData &operator=(const ComposerData &) = default;
-  ComposerData(ComposerData &&other) = default;
-  ComposerData &operator=(ComposerData &&) = default;
+  ComposerData(const ComposerData& other) = default;
+  ComposerData& operator=(const ComposerData&) = default;
+  ComposerData(ComposerData&& other) = default;
+  ComposerData& operator=(ComposerData&&) = default;
 
   transliteration::TransliterationType GetInputMode() const;
 
@@ -109,11 +109,11 @@ class ComposerData {
   std::string GetRawSubString(size_t position, size_t size) const;
 
   // Generate transliterations.
-  void GetTransliterations(transliteration::Transliterations *t13ns) const;
+  void GetTransliterations(transliteration::Transliterations* t13ns) const;
 
   // Generate substrings of transliterations.
   void GetSubTransliterations(size_t position, size_t size,
-                              transliteration::Transliterations *t13ns) const;
+                              transliteration::Transliterations* t13ns) const;
 
   absl::string_view source_text() const { return source_text_; }
 
@@ -171,13 +171,13 @@ class Composer final {
            config::Config config);
 
   // Copyable and movable.
-  Composer(const Composer &) = default;
-  Composer &operator=(const Composer &) = default;
-  Composer(Composer &&) = default;
-  Composer &operator=(Composer &&) = default;
+  Composer(const Composer&) = default;
+  Composer& operator=(const Composer&) = default;
+  Composer(Composer&&) = default;
+  Composer& operator=(Composer&&) = default;
 
   // Returns a reference of empty ComposerData used for placeholder.
-  static const ComposerData &EmptyComposerData();
+  static const ComposerData& EmptyComposerData();
 
   // Return a ComposerData with the current state of the composer.
   ComposerData CreateComposerData() const;
@@ -221,8 +221,8 @@ class Composer final {
   void SetOutputMode(transliteration::TransliterationType mode);
 
   // Returns preedit strings
-  void GetPreedit(std::string *left, std::string *focused,
-                  std::string *right) const;
+  void GetPreedit(std::string* left, std::string* focused,
+                  std::string* right) const;
 
   // Returns a preedit string with user's preferences.
   std::string GetStringForPreedit() const;
@@ -282,14 +282,14 @@ class Composer final {
   // The composition may contain Kana-Kanji mixed string. (ex. "かん字")
   // Handwriting engine can generate multiple candidates.
   void SetCompositionsForHandwriting(
-      absl::Span<const commands::SessionCommand::CompositionEvent *const>
+      absl::Span<const commands::SessionCommand::CompositionEvent* const>
           compositions);
   absl::Span<const commands::SessionCommand::CompositionEvent>
   GetHandwritingCompositions() const;
 
   bool InsertCharacterKeyAndPreedit(absl::string_view key,
                                     absl::string_view preedit);
-  bool InsertCharacterKeyEvent(const commands::KeyEvent &key);
+  bool InsertCharacterKeyEvent(const commands::KeyEvent& key);
   void InsertCommandCharacter(InternalCommand internal_command);
   void Delete();
   void Backspace();
@@ -311,7 +311,7 @@ class Composer final {
   std::string GetRawSubString(size_t position, size_t size) const;
 
   // Generate transliterations.
-  void GetTransliterations(transliteration::Transliterations *t13ns) const;
+  void GetTransliterations(transliteration::Transliterations* t13ns) const;
 
   // Generate substrings of specified transliteration.
   std::string GetSubTransliteration(transliteration::TransliterationType type,
@@ -319,7 +319,7 @@ class Composer final {
 
   // Generate substrings of transliterations.
   void GetSubTransliterations(size_t position, size_t size,
-                              transliteration::Transliterations *t13ns) const;
+                              transliteration::Transliterations* t13ns) const;
 
   // Check if the preedit is can be modified.
   bool EnableInsert() const;
@@ -337,13 +337,13 @@ class Composer final {
   // We cannot use direct input mode because it cannot deal with toggle input.
   // In password mode, first character in composition should be committed
   // when another letter is generated in composition.
-  bool ShouldCommitHead(size_t *length_to_commit) const;
+  bool ShouldCommitHead(size_t* length_to_commit) const;
 
   // Transform characters for preferred number format.  If any
   // characters are transformed true is returned.
   // For example, if the query is "ー１、０００。５", it should be
   // transformed to "−１，０００．５".  and true is returned.
-  static bool TransformCharactersForNumbers(std::string *query);
+  static bool TransformCharactersForNumbers(std::string* query);
 
   // Set new input flag.
   // By calling this method, next inserted character will introduce
@@ -356,7 +356,7 @@ class Composer final {
   bool is_new_input() const { return is_new_input_; }
   size_t shifted_sequence_count() const { return shifted_sequence_count_; }
   absl::string_view source_text() const { return source_text_; }
-  std::string *mutable_source_text() { return &source_text_; }
+  std::string* mutable_source_text() { return &source_text_; }
   void set_source_text(absl::string_view source_text);
   size_t max_length() const { return max_length_; }
   void set_max_length(size_t length) { max_length_ = length; }
