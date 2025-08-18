@@ -47,26 +47,26 @@ class CommandRewriter : public RewriterInterface {
   CommandRewriter() = default;
   ~CommandRewriter() override = default;
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 
  private:
-  bool RewriteSegment(const config::Config &config, Segment *segment) const;
+  bool RewriteSegment(const config::Config& config, Segment* segment) const;
 
   // Insert a new IncogitoModeToggle Command candidate.
   // Use segment->candidate(base_pos) as a reference candidate.
   // |insert_pos| is the actual position where the new candidate
   // is inserted.
-  void InsertIncognitoModeToggleCommand(const config::Config &config,
-                                        Segment *segment, size_t reference_pos,
+  void InsertIncognitoModeToggleCommand(const config::Config& config,
+                                        Segment* segment, size_t reference_pos,
                                         size_t insert_pos) const;
 
   // Insert a new IncogitoModeToggle Command candidate.
   // Use segment->candidate(base_pos) as a reference candidate.
   // |insert_pos| is the actual position where the new candidate
   // is inserted.
-  void InsertDisableAllSuggestionToggleCommand(const config::Config &config,
-                                               Segment *segment,
+  void InsertDisableAllSuggestionToggleCommand(const config::Config& config,
+                                               Segment* segment,
                                                size_t reference_pos,
                                                size_t insert_pos) const;
 };

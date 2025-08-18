@@ -38,7 +38,7 @@
 namespace mozc {
 void CollocationUtil::GetNormalizedScript(const absl::string_view str,
                                           bool remove_number,
-                                          std::string *output) {
+                                          std::string* output) {
   output->clear();
   RemoveExtraCharacters(str, remove_number, output);
   absl::StrReplaceAll({{"％", "%"}, {"～", "〜"}}, output);
@@ -75,7 +75,7 @@ bool CollocationUtil::IsNumber(char32_t c) {
 
 void CollocationUtil::RemoveExtraCharacters(const absl::string_view input,
                                             bool remove_number,
-                                            std::string *output) {
+                                            std::string* output) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     const char32_t codepoint = iter.Get();
     if (((Util::GetScriptType(codepoint) != Util::UNKNOWN_SCRIPT) &&

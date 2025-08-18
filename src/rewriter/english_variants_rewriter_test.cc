@@ -54,7 +54,7 @@ using ::mozc::dictionary::PosMatcher;
 class EnglishVariantsRewriterTestPeer
     : testing::TestPeer<EnglishVariantsRewriter> {
  public:
-  explicit EnglishVariantsRewriterTestPeer(EnglishVariantsRewriter &rewriter)
+  explicit EnglishVariantsRewriterTestPeer(EnglishVariantsRewriter& rewriter)
       : testing::TestPeer<EnglishVariantsRewriter>(rewriter) {}
 
   PEER_METHOD(ExpandEnglishVariants);
@@ -70,8 +70,8 @@ class EnglishVariantsRewriterTest : public testing::TestWithTempUserProfile {
     rewriter_ = std::make_unique<EnglishVariantsRewriter>(pos_matcher_);
   }
 
-  bool GetRankFromValue(const Segment &segment, const absl::string_view value,
-                        int *rank) {
+  bool GetRankFromValue(const Segment& segment, const absl::string_view value,
+                        int* rank) {
     for (size_t i = 0; i < segment.candidates_size(); ++i) {
       if (segment.candidate(i).value == value) {
         *rank = static_cast<int>(i);
@@ -165,8 +165,8 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
   {
     Segments segments;
     const ConversionRequest request;
-    Segment *seg = segments.push_back_segment();
-    converter::Candidate *candidate = seg->add_candidate();
+    Segment* seg = segments.push_back_segment();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "Google";
@@ -195,15 +195,15 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     const ConversionRequest conversion_request =
         ConversionRequestBuilder().SetRequest(request).Build();
 
-    Segment *seg1 = segments.push_back_segment();
-    Segment *seg2 = segments.push_back_segment();
-    converter::Candidate *candidate1 = seg1->add_candidate();
+    Segment* seg1 = segments.push_back_segment();
+    Segment* seg2 = segments.push_back_segment();
+    converter::Candidate* candidate1 = seg1->add_candidate();
     candidate1->content_key = "ぐーぐる";
     candidate1->key = "ぐーぐる";
     candidate1->value = "Google";
     candidate1->content_value = "Google";
     candidate1->attributes &= ~converter::Attribute::NO_VARIANTS_EXPANSION;
-    converter::Candidate *candidate2 = seg2->add_candidate();
+    converter::Candidate* candidate2 = seg2->add_candidate();
     candidate2->content_key = "じゃぱん";
     candidate2->key = "じゃぱん";
     candidate2->value = "Japan";
@@ -247,10 +247,10 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     const ConversionRequest conversion_request =
         ConversionRequestBuilder().SetRequest(request).Build();
 
-    Segment *seg1 = segments.push_back_segment();
-    Segment *seg2 = segments.push_back_segment();
+    Segment* seg1 = segments.push_back_segment();
+    Segment* seg2 = segments.push_back_segment();
     // When seg1 has no candidates, seg2 will not be expanded.
-    converter::Candidate *candidate2 = seg2->add_candidate();
+    converter::Candidate* candidate2 = seg2->add_candidate();
     candidate2->content_key = "じゃぱん";
 
     candidate2->key = "じゃぱん";
@@ -280,17 +280,17 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     const ConversionRequest conversion_request =
         ConversionRequestBuilder().SetRequest(request).Build();
 
-    Segment *seg1 = segments.push_back_segment();
-    Segment *seg2 = segments.push_back_segment();
+    Segment* seg1 = segments.push_back_segment();
+    Segment* seg2 = segments.push_back_segment();
 
     // When seg1 is not an English word, seg2 will not be expanded.
-    converter::Candidate *candidate1 = seg1->add_candidate();
+    converter::Candidate* candidate1 = seg1->add_candidate();
     candidate1->content_key = "ぐーぐる";
     candidate1->key = "ぐーぐる";
     candidate1->value = "ぐーぐる";
     candidate1->content_value = "ぐーぐる";
     candidate1->attributes &= ~converter::Attribute::NO_VARIANTS_EXPANSION;
-    converter::Candidate *candidate2 = seg2->add_candidate();
+    converter::Candidate* candidate2 = seg2->add_candidate();
     candidate2->content_key = "じゃぱん";
     candidate2->key = "じゃぱん";
     candidate2->value = "Japan";
@@ -312,14 +312,14 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
   {
     Segments segments;
     const ConversionRequest request;
-    Segment *seg = segments.push_back_segment();
+    Segment* seg = segments.push_back_segment();
     seg->Clear();
 
     for (int i = 0; i < 10; ++i) {
-      converter::Candidate *candidate1 = seg->add_candidate();
+      converter::Candidate* candidate1 = seg->add_candidate();
       candidate1->value = std::to_string(i);
       candidate1->content_value = std::to_string(i);
-      converter::Candidate *candidate2 = seg->add_candidate();
+      converter::Candidate* candidate2 = seg->add_candidate();
       candidate2->content_key = "ぐーぐる";
       candidate2->key = "ぐーぐる";
       candidate2->value = "Google";
@@ -346,12 +346,12 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
 TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   // Multi-word English candidate should not be expanded.
   // NO_VARIANTS_EXPANSION is passed to the candidate only.
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = "まいけるじゃくそん";
     candidate->key = "まいけるじゃくそん";
     candidate->value = "Michael Jackson";
@@ -374,10 +374,10 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
 TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "Google";
@@ -392,7 +392,7 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
 
   {
     seg->clear_candidates();
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "Google";
@@ -417,10 +417,10 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
 TEST_F(EnglishVariantsRewriterTest, DoNotAddDuplicatedCandidates) {
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "GOOGLE";
@@ -447,10 +447,10 @@ TEST_F(EnglishVariantsRewriterTest, DoNotAddDuplicatedCandidates) {
 TEST_F(EnglishVariantsRewriterTest, KeepRank) {
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "GOOGLE";
@@ -486,10 +486,10 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
   // Fix variants
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = "google";
     candidate->key = "google";
     candidate->value = "Google";
@@ -512,10 +512,10 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
 TEST_F(EnglishVariantsRewriterTest, DoNotExpandUpperCaseProperNouns) {
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = "なさ";
     candidate->key = "なさ";
     candidate->content_value = "NASA";
@@ -536,10 +536,10 @@ TEST_F(EnglishVariantsRewriterTest, DoNotExpandUpperCaseProperNouns) {
 TEST_F(EnglishVariantsRewriterTest, ProperNouns) {
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->content_value = "google";
@@ -568,11 +568,11 @@ TEST_F(EnglishVariantsRewriterTest, ProperNouns) {
 TEST_F(EnglishVariantsRewriterTest, FillConsumedKeySize) {
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   constexpr absl::string_view kKey = "なさ";
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = kKey;
     candidate->key = kKey;
     candidate->content_value = "nasa";
@@ -584,7 +584,7 @@ TEST_F(EnglishVariantsRewriterTest, FillConsumedKeySize) {
   EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
   EXPECT_GT(seg->candidates_size(), 1);
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
-    const converter::Candidate &c = seg->candidate(i);
+    const converter::Candidate& c = seg->candidate(i);
     EXPECT_TRUE(c.attributes & converter::Attribute::PARTIALLY_KEY_CONSUMED);
     EXPECT_EQ(c.consumed_key_size, kKey.size());
   }

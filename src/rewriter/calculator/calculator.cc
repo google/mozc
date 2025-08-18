@@ -81,7 +81,7 @@ Calculator::Calculator() {
 // Basic arithmetic operations are available.
 // TODO(tok): Add more number of operators.
 bool Calculator::CalculateString(const absl::string_view key,
-                                 std::string *result) const {
+                                 std::string* result) const {
   DCHECK(result);
   if (key.empty()) {
     LOG(ERROR) << "Key is empty.";
@@ -124,9 +124,9 @@ bool Calculator::CalculateString(const absl::string_view key,
 }
 
 bool Calculator::Tokenize(absl::string_view expression_body,
-                          TokenSequence *tokens) const {
-  const char *current = expression_body.data();
-  const char *end = expression_body.data() + expression_body.size();
+                          TokenSequence* tokens) const {
+  const char* current = expression_body.data();
+  const char* end = expression_body.data() + expression_body.size();
   int num_operator = 0;  // Number of operators appeared
   int num_value = 0;     // Number of values appeared
 
@@ -138,7 +138,7 @@ bool Calculator::Tokenize(absl::string_view expression_body,
     while ((*current == ' ') || (*current == '\t')) {
       ++current;
     }
-    const char *token_begin = current;
+    const char* token_begin = current;
 
     // Read value token
     while (((*current >= '0') && (*current <= '9')) || (*current == '.')) {
@@ -189,10 +189,10 @@ bool Calculator::Tokenize(absl::string_view expression_body,
   return true;
 }
 
-bool Calculator::CalculateTokens(const TokenSequence &tokens,
-                                 double *result_value) const {
+bool Calculator::CalculateTokens(const TokenSequence& tokens,
+                                 double* result_value) const {
   DCHECK(result_value);
-  void *parser = ParseAlloc(malloc);
+  void* parser = ParseAlloc(malloc);
   Result result;
   for (size_t i = 0; i < tokens.size(); ++i) {
     Parse(parser, tokens[i].first, tokens[i].second, &result);

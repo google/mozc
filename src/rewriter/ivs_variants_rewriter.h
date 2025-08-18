@@ -45,10 +45,10 @@ namespace mozc {
 // (content_key=かつらぎしりつとしょかん, content_value=葛城市立図書館) doesn't.
 class IvsVariantsRewriter : public RewriterInterface {
  public:
-  int capability(const ConversionRequest &request) const override;
+  int capability(const ConversionRequest& request) const override;
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 };
 
 }  // namespace mozc

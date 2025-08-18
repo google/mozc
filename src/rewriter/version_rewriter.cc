@@ -74,23 +74,23 @@ VersionRewriter::VersionRewriter(absl::string_view data_version) {
   std::string version_string =
       absl::StrCat(kVersionRewriterVersionPrefix, Version::GetMozcVersion(),
                    "+", data_version);
-  for (const auto &[key, base_candidate] : kKeyCandList) {
+  for (const auto& [key, base_candidate] : kKeyCandList) {
     entries_.emplace(
         key, VersionEntry{std::string(base_candidate), version_string, 9});
   }
 }
 
-bool VersionRewriter::Rewrite(const ConversionRequest &request,
-                              Segments *segments) const {
+bool VersionRewriter::Rewrite(const ConversionRequest& request,
+                              Segments* segments) const {
   bool result = false;
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     const auto it = entries_.find(segment.key());
     if (it != entries_.end()) {
       for (size_t j = 0; j < segment.candidates_size(); ++j) {
-        const VersionEntry &ent = it->second;
-        const converter::Candidate &c = segment.candidate(static_cast<int>(j));
+        const VersionEntry& ent = it->second;
+        const converter::Candidate& c = segment.candidate(static_cast<int>(j));
         if (c.value == ent.base_candidate) {
-          converter::Candidate *new_cand = segment.insert_candidate(
+          converter::Candidate* new_cand = segment.insert_candidate(
               std::min<int>(segment.candidates_size(), ent.rank));
           if (new_cand != nullptr) {
             new_cand->lid = c.lid;

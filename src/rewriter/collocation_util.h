@@ -41,8 +41,8 @@ namespace mozc {
 class CollocationUtil {
  public:
   CollocationUtil() = delete;
-  CollocationUtil(const CollocationUtil &) = delete;
-  CollocationUtil &operator=(const CollocationUtil &) = delete;
+  CollocationUtil(const CollocationUtil&) = delete;
+  CollocationUtil& operator=(const CollocationUtil&) = delete;
 
   // Gets normalized script
   // Removes or rewrites some symbols.
@@ -50,7 +50,7 @@ class CollocationUtil {
   // "一個" -> "個" (removes 'number' if |remove_number| is true)
   // "%％" -> "%%" (full width '%' to half width)
   static void GetNormalizedScript(const absl::string_view str,
-                                  bool remove_number, std::string *output);
+                                  bool remove_number, std::string* output);
 
   // Returns true if given char is number including kanji.
   static bool IsNumber(char32_t c);
@@ -58,7 +58,7 @@ class CollocationUtil {
  private:
   // Removes characters for normalizing.
   static void RemoveExtraCharacters(const absl::string_view input,
-                                    bool remove_number, std::string *output);
+                                    bool remove_number, std::string* output);
 };
 
 }  // namespace mozc

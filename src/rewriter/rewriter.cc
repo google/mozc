@@ -127,12 +127,12 @@ ABSL_FLAG(bool, use_history_rewriter, false, "Use history rewriter or not.");
 
 namespace mozc {
 
-Rewriter::Rewriter(const engine::Modules &modules) {
-  const DataManager &data_manager = modules.GetDataManager();
-  const dictionary::DictionaryInterface &dictionary = modules.GetDictionary();
-  const dictionary::PosMatcher &pos_matcher = modules.GetPosMatcher();
-  const dictionary::PosGroup &pos_group = modules.GetPosGroup();
-  const dictionary::SingleKanjiDictionary &single_kanji_dictionary =
+Rewriter::Rewriter(const engine::Modules& modules) {
+  const DataManager& data_manager = modules.GetDataManager();
+  const dictionary::DictionaryInterface& dictionary = modules.GetDictionary();
+  const dictionary::PosMatcher& pos_matcher = modules.GetPosMatcher();
+  const dictionary::PosGroup& pos_group = modules.GetPosGroup();
+  const dictionary::SingleKanjiDictionary& single_kanji_dictionary =
       modules.GetSingleKanjiDictionary();
 
 #ifdef MOZC_USER_DICTIONARY_REWRITER

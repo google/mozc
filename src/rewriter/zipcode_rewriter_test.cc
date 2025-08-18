@@ -54,12 +54,12 @@ enum SegmentType {
 };
 
 void AddSegment(const absl::string_view key, const absl::string_view value,
-                SegmentType type, const PosMatcher &pos_matcher,
-                Segments *segments) {
+                SegmentType type, const PosMatcher& pos_matcher,
+                Segments* segments) {
   segments->Clear();
-  Segment *seg = segments->push_back_segment();
+  Segment* seg = segments->push_back_segment();
   seg->set_key(key);
-  converter::Candidate *candidate = seg->add_candidate();
+  converter::Candidate* candidate = seg->add_candidate();
   candidate->value = std::string(key);
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);
@@ -70,11 +70,11 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
   }
 }
 
-bool HasZipcodeAndAddress(const Segments &segments,
+bool HasZipcodeAndAddress(const Segments& segments,
                           const absl::string_view expected) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    const converter::Candidate &candidate = segments.segment(0).candidate(i);
+    const converter::Candidate& candidate = segments.segment(0).candidate(i);
     if (candidate.description == "郵便番号と住所") {
       if (candidate.content_value == expected) {
         return true;

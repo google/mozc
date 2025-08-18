@@ -58,7 +58,7 @@ namespace mozc {
 
 namespace {
 
-void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
+void InsertNounPrefix(const PosMatcher& pos_matcher, Segment* segment,
                       SerializedDictionary::iterator begin,
                       SerializedDictionary::iterator end) {
   DCHECK(begin != end);
@@ -84,7 +84,7 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
                                         converter::Attribute::CONTEXT_SENSITIVE)
                              ? 1
                              : 0));
-    converter::Candidate *c = segment->insert_candidate(insert_pos);
+    converter::Candidate* c = segment->insert_candidate(insert_pos);
     c->lid = pos_matcher.GetNounPrefixId();
     c->rid = pos_matcher.GetNounPrefixId();
     c->cost = 5000;
@@ -100,22 +100,22 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
 }  // namespace
 
 SingleKanjiRewriter::SingleKanjiRewriter(
-    const dictionary::PosMatcher &pos_matcher,
-    const dictionary::SingleKanjiDictionary &single_kanji_dictionary)
+    const dictionary::PosMatcher& pos_matcher,
+    const dictionary::SingleKanjiDictionary& single_kanji_dictionary)
     : pos_matcher_(pos_matcher),
       single_kanji_dictionary_(single_kanji_dictionary) {}
 
 SingleKanjiRewriter::~SingleKanjiRewriter() = default;
 
-int SingleKanjiRewriter::capability(const ConversionRequest &request) const {
+int SingleKanjiRewriter::capability(const ConversionRequest& request) const {
   if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::CONVERSION;
 }
 
-bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
-                                  Segments *segments) const {
+bool SingleKanjiRewriter::Rewrite(const ConversionRequest& request,
+                                  Segments* segments) const {
   if (!request.config().use_single_kanji_conversion()) {
     MOZC_VLOG(2) << "no use_single_kanji_conversion";
     return false;
@@ -125,7 +125,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
     MOZC_VLOG(2) << "single kanji prediction is enabled";
     // Single kanji entries are populated in the predictor when mixed conversion
     // mode, so we only sets the description of single kanji.
-    for (Segment &segment : segments->conversion_segments()) {
+    for (Segment& segment : segments->conversion_segments()) {
       AddDescriptionForExistingCandidates(&segment);
     }
     return true;
@@ -139,7 +139,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
                             .decoder_experiment_params()
                             .variation_character_types() &
                         commands::DecoderExperimentParams::SVS_JAPANESE);
-  for (Segment &segment : conversion_segments) {
+  for (Segment& segment : conversion_segments) {
     AddDescriptionForExistingCandidates(&segment);
 
     const std::vector<std::string> kanji_list =
@@ -156,13 +156,13 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
   // TODO(team): Ideally, this issue can be fixed via the language model
   // and dictionary generation.
   for (size_t i = 0; i < segments_size; ++i) {
-    Segment &segment = conversion_segments[i];
+    Segment& segment = conversion_segments[i];
     if (segment.candidates_size() == 0) {
       continue;
     }
 
     if (i + 1 < segments_size) {
-      const converter::Candidate &right_candidate =
+      const converter::Candidate& right_candidate =
           conversion_segments[i + 1].candidate(0);
       // right segment must be a noun.
       if (!pos_matcher_.IsContentNoun(right_candidate.lid)) {
@@ -190,10 +190,10 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
 // because if we have candidates with same value, the lower ranked candidate
 // will be removed.
 void SingleKanjiRewriter::AddDescriptionForExistingCandidates(
-    Segment *segment) const {
+    Segment* segment) const {
   DCHECK(segment);
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    converter::Candidate *cand = segment->mutable_candidate(i);
+    converter::Candidate* cand = segment->mutable_candidate(i);
     if (!cand->description.empty()) {
       continue;
     }
@@ -205,7 +205,7 @@ void SingleKanjiRewriter::AddDescriptionForExistingCandidates(
 // Insert SingleKanji into segment.
 bool SingleKanjiRewriter::InsertCandidate(
     bool is_single_segment, uint16_t single_kanji_id,
-    absl::Span<const std::string> kanji_list, Segment *segment) const {
+    absl::Span<const std::string> kanji_list, Segment* segment) const {
   DCHECK(segment);
   DCHECK(!kanji_list.empty());
   if (segment->candidates_size() == 0) {
@@ -223,7 +223,7 @@ bool SingleKanjiRewriter::InsertCandidate(
 
   // Append single-kanji
   for (size_t i = 0; i < kanji_list.size(); ++i) {
-    converter::Candidate *c = segment->push_back_candidate();
+    converter::Candidate* c = segment->push_back_candidate();
     FillCandidate(candidate_key, kanji_list[i], kOffsetCost + i,
                   single_kanji_id, c);
   }
@@ -234,7 +234,7 @@ void SingleKanjiRewriter::FillCandidate(const absl::string_view key,
                                         const absl::string_view value,
                                         const int cost,
                                         const uint16_t single_kanji_id,
-                                        converter::Candidate *cand) const {
+                                        converter::Candidate* cand) const {
   cand->lid = single_kanji_id;
   cand->rid = single_kanji_id;
   cand->cost = cost;

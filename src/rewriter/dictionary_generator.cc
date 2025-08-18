@@ -47,7 +47,7 @@ namespace mozc {
 namespace rewriter {
 namespace {
 
-void MergeTokenString(std::string &base, std::string &new_string) {
+void MergeTokenString(std::string& base, std::string& new_string) {
   if (!new_string.empty()) {
     base = std::move(new_string);
   }
@@ -65,24 +65,24 @@ void Token::MergeFrom(Token new_token) {
   MergeTokenString(additional_description, new_token.additional_description);
 }
 
-bool operator==(const Token &lhs, const Token &rhs) {
+bool operator==(const Token& lhs, const Token& rhs) {
   return std::tie(lhs.key, lhs.value, lhs.pos) ==
          std::tie(rhs.key, rhs.value, rhs.pos);
 }
 
-bool operator<(const Token &lhs, const Token &rhs) {
+bool operator<(const Token& lhs, const Token& rhs) {
   return std::tie(lhs.key, lhs.sorting_key, lhs.value) <
          std::tie(rhs.key, rhs.sorting_key, rhs.value);
 }
 
-DictionaryGenerator::DictionaryGenerator(const DataManager &data_manager) {
+DictionaryGenerator::DictionaryGenerator(const DataManager& data_manager) {
   const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
   open_bracket_id_ = pos_matcher.GetOpenBracketId();
   close_bracket_id_ = pos_matcher.GetCloseBracketId();
   user_pos_ = dictionary::UserPos::CreateFromDataManager(data_manager);
 }
 
-const Token &DictionaryGenerator::AddToken(Token token) {
+const Token& DictionaryGenerator::AddToken(Token token) {
   // Take the token as node_type of tokens_.
   auto node = tokens_.extract(token);
   if (node.empty()) {
@@ -93,10 +93,10 @@ const Token &DictionaryGenerator::AddToken(Token token) {
   }
 }
 
-bool DictionaryGenerator::Output(std::ostream &os) const {
+bool DictionaryGenerator::Output(std::ostream& os) const {
   uint32_t num_same_keys = 0;
   std::string prev_key;
-  for (const Token &token : tokens_) {
+  for (const Token& token : tokens_) {
     absl::string_view pos = token.pos;
 
     // Update the number of the sequence of the same keys

@@ -48,16 +48,16 @@
 namespace mozc {
 namespace {
 
-void AddCandidate(Segment *segment, const absl::string_view value) {
-  converter::Candidate *c = segment->add_candidate();
+void AddCandidate(Segment* segment, const absl::string_view value) {
+  converter::Candidate* c = segment->add_candidate();
   c->value = std::string(value);
   c->content_value = std::string(value);
 }
 
-void AddCandidateWithContentValue(Segment *segment,
+void AddCandidateWithContentValue(Segment* segment,
                                   const absl::string_view value,
                                   const absl::string_view content_value) {
-  converter::Candidate *c = segment->add_candidate();
+  converter::Candidate* c = segment->add_candidate();
   c->value = std::string(value);
   c->content_value = std::string(content_value);
 }
@@ -68,7 +68,7 @@ class FocusCandidateRewriterTest : public testing::TestWithTempUserProfile {
     rewriter_ = std::make_unique<FocusCandidateRewriter>(mock_data_manager_);
   }
 
-  const RewriterInterface *GetRewriter() { return rewriter_.get(); }
+  const RewriterInterface* GetRewriter() { return rewriter_.get(); }
 
  private:
   std::unique_ptr<FocusCandidateRewriter> rewriter_;
@@ -78,10 +78,10 @@ class FocusCandidateRewriterTest : public testing::TestWithTempUserProfile {
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterInvalidQuery) {
   Segments segments;
 
-  Segment *seg1 = segments.add_segment();
-  Segment *seg2 = segments.add_segment();
-  Segment *seg3 = segments.add_segment();
-  Segment *seg4 = segments.add_segment();
+  Segment* seg1 = segments.add_segment();
+  Segment* seg2 = segments.add_segment();
+  Segment* seg3 = segments.add_segment();
+  Segment* seg4 = segments.add_segment();
 
   AddCandidate(seg1, "｢");
   AddCandidate(seg1, "(");
@@ -106,10 +106,10 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterInvalidQuery) {
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRight) {
   Segments segments;
 
-  Segment *seg1 = segments.add_segment();
-  Segment *seg2 = segments.add_segment();
-  Segment *seg3 = segments.add_segment();
-  Segment *seg4 = segments.add_segment();
+  Segment* seg1 = segments.add_segment();
+  Segment* seg2 = segments.add_segment();
+  Segment* seg3 = segments.add_segment();
+  Segment* seg4 = segments.add_segment();
 
   AddCandidate(seg1, "｢");
   AddCandidate(seg1, "(");
@@ -143,10 +143,10 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRight) {
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeft) {
   Segments segments;
 
-  Segment *seg1 = segments.add_segment();
-  Segment *seg2 = segments.add_segment();
-  Segment *seg3 = segments.add_segment();
-  Segment *seg4 = segments.add_segment();
+  Segment* seg1 = segments.add_segment();
+  Segment* seg2 = segments.add_segment();
+  Segment* seg3 = segments.add_segment();
+  Segment* seg4 = segments.add_segment();
 
   AddCandidate(seg1, "｢");
   AddCandidate(seg1, "(");
@@ -180,7 +180,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeft) {
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRightNest) {
   Segments segments;
-  Segment *seg[7];
+  Segment* seg[7];
   for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
@@ -224,7 +224,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRightNest) {
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeftNest) {
   Segments segments;
-  Segment *seg[7];
+  Segment* seg[7];
   for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
@@ -268,7 +268,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeftNest) {
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   Segments segments;
-  Segment *seg[3];
+  Segment* seg[3];
   for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
@@ -278,7 +278,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   // set meta candidates
   {
     EXPECT_EQ(seg[0]->meta_candidates_size(), 0);
-    std::vector<converter::Candidate> *meta_cands =
+    std::vector<converter::Candidate>* meta_cands =
         seg[0]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
@@ -304,7 +304,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   // set meta candidates
   {
     EXPECT_EQ(seg[2]->meta_candidates_size(), 0);
-    std::vector<converter::Candidate> *meta_cands =
+    std::vector<converter::Candidate>* meta_cands =
         seg[2]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
@@ -336,7 +336,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   Segments segments;
-  Segment *seg[7];
+  Segment* seg[7];
   for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
@@ -406,7 +406,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
 // Bug #4596846: Non-number characters are changed to numbers
 TEST_F(FocusCandidateRewriterTest, DontChangeNonNumberSegment) {
   Segments segments;
-  Segment *seg[2];
+  Segment* seg[2];
   for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
@@ -427,7 +427,7 @@ TEST_F(FocusCandidateRewriterTest, DontChangeNonNumberSegment) {
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
   {
     Segments segments;
-    Segment *seg[6];
+    Segment* seg[6];
     for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
@@ -461,7 +461,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
   // No Number
   {
     Segments segments;
-    Segment *seg[3];
+    Segment* seg[3];
     for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
@@ -482,7 +482,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
   // No Number
   {
     Segments segments;
-    Segment *seg[3];
+    Segment* seg[3];
     for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
@@ -503,7 +503,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
   // No number
   {
     Segments segments;
-    Segment *seg[3];
+    Segment* seg[3];
     for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
@@ -534,7 +534,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     //
     // Then, focusing on (Seg 0, cand 1) should move "二回" in Seg 1 to the top.
     Segments segments;
-    Segment *seg[2];
+    Segment* seg[2];
     for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
@@ -563,7 +563,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     //
     // Then, focusing on (Seg 0, cand 1) should move "二回" in Seg 1 to the top.
     Segments segments;
-    Segment *seg[2];
+    Segment* seg[2];
     for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
@@ -609,7 +609,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     // Then, focusing on (Seg 0, cand 1) should move "二回や" in Seg 1 and "三回
     // " in Seg 2 to the top of each segment.
     Segments segments;
-    Segment *seg[3];
+    Segment* seg[3];
     for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
@@ -664,7 +664,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     //
     // Then, focusing on (Seg 0, cand 1) cannot move "二回" in Seg 3 to the top.
     Segments segments;
-    Segment *seg[5];
+    Segment* seg[5];
     for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
@@ -714,7 +714,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     // For this case, focusing on (Seg 0, cand 1) should not move "二階" in Seg
     // 1 to the top.
     Segments segments;
-    Segment *seg[3];
+    Segment* seg[3];
     for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }

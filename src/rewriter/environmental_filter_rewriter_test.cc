@@ -58,21 +58,21 @@ constexpr char kKanaSupplement_10_0[] = "\U0001B002";
 constexpr char kKanaExtendedA_14_0[] = "\U0001B122";
 
 void AddSegment(const absl::string_view key, const absl::string_view value,
-                Segments *segments) {
+                Segments* segments) {
   segments->Clear();
-  Segment *seg = segments->push_back_segment();
+  Segment* seg = segments->push_back_segment();
   seg->set_key(key);
-  converter::Candidate *candidate = seg->add_candidate();
+  converter::Candidate* candidate = seg->add_candidate();
   candidate->value = std::string(value);
   candidate->content_value = std::string(value);
 }
 
 void AddSegment(const absl::string_view key,
-                absl::Span<const std::string> values, Segments *segments) {
-  Segment *seg = segments->add_segment();
+                absl::Span<const std::string> values, Segments* segments) {
+  Segment* seg = segments->add_segment();
   seg->set_key(key);
-  for (const std::string &value : values) {
-    converter::Candidate *candidate = seg->add_candidate();
+  for (const std::string& value : values) {
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->content_key = std::string(key);
     candidate->value = value;
     candidate->content_value = value;
@@ -129,20 +129,20 @@ class TestDataManager : public testing::MockDataManager {
   TestDataManager() {
     // Collect all the strings and temporarily assign 0 as index.
     absl::btree_map<std::string, size_t> string_index;
-    for (const EmojiData &data : kTestEmojiList) {
+    for (const EmojiData& data : kTestEmojiList) {
       string_index[data.emoji] = 0;
     }
 
     // Set index.
     std::vector<absl::string_view> strings;
     size_t index = 0;
-    for (auto &iter : string_index) {
+    for (auto& iter : string_index) {
       strings.push_back(iter.first);
       iter.second = index++;
     }
 
     // Create token array.
-    for (const EmojiData &data : kTestEmojiList) {
+    for (const EmojiData& data : kTestEmojiList) {
       token_array_.push_back(0);
       token_array_.push_back(string_index[data.emoji]);
       token_array_.push_back(data.unicode_version);
@@ -158,10 +158,10 @@ class TestDataManager : public testing::MockDataManager {
   }
 
   void GetEmojiRewriterData(
-      absl::string_view *token_array_data,
-      absl::string_view *string_array_data) const override {
+      absl::string_view* token_array_data,
+      absl::string_view* string_array_data) const override {
     *token_array_data =
-        absl::string_view(reinterpret_cast<const char *>(token_array_.data()),
+        absl::string_view(reinterpret_cast<const char*>(token_array_.data()),
                           token_array_.size() * sizeof(uint32_t));
     *string_array_data = string_array_data_;
   }
@@ -288,7 +288,7 @@ TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterTest) {
     request.add_additional_renderable_character_groups(
         commands::Request::EMOJI_13_0);
     const ConversionRequest conversion_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
+        ConversionRequestBuilder().SetRequest(request).Build();
     Segments segments;
 
     segments.Clear();
@@ -319,7 +319,7 @@ TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterE160Test) {
         commands::Request::EMOJI_16_0);
     Segments segments;
     const ConversionRequest conversion_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
+        ConversionRequestBuilder().SetRequest(request).Build();
 
     segments.Clear();
     AddSegment("えもじ", {"🪏", "🫆", "🫟"}, &segments);
@@ -388,7 +388,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
     request.add_additional_renderable_character_groups(
         commands::Request::EMPTY);
     const ConversionRequest conversion_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
+        ConversionRequestBuilder().SetRequest(request).Build();
 
     Segments segments;
     segments.Clear();
@@ -406,7 +406,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
     request.add_additional_renderable_character_groups(
         commands::Request::KANA_SUPPLEMENT_6_0);
     const ConversionRequest conversion_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
+        ConversionRequestBuilder().SetRequest(request).Build();
 
     Segments segments;
     segments.Clear();
@@ -426,7 +426,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
     request.add_additional_renderable_character_groups(
         commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0);
     const ConversionRequest conversion_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
+        ConversionRequestBuilder().SetRequest(request).Build();
 
     Segments segments;
     segments.Clear();
@@ -448,7 +448,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
     request.add_additional_renderable_character_groups(
         commands::Request::KANA_EXTENDED_A_14_0);
     const ConversionRequest conversion_request =
-      ConversionRequestBuilder().SetRequest(request).Build();
+        ConversionRequestBuilder().SetRequest(request).Build();
 
     Segments segments;
     segments.Clear();

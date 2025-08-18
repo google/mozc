@@ -47,9 +47,9 @@ namespace mozc {
 namespace number_compound_util {
 
 bool SplitStringIntoNumberAndCounterSuffix(
-    const SerializedStringArray &suffix_array, absl::string_view input,
-    absl::string_view *number, absl::string_view *counter_suffix,
-    uint32_t *script_type) {
+    const SerializedStringArray& suffix_array, absl::string_view input,
+    absl::string_view* number, absl::string_view* counter_suffix,
+    uint32_t* script_type) {
   *script_type = NONE;
   absl::string_view s = input, rest = input;
   while (!s.empty()) {
@@ -105,8 +105,8 @@ bool SplitStringIntoNumberAndCounterSuffix(
                             *counter_suffix);
 }
 
-bool IsNumber(const SerializedStringArray &suffix_array,
-              const PosMatcher &pos_matcher, const converter::Candidate &cand) {
+bool IsNumber(const SerializedStringArray& suffix_array,
+              const PosMatcher& pos_matcher, const converter::Candidate& cand) {
   // Compound number entries have the left POS ID of number.
   if (pos_matcher.IsNumber(cand.lid) || pos_matcher.IsKanjiNumber(cand.lid)) {
     return true;
@@ -211,7 +211,7 @@ bool IsNumber(const SerializedStringArray &suffix_array,
           {"ろっかい", "六界"},
           {"ろっぽう", "六方"},
           {"ろっぽう", "六法"},
-  });
+      });
   if (kExceptions->contains(std::make_pair(cand.key, cand.value))) {
     return false;
   }

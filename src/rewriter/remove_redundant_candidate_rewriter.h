@@ -44,10 +44,10 @@ class RemoveRedundantCandidateRewriter : public RewriterInterface {
  public:
   RemoveRedundantCandidateRewriter() = default;
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 
-  int capability(const ConversionRequest &request) const override;
+  int capability(const ConversionRequest& request) const override;
 };
 
 }  // namespace mozc

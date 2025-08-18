@@ -84,7 +84,7 @@ void Convert() {
     }
   }
 
-  std::ostream *ofs = &std::cout;
+  std::ostream* ofs = &std::cout;
   if (!absl::GetFlag(FLAGS_output).empty()) {
     if (absl::GetFlag(FLAGS_binary_mode)) {
       ofs = new OutputFileStream(absl::GetFlag(FLAGS_output),
@@ -109,7 +109,7 @@ void Convert() {
 }  // namespace
 }  // namespace mozc
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   LOG(INFO) << absl::GetFlag(FLAGS_suppression_data);

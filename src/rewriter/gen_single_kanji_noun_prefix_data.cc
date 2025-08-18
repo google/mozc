@@ -45,8 +45,8 @@ ABSL_FLAG(std::string, output_string_array, "",
 namespace {
 
 struct NounPrefix {
-  const char *key;
-  const char *value;
+  const char* key;
+  const char* value;
   int16_t rank;
 } kNounPrefixList[] = {
     {"お", "お", 1},
@@ -87,11 +87,11 @@ struct NounPrefix {
 
 }  // namespace
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::map<std::string, mozc::SerializedDictionary::TokenList> tokens;
-  for (const NounPrefix &entry : kNounPrefixList) {
+  for (const NounPrefix& entry : kNounPrefixList) {
     std::unique_ptr<mozc::SerializedDictionary::CompilerToken> token(
         new mozc::SerializedDictionary::CompilerToken);
     token->value = entry.value;

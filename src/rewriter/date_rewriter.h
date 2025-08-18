@@ -62,17 +62,17 @@ struct DateCandidate {
 class DateRewriter : public RewriterInterface {
  public:
   DateRewriter() = default;
-  explicit DateRewriter(const dictionary::DictionaryInterface &dictionary)
+  explicit DateRewriter(const dictionary::DictionaryInterface& dictionary)
       : dictionary_(&dictionary) {}
 
-  int capability(const ConversionRequest &request) const override;
+  int capability(const ConversionRequest& request) const override;
 
   std::optional<ResizeSegmentsRequest> CheckResizeSegmentsRequest(
-      const ConversionRequest &request,
-      const Segments &segments) const override;
+      const ConversionRequest& request,
+      const Segments& segments) const override;
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 
   struct DateData {
     absl::string_view key;
@@ -88,7 +88,7 @@ class DateRewriter : public RewriterInterface {
   // The `month` field is only checked at the year of 2019.
   // The case o year=2019 and month=0 is treated as "entire year" and returns
   // both Heisei and the new e
-  static bool AdToEra(int year, int month, std::vector<std::string> *results);
+  static bool AdToEra(int year, int month, std::vector<std::string>* results);
 
   static std::vector<std::string> AdToEra(int year, int month);
 
@@ -122,7 +122,7 @@ class DateRewriter : public RewriterInterface {
   //    1   :  30 -> "1時30分、午前1時30分、午前1時半、1時半、1:30"
   //   25   :  30 -> "25時30分、25時半、午前1時30分、午前1時半、25:30"
   static bool ConvertTime(uint32_t hour, uint32_t min,
-                          std::vector<std::string> *results);
+                          std::vector<std::string>* results);
   static std::vector<std::string> ConvertTime(uint32_t hour, uint32_t min);
 
   // Converts given date to string expression.
@@ -138,7 +138,7 @@ class DateRewriter : public RewriterInterface {
   //   2011:  5  : 18 -> "平成23年5月18日,2011年5月18日,2011-05-18,2011/05/18"
   //   2000:  2  : 29 -> "平成12年2月29日,2000年2月29日,2000-02-29,2000/02/29"
   static bool ConvertDateWithYear(uint32_t year, uint32_t month, uint32_t day,
-                                  std::vector<std::string> *results);
+                                  std::vector<std::string>* results);
   static std::vector<std::string> ConvertDateWithYear(uint32_t year,
                                                       uint32_t month,
                                                       uint32_t day);
@@ -156,14 +156,14 @@ class DateRewriter : public RewriterInterface {
   // If the rewrite is done, returns `true` and sets the `num_done_out` to the
   // number of segments processed. The `num_done_out` is not modified if the
   // rewrite is not done.
-  static bool RewriteDate(Segment *segment, absl::string_view extra_format,
-                          size_t &num_done_out);
-  static bool RewriteEra(Segments::range segments_range, size_t &num_done_out);
-  static bool RewriteAd(Segments::range segments_range, size_t &num_done_out);
+  static bool RewriteDate(Segment* segment, absl::string_view extra_format,
+                          size_t& num_done_out);
+  static bool RewriteEra(Segments::range segments_range, size_t& num_done_out);
+  static bool RewriteAd(Segments::range segments_range, size_t& num_done_out);
 
   // Returns the value if rewrite for AD wants to resize the segments.
   std::optional<ResizeSegmentsRequest> CheckResizeSegmentsForAd(
-      const ConversionRequest &request, const Segments &segments,
+      const ConversionRequest& request, const Segments& segments,
       size_t segment_index) const;
 
   // When only one conversion segment has consecutive number characters,
@@ -175,21 +175,21 @@ class DateRewriter : public RewriterInterface {
   //   2020 -> "20時20分、午後8時20分、20:20"
   //   2930 -> "29時30分、29時半、午前5時30分、午前5時半"
   //   123  -> "1月23日、01/23、1:23"
-  static bool RewriteConsecutiveDigits(const composer::ComposerData &composer,
-                                       int insert_position, Segments *segments);
+  static bool RewriteConsecutiveDigits(const composer::ComposerData& composer,
+                                       int insert_position, Segments* segments);
 
   // Helper functions for RewriteConsecutiveDigits().
   static bool RewriteConsecutiveTwoDigits(
       absl::string_view str,
-      std::vector<date_rewriter_internal::DateCandidate> *results);
+      std::vector<date_rewriter_internal::DateCandidate>* results);
   static bool RewriteConsecutiveThreeDigits(
       absl::string_view str,
-      std::vector<date_rewriter_internal::DateCandidate> *results);
+      std::vector<date_rewriter_internal::DateCandidate>* results);
   static bool RewriteConsecutiveFourDigits(
       absl::string_view str,
-      std::vector<date_rewriter_internal::DateCandidate> *results);
+      std::vector<date_rewriter_internal::DateCandidate>* results);
 
-  const dictionary::DictionaryInterface *const dictionary_ = nullptr;
+  const dictionary::DictionaryInterface* const dictionary_ = nullptr;
 };
 
 }  // namespace mozc

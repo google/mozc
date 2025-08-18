@@ -57,8 +57,11 @@ def ReadJapanesePhoneticReading(file: str) -> List[KeyValuePair]:
     return outputs
 
 
-def WriteOutput(key_value_pairs: List[KeyValuePair], token_array_file: str,
-                string_array_file: str):
+def WriteOutput(
+    key_value_pairs: List[KeyValuePair],
+    token_array_file: str,
+    string_array_file: str,
+):
   """Output token and string arrays to files.
 
   Args:
@@ -91,23 +94,27 @@ def ParseArgs() -> argparse.Namespace:
   parser = argparse.ArgumentParser()
 
   parser.add_argument(
-      '--input', dest='input', help='Japanese phonetic reading file')
+      '--input', dest='input', help='Japanese phonetic reading file'
+  )
   parser.add_argument(
       '--output_token_array',
       dest='output_token_array',
-      help='Output token array file.')
+      help='Output token array file.',
+  )
   parser.add_argument(
       '--output_string_array',
       dest='output_string_array',
-      help='Output string array file.')
+      help='Output string array file.',
+  )
   return parser.parse_args()
 
 
 def main() -> None:
   args = ParseArgs()
   key_value_pairs = ReadJapanesePhoneticReading(args.input)
-  WriteOutput(key_value_pairs, args.output_token_array,
-              args.output_string_array)
+  WriteOutput(
+      key_value_pairs, args.output_token_array, args.output_string_array
+  )
 
 
 if __name__ == '__main__':

@@ -43,7 +43,7 @@ class RewriterUtil {
   // Note:
   // Rewriters can be called not only after converter, but also after
   // predictors.
-  static size_t CalculateInsertPosition(const Segment &segment, size_t offset);
+  static size_t CalculateInsertPosition(const Segment& segment, size_t offset);
 
  private:
   RewriterUtil() = delete;

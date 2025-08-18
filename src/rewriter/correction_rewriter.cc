@@ -51,8 +51,8 @@ namespace mozc {
 using ::mozc::converter::Attribute;
 using ::mozc::converter::Candidate;
 
-void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
-                                      Candidate *candidate) {
+void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem& item,
+                                      Candidate* candidate) {
   candidate->prefix = "→ ";
   candidate->attributes |= Attribute::SPELLING_CORRECTION;
 
@@ -61,7 +61,7 @@ void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
 
 bool CorrectionRewriter::LookupCorrection(
     const absl::string_view key, const absl::string_view value,
-    std::vector<ReadingCorrectionItem> *results) const {
+    std::vector<ReadingCorrectionItem>* results) const {
   CHECK(results);
   results->clear();
 
@@ -93,7 +93,7 @@ CorrectionRewriter::CorrectionRewriter(
 
 // static
 std::unique_ptr<CorrectionRewriter>
-CorrectionRewriter::CreateCorrectionRewriter(const DataManager &data_manager) {
+CorrectionRewriter::CreateCorrectionRewriter(const DataManager& data_manager) {
   absl::string_view value_array_data, error_array_data, correction_array_data;
   data_manager.GetReadingCorrectionData(&value_array_data, &error_array_data,
                                         &correction_array_data);
@@ -101,8 +101,8 @@ CorrectionRewriter::CreateCorrectionRewriter(const DataManager &data_manager) {
       value_array_data, error_array_data, correction_array_data);
 }
 
-bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
-                                 Segments *segments) const {
+bool CorrectionRewriter::Rewrite(const ConversionRequest& request,
+                                 Segments* segments) const {
   if (!request.config().use_spelling_correction()) {
     return false;
   }
@@ -110,7 +110,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
   bool modified = false;
   std::vector<ReadingCorrectionItem> results;
 
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     if (segment.candidates_size() == 0) {
       continue;
     }
@@ -118,14 +118,14 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
     for (size_t j = 0; j < segment.candidates_size(); ++j) {
       // Check if the existing candidate is a corrected candidate.
       // In this case, update the candidate description.
-      const converter::Candidate &candidate = segment.candidate(j);
+      const converter::Candidate& candidate = segment.candidate(j);
       if (!LookupCorrection(candidate.content_key, candidate.content_value,
                             &results)) {
         continue;
       }
       CHECK_GT(results.size(), 0);
       // results.size() should be 1, but we don't check it here.
-      Candidate *mutable_candidate = segment.mutable_candidate(j);
+      Candidate* mutable_candidate = segment.mutable_candidate(j);
       DCHECK(mutable_candidate);
       SetCandidate(results[0], mutable_candidate);
       modified = true;
@@ -143,7 +143,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
     // the system dictionary.
     const size_t kInsertPosition =
         std::min<size_t>(3, segment.candidates_size());
-    const Candidate &top_candidate = segment.candidate(0);
+    const Candidate& top_candidate = segment.candidate(0);
     if (!LookupCorrection(top_candidate.content_key, "", &results)) {
       continue;
     }

@@ -57,7 +57,7 @@ namespace mozc {
 namespace {
 
 void InsertASCIISequence(const absl::string_view text,
-                         composer::Composer *composer) {
+                         composer::Composer* composer) {
   for (size_t i = 0; i < text.size(); ++i) {
     commands::KeyEvent key;
     key.set_key_code(text[i]);
@@ -65,7 +65,7 @@ void InsertASCIISequence(const absl::string_view text,
   }
 }
 
-void SetAkann(composer::Composer *composer) {
+void SetAkann(composer::Composer* composer) {
   InsertASCIISequence("akann", composer);
   EXPECT_EQ(composer->GetQueryForConversion(), "あかん");
 }
@@ -78,14 +78,14 @@ class TransliterationRewriterTest : public testing::TestWithTempUserProfile {
     config::ConfigHandler::GetDefaultConfig(&default_config_);
   }
 
-  TransliterationRewriter *CreateTransliterationRewriter() const {
+  TransliterationRewriter* CreateTransliterationRewriter() const {
     return new TransliterationRewriter(
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
   }
 
-  const commands::Request &default_request() const { return default_request_; }
+  const commands::Request& default_request() const { return default_request_; }
 
-  const config::Config &default_config() const { return default_config_; }
+  const config::Config& default_config() const { return default_config_; }
 
   const testing::MockDataManager mock_data_manager_;
 
@@ -98,7 +98,7 @@ TEST_F(TransliterationRewriterTest, T13nFromKeyTest) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   CHECK(segment);
   segment->set_key("あかん");
   EXPECT_EQ(segment->meta_candidates_size(), 0);
@@ -147,7 +147,7 @@ TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
   SetAkann(&composer);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   CHECK(segment);
 
   const ConversionRequest request =
@@ -156,7 +156,7 @@ TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
   {
     EXPECT_EQ(segments.conversion_segments_size(), 1);
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
 
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あかん");
     EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value,
@@ -195,7 +195,7 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
   InsertASCIISequence("ssh", &composer);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   CHECK(segment);
 
   commands::Request input;
@@ -215,7 +215,7 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     EXPECT_EQ(segments.conversion_segments_size(), 1);
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
 
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "っｓｈ");
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).key, "っsh");
@@ -242,7 +242,7 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
   const ConversionRequest request =
       ConversionRequestBuilder().SetComposer(composer).Build();
   {
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     CHECK(segment);
     segment->set_key("かまぼこの");
     segment = segments.add_segment();
@@ -253,14 +253,14 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
   EXPECT_EQ(segments.conversion_segments_size(), 2);
   {
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value,
               "かまぼこの");
     EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value,
               "kamabokono");
   }
   {
-    const Segment &seg = segments.conversion_segment(1);
+    const Segment& seg = segments.conversion_segment(1);
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "いんぼう");
     EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "inbou");
   }
@@ -281,7 +281,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
   }
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   CHECK(segment);
 
   const ConversionRequest request =
@@ -291,7 +291,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
   // Should not use composer
   {
     EXPECT_EQ(segments.conversion_segments_size(), 1);
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "かん");
     EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "カン");
     EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "kan");
@@ -323,7 +323,7 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
   SetAkann(&composer);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   CHECK(segment);
   const ConversionRequest request =
       ConversionRequestBuilder().SetComposer(composer).Build();
@@ -331,7 +331,7 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
   {
     EXPECT_EQ(segments.conversion_segments_size(), 1);
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
 
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あかん");
     EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value,
@@ -367,7 +367,7 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
 
   EXPECT_EQ(segments.conversion_segments_size(), 2);
   {
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
 
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あか");
     EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "アカ");
@@ -388,7 +388,7 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
     EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value, "ｱｶ");
   }
   {
-    const Segment &seg = segments.conversion_segment(1);
+    const Segment& seg = segments.conversion_segment(1);
 
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "ん");
     EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "ン");
@@ -415,7 +415,7 @@ TEST_F(TransliterationRewriterTest, NoKeyTest) {
       CreateTransliterationRewriter());
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   CHECK(segment);
   segment->set_key("あ");
   segment = segments.add_segment();
@@ -439,7 +439,7 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
   InsertASCIISequence("a", &composer);
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   CHECK(segment);
 
   const ConversionRequest request =
@@ -464,7 +464,7 @@ TEST_F(TransliterationRewriterTest, NoRewriteTest) {
   table->InitializeWithRequestAndConfig(default_request(), default_config());
 
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   CHECK(segment);
   segment->set_key("亜");
   ConversionRequest request;
@@ -507,7 +507,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
     EXPECT_EQ(composer.GetQueryForConversion(), "い、");
   }
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("い、");
   const ConversionRequest rewrite_request = ConversionRequestBuilder()
                                                 .SetComposer(composer)
@@ -518,7 +518,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
 
   // Do not want to show raw keys for implementation
   {
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
 
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "い、");
     EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "イ、");
@@ -556,7 +556,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
     EXPECT_EQ(composer.GetQueryForConversion(), "あかあか");
   }
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("あかあか");
   const ConversionRequest rewrite_request = ConversionRequestBuilder()
                                                 .SetComposer(composer)
@@ -567,7 +567,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
   // Because NoTransliteration attribute is specified in the mobile romaji
   // table's entries, raw-key based meta-candidates are not shown.
   {
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
 
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あかあか");
     EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value,
@@ -611,7 +611,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
     EXPECT_EQ(composer.GetQueryForConversion(), "あき");
   }
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("あき");
   const ConversionRequest rewrite_request = ConversionRequestBuilder()
                                                 .SetComposer(composer)
@@ -621,7 +621,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
 
   // Do not want to show raw keys for implementation
   {
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
 
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あき");
     EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "アキ");
@@ -664,7 +664,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     EXPECT_EQ(composer.GetQueryForConversion(), kShi);
 
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key(kShi);
     const ConversionRequest request = ConversionRequestBuilder()
                                           .SetComposer(composer)
@@ -672,7 +672,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
                                           .Build();
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
     EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "shi");
   }
 
@@ -683,7 +683,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     EXPECT_EQ(composer.GetQueryForConversion(), kShi);
 
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key(kShi);
     const ConversionRequest request = ConversionRequestBuilder()
                                           .SetComposer(composer)
@@ -691,7 +691,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
                                           .Build();
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
     EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "si");
   }
 }
@@ -713,7 +713,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
     EXPECT_EQ(composer.GetQueryForConversion(), "あん゜で");
   }
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("あん゜で");
   const ConversionRequest rewrite_request = ConversionRequestBuilder()
                                                 .SetComposer(composer)
@@ -723,7 +723,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
 
   // Do not show raw keys.
   {
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
 
     EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あん゜で");
     EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value,
@@ -761,8 +761,8 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
   table->InitializeWithRequestAndConfig(request, default_config());
 
   // Expected t13n of Godan keyboard.
-  std::vector<const char *> keycode_to_t13n_map(
-      128, static_cast<const char *>(nullptr));
+  std::vector<const char*> keycode_to_t13n_map(
+      128, static_cast<const char*>(nullptr));
   keycode_to_t13n_map['"'] = "";
   keycode_to_t13n_map['\''] = "";
   keycode_to_t13n_map['`'] = "";
@@ -798,7 +798,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
                                  i, ascii_input, query));
 
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key(query);
     const ConversionRequest rewrite_request = ConversionRequestBuilder()
                                                   .SetComposer(composer)
@@ -807,13 +807,13 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
     EXPECT_TRUE(t13n_rewriter->Rewrite(rewrite_request, &segments) ||
                 query.empty());
 
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
     if (seg.meta_candidates_size() <= transliteration::HALF_ASCII) {
       // If no t13n happened, then should be no custom t13n.
       EXPECT_TRUE(keycode_to_t13n_map[i] == nullptr ||
                   keycode_to_t13n_map[i] == std::string(""));
     } else {
-      const std::string &half_ascii =
+      const std::string& half_ascii =
           seg.meta_candidate(transliteration::HALF_ASCII).value;
       if (keycode_to_t13n_map[i] && keycode_to_t13n_map[i] != std::string("")) {
         EXPECT_EQ(half_ascii, keycode_to_t13n_map[i]);
@@ -842,7 +842,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
     EXPECT_EQ(composer.GetQueryForPrediction(), kXtsu);
 
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key(kXtsu);
     const ConversionRequest request =
         ConversionRequestBuilder()
@@ -852,7 +852,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
             .Build();
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
     EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "ssh");
   }
 }
@@ -877,7 +877,7 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
     composer.MoveCursorTo(1);  // "っ|sh"
 
     Segments segments;
-    Segment *segment = segments.add_segment();
+    Segment* segment = segments.add_segment();
     segment->set_key(kXtsu);
     const ConversionRequest request =
         ConversionRequestBuilder()
@@ -887,7 +887,7 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
             .Build();
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
-    const Segment &seg = segments.conversion_segment(0);
+    const Segment& seg = segments.conversion_segment(0);
     EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "s");
   }
 }

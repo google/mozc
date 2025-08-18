@@ -70,7 +70,7 @@ class SuppressionFilter {
   static absl::StatusOr<SuppressionFilter> Create(
       absl::Span<const uint32_t> data);
 
-  bool Exists(const converter::Candidate &cand) const;
+  bool Exists(const converter::Candidate& cand) const;
 
  private:
   storage::ExistenceFilter filter_;
@@ -91,17 +91,17 @@ class CollocationRewriter : public RewriterInterface {
         suppression_filter_(std::move(suppression_filter)) {}
 
   static std::unique_ptr<CollocationRewriter> Create(
-      const DataManager &data_manager);
+      const DataManager& data_manager);
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 
  private:
-  bool IsName(const converter::Candidate &cand) const;
-  bool RewriteFromPrevSegment(const converter::Candidate &prev_cand,
-                              Segment *seg) const;
-  bool RewriteUsingNextSegment(Segment *next_seg, Segment *seg) const;
-  bool RewriteCollocation(Segments *segments) const;
+  bool IsName(const converter::Candidate& cand) const;
+  bool RewriteFromPrevSegment(const converter::Candidate& prev_cand,
+                              Segment* seg) const;
+  bool RewriteUsingNextSegment(Segment* next_seg, Segment* seg) const;
+  bool RewriteCollocation(Segments* segments) const;
 
   const dictionary::PosMatcher pos_matcher_;
   const uint16_t first_name_id_;

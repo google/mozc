@@ -48,15 +48,15 @@ namespace mozc {
 namespace {
 
 void AddCandidate(std::string value, const bool is_user_dictionary,
-                  Segments *segments) {
-  Segment *seg = nullptr;
+                  Segments* segments) {
+  Segment* seg = nullptr;
   if (segments->segments_size() == 0) {
     seg = segments->push_back_segment();
     seg->set_key("test");
   } else {
     seg = segments->mutable_segment(0);
   }
-  converter::Candidate *candidate = seg->add_candidate();
+  converter::Candidate* candidate = seg->add_candidate();
   candidate->key = value;
   candidate->content_key = value;
   candidate->value = value;
@@ -66,9 +66,9 @@ void AddCandidate(std::string value, const bool is_user_dictionary,
   }
 }
 
-std::string GetCandidates(const Segments &segments) {
+std::string GetCandidates(const Segments& segments) {
   CHECK_EQ(1, segments.segments_size());
-  const Segment &seg = segments.segment(0);
+  const Segment& seg = segments.segment(0);
   std::vector<std::string> results;
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     results.push_back(seg.candidate(i).value);

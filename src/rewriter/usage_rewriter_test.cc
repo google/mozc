@@ -63,8 +63,8 @@ using ::testing::SetArgPointee;
 
 void AddCandidate(const absl::string_view key, const absl::string_view value,
                   const absl::string_view content_key,
-                  const absl::string_view content_value, Segment *segment) {
-  converter::Candidate *candidate = segment->add_candidate();
+                  const absl::string_view content_value, Segment* segment) {
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->key = std::string(key);
   candidate->value = std::string(value);
   candidate->content_key = std::string(content_key);
@@ -75,7 +75,7 @@ void AddCandidate(const absl::string_view key, const absl::string_view value,
 
 class UsageRewriterTestPeer : public testing::TestPeer<UsageRewriter> {
  public:
-  explicit UsageRewriterTestPeer(UsageRewriter &rewriter)
+  explicit UsageRewriterTestPeer(UsageRewriter& rewriter)
       : testing::TestPeer<UsageRewriter>(rewriter) {}
 
   PEER_STATIC_METHOD(GetKanjiPrefixAndOneHiragana);
@@ -86,10 +86,10 @@ class TestDataManager : public testing::MockDataManager {
  public:
   MOCK_METHOD(void, GetUsageRewriterData,
               (absl::string_view * base_conjugation_suffix_data,
-               absl::string_view *conjugation_suffix_data,
-               absl::string_view *conjugation_index_data,
-               absl::string_view *usage_items_data,
-               absl::string_view *string_array_data),
+               absl::string_view* conjugation_suffix_data,
+               absl::string_view* conjugation_index_data,
+               absl::string_view* usage_items_data,
+               absl::string_view* string_array_data),
               (const, override));
 };
 
@@ -107,16 +107,16 @@ class UsageRewriterTest : public testing::TestWithTempUserProfile {
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
-  UsageRewriter *CreateUsageRewriter() const {
+  UsageRewriter* CreateUsageRewriter() const {
     return new UsageRewriter(data_manager_, user_dictionary_);
   }
 
-  UsageRewriter *CreateUsageRewriterWithTestDataManager() const {
+  UsageRewriter* CreateUsageRewriterWithTestDataManager() const {
     return new UsageRewriter(test_data_manager_, user_dictionary_);
   }
 
-  static ConversionRequest ConvReq(const config::Config &config,
-                                   const commands::Request &request) {
+  static ConversionRequest ConvReq(const config::Config& config,
+                                   const commands::Request& request) {
     return ConversionRequestBuilder()
         .SetConfig(config)
         .SetRequest(request)
@@ -158,7 +158,7 @@ TEST_F(UsageRewriterTest, CapabilityTest) {
 TEST_F(UsageRewriterTest, ConjugationTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
-  Segment *seg;
+  Segment* seg;
 
   segments.Clear();
   seg = segments.push_back_segment();
@@ -176,7 +176,7 @@ TEST_F(UsageRewriterTest, ConjugationTest) {
 TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
-  Segment *seg;
+  Segment* seg;
   const ConversionRequest convreq = ConvReq(config_, request_);
 
   segments.Clear();
@@ -199,7 +199,7 @@ TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
 TEST_F(UsageRewriterTest, ConfigTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
-  Segment *seg;
+  Segment* seg;
 
   // Default setting
   {
@@ -239,7 +239,7 @@ TEST_F(UsageRewriterTest, ConfigTest) {
 TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
-  Segment *seg;
+  Segment* seg;
   const ConversionRequest convreq = ConvReq(config_, request_);
 
   segments.Clear();
@@ -290,7 +290,7 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
 TEST_F(UsageRewriterTest, MultiSegmentsTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
-  Segment *seg;
+  Segment* seg;
   const ConversionRequest convreq = ConvReq(config_, request_);
 
   segments.Clear();
@@ -319,7 +319,7 @@ TEST_F(UsageRewriterTest, MultiSegmentsTest) {
 TEST_F(UsageRewriterTest, SameUsageTest) {
   Segments segments;
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
-  Segment *seg;
+  Segment* seg;
   const ConversionRequest convreq = ConvReq(config_, request_);
 
   seg = segments.push_back_segment();
@@ -362,10 +362,10 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
   // Load mock data
   {
     UserDictionaryStorage storage("");
-    UserDictionaryStorage::UserDictionary *dic =
+    UserDictionaryStorage::UserDictionary* dic =
         storage.GetProto().add_dictionaries();
 
-    UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+    UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
     entry->set_key("うま");
     entry->set_value("アルパカ");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -377,7 +377,7 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
   // Emulates the conversion of key="うま".
   Segments segments;
   segments.Clear();
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
   seg->set_key("うま");
   AddCandidate("うま", "Horse", "うま", "Horse", seg);
   AddCandidate("うま", "アルパカ", "うま", "アルパカ", seg);
@@ -387,13 +387,13 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
   EXPECT_TRUE(rewriter->Rewrite(convreq, &segments));
 
   // Result of ("うま", "Horse"). No comment is expected.
-  const converter::Candidate &cand0 =
+  const converter::Candidate& cand0 =
       segments.conversion_segment(0).candidate(0);
   EXPECT_TRUE(cand0.usage_title.empty());
   EXPECT_TRUE(cand0.usage_description.empty());
 
   // Result of ("うま", "アルパカ"). Comment from user dictionary is expected.
-  const converter::Candidate &cand1 =
+  const converter::Candidate& cand1 =
       segments.conversion_segment(0).candidate(1);
   EXPECT_EQ(cand1.usage_title, "アルパカ");
   EXPECT_EQ(cand1.usage_description, "アルパカコメント");

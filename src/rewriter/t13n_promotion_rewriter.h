@@ -46,9 +46,9 @@ class T13nPromotionRewriter : public RewriterInterface {
   T13nPromotionRewriter();
   ~T13nPromotionRewriter() override;
 
-  int capability(const ConversionRequest &request) const override;
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  int capability(const ConversionRequest& request) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 };
 
 }  // namespace mozc

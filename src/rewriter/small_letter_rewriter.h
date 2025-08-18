@@ -31,6 +31,7 @@
 #define MOZC_REWRITER_SMALL_LETTER_REWRITER_H_
 
 #include <optional>
+
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
@@ -40,14 +41,14 @@ namespace mozc {
 // A rewriter which converts text to superscripts and subscripts.
 class SmallLetterRewriter : public RewriterInterface {
  public:
-  int capability(const ConversionRequest &request) const override;
+  int capability(const ConversionRequest& request) const override;
 
   std::optional<ResizeSegmentsRequest> CheckResizeSegmentsRequest(
-      const ConversionRequest &request,
-      const Segments &segments) const override;
+      const ConversionRequest& request,
+      const Segments& segments) const override;
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 };
 }  // namespace mozc
 #endif  // MOZC_REWRITER_SMALL_LETTER_REWRITER_H_

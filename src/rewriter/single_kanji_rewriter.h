@@ -47,26 +47,26 @@ namespace mozc {
 class SingleKanjiRewriter : public RewriterInterface {
  public:
   SingleKanjiRewriter(
-      const dictionary::PosMatcher &pos_matcher,
-      const dictionary::SingleKanjiDictionary &single_kanji_dictionary);
+      const dictionary::PosMatcher& pos_matcher,
+      const dictionary::SingleKanjiDictionary& single_kanji_dictionary);
   ~SingleKanjiRewriter() override;
 
-  int capability(const ConversionRequest &request) const override;
+  int capability(const ConversionRequest& request) const override;
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 
  private:
-  void AddDescriptionForExistingCandidates(Segment *segment) const;
+  void AddDescriptionForExistingCandidates(Segment* segment) const;
   bool InsertCandidate(bool is_single_segment, uint16_t single_kanji_id,
                        absl::Span<const std::string> kanji_list,
-                       Segment *segment) const;
+                       Segment* segment) const;
   void FillCandidate(absl::string_view key, absl::string_view value, int cost,
                      uint16_t single_kanji_id,
-                     converter::Candidate *cand) const;
+                     converter::Candidate* cand) const;
 
-  const dictionary::PosMatcher &pos_matcher_;
-  const dictionary::SingleKanjiDictionary &single_kanji_dictionary_;
+  const dictionary::PosMatcher& pos_matcher_;
+  const dictionary::SingleKanjiDictionary& single_kanji_dictionary_;
 };
 
 }  // namespace mozc

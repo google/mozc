@@ -56,9 +56,9 @@ namespace mozc {
 namespace {
 
 void AddSegment(const absl::string_view key, const absl::string_view value,
-                Segments *segments) {
-  Segment *seg = segments->add_segment();
-  converter::Candidate *candidate = seg->add_candidate();
+                Segments* segments) {
+  Segment* seg = segments->add_segment();
+  converter::Candidate* candidate = seg->add_candidate();
   seg->set_key(key);
   candidate->content_key = std::string(key);
   candidate->value = std::string(value);
@@ -66,14 +66,14 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
 }
 
 void InitSegments(const absl::string_view key, const absl::string_view value,
-                  Segments *segments) {
+                  Segments* segments) {
   segments->Clear();
   AddSegment(key, value, segments);
 }
 
-bool ContainCandidate(const Segments &segments,
+bool ContainCandidate(const Segments& segments,
                       const absl::string_view candidate) {
-  const Segment &segment = segments.segment(0);
+  const Segment& segment = segments.segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (candidate == segment.candidate(i).value) {
       return true;
@@ -87,9 +87,9 @@ class UnicodeRewriterTest : public testing::TestWithTempUserProfile {
   void SetUp() override { engine_ = MockDataEngineFactory::Create().value(); }
 
   std::unique_ptr<Engine> engine_;
-  const commands::Request &default_request() const { return default_request_; }
-  const config::Config &default_config() const { return default_config_; }
-  const commands::Context &default_context() const { return default_context_; }
+  const commands::Request& default_request() const { return default_request_; }
+  const config::Config& default_config() const { return default_config_; }
+  const commands::Context& default_context() const { return default_context_; }
 
  private:
   const commands::Request default_request_;

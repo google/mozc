@@ -55,7 +55,7 @@ class RewriterInterface {
   // Returns capability of this rewriter.
   // If (capability() & CONVERSION), this rewriter
   // is called after StartConversion().
-  virtual int capability(const ConversionRequest &request) const {
+  virtual int capability(const ConversionRequest& request) const {
     return CONVERSION;
   }
 
@@ -71,36 +71,36 @@ class RewriterInterface {
   };
 
   virtual std::optional<ResizeSegmentsRequest> CheckResizeSegmentsRequest(
-      const ConversionRequest &request, const Segments &segments) const {
+      const ConversionRequest& request, const Segments& segments) const {
     return std::nullopt;
   }
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const = 0;
+  virtual bool Rewrite(const ConversionRequest& request,
+                       Segments* segments) const = 0;
 
   // This method is mainly called when user puts SPACE key
   // and changes the focused candidate.
   // In this method, Converter will find bracketing matching.
   // e.g., when user selects "「",  corresponding closing bracket "」"
   // is chosen in the preedit.
-  virtual bool Focus(Segments *segments, size_t segment_index,
+  virtual bool Focus(Segments* segments, size_t segment_index,
                      int candidate_index) const {
     return true;
   }
 
   // Hook(s) for all mutable operations
-  virtual void Finish(const ConversionRequest &request,
-                      const Segments &segments) {}
+  virtual void Finish(const ConversionRequest& request,
+                      const Segments& segments) {}
 
   // Reverts the last Finish operation.
-  virtual void Revert(const Segments &segments) {}
+  virtual void Revert(const Segments& segments) {}
 
   // Delete the user history based entry corresponding to the specified
   // candidate.
   // Returns true when at least one deletion operation succeeded
   // |segment_index| is the index for all segments, not the index of
   // conversion_segments.
-  virtual bool ClearHistoryEntry(const Segments &segments, size_t segment_index,
+  virtual bool ClearHistoryEntry(const Segments& segments, size_t segment_index,
                                  int candidate_index) {
     return false;
   }

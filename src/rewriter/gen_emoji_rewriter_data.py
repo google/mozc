@@ -61,11 +61,25 @@ from build_tools import code_generator_util
 from build_tools import serialized_string_array_builder
 
 
-_FULLWIDTH_RE = re.compile(u'[！-～]')   # U+FF01 - U+FF5E
+_FULLWIDTH_RE = re.compile('[！-～]')  # U+FF01 - U+FF5E
 # LINT.IfChange
 _VERSION_ALL = [
-    'E0.6', 'E0.7', 'E1.0', 'E2.0', 'E3.0', 'E4.0', 'E5.0', 'E11.0', 'E12.0',
-    'E12.1', 'E13.0', 'E13.1', 'E14.0', 'E15.0', 'E15.1', 'E16.0'
+    'E0.6',
+    'E0.7',
+    'E1.0',
+    'E2.0',
+    'E3.0',
+    'E4.0',
+    'E5.0',
+    'E11.0',
+    'E12.0',
+    'E12.1',
+    'E13.0',
+    'E13.1',
+    'E14.0',
+    'E15.0',
+    'E15.1',
+    'E16.0',
 ]
 # Dict for converting version string into enum index.
 VERSION_TO_INDEX = {v: i for i, v in enumerate(_VERSION_ALL)}
@@ -79,9 +93,10 @@ VERSION_TO_INDEX = {v: i for i, v in enumerate(_VERSION_ALL)}
 
 def NormalizeString(string):
   """Normalize full width ascii characters to half width characters."""
-  offset = ord(u'Ａ') - ord(u'A')
-  normalized = _FULLWIDTH_RE.sub(lambda x: chr(ord(x.group(0)) - offset),
-                                 string)
+  offset = ord('Ａ') - ord('A')
+  normalized = _FULLWIDTH_RE.sub(
+      lambda x: chr(ord(x.group(0)) - offset), string
+  )
   return normalized
 
 
@@ -90,6 +105,7 @@ def ReadEmojiTsv(stream):
 
   Args:
     stream: input stream of emoji_data.tsv
+
   Returns:
     tuple of emoji_data_list and token_dict.
   """
@@ -126,8 +142,9 @@ def ReadEmojiTsv(stream):
   return (emoji_data_list, token_dict)
 
 
-def OutputData(emoji_data_list, token_dict,
-               token_array_file, string_array_file):
+def OutputData(
+    emoji_data_list, token_dict, token_array_file, string_array_file
+):
   """Output token and string arrays to files."""
   sorted_token_dict = sorted(token_dict.items())
 
@@ -147,8 +164,9 @@ def OutputData(emoji_data_list, token_dict,
     for reading, value_list in sorted_token_dict:
       reading_index = strings[reading]
       for value_index in value_list:
-        (emoji, utf8_description,
-         unicode_version) = emoji_data_list[value_index]
+        (emoji, utf8_description, unicode_version) = emoji_data_list[
+            value_index
+        ]
         # Here, f.write should be called exactly 7 times, in order to preserve
         # data format.
         f.write(struct.pack('<I', reading_index))
@@ -159,8 +177,9 @@ def OutputData(emoji_data_list, token_dict,
         f.write(struct.pack('<I', strings['']))
         f.write(struct.pack('<I', strings['']))
 
-  serialized_string_array_builder.SerializeToFile(sorted_strings,
-                                                  string_array_file)
+  serialized_string_array_builder.SerializeToFile(
+      sorted_strings, string_array_file
+  )
 
 
 def ParseOptions() -> argparse.Namespace:
@@ -174,11 +193,13 @@ def ParseOptions() -> argparse.Namespace:
   parser.add_argument(
       '--output_token_array',
       dest='output_token_array',
-      help='output token array file')
+      help='output token array file',
+  )
   parser.add_argument(
       '--output_string_array',
       dest='output_string_array',
-      help='output string array file')
+      help='output string array file',
+  )
   return parser.parse_args()
 
 
@@ -187,8 +208,12 @@ def main():
   with codecs.open(options.input, 'r', encoding='utf-8') as input_stream:
     (emoji_data_list, token_dict) = ReadEmojiTsv(input_stream)
 
-  OutputData(emoji_data_list, token_dict,
-             options.output_token_array, options.output_string_array)
+  OutputData(
+      emoji_data_list,
+      token_dict,
+      options.output_token_array,
+      options.output_string_array,
+  )
 
 
 if __name__ == '__main__':

@@ -48,9 +48,9 @@ struct CounterSuffixEntry;
 
 class FocusCandidateRewriter : public RewriterInterface {
  public:
-  explicit FocusCandidateRewriter(const DataManager &data_manager);
-  FocusCandidateRewriter(const FocusCandidateRewriter &) = delete;
-  FocusCandidateRewriter &operator=(const FocusCandidateRewriter &) = delete;
+  explicit FocusCandidateRewriter(const DataManager& data_manager);
+  FocusCandidateRewriter(const FocusCandidateRewriter&) = delete;
+  FocusCandidateRewriter& operator=(const FocusCandidateRewriter&) = delete;
   ~FocusCandidateRewriter() override;
 
   // Changed the focus of "segment_index"-th segment to be "candidate_index".
@@ -58,24 +58,24 @@ class FocusCandidateRewriter : public RewriterInterface {
   // Currently, FocusSegmentValue() finds bracket/parentheses matching, e.g.,
   // When user chooses "(" in some candidate, corresponding close bracket ")"
   // is automatically placed at the top.
-  bool Focus(Segments *segments, size_t segment_index,
+  bool Focus(Segments* segments, size_t segment_index,
              int candidate_index) const override;
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override {
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override {
     return false;
   }
 
  private:
   // Performs reranking of number candidates to make numbers consistent across
   // multiple segments.
-  bool RerankNumberCandidates(Segments *segments, size_t segment_index,
+  bool RerankNumberCandidates(Segments* segments, size_t segment_index,
                               int candidate_index) const;
 
   // Finds an index of candidate in |seg| that matches the given number script
   // type and suffix.  Returns -1 if there's no candidate matching the
   // condition.
-  int FindMatchingCandidates(const Segment &seg, uint32_t ref_script_type,
+  int FindMatchingCandidates(const Segment& seg, uint32_t ref_script_type,
                              absl::string_view ref_suffix) const;
 
   // Parses the value of a candidate into number and counter suffix.
@@ -83,10 +83,10 @@ class FocusCandidateRewriter : public RewriterInterface {
   // defined to be the following pattern:
   //   * [数][助数詞][並立助詞]?  (e.g., 一階, 二回, ３階や, etc.)
   // Returns false if the value of candidate doesn't match the pattern.
-  bool ParseNumberCandidate(const converter::Candidate &cand,
-                            absl::string_view *number,
-                            absl::string_view *suffix,
-                            uint32_t *script_type) const;
+  bool ParseNumberCandidate(const converter::Candidate& cand,
+                            absl::string_view* number,
+                            absl::string_view* suffix,
+                            uint32_t* script_type) const;
 
   SerializedStringArray suffix_array_;
   const dictionary::PosMatcher pos_matcher_;

@@ -40,9 +40,9 @@ namespace mozc {
 TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {
   RemoveRedundantCandidateRewriter rewriter;
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("a");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->key = "a";
   candidate->value = "a";
 
@@ -54,9 +54,9 @@ TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {
 TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
   RemoveRedundantCandidateRewriter rewriter;
   Segments segments;
-  Segment *segment = segments.add_segment();
+  Segment* segment = segments.add_segment();
   segment->set_key("a");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->key = "a";
   candidate->value = "aa";
 

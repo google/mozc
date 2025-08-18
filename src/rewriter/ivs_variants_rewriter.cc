@@ -51,35 +51,35 @@ struct ExpansionValue {
 };
 
 // {"reading", "base surface"}, {"IVS surface", "additional description"}},
-const auto *kIvsExpansionTable = new absl::flat_hash_map<
+const auto* kIvsExpansionTable = new absl::flat_hash_map<
     std::pair<absl::string_view, absl::string_view>, ExpansionValue>{
     {{"かつらぎし", "葛城市"}, {"葛\U000E0100城市", "正式字体"}},  // 葛󠄀城市
     {{"ぎおん", "祇園"}, {"祇\U000E0100園", "礻"}},                // 祇󠄀園
-    {{"つじのぞみ", "辻希美"}, {"辻\U000E0100希美", "「辻󠄀」"}},  // 辻󠄀希美
+    {{"つじのぞみ", "辻希美"}, {"辻\U000E0100希美", "「辻󠄀」"}},    // 辻󠄀希美
     {{"つじもときよみ", "辻元清美"},
      {"辻\U000E0100元清美", "「辻󠄀」"}},  // 辻󠄀元清美
     {{"つじよしなり", "辻よしなり"},
-     {"辻\U000E0100よしなり", "「辻󠄀」"}},  // 辻󠄀よしなり
+     {"辻\U000E0100よしなり", "「辻󠄀」"}},                          // 辻󠄀よしなり
     {{"つじしんぱち", "辻親八"}, {"辻\U000E0100新八", "「辻󠄀」"}},  // 辻󠄀新八
     {{"つじもとけんと", "辻本賢人"},
-     {"辻\U000E0100本賢人", "「辻󠄀」"}},  // 辻󠄀本賢人
+     {"辻\U000E0100本賢人", "「辻󠄀」"}},                              // 辻󠄀本賢人
     {{"つじあゆみ", "辻あゆみ"}, {"辻\U000E0100あゆみ", "「辻󠄀」"}},  // 辻󠄀あゆみ
     {{"つじかおり", "辻香緒里"}, {"辻\U000E0100香緒里", "「辻󠄀」"}},  // 辻󠄀香緒里
-    {{"つじかおり", "辻香織"}, {"辻\U000E0100香織", "「辻󠄀」"}},  // 辻󠄀香織
+    {{"つじかおり", "辻香織"}, {"辻\U000E0100香織", "「辻󠄀」"}},      // 辻󠄀香織
     {{"つじもとたつのり", "辻本達規"},
-     {"辻\U000E0100本達規", "「辻󠄀」"}},  // 辻󠄀本達規
+     {"辻\U000E0100本達規", "「辻󠄀」"}},                              // 辻󠄀本達規
     {{"つじもととおり", "辻本通"}, {"辻\U000E0100本通", "「辻󠄀」"}},  // 辻󠄀本通
-    {{"つじしんご", "辻慎吾"}, {"辻\U000E0100慎吾", "「辻󠄀」"}},  // 辻󠄀慎吾
-    {{"つじせいめい", "辻清明"}, {"辻\U000E0100清明", "「辻󠄀」"}},  // 辻󠄀清明
+    {{"つじしんご", "辻慎吾"}, {"辻\U000E0100慎吾", "「辻󠄀」"}},      // 辻󠄀慎吾
+    {{"つじせいめい", "辻清明"}, {"辻\U000E0100清明", "「辻󠄀」"}},    // 辻󠄀清明
     {{"つじなかゆたか", "辻中豊"}, {"辻\U000E0100中豊", "「辻󠄀」"}},  // 辻󠄀中豊
     {{"つじもとともひこ", "辻本知彦"},
      {"辻\U000E0100本知彦", "「辻󠄀」"}},  // 辻󠄀本知彦
     {{"つじいのぶゆき", "辻井伸行"},
-     {"辻\U000E0100井伸行", "「辻󠄀」"}},  // 辻󠄀井伸行
+     {"辻\U000E0100井伸行", "「辻󠄀」"}},                              // 辻󠄀井伸行
     {{"さかきいちろう", "榊一郎"}, {"榊\U000E0100一郎", "「榊󠄀」"}},  // 榊󠄀一郎
     {{"さかきばらいくえ", "榊原郁恵"},
-     {"榊\U000E0100原郁恵", "「榊󠄀」"}},  // 榊󠄀原郁恵
-    {{"さかきひでお", "榊英雄"}, {"榊\U000E0100英雄", "「榊󠄀」"}},  // 榊󠄀英雄
+     {"榊\U000E0100原郁恵", "「榊󠄀」"}},                              // 榊󠄀原郁恵
+    {{"さかきひでお", "榊英雄"}, {"榊\U000E0100英雄", "「榊󠄀」"}},    // 榊󠄀英雄
     {{"さかきひろゆき", "榊裕之"}, {"榊\U000E0100裕之", "「榊󠄀」"}},  // 榊󠄀裕之
     {{"さかきよしゆき", "榊佳之"}, {"榊\U000E0100佳之", "「榊󠄀」"}},  // 榊󠄀佳之
     {{"さかきばらまさくに", "榊原政邦"},
@@ -95,7 +95,7 @@ const auto *kIvsExpansionTable = new absl::flat_hash_map<
     {{"ふるたちいちろう", "古舘伊知郎"},
      {"古舘\U000E0101伊知郎", "正式字体"}},  // 古舘󠄁伊知郎
     {{"ひろたこうき", "廣田弘毅"},
-     {"廣\U000E0101田弘毅", "「廣󠄁」"}},  // 廣󠄁田弘毅
+     {"廣\U000E0101田弘毅", "「廣󠄁」"}},                            // 廣󠄁田弘毅
     {{"こばやしけん", "小林劍"}, {"小林劍\U000E0101", "「劍」"}},  // 小林劍󠄁
     {{"きりやまれん", "桐山漣"}, {"桐山漣\U000E0101", "「漣󠄁」"}},  // 桐山漣󠄁
     {{"しばりょうたろう", "司馬遼太郎"},
@@ -113,11 +113,11 @@ const auto *kIvsExpansionTable = new absl::flat_hash_map<
     {{"れんごくしんじゅろう", "煉獄槇寿郎"},
      {"煉\U000E0101獄槇寿郎", "正式字体"}},  // 煉󠄁獄槇寿郎
     {{"れんごくせんじゅろう", "煉獄千寿郎"},
-     {"煉\U000E0101獄千寿郎", "正式字体"}},  // 煉󠄁獄千寿郎
-    {{"れんごく", "煉獄"}, {"煉\U000E0101獄", "「煉󠄁」"}},      // 煉󠄁獄
-    {{"ねずこ", "禰豆子"}, {"禰\U000E0100豆子", "正式字体"}},  // 禰󠄀豆子
-    {{"みそ", "味噌"}, {"味噌\U000E0100", "「噌󠄀」"}},          // 味噌󠄀
-    {{"つじ", "辻"}, {"辻\U000E0100", "一点しんにょう"}},      // 辻󠄀
+     {"煉\U000E0101獄千寿郎", "正式字体"}},                        // 煉󠄁獄千寿郎
+    {{"れんごく", "煉獄"}, {"煉\U000E0101獄", "「煉󠄁」"}},          // 煉󠄁獄
+    {{"ねずこ", "禰豆子"}, {"禰\U000E0100豆子", "正式字体"}},      // 禰󠄀豆子
+    {{"みそ", "味噌"}, {"味噌\U000E0100", "「噌󠄀」"}},              // 味噌󠄀
+    {{"つじ", "辻"}, {"辻\U000E0100", "一点しんにょう"}},          // 辻󠄀
     {{"つじもと", "辻本"}, {"辻\U000E0100本", "一点しんにょう"}},  // 辻󠄀本
     {{"つじもと", "辻元"}, {"辻\U000E0100元", "一点しんにょう"}},  // 辻󠄀元
     {{"つじなか", "辻中"}, {"辻\U000E0100中", "一点しんにょう"}},  // 辻󠄀中
@@ -128,12 +128,12 @@ const auto *kIvsExpansionTable = new absl::flat_hash_map<
 
 constexpr char kIvsVariantDescription[] = "環境依存(IVS)";
 
-bool ExpandIvsVariantsWithSegment(Segment *seg) {
+bool ExpandIvsVariantsWithSegment(Segment* seg) {
   CHECK(seg);
 
   bool modified = false;
   for (int i = seg->candidates_size() - 1; i >= 0; --i) {
-    const converter::Candidate &original_candidate = seg->candidate(i);
+    const converter::Candidate& original_candidate = seg->candidate(i);
     auto it = kIvsExpansionTable->find(
         {original_candidate.content_key, original_candidate.content_value});
     if (it == kIvsExpansionTable->end()) {
@@ -141,7 +141,7 @@ bool ExpandIvsVariantsWithSegment(Segment *seg) {
     }
     modified = true;
 
-    const auto &[key, value] = *it;
+    const auto& [key, value] = *it;
 
     auto new_candidate =
         std::make_unique<converter::Candidate>(original_candidate);
@@ -163,14 +163,14 @@ bool ExpandIvsVariantsWithSegment(Segment *seg) {
 }
 }  // namespace
 
-int IvsVariantsRewriter::capability(const ConversionRequest &request) const {
+int IvsVariantsRewriter::capability(const ConversionRequest& request) const {
   return RewriterInterface::ALL;
 }
 
-bool IvsVariantsRewriter::Rewrite(const ConversionRequest &request,
-                                  Segments *segments) const {
+bool IvsVariantsRewriter::Rewrite(const ConversionRequest& request,
+                                  Segments* segments) const {
   bool modified = false;
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     modified |= ExpandIvsVariantsWithSegment(&segment);
   }
 

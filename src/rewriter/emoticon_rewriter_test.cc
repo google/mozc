@@ -51,20 +51,20 @@ namespace mozc {
 namespace {
 
 void AddSegment(const absl::string_view key, const absl::string_view value,
-                Segments *segments) {
+                Segments* segments) {
   segments->Clear();
-  Segment *seg = segments->push_back_segment();
+  Segment* seg = segments->push_back_segment();
   seg->set_key(key);
-  converter::Candidate *candidate = seg->add_candidate();
+  converter::Candidate* candidate = seg->add_candidate();
   candidate->value = std::string(key);
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);
 }
 
-bool HasEmoticon(const Segments &segments) {
+bool HasEmoticon(const Segments& segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    const converter::Candidate &candidate = segments.segment(0).candidate(i);
+    const converter::Candidate& candidate = segments.segment(0).candidate(i);
     if (candidate.description.starts_with("顔文字")) {
       return true;
     }

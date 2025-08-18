@@ -51,8 +51,8 @@
 namespace mozc {
 namespace {
 
-void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
-  converter::Candidate *candidate = segment->add_candidate();
+void AddCandidateWithValue(const absl::string_view value, Segment* segment) {
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->key = segment->key();
   candidate->content_key = segment->key();
   candidate->value = std::string(value);
@@ -61,7 +61,7 @@ void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
 
 // Returns -1 if not found.
 int GetCandidateIndexByValue(const absl::string_view value,
-                             const Segment &segment) {
+                             const Segment& segment) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).value == value) {
       return i;
@@ -117,7 +117,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteKatakanaFromT13N) {
   Segments segments;
   composer_.SetInputMode(transliteration::HIRAGANA);
   composer_.SetPreeditTextForTestOnly("きょう");
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("きょう");
   AddCandidateWithValue("今日", segment);
   AddCandidateWithValue("きょう", segment);
@@ -142,7 +142,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteKatakanaFromT13NForFewCandidates) {
   Segments segments;
   composer_.SetInputMode(transliteration::HIRAGANA);
   composer_.SetPreeditTextForTestOnly("きょう");
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("きょう");
   AddCandidateWithValue("今日", segment);
   AddCandidateWithValue("きょう", segment);
@@ -164,7 +164,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteKatakana) {
   Segments segments;
   composer_.SetInputMode(transliteration::HIRAGANA);
   composer_.SetPreeditTextForTestOnly("きょう");
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("きょう");
   AddCandidateWithValue("今日", segment);
   AddCandidateWithValue("きょう", segment);
@@ -178,7 +178,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteKatakana) {
   const int katakana_index = GetCandidateIndexByValue("キョウ", *segment);
   EXPECT_EQ(katakana_index, 7);
 
-  converter::Candidate *katakana_candidate =
+  converter::Candidate* katakana_candidate =
       segment->mutable_candidate(katakana_index);
   katakana_candidate->lid = 1;
   katakana_candidate->rid = 1;
@@ -201,7 +201,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteKatakanaOffset) {
   Segments segments;
   composer_.SetInputMode(transliteration::HIRAGANA);
   composer_.SetPreeditTextForTestOnly("きょう");
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("きょう");
   AddCandidateWithValue("今日", segment);
   AddCandidateWithValue("きょう", segment);
@@ -257,7 +257,7 @@ TEST_F(T13nPromotionRewriterTest, KatakanaIsAlreadyRankedHigh) {
   Segments segments;
   composer_.SetInputMode(transliteration::HIRAGANA);
   composer_.SetPreeditTextForTestOnly("きょう");
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("きょう");
   AddCandidateWithValue("今日", segment);
   AddCandidateWithValue("きょう", segment);
@@ -282,7 +282,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteKatakanaForMultiSegments) {
   Segments segments;
   composer_.SetInputMode(transliteration::HIRAGANA);
   composer_.SetPreeditTextForTestOnly("きょうははれ");
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("きょうは");
   AddCandidateWithValue("今日は", segment);
   AddCandidateWithValue("きょうは", segment);
@@ -319,7 +319,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteLatinT13n) {
   T13nPromotionRewriter rewriter;
 
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("go");
   composer_.SetInputMode(transliteration::HALF_ASCII);
   composer_.SetPreeditTextForTestOnly("go");
@@ -345,7 +345,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteLatinT13nSkipExisting) {
   T13nPromotionRewriter rewriter;
 
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("go");
   composer_.SetInputMode(transliteration::HALF_ASCII);
   composer_.SetPreeditTextForTestOnly("go");
@@ -373,7 +373,7 @@ TEST_F(T13nPromotionRewriterTest, PromoteNumberT13n) {
   T13nPromotionRewriter rewriter;
 
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("12");
   composer_.SetInputMode(transliteration::HALF_ASCII);
   composer_.SetPreeditTextForTestOnly("12");

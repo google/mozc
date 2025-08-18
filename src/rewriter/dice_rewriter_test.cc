@@ -50,20 +50,20 @@ constexpr char kKey[] = "さいころ";
 constexpr int kPageSize = 9;
 
 void AddCandidate(const absl::string_view key, const absl::string_view value,
-                  Segment *segment) {
-  converter::Candidate *candidate = segment->add_candidate();
+                  Segment* segment) {
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = std::string(value);
   candidate->content_value = std::string(value);
   candidate->content_key = std::string(key);
 }
 
-void AddSegment(const absl::string_view key, Segments *segments) {
-  Segment *segment = segments->push_back_segment();
+void AddSegment(const absl::string_view key, Segments* segments) {
+  Segment* segment = segments->push_back_segment();
   segment->set_key(key);
 }
 
 // Make a segments which has some dummy candidates.
-void MakeSegments(Segments *segments, const absl::string_view key,
+void MakeSegments(Segments* segments, const absl::string_view key,
                   const int num_segment, const int num_dummy_candidate) {
   segments->Clear();
 
@@ -72,17 +72,17 @@ void MakeSegments(Segments *segments, const absl::string_view key,
     AddSegment(key, segments);
   }
 
-  Segment *segment = segments->mutable_segment(0);
+  Segment* segment = segments->mutable_segment(0);
   for (int i = 0; i < num_dummy_candidate; ++i) {
     AddCandidate("test_key", "test_value", segment);
   }
 }
 
 // Return a number of dice number in candidates.
-int CountDiceNumber(const Segment &segment) {
+int CountDiceNumber(const Segment& segment) {
   int count_dice_number = 0;
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    const converter::Candidate &candidate = segment.candidate(i);
+    const converter::Candidate& candidate = segment.candidate(i);
     if (candidate.description == kDescription) {
       ++count_dice_number;
     }
@@ -90,13 +90,13 @@ int CountDiceNumber(const Segment &segment) {
   return count_dice_number;
 }
 
-bool HasValidValue(const converter::Candidate &candidate) {
+bool HasValidValue(const converter::Candidate& candidate) {
   return ("1" == candidate.value || "2" == candidate.value ||
           "3" == candidate.value || "4" == candidate.value ||
           "5" == candidate.value || "6" == candidate.value);
 }
 
-size_t GetDiceNumberIndex(const Segment &segment) {
+size_t GetDiceNumberIndex(const Segment& segment) {
   size_t dice_number_index = segment.candidates_size();
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).description == kDescription) {
@@ -123,7 +123,7 @@ TEST_F(DiceRewriterTest, InsertTest) {
     EXPECT_TRUE(dice_rewriter.Rewrite(request, &segments));
     EXPECT_EQ(segments.segments_size(), 1);
 
-    const Segment &segment = segments.conversion_segment(0);
+    const Segment& segment = segments.conversion_segment(0);
     EXPECT_EQ(CountDiceNumber(segment), 1);
 
     size_t dice_number_index = GetDiceNumberIndex(segment);

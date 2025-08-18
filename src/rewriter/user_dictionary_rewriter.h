@@ -39,12 +39,12 @@ namespace mozc {
 // A special rewriter that tweaks the ranking of user dictionary candidates.
 class UserDictionaryRewriter : public RewriterInterface {
  public:
-  int capability(const ConversionRequest &request) const override {
+  int capability(const ConversionRequest& request) const override {
     return RewriterInterface::CONVERSION | RewriterInterface::PREDICTION;
   }
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 };
 
 }  // namespace mozc

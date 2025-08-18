@@ -45,7 +45,7 @@
 namespace mozc {
 namespace {
 
-size_t CommandCandidatesSize(const Segment &segment) {
+size_t CommandCandidatesSize(const Segment& segment) {
   size_t result = 0;
   for (int i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).attributes &
@@ -56,7 +56,7 @@ size_t CommandCandidatesSize(const Segment &segment) {
   return result;
 }
 
-std::string GetCommandCandidateValue(const Segment &segment) {
+std::string GetCommandCandidateValue(const Segment& segment) {
   for (int i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).attributes &
         converter::Attribute::COMMAND_CANDIDATE) {
@@ -78,8 +78,8 @@ class CommandRewriterTest : public testing::TestWithTempUserProfile {
     request_.Clear();
   }
 
-  static ConversionRequest ConvReq(const config::Config &config,
-                                   const commands::Request &request) {
+  static ConversionRequest ConvReq(const config::Config& config,
+                                   const commands::Request& request) {
     return ConversionRequestBuilder()
         .SetConfig(config)
         .SetRequest(request)
@@ -93,13 +93,13 @@ class CommandRewriterTest : public testing::TestWithTempUserProfile {
 TEST_F(CommandRewriterTest, Rewrite) {
   CommandRewriter rewriter;
   Segments segments;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   const ConversionRequest convreq = ConvReq(config_, request_);
   EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("こまんど");
     candidate->value = "コマンド";
     EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
@@ -108,7 +108,7 @@ TEST_F(CommandRewriterTest, Rewrite) {
   }
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("さじぇすと");
     candidate->value = "サジェスト";
     EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
@@ -117,7 +117,7 @@ TEST_F(CommandRewriterTest, Rewrite) {
   }
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("ひみつ");
     candidate->value = "秘密";
     EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
@@ -126,7 +126,7 @@ TEST_F(CommandRewriterTest, Rewrite) {
   }
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("きょうと");
     candidate->value = "京都";
     EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
@@ -136,11 +136,11 @@ TEST_F(CommandRewriterTest, Rewrite) {
 
   {
     // don't trigger when multiple segments.
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("こまんど");
     candidate->value = "コマンド";
-    Segment *seg2 = segments.push_back_segment();
-    converter::Candidate *candidate2 = seg2->add_candidate();
+    Segment* seg2 = segments.push_back_segment();
+    converter::Candidate* candidate2 = seg2->add_candidate();
     seg2->set_key("です");
     candidate2->value = "です";
     EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
@@ -151,10 +151,10 @@ TEST_F(CommandRewriterTest, Rewrite) {
 TEST_F(CommandRewriterTest, ValueCheck) {
   CommandRewriter rewriter;
   Segments segments;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("さじぇすと");
     candidate->value = "サジェスト";
     config_.set_presentation_mode(false);
@@ -165,7 +165,7 @@ TEST_F(CommandRewriterTest, ValueCheck) {
   }
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("さじぇすと");
     candidate->value = "サジェスト";
     config_.set_presentation_mode(true);
@@ -176,7 +176,7 @@ TEST_F(CommandRewriterTest, ValueCheck) {
   }
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("ひみつ");
     candidate->value = "秘密";
     config_.set_incognito_mode(false);
@@ -187,7 +187,7 @@ TEST_F(CommandRewriterTest, ValueCheck) {
   }
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("ひみつ");
     candidate->value = "秘密";
     config_.set_incognito_mode(true);

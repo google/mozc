@@ -49,16 +49,16 @@ class CorrectionRewriter : public RewriterInterface {
   // default provided by data_manager.  The caller takes the ownership of the
   // instance.
   static std::unique_ptr<CorrectionRewriter> CreateCorrectionRewriter(
-      const DataManager &data_manager);
+      const DataManager& data_manager);
 
   CorrectionRewriter(absl::string_view value_array_data,
                      absl::string_view error_array_data,
                      absl::string_view correction_array_data);
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 
-  int capability(const ConversionRequest &request) const override {
+  int capability(const ConversionRequest& request) const override {
     return RewriterInterface::ALL;
   }
 
@@ -75,8 +75,8 @@ class CorrectionRewriter : public RewriterInterface {
   };
 
   // Sets |candidate| fields from |iterm|.
-  static void SetCandidate(const ReadingCorrectionItem &item,
-                           converter::Candidate *candidate);
+  static void SetCandidate(const ReadingCorrectionItem& item,
+                           converter::Candidate* candidate);
 
   // Looks up corrections with key and value. Return true if at least
   // one correction is found in the internal dictionary.
@@ -84,7 +84,7 @@ class CorrectionRewriter : public RewriterInterface {
   // The matched results are saved in |results|.
   // Return false if |results| is empty.
   bool LookupCorrection(absl::string_view key, absl::string_view value,
-                        std::vector<ReadingCorrectionItem> *results) const;
+                        std::vector<ReadingCorrectionItem>* results) const;
 
   SerializedStringArray value_array_;
   SerializedStringArray error_array_;

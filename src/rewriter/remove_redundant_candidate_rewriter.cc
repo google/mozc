@@ -37,15 +37,15 @@
 namespace mozc {
 
 int RemoveRedundantCandidateRewriter::capability(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::NOT_AVAILABLE;
 }
 
-bool RemoveRedundantCandidateRewriter::Rewrite(const ConversionRequest &request,
-                                               Segments *segments) const {
+bool RemoveRedundantCandidateRewriter::Rewrite(const ConversionRequest& request,
+                                               Segments* segments) const {
   // For mobile, we don't return the single result that is same as a preedit.
   // However we want to have T13N candidates if we have T13N candidates.
   // http://b/5389342

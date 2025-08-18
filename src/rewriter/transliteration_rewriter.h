@@ -45,29 +45,29 @@ namespace mozc {
 
 class TransliterationRewriter : public RewriterInterface {
  public:
-  explicit TransliterationRewriter(const dictionary::PosMatcher &pos_matcher);
-  TransliterationRewriter(const TransliterationRewriter &) = delete;
-  TransliterationRewriter &operator=(const TransliterationRewriter &) = delete;
+  explicit TransliterationRewriter(const dictionary::PosMatcher& pos_matcher);
+  TransliterationRewriter(const TransliterationRewriter&) = delete;
+  TransliterationRewriter& operator=(const TransliterationRewriter&) = delete;
   ~TransliterationRewriter() override = default;
 
-  int capability(const ConversionRequest &request) const override;
+  int capability(const ConversionRequest& request) const override;
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 
  private:
   void InitT13nCandidate(absl::string_view key, absl::string_view value,
                          uint16_t lid, uint16_t rid,
-                         converter::Candidate *cand) const;
+                         converter::Candidate* cand) const;
   // Sets transliteration values into segment.  If t13ns is invalid,
   // false is returned.
   bool SetTransliterations(absl::Span<const std::string> t13ns,
-                           absl::string_view key, Segment *segment) const;
-  bool FillT13nsFromComposer(const ConversionRequest &request,
-                             Segments *segments) const;
-  bool FillT13nsFromKey(Segments *segments) const;
-  bool AddRawNumberT13nCandidates(const ConversionRequest &request,
-                                  Segments *segments) const;
+                           absl::string_view key, Segment* segment) const;
+  bool FillT13nsFromComposer(const ConversionRequest& request,
+                             Segments* segments) const;
+  bool FillT13nsFromKey(Segments* segments) const;
+  bool AddRawNumberT13nCandidates(const ConversionRequest& request,
+                                  Segments* segments) const;
 
   const uint16_t unknown_id_;
 };

@@ -49,18 +49,18 @@
 namespace mozc {
 namespace {
 
-Segment *AddSegment(const absl::string_view key, Segments *segments) {
-  Segment *segment = segments->push_back_segment();
+Segment* AddSegment(const absl::string_view key, Segments* segments) {
+  Segment* segment = segments->push_back_segment();
   segment->set_key(key);
   return segment;
 }
 
-converter::Candidate *AddCandidate(const absl::string_view key,
+converter::Candidate* AddCandidate(const absl::string_view key,
                                    const absl::string_view value,
                                    const absl::string_view content_key,
                                    const absl::string_view content_value,
-                                   Segment *segment) {
-  converter::Candidate *candidate = segment->add_candidate();
+                                   Segment* segment) {
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->key = std::string(key);
   candidate->value = std::string(value);
   candidate->content_key = std::string(content_key);
@@ -85,7 +85,7 @@ class CorrectionRewriterTest : public testing::Test {
     config_.set_use_spelling_correction(true);
   }
 
-  static ConversionRequest ConvReq(const config::Config &config) {
+  static ConversionRequest ConvReq(const config::Config& config) {
     return ConversionRequestBuilder().SetConfig(config).Build();
   }
 
@@ -106,8 +106,8 @@ TEST_F(CorrectionRewriterTest, CapabilityTest) {
 TEST_F(CorrectionRewriterTest, RewriteTest) {
   Segments segments;
 
-  Segment *segment = AddSegment("gekkyokuwo", &segments);
-  converter::Candidate *candidate = AddCandidate(
+  Segment* segment = AddSegment("gekkyokuwo", &segments);
+  converter::Candidate* candidate = AddCandidate(
       "gekkyokuwo", "TSUKIGIMEwo", "gekkyoku", "TSUKIGIME", segment);
   candidate->attributes |= converter::Attribute::RERANKED;
 

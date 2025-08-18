@@ -53,38 +53,38 @@ namespace mozc {
 namespace {
 
 void AddCandidate(const absl::string_view key, const absl::string_view value,
-                  Segment *segment) {
-  converter::Candidate *candidate = segment->add_candidate();
+                  Segment* segment) {
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->value = std::string(value);
   candidate->content_value = std::string(value);
   candidate->content_key = std::string(key);
 }
 
 void AddSegment(const absl::string_view key, const absl::string_view value,
-                Segments *segments) {
-  Segment *segment = segments->push_back_segment();
+                Segments* segments) {
+  Segment* segment = segments->push_back_segment();
   segment->set_key(key);
   AddCandidate(key, value, segment);
 }
 
 void SetSegment(const absl::string_view key, const absl::string_view value,
-                Segments *segments) {
+                Segments* segments) {
   segments->Clear();
   AddSegment(key, value, segments);
 }
 
 constexpr char kCalculationDescription[] = "計算結果";
 
-bool ContainsCalculatedResult(const converter::Candidate &candidate) {
+bool ContainsCalculatedResult(const converter::Candidate& candidate) {
   return absl::StrContains(candidate.description, kCalculationDescription);
 }
 
 // If the segment has a candidate which was inserted by CalculatorRewriter,
 // then return its index. Otherwise return -1.
-int GetIndexOfCalculatedCandidate(const Segments &segments) {
+int GetIndexOfCalculatedCandidate(const Segments& segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    const converter::Candidate &candidate = segments.segment(0).candidate(i);
+    const converter::Candidate& candidate = segments.segment(0).candidate(i);
     if (ContainsCalculatedResult(candidate)) {
       return i;
     }
@@ -96,14 +96,14 @@ int GetIndexOfCalculatedCandidate(const Segments &segments) {
 
 class CalculatorRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  static bool InsertCandidate(const CalculatorRewriter &calculator_rewriter,
+  static bool InsertCandidate(const CalculatorRewriter& calculator_rewriter,
                               const absl::string_view value, size_t insert_pos,
-                              Segment *segment) {
+                              Segment* segment) {
     return calculator_rewriter.InsertCandidate(value, insert_pos, segment);
   }
 
-  static ConversionRequest ConvReq(const config::Config &config,
-                                   const commands::Request &request) {
+  static ConversionRequest ConvReq(const config::Config& config,
+                                   const commands::Request& request) {
     return ConversionRequestBuilder()
         .SetConfig(config)
         .SetRequest(request)

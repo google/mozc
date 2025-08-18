@@ -40,10 +40,10 @@
 namespace mozc {
 
 void OutputExistenceHeader(absl::Span<const std::string> entries,
-                           absl::string_view data_namespace, std::ostream *ofs,
+                           absl::string_view data_namespace, std::ostream* ofs,
                            double error_rate);
 void OutputExistenceBinary(absl::Span<const std::string> entries,
-                           std::ostream *ofs, double error_rate);
+                           std::ostream* ofs, double error_rate);
 
 }  // namespace mozc
 

@@ -46,8 +46,8 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_singleCandidate) {
 
   // value == content_value
   {
-    Segment *seg = segments.push_back_segment();
-    converter::Candidate *candidate = seg->add_candidate();
+    Segment* seg = segments.push_back_segment();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->key = "かつらぎし";
     candidate->content_key = "かつらぎし";
     candidate->value = "葛城市";
@@ -70,8 +70,8 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_singleCandidate) {
   // value != content_value
   // No deciated description.
   {
-    Segment *seg = segments.push_back_segment();
-    converter::Candidate *candidate = seg->add_candidate();
+    Segment* seg = segments.push_back_segment();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->key = "ぎおんの";
     candidate->content_key = "ぎおん";
     candidate->value = "祇園の";
@@ -100,8 +100,8 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_noMatching) {
 
   // content_key doesn't match.
   {
-    Segment *seg = segments.push_back_segment();
-    converter::Candidate *candidate = seg->add_candidate();
+    Segment* seg = segments.push_back_segment();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->key = "かつらぎし";
     candidate->content_key = "かつらぎし？";
     candidate->value = "葛城市";
@@ -111,8 +111,8 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_noMatching) {
   }
   // content_value doesn't match.
   {
-    Segment *seg = segments.push_back_segment();
-    converter::Candidate *candidate = seg->add_candidate();
+    Segment* seg = segments.push_back_segment();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->key = "かつらぎし";
     candidate->content_key = "かつらぎし";
     candidate->value = "葛城市";
@@ -122,8 +122,8 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_noMatching) {
   }
   // content_key/value needs exact match.
   {
-    Segment *seg = segments.push_back_segment();
-    converter::Candidate *candidate = seg->add_candidate();
+    Segment* seg = segments.push_back_segment();
+    converter::Candidate* candidate = seg->add_candidate();
     candidate->key = "かつらぎしりつとしょかん";
     candidate->content_key = "かつらぎしりつとしょかん";
     candidate->value = "葛城市立図書館";
@@ -138,12 +138,12 @@ TEST_F(IvsVariantsRewriterTest,
   IvsVariantsRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   {
     // IVS 1
     {
-      converter::Candidate *candidate = seg->add_candidate();
+      converter::Candidate* candidate = seg->add_candidate();
       candidate->key = "かつらぎし";
       candidate->content_key = "かつらぎし";
       candidate->value = "葛城市";
@@ -151,7 +151,7 @@ TEST_F(IvsVariantsRewriterTest,
     }
     // Non-IVS 1
     {
-      converter::Candidate *candidate = seg->add_candidate();
+      converter::Candidate* candidate = seg->add_candidate();
       candidate->key = "いか";
       candidate->content_key = "いか";
       candidate->value = "くコ:彡";
@@ -159,7 +159,7 @@ TEST_F(IvsVariantsRewriterTest,
     }
     // IVS 2
     {
-      converter::Candidate *candidate = seg->add_candidate();
+      converter::Candidate* candidate = seg->add_candidate();
       candidate->key = "ぎおん";
       candidate->content_key = "ぎおん";
       candidate->value = "祇園";
@@ -167,7 +167,7 @@ TEST_F(IvsVariantsRewriterTest,
     }
     // Non-IVS 2
     {
-      converter::Candidate *candidate = seg->add_candidate();
+      converter::Candidate* candidate = seg->add_candidate();
       candidate->key = "たこ";
       candidate->content_key = "たこ";
       candidate->value = "Ｃ:。ミ";

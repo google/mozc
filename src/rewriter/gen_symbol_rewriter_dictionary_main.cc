@@ -78,8 +78,8 @@ namespace {
 
 using SortingKeyMap = absl::flat_hash_map<std::string, uint16_t>;
 
-SortingKeyMap CreateSortingKeyMap(const std::string &auto_file,
-                                  const std::string &rule_file) {
+SortingKeyMap CreateSortingKeyMap(const std::string& auto_file,
+                                  const std::string& rule_file) {
   SortingKeyMap sorting_keys;
   std::string line;
   int sorting_key = 0;
@@ -124,8 +124,8 @@ void AddSymbolToDictionary(const absl::string_view pos,
                            const absl::Span<const std::string> keys,
                            const absl::string_view description,
                            const absl::string_view additional_description,
-                           const SortingKeyMap &sorting_keys,
-                           rewriter::DictionaryGenerator &dictionary) {
+                           const SortingKeyMap& sorting_keys,
+                           rewriter::DictionaryGenerator& dictionary) {
   // use first char of value as sorting key.
   const absl::string_view first_value = Util::Utf8SubString(value, 0, 1);
   const auto it = sorting_keys.find(first_value);
@@ -140,8 +140,8 @@ void AddSymbolToDictionary(const absl::string_view pos,
     sorting_key = it->second;
   }
 
-  for (const std::string &key : keys) {
-    const rewriter::Token &token = dictionary.AddToken(
+  for (const std::string& key : keys) {
+    const rewriter::Token& token = dictionary.AddToken(
         {sorting_key, key, std::string(value), std::string(pos),
          std::string(description), std::string(additional_description)});
 
@@ -155,10 +155,10 @@ void AddSymbolToDictionary(const absl::string_view pos,
 }
 
 // Read dic:
-void MakeDictionary(const std::string &symbol_dictionary_file,
-                    const std::string &sorting_map_file,
-                    const std::string &ordering_rule_file,
-                    rewriter::DictionaryGenerator &dictionary) {
+void MakeDictionary(const std::string& symbol_dictionary_file,
+                    const std::string& sorting_map_file,
+                    const std::string& ordering_rule_file,
+                    rewriter::DictionaryGenerator& dictionary) {
   absl::flat_hash_set<std::string> seen;
   SortingKeyMap sorting_keys =
       CreateSortingKeyMap(sorting_map_file, ordering_rule_file);
@@ -208,7 +208,7 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
 }  // namespace
 }  // namespace mozc
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   if ((absl::GetFlag(FLAGS_input).empty() ||

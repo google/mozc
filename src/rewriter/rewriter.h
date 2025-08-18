@@ -37,9 +37,9 @@ namespace mozc {
 
 class Rewriter : public MergerRewriter {
  public:
-  explicit Rewriter(const engine::Modules &modules);
-  Rewriter(const Rewriter &) = delete;
-  Rewriter &operator=(const Rewriter &) = delete;
+  explicit Rewriter(const engine::Modules& modules);
+  Rewriter(const Rewriter&) = delete;
+  Rewriter& operator=(const Rewriter&) = delete;
 };
 
 }  // namespace mozc

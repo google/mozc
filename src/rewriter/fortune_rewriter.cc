@@ -77,10 +77,10 @@ class FortuneData {
   }
 
   void ChangeFortune() {
-    const int *levels = kNormalLevels;
+    const int* levels = kNormalLevels;
 
     const absl::Time at = Clock::GetAbslTime();
-    const absl::TimeZone &tz = Clock::GetTimeZone();
+    const absl::TimeZone& tz = Clock::GetTimeZone();
     const absl::CivilDay today = absl::ToCivilDay(at, tz);
 
     // Modify once per one day
@@ -122,15 +122,15 @@ class FortuneData {
 // Only one fortune indicated by fortune_type is inserted at
 // |insert_pos|. Return false if insersion is failed.
 bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
-                     Segment *segment) {
+                     Segment* segment) {
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
     return false;
   }
 
-  const converter::Candidate &base_candidate = segment->candidate(0);
+  const converter::Candidate& base_candidate = segment->candidate(0);
   size_t offset = std::min(insert_pos, segment->candidates_size());
-  const converter::Candidate &trigger_c = segment->candidate(offset - 1);
+  const converter::Candidate& trigger_c = segment->candidate(offset - 1);
 
   std::string value;
   switch (fortune_type) {
@@ -157,7 +157,7 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
       return false;
   }
 
-  converter::Candidate *c = segment->insert_candidate(offset);
+  converter::Candidate* c = segment->insert_candidate(offset);
   if (c == nullptr) {
     LOG(ERROR) << "cannot insert candidate at " << offset;
     return false;
@@ -181,13 +181,13 @@ FortuneRewriter::FortuneRewriter() = default;
 
 FortuneRewriter::~FortuneRewriter() = default;
 
-bool FortuneRewriter::Rewrite(const ConversionRequest &request,
-                              Segments *segments) const {
+bool FortuneRewriter::Rewrite(const ConversionRequest& request,
+                              Segments* segments) const {
   if (segments->conversion_segments_size() != 1) {
     return false;
   }
 
-  const Segment &segment = segments->conversion_segment(0);
+  const Segment& segment = segments->conversion_segment(0);
   absl::string_view key = segment.key();
   if (key.empty()) {
     LOG(ERROR) << "Key is empty";
@@ -197,7 +197,7 @@ bool FortuneRewriter::Rewrite(const ConversionRequest &request,
   if (key != "おみくじ") {
     return false;
   }
-  FortuneData *fortune_data = Singleton<FortuneData>::get();
+  FortuneData* fortune_data = Singleton<FortuneData>::get();
   fortune_data->ChangeFortune();
   // Insert a fortune candidate into the last of all candidates.
   return InsertCandidate(fortune_data->fortune_type(),

@@ -77,13 +77,13 @@ class IsEqualValue {
 void InsertCandidates(SerializedDictionary::const_iterator begin,
                       SerializedDictionary::const_iterator end,
                       size_t initial_insert_pos, size_t initial_insert_size,
-                      bool is_no_learning, Segment *segment) {
+                      bool is_no_learning, Segment* segment) {
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
     return;
   }
 
-  const converter::Candidate &base_candidate = segment->candidate(0);
+  const converter::Candidate& base_candidate = segment->candidate(0);
   size_t offset = std::min(initial_insert_pos, segment->candidates_size());
 
   // Sort values by cost just in case
@@ -102,7 +102,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
       sorted_value.end());
 
   for (size_t i = 0; i < sorted_value.size(); ++i) {
-    converter::Candidate *c = nullptr;
+    converter::Candidate* c = nullptr;
 
     if (i < initial_insert_size) {
       c = segment->insert_candidate(offset);
@@ -150,9 +150,9 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
 
 }  // namespace
 
-bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
+bool EmoticonRewriter::RewriteCandidate(Segments* segments) const {
   bool modified = false;
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     absl::string_view key = segment.key();
     if (key.empty()) {
       // This case happens for zero query suggestion.
@@ -220,7 +220,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
 }
 
 std::unique_ptr<EmoticonRewriter> EmoticonRewriter::CreateFromDataManager(
-    const DataManager &data_manager) {
+    const DataManager& data_manager) {
   absl::string_view token_array_data, string_array_data;
   data_manager.GetEmoticonRewriterData(&token_array_data, &string_array_data);
   return std::make_unique<EmoticonRewriter>(token_array_data,
@@ -231,15 +231,15 @@ EmoticonRewriter::EmoticonRewriter(absl::string_view token_array_data,
                                    absl::string_view string_array_data)
     : dic_(token_array_data, string_array_data) {}
 
-int EmoticonRewriter::capability(const ConversionRequest &request) const {
+int EmoticonRewriter::capability(const ConversionRequest& request) const {
   if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::CONVERSION;
 }
 
-bool EmoticonRewriter::Rewrite(const ConversionRequest &request,
-                               Segments *segments) const {
+bool EmoticonRewriter::Rewrite(const ConversionRequest& request,
+                               Segments* segments) const {
   if (!request.config().use_emoticon_conversion()) {
     MOZC_VLOG(2) << "no use_emoticon_conversion";
     return false;

@@ -55,7 +55,7 @@ namespace mozc {
 // instead. To avoid this, in non-first segments which follow english word
 // segments, add these space-prefixed candidates.
 bool EnglishVariantsRewriter::ExpandSpacePrefixedVariants(
-    const absl::string_view input, std::vector<std::string> *variants) const {
+    const absl::string_view input, std::vector<std::string>* variants) const {
   DCHECK(variants);
 
   if (input.empty()) {
@@ -66,7 +66,7 @@ bool EnglishVariantsRewriter::ExpandSpacePrefixedVariants(
   }
   std::vector<std::string> space_prefixed_variants;
   space_prefixed_variants.push_back(absl::StrCat(" ", input));
-  for (const std::string &word : *variants) {
+  for (const std::string& word : *variants) {
     if (word.empty()) {
       continue;
     }
@@ -83,7 +83,7 @@ bool EnglishVariantsRewriter::ExpandSpacePrefixedVariants(
 }
 
 bool EnglishVariantsRewriter::ExpandEnglishVariants(
-    const absl::string_view input, std::vector<std::string> *variants) const {
+    const absl::string_view input, std::vector<std::string>* variants) const {
   DCHECK(variants);
 
   if (input.empty()) {
@@ -129,19 +129,19 @@ bool EnglishVariantsRewriter::ExpandEnglishVariants(
 }
 
 bool EnglishVariantsRewriter::IsT13NCandidate(
-    converter::Candidate *candidate) const {
+    converter::Candidate* candidate) const {
   return (Util::IsEnglishTransliteration(candidate->content_value) &&
           Util::GetScriptType(candidate->content_key) == Util::HIRAGANA);
 }
 
 bool EnglishVariantsRewriter::IsEnglishCandidate(
-    converter::Candidate *candidate) const {
+    converter::Candidate* candidate) const {
   return (Util::IsEnglishTransliteration(candidate->content_value) &&
           Util::GetScriptType(candidate->content_key) == Util::ALPHABET);
 }
 
 bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
-    bool need_space_prefix, Segment *seg) const {
+    bool need_space_prefix, Segment* seg) const {
   CHECK(seg);
 
   bool modified = false;
@@ -153,7 +153,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
   }
 
   for (int i = seg->candidates_size() - 1; i >= 0; --i) {
-    converter::Candidate *original_candidate = seg->mutable_candidate(i);
+    converter::Candidate* original_candidate = seg->mutable_candidate(i);
     DCHECK(original_candidate);
 
     // http://b/issue?id=5137299
@@ -211,7 +211,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
           }
           modified = true;
 
-          converter::Candidate *new_candidate = seg->insert_candidate(i + 1);
+          converter::Candidate* new_candidate = seg->insert_candidate(i + 1);
           DCHECK(new_candidate);
           new_candidate->value = std::move(new_value);
           new_candidate->key = original_candidate->key;
@@ -245,23 +245,23 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
 }
 
 int EnglishVariantsRewriter::capability(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::CONVERSION;
 }
 
-bool EnglishVariantsRewriter::Rewrite(const ConversionRequest &request,
-                                      Segments *segments) const {
-  const commands::DecoderExperimentParams &params =
+bool EnglishVariantsRewriter::Rewrite(const ConversionRequest& request,
+                                      Segments* segments) const {
+  const commands::DecoderExperimentParams& params =
       request.request().decoder_experiment_params();
   // 1: enable space insertion
   const bool enable_space_insersion =
       params.english_variation_space_insertion_mode() == 1;
   bool modified = false;
   bool is_previous_candidate_english = false;
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     // if the top candidate of previous segment is an english word,
     // need_space_prefix = true
     const bool need_space_prefix =

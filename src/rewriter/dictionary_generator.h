@@ -49,7 +49,7 @@ struct Token {
   void MergeFrom(Token new_token);
 
   template <typename Sink>
-  friend void AbslStringify(Sink &sink, const Token &token) {
+  friend void AbslStringify(Sink& sink, const Token& token) {
     absl::Format(
         &sink,
         "sorting_key = %d, key = %s, value = %s, pos = %s, description "
@@ -68,28 +68,28 @@ struct Token {
   // should be updated too.
 };
 
-bool operator==(const Token &lhs, const Token &rhs);
-inline bool operator!=(const Token &lhs, const Token &rhs) {
+bool operator==(const Token& lhs, const Token& rhs);
+inline bool operator!=(const Token& lhs, const Token& rhs) {
   return !(lhs == rhs);
 }
 // Sort by keys first.  Key represents the reading of the token. If the keys are
 // equal, sorting keys are used.  Sorting keys are typically character encodings
 // like CP932, Unicode, etc. If the both keys are equal, values (encoded in
 // UTF8) are used.
-bool operator<(const Token &lhs, const Token &rhs);
+bool operator<(const Token& lhs, const Token& rhs);
 
 class DictionaryGenerator {
  public:
-  explicit DictionaryGenerator(const DataManager &data_manager);
+  explicit DictionaryGenerator(const DataManager& data_manager);
 
-  DictionaryGenerator(DictionaryGenerator &&) = default;
-  DictionaryGenerator &operator=(DictionaryGenerator &&) = default;
+  DictionaryGenerator(DictionaryGenerator&&) = default;
+  DictionaryGenerator& operator=(DictionaryGenerator&&) = default;
 
   // Add the token into the pool.
-  const Token &AddToken(Token token);
+  const Token& AddToken(Token token);
 
   // Output the tokens into the stream.
-  bool Output(std::ostream &os) const;
+  bool Output(std::ostream& os) const;
 
  private:
   absl::btree_set<Token> tokens_;

@@ -50,8 +50,8 @@ class MergerRewriter : public RewriterInterface {
   MergerRewriter() = default;
   ~MergerRewriter() override = default;
 
-  MergerRewriter(const MergerRewriter &) = delete;
-  MergerRewriter &operator=(const MergerRewriter &) = delete;
+  MergerRewriter(const MergerRewriter&) = delete;
+  MergerRewriter& operator=(const MergerRewriter&) = delete;
 
   void AddRewriter(std::unique_ptr<RewriterInterface> rewriter) {
     DCHECK(rewriter);
@@ -59,12 +59,12 @@ class MergerRewriter : public RewriterInterface {
   }
 
   std::optional<ResizeSegmentsRequest> CheckResizeSegmentsRequest(
-      const ConversionRequest &request, const Segments &segments) const {
+      const ConversionRequest& request, const Segments& segments) const {
     if (segments.resized()) {
       return std::nullopt;
     }
 
-    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+    for (const std::unique_ptr<RewriterInterface>& rewriter : rewriters_) {
       std::optional<ResizeSegmentsRequest> resize_request =
           rewriter->CheckResizeSegmentsRequest(request, segments);
       if (resize_request.has_value()) {
@@ -74,8 +74,8 @@ class MergerRewriter : public RewriterInterface {
     return std::nullopt;
   }
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override {
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override {
     if (segments == nullptr) {
       return false;
     }
@@ -97,7 +97,7 @@ class MergerRewriter : public RewriterInterface {
     }();
 
     bool is_updated = false;
-    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+    for (const std::unique_ptr<RewriterInterface>& rewriter : rewriters_) {
       if (rewriter->capability(request) & capability_type) {
         is_updated |= rewriter->Rewrite(request, segments);
       }
@@ -107,7 +107,7 @@ class MergerRewriter : public RewriterInterface {
         segments->conversion_segments_size() == 1 &&
         !request.request().mixed_conversion()) {
       const size_t max_suggestions = request.config().suggestions_size();
-      Segment *segment = segments->mutable_conversion_segment(0);
+      Segment* segment = segments->mutable_conversion_segment(0);
       const size_t candidate_size = segment->candidates_size();
       if (candidate_size > max_suggestions) {
         segment->erase_candidates(max_suggestions,
@@ -122,33 +122,33 @@ class MergerRewriter : public RewriterInterface {
   // In this method, Converter will find bracketing matching.
   // e.g., when user selects "「",  corresponding closing bracket "」"
   // is chosen in the preedit.
-  bool Focus(Segments *segments, size_t segment_index,
+  bool Focus(Segments* segments, size_t segment_index,
              int candidate_index) const override {
     bool result = false;
-    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+    for (const std::unique_ptr<RewriterInterface>& rewriter : rewriters_) {
       result |= rewriter->Focus(segments, segment_index, candidate_index);
     }
     return result;
   }
 
   // Hook(s) for all mutable operations
-  void Finish(const ConversionRequest &request,
-              const Segments &segments) override {
-    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+  void Finish(const ConversionRequest& request,
+              const Segments& segments) override {
+    for (const std::unique_ptr<RewriterInterface>& rewriter : rewriters_) {
       rewriter->Finish(request, segments);
     }
   }
 
-  void Revert(const Segments &segments) override {
-    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+  void Revert(const Segments& segments) override {
+    for (const std::unique_ptr<RewriterInterface>& rewriter : rewriters_) {
       rewriter->Revert(segments);
     }
   }
 
-  bool ClearHistoryEntry(const Segments &segments, size_t segment_index,
+  bool ClearHistoryEntry(const Segments& segments, size_t segment_index,
                          int candidate_index) override {
     bool result = false;
-    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+    for (const std::unique_ptr<RewriterInterface>& rewriter : rewriters_) {
       result |=
           rewriter->ClearHistoryEntry(segments, segment_index, candidate_index);
     }
@@ -158,7 +158,7 @@ class MergerRewriter : public RewriterInterface {
   // Syncs internal data to local file system.
   bool Sync() override {
     bool result = false;
-    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+    for (const std::unique_ptr<RewriterInterface>& rewriter : rewriters_) {
       result |= rewriter->Sync();
     }
     return result;
@@ -167,7 +167,7 @@ class MergerRewriter : public RewriterInterface {
   // Reloads internal data from local file system.
   bool Reload() override {
     bool result = false;
-    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+    for (const std::unique_ptr<RewriterInterface>& rewriter : rewriters_) {
       result |= rewriter->Reload();
     }
     return result;
@@ -175,7 +175,7 @@ class MergerRewriter : public RewriterInterface {
 
   // Clears internal data
   void Clear() override {
-    for (const std::unique_ptr<RewriterInterface> &rewriter : rewriters_) {
+    for (const std::unique_ptr<RewriterInterface>& rewriter : rewriters_) {
       rewriter->Clear();
     }
   }

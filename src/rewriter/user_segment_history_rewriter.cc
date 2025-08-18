@@ -86,12 +86,12 @@ constexpr char kFileName[] = "user://segment.db";
 
 constexpr size_t kRevertCacheSize = 16;
 
-bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
+bool IsNumberStyleLearningEnabled(const ConversionRequest& request) {
   // Enabled in mobile (software keyboard & hardware keyboard)
   return request.request().kana_modifier_insensitive_conversion();
 }
 
-bool UseInnerSegments(const ConversionRequest &request) {
+bool UseInnerSegments(const ConversionRequest& request) {
   return request.request().mixed_conversion();
 }
 
@@ -130,7 +130,7 @@ class KeyTriggerValue {
 };
 
 // return the first candidate which has "BEST_CANDIDATE" attribute
-inline int GetDefaultCandidateIndex(const Segment &segment) {
+inline int GetDefaultCandidateIndex(const Segment& segment) {
   // Check up to kMaxRerankSize + 1 candidates because candidate with
   // BEST_CANDIDATE is highly possibly in that range (http://b/9992330).
   const int size = std::min<int>(segment.candidates_size(), kMaxRerankSize + 1);
@@ -146,14 +146,14 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
 }
 
 template <typename... Strings>
-std::string StrJoinWithTabs(const Strings &...strings) {
+std::string StrJoinWithTabs(const Strings&... strings) {
   // Make sure we use the string_view overload so the buffer is preallocated.
   return absl::StrJoin({static_cast<absl::string_view>(strings)...}, "\t");
 }
 
 class FeatureKey {
  public:
-  FeatureKey(const Segments &segments, const PosMatcher &pos_matcher,
+  FeatureKey(const Segments& segments, const PosMatcher& pos_matcher,
              size_t index)
       : segments_(segments), pos_matcher_(pos_matcher), index_(index) {}
 
@@ -179,8 +179,8 @@ class FeatureKey {
   static std::string Number(uint16_t type);
 
  private:
-  const Segments &segments_;
-  const PosMatcher &pos_matcher_;
+  const Segments& segments_;
+  const PosMatcher& pos_matcher_;
   const size_t index_;
 };
 
@@ -268,7 +268,7 @@ std::string FeatureKey::LeftNumber(absl::string_view base_key,
     return "";
   }
   const int j = GetDefaultCandidateIndex(segments_.segment(index_ - 1));
-  const converter::Candidate &candidate =
+  const converter::Candidate& candidate =
       segments_.segment(index_ - 1).candidate(j);
   if (pos_matcher_.IsNumber(candidate.rid) ||
       pos_matcher_.IsKanjiNumber(candidate.rid) ||
@@ -285,7 +285,7 @@ std::string FeatureKey::RightNumber(absl::string_view base_key,
     return "";
   }
   const int j = GetDefaultCandidateIndex(segments_.segment(index_ + 1));
-  const converter::Candidate &candidate =
+  const converter::Candidate& candidate =
       segments_.segment(index_ + 1).candidate(j);
   if (pos_matcher_.IsNumber(candidate.lid) ||
       pos_matcher_.IsKanjiNumber(candidate.lid) ||
@@ -301,7 +301,7 @@ std::string FeatureKey::Number(uint16_t type) {
   return StrJoinWithTabs("N", absl::StrCat(type));
 }
 
-bool IsNumberSegment(const Segment &segment) {
+bool IsNumberSegment(const Segment& segment) {
   if (segment.key().empty()) {
     return false;
   }
@@ -315,11 +315,11 @@ bool IsNumberSegment(const Segment &segment) {
   return is_number;
 }
 
-void GetValueByType(const Segment *segment,
+void GetValueByType(const Segment* segment,
                     NumberUtil::NumberString::Style style,
-                    std::string *output) {
+                    std::string* output) {
   DCHECK(output);
-  for (const converter::Candidate *candidate : segment->candidates()) {
+  for (const converter::Candidate* candidate : segment->candidates()) {
     if (candidate->style == style) {
       *output = candidate->value;
       return;
@@ -328,9 +328,9 @@ void GetValueByType(const Segment *segment,
 }
 
 // NormalizeCandidate using config
-void NormalizeCandidate(const Segment *segment, int n,
-                        std::string *normalized_value) {
-  const converter::Candidate &candidate = segment->candidate(n);
+void NormalizeCandidate(const Segment* segment, int n,
+                        std::string* normalized_value) {
+  const converter::Candidate& candidate = segment->candidate(n);
 
   // use "AS IS"
   if (candidate.attributes & converter::Attribute::NO_VARIANTS_EXPANSION) {
@@ -378,9 +378,9 @@ void NormalizeCandidate(const Segment *segment, int n,
 // This function returns false if not found.
 // When candidate is in meta candidate,
 // set meta candidate index, (-index-1) to position.
-bool GetSameValueCandidatePosition(const Segment *segment,
-                                   const converter::Candidate *candidate,
-                                   int *position) {
+bool GetSameValueCandidatePosition(const Segment* segment,
+                                   const converter::Candidate* candidate,
+                                   int* position) {
   DCHECK(position);
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     if (segment->candidate(i).value == candidate->value) {
@@ -397,7 +397,7 @@ bool GetSameValueCandidatePosition(const Segment *segment,
   return false;
 }
 
-bool IsT13NCandidate(const converter::Candidate &cand) {
+bool IsT13NCandidate(const converter::Candidate& cand) {
   // The cand with 0-id can be the transliterated candidate.
   return (cand.lid == 0 && cand.rid == 0);
 }
@@ -405,7 +405,7 @@ bool IsT13NCandidate(const converter::Candidate &cand) {
 }  // namespace
 
 bool UserSegmentHistoryRewriter::SortCandidates(
-    absl::Span<const ScoreCandidate> sorted_scores, Segment *segment) const {
+    absl::Span<const ScoreCandidate> sorted_scores, Segment* segment) const {
   const uint32_t top_score = sorted_scores[0].score;
   const size_t size = std::min(sorted_scores.size(), kMaxRerankSize);
   constexpr uint32_t kScoreGap = 20;  // TODO(taku): no justification
@@ -417,7 +417,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
     if (kScoreGap < (top_score - sorted_scores[n].score)) {
       break;
     }
-    const converter::Candidate *candidate = sorted_scores[n].candidate;
+    const converter::Candidate* candidate = sorted_scores[n].candidate;
     DCHECK(candidate);
     int old_position = 0;
 
@@ -433,7 +433,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
     NormalizeCandidate(segment, old_position, &normalized_value);
 
     if (normalized_value != candidate->value) {
-      const converter::Candidate *normalized_cand = nullptr;
+      const converter::Candidate* normalized_cand = nullptr;
       int pos = segment->candidates_size();
       for (size_t l = 0; l < segment->candidates_size(); ++l) {
         if (segment->candidate(l).value == normalized_value) {
@@ -454,7 +454,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
         // If default character form is different and
         // is not found in the candidates, make a new
         // candidate and push it to the top.
-        converter::Candidate *new_candidate =
+        converter::Candidate* new_candidate =
             segment->insert_candidate(next_pos);
         DCHECK(new_candidate);
 
@@ -484,7 +484,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
 }
 
 UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
-    const PosMatcher &pos_matcher, const PosGroup &pos_group)
+    const PosMatcher& pos_matcher, const PosGroup& pos_group)
     : storage_(std::make_unique<LruStorage>()),
       pos_matcher_(&pos_matcher),
       pos_group_(&pos_group),
@@ -496,12 +496,12 @@ UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
 }
 
 UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
-    const ConversionRequest &request, const Segments &segments,
+    const ConversionRequest& request, const Segments& segments,
     size_t segment_index, int candidate_index) const {
   const size_t segments_size = segments.conversion_segments_size();
-  const converter::Candidate &top_candidate =
+  const converter::Candidate& top_candidate =
       segments.segment(segment_index).candidate(0);
-  const converter::Candidate &candidate =
+  const converter::Candidate& candidate =
       segments.segment(segment_index).candidate(candidate_index);
   absl::string_view all_value = candidate.value;
   absl::string_view content_value = candidate.content_value;
@@ -572,9 +572,9 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
 // Here, "best candidate" means the candidate from converter before applying
 // personalization.
 bool UserSegmentHistoryRewriter::Replaceable(
-    const ConversionRequest &request,
-    const converter::Candidate &best_candidate,
-    const converter::Candidate &target_candidate) const {
+    const ConversionRequest& request,
+    const converter::Candidate& best_candidate,
+    const converter::Candidate& target_candidate) const {
   const bool same_functional_value = (best_candidate.functional_value() ==
                                       target_candidate.functional_value());
   const bool same_pos_group = (pos_group_->GetPosGroup(best_candidate.lid) ==
@@ -585,8 +585,8 @@ bool UserSegmentHistoryRewriter::Replaceable(
 }
 
 void UserSegmentHistoryRewriter::RememberNumberPreference(
-    const Segment &segment, std::vector<std::string> &revert_entries) {
-  const converter::Candidate &candidate = segment.candidate(0);
+    const Segment& segment, std::vector<std::string>& revert_entries) {
+  const converter::Candidate& candidate = segment.candidate(0);
 
   if ((candidate.style ==
        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH) ||
@@ -611,10 +611,10 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
 }
 
 void UserSegmentHistoryRewriter::RememberFirstCandidate(
-    const ConversionRequest &request, const Segments &segments,
-    size_t segment_index, std::vector<std::string> &revert_entries) {
-  const Segment &seg = segments.segment(segment_index);
-  const converter::Candidate &candidate = seg.candidate(0);
+    const ConversionRequest& request, const Segments& segments,
+    size_t segment_index, std::vector<std::string>& revert_entries) {
+  const Segment& seg = segments.segment(segment_index);
+  const converter::Candidate& candidate = seg.candidate(0);
 
   // http://b/issue?id=3156109
   // Do not remember the preference of Punctuations
@@ -694,8 +694,8 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   }
 }
 
-bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
-                                             const Segments &segments) const {
+bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest& request,
+                                             const Segments& segments) const {
   if (request.incognito_mode()) {
     MOZC_VLOG(2) << "incognito_mode";
     return false;
@@ -712,7 +712,7 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
   }
 
   // check that all segments have candidate
-  for (const Segment &segment : segments) {
+  for (const Segment& segment : segments) {
     if (segment.candidates_size() == 0) {
       LOG(ERROR) << "candidate size is 0";
       return false;
@@ -725,25 +725,25 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
 // Returns segments for learning.
 // Inner segments boundary will be expanded.
 Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
-    const ConversionRequest &request, const Segments &segments) {
+    const ConversionRequest& request, const Segments& segments) {
   Segments ret;
-  for (const Segment &segment : segments) {
-    const converter::Candidate &candidate = segment.candidate(0);
+  for (const Segment& segment : segments) {
+    const converter::Candidate& candidate = segment.candidate(0);
     if (candidate.inner_segment_boundary.empty()) {
       // No inner segment info
-      Segment *seg = ret.add_segment();
+      Segment* seg = ret.add_segment();
       *seg = segment;
       continue;
     }
     int index = 0;
-    for (const auto &iter : candidate.inner_segments()) {
+    for (const auto& iter : candidate.inner_segments()) {
       absl::string_view key = iter.GetKey();
-      Segment *seg = ret.add_segment();
+      Segment* seg = ret.add_segment();
       seg->set_segment_type(segment.segment_type());
       seg->set_key(key);
       seg->clear_candidates();
 
-      converter::Candidate *cand = seg->add_candidate();
+      converter::Candidate* cand = seg->add_candidate();
       cand->attributes = candidate.attributes;
       cand->key = key;
       cand->content_key = iter.GetContentKey();
@@ -763,8 +763,8 @@ Segments UserSegmentHistoryRewriter::MakeLearningSegmentsFromInnerSegments(
   return ret;
 }
 
-void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
-                                        const Segments &segments) {
+void UserSegmentHistoryRewriter::Finish(const ConversionRequest& request,
+                                        const Segments& segments) {
   if (request.request_type() != ConversionRequest::CONVERSION) {
     return;
   }
@@ -785,7 +785,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
   std::vector<std::string> revert_entries;
   for (size_t i = target_segments.history_segments_size();
        i < target_segments.segments_size(); ++i) {
-    const Segment &segment = target_segments.segment(i);
+    const Segment& segment = target_segments.segment(i);
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &
@@ -834,19 +834,19 @@ bool UserSegmentHistoryRewriter::Reload() {
 }
 
 bool UserSegmentHistoryRewriter::ShouldRewrite(
-    const Segment &segment, size_t *max_candidates_size) const {
+    const Segment& segment, size_t* max_candidates_size) const {
   if (segment.candidates_size() == 0) {
     LOG(ERROR) << "candidate size is 0";
     return false;
   }
 
   DCHECK(storage_.get());
-  const KeyTriggerValue *v1 = reinterpret_cast<const KeyTriggerValue *>(
-      storage_->Lookup(segment.key()));
+  const KeyTriggerValue* v1 =
+      reinterpret_cast<const KeyTriggerValue*>(storage_->Lookup(segment.key()));
 
-  const KeyTriggerValue *v2 = nullptr;
+  const KeyTriggerValue* v2 = nullptr;
   if (segment.key() != segment.candidate(0).content_key) {
-    v2 = reinterpret_cast<const KeyTriggerValue *>(
+    v2 = reinterpret_cast<const KeyTriggerValue*>(
         storage_->Lookup(segment.candidate(0).content_key));
   }
 
@@ -860,7 +860,7 @@ bool UserSegmentHistoryRewriter::ShouldRewrite(
   return *max_candidates_size > 0;
 }
 
-void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
+void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment& segment) {
   if (!(segment.candidate(0).attributes & converter::Attribute::RERANKED)) {
     MOZC_VLOG(2) << "InsertTriggerKey is skipped";
     return;
@@ -876,20 +876,20 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
   // increases the chance of hash collisions.
   v.set_candidates_size(segment.candidates_size());
 
-  storage_->Insert(segment.key(), reinterpret_cast<const char *>(&v));
+  storage_->Insert(segment.key(), reinterpret_cast<const char*>(&v));
   if (segment.key() != segment.candidate(0).content_key) {
     storage_->Insert(segment.candidate(0).content_key,
-                     reinterpret_cast<const char *>(&v));
+                     reinterpret_cast<const char*>(&v));
   }
 
   absl::string_view close_bracket_key;
   if (Util::IsOpenBracket(segment.key(), &close_bracket_key)) {
     const std::string key{close_bracket_key.data(), close_bracket_key.size()};
-    storage_->Insert(key, reinterpret_cast<const char *>(&v));
+    storage_->Insert(key, reinterpret_cast<const char*>(&v));
   }
 }
 
-bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
+bool UserSegmentHistoryRewriter::RewriteNumber(Segment* segment) const {
   std::vector<ScoreCandidate> scores;
   for (size_t l = 0;
        l < segment->candidates_size() + segment->meta_candidates_size(); ++l) {
@@ -925,8 +925,8 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
   return SortCandidates(scores, segment);
 }
 
-bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
-                                         Segments *segments) const {
+bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest& request,
+                                         Segments* segments) const {
   if (!IsAvailable(request, *segments)) {
     return false;
   }
@@ -937,7 +937,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
   }
 
   // set BEST_CANDIDATE marker in advance
-  for (Segment &segment : *segments) {
+  for (Segment& segment : *segments) {
     DCHECK_GT(segment.candidates_size(), 0);
     segment.mutable_candidate(0)->attributes |=
         converter::Attribute::BEST_CANDIDATE;
@@ -946,7 +946,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
   bool modified = false;
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {
-    Segment *segment = segments->mutable_segment(i);
+    Segment* segment = segments->mutable_segment(i);
     DCHECK(segment);
     DCHECK_GT(segment->candidates_size(), 0);
 
@@ -1017,25 +1017,25 @@ void UserSegmentHistoryRewriter::Clear() {
   }
 }
 
-void UserSegmentHistoryRewriter::Revert(const Segments &segments) {
-  const std::vector<std::string> *revert_entries =
+void UserSegmentHistoryRewriter::Revert(const Segments& segments) {
+  const std::vector<std::string>* revert_entries =
       revert_cache_.LookupWithoutInsert(segments.revert_id());
   if (!revert_entries) {
     return;
   }
-  for (const auto &key : *revert_entries) {
+  for (const auto& key : *revert_entries) {
     MOZC_VLOG(2) << "Erasing the key: " << key;
     storage_->Delete(key);
   }
 }
 
-bool UserSegmentHistoryRewriter::ClearHistoryEntry(const Segments &segments,
+bool UserSegmentHistoryRewriter::ClearHistoryEntry(const Segments& segments,
                                                    size_t segment_index,
                                                    int candidate_index) {
   DCHECK_LT(segment_index, segments.segments_size());
-  const Segment &segment = segments.segment(segment_index);
+  const Segment& segment = segments.segment(segment_index);
   DCHECK(segment.is_valid_index(candidate_index));
-  const converter::Candidate &candidate = segment.candidate(0);
+  const converter::Candidate& candidate = segment.candidate(0);
   absl::string_view key = candidate.key;
   absl::string_view value = candidate.value;
 
@@ -1054,7 +1054,7 @@ bool UserSegmentHistoryRewriter::ClearHistoryEntry(const Segments &segments,
 }
 
 bool UserSegmentHistoryRewriter::IsPunctuation(
-    const Segment &seg, const converter::Candidate &candidate) const {
+    const Segment& seg, const converter::Candidate& candidate) const {
   return (pos_matcher_->IsJapanesePunctuations(candidate.lid) &&
           candidate.lid == candidate.rid && IsPunctuationInternal(seg.key()) &&
           IsPunctuationInternal(candidate.value));
@@ -1064,8 +1064,8 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::Fetch(
     const absl::string_view key, const uint32_t weight) const {
   if (!key.empty()) {
     uint32_t atime;
-    const FeatureValue *v = std::launder(
-        reinterpret_cast<const FeatureValue *>(storage_->Lookup(key, &atime)));
+    const FeatureValue* v = std::launder(
+        reinterpret_cast<const FeatureValue*>(storage_->Lookup(key, &atime)));
     if (v && v->IsValid()) {
       return {weight, atime};
     }
@@ -1075,7 +1075,7 @@ UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::Fetch(
 
 void UserSegmentHistoryRewriter::Insert(
     absl::string_view key, bool force,
-    std::vector<std::string> &revert_entries) {
+    std::vector<std::string>& revert_entries) {
   if (key.empty()) {
     return;
   }
@@ -1085,14 +1085,14 @@ void UserSegmentHistoryRewriter::Insert(
   FeatureValue v;
   DCHECK(v.IsValid());
   if (force) {
-    storage_->Insert(key, reinterpret_cast<const char *>(&v));
+    storage_->Insert(key, reinterpret_cast<const char*>(&v));
   } else {
-    storage_->TryInsert(key, reinterpret_cast<const char *>(&v));
+    storage_->TryInsert(key, reinterpret_cast<const char*>(&v));
   }
 }
 
 void UserSegmentHistoryRewriter::MaybeInsertRevertEntry(
-    absl::string_view key, std::vector<std::string> &revert_entries) {
+    absl::string_view key, std::vector<std::string>& revert_entries) {
   if (storage_->Lookup(key) != nullptr) {
     return;
   }

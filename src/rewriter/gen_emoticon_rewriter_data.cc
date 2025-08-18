@@ -58,15 +58,15 @@ using KeyList = std::vector<std::string>;
 using CompilerToken = SerializedDictionary::CompilerToken;
 using TokenList = SerializedDictionary::TokenList;
 
-int LookupCount(const absl::flat_hash_map<std::string, int> &key_count,
+int LookupCount(const absl::flat_hash_map<std::string, int>& key_count,
                 const absl::string_view key) {
   const auto iter = key_count.find(key);
   return (iter == key_count.end()) ? 0 : iter->second;
 }
 
 std::string GetDescription(
-    const KeyList &key_list,
-    const absl::flat_hash_map<std::string, int> &key_count) {
+    const KeyList& key_list,
+    const absl::flat_hash_map<std::string, int>& key_count) {
   if (key_list.size() == 1) {
     return key_list[0];
   }
@@ -84,7 +84,7 @@ std::string GetDescription(
                          sorted_key_list.front());
 }
 
-std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
+std::map<std::string, TokenList> ReadEmoticonTsv(const std::string& path) {
   InputFileStream ifs(path);
 
   std::string line;
@@ -102,7 +102,7 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
         absl::StrReplaceAll(field_list[1], {{"　", " "}});  // Full-width space
     KeyList key_list = absl::StrSplit(field_list[1], ' ', absl::SkipEmpty());
 
-    for (const auto &key : key_list) {
+    for (const auto& key : key_list) {
       ++key_count[key];
     }
     data.emplace_back(field_list[0], std::move(key_list));
@@ -110,11 +110,11 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
 
   std::map<std::string, TokenList> input_data;
   int16_t cost = 10;
-  for (const auto &kv : data) {
-    const std::string &value = kv.first;
-    const KeyList &key_list = kv.second;
-    const std::string &description = GetDescription(key_list, key_count);
-    for (const std::string &key : key_list) {
+  for (const auto& kv : data) {
+    const std::string& value = kv.first;
+    const KeyList& key_list = kv.second;
+    const std::string& description = GetDescription(key_list, key_count);
+    for (const std::string& key : key_list) {
       std::unique_ptr<CompilerToken> token(new CompilerToken());
       token->value = value;
       token->description = description;
@@ -132,9 +132,9 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
 }  // namespace
 }  // namespace mozc
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  const auto &input_data = mozc::ReadEmoticonTsv(absl::GetFlag(FLAGS_input));
+  const auto& input_data = mozc::ReadEmoticonTsv(absl::GetFlag(FLAGS_input));
   mozc::SerializedDictionary::CompileToFiles(
       input_data, absl::GetFlag(FLAGS_output_token_array),
       absl::GetFlag(FLAGS_output_string_array));

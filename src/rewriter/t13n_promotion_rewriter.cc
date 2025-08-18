@@ -54,12 +54,12 @@ namespace {
 // be promoted.
 constexpr size_t kLatinT13nOffset = 3;
 
-bool IsLatinInputMode(const ConversionRequest &request) {
+bool IsLatinInputMode(const ConversionRequest& request) {
   return request.composer().GetInputMode() == transliteration::HALF_ASCII ||
          request.composer().GetInputMode() == transliteration::FULL_ASCII;
 }
 
-bool MaybeInsertLatinT13n(Segment *segment) {
+bool MaybeInsertLatinT13n(Segment* segment) {
   if (segment->meta_candidates_size() <=
       transliteration::FULL_ASCII_CAPITALIZED) {
     return false;
@@ -86,7 +86,7 @@ bool MaybeInsertLatinT13n(Segment *segment) {
 
   size_t pos = insert_pos;
   for (const auto t13n_type : kLatinT13nTypes) {
-    const converter::Candidate &t13n_candidate =
+    const converter::Candidate& t13n_candidate =
         segment->meta_candidate(t13n_type);
     auto [it, inserted] = seen.insert(t13n_candidate.value);
     if (!inserted) {
@@ -103,8 +103,8 @@ bool MaybeInsertLatinT13n(Segment *segment) {
 // Katakana candidate is searched from `start_offset`.
 // When no Katakana is found, `katakana_candidate` is inserted.
 void InsertKatakana(int start_offset, int insert_pos,
-                    const converter::Candidate &katakana_candidate,
-                    Segment *segment) {
+                    const converter::Candidate& katakana_candidate,
+                    Segment* segment) {
   int katakana_index = -1;
   for (int i = start_offset; i < segment->candidates_size(); ++i) {
     if (segment->candidate(i).value == katakana_candidate.value) {
@@ -121,8 +121,8 @@ void InsertKatakana(int start_offset, int insert_pos,
 }
 
 bool MaybePromoteKatakanaWithStaticOffset(
-    const commands::DecoderExperimentParams &params,
-    const converter::Candidate &katakana_candidate, Segment *segment) {
+    const commands::DecoderExperimentParams& params,
+    const converter::Candidate& katakana_candidate, Segment* segment) {
   if (params.katakana_promotion_offset() < 0) {
     return false;
   }
@@ -147,20 +147,20 @@ bool MaybePromoteKatakanaWithStaticOffset(
   return true;
 }
 
-bool MaybePromoteKatakana(const ConversionRequest &request, Segment *segment) {
+bool MaybePromoteKatakana(const ConversionRequest& request, Segment* segment) {
   if (segment->meta_candidates_size() <= transliteration::FULL_KATAKANA) {
     return false;
   }
 
-  const auto &params = request.request().decoder_experiment_params();
-  const converter::Candidate &katakana_candidate =
+  const auto& params = request.request().decoder_experiment_params();
+  const converter::Candidate& katakana_candidate =
       segment->meta_candidate(transliteration::FULL_KATAKANA);
 
   return MaybePromoteKatakanaWithStaticOffset(params, katakana_candidate,
                                               segment);
 }
 
-bool MaybePromoteT13n(const ConversionRequest &request, Segment *segment) {
+bool MaybePromoteT13n(const ConversionRequest& request, Segment* segment) {
   if (IsLatinInputMode(request) || Util::IsAscii(segment->key())) {
     return MaybeInsertLatinT13n(segment);
   }
@@ -173,7 +173,7 @@ T13nPromotionRewriter::T13nPromotionRewriter() = default;
 
 T13nPromotionRewriter::~T13nPromotionRewriter() = default;
 
-int T13nPromotionRewriter::capability(const ConversionRequest &request) const {
+int T13nPromotionRewriter::capability(const ConversionRequest& request) const {
   if (request.request().mixed_conversion()) {  // For mobile
     return RewriterInterface::ALL;
   } else {
@@ -181,10 +181,10 @@ int T13nPromotionRewriter::capability(const ConversionRequest &request) const {
   }
 }
 
-bool T13nPromotionRewriter::Rewrite(const ConversionRequest &request,
-                                    Segments *segments) const {
+bool T13nPromotionRewriter::Rewrite(const ConversionRequest& request,
+                                    Segments* segments) const {
   bool modified = false;
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     modified |= MaybePromoteT13n(request, &segment);
   }
   return modified;

@@ -53,7 +53,7 @@
 
 namespace mozc {
 
-int CalculatorRewriter::capability(const ConversionRequest &request) const {
+int CalculatorRewriter::capability(const ConversionRequest& request) const {
   if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
@@ -61,8 +61,8 @@ int CalculatorRewriter::capability(const ConversionRequest &request) const {
 }
 
 std::optional<RewriterInterface::ResizeSegmentsRequest>
-CalculatorRewriter::CheckResizeSegmentsRequest(const ConversionRequest &request,
-                                               const Segments &segments) const {
+CalculatorRewriter::CheckResizeSegmentsRequest(const ConversionRequest& request,
+                                               const Segments& segments) const {
   if (!request.config().use_calculator()) {
     return std::nullopt;
   }
@@ -74,7 +74,7 @@ CalculatorRewriter::CheckResizeSegmentsRequest(const ConversionRequest &request,
 
   // Merge keys of all conversion segments and try calculation.
   std::string merged_key;
-  for (const Segment &segment : segments.conversion_segments()) {
+  for (const Segment& segment : segments.conversion_segments()) {
     merged_key += segment.key();
   }
   // The decision to calculate and calculation itself are both done by the
@@ -95,8 +95,8 @@ CalculatorRewriter::CheckResizeSegmentsRequest(const ConversionRequest &request,
 
 // Rewrites candidates when conversion segments of |segments| represents an
 // expression that can be calculated.
-bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
-                                 Segments *segments) const {
+bool CalculatorRewriter::Rewrite(const ConversionRequest& request,
+                                 Segments* segments) const {
   if (!request.config().use_calculator()) {
     return false;
   }
@@ -128,13 +128,13 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
 
 bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
                                          const size_t insert_pos,
-                                         Segment *segment) const {
+                                         Segment* segment) const {
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
     return false;
   }
 
-  const converter::Candidate &base_candidate = segment->candidate(0);
+  const converter::Candidate& base_candidate = segment->candidate(0);
 
   // Normalize the expression, used in description.
   std::string expression =
@@ -145,7 +145,7 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
 
   for (int n = 0; n < 2; ++n) {
     int current_offset = offset + n;
-    converter::Candidate *candidate = segment->insert_candidate(current_offset);
+    converter::Candidate* candidate = segment->insert_candidate(current_offset);
     if (candidate == nullptr) {
       LOG(ERROR) << "cannot insert candidate at " << current_offset;
       return false;
@@ -157,7 +157,7 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
     if (reference_index >= segment->candidates_size()) {
       reference_index = current_offset - 1;
     }
-    const converter::Candidate &reference_candidate =
+    const converter::Candidate& reference_candidate =
         segment->candidate(reference_index);
 
     candidate->lid = reference_candidate.lid;

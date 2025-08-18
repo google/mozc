@@ -42,7 +42,7 @@ def ReadCounterSuffixPosIds(id_file):
   with codecs.open(id_file, 'r', encoding='utf-8') as stream:
     stream = code_generator_util.ParseColumnStream(stream, num_column=2)
     for pos_id, pos_name in stream:
-      if pos_name.startswith(u'名詞,接尾,助数詞'):
+      if pos_name.startswith('名詞,接尾,助数詞'):
         pos_ids.add(pos_id)
   return pos_ids
 
@@ -57,8 +57,9 @@ def ReadCounterSuffixes(dictionary_files, ids):
     if 'reading_correction.tsv' in filename:
       continue
     with codecs.open(filename, 'r', encoding='utf-8') as stream:
-      stream = code_generator_util.ParseColumnStream(stream, num_column=5,
-                                                     delimiter='\t')
+      stream = code_generator_util.ParseColumnStream(
+          stream, num_column=5, delimiter='\t'
+      )
       for _, lid, rid, _, value in stream:
         if (lid == rid) and (lid in ids) and (rid in ids):
           suffixes.add(value)

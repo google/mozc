@@ -44,21 +44,21 @@ class UserBoundaryHistoryRewriter : public RewriterInterface {
   UserBoundaryHistoryRewriter();
 
   std::optional<ResizeSegmentsRequest> CheckResizeSegmentsRequest(
-      const ConversionRequest &request,
-      const Segments &segments) const override;
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override {
+      const ConversionRequest& request,
+      const Segments& segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override {
     return false;
   }
 
-  void Finish(const ConversionRequest &request,
-              const Segments &segments) override;
+  void Finish(const ConversionRequest& request,
+              const Segments& segments) override;
   bool Sync() override;
   bool Reload() override;
   void Clear() override;
 
  private:
-  bool Insert(const ConversionRequest &request, const Segments &segments);
+  bool Insert(const ConversionRequest& request, const Segments& segments);
 
   storage::LruStorage storage_;
 };

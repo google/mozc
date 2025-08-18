@@ -72,40 +72,40 @@ using ::testing::StrEq;
 using ::testing::Values;
 
 void InitCandidate(const absl::string_view key, const absl::string_view value,
-                   converter::Candidate *candidate) {
+                   converter::Candidate* candidate) {
   candidate->content_key = std::string(key);
   candidate->value = std::string(value);
   candidate->content_value = std::string(value);
 }
 
 void AppendSegment(const absl::string_view key, const absl::string_view value,
-                   Segments *segments) {
-  Segment *seg = segments->add_segment();
+                   Segments* segments) {
+  Segment* seg = segments->add_segment();
   seg->set_key(key);
   InitCandidate(key, value, seg->add_candidate());
 }
 
 void InitSegment(const absl::string_view key, const absl::string_view value,
-                 Segments *segments) {
+                 Segments* segments) {
   segments->Clear();
   AppendSegment(key, value, segments);
 }
 
 void InsertCandidate(const absl::string_view key, const absl::string_view value,
-                     const int position, Segment *segment) {
-  converter::Candidate *cand = segment->insert_candidate(position);
+                     const int position, Segment* segment) {
+  converter::Candidate* cand = segment->insert_candidate(position);
   cand->content_key = std::string(key);
   cand->value = std::string(value);
   cand->content_value = std::string(value);
 }
 
-Matcher<const converter::Candidate *> ValueIs(absl::string_view value) {
+Matcher<const converter::Candidate*> ValueIs(absl::string_view value) {
   return Field(&converter::Candidate::value, value);
 }
 
 // A matcher to test if a candidate has the given value and description.
-Matcher<const converter::Candidate *> ValueAndDescAre(absl::string_view value,
-                                                      absl::string_view desc) {
+Matcher<const converter::Candidate*> ValueAndDescAre(absl::string_view value,
+                                                     absl::string_view desc) {
   return Pointee(AllOf(Field(&converter::Candidate::value, value),
                        Field(&converter::Candidate::description, desc)));
 }
@@ -115,7 +115,7 @@ Matcher<const converter::Candidate *> ValueAndDescAre(absl::string_view value,
 struct InvokeCallbackWithUserDictionaryToken {
   template <class T>
   void operator()(absl::string_view key, T,
-                  DictionaryInterface::Callback *callback) {
+                  DictionaryInterface::Callback* callback) {
     const Token token(key, value, MockDictionary::kDefaultCost,
                       MockDictionary::kDefaultPosId,
                       MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
@@ -201,7 +201,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
       {"にちじ", "日時"},
       {"なう", "ナウ"},
   };
-  for (const auto &[key, value] : kCurrentDateTimeKeyValues) {
+  for (const auto& [key, value] : kCurrentDateTimeKeyValues) {
     InitSegment(key, value, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     ASSERT_EQ(segments.segments_size(), 1);
@@ -215,7 +215,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
       {"いま", "今"},
       {"じこく", "時刻"},
   };
-  for (const auto &[key, value] : kCurrentTimeKeyValues) {
+  for (const auto& [key, value] : kCurrentTimeKeyValues) {
     InitSegment(key, value, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     constexpr absl::string_view kDesc = "現在の時刻";
@@ -393,7 +393,7 @@ struct EraToAdTestData {
   EraToAdTestData WithSuffix() const {
     EraToAdTestData with_suffix;
     with_suffix.key = key + "ねん";
-    for (const auto &result : results) {
+    for (const auto& result : results) {
       with_suffix.results.push_back(
           std::make_pair(result.first + "年", result.second + "年"));
     }
@@ -452,7 +452,7 @@ TEST_P(EraToAdTest, WithSuffix) {
 }
 
 TEST_P(EraToAdTest, WithoutSuffix) {
-  const auto &data = GetParam();
+  const auto& data = GetParam();
   EXPECT_EQ(DateRewriter::EraToAd(data.key), data.results);
 }
 
@@ -515,7 +515,7 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
   } month_days_test_data[] = {{1, 31},  {3, 31},  {4, 30}, {5, 31},
                               {6, 30},  {7, 31},  {8, 31}, {9, 30},
                               {10, 31}, {11, 30}, {12, 31}};
-  for (const auto &test_case : month_days_test_data) {
+  for (const auto& test_case : month_days_test_data) {
     std::vector<std::string> results;
     EXPECT_TRUE(DateRewriter::ConvertDateWithYear(2001, test_case.month,
                                                   test_case.days, &results));
@@ -558,12 +558,12 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
       ConversionRequestBuilder().SetComposer(composer).Build();
 
   // Not targets of rewrite.
-  const char *kNonTargetCases[] = {
+  const char* kNonTargetCases[] = {
       "",      "0",      "1",   "01234", "00000",  // Invalid number of digits.
       "hello", "123xyz",                           // Not numbers.
       "660",   "999",    "3400"                    // Neither date nor time.
   };
-  for (const char *input : kNonTargetCases) {
+  for (const char* input : kNonTargetCases) {
     InitSegment(input, input, &segments);
     EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments))
         << "Input: " << input << "\nSegments: " << segments.DebugString();
@@ -597,7 +597,7 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
 #define GOGO_HAN(hour) {"午後" #hour "時半", "時刻"}
 
   // Targets of rewrite.
-  using ValueAndDescription = std::pair<const char *, const char *>;
+  using ValueAndDescription = std::pair<const char*, const char*>;
   const std::vector<ValueAndDescription> kTestCases[] = {
       // Two digits.
       {
@@ -883,14 +883,14 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
 
   constexpr auto ValueAndDescAre =
       [](absl::string_view value,
-         absl::string_view desc) -> Matcher<const converter::Candidate *> {
+         absl::string_view desc) -> Matcher<const converter::Candidate*> {
     return Pointee(AllOf(Field(&converter::Candidate::value, value),
                          Field(&converter::Candidate::description, desc)));
   };
-  for (const auto &test_case : kTestCases) {
+  for (const auto& test_case : kTestCases) {
     // Convert expected outputs to matchers.
-    std::vector<Matcher<const converter::Candidate *>> matchers;
-    for (const auto &[value, desc] : test_case) {
+    std::vector<Matcher<const converter::Candidate*>> matchers;
+    for (const auto& [value, desc] : test_case) {
       matchers.push_back(ValueAndDescAre(value, desc));
     }
 
@@ -949,7 +949,7 @@ TEST_F(DateRewriterTest, NumberRewriterFromRawInputTest) {
   // In this case meta candidates should be prioritized.
   {
     InitSegment("cd", "cd", &segments);
-    converter::Candidate *meta_candidate =
+    converter::Candidate* meta_candidate =
         segments.mutable_conversion_segment(0)->add_meta_candidate();
     meta_candidate->value = "1111";
     composer.InsertCharacter("2223");
@@ -1009,7 +1009,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
 
     // Verify that the top candidate wasn't modified and the next two were
     // moved to last.
-    const auto &segment = segments.segment(0);
+    const auto& segment = segments.segment(0);
     const auto cand_size = segment.candidates_size();
     ASSERT_LT(3, cand_size);
     EXPECT_EQ(segment.candidate(0).value, "1234");
@@ -1031,7 +1031,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
     EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
 
     // Verify that the first three candidate weren't moved.
-    const auto &segment = segments.segment(0);
+    const auto& segment = segments.segment(0);
     const auto cand_size = segment.candidates_size();
     ASSERT_LT(3, cand_size);
     EXPECT_EQ(segment.candidate(0).value, "1234");
@@ -1051,7 +1051,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsFromMetaCandidates) {
   Segments segments;
   InitSegment("nisen", "にせん", &segments);
 
-  Segment *segment = segments.mutable_conversion_segment(0);
+  Segment* segment = segments.mutable_conversion_segment(0);
   segment->add_meta_candidate()->value = "２０００";
 
   DateRewriter rewriter;
@@ -1071,7 +1071,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsWithMinusSign) {
   Segments segments;
   InitSegment("-123", "−１２３", &segments);
 
-  Segment *segment = segments.mutable_conversion_segment(0);
+  Segment* segment = segments.mutable_conversion_segment(0);
   // Hiragana: ー is prolonged sound mark (U+2212)
   segment->add_meta_candidate()->value = "ー１２３";
   // Half Ascii: - is hyphen-minus (U+002D)
@@ -1103,7 +1103,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionWithHistory) {
 
   // History segment
   InitSegment("hist", "hist", &segments);
-  Segment *seg = segments.mutable_segment(0);
+  Segment* seg = segments.mutable_segment(0);
   InsertCandidate("hist1", "hist1", 1, seg);
   InsertCandidate("hist2", "hist2", 1, seg);
   InsertCandidate("hist3", "hist3", 1, seg);
@@ -1283,11 +1283,11 @@ INSTANTIATE_TEST_SUITE_P(
                       "へいせい23ねん"}));
 
 TEST_P(RewriteAdTest, MockConverter) {
-  const RewriteAdData &data = GetParam();
+  const RewriteAdData& data = GetParam();
   MockDictionary dictionary;
   DateRewriter rewriter(dictionary);
   Segments segments;
-  for (const auto &[key, value] : data.segments) {
+  for (const auto& [key, value] : data.segments) {
     AppendSegment(key, value, &segments);
   }
   const ConversionRequest request;
@@ -1305,7 +1305,7 @@ TEST_P(RewriteAdTest, MockConverter) {
     } else {
       // Rewrite is expected.
       EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-      const Segment &segment = segments.segment(data.segment_index);
+      const Segment& segment = segments.segment(data.segment_index);
       EXPECT_THAT(segment, ContainsCandidate(ValueIs(data.candidate)));
     }
 

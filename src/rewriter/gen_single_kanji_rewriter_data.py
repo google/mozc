@@ -94,10 +94,12 @@ def WriteSingleKanji(single_kanji_dic, output_tokens, output_string_array):
   serialized_string_array_builder.SerializeToFile(strings, output_string_array)
 
 
-def WriteVariantInfo(variant_info,
-                     output_variant_types,
-                     output_variant_tokens,
-                     output_variant_strings):
+def WriteVariantInfo(
+    variant_info,
+    output_variant_types,
+    output_variant_tokens,
+    output_variant_strings,
+):
   """Writes single kanji variants info.
 
   The token output is an array of uint32s, where array[3 * i],
@@ -106,8 +108,9 @@ def WriteVariantInfo(variant_info,
   """
   (variant_types, variant_items) = variant_info
 
-  serialized_string_array_builder.SerializeToFile(variant_types,
-                                                  output_variant_types)
+  serialized_string_array_builder.SerializeToFile(
+      variant_types, output_variant_types
+  )
 
   strings = []
   with open(output_variant_tokens, 'wb') as f:
@@ -118,32 +121,45 @@ def WriteVariantInfo(variant_info,
       strings.append(target)
       strings.append(original)
 
-  serialized_string_array_builder.SerializeToFile(strings,
-                                                  output_variant_strings)
+  serialized_string_array_builder.SerializeToFile(
+      strings, output_variant_strings
+  )
 
 
 def _ParseOptions():
   parser = optparse.OptionParser()
 
-  parser.add_option('--single_kanji_file', dest='single_kanji_file',
-                    help='Single kanji file')
-  parser.add_option('--variant_file', dest='variant_file',
-                    help='Variant rule file')
-  parser.add_option('--output_single_kanji_token',
-                    dest='output_single_kanji_token',
-                    help='Output Single Kanji token data.')
-  parser.add_option('--output_single_kanji_string',
-                    dest='output_single_kanji_string',
-                    help='Output Single Kanji string data.')
-  parser.add_option('--output_variant_types',
-                    dest='output_variant_types',
-                    help='Output variant types.')
-  parser.add_option('--output_variant_tokens',
-                    dest='output_variant_tokens',
-                    help='Output variant tokens.')
-  parser.add_option('--output_variant_strings',
-                    dest='output_variant_strings',
-                    help='Output variant strings.')
+  parser.add_option(
+      '--single_kanji_file', dest='single_kanji_file', help='Single kanji file'
+  )
+  parser.add_option(
+      '--variant_file', dest='variant_file', help='Variant rule file'
+  )
+  parser.add_option(
+      '--output_single_kanji_token',
+      dest='output_single_kanji_token',
+      help='Output Single Kanji token data.',
+  )
+  parser.add_option(
+      '--output_single_kanji_string',
+      dest='output_single_kanji_string',
+      help='Output Single Kanji string data.',
+  )
+  parser.add_option(
+      '--output_variant_types',
+      dest='output_variant_types',
+      help='Output variant types.',
+  )
+  parser.add_option(
+      '--output_variant_tokens',
+      dest='output_variant_tokens',
+      help='Output variant tokens.',
+  )
+  parser.add_option(
+      '--output_variant_strings',
+      dest='output_variant_strings',
+      help='Output variant strings.',
+  )
 
   return parser.parse_args()[0]
 
@@ -151,21 +167,27 @@ def _ParseOptions():
 def main():
   options = _ParseOptions()
 
-  with codecs.open(options.single_kanji_file, 'r',
-                   encoding='utf-8') as single_kanji_stream:
+  with codecs.open(
+      options.single_kanji_file, 'r', encoding='utf-8'
+  ) as single_kanji_stream:
     single_kanji = ReadSingleKanji(single_kanji_stream)
 
-  with codecs.open(options.variant_file, 'r',
-                   encoding='utf-8') as variant_stream:
+  with codecs.open(
+      options.variant_file, 'r', encoding='utf-8'
+  ) as variant_stream:
     variant_info = ReadVariant(variant_stream)
 
-  WriteSingleKanji(single_kanji,
-                   options.output_single_kanji_token,
-                   options.output_single_kanji_string)
-  WriteVariantInfo(variant_info,
-                   options.output_variant_types,
-                   options.output_variant_tokens,
-                   options.output_variant_strings)
+  WriteSingleKanji(
+      single_kanji,
+      options.output_single_kanji_token,
+      options.output_single_kanji_string,
+  )
+  WriteVariantInfo(
+      variant_info,
+      options.output_variant_types,
+      options.output_variant_tokens,
+      options.output_variant_strings,
+  )
 
 
 if __name__ == '__main__':

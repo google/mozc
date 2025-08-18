@@ -80,11 +80,11 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
         collocation_rewriter_(CollocationRewriter::Create(data_manager_)) {}
 
   // Makes a segment from SegmentData.
-  static void MakeSegment(const SegmentData &data, Segment *segment) {
+  static void MakeSegment(const SegmentData& data, Segment* segment) {
     segment->set_key(data.key);
     for (size_t i = 0; i < data.candidates.size(); ++i) {
-      converter::Candidate *cand = segment->add_candidate();
-      const CandidateData &cand_data = data.candidates[i];
+      converter::Candidate* cand = segment->add_candidate();
+      const CandidateData& cand_data = data.candidates[i];
       cand->key = cand_data.key;
       cand->content_key = cand_data.content_key;
       cand->value = cand_data.value;
@@ -96,23 +96,23 @@ class CollocationRewriterTest : public testing::TestWithTempUserProfile {
   }
 
   // Makes a segments from SegmentsData.
-  static void MakeSegments(const SegmentsData &data, Segments *segments) {
+  static void MakeSegments(const SegmentsData& data, Segments* segments) {
     segments->Clear();
-    for (const SegmentData &seg_data : data) {
+    for (const SegmentData& seg_data : data) {
       MakeSegment(seg_data, segments->add_segment());
     }
   }
 
-  bool Rewrite(Segments *segments) const {
+  bool Rewrite(Segments* segments) const {
     const ConversionRequest request;
     return collocation_rewriter_->Rewrite(request, segments);
   }
 
   // Returns the concatenated string of top candidates.
-  static std::string GetTopValue(const Segments &segments) {
+  static std::string GetTopValue(const Segments& segments) {
     std::string result;
-    for (const Segment &segment : segments.conversion_segments()) {
-      const converter::Candidate &candidate = segment.candidate(0);
+    for (const Segment& segment : segments.conversion_segments()) {
+      const converter::Candidate& candidate = segment.candidate(0);
       result.append(candidate.value);
     }
     return result;

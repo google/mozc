@@ -94,14 +94,14 @@ std::unique_ptr<converter::Candidate> CreateCandidate(
   return candidate;
 }
 
-int GetEmojiCost(const Segment &segment) {
+int GetEmojiCost(const Segment& segment) {
   // Use the first candidate's cost (or 0 if not available).
   return segment.candidates_size() == 0 ? 0 : segment.candidate(0).cost;
 }
 
 void GatherAllEmojiData(EmojiDataIterator begin, EmojiDataIterator end,
-                        const SerializedStringArray &string_array,
-                        EmojiEntryList *utf8_emoji_list) {
+                        const SerializedStringArray& string_array,
+                        EmojiEntryList* utf8_emoji_list) {
   for (; begin != end; ++begin) {
     absl::string_view utf8_emoji = string_array[begin.emoji_index()];
     if (utf8_emoji.empty()) {
@@ -118,7 +118,7 @@ std::vector<std::unique_ptr<converter::Candidate>> CreateAllEmojiData(
     absl::string_view key, const int cost, EmojiEntryList utf8_emoji_list) {
   std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(utf8_emoji_list.size());
-  for (const auto &emoji_entry : utf8_emoji_list) {
+  for (const auto& emoji_entry : utf8_emoji_list) {
     candidates.push_back(
         CreateCandidate(key, emoji_entry.first, emoji_entry.second, cost));
   }
@@ -127,7 +127,7 @@ std::vector<std::unique_ptr<converter::Candidate>> CreateAllEmojiData(
 
 std::vector<std::unique_ptr<converter::Candidate>> CreateEmojiData(
     absl::string_view key, const int cost, EmojiRewriter::IteratorRange range,
-    const SerializedStringArray &string_array) {
+    const SerializedStringArray& string_array) {
   std::vector<std::unique_ptr<converter::Candidate>> candidates;
   candidates.reserve(range.second - range.first);
   for (auto iter = range.first; iter != range.second; ++iter) {
@@ -142,14 +142,14 @@ std::vector<std::unique_ptr<converter::Candidate>> CreateEmojiData(
 }
 }  // namespace
 
-EmojiRewriter::EmojiRewriter(const DataManager &data_manager) {
+EmojiRewriter::EmojiRewriter(const DataManager& data_manager) {
   absl::string_view string_array_data;
   data_manager.GetEmojiRewriterData(&token_array_data_, &string_array_data);
   DCHECK(SerializedStringArray::VerifyData(string_array_data));
   string_array_.Set(string_array_data);
 }
 
-int EmojiRewriter::capability(const ConversionRequest &request) const {
+int EmojiRewriter::capability(const ConversionRequest& request) const {
   // The capability of the EmojiRewriter is up to the client's request.
   // Note that the bit representation of RewriterInterface::CapabilityType
   // and Request::RewriterCapability should exactly same, so it is ok
@@ -157,8 +157,8 @@ int EmojiRewriter::capability(const ConversionRequest &request) const {
   return request.request().emoji_rewriter_capability();
 }
 
-bool EmojiRewriter::Rewrite(const ConversionRequest &request,
-                            Segments *segments) const {
+bool EmojiRewriter::Rewrite(const ConversionRequest& request,
+                            Segments* segments) const {
   if (!request.config().use_emoji_conversion()) {
     MOZC_VLOG(2) << "no use_emoji_conversion";
     return false;
@@ -168,7 +168,7 @@ bool EmojiRewriter::Rewrite(const ConversionRequest &request,
   return RewriteCandidates(segments);
 }
 
-bool EmojiRewriter::IsEmojiCandidate(const converter::Candidate &candidate) {
+bool EmojiRewriter::IsEmojiCandidate(const converter::Candidate& candidate) {
   return absl::StrContains(candidate.description, kEmoji);
 }
 
@@ -183,13 +183,13 @@ std::pair<EmojiDataIterator, EmojiDataIterator> EmojiRewriter::LookUpToken(
   return std::equal_range(begin(), end(), iter.index());
 }
 
-bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
+bool EmojiRewriter::RewriteCandidates(Segments* segments) const {
   bool modified = false;
   std::string reading;
 
   auto insert_candidates =
-      [](std::vector<std::unique_ptr<converter::Candidate>> &&cands,
-         Segment *segment) -> bool {
+      [](std::vector<std::unique_ptr<converter::Candidate>>&& cands,
+         Segment* segment) -> bool {
     if (cands.empty()) {
       return false;
     }
@@ -199,7 +199,7 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
     return true;
   };
 
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     reading = japanese_util::FullWidthAsciiToHalfWidthAscii(segment.key());
     if (reading.empty()) {
       continue;

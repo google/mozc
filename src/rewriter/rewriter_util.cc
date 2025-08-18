@@ -51,7 +51,7 @@ namespace mozc {
 // [h, h, h, o, o, R, R, o, ...]
 // [h, h, h, h, o, o, R, R  ...]
 // For the number of history candidates.
-size_t RewriterUtil::CalculateInsertPosition(const Segment &segment,
+size_t RewriterUtil::CalculateInsertPosition(const Segment& segment,
                                              size_t offset) {
   size_t existing_history_candidates_num = 0;
   for (int i = 0; i < segment.candidates_size(); ++i) {

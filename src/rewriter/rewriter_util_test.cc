@@ -42,8 +42,8 @@ namespace mozc {
 namespace {
 
 void AddCandidate(const absl::string_view key, const absl::string_view value,
-                  Segment *segment) {
-  converter::Candidate *candidate = segment->push_back_candidate();
+                  Segment* segment) {
+  converter::Candidate* candidate = segment->push_back_candidate();
   candidate->key = std::string(key);
   candidate->value = std::string(value);
 }

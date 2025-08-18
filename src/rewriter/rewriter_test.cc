@@ -47,7 +47,7 @@
 namespace mozc {
 namespace {
 
-size_t CommandCandidatesSize(const Segment &segment) {
+size_t CommandCandidatesSize(const Segment& segment) {
   size_t result = 0;
   for (int i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).attributes &
@@ -69,7 +69,7 @@ class RewriterTest : public testing::TestWithTempUserProfile {
     rewriter_ = std::make_unique<Rewriter>(*modules_);
   }
 
-  const RewriterInterface *GetRewriter() const { return rewriter_.get(); }
+  const RewriterInterface* GetRewriter() const { return rewriter_.get(); }
 
   std::unique_ptr<const engine::Modules> modules_;
   std::unique_ptr<Rewriter> rewriter_;
@@ -79,10 +79,10 @@ class RewriterTest : public testing::TestWithTempUserProfile {
 TEST_F(RewriterTest, CommandRewriterAvailability) {
   Segments segments;
   const ConversionRequest request;
-  Segment *seg = segments.push_back_segment();
+  Segment* seg = segments.push_back_segment();
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("こまんど");
     candidate->value = "コマンド";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
@@ -95,7 +95,7 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
   }
 
   {
-    converter::Candidate *candidate = seg->add_candidate();
+    converter::Candidate* candidate = seg->add_candidate();
     seg->set_key("さじぇすと");
     candidate->value = "サジェスト";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
@@ -115,8 +115,8 @@ TEST_F(RewriterTest, EmoticonsAboveSymbols) {
 
   const ConversionRequest request;
   Segments segments;
-  Segment *seg = segments.push_back_segment();
-  converter::Candidate *candidate = seg->add_candidate();
+  Segment* seg = segments.push_back_segment();
+  converter::Candidate* candidate = seg->add_candidate();
   seg->set_key(kKey);
   candidate->value = kKey;
   EXPECT_EQ(seg->candidates_size(), 1);

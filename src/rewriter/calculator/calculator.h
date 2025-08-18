@@ -44,7 +44,7 @@ class Calculator {
  public:
   Calculator();
 
-  bool CalculateString(absl::string_view key, std::string *result) const;
+  bool CalculateString(absl::string_view key, std::string* result) const;
 
  private:
   using TokenSequence = std::vector<std::pair<int, double>>;
@@ -56,10 +56,10 @@ class Calculator {
   // It returns false if |expression_body| includes an invalid token or
   // does not include both of a number token and an operator token.
   // Parenthesis is not considered as an operator.
-  bool Tokenize(absl::string_view expression_body, TokenSequence *tokens) const;
+  bool Tokenize(absl::string_view expression_body, TokenSequence* tokens) const;
 
   // Perform calculation with a given sequence of token.
-  bool CalculateTokens(const TokenSequence &tokens, double *result_value) const;
+  bool CalculateTokens(const TokenSequence& tokens, double* result_value) const;
 
   // Mapping from operator character such as '+' to the corresponding
   // token type such as PLUS.

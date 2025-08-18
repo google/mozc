@@ -50,23 +50,23 @@ constexpr absl::string_view kDummyDataVersion = "dataversion";
 class VersionRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   static void AddSegment(std::string key, std::string value,
-                         Segments *segments) {
-    Segment *segment = segments->push_back_segment();
+                         Segments* segments) {
+    Segment* segment = segments->push_back_segment();
     segment->set_key(key);
     AddCandidate(std::move(key), std::move(value), segment);
   }
 
   static void AddCandidate(std::string key, std::string value,
-                           Segment *segment) {
-    converter::Candidate *candidate = segment->add_candidate();
+                           Segment* segment) {
+    converter::Candidate* candidate = segment->add_candidate();
     candidate->value = value;
     candidate->content_value = std::move(value);
     candidate->content_key = std::move(key);
   }
 
   static bool FindCandidateWithPrefix(const absl::string_view prefix,
-                                      const Segments &segments) {
-    for (const Segment &segment : segments) {
+                                      const Segments& segments) {
+    for (const Segment& segment : segments) {
       for (size_t j = 0; j < segment.candidates_size(); ++j) {
         if (segment.candidate(j).value.starts_with(prefix)) {
           return true;

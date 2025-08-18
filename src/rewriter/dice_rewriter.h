@@ -42,8 +42,8 @@ class DiceRewriter : public RewriterInterface {
   DiceRewriter();
   ~DiceRewriter() override;
 
-  bool Rewrite(const ConversionRequest &request,
-               converter::Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               converter::Segments* segments) const override;
 };
 
 }  // namespace mozc

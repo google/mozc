@@ -81,11 +81,11 @@ bool FindString(const absl::string_view query,
   return absl::c_find(values, query) != values.end();
 }
 
-converter::Candidate *InsertCommandCandidate(Segment *segment,
+converter::Candidate* InsertCommandCandidate(Segment* segment,
                                              size_t reference_pos,
                                              size_t insert_pos) {
   DCHECK(segment);
-  converter::Candidate *candidate = segment->insert_candidate(
+  converter::Candidate* candidate = segment->insert_candidate(
       std::min(segment->candidates_size(), insert_pos));
   DCHECK(candidate);
   *candidate = segment->candidate(reference_pos);
@@ -98,16 +98,16 @@ converter::Candidate *InsertCommandCandidate(Segment *segment,
   return candidate;
 }
 
-bool IsSuggestionEnabled(const config::Config &config) {
+bool IsSuggestionEnabled(const config::Config& config) {
   return config.use_history_suggest() || config.use_dictionary_suggest() ||
          config.use_realtime_conversion();
 }
 }  // namespace
 
 void CommandRewriter::InsertIncognitoModeToggleCommand(
-    const config::Config &config, Segment *segment, size_t reference_pos,
+    const config::Config& config, Segment* segment, size_t reference_pos,
     size_t insert_pos) const {
-  converter::Candidate *candidate =
+  converter::Candidate* candidate =
       InsertCommandCandidate(segment, reference_pos, insert_pos);
   DCHECK(candidate);
   if (config.incognito_mode()) {
@@ -121,13 +121,13 @@ void CommandRewriter::InsertIncognitoModeToggleCommand(
 }
 
 void CommandRewriter::InsertDisableAllSuggestionToggleCommand(
-    const config::Config &config, Segment *segment, size_t reference_pos,
+    const config::Config& config, Segment* segment, size_t reference_pos,
     size_t insert_pos) const {
   if (!IsSuggestionEnabled(config)) {
     return;
   }
 
-  converter::Candidate *candidate =
+  converter::Candidate* candidate =
       InsertCommandCandidate(segment, reference_pos, insert_pos);
 
   DCHECK(candidate);
@@ -141,8 +141,8 @@ void CommandRewriter::InsertDisableAllSuggestionToggleCommand(
   candidate->content_value = candidate->value;
 }
 
-bool CommandRewriter::RewriteSegment(const config::Config &config,
-                                     Segment *segment) const {
+bool CommandRewriter::RewriteSegment(const config::Config& config,
+                                     Segment* segment) const {
   DCHECK(segment);
 
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
@@ -166,13 +166,13 @@ bool CommandRewriter::RewriteSegment(const config::Config &config,
   return false;
 }
 
-bool CommandRewriter::Rewrite(const ConversionRequest &request,
-                              Segments *segments) const {
+bool CommandRewriter::Rewrite(const ConversionRequest& request,
+                              Segments* segments) const {
   if (segments == nullptr || segments->conversion_segments_size() != 1) {
     return false;
   }
 
-  Segment *segment = segments->mutable_conversion_segment(0);
+  Segment* segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
   absl::string_view key = segment->key();
 

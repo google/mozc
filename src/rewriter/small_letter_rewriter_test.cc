@@ -51,9 +51,9 @@ namespace mozc {
 namespace {
 
 void AddSegment(absl::string_view key, absl::string_view value,
-                Segments *segments) {
-  Segment *seg = segments->add_segment();
-  converter::Candidate *candidate = seg->add_candidate();
+                Segments* segments) {
+  Segment* seg = segments->add_segment();
+  converter::Candidate* candidate = seg->add_candidate();
   seg->set_key(key);
   strings::Assign(candidate->content_key, key);
   strings::Assign(candidate->value, value);
@@ -61,14 +61,14 @@ void AddSegment(absl::string_view key, absl::string_view value,
 }
 
 void InitSegments(absl::string_view key, absl::string_view value,
-                  Segments *segments) {
+                  Segments* segments) {
   segments->Clear();
   AddSegment(key, value, segments);
 }
 
-bool ContainCandidate(const Segments &segments,
+bool ContainCandidate(const Segments& segments,
                       const absl::string_view candidate) {
-  const Segment &segment = segments.segment(0);
+  const Segment& segment = segments.segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (candidate == segment.candidate(i).value) {
       return true;
@@ -82,8 +82,8 @@ class SmallLetterRewriterTest : public testing::TestWithTempUserProfile {
   void SetUp() override { engine_ = MockDataEngineFactory::Create().value(); }
 
   std::unique_ptr<Engine> engine_;
-  const commands::Request &default_request() const { return default_request_; }
-  const config::Config &default_config() const { return default_config_; }
+  const commands::Request& default_request() const { return default_request_; }
+  const config::Config& default_config() const { return default_config_; }
 
  private:
   const commands::Request default_request_;
@@ -157,7 +157,7 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
   };
 
   // Test behavior for each test cases in kInputOutputData.
-  for (const InputOutputData &item : kInputOutputData) {
+  for (const InputOutputData& item : kInputOutputData) {
     InitSegments(item.input, item.input, &segments);
     const ConversionRequest request =
         ConversionRequestBuilder().SetKey(item.input).Build();
@@ -169,7 +169,7 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
   }
 
   // Mozc does not accept some superscript/subscript supported in Unicode
-  for (const absl::string_view &item : kMozcUnsupportedInput) {
+  for (const absl::string_view& item : kMozcUnsupportedInput) {
     InitSegments(item, item, &segments);
     const ConversionRequest request =
         ConversionRequestBuilder().SetKey(item).Build();

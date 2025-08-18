@@ -83,15 +83,15 @@ using ::testing::WithParamInterface;
 
 constexpr size_t kCandidatesSize = 20;
 
-void InitSegments(Segments *segments, size_t size, size_t candidate_size) {
+void InitSegments(Segments* segments, size_t size, size_t candidate_size) {
   segments->Clear();
   for (size_t i = 0; i < size; ++i) {
-    Segment *segment = segments->add_segment();
+    Segment* segment = segments->add_segment();
     CHECK(segment);
     segment->set_key(std::string("segment") +
                      std::to_string(static_cast<uint32_t>(i)));
     for (size_t j = 0; j < candidate_size; ++j) {
-      converter::Candidate *c = segment->add_candidate();
+      converter::Candidate* c = segment->add_candidate();
       c->content_key = segment->key();
       c->content_value =
           std::string("candidate") + std::to_string(static_cast<uint32_t>(j));
@@ -105,11 +105,11 @@ void InitSegments(Segments *segments, size_t size, size_t candidate_size) {
   CHECK_EQ(segments->segments_size(), size);
 }
 
-void InitSegments(Segments *segments, size_t size) {
+void InitSegments(Segments* segments, size_t size) {
   InitSegments(segments, size, kCandidatesSize);
 }
 
-void AppendCandidateSuffix(Segment *segment, size_t index,
+void AppendCandidateSuffix(Segment* segment, size_t index,
                            const absl::string_view suffix, uint16_t lid,
                            uint16_t rid) {
   segment->set_key(absl::StrCat(segment->key(), suffix));
@@ -118,7 +118,7 @@ void AppendCandidateSuffix(Segment *segment, size_t index,
   segment->mutable_candidate(index)->rid = rid;
 }
 
-void AppendCandidateSuffixWithLid(Segment *segment, size_t index,
+void AppendCandidateSuffixWithLid(Segment* segment, size_t index,
                                   const absl::string_view suffix,
                                   uint16_t lid) {
   // if lid == 0 and rid == 0, we assume that candidate is t13n.
@@ -137,7 +137,7 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
     config_ = std::make_unique<config::Config>();
     ConfigHandler::GetDefaultConfig(config_.get());
     for (int i = 0; i < config_->character_form_rules_size(); ++i) {
-      Config::CharacterFormRule *rule =
+      Config::CharacterFormRule* rule =
           config_->mutable_character_form_rules(i);
       if (rule->group() == "0" || rule->group() == "A" ||
           rule->group() == "(){}[]") {
@@ -157,20 +157,20 @@ class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
     rewriter->Clear();
   }
 
-  const PosMatcher &pos_matcher() const { return pos_matcher_; }
-  const PosGroup &pos_group() const { return pos_group_; }
+  const PosMatcher& pos_matcher() const { return pos_matcher_; }
+  const PosGroup& pos_group() const { return pos_group_; }
 
-  NumberRewriter *CreateNumberRewriter() const {
+  NumberRewriter* CreateNumberRewriter() const {
     return new NumberRewriter(mock_data_manager_);
   }
 
-  UserSegmentHistoryRewriter *CreateUserSegmentHistoryRewriter() const {
+  UserSegmentHistoryRewriter* CreateUserSegmentHistoryRewriter() const {
     return new UserSegmentHistoryRewriter(pos_matcher_, pos_group_);
   }
 
   void SetNumberForm(Config::CharacterForm form) {
     for (size_t i = 0; i < config_->character_form_rules_size(); ++i) {
-      Config::CharacterFormRule *rule =
+      Config::CharacterFormRule* rule =
           config_->mutable_character_form_rules(i);
       if (rule->group() == "0") {
         rule->set_conversion_character_form(form);
@@ -1055,7 +1055,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
       AppendCandidateSuffix(segments.mutable_segment(0), 0, "", 1, 1);
       // Prepare candidate2 as T13N candidate (lid, rid != 0)
       {
-        converter::Candidate *c =
+        converter::Candidate* c =
             segments.mutable_segment(0)->mutable_candidate(2);
         c->value = "ひらがな";
         c->content_value = "ひらがな";
@@ -1147,7 +1147,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
   {
     const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(2);
     candidate->value = "(";
     candidate->content_value = "(";
@@ -1162,7 +1162,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
   {
     const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(2);
     candidate->value = ")";
     candidate->content_value = ")";
@@ -1186,7 +1186,7 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
     const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->set_key("key1");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(2);
     candidate->value = "value1";
     candidate->content_value = "value1";
@@ -1202,7 +1202,7 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
     const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->set_key("key2");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(2);
     candidate->value = "value2";
     candidate->content_value = "value2";
@@ -1218,7 +1218,7 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
     const ConversionRequest convreq = CreateConversionRequest();
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->set_key("key1");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(2);
     candidate->value = "value2";
     candidate->content_value = "value2";
@@ -1247,7 +1247,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("12");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "⑫";
     candidate->content_value = "⑫";
@@ -1267,7 +1267,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
     segments.add_segment();
     segments.mutable_segment(0)->set_key("14");
     {
-      converter::Candidate *candidate =
+      converter::Candidate* candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "14";
       candidate->content_value = "14";
@@ -1296,7 +1296,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("1234");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "１，２３４";
     candidate->content_value = "１，２３４";
@@ -1315,7 +1315,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
     segments.add_segment();
     segments.mutable_segment(0)->set_key("1234");
     {
-      converter::Candidate *candidate =
+      converter::Candidate* candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "1234";
       candidate->content_value = "1234";
@@ -1345,7 +1345,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("1234");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "1,234";
     candidate->content_value = "1,2344";
@@ -1364,7 +1364,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
     segments.add_segment();
     {
       segments.mutable_segment(0)->set_key("1234");
-      converter::Candidate *candidate =
+      converter::Candidate* candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "1234";
       candidate->content_value = "1234";
@@ -1416,7 +1416,7 @@ TEST_P(UserSegmentHistoryNumberTest, UserSegmentHistoryRewriterTest) {
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("1234");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "1,234";
     candidate->content_value = "1,2344";
@@ -1435,7 +1435,7 @@ TEST_P(UserSegmentHistoryNumberTest, UserSegmentHistoryRewriterTest) {
     segments.add_segment();
     {
       segments.mutable_segment(0)->set_key("1234");
-      converter::Candidate *candidate =
+      converter::Candidate* candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "1234";
       candidate->content_value = "1234";
@@ -1464,7 +1464,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("10");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "十";
     candidate->content_value = "十";
@@ -1480,7 +1480,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     segments.Clear();
     segments.add_segment();
     segments.mutable_segment(0)->set_key("1234");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "1,234";
     candidate->content_value = "1,234";
@@ -1498,7 +1498,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->set_key("9");
     {
-      converter::Candidate *candidate =
+      converter::Candidate* candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "9";
       candidate->content_value = "9";
@@ -1686,7 +1686,7 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     segments.Clear();
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("abc");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->mutable_candidate(1);
     candidate->value = "ａｂｃ";
     candidate->content_value = "ａｂｃ";
@@ -1704,7 +1704,7 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     segments.Clear();
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("abc");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->mutable_candidate(1);
     candidate->value = "ａｂｃ";
     candidate->content_value = "ａｂｃ";
@@ -1732,7 +1732,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
     constexpr absl::string_view kKey = "わたしのなまえはなかのです";
     constexpr absl::string_view kValue = "私の名前は中野です";
     segments.mutable_segment(0)->set_key(kKey);
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->mutable_candidate(1);
 
     candidate->value = kValue;
@@ -1804,7 +1804,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
     constexpr absl::string_view kKey = "わたしの";
     constexpr absl::string_view kValue = "私の";
     segments.mutable_segment(0)->set_key(kKey);
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->mutable_candidate(1);
 
     candidate->value = kValue;
@@ -1847,7 +1847,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
     segments.Clear();
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("なかの");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->mutable_candidate(0);
     candidate->value = "中埜";
     candidate->content_value = "中埜";
@@ -1874,7 +1874,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Revert) {
   {
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("abc");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->mutable_candidate(1);
     candidate->value = "ａｂｃ";
     candidate->content_value = "ａｂｃ";
@@ -1894,7 +1894,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Revert) {
     segments.Clear();
     InitSegments(&segments, 1, 2);
     segments.mutable_segment(0)->set_key("abc");
-    converter::Candidate *candidate =
+    converter::Candidate* candidate =
         segments.mutable_segment(0)->mutable_candidate(1);
     candidate->value = "ａｂｃ";
     candidate->content_value = "ａｂｃ";

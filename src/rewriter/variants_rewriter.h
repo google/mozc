@@ -71,21 +71,21 @@ class VariantsRewriter : public RewriterInterface {
   explicit VariantsRewriter(dictionary::PosMatcher pos_matcher)
       : pos_matcher_(pos_matcher) {}
 
-  int capability(const ConversionRequest &request) const override;
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
-  void Finish(const ConversionRequest &request,
-              const Segments &segments) override;
+  int capability(const ConversionRequest& request) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
+  void Finish(const ConversionRequest& request,
+              const Segments& segments) override;
   void Clear() override;
 
   // Used by UserSegmentHistoryRewriter.
   // TODO(noriyukit): I'd be better to prepare some utility for rewriters.
   static void SetDescriptionForCandidate(dictionary::PosMatcher pos_matcher,
-                                         converter::Candidate *candidate);
+                                         converter::Candidate* candidate);
   static void SetDescriptionForTransliteration(
-      dictionary::PosMatcher pos_matcher, converter::Candidate *candidate);
+      dictionary::PosMatcher pos_matcher, converter::Candidate* candidate);
   static void SetDescriptionForPrediction(dictionary::PosMatcher pos_matcher,
-                                          converter::Candidate *candidate);
+                                          converter::Candidate* candidate);
 
   // Returns form types for given two pair of strings.
   // This function tries to find the difference between
@@ -136,13 +136,13 @@ class VariantsRewriter : public RewriterInterface {
 
   static std::string GetDescription(dictionary::PosMatcher pos_matcher,
                                     int description_type,
-                                    const converter::Candidate &candidate);
+                                    const converter::Candidate& candidate);
   static absl::string_view GetPrefix(int description_type,
-                                     const converter::Candidate &candidate);
+                                     const converter::Candidate& candidate);
   static void SetDescription(dictionary::PosMatcher pos_matcher,
                              int description_type,
-                             converter::Candidate *candidate);
-  bool RewriteSegment(RewriteType type, Segment *seg) const;
+                             converter::Candidate* candidate);
+  bool RewriteSegment(RewriteType type, Segment* seg) const;
 
   // Generates values for primary and secondary candidates.
   //
@@ -161,11 +161,11 @@ class VariantsRewriter : public RewriterInterface {
   //
   // Returns true if at least one of the values is modified.
   bool GenerateAlternatives(
-      const converter::Candidate &original, std::string *primary_value,
-      std::string *secondary_value, std::string *primary_content_value,
-      std::string *secondary_content_value,
-      converter::InnerSegmentBoundary *primary_inner_segment_boundary,
-      converter::InnerSegmentBoundary *secondary_inner_segment_boundary) const;
+      const converter::Candidate& original, std::string* primary_value,
+      std::string* secondary_value, std::string* primary_content_value,
+      std::string* secondary_content_value,
+      converter::InnerSegmentBoundary* primary_inner_segment_boundary,
+      converter::InnerSegmentBoundary* secondary_inner_segment_boundary) const;
 
   // Returns an alternative candidate and information for the base candidate.
   struct AlternativeCandidateResult {
@@ -174,7 +174,7 @@ class VariantsRewriter : public RewriterInterface {
     std::unique_ptr<converter::Candidate> alternative_candidate = nullptr;
   };
   AlternativeCandidateResult CreateAlternativeCandidate(
-      const converter::Candidate &original_candidate) const;
+      const converter::Candidate& original_candidate) const;
 
   const dictionary::PosMatcher pos_matcher_;
 };

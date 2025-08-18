@@ -158,7 +158,7 @@ std::string A11yDescriptionRewriter::GetKanaCharacterLabel(
 }
 
 A11yDescriptionRewriter::A11yDescriptionRewriter(
-    const DataManager &data_manager)
+    const DataManager& data_manager)
     : small_letter_set_(
           {// Small hiragana
            U'ぁ', U'ぃ', U'ぅ', U'ぇ', U'ぉ', U'ゃ', U'ゅ', U'ょ', U'っ', U'ゎ',
@@ -187,7 +187,7 @@ A11yDescriptionRewriter::A11yDescriptionRewriter(
 }
 
 void A11yDescriptionRewriter::AddA11yDescription(
-    converter::Candidate *candidate) const {
+    converter::Candidate* candidate) const {
   absl::string_view value = candidate->value;
   std::string buf(value);
   CharacterType previous_type = INITIAL_STATE;
@@ -223,19 +223,19 @@ void A11yDescriptionRewriter::AddA11yDescription(
 }
 
 int A11yDescriptionRewriter::capability(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   if (description_map_ && request.request().enable_a11y_description()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::NOT_AVAILABLE;
 }
 
-bool A11yDescriptionRewriter::Rewrite(const ConversionRequest &request,
-                                      Segments *segments) const {
+bool A11yDescriptionRewriter::Rewrite(const ConversionRequest& request,
+                                      Segments* segments) const {
   bool modified = false;
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     for (size_t j = 0; j < segment.candidates_size(); ++j) {
-      converter::Candidate *candidate = segment.mutable_candidate(j);
+      converter::Candidate* candidate = segment.mutable_candidate(j);
       AddA11yDescription(candidate);
       modified = true;
     }

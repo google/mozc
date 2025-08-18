@@ -47,12 +47,12 @@
 
 namespace mozc {
 
-bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
-                                                   std::string &zipcode,
-                                                   std::string &address,
-                                                   size_t &insert_pos) const {
+bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment& seg,
+                                                   std::string& zipcode,
+                                                   std::string& address,
+                                                   size_t& insert_pos) const {
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
-    const converter::Candidate &c = seg.candidate(i);
+    const converter::Candidate& c = seg.candidate(i);
     if (!pos_matcher_.IsZipcode(c.lid) || !pos_matcher_.IsZipcode(c.rid)) {
       continue;
     }
@@ -67,8 +67,8 @@ bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
 // Insert zipcode into the |segment|
 bool ZipcodeRewriter::InsertCandidate(const size_t insert_pos,
                                       std::string zipcode, std::string address,
-                                      const ConversionRequest &request,
-                                      Segment *segment) const {
+                                      const ConversionRequest& request,
+                                      Segment* segment) const {
   DCHECK(segment);
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
@@ -102,13 +102,13 @@ bool ZipcodeRewriter::InsertCandidate(const size_t insert_pos,
   std::string value = absl::StrCat(zipcode, space, address);
 
   const size_t offset = std::min(insert_pos, segment->candidates_size());
-  converter::Candidate *candidate = segment->insert_candidate(offset);
+  converter::Candidate* candidate = segment->insert_candidate(offset);
   if (candidate == nullptr) {
     LOG(ERROR) << "cannot insert candidate at " << offset;
     return false;
   }
   DCHECK_GE(offset, 1);
-  const converter::Candidate &base_candidate = segment->candidate(offset - 1);
+  const converter::Candidate& base_candidate = segment->candidate(offset - 1);
   candidate->lid = pos_matcher_.GetZipcodeId();
   candidate->rid = pos_matcher_.GetZipcodeId();
   candidate->cost = base_candidate.cost;
@@ -123,13 +123,13 @@ bool ZipcodeRewriter::InsertCandidate(const size_t insert_pos,
   return true;
 }
 
-bool ZipcodeRewriter::Rewrite(const ConversionRequest &request,
-                              Segments *segments) const {
+bool ZipcodeRewriter::Rewrite(const ConversionRequest& request,
+                              Segments* segments) const {
   if (segments->conversion_segments_size() != 1) {
     return false;
   }
 
-  const Segment &segment = segments->conversion_segment(0);
+  const Segment& segment = segments->conversion_segment(0);
   const absl::string_view key = segment.key();
   if (key.empty()) {
     LOG(ERROR) << "Key is empty";

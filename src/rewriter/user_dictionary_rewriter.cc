@@ -43,12 +43,12 @@ namespace mozc {
 // Since user expects that user-dictionary candidates may appear
 // on the top, we simply move user-dictionary-candidate just
 // "after" the top candidate.
-bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
-                                     Segments *segments) const {
+bool UserDictionaryRewriter::Rewrite(const ConversionRequest& request,
+                                     Segments* segments) const {
   DCHECK(segments);
 
   bool modified = false;
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     // final destination of the user dictionary candidate.
     int move_to_start = 1;
 

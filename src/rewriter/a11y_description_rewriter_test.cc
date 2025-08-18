@@ -43,8 +43,8 @@
 namespace mozc {
 namespace {
 
-void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
-  converter::Candidate *candidate = segment->add_candidate();
+void AddCandidateWithValue(const absl::string_view value, Segment* segment) {
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->key = segment->key();
   candidate->content_key = segment->key();
   candidate->value = std::string(value);
@@ -55,8 +55,8 @@ void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
 class NoDataMockDataManager : public testing::MockDataManager {
  public:
   void GetA11yDescriptionRewriterData(
-      absl::string_view *token_array_data,
-      absl::string_view *string_array_data) const override {
+      absl::string_view* token_array_data,
+      absl::string_view* string_array_data) const override {
     *token_array_data = "";
     *string_array_data = "";
   }
@@ -68,8 +68,8 @@ class A11yDescriptionRewriterTest : public ::testing::Test {
       : rewriter_(mock_data_manager_),
         rewriter_without_data_(no_data_mock_data_manager_) {}
 
-  const RewriterInterface *GetRewriter() { return &rewriter_; }
-  const RewriterInterface *GetRewriterWithoutData() {
+  const RewriterInterface* GetRewriter() { return &rewriter_; }
+  const RewriterInterface* GetRewriterWithoutData() {
     return &rewriter_without_data_;
   }
 
@@ -109,7 +109,7 @@ TEST_F(A11yDescriptionRewriterTest, AddA11yDescriptionForSingleCharacter) {
   const ConversionRequest request;
 
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   AddCandidateWithValue("あ", segment);
   AddCandidateWithValue("イ", segment);
   AddCandidateWithValue("ｱ", segment);
@@ -141,7 +141,7 @@ TEST_F(A11yDescriptionRewriterTest, AddA11yDescriptionForMultiCharacters) {
   const ConversionRequest request;
 
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   AddCandidateWithValue("あ亜", segment);
   AddCandidateWithValue("ぁたし", segment);
   AddCandidateWithValue("ぁぃ", segment);
@@ -164,7 +164,7 @@ TEST_F(A11yDescriptionRewriterTest, AddA11yDescriptionForHiraganaCharacters) {
   const ConversionRequest request;
 
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   AddCandidateWithValue("あい", segment);
 
   EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
@@ -175,7 +175,7 @@ TEST_F(A11yDescriptionRewriterTest, AddA11yDescriptionForUnsupportedCharacter) {
   const ConversionRequest request;
 
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   AddCandidateWithValue("☺", segment);
 
   EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
@@ -186,7 +186,7 @@ TEST_F(A11yDescriptionRewriterTest, AddA11yDescriptionForLongSound) {
   const ConversionRequest request;
 
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   AddCandidateWithValue("あー", segment);
   AddCandidateWithValue("亜ー", segment);
   AddCandidateWithValue("ーー", segment);
@@ -214,7 +214,7 @@ TEST_F(A11yDescriptionRewriterTest, AddA11yDescriptionForAlphabetCharacters) {
   const ConversionRequest request;
 
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   AddCandidateWithValue("abc", segment);
   AddCandidateWithValue("Google", segment);
   AddCandidateWithValue("ｘｙｚ", segment);
@@ -233,9 +233,9 @@ TEST_F(A11yDescriptionRewriterTest, AddA11yDescriptionForAlphabetCharacters) {
 TEST_F(A11yDescriptionRewriterTest, CandidateValue) {
   // Confirm the `value` is used rather than `content_value`.
   Segments segments;
-  Segment *segment = segments.push_back_segment();
+  Segment* segment = segments.push_back_segment();
   segment->set_key("あを");
-  converter::Candidate *candidate = segment->add_candidate();
+  converter::Candidate* candidate = segment->add_candidate();
   candidate->key = "あを";
   candidate->content_key = "あ";
   candidate->value = "亜を";

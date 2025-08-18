@@ -53,8 +53,8 @@ namespace mozc {
 
 using ::mozc::dictionary::DictionaryInterface;
 
-UsageRewriter::UsageRewriter(const DataManager &data_manager,
-                             const DictionaryInterface &dictionary)
+UsageRewriter::UsageRewriter(const DataManager& data_manager,
+                             const DictionaryInterface& dictionary)
     : pos_matcher_(data_manager.GetPosMatcherData()),
       dictionary_(&dictionary),
       base_conjugation_suffix_(nullptr) {
@@ -67,11 +67,11 @@ UsageRewriter::UsageRewriter(const DataManager &data_manager,
       &base_conjugation_suffix_data, &conjugation_suffix_data,
       &conjugation_suffix_index_data, &usage_items_data, &string_array_data);
   base_conjugation_suffix_ =
-      reinterpret_cast<const uint32_t *>(base_conjugation_suffix_data.data());
-  const uint32_t *conjugation_suffix =
-      reinterpret_cast<const uint32_t *>(conjugation_suffix_data.data());
-  const uint32_t *conjugation_suffix_data_index =
-      reinterpret_cast<const uint32_t *>(conjugation_suffix_index_data.data());
+      reinterpret_cast<const uint32_t*>(base_conjugation_suffix_data.data());
+  const uint32_t* conjugation_suffix =
+      reinterpret_cast<const uint32_t*>(conjugation_suffix_data.data());
+  const uint32_t* conjugation_suffix_data_index =
+      reinterpret_cast<const uint32_t*>(conjugation_suffix_index_data.data());
 
   if (SerializedStringArray::VerifyData(string_array_data)) {
     string_array_.Set(string_array_data);
@@ -142,7 +142,7 @@ std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
 
 UsageRewriter::UsageDictItemIterator
 UsageRewriter::LookupUnmatchedUsageHeuristically(
-    const converter::Candidate &candidate) const {
+    const converter::Candidate& candidate) const {
   // We check Unknown POS ("名詞,サ変接続") as well, since
   // target verbs/adjectives may be in web dictionary.
   if (!pos_matcher_.IsContentWordWithConjugation(candidate.lid) &&
@@ -172,7 +172,7 @@ UsageRewriter::LookupUnmatchedUsageHeuristically(
 }
 
 UsageRewriter::UsageDictItemIterator UsageRewriter::LookupUsage(
-    const converter::Candidate &candidate) const {
+    const converter::Candidate& candidate) const {
   const absl::string_view key = candidate.content_key;
   const absl::string_view value = candidate.content_value;
   StrPair key_value(key, value);
@@ -184,11 +184,11 @@ UsageRewriter::UsageDictItemIterator UsageRewriter::LookupUsage(
   return LookupUnmatchedUsageHeuristically(candidate);
 }
 
-bool UsageRewriter::Rewrite(const ConversionRequest &request,
-                            Segments *segments) const {
+bool UsageRewriter::Rewrite(const ConversionRequest& request,
+                            Segments* segments) const {
   MOZC_VLOG(2) << segments->DebugString();
 
-  const config::Config &config = request.config();
+  const config::Config& config = request.config();
   // Default value of use_local_usage_dictionary() is true.
   // So if information_list_config() is not available in the config,
   // we don't need to return false here.
@@ -208,7 +208,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
   int32_t usage_id_for_user_comment = key_value_usageitem_map_.size();
   std::string comment;  // LookupComment rarely returns true.
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
+    Segment* segment = segments->mutable_conversion_segment(i);
     DCHECK(segment);
     for (size_t j = 0; j < segment->candidates_size(); ++j) {
       ++usage_id_for_user_comment;
@@ -218,7 +218,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
         if (dictionary_->LookupComment(segment->candidate(j).content_key,
                                        segment->candidate(j).content_value,
                                        request, &comment)) {
-          converter::Candidate *candidate = segment->mutable_candidate(j);
+          converter::Candidate* candidate = segment->mutable_candidate(j);
           candidate->usage_id = usage_id_for_user_comment;
           candidate->usage_title = segment->candidate(j).content_value;
           candidate->usage_description = std::move(comment);
@@ -232,7 +232,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
       // dictionary.
       const UsageDictItemIterator iter = LookupUsage(segment->candidate(j));
       if (iter.IsValid()) {
-        converter::Candidate *candidate = segment->mutable_candidate(j);
+        converter::Candidate* candidate = segment->mutable_candidate(j);
         DCHECK(candidate);
         candidate->usage_id = iter.usage_id();
 

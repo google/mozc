@@ -36,8 +36,8 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
-#include "data_manager/serialized_dictionary.h"
 #include "converter/segments.h"
+#include "data_manager/serialized_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -48,18 +48,18 @@ class DataManager;
 
 class SymbolRewriter : public RewriterInterface {
  public:
-  explicit SymbolRewriter(const DataManager &data_manager);
+  explicit SymbolRewriter(const DataManager& data_manager);
   ~SymbolRewriter() override = default;
 
-  int capability(const ConversionRequest &request) const override;
+  int capability(const ConversionRequest& request) const override;
 
   std::optional<RewriterInterface::ResizeSegmentsRequest>
   CheckResizeSegmentsRequest(
-      const ConversionRequest &request,
-      const converter::Segments &segments) const override;
+      const ConversionRequest& request,
+      const converter::Segments& segments) const override;
 
-  bool Rewrite(const ConversionRequest &request,
-               converter::Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               converter::Segments* segments) const override;
 
  private:
   friend class SymbolRewriterTestPeer;
@@ -74,7 +74,7 @@ class SymbolRewriter : public RewriterInterface {
   static bool IsSymbol(absl::string_view key);
 
   // Insert alternative form of space.
-  static void ExpandSpace(Segment *segment);
+  static void ExpandSpace(Segment* segment);
 
   // Return true if two symbols are in same group.
   static bool InSameSymbolGroup(SerializedDictionary::const_iterator lhs,
@@ -82,23 +82,23 @@ class SymbolRewriter : public RewriterInterface {
 
   // Insert Symbol into segment.
   static void InsertCandidates(size_t default_offset,
-                               const SerializedDictionary::IterRange &range,
-                               bool context_sensitive, Segment *segment);
+                               const SerializedDictionary::IterRange& range,
+                               bool context_sensitive, Segment* segment);
 
   // Add symbol desc to existing candidates
   static void AddDescForCurrentCandidates(
-      const SerializedDictionary::IterRange &range, Segment *segment);
+      const SerializedDictionary::IterRange& range, Segment* segment);
 
-  static size_t GetOffset(const ConversionRequest &request,
+  static size_t GetOffset(const ConversionRequest& request,
                           absl::string_view key);
 
   // Insert symbols using connected all segments.
-  bool RewriteEntireCandidate(const ConversionRequest &request,
-                              converter::Segments *segments) const;
+  bool RewriteEntireCandidate(const ConversionRequest& request,
+                              converter::Segments* segments) const;
 
   // Insert symbols using single segment.
-  bool RewriteEachCandidate(const ConversionRequest &request,
-                            converter::Segments *segments) const;
+  bool RewriteEachCandidate(const ConversionRequest& request,
+                            converter::Segments* segments) const;
 
   std::unique_ptr<SerializedDictionary> dictionary_;
 };

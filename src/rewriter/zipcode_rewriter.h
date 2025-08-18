@@ -45,16 +45,16 @@ class ZipcodeRewriter : public RewriterInterface {
   explicit ZipcodeRewriter(const dictionary::PosMatcher pos_matcher)
       : pos_matcher_(pos_matcher) {}
 
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
+  bool Rewrite(const ConversionRequest& request,
+               Segments* segments) const override;
 
  private:
-  bool GetZipcodeCandidatePositions(const Segment &seg, std::string &zipcode,
-                                    std::string &address,
-                                    size_t &insert_pos) const;
+  bool GetZipcodeCandidatePositions(const Segment& seg, std::string& zipcode,
+                                    std::string& address,
+                                    size_t& insert_pos) const;
   bool InsertCandidate(size_t insert_pos, std::string zipcode,
-                       std::string address, const ConversionRequest &request,
-                       Segment *segment) const;
+                       std::string address, const ConversionRequest& request,
+                       Segment* segment) const;
 
   const dictionary::PosMatcher pos_matcher_;
 };

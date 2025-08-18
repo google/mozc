@@ -140,7 +140,7 @@ bool FindCodepointsInClosedRange(const std::u32string_view codepoints,
 }
 
 std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
-    const ::mozc::protobuf::RepeatedField<int> &additional_groups) {
+    const ::mozc::protobuf::RepeatedField<int>& additional_groups) {
   // WARNING: Though it is named k'All'Cases, 'Empty' is intentionally omitted
   // here. All other cases should be added.
   constexpr std::array<AdditionalRenderableCharacterGroup, 12> kAllCases = {
@@ -170,12 +170,12 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
 }
 
 // If the candidate should not by modified by this rewriter, returns true.
-bool ShouldKeepCandidate(const converter::Candidate &candidate) {
+bool ShouldKeepCandidate(const converter::Candidate& candidate) {
   return candidate.attributes & (converter::Attribute::NO_MODIFICATION |
                                  converter::Attribute::USER_DICTIONARY);
 }
 
-bool NormalizeCandidate(converter::Candidate *candidate,
+bool NormalizeCandidate(converter::Candidate* candidate,
                         TextNormalizer::Flag flag) {
   DCHECK(candidate);
   // ShouldKeepCandidate should be called before.
@@ -208,8 +208,8 @@ EmojiDataIterator end(const absl::string_view token_array_data) {
 absl::flat_hash_map<EmojiVersion, std::vector<std::u32string>>
 ExtractTargetEmojis(
     absl::Span<const EmojiVersion> target_versions,
-    const std::pair<EmojiDataIterator, EmojiDataIterator> &range,
-    const SerializedStringArray &string_array) {
+    const std::pair<EmojiDataIterator, EmojiDataIterator>& range,
+    const SerializedStringArray& string_array) {
   absl::flat_hash_map<EmojiVersion, std::vector<std::u32string>> results;
   for (const EmojiVersion target_version : target_versions) {
     results[target_version] = {};
@@ -243,7 +243,7 @@ std::u32string SortAndUnique(std::u32string_view codepoints) {
 void CharacterGroupFinder::Initialize(
     absl::Span<const std::u32string> target_codepoints) {
   std::u32string single_codepoints;
-  for (const auto &codepoints : target_codepoints) {
+  for (const auto& codepoints : target_codepoints) {
     const size_t size = codepoints.size();
     if (size == 1) {
       single_codepoints.push_back(codepoints[0]);
@@ -266,7 +266,7 @@ void CharacterGroupFinder::Initialize(
   // search algorithm.
   if (!multiple_codepoints_.empty()) {
     std::u32string intersection = SortAndUnique(multiple_codepoints_[0]);
-    for (const std::u32string &codepoints : multiple_codepoints_) {
+    for (const std::u32string& codepoints : multiple_codepoints_) {
       std::u32string new_intersection;
       const std::u32string cp_set = SortAndUnique(codepoints);
       std::set_intersection(
@@ -351,7 +351,7 @@ bool CharacterGroupFinder::FindMatch(const std::u32string_view target) const {
         // As hash can collide in some unfortunate case, double-check here.
         const std::u32string_view hashed_target =
             target.substr(left, right - left + 1);
-        for (const std::u32string &codepoints : multiple_codepoints_) {
+        for (const std::u32string& codepoints : multiple_codepoints_) {
           if (hashed_target == codepoints) {
             return true;
           }
@@ -363,12 +363,12 @@ bool CharacterGroupFinder::FindMatch(const std::u32string_view target) const {
 }
 
 int EnvironmentalFilterRewriter::capability(
-    const ConversionRequest &request) const {
+    const ConversionRequest& request) const {
   return RewriterInterface::ALL;
 }
 
 EnvironmentalFilterRewriter::EnvironmentalFilterRewriter(
-    const DataManager &data_manager) {
+    const DataManager& data_manager) {
   absl::string_view token_array_data;
   absl::string_view string_array_data;
 
@@ -397,18 +397,18 @@ EnvironmentalFilterRewriter::EnvironmentalFilterRewriter(
   finder_e16_0_.Initialize(version_to_targets.at(EmojiVersion::E16_0));
 }
 
-bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
-                                          Segments *segments) const {
+bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest& request,
+                                          Segments* segments) const {
   DCHECK(segments);
   const std::vector<AdditionalRenderableCharacterGroup> nonrenderable_groups =
       GetNonrenderableGroups(
           request.request().additional_renderable_character_groups());
 
   bool modified = false;
-  for (Segment &segment : segments->conversion_segments()) {
+  for (Segment& segment : segments->conversion_segments()) {
     // Meta candidate
     for (size_t j = 0; j < segment.meta_candidates_size(); ++j) {
-      converter::Candidate *candidate = segment.mutable_meta_candidate(j);
+      converter::Candidate* candidate = segment.mutable_meta_candidate(j);
       DCHECK(candidate);
       if (ShouldKeepCandidate(*candidate)) {
         continue;
@@ -421,7 +421,7 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
 
     for (size_t j = 0; j < candidates_size; ++j) {
       const size_t reversed_j = candidates_size - j - 1;
-      converter::Candidate *candidate = segment.mutable_candidate(reversed_j);
+      converter::Candidate* candidate = segment.mutable_candidate(reversed_j);
       DCHECK(candidate);
 
       if (ShouldKeepCandidate(*candidate)) {

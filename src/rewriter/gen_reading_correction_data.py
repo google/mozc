@@ -50,22 +50,36 @@ def ParseOptions():
   """Parse command line options."""
   parser = optparse.OptionParser()
   parser.add_option('--input', dest='input', help='Input TSV file path.')
-  parser.add_option('--output_value_array', dest='output_value_array',
-                    help='Output serialized string array for values.')
-  parser.add_option('--output_error_array', dest='output_error_array',
-                    help='Output serialized string array for errors.')
-  parser.add_option('--output_correction_array', dest='output_correction_array',
-                    help='Output serialized string array for corrections.')
+  parser.add_option(
+      '--output_value_array',
+      dest='output_value_array',
+      help='Output serialized string array for values.',
+  )
+  parser.add_option(
+      '--output_error_array',
+      dest='output_error_array',
+      help='Output serialized string array for errors.',
+  )
+  parser.add_option(
+      '--output_correction_array',
+      dest='output_correction_array',
+      help='Output serialized string array for corrections.',
+  )
   return parser.parse_args()[0]
 
 
-def WriteData(input_path, output_value_array_path, output_error_array_path,
-              output_correction_array_path):
+def WriteData(
+    input_path,
+    output_value_array_path,
+    output_error_array_path,
+    output_correction_array_path,
+):
   outputs = []
   with codecs.open(input_path, 'r', encoding='utf-8') as input_stream:
     input_stream = code_generator_util.SkipLineComment(input_stream)
-    input_stream = code_generator_util.ParseColumnStream(input_stream,
-                                                         num_column=3)
+    input_stream = code_generator_util.ParseColumnStream(
+        input_stream, num_column=3
+    )
     # ex. (value, error, correction) = ("雰囲気", "ふいんき", "ふんいき")
     for value, error, correction in input_stream:
       outputs.append([value, error, correction])
@@ -75,18 +89,25 @@ def WriteData(input_path, output_value_array_path, output_error_array_path,
   outputs.sort(key=lambda x: (x[1], x[0]))
 
   serialized_string_array_builder.SerializeToFile(
-      [value for (value, _, _) in outputs], output_value_array_path)
+      [value for (value, _, _) in outputs], output_value_array_path
+  )
   serialized_string_array_builder.SerializeToFile(
-      [error for (_, error, _) in outputs], output_error_array_path)
+      [error for (_, error, _) in outputs], output_error_array_path
+  )
   serialized_string_array_builder.SerializeToFile(
       [correction for (_, _, correction) in outputs],
-      output_correction_array_path)
+      output_correction_array_path,
+  )
 
 
 def main():
   options = ParseOptions()
-  WriteData(options.input, options.output_value_array,
-            options.output_error_array, options.output_correction_array)
+  WriteData(
+      options.input,
+      options.output_value_array,
+      options.output_error_array,
+      options.output_correction_array,
+  )
 
 
 if __name__ == '__main__':

@@ -46,7 +46,7 @@ namespace mozc {
 namespace {
 
 // Runs calculation with |expression| and compares the result and |expect|.
-void VerifyCalculation(const Calculator &calculator,
+void VerifyCalculation(const Calculator& calculator,
                        const absl::string_view expression,
                        const absl::string_view expected) {
   std::string result;
@@ -66,7 +66,7 @@ void VerifyCalculation(const Calculator &calculator,
 }
 
 // Runs calculation and compare results in PRINTED string.
-void VerifyCalculationInString(const Calculator &calculator,
+void VerifyCalculationInString(const Calculator& calculator,
                                const absl::string_view expression,
                                const absl::string_view expected) {
   std::string result;
@@ -76,7 +76,7 @@ void VerifyCalculationInString(const Calculator &calculator,
 }
 
 // Tries to calculate |wrong_key| and returns true if it fails.
-void VerifyRejection(const Calculator &calculator,
+void VerifyRejection(const Calculator& calculator,
                      const absl::string_view wrong_key) {
   std::string result;
   EXPECT_FALSE(calculator.CalculateString(wrong_key, &result))
