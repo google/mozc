@@ -193,49 +193,6 @@ bool IsCompoundCandidate(const absl::Span<const Node* const> nodes) {
   return nodes.size() == 1 && nodes[0]->lid != nodes[0]->rid;
 }
 
-bool IsSuffixNode(const dictionary::PosMatcher& pos_matcher, const Node& node) {
-  return pos_matcher.IsSuffixWord(node.lid) &&
-         pos_matcher.IsSuffixWord(node.rid);
-}
-
-bool IsFunctionalNode(const dictionary::PosMatcher& pos_matcher,
-                      const Node& node) {
-  return pos_matcher.IsFunctional(node.lid) &&
-         pos_matcher.IsFunctional(node.rid);
-}
-
-// Returns true if the node structure is
-// content_word + suffix_word*N + (suffix_word|functional_word).
-// Example: "行き+ます", "山+が", etc.
-bool IsTypicalNodeStructure(const dictionary::PosMatcher& pos_matcher,
-                            const absl::Span<const Node* const> nodes) {
-  DCHECK_GT(nodes.size(), 1);
-  if (IsSuffixNode(pos_matcher, *nodes[0])) {
-    return false;
-  }
-  for (size_t i = 1; i < nodes.size() - 1; ++i) {
-    if (!IsSuffixNode(pos_matcher, *nodes[i])) {
-      return false;
-    }
-  }
-  return IsSuffixNode(pos_matcher, *nodes.back()) ||
-         IsFunctionalNode(pos_matcher, *nodes.back());
-}
-
-// Returns true if |lnodes| and |rnodes| have the same Pos structure.
-bool IsSameNodeStructure(const absl::Span<const Node* const> lnodes,
-                         const absl::Span<const Node* const> rnodes) {
-  if (lnodes.size() != rnodes.size()) {
-    return false;
-  }
-  for (int i = 0; i < lnodes.size(); ++i) {
-    if (lnodes[i]->lid != rnodes[i]->lid || lnodes[i]->rid != rnodes[i]->rid) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // Returns true if there is a number node that does not follow the
 bool IsNoisyNumberCandidate(const dictionary::PosMatcher& pos_matcher,
                             const absl::Span<const Node* const> nodes) {
