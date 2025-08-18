@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-
 namespace mozc {
 namespace transliteration {
 
