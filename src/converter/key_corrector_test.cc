@@ -58,13 +58,11 @@ TEST(KeyCorrectorTest, KeyCorrectorBasicTest) {
     KeyCorrector corrector("てすと", KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.original_key(), "てすと");
-    corrector.Clear();
-    EXPECT_FALSE(corrector.IsAvailable());
   }
 }
 
 TEST(KeyCorrectorTest, KeyCorrectorKanaTest) {
-  const std::string input = "みんあであそぼう";
+  constexpr absl::string_view input = "みんあであそぼう";
   KeyCorrector corrector(input, KeyCorrector::KANA, 0);
   EXPECT_FALSE(corrector.IsAvailable());
   EXPECT_EQ(corrector.corrected_key(), "");
@@ -77,14 +75,14 @@ TEST(KeyCorrectorTest, KeyCorrectorKanaTest) {
 
 TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   {
-    const std::string input = "ん";
+    constexpr absl::string_view input = "ん";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "ん");
   }
 
   {
-    const std::string input = "かん";
+    constexpr absl::string_view input = "かん";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "かん");
@@ -92,21 +90,21 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "かに";
+    constexpr absl::string_view input = "かに";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "かに");
   }
 
   {
-    const std::string input = "かｍ";
+    constexpr absl::string_view input = "かｍ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "かｍ");
   }
 
   {
-    const std::string input = "みんあであそぼう";
+    constexpr absl::string_view input = "みんあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "みんなであそぼう");
@@ -115,7 +113,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
 
   {
     // don't rewrite 1st "ん"
-    const std::string input = "んあであそぼう";
+    constexpr absl::string_view input = "んあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "んあであそぼう");
@@ -123,7 +121,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "こんかいのみんあはこんんでた";
+    constexpr absl::string_view input = "こんかいのみんあはこんんでた";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんかいのみんなはこんでた");
@@ -131,7 +129,8 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "みんあみんいみんうみんえみんおみんんか";
+    constexpr absl::string_view input =
+        "みんあみんいみんうみんえみんおみんんか";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(),
@@ -140,7 +139,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "こんんにちは";
+    constexpr absl::string_view input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちは");
@@ -148,7 +147,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "こんんいちは";
+    constexpr absl::string_view input = "こんんいちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちは");
@@ -156,7 +155,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "しぜんんお";
+    constexpr absl::string_view input = "しぜんんお";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "しぜんの");
@@ -164,7 +163,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "あんんんたい";
+    constexpr absl::string_view input = "あんんんたい";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "あんんんたい");
@@ -172,7 +171,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "せにょう";
+    constexpr absl::string_view input = "せにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "せんよう");
@@ -180,7 +179,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "せにゃうせにゅうせにょう";
+    constexpr absl::string_view input = "せにゃうせにゅうせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "せんやうせんゆうせんよう");
@@ -188,7 +187,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "こんんにちはせにょう";
+    constexpr absl::string_view input = "こんんにちはせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちはせんよう");
@@ -196,7 +195,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "おんあのここんいちは";
+    constexpr absl::string_view input = "おんあのここんいちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "おんなのここんにちは");
@@ -204,7 +203,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "きっって";
+    constexpr absl::string_view input = "きっって";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "きって");
@@ -212,7 +211,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "きっっって";
+    constexpr absl::string_view input = "きっっって";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "きっっって");
@@ -220,7 +219,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "きっっっ";
+    constexpr absl::string_view input = "きっっっ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "きっっっ");
@@ -228,7 +227,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "っっ";
+    constexpr absl::string_view input = "っっ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "っっ");
@@ -236,7 +235,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "しｍばし";
+    constexpr absl::string_view input = "しｍばし";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "しんばし");
@@ -244,7 +243,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "しｍはししｍぱしー";
+    constexpr absl::string_view input = "しｍはししｍぱしー";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "しｍはししんぱしー");
@@ -252,7 +251,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "ちゅごく";
+    constexpr absl::string_view input = "ちゅごく";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "ちゅうごく");
@@ -260,7 +259,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
   }
 
   {
-    const std::string input = "きゅきゅしゃ";
+    constexpr absl::string_view input = "きゅきゅしゃ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "きゅうきゅうしゃ");
@@ -270,7 +269,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
 
 TEST(KeyCorrectorTest, KeyCorrectorRomanPositionTest) {
   {
-    const std::string input = "みんあであそぼう";
+    constexpr absl::string_view input = "みんあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "みんなであそぼう");
@@ -299,7 +298,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanPositionTest) {
   }
 
   {
-    const std::string input = "こんんにちは";
+    constexpr absl::string_view input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちは");
@@ -333,7 +332,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanPositionTest) {
   }
 
   {
-    const std::string input = "こんんにちはせにょう";
+    constexpr absl::string_view input = "こんんにちはせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちはせんよう");
@@ -357,89 +356,57 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanPositionTest) {
 
 TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
   {
-    const std::string input = "てすと";
+    constexpr absl::string_view input = "てすと";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    size_t length = 0;
 
     // same as the original key
-    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(0, &length));
-    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(1, &length));
-    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(2, &length));
-    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(3, &length));
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(0).empty());
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(1).empty());
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(2).empty());
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(3).empty());
   }
 
   {
-    const std::string input = "みんあであそぼう";
+    constexpr absl::string_view input = "みんあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "みんなであそぼう");
 
-    const char* output = nullptr;
-    size_t length = 0;
-
-    output = corrector.GetCorrectedPrefix(0, &length);
-    EXPECT_EQ(std::string(output, length), "みんなであそぼう");
-
-    output = corrector.GetCorrectedPrefix(3, &length);
-    EXPECT_EQ(std::string(output, length), "んなであそぼう");
-
-    output = corrector.GetCorrectedPrefix(6, &length);
-    EXPECT_EQ(std::string(output, length), "なであそぼう");
-
-    output = corrector.GetCorrectedPrefix(9, &length);
-    // same
-    EXPECT_TRUE(nullptr == output);
+    EXPECT_EQ(corrector.GetCorrectedPrefix(0), "みんなであそぼう");
+    EXPECT_EQ(corrector.GetCorrectedPrefix(3), "んなであそぼう");
+    EXPECT_EQ(corrector.GetCorrectedPrefix(6), "なであそぼう");
+    EXPECT_EQ(corrector.GetCorrectedPrefix(9), "");
   }
 
   {
-    const std::string input = "こんんにちは";
+    constexpr absl::string_view input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちは");
 
-    const char* output = nullptr;
-    size_t length = 0;
-
-    output = corrector.GetCorrectedPrefix(0, &length);
-    EXPECT_EQ(std::string(output, length), "こんにちは");
-
-    output = corrector.GetCorrectedPrefix(3, &length);
-    EXPECT_TRUE(nullptr == output);
-
-    output = corrector.GetCorrectedPrefix(6, &length);
-    EXPECT_TRUE(nullptr == output);
-
-    output = corrector.GetCorrectedPrefix(9, &length);
-    EXPECT_TRUE(nullptr == output);
+    EXPECT_EQ(corrector.GetCorrectedPrefix(0), "こんにちは");
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(3).empty());
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(6).empty());
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(9).empty());
   }
 
   {
-    const std::string input = "こんんにちはせにょう";
+    constexpr absl::string_view input = "こんんにちはせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちはせんよう");
 
-    const char* output = nullptr;
-    size_t length = 0;
-
-    output = corrector.GetCorrectedPrefix(0, &length);
-    EXPECT_EQ(std::string(output, length), "こんにちはせんよう");
-
-    output = corrector.GetCorrectedPrefix(3, &length);
-    EXPECT_TRUE(nullptr == output);
-
-    output = corrector.GetCorrectedPrefix(6, &length);
-    EXPECT_TRUE(nullptr == output);
-
-    output = corrector.GetCorrectedPrefix(9, &length);
-    EXPECT_EQ(std::string(output, length), "にちはせんよう");
+    EXPECT_EQ(corrector.GetCorrectedPrefix(0), "こんにちはせんよう");
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(3).empty());
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(6).empty());
+    EXPECT_EQ(corrector.GetCorrectedPrefix(9), "にちはせんよう");
   }
 }
 
 TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
   {
-    const std::string input = "てすと";
+    constexpr absl::string_view input = "てすと";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.GetOriginalOffset(0, 3), 3);
@@ -451,7 +418,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
   }
 
   {
-    const std::string input = "みんあ";
+    constexpr absl::string_view input = "みんあ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.GetOriginalOffset(0, 3), 3);
@@ -460,14 +427,14 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
   }
 
   {
-    const std::string input = "きっって";
+    constexpr absl::string_view input = "きっって";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.GetOriginalOffset(0, 9), 12);
   }
 
   {
-    const std::string input = "こんんにちは";
+    constexpr absl::string_view input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.corrected_key(), "こんにちは");
@@ -495,13 +462,13 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
 // Check if UCS4 is supported. b/3386634
 TEST(KeyCorrectorTest, UCS4IsAvailable) {
   {
-    const std::string input = "𠮟";  // UCS4 char in UTF8
+    constexpr absl::string_view input = "𠮟";  // UCS4 char in UTF8
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
   }
 
   {
-    const std::string input = "こ";  // UCS2 char in UTF8
+    constexpr absl::string_view input = "こ";  // UCS2 char in UTF8
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
   }
@@ -509,7 +476,7 @@ TEST(KeyCorrectorTest, UCS4IsAvailable) {
 
 TEST(KeyCorrectorTest, UCS4Test) {
   {
-    const std::string input = "😁みんあ";
+    constexpr absl::string_view input = "😁みんあ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
     EXPECT_EQ(corrector.GetOriginalOffset(0, 7), 7);
@@ -521,16 +488,15 @@ TEST(KeyCorrectorTest, UCS4Test) {
 // Should not rewrite the character which is at the beginning of current input
 TEST(KeyCorrectorTest, Bug3046266Test) {
   {
-    const std::string input = "かんあか";
+    constexpr absl::string_view input = "かんあか";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 6);  // history_size = 6
     EXPECT_TRUE(corrector.IsAvailable());
-    size_t length = 0;
 
     // same as the original key
-    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(0, &length));
-    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(1, &length));
-    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(2, &length));
-    EXPECT_TRUE(nullptr == corrector.GetCorrectedPrefix(3, &length));
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(0).empty());
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(1).empty());
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(2).empty());
+    EXPECT_TRUE(corrector.GetCorrectedPrefix(3).empty());
   }
 }
 

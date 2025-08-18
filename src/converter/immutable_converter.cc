@@ -138,14 +138,13 @@ void InsertCorrectedNodes(size_t pos, absl::string_view key,
   if (key_corrector == nullptr) {
     return;
   }
-  size_t length = 0;
-  const char* str = key_corrector->GetCorrectedPrefix(pos, &length);
-  if (str == nullptr || length == 0) {
+  absl::string_view prefix = key_corrector->GetCorrectedPrefix(pos);
+  if (prefix.empty()) {
     return;
   }
   KeyCorrectedNodeListBuilder builder(pos, key, key_corrector,
                                       lattice->node_allocator());
-  dictionary.LookupPrefix(absl::string_view(str, length), request, &builder);
+  dictionary.LookupPrefix(prefix, request, &builder);
   if (builder.tail() != nullptr) {
     builder.tail()->bnext = nullptr;
   }
@@ -1939,7 +1938,7 @@ bool ImmutableConverter::Convert(const ConversionRequest& request,
   // TODO(all): Re-evaluate this implementation if we run converter on
   // multi-threaded environment.
   thread_local Lattice lattice;
-#else  // defined(__ANDROID__) || defined(_WIN32) || defined(__APPLE__)
+#else   // defined(__ANDROID__) || defined(_WIN32) || defined(__APPLE__)
   Lattice lattice;
 #endif  // defined(__ANDROID__) || defined(_WIN32) || defined(__APPLE__)
 

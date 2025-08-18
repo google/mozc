@@ -375,18 +375,8 @@ size_t KeyCorrector::GetOriginalPosition(const size_t corrected_key_pos) const {
   return kInvalidPos;
 }
 
-void KeyCorrector::Clear() {
-  available_ = false;
-  original_key_.clear();
-  corrected_key_.clear();
-  alignment_.clear();
-  rev_alignment_.clear();
-}
-
-bool KeyCorrector::CorrectKey(absl::string_view key, InputMode mode,
-                              size_t history_size) {
-  Clear();
-
+bool KeyCorrector::Init(absl::string_view key, InputMode mode,
+                        size_t history_size) {
   // TODO(taku)  support KANA
   if (mode == KANA) {
     return false;
@@ -422,7 +412,6 @@ bool KeyCorrector::CorrectKey(absl::string_view key, InputMode mode,
 
     if (corrected_mblen <= 0 && mblen <= 0) {
       LOG(ERROR) << "Invalid pattern: " << key;
-      Clear();
       return false;
     }
 
@@ -456,37 +445,30 @@ bool KeyCorrector::CorrectKey(absl::string_view key, InputMode mode,
   return true;
 }
 
-const char* KeyCorrector::GetCorrectedPrefix(const size_t original_key_pos,
-                                             size_t* length) const {
+absl::string_view KeyCorrector::GetCorrectedPrefix(
+    const size_t original_key_pos) const {
   if (!IsAvailable()) {
-    *length = 0;
-    return nullptr;
+    return "";
   }
 
   if (mode_ == KANA) {
-    *length = 0;
-    return nullptr;
+    return "";
   }
 
   const size_t corrected_key_pos = GetCorrectedPosition(original_key_pos);
   if (!IsValidPosition(corrected_key_pos)) {
-    *length = 0;
-    return nullptr;
+    return "";
   }
 
-  const char* corrected_substr = corrected_key_.data() + corrected_key_pos;
-  const size_t corrected_length = corrected_key_.size() - corrected_key_pos;
-  const char* original_substr = original_key_.data() + original_key_pos;
-  const size_t original_length = original_key_.size() - original_key_pos;
-  // substrs are different
-  if (original_length != corrected_length ||
-      memcmp(original_substr, corrected_substr, original_length) != 0) {
-    *length = corrected_length;
+  absl::string_view corrected_substr =
+      absl::string_view(corrected_key_).substr(corrected_key_pos);
+  absl::string_view original_substr =
+      absl::string_view(original_key_).substr(original_key_pos);
+  if (corrected_substr != original_substr) {
     return corrected_substr;
   }
 
-  *length = 0;
-  return nullptr;
+  return "";
 }
 
 size_t KeyCorrector::GetOriginalOffset(const size_t original_key_pos,
