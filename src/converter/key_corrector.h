@@ -123,8 +123,7 @@ class KeyCorrector final {
   //                     + new_key_offset) - original_key_pos;
   //
   // Usage:
-  // const char *corrected_prefix = GetCorrectedPrefix(original_key_pos,
-  //                                                   &length);
+  // absl::string_view corrected_prefix = GetCorrectedPrefix(original_key_pos);
   // Node *nodes = Lookup(corrected_prefix, length);
   // for node in nodes {
   //   original_offset = GetOriginalOffset(original_key_pos, node->length);

@@ -101,9 +101,12 @@ class Util {
   // The read byte length is stored to |mblen|.
   static char32_t Utf8ToCodepoint(const char* begin, const char* end,
                                   size_t* mblen);
+  static char32_t Utf8ToCodepoint(absl::string_view s, size_t* mblen) {
+    return Utf8ToCodepoint(s.data(), s.data() + s.size(), mblen);
+  }
   static char32_t Utf8ToCodepoint(absl::string_view s) {
     size_t mblen = 0;
-    return Utf8ToCodepoint(s.data(), s.data() + s.size(), &mblen);
+    return Utf8ToCodepoint(s, &mblen);
   }
 
   // Converts a UCS4 code point to UTF8 string.
