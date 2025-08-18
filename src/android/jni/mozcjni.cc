@@ -57,9 +57,9 @@ namespace {
 std::unique_ptr<SessionHandler> g_session_handler;
 
 // Concrete implementation for MozcJni.evalCommand
-jbyteArray JNICALL evalCommand(JNIEnv *env, jclass clazz,
+jbyteArray JNICALL evalCommand(JNIEnv* env, jclass clazz,
                                jbyteArray in_bytes_array) {
-  jbyte *in_bytes = env->GetByteArrayElements(in_bytes_array, nullptr);
+  jbyte* in_bytes = env->GetByteArrayElements(in_bytes_array, nullptr);
   const jsize in_size = env->GetArrayLength(in_bytes_array);
   mozc::commands::Command command;
   command.ParseFromArray(in_bytes, in_size);
@@ -74,7 +74,7 @@ jbyteArray JNICALL evalCommand(JNIEnv *env, jclass clazz,
 
   const int out_size = command.ByteSizeLong();
   jbyteArray out_bytes_array = env->NewByteArray(out_size);
-  jbyte *out_bytes = env->GetByteArrayElements(out_bytes_array, nullptr);
+  jbyte* out_bytes = env->GetByteArrayElements(out_bytes_array, nullptr);
   command.SerializeToArray(out_bytes, out_size);
 
   // Use 0 to copy out_bytes to out_bytes_array.
@@ -83,15 +83,15 @@ jbyteArray JNICALL evalCommand(JNIEnv *env, jclass clazz,
   return out_bytes_array;
 }
 
-std::string JstringToCcString(JNIEnv *env, jstring j_string) {
-  const char *cstr = env->GetStringUTFChars(j_string, nullptr);
+std::string JstringToCcString(JNIEnv* env, jstring j_string) {
+  const char* cstr = env->GetStringUTFChars(j_string, nullptr);
   const std::string cc_string(cstr);
   env->ReleaseStringUTFChars(j_string, cstr);
   return cc_string;
 }
 
 std::unique_ptr<EngineInterface> CreateMobileEngine(
-    const std::string &data_file_path) {
+    const std::string& data_file_path) {
   absl::StatusOr<std::unique_ptr<const DataManager>> data_manager =
       DataManager::CreateFromFile(data_file_path);
   if (!data_manager.ok()) {
@@ -119,7 +119,7 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
   return *std::move(engine);
 }
 
-std::unique_ptr<SessionHandler> CreateSessionHandler(JNIEnv *env,
+std::unique_ptr<SessionHandler> CreateSessionHandler(JNIEnv* env,
                                                      jstring j_data_file_path) {
   if (env == nullptr) {
     LOG(DFATAL) << "JNIEnv is null";
@@ -130,7 +130,7 @@ std::unique_ptr<SessionHandler> CreateSessionHandler(JNIEnv *env,
     LOG(ERROR) << "j_data_file_path is null.  Fallback to minimal engine.";
     engine = Engine::CreateEngine();
   } else {
-    const std::string &data_file_path =
+    const std::string& data_file_path =
         JstringToCcString(env, j_data_file_path);
     engine = CreateMobileEngine(data_file_path);
   }
@@ -141,7 +141,7 @@ std::unique_ptr<SessionHandler> CreateSessionHandler(JNIEnv *env,
 // Does post-load tasks.
 // Returns true if the task succeeded
 // or SessionHandler has already been initializaed.
-jboolean JNICALL onPostLoad(JNIEnv *env, jclass clazz,
+jboolean JNICALL onPostLoad(JNIEnv* env, jclass clazz,
                             jstring user_profile_directory_path,
                             jstring data_file_path) {
   if (g_session_handler) {
@@ -149,7 +149,7 @@ jboolean JNICALL onPostLoad(JNIEnv *env, jclass clazz,
   }
 
   // First of all, set the user profile directory.
-  const std::string &original_dir = SystemUtil::GetUserProfileDirectory();
+  const std::string& original_dir = SystemUtil::GetUserProfileDirectory();
   SystemUtil::SetUserProfileDirectory(
       JstringToCcString(env, user_profile_directory_path));
 
@@ -164,7 +164,7 @@ jboolean JNICALL onPostLoad(JNIEnv *env, jclass clazz,
   return true;
 }
 
-jstring JNICALL getDataVersion(JNIEnv *env) {
+jstring JNICALL getDataVersion(JNIEnv* env) {
   std::string version = "";
   if (g_session_handler) {
     const absl::string_view version_sp = g_session_handler->GetDataVersion();
@@ -181,18 +181,18 @@ extern "C" {
 
 JNIEXPORT jboolean JNICALL
 Java_com_google_android_apps_inputmethod_libs_mozc_session_MozcJNI_initialize(
-    JNIEnv *env, jclass clazz) {
+    JNIEnv* env, jclass clazz) {
   if (!env) {
     // Fatal error. No way to recover.
     return false;
   }
   const JNINativeMethod methods[] = {
       {"evalCommand", "([B)[B",
-       reinterpret_cast<void *>(&mozc::jni::evalCommand)},
+       reinterpret_cast<void*>(&mozc::jni::evalCommand)},
       {"onPostLoad", "(Ljava/lang/String;Ljava/lang/String;)Z",
-       reinterpret_cast<void *>(&mozc::jni::onPostLoad)},
+       reinterpret_cast<void*>(&mozc::jni::onPostLoad)},
       {"getDataVersion", "()Ljava/lang/String;",
-       reinterpret_cast<void *>(&mozc::jni::getDataVersion)},
+       reinterpret_cast<void*>(&mozc::jni::getDataVersion)},
   };
   if (env->RegisterNatives(clazz, methods, std::size(methods))) {
     // Fatal error. No way to recover.

@@ -44,12 +44,12 @@ import struct
 import urllib.parse
 
 
-
 def ReadCollectedKeyboards(stream):
   """Parses collected keyboard list (CSV).
 
   Args:
     stream: An input stream.
+
   Returns:
     A frozeset of tuples (base_name, major, minor, revision).
   """
@@ -65,9 +65,9 @@ def ReadData(stream, collected_keyboards):
 
   Args:
     stream: An input stream of the file.
-    collected_keyboards: A collection of the keyboard spec tuple
-                         (base_name, major, minor, revision)
-                         of which data is used.
+    collected_keyboards: A collection of the keyboard spec tuple (base_name,
+      major, minor, revision) of which data is used.
+
   Returns:
     A dictionary: base_name_orientation -> source_id -> stats_type ->
                   (cumulative_average, count)
@@ -81,10 +81,13 @@ def ReadData(stream, collected_keyboards):
     base_name_orientation = (row['base_name'], row['orientation'])
     source_id = int(row['source_id'])
     stats_type = row['stats_type']
-    (cumulative_average, count) = (
-        stats[base_name_orientation][source_id][stats_type])
-    new_value = (cumulative_average + int(row['sum']),
-                 count + int(row['count']))
+    (cumulative_average, count) = stats[base_name_orientation][source_id][
+        stats_type
+    ]
+    new_value = (
+        cumulative_average + int(row['sum']),
+        count + int(row['count']),
+    )
     stats[base_name_orientation][source_id][stats_type] = new_value
   return stats
 
@@ -93,9 +96,8 @@ def WriteKeyboardData(keyboard_value, stream):
   """Writes serialized binary of the stats for a keyboard.
 
   Args:
-    keyboard_value: A dictionary from souce_id to source_value.
-                    source_value is a dictionary from stats_type to
-                    (cumulative_average, count).
+    keyboard_value: A dictionary from souce_id to source_value. source_value is
+      a dictionary from stats_type to (cumulative_average, count).
     stream: An output stream.
   """
 
@@ -118,26 +120,39 @@ def WriteKeyboardData(keyboard_value, stream):
     # Such values are theoritically meaningless but we collect
     # only restricted value to avoid from privacy issue
     # so we have to use them instead.
-    stream.write(struct.pack('>ffffffff',
-                             *[GetAverage(source_value, key) for key in keys]))
+    stream.write(
+        struct.pack(
+            '>ffffffff', *[GetAverage(source_value, key) for key in keys]
+        )
+    )
 
 
 def WriteData(stats, output_dir):
   for base_name_orientation in stats.keys():
     with open(
         os.path.join(
-            output_dir, '%s_%s.touch_stats' % (urllib.parse.unquote(
-                base_name_orientation[0]), base_name_orientation[1])),
-        'wb') as stream:
+            output_dir,
+            '%s_%s.touch_stats'
+            % (
+                urllib.parse.unquote(base_name_orientation[0]),
+                base_name_orientation[1],
+            ),
+        ),
+        'wb',
+    ) as stream:
       WriteKeyboardData(stats[base_name_orientation], stream)
 
 
 def ParseOptions():
   parser = optparse.OptionParser()
-  parser.add_option('--collected_keyboards', dest='collected_keyboards',
-                    help='Keyboards to be collected')
-  parser.add_option('--stats_data', dest='stats_data',
-                    help='Path to touch_event_stats.csv')
+  parser.add_option(
+      '--collected_keyboards',
+      dest='collected_keyboards',
+      help='Keyboards to be collected',
+  )
+  parser.add_option(
+      '--stats_data', dest='stats_data', help='Path to touch_event_stats.csv'
+  )
   parser.add_option('--output_dir', dest='output_dir', help='Output file name')
   return parser.parse_args()[0]
 
@@ -152,6 +167,7 @@ def main():
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
   WriteData(stats, output_dir)
+
 
 if __name__ == '__main__':
   main()
