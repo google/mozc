@@ -147,7 +147,7 @@ class UserDictionaryStorage {
   int GetUserDictionaryIndex(uint64_t dic_id) const;
 
   // return mutable UserDictionary corresponding to dic_id
-  UserDictionary *GetUserDictionary(uint64_t dic_id);
+  UserDictionary* GetUserDictionary(uint64_t dic_id);
 
   // returns the dictionary id associated with the "dic_name".
   absl::StatusOr<uint64_t> GetUserDictionaryId(
@@ -159,15 +159,15 @@ class UserDictionaryStorage {
   // maximum number of entries one dictionary can hold
   static size_t max_entry_size();
 
-  user_dictionary::UserDictionaryStorage &GetProto() { return proto_; }
+  user_dictionary::UserDictionaryStorage& GetProto() { return proto_; }
 
-  const user_dictionary::UserDictionaryStorage &GetProto() const {
+  const user_dictionary::UserDictionaryStorage& GetProto() const {
     return proto_;
   }
 
   size_t dictionaries_size() const { return proto_.dictionaries_size(); }
 
-  const user_dictionary::UserDictionary &dictionaries(size_t i) const {
+  const user_dictionary::UserDictionary& dictionaries(size_t i) const {
     return proto_.dictionaries(i);
   }
 

@@ -28,8 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""A script to generate a C++ header file for the POS conversion map.
-"""
+"""A script to generate a C++ header file for the POS conversion map."""
 import codecs
 import optparse
 
@@ -70,7 +69,7 @@ def GeneratePosMap(third_party_pos_map_file, user_pos_file):
         mozc_pos = user_pos_map[mozc_pos]
 
       if third_party_pos_name in result:
-        assert (result[third_party_pos_name] == mozc_pos)
+        assert result[third_party_pos_name] == mozc_pos
         continue
 
       result[third_party_pos_name] = mozc_pos
@@ -78,7 +77,7 @@ def GeneratePosMap(third_party_pos_map_file, user_pos_file):
   # Create mozc_pos to mozc_pos map.
   for key, value in user_pos_map.items():
     if key in result:
-      assert (result[key] == value)
+      assert result[key] == value
       continue
     result[key] = value
 
@@ -92,7 +91,8 @@ def OutputPosMap(pos_map, output):
     if value is None:
       # Invalid PosType.
       value = (
-          'static_cast< ::mozc::user_dictionary::UserDictionary::PosType>(-1)')
+          'static_cast< ::mozc::user_dictionary::UserDictionary::PosType>(-1)'
+      )
     else:
       value = '::mozc::user_dictionary::UserDictionary::' + value
     output.write('  { %s, %s },\n' % (key, value))
@@ -103,21 +103,24 @@ def ParseOptions():
   parser = optparse.OptionParser()
   # Input: user_pos.def, third_party_pos_map.def
   # Output: pos_map.h
-  parser.add_option('--user_pos_file', dest='user_pos_file',
-                    help='Path to user_pos.def')
-  parser.add_option('--third_party_pos_map_file',
-                    dest='third_party_pos_map_file',
-                    help='Path to third_party_pos_map.def')
-  parser.add_option('--output', dest='output',
-                    help='Path to output pos_map.h')
+  parser.add_option(
+      '--user_pos_file', dest='user_pos_file', help='Path to user_pos.def'
+  )
+  parser.add_option(
+      '--third_party_pos_map_file',
+      dest='third_party_pos_map_file',
+      help='Path to third_party_pos_map.def',
+  )
+  parser.add_option('--output', dest='output', help='Path to output pos_map.h')
   return parser.parse_args()[0]
 
 
 def main():
   options = ParseOptions()
 
-  pos_map = GeneratePosMap(options.third_party_pos_map_file,
-                           options.user_pos_file)
+  pos_map = GeneratePosMap(
+      options.third_party_pos_map_file, options.user_pos_file
+  )
 
   with open(options.output, 'w') as stream:
     OutputPosMap(pos_map, stream)

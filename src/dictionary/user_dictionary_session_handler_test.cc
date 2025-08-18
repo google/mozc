@@ -132,7 +132,7 @@ class UserDictionarySessionHandlerTest
     command_->set_type(UserDictionaryCommand::ADD_ENTRY);
     command_->set_session_id(session_id);
     command_->set_dictionary_id(dictionary_id);
-    UserDictionary::Entry *entry = command_->mutable_entry();
+    UserDictionary::Entry* entry = command_->mutable_entry();
     entry->set_key(std::string(key));
     entry->set_value(std::string(value));
     entry->set_pos(pos);
@@ -657,7 +657,7 @@ TEST_F(UserDictionarySessionHandlerTest, AddEntry) {
   command_->set_type(UserDictionaryCommand::ADD_ENTRY);
   command_->set_session_id(session_id);
   {
-    UserDictionary::Entry *entry = command_->mutable_entry();
+    UserDictionary::Entry* entry = command_->mutable_entry();
     entry->set_key("reading");
     entry->set_value("word");
     entry->set_pos(UserDictionary::NOUN);
@@ -702,7 +702,7 @@ TEST_F(UserDictionarySessionHandlerTest, EditEntry) {
   command_->set_dictionary_id(dictionary_id);
   command_->add_entry_index(1);
   {
-    UserDictionary::Entry *entry = command_->mutable_entry();
+    UserDictionary::Entry* entry = command_->mutable_entry();
     entry->set_key("reading3");
     entry->set_value("word3");
     entry->set_pos(UserDictionary::PREFIX);
@@ -740,7 +740,7 @@ TEST_F(UserDictionarySessionHandlerTest, EditEntry) {
   command_->set_session_id(session_id);
   command_->add_entry_index(1);
   {
-    UserDictionary::Entry *entry = command_->mutable_entry();
+    UserDictionary::Entry* entry = command_->mutable_entry();
     entry->set_key("reading3");
     entry->set_value("word3");
     entry->set_pos(UserDictionary::PREFIX);
@@ -753,7 +753,7 @@ TEST_F(UserDictionarySessionHandlerTest, EditEntry) {
   command_->set_session_id(session_id);
   command_->set_dictionary_id(dictionary_id);
   {
-    UserDictionary::Entry *entry = command_->mutable_entry();
+    UserDictionary::Entry* entry = command_->mutable_entry();
     entry->set_key("reading3");
     entry->set_value("word3");
     entry->set_pos(UserDictionary::PREFIX);
@@ -768,7 +768,7 @@ TEST_F(UserDictionarySessionHandlerTest, EditEntry) {
   command_->add_entry_index(0);
   command_->add_entry_index(1);
   {
-    UserDictionary::Entry *entry = command_->mutable_entry();
+    UserDictionary::Entry* entry = command_->mutable_entry();
     entry->set_key("reading3");
     entry->set_value("word3");
     entry->set_pos(UserDictionary::PREFIX);

@@ -43,14 +43,14 @@ namespace dictionary {
 // Note that this class is very small so it's ok to be copied.
 class ExpandedKey {
  public:
-  explicit ExpandedKey(const uint32_t *data) : data_(data) {}
+  explicit ExpandedKey(const uint32_t* data) : data_(data) {}
 
   bool IsHit(char value) const {
     return (data_[value / 32] >> (value % 32)) & 1;
   }
 
  private:
-  const uint32_t *data_;
+  const uint32_t* data_;
 };
 
 // Table to keep the key expanding information.
@@ -70,8 +70,8 @@ class KeyExpansionTable {
     }
   }
 
-  KeyExpansionTable(const KeyExpansionTable &) = delete;
-  KeyExpansionTable &operator=(const KeyExpansionTable &) = delete;
+  KeyExpansionTable(const KeyExpansionTable&) = delete;
+  KeyExpansionTable& operator=(const KeyExpansionTable&) = delete;
 
   // Add expanding data of the given key.
   void Add(const char key, const absl::string_view data) {
@@ -84,7 +84,7 @@ class KeyExpansionTable {
 
   // Returns the default (no-effective) KeyExpansionTable instance.
   // (in other words, the result holds identity-bitmap matrix).
-  static const KeyExpansionTable &GetDefaultInstance() {
+  static const KeyExpansionTable& GetDefaultInstance() {
     static const KeyExpansionTable table;
     return table;
   }

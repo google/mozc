@@ -62,10 +62,10 @@ class Uint32ArrayIterator {
   using iterator_category = std::random_access_iterator_tag;
   using value_type = uint32_t;
   using difference_type = std::ptrdiff_t;
-  using pointer = uint32_t *;
-  using reference = uint32_t &;
+  using pointer = uint32_t*;
+  using reference = uint32_t&;
 
-  explicit Uint32ArrayIterator(const uint32_t *ptr) : ptr_(ptr) {}
+  explicit Uint32ArrayIterator(const uint32_t* ptr) : ptr_(ptr) {}
 
   uint32_t operator*() const { return *ptr_; }
 
@@ -74,43 +74,43 @@ class Uint32ArrayIterator {
     return ptr_[i];
   }
 
-  void swap(Uint32ArrayIterator &x) {
+  void swap(Uint32ArrayIterator& x) {
     using std::swap;
     swap(ptr_, x.ptr_);
   }
 
-  friend void swap(Uint32ArrayIterator &x, Uint32ArrayIterator &y) {
+  friend void swap(Uint32ArrayIterator& x, Uint32ArrayIterator& y) {
     x.swap(y);
   }
 
-  Uint32ArrayIterator &operator++() {
+  Uint32ArrayIterator& operator++() {
     ptr_ += N;
     return *this;
   }
 
   Uint32ArrayIterator operator++(int) {
-    const uint32_t *tmp = ptr_;
+    const uint32_t* tmp = ptr_;
     ptr_ += N;
     return Uint32ArrayIterator(tmp);
   }
 
-  Uint32ArrayIterator &operator--() {
+  Uint32ArrayIterator& operator--() {
     ptr_ -= N;
     return *this;
   }
 
   Uint32ArrayIterator operator--(int) {
-    const uint32_t *tmp = ptr_;
+    const uint32_t* tmp = ptr_;
     ptr_ -= N;
     return Uint32ArrayIterator(tmp);
   }
 
-  Uint32ArrayIterator &operator+=(ptrdiff_t n) {
+  Uint32ArrayIterator& operator+=(ptrdiff_t n) {
     ptr_ += n * N;
     return *this;
   }
 
-  Uint32ArrayIterator &operator-=(ptrdiff_t n) {
+  Uint32ArrayIterator& operator-=(ptrdiff_t n) {
     ptr_ -= n * N;
     return *this;
   }
@@ -156,12 +156,12 @@ class Uint32ArrayIterator {
   }
 
  private:
-  const uint32_t *ptr_;
+  const uint32_t* ptr_;
 };
 
 }  // namespace
 
-SingleKanjiDictionary::SingleKanjiDictionary(const DataManager &data_manager) {
+SingleKanjiDictionary::SingleKanjiDictionary(const DataManager& data_manager) {
   absl::string_view string_array_data;
   absl::string_view variant_type_array_data;
   absl::string_view variant_string_array_data;
@@ -212,8 +212,8 @@ SingleKanjiDictionary::SingleKanjiDictionary(const DataManager &data_manager) {
 std::vector<std::string> SingleKanjiDictionary::LookupKanjiEntries(
     absl::string_view key, bool use_svs) const {
   std::vector<std::string> kanji_list;
-  const uint32_t *token_array =
-      reinterpret_cast<const uint32_t *>(single_kanji_token_array_.data());
+  const uint32_t* token_array =
+      reinterpret_cast<const uint32_t*>(single_kanji_token_array_.data());
   const size_t token_array_size =
       single_kanji_token_array_.size() / sizeof(uint32_t);
 
@@ -262,10 +262,10 @@ std::vector<std::string> SingleKanjiDictionary::LookupKanjiEntries(
 // original are stored in |variant_string_array_|, while strings of variant type
 // are stored in |variant_type_array_|.
 bool SingleKanjiDictionary::GenerateDescription(absl::string_view kanji_surface,
-                                                std::string *desc) const {
+                                                std::string* desc) const {
   DCHECK(desc);
-  const uint32_t *token_array =
-      reinterpret_cast<const uint32_t *>(variant_token_array_.data());
+  const uint32_t* token_array =
+      reinterpret_cast<const uint32_t*>(variant_token_array_.data());
   const size_t token_array_size =
       variant_token_array_.size() / sizeof(uint32_t);
 

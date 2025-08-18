@@ -47,66 +47,66 @@ namespace user_dictionary {
 class UserDictionarySessionHandler {
  public:
   UserDictionarySessionHandler() = default;
-  UserDictionarySessionHandler(const UserDictionarySessionHandler &) = delete;
-  UserDictionarySessionHandler &operator=(
-      const UserDictionarySessionHandler &) = delete;
+  UserDictionarySessionHandler(const UserDictionarySessionHandler&) = delete;
+  UserDictionarySessionHandler& operator=(const UserDictionarySessionHandler&) =
+      delete;
 
-  bool Evaluate(const UserDictionaryCommand &command,
-                UserDictionaryCommandStatus *status);
+  bool Evaluate(const UserDictionaryCommand& command,
+                UserDictionaryCommandStatus* status);
 
-  void NoOperation(const UserDictionaryCommand &command,
-                   UserDictionaryCommandStatus *status);
-  void ClearStorage(const UserDictionaryCommand &command,
-                    UserDictionaryCommandStatus *status);
+  void NoOperation(const UserDictionaryCommand& command,
+                   UserDictionaryCommandStatus* status);
+  void ClearStorage(const UserDictionaryCommand& command,
+                    UserDictionaryCommandStatus* status);
 
-  void CreateSession(const UserDictionaryCommand &command,
-                     UserDictionaryCommandStatus *status);
-  void DeleteSession(const UserDictionaryCommand &command,
-                     UserDictionaryCommandStatus *status);
+  void CreateSession(const UserDictionaryCommand& command,
+                     UserDictionaryCommandStatus* status);
+  void DeleteSession(const UserDictionaryCommand& command,
+                     UserDictionaryCommandStatus* status);
 
-  void SetDefaultDictionaryName(const UserDictionaryCommand &command,
-                                UserDictionaryCommandStatus *status);
+  void SetDefaultDictionaryName(const UserDictionaryCommand& command,
+                                UserDictionaryCommandStatus* status);
 
-  void CheckUndoability(const UserDictionaryCommand &command,
-                        UserDictionaryCommandStatus *status);
-  void Undo(const UserDictionaryCommand &command,
-            UserDictionaryCommandStatus *status);
+  void CheckUndoability(const UserDictionaryCommand& command,
+                        UserDictionaryCommandStatus* status);
+  void Undo(const UserDictionaryCommand& command,
+            UserDictionaryCommandStatus* status);
 
-  void Load(const UserDictionaryCommand &command,
-            UserDictionaryCommandStatus *status);
-  void Save(const UserDictionaryCommand &command,
-            UserDictionaryCommandStatus *status);
+  void Load(const UserDictionaryCommand& command,
+            UserDictionaryCommandStatus* status);
+  void Save(const UserDictionaryCommand& command,
+            UserDictionaryCommandStatus* status);
 
-  void GetUserDictionaryNameList(const UserDictionaryCommand &command,
-                                 UserDictionaryCommandStatus *status);
-  void GetEntrySize(const UserDictionaryCommand &command,
-                    UserDictionaryCommandStatus *status);
-  void GetEntries(const UserDictionaryCommand &command,
-                  UserDictionaryCommandStatus *status);
+  void GetUserDictionaryNameList(const UserDictionaryCommand& command,
+                                 UserDictionaryCommandStatus* status);
+  void GetEntrySize(const UserDictionaryCommand& command,
+                    UserDictionaryCommandStatus* status);
+  void GetEntries(const UserDictionaryCommand& command,
+                  UserDictionaryCommandStatus* status);
 
-  void CheckNewDictionaryAvailability(const UserDictionaryCommand &command,
-                                      UserDictionaryCommandStatus *status);
-  void CreateDictionary(const UserDictionaryCommand &command,
-                        UserDictionaryCommandStatus *status);
-  void DeleteDictionary(const UserDictionaryCommand &command,
-                        UserDictionaryCommandStatus *status);
-  void RenameDictionary(const UserDictionaryCommand &command,
-                        UserDictionaryCommandStatus *status);
+  void CheckNewDictionaryAvailability(const UserDictionaryCommand& command,
+                                      UserDictionaryCommandStatus* status);
+  void CreateDictionary(const UserDictionaryCommand& command,
+                        UserDictionaryCommandStatus* status);
+  void DeleteDictionary(const UserDictionaryCommand& command,
+                        UserDictionaryCommandStatus* status);
+  void RenameDictionary(const UserDictionaryCommand& command,
+                        UserDictionaryCommandStatus* status);
 
-  void CheckNewEntryAvailability(const UserDictionaryCommand &command,
-                                 UserDictionaryCommandStatus *status);
-  void AddEntry(const UserDictionaryCommand &command,
-                UserDictionaryCommandStatus *status);
-  void EditEntry(const UserDictionaryCommand &command,
-                 UserDictionaryCommandStatus *status);
-  void DeleteEntry(const UserDictionaryCommand &command,
-                   UserDictionaryCommandStatus *status);
+  void CheckNewEntryAvailability(const UserDictionaryCommand& command,
+                                 UserDictionaryCommandStatus* status);
+  void AddEntry(const UserDictionaryCommand& command,
+                UserDictionaryCommandStatus* status);
+  void EditEntry(const UserDictionaryCommand& command,
+                 UserDictionaryCommandStatus* status);
+  void DeleteEntry(const UserDictionaryCommand& command,
+                   UserDictionaryCommandStatus* status);
 
-  void ImportData(const UserDictionaryCommand &command,
-                  UserDictionaryCommandStatus *status);
+  void ImportData(const UserDictionaryCommand& command,
+                  UserDictionaryCommandStatus* status);
 
-  void GetStorage(const UserDictionaryCommand &command,
-                  UserDictionaryCommandStatus *status);
+  void GetStorage(const UserDictionaryCommand& command,
+                  UserDictionaryCommandStatus* status);
 
   void set_dictionary_path(absl::string_view dictionary_path) {
     strings::Assign(dictionary_path_, dictionary_path);
@@ -115,8 +115,8 @@ class UserDictionarySessionHandler {
  private:
   static constexpr uint64_t kInvalidSessionId = 0;
 
-  UserDictionarySession *GetSession(const UserDictionaryCommand &command,
-                                    UserDictionaryCommandStatus *status);
+  UserDictionarySession* GetSession(const UserDictionaryCommand& command,
+                                    UserDictionaryCommandStatus* status);
   uint64_t CreateNewSessionId() const;
 
   // As an interface, this class can hold multiple sessions,

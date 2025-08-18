@@ -50,7 +50,7 @@ class TestInputIterator
 
   bool IsAvailable() const override { return is_available_; }
 
-  bool Next(UserDictionaryImporter::RawEntry *entry) override {
+  bool Next(UserDictionaryImporter::RawEntry* entry) override {
     if (!is_available_) {
       return false;
     }
@@ -66,7 +66,7 @@ class TestInputIterator
   }
 
   void set_entries(
-      const std::vector<UserDictionaryImporter::RawEntry> *entries) {
+      const std::vector<UserDictionaryImporter::RawEntry>* entries) {
     entries_ = entries;
   }
 
@@ -75,7 +75,7 @@ class TestInputIterator
  public:
   int index_;
   bool is_available_;
-  const std::vector<UserDictionaryImporter::RawEntry> *entries_;
+  const std::vector<UserDictionaryImporter::RawEntry>* entries_;
 };
 
 }  // namespace
@@ -429,7 +429,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorDupTest) {
   UserDictionaryStorage::UserDictionary user_dic;
 
   {
-    UserDictionaryStorage::UserDictionaryEntry *entry = user_dic.add_entries();
+    UserDictionaryStorage::UserDictionaryEntry* entry = user_dic.add_entries();
     entry->set_key("aa");
     entry->set_value("aa");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);

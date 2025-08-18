@@ -55,34 +55,34 @@ class DictionaryImpl : public DictionaryInterface {
   // the owner reloads it.
   DictionaryImpl(std::unique_ptr<const DictionaryInterface> system_dictionary,
                  std::unique_ptr<const DictionaryInterface> value_dictionary,
-                 const UserDictionaryInterface &user_dictionary,
-                 const PosMatcher &pos_matcher);
+                 const UserDictionaryInterface& user_dictionary,
+                 const PosMatcher& pos_matcher);
 
-  DictionaryImpl(const DictionaryImpl &) = delete;
-  DictionaryImpl &operator=(const DictionaryImpl &) = delete;
+  DictionaryImpl(const DictionaryImpl&) = delete;
+  DictionaryImpl& operator=(const DictionaryImpl&) = delete;
 
   ~DictionaryImpl() override;
 
   bool HasKey(absl::string_view key) const override;
   bool HasValue(absl::string_view value) const override;
   void LookupPredictive(absl::string_view key,
-                        const ConversionRequest &conversion_request,
-                        Callback *callback) const override;
+                        const ConversionRequest& conversion_request,
+                        Callback* callback) const override;
   void LookupPrefix(absl::string_view key,
-                    const ConversionRequest &conversion_request,
-                    Callback *callback) const override;
+                    const ConversionRequest& conversion_request,
+                    Callback* callback) const override;
 
   void LookupExact(absl::string_view key,
-                   const ConversionRequest &conversion_request,
-                   Callback *callback) const override;
+                   const ConversionRequest& conversion_request,
+                   Callback* callback) const override;
 
   void LookupReverse(absl::string_view str,
-                     const ConversionRequest &conversion_request,
-                     Callback *callback) const override;
+                     const ConversionRequest& conversion_request,
+                     Callback* callback) const override;
 
   bool LookupComment(absl::string_view key, absl::string_view value,
-                     const ConversionRequest &conversion_request,
-                     std::string *comment) const override;
+                     const ConversionRequest& conversion_request,
+                     std::string* comment) const override;
   void PopulateReverseLookupCache(absl::string_view str) const override;
   void ClearReverseLookupCache() const override;
 
@@ -95,16 +95,16 @@ class DictionaryImpl : public DictionaryInterface {
   };
 
   // Used to check POS IDs.
-  const PosMatcher &pos_matcher_;
+  const PosMatcher& pos_matcher_;
 
   // Main three dictionaries.
   std::unique_ptr<const DictionaryInterface> system_dictionary_;
   std::unique_ptr<const DictionaryInterface> value_dictionary_;
-  const UserDictionaryInterface &user_dictionary_;
+  const UserDictionaryInterface& user_dictionary_;
 
   // Convenient container to handle the above three dictionaries as one
   // composite dictionary.
-  std::vector<const DictionaryInterface *> dics_;
+  std::vector<const DictionaryInterface*> dics_;
 };
 
 }  // namespace dictionary

@@ -79,7 +79,7 @@ std::pair<std::string, std::string> GetInputFileName(
       absl::StrSplit(input_file, ' ', absl::SkipWhitespace());
   std::vector<absl::string_view> system_dictionary_inputs,
       reading_correction_inputs;
-  for (const absl::string_view &field : fields) {
+  for (const absl::string_view& field : fields) {
     if (field.ends_with(kReadingCorrectionFile)) {
       reading_correction_inputs.push_back(field);
     } else {
@@ -93,7 +93,7 @@ std::pair<std::string, std::string> GetInputFileName(
 }  // namespace
 }  // namespace mozc
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::string system_dictionary_input, reading_correction_input;

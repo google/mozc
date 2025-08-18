@@ -60,7 +60,7 @@ class UserDictionarySessionTest : public testing::TestWithTempUserProfile {
 
   void ResetEntry(const absl::string_view key, const absl::string_view value,
                   const UserDictionary::PosType pos,
-                  UserDictionary::Entry *entry) {
+                  UserDictionary::Entry* entry) {
     entry->Clear();
     entry->set_key(std::string(key));
     entry->set_value(std::string(value));
@@ -106,11 +106,11 @@ TEST_F(UserDictionarySessionTest, DISABLED_HugeFileSave) {
 
   // Create huge dummy data.
   {
-    UserDictionaryStorage *storage = &session.mutable_storage()->GetProto();
+    UserDictionaryStorage* storage = &session.mutable_storage()->GetProto();
     for (int i = 0; i < 100; ++i) {
-      UserDictionary *dictionary = storage->add_dictionaries();
+      UserDictionary* dictionary = storage->add_dictionaries();
       for (int j = 0; j < 1000; ++j) {
-        UserDictionary::Entry *entry = dictionary->add_entries();
+        UserDictionary::Entry* entry = dictionary->add_entries();
         entry->set_key("dummy_key_data");
         entry->set_value("dummy_value_data");
         entry->set_pos(UserDictionary::NOUN);  // Set dummy data.
@@ -142,7 +142,7 @@ TEST_F(UserDictionarySessionTest, CreateDictionary) {
   ASSERT_EQ(session.CreateDictionary("user dictionary", &dictionary_id),
             UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
   {
-    const UserDictionaryStorage &storage = session.storage();
+    const UserDictionaryStorage& storage = session.storage();
     EXPECT_EQ(storage.dictionaries_size(), 1);
     EXPECT_EQ(storage.dictionaries(0).name(), "user dictionary");
     EXPECT_EQ(storage.dictionaries(0).id(), dictionary_id);
@@ -179,7 +179,7 @@ TEST_F(UserDictionarySessionTest, DeleteDictionary) {
   // Add dummy dictionary.
   constexpr uint64_t kDummyId = 10;
   {
-    UserDictionary *user_dictionary =
+    UserDictionary* user_dictionary =
         session.mutable_storage()->GetProto().add_dictionaries();
     user_dictionary->set_id(kDummyId);
   }
@@ -203,7 +203,7 @@ TEST_F(UserDictionarySessionTest, DeleteDictionaryWithEnsuringNonEmptyStorage) {
   // Add dummy dictionary.
   constexpr uint64_t kDummyId = 10;
   {
-    UserDictionary *user_dictionary =
+    UserDictionary* user_dictionary =
         session.mutable_storage()->GetProto().add_dictionaries();
     user_dictionary->set_id(kDummyId);
   }

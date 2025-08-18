@@ -62,25 +62,40 @@ def OutputUserPosData(user_pos_data, output_token_array, output_string_array):
         f.write(struct.pack('<H', conjugation_id))
 
   serialized_string_array_builder.SerializeToFile(
-      sorted(string_index.keys()), output_string_array)
+      sorted(string_index.keys()), output_string_array
+  )
 
 
 def ParseOptions():
   parser = optparse.OptionParser()
   # Input: id.def, special_pos.def, user_pos.def, cforms.def
   parser.add_option('--id_file', dest='id_file', help='Path to id.def.')
-  parser.add_option('--special_pos_file', dest='special_pos_file',
-                    help='Path to special_pos.def')
-  parser.add_option('--cforms_file', dest='cforms_file',
-                    help='Path to cforms.def')
-  parser.add_option('--user_pos_file', dest='user_pos_file',
-                    help='Path to user_pos,def')
-  parser.add_option('--output_token_array', dest='output_token_array',
-                    help='Path to output token array binary data')
-  parser.add_option('--output_string_array', dest='output_string_array',
-                    help='Path to output string array data')
-  parser.add_option('--output_pos_list', dest='output_pos_list',
-                    help='Path to output POS list binary file')
+  parser.add_option(
+      '--special_pos_file',
+      dest='special_pos_file',
+      help='Path to special_pos.def',
+  )
+  parser.add_option(
+      '--cforms_file', dest='cforms_file', help='Path to cforms.def'
+  )
+  parser.add_option(
+      '--user_pos_file', dest='user_pos_file', help='Path to user_pos,def'
+  )
+  parser.add_option(
+      '--output_token_array',
+      dest='output_token_array',
+      help='Path to output token array binary data',
+  )
+  parser.add_option(
+      '--output_string_array',
+      dest='output_string_array',
+      help='Path to output string array data',
+  )
+  parser.add_option(
+      '--output_pos_list',
+      dest='output_pos_list',
+      help='Path to output POS list binary file',
+  )
   return parser.parse_args()[0]
 
 
@@ -93,12 +108,14 @@ def main():
   user_pos = pos_util.UserPos(pos_database, inflection_map)
   user_pos.Parse(options.user_pos_file)
 
-  OutputUserPosData(user_pos.data,
-                    options.output_token_array, options.output_string_array)
+  OutputUserPosData(
+      user_pos.data, options.output_token_array, options.output_string_array
+  )
 
   if options.output_pos_list:
     serialized_string_array_builder.SerializeToFile(
-        [pos for (pos, _) in user_pos.data], options.output_pos_list)
+        [pos for (pos, _) in user_pos.data], options.output_pos_list
+    )
 
 
 if __name__ == '__main__':

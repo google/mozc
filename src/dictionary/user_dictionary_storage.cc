@@ -113,7 +113,7 @@ absl::Status UserDictionaryStorage::Load() {
 
   // Check dictionary id here. if id is 0, assign random ID.
   for (int i = 0; i < proto_.dictionaries_size(); ++i) {
-    const UserDictionary &dict = proto_.dictionaries(i);
+    const UserDictionary& dict = proto_.dictionaries(i);
     if (dict.id() == 0) {
       proto_.mutable_dictionaries(i)->set_id(
           UserDictionaryUtil::CreateNewDictionaryId(proto_));
@@ -204,9 +204,9 @@ absl::Status UserDictionaryStorage::ExportDictionary(
         absl::StrCat("Cannot open export file: ", filename));
   }
 
-  const UserDictionary &dic = proto_.dictionaries(index);
+  const UserDictionary& dic = proto_.dictionaries(index);
   for (size_t i = 0; i < dic.entries_size(); ++i) {
-    const UserDictionaryEntry &entry = dic.entries(i);
+    const UserDictionaryEntry& entry = dic.entries(i);
     ofs << entry.key() << "\t" << entry.value() << "\t"
         << UserDictionaryUtil::GetStringPosType(entry.pos()) << "\t"
         << entry.comment() << std::endl;
@@ -273,7 +273,7 @@ absl::Status UserDictionaryStorage::RenameDictionary(
     return status;
   }
 
-  UserDictionary *dic = GetUserDictionary(dic_id);
+  UserDictionary* dic = GetUserDictionary(dic_id);
   if (!dic) {
     return absl::Status(static_cast<absl::StatusCode>(INVALID_DICTIONARY_ID),
                         absl::StrCat("Invalid dictionary id: ", dic_id));
@@ -312,7 +312,7 @@ absl::StatusOr<uint64_t> UserDictionaryStorage::GetUserDictionaryId(
       absl::StrCat("Dictionary id is not found for ", dic_name));
 }
 
-user_dictionary::UserDictionary *UserDictionaryStorage::GetUserDictionary(
+user_dictionary::UserDictionary* UserDictionaryStorage::GetUserDictionary(
     uint64_t dic_id) {
   return UserDictionaryUtil::GetMutableUserDictionaryById(&proto_, dic_id);
 }

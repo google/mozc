@@ -76,18 +76,18 @@ class SystemDictionary : public DictionaryInterface {
     // Creates Builder from filename
     explicit Builder(absl::string_view filename);
     // Creates Builder from image
-    Builder(const char *ptr, int len);
-    Builder(const Builder &) = delete;
-    Builder &operator=(const Builder &) = delete;
+    Builder(const char* ptr, int len);
+    Builder(const Builder&) = delete;
+    Builder& operator=(const Builder&) = delete;
     ~Builder() = default;
 
     // Sets options (default: NONE)
-    Builder &SetOptions(Options options);
+    Builder& SetOptions(Options options);
 
     // Sets codec (default: nullptr)
     // Uses default codec if this is nullptr
     // Doesn't take the ownership of |codec|.
-    Builder &SetCodec(const SystemDictionaryCodecInterface *codec);
+    Builder& SetCodec(const SystemDictionaryCodecInterface* codec);
 
     // Builds and returns system dictionary.
     absl::StatusOr<std::unique_ptr<SystemDictionary>> Build();
@@ -99,9 +99,9 @@ class SystemDictionary : public DictionaryInterface {
         IMAGE,
       };
 
-      Specification(InputType t, absl::string_view fn, const char *p, int l,
-                    Options o, const SystemDictionaryCodecInterface *codec,
-                    const DictionaryFileCodecInterface *file_codec)
+      Specification(InputType t, absl::string_view fn, const char* p, int l,
+                    Options o, const SystemDictionaryCodecInterface* codec,
+                    const DictionaryFileCodecInterface* file_codec)
           : type(t),
             filename(fn),
             ptr(p),
@@ -116,43 +116,43 @@ class SystemDictionary : public DictionaryInterface {
       const std::string filename;
 
       // For InputType::IMAGE
-      const char *ptr;
+      const char* ptr;
       const int len;
 
       Options options;
-      const SystemDictionaryCodecInterface *codec;
-      const DictionaryFileCodecInterface *file_codec;
+      const SystemDictionaryCodecInterface* codec;
+      const DictionaryFileCodecInterface* file_codec;
     };
 
     std::unique_ptr<Specification> spec_;
   };
 
-  SystemDictionary(const SystemDictionary &) = delete;
-  SystemDictionary &operator=(const SystemDictionary &) = delete;
+  SystemDictionary(const SystemDictionary&) = delete;
+  SystemDictionary& operator=(const SystemDictionary&) = delete;
 
   ~SystemDictionary() override;
 
-  const storage::louds::LoudsTrie &value_trie() const { return value_trie_; }
+  const storage::louds::LoudsTrie& value_trie() const { return value_trie_; }
 
   // Implementation of DictionaryInterface.
   bool HasKey(absl::string_view key) const override;
   bool HasValue(absl::string_view value) const override;
 
   void LookupPredictive(absl::string_view key,
-                        const ConversionRequest &conversion_request,
-                        Callback *callback) const override;
+                        const ConversionRequest& conversion_request,
+                        Callback* callback) const override;
 
   void LookupPrefix(absl::string_view key,
-                    const ConversionRequest &conversion_request,
-                    Callback *callback) const override;
+                    const ConversionRequest& conversion_request,
+                    Callback* callback) const override;
 
   void LookupExact(absl::string_view key,
-                   const ConversionRequest &conversion_request,
-                   Callback *callback) const override;
+                   const ConversionRequest& conversion_request,
+                   Callback* callback) const override;
 
   void LookupReverse(absl::string_view str,
-                     const ConversionRequest &conversion_request,
-                     Callback *callback) const override;
+                     const ConversionRequest& conversion_request,
+                     Callback* callback) const override;
 
   void PopulateReverseLookupCache(absl::string_view str) const override;
   void ClearReverseLookupCache() const override;
@@ -162,38 +162,38 @@ class SystemDictionary : public DictionaryInterface {
   class ReverseLookupIndex;
   struct PredictiveLookupSearchState;
 
-  SystemDictionary(const SystemDictionaryCodecInterface *codec,
-                   const DictionaryFileCodecInterface *file_codec);
+  SystemDictionary(const SystemDictionaryCodecInterface* codec,
+                   const DictionaryFileCodecInterface* file_codec);
 
   bool OpenDictionaryFile(bool enable_reverse_lookup_index);
 
   void RegisterReverseLookupTokensForT13N(absl::string_view value,
-                                          Callback *callback) const;
+                                          Callback* callback) const;
   void RegisterReverseLookupTokensForValue(absl::string_view value,
-                                           Callback *callback) const;
-  void ScanTokens(const absl::btree_set<int> &id_set,
-                  ReverseLookupCache *cache) const;
-  void RegisterReverseLookupResults(const absl::btree_set<int> &id_set,
-                                    const ReverseLookupCache &cache,
-                                    Callback *callback) const;
+                                           Callback* callback) const;
+  void ScanTokens(const absl::btree_set<int>& id_set,
+                  ReverseLookupCache* cache) const;
+  void RegisterReverseLookupResults(const absl::btree_set<int>& id_set,
+                                    const ReverseLookupCache& cache,
+                                    Callback* callback) const;
   void InitReverseLookupIndex();
 
   Callback::ResultType LookupPrefixWithKeyExpansionImpl(
-      const char *key, absl::string_view encoded_key,
-      const KeyExpansionTable &table, Callback *callback,
+      const char* key, absl::string_view encoded_key,
+      const KeyExpansionTable& table, Callback* callback,
       storage::louds::LoudsTrie::Node node,
       absl::string_view::size_type key_pos, int num_expanded,
-      char *actual_key_buffer, std::string *actual_prefix) const;
+      char* actual_key_buffer, std::string* actual_prefix) const;
 
   void CollectPredictiveNodesInBfsOrder(
-      absl::string_view encoded_key, const KeyExpansionTable &table,
-      size_t limit, std::vector<PredictiveLookupSearchState> *result) const;
+      absl::string_view encoded_key, const KeyExpansionTable& table,
+      size_t limit, std::vector<PredictiveLookupSearchState>* result) const;
 
   storage::louds::LoudsTrie key_trie_;
   storage::louds::LoudsTrie value_trie_;
   storage::louds::BitVectorBasedArray token_array_;
-  const uint32_t *frequent_pos_;
-  const SystemDictionaryCodecInterface *codec_;
+  const uint32_t* frequent_pos_;
+  const SystemDictionaryCodecInterface* codec_;
   KeyExpansionTable hiragana_expansion_table_;
   std::unique_ptr<DictionaryFile> dictionary_file_;
   mutable AtomicSharedPtr<ReverseLookupCache> reverse_lookup_cache_;

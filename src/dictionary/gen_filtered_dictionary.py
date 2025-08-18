@@ -49,7 +49,7 @@ import argparse
 import re
 
 
-class Dictionary():
+class Dictionary:
   """Class for dictionary0*.txt."""
 
   def __init__(self):

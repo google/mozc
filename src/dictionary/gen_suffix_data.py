@@ -42,11 +42,13 @@ def _ParseOptions():
   parser.add_option(
       '--output_key_array',
       dest='output_key_array',
-      help='Output serialized string array for keys')
+      help='Output serialized string array for keys',
+  )
   parser.add_option(
       '--output_value_array',
       dest='output_value_array',
-      help='Output serialized string array for values')
+      help='Output serialized string array for values',
+  )
   parser.add_option(
       '--output_token_array',
       dest='output_token_array',
@@ -85,11 +87,13 @@ def main():
 
   # Write keys to serialized string array.
   serialized_string_array_builder.SerializeToFile(
-      list(entry[0] for entry in result), opts.output_key_array)
+      list(entry[0] for entry in result), opts.output_key_array
+  )
 
   # Write values to serialized string array.
   serialized_string_array_builder.SerializeToFile(
-      list(entry[1] for entry in result), opts.output_value_array)
+      list(entry[1] for entry in result), opts.output_value_array
+  )
 
   # Write a sequence of (lid, rid, cost) to uint32_t array:
   #   {lid[0], rid[0], cost[0], lid[1], rid[1], cost[1], ...}

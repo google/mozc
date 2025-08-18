@@ -74,7 +74,7 @@ namespace dictionary {
 namespace {
 
 struct TokenGreaterThan {
-  bool operator()(const TokenInfo &lhs, const TokenInfo &rhs) const {
+  bool operator()(const TokenInfo& lhs, const TokenInfo& rhs) const {
     if (lhs.token->lid != rhs.token->lid) {
       return lhs.token->lid > rhs.token->lid;
     }
@@ -88,8 +88,8 @@ struct TokenGreaterThan {
   }
 };
 
-void WriteSectionToFile(const DictionaryFileSection &section,
-                        const std::string &filename) {
+void WriteSectionToFile(const DictionaryFileSection& section,
+                        const std::string& filename) {
   if (absl::Status s = FileUtil::SetContents(
           filename, absl::string_view(section.ptr, section.len));
       !s.ok()) {
@@ -101,16 +101,16 @@ void WriteSectionToFile(const DictionaryFileSection &section,
 
 void SystemDictionaryBuilder::BuildFromTokens(
     absl::Span<const std::unique_ptr<Token>> tokens) {
-  std::vector<Token *> ptrs;
+  std::vector<Token*> ptrs;
   ptrs.reserve(tokens.size());
-  for (const std::unique_ptr<Token> &token : tokens) {
+  for (const std::unique_ptr<Token>& token : tokens) {
     ptrs.push_back(token.get());
   }
   BuildFromTokensInternal(std::move(ptrs));
 }
 
 void SystemDictionaryBuilder::BuildFromTokensInternal(
-    std::vector<Token *> tokens) {
+    std::vector<Token*> tokens) {
   KeyInfoList key_info_list = ReadTokens(std::move(tokens));
 
   BuildFrequentPos(key_info_list);
@@ -128,14 +128,14 @@ void SystemDictionaryBuilder::BuildFromTokensInternal(
 }
 
 void SystemDictionaryBuilder::WriteToFile(
-    const std::string &output_file) const {
+    const std::string& output_file) const {
   OutputFileStream ofs(output_file, std::ios::binary | std::ios::out);
   WriteToStream(output_file, &ofs);
 }
 
 void SystemDictionaryBuilder::WriteToStream(
     const absl::string_view intermediate_output_file_base_path,
-    std::ostream *output_stream) const {
+    std::ostream* output_stream) const {
   // Memory images of each section
   std::vector<DictionaryFileSection> sections;
   DictionaryFileSection value_trie_section(
@@ -159,7 +159,7 @@ void SystemDictionaryBuilder::WriteToStream(
     frequent_pos_array[i->second] = i->first;
   }
   DictionaryFileSection frequent_pos_section(
-      reinterpret_cast<const char *>(frequent_pos_array),
+      reinterpret_cast<const char*>(frequent_pos_array),
       sizeof frequent_pos_array,
       file_codec_->GetSectionName(codec_->GetSectionNameForPos()));
   sections.push_back(frequent_pos_section);
@@ -187,7 +187,7 @@ uint32_t GetCombinedPos(uint16_t lid, uint16_t rid) {
   return (lid << 16) | rid;
 }
 
-TokenInfo::ValueType GetValueType(const Token *token) {
+TokenInfo::ValueType GetValueType(const Token* token) {
   if (token->value == token->key) {
     return TokenInfo::AS_IS_HIRAGANA;
   }
@@ -198,15 +198,15 @@ TokenInfo::ValueType GetValueType(const Token *token) {
   return TokenInfo::DEFAULT_VALUE;
 }
 
-bool HasHomonymsInSamePos(const SystemDictionaryBuilder::KeyInfo &key_info) {
+bool HasHomonymsInSamePos(const SystemDictionaryBuilder::KeyInfo& key_info) {
   // Early exit path mainly for performance.
   if (key_info.tokens.size() == 1) {
     return false;
   }
 
   absl::flat_hash_set<uint32_t> seen;
-  for (const TokenInfo &token_info : key_info.tokens) {
-    const Token *token = token_info.token;
+  for (const TokenInfo& token_info : key_info.tokens) {
+    const Token* token = token_info.token;
     const uint32_t pos = GetCombinedPos(token->lid, token->rid);
     if (!seen.insert(pos).second) {
       // Insertion failed, which means we already have |pos|.
@@ -217,9 +217,9 @@ bool HasHomonymsInSamePos(const SystemDictionaryBuilder::KeyInfo &key_info) {
 }
 
 bool HasHeterophones(
-    const SystemDictionaryBuilder::KeyInfo &key_info,
-    const absl::flat_hash_set<absl::string_view> &heteronym_values) {
-  for (const TokenInfo &token_info : key_info.tokens) {
+    const SystemDictionaryBuilder::KeyInfo& key_info,
+    const absl::flat_hash_set<absl::string_view>& heteronym_values) {
+  for (const TokenInfo& token_info : key_info.tokens) {
     if (heteronym_values.contains(token_info.token->value)) {
       return true;
     }
@@ -230,9 +230,9 @@ bool HasHeterophones(
 }  // namespace
 
 SystemDictionaryBuilder::KeyInfoList SystemDictionaryBuilder::ReadTokens(
-    std::vector<Token *> tokens) const {
+    std::vector<Token*> tokens) const {
   // Check if all the key values are nonempty.
-  for (const Token *token : tokens) {
+  for (const Token* token : tokens) {
     CHECK(!token->key.empty()) << "empty key string in input";
     CHECK(!token->value.empty()) << "empty value string in input";
   }
@@ -246,7 +246,7 @@ SystemDictionaryBuilder::KeyInfoList SystemDictionaryBuilder::ReadTokens(
   // Step 1.
   std::stable_sort(
       tokens.begin(), tokens.end(),
-      [](const Token *l, const Token *r) { return l->key < r->key; });
+      [](const Token* l, const Token* r) { return l->key < r->key; });
 
   // Step 2.
   KeyInfoList key_info_list;
@@ -255,7 +255,7 @@ SystemDictionaryBuilder::KeyInfoList SystemDictionaryBuilder::ReadTokens(
   }
   KeyInfo last_key_info;
   last_key_info.key = tokens.front()->key;
-  for (Token *token : tokens) {
+  for (Token* token : tokens) {
     if (last_key_info.key != token->key) {
       key_info_list.push_back(std::move(last_key_info));
       last_key_info = KeyInfo();
@@ -269,14 +269,14 @@ SystemDictionaryBuilder::KeyInfoList SystemDictionaryBuilder::ReadTokens(
 }
 
 void SystemDictionaryBuilder::BuildFrequentPos(
-    const KeyInfoList &key_info_list) {
+    const KeyInfoList& key_info_list) {
   // Calculate the frequency of each POS.
   // TODO(toshiyuki): It might be better to count frequency
   // with considering same_as_prev_pos.
   absl::btree_map<uint32_t, int> pos_map;
-  for (const KeyInfo &key_info : key_info_list) {
-    for (const TokenInfo &token_info : key_info.tokens) {
-      const Token *token = token_info.token;
+  for (const KeyInfo& key_info : key_info_list) {
+    for (const TokenInfo& token_info : key_info.tokens) {
+      const Token* token = token_info.token;
       pos_map[GetCombinedPos(token->lid, token->rid)]++;
     }
   }
@@ -316,9 +316,9 @@ void SystemDictionaryBuilder::BuildFrequentPos(
                << " tokens";
 }
 
-void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList &key_info_list) {
-  for (const KeyInfo &key_info : key_info_list) {
-    for (const TokenInfo &token_info : key_info.tokens) {
+void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList& key_info_list) {
+  for (const KeyInfo& key_info : key_info_list) {
+    for (const TokenInfo& token_info : key_info.tokens) {
       if (token_info.value_type == TokenInfo::AS_IS_HIRAGANA ||
           token_info.value_type == TokenInfo::AS_IS_KATAKANA) {
         // These values will be stored in token array as flags
@@ -332,9 +332,9 @@ void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList &key_info_list) {
   value_trie_builder_.Build();
 }
 
-void SystemDictionaryBuilder::SetIdForValue(KeyInfoList *key_info_list) const {
-  for (KeyInfo &key_info : *key_info_list) {
-    for (TokenInfo &token_info : key_info.tokens) {
+void SystemDictionaryBuilder::SetIdForValue(KeyInfoList* key_info_list) const {
+  for (KeyInfo& key_info : *key_info_list) {
+    for (TokenInfo& token_info : key_info.tokens) {
       std::string value_str;
       codec_->EncodeValue(token_info.token->value, &value_str);
       token_info.id_in_value_trie = value_trie_builder_.GetId(value_str);
@@ -342,22 +342,22 @@ void SystemDictionaryBuilder::SetIdForValue(KeyInfoList *key_info_list) const {
   }
 }
 
-void SystemDictionaryBuilder::SortTokenInfo(KeyInfoList *key_info_list) const {
-  for (KeyInfo &key_info : *key_info_list) {
+void SystemDictionaryBuilder::SortTokenInfo(KeyInfoList* key_info_list) const {
+  for (KeyInfo& key_info : *key_info_list) {
     std::stable_sort(key_info.tokens.begin(), key_info.tokens.end(),
                      TokenGreaterThan());
   }
 }
 
-void SystemDictionaryBuilder::SetCostType(KeyInfoList *key_info_list) const {
+void SystemDictionaryBuilder::SetCostType(KeyInfoList* key_info_list) const {
   // Values that have multiple keys.
   absl::flat_hash_set<absl::string_view> heterophone_values;
   {
     // value → reading
     absl::flat_hash_map<absl::string_view, absl::string_view> seen_reading_map;
-    for (const KeyInfo &key_info : *key_info_list) {
-      for (const TokenInfo &token_info : key_info.tokens) {
-        const Token *token = token_info.token;
+    for (const KeyInfo& key_info : *key_info_list) {
+      for (const TokenInfo& token_info : key_info.tokens) {
+        const Token* token = token_info.token;
         if (heterophone_values.contains(token->value)) {
           continue;
         }
@@ -376,7 +376,7 @@ void SystemDictionaryBuilder::SetCostType(KeyInfoList *key_info_list) const {
 
   const int min_key_len =
       absl::GetFlag(FLAGS_min_key_length_to_use_small_cost_encoding);
-  for (KeyInfo &key_info : *key_info_list) {
+  for (KeyInfo& key_info : *key_info_list) {
     if (Util::CharsLen(key_info.key) < min_key_len) {
       // Do not use small cost encoding for short keys.
       continue;
@@ -389,7 +389,7 @@ void SystemDictionaryBuilder::SetCostType(KeyInfoList *key_info_list) const {
       continue;
     }
 
-    for (TokenInfo &token_info : key_info.tokens) {
+    for (TokenInfo& token_info : key_info.tokens) {
       if (token_info.token->cost < 0x100) {
         // Small cost encoding ignores lower 8 bits.
         continue;
@@ -399,10 +399,10 @@ void SystemDictionaryBuilder::SetCostType(KeyInfoList *key_info_list) const {
   }
 }
 
-void SystemDictionaryBuilder::SetPosType(KeyInfoList *key_info_list) const {
-  for (KeyInfo &key_info : *key_info_list) {
+void SystemDictionaryBuilder::SetPosType(KeyInfoList* key_info_list) const {
+  for (KeyInfo& key_info : *key_info_list) {
     for (size_t i = 0; i < key_info.tokens.size(); ++i) {
-      TokenInfo *token_info = &(key_info.tokens[i]);
+      TokenInfo* token_info = &(key_info.tokens[i]);
       const uint32_t pos =
           GetCombinedPos(token_info->token->lid, token_info->token->rid);
       if (auto iter = frequent_pos_.find(pos); iter != frequent_pos_.end()) {
@@ -410,7 +410,7 @@ void SystemDictionaryBuilder::SetPosType(KeyInfoList *key_info_list) const {
         token_info->id_in_frequent_pos_map = iter->second;
       }
       if (i >= 1) {
-        const TokenInfo &prev_token_info = key_info.tokens[i - 1];
+        const TokenInfo& prev_token_info = key_info.tokens[i - 1];
         const uint32_t prev_pos = GetCombinedPos(prev_token_info.token->lid,
                                                  prev_token_info.token->rid);
         if (prev_pos == pos) {
@@ -422,11 +422,11 @@ void SystemDictionaryBuilder::SetPosType(KeyInfoList *key_info_list) const {
   }
 }
 
-void SystemDictionaryBuilder::SetValueType(KeyInfoList *key_info_list) const {
-  for (KeyInfo &key_info : *key_info_list) {
+void SystemDictionaryBuilder::SetValueType(KeyInfoList* key_info_list) const {
+  for (KeyInfo& key_info : *key_info_list) {
     for (size_t i = 1; i < key_info.tokens.size(); ++i) {
-      const TokenInfo &prev_token_info = key_info.tokens[i - 1];
-      TokenInfo *token_info = &(key_info.tokens[i]);
+      const TokenInfo& prev_token_info = key_info.tokens[i - 1];
+      TokenInfo* token_info = &(key_info.tokens[i]);
       if (token_info->value_type != TokenInfo::AS_IS_HIRAGANA &&
           token_info->value_type != TokenInfo::AS_IS_KATAKANA &&
           (token_info->token->value == prev_token_info.token->value)) {
@@ -436,8 +436,8 @@ void SystemDictionaryBuilder::SetValueType(KeyInfoList *key_info_list) const {
   }
 }
 
-void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoList &key_info_list) {
-  for (const KeyInfo &key_info : key_info_list) {
+void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoList& key_info_list) {
+  for (const KeyInfo& key_info : key_info_list) {
     std::string key_str;
     codec_->EncodeKey(key_info.key, &key_str);
     key_trie_builder_.Add(key_str);
@@ -445,8 +445,8 @@ void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoList &key_info_list) {
   key_trie_builder_.Build();
 }
 
-void SystemDictionaryBuilder::SetIdForKey(KeyInfoList *key_info_list) const {
-  for (KeyInfo &key_info : *key_info_list) {
+void SystemDictionaryBuilder::SetIdForKey(KeyInfoList* key_info_list) const {
+  for (KeyInfo& key_info : *key_info_list) {
     std::string key_str;
     codec_->EncodeKey(key_info.key, &key_str);
     key_info.id_in_key_trie = key_trie_builder_.GetId(key_str);
@@ -454,18 +454,18 @@ void SystemDictionaryBuilder::SetIdForKey(KeyInfoList *key_info_list) const {
 }
 
 void SystemDictionaryBuilder::BuildTokenArray(
-    const KeyInfoList &key_info_list) {
+    const KeyInfoList& key_info_list) {
   // Here we make a reverse lookup table as follows:
   //   |key_info_list[X].id_in_key_trie| -> |key_info_list[X]|
   // assuming |key_info_list[X].id_in_key_trie| is unique and successive.
   {
-    std::vector<const KeyInfo *> id_to_keyinfo_table(key_info_list.size());
-    for (const KeyInfo &key_info : key_info_list) {
+    std::vector<const KeyInfo*> id_to_keyinfo_table(key_info_list.size());
+    for (const KeyInfo& key_info : key_info_list) {
       const int id = key_info.id_in_key_trie;
       id_to_keyinfo_table[id] = &key_info;
     }
 
-    for (const KeyInfo *key_info : id_to_keyinfo_table) {
+    for (const KeyInfo* key_info : id_to_keyinfo_table) {
       std::string tokens_str;
       codec_->EncodeTokens(key_info->tokens, &tokens_str);
       token_array_builder_.Add(tokens_str);

@@ -46,10 +46,10 @@ struct TokenInfo;
 class SystemDictionaryCodecInterface {
  public:
   SystemDictionaryCodecInterface() = default;
-  SystemDictionaryCodecInterface(const SystemDictionaryCodecInterface &) =
+  SystemDictionaryCodecInterface(const SystemDictionaryCodecInterface&) =
       delete;
-  SystemDictionaryCodecInterface &operator=(
-      const SystemDictionaryCodecInterface &) = delete;
+  SystemDictionaryCodecInterface& operator=(
+      const SystemDictionaryCodecInterface&) = delete;
   virtual ~SystemDictionaryCodecInterface() = default;
 
   // Get section name functions are expected not to be called so often
@@ -67,16 +67,16 @@ class SystemDictionaryCodecInterface {
   virtual std::string GetSectionNameForPos() const = 0;
 
   // Encode value(word) string
-  virtual void EncodeValue(absl::string_view src, std::string *dst) const = 0;
+  virtual void EncodeValue(absl::string_view src, std::string* dst) const = 0;
 
   // Decode value(word) string
-  virtual void DecodeValue(absl::string_view src, std::string *dst) const = 0;
+  virtual void DecodeValue(absl::string_view src, std::string* dst) const = 0;
 
   // Encode key(reading) string
-  virtual void EncodeKey(absl::string_view src, std::string *dst) const = 0;
+  virtual void EncodeKey(absl::string_view src, std::string* dst) const = 0;
 
   // Decode key(reading) string
-  virtual void DecodeKey(absl::string_view src, std::string *dst) const = 0;
+  virtual void DecodeKey(absl::string_view src, std::string* dst) const = 0;
 
   // Returns the length of encoded key string.
   virtual size_t GetEncodedKeyLength(absl::string_view src) const = 0;
@@ -86,23 +86,23 @@ class SystemDictionaryCodecInterface {
 
   // Encode tokens(word info) for a certain key
   virtual void EncodeTokens(absl::Span<const TokenInfo> tokens,
-                            std::string *output) const = 0;
+                            std::string* output) const = 0;
 
   // Decode token(word info) for a certain key
-  virtual void DecodeTokens(const uint8_t *ptr,
-                            std::vector<TokenInfo> *tokens) const = 0;
+  virtual void DecodeTokens(const uint8_t* ptr,
+                            std::vector<TokenInfo>* tokens) const = 0;
 
   // Decode a token. If the token is the last one, returns false,
   // otherwise true.
-  virtual bool DecodeToken(const uint8_t *ptr, TokenInfo *token_info,
-                           int *read_bytes) const = 0;
+  virtual bool DecodeToken(const uint8_t* ptr, TokenInfo* token_info,
+                           int* read_bytes) const = 0;
 
   // Read a token for reverse lookup
   // If the token have value id, assign it to |value_id|
   // otherwise assign -1
   // Return false if a token is the last token for a certain key
-  virtual bool ReadTokenForReverseLookup(const uint8_t *ptr, int *value_id,
-                                         int *read_bytes) const = 0;
+  virtual bool ReadTokenForReverseLookup(const uint8_t* ptr, int* value_id,
+                                         int* read_bytes) const = 0;
 
   // Return termination flag for tokens
   virtual uint8_t GetTokensTerminationFlag() const = 0;
@@ -111,11 +111,11 @@ class SystemDictionaryCodecInterface {
 class SystemDictionaryCodecFactory {
  public:
   SystemDictionaryCodecFactory() = delete;
-  SystemDictionaryCodecFactory(const SystemDictionaryCodecFactory &) = delete;
-  SystemDictionaryCodecFactory &operator=(
-      const SystemDictionaryCodecFactory &) = delete;
-  static SystemDictionaryCodecInterface *GetCodec();
-  static void SetCodec(SystemDictionaryCodecInterface *codec);
+  SystemDictionaryCodecFactory(const SystemDictionaryCodecFactory&) = delete;
+  SystemDictionaryCodecFactory& operator=(const SystemDictionaryCodecFactory&) =
+      delete;
+  static SystemDictionaryCodecInterface* GetCodec();
+  static void SetCodec(SystemDictionaryCodecInterface* codec);
 };
 
 }  // namespace dictionary

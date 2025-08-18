@@ -51,23 +51,23 @@ class UserDictionarySession {
   class UndoCommand {
    public:
     UndoCommand() = default;
-    UndoCommand(const UndoCommand &) = delete;
-    UndoCommand &operator=(const UndoCommand &) = delete;
+    UndoCommand(const UndoCommand&) = delete;
+    UndoCommand& operator=(const UndoCommand&) = delete;
     virtual ~UndoCommand() = default;
 
-    virtual bool RunUndo(mozc::UserDictionaryStorage *storage) = 0;
+    virtual bool RunUndo(mozc::UserDictionaryStorage* storage) = 0;
   };
 
-  explicit UserDictionarySession(const std::string &filepath);
-  UserDictionarySession(const UserDictionarySession &) = delete;
-  UserDictionarySession &operator=(const UserDictionarySession &) = delete;
+  explicit UserDictionarySession(const std::string& filepath);
+  UserDictionarySession(const UserDictionarySession&) = delete;
+  UserDictionarySession& operator=(const UserDictionarySession&) = delete;
 
-  const UserDictionaryStorage &storage() const;
+  const UserDictionaryStorage& storage() const;
 
   // This method is introduced for backword compatibility to make the change
   // step-by-step.
   // TODO(hidehiko): remove this method when the refactoring is done.
-  mozc::UserDictionaryStorage *mutable_storage();
+  mozc::UserDictionaryStorage* mutable_storage();
 
   // Sets the default dictionary name.
   UserDictionaryCommandStatus::Status SetDefaultDictionaryName(
@@ -90,7 +90,7 @@ class UserDictionarySession {
 
   // Creates a new dictionary.
   UserDictionaryCommandStatus::Status CreateDictionary(
-      absl::string_view dictionary_name, uint64_t *new_dictionary_id);
+      absl::string_view dictionary_name, uint64_t* new_dictionary_id);
 
   // Deletes the dictionary of the given dictionary_id.
   UserDictionaryCommandStatus::Status DeleteDictionary(uint64_t dictionary_id);
@@ -108,12 +108,12 @@ class UserDictionarySession {
   // Adds an entry with given key, value and pos_type to the dictionary
   // specified by the dicitonary_id.
   UserDictionaryCommandStatus::Status AddEntry(
-      uint64_t dictionary_id, const UserDictionary::Entry &entry);
+      uint64_t dictionary_id, const UserDictionary::Entry& entry);
 
   // Edits the entry at "index" in the dictionary specified by dictionary_id
   // to the given key, value and pos_type.
   UserDictionaryCommandStatus::Status EditEntry(
-      uint64_t dictionary_id, int index, const UserDictionary::Entry &entry);
+      uint64_t dictionary_id, int index, const UserDictionary::Entry& entry);
 
   // Deletes the entries in the dictionary specified by dictionary_id.
   UserDictionaryCommandStatus::Status DeleteEntry(uint64_t dictionary_id,
@@ -126,7 +126,7 @@ class UserDictionarySession {
   // Imports entries from the text data into a newly created dictionary.
   UserDictionaryCommandStatus::Status ImportToNewDictionaryFromString(
       absl::string_view dictionary_name, absl::string_view data,
-      uint64_t *new_dictionary_id);
+      uint64_t* new_dictionary_id);
 
   // Clears all the dictionaries and undo history (doesn't save to the file).
   // This operation is not undoable.
@@ -142,7 +142,7 @@ class UserDictionarySession {
   UserDictionaryCommandStatus::Status DeleteDictionaryInternal(
       uint64_t dictionary_id, bool ensure_non_empty_storage);
   UserDictionaryCommandStatus::Status ImportFromStringInternal(
-      UserDictionary *dictionary, absl::string_view data);
+      UserDictionary* dictionary, absl::string_view data);
 
   void ClearUndoHistory();
   void AddUndoCommand(std::unique_ptr<UndoCommand> undo_command);

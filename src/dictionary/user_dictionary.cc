@@ -72,27 +72,27 @@ namespace dictionary {
 namespace {
 
 struct OrderByKey {
-  bool operator()(const UserPos::Token &token, absl::string_view key) const {
+  bool operator()(const UserPos::Token& token, absl::string_view key) const {
     return token.key < key;
   }
 
-  bool operator()(absl::string_view key, const UserPos::Token &token) const {
+  bool operator()(absl::string_view key, const UserPos::Token& token) const {
     return key < token.key;
   }
 };
 
 struct OrderByKeyPrefix {
-  bool operator()(const UserPos::Token &token, absl::string_view prefix) const {
+  bool operator()(const UserPos::Token& token, absl::string_view prefix) const {
     return absl::string_view(token.key).substr(0, prefix.size()) < prefix;
   }
 
-  bool operator()(absl::string_view prefix, const UserPos::Token &token) const {
+  bool operator()(absl::string_view prefix, const UserPos::Token& token) const {
     return prefix < absl::string_view(token.key).substr(0, prefix.size());
   }
 };
 
 struct OrderByKeyThenById {
-  bool operator()(const UserPos::Token &lhs, const UserPos::Token &rhs) const {
+  bool operator()(const UserPos::Token& lhs, const UserPos::Token& rhs) const {
     const int comp = lhs.key.compare(rhs.key);
     return comp == 0 ? (lhs.id < rhs.id) : (comp < 0);
   }
@@ -146,7 +146,7 @@ class SuppressionDictionary {
 
 class UserDictionary::TokensIndex {
  public:
-  explicit TokensIndex(const UserPos &user_pos) : user_pos_(user_pos) {}
+  explicit TokensIndex(const UserPos& user_pos) : user_pos_(user_pos) {}
 
   ~TokensIndex() = default;
 
@@ -160,14 +160,14 @@ class UserDictionary::TokensIndex {
     return user_pos_tokens_.end();
   }
 
-  void Load(const user_dictionary::UserDictionaryStorage &storage,
-            std::atomic<bool> *canceled_signal) {
+  void Load(const user_dictionary::UserDictionaryStorage& storage,
+            std::atomic<bool>* canceled_signal) {
     DCHECK(canceled_signal);
     user_pos_tokens_.clear();
     absl::flat_hash_set<uint64_t> seen;
     std::vector<UserPos::Token> tokens;
 
-    for (const UserDictionaryStorage::UserDictionary &dic :
+    for (const UserDictionaryStorage::UserDictionary& dic :
          storage.dictionaries()) {
       if (dic.entries_size() == 0) {
         continue;
@@ -175,7 +175,7 @@ class UserDictionary::TokensIndex {
       const bool is_android_shortcuts =
           (dic.name() == "__auto_imported_android_shortcuts_dictionary");
 
-      for (const UserDictionaryStorage::UserDictionaryEntry &entry :
+      for (const UserDictionaryStorage::UserDictionaryEntry& entry :
            dic.entries()) {
         if (!UserDictionaryUtil::IsValidEntry(user_pos_, entry)) {
           continue;
@@ -230,7 +230,7 @@ class UserDictionary::TokensIndex {
                               &tokens);
           const absl::string_view comment =
               absl::StripAsciiWhitespace(entry.comment());
-          for (auto &token : tokens) {
+          for (auto& token : tokens) {
             strings::Assign(token.comment, comment);
             if (is_android_shortcuts &&
                 token.has_attribute(UserPos::Token::SUGGESTION_ONLY)) {
@@ -262,20 +262,20 @@ class UserDictionary::TokensIndex {
   }
 
  private:
-  const UserPos &user_pos_;
+  const UserPos& user_pos_;
   SuppressionDictionary suppression_dictionary_;
   std::vector<UserPos::Token> user_pos_tokens_;
 };
 
 class UserDictionary::UserDictionaryReloader {
  public:
-  explicit UserDictionaryReloader(UserDictionary *dic)
+  explicit UserDictionaryReloader(UserDictionary* dic)
       : modified_at_(0), dic_(dic) {
     DCHECK(dic_);
   }
 
-  UserDictionaryReloader(const UserDictionaryReloader &) = delete;
-  UserDictionaryReloader &operator=(const UserDictionaryReloader &) = delete;
+  UserDictionaryReloader(const UserDictionaryReloader&) = delete;
+  UserDictionaryReloader& operator=(const UserDictionaryReloader&) = delete;
 
   ~UserDictionaryReloader() { Wait(); }
 
@@ -329,7 +329,7 @@ class UserDictionary::UserDictionaryReloader {
 
   std::optional<BackgroundFuture<void>> reload_;
   FileTimeStamp modified_at_;
-  UserDictionary *dic_ = nullptr;
+  UserDictionary* dic_ = nullptr;
 };
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPos> user_pos,
@@ -373,8 +373,8 @@ bool UserDictionary::HasValue(absl::string_view value) const {
 }
 
 void UserDictionary::LookupPredictive(
-    absl::string_view key, const ConversionRequest &conversion_request,
-    Callback *callback) const {
+    absl::string_view key, const ConversionRequest& conversion_request,
+    Callback* callback) const {
   if (key.empty()) {
     MOZC_VLOG(2) << "string of length zero is passed.";
     return;
@@ -394,7 +394,7 @@ void UserDictionary::LookupPredictive(
   for (auto [begin, end] = std::equal_range(tokens->begin(), tokens->end(), key,
                                             OrderByKeyPrefix());
        begin != end; ++begin) {
-    const UserPos::Token &user_pos_token = *begin;
+    const UserPos::Token& user_pos_token = *begin;
     switch (callback->OnKey(user_pos_token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
@@ -420,8 +420,8 @@ void UserDictionary::LookupPredictive(
 
 // UserDictionary doesn't support kana modifier insensitive lookup.
 void UserDictionary::LookupPrefix(absl::string_view key,
-                                  const ConversionRequest &conversion_request,
-                                  Callback *callback) const {
+                                  const ConversionRequest& conversion_request,
+                                  Callback* callback) const {
   if (key.empty()) {
     LOG(WARNING) << "string of length zero is passed.";
     return;
@@ -443,7 +443,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
   for (auto it = std::lower_bound(tokens->begin(), tokens->end(), first_char,
                                   OrderByKey());
        it != tokens->end(); ++it) {
-    const UserPos::Token &user_pos_token = *it;
+    const UserPos::Token& user_pos_token = *it;
     if (user_pos_token.key > key) {
       break;
     }
@@ -483,8 +483,8 @@ void UserDictionary::LookupPrefix(absl::string_view key,
 }
 
 void UserDictionary::LookupExact(absl::string_view key,
-                                 const ConversionRequest &conversion_request,
-                                 Callback *callback) const {
+                                 const ConversionRequest& conversion_request,
+                                 Callback* callback) const {
   std::shared_ptr<const TokensIndex> tokens = GetTokens();
 
   if (key.empty() || tokens->empty() || conversion_request.incognito_mode()) {
@@ -505,7 +505,7 @@ void UserDictionary::LookupExact(absl::string_view key,
 
   Token token;
   for (; begin != end; ++begin) {
-    const UserPos::Token &user_pos_token = *begin;
+    const UserPos::Token& user_pos_token = *begin;
     if (user_pos_token.has_attribute(UserPos::Token::SUGGESTION_ONLY)) {
       continue;
     }
@@ -517,13 +517,13 @@ void UserDictionary::LookupExact(absl::string_view key,
 }
 
 void UserDictionary::LookupReverse(absl::string_view key,
-                                   const ConversionRequest &conversion_request,
-                                   Callback *callback) const {}
+                                   const ConversionRequest& conversion_request,
+                                   Callback* callback) const {}
 
 bool UserDictionary::LookupComment(absl::string_view key,
                                    absl::string_view value,
-                                   const ConversionRequest &conversion_request,
-                                   std::string *comment) const {
+                                   const ConversionRequest& conversion_request,
+                                   std::string* comment) const {
   if (key.empty() || conversion_request.incognito_mode()) {
     return false;
   }
@@ -538,7 +538,7 @@ bool UserDictionary::LookupComment(absl::string_view key,
   for (auto [begin, end] =
            std::equal_range(tokens->begin(), tokens->end(), key, OrderByKey());
        begin != end; ++begin) {
-    const UserPos::Token &token = *begin;
+    const UserPos::Token& token = *begin;
     if (token.value == value && !token.comment.empty()) {
       comment->assign(token.comment);
       return true;
@@ -566,7 +566,7 @@ bool UserDictionary::Reload() {
 void UserDictionary::WaitForReloader() { reloader_->Wait(); }
 
 bool UserDictionary::Load(
-    const user_dictionary::UserDictionaryStorage &storage) {
+    const user_dictionary::UserDictionaryStorage& storage) {
   const size_t size = GetTokens()->size();
 
   // If UserDictionary is pretty big, we first remove the
@@ -596,8 +596,8 @@ std::vector<std::string> UserDictionary::GetPosList() const {
 std::string UserDictionary::GetFileName() const { return filename_; }
 
 void UserDictionary::PopulateTokenFromUserPosToken(
-    const UserPos::Token &user_pos_token, RequestType request_type,
-    Token *token) const {
+    const UserPos::Token& user_pos_token, RequestType request_type,
+    Token* token) const {
   token->key = user_pos_token.key;
   token->value = user_pos_token.value;
   token->lid = token->rid = user_pos_token.id;

@@ -79,8 +79,8 @@ struct UserDictionaryEntryData {
   absl::string_view comment;
 };
 
-void ConvertUserDictionaryEntry(const UserDictionaryEntryData &input,
-                                UserDictionary::Entry *output) {
+void ConvertUserDictionaryEntry(const UserDictionaryEntryData& input,
+                                UserDictionary::Entry* output) {
   output->set_key(input.key);
   output->set_value(input.value);
   output->set_pos(input.pos);

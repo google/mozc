@@ -66,7 +66,7 @@ namespace {
 using ::mozc::user_dictionary::UserDictionary;
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
-size_t HashOf(const UserDictionary::Entry &entry) {
+size_t HashOf(const UserDictionary::Entry& entry) {
   DCHECK(UserDictionary::PosType_IsValid(entry.pos()));
   return absl::HashOf(entry.key(), entry.value(), entry.pos());
 }
@@ -94,8 +94,8 @@ struct PosMap {
 
 // Convert POS of a third party IME to that of Mozc using the given mapping.
 bool ConvertEntryInternal(const absl::Span<const PosMap> pos_map,
-                          const UserDictionaryImporter::RawEntry &from,
-                          UserDictionary::Entry *to) {
+                          const UserDictionaryImporter::RawEntry& from,
+                          UserDictionary::Entry* to) {
   if (to == nullptr) {
     LOG(ERROR) << "Null pointer is passed.";
     return false;
@@ -160,7 +160,7 @@ bool ConvertEntryInternal(const absl::Span<const PosMap> pos_map,
 }  // namespace
 
 UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
-    InputIteratorInterface *iter, UserDictionary *user_dic) {
+    InputIteratorInterface* iter, UserDictionary* user_dic) {
   if (iter == nullptr || user_dic == nullptr) {
     LOG(ERROR) << "iter or user_dic is nullptr";
     return IMPORT_FATAL;
@@ -171,7 +171,7 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
   ErrorType ret = IMPORT_NO_ERROR;
 
   absl::flat_hash_set<size_t> existent_entries;
-  for (const auto &entry : user_dic->entries()) {
+  for (const auto& entry : user_dic->entries()) {
     existent_entries.insert(HashOf(entry));
   }
 
@@ -209,8 +209,8 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
 
 UserDictionaryImporter::ErrorType
 UserDictionaryImporter::ImportFromTextLineIterator(
-    IMEType ime_type, TextLineIteratorInterface *iter,
-    UserDictionary *user_dic) {
+    IMEType ime_type, TextLineIteratorInterface* iter,
+    UserDictionary* user_dic) {
   TextInputIterator text_iter(ime_type, iter);
   if (text_iter.ime_type() == NUM_IMES) {
     return IMPORT_NOT_SUPPORTED;
@@ -227,7 +227,7 @@ bool UserDictionaryImporter::StringTextLineIterator::IsAvailable() const {
   return data_.end() != first_;
 }
 
-bool UserDictionaryImporter::StringTextLineIterator::Next(std::string *line) {
+bool UserDictionaryImporter::StringTextLineIterator::Next(std::string* line) {
   if (!IsAvailable()) {
     return false;
   }
@@ -256,7 +256,7 @@ void UserDictionaryImporter::StringTextLineIterator::Reset() {
 }
 
 UserDictionaryImporter::TextInputIterator::TextInputIterator(
-    IMEType ime_type, TextLineIteratorInterface *iter)
+    IMEType ime_type, TextLineIteratorInterface* iter)
     : ime_type_(NUM_IMES), iter_(iter) {
   CHECK(iter_);
   if (!iter_->IsAvailable()) {
@@ -281,7 +281,7 @@ bool UserDictionaryImporter::TextInputIterator::IsAvailable() const {
           ime_type_ != NUM_IMES);
 }
 
-bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
+bool UserDictionaryImporter::TextInputIterator::Next(RawEntry* entry) {
   DCHECK(iter_);
   if (!IsAvailable()) {
     LOG(ERROR) << "iterator is not available";
@@ -356,8 +356,8 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
   return false;
 }
 
-bool UserDictionaryImporter::ConvertEntry(const RawEntry &from,
-                                          UserDictionary::Entry *to) {
+bool UserDictionaryImporter::ConvertEntry(const RawEntry& from,
+                                          UserDictionary::Entry* to) {
   return ConvertEntryInternal(kPosMap, from, to);
 }
 
@@ -474,7 +474,7 @@ UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
 }
 
 UserDictionaryImporter::EncodingType
-UserDictionaryImporter::GuessFileEncodingType(const std::string &filename) {
+UserDictionaryImporter::GuessFileEncodingType(const std::string& filename) {
   absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_ONLY);
   if (!mmap.ok()) {
     LOG(ERROR) << "cannot open: " << filename << ": " << mmap.status();

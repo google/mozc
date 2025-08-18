@@ -64,7 +64,8 @@ class PosDataBase(object):
     assert feature
     for line, pos_id in self.id_list:
       # Return by prefix match.
-      if line.startswith(feature): return pos_id
+      if line.startswith(feature):
+        return pos_id
 
     logging.warning('Cannot find the POS for: %s', feature)
 
@@ -80,11 +81,12 @@ class PosDataBase(object):
       yield result
 
   def GetRange(self, pattern):
-    id_list = [
-        pos_id for line, pos_id in self.id_list if pattern.match(line)]
+    id_list = [pos_id for line, pos_id in self.id_list if pattern.match(line)]
     id_list.sort()
-    return [(id_range[0], id_range[-1])
-            for id_range in PosDataBase._GroupConsecutiveId(id_list)]
+    return [
+        (id_range[0], id_range[-1])
+        for id_range in PosDataBase._GroupConsecutiveId(id_list)
+    ]
 
 
 class PosMatcher(object):
@@ -99,12 +101,14 @@ class PosMatcher(object):
       stream = code_generator_util.ParseColumnStream(stream, num_column=2)
       self._match_rule_map = dict(
           (name, (pattern, re.compile(pattern.replace('*', '[^,]+')), sortkey))
-          for sortkey, (name, pattern) in enumerate(stream))
+          for sortkey, (name, pattern) in enumerate(stream)
+      )
 
   def GetRuleNameList(self):
     """Returns a list of rule names in the original file's order."""
     sorted_rule_list = sorted(
-        list(self._match_rule_map.items()), key=lambda item: item[1][2])
+        list(self._match_rule_map.items()), key=lambda item: item[1][2]
+    )
     return [rule_name for rule_name, _ in sorted_rule_list]
 
   def GetRange(self, name):
@@ -135,7 +139,8 @@ class InflectionMap(object):
         result[key].append((
             form,
             value_suffix if value_suffix != '*' else '',
-            key_suffix if key_suffix != '*' else ''))
+            key_suffix if key_suffix != '*' else '',
+        ))
     self._map = result
 
   def Get(self, key):
@@ -163,12 +168,14 @@ class UserPos(object):
         conjugation_list = []
         if ctype == '*':
           conjugation_list.append(
-              (None, None, self._pos_database.GetPosId(feature)))
+              (None, None, self._pos_database.GetPosId(feature))
+          )
         else:
           for form, value_suffix, key_suffix in self._inflection_map.Get(ctype):
             # repalce <cfrom> with actual cform
             pos_id = self._pos_database.GetPosId(
-                feature.replace('<cform>', form))
+                feature.replace('<cform>', form)
+            )
 
             # Known error items.
             # 動詞,自立,*,*,五段動詞,体言接続特殊２,*

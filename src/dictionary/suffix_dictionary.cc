@@ -90,8 +90,8 @@ bool SuffixDictionary::HasValue(absl::string_view value) const {
 }
 
 void SuffixDictionary::LookupPredictive(
-    absl::string_view key, const ConversionRequest &conversion_request,
-    Callback *callback) const {
+    absl::string_view key, const ConversionRequest& conversion_request,
+    Callback* callback) const {
   using Iter = SerializedStringArray::const_iterator;
   std::pair<Iter, Iter> range = std::equal_range(
       key_array_.begin(), key_array_.end(), key, ComparePrefix(key.size()));

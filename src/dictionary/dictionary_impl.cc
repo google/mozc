@@ -50,8 +50,8 @@ namespace dictionary {
 DictionaryImpl::DictionaryImpl(
     std::unique_ptr<const DictionaryInterface> system_dictionary,
     std::unique_ptr<const DictionaryInterface> value_dictionary,
-    const UserDictionaryInterface &user_dictionary,
-    const PosMatcher &pos_matcher)
+    const UserDictionaryInterface& user_dictionary,
+    const PosMatcher& pos_matcher)
     : pos_matcher_(pos_matcher),
       system_dictionary_(std::move(system_dictionary)),
       value_dictionary_(std::move(value_dictionary)),
@@ -66,13 +66,13 @@ DictionaryImpl::DictionaryImpl(
 DictionaryImpl::~DictionaryImpl() { dics_.clear(); }
 
 bool DictionaryImpl::HasKey(absl::string_view key) const {
-  return absl::c_any_of(dics_, [&key](const DictionaryInterface *dic) {
+  return absl::c_any_of(dics_, [&key](const DictionaryInterface* dic) {
     return dic->HasKey(key);
   });
 }
 
 bool DictionaryImpl::HasValue(absl::string_view value) const {
-  return absl::c_any_of(dics_, [&value](const DictionaryInterface *dic) {
+  return absl::c_any_of(dics_, [&value](const DictionaryInterface* dic) {
     return dic->HasKey(value);
   });
 }
@@ -81,10 +81,10 @@ namespace {
 
 class CallbackWithFilter : public DictionaryInterface::Callback {
  public:
-  CallbackWithFilter(const config::Config &config,
-                     const PosMatcher &pos_matcher,
-                     const UserDictionaryInterface &user_dictionary,
-                     DictionaryInterface::Callback *callback)
+  CallbackWithFilter(const config::Config& config,
+                     const PosMatcher& pos_matcher,
+                     const UserDictionaryInterface& user_dictionary,
+                     DictionaryInterface::Callback* callback)
       : config_(config),
         pos_matcher_(pos_matcher),
         user_dictionary_(user_dictionary),
@@ -100,7 +100,7 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
   }
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
-                     const Token &token) override {
+                     const Token& token) override {
     if (!(token.attributes & Token::USER_DICTIONARY)) {
       if (!config_.use_spelling_correction() &&
           (token.attributes & Token::SPELLING_CORRECTION)) {
@@ -122,73 +122,73 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
   }
 
  private:
-  const config::Config &config_;
-  const PosMatcher &pos_matcher_;
-  const UserDictionaryInterface &user_dictionary_;
-  DictionaryInterface::Callback *callback_;
+  const config::Config& config_;
+  const PosMatcher& pos_matcher_;
+  const UserDictionaryInterface& user_dictionary_;
+  DictionaryInterface::Callback* callback_;
 };
 
 }  // namespace
 
 void DictionaryImpl::LookupPredictive(
-    absl::string_view key, const ConversionRequest &conversion_request,
-    Callback *callback) const {
+    absl::string_view key, const ConversionRequest& conversion_request,
+    Callback* callback) const {
   CallbackWithFilter callback_with_filter(
       conversion_request.config(), pos_matcher_, user_dictionary_, callback);
-  for (const DictionaryInterface *dic : dics_) {
+  for (const DictionaryInterface* dic : dics_) {
     dic->LookupPredictive(key, conversion_request, &callback_with_filter);
   }
 }
 
 void DictionaryImpl::LookupPrefix(absl::string_view key,
-                                  const ConversionRequest &conversion_request,
-                                  Callback *callback) const {
+                                  const ConversionRequest& conversion_request,
+                                  Callback* callback) const {
   CallbackWithFilter callback_with_filter(
       conversion_request.config(), pos_matcher_, user_dictionary_, callback);
-  for (const DictionaryInterface *dic : dics_) {
+  for (const DictionaryInterface* dic : dics_) {
     dic->LookupPrefix(key, conversion_request, &callback_with_filter);
   }
 }
 
 void DictionaryImpl::LookupExact(absl::string_view key,
-                                 const ConversionRequest &conversion_request,
-                                 Callback *callback) const {
+                                 const ConversionRequest& conversion_request,
+                                 Callback* callback) const {
   CallbackWithFilter callback_with_filter(
       conversion_request.config(), pos_matcher_, user_dictionary_, callback);
-  for (const DictionaryInterface *dic : dics_) {
+  for (const DictionaryInterface* dic : dics_) {
     dic->LookupExact(key, conversion_request, &callback_with_filter);
   }
 }
 
 void DictionaryImpl::LookupReverse(absl::string_view str,
-                                   const ConversionRequest &conversion_request,
-                                   Callback *callback) const {
+                                   const ConversionRequest& conversion_request,
+                                   Callback* callback) const {
   CallbackWithFilter callback_with_filter(
       conversion_request.config(), pos_matcher_, user_dictionary_, callback);
-  for (const DictionaryInterface *dic : dics_) {
+  for (const DictionaryInterface* dic : dics_) {
     dic->LookupReverse(str, conversion_request, &callback_with_filter);
   }
 }
 
 bool DictionaryImpl::LookupComment(absl::string_view key,
                                    absl::string_view value,
-                                   const ConversionRequest &conversion_request,
-                                   std::string *comment) const {
+                                   const ConversionRequest& conversion_request,
+                                   std::string* comment) const {
   // Access dics_ in reverse order to prefer UserDictionary
   return std::any_of(
-      dics_.rbegin(), dics_.rend(), [&](const DictionaryInterface *dic) {
+      dics_.rbegin(), dics_.rend(), [&](const DictionaryInterface* dic) {
         return dic->LookupComment(key, value, conversion_request, comment);
       });
 }
 
 void DictionaryImpl::PopulateReverseLookupCache(absl::string_view str) const {
-  for (const DictionaryInterface *dic : dics_) {
+  for (const DictionaryInterface* dic : dics_) {
     dic->PopulateReverseLookupCache(str);
   }
 }
 
 void DictionaryImpl::ClearReverseLookupCache() const {
-  for (const DictionaryInterface *dic : dics_) {
+  for (const DictionaryInterface* dic : dics_) {
     dic->ClearReverseLookupCache();
   }
 }

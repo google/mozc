@@ -47,24 +47,24 @@ class UserDictionaryStub : public UserDictionaryInterface {
   bool HasValue(absl::string_view value) const override { return false; }
 
   void LookupPredictive(absl::string_view key,
-                        const ConversionRequest &conversion_request,
-                        Callback *callback) const override {}
+                        const ConversionRequest& conversion_request,
+                        Callback* callback) const override {}
 
   void LookupPrefix(absl::string_view key,
-                    const ConversionRequest &conversion_request,
-                    Callback *callback) const override {}
+                    const ConversionRequest& conversion_request,
+                    Callback* callback) const override {}
 
   void LookupExact(absl::string_view key,
-                   const ConversionRequest &conversion_request,
-                   Callback *callback) const override {}
+                   const ConversionRequest& conversion_request,
+                   Callback* callback) const override {}
 
   void LookupReverse(absl::string_view str,
-                     const ConversionRequest &conversion_request,
-                     Callback *callback) const override {}
+                     const ConversionRequest& conversion_request,
+                     Callback* callback) const override {}
 
   bool LookupComment(absl::string_view key, absl::string_view value,
-                     const ConversionRequest &conversion_request,
-                     std::string *comment) const override {
+                     const ConversionRequest& conversion_request,
+                     std::string* comment) const override {
     if (key == "comment" || value == "comment") {
       comment->assign("UserDictionaryStub");
       return true;
@@ -76,7 +76,7 @@ class UserDictionaryStub : public UserDictionaryInterface {
 
   void WaitForReloader() override {}
 
-  bool Load(const user_dictionary::UserDictionaryStorage &storage) override {
+  bool Load(const user_dictionary::UserDictionaryStorage& storage) override {
     return true;
   }
 

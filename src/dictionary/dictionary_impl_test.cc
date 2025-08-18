@@ -99,7 +99,7 @@ class DictionaryImplTest : public ::testing::Test {
 
     ResultType OnToken(absl::string_view /* key */,
                        absl::string_view /* actual_key */,
-                       const Token &token) override {
+                       const Token& token) override {
       if (token.key == key_ && token.value == value_) {
         found_ = true;
         return TRAVERSE_DONE;
@@ -122,7 +122,7 @@ class DictionaryImplTest : public ::testing::Test {
 
     ResultType OnToken(absl::string_view /* key */,
                        absl::string_view /* actual_key */,
-                       const Token &token) override {
+                       const Token& token) override {
       if (token.key == key_ && token.value == value_ &&
           (token.attributes & Token::SPELLING_CORRECTION)) {
         found_ = true;
@@ -142,12 +142,12 @@ class DictionaryImplTest : public ::testing::Test {
    public:
     explicit CheckZipCodeExistenceCallback(absl::string_view key,
                                            absl::string_view value,
-                                           const PosMatcher &pos_matcher)
+                                           const PosMatcher& pos_matcher)
         : key_(key), value_(value), pos_matcher_(pos_matcher), found_(false) {}
 
     ResultType OnToken(absl::string_view /* key */,
                        absl::string_view /* actual_key */,
-                       const Token &token) override {
+                       const Token& token) override {
       if (token.key == key_ && token.value == value_ &&
           pos_matcher_.IsZipcode(token.lid)) {
         found_ = true;
@@ -160,7 +160,7 @@ class DictionaryImplTest : public ::testing::Test {
 
    private:
     const absl::string_view key_, value_;
-    const PosMatcher &pos_matcher_;
+    const PosMatcher& pos_matcher_;
     bool found_;
   };
 
@@ -171,7 +171,7 @@ class DictionaryImplTest : public ::testing::Test {
 
     ResultType OnToken(absl::string_view /* key */,
                        absl::string_view /* actual_key */,
-                       const Token &token) override {
+                       const Token& token) override {
       if (token.key == key_ && token.value == value_ &&
           Util::IsEnglishTransliteration(token.value)) {
         found_ = true;
@@ -190,12 +190,12 @@ class DictionaryImplTest : public ::testing::Test {
   // Pair of DictionaryInterface's lookup method and query text.
   struct LookupMethodAndQuery {
     void (DictionaryInterface::*lookup_method)(
-        absl::string_view, const ConversionRequest &,
-        DictionaryInterface::Callback *) const;
-    const char *query;
+        absl::string_view, const ConversionRequest&,
+        DictionaryInterface::Callback*) const;
+    const char* query;
   };
 
-  static ConversionRequest ConvReq(const config::Config &config) {
+  static ConversionRequest ConvReq(const config::Config& config) {
     return ConversionRequestBuilder().SetConfig(config).Build();
   }
 
@@ -204,7 +204,7 @@ class DictionaryImplTest : public ::testing::Test {
 
 TEST_F(DictionaryImplTest, WordSuppressionTest) {
   std::unique_ptr<DictionaryData> data = CreateDictionaryData();
-  DictionaryInterface *d = data->dictionary.get();
+  DictionaryInterface* d = data->dictionary.get();
 
   constexpr absl::string_view kKey = "ぐーぐる";
   constexpr absl::string_view kValue = "グーグル";
@@ -219,7 +219,7 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
 
   {
     user_dictionary::UserDictionaryStorage storage;
-    UserEntry *entry = storage.add_dictionaries()->add_entries();
+    UserEntry* entry = storage.add_dictionaries()->add_entries();
     entry->set_key(kKey);
     entry->set_value(kValue);
     entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
@@ -250,7 +250,7 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
 
 TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
   std::unique_ptr<DictionaryData> data = CreateDictionaryData();
-  DictionaryInterface *d = data->dictionary.get();
+  DictionaryInterface* d = data->dictionary.get();
 
   // "あぼがど" -> "アボカド", which is in the test dictionary.
   constexpr char kKey[] = "あぼがど";
@@ -283,7 +283,7 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
 
 TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   std::unique_ptr<DictionaryData> data = CreateDictionaryData();
-  DictionaryInterface *d = data->dictionary.get();
+  DictionaryInterface* d = data->dictionary.get();
 
   // "100-0000" -> "東京都千代田区", which is in the test dictionary.
   constexpr char kKey[] = "100-0000";
@@ -316,7 +316,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
 
 TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   std::unique_ptr<DictionaryData> data = CreateDictionaryData();
-  DictionaryInterface *d = data->dictionary.get();
+  DictionaryInterface* d = data->dictionary.get();
 
   constexpr char kKey[] = "ぐーぐる";
   constexpr char kValue[] = "Google";
@@ -348,11 +348,11 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
 
 TEST_F(DictionaryImplTest, LookupComment) {
   std::unique_ptr<DictionaryData> data = CreateDictionaryData();
-  DictionaryInterface *d = data->dictionary.get();
+  DictionaryInterface* d = data->dictionary.get();
 
   {
     user_dictionary::UserDictionaryStorage storage;
-    UserEntry *entry = storage.add_dictionaries()->add_entries();
+    UserEntry* entry = storage.add_dictionaries()->add_entries();
     entry->set_key("key");
     entry->set_value("comment");
     entry->set_comment("UserDictionaryStub");

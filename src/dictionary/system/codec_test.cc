@@ -52,7 +52,7 @@ namespace dictionary {
 namespace {
 
 ::testing::AssertionResult MakeAssertResult(bool success, char32_t c,
-                                            const char *message) {
+                                            const char* message) {
   if (success) {
     return ::testing::AssertionSuccess();
   }
@@ -137,7 +137,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     ClearTokens(&decoded_tokens_);
   }
 
-  void ClearTokens(std::vector<TokenInfo> *tokens) const {
+  void ClearTokens(std::vector<TokenInfo>* tokens) const {
     for (size_t i = 0; i < tokens->size(); ++i) {
       delete tokens->at(i).token;
     }
@@ -146,14 +146,14 @@ class SystemDictionaryCodecTest : public ::testing::Test {
 
   void InitTokens(int size) {
     for (size_t i = 0; i < size; ++i) {
-      Token *t = new Token();
+      Token* t = new Token();
       TokenInfo token_info(t);
       token_info.id_in_value_trie = 0;
       source_tokens_.push_back(token_info);
     }
   }
 
-  void SetDefaultPos(TokenInfo *token_info) const {
+  void SetDefaultPos(TokenInfo* token_info) const {
     CHECK(token_info);
     token_info->pos_type = TokenInfo::DEFAULT_POS;
     // set id randomly
@@ -162,7 +162,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     token_info->token->rid = absl::Bernoulli(random_, 0.5) ? id : id + 1;
   }
 
-  void SetFrequentPos(TokenInfo *token_info) const {
+  void SetFrequentPos(TokenInfo* token_info) const {
     CHECK(token_info);
     token_info->pos_type = TokenInfo::FREQUENT_POS;
     // set id randomly
@@ -170,7 +170,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     token_info->id_in_frequent_pos_map = id;
   }
 
-  void SetSamePos(TokenInfo *token_info) const {
+  void SetSamePos(TokenInfo* token_info) const {
     CHECK(token_info);
     token_info->pos_type = TokenInfo::SAME_AS_PREV_POS;
   }
@@ -198,7 +198,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     }
   }
 
-  void SetDefaultCost(TokenInfo *token_info) const {
+  void SetDefaultCost(TokenInfo* token_info) const {
     CHECK(token_info);
     token_info->cost_type = TokenInfo::DEFAULT_COST;
     // set cost randomly
@@ -206,7 +206,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     token_info->token->cost = cost;
   }
 
-  void SetSmallCost(TokenInfo *token_info) const {
+  void SetSmallCost(TokenInfo* token_info) const {
     CHECK(token_info);
     token_info->cost_type = TokenInfo::CAN_USE_SMALL_ENCODING;
     // set cost randomly
@@ -228,7 +228,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     }
   }
 
-  void SetDefaultValue(TokenInfo *token_info) const {
+  void SetDefaultValue(TokenInfo* token_info) const {
     CHECK(token_info);
     token_info->value_type = TokenInfo::DEFAULT_VALUE;
     // set id randomly
@@ -236,7 +236,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     token_info->id_in_value_trie = id;
   }
 
-  void SetSameValue(TokenInfo *token_info) const {
+  void SetSameValue(TokenInfo* token_info) const {
     CHECK(token_info);
     token_info->value_type = TokenInfo::SAME_AS_PREV_VALUE;
   }
@@ -322,9 +322,9 @@ class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
   std::string GetSectionNameForValue() const override { return "Mock"; }
   std::string GetSectionNameForTokens() const override { return "Mock"; }
   std::string GetSectionNameForPos() const override { return "Mock"; }
-  void EncodeKey(const absl::string_view src, std::string *dst) const override {
+  void EncodeKey(const absl::string_view src, std::string* dst) const override {
   }
-  void DecodeKey(const absl::string_view src, std::string *dst) const override {
+  void DecodeKey(const absl::string_view src, std::string* dst) const override {
   }
   size_t GetEncodedKeyLength(const absl::string_view src) const override {
     return 0;
@@ -333,20 +333,20 @@ class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
     return 0;
   }
   void EncodeValue(const absl::string_view src,
-                   std::string *dst) const override {}
+                   std::string* dst) const override {}
   void DecodeValue(const absl::string_view src,
-                   std::string *dst) const override {}
+                   std::string* dst) const override {}
   void EncodeTokens(absl::Span<const TokenInfo> tokens,
-                    std::string *output) const override {}
-  void DecodeTokens(const uint8_t *ptr,
-                    std::vector<TokenInfo> *tokens) const override {}
-  bool DecodeToken(const uint8_t *ptr, TokenInfo *token_info,
-                   int *read_bytes) const override {
+                    std::string* output) const override {}
+  void DecodeTokens(const uint8_t* ptr,
+                    std::vector<TokenInfo>* tokens) const override {}
+  bool DecodeToken(const uint8_t* ptr, TokenInfo* token_info,
+                   int* read_bytes) const override {
     *read_bytes = 0;
     return false;
   }
-  bool ReadTokenForReverseLookup(const uint8_t *ptr, int *value_id,
-                                 int *read_bytes) const override {
+  bool ReadTokenForReverseLookup(const uint8_t* ptr, int* value_id,
+                                 int* read_bytes) const override {
     return false;
   }
   uint8_t GetTokensTerminationFlag() const override { return 0xff; }
@@ -356,13 +356,13 @@ TEST_F(SystemDictionaryCodecTest, FactoryTest) {
   std::unique_ptr<SystemDictionaryCodecMock> mock(
       new SystemDictionaryCodecMock);
   SystemDictionaryCodecFactory::SetCodec(mock.get());
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   EXPECT_EQ(codec->GetSectionNameForKey(), "Mock");
 }
 
 TEST_F(SystemDictionaryCodecTest, KeyCodecKanaTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   const std::string original = "よみ";
   std::string encoded;
@@ -377,7 +377,7 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecKanaTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   const std::string original = "・ー";
   std::string encoded;
@@ -407,7 +407,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, ValueCodecKanaTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   const std::string original = "もジ";
   std::string encoded;
@@ -420,7 +420,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecKanaTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, ValueCodecAsciiTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   const std::string original = "word";
   std::string encoded;
@@ -433,33 +433,33 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecAsciiTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenDefaultPosTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(1);
   SetDefaultPos(&source_tokens_[0]);
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenFrequentPosTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(1);
   SetFrequentPos(&source_tokens_[0]);
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenSamePosTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   {
     InitTokens(2);
@@ -468,7 +468,7 @@ TEST_F(SystemDictionaryCodecTest, TokenSamePosTest) {
     std::string encoded;
     codec->EncodeTokens(source_tokens_, &encoded);
     EXPECT_GT(encoded.size(), 0);
-    codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+    codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                         &decoded_tokens_);
     CheckDecoded();
   }
@@ -480,79 +480,79 @@ TEST_F(SystemDictionaryCodecTest, TokenSamePosTest) {
     std::string encoded;
     codec->EncodeTokens(source_tokens_, &encoded);
     EXPECT_GT(encoded.size(), 0);
-    codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+    codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                         &decoded_tokens_);
     CheckDecoded();
   }
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomPosTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
   SetRandPos();
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenDefaultCostTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(1);
   SetDefaultCost(&source_tokens_[0]);
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenSmallCostTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(1);
   SetSmallCost(&source_tokens_[0]);
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomCostTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
   SetRandCost();
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenDefaultValueTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(1);
   SetDefaultValue(&source_tokens_[0]);
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, UCS4CharactersTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   const std::string codepoint_including =
       // "𠀋𡈽𡌛𡑮𡢽𠮟𡚴𡸴𣇄𣗄𣜿𣝣𣳾𤟱𥒎𥔎𥝱𥧄𥶡𦫿𦹀𧃴𧚄𨉷𨏍𪆐𠂉"
@@ -655,7 +655,7 @@ TEST_F(SystemDictionaryCodecTest, UCS4CharactersTest) {
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenSameValueTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(2);
   SetDefaultValue(&source_tokens_[0]);
@@ -663,39 +663,39 @@ TEST_F(SystemDictionaryCodecTest, TokenSameValueTest) {
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomValueTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
   SetRandValue();
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomLabelTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
   SetRandLabel();
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenRandomTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
   SetRandPos();
@@ -705,13 +705,13 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomTest) {
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
   EXPECT_GT(encoded.size(), 0);
-  codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+  codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                       &decoded_tokens_);
   CheckDecoded();
 }
 
 TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
   SetRandPos();
@@ -727,7 +727,7 @@ TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
     int read_byte = 0;
     int value_id = -1;
     const bool is_last_token = !(codec->ReadTokenForReverseLookup(
-        reinterpret_cast<const unsigned char *>(encoded.data()) + offset,
+        reinterpret_cast<const unsigned char*>(encoded.data()) + offset,
         &value_id, &read_byte));
     if (source_tokens_[read_num].value_type == TokenInfo::DEFAULT_VALUE) {
       EXPECT_EQ(value_id, source_tokens_[read_num].id_in_value_trie);
@@ -746,7 +746,7 @@ TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
 TEST_F(SystemDictionaryCodecTest, CodecTest) {
   std::unique_ptr<SystemDictionaryCodec> impl(new SystemDictionaryCodec);
   SystemDictionaryCodecFactory::SetCodec(impl.get());
-  SystemDictionaryCodecInterface *codec =
+  SystemDictionaryCodecInterface* codec =
       SystemDictionaryCodecFactory::GetCodec();
   {  // Token
     InitTokens(50);
@@ -757,7 +757,7 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
     std::string encoded;
     codec->EncodeTokens(source_tokens_, &encoded);
     EXPECT_GT(encoded.size(), 0);
-    codec->DecodeTokens(reinterpret_cast<const unsigned char *>(encoded.data()),
+    codec->DecodeTokens(reinterpret_cast<const unsigned char*>(encoded.data()),
                         &decoded_tokens_);
     CheckDecoded();
 
@@ -768,7 +768,7 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
       int read_byte = 0;
       int value_id = -1;
       const bool is_last_token = !(codec->ReadTokenForReverseLookup(
-          reinterpret_cast<const unsigned char *>(encoded.data()) + offset,
+          reinterpret_cast<const unsigned char*>(encoded.data()) + offset,
           &value_id, &read_byte));
       if (source_tokens_[read_num].value_type == TokenInfo::DEFAULT_VALUE) {
         EXPECT_EQ(value_id, source_tokens_[read_num].id_in_value_trie);

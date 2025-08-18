@@ -44,7 +44,7 @@ namespace mozc {
 namespace user_dictionary {
 
 bool UserDictionarySessionHandler::Evaluate(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
   if (!command.has_type()) {
     return false;
   }
@@ -125,8 +125,8 @@ bool UserDictionarySessionHandler::Evaluate(
 }
 
 void UserDictionarySessionHandler::NoOperation(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -136,7 +136,7 @@ void UserDictionarySessionHandler::NoOperation(
 }
 
 void UserDictionarySessionHandler::ClearStorage(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
   // Note: session_ might not be created when ClearStorage is called.  So create
   // a local session to clear the storage.
   UserDictionarySession session(dictionary_path_);
@@ -145,7 +145,7 @@ void UserDictionarySessionHandler::ClearStorage(
 }
 
 void UserDictionarySessionHandler::CreateSession(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
   uint64_t new_id = CreateNewSessionId();
 
   session_id_ = new_id;
@@ -158,8 +158,8 @@ void UserDictionarySessionHandler::CreateSession(
 }
 
 void UserDictionarySessionHandler::DeleteSession(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -171,8 +171,8 @@ void UserDictionarySessionHandler::DeleteSession(
 }
 
 void UserDictionarySessionHandler::SetDefaultDictionaryName(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -187,8 +187,8 @@ void UserDictionarySessionHandler::SetDefaultDictionaryName(
 }
 
 void UserDictionarySessionHandler::CheckUndoability(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -199,9 +199,9 @@ void UserDictionarySessionHandler::CheckUndoability(
           : UserDictionaryCommandStatus::NO_UNDO_HISTORY);
 }
 
-void UserDictionarySessionHandler::Undo(const UserDictionaryCommand &command,
-                                        UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+void UserDictionarySessionHandler::Undo(const UserDictionaryCommand& command,
+                                        UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -209,9 +209,9 @@ void UserDictionarySessionHandler::Undo(const UserDictionaryCommand &command,
   status->set_status(session->Undo());
 }
 
-void UserDictionarySessionHandler::Load(const UserDictionaryCommand &command,
-                                        UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+void UserDictionarySessionHandler::Load(const UserDictionaryCommand& command,
+                                        UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -223,9 +223,9 @@ void UserDictionarySessionHandler::Load(const UserDictionaryCommand &command,
   }
 }
 
-void UserDictionarySessionHandler::Save(const UserDictionaryCommand &command,
-                                        UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+void UserDictionarySessionHandler::Save(const UserDictionaryCommand& command,
+                                        UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -234,17 +234,17 @@ void UserDictionarySessionHandler::Save(const UserDictionaryCommand &command,
 }
 
 void UserDictionarySessionHandler::GetUserDictionaryNameList(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
 
-  const UserDictionaryStorage &storage = session->storage();
-  UserDictionaryStorage *result_storage = status->mutable_storage();
+  const UserDictionaryStorage& storage = session->storage();
+  UserDictionaryStorage* result_storage = status->mutable_storage();
   for (int i = 0; i < storage.dictionaries_size(); ++i) {
-    const UserDictionary &dictionary = storage.dictionaries(i);
-    UserDictionary *result_dictionary = result_storage->add_dictionaries();
+    const UserDictionary& dictionary = storage.dictionaries(i);
+    UserDictionary* result_dictionary = result_storage->add_dictionaries();
     if (dictionary.has_id()) {
       result_dictionary->set_id(dictionary.id());
     }
@@ -258,8 +258,8 @@ void UserDictionarySessionHandler::GetUserDictionaryNameList(
 }
 
 void UserDictionarySessionHandler::GetEntrySize(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -269,7 +269,7 @@ void UserDictionarySessionHandler::GetEntrySize(
     return;
   }
 
-  const UserDictionary *dictionary = UserDictionaryUtil::GetUserDictionaryById(
+  const UserDictionary* dictionary = UserDictionaryUtil::GetUserDictionaryById(
       session_->storage(), command.dictionary_id());
   if (dictionary == nullptr) {
     status->set_status(UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID);
@@ -282,8 +282,8 @@ void UserDictionarySessionHandler::GetEntrySize(
 }
 
 void UserDictionarySessionHandler::GetEntries(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -293,7 +293,7 @@ void UserDictionarySessionHandler::GetEntries(
     return;
   }
 
-  const UserDictionary *dictionary = UserDictionaryUtil::GetUserDictionaryById(
+  const UserDictionary* dictionary = UserDictionaryUtil::GetUserDictionaryById(
       session_->storage(), command.dictionary_id());
   if (dictionary == nullptr) {
     status->set_status(UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID);
@@ -309,7 +309,7 @@ void UserDictionarySessionHandler::GetEntries(
     }
   }
 
-  mozc::protobuf::RepeatedPtrField<UserDictionary::Entry> *mutable_entries =
+  mozc::protobuf::RepeatedPtrField<UserDictionary::Entry>* mutable_entries =
       status->mutable_entries();
   mutable_entries->Clear();
   mutable_entries->Reserve(entry_index_size);
@@ -322,8 +322,8 @@ void UserDictionarySessionHandler::GetEntries(
 }
 
 void UserDictionarySessionHandler::CheckNewDictionaryAvailability(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -339,8 +339,8 @@ void UserDictionarySessionHandler::CheckNewDictionaryAvailability(
 }
 
 void UserDictionarySessionHandler::CreateDictionary(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -360,8 +360,8 @@ void UserDictionarySessionHandler::CreateDictionary(
 }
 
 void UserDictionarySessionHandler::DeleteDictionary(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -380,8 +380,8 @@ void UserDictionarySessionHandler::DeleteDictionary(
 }
 
 void UserDictionarySessionHandler::RenameDictionary(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -396,8 +396,8 @@ void UserDictionarySessionHandler::RenameDictionary(
 }
 
 void UserDictionarySessionHandler::CheckNewEntryAvailability(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -407,7 +407,7 @@ void UserDictionarySessionHandler::CheckNewEntryAvailability(
     return;
   }
 
-  const UserDictionary *dictionary = UserDictionaryUtil::GetUserDictionaryById(
+  const UserDictionary* dictionary = UserDictionaryUtil::GetUserDictionaryById(
       session->storage(), command.dictionary_id());
   if (dictionary == nullptr) {
     status->set_status(UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID);
@@ -424,8 +424,8 @@ void UserDictionarySessionHandler::CheckNewEntryAvailability(
 }
 
 void UserDictionarySessionHandler::AddEntry(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -440,8 +440,8 @@ void UserDictionarySessionHandler::AddEntry(
 }
 
 void UserDictionarySessionHandler::EditEntry(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -457,8 +457,8 @@ void UserDictionarySessionHandler::EditEntry(
 }
 
 void UserDictionarySessionHandler::DeleteEntry(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -474,8 +474,8 @@ void UserDictionarySessionHandler::DeleteEntry(
 }
 
 void UserDictionarySessionHandler::ImportData(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -512,8 +512,8 @@ void UserDictionarySessionHandler::ImportData(
 }
 
 void UserDictionarySessionHandler::GetStorage(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  UserDictionarySession *session = GetSession(command, status);
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
+  UserDictionarySession* session = GetSession(command, status);
   if (session == nullptr) {
     return;
   }
@@ -522,8 +522,8 @@ void UserDictionarySessionHandler::GetStorage(
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
 }
 
-UserDictionarySession *UserDictionarySessionHandler::GetSession(
-    const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
+UserDictionarySession* UserDictionarySessionHandler::GetSession(
+    const UserDictionaryCommand& command, UserDictionaryCommandStatus* status) {
   if (!command.has_session_id()) {
     status->set_status(UserDictionaryCommandStatus::INVALID_ARGUMENT);
     return nullptr;

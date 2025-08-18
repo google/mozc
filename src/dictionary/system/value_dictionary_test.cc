@@ -80,14 +80,14 @@ class ValueDictionaryTest : public ::testing::Test {
     louds_trie_builder_->Add(encoded);
   }
 
-  ValueDictionary *BuildValueDictionary() {
+  ValueDictionary* BuildValueDictionary() {
     louds_trie_builder_->Build();
     louds_trie_->Open(
-        reinterpret_cast<const uint8_t *>(louds_trie_builder_->image().data()));
+        reinterpret_cast<const uint8_t*>(louds_trie_builder_->image().data()));
     return new ValueDictionary(pos_matcher_, louds_trie_.get());
   }
 
-  void InitToken(const absl::string_view value, Token *token) const {
+  void InitToken(const absl::string_view value, Token* token) const {
     token->key = token->value = std::string(value);
     token->cost = 10000;
     token->lid = token->rid = pos_matcher_.GetSuggestOnlyWordId();
@@ -206,7 +206,7 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   {
     CollectTokenCallback callback;
     dictionary->LookupPredictive("w", convreq_, &callback);
-    std::vector<Token *> expected;
+    std::vector<Token*> expected;
     expected.push_back(&token_we);
     expected.push_back(&token_war);
     expected.push_back(&token_word);
@@ -216,7 +216,7 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   {
     CollectTokenCallback callback;
     dictionary->LookupPredictive("wo", convreq_, &callback);
-    std::vector<Token *> expected;
+    std::vector<Token*> expected;
     expected.push_back(&token_word);
     expected.push_back(&token_world);
     EXPECT_TOKENS_EQ_UNORDERED(expected, callback.tokens());

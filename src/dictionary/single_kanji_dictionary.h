@@ -46,10 +46,10 @@ namespace dictionary {
 class SingleKanjiDictionary {
  public:
   SingleKanjiDictionary() = default;
-  explicit SingleKanjiDictionary(const DataManager &data_manager);
+  explicit SingleKanjiDictionary(const DataManager& data_manager);
 
-  SingleKanjiDictionary(const SingleKanjiDictionary &) = delete;
-  SingleKanjiDictionary &operator=(const SingleKanjiDictionary &) = delete;
+  SingleKanjiDictionary(const SingleKanjiDictionary&) = delete;
+  SingleKanjiDictionary& operator=(const SingleKanjiDictionary&) = delete;
 
   virtual ~SingleKanjiDictionary() = default;
 
@@ -71,7 +71,7 @@ class SingleKanjiDictionary {
   // Generates kanji variant description.
   // Returns false if the description was not found.
   virtual bool GenerateDescription(absl::string_view kanji_surface,
-                                   std::string *desc) const;
+                                   std::string* desc) const;
 
  private:
   absl::string_view single_kanji_token_array_;

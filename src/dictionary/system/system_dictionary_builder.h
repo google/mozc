@@ -65,21 +65,21 @@ class SystemDictionaryBuilder final {
 
   SystemDictionaryBuilder() = default;
   // This class does not have the ownership of |codec|.
-  SystemDictionaryBuilder(const SystemDictionaryCodecInterface *codec,
-                          const DictionaryFileCodecInterface *file_codec)
+  SystemDictionaryBuilder(const SystemDictionaryCodecInterface* codec,
+                          const DictionaryFileCodecInterface* file_codec)
       : codec_(codec), file_codec_(file_codec) {}
 
-  SystemDictionaryBuilder(const SystemDictionaryBuilder &) = delete;
-  SystemDictionaryBuilder &operator=(const SystemDictionaryBuilder &) = delete;
+  SystemDictionaryBuilder(const SystemDictionaryBuilder&) = delete;
+  SystemDictionaryBuilder& operator=(const SystemDictionaryBuilder&) = delete;
 
-  void BuildFromTokens(absl::Span<Token *const> tokens) {
-    BuildFromTokensInternal(std::vector<Token *>(tokens.begin(), tokens.end()));
+  void BuildFromTokens(absl::Span<Token* const> tokens) {
+    BuildFromTokensInternal(std::vector<Token*>(tokens.begin(), tokens.end()));
   }
   void BuildFromTokens(absl::Span<const std::unique_ptr<Token>> token);
 
-  void WriteToFile(const std::string &output_file) const;
+  void WriteToFile(const std::string& output_file) const;
   void WriteToStream(absl::string_view intermediate_output_file_base_path,
-                     std::ostream *output_stream) const;
+                     std::ostream* output_stream) const;
 
  private:
   using KeyInfoList = std::deque<KeyInfo>;
@@ -87,22 +87,22 @@ class SystemDictionaryBuilder final {
   // Build process needs to make a copy of input token pointers. Therefore, make
   // a copy at call site, which is helpful to efficiently support the above two
   // versions of BuildFromTokens() without extra copying.
-  void BuildFromTokensInternal(std::vector<Token *> tokens);
+  void BuildFromTokensInternal(std::vector<Token*> tokens);
 
-  KeyInfoList ReadTokens(std::vector<Token *> tokens) const;
+  KeyInfoList ReadTokens(std::vector<Token*> tokens) const;
 
-  void BuildFrequentPos(const KeyInfoList &key_info_list);
-  void BuildValueTrie(const KeyInfoList &key_info_list);
-  void BuildKeyTrie(const KeyInfoList &key_info_list);
-  void BuildTokenArray(const KeyInfoList &key_info_list);
+  void BuildFrequentPos(const KeyInfoList& key_info_list);
+  void BuildValueTrie(const KeyInfoList& key_info_list);
+  void BuildKeyTrie(const KeyInfoList& key_info_list);
+  void BuildTokenArray(const KeyInfoList& key_info_list);
 
-  void SetIdForValue(KeyInfoList *key_info_list) const;
-  void SetIdForKey(KeyInfoList *key_info_list) const;
-  void SortTokenInfo(KeyInfoList *key_info_list) const;
+  void SetIdForValue(KeyInfoList* key_info_list) const;
+  void SetIdForKey(KeyInfoList* key_info_list) const;
+  void SortTokenInfo(KeyInfoList* key_info_list) const;
 
-  void SetCostType(KeyInfoList *key_info_list) const;
-  void SetPosType(KeyInfoList *key_info_list) const;
-  void SetValueType(KeyInfoList *key_info_list) const;
+  void SetCostType(KeyInfoList* key_info_list) const;
+  void SetPosType(KeyInfoList* key_info_list) const;
+  void SetValueType(KeyInfoList* key_info_list) const;
 
   storage::louds::LoudsTrieBuilder value_trie_builder_;
   storage::louds::LoudsTrieBuilder key_trie_builder_;
@@ -111,9 +111,9 @@ class SystemDictionaryBuilder final {
   // mapping from {left_id, right_id} to POS index (0--255)
   std::map<uint32_t, int> frequent_pos_;
 
-  const SystemDictionaryCodecInterface *codec_ =
+  const SystemDictionaryCodecInterface* codec_ =
       SystemDictionaryCodecFactory::GetCodec();
-  const DictionaryFileCodecInterface *file_codec_ =
+  const DictionaryFileCodecInterface* file_codec_ =
       DictionaryFileCodecFactory::GetCodec();
 };
 

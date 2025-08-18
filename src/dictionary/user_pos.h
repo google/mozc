@@ -108,7 +108,7 @@ class UserPos {
     }
     inline void remove_attribute(Attribute attr) { attributes &= ~attr; }
 
-    void swap(Token &other) noexcept {
+    void swap(Token& other) noexcept {
       static_assert(std::is_nothrow_swappable_v<std::string>);
       using std::swap;
       swap(key, other.key);
@@ -117,7 +117,7 @@ class UserPos {
       swap(attributes, other.attributes);
       swap(comment, other.comment);
     }
-    friend void swap(Token &lhs, Token &rhs) noexcept { lhs.swap(rhs); }
+    friend void swap(Token& lhs, Token& rhs) noexcept { lhs.swap(rhs); }
   };
 
   class iterator {
@@ -125,63 +125,63 @@ class UserPos {
     using iterator_category = std::random_access_iterator_tag;
     using value_type = uint16_t;
     using difference_type = std::ptrdiff_t;
-    using pointer = uint16_t *;
-    using reference = uint16_t &;
+    using pointer = uint16_t*;
+    using reference = uint16_t&;
 
     iterator() = default;
-    explicit iterator(const char *ptr) : ptr_(ptr) {}
-    iterator(const iterator &x) = default;
+    explicit iterator(const char* ptr) : ptr_(ptr) {}
+    iterator(const iterator& x) = default;
 
     uint16_t pos_index() const {
-      return *reinterpret_cast<const uint16_t *>(ptr_);
+      return *reinterpret_cast<const uint16_t*>(ptr_);
     }
     uint16_t value_suffix_index() const {
-      return *reinterpret_cast<const uint16_t *>(ptr_ + 2);
+      return *reinterpret_cast<const uint16_t*>(ptr_ + 2);
     }
     uint16_t key_suffix_index() const {
-      return *reinterpret_cast<const uint16_t *>(ptr_ + 4);
+      return *reinterpret_cast<const uint16_t*>(ptr_ + 4);
     }
     uint16_t conjugation_id() const {
-      return *reinterpret_cast<const uint16_t *>(ptr_ + 6);
+      return *reinterpret_cast<const uint16_t*>(ptr_ + 6);
     }
 
     uint16_t operator*() const { return pos_index(); }
 
-    void swap(iterator &x) {
+    void swap(iterator& x) {
       using std::swap;
       swap(ptr_, x.ptr_);
     }
 
-    friend void swap(iterator &x, iterator &y) { x.swap(y); }
+    friend void swap(iterator& x, iterator& y) { x.swap(y); }
 
-    iterator &operator++() {
+    iterator& operator++() {
       ptr_ += kTokenByteLength;
       return *this;
     }
 
     iterator operator++(int) {
-      const char *tmp = ptr_;
+      const char* tmp = ptr_;
       ptr_ += kTokenByteLength;
       return iterator(tmp);
     }
 
-    iterator &operator--() {
+    iterator& operator--() {
       ptr_ -= kTokenByteLength;
       return *this;
     }
 
     iterator operator--(int) {
-      const char *tmp = ptr_;
+      const char* tmp = ptr_;
       ptr_ -= kTokenByteLength;
       return iterator(tmp);
     }
 
-    iterator &operator+=(difference_type n) {
+    iterator& operator+=(difference_type n) {
       ptr_ += n * kTokenByteLength;
       return *this;
     }
 
-    iterator &operator-=(difference_type n) {
+    iterator& operator-=(difference_type n) {
       ptr_ -= n * kTokenByteLength;
       return *this;
     }
@@ -210,30 +210,30 @@ class UserPos {
     friend bool operator>=(iterator x, iterator y) { return x.ptr_ >= y.ptr_; }
 
    private:
-    const char *ptr_ = nullptr;
+    const char* ptr_ = nullptr;
   };
 
   using const_iterator = iterator;
 
   static std::unique_ptr<UserPos> CreateFromDataManager(
-      const DataManager &manager);
+      const DataManager& manager);
 
   // Initializes the user pos from the given binary data.  The provided byte
   // data must outlive this instance.
   UserPos(absl::string_view token_array_data,
           absl::string_view string_array_data);
-  UserPos(const UserPos &) = delete;
-  UserPos &operator=(const UserPos &) = delete;
+  UserPos(const UserPos&) = delete;
+  UserPos& operator=(const UserPos&) = delete;
   virtual ~UserPos() = default;
 
   // Virutal for testing/mocking.
   virtual std::vector<std::string> GetPosList() const { return pos_list_; }
   virtual int GetPosListDefaultIndex() const { return pos_list_default_index_; }
   virtual bool IsValidPos(absl::string_view pos) const;
-  virtual bool GetPosIds(absl::string_view pos, uint16_t *id) const;
+  virtual bool GetPosIds(absl::string_view pos, uint16_t* id) const;
   virtual bool GetTokens(absl::string_view key, absl::string_view value,
                          absl::string_view pos, absl::string_view locale,
-                         std::vector<Token> *tokens) const;
+                         std::vector<Token>* tokens) const;
 
   iterator begin() const { return iterator(token_array_data_.data()); }
   iterator end() const {
@@ -241,7 +241,7 @@ class UserPos {
   }
 
   bool GetTokens(absl::string_view key, absl::string_view value,
-                 absl::string_view pos, std::vector<Token> *tokens) const {
+                 absl::string_view pos, std::vector<Token>* tokens) const {
     return GetTokens(key, value, pos, "", tokens);
   }
 

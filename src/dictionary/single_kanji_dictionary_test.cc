@@ -70,7 +70,7 @@ TEST_F(SingleKanjiDictionaryTest, LookupNounPrefixEntries) {
   {
     auto [begin, end] = dictionary.LookupNounPrefixEntries("ご");
     EXPECT_NE(begin, end);
-    for (auto &iter = begin; iter != end; ++iter) {
+    for (auto& iter = begin; iter != end; ++iter) {
       EXPECT_FALSE(iter.value().empty());
       EXPECT_TRUE(iter.cost() == 0 || iter.cost() == 1);
     }

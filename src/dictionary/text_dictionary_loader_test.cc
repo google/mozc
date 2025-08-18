@@ -50,7 +50,7 @@ namespace dictionary {
 class TextDictionaryLoaderTestPeer
     : public testing::TestPeer<TextDictionaryLoader> {
  public:
-  explicit TextDictionaryLoaderTestPeer(TextDictionaryLoader &loader)
+  explicit TextDictionaryLoaderTestPeer(TextDictionaryLoader& loader)
       : testing::TestPeer<TextDictionaryLoader>(loader) {}
 
   PEER_METHOD(RewriteSpecialToken);
@@ -87,7 +87,7 @@ class TextDictionaryLoaderTest : public ::testing::Test {
 TEST_F(TextDictionaryLoaderTest, BasicTest) {
   {
     std::unique_ptr<TextDictionaryLoader> loader = CreateTextDictionaryLoader();
-    std::vector<Token *> tokens;
+    std::vector<Token*> tokens;
     loader->CollectTokens(&tokens);
     EXPECT_TRUE(tokens.empty());
   }

@@ -48,15 +48,15 @@ namespace dictionary {
 
 class TokenDecodeIterator {
  public:
-  TokenDecodeIterator(const TokenDecodeIterator &) = delete;
-  TokenDecodeIterator &operator=(const TokenDecodeIterator &) = delete;
-  TokenDecodeIterator(const SystemDictionaryCodecInterface *codec,
-                      const storage::louds::LoudsTrie &value_trie,
-                      const uint32_t *frequent_pos, absl::string_view key,
-                      const uint8_t *ptr);
+  TokenDecodeIterator(const TokenDecodeIterator&) = delete;
+  TokenDecodeIterator& operator=(const TokenDecodeIterator&) = delete;
+  TokenDecodeIterator(const SystemDictionaryCodecInterface* codec,
+                      const storage::louds::LoudsTrie& value_trie,
+                      const uint32_t* frequent_pos, absl::string_view key,
+                      const uint8_t* ptr);
   ~TokenDecodeIterator() = default;
 
-  const TokenInfo &Get() const { return token_info_; }
+  const TokenInfo& Get() const { return token_info_; }
   bool Done() const { return state_ == DONE; }
   void Next();
 
@@ -69,23 +69,23 @@ class TokenDecodeIterator {
 
   void NextInternal();
 
-  void LookupValue(int id, std::string *value) const {
+  void LookupValue(int id, std::string* value) const {
     char buffer[storage::louds::LoudsTrie::kMaxDepth + 1];
     const absl::string_view encoded_value =
         value_trie_->RestoreKeyString(id, buffer);
     codec_->DecodeValue(encoded_value, value);
   }
 
-  const SystemDictionaryCodecInterface *codec_;
-  const storage::louds::LoudsTrie *value_trie_;
-  const uint32_t *frequent_pos_;
+  const SystemDictionaryCodecInterface* codec_;
+  const storage::louds::LoudsTrie* value_trie_;
+  const uint32_t* frequent_pos_;
 
   const absl::string_view key_;
   // Katakana key will be lazily initialized.
   std::string key_katakana_;
 
   State state_;
-  const uint8_t *ptr_;
+  const uint8_t* ptr_;
 
   TokenInfo token_info_;
   Token token_;
@@ -94,9 +94,9 @@ class TokenDecodeIterator {
 // Implementation is inlined for performance.
 
 inline TokenDecodeIterator::TokenDecodeIterator(
-    const SystemDictionaryCodecInterface *codec,
-    const storage::louds::LoudsTrie &value_trie, const uint32_t *frequent_pos,
-    absl::string_view key, const uint8_t *ptr)
+    const SystemDictionaryCodecInterface* codec,
+    const storage::louds::LoudsTrie& value_trie, const uint32_t* frequent_pos,
+    absl::string_view key, const uint8_t* ptr)
     : codec_(codec),
       value_trie_(&value_trie),
       frequent_pos_(frequent_pos),

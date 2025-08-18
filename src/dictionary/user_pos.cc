@@ -81,7 +81,7 @@ bool UserPos::IsValidPos(absl::string_view pos) const {
   return std::binary_search(begin(), end(), iter.index());
 }
 
-bool UserPos::GetPosIds(absl::string_view pos, uint16_t *id) const {
+bool UserPos::GetPosIds(absl::string_view pos, uint16_t* id) const {
   const auto str_iter =
       std::lower_bound(string_array_.begin(), string_array_.end(), pos);
   if (str_iter == string_array_.end() || *str_iter != pos) {
@@ -97,7 +97,7 @@ bool UserPos::GetPosIds(absl::string_view pos, uint16_t *id) const {
 
 bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
                         absl::string_view pos, absl::string_view locale,
-                        std::vector<Token> *tokens) const {
+                        std::vector<Token>* tokens) const {
   if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
     return false;
   }
@@ -173,7 +173,7 @@ bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
 }
 
 std::unique_ptr<UserPos> UserPos::CreateFromDataManager(
-    const DataManager &manager) {
+    const DataManager& manager) {
   absl::string_view token_array_data, string_array_data;
   manager.GetUserPosData(&token_array_data, &string_array_data);
   return std::make_unique<UserPos>(token_array_data, string_array_data);

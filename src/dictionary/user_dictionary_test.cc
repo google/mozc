@@ -118,7 +118,7 @@ constexpr char kUserDictionary0[] =
 constexpr char kUserDictionary1[] = "end\tend\tverb\n";
 
 void PushBackToken(absl::string_view key, absl::string_view value, uint16_t id,
-                   std::vector<UserPos::Token> *tokens) {
+                   std::vector<UserPos::Token>* tokens) {
   tokens->push_back(UserPos::Token{
       .key = std::string(key),
       .value = std::string(value),
@@ -149,7 +149,7 @@ class UserPosMock : public UserPos {
   //  verb (-ing form) | 220 | 220
   bool GetTokens(absl::string_view key, absl::string_view value,
                  absl::string_view pos, absl::string_view locale,
-                 std::vector<UserPos::Token> *tokens) const override {
+                 std::vector<UserPos::Token>* tokens) const override {
     if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
       return false;
     }
@@ -175,7 +175,7 @@ class UserPosMock : public UserPos {
   }
   int GetPosListDefaultIndex() const override { return 0; }
 
-  bool GetPosIds(absl::string_view pos, uint16_t *id) const override {
+  bool GetPosIds(absl::string_view pos, uint16_t* id) const override {
     return false;
   }
 
@@ -218,7 +218,7 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
         std::move(filename));
   }
 
-  ConversionRequest ConvReq(const config::Config &config) {
+  ConversionRequest ConvReq(const config::Config& config) {
     return ConversionRequestBuilder().SetConfig(config).Build();
   }
 
@@ -228,13 +228,13 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
     uint16_t lid;
     uint16_t rid;
 
-    bool operator==(const Entry &rhs) const {
+    bool operator==(const Entry& rhs) const {
       return std::tie(key, value, lid, rid) ==
              std::tie(rhs.key, rhs.value, rhs.lid, rhs.rid);
     }
 
     template <typename Sink>
-    friend void AbslStringify(Sink &sink, const Entry &entry) {
+    friend void AbslStringify(Sink& sink, const Entry& entry) {
       absl::Format(&sink, "key = %s, value = %s, lid = %d, rid = %d", entry.key,
                    entry.value, entry.lid, entry.rid);
     }
@@ -244,7 +244,7 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
    public:
     ResultType OnToken(absl::string_view,  // key
                        absl::string_view,  // actual_key
-                       const Token &token) override {
+                       const Token& token) override {
       // Collect only user dictionary entries.
       if (token.attributes & Token::USER_DICTIONARY) {
         entries_.push_back(Entry({.key = token.key,
@@ -255,14 +255,14 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
       return TRAVERSE_CONTINUE;
     }
 
-    std::vector<Entry> &&entries() && { return std::move(entries_); }
+    std::vector<Entry>&& entries() && { return std::move(entries_); }
 
    private:
     std::vector<Entry> entries_;
   };
 
   std::vector<Entry> LookupPredictive(absl::string_view key,
-                                      const UserDictionary &dic) {
+                                      const UserDictionary& dic) {
     EntryCollector collector;
     const ConversionRequest convreq = ConvReq(config_);
     dic.LookupPredictive(key, convreq, &collector);
@@ -270,7 +270,7 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
   }
 
   std::vector<Entry> LookupPrefix(absl::string_view key,
-                                  const UserDictionary &dic) {
+                                  const UserDictionary& dic) {
     EntryCollector collector;
     const ConversionRequest convreq = ConvReq(config_);
     dic.LookupPrefix(key, convreq, &collector);
@@ -278,20 +278,20 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
   }
 
   std::vector<Entry> LookupExact(absl::string_view key,
-                                 const UserDictionary &dic) {
+                                 const UserDictionary& dic) {
     EntryCollector collector;
     const ConversionRequest convreq = ConvReq(config_);
     dic.LookupExact(key, convreq, &collector);
     return std::move(collector).entries();
   }
 
-  static void LoadFromString(const std::string &contents,
-                             UserDictionaryStorage *storage) {
+  static void LoadFromString(const std::string& contents,
+                             UserDictionaryStorage* storage) {
     std::istringstream is(contents);
     CHECK(is.good());
 
     storage->GetProto().Clear();
-    UserDictionaryStorage::UserDictionary *dic =
+    UserDictionaryStorage::UserDictionary* dic =
         storage->GetProto().add_dictionaries();
     CHECK(dic);
 
@@ -303,7 +303,7 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
       std::vector<absl::string_view> fields =
           absl::StrSplit(line, '\t', absl::AllowEmpty());
       EXPECT_GE(fields.size(), 3) << line;
-      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
       CHECK(entry);
       entry->set_key(fields[0]);
       entry->set_value(fields[1]);
@@ -319,7 +319,7 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
   }
 
   // Helper function to lookup comment string from |dic|.
-  std::string LookupComment(const UserDictionary &dic, absl::string_view key,
+  std::string LookupComment(const UserDictionary& dic, absl::string_view key,
                             absl::string_view value) {
     std::string comment;
     const ConversionRequest convreq = ConvReq(config_);
@@ -589,11 +589,11 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
   UserDictionaryStorage storage(filename);
   {
     EXPECT_OK(storage.CreateDictionary("test"));
-    UserDictionaryStorage::UserDictionary *dic =
+    UserDictionaryStorage::UserDictionary* dic =
         storage.GetProto().mutable_dictionaries(0);
 
     // "名詞"
-    UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+    UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
     entry->set_key("key");
     entry->set_value("noun");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -629,11 +629,11 @@ TEST_F(UserDictionaryTest, TestLookupWithShortCut) {
     // Creates the shortcut dictionary (from Gboard Android).
     EXPECT_OK(storage.CreateDictionary(
         "__auto_imported_android_shortcuts_dictionary"));
-    UserDictionaryStorage::UserDictionary *dic =
+    UserDictionaryStorage::UserDictionary* dic =
         storage.GetProto().mutable_dictionaries(0);
 
     // "名詞"
-    UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+    UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
     entry->set_key("key");
     entry->set_value("noun");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -689,12 +689,12 @@ TEST_F(UserDictionaryTest, TestKeyNormalization) {
   UserDictionaryStorage storage(filename);
   {
     EXPECT_OK(storage.CreateDictionary("normalization_test"));
-    UserDictionaryStorage::UserDictionary *dic =
+    UserDictionaryStorage::UserDictionary* dic =
         storage.GetProto().mutable_dictionaries(0);
 
     // "名詞"(NOUN)
     // Full width will be normalized to half width.
-    UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+    UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
     entry->set_key("１％");
     entry->set_value("１％");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -771,10 +771,10 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     EXPECT_TRUE(storage.Lock());
 
     EXPECT_OK(storage.CreateDictionary("test"));
-    UserDictionaryStorage::UserDictionary *dic =
+    UserDictionaryStorage::UserDictionary* dic =
         storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
       entry->set_key(random.Utf8StringRandomLen(10, 'a', 'z'));
       entry->set_value(random.Utf8StringRandomLen(10, 'a', 'z'));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -823,17 +823,17 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   // Create dictionary
   {
     EXPECT_OK(storage.CreateDictionary("test"));
-    UserDictionaryStorage::UserDictionary *dic =
+    UserDictionaryStorage::UserDictionary* dic =
         storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
       entry->set_key(absl::StrCat("no_suppress_key", j));
       entry->set_value(absl::StrCat("no_suppress_value", j));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
     for (size_t j = 0; j < 10; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
       entry->set_key(absl::StrCat("suppress_key", j));
       entry->set_value(absl::StrCat("suppress_value", j));
       // entry->set_pos("抑制単語");
@@ -852,10 +852,10 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   {
     storage.GetProto().Clear();
     EXPECT_OK(storage.CreateDictionary("test"));
-    UserDictionaryStorage::UserDictionary *dic =
+    UserDictionaryStorage::UserDictionary* dic =
         storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
       entry->set_key(absl::StrCat("no_suppress_key", j));
       entry->set_value(absl::StrCat("no_suppress_value", j));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -883,11 +883,11 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   // Create dictionary
   {
     EXPECT_OK(storage.CreateDictionary("test"));
-    UserDictionaryStorage::UserDictionary *dic =
+    UserDictionaryStorage::UserDictionary* dic =
         storage.GetProto().mutable_dictionaries(0);
 
     for (size_t j = 0; j < 10; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
       entry->set_key(absl::StrCat("key", j));
       entry->set_value("default");
       // "名詞"
@@ -895,7 +895,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     }
 
     for (size_t j = 0; j < 10; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry* entry = dic->add_entries();
       entry->set_key(absl::StrCat("key", j));
       entry->set_value("suggest_only");
       // "サジェストのみ"

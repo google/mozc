@@ -69,8 +69,8 @@ def MergeCSV(csv_lines):
 def ShouldMerge(zip_count, entry):
   """Return true if this entry should be merged to the previous entry."""
   zip_code = entry[2]
-  flag_multi = (entry[12] == '1')
-  should_merge = (zip_count[zip_code] > 1 and not flag_multi)
+  flag_multi = entry[12] == '1'
+  should_merge = zip_count[zip_code] > 1 and not flag_multi
   should_merge_special = ShouldMergeSpecial(entry)
   return should_merge or should_merge_special
 
@@ -86,12 +86,12 @@ class SpecialMergeZip(object):
 
 
 _SPECIAL_CASES = [
-    SpecialMergeZip(u'5900111', u'大阪府', u'堺市中区', [u'三原台']),
-    SpecialMergeZip(u'8710046', u'大分県', u'中津市',
-                    [u'金谷', u'西堀端', u'東堀端', u'古金谷']),
-    SpecialMergeZip(u'9218046', u'石川県', u'金沢市',
-                    [u'大桑町', u'三小牛町']),
-    ]
+    SpecialMergeZip('5900111', '大阪府', '堺市中区', ['三原台']),
+    SpecialMergeZip(
+        '8710046', '大分県', '中津市', ['金谷', '西堀端', '東堀端', '古金谷']
+    ),
+    SpecialMergeZip('9218046', '石川県', '金沢市', ['大桑町', '三小牛町']),
+]
 
 
 def ShouldMergeSpecial(entry):
@@ -101,10 +101,12 @@ def ShouldMergeSpecial(entry):
   level2 = entry[7]
   level3 = entry[8]
   for special_case in _SPECIAL_CASES:
-    if (zip_code == special_case.zip_code and
-        level1 == special_case.pref and
-        level2 == special_case.city and
-        ContinuedLine(level3, special_case.towns)):
+    if (
+        zip_code == special_case.zip_code
+        and level1 == special_case.pref
+        and level2 == special_case.city
+        and ContinuedLine(level3, special_case.towns)
+    ):
       return True
   return False
 

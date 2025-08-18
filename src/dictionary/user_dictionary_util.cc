@@ -76,8 +76,8 @@ size_t UserDictionaryUtil::max_dictionary_size() { return kMaxDictionarySize; }
 size_t UserDictionaryUtil::max_entry_size() { return kMaxEntrySize; }
 
 bool UserDictionaryUtil::IsValidEntry(
-    const dictionary::UserPos &user_pos,
-    const user_dictionary::UserDictionary::Entry &entry) {
+    const dictionary::UserPos& user_pos,
+    const user_dictionary::UserDictionary::Entry& entry) {
   return ValidateEntry(entry) ==
          UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
@@ -119,9 +119,9 @@ std::string UserDictionaryUtil::NormalizeReading(
 }
 
 UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
-    const user_dictionary::UserDictionary::Entry &entry) {
+    const user_dictionary::UserDictionary::Entry& entry) {
   // Validate reading.
-  const std::string &reading = entry.key();
+  const std::string& reading = entry.key();
   if (reading.empty()) {
     MOZC_VLOG(1) << "key is empty";
     return UserDictionaryCommandStatus::READING_EMPTY;
@@ -137,7 +137,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
   }
 
   // Validate word.
-  const std::string &word = entry.value();
+  const std::string& word = entry.value();
   if (word.empty()) {
     return UserDictionaryCommandStatus::WORD_EMPTY;
   }
@@ -152,7 +152,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
   }
 
   // Validate comment.
-  const std::string &comment = entry.comment();
+  const std::string& comment = entry.comment();
   if (comment.size() > kMaxCommentSize) {
     MOZC_VLOG(1) << "Too long comment.";
     return UserDictionaryCommandStatus::COMMENT_TOO_LONG;
@@ -174,35 +174,35 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
 }
 
 bool UserDictionaryUtil::IsStorageFull(
-    const user_dictionary::UserDictionaryStorage &storage) {
+    const user_dictionary::UserDictionaryStorage& storage) {
   return storage.dictionaries_size() >= kMaxDictionarySize;
 }
 
 bool UserDictionaryUtil::IsDictionaryFull(
-    const user_dictionary::UserDictionary &dictionary) {
+    const user_dictionary::UserDictionary& dictionary) {
   return dictionary.entries_size() >= kMaxEntrySize;
 }
 
-const user_dictionary::UserDictionary *
+const user_dictionary::UserDictionary*
 UserDictionaryUtil::GetUserDictionaryById(
-    const user_dictionary::UserDictionaryStorage &storage,
+    const user_dictionary::UserDictionaryStorage& storage,
     uint64_t dictionary_id) {
   int index = GetUserDictionaryIndexById(storage, dictionary_id);
   return index >= 0 ? &storage.dictionaries(index) : nullptr;
 }
 
-user_dictionary::UserDictionary *
+user_dictionary::UserDictionary*
 UserDictionaryUtil::GetMutableUserDictionaryById(
-    user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id) {
+    user_dictionary::UserDictionaryStorage* storage, uint64_t dictionary_id) {
   int index = GetUserDictionaryIndexById(*storage, dictionary_id);
   return index >= 0 ? storage->mutable_dictionaries(index) : nullptr;
 }
 
 int UserDictionaryUtil::GetUserDictionaryIndexById(
-    const user_dictionary::UserDictionaryStorage &storage,
+    const user_dictionary::UserDictionaryStorage& storage,
     uint64_t dictionary_id) {
   for (int i = 0; i < storage.dictionaries_size(); ++i) {
-    const user_dictionary::UserDictionary &dictionary = storage.dictionaries(i);
+    const user_dictionary::UserDictionary& dictionary = storage.dictionaries(i);
     if (dictionary.id() == dictionary_id) {
       return i;
     }
@@ -218,7 +218,7 @@ std::string UserDictionaryUtil::GetUserDictionaryFileName() {
 
 // static
 bool UserDictionaryUtil::SanitizeEntry(
-    user_dictionary::UserDictionary::Entry *entry) {
+    user_dictionary::UserDictionary::Entry* entry) {
   bool modified = false;
   modified |= Sanitize(entry->mutable_key(), kMaxKeySize);
   modified |= Sanitize(entry->mutable_value(), kMaxValueSize);
@@ -232,7 +232,7 @@ bool UserDictionaryUtil::SanitizeEntry(
 }
 
 // static
-bool UserDictionaryUtil::Sanitize(std::string *str, size_t max_size) {
+bool UserDictionaryUtil::Sanitize(std::string* str, size_t max_size) {
   // First part: Remove invalid characters.
   const int n = absl::StrReplaceAll(
       {
@@ -256,7 +256,7 @@ bool UserDictionaryUtil::Sanitize(std::string *str, size_t max_size) {
 }
 
 UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateDictionaryName(
-    const user_dictionary::UserDictionaryStorage &storage,
+    const user_dictionary::UserDictionaryStorage& storage,
     const absl::string_view dictionary_name) {
   if (dictionary_name.empty()) {
     MOZC_VLOG(1) << "Empty dictionary name.";
@@ -322,7 +322,7 @@ user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
 }
 
 uint64_t UserDictionaryUtil::CreateNewDictionaryId(
-    const user_dictionary::UserDictionaryStorage &storage) {
+    const user_dictionary::UserDictionaryStorage& storage) {
   static constexpr uint64_t kInvalidDictionaryId = 0;
   absl::BitGen gen;
 
@@ -344,8 +344,8 @@ uint64_t UserDictionaryUtil::CreateNewDictionaryId(
 }
 
 UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
-    user_dictionary::UserDictionaryStorage *storage,
-    const absl::string_view dictionary_name, uint64_t *new_dictionary_id) {
+    user_dictionary::UserDictionaryStorage* storage,
+    const absl::string_view dictionary_name, uint64_t* new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
       ValidateDictionaryName(*storage, dictionary_name);
   if (status != UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
@@ -364,7 +364,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
   }
 
   *new_dictionary_id = CreateNewDictionaryId(*storage);
-  user_dictionary::UserDictionary *dictionary = storage->add_dictionaries();
+  user_dictionary::UserDictionary* dictionary = storage->add_dictionaries();
   if (dictionary == nullptr) {
     LOG(ERROR) << "add_dictionaries failed.";
     return UserDictionaryCommandStatus::UNKNOWN_ERROR;
@@ -376,9 +376,9 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
 }
 
 bool UserDictionaryUtil::DeleteDictionary(
-    user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id,
-    int *original_index,
-    std::unique_ptr<user_dictionary::UserDictionary> *deleted_dictionary) {
+    user_dictionary::UserDictionaryStorage* storage, uint64_t dictionary_id,
+    int* original_index,
+    std::unique_ptr<user_dictionary::UserDictionary>* deleted_dictionary) {
   const int index = GetUserDictionaryIndexById(*storage, dictionary_id);
   if (original_index != nullptr) {
     *original_index = index;
@@ -389,7 +389,7 @@ bool UserDictionaryUtil::DeleteDictionary(
     return false;
   }
 
-  RepeatedPtrField<user_dictionary::UserDictionary> *dictionaries =
+  RepeatedPtrField<user_dictionary::UserDictionary>* dictionaries =
       storage->mutable_dictionaries();
   // Move the target dictionary to the end.
   std::rotate(dictionaries->pointer_begin() + index,

@@ -66,7 +66,7 @@ struct TokenInfo {
     EMBEDDED_IN_TOKEN = 1,
     ACCENT_ENCODING_TYPE_SIZE = 2,
   };
-  explicit TokenInfo(Token *t) {
+  explicit TokenInfo(Token* t) {
     Clear();
     token = t;
   }
@@ -87,7 +87,7 @@ struct TokenInfo {
   // 2) Modifying text_dictionary_loader not to handle the ownership for token
 
   // original token
-  Token *token;
+  Token* token;
   // id of the value(=word) string in value trie
   int id_in_value_trie;
   // id of the pos map

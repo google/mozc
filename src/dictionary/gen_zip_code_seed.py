@@ -79,8 +79,9 @@ class ZipEntry(object):
     """Return the output line."""
     zip_code = self.FormatZip(self.zip_code)
     address = unicodedata.normalize('NFKC', self.address)
-    line = '\t'.join([zip_code, '0', '0', str(ZIP_CODE_COST),
-                      address, ZIP_CODE_LABEL])
+    line = '\t'.join(
+        [zip_code, '0', '0', str(ZIP_CODE_COST), address, ZIP_CODE_LABEL]
+    )
     return line
 
   def Output(self):
@@ -103,22 +104,24 @@ def ProcessJigyosyoCSV(file_name):
   """Process jigyosyo csv."""
   output = []
   for tokens in zip_code_util.ReadCSV(file_name):
-    entry = ReadJigyosyoEntry(tokens[7], tokens[3], tokens[4],
-                              tokens[5], tokens[2])
+    entry = ReadJigyosyoEntry(
+        tokens[7], tokens[3], tokens[4], tokens[5], tokens[2]
+    )
     output.append(entry.GetLine())
   return output
 
 
 def ReadZipCodeEntries(zip_code, level1, level2, level3):
   """Read zip code entries."""
-  return [ZipEntry(zip_code, u''.join([level1, level2, town]))
-          for town in ParseTownName(level3)]
+  return [
+      ZipEntry(zip_code, ''.join([level1, level2, town]))
+      for town in ParseTownName(level3)
+  ]
 
 
 def ReadJigyosyoEntry(zip_code, level1, level2, level3, name):
   """Read jigyosyo entry."""
-  return ZipEntry(zip_code,
-                  u''.join([level1, level2, level3, u' ', name]))
+  return ZipEntry(zip_code, ''.join([level1, level2, level3, ' ', name]))
 
 
 def ParseTownName(level3):
@@ -130,16 +133,19 @@ def ParseTownName(level3):
   # 渡名喜村一円 : 901-3601 沖縄県島尻郡渡名喜村
   # 琴平町の次に４２７番地以降がくる場合（川西） : 766-0001 香川県仲多度郡琴平町
   # 琴平町の次に１～４２６番地がくる場合（川東） : 766-0002 香川県仲多度郡琴平町
-  if (level3.find(u'以下に掲載がない場合') != -1 or
-      level3.find(u'がくる場合') != -1 or
-      level3.endswith(u'村一円')):
+  if (
+      level3.find('以下に掲載がない場合') != -1
+      or level3.find('がくる場合') != -1
+      or level3.endswith('村一円')
+  ):
     return ['']
 
-  assert CanParseAddress(level3), ('failed to be merged %s'
-                                   % level3.encode('utf-8'))
+  assert CanParseAddress(level3), 'failed to be merged %s' % level3.encode(
+      'utf-8'
+  )
 
   # We ignore additional information here.
-  level3 = re.sub(u'（.*）', u'', level3, flags=re.U)
+  level3 = re.sub('（.*）', '', level3, flags=re.U)
 
   # For 地割, we have these cases.
   #  XX1地割
@@ -149,7 +155,7 @@ def ParseTownName(level3):
   #  XX第1地割、XX第2地割、
   #  XX第1地割〜XX第2地割、
   # We simply use XX for them.
-  chiwari_match = re.match(u'(\\D*?)第?\\d+地割.*', level3, re.U)
+  chiwari_match = re.match('(\\D*?)第?\\d+地割.*', level3, re.U)
   if chiwari_match:
     town = chiwari_match.group(1)
     return [town]
@@ -159,35 +165,46 @@ def ParseTownName(level3):
   #   -> XX町YY and (XX町)ZZ
   #  YY、ZZ
   #   -> YY and ZZ
-  chou_match = re.match(u'(.*町)?(.*)', level3, re.U)
+  chou_match = re.match('(.*町)?(.*)', level3, re.U)
   if chou_match:
-    chou = u''
+    chou = ''
     if chou_match.group(1):
       chou = chou_match.group(1)
     rests = chou_match.group(2)
-    return [chou + rest for rest in rests.split(u'、')]
+    return [chou + rest for rest in rests.split('、')]
 
   return [level3]
 
 
 def CanParseAddress(address):
   """Return true for valid address."""
-  return (address.find(u'（') == -1 or
-          address.find(u'）') != -1)
+  return address.find('（') == -1 or address.find('）') != -1
 
 
 def ParseOptions():
   """Parse command line options."""
   parser = optparse.OptionParser(usage='Usage: %prog [options]')
-  parser.add_option('--zip_code', dest='zip_code',
-                    action='store', default='',
-                    help='specify zip code csv file path.')
-  parser.add_option('--jigyosyo', dest='jigyosyo',
-                    action='store', default='',
-                    help='specify zip code csv file path.')
-  parser.add_option('--output', dest='output',
-                    action='store', default=None,
-                    help='specify output file path.')
+  parser.add_option(
+      '--zip_code',
+      dest='zip_code',
+      action='store',
+      default='',
+      help='specify zip code csv file path.',
+  )
+  parser.add_option(
+      '--jigyosyo',
+      dest='jigyosyo',
+      action='store',
+      default='',
+      help='specify zip code csv file path.',
+  )
+  parser.add_option(
+      '--output',
+      dest='output',
+      action='store',
+      default=None,
+      help='specify output file path.',
+  )
   (options, unused_args) = parser.parse_args()
   return options
 

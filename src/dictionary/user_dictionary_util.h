@@ -48,8 +48,8 @@ namespace mozc {
 class UserDictionaryUtil {
  public:
   UserDictionaryUtil() = delete;
-  UserDictionaryUtil(const UserDictionaryUtil &) = delete;
-  UserDictionaryUtil &operator=(const UserDictionaryUtil &) = delete;
+  UserDictionaryUtil(const UserDictionaryUtil&) = delete;
+  UserDictionaryUtil& operator=(const UserDictionaryUtil&) = delete;
   // Following methods return limits of dictionary/entry size.
   static size_t max_dictionary_size();
   static size_t max_entry_size();
@@ -69,8 +69,8 @@ class UserDictionaryUtil {
   // invalid character and so on. If the function returns false, we
   // shouldn't accept the data being passed into the dictionary.
   // TODO(hidehikoo): Replace this method by the following ValidateEntry.
-  static bool IsValidEntry(const dictionary::UserPos &user_pos,
-                           const user_dictionary::UserDictionary::Entry &entry);
+  static bool IsValidEntry(const dictionary::UserPos& user_pos,
+                           const user_dictionary::UserDictionary::Entry& entry);
 
   // Returns the error status of the validity for the given entry.
   // The validation process is as follows:
@@ -87,45 +87,45 @@ class UserDictionaryUtil {
   //   - if it doesn't contain invalid character
   // - Checks if a valid pos type is set.
   static user_dictionary::UserDictionaryCommandStatus::Status ValidateEntry(
-      const user_dictionary::UserDictionary::Entry &entry);
+      const user_dictionary::UserDictionary::Entry& entry);
 
   // Sanitizes a dictionary entry so that it's acceptable to the
   // class. A user of the class may want this function to make sure an
   // error want happen before calling AddEntry() and other
   // methods. Return true if the entry is changed.
-  static bool SanitizeEntry(user_dictionary::UserDictionary::Entry *entry);
+  static bool SanitizeEntry(user_dictionary::UserDictionary::Entry* entry);
 
   // Helper function for SanitizeEntry
   // "max_size" is the maximum allowed size of str. If str size exceeds
   // "max_size", remaining part is truncated by this function.
-  static bool Sanitize(std::string *str, size_t max_size);
+  static bool Sanitize(std::string* str, size_t max_size);
 
   // Returns the error status of the validity for the given dictionary name.
   static user_dictionary::UserDictionaryCommandStatus::Status
-  ValidateDictionaryName(const user_dictionary::UserDictionaryStorage &storage,
+  ValidateDictionaryName(const user_dictionary::UserDictionaryStorage& storage,
                          absl::string_view dictionary_name);
 
   // Returns true if the given storage hits the limit for the number of
   // dictionaries.
   static bool IsStorageFull(
-      const user_dictionary::UserDictionaryStorage &storage);
+      const user_dictionary::UserDictionaryStorage& storage);
 
   // Returns true if the given dictionary hits the limit for the number of
   // entries.
   static bool IsDictionaryFull(
-      const user_dictionary::UserDictionary &dictionary);
+      const user_dictionary::UserDictionary& dictionary);
 
   // Returns UserDictionary with the given id, or nullptr if not found.
-  static const user_dictionary::UserDictionary *GetUserDictionaryById(
-      const user_dictionary::UserDictionaryStorage &storage,
+  static const user_dictionary::UserDictionary* GetUserDictionaryById(
+      const user_dictionary::UserDictionaryStorage& storage,
       uint64_t dictionary_id);
-  static user_dictionary::UserDictionary *GetMutableUserDictionaryById(
-      user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id);
+  static user_dictionary::UserDictionary* GetMutableUserDictionaryById(
+      user_dictionary::UserDictionaryStorage* storage, uint64_t dictionary_id);
 
   // Returns the index of the dictionary with the given dictionary_id
   // in the storage, or -1 if not found.
   static int GetUserDictionaryIndexById(
-      const user_dictionary::UserDictionaryStorage &storage,
+      const user_dictionary::UserDictionaryStorage& storage,
       uint64_t dictionary_id);
 
   // Returns the file name of UserDictionary.
@@ -144,21 +144,21 @@ class UserDictionaryUtil {
 
   // Generates a new dictionary id, i.e. id which is not in the storage.
   static uint64_t CreateNewDictionaryId(
-      const user_dictionary::UserDictionaryStorage &storage);
+      const user_dictionary::UserDictionaryStorage& storage);
 
   // Creates dictionary with the given name.
   static user_dictionary::UserDictionaryCommandStatus::Status CreateDictionary(
-      user_dictionary::UserDictionaryStorage *storage,
-      absl::string_view dictionary_name, uint64_t *new_dictionary_id);
+      user_dictionary::UserDictionaryStorage* storage,
+      absl::string_view dictionary_name, uint64_t* new_dictionary_id);
 
   // Deletes dictionary specified by the given dictionary_id.
   // If the deleted_dictionary is not nullptr, the pointer to the
   // delete dictionary is stored into it.
   // Returns true if succeeded, otherwise false.
   static bool DeleteDictionary(
-      user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id,
-      int *original_index,
-      std::unique_ptr<user_dictionary::UserDictionary> *deleted_dictionary);
+      user_dictionary::UserDictionaryStorage* storage, uint64_t dictionary_id,
+      int* original_index,
+      std::unique_ptr<user_dictionary::UserDictionary>* deleted_dictionary);
 };
 }  // namespace mozc
 
