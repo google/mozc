@@ -72,9 +72,9 @@ constexpr int kRunLevelLow = 0;
 constexpr int kRunLevelMedium = 1;
 constexpr int kRunLevelHigh = 2;
 
-bool TryGetKnownKey(HKEY key, LPCWSTR sub_key, HKEY *result_key) {
+bool TryGetKnownKey(HKEY key, LPCWSTR sub_key, HKEY* result_key) {
   HKEY dummy = nullptr;
-  HKEY &result = (result_key != nullptr ? *result_key : dummy);
+  HKEY& result = (result_key != nullptr ? *result_key : dummy);
   if (HKEY_CURRENT_USER == key) {
     if (std::wstring(kOmahaUsageKey) == sub_key) {
       result = kHKCU_ClientState;
@@ -121,7 +121,7 @@ class RegistryEmulator {
       }
       return i->second;
     }
-    const absl::flat_hash_map<HKEY, DWORD> &usagestats_map() const {
+    const absl::flat_hash_map<HKEY, DWORD>& usagestats_map() const {
       return usagestats_map_;
     }
     int run_level() const { return run_level_; }
@@ -164,7 +164,7 @@ class RegistryEmulator {
     }
     return true;
   }
-  static bool GetUsagestatsValue(HKEY key, DWORD *value) {
+  static bool GetUsagestatsValue(HKEY key, DWORD* value) {
     if (!HasUsagestatsValue(key)) {
       return false;
     }
@@ -209,7 +209,7 @@ class RegistryEmulator {
       DWORD options, REGSAM sam, LPSECURITY_ATTRIBUTES security_attributes,
       PHKEY result, LPDWORD disposition) {
     HKEY dummy = nullptr;
-    HKEY &result_key = result != nullptr ? *result : dummy;
+    HKEY& result_key = result != nullptr ? *result : dummy;
     if (!TryGetKnownKey(key, sub_key, &result_key)) {
       return ERROR_ACCESS_DENIED;
     }
@@ -220,7 +220,7 @@ class RegistryEmulator {
   }
   static LSTATUS WINAPI TestRegSetValueExW(HKEY key, LPCWSTR value_name,
                                            DWORD reserved, DWORD type,
-                                           const BYTE *data, DWORD num_data) {
+                                           const BYTE* data, DWORD num_data) {
     if (type != REG_DWORD || std::wstring(kSendStatsName) != value_name) {
       // Do nothing for other cases.
       return ERROR_SUCCESS;
@@ -228,7 +228,7 @@ class RegistryEmulator {
     if (!CheckWritable(key)) {
       return ERROR_ACCESS_DENIED;
     }
-    SetUsagestatsValue(key, *reinterpret_cast<const DWORD *>(data));
+    SetUsagestatsValue(key, *reinterpret_cast<const DWORD*>(data));
     return ERROR_SUCCESS;
   }
   static LSTATUS WINAPI TestRegCloseKey(HKEY key) { return ERROR_SUCCESS; }
@@ -249,7 +249,7 @@ class RegistryEmulator {
     if (!HasUsagestatsValue(key)) {
       return ERROR_FILE_NOT_FOUND;
     }
-    GetUsagestatsValue(key, reinterpret_cast<DWORD *>(data));
+    GetUsagestatsValue(key, reinterpret_cast<DWORD*>(data));
     if (type != nullptr) {
       *type = REG_DWORD;
     }

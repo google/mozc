@@ -180,7 +180,7 @@ bool MacStatsConfigUtilImpl::IsEnabled() {
   }
 
   uint32_t value = kDefaultValue;
-  if (!ifs.read(reinterpret_cast<char *>(&value), sizeof(value))) {
+  if (!ifs.read(reinterpret_cast<char*>(&value), sizeof(value))) {
     return kDefaultValue;
   }
 
@@ -208,7 +208,7 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
   if (!ofs) {
     return false;
   }
-  ofs.write(reinterpret_cast<const char *>(&value), sizeof(value));
+  ofs.write(reinterpret_cast<const char*>(&value), sizeof(value));
   if (!ofs.good()) {
     return false;
   }
@@ -238,7 +238,7 @@ class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
   bool SetEnabled(bool val) override { return true; }
 };
 
-StatsConfigUtilInterface *g_stats_config_util_handler = nullptr;
+StatsConfigUtilInterface* g_stats_config_util_handler = nullptr;
 
 // GetStatsConfigUtil and SetHandler are not thread safe.
 
@@ -256,7 +256,7 @@ typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
 #endif  // Platforms
 
-StatsConfigUtilInterface &GetStatsConfigUtil() {
+StatsConfigUtilInterface& GetStatsConfigUtil() {
   if (g_stats_config_util_handler == nullptr) {
     return *(Singleton<DefaultConfigUtilImpl>::get());
   } else {
@@ -265,7 +265,7 @@ StatsConfigUtilInterface &GetStatsConfigUtil() {
 }
 }  // namespace
 
-void StatsConfigUtil::SetHandler(StatsConfigUtilInterface *handler) {
+void StatsConfigUtil::SetHandler(StatsConfigUtilInterface* handler) {
   g_stats_config_util_handler = handler;
 }
 

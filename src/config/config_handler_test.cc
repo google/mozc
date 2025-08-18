@@ -309,7 +309,7 @@ TEST_F(ConfigHandlerTest, DefaultConfig) {
 }
 
 // Returns concatenated serialized data of |Config::character_form_rules|.
-std::string ExtractCharacterFormRules(const Config &config) {
+std::string ExtractCharacterFormRules(const Config& config) {
   std::string rules;
   for (size_t i = 0; i < config.character_form_rules_size(); ++i) {
     config.character_form_rules(i).AppendToString(&rules);
@@ -330,13 +330,13 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
     ConfigHandler::GetDefaultConfig(&config);
     config.clear_character_form_rules();
     {
-      auto *rule = config.add_character_form_rules();
+      auto* rule = config.add_character_form_rules();
       rule->set_group("0");
       rule->set_preedit_character_form(Config::HALF_WIDTH);
       rule->set_conversion_character_form(Config::HALF_WIDTH);
     }
     {
-      auto *rule = config.add_character_form_rules();
+      auto* rule = config.add_character_form_rules();
       rule->set_group("A");
       rule->set_preedit_character_form(Config::LAST_FORM);
       rule->set_conversion_character_form(Config::LAST_FORM);
@@ -347,13 +347,13 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
     Config config;
     ConfigHandler::GetDefaultConfig(&config);
     {
-      auto *rule = config.add_character_form_rules();
+      auto* rule = config.add_character_form_rules();
       rule->set_group("0");
       rule->set_preedit_character_form(Config::HALF_WIDTH);
       rule->set_conversion_character_form(Config::HALF_WIDTH);
     }
     {
-      auto *rule = config.add_character_form_rules();
+      auto* rule = config.add_character_form_rules();
       rule->set_group("A");
       rule->set_preedit_character_form(Config::LAST_FORM);
       rule->set_conversion_character_form(Config::LAST_FORM);
@@ -366,19 +366,19 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   // is not predictable.  Hence we only make sure that
   // |Config::character_form_rules()| is one of expected values.
   absl::flat_hash_set<std::string> character_form_rules_set;
-  for (const auto &config : configs) {
+  for (const auto& config : configs) {
     character_form_rules_set.insert(ExtractCharacterFormRules(config));
   }
 
   // Before starting concurrent test, check to see if it works in single
   // thread.
-  for (const auto &config : configs) {
+  for (const auto& config : configs) {
     // Update the global config.
     ConfigHandler::SetConfig(config);
 
     // Check to see if the returned config contains one of expected
     // |Config::character_form_rules()|.
-    const auto &rules =
+    const auto& rules =
         ExtractCharacterFormRules(ConfigHandler::GetCopiedConfig());
     ASSERT_TRUE(character_form_rules_set.contains(rules));
   }
@@ -401,7 +401,7 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
     for (int i = 0; i < 4; ++i) {
       get_threads.push_back(Thread([&cancel, &character_form_rules_set] {
         while (!cancel.HasBeenNotified()) {
-          const auto &rules =
+          const auto& rules =
               ExtractCharacterFormRules(ConfigHandler::GetCopiedConfig());
           EXPECT_TRUE(character_form_rules_set.contains(rules));
         }
@@ -415,10 +415,10 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
     absl::SleepFor(absl::Milliseconds(250));
 
     cancel.Notify();
-    for (auto &set_thread : set_threads) {
+    for (auto& set_thread : set_threads) {
       set_thread.Join();
     }
-    for (auto &get_thread : get_threads) {
+    for (auto& get_thread : get_threads) {
       get_thread.Join();
     }
   }

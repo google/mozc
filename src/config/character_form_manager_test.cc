@@ -44,20 +44,20 @@ namespace {
 class CharacterFormManagerTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    CharacterFormManager *manager =
+    CharacterFormManager* manager =
         CharacterFormManager::GetCharacterFormManager();
     manager->SetDefaultRule();
   }
 
   void TearDown() override {
-    CharacterFormManager *manager =
+    CharacterFormManager* manager =
         CharacterFormManager::GetCharacterFormManager();
     manager->SetDefaultRule();
   }
 };
 
 TEST_F(CharacterFormManagerTest, DefaultTest) {
-  CharacterFormManager *manager =
+  CharacterFormManager* manager =
       CharacterFormManager::GetCharacterFormManager();
 
   manager->ClearHistory();
@@ -370,7 +370,7 @@ TEST_F(CharacterFormManagerTest, DefaultTest) {
 }
 
 TEST_F(CharacterFormManagerTest, MixedFormTest) {
-  CharacterFormManager *manager =
+  CharacterFormManager* manager =
       CharacterFormManager::GetCharacterFormManager();
 
   manager->AddConversionRule("0", config::Config::FULL_WIDTH);
@@ -389,7 +389,7 @@ TEST_F(CharacterFormManagerTest, MixedFormTest) {
 }
 
 TEST_F(CharacterFormManagerTest, GroupTest) {
-  CharacterFormManager *manager =
+  CharacterFormManager* manager =
       CharacterFormManager::GetCharacterFormManager();
 
   {
@@ -521,7 +521,7 @@ TEST_F(CharacterFormManagerTest, GroupTest) {
 }
 
 TEST_F(CharacterFormManagerTest, InvalidStringTest) {
-  CharacterFormManager *manager =
+  CharacterFormManager* manager =
       CharacterFormManager::GetCharacterFormManager();
 
   std::string output;
@@ -532,7 +532,7 @@ TEST_F(CharacterFormManagerTest, InvalidStringTest) {
 }
 
 TEST_F(CharacterFormManagerTest, NumberStyle) {
-  CharacterFormManager *manager =
+  CharacterFormManager* manager =
       CharacterFormManager::GetCharacterFormManager();
   {
     std::optional<const CharacterFormManager::NumberFormStyle> stored_entry =

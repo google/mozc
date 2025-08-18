@@ -47,8 +47,8 @@ inline constexpr int kConfigVersion = 1;
 class ConfigHandler {
  public:
   ConfigHandler() = delete;
-  ConfigHandler(const ConfigHandler &) = delete;
-  ConfigHandler &operator=(const ConfigHandler &) = delete;
+  ConfigHandler(const ConfigHandler&) = delete;
+  ConfigHandler& operator=(const ConfigHandler&) = delete;
 
   // Returns current config.
   // This method returns a *copied* Config instance
@@ -73,9 +73,9 @@ class ConfigHandler {
   //
   // Using these functions are safer than using an uninitialized config value.
   // These functions are also thread-safe.
-  static void GetDefaultConfig(Config *config);
+  static void GetDefaultConfig(Config* config);
 
-  static const Config &DefaultConfig();
+  static const Config& DefaultConfig();
   static std::shared_ptr<const config::Config> GetSharedDefaultConfig();
 
   // Reloads config from storage.

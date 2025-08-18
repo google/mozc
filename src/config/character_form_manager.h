@@ -52,8 +52,8 @@ class CharacterFormManager {
     NumberUtil::NumberString::Style style;
   };
 
-  CharacterFormManager(const CharacterFormManager &) = delete;
-  CharacterFormManager &operator=(const CharacterFormManager &) = delete;
+  CharacterFormManager(const CharacterFormManager&) = delete;
+  CharacterFormManager& operator=(const CharacterFormManager&) = delete;
 
   // Returns the preference of character form.
   // This method cannot return the preference,
@@ -64,9 +64,9 @@ class CharacterFormManager {
       absl::string_view input) const;
 
   // Converts string according to the config rules.
-  void ConvertPreeditString(absl::string_view input, std::string *output) const;
+  void ConvertPreeditString(absl::string_view input, std::string* output) const;
   void ConvertConversionString(absl::string_view input,
-                               std::string *output) const;
+                               std::string* output) const;
 
   std::string ConvertPreeditString(absl::string_view input) const {
     std::string output;
@@ -86,11 +86,11 @@ class CharacterFormManager {
   // e.g., output = "@" alternative_output = "＠"
   // return true if both output and alternative_output are defined.
   bool ConvertPreeditStringWithAlternative(
-      absl::string_view input, std::string *output,
-      std::string *alternative_output) const;
+      absl::string_view input, std::string* output,
+      std::string* alternative_output) const;
   bool ConvertConversionStringWithAlternative(
-      absl::string_view input, std::string *output,
-      std::string *alternative_output) const;
+      absl::string_view input, std::string* output,
+      std::string* alternative_output) const;
 
   // Calls this method after user fixed the final result.
   // If a character has "LAST_FORM" preference in the config,
@@ -107,7 +107,7 @@ class CharacterFormManager {
   // You can just pass the final final conversion string to this method.
   void GuessAndSetCharacterForm(absl::string_view input);
 
-  void SetLastNumberStyle(const NumberFormStyle &form_style);
+  void SetLastNumberStyle(const NumberFormStyle& form_style);
   std::optional<const NumberFormStyle> GetLastNumberStyle() const;
 
   // Clears history data. This method does not clear config data.
@@ -129,14 +129,14 @@ class CharacterFormManager {
   void SetDefaultRule();
 
   // Reload config explicitly.
-  void ReloadConfig(const Config &config);
+  void ReloadConfig(const Config& config);
 
   // Utility function: pass character form.
   static std::string ConvertWidth(std::string input,
                                   Config::CharacterForm form);
 
   // Returns the singleton instance.
-  static CharacterFormManager *GetCharacterFormManager();
+  static CharacterFormManager* GetCharacterFormManager();
 
  private:
   class Data;

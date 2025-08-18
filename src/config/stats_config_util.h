@@ -64,7 +64,7 @@ class StatsConfigUtil {
   static bool SetEnabled(bool val);
 
   // Inject a dependency
-  static void SetHandler(StatsConfigUtilInterface *handler);
+  static void SetHandler(StatsConfigUtilInterface* handler);
 
   // Should never be allocated.
 };

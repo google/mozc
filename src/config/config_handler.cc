@@ -69,8 +69,8 @@ constexpr absl::string_view kFileNamePrefix = "user://config";
 void AddCharacterFormRule(const absl::string_view group,
                           const Config::CharacterForm preedit_form,
                           const Config::CharacterForm conversion_form,
-                          Config *config) {
-  Config::CharacterFormRule *rule = config->add_character_form_rules();
+                          Config* config) {
+  Config::CharacterFormRule* rule = config->add_character_form_rules();
   rule->set_group(group);
   rule->set_preedit_character_form(preedit_form);
   rule->set_conversion_character_form(conversion_form);
@@ -119,8 +119,8 @@ Config CreateDefaultConfig() {
   return config;
 }
 
-void SetMetaData(Config *config) {
-  GeneralConfig *general_config = config->mutable_general_config();
+void SetMetaData(Config* config) {
+  GeneralConfig* general_config = config->mutable_general_config();
   general_config->set_config_version(kConfigVersion);
   general_config->set_last_modified_time(
       absl::ToUnixSeconds(Clock::GetAbslTime()));
@@ -128,7 +128,7 @@ void SetMetaData(Config *config) {
   general_config->set_platform(SystemUtil::GetOSVersionString());
 }
 
-void NormalizeConfig(Config *config) {
+void NormalizeConfig(Config* config) {
 #ifdef NDEBUG
   // Delete the optional field from the config.
   config->clear_verbose_level();
@@ -186,7 +186,7 @@ class ConfigHandlerImpl final {
   mutable absl::Mutex mutex_;
 };
 
-ConfigHandlerImpl *GetConfigHandlerImpl() {
+ConfigHandlerImpl* GetConfigHandlerImpl() {
   return Singleton<ConfigHandlerImpl>::get();
 }
 
@@ -299,7 +299,7 @@ void ConfigHandler::SetConfig(Config config) {
 }
 
 // static
-void ConfigHandler::GetDefaultConfig(Config *config) {
+void ConfigHandler::GetDefaultConfig(Config* config) {
   *config = DefaultConfig();
 }
 
@@ -308,7 +308,7 @@ std::shared_ptr<const Config> ConfigHandler::GetSharedDefaultConfig() {
 }
 
 // static
-const Config &ConfigHandler::DefaultConfig() {
+const Config& ConfigHandler::DefaultConfig() {
   return *GetSharedDefaultConfig();  // NOLINT: The referenced object has static
                                      // lifetime.
 }
