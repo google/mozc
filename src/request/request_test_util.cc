@@ -35,7 +35,7 @@ namespace mozc {
 namespace request_test_util {
 using commands::Request;
 
-void FillMobileRequest(Request *request) {
+void FillMobileRequest(Request* request) {
   request->set_zero_query_suggestion(true);
   request->set_mixed_conversion(true);
   request->set_update_input_mode_from_surrounding_text(false);
@@ -45,7 +45,7 @@ void FillMobileRequest(Request *request) {
   request->set_language_aware_input(Request::NO_LANGUAGE_AWARE_INPUT);
 }
 
-void FillMobileRequestWithHardwareKeyboard(Request *request) {
+void FillMobileRequestWithHardwareKeyboard(Request* request) {
   request->set_zero_query_suggestion(false);
   request->set_mixed_conversion(false);
   request->set_update_input_mode_from_surrounding_text(true);
@@ -56,7 +56,7 @@ void FillMobileRequestWithHardwareKeyboard(Request *request) {
   request->set_candidate_page_size(2);
 }
 
-void FillMobileRequestForHandwriting(Request *request) {
+void FillMobileRequestForHandwriting(Request* request) {
   request->set_zero_query_suggestion(true);
   request->set_mixed_conversion(true);
   request->set_kana_modifier_insensitive_conversion(false);

@@ -62,43 +62,43 @@ class copy_or_view_ptr {
   copy_or_view_ptr() = default;
   ~copy_or_view_ptr() = default;
   // default constructor stores the view.
-  copy_or_view_ptr(T &view ABSL_ATTRIBUTE_LIFETIME_BOUND) : view_(&view) {};
-  copy_or_view_ptr(copy_or_view_ptr<T> &other) { CopyFrom(other); }
-  copy_or_view_ptr(const copy_or_view_ptr<T> &other) { CopyFrom(other); }
-  copy_or_view_ptr(copy_or_view_ptr<T> &&other) { MoveFrom(std::move(other)); }
+  copy_or_view_ptr(T& view ABSL_ATTRIBUTE_LIFETIME_BOUND) : view_(&view) {};
+  copy_or_view_ptr(copy_or_view_ptr<T>& other) { CopyFrom(other); }
+  copy_or_view_ptr(const copy_or_view_ptr<T>& other) { CopyFrom(other); }
+  copy_or_view_ptr(copy_or_view_ptr<T>&& other) { MoveFrom(std::move(other)); }
 
-  constexpr T &operator*() const { return *view_; }
-  constexpr T *operator->() { return view_; }
-  constexpr const T *operator->() const { return view_; }
+  constexpr T& operator*() const { return *view_; }
+  constexpr T* operator->() { return view_; }
+  constexpr const T* operator->() const { return view_; }
   explicit operator bool() const { return view_ != nullptr; }
 
-  constexpr void set_view(T &view) {
+  constexpr void set_view(T& view) {
     view_ = &view;
     copy_.reset();
   }
 
-  constexpr void copy_from(T &copy) {
+  constexpr void copy_from(T& copy) {
     copy_ = std::make_unique<T>(copy);
     view_ = copy_.get();
   }
 
-  constexpr void move_from(T &&other) {
+  constexpr void move_from(T&& other) {
     copy_ = std::make_unique<T>(std::move(other));
     view_ = copy_.get();
   }
 
-  constexpr copy_or_view_ptr<T> &operator=(const copy_or_view_ptr<T> &other) {
+  constexpr copy_or_view_ptr<T>& operator=(const copy_or_view_ptr<T>& other) {
     CopyFrom(other);
     return *this;
   }
 
-  constexpr copy_or_view_ptr<T> &operator=(copy_or_view_ptr<T> &&other) {
+  constexpr copy_or_view_ptr<T>& operator=(copy_or_view_ptr<T>&& other) {
     MoveFrom(std::move(other));
     return *this;
   }
 
  private:
-  void CopyFrom(const copy_or_view_ptr<T> &other) {
+  void CopyFrom(const copy_or_view_ptr<T>& other) {
     if (other.copy_) {
       copy_ = std::make_unique<T>(*other.copy_);
       view_ = copy_.get();
@@ -108,7 +108,7 @@ class copy_or_view_ptr {
     }
   }
 
-  void MoveFrom(copy_or_view_ptr<T> &&other) {
+  void MoveFrom(copy_or_view_ptr<T>&& other) {
     if (other.copy_) {
       copy_ = std::move(other.copy_);
       view_ = copy_.get();
@@ -118,7 +118,7 @@ class copy_or_view_ptr {
     }
   }
 
-  T *view_ = nullptr;
+  T* view_ = nullptr;
   std::unique_ptr<T> copy_;
 };
 }  // namespace internal
@@ -214,16 +214,16 @@ class ConversionRequest {
         history_result_(prediction::Result::DefaultResult()),
         options_(Options()) {}
 
-  ConversionRequest(const ConversionRequest &) = default;
-  ConversionRequest(ConversionRequest &&) = default;
+  ConversionRequest(const ConversionRequest&) = default;
+  ConversionRequest(ConversionRequest&&) = default;
 
   // operator= are not available since this class has a const member.
-  ConversionRequest &operator=(const ConversionRequest &) = delete;
-  ConversionRequest &operator=(ConversionRequest &&) = delete;
+  ConversionRequest& operator=(const ConversionRequest&) = delete;
+  ConversionRequest& operator=(ConversionRequest&&) = delete;
 
   RequestType request_type() const { return options_.request_type; }
 
-  const composer::ComposerData &composer() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  const composer::ComposerData& composer() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return *composer_data_;
   }
 
@@ -243,19 +243,19 @@ class ConversionRequest {
     return options_.composer_key_selection;
   }
 
-  const commands::Request &request() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  const commands::Request& request() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return *request_;
   }
-  const commands::Context &context() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  const commands::Context& context() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return *context_;
   }
-  const config::Config &config() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  const config::Config& config() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return *config_;
   }
-  const Options &options() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  const Options& options() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return options_;
   }
-  const prediction::Result &history_result() const
+  const prediction::Result& history_result() const
       ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return *history_result_;
   }
@@ -365,8 +365,8 @@ class ConversionRequestBuilder {
     return request_;
   }
 
-  ConversionRequestBuilder &SetConversionRequest(
-      const ConversionRequest &base_convreq) {
+  ConversionRequestBuilder& SetConversionRequest(
+      const ConversionRequest& base_convreq) {
     DCHECK_LE(stage_, 1);
     stage_ = 1;
     // Uses the default copy operator.
@@ -381,8 +381,8 @@ class ConversionRequestBuilder {
     request_.key_ = base_convreq.key_;
     return *this;
   }
-  ConversionRequestBuilder &SetConversionRequestView(
-      const ConversionRequest &base_convreq ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+  ConversionRequestBuilder& SetConversionRequestView(
+      const ConversionRequest& base_convreq ABSL_ATTRIBUTE_LIFETIME_BOUND) {
     DCHECK_LE(stage_, 1);
     stage_ = 1;
     // Enforces to use the view.
@@ -395,82 +395,82 @@ class ConversionRequestBuilder {
     request_.history_result_.set_view(*base_convreq.history_result_);
     return *this;
   }
-  ConversionRequestBuilder &SetComposerData(
-      composer::ComposerData &&composer_data) {
+  ConversionRequestBuilder& SetComposerData(
+      composer::ComposerData&& composer_data) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.composer_data_.move_from(std::move(composer_data));
     return *this;
   }
-  ConversionRequestBuilder &SetComposer(const composer::Composer &composer) {
+  ConversionRequestBuilder& SetComposer(const composer::Composer& composer) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.composer_data_.copy_from(composer.CreateComposerData());
     return *this;
   }
-  ConversionRequestBuilder &SetRequest(const commands::Request &request) {
+  ConversionRequestBuilder& SetRequest(const commands::Request& request) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.request_.copy_from(request);
     return *this;
   }
-  ConversionRequestBuilder &SetRequestView(
-      const commands::Request &request ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+  ConversionRequestBuilder& SetRequestView(
+      const commands::Request& request ABSL_ATTRIBUTE_LIFETIME_BOUND) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.request_.set_view(request);
     return *this;
   }
-  ConversionRequestBuilder &SetContext(const commands::Context &context) {
+  ConversionRequestBuilder& SetContext(const commands::Context& context) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.context_.copy_from(context);
     return *this;
   }
-  ConversionRequestBuilder &SetContextView(
-      const commands::Context &context ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+  ConversionRequestBuilder& SetContextView(
+      const commands::Context& context ABSL_ATTRIBUTE_LIFETIME_BOUND) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.context_.set_view(context);
     return *this;
   }
-  ConversionRequestBuilder &SetConfig(const config::Config &config) {
+  ConversionRequestBuilder& SetConfig(const config::Config& config) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.config_.copy_from(TrimConfig(config));
     return *this;
   }
-  ConversionRequestBuilder &SetConfigView(
-      const config::Config &config ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+  ConversionRequestBuilder& SetConfigView(
+      const config::Config& config ABSL_ATTRIBUTE_LIFETIME_BOUND) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.config_.set_view(config);
     return *this;
   }
-  ConversionRequestBuilder &SetHistoryResult(
-      const prediction::Result &history_result) {
+  ConversionRequestBuilder& SetHistoryResult(
+      const prediction::Result& history_result) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.history_result_.copy_from(history_result);
     return *this;
   }
-  ConversionRequestBuilder &SetHistoryResultView(
-      const prediction::Result &history_result ABSL_ATTRIBUTE_LIFETIME_BOUND) {
+  ConversionRequestBuilder& SetHistoryResultView(
+      const prediction::Result& history_result ABSL_ATTRIBUTE_LIFETIME_BOUND) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.history_result_.set_view(history_result);
     return *this;
   }
-  ConversionRequestBuilder &SetEmptyHistoryResult() {
+  ConversionRequestBuilder& SetEmptyHistoryResult() {
     return SetHistoryResultView(prediction::Result::DefaultResult());
   }
-  ConversionRequestBuilder &SetOptions(ConversionRequest::Options &&options) {
+  ConversionRequestBuilder& SetOptions(ConversionRequest::Options&& options) {
     DCHECK_LE(stage_, 2);
     stage_ = 2;
     request_.options_ = std::move(options);
     return *this;
   }
-  ConversionRequestBuilder &SetRequestType(
+  ConversionRequestBuilder& SetRequestType(
       ConversionRequest::RequestType request_type) {
     DCHECK_LE(stage_, 3);
     stage_ = 3;
@@ -479,7 +479,7 @@ class ConversionRequestBuilder {
   }
   // We cannot set empty key (SetKey("")). When key is empty,
   // key is created from composer.
-  ConversionRequestBuilder &SetKey(absl::string_view key) {
+  ConversionRequestBuilder& SetKey(absl::string_view key) {
     DCHECK_LE(stage_, 3);
     stage_ = 3;
     strings::Assign(request_.key_, key);
@@ -491,7 +491,7 @@ class ConversionRequestBuilder {
   // from Config and return it.
   // TODO(b/365909808): Move this method to Session after updating the
   // ConversionRequest constructor.
-  static config::Config TrimConfig(const config::Config &base_config) {
+  static config::Config TrimConfig(const config::Config& base_config) {
     config::Config config = base_config;
     config.clear_custom_keymap_table();
     config.clear_custom_roman_table();
@@ -499,7 +499,7 @@ class ConversionRequestBuilder {
   }
 
   static std::string GetKey(
-      const composer::ComposerData &composer_data,
+      const composer::ComposerData& composer_data,
       const ConversionRequest::RequestType type,
       const ConversionRequest::ComposerKeySelection selection) {
     if (type == ConversionRequest::CONVERSION &&

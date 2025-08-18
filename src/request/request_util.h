@@ -37,18 +37,18 @@
 namespace mozc {
 namespace request_util {
 
-inline bool IsHandwriting(const ConversionRequest &conversion_request) {
+inline bool IsHandwriting(const ConversionRequest& conversion_request) {
   return conversion_request.request().is_handwriting() ||
          !conversion_request.composer().GetHandwritingCompositions().empty();
 }
 
 inline bool IsAutoPartialSuggestionEnabled(
-    const ConversionRequest &conversion_request) {
+    const ConversionRequest& conversion_request) {
   return conversion_request.request().auto_partial_suggestion();
 }
 
 inline bool ShouldFilterNoisyNumberCandidate(
-    const ConversionRequest &conversion_request) {
+    const ConversionRequest& conversion_request) {
   return conversion_request.create_partial_candidates();
 }
 

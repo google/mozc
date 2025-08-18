@@ -36,11 +36,11 @@
 namespace mozc {
 namespace request_test_util {
 
-void FillMobileRequest(commands::Request *request);
+void FillMobileRequest(commands::Request* request);
 
-void FillMobileRequestWithHardwareKeyboard(commands::Request *request);
+void FillMobileRequestWithHardwareKeyboard(commands::Request* request);
 
-void FillMobileRequestForHandwriting(commands::Request *request);
+void FillMobileRequestForHandwriting(commands::Request* request);
 
 }  // namespace request_test_util
 }  // namespace mozc
